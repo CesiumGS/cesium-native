@@ -228,7 +228,7 @@ void postprocess(
   Model& model = readModel.model.value();
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(reader, readModel, options.clearDecodedDataUrls);
+    decodeDataUrls(reader, readModel, options);
   }
 
   if (options.decodeEmbeddedImages) {
@@ -259,7 +259,9 @@ void postprocess(
       const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
-      ImageReaderResult imageResult = reader.readImage(bufferViewSpan);
+      ImageReaderResult imageResult = GltfReader::readImage(
+          bufferViewSpan,
+          options.ktx2TranscodeTargetFormat);
       readModel.warnings.insert(
           readModel.warnings.end(),
           imageResult.warnings.begin(),
@@ -334,7 +336,8 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     const std::string& baseUrl,
     const HttpHeaders& headers,
     std::shared_ptr<IAssetAccessor> pAssetAccessor,
-    ModelReaderResult&& result) {
+    ModelReaderResult&& result,
+    const ReadModelOptions& options) {
 
   // TODO: Can we avoid this copy conversion?
   std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
@@ -413,7 +416,10 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                   Uri::resolve(baseUrl, *image.uri),
                   tHeaders)
               .thenInWorkerThread(
-                  [pImage = &image](std::shared_ptr<IAssetRequest>&& pRequest) {
+                  [pImage = &image,
+                   ktx2TranscodeTargetFormat =
+                       options.ktx2TranscodeTargetFormat](
+                      std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
 
                     std::string imageUri = *pImage->uri;
@@ -421,8 +427,9 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                     if (pResponse) {
                       pImage->uri = std::nullopt;
 
-                      ImageReaderResult imageResult =
-                          readImage(pResponse->data());
+                      ImageReaderResult imageResult = readImage(
+                          pResponse->data(),
+                          ktx2TranscodeTargetFormat);
                       if (imageResult.image) {
                         pImage->cesium = std::move(*imageResult.image);
                         return ExternalBufferLoadResult{true, imageUri};
@@ -462,8 +469,10 @@ bool isKtx(const gsl::span<const std::byte>& data) {
 }
 
 /*static*/
-ImageReaderResult
-GltfReader::readImage(const gsl::span<const std::byte>& data) {
+ImageReaderResult GltfReader::readImage(
+    const gsl::span<const std::byte>& data,
+    const std::optional<CompressedPixelFormatCesium>&
+        ktx2TranscodeTargetFormat) {
   CESIUM_TRACE("CesiumGltf::readImage");
 
   ImageReaderResult result;
@@ -474,16 +483,6 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
   if (isKtx(data)) {
     // TODO: better error handling; make sure KTX-Software doesn't throw
     // exceptions
-    // TODO: support uncompressed textures
-    // TODO: currently hardcoded to DXT1 RGB textures. Won't work on mobile.
-    // Won't work for alpha. Need a way to pass this information to Cesium
-    // Native.
-    // TODO: need an enum for the compressed pixel format rather than using
-    // Unreal's PixelFormat values
-    // TODO: overall better API needed in ImageCesium
-    // TODO: Read the KHR_texture_basisu extension properly rather than making a
-    // hacky glTF
-    // TODO: no support for embedded mipmap
 
     ktxTexture2* pTexture = nullptr;
     KTX_error_code errorCode;
@@ -494,26 +493,75 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
         KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
         &pTexture);
 
+    ktx_transcode_fmt_e targetFormat = KTX_TTF_RGBA32;
+    if (ktx2TranscodeTargetFormat) {
+      switch (*ktx2TranscodeTargetFormat) {
+      case CompressedPixelFormatCesium::ETC1_RGB:
+        targetFormat = KTX_TTF_ETC1_RGB;
+        break;
+      case CompressedPixelFormatCesium::ETC2_RGBA:
+        targetFormat = KTX_TTF_ETC2_RGBA;
+        break;
+      case CompressedPixelFormatCesium::BC1_RGB:
+        targetFormat = KTX_TTF_BC1_RGB;
+        break;
+      case CompressedPixelFormatCesium::BC3_RGBA:
+        targetFormat = KTX_TTF_BC3_RGBA;
+        break;
+      case CompressedPixelFormatCesium::BC4_R:
+        targetFormat = KTX_TTF_BC4_R;
+        break;
+      case CompressedPixelFormatCesium::BC5_RG:
+        targetFormat = KTX_TTF_BC5_RG;
+        break;
+      case CompressedPixelFormatCesium::BC7_RGBA:
+        targetFormat = KTX_TTF_BC7_RGBA;
+        break;
+      case CompressedPixelFormatCesium::PVRTC1_4_RGB:
+        targetFormat = KTX_TTF_PVRTC1_4_RGB;
+        break;
+      case CompressedPixelFormatCesium::PVRTC1_4_RGBA:
+        targetFormat = KTX_TTF_PVRTC1_4_RGBA;
+        break;
+      case CompressedPixelFormatCesium::ASTC_4x4_RGBA:
+        targetFormat = KTX_TTF_ASTC_4x4_RGBA;
+        break;
+      case CompressedPixelFormatCesium::PVRTC2_4_RGB:
+        targetFormat = KTX_TTF_PVRTC2_4_RGB;
+        break;
+      case CompressedPixelFormatCesium::PVRTC2_4_RGBA:
+        targetFormat = KTX_TTF_PVRTC2_4_RGBA;
+        break;
+      case CompressedPixelFormatCesium::ETC2_EAC_R11:
+        targetFormat = KTX_TTF_ETC2_EAC_R11;
+        break;
+      case CompressedPixelFormatCesium::ETC2_EAC_RG11:
+        targetFormat = KTX_TTF_ETC2_EAC_RG11;
+        break;
+      };
+    }
+
     if (errorCode == KTX_SUCCESS) {
       if (ktxTexture2_NeedsTranscoding(pTexture)) {
-        errorCode = ktxTexture2_TranscodeBasis(pTexture, KTX_TTF_BC1_RGB, 0);
+        errorCode = ktxTexture2_TranscodeBasis(pTexture, targetFormat, 0);
         if (errorCode == KTX_SUCCESS) {
-          // TODO: this is currently hardcoded, but shouldn't be
-          image.compressedPixelFormat = CompressedPixelFormatCesium::DXT1;
+          image.compressedPixelFormat = ktx2TranscodeTargetFormat;
           image.width = static_cast<int32_t>(pTexture->baseWidth);
           image.height = static_cast<int32_t>(pTexture->baseHeight);
 
-          ktx_uint8_t* compressedPixelData =
-              ktxTexture_GetData(ktxTexture(pTexture));
-          ktx_size_t compressedPixelDataSize =
+          if (!ktx2TranscodeTargetFormat) {
+            // We fully decompressed the texture in this case.
+            image.bytesPerChannel = 1;
+            image.channels = 4;
+          }
+
+          ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
+          ktx_size_t pixelDataSize =
               ktxTexture_GetDataSize(ktxTexture(pTexture));
-          image.pixelData.resize(compressedPixelDataSize);
+          image.pixelData.resize(pixelDataSize);
           std::uint8_t* u8Pointer =
               reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-          std::copy(
-              compressedPixelData,
-              compressedPixelData + compressedPixelDataSize,
-              u8Pointer);
+          std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
           ktxTexture_Destroy(ktxTexture(pTexture));
 
           return result;

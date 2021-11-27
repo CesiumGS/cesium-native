@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/ImageCesium.h>
 
 #include <spdlog/fwd.h>
 
@@ -63,6 +64,14 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * the raster overlay maps to approximately 2x2 pixels on the screen.
    */
   double maximumScreenSpaceError = 2.0;
+
+  /**
+   * @brief The compression format to transcode KTX v2 textures into. If this
+   * is std::nullopt, KTX v2 textures will be fully decompressed into raw
+   * pixels.
+   */
+  std::optional<CesiumGltf::CompressedPixelFormatCesium>
+      ktx2TranscodeTargetFormat = std::nullopt;
 };
 
 /**

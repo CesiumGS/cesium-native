@@ -89,7 +89,7 @@ namespace CesiumGltf {
 void decodeDataUrls(
     const GltfReader& reader,
     ModelReaderResult& readModel,
-    bool clearDecodedDataUrls) {
+    const ReadModelOptions& options) {
   CESIUM_TRACE("CesiumGltf::decodeDataUrls");
   if (!readModel.model) {
     return;
@@ -109,7 +109,7 @@ void decodeDataUrls(
 
     buffer.cesium.data = std::move(decoded.value().data);
 
-    if (clearDecodedDataUrls) {
+    if (options.clearDecodedDataUrls) {
       buffer.uri.reset();
     }
   }
@@ -124,12 +124,14 @@ void decodeDataUrls(
       continue;
     }
 
-    ImageReaderResult imageResult = reader.readImage(decoded.value().data);
+    ImageReaderResult imageResult = reader.readImage(
+        decoded.value().data,
+        options.ktx2TranscodeTargetFormat);
     if (imageResult.image) {
       image.cesium = std::move(imageResult.image.value());
     }
 
-    if (clearDecodedDataUrls) {
+    if (options.clearDecodedDataUrls) {
       image.uri.reset();
     }
   }

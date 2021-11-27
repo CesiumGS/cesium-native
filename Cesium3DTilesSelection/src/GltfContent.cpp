@@ -33,7 +33,8 @@ GltfContent::load(const TileContentLoadInput& input) {
       input.pRequest->url(),
       input.pRequest->headers(),
       input.pAssetAccessor,
-      input.pRequest->response()->data());
+      input.pRequest->response()->data(),
+      input.contentOptions);
 }
 
 /*static*/
@@ -43,11 +44,16 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const std::string& url,
     const HttpHeaders& headers,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const gsl::span<const std::byte>& data) {
+    const gsl::span<const std::byte>& data,
+    const TilesetContentOptions& contentOptions) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
+  ReadModelOptions readOptions;
+  readOptions.ktx2TranscodeTargetFormat =
+      contentOptions.ktx2TranscodeTargetFormat;
+
   CesiumGltf::ModelReaderResult loadedModel =
-      GltfContent::_gltfReader.readModel(data);
+      GltfContent::_gltfReader.readModel(data, readOptions);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -72,7 +78,8 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              url,
              headers,
              pAssetAccessor,
-             std::move(loadedModel))
+             std::move(loadedModel),
+             readOptions)
       .thenInWorkerThread(
           [pLogger, url](CesiumGltf::ModelReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =

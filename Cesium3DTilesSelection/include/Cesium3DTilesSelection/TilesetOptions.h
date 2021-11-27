@@ -2,6 +2,8 @@
 
 #include "Library.h"
 
+#include <CesiumGltf/ImageCesium.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -35,6 +37,14 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * normals.
    */
   bool generateMissingNormalsSmooth = false;
+
+  /**
+   * @brief The compression format to transcode KTX v2 textures into. If this
+   * is std::nullopt, KTX v2 textures will be fully decompressed into raw
+   * pixels.
+   */
+  std::optional<CesiumGltf::CompressedPixelFormatCesium>
+      ktx2TranscodeTargetFormat = std::nullopt;
 };
 
 /**

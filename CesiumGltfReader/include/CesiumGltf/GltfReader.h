@@ -6,6 +6,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
@@ -100,6 +101,14 @@ struct CESIUMGLTFREADER_API ReadModelOptions {
    * extension should be automatically decoded as part of the load process.
    */
   bool decodeDraco = true;
+
+  /**
+   * @brief The compression format to transcode KTX v2 textures into. If this
+   * is std::nullopt, KTX v2 textures will be fully decompressed into raw
+   * pixels.
+   */
+  std::optional<CompressedPixelFormatCesium> ktx2TranscodeTargetFormat =
+      std::nullopt;
 };
 
 /**
@@ -145,13 +154,15 @@ public:
    * @param pAssetAccessor The asset accessor to use to request the external
    * buffers and images.
    * @param result The result of the synchronous readModel invocation.
+   * @param options Options for how to read the glTF.
    */
   static CesiumAsync::Future<ModelReaderResult> resolveExternalData(
       CesiumAsync::AsyncSystem asyncSystem,
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
-      ModelReaderResult&& result);
+      ModelReaderResult&& result,
+      const ReadModelOptions& options);
 
   /**
    * @brief Reads an image from a buffer.
@@ -160,9 +171,15 @@ public:
    * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
    *
    * @param data The buffer from which to read the image.
+   * @param ktx2TranscodeTargetFormat The compression format to transcode
+   * KTX v2 textures into. If this is std::nullopt, KTX v2 textures will be
+   * fully decompressed into raw pixels.
    * @return The result of reading the image.
    */
-  static ImageReaderResult readImage(const gsl::span<const std::byte>& data);
+  static ImageReaderResult readImage(
+      const gsl::span<const std::byte>& data,
+      const std::optional<CompressedPixelFormatCesium>&
+          ktx2TranscodeTargetFormat = std::nullopt);
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;

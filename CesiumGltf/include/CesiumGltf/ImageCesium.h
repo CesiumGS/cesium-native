@@ -4,18 +4,32 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace CesiumGltf {
 
 /**
- * @brief Supported block compressed pixel formats that KTX v2 may have been
- * transcoded to.
+ * @brief Supported compressed pixel formats.
  */
 enum CESIUMGLTF_API CompressedPixelFormatCesium {
-  DXT1,
-  KTX,
-  NONE,
+  KTX2,
+
+  // Block compression formats.
+  ETC1_RGB,
+  ETC2_RGBA,
+  BC1_RGB,
+  BC3_RGBA,
+  BC4_R,
+  BC5_RG,
+  BC7_RGBA,
+  PVRTC1_4_RGB,
+  PVRTC1_4_RGBA,
+  ASTC_4x4_RGBA,
+  PVRTC2_4_RGB,
+  PVRTC2_4_RGBA,
+  ETC2_EAC_R11,
+  ETC2_EAC_RG11
 };
 
 /**
@@ -44,15 +58,15 @@ struct CESIUMGLTF_API ImageCesium final {
   int32_t bytesPerChannel = 1;
 
   /**
-   * @brief The compressed pixel format.
+   * @brief The compressed pixel format, if this image is compressed.
    */
-  CompressedPixelFormatCesium compressedPixelFormat =
-      CompressedPixelFormatCesium::NONE;
+  std::optional<CompressedPixelFormatCesium> compressedPixelFormat =
+      std::nullopt;
 
   /**
    * @brief The pixel data.
    *
-   * This will be the raw pixel data when compressedPixelFormat is NONE.
+   * This will be the raw pixel data when compressedPixelFormat is std::nullopt.
    * Otherwise, this buffer will store the compressed pixel data in the
    * specified format.
    *
@@ -64,7 +78,7 @@ struct CESIUMGLTF_API ImageCesium final {
    *  `width * height * channels * bytesPerChannel` bytes. There is no
    *  padding between rows or columns of the image, regardless of format.
    *
-   * The channels and their meaning are as follows:
+   * -The channels and their meaning are as follows:
    *
    * | Number of Channels | Channel Order and Meaning |
    * |--------------------|---------------------------|
