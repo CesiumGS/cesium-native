@@ -105,6 +105,7 @@ function resolveProperty(
       propertyName,
       cppSafeName,
       propertyDetails,
+      isRequired,
       makeOptional,
       namespace,
       readerNamespace,
@@ -120,7 +121,7 @@ function resolveProperty(
         headers: ["<cstdint>"],
         readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
-        optionalId: makeOptional,
+        requiredId: isRequired,
       };
     } else if (itemSchema.type !== "object") {
       return resolveProperty(
@@ -377,6 +378,7 @@ function resolveEnum(
   propertyName,
   cppSafeName,
   propertyDetails,
+  isRequired,
   makeOptional,
   namespace,
   readerNamespace,
@@ -393,6 +395,8 @@ function resolveEnum(
   const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
 
   const enumName = toPascalCase(propertyName);
+  const enumDefaultValue = createEnumDefault(enumName, propertyDetails);
+  const enumDefaultValueWriter = `${namespace}::${parentName}::${enumDefaultValue}`;
 
   const readerTypes = createEnumReaderType(
     parentName,
@@ -429,9 +433,8 @@ function resolveEnum(
     ],
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
-    defaultValue: makeOptional
-      ? undefined
-      : createEnumDefault(enumName, propertyDetails),
+    defaultValue: makeOptional ? undefined : enumDefaultValue,
+    defaultValueWriter: makeOptional ? undefined : enumDefaultValueWriter,
     readerHeaders: [`<${namespace}/${parentName}.h>`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
@@ -442,6 +445,7 @@ function resolveEnum(
     ),
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
+    requiredEnum: isRequired,
   };
 
   if (readerTypes.length > 0) {

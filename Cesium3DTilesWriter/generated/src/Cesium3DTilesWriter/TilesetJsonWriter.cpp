@@ -362,7 +362,9 @@ void writeJson(
     writeJson(obj.refine, jsonWriter, context);
   }
 
-  if (!obj.transform.empty()) {
+  static const std::vector<double> transformDefault =
+      {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  if (obj.transform != transformDefault) {
     jsonWriter.Key("transform");
     writeJson(obj.transform, jsonWriter, context);
   }

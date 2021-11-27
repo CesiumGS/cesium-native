@@ -568,8 +568,10 @@ void writeJson(
   jsonWriter.Key("index");
   writeJson(obj.index, jsonWriter, context);
 
-  jsonWriter.Key("texCoord");
-  writeJson(obj.texCoord, jsonWriter, context);
+  if (obj.texCoord != 0) {
+    jsonWriter.Key("texCoord");
+    writeJson(obj.texCoord, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -620,11 +622,15 @@ void writeJson(
     writeJson(obj.attribute, jsonWriter, context);
   }
 
-  jsonWriter.Key("constant");
-  writeJson(obj.constant, jsonWriter, context);
+  if (obj.constant != 0) {
+    jsonWriter.Key("constant");
+    writeJson(obj.constant, jsonWriter, context);
+  }
 
-  jsonWriter.Key("divisor");
-  writeJson(obj.divisor, jsonWriter, context);
+  if (obj.divisor != 0) {
+    jsonWriter.Key("divisor");
+    writeJson(obj.divisor, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -707,8 +713,10 @@ void writeJson(
   jsonWriter.Key("bufferView");
   writeJson(obj.bufferView, jsonWriter, context);
 
-  jsonWriter.Key("offsetType");
-  writeJson(obj.offsetType, jsonWriter, context);
+  if (obj.offsetType != CesiumGltf::FeatureTableProperty::OffsetType::UINT32) {
+    jsonWriter.Key("offsetType");
+    writeJson(obj.offsetType, jsonWriter, context);
+  }
 
   if (obj.arrayOffsetBufferView > -1) {
     jsonWriter.Key("arrayOffsetBufferView");
@@ -891,8 +899,10 @@ void writeJson(
     writeJson(obj.description, jsonWriter, context);
   }
 
-  jsonWriter.Key("valueType");
-  writeJson(obj.valueType, jsonWriter, context);
+  if (obj.valueType != CesiumGltf::Enum::ValueType::UINT16) {
+    jsonWriter.Key("valueType");
+    writeJson(obj.valueType, jsonWriter, context);
+  }
 
   if (!obj.values.empty()) {
     jsonWriter.Key("values");
@@ -1010,8 +1020,10 @@ void writeJson(
     writeJson(obj.componentCount, jsonWriter, context);
   }
 
-  jsonWriter.Key("normalized");
-  writeJson(obj.normalized, jsonWriter, context);
+  if (obj.normalized != false) {
+    jsonWriter.Key("normalized");
+    writeJson(obj.normalized, jsonWriter, context);
+  }
 
   jsonWriter.Key("max");
   writeJson(obj.max, jsonWriter, context);
@@ -1022,8 +1034,10 @@ void writeJson(
   jsonWriter.Key("default");
   writeJson(obj.defaultProperty, jsonWriter, context);
 
-  jsonWriter.Key("optional");
-  writeJson(obj.optional, jsonWriter, context);
+  if (obj.optional != false) {
+    jsonWriter.Key("optional");
+    writeJson(obj.optional, jsonWriter, context);
+  }
 
   if (obj.semantic.has_value()) {
     jsonWriter.Key("semantic");
@@ -1248,11 +1262,15 @@ void writeJson(
     writeJson(obj.minFilter, jsonWriter, context);
   }
 
-  jsonWriter.Key("wrapS");
-  writeJson(obj.wrapS, jsonWriter, context);
+  if (obj.wrapS != CesiumGltf::Sampler::WrapS::REPEAT) {
+    jsonWriter.Key("wrapS");
+    writeJson(obj.wrapS, jsonWriter, context);
+  }
 
-  jsonWriter.Key("wrapT");
-  writeJson(obj.wrapT, jsonWriter, context);
+  if (obj.wrapT != CesiumGltf::Sampler::WrapT::REPEAT) {
+    jsonWriter.Key("wrapT");
+    writeJson(obj.wrapT, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1288,7 +1306,9 @@ void writeJson(
     writeJson(obj.skin, jsonWriter, context);
   }
 
-  if (!obj.matrix.empty()) {
+  static const std::vector<double> matrixDefault =
+      {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  if (obj.matrix != matrixDefault) {
     jsonWriter.Key("matrix");
     writeJson(obj.matrix, jsonWriter, context);
   }
@@ -1298,17 +1318,20 @@ void writeJson(
     writeJson(obj.mesh, jsonWriter, context);
   }
 
-  if (!obj.rotation.empty()) {
+  static const std::vector<double> rotationDefault = {0, 0, 0, 1};
+  if (obj.rotation != rotationDefault) {
     jsonWriter.Key("rotation");
     writeJson(obj.rotation, jsonWriter, context);
   }
 
-  if (!obj.scale.empty()) {
+  static const std::vector<double> scaleDefault = {1, 1, 1};
+  if (obj.scale != scaleDefault) {
     jsonWriter.Key("scale");
     writeJson(obj.scale, jsonWriter, context);
   }
 
-  if (!obj.translation.empty()) {
+  static const std::vector<double> translationDefault = {0, 0, 0};
+  if (obj.translation != translationDefault) {
     jsonWriter.Key("translation");
     writeJson(obj.translation, jsonWriter, context);
   }
@@ -1381,8 +1404,10 @@ void writeJson(
     writeJson(obj.material, jsonWriter, context);
   }
 
-  jsonWriter.Key("mode");
-  writeJson(obj.mode, jsonWriter, context);
+  if (obj.mode != CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
+    jsonWriter.Key("mode");
+    writeJson(obj.mode, jsonWriter, context);
+  }
 
   if (!obj.targets.empty()) {
     jsonWriter.Key("targets");
@@ -1428,19 +1453,26 @@ void writeJson(
     writeJson(obj.emissiveTexture, jsonWriter, context);
   }
 
-  if (!obj.emissiveFactor.empty()) {
+  static const std::vector<double> emissiveFactorDefault = {0, 0, 0};
+  if (obj.emissiveFactor != emissiveFactorDefault) {
     jsonWriter.Key("emissiveFactor");
     writeJson(obj.emissiveFactor, jsonWriter, context);
   }
 
-  jsonWriter.Key("alphaMode");
-  writeJson(obj.alphaMode, jsonWriter, context);
+  if (obj.alphaMode != CesiumGltf::Material::AlphaMode::OPAQUE) {
+    jsonWriter.Key("alphaMode");
+    writeJson(obj.alphaMode, jsonWriter, context);
+  }
 
-  jsonWriter.Key("alphaCutoff");
-  writeJson(obj.alphaCutoff, jsonWriter, context);
+  if (obj.alphaCutoff != 0.5) {
+    jsonWriter.Key("alphaCutoff");
+    writeJson(obj.alphaCutoff, jsonWriter, context);
+  }
 
-  jsonWriter.Key("doubleSided");
-  writeJson(obj.doubleSided, jsonWriter, context);
+  if (obj.doubleSided != false) {
+    jsonWriter.Key("doubleSided");
+    writeJson(obj.doubleSided, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1461,8 +1493,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("strength");
-  writeJson(obj.strength, jsonWriter, context);
+  if (obj.strength != 1) {
+    jsonWriter.Key("strength");
+    writeJson(obj.strength, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1483,8 +1517,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("scale");
-  writeJson(obj.scale, jsonWriter, context);
+  if (obj.scale != 1) {
+    jsonWriter.Key("scale");
+    writeJson(obj.scale, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1505,7 +1541,8 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (!obj.baseColorFactor.empty()) {
+  static const std::vector<double> baseColorFactorDefault = {1, 1, 1, 1};
+  if (obj.baseColorFactor != baseColorFactorDefault) {
     jsonWriter.Key("baseColorFactor");
     writeJson(obj.baseColorFactor, jsonWriter, context);
   }
@@ -1515,11 +1552,15 @@ void writeJson(
     writeJson(obj.baseColorTexture, jsonWriter, context);
   }
 
-  jsonWriter.Key("metallicFactor");
-  writeJson(obj.metallicFactor, jsonWriter, context);
+  if (obj.metallicFactor != 1) {
+    jsonWriter.Key("metallicFactor");
+    writeJson(obj.metallicFactor, jsonWriter, context);
+  }
 
-  jsonWriter.Key("roughnessFactor");
-  writeJson(obj.roughnessFactor, jsonWriter, context);
+  if (obj.roughnessFactor != 1) {
+    jsonWriter.Key("roughnessFactor");
+    writeJson(obj.roughnessFactor, jsonWriter, context);
+  }
 
   if (obj.metallicRoughnessTexture.has_value()) {
     jsonWriter.Key("metallicRoughnessTexture");
@@ -1680,8 +1721,10 @@ void writeJson(
   jsonWriter.Key("buffer");
   writeJson(obj.buffer, jsonWriter, context);
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteLength");
   writeJson(obj.byteLength, jsonWriter, context);
@@ -1811,8 +1854,11 @@ void writeJson(
   jsonWriter.Key("input");
   writeJson(obj.input, jsonWriter, context);
 
-  jsonWriter.Key("interpolation");
-  writeJson(obj.interpolation, jsonWriter, context);
+  if (obj.interpolation !=
+      CesiumGltf::AnimationSampler::Interpolation::LINEAR) {
+    jsonWriter.Key("interpolation");
+    writeJson(obj.interpolation, jsonWriter, context);
+  }
 
   jsonWriter.Key("output");
   writeJson(obj.output, jsonWriter, context);
@@ -1893,14 +1939,18 @@ void writeJson(
     writeJson(obj.bufferView, jsonWriter, context);
   }
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("componentType");
   writeJson(obj.componentType, jsonWriter, context);
 
-  jsonWriter.Key("normalized");
-  writeJson(obj.normalized, jsonWriter, context);
+  if (obj.normalized != false) {
+    jsonWriter.Key("normalized");
+    writeJson(obj.normalized, jsonWriter, context);
+  }
 
   jsonWriter.Key("count");
   writeJson(obj.count, jsonWriter, context);
@@ -1973,8 +2023,10 @@ void writeJson(
   jsonWriter.Key("bufferView");
   writeJson(obj.bufferView, jsonWriter, context);
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1998,8 +2050,10 @@ void writeJson(
   jsonWriter.Key("bufferView");
   writeJson(obj.bufferView, jsonWriter, context);
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("componentType");
   writeJson(obj.componentType, jsonWriter, context);

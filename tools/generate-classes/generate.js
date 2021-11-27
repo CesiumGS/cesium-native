@@ -460,14 +460,33 @@ function formatWriterPropertyImpl(property) {
   let result = "";
 
   const type = property.type;
+  const defaultValue = property.defaultValueWriter || property.defaultValue;
 
-  const hasEmptyGuard =
-    type.startsWith("std::vector") || type.startsWith("std::map");
-  const hasOptionalGuard = type.startsWith("std::optional");
-  const hasNegativeIndexGuard = property.optionalId;
-  const hasGuard = hasEmptyGuard || hasOptionalGuard || hasNegativeIndexGuard;
+  const isId = property.requiredId !== undefined;
+  const isOptionalId = property.requiredId === false;
+  const isRequiredEnum = property.requiredEnum === true;
+  const isVector = type.startsWith("std::vector");
+  const isMap = type.startsWith("std::map");
+  const isOptional = type.startsWith("std::optional");
 
-  if (hasEmptyGuard) {
+  const hasDefaultValueGuard =
+    !isId && !isRequiredEnum && defaultValue !== undefined;
+  const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
+  const hasEmptyGuard = isVector || isMap;
+  const hasOptionalGuard = isOptional;
+  const hasNegativeIndexGuard = isOptionalId;
+  const hasGuard =
+    hasDefaultValueGuard ||
+    hasEmptyGuard ||
+    hasOptionalGuard ||
+    hasNegativeIndexGuard;
+
+  if (hasDefaultVectorGuard) {
+    result += `static const ${type} ${property.cppSafeName}Default = ${defaultValue};\n`;
+    result += `if (obj.${property.cppSafeName} != ${property.cppSafeName}Default) {\n`;
+  } else if (hasDefaultValueGuard) {
+    result += `if (obj.${property.cppSafeName} != ${defaultValue}) {\n`;
+  } else if (hasEmptyGuard) {
     result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
   } else if (hasNegativeIndexGuard) {
     result += `if (obj.${property.cppSafeName} > -1) {\n`;
