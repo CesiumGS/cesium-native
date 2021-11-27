@@ -9,6 +9,7 @@
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
+#include "ExtensionTextureBasisUJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
@@ -297,6 +298,9 @@ GltfReader::GltfReader() : _context() {
   this->_context.registerExtension<
       MeshPrimitive,
       ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
+
+  this->_context
+      .registerExtension<Texture, ExtensionTextureBasisUJsonHandler>();
 }
 
 CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
