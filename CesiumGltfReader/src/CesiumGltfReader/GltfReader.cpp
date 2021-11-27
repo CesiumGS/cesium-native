@@ -1,5 +1,8 @@
 #include "CesiumGltfReader/GltfReader.h"
 
+#include "CesiumGltfReader/ExtensionKhrDracoMeshCompressionJsonHandler.h"
+#include "CesiumGltfReader/ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
+#include "CesiumGltfReader/ExtensionModelExtFeatureMetadataJsonHandler.h"
 #include "CesiumGltfReader/ModelJsonHandler.h"
 #include "CesiumGltfReader/decodeDataUrls.h"
 #include "CesiumGltfReader/decodeDraco.h"
@@ -279,20 +282,18 @@ void postprocess(
 
 } // namespace
 
-void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+GltfReader::GltfReader() : _context() {
+  this->_context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionKhrDracoMeshCompressionJsonHandler>();
 
-GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
-
-// this->_context.registerExtension<
-//     CesiumGltf::MeshPrimitive,
-//     ExtensionKhrDracoMeshCompressionJsonHandler>();
-
-// this->_context.registerExtension<
-//     CesiumGltf::Model,
-//     ExtensionModelExtFeatureMetadataJsonHandler>();
-// this->_context.registerExtension<
-//     CesiumGltf::MeshPrimitive,
-//     ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
+  this->_context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelExtFeatureMetadataJsonHandler>();
+  this->_context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
+}
 
 CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
   return this->_context;
