@@ -28,25 +28,33 @@
       "className": "ExtensionKhrDracoMeshCompression",
       "extensionName": "KHR_draco_mesh_compression",
       "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
-      "attachTo": ["mesh.primitive"]
+      "attachTo": [
+        "mesh.primitive"
+      ]
     },
     {
       "className": "ExtensionModelExtFeatureMetadata",
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json",
-      "attachTo": ["glTF"]
+      "attachTo": [
+        "glTF"
+      ]
     },
     {
       "className": "ExtensionMeshPrimitiveExtFeatureMetadata",
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/primitive.EXT_feature_metadata.schema.json",
-      "attachTo": ["mesh.primitive"]
+      "attachTo": [
+        "mesh.primitive"
+      ]
     },
     {
       "className": "ExtensionMaterialsUnlit",
       "extensionName": "KHR_materials_unlit",
       "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
-      "attachTo": ["material"]
+      "attachTo": [
+        "material"
+      ]
     }
   ]
 }

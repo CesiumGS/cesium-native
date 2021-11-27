@@ -107,7 +107,6 @@ const options = {
   extensions: {},
 };
 
-const readers = [];
 const writers = [];
 
 let schemas = [rootSchema];
@@ -127,7 +126,7 @@ for (const extension of config.extensions) {
   config.classes[extensionSchema.title].overrideName = extension.className;
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
-  schemas.push(...generate(options, extensionSchema, readers, writers));
+  schemas.push(...generate(options, extensionSchema, writers));
 
   for (const objectToExtend of extension.attachTo) {
     const objectToExtendSchema = schemaCache.load(
@@ -158,7 +157,7 @@ function processSchemas() {
       continue;
     }
     processed[schema.sourcePath] = true;
-    schemas.push(...generate(options, schema, readers, writers));
+    schemas.push(...generate(options, schema, writers));
   }
 }
 
@@ -173,15 +172,6 @@ if (additionalSchemas) {
     processSchemas();
   }
 }
-
-const readerOptions = {
-  readerOutputDir: argv.readerOutput,
-  config: config,
-  namespace: argv.namespace,
-  readerNamespace: argv.readerNamespace,
-  readers: readers,
-  extensions: options.extensions
-};
 
 const writerOptions = {
   writerOutputDir: argv.writerOutput,
