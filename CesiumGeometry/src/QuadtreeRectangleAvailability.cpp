@@ -1,4 +1,6 @@
-#include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
+
+#include "CesiumGeometry/TileAvailabilityFlags.h"
 
 #include <glm/common.hpp>
 
@@ -6,7 +8,7 @@
 
 namespace CesiumGeometry {
 
-QuadtreeTileAvailability::QuadtreeTileAvailability(
+QuadtreeRectangleAvailability::QuadtreeRectangleAvailability(
     const QuadtreeTilingScheme& tilingScheme,
     uint32_t maximumLevel) noexcept
     : _tilingScheme(tilingScheme),
@@ -25,7 +27,7 @@ QuadtreeTileAvailability::QuadtreeTileAvailability(
   }
 }
 
-void QuadtreeTileAvailability::addAvailableTileRange(
+void QuadtreeRectangleAvailability::addAvailableTileRange(
     const QuadtreeTileRectangularRange& range) noexcept {
   const Rectangle ll = this->_tilingScheme.tileToRectangle(
       QuadtreeTileID(range.level, range.minimumX, range.minimumY));
@@ -47,7 +49,7 @@ void QuadtreeTileAvailability::addAvailableTileRange(
   }
 }
 
-uint32_t QuadtreeTileAvailability::computeMaximumLevelAtPosition(
+uint32_t QuadtreeRectangleAvailability::computeMaximumLevelAtPosition(
     const glm::dvec2& position) const noexcept {
   // Find the root node that contains this position.
   for (const std::unique_ptr<QuadtreeNode>& pNode : this->_rootNodes) {
@@ -59,7 +61,7 @@ uint32_t QuadtreeTileAvailability::computeMaximumLevelAtPosition(
   return 0;
 }
 
-bool QuadtreeTileAvailability::isTileAvailable(
+uint8_t QuadtreeRectangleAvailability::isTileAvailable(
     const QuadtreeTileID& id) const noexcept {
   // Get the center of the tile and find the maximum level at that position.
   // Because availability is by tile, if the level is available at that point,
@@ -70,14 +72,20 @@ bool QuadtreeTileAvailability::isTileAvailable(
   const CesiumGeometry::Rectangle rectangle =
       this->_tilingScheme.tileToRectangle(id);
   const glm::dvec2 center = rectangle.getCenter();
-  return this->computeMaximumLevelAtPosition(center) >= id.level;
+  if (this->computeMaximumLevelAtPosition(center) >= id.level) {
+    return TileAvailabilityFlags::TILE_AVAILABLE |
+           TileAvailabilityFlags::REACHABLE;
+  }
+
+  return 0;
 }
 
-/*static*/ void QuadtreeTileAvailability::putRectangleInQuadtree(
+/*static*/ void QuadtreeRectangleAvailability::putRectangleInQuadtree(
     const QuadtreeTilingScheme& tilingScheme,
     uint32_t maximumLevel,
-    QuadtreeTileAvailability::QuadtreeNode& node,
-    const QuadtreeTileAvailability::RectangleWithLevel& rectangle) noexcept {
+    QuadtreeRectangleAvailability::QuadtreeNode& node,
+    const QuadtreeRectangleAvailability::RectangleWithLevel&
+        rectangle) noexcept {
   QuadtreeNode* pNode = &node;
 
   while (pNode->id.level < maximumLevel) {
@@ -106,22 +114,22 @@ bool QuadtreeTileAvailability::isTileAvailable(
     std::push_heap(
         pNode->rectangles.begin(),
         pNode->rectangles.end(),
-        QuadtreeTileAvailability::rectangleLevelComparator);
+        QuadtreeRectangleAvailability::rectangleLevelComparator);
   }
 }
 
-/*static*/ bool QuadtreeTileAvailability::rectangleLevelComparator(
-    const QuadtreeTileAvailability::RectangleWithLevel& a,
-    const QuadtreeTileAvailability::RectangleWithLevel& b) noexcept {
+/*static*/ bool QuadtreeRectangleAvailability::rectangleLevelComparator(
+    const QuadtreeRectangleAvailability::RectangleWithLevel& a,
+    const QuadtreeRectangleAvailability::RectangleWithLevel& b) noexcept {
   return a.level < b.level;
 }
 
-/*static*/ uint32_t QuadtreeTileAvailability::findMaxLevelFromNode(
-    QuadtreeTileAvailability::QuadtreeNode* pStopNode,
-    QuadtreeTileAvailability::QuadtreeNode& node,
+/*static*/ uint32_t QuadtreeRectangleAvailability::findMaxLevelFromNode(
+    QuadtreeRectangleAvailability::QuadtreeNode* pStopNode,
+    QuadtreeRectangleAvailability::QuadtreeNode& node,
     const glm::dvec2& position) noexcept {
   uint32_t maxLevel = 0;
-  QuadtreeTileAvailability::QuadtreeNode* pNode = &node;
+  QuadtreeRectangleAvailability::QuadtreeNode* pNode = &node;
 
   // Find the deepest quadtree node containing this point.
   bool found = false;
@@ -195,8 +203,8 @@ bool QuadtreeTileAvailability::isTileAvailable(
   return maxLevel;
 }
 
-/*static*/ void QuadtreeTileAvailability::createNodeChildrenIfNecessary(
-    QuadtreeTileAvailability::QuadtreeNode& node,
+/*static*/ void QuadtreeRectangleAvailability::createNodeChildrenIfNecessary(
+    QuadtreeRectangleAvailability::QuadtreeNode& node,
     const QuadtreeTilingScheme& tilingScheme) noexcept {
   if (node.ll) {
     return;

@@ -46,22 +46,24 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
 
   pResult->childTiles.emplace(1);
 
-  pResult->pNewTileContext = std::make_unique<TileContext>();
-  pResult->pNewTileContext->baseUrl = url;
+  std::unique_ptr<TileContext> pExternalTileContext =
+      std::make_unique<TileContext>();
+  pExternalTileContext->baseUrl = url;
+  pExternalTileContext->contextInitializerCallback =
+      [](const TileContext& parentContext, TileContext& currentContext) {
+        currentContext.pTileset = parentContext.pTileset;
+        currentContext.requestHeaders = parentContext.requestHeaders;
+        currentContext.version = parentContext.version;
+        currentContext.failedTileCallback = parentContext.failedTileCallback;
+      };
 
-  TileContext* pContext = pResult->pNewTileContext.get();
-  pContext->contextInitializerCallback = [](const TileContext& parentContext,
-                                            TileContext& currentContext) {
-    currentContext.pTileset = parentContext.pTileset;
-    currentContext.requestHeaders = parentContext.requestHeaders;
-    currentContext.version = parentContext.version;
-    currentContext.failedTileCallback = parentContext.failedTileCallback;
-  };
-
+  TileContext* pContext = pExternalTileContext.get();
   pResult->childTiles.value()[0].setContext(pContext);
+  pResult->newTileContexts.push_back(std::move(pExternalTileContext));
 
   Tileset::loadTilesFromJson(
       pResult->childTiles.value()[0],
+      pResult->newTileContexts,
       tilesetJson,
       tileTransform,
       tileRefine,

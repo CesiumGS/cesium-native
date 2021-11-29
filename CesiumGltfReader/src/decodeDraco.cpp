@@ -151,6 +151,7 @@ void copyDecodedIndices(
   indicesBufferView.byteOffset = 0;
   indicesBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
   pIndicesAccessor->type = Accessor::Type::SCALAR;
+  pIndicesAccessor->byteOffset = 0;
 
   static_assert(sizeof(draco::PointIndex) == sizeof(uint32_t));
 
@@ -206,9 +207,9 @@ void copyDecodedAttribute(
   CESIUM_TRACE("CesiumGltf::copyDecodedAttribute");
   Model& model = readModel.model.value();
 
-  if (pAccessor->count > pMesh->num_points()) {
-    readModel.warnings.emplace_back("There are fewer decoded Draco indices "
-                                    "than are expected by the accessor.");
+  if (pAccessor->count != pMesh->num_points()) {
+    readModel.warnings.emplace_back("Attribute accessor.count doesn't match "
+                                    "with number of decoded Draco vertices.");
 
     pAccessor->count = pMesh->num_points();
   }

@@ -446,6 +446,15 @@ public:
   }
 
   /**
+   * @brief Sets the {@link TileContentLoadResult} of this tile to be an empty
+   * object instead of nullptr.
+   *
+   * This is useful to indicate to the traversal that this tile points to an
+   * external or implicit tileset.
+   */
+  void setEmptyContent() noexcept;
+
+  /**
    * @brief Returns internal resources required for rendering this tile.
    *
    * This function is not supposed to be called by clients.
@@ -462,6 +471,13 @@ public:
   LoadState getState() const noexcept {
     return this->_state.load(std::memory_order::memory_order_acquire);
   }
+
+  /**
+   * @brief Set the {@link LoadState} of this tile.
+   *
+   * Not to be called by clients.
+   */
+  void setState(LoadState value) noexcept;
 
   /**
    * @brief Returns the {@link TileSelectionState} of this tile.
@@ -518,20 +534,42 @@ public:
    *
    * This function is not supposed to be called by clients.
    *
-   * If this tile is not in its initial state (indicated by the
-   * {@link Tile::getState} of this tile being *not*
-   * {@link Tile::LoadState::Unloaded}), then nothing will be done.
+   * Do NOT call this function if the tile does not have content to load and
+   * does not need to be upsampled.
    *
-   * Otherwise, the tile will go into the
-   * {@link Tile::LoadState::ContentLoading} state, and the request for
-   * loading the tile content will be sent out.
-   * The function will then return, and the response of the request will
-   * be received asynchronously. Depending on the type of the tile and
-   * the response, the tile will eventually go into the
-   * {@link Tile::LoadState::ContentLoaded} state, and the
-   * {@link Tile::getContent} will be available.
+   * If this tile is not in {@link Tile::LoadState::Unloaded}, any previously
+   * throttled rasters will be reloaded.
+   *
+   * Otherwise, if this is a non-upsampled tile:
+   * - The tile will be put into the {@link Tile::LoadState::ContentLoading}
+   *   state, the content will be requested, and then be processed
+   *   asynchronously.
+   *
+   * Otherwise, if this is an upsampled tile, this tile's content needs to be
+   * derived from its parent:
+   * - If the parent has a load state of {@link Tile::LoadState::Done}, we will
+   *   asynchronously upsample from it to load this tile's content.
+   * - If the parent has any other load state, we will call
+   *   {@link Tile::loadContent} for the parent and return after setting this
+   *   tile back to {@link Tile::Unloaded}.
+   *
+   * Once the asynchronous content loading or upsampling is done, the tile's
+   * state will be set to {@link Tile::LoadState::ContentLoaded}. If we are
+   * waiting on a parent tile to be able to upsample, the state will be set to
+   * {@link Tile::LoadState::Unloaded}.
    */
   void loadContent();
+
+  /**
+   * @brief Finalizes the tile from the loaded content.
+   *
+   * Once the tile is {@link Tile::LoadState::ContentLoaded} after the
+   * asynchronous {@link Tile::loadContent} finishes, this should be called to
+   * finalize the tile from the loaded content. Nothing happens if this tile is
+   * not in {@link Tile::LoadState::ContentLoaded}. After this is called, the
+   * tile will be set to {@link Tile::LoadState::Done}.
+   */
+  void processLoadedContent();
 
   /**
    * @brief Frees all resources that have been allocated for the
@@ -577,11 +615,6 @@ public:
   int64_t computeByteSize() const noexcept;
 
 private:
-  /**
-   * @brief Set the {@link LoadState} of this tile.
-   */
-  void setState(LoadState value) noexcept;
-
   /**
    * @brief Upsample the parent of this tile.
    *

@@ -23,6 +23,19 @@
 - Added `GltfContent::applyRtcCenter` and `applyGltfUpAxisTransform`.
 - Clipping polygon edges now remain sharp even when zooming in past the available geometry detail.
 - Added `DebugColorizeTilesRasterOverlay`.
+- Added `BoundingRegionBuilder` to `CesiumGeospatial`.
+- Added `GlobeRectangle::EMPTY` static field and `GlobeRectangle::isEmpty` method.
+- Added the ability to set the coordinates of a `GlobeRectangle` after construction.
+
+##### Fixes :wrench:
+
+- Improved the computation of bounding regions and overlay texture coordinates from geometry, particularly for geometry that crosses the anti-meridian or touches the poles.
+- Fixed a bug that would result in incorrect geometry when upsampling a glTF with a position accessor pointing to a bufferView that did not start at the beginning of its buffer.
+- Fixed a problem that could cause incorrect distance computation for a degenerate bounding region that is a single point with a min/max height.
+- Improved the numerical stability of `GlobeRectangle::computeCenter` and `GlobeRectangle::contains`.
+- Error messages are no longer printed to the Output Log when an upsampled tile happens to have a primitive with no vertices.
+- Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by the corresponding glTF accessor.
+- Fixed a bug that could cause the wrong triangle indices to be used for a Draco-encoded glTF.
 
 ### v0.9.0 - 2021-11-01
 

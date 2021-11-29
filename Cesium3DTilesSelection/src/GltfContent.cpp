@@ -5,6 +5,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/Model.h>
@@ -99,49 +100,6 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
           });
 }
 
-namespace {
-void updateBoundsWithNewPosition(
-    const Cartographic& position,
-    bool haveFirst,
-    double& west,
-    double& south,
-    double& east,
-    double& north,
-    double& minimumHeight,
-    double& maximumHeight) {
-  double longitude = position.longitude;
-  double latitude = position.latitude;
-  double ellipsoidHeight = position.height;
-
-  if (haveFirst) {
-    // Check if we've crossed the anti-meridian relative to the first
-    // point and if so adjust so our min/maxes below have the expected
-    // result.
-    double difference = longitude - west;
-    if (difference > Math::ONE_PI) {
-      longitude -= Math::TWO_PI;
-    } else if (difference < -Math::ONE_PI) {
-      longitude += Math::TWO_PI;
-    }
-  } else {
-    haveFirst = true;
-  }
-
-  // The computation of longitude is very unstable at the poles,
-  // so don't let extreme latitudes affect the longitude bounding box.
-  if (glm::abs(glm::abs(latitude) - CesiumUtility::Math::PI_OVER_TWO) >
-      CesiumUtility::Math::EPSILON6) {
-    west = glm::min(west, longitude);
-    east = glm::max(east, longitude);
-  }
-  south = glm::min(south, latitude);
-  north = glm::max(north, latitude);
-  minimumHeight = glm::min(minimumHeight, ellipsoidHeight);
-  maximumHeight = glm::max(maximumHeight, ellipsoidHeight);
-}
-
-} // namespace
-
 /*static*/ std::optional<TileContentDetailsForOverlays>
 GltfContent::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
@@ -180,13 +138,11 @@ GltfContent::createRasterOverlayTextureCoordinates(
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 
-  double west = CesiumUtility::Math::ONE_PI;
-  double south = CesiumUtility::Math::PI_OVER_TWO;
-  double east = -CesiumUtility::Math::ONE_PI;
-  double north = -CesiumUtility::Math::PI_OVER_TWO;
-  double minimumHeight = std::numeric_limits<double>::max();
-  double maximumHeight = std::numeric_limits<double>::lowest();
-  bool haveFirst = false;
+  // When computing the tile's bounds, ignore tiles that are less than 1/1000th
+  // of a tile width from the North or South pole. Longitudes cannot be trusted
+  // at such extreme latitudes.
+  BoundingRegionBuilder computedBounds;
+  computedBounds.setPoleTolerance(0.001 * bounds.computeHeight());
 
   auto createTextureCoordinatesForPrimitive =
       [&](CesiumGltf::Model& gltf,
@@ -306,15 +262,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
             continue;
           }
 
-          updateBoundsWithNewPosition(
-              *cartographic,
-              haveFirst,
-              west,
-              south,
-              east,
-              north,
-              minimumHeight,
-              maximumHeight);
+          computedBounds.expandToIncludePosition(*cartographic);
 
           // Generate texture coordinates at this position for each projection
           for (size_t projectionIndex = 0; projectionIndex < projections.size();
@@ -386,10 +334,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
   return TileContentDetailsForOverlays{
       std::move(projections),
       std::move(rectangles),
-      CesiumGeospatial::BoundingRegion(
-          CesiumGeospatial::GlobeRectangle(west, south, east, north),
-          minimumHeight,
-          maximumHeight)};
+      computedBounds.toRegion()};
 }
 
 /*static*/ CesiumGeospatial::BoundingRegion GltfContent::computeBoundingRegion(
@@ -402,24 +347,14 @@ GltfContent::createRasterOverlayTextureCoordinates(
   rootTransform = applyRtcCenter(gltf, rootTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
-  double west = CesiumUtility::Math::ONE_PI;
-  double south = CesiumUtility::Math::PI_OVER_TWO;
-  double east = -CesiumUtility::Math::ONE_PI;
-  double north = -CesiumUtility::Math::PI_OVER_TWO;
-  double minimumHeight = std::numeric_limits<double>::max();
-  double maximumHeight = std::numeric_limits<double>::lowest();
-  bool haveFirst = false;
+  // When computing the tile's bounds, ignore tiles that are less than 1/1000th
+  // of a tile width from the North or South pole. Longitudes cannot be trusted
+  // at such extreme latitudes.
+  BoundingRegionBuilder computedBounds;
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [&rootTransform,
-       &west,
-       &south,
-       &east,
-       &north,
-       &minimumHeight,
-       &maximumHeight,
-       &haveFirst](
+      [&rootTransform, &computedBounds](
           const CesiumGltf::Model& gltf_,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -459,49 +394,11 @@ GltfContent::createRasterOverlayTextureCoordinates(
             continue;
           }
 
-          double longitude = cartographic->longitude;
-          double latitude = cartographic->latitude;
-          double height = cartographic->height;
-
-          if (haveFirst) {
-            // Check if we've crossed the anti-meridian relative to the first
-            // point and if so adjust so our min/maxes below have the expected
-            // result.
-            double difference = longitude - west;
-            if (difference > Math::ONE_PI) {
-              longitude -= Math::TWO_PI;
-            } else if (difference < -Math::ONE_PI) {
-              longitude += Math::TWO_PI;
-            }
-          } else {
-            haveFirst = true;
-          }
-
-          // The computation of longitude is very unstable at the poles,
-          // so don't let extreme latitudes affect the longitude bounding box.
-          if (glm::abs(
-                  glm::abs(cartographic->latitude) -
-                  CesiumUtility::Math::PI_OVER_TWO) >
-              CesiumUtility::Math::EPSILON6) {
-            west = glm::min(west, longitude);
-            east = glm::max(east, longitude);
-          }
-          south = glm::min(south, latitude);
-          north = glm::max(north, latitude);
-          minimumHeight = glm::min(minimumHeight, height);
-          maximumHeight = glm::max(maximumHeight, height);
+          computedBounds.expandToIncludePosition(*cartographic);
         }
       });
 
-  // Put longitudes back in the -PI to PI range, which may make east < west but
-  // that's ok.
-  west = Math::negativePiToPi(west);
-  east = Math::negativePiToPi(east);
-
-  return CesiumGeospatial::BoundingRegion(
-      CesiumGeospatial::GlobeRectangle(west, south, east, north),
-      minimumHeight,
-      maximumHeight);
+  return computedBounds.toRegion();
 }
 
 /*static*/ glm::dmat4x4 GltfContent::applyRtcCenter(
