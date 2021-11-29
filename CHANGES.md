@@ -22,6 +22,7 @@
 - `RasterOverlay::loadTileProvider` now returns a `SharedFuture`, making it easy to attach a continuation to run when the load completes.
 - Added `GltfContent::applyRtcCenter` and `applyGltfUpAxisTransform`.
 - Clipping polygon edges now remain sharp even when zooming in past the available geometry detail.
+- Added `DebugColorizeTilesRasterOverlay`.
 - Added `BoundingRegionBuilder` to `CesiumGeospatial`.
 - Added `GlobeRectangle::EMPTY` static field and `GlobeRectangle::isEmpty` method.
 - Added the ability to set the coordinates of a `GlobeRectangle` after construction.
@@ -33,9 +34,6 @@
 - Fixed a problem that could cause incorrect distance computation for a degenerate bounding region that is a single point with a min/max height.
 - Improved the numerical stability of `GlobeRectangle::computeCenter` and `GlobeRectangle::contains`.
 - Error messages are no longer printed to the Output Log when an upsampled tile happens to have a primitive with no vertices.
-
-##### Fixes :wrench:
-
 - Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by the corresponding glTF accessor.
 - Fixed a bug that could cause the wrong triangle indices to be used for a Draco-encoded glTF.
 
