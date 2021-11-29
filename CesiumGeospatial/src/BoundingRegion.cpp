@@ -362,6 +362,22 @@ static OrientedBoundingBox fromPlaneExtents(
     maxZ = maximumHeight; // Since the tangent plane touches the surface at
                           // height = 0, this is okay
 
+    // Esure our box is at least a millimeter in each direction to avoid
+    // problems with degenerate or nearly-degenerate bounding regions.
+    const double oneMillimeter = 0.001;
+    if (maxX - minX < oneMillimeter) {
+      minX -= oneMillimeter * 0.5;
+      maxX += oneMillimeter * 0.5;
+    }
+    if (maxY - minY < oneMillimeter) {
+      minY -= oneMillimeter * 0.5;
+      maxY += oneMillimeter * 0.5;
+    }
+    if (maxZ - minZ < oneMillimeter) {
+      minZ -= oneMillimeter * 0.5;
+      maxZ += oneMillimeter * 0.5;
+    }
+
     return fromPlaneExtents(
         tangentPlane.getOrigin(),
         tangentPlane.getXAxis(),
