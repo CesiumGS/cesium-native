@@ -11,7 +11,5 @@ class JsonValue;
 }
 
 namespace CesiumJsonWriter {
-void writeJsonValue(
-    const CesiumUtility::JsonValue& value,
-    CesiumJsonWriter::JsonWriter& writer);
+void writeJsonValue(const CesiumUtility::JsonValue& value, JsonWriter& writer);
 }
