@@ -10,19 +10,15 @@
 
 namespace CesiumJsonWriter {
 namespace {
-void primitiveWriter(
-    const CesiumUtility::JsonValue& item,
-    CesiumJsonWriter::JsonWriter& j);
+void primitiveWriter(const CesiumUtility::JsonValue& item, JsonWriter& j);
 void recursiveArrayWriter(
     const CesiumUtility::JsonValue::Array& array,
-    CesiumJsonWriter::JsonWriter& j);
+    JsonWriter& j);
 void recursiveObjectWriter(
     const CesiumUtility::JsonValue::Object& object,
-    CesiumJsonWriter::JsonWriter& j);
+    JsonWriter& j);
 
-void primitiveWriter(
-    const CesiumUtility::JsonValue& item,
-    CesiumJsonWriter::JsonWriter& j) {
+void primitiveWriter(const CesiumUtility::JsonValue& item, JsonWriter& j) {
   if (item.isBool()) {
     j.Bool(item.getBool());
   }
@@ -50,7 +46,7 @@ void primitiveWriter(
 
 void recursiveArrayWriter(
     const CesiumUtility::JsonValue::Array& array,
-    CesiumJsonWriter::JsonWriter& j) {
+    JsonWriter& j) {
   j.StartArray();
   for (const auto& item : array) {
     if (item.isArray()) {
@@ -70,7 +66,7 @@ void recursiveArrayWriter(
 
 void recursiveObjectWriter(
     const CesiumUtility::JsonValue::Object& object,
-    CesiumJsonWriter::JsonWriter& j) {
+    JsonWriter& j) {
 
   j.StartObject();
 
