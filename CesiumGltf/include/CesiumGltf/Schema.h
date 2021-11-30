@@ -20,7 +20,12 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Schema";
 
   /**
-   * @brief The name of the schema.
+   * @brief Unique identifer for the schema.
+   */
+  std::optional<std::string> id;
+
+  /**
+   * @brief The name of the schema, e.g. for display purposes.
    */
   std::optional<std::string> name;
 
@@ -36,13 +41,15 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
 
   /**
    * @brief A dictionary, where each key is a class ID and each value is an
-   * object defining the class.
+   * object defining the class. Class IDs may contain only alphanumeric and
+   * underscore characters.
    */
   std::unordered_map<std::string, Class> classes;
 
   /**
    * @brief A dictionary, where each key is an enum ID and each value is an
-   * object defining the values for the enum.
+   * object defining the values for the enum. Enum IDs may contain only
+   * alphanumeric and underscore characters.
    */
   std::unordered_map<std::string, Enum> enums;
 };

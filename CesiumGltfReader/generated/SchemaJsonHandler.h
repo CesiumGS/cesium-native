@@ -33,6 +33,7 @@ protected:
 
 private:
   Schema* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _id;
   CesiumJsonReader::StringJsonHandler _name;
   CesiumJsonReader::StringJsonHandler _description;
   CesiumJsonReader::StringJsonHandler _version;

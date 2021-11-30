@@ -33,17 +33,17 @@
             ]
         },
         {
-            "className": "ExtensionModelExtFeatureMetadata",
-            "extensionName": "EXT_feature_metadata",
-            "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json",
+            "className": "ExtensionModelMeshFeatures",
+            "extensionName": "EXT_mesh_features",
+            "schema": "Vendor/EXT_mesh_features/schema/glTF.EXT_mesh_features.schema.json",
             "attachTo": [
                 "glTF"
             ]
         },
         {
-            "className": "ExtensionMeshPrimitiveExtFeatureMetadata",
-            "extensionName": "EXT_feature_metadata",
-            "schema": "Vendor/EXT_feature_metadata/schema/primitive.EXT_feature_metadata.schema.json",
+            "className": "ExtensionMeshPrimitiveMeshFeatures",
+            "extensionName": "EXT_mesh_features",
+            "schema": "Vendor/EXT_mesh_features/schema/primitive.EXT_mesh_features.schema.json",
             "attachTo": [
                 "mesh.primitive"
             ]
