@@ -54,6 +54,7 @@
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/writeJsonExtensions.h>
+#include <CesiumUtility/JsonValue.h>
 
 namespace CesiumGltfWriter {
 
