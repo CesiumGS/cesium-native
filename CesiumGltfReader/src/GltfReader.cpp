@@ -538,6 +538,9 @@ ImageReaderResult GltfReader::readImage(
       case CompressedPixelFormatCesium::ETC2_EAC_RG11:
         targetFormat = KTX_TTF_ETC2_EAC_RG11;
         break;
+      default:
+        targetFormat = KTX_TTF_RGBA32;
+        break;
       };
     }
 
