@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.10.0 - 2021-12-01
 
 ##### Breaking Changes :mega:
 
@@ -10,13 +10,14 @@
 - The constructor of `RasterMappedTo3DTile` now requires a texture coordinate index.
 - The constructor of `RasterOverlayTile` now takes a `targetScreenPixels` instead of a `targetGeometricError`. And the corresponding `getTargetGeometricError` has been removed.
 - Removed `TileContentLoadResult::rasterOverlayProjections`. This field is now found in the `overlayDetails`.
-- Removed `obtainGlobeRectangle` from `TileUtilities.h`. Use `obtainGlobeRectangle` in `BoundingVolume.h` instead.
+- Removed `obtainGlobeRectangle` from `TileUtilities.h`. Use `estimateGlobeRectangle` in `BoundingVolume.h` instead.
 
 ##### Additions :tada:
 
+- Added support for the [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling) extension.
 - Added support for the [3DTILES_bounding_volume_S2](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_bounding_volume_S2) extension.
-- Added support for external glTF buffers and images.
 - Added support for raster overlays, including clipping polygons, on any 3D Tiles tileset.
+- Added support for external glTF buffers and images.
 - Raster overlay level-of detail is now selected using "target screen pixels" rather than the hard-to-interpret geometric error value.
 - A `RasterOverlay` can now be configured with a `maximumScreenSpaceError` independent of the screen-space error used for the geometry.
 - `RasterOverlay::loadTileProvider` now returns a `SharedFuture`, making it easy to attach a continuation to run when the load completes.
