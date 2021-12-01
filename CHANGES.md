@@ -11,6 +11,10 @@
 - The constructor of `RasterOverlayTile` now takes a `targetScreenPixels` instead of a `targetGeometricError`. And the corresponding `getTargetGeometricError` has been removed.
 - Removed `TileContentLoadResult::rasterOverlayProjections`. This field is now found in the `overlayDetails`.
 - Removed `obtainGlobeRectangle` from `TileUtilities.h`. Use `estimateGlobeRectangle` in `BoundingVolume.h` instead.
+- cesium-native now uses the following options with the `glm` library:
+  - `GLM_FORCE_XYZW_ONLY`
+  - `GLM_FORCE_EXPLICIT_CTOR`
+  - `GLM_FORCE_SIZE_T_LENGTH`
 
 ##### Additions :tada:
 
