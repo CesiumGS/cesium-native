@@ -1,4 +1,4 @@
-const getNameFromSchema = require("./getNameFromSchema");
+const getNameFromTitle = require("./getNameFromTitle");
 const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
@@ -136,7 +136,7 @@ function resolveProperty(
         writerNamespace
       );
     } else {
-      const type = getNameFromSchema(config, itemSchema);
+      const type = getNameFromTitle(config, itemSchema.title);
       return {
         ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
         type: makeOptional

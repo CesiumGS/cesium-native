@@ -4,6 +4,7 @@ const fs = require("fs");
 const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
 const generateCombinedWriter = require("./generateCombinedWriter");
+const generateExtensionRegistration = require("./generateExtensionRegistration");
 
 const argv = yargs.options({
   schema: {
@@ -172,6 +173,16 @@ if (additionalSchemas) {
     processSchemas();
   }
 }
+
+const extensionRegistrationOptions = {
+  readerOutputDir: argv.readerOutput,
+  config: config,
+  namespace: argv.namespace,
+  readerNamespace: argv.readerNamespace,
+  extensions: options.extensions
+};
+
+generateExtensionRegistration(extensionRegistrationOptions);
 
 const writerOptions = {
   writerOutputDir: argv.writerOutput,

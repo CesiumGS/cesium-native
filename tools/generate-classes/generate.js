@@ -1,5 +1,5 @@
 const fs = require("fs");
-const getNameFromSchema = require("./getNameFromSchema");
+const getNameFromTitle = require("./getNameFromTitle");
 const indent = require("./indent");
 const lodash = require("lodash");
 const path = require("path");
@@ -18,7 +18,7 @@ function generate(options, schema, writers) {
     extensions,
   } = options;
 
-  const name = getNameFromSchema(config, schema);
+  const name = getNameFromTitle(config, schema.title);
   const thisConfig = config.classes[schema.title] || {};
 
   console.log(`Generating ${name}`);
@@ -28,7 +28,7 @@ function generate(options, schema, writers) {
   let base = "CesiumUtility::ExtensibleObject";
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
     const baseSchema = schemaCache.load(schema.allOf[0].$ref);
-    base = getNameFromSchema(config, baseSchema);
+    base = getNameFromTitle(config, baseSchema.title);
   }
 
   const required = schema.required || [];
