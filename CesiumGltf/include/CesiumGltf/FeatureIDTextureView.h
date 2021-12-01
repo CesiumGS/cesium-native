@@ -2,11 +2,12 @@
 
 #include "ExtensionModelExtFeatureMetadata.h"
 #include "FeatureIDTexture.h"
+#include "FeatureTable.h"
 #include "Image.h"
 #include "ImageCesium.h"
-#include "MetadataFeatureTableView.h"
 #include "Model.h"
 #include "Texture.h"
+#include "TextureAccessor.h"
 
 #include <algorithm>
 #include <cassert>
@@ -18,6 +19,7 @@ namespace CesiumGltf {
 
 enum class FeatureIDTextureViewStatus {
   Valid,
+  InvalidUninitialized,
   InvalidExtensionMissing,
   InvalidFeatureTableMissing,
   InvalidTextureIndex,
@@ -27,12 +29,19 @@ enum class FeatureIDTextureViewStatus {
 
 class FeatureIDTextureView {
 public:
-  FeatueIDTextureView(
-      const Model& model,
-      const FeatureIDTexture& featureIDTexture)
+  FeatureIDTextureView() noexcept
       : _pImage(nullptr),
-        _featureTableView(),
-        _status(FeatureIDTextureView::Valid) noexcept {
+        _textureCoordinateIndex(-1),
+        _pFeatureTable(nullptr),
+        _status(FeatureIDTextureViewStatus::InvalidUninitialized) {}
+
+  FeatureIDTextureView(
+      const Model& model,
+      const FeatureIDTexture& featureIDTexture) noexcept
+      : _pImage(nullptr),
+        _textureCoordinateIndex(-1),
+        _pFeatureTable(nullptr),
+        _status(FeatureIDTextureViewStatus::InvalidUninitialized) {
 
     const ExtensionModelExtFeatureMetadata* pExtension =
         model.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -44,13 +53,15 @@ public:
 
     auto tableIt =
         pExtension->featureTables.find(featureIDTexture.featureTable);
-    if (tableIt == pExtension->featuresTables.end()) {
+    if (tableIt == pExtension->featureTables.end()) {
       this->_status = FeatureIDTextureViewStatus::InvalidFeatureTableMissing;
       return;
     }
 
-    this->_featureTableView =
-        MetadataFeatureTableView(&model, &tableIt->second);
+    this->_pFeatureTable = &tableIt->second;
+
+    this->_textureCoordinateIndex =
+        featureIDTexture.featureIds.texture.texCoord;
 
     int32_t textureIndex = featureIDTexture.featureIds.texture.index;
     if (textureIndex < 0 || textureIndex >= model.textures.size()) {
@@ -95,24 +106,29 @@ public:
 
     int64_t x = std::clamp(
         std::lround(u * this->_pImage->width),
-        0,
-        this->_pImage->width);
+        0L,
+        (long)this->_pImage->width);
     int64_t y = std::clamp(
         std::lround(v * this->_pImage->height),
-        0,
-        this->_pImage->height);
+        0L,
+        (long)this->_pImage->height);
     int64_t offset = y * this->_pImage->width + x;
 
     return static_cast<uint8_t>(this->_pImage->pixelData[offset]);
   }
 
-  const MetadataFeatureTableView& getFeatureTableView() const noexcept {
-    return this->_featureTableView;
+  const FeatureTable* getFeatureTable() const noexcept {
+    return this->_pFeatureTable;
+  }
+
+  int64_t getTextureCoordinateIndex() const noexcept {
+    return this->_textureCoordinateIndex;
   }
 
 private:
   const ImageCesium* _pImage;
-  MetadataFeatureTableView _featureTableView;
+  int64_t _textureCoordinateIndex;
+  const FeatureTable* _pFeatureTable;
   FeatureIDTextureViewStatus _status;
 };
 
