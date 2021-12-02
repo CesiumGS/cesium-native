@@ -3,6 +3,8 @@
 #include <CesiumGltf/NamedObject.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
+#include <string>
+
 namespace CesiumGltfReader {
 NamedObjectJsonHandler::NamedObjectJsonHandler(
     const CesiumJsonReader::ExtensionReaderContext& context) noexcept
