@@ -1,7 +1,7 @@
 #include "Cesium3DTilesReader/TilesetReader.h"
 
-#include "Cesium3DTilesReader/GeneratedExtensionRegistration.h"
 #include "Cesium3DTilesReader/TilesetJsonHandler.h"
+#include "Cesium3DTilesReader/registerExtensions.h"
 
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Tracing.h>

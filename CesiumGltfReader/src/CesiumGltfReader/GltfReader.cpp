@@ -1,9 +1,9 @@
 #include "CesiumGltfReader/GltfReader.h"
 
-#include "CesiumGltfReader/GeneratedExtensionRegistration.h"
 #include "CesiumGltfReader/ModelJsonHandler.h"
 #include "CesiumGltfReader/decodeDataUrls.h"
 #include "CesiumGltfReader/decodeDraco.h"
+#include "CesiumGltfReader/registerExtensions.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
