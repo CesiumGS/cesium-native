@@ -6,11 +6,9 @@ cesium_glob_files(CESIUM_JSON_WRITER_SOURCES
 )
 cesium_glob_files(CESIUM_JSON_WRITER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumJsonWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumJsonWriter/*.hpp
 )
 cesium_glob_files(CESIUM_JSON_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumJsonWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumJsonWriter/*.hpp
 )
 cesium_glob_files(CESIUM_JSON_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp

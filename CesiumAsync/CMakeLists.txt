@@ -3,7 +3,7 @@ add_library(CesiumAsync "")
 configure_cesium_library(CesiumAsync)
 
 cesium_glob_files(CESIUM_ASYNC_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_ASYNC_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_ASYNC_HEADERS src/*.h)
 cesium_glob_files(CESIUM_ASYNC_PUBLIC_HEADERS include/CesiumAsync/*.h)
 cesium_glob_files(CESIUM_ASYNC_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_ASYNC_TEST_HEADERS test/*.h)

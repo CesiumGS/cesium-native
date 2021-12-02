@@ -7,15 +7,11 @@ cesium_glob_files(CESIUM_3DTILES_WRITER_SOURCES
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesWriter/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTilesWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTilesWriter/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp

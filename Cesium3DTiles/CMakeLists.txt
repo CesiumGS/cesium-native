@@ -7,15 +7,11 @@ cesium_glob_files(CESIUM_3DTILES_SOURCES
 )
 cesium_glob_files(CESIUM_3DTILES_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp

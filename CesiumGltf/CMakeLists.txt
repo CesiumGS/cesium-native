@@ -7,15 +7,11 @@ cesium_glob_files(CESIUM_GLTF_SOURCES
 )
 cesium_glob_files(CESIUM_GLTF_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltf/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltf/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltf/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltf/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltf/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltf/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltf/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltf/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp

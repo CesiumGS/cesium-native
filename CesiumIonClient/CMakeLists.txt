@@ -3,7 +3,7 @@ add_library(CesiumIonClient "")
 configure_cesium_library(CesiumIonClient)
 
 cesium_glob_files(CESIUM_ION_CLIENT_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_ION_CLIENT_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_ION_CLIENT_HEADERS src/*.h)
 cesium_glob_files(CESIUM_ION_CLIENT_PUBLIC_HEADERS include/CesiumIonClient/*.h)
 cesium_glob_files(CESIUM_ION_CLIENT_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_ION_CLIENT_TEST_HEADERS test/*.h)

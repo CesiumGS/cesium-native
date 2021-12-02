@@ -7,15 +7,11 @@ cesium_glob_files(CESIUM_GLTF_READER_SOURCES
 )
 cesium_glob_files(CESIUM_GLTF_READER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfReader/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfReader/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_READER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp

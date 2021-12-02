@@ -7,15 +7,11 @@ cesium_glob_files(CESIUM_GLTF_WRITER_SOURCES
 )
 cesium_glob_files(CESIUM_GLTF_WRITER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfWriter/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfWriter/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfWriter/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp

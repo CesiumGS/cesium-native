@@ -7,15 +7,11 @@ cesium_glob_files(CESIUM_3DTILES_READER_SOURCES
 )
 cesium_glob_files(CESIUM_3DTILES_READER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesReader/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_READER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesReader/*.hpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTilesReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTilesReader/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_READER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
