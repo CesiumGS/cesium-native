@@ -520,7 +520,11 @@ const qualifiedTypeNameRegex = /(?:(?<namespace>.+)::)?(?<name>.+)/;
 function getIncludeFromName(name, namespace) {
   const pieces = name.match(qualifiedTypeNameRegex);
   if (pieces && pieces.groups && pieces.groups.namespace) {
-    return `<${pieces.groups.namespace}/${pieces.groups.name}.h>`;
+    if (pieces.groups.namespace === namespace) {
+      return `"${namespace}/${pieces.groups.name}.h"`;
+    } else {
+      return `<${pieces.groups.namespace}/${pieces.groups.name}.h>`;
+    }
   } else {
     return `"${namespace}/${name}.h"`;
   }

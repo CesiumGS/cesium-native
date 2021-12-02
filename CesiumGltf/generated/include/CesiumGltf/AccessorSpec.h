@@ -4,8 +4,7 @@
 
 #include "CesiumGltf/AccessorSparse.h"
 #include "CesiumGltf/Library.h"
-
-#include <CesiumGltf/NamedObject.h>
+#include "CesiumGltf/NamedObject.h"
 
 #include <cstdint>
 #include <optional>

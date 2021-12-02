@@ -6,9 +6,8 @@
 #include "CesiumGltf/MaterialNormalTextureInfo.h"
 #include "CesiumGltf/MaterialOcclusionTextureInfo.h"
 #include "CesiumGltf/MaterialPBRMetallicRoughness.h"
+#include "CesiumGltf/NamedObject.h"
 #include "CesiumGltf/TextureInfo.h"
-
-#include <CesiumGltf/NamedObject.h>
 
 #include <optional>
 #include <vector>

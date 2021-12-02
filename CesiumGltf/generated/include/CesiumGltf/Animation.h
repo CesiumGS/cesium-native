@@ -5,8 +5,7 @@
 #include "CesiumGltf/AnimationChannel.h"
 #include "CesiumGltf/AnimationSampler.h"
 #include "CesiumGltf/Library.h"
-
-#include <CesiumGltf/NamedObject.h>
+#include "CesiumGltf/NamedObject.h"
 
 #include <vector>
 

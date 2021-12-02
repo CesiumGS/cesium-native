@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
-#include <CesiumGltf/NamedObject.h>
+#include "CesiumGltf/NamedObject.h"
 
 #include <cstdint>
 

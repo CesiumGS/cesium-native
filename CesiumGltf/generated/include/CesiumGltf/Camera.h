@@ -5,8 +5,7 @@
 #include "CesiumGltf/CameraOrthographic.h"
 #include "CesiumGltf/CameraPerspective.h"
 #include "CesiumGltf/Library.h"
-
-#include <CesiumGltf/NamedObject.h>
+#include "CesiumGltf/NamedObject.h"
 
 #include <optional>
 

@@ -4,8 +4,7 @@
 
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/MeshPrimitive.h"
-
-#include <CesiumGltf/NamedObject.h>
+#include "CesiumGltf/NamedObject.h"
 
 #include <vector>
 
