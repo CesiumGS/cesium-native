@@ -49,13 +49,6 @@ target_include_directories(
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include/
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
-    INTERFACE
-        # Make private API files accessible to other Cesium Native libraries. This is analagous to protected inheritance in C++  
-        # For example, CesiumGltfWriter/AccessorWriter.h (generated) includes CesiumGltf/Accessor.h which includes CesiumGltf/AccessorSpec.h (generated)
-        # CesiumGltf/Accessor.h is public API and CesiumGltf/AccessorSpec.h is not, but CesiumGltfWriter still needs to know where to look for CesiumGltf/AccessorSpec.h 
-
-        ${CMAKE_CURRENT_LIST_DIR}/src
-        ${CMAKE_CURRENT_LIST_DIR}/generated/src
     PRIVATE
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
