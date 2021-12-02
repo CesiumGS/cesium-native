@@ -5,12 +5,8 @@
 
 #include <cstdint>
 
-// forward declarations
 namespace CesiumGltf {
 struct Model;
-}
-
-namespace CesiumGltf {
 
 /** @copydoc AccessorSpec */
 struct CESIUMGLTF_API Accessor final : public AccessorSpec {
