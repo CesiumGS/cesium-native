@@ -192,15 +192,3 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUD
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
 
 install(TARGETS s2geometry)
-
-# Ninja and various Makefiles generators support generating compile_commands.json
-# https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html
-if ("${CMAKE_GENERATOR}" MATCHES "Ninja" OR "${CMAKE_GENERATOR}" MATCHES "Makefiles" OR "${CMAKE_GENERATOR}" MATCHES "WMake")
-    # Copy compile_commands.json to the root directory after configuration so that
-    # extensions like clangd or intellisense use the correct compile flags
-    add_custom_target(
-        copy-compile-commands ALL
-        ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_BINARY_DIR}/compile_commands.json" "${PROJECT_SOURCE_DIR}"
-    )
-endif()
