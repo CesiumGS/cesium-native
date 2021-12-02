@@ -304,10 +304,10 @@ function resolveDictionary(
   return {
     ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
     name: propertyName,
-    headers: ["<map>", ...additional.headers],
+    headers: ["<unordered_map>", ...additional.headers],
     schemas: additional.schemas,
     localTypes: additional.localTypes,
-    type: `std::map<std::string, ${additional.type}>`,
+    type: `std::unordered_map<std::string, ${additional.type}>`,
     readerHeaders: [
       `<CesiumJsonReader/DictionaryJsonHandler.h>`,
       ...additional.readerHeaders,

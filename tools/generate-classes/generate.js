@@ -466,7 +466,7 @@ function formatWriterPropertyImpl(property) {
   const isOptionalId = property.requiredId === false;
   const isRequiredEnum = property.requiredEnum === true;
   const isVector = type.startsWith("std::vector");
-  const isMap = type.startsWith("std::map");
+  const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
 
   const hasDefaultValueGuard =

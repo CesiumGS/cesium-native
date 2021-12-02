@@ -8,10 +8,10 @@
 #include <gsl/span>
 
 #include <functional>
-#include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace Cesium3DTilesReader {

@@ -4,11 +4,10 @@
 #include "Library.h"
 
 #include <functional>
-#include <map>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 namespace CesiumJsonReader {
@@ -115,7 +114,8 @@ private:
   using ExtensionHandlerFactory =
       std::function<std::unique_ptr<IExtensionJsonHandler>(
           const ExtensionReaderContext&)>;
-  using ObjectTypeToHandler = std::map<std::string, ExtensionHandlerFactory>;
+  using ObjectTypeToHandler =
+      std::map<std::string, ExtensionHandlerFactory>;
   using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;

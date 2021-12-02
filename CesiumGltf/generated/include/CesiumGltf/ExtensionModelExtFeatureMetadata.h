@@ -10,9 +10,9 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <map>
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -43,12 +43,12 @@ struct CESIUMGLTF_API ExtensionModelExtFeatureMetadata final
    * @brief A dictionary, where each key is a feature table ID and each value is
    * an object defining the feature table.
    */
-  std::map<std::string, CesiumGltf::FeatureTable> featureTables;
+  std::unordered_map<std::string, CesiumGltf::FeatureTable> featureTables;
 
   /**
    * @brief A dictionary, where each key is a feature texture ID and each value
    * is an object defining the feature texture.
    */
-  std::map<std::string, CesiumGltf::FeatureTexture> featureTextures;
+  std::unordered_map<std::string, CesiumGltf::FeatureTexture> featureTextures;
 };
 } // namespace CesiumGltf

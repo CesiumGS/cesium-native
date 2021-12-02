@@ -7,9 +7,9 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <map>
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -32,6 +32,6 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
    * @brief A dictionary, where each key is a property ID and each value is an
    * object defining the property.
    */
-  std::map<std::string, CesiumGltf::ClassProperty> properties;
+  std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
 };
 } // namespace CesiumGltf

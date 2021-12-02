@@ -4,7 +4,7 @@
 #include "Library.h"
 
 #include <any>
-#include <map>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -73,7 +73,7 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * type. Use {@link getGenericExtension} to get unknown extensions as a
    * generic {@link CesiumUtility::JsonValue}.
    */
-  std::map<std::string, std::any> extensions;
+  std::unordered_map<std::string, std::any> extensions;
 
   /**
    * @brief Application-specific data.

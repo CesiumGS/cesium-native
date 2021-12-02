@@ -351,7 +351,7 @@ void writeJson(
 
 template <typename T>
 [[maybe_unused]] void writeJson(
-    const std::map<std::string, T>& obj,
+    const std::unordered_map<std::string, T>& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();

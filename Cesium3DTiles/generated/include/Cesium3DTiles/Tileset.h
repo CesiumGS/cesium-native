@@ -9,8 +9,8 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace Cesium3DTiles {
@@ -29,7 +29,7 @@ struct CESIUM3DTILES_API Tileset final
   /**
    * @brief A dictionary object of metadata about per-feature properties.
    */
-  std::map<std::string, Cesium3DTiles::Properties> properties;
+  std::unordered_map<std::string, Cesium3DTiles::Properties> properties;
 
   /**
    * @brief The error, in meters, introduced if this tileset is not rendered. At

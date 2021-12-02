@@ -7,8 +7,8 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <map>
 #include <string>
+#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -31,6 +31,6 @@ struct CESIUMGLTF_API FeatureTexture final
    * class' `properties` dictionary and each value describes the texture
    * channels containing property values.
    */
-  std::map<std::string, CesiumGltf::TextureAccessor> properties;
+  std::unordered_map<std::string, CesiumGltf::TextureAccessor> properties;
 };
 } // namespace CesiumGltf
