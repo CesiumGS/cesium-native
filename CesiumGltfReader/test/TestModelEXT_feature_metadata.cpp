@@ -1,4 +1,4 @@
-#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltfReader/GltfReader.h"
 
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 
@@ -59,9 +59,9 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
     }
   )";
 
-  ReadModelOptions options;
-  CesiumGltf::GltfReader reader;
-  ModelReaderResult modelResult = reader.readModel(
+  CesiumGltfReader::ReadModelOptions options;
+  CesiumGltfReader::GltfReader reader;
+  CesiumGltfReader::ModelReaderResult modelResult = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ExtensionModelExtFeatureMetadata.h"
-#include "MetadataPropertyView.h"
-#include "Model.h"
-#include "PropertyType.h"
+#include "CesiumGltf/ExtensionModelExtFeatureMetadata.h"
+#include "CesiumGltf/MetadataPropertyView.h"
+#include "CesiumGltf/Model.h"
+#include "CesiumGltf/PropertyType.h"
 
 #include <glm/common.hpp>
 

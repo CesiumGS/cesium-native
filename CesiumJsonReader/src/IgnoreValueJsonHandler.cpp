@@ -2,8 +2,7 @@
 
 #include <string>
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) noexcept {
   this->_pParent = pParent;
   this->_depth = 0;
@@ -77,3 +76,4 @@ void IgnoreValueJsonHandler::reportWarning(
 IJsonHandler* IgnoreValueJsonHandler::parent() noexcept {
   return this->_pParent;
 }
+} // namespace CesiumJsonReader

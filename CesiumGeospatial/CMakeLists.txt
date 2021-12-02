@@ -3,7 +3,7 @@ add_library(CesiumGeospatial "")
 configure_cesium_library(CesiumGeospatial)
 
 cesium_glob_files(CESIUM_GEOSPATIAL_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_GEOSPATIAL_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_GEOSPATIAL_HEADERS src/*.h)
 cesium_glob_files(CESIUM_GEOSPATIAL_PUBLIC_HEADERS include/CesiumGeospatial/*.h)
 cesium_glob_files(CESIUM_GEOSPATIAL_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_GEOSPATIAL_TEST_HEADERS test/*.h)

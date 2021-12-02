@@ -4,23 +4,21 @@
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 
-using namespace CesiumJsonReader;
-using namespace CesiumUtility;
-
+namespace CesiumJsonReader {
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
     const ExtensionReaderContext& context) noexcept
     : ObjectJsonHandler(), _extras(), _extensions(context) {}
 
 void ExtensibleObjectJsonHandler::reset(
     IJsonHandler* pParent,
-    ExtensibleObject* /*pObject*/) {
+    CesiumUtility::ExtensibleObject* /*pObject*/) {
   ObjectJsonHandler::reset(pParent);
 }
 
 IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     const std::string& objectType,
     const std::string_view& str,
-    ExtensibleObject& o) {
+    CesiumUtility::ExtensibleObject& o) {
   using namespace std::string_literals;
 
   if ("extras"s == str)
@@ -33,3 +31,4 @@ IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
 
   return this->ignoreAndContinue();
 }
+} // namespace CesiumJsonReader

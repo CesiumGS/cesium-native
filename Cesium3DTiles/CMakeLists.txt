@@ -1,11 +1,24 @@
 add_library(Cesium3DTiles "")
 configure_cesium_library(Cesium3DTiles)
 
-cesium_glob_files(CESIUM_3DTILES_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_HEADERS src/*.h src/*.hpp)
-cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS include/Cesium3DTiles/*.h)
-cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_TEST_HEADERS test/*.h)
+cesium_glob_files(CESIUM_3DTILES_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.cpp
+)
+cesium_glob_files(CESIUM_3DTILES_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.h
+)
+cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.h
+)
+cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
+)
+cesium_glob_files(CESIUM_3DTILES_TEST_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
+)
 
 set_target_properties(Cesium3DTiles
     PROPERTIES
@@ -30,10 +43,12 @@ target_sources(
 target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
-        ${CMAKE_CURRENT_LIST_DIR}/include/
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
 target_link_libraries(Cesium3DTiles
