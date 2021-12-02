@@ -24,13 +24,14 @@ enum class FeatureIDTextureViewStatus {
   InvalidFeatureTableMissing,
   InvalidTextureIndex,
   InvalidImageIndex,
-  InvalidChannelCount
+  InvalidChannel
 };
 
 class FeatureIDTextureView {
 public:
   FeatureIDTextureView() noexcept
       : _pImage(nullptr),
+        _channel(0),
         _textureCoordinateIndex(-1),
         _pFeatureTable(nullptr),
         _status(FeatureIDTextureViewStatus::InvalidUninitialized) {}
@@ -39,6 +40,7 @@ public:
       const Model& model,
       const FeatureIDTexture& featureIDTexture) noexcept
       : _pImage(nullptr),
+        _channel(0),
         _textureCoordinateIndex(-1),
         _pFeatureTable(nullptr),
         _status(FeatureIDTextureViewStatus::InvalidUninitialized) {
@@ -79,10 +81,26 @@ public:
 
     this->_pImage = &model.images[texture.source].cesium;
 
-    if (this->_pImage->channels != 1) {
-      this->_status = FeatureIDTextureViewStatus::InvalidChannelCount;
+    // TODO: is this right?
+    // This assumes that if the channel is g, there must be at least two
+    // channels (r and g). If it is b there must be r, g, and b. If there is a,
+    // then there must be r, g, b, and a.
+    // For instance, if the image has two channels, will those be referred to
+    // as r and g or r and a?
+    if (featureIDTexture.featureIds.channels == "r") {
+      this->_channel = 0;
+    } else if (featureIDTexture.featureIds.channels == "g") {
+      this->_channel = 1;
+    } else if (featureIDTexture.featureIds.channels == "b") {
+      this->_channel = 2;
+    } else if (featureIDTexture.featureIds.channels == "a") {
+      this->_channel = 3;
+    } else {
+      this->_status = FeatureIDTextureViewStatus::InvalidChannel;
       return;
     }
+
+    this->_status = FeatureIDTextureViewStatus::Valid;
 
     // TODO: add more validation steps, check if image has at least one pixel.
 
@@ -101,20 +119,24 @@ public:
    * [0.0, 1.0].
    * @return The feature ID at the nearest pixel to the texture coordinates.
    */
-  uint8_t getFeatureID(double u, double v) const noexcept {
+  int64_t getFeatureID(double u, double v) const noexcept {
     assert(this->_status == FeatureIDTextureViewStatus::Valid);
 
     int64_t x = std::clamp(
-        std::lround(u * this->_pImage->width),
-        0L,
-        (long)this->_pImage->width);
+        std::llround(u * this->_pImage->width),
+        0LL,
+        (int64_t)this->_pImage->width);
     int64_t y = std::clamp(
-        std::lround(v * this->_pImage->height),
-        0L,
-        (long)this->_pImage->height);
-    int64_t offset = y * this->_pImage->width + x;
+        std::llround(v * this->_pImage->height),
+        0LL,
+        (int64_t)this->_pImage->height);
 
-    return static_cast<uint8_t>(this->_pImage->pixelData[offset]);
+    int64_t pixelOffset = this->_pImage->bytesPerChannel *
+                          this->_pImage->channels *
+                          (y * this->_pImage->width + x);
+
+    return static_cast<int64_t>(
+        this->_pImage->pixelData[pixelOffset + this->_channel]);
   }
 
   const FeatureTable* getFeatureTable() const noexcept {
@@ -127,6 +149,7 @@ public:
 
 private:
   const ImageCesium* _pImage;
+  int32_t _channel;
   int64_t _textureCoordinateIndex;
   const FeatureTable* _pFeatureTable;
   FeatureIDTextureViewStatus _status;
