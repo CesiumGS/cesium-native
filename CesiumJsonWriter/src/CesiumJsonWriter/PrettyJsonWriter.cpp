@@ -12,7 +12,6 @@ PrettyJsonWriter::PrettyJsonWriter() noexcept {
       rapidjson::PrettyFormatOptions::kFormatSingleLineArray);
   pretty = std::make_unique<rapidjson::PrettyWriter<rapidjson::StringBuffer>>(
       std::move(writer));
-  pretty->SetIndent(' ', 2);
 }
 
 bool PrettyJsonWriter::Null() { return pretty->Null(); }
