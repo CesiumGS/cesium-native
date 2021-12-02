@@ -1,27 +1,21 @@
 add_library(CesiumGltfWriter "")
 configure_cesium_library(CesiumGltfWriter)
 
-if(CESIUM_GLTF_WRITER_GENERATED_DIRECTORY)
-    set(GENERATED_DIRECTORY ${CESIUM_GLTF_WRITER_GENERATED_DIRECTORY}/generated)
-else()
-    set(GENERATED_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
-endif()
-
 cesium_glob_files(CESIUM_GLTF_WRITER_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.cpp
-    ${GENERATED_DIRECTORY}/src/CesiumGltfWriter/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfWriter/*.cpp
 )
 cesium_glob_files(CESIUM_GLTF_WRITER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.h
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.hpp
-    ${GENERATED_DIRECTORY}/src/CesiumGltfWriter/*.h
-    ${GENERATED_DIRECTORY}/src/CesiumGltfWriter/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfWriter/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfWriter/*.h
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfWriter/*.hpp
-    ${GENERATED_DIRECTORY}/include/CesiumGltfWriter/*.h
-    ${GENERATED_DIRECTORY}/include/CesiumGltfWriter/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfWriter/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
@@ -60,11 +54,11 @@ target_include_directories(
     CesiumGltfWriter
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
-        ${GENERATED_DIRECTORY}/include
+        ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
         ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${GENERATED_DIRECTORY}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
 target_link_libraries(CesiumGltfWriter

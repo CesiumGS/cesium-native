@@ -1,27 +1,21 @@
 add_library(Cesium3DTiles "")
 configure_cesium_library(Cesium3DTiles)
 
-if(CESIUM_3DTILES_GENERATED_DIRECTORY)
-    set(GENERATED_DIRECTORY ${CESIUM_3DTILES_GENERATED_DIRECTORY}/generated)
-else()
-    set(GENERATED_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
-endif()
-
 cesium_glob_files(CESIUM_3DTILES_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.cpp
-    ${GENERATED_DIRECTORY}/src/Cesium3DTiles/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.cpp
 )
 cesium_glob_files(CESIUM_3DTILES_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.h
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.hpp
-    ${GENERATED_DIRECTORY}/src/Cesium3DTiles/*.h
-    ${GENERATED_DIRECTORY}/src/Cesium3DTiles/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTiles/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.h
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.hpp
-    ${GENERATED_DIRECTORY}/include/Cesium3DTiles/*.h
-    ${GENERATED_DIRECTORY}/include/Cesium3DTiles/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
@@ -54,14 +48,14 @@ target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
-        ${GENERATED_DIRECTORY}/include
+        ${CMAKE_CURRENT_LIST_DIR}/generated/include
     INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${GENERATED_DIRECTORY}/src    
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src    
     PRIVATE
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${GENERATED_DIRECTORY}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
 target_link_libraries(Cesium3DTiles

@@ -1,27 +1,21 @@
 add_library(CesiumGltfReader "")
 configure_cesium_library(CesiumGltfReader)
 
-if(CESIUM_GLTF_READER_GENERATED_DIRECTORY)
-    set(GENERATED_DIRECTORY ${CESIUM_GLTF_READER_GENERATED_DIRECTORY}/generated)
-else()
-    set(GENERATED_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
-endif()
-
 cesium_glob_files(CESIUM_GLTF_READER_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.cpp
-    ${GENERATED_DIRECTORY}/src/CesiumGltfReader/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.cpp
 )
 cesium_glob_files(CESIUM_GLTF_READER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.h
     ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.hpp
-    ${GENERATED_DIRECTORY}/src/CesiumGltfReader/*.h
-    ${GENERATED_DIRECTORY}/src/CesiumGltfReader/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfReader/*.h
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfReader/*.hpp
-    ${GENERATED_DIRECTORY}/include/CesiumGltfReader/*.h
-    ${GENERATED_DIRECTORY}/include/CesiumGltfReader/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfReader/*.hpp
 )
 cesium_glob_files(CESIUM_GLTF_READER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
@@ -57,11 +51,11 @@ target_include_directories(
         # Necessary for `draco/draco_features.h`
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
-        ${GENERATED_DIRECTORY}/include
+        ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
         ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${GENERATED_DIRECTORY}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
 target_link_libraries(CesiumGltfReader

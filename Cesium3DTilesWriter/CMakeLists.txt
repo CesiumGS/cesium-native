@@ -1,27 +1,21 @@
 add_library(Cesium3DTilesWriter "")
 configure_cesium_library(Cesium3DTilesWriter)
 
-if(CESIUM_3DTILES_WRITER_GENERATED_DIRECTORY)
-    set(GENERATED_DIRECTORY ${CESIUM_3DTILES_WRITER_GENERATED_DIRECTORY}/generated)
-else()
-    set(GENERATED_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
-endif()
-
 cesium_glob_files(CESIUM_3DTILES_WRITER_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.cpp
-    ${GENERATED_DIRECTORY}/src/Cesium3DTilesWriter/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.cpp
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.h
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.hpp
-    ${GENERATED_DIRECTORY}/src/Cesium3DTilesWriter/*.h
-    ${GENERATED_DIRECTORY}/src/Cesium3DTilesWriter/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesWriter/*.h
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesWriter/*.hpp
-    ${GENERATED_DIRECTORY}/include/Cesium3DTilesWriter/*.h
-    ${GENERATED_DIRECTORY}/include/Cesium3DTilesWriter/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTilesWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTilesWriter/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
@@ -55,10 +49,10 @@ target_include_directories(
     Cesium3DTilesWriter
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
-        ${GENERATED_DIRECTORY}/include
+        ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${GENERATED_DIRECTORY}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
 target_link_libraries(Cesium3DTilesWriter
