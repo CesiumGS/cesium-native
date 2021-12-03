@@ -4,6 +4,7 @@
 #include "Library.h"
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>

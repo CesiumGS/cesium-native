@@ -537,7 +537,6 @@ function getIncludeFromName(name, namespace) {
   }
 }
 
-
 function getReaderIncludeFromName(name, readerNamespace) {
   const pieces = name.match(qualifiedTypeNameRegex);
   if (pieces && pieces.groups && pieces.groups.namespace) {
