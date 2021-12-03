@@ -18,6 +18,21 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
+struct Tileset::LoadTilesetDotJson::Private {
+  static LoadResult workerThreadHandleResponse(
+      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
+      std::unique_ptr<TileContext>&& pContext,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      bool useWaterMask);
+
+  static void workerThreadLoadTerrainTile(
+      Tile& tile,
+      const rapidjson::Value& layerJson,
+      TileContext& context,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      bool useWaterMask);
+};
+
 CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
     Tileset& tileset,
     const std::string& url,
@@ -37,7 +52,7 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
            pContext = std::move(pContext),
            useWaterMask = tileset.getOptions().contentOptions.enableWaterMask](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            return LoadTilesetDotJson::workerThreadHandleResponse(
+            return Private::workerThreadHandleResponse(
                 std::move(pRequest),
                 std::move(pContext),
                 pLogger,
@@ -109,7 +124,8 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 }
 } // namespace
 
-Tileset::LoadResult Tileset::LoadTilesetDotJson::workerThreadHandleResponse(
+Tileset::LoadResult
+Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -181,7 +197,7 @@ Tileset::LoadResult Tileset::LoadTilesetDotJson::workerThreadHandleResponse(
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
-    LoadTilesetDotJson::loadTerrainTile(
+    Private::workerThreadLoadTerrainTile(
         *pRootTile,
         tileset,
         *pContext,
@@ -244,7 +260,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 } // namespace
 
-void Tileset::LoadTilesetDotJson::loadTerrainTile(
+void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     Tile& tile,
     const rapidjson::Value& layerJson,
     TileContext& context,

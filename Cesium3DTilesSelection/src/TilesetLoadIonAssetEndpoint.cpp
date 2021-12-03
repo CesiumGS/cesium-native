@@ -16,6 +16,20 @@
 using namespace Cesium3DTilesSelection;
 using namespace CesiumAsync;
 
+struct Tileset::LoadIonAssetEndpoint::Private {
+  static CesiumAsync::Future<void> mainThreadHandleResponse(
+      Tileset& tileset,
+      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+
+  static void mainThreadHandleTokenRefreshResponse(
+      Tileset& tileset,
+      std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
+      TileContext* pContext,
+      const std::shared_ptr<spdlog::logger>& pLogger);
+
+  static FailedTileAction onIonTileFailed(Tile& failedTile);
+};
+
 CesiumAsync::Future<void>
 Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
   assert(tileset._ionAssetID.has_value());
@@ -35,7 +49,7 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
   return tileset._externals.pAssetAccessor
       ->requestAsset(tileset._asyncSystem, ionUrl)
       .thenInMainThread([&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
-        return mainThreadHandleResponse(tileset, std::move(pRequest));
+        return Private::mainThreadHandleResponse(tileset, std::move(pRequest));
       })
       .catchInMainThread([&tileset, ionAssetID](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
@@ -48,7 +62,7 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
           []() { CESIUM_TRACE_END_IN_TRACK("Tileset from ion startup"); });
 }
 
-Future<void> Tileset::LoadIonAssetEndpoint::mainThreadHandleResponse(
+Future<void> Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
     Tileset& tileset,
     std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
@@ -131,67 +145,13 @@ Future<void> Tileset::LoadIonAssetEndpoint::mainThreadHandleResponse(
   pContext->requestHeaders.push_back(
       std::make_pair("Authorization", "Bearer " + accessToken));
   pContext->failedTileCallback = [&tileset](Tile& failedTile) {
-    return LoadIonAssetEndpoint::onIonTileFailed(failedTile);
+    return Private::onIonTileFailed(failedTile);
   };
   return LoadTilesetDotJson::start(
       tileset,
       pContext->baseUrl,
       pContext->requestHeaders,
       std::move(pContext));
-}
-
-FailedTileAction
-Tileset::LoadIonAssetEndpoint::onIonTileFailed(Tile& failedTile) {
-  TileContentLoadResult* pContent = failedTile.getContent();
-  if (!pContent) {
-    return FailedTileAction::GiveUp;
-  }
-
-  if (pContent->httpStatusCode != 401) {
-    return FailedTileAction::GiveUp;
-  }
-
-  assert(failedTile.getContext()->pTileset != nullptr);
-  Tileset& tileset = *failedTile.getContext()->pTileset;
-
-  if (!tileset._ionAssetID) {
-    return FailedTileAction::GiveUp;
-  }
-
-  if (!tileset._isRefreshingIonToken) {
-    tileset._isRefreshingIonToken = true;
-
-    std::string url = "https://api.cesium.com/v1/assets/" +
-                      std::to_string(tileset._ionAssetID.value()) + "/endpoint";
-    if (tileset._ionAccessToken) {
-      url += "?access_token=" + tileset._ionAccessToken.value();
-    }
-
-    tileset.notifyTileStartLoading(nullptr);
-
-    tileset.getExternals()
-        .pAssetAccessor->requestAsset(tileset.getAsyncSystem(), url)
-        .thenInMainThread([&tileset, pContext = failedTile.getContext()](
-                              std::shared_ptr<IAssetRequest>&& pIonRequest) {
-          LoadIonAssetEndpoint::mainThreadHandleTokenRefreshResponse(
-              tileset,
-              std::move(pIonRequest),
-              pContext,
-              tileset.getExternals().pLogger);
-        })
-        .catchInMainThread([&tileset](const std::exception& e) {
-          SPDLOG_LOGGER_ERROR(
-              tileset.getExternals().pLogger,
-              "Unhandled error when retrying request: {}",
-              e.what());
-        })
-        .thenInMainThread([&tileset]() {
-          tileset._isRefreshingIonToken = false;
-          tileset.notifyTileDoneLoading(nullptr);
-        });
-  }
-
-  return FailedTileAction::Wait;
 }
 
 namespace {
@@ -243,7 +203,7 @@ bool updateContextWithNewToken(
 
 } // namespace
 
-void Tileset::LoadIonAssetEndpoint::mainThreadHandleTokenRefreshResponse(
+void Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleTokenRefreshResponse(
     Tileset& tileset,
     std::shared_ptr<IAssetRequest>&& pIonRequest,
     TileContext* pContext,
@@ -275,4 +235,58 @@ void Tileset::LoadIonAssetEndpoint::mainThreadHandleTokenRefreshResponse(
 
     pTile = tileset._loadedTiles.next(*pTile);
   }
+}
+
+FailedTileAction
+Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
+  TileContentLoadResult* pContent = failedTile.getContent();
+  if (!pContent) {
+    return FailedTileAction::GiveUp;
+  }
+
+  if (pContent->httpStatusCode != 401) {
+    return FailedTileAction::GiveUp;
+  }
+
+  assert(failedTile.getContext()->pTileset != nullptr);
+  Tileset& tileset = *failedTile.getContext()->pTileset;
+
+  if (!tileset._ionAssetID) {
+    return FailedTileAction::GiveUp;
+  }
+
+  if (!tileset._isRefreshingIonToken) {
+    tileset._isRefreshingIonToken = true;
+
+    std::string url = "https://api.cesium.com/v1/assets/" +
+                      std::to_string(tileset._ionAssetID.value()) + "/endpoint";
+    if (tileset._ionAccessToken) {
+      url += "?access_token=" + tileset._ionAccessToken.value();
+    }
+
+    tileset.notifyTileStartLoading(nullptr);
+
+    tileset.getExternals()
+        .pAssetAccessor->requestAsset(tileset.getAsyncSystem(), url)
+        .thenInMainThread([&tileset, pContext = failedTile.getContext()](
+                              std::shared_ptr<IAssetRequest>&& pIonRequest) {
+          Private::mainThreadHandleTokenRefreshResponse(
+              tileset,
+              std::move(pIonRequest),
+              pContext,
+              tileset.getExternals().pLogger);
+        })
+        .catchInMainThread([&tileset](const std::exception& e) {
+          SPDLOG_LOGGER_ERROR(
+              tileset.getExternals().pLogger,
+              "Unhandled error when retrying request: {}",
+              e.what());
+        })
+        .thenInMainThread([&tileset]() {
+          tileset._isRefreshingIonToken = false;
+          tileset.notifyTileDoneLoading(nullptr);
+        });
+  }
+
+  return FailedTileAction::Wait;
 }
