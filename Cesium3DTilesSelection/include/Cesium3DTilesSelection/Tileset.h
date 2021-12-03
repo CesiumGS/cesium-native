@@ -352,47 +352,6 @@ private:
   };
 
   /**
-   * @brief Handles the response that was received for an tileset.json request.
-   *
-   * This function is supposed to be called on the main thread.
-   *
-   * It the response for the given request consists of a valid tileset JSON,
-   * then {@link createTile} or {@link _createTerrainTile} will be called.
-   * Otherwise, and error message will be printed and the root tile of the
-   * return value will be `nullptr`.
-   *
-   * @param pRequest The request for which the response was received.
-   * @return The LoadResult structure
-   */
-  static LoadResult _handleTilesetResponse(
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
-      std::unique_ptr<TileContext>&& pContext,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      bool useWaterMask);
-
-  CesiumAsync::Future<void> _loadTilesetJson(
-      const std::string& url,
-      const std::vector<std::pair<std::string, std::string>>& headers =
-          std::vector<std::pair<std::string, std::string>>(),
-      std::unique_ptr<TileContext>&& pContext = nullptr);
-
-  static void _createTile(
-      Tile& tile,
-      std::vector<std::unique_ptr<TileContext>>& newContexts,
-      const rapidjson::Value& tileJson,
-      const glm::dmat4& parentTransform,
-      TileRefine parentRefine,
-      const TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger);
-  static void _createTerrainTile(
-      Tile& tile,
-      const rapidjson::Value& layerJson,
-      TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      bool useWaterMask);
-  FailedTileAction _onIonTileFailed(Tile& failedTile);
-
-  /**
    * @brief Handles a Cesium ion response to refreshing a token, retrying tiles
    * that previously failed due to token expiration.
    *
@@ -655,6 +614,10 @@ private:
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
+
+  class LoadIonAssetEndpoint;
+  class LoadTilesetDotJson;
+  class LoadTileFromJson;
 };
 
 } // namespace Cesium3DTilesSelection
