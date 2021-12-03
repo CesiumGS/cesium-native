@@ -6,7 +6,7 @@ const path = require("path");
 const resolveProperty = require("./resolveProperty");
 const unindent = require("./unindent");
 
-function generate(options, schema) {
+function generate(options, schema, writers) {
   const {
     schemaCache,
     outputDir,
@@ -14,6 +14,8 @@ function generate(options, schema) {
     config,
     namespace,
     readerNamespace,
+    writerNamespace,
+    extensions,
   } = options;
 
   const name = getNameFromTitle(config, schema.title);
@@ -41,7 +43,8 @@ function generate(options, schema) {
         schema.properties[key],
         required,
         namespace,
-        readerNamespace
+        readerNamespace,
+        writerNamespace
       )
     )
     .filter((property) => property !== undefined);
@@ -295,6 +298,105 @@ function generate(options, schema) {
         } // namespace ${readerNamespace}
   `;
 
+  const writeForwardDeclaration = `struct ${name};`;
+
+  const writeInclude = `#include <${namespace}/${name}.h>`;
+
+  const writeDeclaration = `
+        struct ${name}JsonWriter {
+          using ValueType = ${namespace}::${name};
+
+          ${
+            thisConfig.extensionName
+              ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+              : ""
+          }
+
+          static void write(
+              const ${namespace}::${name}& obj,
+              CesiumJsonWriter::JsonWriter& jsonWriter,
+              const CesiumJsonWriter::ExtensionWriterContext& context);
+        };
+  `;
+
+  const writeJsonDeclaration = `
+        void writeJson(
+            const ${namespace}::${name}& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context);
+  `;
+
+  const writeDefinition = `
+        void ${name}JsonWriter::write(
+            const ${namespace}::${name}& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+          writeJson(obj, jsonWriter, context);
+        }
+  `;
+
+  const writeJsonDefinition = `
+        void writeJson(
+            const ${namespace}::${name}& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+          jsonWriter.StartObject();
+
+          ${indent(
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
+
+          ${
+            schema.properties.extensions
+              ? `
+            if (!obj.extensions.empty()) {
+              jsonWriter.Key("extensions");
+              writeJsonExtensions(obj, jsonWriter, context);
+            }
+          `
+              : ""
+          }
+
+          ${
+            schema.properties.extras
+              ? `
+            if (!obj.extras.empty()) {
+              jsonWriter.Key("extras");
+              writeJson(obj.extras, jsonWriter, context);
+            }
+          `
+              : ""
+          }
+
+          jsonWriter.EndObject();
+        }
+  `;
+
+  const writeExtensionsRegistration = `
+        ${
+          extensions[schema.title]
+            ? extensions[schema.title]
+                .map((extension) => {
+                  return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
+                })
+                .join("\n")
+            : ""
+        }
+  `;
+
+  writers.push({
+    writeInclude,
+    writeForwardDeclaration,
+    writeDeclaration,
+    writeJsonDeclaration,
+    writeDefinition,
+    writeJsonDefinition,
+    writeExtensionsRegistration,
+  });
+
   if (options.oneHandlerFile) {
     const readerSourceOutputPath = path.join(
       readerHeaderOutputDir,
@@ -347,6 +449,60 @@ function formatReaderProperty(property) {
 
 function formatReaderPropertyImpl(property) {
   return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.cppSafeName}, o.${property.cppSafeName});`;
+}
+
+function formatWriterPropertyImpl(property) {
+  let result = "";
+
+  const type = property.type;
+  const defaultValue = property.defaultValueWriter || property.defaultValue;
+
+  const isId = property.requiredId !== undefined;
+  const isOptionalId = property.requiredId === false;
+  const isRequiredEnum = property.requiredEnum === true;
+  const isVector = type.startsWith("std::vector");
+  const isMap = type.startsWith("std::unordered_map");
+  const isOptional = type.startsWith("std::optional");
+
+  // Somewhat opinionated but it's helpful to see byteOffset: 0 in accessors and bufferViews
+  const requiredPropertyOverride = ["byteOffset"];
+
+  const hasDefaultValueGuard =
+    !isId &&
+    !isRequiredEnum &&
+    !requiredPropertyOverride.includes(property.cppSafeName) &&
+    defaultValue !== undefined;
+  const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
+  const hasEmptyGuard = isVector || isMap;
+  const hasOptionalGuard = isOptional;
+  const hasNegativeIndexGuard = isOptionalId;
+  const hasGuard =
+    hasDefaultValueGuard ||
+    hasEmptyGuard ||
+    hasOptionalGuard ||
+    hasNegativeIndexGuard;
+
+  if (hasDefaultVectorGuard) {
+    result += `static const ${type} ${property.cppSafeName}Default = ${defaultValue};\n`;
+    result += `if (obj.${property.cppSafeName} != ${property.cppSafeName}Default) {\n`;
+  } else if (hasDefaultValueGuard) {
+    result += `if (obj.${property.cppSafeName} != ${defaultValue}) {\n`;
+  } else if (hasEmptyGuard) {
+    result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
+  } else if (hasNegativeIndexGuard) {
+    result += `if (obj.${property.cppSafeName} > -1) {\n`;
+  } else if (hasOptionalGuard) {
+    result += `if (obj.${property.cppSafeName}.has_value()) {\n`;
+  }
+
+  result += `jsonWriter.Key("${property.name}");\n`;
+  result += `writeJson(obj.${property.cppSafeName}, jsonWriter, context);\n`;
+
+  if (hasGuard) {
+    result += "}\n";
+  }
+
+  return result;
 }
 
 function privateSpecConstructor(name) {

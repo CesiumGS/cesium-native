@@ -38,11 +38,6 @@ struct CESIUM3DTILESREADER_API TilesetReaderResult {
 };
 
 /**
- * @brief Options for how to read a tileset.
- */
-struct CESIUM3DTILESREADER_API ReadTilesetOptions {};
-
-/**
  * @brief Reads tilesets.
  */
 class CESIUM3DTILESREADER_API TilesetReader {
@@ -71,9 +66,7 @@ public:
    * @param options Options for how to read the tileset.
    * @return The result of reading the tileset.
    */
-  TilesetReaderResult readTileset(
-      const gsl::span<const std::byte>& data,
-      const ReadTilesetOptions& options = ReadTilesetOptions()) const;
+  TilesetReaderResult readTileset(const gsl::span<const std::byte>& data) const;
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;
