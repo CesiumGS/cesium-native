@@ -17,6 +17,7 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Transforms.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <cstddef>
@@ -224,6 +225,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
  * for use.
  *
  * @param pPrepareRendererResources
+ * @param pLogger
  * @param content
  * @param generateMissingNormalsSmooth
  * @param gltfUpAxis
@@ -236,6 +238,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
  */
 void* processNewTileContent(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     TileContentLoadResult& content,
     bool generateMissingNormalsSmooth,
     CesiumGeometry::Axis gltfUpAxis,
@@ -272,6 +275,32 @@ void* processNewTileContent(
       0,
       pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
       std::move(projections));
+
+  if (pRegion && content.overlayDetails) {
+    // If the original bounding region was wrong, report it.
+    const GlobeRectangle& original = pRegion->getRectangle();
+    const GlobeRectangle& computed =
+        content.overlayDetails->boundingRegion.getRectangle();
+    if ((!Math::equalsEpsilon(computed.getWest(), original.getWest(), 0.01) &&
+         computed.getWest() < original.getWest()) ||
+        (!Math::equalsEpsilon(computed.getSouth(), original.getSouth(), 0.01) &&
+         computed.getSouth() < original.getSouth()) ||
+        (!Math::equalsEpsilon(computed.getEast(), original.getEast(), 0.01) &&
+         computed.getEast() > original.getEast()) ||
+        (!Math::equalsEpsilon(computed.getNorth(), original.getNorth(), 0.01) &&
+         computed.getNorth() > original.getNorth())) {
+
+      auto it = model.extras.find("Cesium3DTiles_TileUrl");
+      std::string url = it != model.extras.end()
+                            ? it->second.getStringOrDefault("Unknown Tile URL")
+                            : "Unknown Tile URL";
+      SPDLOG_LOGGER_WARN(
+          pLogger,
+          "Tile has a bounding volume that does not include all of its "
+          "content, so culling and raster overlays may be incorrect: {}",
+          url);
+    }
+  }
 
   // If our tile bounding region has loose fitting heights, find the real ones.
   const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
@@ -434,6 +463,7 @@ void Tile::loadContent() {
 
                     pRendererResources = processNewTileContent(
                         pPrepareRendererResources,
+                        loadInput.pLogger,
                         *pContent,
                         generateMissingNormalsSmooth,
                         gltfUpAxis,
@@ -584,7 +614,12 @@ bool Tile::unloadContent() noexcept {
 
 namespace {
 
-std::optional<BoundingRegion>
+struct RegionAndCenter {
+  BoundingRegion region;
+  Cartographic center;
+};
+
+std::optional<RegionAndCenter>
 getTileBoundingRegionForUpsampling(const Tile& parent) {
   // To create subdivided children, we need to know a bounding region for each.
   // If the parent is already loaded and we have Web Mercator or Geographic
@@ -594,33 +629,42 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // Get an accurate bounding region from the content first.
   const TileContentLoadResult* pParentContent = parent.getContent();
   if (pParentContent && pParentContent->overlayDetails) {
-    return pParentContent->overlayDetails->boundingRegion;
+    const TileContentDetailsForOverlays& details =
+        *pParentContent->overlayDetails;
+
+    // If we don't have any overlay projections/rectangles, why are we
+    // upsampling?
+    assert(!details.rasterOverlayProjections.empty());
+    assert(!details.rasterOverlayRectangles.empty());
+
+    // Use the projected center of the tile as the subdivision center.
+    // The tile will be subdivided by (0.5, 0.5) in the _first_ overlay's
+    // texture coordinates (no matter which overlay(s) had more detail), at
+    // least until https://github.com/CesiumGS/cesium-native/issues/385 is
+    // addressed. So pick the center accordingly.
+    glm::dvec2 centerProjected = details.rasterOverlayRectangles[0].getCenter();
+    Cartographic center = unprojectPosition(
+        details.rasterOverlayProjections[0],
+        glm::dvec3(centerProjected, 0.0));
+
+    return RegionAndCenter{details.boundingRegion, center};
   }
 
-  // If the tile's bounding volume is a region, use it.
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&parent.getBoundingVolume());
-  if (pRegion) {
-    return *pRegion;
-  }
-
-  const BoundingRegionWithLooseFittingHeights* pLoose =
-      std::get_if<BoundingRegionWithLooseFittingHeights>(
-          &parent.getBoundingVolume());
-  if (pLoose) {
-    return pLoose->getBoundingRegion();
-  }
-
+  // We shouldn't be upsampling from a tile until that tile is loaded.
+  // If it has no content after loading, we can't upsample from it.
   return std::nullopt;
 }
 
 void createQuadtreeSubdividedChildren(Tile& parent) {
-  std::optional<BoundingRegion> maybeRegion =
+  std::optional<RegionAndCenter> maybeRegionAndCenter =
       getTileBoundingRegionForUpsampling(parent);
-  if (!maybeRegion) {
+  if (!maybeRegionAndCenter) {
     return;
   }
 
+  // The quadtree tile ID doesn't actually matter, because we're not going to
+  // use the standard tile bounds for the ID. But having a tile ID that reflects
+  // the level and _approximate_ location is helpful for debugging.
   const QuadtreeTileID* pRealParentTileID =
       std::get_if<QuadtreeTileID>(&parent.getTileID());
   if (!pRealParentTileID) {
@@ -635,11 +679,9 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
       pRealParentTileID ? *pRealParentTileID : QuadtreeTileID(0, 0, 0);
 
   // QuadtreeTileID can't handle higher than level 30 because the x and y
-  // coordinates (uint32_t) will overflow. If we ever have an actual need for
-  // higher levels, we can switch to 64-bit integers or use a different tile ID
-  // type.
+  // coordinates (uint32_t) will overflow. So just start over at level 0.
   if (parentTileID.level >= 30U) {
-    return;
+    parentTileID = QuadtreeTileID(0, 0, 0);
   }
 
   // The parent tile must not have a zero geometric error, even if it's a leaf
@@ -665,10 +707,19 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   Tile& nw = children[2];
   Tile& ne = children[3];
 
-  sw.setContext(parent.getContext());
-  se.setContext(parent.getContext());
-  nw.setContext(parent.getContext());
-  ne.setContext(parent.getContext());
+  // Use the root tile's context, because that's guaranteed not to do any
+  // implicit tiling.
+  assert(
+      parent.getContext() != nullptr &&
+      parent.getContext()->pTileset != nullptr &&
+      parent.getContext()->pTileset->getRootTile() != nullptr);
+  TileContext* pRootContext =
+      parent.getContext()->pTileset->getRootTile()->getContext();
+  assert(pRootContext != nullptr);
+  sw.setContext(pRootContext);
+  se.setContext(pRootContext);
+  nw.setContext(pRootContext);
+  ne.setContext(pRootContext);
 
   const double geometricError = parent.getGeometricError() * 0.5;
   sw.setGeometricError(geometricError);
@@ -686,141 +737,47 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   nw.setTileID(UpsampledQuadtreeNode{nwID});
   ne.setTileID(UpsampledQuadtreeNode{neID});
 
-  const double minimumHeight = maybeRegion->getMinimumHeight();
-  const double maximumHeight = maybeRegion->getMaximumHeight();
+  const double minimumHeight = maybeRegionAndCenter->region.getMinimumHeight();
+  const double maximumHeight = maybeRegionAndCenter->region.getMaximumHeight();
 
-  // If we have an implicit tiling context, make these new tiles conform to it.
-  // Otherwise just subdivide the bounding region.
-  const TileContext* pContext = parent.getContext();
-  if (pRealParentTileID && pContext && pContext->implicitContext &&
-      pContext->implicitContext->quadtreeTilingScheme) {
+  const GlobeRectangle& parentRectangle =
+      maybeRegionAndCenter->region.getRectangle();
+  const Cartographic& center = maybeRegionAndCenter->center;
+  sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+      GlobeRectangle(
+          parentRectangle.getWest(),
+          parentRectangle.getSouth(),
+          center.longitude,
+          center.latitude),
+      minimumHeight,
+      maximumHeight)));
 
-    const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
-    const QuadtreeTilingScheme& tilingScheme =
-        *implicitContext.quadtreeTilingScheme;
+  se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+      GlobeRectangle(
+          center.longitude,
+          parentRectangle.getSouth(),
+          parentRectangle.getEast(),
+          center.latitude),
+      minimumHeight,
+      maximumHeight)));
 
-    const BoundingRegion* pRegion = std::get_if<BoundingRegion>(
-        &implicitContext.implicitRootBoundingVolume);
-    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(
-            &implicitContext.implicitRootBoundingVolume);
-    const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
-        &implicitContext.implicitRootBoundingVolume);
+  nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+      GlobeRectangle(
+          parentRectangle.getWest(),
+          center.latitude,
+          center.longitude,
+          parentRectangle.getNorth()),
+      minimumHeight,
+      maximumHeight)));
 
-    if (!pRegion && pLooseRegion) {
-      pRegion = &pLooseRegion->getBoundingRegion();
-    }
-
-    CesiumGeometry::Rectangle swProjectedRectangle =
-        tilingScheme.tileToRectangle(swID);
-    CesiumGeometry::Rectangle seProjectedRectangle =
-        tilingScheme.tileToRectangle(seID);
-    CesiumGeometry::Rectangle nwProjectedRectangle =
-        tilingScheme.tileToRectangle(nwID);
-    CesiumGeometry::Rectangle neProjectedRectangle =
-        tilingScheme.tileToRectangle(neID);
-
-    if (pRegion && implicitContext.projection) {
-      const Projection& projection = *implicitContext.projection;
-
-      sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-          unprojectRectangleSimple(projection, swProjectedRectangle),
-          minimumHeight,
-          maximumHeight)));
-
-      se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-          unprojectRectangleSimple(projection, seProjectedRectangle),
-          minimumHeight,
-          maximumHeight)));
-
-      nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-          unprojectRectangleSimple(projection, nwProjectedRectangle),
-          minimumHeight,
-          maximumHeight)));
-
-      ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-          unprojectRectangleSimple(projection, neProjectedRectangle),
-          minimumHeight,
-          maximumHeight)));
-
-    } else if (pBox) {
-      const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
-
-      glm::dvec2 swProjectedCenter = swProjectedRectangle.getCenter();
-      sw.setBoundingVolume(OrientedBoundingBox(
-          rootHalfAxes *
-              glm::dvec3(swProjectedCenter.x, swProjectedCenter.y, 0.0),
-          glm::dmat3(
-              0.5 * swProjectedRectangle.computeWidth() * rootHalfAxes[0],
-              0.5 * swProjectedRectangle.computeHeight() * rootHalfAxes[1],
-              rootHalfAxes[2])));
-
-      glm::dvec2 seProjectedCenter = seProjectedRectangle.getCenter();
-      se.setBoundingVolume(OrientedBoundingBox(
-          rootHalfAxes *
-              glm::dvec3(seProjectedCenter.x, seProjectedCenter.y, 0.0),
-          glm::dmat3(
-              0.5 * seProjectedRectangle.computeWidth() * rootHalfAxes[0],
-              0.5 * seProjectedRectangle.computeHeight() * rootHalfAxes[1],
-              rootHalfAxes[2])));
-
-      glm::dvec2 nwProjectedCenter = nwProjectedRectangle.getCenter();
-      nw.setBoundingVolume(OrientedBoundingBox(
-          rootHalfAxes *
-              glm::dvec3(nwProjectedCenter.x, nwProjectedCenter.y, 0.0),
-          glm::dmat3(
-              0.5 * nwProjectedRectangle.computeWidth() * rootHalfAxes[0],
-              0.5 * nwProjectedRectangle.computeHeight() * rootHalfAxes[1],
-              rootHalfAxes[2])));
-
-      glm::dvec2 neProjectedCenter = neProjectedRectangle.getCenter();
-      ne.setBoundingVolume(OrientedBoundingBox(
-          rootHalfAxes *
-              glm::dvec3(neProjectedCenter.x, neProjectedCenter.y, 0.0),
-          glm::dmat3(
-              0.5 * neProjectedRectangle.computeWidth() * rootHalfAxes[0],
-              0.5 * neProjectedRectangle.computeHeight() * rootHalfAxes[1],
-              rootHalfAxes[2])));
-    }
-  } else {
-    const GlobeRectangle& parentRectangle = maybeRegion->getRectangle();
-    Cartographic center = parentRectangle.computeCenter();
-    sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-        GlobeRectangle(
-            parentRectangle.getWest(),
-            parentRectangle.getSouth(),
-            center.longitude,
-            center.latitude),
-        minimumHeight,
-        maximumHeight)));
-
-    se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-        GlobeRectangle(
-            center.longitude,
-            parentRectangle.getSouth(),
-            parentRectangle.getEast(),
-            center.latitude),
-        minimumHeight,
-        maximumHeight)));
-
-    nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-        GlobeRectangle(
-            parentRectangle.getWest(),
-            center.latitude,
-            center.longitude,
-            parentRectangle.getNorth()),
-        minimumHeight,
-        maximumHeight)));
-
-    se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-        GlobeRectangle(
-            center.longitude,
-            center.latitude,
-            parentRectangle.getEast(),
-            parentRectangle.getNorth()),
-        minimumHeight,
-        maximumHeight)));
-  }
+  ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+      GlobeRectangle(
+          center.longitude,
+          center.latitude,
+          parentRectangle.getEast(),
+          parentRectangle.getNorth()),
+      minimumHeight,
+      maximumHeight)));
 
   sw.setTransform(parent.getTransform());
   se.setTransform(parent.getTransform());
@@ -1006,6 +963,7 @@ void Tile::upsampleParent(
            generateMissingNormalsSmooth =
                pTileset->getOptions()
                    .contentOptions.generateMissingNormalsSmooth,
+           pLogger = pTileset->getExternals().pLogger,
            pPrepareRendererResources =
                pTileset->getExternals().pPrepareRendererResources]() mutable {
             std::unique_ptr<TileContentLoadResult> pContent =
@@ -1022,6 +980,7 @@ void Tile::upsampleParent(
 
             void* pRendererResources = processNewTileContent(
                 pPrepareRendererResources,
+                pLogger,
                 *pContent,
                 generateMissingNormalsSmooth,
                 gltfUpAxis,

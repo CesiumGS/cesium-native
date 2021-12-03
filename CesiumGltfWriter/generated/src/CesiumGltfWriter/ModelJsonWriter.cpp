@@ -2412,6 +2412,9 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
 
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
+      ExtensionKhrDracoMeshCompressionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter>();
 
   context.registerExtension<

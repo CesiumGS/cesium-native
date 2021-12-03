@@ -5,6 +5,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/Model.h>
@@ -69,79 +70,37 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
-  return GltfReader::resolveExternalData(
+  return CesiumGltfReader::GltfReader::resolveExternalData(
              asyncSystem,
              url,
              headers,
              pAssetAccessor,
              std::move(loadedModel))
-      .thenInWorkerThread([pLogger, url](ModelReaderResult&& resolvedModel) {
-        std::unique_ptr<TileContentLoadResult> pResult =
-            std::make_unique<TileContentLoadResult>();
+      .thenInWorkerThread(
+          [pLogger, url](CesiumGltfReader::ModelReaderResult&& resolvedModel) {
+            std::unique_ptr<TileContentLoadResult> pResult =
+                std::make_unique<TileContentLoadResult>();
 
-        if (!resolvedModel.errors.empty()) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Failed resolving external glTF buffers from {}:\n- {}",
-              url,
-              CesiumUtility::joinToString(resolvedModel.errors, "\n- "));
-        }
+            if (!resolvedModel.errors.empty()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Failed resolving external glTF buffers from {}:\n- {}",
+                  url,
+                  CesiumUtility::joinToString(resolvedModel.errors, "\n- "));
+            }
 
-        if (!resolvedModel.warnings.empty()) {
-          SPDLOG_LOGGER_WARN(
-              pLogger,
-              "Warning when resolving external gltf buffers from {}:\n- {}",
-              url,
-              CesiumUtility::joinToString(resolvedModel.warnings, "\n- "));
-        }
+            if (!resolvedModel.warnings.empty()) {
+              SPDLOG_LOGGER_WARN(
+                  pLogger,
+                  "Warning when resolving external gltf buffers from {}:\n- {}",
+                  url,
+                  CesiumUtility::joinToString(resolvedModel.warnings, "\n- "));
+            }
 
-        pResult->model = std::move(resolvedModel.model);
-        return pResult;
-      });
+            pResult->model = std::move(resolvedModel.model);
+            return pResult;
+          });
 }
-
-namespace {
-void updateBoundsWithNewPosition(
-    const Cartographic& position,
-    bool haveFirst,
-    double& west,
-    double& south,
-    double& east,
-    double& north,
-    double& minimumHeight,
-    double& maximumHeight) {
-  double longitude = position.longitude;
-  double latitude = position.latitude;
-  double ellipsoidHeight = position.height;
-
-  if (haveFirst) {
-    // Check if we've crossed the anti-meridian relative to the first
-    // point and if so adjust so our min/maxes below have the expected
-    // result.
-    double difference = longitude - west;
-    if (difference > Math::ONE_PI) {
-      longitude -= Math::TWO_PI;
-    } else if (difference < -Math::ONE_PI) {
-      longitude += Math::TWO_PI;
-    }
-  } else {
-    haveFirst = true;
-  }
-
-  // The computation of longitude is very unstable at the poles,
-  // so don't let extreme latitudes affect the longitude bounding box.
-  if (glm::abs(glm::abs(latitude) - CesiumUtility::Math::PI_OVER_TWO) >
-      CesiumUtility::Math::EPSILON6) {
-    west = glm::min(west, longitude);
-    east = glm::max(east, longitude);
-  }
-  south = glm::min(south, latitude);
-  north = glm::max(north, latitude);
-  minimumHeight = glm::min(minimumHeight, ellipsoidHeight);
-  maximumHeight = glm::max(maximumHeight, ellipsoidHeight);
-}
-
-} // namespace
 
 /*static*/ std::optional<TileContentDetailsForOverlays>
 GltfContent::createRasterOverlayTextureCoordinates(
@@ -181,212 +140,242 @@ GltfContent::createRasterOverlayTextureCoordinates(
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 
-  double west = CesiumUtility::Math::ONE_PI;
-  double south = CesiumUtility::Math::PI_OVER_TWO;
-  double east = -CesiumUtility::Math::ONE_PI;
-  double north = -CesiumUtility::Math::PI_OVER_TWO;
-  double minimumHeight = std::numeric_limits<double>::max();
-  double maximumHeight = std::numeric_limits<double>::lowest();
-  bool haveFirst = false;
+  // When computing the tile's bounds, ignore tiles that are less than 1/1000th
+  // of a tile width from the North or South pole. Longitudes cannot be trusted
+  // at such extreme latitudes.
+  BoundingRegionBuilder computedBounds;
+  computedBounds.setPoleTolerance(0.001 * bounds.computeHeight());
 
-  auto createTextureCoordinatesForPrimitive = [&](Model& gltf,
-                                                  Node& /*node*/,
-                                                  Mesh& /*mesh*/,
-                                                  MeshPrimitive& primitive,
-                                                  const glm::dmat4&
-                                                      nodeTransform) {
-    auto positionIt = primitive.attributes.find("POSITION");
-    if (positionIt == primitive.attributes.end()) {
-      return;
-    }
-
-    const int positionAccessorIndex = positionIt->second;
-    if (positionAccessorIndex < 0 ||
-        positionAccessorIndex >= static_cast<int>(gltf.accessors.size())) {
-      return;
-    }
-
-    const int32_t firstTextureCoordinateAccessorIndex =
-        positionAccessorsToTextureCoordinateAccessor[static_cast<size_t>(
-            positionAccessorIndex)];
-    if (firstTextureCoordinateAccessorIndex > 0) {
-      // Already created texture coordinates for this projection, so use
-      // them.
-      for (size_t i = 0; i < projections.size(); ++i) {
-        std::string attributeName =
-            "_CESIUMOVERLAY_" +
-            std::to_string(firstTextureCoordinateID + int32_t(i));
-        primitive.attributes[attributeName] =
-            firstTextureCoordinateAccessorIndex + int32_t(i);
-      }
-      return;
-    }
-
-    const glm::dmat4 fullTransform = rootTransform * nodeTransform;
-
-    std::vector<Buffer>& buffers = gltf.buffers;
-    std::vector<BufferView>& bufferViews = gltf.bufferViews;
-    std::vector<Accessor>& accessors = gltf.accessors;
-
-    positionAccessorsToTextureCoordinateAccessor[size_t(
-        positionAccessorIndex)] = int32_t(gltf.accessors.size());
-
-    // Create a buffer, bufferView, accessor, and writer for each set of
-    // coordinates. Reserve space for them to avoid unnecessary
-    // reallocations and to prevent earlier buffers from becoming invalid
-    // after we've created an AccessorWriter for it and then add _another_
-    // buffer.
-    std::vector<AccessorWriter<glm::vec2>> uvWriters;
-    uvWriters.reserve(projections.size());
-    buffers.reserve(buffers.size() + projections.size());
-    bufferViews.reserve(bufferViews.size() + projections.size());
-    accessors.reserve(accessors.size() + projections.size());
-
-    const AccessorView<glm::vec3> positionView(gltf, positionAccessorIndex);
-    if (positionView.status() != AccessorViewStatus::Valid) {
-      return;
-    }
-
-    for (size_t i = 0; i < projections.size(); ++i) {
-      const int uvBufferId = static_cast<int>(buffers.size());
-      Buffer& uvBuffer = buffers.emplace_back();
-
-      const int uvBufferViewId = static_cast<int>(bufferViews.size());
-      bufferViews.emplace_back();
-
-      const int uvAccessorId = static_cast<int>(accessors.size());
-      accessors.emplace_back();
-
-      uvBuffer.cesium.data.resize(
-          size_t(positionView.size()) * 2 * sizeof(float));
-
-      BufferView& uvBufferView =
-          gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
-      uvBufferView.buffer = uvBufferId;
-      uvBufferView.byteOffset = 0;
-      uvBufferView.byteStride = 2 * sizeof(float);
-      uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
-      uvBufferView.target = BufferView::Target::ARRAY_BUFFER;
-
-      Accessor& uvAccessor = gltf.accessors[static_cast<size_t>(uvAccessorId)];
-      uvAccessor.bufferView = uvBufferViewId;
-      uvAccessor.byteOffset = 0;
-      uvAccessor.componentType = Accessor::ComponentType::FLOAT;
-      uvAccessor.count = int64_t(positionView.size());
-      uvAccessor.type = Accessor::Type::VEC2;
-
-      [[maybe_unused]] AccessorWriter<glm::vec2>& uvWriter =
-          uvWriters.emplace_back(gltf, uvAccessorId);
-      assert(uvWriter.status() == AccessorViewStatus::Valid);
-
-      std::string attributeName =
-          "_CESIUMOVERLAY_" +
-          std::to_string(firstTextureCoordinateID + int32_t(i));
-      primitive.attributes[attributeName] = uvAccessorId;
-    }
-
-    // Generate texture coordinates for each position.
-    for (int64_t positionIndex = 0; positionIndex < positionView.size();
-         ++positionIndex) {
-      // Get the ECEF position
-      const glm::vec3 position = positionView[positionIndex];
-      const glm::dvec3 positionEcef =
-          glm::dvec3(fullTransform * glm::dvec4(position, 1.0));
-
-      // Convert it to cartographic
-      const std::optional<CesiumGeospatial::Cartographic> cartographic =
-          CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
-              positionEcef);
-      if (!cartographic) {
-        for (AccessorWriter<glm::vec2>& uvWriter : uvWriters) {
-          uvWriter[positionIndex] = glm::dvec2(0.0, 0.0);
+  auto createTextureCoordinatesForPrimitive =
+      [&](Model& gltf,
+          Node& /*node*/,
+          Mesh& /*mesh*/,
+          MeshPrimitive& primitive,
+          const glm::dmat4& nodeTransform) {
+        auto positionIt = primitive.attributes.find("POSITION");
+        if (positionIt == primitive.attributes.end()) {
+          return;
         }
-        continue;
-      }
 
-      updateBoundsWithNewPosition(
-          *cartographic,
-          haveFirst,
-          west,
-          south,
-          east,
-          north,
-          minimumHeight,
-          maximumHeight);
+        const int positionAccessorIndex = positionIt->second;
+        if (positionAccessorIndex < 0 ||
+            positionAccessorIndex >= static_cast<int>(gltf.accessors.size())) {
+          return;
+        }
 
-      // Generate texture coordinates at this position for each projection
-      for (size_t projectionIndex = 0; projectionIndex < projections.size();
-           ++projectionIndex) {
-        const Projection& projection = projections[projectionIndex];
-        const Rectangle& rectangle = rectangles[projectionIndex];
+        const int32_t firstTextureCoordinateAccessorIndex =
+            positionAccessorsToTextureCoordinateAccessor[static_cast<size_t>(
+                positionAccessorIndex)];
+        if (firstTextureCoordinateAccessorIndex > 0) {
+          // Already created texture coordinates for this projection, so use
+          // them.
+          for (size_t i = 0; i < projections.size(); ++i) {
+            std::string attributeName =
+                "_CESIUMOVERLAY_" +
+                std::to_string(firstTextureCoordinateID + int32_t(i));
+            primitive.attributes[attributeName] =
+                firstTextureCoordinateAccessorIndex + int32_t(i);
+          }
+          return;
+        }
 
-        // Project it with the raster overlay's projection
-        glm::dvec3 projectedPosition =
-            projectPosition(projection, cartographic.value());
+        const glm::dmat4 fullTransform = rootTransform * nodeTransform;
 
-        double longitude = cartographic.value().longitude;
-        const double latitude = cartographic.value().latitude;
-        const double ellipsoidHeight = cartographic.value().height;
+        std::vector<Buffer>& buffers = gltf.buffers;
+        std::vector<BufferView>& bufferViews = gltf.bufferViews;
+        std::vector<Accessor>& accessors = gltf.accessors;
 
-        // If the position is near the anti-meridian and the projected
-        // position is outside the expected range, try using the equivalent
-        // longitude on the other side of the anti-meridian to see if that
-        // gets us closer.
-        if (glm::abs(
-                glm::abs(cartographic.value().longitude) -
-                CesiumUtility::Math::ONE_PI) < CesiumUtility::Math::EPSILON5 &&
-            (projectedPosition.x < rectangle.minimumX ||
-             projectedPosition.x > rectangle.maximumX ||
-             projectedPosition.y < rectangle.minimumY ||
-             projectedPosition.y > rectangle.maximumY)) {
-          const double testLongitude = longitude + longitude < 0.0
-                                           ? CesiumUtility::Math::TWO_PI
-                                           : -CesiumUtility::Math::TWO_PI;
-          const glm::dvec3 projectedPosition2 = projectPosition(
-              projection,
-              Cartographic(testLongitude, latitude, ellipsoidHeight));
+        positionAccessorsToTextureCoordinateAccessor[size_t(
+            positionAccessorIndex)] = int32_t(gltf.accessors.size());
 
-          const double distance1 =
-              rectangle.computeSignedDistance(glm::dvec2(projectedPosition));
-          const double distance2 =
-              rectangle.computeSignedDistance(glm::dvec2(projectedPosition2));
+        // Create a buffer, bufferView, accessor, and writer for each set of
+        // coordinates. Reserve space for them to avoid unnecessary
+        // reallocations and to prevent earlier buffers from becoming invalid
+        // after we've created an AccessorWriter for it and then add _another_
+        // buffer.
+        std::vector<AccessorWriter<glm::vec2>> uvWriters;
+        uvWriters.reserve(projections.size());
+        buffers.reserve(buffers.size() + projections.size());
+        bufferViews.reserve(bufferViews.size() + projections.size());
+        accessors.reserve(accessors.size() + projections.size());
 
-          if (distance2 < distance1) {
-            projectedPosition = projectedPosition2;
-            longitude = testLongitude;
+        const AccessorView<glm::vec3> positionView(gltf, positionAccessorIndex);
+        if (positionView.status() != AccessorViewStatus::Valid) {
+          return;
+        }
+
+        for (size_t i = 0; i < projections.size(); ++i) {
+          const int uvBufferId = static_cast<int>(buffers.size());
+          Buffer& uvBuffer = buffers.emplace_back();
+
+          const int uvBufferViewId = static_cast<int>(bufferViews.size());
+          bufferViews.emplace_back();
+
+          const int uvAccessorId = static_cast<int>(accessors.size());
+          accessors.emplace_back();
+
+          uvBuffer.cesium.data.resize(
+              size_t(positionView.size()) * 2 * sizeof(float));
+
+          BufferView& uvBufferView =
+              gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
+          uvBufferView.buffer = uvBufferId;
+          uvBufferView.byteOffset = 0;
+          uvBufferView.byteStride = 2 * sizeof(float);
+          uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
+          uvBufferView.target = BufferView::Target::ARRAY_BUFFER;
+
+          Accessor& uvAccessor =
+              gltf.accessors[static_cast<size_t>(uvAccessorId)];
+          uvAccessor.bufferView = uvBufferViewId;
+          uvAccessor.byteOffset = 0;
+          uvAccessor.componentType = Accessor::ComponentType::FLOAT;
+          uvAccessor.count = int64_t(positionView.size());
+          uvAccessor.type = Accessor::Type::VEC2;
+
+          [[maybe_unused]] AccessorWriter<glm::vec2>& uvWriter =
+              uvWriters.emplace_back(gltf, uvAccessorId);
+          assert(uvWriter.status() == AccessorViewStatus::Valid);
+
+          std::string attributeName =
+              "_CESIUMOVERLAY_" +
+              std::to_string(firstTextureCoordinateID + int32_t(i));
+          primitive.attributes[attributeName] = uvAccessorId;
+        }
+
+        // Generate texture coordinates for each position.
+        for (int64_t positionIndex = 0; positionIndex < positionView.size();
+             ++positionIndex) {
+          // Get the ECEF position
+          const glm::vec3 position = positionView[positionIndex];
+          const glm::dvec3 positionEcef =
+              glm::dvec3(fullTransform * glm::dvec4(position, 1.0));
+
+          // Convert it to cartographic
+          const std::optional<CesiumGeospatial::Cartographic> cartographic =
+              CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+                  positionEcef);
+          if (!cartographic) {
+            for (AccessorWriter<glm::vec2>& uvWriter : uvWriters) {
+              uvWriter[positionIndex] = glm::dvec2(0.0, 0.0);
+            }
+
+            // Generate texture coordinates for each position.
+            for (int64_t positionIndex = 0; positionIndex < positionView.size();
+                 ++positionIndex) {
+              // Get the ECEF position
+              const glm::vec3 position = positionView[positionIndex];
+              const glm::dvec3 positionEcef =
+                  glm::dvec3(fullTransform * glm::dvec4(position, 1.0));
+
+              // Convert it to cartographic
+              const std::optional<CesiumGeospatial::Cartographic> cartographic =
+                  CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+                      positionEcef);
+              if (!cartographic) {
+                for (AccessorWriter<glm::vec2>& uvWriter : uvWriters) {
+                  uvWriter[positionIndex] = glm::dvec2(0.0, 0.0);
+                }
+                continue;
+              }
+
+              computedBounds.expandToIncludePosition(*cartographic);
+
+              // Generate texture coordinates at this position for each
+              // projection
+              for (size_t projectionIndex = 0;
+                   projectionIndex < projections.size();
+                   ++projectionIndex) {
+                const Projection& projection = projections[projectionIndex];
+                const Rectangle& rectangle = rectangles[projectionIndex];
+
+                // Project it with the raster overlay's projection
+                glm::dvec3 projectedPosition =
+                    projectPosition(projection, cartographic.value());
+
+                double longitude = cartographic.value().longitude;
+                const double latitude = cartographic.value().latitude;
+                const double ellipsoidHeight = cartographic.value().height;
+
+                // If the position is near the anti-meridian and the projected
+                // position is outside the expected range, try using the
+                // equivalent longitude on the other side of the anti-meridian
+                // to see if that gets us closer.
+                if (glm::abs(
+                        glm::abs(cartographic.value().longitude) -
+                        CesiumUtility::Math::ONE_PI) <
+                        CesiumUtility::Math::EPSILON5 &&
+                    (projectedPosition.x < rectangle.minimumX ||
+                     projectedPosition.x > rectangle.maximumX ||
+                     projectedPosition.y < rectangle.minimumY ||
+                     projectedPosition.y > rectangle.maximumY)) {
+                  const double testLongitude =
+                      longitude + longitude < 0.0
+                          ? CesiumUtility::Math::TWO_PI
+                          : -CesiumUtility::Math::TWO_PI;
+                  const glm::dvec3 projectedPosition2 = projectPosition(
+                      projection,
+                      Cartographic(testLongitude, latitude, ellipsoidHeight));
+
+                  const double distance1 = rectangle.computeSignedDistance(
+                      glm::dvec2(projectedPosition));
+                  const double distance2 = rectangle.computeSignedDistance(
+                      glm::dvec2(projectedPosition2));
+
+                  if (distance2 < distance1) {
+                    projectedPosition = projectedPosition2;
+                    longitude = testLongitude;
+                  }
+                }
+
+                // Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and
+                // (1.0, 1.0) at the (maximumX, maximumY) corner. The
+                // coordinates should stay inside these bounds if the input
+                // rectangle actually bounds the vertices, but we'll clamp to be
+                // safe.
+                glm::vec2 uv(
+                    CesiumUtility::Math::clamp(
+                        (projectedPosition.x - rectangle.minimumX) /
+                            rectangle.computeWidth(),
+                        0.0,
+                        1.0),
+                    CesiumUtility::Math::clamp(
+                        (projectedPosition.y - rectangle.minimumY) /
+                            rectangle.computeHeight(),
+                        0.0,
+                        1.0));
+
+                uvWriters[projectionIndex][positionIndex] = uv;
+              }
+            }
+
+            // Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and
+            // (1.0, 1.0) at the (maximumX, maximumY) corner. The coordinates
+            // should stay inside these bounds if the input rectangle actually
+            // bounds the vertices, but we'll clamp to be safe.
+            glm::vec2 uv(
+                CesiumUtility::Math::clamp(
+                    (projectedPosition.x - rectangle.minimumX) /
+                        rectangle.computeWidth(),
+                    0.0,
+                    1.0),
+                CesiumUtility::Math::clamp(
+                    (projectedPosition.y - rectangle.minimumY) /
+                        rectangle.computeHeight(),
+                    0.0,
+                    1.0));
+
+            uvWriters[projectionIndex][positionIndex] = uv;
           }
         }
-
-        // Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and
-        // (1.0, 1.0) at the (maximumX, maximumY) corner. The coordinates
-        // should stay inside these bounds if the input rectangle actually
-        // bounds the vertices, but we'll clamp to be safe.
-        glm::vec2 uv(
-            CesiumUtility::Math::clamp(
-                (projectedPosition.x - rectangle.minimumX) /
-                    rectangle.computeWidth(),
-                0.0,
-                1.0),
-            CesiumUtility::Math::clamp(
-                (projectedPosition.y - rectangle.minimumY) /
-                    rectangle.computeHeight(),
-                0.0,
-                1.0));
-
-        uvWriters[projectionIndex][positionIndex] = uv;
-      }
-    }
-  };
+      };
 
   gltf.forEachPrimitiveInScene(-1, createTextureCoordinatesForPrimitive);
 
   return TileContentDetailsForOverlays{
       std::move(projections),
       std::move(rectangles),
-      CesiumGeospatial::BoundingRegion(
-          CesiumGeospatial::GlobeRectangle(west, south, east, north),
-          minimumHeight,
-          maximumHeight)};
+      computedBounds.toRegion()};
 }
 
 /*static*/ CesiumGeospatial::BoundingRegion GltfContent::computeBoundingRegion(
@@ -399,28 +388,18 @@ GltfContent::createRasterOverlayTextureCoordinates(
   rootTransform = applyRtcCenter(gltf, rootTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
-  double west = CesiumUtility::Math::ONE_PI;
-  double south = CesiumUtility::Math::PI_OVER_TWO;
-  double east = -CesiumUtility::Math::ONE_PI;
-  double north = -CesiumUtility::Math::PI_OVER_TWO;
-  double minimumHeight = std::numeric_limits<double>::max();
-  double maximumHeight = std::numeric_limits<double>::lowest();
-  bool haveFirst = false;
+  // When computing the tile's bounds, ignore tiles that are less than 1/1000th
+  // of a tile width from the North or South pole. Longitudes cannot be trusted
+  // at such extreme latitudes.
+  BoundingRegionBuilder computedBounds;
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [&rootTransform,
-       &west,
-       &south,
-       &east,
-       &north,
-       &minimumHeight,
-       &maximumHeight,
-       &haveFirst](
-          const Model& gltf_,
-          const Node& /*node*/,
-          const Mesh& /*mesh*/,
-          const MeshPrimitive& primitive,
+      [&rootTransform, &computedBounds](
+          const CesiumGltf::Model& gltf_,
+          const CesiumGltf::Node& /*node*/,
+          const CesiumGltf::Mesh& /*mesh*/,
+          const CesiumGltf::MeshPrimitive& primitive,
           const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {
@@ -456,49 +435,11 @@ GltfContent::createRasterOverlayTextureCoordinates(
             continue;
           }
 
-          double longitude = cartographic->longitude;
-          double latitude = cartographic->latitude;
-          double height = cartographic->height;
-
-          if (haveFirst) {
-            // Check if we've crossed the anti-meridian relative to the first
-            // point and if so adjust so our min/maxes below have the expected
-            // result.
-            double difference = longitude - west;
-            if (difference > Math::ONE_PI) {
-              longitude -= Math::TWO_PI;
-            } else if (difference < -Math::ONE_PI) {
-              longitude += Math::TWO_PI;
-            }
-          } else {
-            haveFirst = true;
-          }
-
-          // The computation of longitude is very unstable at the poles,
-          // so don't let extreme latitudes affect the longitude bounding box.
-          if (glm::abs(
-                  glm::abs(cartographic->latitude) -
-                  CesiumUtility::Math::PI_OVER_TWO) >
-              CesiumUtility::Math::EPSILON6) {
-            west = glm::min(west, longitude);
-            east = glm::max(east, longitude);
-          }
-          south = glm::min(south, latitude);
-          north = glm::max(north, latitude);
-          minimumHeight = glm::min(minimumHeight, height);
-          maximumHeight = glm::max(maximumHeight, height);
+          computedBounds.expandToIncludePosition(*cartographic);
         }
       });
 
-  // Put longitudes back in the -PI to PI range, which may make east < west but
-  // that's ok.
-  west = Math::negativePiToPi(west);
-  east = Math::negativePiToPi(east);
-
-  return CesiumGeospatial::BoundingRegion(
-      CesiumGeospatial::GlobeRectangle(west, south, east, north),
-      minimumHeight,
-      maximumHeight);
+  return computedBounds.toRegion();
 }
 
 /*static*/ glm::dmat4x4 GltfContent::applyRtcCenter(

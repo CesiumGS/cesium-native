@@ -4,7 +4,7 @@ const fs = require("fs");
 const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
 const generateCombinedWriter = require("./generateCombinedWriter");
-const generateExtensionRegistration = require("./generateExtensionRegistration");
+const generateRegisterExtensions = require("./generateRegisterExtensions");
 
 const argv = yargs.options({
   schema: {
@@ -48,12 +48,12 @@ const argv = yargs.options({
     type: "string",
   },
   readerNamespace: {
-    description: "Namespace to put the generated reader methods in.",
+    description: "Namespace to put the generated reader classes in.",
     demandOption: true,
     type: "string",
   },
   writerNamespace: {
-    description: "Namespace to put the generated writer methods in.",
+    description: "Namespace to put the generated writer classes in.",
     demandOption: true,
     type: "string",
   },
@@ -138,7 +138,7 @@ for (const extension of config.extensions) {
       continue;
     }
 
-    if (!options.extensions[objectToExtend]) {
+    if (!options.extensions[objectToExtendSchema.title]) {
       options.extensions[objectToExtendSchema.title] = [];
     }
 
@@ -174,17 +174,15 @@ if (additionalSchemas) {
   }
 }
 
-const extensionRegistrationOptions = {
+generateRegisterExtensions({
   readerOutputDir: argv.readerOutput,
   config: config,
   namespace: argv.namespace,
   readerNamespace: argv.readerNamespace,
-  extensions: options.extensions
-};
+  extensions: options.extensions,
+});
 
-generateExtensionRegistration(extensionRegistrationOptions);
-
-const writerOptions = {
+generateCombinedWriter({
   writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
@@ -192,6 +190,4 @@ const writerOptions = {
   rootSchema: rootSchema,
   writers: writers,
   extensions: options.extensions,
-};
-
-generateCombinedWriter(writerOptions);
+});

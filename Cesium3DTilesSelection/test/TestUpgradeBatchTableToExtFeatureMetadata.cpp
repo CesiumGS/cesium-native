@@ -129,7 +129,9 @@ static void createTestForScalarJson(
           batchTableJson.GetAllocator());
       scalarProperty.PushBack(value, batchTableJson.GetAllocator());
     } else {
-      scalarProperty.PushBack(expected[i], batchTableJson.GetAllocator());
+      scalarProperty.PushBack(
+          ExpectedType(expected[i]),
+          batchTableJson.GetAllocator());
     }
   }
 
@@ -202,7 +204,9 @@ static void createTestForArrayJson(
             batchTableJson.GetAllocator());
         innerArray.PushBack(value, batchTableJson.GetAllocator());
       } else {
-        innerArray.PushBack(expected[i][j], batchTableJson.GetAllocator());
+        innerArray.PushBack(
+            ExpectedType(expected[i][j]),
+            batchTableJson.GetAllocator());
       }
     }
     fixedArrayProperties.PushBack(innerArray, batchTableJson.GetAllocator());

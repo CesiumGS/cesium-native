@@ -21,7 +21,8 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
-/*static*/ GltfReader RasterOverlayTileProvider::_gltfReader{};
+/*static*/ CesiumGltfReader::GltfReader
+    RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
@@ -176,7 +177,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             const gsl::span<const std::byte> data = pResponse->data();
 
-            ImageReaderResult loadedImage =
+            CesiumGltfReader::ImageReaderResult loadedImage =
                 RasterOverlayTileProvider::_gltfReader.readImage(data);
 
             if (!loadedImage.errors.empty()) {

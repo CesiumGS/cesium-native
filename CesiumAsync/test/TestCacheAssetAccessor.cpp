@@ -14,6 +14,8 @@
 
 using namespace CesiumAsync;
 
+namespace {
+
 class MockStoreCacheDatabase : public ICacheDatabase {
 public:
   struct StoreRequestParameters {
@@ -113,6 +115,8 @@ class MockTaskProcessor : public ITaskProcessor {
 public:
   virtual void startTask(std::function<void()> f) override { f(); }
 };
+
+} // namespace
 
 TEST_CASE("Test the condition of caching the request") {
   SECTION("Cache request") {

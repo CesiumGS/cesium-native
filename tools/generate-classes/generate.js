@@ -15,7 +15,7 @@ function generate(options, schema, writers) {
     namespace,
     readerNamespace,
     writerNamespace,
-    extensions,
+    extensions
   } = options;
 
   const name = getNameFromTitle(config, schema.title);
@@ -128,7 +128,7 @@ function generate(options, schema, writers) {
     lodash.flatten(properties.map((property) => property.readerLocalTypes))
   );
 
-  const baseReader = getReaderName(base);
+  const baseReader = getReaderName(base, readerNamespace);
 
   // prettier-ignore
   const readerHeader = `
@@ -517,6 +517,13 @@ function privateSpecConstructor(name) {
 
 const qualifiedTypeNameRegex = /(?:(?<namespace>.+)::)?(?<name>.+)/;
 
+function getReaderNamespace(namespace, readerNamespace) {
+  if (namespace === "CesiumUtility") {
+    return "CesiumJsonReader";
+  }
+  return readerNamespace;
+}
+
 function getIncludeFromName(name, namespace) {
   const pieces = name.match(qualifiedTypeNameRegex);
   if (pieces && pieces.groups && pieces.groups.namespace) {
@@ -530,27 +537,14 @@ function getIncludeFromName(name, namespace) {
   }
 }
 
-function getReaderNamespace(namespace) {
-  let readerNamespace = namespace;
-  // CesiumUtility types have their corresponding reader classes in CesiumJsonReader
-  if (namespace === "CesiumUtility") {
-    readerNamespace = "CesiumJsonReader";
-  }
-  // CesiumGltf types have their corresponding reader classes in CesiumGltfReader
-  else if (namespace === "CesiumGltf") {
-    readerNamespace = "CesiumGltfReader";
-  }
-  // Cesium3DTiles types have their corresponding reader classes in Cesium3DTilesReader
-  else if (namespace === "Cesium3DTiles") {
-    readerNamespace = "Cesium3DTilesReader";
-  }
-  return readerNamespace;
-}
 
 function getReaderIncludeFromName(name, readerNamespace) {
   const pieces = name.match(qualifiedTypeNameRegex);
   if (pieces && pieces.groups && pieces.groups.namespace) {
-    const namespace = getReaderNamespace(pieces.groups.namespace);
+    const namespace = getReaderNamespace(
+      pieces.groups.namespace,
+      readerNamespace
+    );
     const includeStart = namespace === readerNamespace ? `"` : `<`;
     const includeEnd = namespace === readerNamespace ? `"` : `>`;
     return `${includeStart}${namespace}/${pieces.groups.name}JsonHandler.h${includeEnd}`;
@@ -559,10 +553,13 @@ function getReaderIncludeFromName(name, readerNamespace) {
   }
 }
 
-function getReaderName(name) {
+function getReaderName(name, readerNamespace) {
   const pieces = name.match(qualifiedTypeNameRegex);
   if (pieces && pieces.groups && pieces.groups.namespace) {
-    const namespace = getReaderNamespace(pieces.groups.namespace);
+    const namespace = getReaderNamespace(
+      pieces.groups.namespace,
+      readerNamespace
+    );
     return `${namespace}::${pieces.groups.name}JsonHandler`;
   } else {
     return `${name}JsonHandler`;
