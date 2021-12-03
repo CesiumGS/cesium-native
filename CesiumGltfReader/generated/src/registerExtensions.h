@@ -8,4 +8,4 @@ class ExtensionReaderContext;
 
 namespace CesiumGltfReader {
 void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-};
+}

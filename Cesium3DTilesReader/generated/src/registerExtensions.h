@@ -8,4 +8,4 @@ class ExtensionReaderContext;
 
 namespace Cesium3DTilesReader {
 void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-};
+}

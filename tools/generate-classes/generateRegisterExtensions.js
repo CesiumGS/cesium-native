@@ -45,7 +45,7 @@ function generateRegisterExtensions(options) {
         
         namespace ${readerNamespace} {
         void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-        };
+        }
     `;
 
   const implementation = `
