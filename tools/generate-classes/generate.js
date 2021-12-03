@@ -60,7 +60,7 @@ function generate(options, schema) {
 
   // Prevent header from including itself for recursive types like Tile
   headers = headers.filter((header) => {
-    return header !== `"${name}.h"`;
+    return header !== `"${namespace}/${name}.h"`;
   });
 
   headers.sort();
@@ -211,12 +211,7 @@ function generate(options, schema) {
         }
   `;
 
-  const readerHeaderOutputDir = path.join(
-    readerOutputDir,
-    "generated",
-    "src",
-    readerNamespace
-  );
+  const readerHeaderOutputDir = path.join(readerOutputDir, "generated", "src");
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
 
   const readerHeaderOutputPath = path.join(
@@ -394,11 +389,13 @@ function getReaderIncludeFromName(name, readerNamespace) {
       pieces.groups.namespace,
       readerNamespace
     );
-    const includeStart = namespace === readerNamespace ? `"` : `<`;
-    const includeEnd = namespace === readerNamespace ? `"` : `>`;
-    return `${includeStart}${namespace}/${pieces.groups.name}JsonHandler.h${includeEnd}`;
+    if (namespace === readerNamespace) {
+      return `"${pieces.groups.name}JsonHandler.h"`;
+    } else {
+      return `<${namespace}/${pieces.groups.name}JsonHandler.h>`;
+    }
   } else {
-    return `"${readerNamespace}/${name}JsonHandler.h"`;
+    return `"${name}JsonHandler.h"`;
   }
 }
 

@@ -68,8 +68,7 @@ if (argv.oneHandlerFile) {
   const readerHeaderOutputDir = path.join(
     argv.readerOutput,
     "generated",
-    "src",
-    argv.readerNamespace
+    "src"
   );
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
   const readerSourceOutputPath = path.join(

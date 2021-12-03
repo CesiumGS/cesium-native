@@ -4,7 +4,6 @@
 
 #include "BoundingVolumeJsonHandler.h"
 #include "ContentJsonHandler.h"
-#include "TileJsonHandler.h"
 
 #include <Cesium3DTiles/Tile.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>

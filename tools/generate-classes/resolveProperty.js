@@ -141,7 +141,7 @@ function resolveProperty(
           ...(makeOptional ? ["<optional>"] : []),
         ],
         readerType: `${type}JsonHandler`,
-        readerHeaders: [`"${readerNamespace}/${type}JsonHandler.h"`],
+        readerHeaders: [`"${type}JsonHandler.h"`],
         schemas: [itemSchema],
       };
     }
