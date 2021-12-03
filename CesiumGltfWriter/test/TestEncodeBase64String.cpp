@@ -1,4 +1,4 @@
-#include "CesiumGltfWriter/EncodeBase64String.h"
+#include "EncodeBase64String.h"
 
 #include <catch2/catch.hpp>
 

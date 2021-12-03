@@ -2,10 +2,10 @@ add_library(CesiumJsonWriter "")
 configure_cesium_library(CesiumJsonWriter)
 
 cesium_glob_files(CESIUM_JSON_WRITER_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumJsonWriter/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
 )
 cesium_glob_files(CESIUM_JSON_WRITER_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumJsonWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
 )
 cesium_glob_files(CESIUM_JSON_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumJsonWriter/*.h

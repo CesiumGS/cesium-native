@@ -1,4 +1,4 @@
-#include "CesiumGltfWriter/BufferWriter.h"
+#include "BufferWriter.h"
 #include "CesiumGltfWriter/WriteModelOptions.h"
 #include "CesiumGltfWriter/WriteModelResult.h"
 

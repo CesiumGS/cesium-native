@@ -2,12 +2,12 @@ add_library(CesiumGltfReader "")
 configure_cesium_library(CesiumGltfReader)
 
 cesium_glob_files(CESIUM_GLTF_READER_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
 )
 cesium_glob_files(CESIUM_GLTF_READER_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltfReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
 )
 cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfReader/*.h
