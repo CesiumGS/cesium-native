@@ -655,6 +655,9 @@ private:
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
+
+  template <typename TDerived>
+  friend class TilesetLoadPipeline;
 };
 
 } // namespace Cesium3DTilesSelection

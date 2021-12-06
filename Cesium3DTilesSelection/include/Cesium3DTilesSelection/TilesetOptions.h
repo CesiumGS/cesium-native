@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -10,6 +11,8 @@
 namespace Cesium3DTilesSelection {
 
 class ITileExcluder;
+struct TilesetLoadFailureDetails;
+struct TilesetLoadFailureAction;
 
 /**
  * @brief Options for configuring the parsing of a {@link Tileset}'s content
@@ -204,6 +207,17 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * should not be loaded, it will not be loaded.
    */
   std::vector<std::shared_ptr<ITileExcluder>> excluders;
+
+  /**
+   * @brief A callback function that is invoked when a tileset resource fails to
+   * load.
+   *
+   * The callback may asynchronously decide what to do in response to the
+   * failure.
+   */
+  std::function<CesiumAsync::Future<TilesetLoadFailureAction>(
+      const TilesetLoadFailureDetails&)>
+      loadErrorCallback;
 
   /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content

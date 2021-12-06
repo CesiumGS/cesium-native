@@ -7,7 +7,9 @@
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "IonAssetPipeline.h"
 #include "TileUtilities.h"
 #include "calcQuadtreeMaxGeometricError.h"
 
@@ -111,6 +113,11 @@ Tileset::Tileset(
 
   ++this->_loadsInProgress;
 
+  IntrusivePointer<IonAssetPipeline> pPipeline = new IonAssetPipeline(*this);
+  pPipeline->run();
+
+  // this->_externals.pAssetAccessor->requestAsset(this->_asyncSystem, ionUrl).thenInMainThread()
+
   this->_externals.pAssetAccessor->requestAsset(this->_asyncSystem, ionUrl)
       .thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
         return this->_handleAssetResponse(std::move(pRequest));
@@ -156,10 +163,13 @@ Future<void>
 Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
-    SPDLOG_LOGGER_ERROR(
-        this->_externals.pLogger,
+    std::string message = fmt::format(
         "No response received for asset request {}",
         pRequest->url());
+    this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
+        TilesetLoadType::CesiumIon,
+        std::move(pRequest),
+        message});
     this->notifyTileDoneLoading(nullptr);
     return this->getAsyncSystem().createResolvedFuture();
   }
