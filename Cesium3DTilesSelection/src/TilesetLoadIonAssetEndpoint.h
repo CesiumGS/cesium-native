@@ -18,4 +18,4 @@ private:
   struct Private;
 };
 
-}; // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesSelection

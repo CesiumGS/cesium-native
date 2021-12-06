@@ -29,4 +29,4 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger);
 };
 
-}; // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesSelection
