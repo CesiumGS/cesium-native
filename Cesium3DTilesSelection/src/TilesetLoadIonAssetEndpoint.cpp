@@ -144,7 +144,7 @@ Future<void> Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
   pContext->baseUrl = url;
   pContext->requestHeaders.push_back(
       std::make_pair("Authorization", "Bearer " + accessToken));
-  pContext->failedTileCallback = [&tileset](Tile& failedTile) {
+  pContext->failedTileCallback = [](Tile& failedTile) {
     return Private::onIonTileFailed(failedTile);
   };
   return LoadTilesetDotJson::start(
