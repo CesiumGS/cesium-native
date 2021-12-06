@@ -4,8 +4,8 @@
 
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
-void CesiumGltf::writeScene(
-    const std::vector<Scene>& scenes,
+void CesiumGltfWriter::writeScene(
+    const std::vector<CesiumGltf::Scene>& scenes,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (scenes.empty()) {

@@ -1,8 +1,11 @@
-#include "CesiumGltf/Writer.h"
+#include "CesiumGltfWriter/Writer.h"
 
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
+#include "BufferViewWriter.h"
+#include "BufferWriter.h"
+#include "CameraWriter.h"
 #include "ExtensionWriter.h"
 #include "ImageWriter.h"
 #include "MaterialWriter.h"
@@ -14,17 +17,13 @@
 #include "TextureWriter.h"
 #include "WriteBinaryGLB.h"
 
-#include <CesiumGltf/WriteGLTFCallback.h>
-#include <CesiumGltf/WriteModelOptions.h>
-#include <CesiumGltf/Writer.h>
+#include <CesiumGltfWriter/WriteGLTFCallback.h>
+#include <CesiumGltfWriter/WriteModelOptions.h>
+#include <CesiumGltfWriter/Writer.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
-
-#include <BufferViewWriter.h>
-#include <BufferWriter.h>
-#include <CameraWriter.h>
 
 #include <array>
 #include <cstdio>
@@ -35,19 +34,20 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-WriteModelResult writeModel(
+CesiumGltfWriter::WriteModelResult writeModel(
     const Model& model,
-    const WriteModelOptions& options,
+    const CesiumGltfWriter::WriteModelOptions& options,
     std::string_view filename,
-    const WriteGLTFCallback& writeGLTFCallback = noopGltfWriter);
+    const CesiumGltfWriter::WriteGLTFCallback& writeGLTFCallback =
+        CesiumGltfWriter::noopGltfWriter);
 
-WriteModelResult CesiumGltf::writeModelAsEmbeddedBytes(
+CesiumGltfWriter::WriteModelResult CesiumGltfWriter::writeModelAsEmbeddedBytes(
     const Model& model,
     const WriteModelOptions& options) {
   return writeModel(model, options, "");
 }
 
-WriteModelResult CesiumGltf::writeModelAndExternalFiles(
+CesiumGltfWriter::WriteModelResult CesiumGltfWriter::writeModelAndExternalFiles(
     const Model& model,
     const WriteModelOptions& options,
     std::string_view filename,
@@ -55,13 +55,13 @@ WriteModelResult CesiumGltf::writeModelAndExternalFiles(
   return writeModel(model, options, filename, writeGLTFCallback);
 }
 
-WriteModelResult writeModel(
+CesiumGltfWriter::WriteModelResult writeModel(
     const Model& model,
-    const WriteModelOptions& options,
+    const CesiumGltfWriter::WriteModelOptions& options,
     std::string_view filename,
-    const WriteGLTFCallback& writeGLTFCallback) {
+    const CesiumGltfWriter::WriteGLTFCallback& writeGLTFCallback) {
 
-  WriteModelResult result;
+  CesiumGltfWriter::WriteModelResult result;
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -88,31 +88,31 @@ WriteModelResult writeModel(
     });
   }
 
-  CesiumGltf::writeAccessor(model.accessors, *writer);
-  CesiumGltf::writeAnimation(result, model.animations, *writer);
-  CesiumGltf::writeAsset(model.asset, *writer);
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeAccessor(model.accessors, *writer);
+  CesiumGltfWriter::writeAnimation(result, model.animations, *writer);
+  CesiumGltfWriter::writeAsset(model.asset, *writer);
+  CesiumGltfWriter::writeBuffer(
       result,
       model.buffers,
       *writer,
       options,
       writeGLTFCallback);
-  CesiumGltf::writeBufferView(model.bufferViews, *writer);
-  CesiumGltf::writeCamera(model.cameras, *writer);
-  CesiumGltf::writeImage(
+  CesiumGltfWriter::writeBufferView(model.bufferViews, *writer);
+  CesiumGltfWriter::writeCamera(model.cameras, *writer);
+  CesiumGltfWriter::writeImage(
       result,
       model.images,
       *writer,
       options,
       writeGLTFCallback);
-  CesiumGltf::writeMaterial(model.materials, *writer);
-  CesiumGltf::writeMesh(model.meshes, *writer);
-  CesiumGltf::writeNode(model.nodes, *writer);
-  CesiumGltf::writeSampler(model.samplers, *writer);
-  CesiumGltf::writeScene(model.scenes, *writer);
-  CesiumGltf::writeSkin(model.skins, *writer);
-  CesiumGltf::writeTexture(model.textures, *writer);
-  CesiumGltf::writeExtensions(model.extensions, *writer);
+  CesiumGltfWriter::writeMaterial(model.materials, *writer);
+  CesiumGltfWriter::writeMesh(model.meshes, *writer);
+  CesiumGltfWriter::writeNode(model.nodes, *writer);
+  CesiumGltfWriter::writeSampler(model.samplers, *writer);
+  CesiumGltfWriter::writeScene(model.scenes, *writer);
+  CesiumGltfWriter::writeSkin(model.skins, *writer);
+  CesiumGltfWriter::writeTexture(model.textures, *writer);
+  CesiumGltfWriter::writeExtensions(model.extensions, *writer);
 
   if (!model.extras.empty()) {
     CesiumJsonWriter::writeJsonValue(model.extras, *writer);
@@ -120,14 +120,15 @@ WriteModelResult writeModel(
 
   writer->EndObject();
 
-  if (options.exportType == GltfExportType::GLB) {
+  if (options.exportType == CesiumGltfWriter::GltfExportType::GLB) {
     if (model.buffers.empty()) {
-      result.gltfAssetBytes =
-          writeBinaryGLB(std::vector<std::byte>{}, writer->toStringView());
+      result.gltfAssetBytes = CesiumGltfWriter::writeBinaryGLB(
+          std::vector<std::byte>{},
+          writer->toStringView());
     }
 
     else {
-      result.gltfAssetBytes = writeBinaryGLB(
+      result.gltfAssetBytes = CesiumGltfWriter::writeBinaryGLB(
           model.buffers.at(0).cesium.data,
           writer->toStringView());
     }

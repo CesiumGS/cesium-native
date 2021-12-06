@@ -4,14 +4,14 @@
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
 
-#include <CesiumGltf/WriteModelOptions.h>
+#include <CesiumGltfWriter/WriteModelOptions.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
 #include <string_view>
 
-void CesiumGltf::writeBuffer(
+void CesiumGltfWriter::writeBuffer(
     WriteModelResult& result,
-    const std::vector<Buffer>& buffers,
+    const std::vector<CesiumGltf::Buffer>& buffers,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const WriteModelOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
@@ -54,7 +54,7 @@ void CesiumGltf::writeBuffer(
     else if (isBase64URI) {
       if (!isDataBufferEmpty) {
         const std::string culpableBuffer = "buffers[" + std::to_string(i) + "]";
-        std::string error = "AmbiguiousDataSource: " + culpableBuffer + " " +
+        std::string error = "AmbiguousDataSource: " + culpableBuffer + " " +
                             "has a base64 data uri but " + culpableBuffer +
                             ".cesium.data should be empty if " +
                             culpableBuffer + ".uri is a base64 uri";

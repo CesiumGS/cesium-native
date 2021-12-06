@@ -1,23 +1,12 @@
-#include "Cesium3DTiles/TilesetReader.h"
+#include "Cesium3DTilesReader/TilesetReader.h"
 
-#include "CesiumUtility/Tracing.h"
-#include "Extension3dTilesContentGltfJsonHandler.h"
 #include "TilesetJsonHandler.h"
+#include "registerExtensions.h"
 
-#include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Tracing.h>
 
-#include <rapidjson/reader.h>
-
-#include <algorithm>
-#include <cstddef>
-#include <iomanip>
-#include <sstream>
-#include <string>
-
-using namespace Cesium3DTiles;
-using namespace CesiumJsonReader;
-using namespace CesiumUtility;
+namespace Cesium3DTilesReader {
 
 namespace {
 
@@ -25,11 +14,11 @@ TilesetReaderResult readTilesetJson(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  CESIUM_TRACE("Cesium3DTiles::TilesetReader::readTilesetJson");
+  CESIUM_TRACE("Cesium3DTilesReader::TilesetReader::readTilesetJson");
 
   TilesetJsonHandler tilesetHandler(context);
-  ReadJsonResult<Tileset> jsonResult =
-      JsonReader::readJson(data, tilesetHandler);
+  CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Tileset> jsonResult =
+      CesiumJsonReader::JsonReader::readJson(data, tilesetHandler);
 
   return TilesetReaderResult{
       std::move(jsonResult.value),
@@ -39,10 +28,7 @@ TilesetReaderResult readTilesetJson(
 
 } // namespace
 
-TilesetReader::TilesetReader() {
-  this->_context
-      .registerExtension<Tileset, Extension3dTilesContentGltfJsonHandler>();
-}
+TilesetReader::TilesetReader() { registerExtensions(this->_context); }
 
 CesiumJsonReader::ExtensionReaderContext& TilesetReader::getExtensions() {
   return this->_context;
@@ -62,3 +48,4 @@ TilesetReaderResult TilesetReader::readTileset(
 
   return result;
 }
+} // namespace Cesium3DTilesReader

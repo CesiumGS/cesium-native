@@ -5,8 +5,8 @@
 
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeSampler(
-    const std::vector<Sampler>& samplers,
+    const std::vector<CesiumGltf::Sampler>& samplers,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

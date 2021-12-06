@@ -6,7 +6,7 @@
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltf/GltfReader.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <spdlog/fwd.h>
@@ -398,6 +398,6 @@ private:
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");
 
-  static CesiumGltf::GltfReader _gltfReader;
+  static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesSelection

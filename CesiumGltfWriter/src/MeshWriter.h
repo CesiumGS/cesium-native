@@ -5,8 +5,8 @@
 
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeMesh(
-    const std::vector<Mesh>& meshes,
+    const std::vector<CesiumGltf::Mesh>& meshes,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }
