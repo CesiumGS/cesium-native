@@ -15,6 +15,7 @@
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumAsync;
+using namespace CesiumUtility;
 
 struct Tileset::LoadIonAssetEndpoint::Private {
   static CesiumAsync::Future<void> mainThreadHandleResponse(
