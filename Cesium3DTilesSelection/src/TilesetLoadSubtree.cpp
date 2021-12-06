@@ -70,8 +70,8 @@ Future<void> Tileset::LoadSubtree::start(
                 std::unique_ptr<AvailabilitySubtree>(nullptr));
           })
       .thenInMainThread(
-          [&tileset, loadRecord, pNewNode](
-              std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
+          [loadRecord,
+           pNewNode](std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
             if (loadRecord.pTile && pNewNode) {
               TileContext* pContext = loadRecord.pTile->getContext();
               if (pContext && pContext->implicitContext) {
