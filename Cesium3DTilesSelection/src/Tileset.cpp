@@ -1,32 +1,22 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 
-#include "AvailabilitySubtreeContent.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "TileUtilities.h"
 #include "TilesetLoadIonAssetEndpoint.h"
+#include "TilesetLoadSubtree.h"
 #include "TilesetLoadTileFromJson.h"
 #include "TilesetLoadTilesetDotJson.h"
 
 #include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/OctreeTilingScheme.h>
-#include <CesiumGeometry/QuadtreeAvailability.h>
-#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
-#include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
@@ -376,19 +366,6 @@ Tileset::requestTileContent(Tile& tile) {
   assert(!url.empty());
 
   this->notifyTileStartLoading(&tile);
-
-  return this->getExternals().pAssetAccessor->requestAsset(
-      this->getAsyncSystem(),
-      url,
-      tile.getContext()->requestHeaders);
-}
-
-CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-Tileset::requestAvailabilitySubtree(Tile& tile) {
-  std::string url = this->getResolvedSubtreeUrl(tile);
-  assert(!url.empty());
-
-  ++this->_subtreeLoadsInProgress;
 
   return this->getExternals().pAssetAccessor->requestAsset(
       this->getAsyncSystem(),
@@ -1302,80 +1279,6 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
   return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
 }
 
-std::string Tileset::getResolvedSubtreeUrl(const Tile& tile) const {
-  struct Operation {
-    const TileContext& context;
-
-    std::string operator()(const std::string& url) { return url; }
-
-    std::string operator()(const QuadtreeTileID& quadtreeID) {
-      if (!this->context.implicitContext ||
-          !this->context.implicitContext->subtreeTemplateUrl) {
-        return std::string();
-      }
-
-      return CesiumUtility::Uri::substituteTemplateParameters(
-          *this->context.implicitContext.value().subtreeTemplateUrl,
-          [this, &quadtreeID](const std::string& placeholder) -> std::string {
-            if (placeholder == "level" || placeholder == "z") {
-              return std::to_string(quadtreeID.level);
-            }
-            if (placeholder == "x") {
-              return std::to_string(quadtreeID.x);
-            }
-            if (placeholder == "y") {
-              return std::to_string(quadtreeID.y);
-            }
-            if (placeholder == "version") {
-              return this->context.version.value_or(std::string());
-            }
-
-            return placeholder;
-          });
-    }
-
-    std::string operator()(const OctreeTileID& octreeID) {
-      if (!this->context.implicitContext ||
-          !this->context.implicitContext->subtreeTemplateUrl) {
-        return std::string();
-      }
-
-      return CesiumUtility::Uri::substituteTemplateParameters(
-          *this->context.implicitContext.value().subtreeTemplateUrl,
-          [this, &octreeID](const std::string& placeholder) -> std::string {
-            if (placeholder == "level") {
-              return std::to_string(octreeID.level);
-            }
-            if (placeholder == "x") {
-              return std::to_string(octreeID.x);
-            }
-            if (placeholder == "y") {
-              return std::to_string(octreeID.y);
-            }
-            if (placeholder == "z") {
-              return std::to_string(octreeID.z);
-            }
-            if (placeholder == "version") {
-              return this->context.version.value_or(std::string());
-            }
-
-            return placeholder;
-          });
-    }
-
-    std::string operator()(UpsampledQuadtreeNode /*subdividedParent*/) {
-      return std::string();
-    }
-  };
-
-  std::string url = std::visit(Operation{*tile.getContext()}, tile.getTileID());
-  if (url.empty()) {
-    return url;
-  }
-
-  return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
-}
-
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
@@ -1491,85 +1394,6 @@ void Tileset::processQueue(
   }
 }
 
-void Tileset::loadSubtree(const SubtreeLoadRecord& loadRecord) {
-  if (!loadRecord.pTile) {
-    return;
-  }
-
-  ImplicitTilingContext& implicitContext =
-      *loadRecord.pTile->getContext()->implicitContext;
-
-  const TileID& tileID = loadRecord.pTile->getTileID();
-  const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-  const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-  AvailabilityNode* pNewNode = nullptr;
-
-  if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-    pNewNode = implicitContext.quadtreeAvailability->addNode(
-        *pQuadtreeID,
-        loadRecord.implicitInfo.pParentNode);
-  } else if (pOctreeID && implicitContext.octreeAvailability) {
-    pNewNode = implicitContext.octreeAvailability->addNode(
-        *pOctreeID,
-        loadRecord.implicitInfo.pParentNode);
-  }
-
-  this->requestAvailabilitySubtree(*loadRecord.pTile)
-      .thenInWorkerThread(
-          [asyncSystem = this->getAsyncSystem(),
-           pLogger = this->getExternals().pLogger,
-           pAssetAccessor = this->getExternals().pAssetAccessor](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
-            const IAssetResponse* pResponse = pRequest->response();
-
-            if (pResponse) {
-              uint16_t statusCode = pResponse->statusCode();
-              if (statusCode == 0 || (statusCode >= 200 && statusCode < 300)) {
-                return AvailabilitySubtreeContent::load(
-                    asyncSystem,
-                    pLogger,
-                    pRequest->url(),
-                    pResponse->data(),
-                    pAssetAccessor,
-                    pRequest->headers());
-              }
-            }
-
-            return asyncSystem.createResolvedFuture(
-                std::unique_ptr<AvailabilitySubtree>(nullptr));
-          })
-      .thenInMainThread(
-          [this, loadRecord, pNewNode](
-              std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
-            --this->_subtreeLoadsInProgress;
-            if (loadRecord.pTile && pNewNode) {
-              TileContext* pContext = loadRecord.pTile->getContext();
-              if (pContext && pContext->implicitContext) {
-                ImplicitTilingContext& implicitContext =
-                    *pContext->implicitContext;
-                if (loadRecord.implicitInfo.usingImplicitQuadtreeTiling) {
-                  implicitContext.quadtreeAvailability->addLoadedSubtree(
-                      pNewNode,
-                      std::move(*pSubtree.release()));
-                } else if (loadRecord.implicitInfo.usingImplicitOctreeTiling) {
-                  implicitContext.octreeAvailability->addLoadedSubtree(
-                      pNewNode,
-                      std::move(*pSubtree.release()));
-                }
-              }
-            }
-          })
-      .catchInMainThread([this, &tileID](const std::exception& e) {
-        SPDLOG_LOGGER_ERROR(
-            this->_externals.pLogger,
-            "Unhandled error while loading the subtree for tile id {}: {}",
-            TileIdUtilities::createTileIdString(tileID),
-            e.what());
-        --this->_subtreeLoadsInProgress;
-      });
-}
-
 void Tileset::addSubtreeToLoadQueue(
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo,
@@ -1596,7 +1420,10 @@ void Tileset::processSubtreeQueue() {
 
   for (SubtreeLoadRecord& record : this->_subtreeLoadQueue) {
     // TODO: tracing code here
-    loadSubtree(record);
+    ++this->_subtreeLoadsInProgress;
+    LoadSubtree::start(*this, record).thenInMainThread([this]() {
+      --this->_subtreeLoadsInProgress;
+    });
     if (this->_subtreeLoadsInProgress >=
         this->_options.maximumSimultaneousSubtreeLoads) {
       break;

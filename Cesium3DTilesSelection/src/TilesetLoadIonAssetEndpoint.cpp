@@ -203,11 +203,12 @@ bool updateContextWithNewToken(
 
 } // namespace
 
-void Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleTokenRefreshResponse(
-    Tileset& tileset,
-    std::shared_ptr<IAssetRequest>&& pIonRequest,
-    TileContext* pContext,
-    const std::shared_ptr<spdlog::logger>& pLogger) {
+void Tileset::LoadIonAssetEndpoint::Private::
+    mainThreadHandleTokenRefreshResponse(
+        Tileset& tileset,
+        std::shared_ptr<IAssetRequest>&& pIonRequest,
+        TileContext* pContext,
+        const std::shared_ptr<spdlog::logger>& pLogger) {
   const IAssetResponse* pIonResponse = pIonRequest->response();
 
   bool failed = true;

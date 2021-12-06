@@ -495,7 +495,6 @@ private:
   void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
-  std::string getResolvedSubtreeUrl(const Tile& tile) const;
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
@@ -605,7 +604,6 @@ private:
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
-  void loadSubtree(const SubtreeLoadRecord& loadRecord);
   void addSubtreeToLoadQueue(
       Tile& tile,
       const ImplicitTraversalInfo& implicitInfo,
@@ -618,6 +616,7 @@ private:
   class LoadIonAssetEndpoint;
   class LoadTilesetDotJson;
   class LoadTileFromJson;
+  class LoadSubtree;
 };
 
 } // namespace Cesium3DTilesSelection
