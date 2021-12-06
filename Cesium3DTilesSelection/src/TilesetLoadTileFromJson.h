@@ -8,10 +8,6 @@
 #include <rapidjson/fwd.h>
 #include <spdlog/fwd.h>
 
-namespace CesiumAsync {
-class IAssetRequest;
-}
-
 namespace Cesium3DTilesSelection {
 
 class Tile;

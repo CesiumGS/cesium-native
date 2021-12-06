@@ -4,16 +4,7 @@
 
 #include <CesiumAsync/Future.h>
 
-#include <string>
-#include <vector>
-
-namespace CesiumAsync {
-class IAssetRequest;
-}
-
 namespace Cesium3DTilesSelection {
-
-class TileContext;
 
 /**
  * @brief Loads a tileset's implicitly-tiled subtree.

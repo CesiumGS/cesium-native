@@ -5,11 +5,8 @@
 #include <CesiumAsync/Future.h>
 
 #include <string>
+#include <utility>
 #include <vector>
-
-namespace CesiumAsync {
-class IAssetRequest;
-}
 
 namespace Cesium3DTilesSelection {
 
