@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 [[nodiscard]] std::string
 encodeAsBase64String(const std::vector<std::byte>& data) noexcept;
 }

@@ -1,6 +1,6 @@
 #include "BufferWriter.h"
-#include "CesiumGltf/WriteModelOptions.h"
-#include "CesiumGltf/WriteModelResult.h"
+#include "CesiumGltfWriter/WriteModelOptions.h"
+#include "CesiumGltfWriter/WriteModelResult.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumJsonWriter/JsonWriter.h>
@@ -36,13 +36,13 @@ TEST_CASE(
   // if a base64 conversion occured.
   buffer.byteLength = 1337;
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
   writer.StartObject();
-  CesiumGltf::WriteModelResult result;
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::WriteModelResult result;
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -91,14 +91,14 @@ TEST_CASE(
   // writing to an external file would occur.
   buffer.byteLength = 1337;
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
-  CesiumGltf::WriteModelResult result;
+  CesiumGltfWriter::WriteModelResult result;
 
   writer.StartObject();
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -132,12 +132,12 @@ TEST_CASE("Buffer that only has byteLength set is serialized correctly") {
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::WriteModelResult result;
+  CesiumGltfWriter::WriteModelResult result;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -158,11 +158,11 @@ TEST_CASE("URI zero CANNOT be set in GLB mode. (0th buffer is reserved as "
   buffer.uri = "literally anything here should trigger this error";
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLB;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -193,11 +193,11 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
 
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -210,7 +210,7 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
   REQUIRE(callbackInvoked);
 }
 
-TEST_CASE("AmbiguiousDataSource error returned if buffer.uri is set to base64 "
+TEST_CASE("AmbiguousDataSource error returned if buffer.uri is set to base64 "
           "uri and "
           "buffer.cesium.data also set") {
   CesiumGltf::Buffer buffer;
@@ -219,11 +219,11 @@ TEST_CASE("AmbiguiousDataSource error returned if buffer.uri is set to base64 "
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -233,7 +233,7 @@ TEST_CASE("AmbiguiousDataSource error returned if buffer.uri is set to base64 "
   REQUIRE(result.errors.size() == 1);
 
   const auto& errorString = result.errors.at(0);
-  REQUIRE(errorString.rfind("AmbiguiousDataSource", 0) == 0);
+  REQUIRE(errorString.rfind("AmbiguousDataSource", 0) == 0);
 }
 
 TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
@@ -244,11 +244,11 @@ TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -283,11 +283,11 @@ TEST_CASE("base64 uri set but byte length not set") {
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -306,11 +306,11 @@ TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLB;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -344,11 +344,11 @@ TEST_CASE("MissingDataSource error returned if ExternalFileURI detected and "
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
@@ -372,11 +372,11 @@ TEST_CASE("extras and extensions are detected and serialized") {
   CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteModelOptions options;
-  CesiumGltf::WriteModelResult result;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  CesiumGltfWriter::WriteModelResult result;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  CesiumGltf::writeBuffer(
+  CesiumGltfWriter::writeBuffer(
       result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,

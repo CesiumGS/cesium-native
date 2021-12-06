@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumGltf/Library.h"
 
 #include <cstddef>
 #include <cstdint>

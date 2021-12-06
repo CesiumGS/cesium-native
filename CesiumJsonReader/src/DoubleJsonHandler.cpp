@@ -1,7 +1,6 @@
 #include "CesiumJsonReader/DoubleJsonHandler.h"
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 DoubleJsonHandler::DoubleJsonHandler() noexcept : JsonHandler() {}
 
 void DoubleJsonHandler::reset(IJsonHandler* pParent, double* pDouble) {
@@ -38,3 +37,4 @@ IJsonHandler* DoubleJsonHandler::readDouble(double d) {
   *this->_pDouble = d;
   return this->parent();
 }
+} // namespace CesiumJsonReader

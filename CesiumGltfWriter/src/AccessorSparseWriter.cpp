@@ -26,7 +26,7 @@ void writeAccessorSparseIndices(
   j.KeyPrimitive("componentType", indices.componentType);
 
   if (!indices.extensions.empty()) {
-    CesiumGltf::writeExtensions(indices.extensions, j);
+    CesiumGltfWriter::writeExtensions(indices.extensions, j);
   }
 
   if (!indices.extras.empty()) {
@@ -49,7 +49,7 @@ void writeAccessorSparseValues(
   }
 
   if (!values.extensions.empty()) {
-    CesiumGltf::writeExtensions(values.extensions, j);
+    CesiumGltfWriter::writeExtensions(values.extensions, j);
   }
 
   if (!values.extras.empty()) {
@@ -58,8 +58,8 @@ void writeAccessorSparseValues(
   }
 }
 
-void CesiumGltf::writeAccessorSparse(
-    const AccessorSparse& accessorSparse,
+void CesiumGltfWriter::writeAccessorSparse(
+    const CesiumGltf::AccessorSparse& accessorSparse,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("sparse");

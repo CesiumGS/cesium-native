@@ -8,8 +8,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-void CesiumGltf::writeAccessor(
-    const std::vector<Accessor>& accessors,
+void CesiumGltfWriter::writeAccessor(
+    const std::vector<CesiumGltf::Accessor>& accessors,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (accessors.empty()) {

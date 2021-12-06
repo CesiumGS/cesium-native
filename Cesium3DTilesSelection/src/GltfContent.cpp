@@ -9,6 +9,7 @@
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/joinToString.h>
@@ -16,15 +17,16 @@
 #include <optional>
 #include <stdexcept>
 
+using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
-using namespace CesiumAsync;
-
-/*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
+/*static*/ CesiumGltfReader::GltfReader GltfContent::_gltfReader{};
 
 Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
@@ -47,7 +49,7 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
-  CesiumGltf::ModelReaderResult loadedModel =
+  CesiumGltfReader::ModelReaderResult loadedModel =
       GltfContent::_gltfReader.readModel(data);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
@@ -68,14 +70,14 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
-  return CesiumGltf::GltfReader::resolveExternalData(
+  return CesiumGltfReader::GltfReader::resolveExternalData(
              asyncSystem,
              url,
              headers,
              pAssetAccessor,
              std::move(loadedModel))
       .thenInWorkerThread(
-          [pLogger, url](CesiumGltf::ModelReaderResult&& resolvedModel) {
+          [pLogger, url](CesiumGltfReader::ModelReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =
                 std::make_unique<TileContentLoadResult>();
 

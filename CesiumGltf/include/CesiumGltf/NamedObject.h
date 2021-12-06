@@ -1,12 +1,10 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumGltf/Library.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <string>
-
-using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**
@@ -14,7 +12,7 @@ namespace CesiumGltf {
  *
  * A named object is also an {@link ExtensibleObject}.
  */
-struct CESIUMGLTF_API NamedObject : public ExtensibleObject {
+struct CESIUMGLTF_API NamedObject : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The user-defined name of this object.
    *

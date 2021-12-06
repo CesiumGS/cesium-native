@@ -4,8 +4,7 @@
 
 #include <stdexcept>
 
-using namespace CesiumUtility;
-
+namespace CesiumUtility {
 std::string Uri::resolve(
     const std::string& base,
     const std::string& relative,
@@ -131,3 +130,4 @@ std::string Uri::substituteTemplateParameters(
 
   return result;
 }
+} // namespace CesiumUtility

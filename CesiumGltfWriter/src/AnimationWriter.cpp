@@ -25,7 +25,7 @@ void writeAnimationChannel(
     j.String(animationChannel.target.path.c_str());
 
     if (!animationChannel.target.extensions.empty()) {
-      CesiumGltf::writeExtensions(animationChannel.target.extensions, j);
+      CesiumGltfWriter::writeExtensions(animationChannel.target.extensions, j);
     }
 
     if (!animationChannel.target.extras.empty()) {
@@ -47,7 +47,7 @@ void writeAnimationSampler(
   j.KeyPrimitive("output", animationSampler.output);
 
   if (!animationSampler.extensions.empty()) {
-    CesiumGltf::writeExtensions(animationSampler.extensions, j);
+    CesiumGltfWriter::writeExtensions(animationSampler.extensions, j);
   }
 
   if (!animationSampler.extras.empty()) {
@@ -58,9 +58,9 @@ void writeAnimationSampler(
   j.EndObject();
 }
 
-void CesiumGltf::writeAnimation(
-    CesiumGltf::WriteModelResult& result,
-    const std::vector<Animation>& animations,
+void CesiumGltfWriter::writeAnimation(
+    CesiumGltfWriter::WriteModelResult& result,
+    const std::vector<CesiumGltf::Animation>& animations,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (animations.empty()) {

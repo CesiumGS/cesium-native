@@ -4,8 +4,8 @@
 
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
-void CesiumGltf::writeSkin(
-    const std::vector<Skin>& skins,
+void CesiumGltfWriter::writeSkin(
+    const std::vector<CesiumGltf::Skin>& skins,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (skins.empty()) {

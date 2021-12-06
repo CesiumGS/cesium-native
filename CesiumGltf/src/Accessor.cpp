@@ -2,8 +2,7 @@
 
 #include "CesiumGltf/Model.h"
 
-using namespace CesiumGltf;
-
+namespace CesiumGltf {
 /*static*/ int8_t
 Accessor::computeNumberOfComponents(const std::string& type) noexcept {
   if (type == CesiumGltf::Accessor::Type::SCALAR) {
@@ -76,3 +75,4 @@ Accessor::computeByteStride(const CesiumGltf::Model& model) const noexcept {
   return computeNumberOfComponents(this->type) *
          computeByteSizeOfComponent(this->componentType);
 }
+} // namespace CesiumGltf

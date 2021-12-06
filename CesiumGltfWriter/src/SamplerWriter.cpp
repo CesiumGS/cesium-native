@@ -4,8 +4,8 @@
 
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
-void CesiumGltf::writeSampler(
-    const std::vector<Sampler>& samplers,
+void CesiumGltfWriter::writeSampler(
+    const std::vector<CesiumGltf::Sampler>& samplers,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (samplers.empty()) {
     return;
@@ -28,12 +28,12 @@ void CesiumGltf::writeSampler(
       j.Int(*sampler.minFilter);
     }
 
-    if (sampler.wrapS != Sampler::WrapS::REPEAT) {
+    if (sampler.wrapS != CesiumGltf::Sampler::WrapS::REPEAT) {
       j.Key("wrapS");
       j.Int(sampler.wrapS);
     }
 
-    if (sampler.wrapT != Sampler::WrapT::REPEAT) {
+    if (sampler.wrapT != CesiumGltf::Sampler::WrapT::REPEAT) {
       j.Key("wrapT");
       j.Int(sampler.wrapT);
     }

@@ -1,17 +1,17 @@
 #pragma once
 
 #include <CesiumGltf/Image.h>
-#include <CesiumGltf/WriteGLTFCallback.h>
-#include <CesiumGltf/WriteModelOptions.h>
-#include <CesiumGltf/WriteModelResult.h>
+#include <CesiumGltfWriter/WriteGLTFCallback.h>
+#include <CesiumGltfWriter/WriteModelOptions.h>
+#include <CesiumGltfWriter/WriteModelResult.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeImage(
     WriteModelResult& result,
-    const std::vector<Image>& images,
+    const std::vector<CesiumGltf::Image>& images,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const WriteModelOptions& flags,
     WriteGLTFCallback writeGLTFCallback = noopGltfWriter);

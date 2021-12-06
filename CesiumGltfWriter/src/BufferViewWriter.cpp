@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-void CesiumGltf::writeBufferView(
-    const std::vector<BufferView>& bufferViews,
+void CesiumGltfWriter::writeBufferView(
+    const std::vector<CesiumGltf::BufferView>& bufferViews,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (bufferViews.empty()) {

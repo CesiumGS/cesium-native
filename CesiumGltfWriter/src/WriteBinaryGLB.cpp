@@ -80,7 +80,7 @@ void writeGLBBinaryChunk(
   glbBuffer.insert(glbBuffer.end(), paddingLength, PADDING_CHAR);
 }
 
-[[nodiscard]] std::vector<std::byte> CesiumGltf::writeBinaryGLB(
+[[nodiscard]] std::vector<std::byte> CesiumGltfWriter::writeBinaryGLB(
     const std::vector<std::byte>& binaryChunk,
     const std::string_view& gltfJson) {
 

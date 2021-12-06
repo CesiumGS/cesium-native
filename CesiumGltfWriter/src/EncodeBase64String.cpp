@@ -2,8 +2,8 @@
 
 #include <modp_b64.h>
 
-std::string
-CesiumGltf::encodeAsBase64String(const std::vector<std::byte>& data) noexcept {
+std::string CesiumGltfWriter::encodeAsBase64String(
+    const std::vector<std::byte>& data) noexcept {
   const std::size_t paddedLength = modp_b64_encode_len(data.size());
   std::string result(paddedLength, '\0');
   const char* asCharPointer = reinterpret_cast<const char*>(data.data());

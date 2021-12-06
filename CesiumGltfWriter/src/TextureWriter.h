@@ -5,8 +5,8 @@
 
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeTexture(
-    const std::vector<Texture>& textures,
+    const std::vector<CesiumGltf::Texture>& textures,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }
