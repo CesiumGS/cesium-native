@@ -45,6 +45,12 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
 
   const std::string& contentType = input.pRequest->response()->contentType();
   std::string baseContentType = contentType.substr(0, contentType.find(';'));
+#ifdef _WIN32
+	if ((std::string::npos != input.pRequest->url().find("file:")) || (std::string::npos != input.pRequest->url().find("FILE:")))
+	{
+		baseContentType = "application/vnd.quantized-mesh";
+	}
+#endif // _WIN32
 
   auto itContentType =
       TileContentFactory::_loadersByContentType.find(baseContentType);
