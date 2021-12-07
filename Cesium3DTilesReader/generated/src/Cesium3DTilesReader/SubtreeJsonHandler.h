@@ -41,6 +41,8 @@ private:
           _bufferViews;
   AvailabilityJsonHandler _tileAvailability;
   AvailabilityJsonHandler _childSubtreeAvailability;
-  AvailabilityJsonHandler _contentAvailability;
+  CesiumJsonReader::
+      ArrayJsonHandler<Cesium3DTiles::Availability, AvailabilityJsonHandler>
+          _contentAvailability;
 };
 } // namespace Cesium3DTilesReader

@@ -9,7 +9,6 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <optional>
 #include <vector>
 
 namespace Cesium3DTiles {
@@ -60,16 +59,16 @@ struct CESIUM3DTILES_API Subtree final
   Cesium3DTiles::Availability childSubtreeAvailability;
 
   /**
-   * @brief The availability of the content of the tiles of the subtree. The
-   * structure of the content availability bitstream matches the tile
-   * availability bitstream. Content availability is determined by a single bit,
-   * 1 meaning content exists at that spatial index, and 0 meaning it does not.
-   * If content availability is 1 its corresponding tile availability must also
-   * be 1. If content availability is 0 and its corresponding tile availability
-   * is 1 then the tile is considered to be an empty tile. If `tile.content` is
-   * defined, then `contentAvailability` is required. Otherwise,
-   * `contentAvailability` is disallowed.
+   * @brief An array of availabilities of the contents of the tiles of the
+   * subtree. The structure of the content availability bitstream matches the
+   * tile availability bitstream. Content availability is determined by a single
+   * bit, 1 meaning content exists at that spatial index, and 0 meaning it does
+   * not. If content availability is 1 its corresponding tile availability must
+   * also be 1. If content availability is 0 and its corresponding tile
+   * availability is 1 then the tile is considered to be an empty tile. If
+   * `tile.content` is defined, then `contentAvailability` is required.
+   * Otherwise, `contentAvailability` is disallowed.
    */
-  std::optional<Cesium3DTiles::Availability> contentAvailability;
+  std::vector<Cesium3DTiles::Availability> contentAvailability;
 };
 } // namespace Cesium3DTiles

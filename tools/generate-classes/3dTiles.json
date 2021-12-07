@@ -12,25 +12,25 @@
       "className": "Extension3dTilesContentGltf",
       "extensionName": "3DTILES_content_gltf",
       "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json",
-      "attachTo": [
-        "tileset"
-      ]
+      "attachTo": ["tileset"]
+    },
+    {
+      "className": "Extension3dTilesMultipleContents",
+      "extensionName": "3DTILES_multiple_contents",
+      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json",
+      "attachTo": ["tile"]
     },
     {
       "className": "Extension3dTilesBoundingVolumeS2",
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json",
-      "attachTo": [
-        "boundingVolume"
-      ]
+      "attachTo": ["boundingVolume"]
     },
     {
       "className": "Extension3dTilesImplicitTiling",
       "extensionName": "3DTILES_implicit_tiling",
       "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json",
-      "attachTo": [
-        "tile"
-      ]
+      "attachTo": ["tile"]
     }
   ]
 }
