@@ -141,21 +141,27 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   {},
                   options.moreDetailAvailable};
             }
-
-            if (pResponse->statusCode() < 200 ||
-                pResponse->statusCode() >= 300) {
-              std::string message = "Image response code " +
-                                    std::to_string(pResponse->statusCode()) +
-                                    " for " + pRequest->url();
-              return LoadedRasterOverlayImage{
-                  std::nullopt,
-                  options.rectangle,
-                  std::move(options.credits),
-                  {message},
-                  {},
-                  options.moreDetailAvailable};
-            }
-
+#ifdef _WIN32
+						if ((std::string::npos == pRequest->url().find("file:")) && (std::string::npos == pRequest->url().find("FILE:")))
+						{
+#endif // _WIN32
+              if (pResponse->statusCode() < 200 ||
+                  pResponse->statusCode() >= 300) {
+                std::string message = "Image response code " +
+                                      std::to_string(pResponse->statusCode()) +
+                                      " for " + pRequest->url();
+                return LoadedRasterOverlayImage{
+                    std::nullopt,
+                    options.rectangle,
+                    std::move(options.credits),
+                    {message},
+                    {},
+                    options.moreDetailAvailable};
+              }
+#ifdef _WIN32
+						}
+#endif // _WIN32
+            
             if (pResponse->data().empty()) {
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
