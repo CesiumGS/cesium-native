@@ -109,6 +109,18 @@ public:
   }
 
   /**
+   * @brief Get the actual feature ID texture.
+   * @return The feature ID texture.
+   */
+  constexpr const ImageCesium* getImage() const { return _pImage; }
+
+  /**
+   * @brief Get the channel index that this feature ID texture uses.
+   * @return The channel index;
+   */
+  constexpr int32_t getChannel() const { return _channel; }
+
+  /**
    * @brief Get the Feature ID for the given texture coordinates.
    *
    * Not safe when the status is not Valid.

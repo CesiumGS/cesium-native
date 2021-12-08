@@ -230,6 +230,14 @@ public:
    */
   int64_t size() const noexcept { return _instanceCount; }
 
+  /**
+   * @brief Get the component count of this property. Only applicable when the
+   * property is an array type.
+   *
+   * @return The component count of this property.
+   */
+  int64_t getComponentCount() const noexcept { return _componentCount; }
+
 private:
   ElementType getNumeric(int64_t instance) const noexcept {
     return reinterpret_cast<const ElementType*>(_valueBuffer.data())[instance];
