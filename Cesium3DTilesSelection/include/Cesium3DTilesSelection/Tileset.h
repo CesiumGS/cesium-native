@@ -610,6 +610,8 @@ private:
       double loadPriority);
   void processSubtreeQueue();
 
+  void reportError(TilesetLoadFailureDetails&& errorDetails);
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 

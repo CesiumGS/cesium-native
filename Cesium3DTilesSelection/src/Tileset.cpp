@@ -5,6 +5,7 @@
 #include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "TileUtilities.h"
 #include "TilesetLoadIonAssetEndpoint.h"
@@ -1428,6 +1429,16 @@ void Tileset::processSubtreeQueue() {
         this->_options.maximumSimultaneousSubtreeLoads) {
       break;
     }
+  }
+}
+
+void Tileset::reportError(TilesetLoadFailureDetails&& errorDetails) {
+  SPDLOG_LOGGER_ERROR(this->getExternals().pLogger, errorDetails.message);
+  if (this->getOptions().loadErrorCallback) {
+    this->getExternals().asyncSystem.runInMainThread(
+        [this, errorDetails = std::move(errorDetails)]() mutable {
+          this->getOptions().loadErrorCallback(std::move(errorDetails));
+        });
   }
 }
 

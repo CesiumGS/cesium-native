@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/Tileset.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "TilesetLoadTilesetDotJson.h"
 
 #include <CesiumAsync/Future.h>
@@ -18,17 +19,48 @@ using namespace CesiumAsync;
 using namespace CesiumUtility;
 
 struct Tileset::LoadIonAssetEndpoint::Private {
-  static CesiumAsync::Future<void> mainThreadHandleResponse(
+  static Future<std::optional<TilesetLoadFailureDetails>>
+  mainThreadHandleResponse(
       Tileset& tileset,
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+      std::shared_ptr<IAssetRequest>&& pRequest);
 
   static void mainThreadHandleTokenRefreshResponse(
       Tileset& tileset,
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
+      std::shared_ptr<IAssetRequest>&& pIonRequest,
       TileContext* pContext,
       const std::shared_ptr<spdlog::logger>& pLogger);
 
   static FailedTileAction onIonTileFailed(Tile& failedTile);
+
+  template <typename T>
+  static auto handlePotentialError(Tileset& tileset, T&& operation) {
+    return std::move(operation)
+        .catchInMainThread([&tileset](const std::exception& e) {
+          TilesetLoadFailureDetails failure;
+          failure.pTileset = &tileset;
+          failure.pTile = nullptr;
+          failure.pRequest = nullptr;
+          failure.type = TilesetLoadType::CesiumIon;
+          failure.message = fmt::format(
+              "Unhandled error for asset {}: {}",
+              tileset.getIonAssetID().value_or(0),
+              e.what());
+          return std::make_optional(failure);
+        })
+        .thenImmediately(
+            [&tileset](
+                std::optional<TilesetLoadFailureDetails>&& maybeFailure) {
+              if (maybeFailure) {
+                tileset.reportError(std::move(*maybeFailure));
+              }
+            })
+        .catchImmediately([](const std::exception& /*e*/) {
+          // We should only land here if tileset.reportError above throws an
+          // exception, which it shouldn't. Flag it in a debug build and ignore
+          // it in a release build.
+          assert(false);
+        });
+  }
 };
 
 CesiumAsync::Future<void>
@@ -47,41 +79,49 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
     ionUrl += "?access_token=" + ionAccessToken;
   }
 
-  return tileset._externals.pAssetAccessor
-      ->requestAsset(tileset._asyncSystem, ionUrl)
-      .thenInMainThread([&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
-        return Private::mainThreadHandleResponse(tileset, std::move(pRequest));
-      })
-      .catchInMainThread([&tileset, ionAssetID](const std::exception& e) {
-        SPDLOG_LOGGER_ERROR(
-            tileset._externals.pLogger,
-            "Unhandled error for asset {}: {}",
-            ionAssetID,
-            e.what());
-      })
+  auto operation =
+      tileset._externals.pAssetAccessor
+          ->requestAsset(tileset._asyncSystem, ionUrl)
+          .thenInMainThread(
+              [&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
+                return Private::mainThreadHandleResponse(
+                    tileset,
+                    std::move(pRequest));
+              });
+
+  return Private::handlePotentialError(tileset, std::move(operation))
       .thenImmediately(
           []() { CESIUM_TRACE_END_IN_TRACK("Tileset from ion startup"); });
 }
 
-Future<void> Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
+Future<std::optional<TilesetLoadFailureDetails>>
+Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
     Tileset& tileset,
     std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
-    SPDLOG_LOGGER_ERROR(
-        tileset.getExternals().pLogger,
+    TilesetLoadFailureDetails error;
+    error.pTileset = &tileset;
+    error.pRequest = std::move(pRequest);
+    error.type = TilesetLoadType::CesiumIon;
+    error.message = fmt::format(
         "No response received for asset request {}",
-        pRequest->url());
-    return tileset.getAsyncSystem().createResolvedFuture();
+        error.pRequest->url());
+    return tileset.getAsyncSystem().createResolvedFuture(
+        std::make_optional(std::move(error)));
   }
 
   if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-    SPDLOG_LOGGER_ERROR(
-        tileset.getExternals().pLogger,
+    TilesetLoadFailureDetails error;
+    error.pTileset = &tileset;
+    error.pRequest = std::move(pRequest);
+    error.type = TilesetLoadType::CesiumIon;
+    error.message = fmt::format(
         "Received status code {} for asset response {}",
         pResponse->statusCode(),
-        pRequest->url());
-    return tileset.getAsyncSystem().createResolvedFuture();
+        error.pRequest->url());
+    return tileset.getAsyncSystem().createResolvedFuture(
+        std::make_optional(std::move(error)));
   }
 
   const gsl::span<const std::byte> data = pResponse->data();
@@ -90,13 +130,17 @@ Future<void> Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
   ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
   if (ionResponse.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        tileset.getExternals().pLogger,
+    TilesetLoadFailureDetails error;
+    error.pTileset = &tileset;
+    error.pRequest = std::move(pRequest);
+    error.type = TilesetLoadType::CesiumIon;
+    error.message = fmt::format(
         "Error when parsing Cesium ion response JSON, error code {} at byte "
         "offset {}",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
-    return tileset.getAsyncSystem().createResolvedFuture();
+    return tileset.getAsyncSystem().createResolvedFuture(
+        std::make_optional(std::move(error)));
   }
 
   if (tileset.getExternals().pCreditSystem) {
@@ -132,11 +176,14 @@ Future<void> Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
     // URL.
     url = CesiumUtility::Uri::resolve(url, "layer.json", true);
   } else if (type != "3DTILES") {
-    SPDLOG_LOGGER_ERROR(
-        tileset.getExternals().pLogger,
-        "Received unsupported asset response type: {}",
-        type);
-    return tileset.getAsyncSystem().createResolvedFuture();
+    TilesetLoadFailureDetails error;
+    error.pTileset = &tileset;
+    error.pRequest = std::move(pRequest);
+    error.type = TilesetLoadType::CesiumIon;
+    error.message =
+        fmt::format("Received unsupported asset response type: {}", type);
+    return tileset.getAsyncSystem().createResolvedFuture(
+        std::make_optional(std::move(error)));
   }
 
   auto pContext = std::make_unique<TileContext>();
@@ -147,10 +194,13 @@ Future<void> Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
       std::make_pair("Authorization", "Bearer " + accessToken));
   pContext->failedTileCallback = Private::onIonTileFailed;
   return LoadTilesetDotJson::start(
-      tileset,
-      pContext->baseUrl,
-      pContext->requestHeaders,
-      std::move(pContext));
+             tileset,
+             pContext->baseUrl,
+             pContext->requestHeaders,
+             std::move(pContext))
+      .thenImmediately([]() -> std::optional<TilesetLoadFailureDetails> {
+        return std::nullopt;
+      });
 }
 
 namespace {
