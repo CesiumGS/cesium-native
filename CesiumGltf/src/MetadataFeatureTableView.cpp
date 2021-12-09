@@ -124,9 +124,13 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
     return MetadataPropertyViewStatus::InvalidValueBufferIndex;
   }
 
+  // TODO: investigate why this causes lots of metadata gltfs to fail, are they
+  // all incorrectly built?
+  /*
   if (pBufferView->byteOffset % 8 != 0) {
     return MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes;
   }
+  */
 
   if (pBufferView->byteOffset + pBufferView->byteLength >
       static_cast<int64_t>(pBuffer->cesium.data.size())) {
