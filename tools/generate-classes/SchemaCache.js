@@ -26,9 +26,9 @@ function readJsonString(pathOrUrl) {
 }
 
 class SchemaCache {
-  constructor(schemaPath, extensionPath) {
-    this.schemaPath = schemaPath;
-    this.extensionPath = extensionPath;
+  constructor(schemaPaths, extensionPaths) {
+    this.schemaPaths = schemaPaths;
+    this.extensionSchemaPaths = extensionPaths;
     this.cache = {};
     this.contextStack = [];
     this.byTitle = {};
@@ -36,33 +36,44 @@ class SchemaCache {
 
   load(name) {
     // First try loading relative to the current context
-    let path = this.resolveRelativePath(name);
+    // Then try loading from the base schema paths
+    return this.loadFromSearchPaths(name, [
+      this.resolveRelativePath(name),
+      ...this.schemaPaths.map((path) => this.resolvePath(path, name)),
+    ]);
+  }
 
-    const existing = this.cache[path];
-    if (existing) {
-      return existing;
+  loadExtension(name) {
+    return this.loadFromSearchPaths(
+      name,
+      this.extensionSchemaPaths.map((path) => this.resolvePath(path, name))
+    );
+  }
+
+  loadFromSearchPaths(name, paths) {
+    let jsonString;
+
+    let path;
+    for (path of paths) {
+      const existingSchema = this.cache[path];
+      if (existingSchema) {
+        return existingSchema;
+      }
+
+      jsonString = readJsonString(path);
+
+      if (jsonString) {
+        break;
+      }
     }
 
-    let jsonString = readJsonString(path);
     if (jsonString === undefined) {
-      // Next try resolving relative to the base URL
-      const pathFromBase = this.resolvePathFromBase(name);
-
-      const existingFromBase = this.cache[pathFromBase];
-      if (existingFromBase) {
-        return existingFromBase;
-      }
-
-      jsonString = readJsonString(pathFromBase);
-
-      if (jsonString === undefined) {
-        console.warn(
-          `Could not resolve ${name}. Tried:\n  * ${path}\n  *${pathFromBase}`
-        );
-        return undefined;
-      }
-
-      path = pathFromBase;
+      console.warn(
+        `Could not resolve ${name}. Tried:\n${paths
+          .map((path) => `  * ${path}`)
+          .join("\n")}`
+      );
+      return undefined;
     }
 
     const result = JSON.parse(jsonString);
@@ -77,31 +88,6 @@ class SchemaCache {
     }
 
     this.byTitle[upperTitle] = result;
-
-    return result;
-  }
-
-  loadExtension(name) {
-    const path = this.resolvePath(this.extensionPath, name);
-
-    const existing = this.cache[path];
-    if (existing) {
-      return existing;
-    }
-
-    const jsonString = readJsonString(path);
-    const result = JSON.parse(jsonString, "utf-8");
-    result.sourcePath = path;
-    this.cache[name] = result;
-
-    const upperTitle = result.title.toUpperCase();
-    if (this.byTitle[upperTitle]) {
-      console.warn(
-        `*** Two schema files share the same title, things will be broken:\n  ${this.byTitle[upperTitle].sourcePath}\n  ${path}`
-      );
-    }
-
-    this.byTitle[result.title.toUpperCase()] = result;
 
     return result;
   }
@@ -121,10 +107,6 @@ class SchemaCache {
 
     const base = this.contextStack[this.contextStack.length - 1].sourcePath;
     return this.resolvePath(base, name);
-  }
-
-  resolvePathFromBase(name) {
-    return this.resolvePath(this.schemaPath, name);
   }
 
   resolvePath(base, name) {

@@ -12,6 +12,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/Extension3dTilesContentGltf.h>
 #include <Cesium3DTiles/Extension3dTilesImplicitTiling.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingExtension3dTilesMultipleContents.h>
 #include <Cesium3DTiles/Extension3dTilesMultipleContents.h>
 #include <Cesium3DTiles/Properties.h>
 #include <Cesium3DTiles/Subtree.h>
@@ -49,6 +50,17 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
+    const Cesium3DTiles::
+        Extension3dTilesImplicitTilingExtension3dTilesMultipleContents& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
     const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
@@ -60,6 +72,21 @@ void writeJson(
 
 void writeJson(
     const Cesium3DTiles::BoundingVolume& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Subtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::BufferView& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Buffer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -80,26 +107,6 @@ void writeJson(
 
 void writeJson(
     const Cesium3DTiles::Asset& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context);
-
-void writeJson(
-    const Cesium3DTiles::Subtree& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context);
-
-void writeJson(
-    const Cesium3DTiles::Availability& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context);
-
-void writeJson(
-    const Cesium3DTiles::BufferView& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context);
-
-void writeJson(
-    const Cesium3DTiles::Buffer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -307,6 +314,65 @@ void writeJson(
 }
 
 void writeJson(
+    const Cesium3DTiles::
+        Extension3dTilesImplicitTilingExtension3dTilesMultipleContents& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.contentAvailability.empty()) {
+    jsonWriter.Key("contentAvailability");
+    writeJson(obj.contentAvailability, jsonWriter, context);
+  }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.bufferView.has_value()) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
+
+  if (obj.availableCount.has_value()) {
+    jsonWriter.Key("availableCount");
+    writeJson(obj.availableCount, jsonWriter, context);
+  }
+
+  if (obj.constant.has_value()) {
+    jsonWriter.Key("constant");
+    writeJson(obj.constant, jsonWriter, context);
+  }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
     const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -374,6 +440,111 @@ void writeJson(
   if (!obj.sphere.empty()) {
     jsonWriter.Key("sphere");
     writeJson(obj.sphere, jsonWriter, context);
+  }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Subtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.buffers.empty()) {
+    jsonWriter.Key("buffers");
+    writeJson(obj.buffers, jsonWriter, context);
+  }
+
+  if (!obj.bufferViews.empty()) {
+    jsonWriter.Key("bufferViews");
+    writeJson(obj.bufferViews, jsonWriter, context);
+  }
+
+  jsonWriter.Key("tileAvailability");
+  writeJson(obj.tileAvailability, jsonWriter, context);
+
+  jsonWriter.Key("childSubtreeAvailability");
+  writeJson(obj.childSubtreeAvailability, jsonWriter, context);
+
+  if (obj.contentAvailability.has_value()) {
+    jsonWriter.Key("contentAvailability");
+    writeJson(obj.contentAvailability, jsonWriter, context);
+  }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::BufferView& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("buffer");
+  writeJson(obj.buffer, jsonWriter, context);
+
+  jsonWriter.Key("byteOffset");
+  writeJson(obj.byteOffset, jsonWriter, context);
+
+  jsonWriter.Key("byteLength");
+  writeJson(obj.byteLength, jsonWriter, context);
+
+  if (obj.name.has_value()) {
+    jsonWriter.Key("name");
+    writeJson(obj.name, jsonWriter, context);
+  }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Buffer& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.uri.has_value()) {
+    jsonWriter.Key("uri");
+    writeJson(obj.uri, jsonWriter, context);
+  }
+
+  jsonWriter.Key("byteLength");
+  writeJson(obj.byteLength, jsonWriter, context);
+
+  if (obj.name.has_value()) {
+    jsonWriter.Key("name");
+    writeJson(obj.name, jsonWriter, context);
   }
 
   if (!obj.extensions.empty()) {
@@ -536,145 +707,6 @@ void writeJson(
   jsonWriter.EndObject();
 }
 
-void writeJson(
-    const Cesium3DTiles::Subtree& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-
-  if (!obj.buffers.empty()) {
-    jsonWriter.Key("buffers");
-    writeJson(obj.buffers, jsonWriter, context);
-  }
-
-  if (!obj.bufferViews.empty()) {
-    jsonWriter.Key("bufferViews");
-    writeJson(obj.bufferViews, jsonWriter, context);
-  }
-
-  jsonWriter.Key("tileAvailability");
-  writeJson(obj.tileAvailability, jsonWriter, context);
-
-  jsonWriter.Key("childSubtreeAvailability");
-  writeJson(obj.childSubtreeAvailability, jsonWriter, context);
-
-  if (!obj.contentAvailability.empty()) {
-    jsonWriter.Key("contentAvailability");
-    writeJson(obj.contentAvailability, jsonWriter, context);
-  }
-
-  if (!obj.extensions.empty()) {
-    jsonWriter.Key("extensions");
-    writeJsonExtensions(obj, jsonWriter, context);
-  }
-
-  if (!obj.extras.empty()) {
-    jsonWriter.Key("extras");
-    writeJson(obj.extras, jsonWriter, context);
-  }
-
-  jsonWriter.EndObject();
-}
-
-void writeJson(
-    const Cesium3DTiles::Availability& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-
-  if (obj.bufferView.has_value()) {
-    jsonWriter.Key("bufferView");
-    writeJson(obj.bufferView, jsonWriter, context);
-  }
-
-  if (obj.availableCount.has_value()) {
-    jsonWriter.Key("availableCount");
-    writeJson(obj.availableCount, jsonWriter, context);
-  }
-
-  if (obj.constant.has_value()) {
-    jsonWriter.Key("constant");
-    writeJson(obj.constant, jsonWriter, context);
-  }
-
-  if (!obj.extensions.empty()) {
-    jsonWriter.Key("extensions");
-    writeJsonExtensions(obj, jsonWriter, context);
-  }
-
-  if (!obj.extras.empty()) {
-    jsonWriter.Key("extras");
-    writeJson(obj.extras, jsonWriter, context);
-  }
-
-  jsonWriter.EndObject();
-}
-
-void writeJson(
-    const Cesium3DTiles::BufferView& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-
-  jsonWriter.Key("buffer");
-  writeJson(obj.buffer, jsonWriter, context);
-
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
-
-  jsonWriter.Key("byteLength");
-  writeJson(obj.byteLength, jsonWriter, context);
-
-  if (obj.name.has_value()) {
-    jsonWriter.Key("name");
-    writeJson(obj.name, jsonWriter, context);
-  }
-
-  if (!obj.extensions.empty()) {
-    jsonWriter.Key("extensions");
-    writeJsonExtensions(obj, jsonWriter, context);
-  }
-
-  if (!obj.extras.empty()) {
-    jsonWriter.Key("extras");
-    writeJson(obj.extras, jsonWriter, context);
-  }
-
-  jsonWriter.EndObject();
-}
-
-void writeJson(
-    const Cesium3DTiles::Buffer& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-
-  if (obj.uri.has_value()) {
-    jsonWriter.Key("uri");
-    writeJson(obj.uri, jsonWriter, context);
-  }
-
-  jsonWriter.Key("byteLength");
-  writeJson(obj.byteLength, jsonWriter, context);
-
-  if (obj.name.has_value()) {
-    jsonWriter.Key("name");
-    writeJson(obj.name, jsonWriter, context);
-  }
-
-  if (!obj.extensions.empty()) {
-    jsonWriter.Key("extensions");
-    writeJsonExtensions(obj, jsonWriter, context);
-  }
-
-  if (!obj.extras.empty()) {
-    jsonWriter.Key("extras");
-    writeJson(obj.extras, jsonWriter, context);
-  }
-
-  jsonWriter.EndObject();
-}
-
 } // namespace
 
 void Extension3dTilesContentGltfJsonWriter::write(
@@ -705,6 +737,22 @@ void Extension3dTilesImplicitTilingJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
+void Extension3dTilesImplicitTilingExtension3dTilesMultipleContentsJsonWriter::
+    write(
+        const Cesium3DTiles::
+            Extension3dTilesImplicitTilingExtension3dTilesMultipleContents& obj,
+        CesiumJsonWriter::JsonWriter& jsonWriter,
+        const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void AvailabilityJsonWriter::write(
+    const Cesium3DTiles::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
 void SubtreesJsonWriter::write(
     const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -721,6 +769,27 @@ void ContentJsonWriter::write(
 
 void BoundingVolumeJsonWriter::write(
     const Cesium3DTiles::BoundingVolume& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void SubtreeJsonWriter::write(
+    const Cesium3DTiles::Subtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void BufferViewJsonWriter::write(
+    const Cesium3DTiles::BufferView& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void BufferJsonWriter::write(
+    const Cesium3DTiles::Buffer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
@@ -754,40 +823,16 @@ void AssetJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void SubtreeJsonWriter::write(
-    const Cesium3DTiles::Subtree& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-void AvailabilityJsonWriter::write(
-    const Cesium3DTiles::Availability& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-void BufferViewJsonWriter::write(
-    const Cesium3DTiles::BufferView& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-void BufferJsonWriter::write(
-    const Cesium3DTiles::Buffer& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
 void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
 
   context.registerExtension<
       Cesium3DTiles::BoundingVolume,
       Extension3dTilesBoundingVolumeS2JsonWriter>();
+
+  context.registerExtension<
+      Cesium3DTiles::Subtree,
+      Extension3dTilesImplicitTilingExtension3dTilesMultipleContentsJsonWriter>();
 
   context.registerExtension<
       Cesium3DTiles::Tileset,

@@ -7,13 +7,9 @@ const generateCombinedWriter = require("./generateCombinedWriter");
 const generateRegisterExtensions = require("./generateRegisterExtensions");
 
 const argv = yargs.options({
-  schema: {
-    description: "The path to the JSON schema.",
+  schemas: {
+    description: "The paths to the JSON schemas.",
     demandOption: true,
-    type: "string",
-  },
-  additionalSchemas: {
-    description: "Paths to additional JSON schemas.",
     type: "array",
   },
   output: {
@@ -32,9 +28,9 @@ const argv = yargs.options({
     type: "string",
   },
   extensions: {
-    description: "The extensions directory.",
+    description: "The extension directories.",
     demandOption: true,
-    type: "string",
+    type: "array",
   },
   config: {
     description:
@@ -72,9 +68,21 @@ function splitSchemaPath(schemaPath) {
   return { schemaName, schemaBasePath };
 }
 
-const { schemaName, schemaBasePath } = splitSchemaPath(argv.schema);
-const schemaCache = new SchemaCache(schemaBasePath, argv.extensions);
-const rootSchema = schemaCache.load(schemaName);
+const schemaBasePaths = [];
+for (const schemaPath of argv.schemas) {
+  const { _, schemaBasePath } = splitSchemaPath(schemaPath);
+  schemaBasePaths.push(schemaBasePath);
+}
+
+const schemaCache = new SchemaCache(schemaBasePaths, argv.extensions);
+
+let schemas = [];
+for (const schemaPath of argv.schemas) {
+  const { schemaName, _ } = splitSchemaPath(schemaPath);
+  const schema = schemaCache.load(schemaName);
+  schemas.push(schema);
+}
+const rootSchema = schemas[0];
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
@@ -110,8 +118,6 @@ const options = {
 
 const writers = [];
 
-let schemas = [rootSchema];
-
 for (const extension of config.extensions) {
   const extensionSchema = schemaCache.loadExtension(extension.schema);
   if (!extensionSchema) {
@@ -134,7 +140,7 @@ for (const extension of config.extensions) {
       `${objectToExtend}.schema.json`
     );
     if (!objectToExtendSchema) {
-      console.warn("Could not load schema for ${objectToExtend}.");
+      console.warn(`Could not load schema for ${objectToExtend}.`);
       continue;
     }
 
@@ -163,16 +169,6 @@ function processSchemas() {
 }
 
 processSchemas();
-
-const additionalSchemas = argv.additionalSchemas;
-if (additionalSchemas) {
-  for (const schema of additionalSchemas) {
-    const { schemaName, schemaBasePath } = splitSchemaPath(schema);
-    schemaCache.schemaPath = schemaBasePath;
-    schemas.push(schemaCache.load(schemaName));
-    processSchemas();
-  }
-}
 
 generateRegisterExtensions({
   readerOutputDir: argv.readerOutput,

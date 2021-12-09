@@ -31,6 +31,12 @@
       "extensionName": "3DTILES_implicit_tiling",
       "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json",
       "attachTo": ["tile"]
+    },
+    {
+      "className": "Extension3dTilesImplicitTilingExtension3dTilesMultipleContents",
+      "extensionName": "3DTILES_multiple_contents",
+      "schema": "3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json",
+      "attachTo": ["subtree"]
     }
   ]
 }
