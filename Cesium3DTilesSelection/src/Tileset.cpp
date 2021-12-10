@@ -62,11 +62,13 @@ Tileset::Tileset(
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
-  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-  this->notifyTileStartLoading(nullptr);
-  LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
-    this->notifyTileDoneLoading(nullptr);
-  });
+  if (!url.empty()) {
+    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+    this->notifyTileStartLoading(nullptr);
+    LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
+      this->notifyTileDoneLoading(nullptr);
+    });
+  }
 }
 
 Tileset::Tileset(
@@ -95,10 +97,12 @@ Tileset::Tileset(
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
-  CESIUM_TRACE_USE_TRACK_SET(tileset._loadingSlots);
-  this->notifyTileStartLoading(nullptr);
-  LoadIonAssetEndpoint::start(*this).thenInMainThread(
-      [this]() { this->notifyTileDoneLoading(nullptr); });
+  if (ionAssetID > 0 && !ionAccessToken.empty()) {
+    CESIUM_TRACE_USE_TRACK_SET(tileset._loadingSlots);
+    this->notifyTileStartLoading(nullptr);
+    LoadIonAssetEndpoint::start(*this).thenInMainThread(
+        [this]() { this->notifyTileDoneLoading(nullptr); });
+  }
 }
 
 Tileset::~Tileset() {
