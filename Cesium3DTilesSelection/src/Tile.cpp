@@ -920,6 +920,10 @@ void Tile::setEmptyContent() noexcept {
   this->_pContent = std::make_unique<TileContentLoadResult>();
 }
 
+Tile::LoadState Tile::getState() const noexcept {
+  return this->_state.load(std::memory_order::memory_order_acquire);
+}
+
 void Tile::setState(LoadState value) noexcept {
   this->_state.store(value, std::memory_order::memory_order_release);
 }
