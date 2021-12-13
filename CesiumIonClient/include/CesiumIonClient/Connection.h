@@ -4,6 +4,7 @@
 #include "Profile.h"
 #include "Response.h"
 #include "Token.h"
+#include "TokenList.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -125,7 +126,7 @@ public:
    *
    * @return A future that resolves to the token information.
    */
-  CesiumAsync::Future<Response<std::vector<Token>>> tokens() const;
+  CesiumAsync::Future<Response<TokenList>> tokens() const;
 
   /**
    * @brief Gets details of the asset with the given ID.
@@ -140,14 +141,25 @@ public:
    *
    * @param name The name of the new token.
    * @param scopes The scopes allowed by this token.
-   * @param assets The assets that may be accessed by this token. If
+   * @param assetIds The assets that may be accessed by this token. If
    * `std::nullopt`, access to all assets is allowed.
+   * @param allowedUrls The URLs from which this token can be accessed. If
+   * `std::nullopt`, the token can be accessed from any URL.
    * @return The new token.
    */
   CesiumAsync::Future<Response<Token>> createToken(
       const std::string& name,
       const std::vector<std::string>& scopes,
-      const std::optional<std::vector<int64_t>>& assets = std::nullopt) const;
+      const std::optional<std::vector<int64_t>>& assetIds = std::nullopt,
+      const std::optional<std::vector<std::string>>& allowedUrls =
+          std::nullopt) const;
+
+  CesiumAsync::Future<Response<std::monostate>> modifyToken(
+      const std::string& tokenID,
+      const std::string& newName,
+      const std::vector<int64_t>& newAssetIDs,
+      const std::vector<std::string>& newScopes,
+      const std::vector<std::string>& newAllowedUrls);
 
 private:
   static CesiumAsync::Future<Connection> completeTokenExchange(

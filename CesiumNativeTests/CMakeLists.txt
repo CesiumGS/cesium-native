@@ -12,6 +12,7 @@ set(cesium_native_targets
     CesiumGltf
     CesiumGltfReader
     CesiumGltfWriter
+    CesiumIonClient
     CesiumUtility
 )
 
