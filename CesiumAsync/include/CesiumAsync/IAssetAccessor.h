@@ -36,8 +36,8 @@ public:
    * @param headers The headers to include in the request.
    * @return The in-progress asset request.
    */
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> get(
-      const AsyncSystem& asyncSystem,
+  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
+  get(const AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers = {}) = 0;
 
