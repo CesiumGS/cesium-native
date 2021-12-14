@@ -231,12 +231,12 @@ public:
       const std::optional<std::vector<std::string>>& allowedUrls =
           std::nullopt) const;
 
-  // CesiumAsync::Future<Response<std::monostate>> modifyToken(
-  //     const std::string& tokenID,
-  //     const std::string& newName,
-  //     const std::vector<int64_t>& newAssetIDs,
-  //     const std::vector<std::string>& newScopes,
-  //     const std::vector<std::string>& newAllowedUrls);
+  CesiumAsync::Future<Response<NoValue>> modifyToken(
+      const std::string& tokenID,
+      const std::string& newName,
+      const std::optional<std::vector<int64_t>>& newAssetIDs,
+      const std::vector<std::string>& newScopes,
+      const std::optional<std::vector<std::string>>& newAllowedUrls) const;
 
 private:
   static CesiumAsync::Future<Connection> completeTokenExchange(
@@ -248,8 +248,7 @@ private:
       const std::string& redirectUrl,
       const std::string& codeVerifier);
 
-  CesiumAsync::Future<Response<TokenList>>
-  tokens(const std::string& url) const;
+  CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;

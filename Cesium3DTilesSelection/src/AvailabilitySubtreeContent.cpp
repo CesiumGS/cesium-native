@@ -45,7 +45,7 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
     // Using external buffer.
     std::string fullBufferUri =
         CesiumUtility::Uri::resolve(url, *buffer.uri, false);
-    return pAssetAccessor->requestAsset(asyncSystem, fullBufferUri, headers)
+    return pAssetAccessor->get(asyncSystem, fullBufferUri, headers)
         .thenInWorkerThread([buffer = std::move(buffer)](
                                 std::shared_ptr<IAssetRequest>&& pRequest) {
           const IAssetResponse* pResponse = pRequest->response();

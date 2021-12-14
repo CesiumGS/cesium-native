@@ -46,7 +46,7 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
   CESIUM_TRACE_BEGIN_IN_TRACK("Load tileset.json");
 
   return tileset.getExternals()
-      .pAssetAccessor->requestAsset(tileset.getAsyncSystem(), url, headers)
+      .pAssetAccessor->get(tileset.getAsyncSystem(), url, headers)
       .thenInWorkerThread(
           [pLogger = tileset.getExternals().pLogger,
            pContext = std::move(pContext),

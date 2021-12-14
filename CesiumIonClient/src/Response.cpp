@@ -73,6 +73,7 @@ Response<T>::Response(
 // Explicit instantiations
 template struct Response<Asset>;
 template struct Response<Assets>;
+template struct Response<NoValue>;
 template struct Response<Profile>;
 template struct Response<Token>;
 template struct Response<TokenList>;

@@ -86,4 +86,9 @@ template <typename T> struct Response final {
   std::optional<std::string> previousPageUrl;
 };
 
+/**
+ * @brief A non-value, for use with a valueless {@link Response}.
+ */
+struct NoValue {};
+
 } // namespace CesiumIonClient

@@ -47,7 +47,7 @@ IonRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
+  return pAssetAccessor->get(asyncSystem, ionUrl)
       .thenInWorkerThread(
           [name = this->getName(),
            pLogger](const std::shared_ptr<IAssetRequest>& pRequest)

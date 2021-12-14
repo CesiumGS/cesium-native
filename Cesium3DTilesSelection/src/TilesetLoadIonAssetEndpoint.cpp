@@ -80,8 +80,7 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
   }
 
   auto operation =
-      tileset._externals.pAssetAccessor
-          ->requestAsset(tileset._asyncSystem, ionUrl)
+      tileset._externals.pAssetAccessor->get(tileset._asyncSystem, ionUrl)
           .thenInMainThread(
               [&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
                 return Private::mainThreadHandleResponse(
@@ -317,7 +316,7 @@ Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
     tileset.notifyTileStartLoading(nullptr);
 
     tileset.getExternals()
-        .pAssetAccessor->requestAsset(tileset.getAsyncSystem(), url)
+        .pAssetAccessor->get(tileset.getAsyncSystem(), url)
         .thenInMainThread([&tileset, pContext = failedTile.getContext()](
                               std::shared_ptr<IAssetRequest>&& pIonRequest) {
           Private::mainThreadHandleTokenRefreshResponse(
