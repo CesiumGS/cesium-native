@@ -1,16 +1,39 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 
+namespace CesiumAsync {
+class IAssetRequest;
+}
+
 namespace CesiumIonClient {
+
 /**
  * @brief A response from Cesium ion.
  *
  * @tparam T The type of the response object.
  */
 template <typename T> struct Response final {
+  Response();
+
+  Response(
+      const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
+      T&& value);
+
+  Response(
+      T&& value,
+      uint16_t httpStatusCode,
+      const std::string& errorCode,
+      const std::string& errorMessage);
+
+  Response(
+      uint16_t httpStatusCode,
+      const std::string& errorCode,
+      const std::string& errorMessage);
+
   /**
    * @brief The response value, or `std::nullopt` if the response was
    * unsuccessful.
@@ -45,5 +68,22 @@ template <typename T> struct Response final {
    * message will contain further details of the error.
    */
   std::string errorMessage;
+
+  /**
+   * @brief The URL to use to obtain the next page of results, if there is a
+   * next page.
+   *
+   * Call {@link Connection::nextPage} rather than using this field directly.
+   */
+  std::optional<std::string> nextPageUrl;
+
+  /**
+   * @brief The URL to use to obtain the previous page of results, if there is
+   * one.
+   *
+   * Call {@link Connection::previousPage} rather than using this field directly.
+   */
+  std::optional<std::string> previousPageUrl;
 };
+
 } // namespace CesiumIonClient

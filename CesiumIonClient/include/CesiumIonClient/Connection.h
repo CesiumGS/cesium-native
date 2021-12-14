@@ -13,6 +13,50 @@
 #include <cstdint>
 
 namespace CesiumIonClient {
+
+/**
+ * @brief Whether sorted results should be ascending or descending.
+ */
+enum class SortOrder { Ascending, Descending };
+
+/**
+ * @brief Options to be passed to {@link Connection::tokens}.
+ */
+struct ListTokensOptions {
+  /**
+   * @brief The maximum number of tokens to return in a single page.
+   *
+   * Receiving fewer tokens should not be interpreted as the end of the
+   * collection. The end of the collection is reached when the response does not
+   * contain {@link Response::nextPageUrl}.
+   */
+  std::optional<int32_t> limit;
+
+  /**
+   * @brief The page number, where the first page of results is page 1 (not 0).
+   */
+  std::optional<int32_t> page;
+
+  /**
+   * @brief One or more keywords separated by whitespace by which to
+   * filter the list of tokens. The token name will contain each keyword of the
+   * search string.
+   */
+  std::optional<std::string> search;
+
+  /**
+   * @brief The property by which to sort results. Valid values are
+   * `"NAME"` and `"LAST_USED"`.
+   */
+  std::optional<std::string> sortBy;
+
+  /**
+   * @brief The property by which to sort results. Valid values are
+   * `"NAME"` and `"LAST_USED"`.
+   */
+  std::optional<SortOrder> sortOrder;
+};
+
 /**
  * @brief A connection to Cesium ion that can be used to interact with it via
  * its REST API.
@@ -25,8 +69,9 @@ public:
    *
    * Uses the "Authorization Code with PKCE" OAuth2 flow.
    *
-   * See [Connection to Cesium ion with OAuth2](https://cesium.com/docs/oauth/)
-   * for a description of the authorization process.
+   * See [Connecting to Cesium ion with
+   * OAuth2](https://cesium.com/learn/ion/ion-oauth2/) for a description of the
+   * authorization process.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
@@ -122,11 +167,17 @@ public:
   CesiumAsync::Future<Response<Assets>> assets() const;
 
   /**
-   * @brief Gets the list of available tokens.
+   * @brief Invokes the "List tokens" service to get the list of available
+   * tokens.
    *
-   * @return A future that resolves to the token information.
+   * Only a single page is returned. To obtain additional pages, use
+   * {@link Connection::nextPage} and {@link Connection::previousPage}.
+   *
+   * @param options Options to include in the "List tokens" request.
+   * @return A future that resolves to a page of token information.
    */
-  CesiumAsync::Future<Response<TokenList>> tokens() const;
+  CesiumAsync::Future<Response<TokenList>>
+  tokens(const ListTokensOptions& options = {}) const;
 
   /**
    * @brief Gets details of the asset with the given ID.
@@ -135,6 +186,32 @@ public:
    * @return A future that resolves to the asset details.
    */
   CesiumAsync::Future<Response<Asset>> asset(int64_t assetID) const;
+
+  /**
+   * @brief Gets the next page of results from the "List tokens" service.
+   *
+   * To get the first page, use {@link Connection::tokens}.
+   *
+   * @param currentPage The current page from which to get the next page.
+   * @return A future that resolves to the next page of tokens, or to a
+   * response with an {@link Response::errorCode} of "NoMorePages" if the
+   * currentPage is the last one.
+   */
+  CesiumAsync::Future<Response<TokenList>>
+  nextPage(const Response<TokenList>& currentPage) const;
+
+  /**
+   * @brief Gets the previous page of results from the "List tokens" service.
+   *
+   * To get the first page (or a particular page), use {@link Connection::tokens}.
+   *
+   * @param currentPage The current page from which to get the previous page.
+   * @return A future that resolves to the previous page of tokens, or to a
+   * response with an {@link Response::errorCode} of "NoMorePages" if the
+   * currentPage is the first one.
+   */
+  CesiumAsync::Future<Response<TokenList>>
+  previousPage(const Response<TokenList>& currentPage) const;
 
   /**
    * @brief Creates a new token.
@@ -154,12 +231,12 @@ public:
       const std::optional<std::vector<std::string>>& allowedUrls =
           std::nullopt) const;
 
-  CesiumAsync::Future<Response<std::monostate>> modifyToken(
-      const std::string& tokenID,
-      const std::string& newName,
-      const std::vector<int64_t>& newAssetIDs,
-      const std::vector<std::string>& newScopes,
-      const std::vector<std::string>& newAllowedUrls);
+  // CesiumAsync::Future<Response<std::monostate>> modifyToken(
+  //     const std::string& tokenID,
+  //     const std::string& newName,
+  //     const std::vector<int64_t>& newAssetIDs,
+  //     const std::vector<std::string>& newScopes,
+  //     const std::vector<std::string>& newAllowedUrls);
 
 private:
   static CesiumAsync::Future<Connection> completeTokenExchange(
@@ -170,6 +247,9 @@ private:
       const std::string& code,
       const std::string& redirectUrl,
       const std::string& codeVerifier);
+
+  CesiumAsync::Future<Response<TokenList>>
+  tokens(const std::string& url) const;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
