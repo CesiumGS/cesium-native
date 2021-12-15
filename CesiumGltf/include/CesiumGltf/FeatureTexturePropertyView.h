@@ -163,7 +163,6 @@ public:
     return property;
   }
 
-public:
   FeatureTexturePropertyViewStatus status() const noexcept {
     return this->_status;
   }
