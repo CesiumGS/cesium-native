@@ -21,7 +21,7 @@
 	url = https://github.com/leethomason/tinyxml2.git
 [submodule "extern/asyncplusplus"]
 	path = extern/asyncplusplus
-	url = https://github.com/Amanieu/asyncplusplus.git
+	url = https://github.com/IanLilleyT/asyncplusplus.git
 [submodule "extern/spdlog"]
 	path = extern/spdlog
 	url = https://github.com/gabime/spdlog.git
