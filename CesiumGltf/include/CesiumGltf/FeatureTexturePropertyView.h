@@ -105,13 +105,13 @@ public:
         this->_channelOffsets[i] = 0;
         break;
       case 'g':
-        this->_channelOffsets[i] = this->_pImage->bytesPerChannel;
+        this->_channelOffsets[i] = 1;
         break;
       case 'b':
-        this->_channelOffsets[i] = 2 * this->_pImage->bytesPerChannel;
+        this->_channelOffsets[i] = 2;
         break;
       case 'a':
-        this->_channelOffsets[i] = 3 * this->_pImage->bytesPerChannel;
+        this->_channelOffsets[i] = 3;
         break;
       default:
         this->_status = FeatureTexturePropertyViewStatus::InvalidChannelsString;
@@ -137,6 +137,7 @@ public:
   FeatureTexturePropertyValue<T>
   getProperty(double u, double v) const noexcept {
     assert(this->_status == FeatureTexturePropertyViewStatus::Valid);
+    assert(sizeof(T) == this->_pImage->bytesPerChannel);
 
     // TODO: actually use the sampler??
     int64_t x = std::clamp(
@@ -151,16 +152,12 @@ public:
     int64_t pixelOffset = this->_pImage->bytesPerChannel *
                           this->_pImage->channels *
                           (y * this->_pImage->width + x);
-    const T* pChannel = reinterpret_cast<const T*>(
+    const T* pRedChannel = reinterpret_cast<const T*>(
         this->_pImage->pixelData.data() + pixelOffset);
-
-    return static_cast<int64_t>(
-        this->_pImage->pixelData[pixelOffset + this->_channel]);
 
     FeatureTexturePropertyValue<T> property;
     for (int i = 0; i < this->_componentCount; ++i) {
-      property[i] = *pChannel;
-      ++pChannel;
+      property.components[i] = *(pRedChannel + this->_channelOffsets[i]);
     }
 
     return property;
