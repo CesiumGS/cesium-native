@@ -15,10 +15,12 @@ function generate(options, schema, writers) {
     namespace,
     readerNamespace,
     writerNamespace,
-    extensions
+    extensions,
   } = options;
 
-  const name = getNameFromTitle(config, schema.title);
+  const baseName = getNameFromTitle(config, schema.title);
+  const prefix = schema.prefix && schema.prefix !== baseName ? schema.prefix : "";
+  const name = prefix + baseName;
   const thisConfig = config.classes[schema.title] || {};
 
   console.log(`Generating ${name}`);

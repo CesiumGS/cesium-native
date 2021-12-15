@@ -5,6 +5,7 @@ const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
 const generateCombinedWriter = require("./generateCombinedWriter");
 const generateRegisterExtensions = require("./generateRegisterExtensions");
+const getNameFromTitle = require("./getNameFromTitle");
 
 const argv = yargs.options({
   schemas: {
@@ -118,11 +119,27 @@ const options = {
 
 const writers = [];
 
+function getObjectToExtend(schema, extensionName) {
+  const parts = schema.split("\/");
+  const last = parts[parts.length - 1];
+  const subParts = last.split(".");
+  const extensionNameIndex = subParts.indexOf(extensionName);
+  if (extensionNameIndex == -1 || extensionNameIndex == 0) {
+    return undefined;
+  }
+  const objectToExtend = subParts.slice(0, extensionNameIndex).join(".");
+  return objectToExtend;
+}
+
 for (const extension of config.extensions) {
-  const extensionSchema = schemaCache.loadExtension(extension.schema);
+  const prefix = extensionClassName;
+  const extensionSchema = schemaCache.loadExtension(extension.schema, extension.extensionName, prefix);
+  const extensionClassName = getNameFromTitle(config, extensionSchema.title);
+  // extensionSchema.prefix = extensionClassName;
+
   if (!extensionSchema) {
     console.warn(
-      `Could not load schema ${extension.schema} for extension class ${extension.className}.`
+      `Could not load schema ${extension.schema} for extension class ${extensionClassName}.`
     );
     continue;
   }
@@ -130,12 +147,28 @@ for (const extension of config.extensions) {
   if (!config.classes[extensionSchema.title]) {
     config.classes[extensionSchema.title] = {};
   }
-  config.classes[extensionSchema.title].overrideName = extension.className;
+  config.classes[extensionSchema.title].overrideName = extensionClassName;
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
   schemas.push(...generate(options, extensionSchema, writers));
+  // console.log(schemas);
 
-  for (const objectToExtend of extension.attachTo) {
+  var objectsToExtend = [];
+  if (extension.attachTo !== undefined) {
+    objectsToExtend.concat(extension.attachTo);
+  } else {
+    const attachTo = getObjectToExtend(extension.schema, extension.extensionName, extensionClassName);
+    if (attachTo !== undefined) {
+      objectsToExtend.push(attachTo);
+    }
+  }
+
+  if (objectsToExtend.length === 0) {
+    console.warn(`Could not find object to extend for extension class ${extensionClassName}`);
+    continue;
+  }
+
+  for (const objectToExtend of objectsToExtend) {
     const objectToExtendSchema = schemaCache.load(
       `${objectToExtend}.schema.json`
     );
@@ -160,6 +193,8 @@ function processSchemas() {
 
   while (schemas.length > 0) {
     const schema = schemas.pop();
+    console.log("prefix " + schema.prefix);
+    console.log(schema);
     if (processed[schema.sourcePath]) {
       continue;
     }
@@ -167,6 +202,8 @@ function processSchemas() {
     schemas.push(...generate(options, schema, writers));
   }
 }
+
+console.log("DFSF")
 
 processSchemas();
 

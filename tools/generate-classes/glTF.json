@@ -21,40 +21,54 @@
     },
     "Texture Info": {
       "isBaseClass": true
+    },
+    "KHR_draco_mesh_compression extension": {
+      "overrideName": "ExtensionKhrDracoMeshCompression"
+    },
+    "EXT_feature_metadata glTF extension": {
+      "overrideName": "ExtensionModelExtFeatureMetadata"
+    },
+    "EXT_feature_metadata glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionMeshPrimitiveExtFeatureMetadata"
+    },
+    "EXT_mesh_features glTF extension": {
+      "overrideName": "ExtensionModelExtMeshFeatures"
+    },
+    "EXT_mesh_features glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
+    },
+    "EXT_mesh_features glTF Node extension": {
+      "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
     }
   },
   "extensions": [
     {
-      "className": "ExtensionKhrDracoMeshCompression",
       "extensionName": "KHR_draco_mesh_compression",
-      "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
-      "attachTo": [
-        "mesh.primitive"
-      ]
+      "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json"
     },
     {
-      "className": "ExtensionModelExtFeatureMetadata",
       "extensionName": "EXT_feature_metadata",
-      "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json",
-      "attachTo": [
-        "glTF"
-      ]
+      "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json"
     },
     {
-      "className": "ExtensionMeshPrimitiveExtFeatureMetadata",
       "extensionName": "EXT_feature_metadata",
-      "schema": "Vendor/EXT_feature_metadata/schema/primitive.EXT_feature_metadata.schema.json",
-      "attachTo": [
-        "mesh.primitive"
-      ]
+      "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
     },
     {
-      "className": "ExtensionMaterialsUnlit",
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/glTF.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/node.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/mesh.primitive.EXT_mesh_features.schema.json"
+    },
+    {
       "extensionName": "KHR_materials_unlit",
-      "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
-      "attachTo": [
-        "material"
-      ]
+      "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json"
     }
   ]
 }

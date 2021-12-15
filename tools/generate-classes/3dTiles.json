@@ -9,34 +9,24 @@
   },
   "extensions": [
     {
-      "className": "Extension3dTilesContentGltf",
       "extensionName": "3DTILES_content_gltf",
-      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json",
-      "attachTo": ["tileset"]
+      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
     },
     {
-      "className": "Extension3dTilesMultipleContents",
       "extensionName": "3DTILES_multiple_contents",
-      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json",
-      "attachTo": ["tile"]
+      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json"
     },
     {
-      "className": "Extension3dTilesBoundingVolumeS2",
       "extensionName": "3DTILES_bounding_volume_S2",
-      "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json",
-      "attachTo": ["boundingVolume"]
+      "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
     },
     {
-      "className": "Extension3dTilesImplicitTiling",
       "extensionName": "3DTILES_implicit_tiling",
-      "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json",
-      "attachTo": ["tile"]
+      "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
     },
     {
-      "className": "Extension3dTilesImplicitTilingExtension3dTilesMultipleContents",
       "extensionName": "3DTILES_multiple_contents",
-      "schema": "3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json",
-      "attachTo": ["subtree"]
+      "schema": "3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json"
     }
   ]
 }
