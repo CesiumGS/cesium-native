@@ -13,7 +13,8 @@ function resolveProperty(
   propertyDetails,
   required,
   namespace,
-  readerNamespace
+  readerNamespace,
+  writerNamespace
 ) {
   if (Object.keys(propertyDetails).length === 0) {
     // Ignore totally empty properties. The glTF and 3D Tiles JSON schema files often use empty properties in derived classes
@@ -38,7 +39,8 @@ function resolveProperty(
       propertyDetails,
       required,
       namespace,
-      readerNamespace
+      readerNamespace,
+      writerNamespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
@@ -92,7 +94,8 @@ function resolveProperty(
       propertyDetails,
       required,
       namespace,
-      readerNamespace
+      readerNamespace,
+      writerNamespace
     );
   } else if (isEnum(propertyDetails)) {
     return resolveEnum(
@@ -105,7 +108,8 @@ function resolveProperty(
       isRequired,
       makeOptional,
       namespace,
-      readerNamespace
+      readerNamespace,
+      writerNamespace
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -117,6 +121,7 @@ function resolveProperty(
         headers: ["<cstdint>"],
         readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
+        requiredId: isRequired,
       };
     } else if (itemSchema.type !== "object") {
       return resolveProperty(
@@ -127,7 +132,8 @@ function resolveProperty(
         itemSchema,
         required,
         namespace,
-        readerNamespace
+        readerNamespace,
+        writerNamespace
       );
     } else {
       const type = getNameFromTitle(config, itemSchema.title);
@@ -154,7 +160,8 @@ function resolveProperty(
       propertyDetails.allOf[0],
       required,
       namespace,
-      readerNamespace
+      readerNamespace,
+      writerNamespace
     );
 
     return {
@@ -224,7 +231,8 @@ function resolveArray(
   propertyDetails,
   required,
   namespace,
-  readerNamespace
+  readerNamespace,
+  writerNamespace
 ) {
   // If there is no items definition, pass an effectively empty object.
   // But if the definition is _actually_ empty, the property will be ignored
@@ -238,7 +246,8 @@ function resolveArray(
     propertyDetails.items || { notEmpty: true },
     undefined,
     namespace,
-    readerNamespace
+    readerNamespace,
+    writerNamespace
   );
 
   if (!itemProperty) {
@@ -272,7 +281,8 @@ function resolveDictionary(
   propertyDetails,
   required,
   namespace,
-  readerNamespace
+  readerNamespace,
+  writerNamespace
 ) {
   const additional = resolveProperty(
     schemaCache,
@@ -283,7 +293,8 @@ function resolveDictionary(
     // Treat the nested property type as required so it's not wrapped in std::optional.
     [propertyName + ".additionalProperties"],
     namespace,
-    readerNamespace
+    readerNamespace,
+    writerNamespace
   );
 
   if (!additional) {
@@ -370,7 +381,8 @@ function resolveEnum(
   isRequired,
   makeOptional,
   namespace,
-  readerNamespace
+  readerNamespace,
+  writerNamespace
 ) {
   if (!isEnum(propertyDetails)) {
     return undefined;
@@ -384,6 +396,7 @@ function resolveEnum(
 
   const enumName = toPascalCase(propertyName);
   const enumDefaultValue = createEnumDefault(enumName, propertyDetails);
+  const enumDefaultValueWriter = `${namespace}::${parentName}::${enumDefaultValue}`;
 
   const readerTypes = createEnumReaderType(
     parentName,
@@ -421,6 +434,7 @@ function resolveEnum(
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: makeOptional ? undefined : enumDefaultValue,
+    defaultValueWriter: makeOptional ? undefined : enumDefaultValueWriter,
     readerHeaders: [`<${namespace}/${parentName}.h>`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
@@ -431,6 +445,7 @@ function resolveEnum(
     ),
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
+    requiredEnum: isRequired,
   };
 
   if (readerTypes.length > 0) {
