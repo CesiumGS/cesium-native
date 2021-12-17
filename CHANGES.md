@@ -8,6 +8,10 @@
 - The `CesiumGltfWriter` project now uses the `CesiumGltfWriter` namespace instead of the `CesiumGltf` namespace.
 - The `Cesium3DTilesReader` project now uses the `Cesium3DTilesReader` namespace instead of the `Cesium3DTiles` namespace.
 
+##### Additions :tada:
+
+- Added `Cesium3DTilesWriter` library.
+
 ### v0.10.0 - 2021-12-01
 
 ##### Breaking Changes :mega:
