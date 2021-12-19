@@ -26,5 +26,8 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtFeatureMetadataJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Texture,
+      ExtensionTextureBasisUJsonHandler>();
 }
 } // namespace CesiumGltfReader

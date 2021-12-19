@@ -226,7 +226,7 @@ void postprocess(
 
   if (options.decodeEmbeddedImages) {
     CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
-    for (Image& image : model.images) {
+    for (CesiumGltf::Image& image : model.images) {
       // Ignore external images for now.
       if (image.uri) {
         continue;
@@ -234,7 +234,8 @@ void postprocess(
 
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
-      const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
+      const CesiumGltf::Buffer& buffer =
+          Model::getSafe(model.buffers, bufferView.buffer);
 
       if (bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
@@ -329,13 +330,13 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
   // Get a rough count of how many external buffers we may have.
   // Some of these may be data uris though.
   size_t uriBuffersCount = 0;
-  for (const Buffer& buffer : result.model->buffers) {
+  for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
     if (buffer.uri) {
       ++uriBuffersCount;
     }
   }
 
-  for (const Image& image : result.model->images) {
+  for (const CesiumGltf::Image& image : result.model->images) {
     if (image.uri) {
       ++uriBuffersCount;
     }
@@ -359,7 +360,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
   constexpr std::string_view dataPrefix = "data:";
   constexpr size_t dataPrefixLength = dataPrefix.size();
 
-  for (Buffer& buffer : pResult->model->buffers) {
+  for (CesiumGltf::Buffer& buffer : pResult->model->buffers) {
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
@@ -387,7 +388,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     }
   }
 
-  for (Image& image : pResult->model->images) {
+  for (CesiumGltf::Image& image : pResult->model->images) {
     if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor

@@ -10,18 +10,20 @@ namespace CesiumJsonReader {
 class ExtensionReaderContext;
 }
 
-namespace CesiumGltf {
+namespace CesiumGltfReader {
 class ExtensionTextureBasisUJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler,
       public CesiumJsonReader::IExtensionJsonHandler {
 public:
-  using ValueType = ExtensionTextureBasisU;
+  using ValueType = CesiumGltf::ExtensionTextureBasisU;
 
   static inline constexpr const char* ExtensionName = "KHR_texture_basisu";
 
   ExtensionTextureBasisUJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, ExtensionTextureBasisU* pObject);
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::ExtensionTextureBasisU* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
@@ -79,10 +81,10 @@ protected:
   IJsonHandler* readObjectKeyExtensionTextureBasisU(
       const std::string& objectType,
       const std::string_view& str,
-      ExtensionTextureBasisU& o);
+      CesiumGltf::ExtensionTextureBasisU& o);
 
 private:
-  ExtensionTextureBasisU* _pObject = nullptr;
+  CesiumGltf::ExtensionTextureBasisU* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _source;
 };
-} // namespace CesiumGltf
+} // namespace CesiumGltfReader
