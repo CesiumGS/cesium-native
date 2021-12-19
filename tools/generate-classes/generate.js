@@ -53,6 +53,10 @@ function generate(options, schema, writers) {
     lodash.flatten(properties.map((property) => property.localTypes))
   );
 
+  const undefines = lodash.uniq(
+    lodash.flatten(properties.map((property) => property.undefines))
+  );
+
   schemaCache.popContext();
 
   let headers = lodash.uniq([
@@ -75,6 +79,8 @@ function generate(options, schema, writers) {
         #pragma once
 
         ${headers.map((header) => `#include ${header}`).join("\n")}
+
+        ${undefines.map((undefine) => `// ${undefine.comment}\n#undef ${undefine.name}`).join("\n")}
 
         namespace ${namespace} {
             /**

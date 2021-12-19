@@ -12,6 +12,9 @@
 #include <optional>
 #include <vector>
 
+// OPAQUE is defined in wingdi.h
+#undef OPAQUE
+
 namespace CesiumGltf {
 /**
  * @brief The material appearance of a primitive.

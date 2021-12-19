@@ -219,6 +219,7 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
     readerLocalTypesImpl: [],
     briefDoc: propertyDetails.description,
     fullDoc: fullDoc,
+    undefines: [],
   };
 }
 
@@ -371,6 +372,13 @@ function findCommonEnumType(propertyName, propertyDetails) {
   return firstType;
 }
 
+const allUndefines = [
+  {
+    name: "OPAQUE",
+    comment: "OPAQUE is defined in wingdi.h",
+  },
+];
+
 function resolveEnum(
   schemaCache,
   config,
@@ -404,6 +412,17 @@ function resolveEnum(
     propertyName,
     propertyDetails
   );
+
+  const undefines = [];
+
+  for (const e of propertyDetails.anyOf) {
+    const enumIdentifier = createEnumIdentifier(e);
+    for (const undefine of allUndefines) {
+      if (undefine.name === enumIdentifier) {
+        undefines.push(undefine);
+      }
+    }
+  }
 
   const propertyDefaultValues = propertyDefaults(
     propertyName,
@@ -446,6 +465,7 @@ function resolveEnum(
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
     requiredEnum: isRequired,
+    undefines: undefines,
   };
 
   if (readerTypes.length > 0) {
@@ -532,13 +552,26 @@ function createEnum(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return `static constexpr int32_t ${makeIdentifier(
-      enumDetails.description
+    return `static constexpr int32_t ${createEnumIdentifier(
+      enumDetails
     )} = ${enumValue}`;
   } else {
-    return `inline static const std::string ${makeIdentifier(
-      enumValue
+    return `inline static const std::string ${createEnumIdentifier(
+      enumDetails
     )} = \"${enumValue}\"`;
+  }
+}
+
+function createEnumIdentifier(enumDetails) {
+  const enumValue = getEnumValue(enumDetails);
+  if (enumValue === undefined) {
+    return undefined;
+  }
+
+  if (enumDetails.type === "integer") {
+    return makeIdentifier(enumDetails.description);
+  } else {
+    return makeIdentifier(enumValue);
   }
 }
 
