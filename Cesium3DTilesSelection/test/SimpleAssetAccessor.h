@@ -18,8 +18,7 @@ public:
       : mockCompletedRequests{std::move(mockCompletedRequests)} {}
 
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  requestAsset(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+  get(const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<THeader>&) override {
     auto mockRequestIt = mockCompletedRequests.find(url);
@@ -32,12 +31,14 @@ public:
         std::shared_ptr<CesiumAsync::IAssetRequest>(nullptr));
   }
 
-  virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>> post(
+  virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
+  startRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::string& /* verb */,
       const std::string& url,
       const std::vector<THeader>& headers,
       const gsl::span<const std::byte>&) override {
-    return this->requestAsset(asyncSystem, url, headers);
+    return this->get(asyncSystem, url, headers);
   }
 
   virtual void tick() noexcept override {}
