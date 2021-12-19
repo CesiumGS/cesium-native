@@ -4,8 +4,7 @@
 
 #include <cassert>
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 namespace {
 
 struct Dispatcher {
@@ -155,3 +154,4 @@ void JsonReader::FinalJsonHandler::setInputStream(
     errors.emplace_back(std::move(s));
   }
 }
+} // namespace CesiumJsonReader

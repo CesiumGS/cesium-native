@@ -1,14 +1,14 @@
 #pragma once
 
 #include <CesiumGltf/Animation.h>
-#include <CesiumGltf/WriteModelResult.h>
+#include <CesiumGltfWriter/WriteModelResult.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeAnimation(
-    CesiumGltf::WriteModelResult& result,
-    const std::vector<Animation>& animations,
+    CesiumGltfWriter::WriteModelResult& result,
+    const std::vector<CesiumGltf::Animation>& animations,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

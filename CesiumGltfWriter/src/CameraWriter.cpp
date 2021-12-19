@@ -28,7 +28,7 @@ void writeOrthographicCamera(
   j.Double(cameraOrthographic.znear);
 
   if (!cameraOrthographic.extensions.empty()) {
-    CesiumGltf::writeExtensions(cameraOrthographic.extensions, j);
+    CesiumGltfWriter::writeExtensions(cameraOrthographic.extensions, j);
   }
 
   if (!cameraOrthographic.extras.empty()) {
@@ -58,7 +58,7 @@ void writePerspectiveCamera(
   j.Double(cameraPerspective.znear);
 
   if (!cameraPerspective.extensions.empty()) {
-    CesiumGltf::writeExtensions(cameraPerspective.extensions, j);
+    CesiumGltfWriter::writeExtensions(cameraPerspective.extensions, j);
   }
 
   if (!cameraPerspective.extras.empty()) {
@@ -69,8 +69,8 @@ void writePerspectiveCamera(
   j.EndObject();
 }
 
-void CesiumGltf::writeCamera(
-    const std::vector<Camera>& cameras,
+void CesiumGltfWriter::writeCamera(
+    const std::vector<CesiumGltf::Camera>& cameras,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (cameras.empty()) {
     return;

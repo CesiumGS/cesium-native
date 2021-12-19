@@ -14,8 +14,8 @@ const std::vector<double> DEFAULT_ROTATION{0, 0, 0, 1};
 const std::vector<double> DEFAULT_SCALE{1, 1, 1};
 const std::vector<double> DEFAULT_TRANSLATION{0, 0, 0};
 
-void CesiumGltf::writeNode(
-    const std::vector<Node>& nodes,
+void CesiumGltfWriter::writeNode(
+    const std::vector<CesiumGltf::Node>& nodes,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (nodes.empty()) {
     return;

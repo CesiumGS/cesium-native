@@ -11,7 +11,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/GltfReader.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
@@ -177,7 +177,7 @@ public:
       const glm::dmat4x4& rootTransform);
 
 private:
-  static CesiumGltf::GltfReader _gltfReader;
+  static CesiumGltfReader::GltfReader _gltfReader;
 };
 
 } // namespace Cesium3DTilesSelection

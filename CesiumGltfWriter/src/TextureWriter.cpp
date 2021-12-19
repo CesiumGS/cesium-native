@@ -4,8 +4,8 @@
 
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
-void CesiumGltf::writeTexture(
-    const std::vector<Texture>& textures,
+void CesiumGltfWriter::writeTexture(
+    const std::vector<CesiumGltf::Texture>& textures,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (textures.empty()) {
     return;

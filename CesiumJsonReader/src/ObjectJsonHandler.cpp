@@ -1,7 +1,6 @@
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 IJsonHandler* ObjectJsonHandler::readObjectStart() {
   ++this->_depth;
   if (this->_depth > 1) {
@@ -41,3 +40,4 @@ const char* ObjectJsonHandler::getCurrentKey() const noexcept {
 void ObjectJsonHandler::setCurrentKey(const char* key) noexcept {
   this->_currentKey = key;
 }
+} // namespace CesiumJsonReader

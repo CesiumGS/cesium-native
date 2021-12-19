@@ -8,6 +8,8 @@
 
 using namespace CesiumAsync;
 
+namespace {
+
 class MockTaskProcessor : public ITaskProcessor {
 public:
   std::atomic<int32_t> tasksStarted = 0;
@@ -17,6 +19,8 @@ public:
     std::thread(f).detach();
   }
 };
+
+} // namespace
 
 TEST_CASE("AsyncSystem") {
   std::shared_ptr<MockTaskProcessor> pTaskProcessor =

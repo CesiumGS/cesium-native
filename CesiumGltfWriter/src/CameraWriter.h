@@ -3,8 +3,8 @@
 #include <CesiumGltf/Camera.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeCamera(
-    const std::vector<Camera>& cameras,
+    const std::vector<CesiumGltf::Camera>& cameras,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

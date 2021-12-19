@@ -1,6 +1,18 @@
 # Change Log
 
-### ? - ?
+### v0.11.0 - 2022-01-03
+
+##### Breaking Changes :mega:
+
+- The `CesiumGltfReader` project now uses the `CesiumGltfReader` namespace instead of the `CesiumGltf` namespace.
+- The `CesiumGltfWriter` project now uses the `CesiumGltfWriter` namespace instead of the `CesiumGltf` namespace.
+- The `Cesium3DTilesReader` project now uses the `Cesium3DTilesReader` namespace instead of the `Cesium3DTiles` namespace.
+
+##### Additions :tada:
+
+- Added `Cesium3DTilesWriter` library.
+
+### v0.10.0 - 2021-12-01
 
 ##### Breaking Changes :mega:
 
@@ -10,18 +22,37 @@
 - The constructor of `RasterMappedTo3DTile` now requires a texture coordinate index.
 - The constructor of `RasterOverlayTile` now takes a `targetScreenPixels` instead of a `targetGeometricError`. And the corresponding `getTargetGeometricError` has been removed.
 - Removed `TileContentLoadResult::rasterOverlayProjections`. This field is now found in the `overlayDetails`.
-- Removed `obtainGlobeRectangle` from `TileUtilities.h`. Use `obtainGlobeRectangle` in `BoundingVolume.h` instead.
+- Removed `obtainGlobeRectangle` from `TileUtilities.h`. Use `estimateGlobeRectangle` in `BoundingVolume.h` instead.
+- cesium-native now uses the following options with the `glm` library:
+  - `GLM_FORCE_XYZW_ONLY`
+  - `GLM_FORCE_EXPLICIT_CTOR`
+  - `GLM_FORCE_SIZE_T_LENGTH`
 
 ##### Additions :tada:
 
+- Added support for the [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling) extension.
 - Added support for the [3DTILES_bounding_volume_S2](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_bounding_volume_S2) extension.
-- Added support for external glTF buffers and images.
 - Added support for raster overlays, including clipping polygons, on any 3D Tiles tileset.
+- Added support for external glTF buffers and images.
 - Raster overlay level-of detail is now selected using "target screen pixels" rather than the hard-to-interpret geometric error value.
 - A `RasterOverlay` can now be configured with a `maximumScreenSpaceError` independent of the screen-space error used for the geometry.
 - `RasterOverlay::loadTileProvider` now returns a `SharedFuture`, making it easy to attach a continuation to run when the load completes.
 - Added `GltfContent::applyRtcCenter` and `applyGltfUpAxisTransform`.
 - Clipping polygon edges now remain sharp even when zooming in past the available geometry detail.
+- Added `DebugColorizeTilesRasterOverlay`.
+- Added `BoundingRegionBuilder` to `CesiumGeospatial`.
+- Added `GlobeRectangle::EMPTY` static field and `GlobeRectangle::isEmpty` method.
+- Added the ability to set the coordinates of a `GlobeRectangle` after construction.
+
+##### Fixes :wrench:
+
+- Improved the computation of bounding regions and overlay texture coordinates from geometry, particularly for geometry that crosses the anti-meridian or touches the poles.
+- Fixed a bug that would result in incorrect geometry when upsampling a glTF with a position accessor pointing to a bufferView that did not start at the beginning of its buffer.
+- Fixed a problem that could cause incorrect distance computation for a degenerate bounding region that is a single point with a min/max height.
+- Improved the numerical stability of `GlobeRectangle::computeCenter` and `GlobeRectangle::contains`.
+- Error messages are no longer printed to the Output Log when an upsampled tile happens to have a primitive with no vertices.
+- Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by the corresponding glTF accessor.
+- Fixed a bug that could cause the wrong triangle indices to be used for a Draco-encoded glTF.
 
 ### v0.9.0 - 2021-11-01
 

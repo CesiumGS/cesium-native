@@ -1,6 +1,6 @@
 #include "decodeDataUrls.h"
 
-#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltfReader/GltfReader.h"
 
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Tracing.h>
@@ -9,10 +9,12 @@
 
 #include <cstddef>
 
+namespace CesiumGltfReader {
+
 namespace {
 
 std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
-  CESIUM_TRACE("CesiumGltf::decodeBase64");
+  CESIUM_TRACE("CesiumGltfReader::decodeBase64");
   std::vector<std::byte> result(modp_b64_decode_len(data.size()));
 
   const size_t resultLength = modp_b64_decode(
@@ -84,8 +86,6 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 }
 } // namespace
 
-namespace CesiumGltf {
-
 void decodeDataUrls(
     const GltfReader& reader,
     ModelReaderResult& readModel,
@@ -95,9 +95,9 @@ void decodeDataUrls(
     return;
   }
 
-  Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readModel.model.value();
 
-  for (Buffer& buffer : model.buffers) {
+  for (CesiumGltf::Buffer& buffer : model.buffers) {
     if (!buffer.uri) {
       continue;
     }
@@ -114,7 +114,7 @@ void decodeDataUrls(
     }
   }
 
-  for (Image& image : model.images) {
+  for (CesiumGltf::Image& image : model.images) {
     if (!image.uri) {
       continue;
     }
@@ -137,4 +137,4 @@ void decodeDataUrls(
   }
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumGltfReader

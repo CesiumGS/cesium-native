@@ -140,8 +140,7 @@ static std::string createAuthorizationErrorHtml(
   // TODO: state and code_challenge
 
   pServer->Get(
-      redirectPath.c_str(),
-      redirectPath.size(),
+      redirectPath,
       [promise,
        pServer,
        asyncSystem,

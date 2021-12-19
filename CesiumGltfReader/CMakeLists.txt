@@ -1,11 +1,24 @@
 add_library(CesiumGltfReader "")
 configure_cesium_library(CesiumGltfReader)
 
-cesium_glob_files(CESIUM_GLTF_READER_SOURCES src/*.cpp generated/*.cpp)
-cesium_glob_files(CESIUM_GLTF_READER_HEADERS src/*.h src/*.hpp generated/*.h generated/*.hpp)
-cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS include/CesiumGltf/*.h) # Correct is CesiumGltf not CesiumGltfReader
-cesium_glob_files(CESIUM_GLTF_READER_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_GLTF_READER_TEST_HEADERS test/*.h)
+cesium_glob_files(CESIUM_GLTF_READER_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
+)
+cesium_glob_files(CESIUM_GLTF_READER_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
+)
+cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltfReader/*.h
+)
+cesium_glob_files(CESIUM_GLTF_READER_TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
+)
+cesium_glob_files(CESIUM_GLTF_READER_TEST_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
+)
 
 set_target_properties(CesiumGltfReader
     PROPERTIES
@@ -33,12 +46,12 @@ target_include_directories(
     SYSTEM PUBLIC
         # Necessary for `draco/draco_features.h`
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
-        ${CMAKE_BINARY_DIR}
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
+        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${CMAKE_CURRENT_LIST_DIR}/generated
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
 target_link_libraries(CesiumGltfReader
@@ -46,7 +59,6 @@ target_link_libraries(CesiumGltfReader
         CesiumAsync
         CesiumGltf
         CesiumJsonReader
-        GSL
         modp_b64
         ${CESIUM_NATIVE_DRACO_LIBRARY}
     PRIVATE
@@ -55,5 +67,5 @@ target_link_libraries(CesiumGltfReader
 
 install(TARGETS CesiumGltfReader
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf # Correct is CesiumGltf not CesiumGltfReader
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltfReader
 )

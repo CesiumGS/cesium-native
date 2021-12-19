@@ -1,6 +1,6 @@
 #pragma once
 
-namespace CesiumGltf {
+namespace CesiumGltfReader {
 
 struct ModelReaderResult;
 struct ReadModelOptions;
