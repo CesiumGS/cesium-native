@@ -49,12 +49,12 @@
       ]
     },
     {
-        "className": "ExtensionTextureBasisU",
-        "extensionName": "KHR_texture_basisu",
-        "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
-        "attachTo": [
-            "texture"
-        ]
+      "className": "ExtensionTextureBasisU",
+      "extensionName": "KHR_texture_basisu",
+      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
+      "attachTo": [
+        "texture"
+      ]
     }
   ]
 }

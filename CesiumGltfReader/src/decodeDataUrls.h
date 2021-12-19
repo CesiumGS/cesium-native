@@ -10,4 +10,4 @@ void decodeDataUrls(
     const GltfReader& reader,
     ModelReaderResult& readModel,
     const ReadModelOptions& options);
-} // namespace CesiumGltf
+} // namespace CesiumGltfReader

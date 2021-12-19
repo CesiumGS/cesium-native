@@ -10,8 +10,8 @@
 
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumGltf/Texture.h>
+#include <CesiumJsonReader/ExtensionReaderContext.h>
 
 namespace CesiumGltfReader {
 
@@ -26,8 +26,5 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtFeatureMetadataJsonHandler>();
-  context.registerExtension<
-      CesiumGltf::Texture, 
-      ExtensionTextureBasisUJsonHandler>();
 }
 } // namespace CesiumGltfReader
