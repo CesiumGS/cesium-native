@@ -1,6 +1,7 @@
-#include "Cesium3DTilesWriter/TilesetWriter.h"
+#include "Cesium3DTilesWriter/SubtreeWriter.h"
 
-#include "Cesium3DTilesWriter/TilesetJsonWriter.h"
+#include "TilesetJsonWriter.h"
+#include "registerExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -8,26 +9,26 @@
 
 namespace Cesium3DTilesWriter {
 
-TilesetWriter::TilesetWriter() { registerExtensions(this->_context); }
+SubtreeWriter::SubtreeWriter() { registerExtensions(this->_context); }
 
-CesiumJsonWriter::ExtensionWriterContext& TilesetWriter::getExtensions() {
+CesiumJsonWriter::ExtensionWriterContext& SubtreeWriter::getExtensions() {
   return this->_context;
 }
 
 const CesiumJsonWriter::ExtensionWriterContext&
-TilesetWriter::getExtensions() const {
+SubtreeWriter::getExtensions() const {
   return this->_context;
 }
 
-TilesetWriterResult TilesetWriter::writeTileset(
-    const Cesium3DTiles::Tileset& tileset,
-    const TilesetWriterOptions& options) const {
-  CESIUM_TRACE("TilesetWriter::writeTileset");
+SubtreeWriterResult SubtreeWriter::writeSubtree(
+    const Cesium3DTiles::Subtree& subtree,
+    const SubtreeWriterOptions& options) const {
+  CESIUM_TRACE("SubtreeWriter::writeSubtree");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
-  TilesetWriterResult result;
+  SubtreeWriterResult result;
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -36,8 +37,8 @@ TilesetWriterResult TilesetWriter::writeTileset(
     writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  TilesetJsonWriter::write(tileset, *writer, context);
-  result.tilesetBytes = writer->toBytes();
+  SubtreeJsonWriter::write(subtree, *writer, context);
+  result.subtreeBytes = writer->toBytes();
 
   return result;
 }

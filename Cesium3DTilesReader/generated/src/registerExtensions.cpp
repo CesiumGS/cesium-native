@@ -5,6 +5,9 @@
 
 #include "Extension3dTilesBoundingVolumeS2JsonHandler.h"
 #include "Extension3dTilesContentGltfJsonHandler.h"
+#include "Extension3dTilesImplicitTilingExtension3dTilesMultipleContentsJsonHandler.h"
+#include "Extension3dTilesImplicitTilingJsonHandler.h"
+#include "Extension3dTilesMultipleContentsJsonHandler.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Subtree.h>

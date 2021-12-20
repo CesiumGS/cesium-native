@@ -38,7 +38,10 @@
       "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
     },
     "EXT_mesh_features glTF Node extension": {
-      "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
+      "overrideName": "ExtensionNodeExtMeshFeatures"
+    },
+    "KHR_materials_unlit glTF extension": {
+      "overrideName": "ExtensionKhrMaterialsUnlit"
     }
   },
   "extensions": [
@@ -55,20 +58,9 @@
       "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
     },
     {
-      "extensionName": "EXT_mesh_features",
-      "schema": "Vendor/EXT_mesh_features/schema/glTF.EXT_mesh_features.schema.json"
-    },
-    {
-      "extensionName": "EXT_mesh_features",
-      "schema": "Vendor/EXT_mesh_features/schema/node.EXT_mesh_features.schema.json"
-    },
-    {
-      "extensionName": "EXT_mesh_features",
-      "schema": "Vendor/EXT_mesh_features/schema/mesh.primitive.EXT_mesh_features.schema.json"
-    },
-    {
       "extensionName": "KHR_materials_unlit",
-      "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json"
+      "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
+      "attachTo": ["material"]
     }
   ]
 }

@@ -134,13 +134,10 @@ function getObjectToExtend(schema, extensionName) {
   const objectToExtend = subParts.slice(0, extensionNameIndex).join(".");
   return objectToExtend;
 }
-let schemas = [rootSchema];
 
 for (const extension of config.extensions) {
-  const prefix = extensionClassName;
-  const extensionSchema = schemaCache.loadExtension(extension.schema, extension.extensionName, prefix);
+  const extensionSchema = schemaCache.loadExtension(extension.schema, extension.extensionName);
   const extensionClassName = getNameFromTitle(config, extensionSchema.title);
-  // extensionSchema.prefix = extensionClassName;
 
   if (!extensionSchema) {
     console.warn(
@@ -159,14 +156,13 @@ for (const extension of config.extensions) {
 
   var objectsToExtend = [];
   if (extension.attachTo !== undefined) {
-    objectsToExtend.concat(extension.attachTo);
+    objectsToExtend = objectsToExtend.concat(extension.attachTo);
   } else {
     const attachTo = getObjectToExtend(extension.schema, extension.extensionName, extensionClassName);
     if (attachTo !== undefined) {
       objectsToExtend.push(attachTo);
     }
   }
-
   if (objectsToExtend.length === 0) {
     console.warn(`Could not find object to extend for extension class ${extensionClassName}`);
     continue;
@@ -187,7 +183,7 @@ for (const extension of config.extensions) {
 
     options.extensions[objectToExtendSchema.title].push({
       name: extension.extensionName,
-      className: extension.className,
+      className: extensionClassName,
     });
   }
 }
@@ -197,8 +193,6 @@ function processSchemas() {
 
   while (schemas.length > 0) {
     const schema = schemas.pop();
-    console.log("prefix " + schema.prefix);
-    console.log(schema);
     if (processed[schema.sourcePath]) {
       continue;
     }
@@ -207,15 +201,16 @@ function processSchemas() {
   }
 }
 
-console.log("DFSF")
-
 processSchemas();
 
 generateRegisterExtensions({
   readerOutputDir: argv.readerOutput,
+  writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
   readerNamespace: argv.readerNamespace,
+  writerNamespace: argv.writerNamespace,
+  rootSchema: rootSchema,
   extensions: options.extensions,
 });
 

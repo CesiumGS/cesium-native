@@ -33,17 +33,17 @@ class SchemaCache {
     this.contextStack = [];
   }
 
-  load(name, prefix) {
+  load(name) {
     // First search relative to the current context.
     // If not found, search the schema paths.
     const searchPaths = [
       this.resolveRelativePath(name),
       ...this.schemaPaths.map((path) => this.resolvePath(path, name)),
     ];
-    return this.loadFromSearchPaths(name, searchPaths, prefix);
+    return this.loadFromSearchPaths(name, searchPaths);
   }
 
-  loadExtension(schemaName, extensionName, prefix) {
+  loadExtension(schemaName, extensionName) {
     const searchPaths = this.extensionSchemaPaths.map((path) =>
       this.resolvePath(path, schemaName)
     );
@@ -53,10 +53,10 @@ class SchemaCache {
       const resultB = pathB.indexOf(extensionName) === -1 ? 0 : 1;
       return resultB - resultA;
     });
-    return this.loadFromSearchPaths(schemaName, searchPaths, prefix);
+    return this.loadFromSearchPaths(schemaName, searchPaths);
   }
 
-  loadFromSearchPaths(name, paths, prefix) {
+  loadFromSearchPaths(name, paths) {
     let jsonString;
 
     let path;
@@ -84,7 +84,6 @@ class SchemaCache {
 
     const result = JSON.parse(jsonString);
     result.sourcePath = path;
-    result.prefix = prefix;
     this.cache[path] = result;
 
     return result;

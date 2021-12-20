@@ -5,6 +5,21 @@
     },
     "Tileset Property": {
       "overrideName": "CesiumUtility::ExtensibleObject"
+    },
+    "3DTILES_content_gltf extension": {
+      "overrideName": "Extension3dTilesContentGltf"
+    },
+    "3DTILES_multiple_contents tile extension": {
+      "overrideName": "Extension3dTilesMultipleContents"
+    },
+    "3DTILES_bounding_volume_S2 extension": {
+      "overrideName": "Extension3dTilesBoundingVolumeS2"
+    },
+    "3DTILES_implicit_tiling tile extension": {
+      "overrideName": "Extension3dTilesImplicitTiling"
+    },
+    "3DTILES_multiple_contents extension for 3DTILES_implicit_tiling subtree": {
+      "overrideName": "Extension3dTilesImplicitTilingExtension3dTilesMultipleContents"
     }
   },
   "extensions": [

@@ -23,6 +23,7 @@
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/FeatureIDAttribute.h>
@@ -71,6 +72,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrMaterialsUnlit& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -471,6 +477,25 @@ void writeJson(
     jsonWriter.Key("featureTextures");
     writeJson(obj.featureTextures, jsonWriter, context);
   }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrMaterialsUnlit& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -2062,6 +2087,13 @@ void ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
+void ExtensionKhrMaterialsUnlitJsonWriter::write(
+    const CesiumGltf::ExtensionKhrMaterialsUnlit& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
 void FeatureIDTextureJsonWriter::write(
     const CesiumGltf::FeatureIDTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -2363,18 +2395,4 @@ void AccessorSparseIndicesJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-
-  context.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonWriter>();
-
-  context.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionKhrDracoMeshCompressionJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter>();
-}
 } // namespace CesiumGltfWriter

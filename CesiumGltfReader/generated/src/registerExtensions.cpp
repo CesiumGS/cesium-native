@@ -4,6 +4,7 @@
 #include "registerExtensions.h"
 
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
+#include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
 
@@ -27,6 +28,6 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       ExtensionModelExtFeatureMetadataJsonHandler>();
   context.registerExtension<
       CesiumGltf::Material,
-      ExtensionMaterialsUnlitJsonHandler>();
+      ExtensionKhrMaterialsUnlitJsonHandler>();
 }
 } // namespace CesiumGltfReader

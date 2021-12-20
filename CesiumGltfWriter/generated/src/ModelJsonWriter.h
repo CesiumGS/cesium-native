@@ -13,6 +13,7 @@ namespace CesiumGltf {
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionModelExtFeatureMetadata;
 struct ExtensionMeshPrimitiveExtFeatureMetadata;
+struct ExtensionKhrMaterialsUnlit;
 struct FeatureIDTexture;
 struct TextureAccessor;
 struct TextureInfo;
@@ -90,6 +91,17 @@ struct ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrMaterialsUnlitJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrMaterialsUnlit;
+
+  static inline constexpr const char* ExtensionName = "KHR_materials_unlit";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrMaterialsUnlit& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -480,7 +492,5 @@ struct AccessorSparseIndicesJsonWriter {
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
-
-void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 
 } // namespace CesiumGltfWriter
