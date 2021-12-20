@@ -2,7 +2,6 @@ const getNameFromTitle = require("./getNameFromTitle");
 const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
-const lodash = require("lodash");
 const cppReservedWords = require("./cppReservedWords");
 
 function resolveProperty(
@@ -29,7 +28,21 @@ function resolveProperty(
   const isRequired = required === undefined || required.includes(propertyName);
   const makeOptional = !isRequired && propertyDetails.default === undefined;
 
-  if (propertyDetails.type == "array") {
+  if (isEnum(propertyDetails)) {
+    return resolveEnum(
+      schemaCache,
+      config,
+      parentName,
+      propertyName,
+      cppSafeName,
+      propertyDetails,
+      isRequired,
+      makeOptional,
+      namespace,
+      readerNamespace,
+      writerNamespace
+    );
+  } else if (propertyDetails.type == "array") {
     return resolveArray(
       schemaCache,
       config,
@@ -93,20 +106,6 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       required,
-      namespace,
-      readerNamespace,
-      writerNamespace
-    );
-  } else if (isEnum(propertyDetails)) {
-    return resolveEnum(
-      schemaCache,
-      config,
-      parentName,
-      propertyName,
-      cppSafeName,
-      propertyDetails,
-      isRequired,
-      makeOptional,
       namespace,
       readerNamespace,
       writerNamespace
@@ -333,24 +332,19 @@ function createEnumPropertyDoc(propertyValues) {
 }
 
 /**
- * Returns a string representing the common type of an "anyOf" property.
+ * Returns a string representing the common type of an enum.
  *
- * If there is no common type (because it is not an "anyOf" property,
- * or the "anyOf" entries don't contain "type" properties, or there
+ * If there is no common type (because "type" is undefined, or there
  * are different "type" properties), then undefined is returned.
  *
  * @param {String} propertyName The property name
- * @param {Object} propertyDetails The value of the property in the JSON
- * schema. Good to know that. Used a debugger to figure it out.
+ * @param {Array} enums The enums.
  * @returns The string indicating the common type, or undefined.
  */
-function findCommonEnumType(propertyName, propertyDetails) {
-  if (!isEnum(propertyDetails)) {
-    return undefined;
-  }
+function findCommonEnumType(propertyName, enums) {
   let firstType = undefined;
-  for (let i = 0; i < propertyDetails.anyOf.length; i++) {
-    const element = propertyDetails.anyOf[i];
+  for (let i = 0; i < enums.length; i++) {
+    const element = enums[i];
     if (element.type) {
       if (firstType) {
         if (element.type !== firstType) {
@@ -396,26 +390,54 @@ function resolveEnum(
     return undefined;
   }
 
-  const enumType = findCommonEnumType(propertyName, propertyDetails);
+  // Convert the three enum variations into a common format
+  const enums = [];
+  if (propertyDetails.enum) {
+    for (const e of propertyDetails.enum) {
+      enums.push({
+        const: e,
+        description: e,
+        type: propertyDetails.type,
+      });
+    }
+  } else if (propertyDetails.anyOf) {
+    for (const e of propertyDetails.anyOf) {
+      if (e.enum !== undefined && e.enum.length > 0) {
+        enums.push({
+          const: e.enum[0],
+          description: e.description,
+          type: propertyDetails.type,
+        });
+      } else {
+        enums.push({
+          const: e.const,
+          description: e.description,
+          type: e.type,
+        });
+      }
+    }
+  }
+
+  const enumType = findCommonEnumType(propertyName, enums);
   if (!enumType) {
     return undefined;
   }
   const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
 
   const enumName = toPascalCase(propertyName);
-  const enumDefaultValue = createEnumDefault(enumName, propertyDetails);
+  const enumDefaultValue = createEnumDefault(enumName, propertyDetails, enums);
   const enumDefaultValueWriter = `${namespace}::${parentName}::${enumDefaultValue}`;
 
   const readerTypes = createEnumReaderType(
     parentName,
     enumName,
     propertyName,
-    propertyDetails
+    enums
   );
 
   const undefines = [];
 
-  for (const e of propertyDetails.anyOf) {
+  for (const e of enums) {
     const enumIdentifier = createEnumIdentifier(e);
     for (const undefine of allUndefines) {
       if (undefine.name === enumIdentifier) {
@@ -441,7 +463,7 @@ function resolveEnum(
         ${createEnumPropertyDoc(propertyDefaultValues)}
         struct ${enumName} {
             ${indent(
-              propertyDetails.anyOf
+              enums
                 .map((e) => createEnum(e))
                 .filter((e) => e !== undefined)
                 .join(";\n\n") + ";",
@@ -460,7 +482,7 @@ function resolveEnum(
       parentName,
       enumName,
       propertyName,
-      propertyDetails
+      enums
     ),
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
@@ -486,25 +508,25 @@ function getEnumValue(enumDetails) {
     return enumDetails.const;
   }
 
-  if (enumDetails.enum !== undefined && enumDetails.enum.length > 0) {
-    return enumDetails.enum[0];
-  }
-
   return undefined;
 }
 
 function isEnum(propertyDetails) {
-  if (
-    propertyDetails.anyOf === undefined ||
-    propertyDetails.anyOf.length === 0
-  ) {
-    return false;
+  if (propertyDetails.anyOf && propertyDetails.anyOf.length > 0) {
+    const firstEnum = propertyDetails.anyOf[0];
+    const firstEnumValue = getEnumValue(firstEnum);
+
+    return firstEnumValue !== undefined;
   }
 
-  const firstEnum = propertyDetails.anyOf[0];
-  const firstEnumValue = getEnumValue(firstEnum);
+  // Enum form seen in EXT_meshopt_compression
+  if (propertyDetails.enum && propertyDetails.enum.length > 0) {
+    const firstEnumValue = propertyDetails.enum[0];
 
-  return firstEnumValue !== undefined;
+    return firstEnumValue !== undefined;
+  }
+
+  return false;
 }
 
 /**
@@ -512,12 +534,13 @@ function isEnum(propertyDetails) {
  * of the "initial" value of the given enum property.
  *
  * @param {Object} propertyDetails The property details
+ * @param {Array} enums The enums
  * @returns The name of the default property
  */
-function findNameOfInitial(propertyDetails) {
+function findNameOfInitial(propertyDetails, enums) {
   if (propertyDetails.default !== undefined) {
-    for (let i = 0; i < propertyDetails.anyOf.length; i++) {
-      const element = propertyDetails.anyOf[i];
+    for (let i = 0; i < enums.length; i++) {
+      const element = enums[i];
       const enumValue = getEnumValue(element);
       if (enumValue === propertyDetails.default) {
         if (element.type === "integer") {
@@ -528,8 +551,8 @@ function findNameOfInitial(propertyDetails) {
     }
   }
   // No explicit default value was found. Return the first value
-  for (let i = 0; i < propertyDetails.anyOf.length; i++) {
-    const element = propertyDetails.anyOf[i];
+  for (let i = 0; i < enums.length; i++) {
+    const element = enums[i];
     const enumValue = getEnumValue(element);
     if (enumValue !== undefined) {
       if (element.type === "integer") {
@@ -541,8 +564,8 @@ function findNameOfInitial(propertyDetails) {
   return undefined;
 }
 
-function createEnumDefault(enumName, propertyDetails) {
-  return `${enumName}::${findNameOfInitial(propertyDetails)}`;
+function createEnumDefault(enumName, propertyDetails, enums) {
+  return `${enumName}::${findNameOfInitial(propertyDetails, enums)}`;
 }
 
 function createEnum(enumDetails) {
@@ -575,17 +598,12 @@ function createEnumIdentifier(enumDetails) {
   }
 }
 
-function createEnumReaderType(
-  parentName,
-  enumName,
-  propertyName,
-  propertyDetails
-) {
-  if (propertyDetails.anyOf[0].type === "integer") {
+function createEnumReaderType(parentName, enumName, propertyName, enums) {
+  if (enums[0].type === "integer") {
     // No special reader needed for integer enums.
     return [];
   }
-  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
+  if (findCommonEnumType(propertyName, enums) === "string") {
     // No special reader needed for string enums.
     return [];
   }
@@ -603,17 +621,12 @@ function createEnumReaderType(
   `);
 }
 
-function createEnumReaderTypeImpl(
-  parentName,
-  enumName,
-  propertyName,
-  propertyDetails
-) {
-  if (propertyDetails.anyOf[0].type === "integer") {
+function createEnumReaderTypeImpl(parentName, enumName, propertyName, enums) {
+  if (enums[0].type === "integer") {
     // No special reader needed for integer enums.
     return [];
   }
-  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
+  if (findCommonEnumType(propertyName, enums) === "string") {
     // No special reader needed for string enums.
     return [];
   }
@@ -630,7 +643,7 @@ function createEnumReaderTypeImpl(
       assert(this->_pEnum);
 
       ${indent(
-        propertyDetails.anyOf
+        enums
           .map((e) => {
             const enumValue = getEnumValue(e);
             return enumValue !== undefined
