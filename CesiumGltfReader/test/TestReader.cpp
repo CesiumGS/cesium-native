@@ -77,7 +77,7 @@ TEST_CASE("CesiumGltf::GltfReader") {
   )";
 
   GltfReader reader;
-  ModelReaderResult result = reader.readModel(
+  GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   CHECK(result.errors.empty());
   REQUIRE(result.model.has_value());
@@ -113,7 +113,7 @@ TEST_CASE("Read TriangleWithoutIndices") {
       "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile);
   GltfReader reader;
-  ModelReaderResult result = reader.readModel(data);
+  GltfReaderResult result = reader.readGltf(data);
   REQUIRE(result.model);
 
   const Model& model = result.model.value();
@@ -147,7 +147,7 @@ TEST_CASE("Nested extras deserializes properly") {
   )";
 
   GltfReader reader;
-  ModelReaderResult result = reader.readModel(
+  GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
   REQUIRE(result.errors.empty());
@@ -195,16 +195,16 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
     }
   )";
 
-  ReadModelOptions options;
+  GltfReaderOptions options;
   GltfReader reader;
-  ModelReaderResult modelResult = reader.readModel(
+  GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
-  REQUIRE(modelResult.errors.empty());
-  REQUIRE(modelResult.model.has_value());
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.model.has_value());
 
-  Model& model = modelResult.model.value();
+  Model& model = result.model.value();
   REQUIRE(model.meshes.size() == 1);
   REQUIRE(model.meshes[0].primitives.size() == 1);
 
@@ -225,14 +225,14 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::JsonOnly);
 
-  ModelReaderResult modelResult2 = reader.readModel(
+  GltfReaderResult result2 = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
-  REQUIRE(modelResult2.errors.empty());
-  REQUIRE(modelResult2.model.has_value());
+  REQUIRE(result2.errors.empty());
+  REQUIRE(result2.model.has_value());
 
-  Model& model2 = modelResult2.model.value();
+  Model& model2 = result2.model.value();
   REQUIRE(model2.meshes.size() == 1);
   REQUIRE(model2.meshes[0].primitives.size() == 1);
 
@@ -260,14 +260,14 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::Disabled);
 
-  ModelReaderResult modelResult3 = reader.readModel(
+  GltfReaderResult result3 = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
-  REQUIRE(modelResult3.errors.empty());
-  REQUIRE(modelResult3.model.has_value());
+  REQUIRE(result3.errors.empty());
+  REQUIRE(result3.model.has_value());
 
-  Model& model3 = modelResult3.model.value();
+  Model& model3 = result3.model.value();
   REQUIRE(model3.meshes.size() == 1);
   REQUIRE(model3.meshes[0].primitives.size() == 1);
 
@@ -295,9 +295,9 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
     }
   )";
 
-  ReadModelOptions options;
+  GltfReaderOptions options;
   GltfReader reader;
-  ModelReaderResult withCustomExtModel = reader.readModel(
+  GltfReaderResult withCustomExtModel = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
@@ -328,7 +328,7 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 
-  ModelReaderResult withoutCustomExt = reader.readModel(
+  GltfReaderResult withoutCustomExt = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
@@ -350,13 +350,13 @@ TEST_CASE("Unknown MIME types are handled") {
     }
   )";
 
-  ReadModelOptions options;
+  GltfReaderOptions options;
   GltfReader reader;
-  ModelReaderResult modelResult = reader.readModel(
+  GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
-  // Note: The modelResult.errors will not be empty,
+  // Note: The result.errors will not be empty,
   // because no images could be read.
-  REQUIRE(modelResult.model.has_value());
+  REQUIRE(result.model.has_value());
 }

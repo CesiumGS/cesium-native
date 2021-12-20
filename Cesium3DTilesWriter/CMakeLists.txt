@@ -2,12 +2,12 @@ add_library(Cesium3DTilesWriter "")
 configure_cesium_library(Cesium3DTilesWriter)
 
 cesium_glob_files(CESIUM_3DTILES_WRITER_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesWriter/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
 )
 cesium_glob_files(CESIUM_3DTILES_WRITER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesWriter/*.h

@@ -65,7 +65,7 @@ function generate(options, schema, writers) {
 
   // Prevent header from including itself for recursive types like Tile
   headers = headers.filter((header) => {
-    return header !== `"${name}.h"`;
+    return header !== `"${namespace}/${name}.h"`;
   });
 
   headers.sort();
@@ -216,12 +216,7 @@ function generate(options, schema, writers) {
         }
   `;
 
-  const readerHeaderOutputDir = path.join(
-    readerOutputDir,
-    "generated",
-    "src",
-    readerNamespace
-  );
+  const readerHeaderOutputDir = path.join(readerOutputDir, "generated", "src");
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
 
   const readerHeaderOutputPath = path.join(
@@ -471,8 +466,14 @@ function formatWriterPropertyImpl(property) {
   const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
 
+  // Somewhat opinionated but it's helpful to see byteOffset: 0 in accessors and bufferViews
+  const requiredPropertyOverride = ["byteOffset"];
+
   const hasDefaultValueGuard =
-    !isId && !isRequiredEnum && defaultValue !== undefined;
+    !isId &&
+    !isRequiredEnum &&
+    !requiredPropertyOverride.includes(property.cppSafeName) &&
+    defaultValue !== undefined;
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
@@ -546,11 +547,13 @@ function getReaderIncludeFromName(name, readerNamespace) {
       pieces.groups.namespace,
       readerNamespace
     );
-    const includeStart = namespace === readerNamespace ? `"` : `<`;
-    const includeEnd = namespace === readerNamespace ? `"` : `>`;
-    return `${includeStart}${namespace}/${pieces.groups.name}JsonHandler.h${includeEnd}`;
+    if (namespace === readerNamespace) {
+      return `"${pieces.groups.name}JsonHandler.h"`;
+    } else {
+      return `<${namespace}/${pieces.groups.name}JsonHandler.h>`;
+    }
   } else {
-    return `"${readerNamespace}/${name}JsonHandler.h"`;
+    return `"${name}JsonHandler.h"`;
   }
 }
 

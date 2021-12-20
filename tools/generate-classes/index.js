@@ -25,6 +25,14 @@ const argv = yargs.options({
   },
   writerOutput: {
     description: "The output directory for the generated writer files.",
+<<<<<<< HEAD
+=======
+    demandOption: true,
+    type: "string",
+  },
+  extensions: {
+    description: "The extensions directory.",
+>>>>>>> origin/gltf-writer
     demandOption: true,
     type: "string",
   },
@@ -45,7 +53,12 @@ const argv = yargs.options({
     type: "string",
   },
   readerNamespace: {
-    description: "Namespace to put the generated reader classes in.",
+    description: "Namespace to put the generated reader files in.",
+    demandOption: true,
+    type: "string",
+  },
+  writerNamespace: {
+    description: "Namespace to put the generated writer files in.",
     demandOption: true,
     type: "string",
   },
@@ -92,8 +105,7 @@ if (argv.oneHandlerFile) {
   const readerHeaderOutputDir = path.join(
     argv.readerOutput,
     "generated",
-    "src",
-    argv.readerNamespace
+    "src"
   );
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
   const readerSourceOutputPath = path.join(
@@ -130,6 +142,7 @@ function getObjectToExtend(schema, extensionName) {
   const objectToExtend = subParts.slice(0, extensionNameIndex).join(".");
   return objectToExtend;
 }
+let schemas = [rootSchema];
 
 for (const extension of config.extensions) {
   const prefix = extensionClassName;
@@ -151,7 +164,6 @@ for (const extension of config.extensions) {
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
   schemas.push(...generate(options, extensionSchema, writers));
-  // console.log(schemas);
 
   var objectsToExtend = [];
   if (extension.attachTo !== undefined) {

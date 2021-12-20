@@ -2,12 +2,12 @@ add_library(Cesium3DTilesReader "")
 configure_cesium_library(Cesium3DTilesReader)
 
 cesium_glob_files(CESIUM_3DTILES_READER_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesReader/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
 )
 cesium_glob_files(CESIUM_3DTILES_READER_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/Cesium3DTilesReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
 )
 cesium_glob_files(CESIUM_3DTILES_READER_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesReader/*.h

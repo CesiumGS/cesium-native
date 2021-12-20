@@ -2,12 +2,12 @@ add_library(CesiumGltf "")
 configure_cesium_library(CesiumGltf)
 
 cesium_glob_files(CESIUM_GLTF_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltf/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltf/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
 )
 cesium_glob_files(CESIUM_GLTF_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltf/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/CesiumGltf/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
 )
 cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltf/*.h

@@ -1,5 +1,19 @@
 # Change Log
 
+### v0.11.0 - 2022-01-03
+
+##### Breaking Changes :mega:
+
+- The `CesiumGltfReader` project now uses the `CesiumGltfReader` namespace instead of the `CesiumGltf` namespace.
+- The `CesiumGltfWriter` project now uses the `CesiumGltfWriter` namespace instead of the `CesiumGltf` namespace.
+- The `Cesium3DTilesReader` project now uses the `Cesium3DTilesReader` namespace instead of the `Cesium3DTiles` namespace.
+- Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
+- Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, and `GltfWriterResult` instead.
+
+##### Additions :tada:
+
+- Added `Cesium3DTilesWriter` library.
+
 ### v0.10.0 - 2021-12-01
 
 ##### Breaking Changes :mega:
