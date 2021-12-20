@@ -8,3 +8,4 @@ CMakeSettings.json
 .cache
 *.DS_Store
 test.db
+compile_commands.json
