@@ -4,15 +4,9 @@
 #include <Cesium3DTilesReader/TilesetReader.h>
 
 #include <catch2/catch.hpp>
+#include <rapidjson/document.h>
 
 namespace {
-std::string removeWhitespace(const std::string& s) {
-  std::string compact = s;
-  compact.erase(
-      remove_if(compact.begin(), compact.end(), isspace),
-      compact.end());
-  return compact;
-}
 void check(const std::string& input, const std::string& expectedOutput) {
   Cesium3DTilesReader::TilesetReader reader;
   Cesium3DTilesReader::TilesetReaderResult readResult =
@@ -28,18 +22,22 @@ void check(const std::string& input, const std::string& expectedOutput) {
   Cesium3DTilesWriter::TilesetWriter writer;
   Cesium3DTilesWriter::TilesetWriterResult writeResult =
       writer.writeTileset(tileset);
-  const auto asBytes = writeResult.tilesetBytes;
+  const auto tilesetBytes = writeResult.tilesetBytes;
 
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
 
-  std::string expectedString = removeWhitespace(expectedOutput);
+  const std::string tilesetString(
+      reinterpret_cast<const char*>(tilesetBytes.data()),
+      tilesetBytes.size());
 
-  const std::string extractedString(
-      reinterpret_cast<const char*>(asBytes.data()),
-      asBytes.size());
+  rapidjson::Document tilesetJson;
+  tilesetJson.Parse(tilesetString.c_str());
 
-  REQUIRE(expectedString == extractedString);
+  rapidjson::Document expectedJson;
+  expectedJson.Parse(expectedOutput.c_str());
+
+  REQUIRE(tilesetJson == expectedJson);
 }
 } // namespace
 
@@ -63,39 +61,30 @@ TEST_CASE("Writes tileset JSON") {
       "geometricError": 45.0,
       "root": {
         "boundingVolume": {
-          "box":
-          [20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0]
+          "box": [20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0]
         },
         "geometricError": 35.0,
         "refine": "REPLACE",
-        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 0.0, 0.0, 0.0, 1.0], "children": [
+        "children": [
           {
             "boundingVolume": {
-              "box":
-              [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+              "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
             },
             "geometricError": 15.0,
             "refine": "ADD",
-            "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0], "content": {
+            "content": {
               "uri": "1.gltf"
             }
           },
           {
             "boundingVolume": {
-              "box":
-              [10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0,
-              21.0]
+              "box": [10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0]
             },
             "viewerRequestVolume": {
-              "box":
-              [30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0,
-              41.0]
+              "box": [30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0]
             },
             "geometricError": 25.0,
-            "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0], "content": {
+            "content": {
               "boundingVolume": {
                 "sphere": [30.0, 31.0, 32.0, 33.0]
               },
@@ -123,7 +112,6 @@ TEST_CASE("Writes tileset JSON with extras") {
         },
         "geometricError": 15.0,
         "refine": "ADD",
-        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],
         "extras": {
           "D": "Goodbye"
         }
@@ -156,7 +144,6 @@ TEST_CASE("Writes tileset JSON with 3DTILES_content_gltf extension") {
         },
         "geometricError": 15.0,
         "refine": "ADD",
-        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],
         "content": {
           "uri": "root.glb"
         }
@@ -196,8 +183,7 @@ TEST_CASE("Writes tileset JSON with custom extension") {
           "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
         },
         "geometricError": 15.0,
-        "refine": "ADD",
-        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+        "refine": "ADD"
       },
       "extensionsUsed": ["A", "B"],
       "extensions": {
@@ -212,4 +198,41 @@ TEST_CASE("Writes tileset JSON with custom extension") {
   )";
 
   check(string, string);
+}
+
+TEST_CASE("Writes tileset JSON with default values removed") {
+  std::string string = R"(
+    {
+      "asset": {
+        "version": "1.0"
+      },
+      "geometricError": 45.0,
+      "root": {
+        "boundingVolume": {
+          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+        },
+        "geometricError": 15.0,
+        "refine": "ADD",
+        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+      }
+    }
+  )";
+
+  std::string expected = R"(
+    {
+      "asset": {
+        "version": "1.0"
+      },
+      "geometricError": 45.0,
+      "root": {
+        "boundingVolume": {
+          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+        },
+        "geometricError": 15.0,
+        "refine": "ADD"
+      }
+    }
+  )";
+
+  check(string, expected);
 }
