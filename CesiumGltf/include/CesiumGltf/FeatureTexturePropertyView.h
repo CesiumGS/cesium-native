@@ -177,6 +177,8 @@ public:
     return this->_textureCoordinateIndex;
   }
 
+  bool isNormalized() const noexcept { return this->_normalized; };
+
 private:
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
