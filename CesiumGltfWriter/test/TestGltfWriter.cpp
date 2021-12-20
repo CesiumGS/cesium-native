@@ -1,6 +1,6 @@
 #include "CesiumGltfWriter/GltfWriter.h"
 
-#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveKhrDracoMeshCompression.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <catch2/catch.hpp>

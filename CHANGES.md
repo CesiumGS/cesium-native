@@ -9,6 +9,8 @@
 - The `Cesium3DTilesReader` project now uses the `Cesium3DTilesReader` namespace instead of the `Cesium3DTiles` namespace.
 - Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
 - Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, and `GltfWriterResult` instead.
+- Renamed the following glTF extension classes:
+  - `ExtensionKhrDracoMeshCompression` -> `ExtensionMeshPrimitiveKhrDracoMeshCompression`
 
 ##### Additions :tada:
 
