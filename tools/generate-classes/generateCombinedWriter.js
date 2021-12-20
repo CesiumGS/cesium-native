@@ -74,6 +74,14 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
         
+        // Forward declaration to avoid circular dependency since some properties
+        // are vector of unordered_map and others are unordered_map of vector
+        template <typename T>
+        [[maybe_unused]] void writeJson(
+            const std::vector<T>& list,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context);
+
         [[maybe_unused]] void writeJson(
             const std::string& str,
             CesiumJsonWriter::JsonWriter& jsonWriter,

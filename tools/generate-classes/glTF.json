@@ -88,6 +88,45 @@
     "Texture Accessor in EXT_feature_metadata": {
       "overrideName": "ExtensionExtFeatureMetadataTextureAccessor"
     },
+    "EXT_mesh_features glTF extension": {
+      "overrideName": "ExtensionModelExtMeshFeatures"
+    },
+    "EXT_mesh_features glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
+    },
+    "EXT_mesh_features glTF Node extension": {
+      "overrideName": "ExtensionNodeExtMeshFeatures"
+    },
+    "Class Property in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesClassProperty"
+    },
+    "Class in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesClass"
+    },
+    "Enum in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesEnum"
+    },
+    "Enum Value in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesEnumValue"
+    },
+    "Feature ID Attribute in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesFeatureIdAttribute"
+    },
+    "Feature ID Texture in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesFeatureIdTexture"
+    },
+    "Property Table Property in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesPropertyTableProperty"
+    },
+    "Property Table in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesPropertyTable"
+    },
+    "Property Texture in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesPropertyTexture"
+    },
+    "Schema in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesSchema"
+    },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
       "overrideName": "ExtensionMeshPrimitiveCesiumTileEdges"
     }
@@ -130,6 +169,18 @@
     {
       "extensionName": "CESIUM_tile_edges",
       "schema": "Vendor/CESIUM_tile_edges/schema/mesh.primitive.CESIUM_tile_edges.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/glTF.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/mesh.primitive.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/node.EXT_mesh_features.schema.json"
     }
   ]
 }

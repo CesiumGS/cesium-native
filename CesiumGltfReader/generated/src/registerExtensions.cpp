@@ -8,8 +8,11 @@
 #include "ExtensionMaterialKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionMeshPrimitiveCesiumTileEdgesJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
+#include "ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
+#include "ExtensionModelExtMeshFeaturesJsonHandler.h"
+#include "ExtensionNodeExtMeshFeaturesJsonHandler.h"
 #include "ExtensionNodeExtMeshGpuInstancingJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
@@ -34,11 +37,17 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveCesiumTileEdgesJsonHandler>();
   context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler>();
+  context.registerExtension<
       CesiumGltf::Material,
       ExtensionMaterialKhrMaterialsUnlitJsonHandler>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeExtMeshGpuInstancingJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNodeExtMeshFeaturesJsonHandler>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();
@@ -48,5 +57,8 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtFeatureMetadataJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelExtMeshFeaturesJsonHandler>();
 }
 } // namespace CesiumGltfReader
