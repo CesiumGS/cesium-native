@@ -23,7 +23,7 @@
       "isBaseClass": true
     },
     "KHR_draco_mesh_compression extension": {
-      "overrideName": "ExtensionKhrDracoMeshCompression"
+      "overrideName": "ExtensionMeshPrimitiveKhrDracoMeshCompression"
     },
     "EXT_feature_metadata glTF extension": {
       "overrideName": "ExtensionModelExtFeatureMetadata"
@@ -41,7 +41,16 @@
       "overrideName": "ExtensionNodeExtMeshFeatures"
     },
     "KHR_materials_unlit glTF extension": {
-      "overrideName": "ExtensionKhrMaterialsUnlit"
+      "overrideName": "ExtensionMaterialKhrMaterialsUnlit"
+    },
+    "CESIUM_tile_edges glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionMeshPrimitiveCesiumTileEdges"
+    },
+    "EXT_meshopt_compression buffer extension": {
+      "overrideName": "ExtensionBufferExtMeshoptCompression"
+    },
+    "EXT_meshopt_compression bufferView extension": {
+      "overrideName": "ExtensionBufferViewExtMeshoptCompression"
     }
   },
   "extensions": [
@@ -61,6 +70,18 @@
       "extensionName": "KHR_materials_unlit",
       "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
       "attachTo": ["material"]
+    },
+    {
+      "extensionName": "CESIUM_tile_edges",
+      "schema": "Vendor/CESIUM_tile_edges/schema/mesh.primitive.CESIUM_tile_edges.schema.json"
+    },
+    {
+      "extensionName": "EXT_meshopt_compression",
+      "schema": "Vendor/EXT_meshopt_compression/schema/buffer.EXT_meshopt_compression.schema.json"
+    },
+    {
+      "extensionName": "EXT_meshopt_compression",
+      "schema": "Vendor/EXT_meshopt_compression/schema/bufferView.EXT_meshopt_compression.schema.json"
     }
   ]
 }
