@@ -3,6 +3,7 @@ const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
 const cppReservedWords = require("./cppReservedWords");
+const reservedEnums = require("./reservedEnums");
 
 function resolveProperty(
   schemaCache,
@@ -218,7 +219,6 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
     readerLocalTypesImpl: [],
     briefDoc: propertyDetails.description,
     fullDoc: fullDoc,
-    undefines: [],
   };
 }
 
@@ -366,13 +366,6 @@ function findCommonEnumType(propertyName, enums) {
   return firstType;
 }
 
-const allUndefines = [
-  {
-    name: "OPAQUE",
-    comment: "OPAQUE is defined in wingdi.h",
-  },
-];
-
 function resolveEnum(
   schemaCache,
   config,
@@ -395,6 +388,7 @@ function resolveEnum(
   if (propertyDetails.enum) {
     for (const e of propertyDetails.enum) {
       enums.push({
+        cppSafeName: makeNameIntoValidEnumIdentifier(e),
         const: e,
         description: e,
         type: propertyDetails.type,
@@ -404,12 +398,14 @@ function resolveEnum(
     for (const e of propertyDetails.anyOf) {
       if (e.enum !== undefined && e.enum.length > 0) {
         enums.push({
+          cppSafeName: makeNameIntoValidEnumIdentifier(e.enum[0]),
           const: e.enum[0],
           description: e.description,
           type: propertyDetails.type,
         });
       } else {
         enums.push({
+          cppSafeName: makeNameIntoValidEnumIdentifier(e.const),
           const: e.const,
           description: e.description,
           type: e.type,
@@ -434,17 +430,6 @@ function resolveEnum(
     propertyName,
     enums
   );
-
-  const undefines = [];
-
-  for (const e of enums) {
-    const enumIdentifier = createEnumIdentifier(e);
-    for (const undefine of allUndefines) {
-      if (undefine.name === enumIdentifier) {
-        undefines.push(undefine);
-      }
-    }
-  }
 
   const propertyDefaultValues = propertyDefaults(
     propertyName,
@@ -487,7 +472,6 @@ function resolveEnum(
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
     requiredEnum: isRequired,
-    undefines: undefines,
   };
 
   if (readerTypes.length > 0) {
@@ -543,10 +527,7 @@ function findNameOfInitial(propertyDetails, enums) {
       const element = enums[i];
       const enumValue = getEnumValue(element);
       if (enumValue === propertyDetails.default) {
-        if (element.type === "integer") {
-          return element.description;
-        }
-        return `${makeIdentifier(enumValue)}`;
+        return createEnumIdentifier(element);
       }
     }
   }
@@ -555,10 +536,7 @@ function findNameOfInitial(propertyDetails, enums) {
     const element = enums[i];
     const enumValue = getEnumValue(element);
     if (enumValue !== undefined) {
-      if (element.type === "integer") {
-        return element.description;
-      }
-      return `${makeIdentifier(enumValue)}`;
+      return createEnumIdentifier(element);
     }
   }
   return undefined;
@@ -592,9 +570,11 @@ function createEnumIdentifier(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return makeIdentifier(enumDetails.description);
+    return makeIdentifier(
+      makeNameIntoValidEnumIdentifier(enumDetails.description)
+    );
   } else {
-    return makeIdentifier(enumValue);
+    return makeIdentifier(makeNameIntoValidEnumIdentifier(enumValue));
   }
 }
 
@@ -666,6 +646,13 @@ function createEnumReaderTypeImpl(parentName, enumName, propertyName, enums) {
 function makeNameIntoValidIdentifier(name) {
   if (cppReservedWords.indexOf(name) >= 0) {
     name += "Property";
+  }
+  return name;
+}
+
+function makeNameIntoValidEnumIdentifier(name) {
+  if (reservedEnums.indexOf(name) >= 0) {
+    name += "_ENUM";
   }
   return name;
 }

@@ -12,9 +12,6 @@
 #include <optional>
 #include <vector>
 
-// OPAQUE is defined in wingdi.h
-#undef OPAQUE
-
 namespace CesiumGltf {
 /**
  * @brief The material appearance of a primitive.
@@ -26,7 +23,7 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
    * @brief Known values for The alpha rendering mode of the material.
    */
   struct AlphaMode {
-    inline static const std::string OPAQUE = "OPAQUE";
+    inline static const std::string OPAQUE_ENUM = "OPAQUE";
 
     inline static const std::string MASK = "MASK";
 
@@ -92,7 +89,7 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
    * The material's alpha rendering mode enumeration specifying the
    * interpretation of the alpha value of the base color.
    */
-  std::string alphaMode = AlphaMode::OPAQUE;
+  std::string alphaMode = AlphaMode::OPAQUE_ENUM;
 
   /**
    * @brief The alpha cutoff value of the material.
