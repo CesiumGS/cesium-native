@@ -336,8 +336,8 @@ void decodeDraco(CesiumGltfReader::GltfReaderResult& readGltf) {
   for (CesiumGltf::Mesh& mesh : model.meshes) {
     for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
       CesiumGltf::ExtensionMeshPrimitiveKhrDracoMeshCompression* pDraco =
-          primitive
-              .getExtension<CesiumGltf::ExtensionMeshPrimitiveKhrDracoMeshCompression>();
+          primitive.getExtension<
+              CesiumGltf::ExtensionMeshPrimitiveKhrDracoMeshCompression>();
       if (!pDraco) {
         continue;
       }

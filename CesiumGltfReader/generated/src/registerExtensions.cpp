@@ -10,12 +10,14 @@
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
+#include "ExtensionNodeExtMeshGpuInstancingJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 
 namespace CesiumGltfReader {
@@ -32,16 +34,19 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveCesiumTileEdgesJsonHandler>();
   context.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonHandler>();
-  context.registerExtension<
       CesiumGltf::Material,
       ExtensionMaterialKhrMaterialsUnlitJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNodeExtMeshGpuInstancingJsonHandler>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();
   context.registerExtension<
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelExtFeatureMetadataJsonHandler>();
 }
 } // namespace CesiumGltfReader

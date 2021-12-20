@@ -27,14 +27,15 @@ public:
    */
   MetadataFeatureTableView(
       const Model* pModel,
-      const FeatureTable* pFeatureTable);
+      const ExtensionExtFeatureMetadataFeatureTable* pFeatureTable);
 
   /**
    * @brief Find the {@link ClassProperty} which stores the type information of a property based on the property name
    * @param propertyName The name of the property to retrieve type info
    * @return ClassProperty of a property. Return nullptr if no property is found
    */
-  const ClassProperty* getClassProperty(const std::string& propertyName) const;
+  const ExtensionExtFeatureMetadataClassProperty*
+  getClassProperty(const std::string& propertyName) const;
 
   /**
    * @brief Get MetadataPropertyView to view the data of a property stored in
@@ -57,7 +58,8 @@ public:
           MetadataPropertyViewStatus::InvalidPropertyNotExist);
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyName);
+    const ExtensionExtFeatureMetadataClassProperty* pClassProperty =
+        getClassProperty(propertyName);
     if (!pClassProperty) {
       return createInvalidPropertyView<T>(
           MetadataPropertyViewStatus::InvalidPropertyNotExist);
@@ -86,7 +88,8 @@ public:
   template <typename Callback>
   void
   getPropertyView(const std::string& propertyName, Callback&& callback) const {
-    const ClassProperty* pClassProperty = getClassProperty(propertyName);
+    const ExtensionExtFeatureMetadataClassProperty* pClassProperty =
+        getClassProperty(propertyName);
     if (!pClassProperty) {
       return;
     }
@@ -141,7 +144,7 @@ private:
   template <typename Callback>
   void getArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty& classProperty,
+      const ExtensionExtFeatureMetadataClassProperty& classProperty,
       PropertyType type,
       Callback&& callback) const {
     switch (type) {
@@ -237,7 +240,7 @@ private:
   template <typename Callback>
   void getScalarPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty& classProperty,
+      const ExtensionExtFeatureMetadataClassProperty& classProperty,
       PropertyType type,
       Callback&& callback) const {
     switch (type) {
@@ -309,7 +312,7 @@ private:
   template <typename T>
   MetadataPropertyView<T> getPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty& classProperty) const {
+      const ExtensionExtFeatureMetadataClassProperty& classProperty) const {
     auto featureTablePropertyIter =
         _pFeatureTable->properties.find(propertyName);
     if (featureTablePropertyIter == _pFeatureTable->properties.end()) {
@@ -317,8 +320,8 @@ private:
           MetadataPropertyViewStatus::InvalidPropertyNotExist);
     }
 
-    const FeatureTableProperty& featureTableProperty =
-        featureTablePropertyIter->second;
+    const ExtensionExtFeatureMetadataFeatureTableProperty&
+        featureTableProperty = featureTablePropertyIter->second;
 
     if constexpr (IsMetadataNumeric<T>::value || IsMetadataBoolean<T>::value) {
       return getPrimitivePropertyValues<T>(classProperty, featureTableProperty);
@@ -343,8 +346,9 @@ private:
 
   template <typename T>
   MetadataPropertyView<T> getPrimitivePropertyValues(
-      const ClassProperty& classProperty,
-      const FeatureTableProperty& featureTableProperty) const {
+      const ExtensionExtFeatureMetadataClassProperty& classProperty,
+      const ExtensionExtFeatureMetadataFeatureTableProperty&
+          featureTableProperty) const {
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
       return createInvalidPropertyView<T>(
@@ -388,14 +392,17 @@ private:
   }
 
   MetadataPropertyView<std::string_view> getStringPropertyValues(
-      const ClassProperty& classProperty,
-      const FeatureTableProperty& featureTableProperty) const;
+      const ExtensionExtFeatureMetadataClassProperty& classProperty,
+      const ExtensionExtFeatureMetadataFeatureTableProperty&
+          featureTableProperty) const;
 
   template <typename T>
   MetadataPropertyView<MetadataArrayView<T>> getPrimitiveArrayPropertyValues(
-      const ClassProperty& classProperty,
-      const FeatureTableProperty& featureTableProperty) const {
-    if (classProperty.type != ClassProperty::Type::ARRAY) {
+      const ExtensionExtFeatureMetadataClassProperty& classProperty,
+      const ExtensionExtFeatureMetadataFeatureTableProperty&
+          featureTableProperty) const {
+    if (classProperty.type !=
+        ExtensionExtFeatureMetadataClassProperty::Type::ARRAY) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
@@ -497,8 +504,9 @@ private:
 
   MetadataPropertyView<MetadataArrayView<std::string_view>>
   getStringArrayPropertyValues(
-      const ClassProperty& classProperty,
-      const FeatureTableProperty& featureTableProperty) const;
+      const ExtensionExtFeatureMetadataClassProperty& classProperty,
+      const ExtensionExtFeatureMetadataFeatureTableProperty&
+          featureTableProperty) const;
 
   MetadataPropertyViewStatus getBufferSafe(
       int32_t bufferViewIdx,
@@ -526,7 +534,7 @@ private:
   }
 
   const Model* _pModel;
-  const FeatureTable* _pFeatureTable;
-  const Class* _pClass;
+  const ExtensionExtFeatureMetadataFeatureTable* _pFeatureTable;
+  const ExtensionExtFeatureMetadataClass* _pClass;
 };
 } // namespace CesiumGltf

@@ -39,26 +39,31 @@ TEST_CASE("Test numeric properties") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::UINT32;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::UINT32;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(values.size());
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::UINT32);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::UINT32);
   REQUIRE(classProperty->componentCount == std::nullopt);
   REQUIRE(classProperty->componentType == std::nullopt);
 
@@ -226,27 +231,32 @@ TEST_CASE("Test boolean properties") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::BOOLEAN;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::BOOLEAN;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(instanceCount);
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.bufferView =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::BOOLEAN);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::BOOLEAN);
   REQUIRE(classProperty->componentCount == std::nullopt);
   REQUIRE(classProperty->componentType == std::nullopt);
 
@@ -334,29 +344,35 @@ TEST_CASE("Test string property") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::STRING;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::STRING;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(expected.size());
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT32;
+  featureTableProperty.offsetType =
+      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT32;
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.stringOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::STRING);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::STRING);
   REQUIRE(classProperty->componentCount == std::nullopt);
   REQUIRE(classProperty->componentType == std::nullopt);
 
@@ -370,14 +386,16 @@ TEST_CASE("Test string property") {
   }
 
   SECTION("Wrong offset type") {
-    featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT8;
+    featureTableProperty.offsetType =
+        ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT8;
     MetadataPropertyView<std::string_view> stringProperty =
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(
         stringProperty.status() ==
         MetadataPropertyViewStatus::InvalidBufferViewSizeNotFitInstanceCount);
 
-    featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT64;
+    featureTableProperty.offsetType =
+        ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT64;
     stringProperty =
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(
@@ -447,33 +465,41 @@ TEST_CASE("Test fixed numeric array") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::ARRAY;
-  testClassProperty.componentType = ClassProperty::ComponentType::UINT32;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+  testClassProperty.componentType =
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::UINT32;
   testClassProperty.componentCount = 3;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(
       values.size() /
       static_cast<size_t>(testClassProperty.componentCount.value()));
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.bufferView =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
   REQUIRE(classProperty->componentCount == 3);
-  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT32);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::UINT32);
 
   SECTION("Access the right type") {
     MetadataPropertyView<MetadataArrayView<uint32_t>> arrayProperty =
@@ -489,7 +515,8 @@ TEST_CASE("Test fixed numeric array") {
   }
 
   SECTION("Wrong component type") {
-    testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+    testClassProperty.componentType =
+        ExtensionExtFeatureMetadataClassProperty::ComponentType::UINT8;
     MetadataPropertyView<MetadataArrayView<uint32_t>> arrayProperty =
         view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(
@@ -589,31 +616,40 @@ TEST_CASE("Test dynamic numeric array") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::ARRAY;
-  testClassProperty.componentType = ClassProperty::ComponentType::UINT16;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+  testClassProperty.componentType =
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::UINT16;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(expected.size());
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.arrayOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
-  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT64;
+  featureTableProperty.offsetType =
+      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT64;
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
-  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT16);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::UINT16);
 
   SECTION("Access the correct type") {
     MetadataPropertyView<MetadataArrayView<uint16_t>> property =
@@ -690,34 +726,41 @@ TEST_CASE("Test fixed boolean array") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::ARRAY;
-  testClassProperty.componentType = ClassProperty::ComponentType::BOOLEAN;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+  testClassProperty.componentType =
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::BOOLEAN;
   testClassProperty.componentCount = 3;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(
       expected.size() /
       static_cast<size_t>(testClassProperty.componentCount.value()));
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.bufferView =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
   REQUIRE(classProperty->componentCount == 3);
   REQUIRE(
-      classProperty->componentType == ClassProperty::ComponentType::BOOLEAN);
+      classProperty->componentType ==
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::BOOLEAN);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<bool>> boolProperty =
@@ -822,32 +865,40 @@ TEST_CASE("Test dynamic bool array") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::ARRAY;
-  testClassProperty.componentType = ClassProperty::ComponentType::BOOLEAN;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+  testClassProperty.componentType =
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::BOOLEAN;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(expected.size());
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.arrayOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
-  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT64;
+  featureTableProperty.offsetType =
+      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT64;
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
   REQUIRE(
-      classProperty->componentType == ClassProperty::ComponentType::BOOLEAN);
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::BOOLEAN);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<bool>> boolProperty =
@@ -936,35 +987,44 @@ TEST_CASE("Test fixed array of string") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::ARRAY;
-  testClassProperty.componentType = ClassProperty::ComponentType::STRING;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+  testClassProperty.componentType =
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::STRING;
   testClassProperty.componentCount = 2;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(
       expected.size() /
       static_cast<size_t>(testClassProperty.componentCount.value()));
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT32;
+  featureTableProperty.offsetType =
+      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT32;
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.stringOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
   REQUIRE(classProperty->componentCount == 2);
-  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::STRING);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::STRING);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =
@@ -1115,21 +1175,26 @@ TEST_CASE("Test dynamic array of string") {
       model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = ClassProperty::Type::ARRAY;
-  testClassProperty.componentType = ClassProperty::ComponentType::STRING;
+  ExtensionExtFeatureMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtFeatureMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtFeatureMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+  testClassProperty.componentType =
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::STRING;
 
   // setup feature table
-  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(expected.size());
 
   // setup feature table property
-  FeatureTableProperty& featureTableProperty =
+  ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT32;
+  featureTableProperty.offsetType =
+      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT32;
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.arrayOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
@@ -1138,10 +1203,14 @@ TEST_CASE("Test dynamic array of string") {
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
-  const ClassProperty* classProperty =
+  const ExtensionExtFeatureMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
-  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::STRING);
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtFeatureMetadataClassProperty::ComponentType::STRING);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =

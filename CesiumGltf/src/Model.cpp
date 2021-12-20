@@ -118,7 +118,8 @@ void Model::merge(Model&& rhs) {
       }
 
       ExtensionMeshPrimitiveKhrDracoMeshCompression* pDraco =
-          primitive.getExtension<ExtensionMeshPrimitiveKhrDracoMeshCompression>();
+          primitive
+              .getExtension<ExtensionMeshPrimitiveKhrDracoMeshCompression>();
       if (pDraco) {
         updateIndex(pDraco->bufferView, firstBufferView);
       }

@@ -26,13 +26,14 @@ using namespace Cesium3DTilesSelection;
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkScalarProperty(
     const Model& model,
-    const FeatureTable& featureTable,
-    const Class& metaClass,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    const ExtensionExtFeatureMetadataClass& metaClass,
     const std::string& propertyName,
     const std::string& expectedPropertyType,
     const std::vector<ExpectedType>& expected,
     size_t expectedTotalInstances) {
-  const ClassProperty& property = metaClass.properties.at(propertyName);
+  const ExtensionExtFeatureMetadataClassProperty& property =
+      metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedPropertyType);
   REQUIRE(property.componentType == std::nullopt);
   REQUIRE(property.componentCount == std::nullopt);
@@ -59,14 +60,15 @@ static void checkScalarProperty(
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkArrayProperty(
     const Model& model,
-    const FeatureTable& featureTable,
-    const Class& metaClass,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    const ExtensionExtFeatureMetadataClass& metaClass,
     const std::string& propertyName,
     int64_t expectedComponentCount,
     const std::string& expectedComponentType,
     const std::vector<std::vector<ExpectedType>>& expected,
     size_t expectedTotalInstances) {
-  const ClassProperty& property = metaClass.properties.at(propertyName);
+  const ExtensionExtFeatureMetadataClassProperty& property =
+      metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
   REQUIRE(property.componentType.has_value());
   REQUIRE(*property.componentType == expectedComponentType);
@@ -151,18 +153,22 @@ static void createTestForScalarJson(
       model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
-  std::optional<Schema> schema = metadata->schema;
+  std::optional<ExtensionExtFeatureMetadataSchema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const std::unordered_map<std::string, ExtensionExtFeatureMetadataClass>&
+      classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const ExtensionExtFeatureMetadataClass& defaultClass = classes.at("default");
+  const std::unordered_map<
+      std::string,
+      ExtensionExtFeatureMetadataClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
-  const FeatureTable& featureTable = metadata->featureTables["default"];
+  const ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata->featureTables["default"];
   checkScalarProperty<ExpectedType, PropertyViewType>(
       model,
       featureTable,
@@ -228,18 +234,22 @@ static void createTestForArrayJson(
       model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
-  std::optional<Schema> schema = metadata->schema;
+  std::optional<ExtensionExtFeatureMetadataSchema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const std::unordered_map<std::string, ExtensionExtFeatureMetadataClass>&
+      classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const ExtensionExtFeatureMetadataClass& defaultClass = classes.at("default");
+  const std::unordered_map<
+      std::string,
+      ExtensionExtFeatureMetadataClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
-  const FeatureTable& featureTable = metadata->featureTables["default"];
+  const ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata->featureTables["default"];
   checkArrayProperty<ExpectedType, PropertyViewType>(
       model,
       featureTable,
@@ -304,7 +314,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  CesiumGltf::ExtensionExtFeatureMetadataClass& defaultClass =
+      firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 4);
 
   auto idIt = defaultClass.properties.find("id");
@@ -325,7 +336,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   auto firstFeatureTableIt = pExtension->featureTables.begin();
   REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
 
-  FeatureTable& featureTable = firstFeatureTableIt->second;
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      firstFeatureTableIt->second;
   CHECK(featureTable.classProperty == "default");
   REQUIRE(featureTable.properties.size() == 4);
 
@@ -380,7 +392,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
-      FeatureIDAttribute& attribute =
+      ExtensionExtFeatureMetadataFeatureIdAttribute& attribute =
           pPrimitiveExtension->featureIdAttributes[0];
       CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
       CHECK(attribute.featureTable == "default");
@@ -481,18 +493,22 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
       pResult->model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
-  std::optional<Schema> schema = metadata->schema;
+  std::optional<ExtensionExtFeatureMetadataSchema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const std::unordered_map<std::string, ExtensionExtFeatureMetadataClass>&
+      classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const ExtensionExtFeatureMetadataClass& defaultClass = classes.at("default");
+  const std::unordered_map<
+      std::string,
+      ExtensionExtFeatureMetadataClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
-  const FeatureTable& featureTable = metadata->featureTables["default"];
+  const ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata->featureTables["default"];
 
   {
     std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -625,18 +641,22 @@ TEST_CASE("Upgrade json nested json metadata to string") {
       pResult->model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
-  std::optional<Schema> schema = metadata->schema;
+  std::optional<ExtensionExtFeatureMetadataSchema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const std::unordered_map<std::string, ExtensionExtFeatureMetadataClass>&
+      classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const ExtensionExtFeatureMetadataClass& defaultClass = classes.at("default");
+  const std::unordered_map<
+      std::string,
+      ExtensionExtFeatureMetadataClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
-  const FeatureTable& featureTable = metadata->featureTables["default"];
+  const ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata->featureTables["default"];
   REQUIRE(featureTable.count == 10);
 
   {
@@ -715,21 +735,26 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
-  std::optional<Schema> schema = metadata->schema;
+  std::optional<ExtensionExtFeatureMetadataSchema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const std::unordered_map<std::string, ExtensionExtFeatureMetadataClass>&
+      classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const ExtensionExtFeatureMetadataClass& defaultClass = classes.at("default");
+  const std::unordered_map<
+      std::string,
+      ExtensionExtFeatureMetadataClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
-  const ClassProperty& propertyClass = properties.at("boolProp");
+  const ExtensionExtFeatureMetadataClassProperty& propertyClass =
+      properties.at("boolProp");
   REQUIRE(propertyClass.type == "BOOLEAN");
 
-  const FeatureTable& featureTable = metadata->featureTables["default"];
+  const ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      metadata->featureTables["default"];
   checkScalarProperty(
       model,
       featureTable,

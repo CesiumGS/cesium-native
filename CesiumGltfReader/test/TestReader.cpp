@@ -274,7 +274,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   MeshPrimitive& primitive3 = model3.meshes[0].primitives[0];
 
   REQUIRE(!primitive3.getGenericExtension("KHR_draco_mesh_compression"));
-  REQUIRE(!primitive3.getExtension<ExtensionMeshPrimitiveKhrDracoMeshCompression>());
+  REQUIRE(!primitive3
+               .getExtension<ExtensionMeshPrimitiveKhrDracoMeshCompression>());
 }
 
 TEST_CASE("Extensions deserialize to JsonVaue iff "

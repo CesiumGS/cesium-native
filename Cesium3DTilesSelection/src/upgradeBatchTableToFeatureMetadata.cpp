@@ -213,9 +213,9 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
 
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
 
@@ -310,9 +310,9 @@ void updateExtensionWithJsonStringProperty(
 template <typename T, typename TRapidJson = T>
 void updateExtensionWithJsonNumericProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue,
     const std::string& typeName) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -345,9 +345,9 @@ void updateExtensionWithJsonNumericProperty(
 
 void updateExtensionWithJsonBoolProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
 
@@ -385,7 +385,7 @@ void copyNumericDynamicArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
-    const FeatureTable& featureTable,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
   offsetBuffer.resize(
@@ -414,9 +414,9 @@ void copyNumericDynamicArrayBuffers(
 template <typename TRapidjson, typename ValueType>
 void updateNumericArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    const FeatureTable& featureTable,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -543,7 +543,7 @@ void copyStringArrayBuffers(
     std::vector<std::byte>& offsetBuffer,
     size_t totalByteLength,
     size_t numOfString,
-    const FeatureTable& featureTable,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize((numOfString + 1) * sizeof(OffsetType));
@@ -575,7 +575,7 @@ void copyStringArrayBuffers(
 template <typename OffsetType>
 void copyArrayOffsetBufferForStringArrayProperty(
     std::vector<std::byte>& offsetBuffer,
-    const FeatureTable& featureTable,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   OffsetType prevOffset = 0;
   offsetBuffer.resize(
@@ -596,9 +596,9 @@ void copyArrayOffsetBufferForStringArrayProperty(
 
 void updateStringArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    const FeatureTable& featureTable,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -753,7 +753,7 @@ void copyBooleanArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
-    const FeatureTable& featureTable,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   size_t currentIndex = 0;
   const size_t totalByteLength =
@@ -786,9 +786,9 @@ void copyBooleanArrayBuffers(
 
 void updateBooleanArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    const FeatureTable& featureTable,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -914,9 +914,9 @@ void updateBooleanArrayProperty(
 
 void updateExtensionWithArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -1022,9 +1022,9 @@ void updateExtensionWithArrayProperty(
 
 void updateExtensionWithJsonProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
 
   if (propertyValue.Empty() || propertyValue.Size() < featureTable.count) {
@@ -1151,9 +1151,9 @@ void updateExtensionWithBinaryProperty(
     int32_t gltfBufferIndex,
     int64_t gltfBufferOffset,
     BinaryProperty& binaryProperty,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtFeatureMetadataClassProperty& classProperty,
+    const ExtensionExtFeatureMetadataFeatureTable& featureTable,
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty,
     const std::string& propertyName,
     const rapidjson::Value& propertyValue,
     const std::shared_ptr<spdlog::logger>& pLogger) {
@@ -1290,12 +1290,14 @@ void upgradeBatchTableToFeatureMetadata(
 
   ExtensionModelExtFeatureMetadata& modelExtension =
       gltf.addExtension<ExtensionModelExtFeatureMetadata>();
-  Schema& schema = modelExtension.schema.emplace();
-  Class& classDefinition =
-      schema.classes.emplace("default", Class()).first->second;
+  ExtensionExtFeatureMetadataSchema& schema = modelExtension.schema.emplace();
+  ExtensionExtFeatureMetadataClass& classDefinition =
+      schema.classes.emplace("default", ExtensionExtFeatureMetadataClass())
+          .first->second;
 
-  FeatureTable& featureTable =
-      modelExtension.featureTables.emplace("default", FeatureTable())
+  ExtensionExtFeatureMetadataFeatureTable& featureTable =
+      modelExtension.featureTables
+          .emplace("default", ExtensionExtFeatureMetadataFeatureTable())
           .first->second;
   featureTable.count = batchLength;
   featureTable.classProperty = "default";
@@ -1311,12 +1313,15 @@ void upgradeBatchTableToFeatureMetadata(
       continue;
     }
 
-    ClassProperty& classProperty =
-        classDefinition.properties.emplace(name, ClassProperty()).first->second;
+    ExtensionExtFeatureMetadataClassProperty& classProperty =
+        classDefinition.properties
+            .emplace(name, ExtensionExtFeatureMetadataClassProperty())
+            .first->second;
     classProperty.name = name;
 
-    FeatureTableProperty& featureTableProperty =
-        featureTable.properties.emplace(name, FeatureTableProperty())
+    ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty =
+        featureTable.properties
+            .emplace(name, ExtensionExtFeatureMetadataFeatureTableProperty())
             .first->second;
     const rapidjson::Value& propertyValue = propertyIt->value;
     if (propertyValue.IsArray()) {
@@ -1373,7 +1378,7 @@ void upgradeBatchTableToFeatureMetadata(
       // Create a feature extension
       ExtensionMeshPrimitiveExtFeatureMetadata& extension =
           primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-      FeatureIDAttribute& attribute =
+      ExtensionExtFeatureMetadataFeatureIdAttribute& attribute =
           extension.featureIdAttributes.emplace_back();
       attribute.featureTable = "default";
       attribute.featureIds.attribute = "_FEATURE_ID_0";
