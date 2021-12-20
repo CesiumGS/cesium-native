@@ -25,14 +25,6 @@ const argv = yargs.options({
   },
   writerOutput: {
     description: "The output directory for the generated writer files.",
-<<<<<<< HEAD
-=======
-    demandOption: true,
-    type: "string",
-  },
-  extensions: {
-    description: "The extensions directory.",
->>>>>>> origin/gltf-writer
     demandOption: true,
     type: "string",
   },
