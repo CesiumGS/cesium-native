@@ -69,8 +69,8 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
       glm::dvec2(rectangle.computeWidth(), rectangle.computeHeight()) /
       rasterTiles;
   const glm::dvec2 totalDimensions = glm::dvec2(
-      this->getCoverageRectangle().computeWidth(),
-      this->getCoverageRectangle().computeHeight());
+      this->getTilingScheme().getRectangle().computeWidth(),
+      this->getTilingScheme().getRectangle().computeHeight());
   const glm::dvec2 totalTileDimensions =
       totalDimensions / glm::dvec2(
                             this->getTilingScheme().getRootTilesX(),
