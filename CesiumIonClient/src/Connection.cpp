@@ -543,6 +543,45 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
           });
 }
 
+CesiumAsync::Future<Response<Token>>
+Connection::token(const std::string& tokenID) const {
+  std::string tokensUrl =
+      CesiumUtility::Uri::resolve(this->_apiUrl, "v2/tokens/");
+
+  return this->_pAssetAccessor
+      ->get(
+          this->_asyncSystem,
+          CesiumUtility::Uri::resolve(tokensUrl, tokenID),
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return createEmptyResponse<Token>();
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<Token>(pResponse);
+            }
+
+            rapidjson::Document d;
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Token>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<Token>(pResponse, "object");
+            }
+
+            return Response<Token>{
+                tokenFromJson(d),
+                pResponse->statusCode(),
+                std::string(),
+                std::string()};
+          });
+}
+
 CesiumAsync::Future<Response<TokenList>>
 Connection::nextPage(const Response<TokenList>& currentPage) const {
   if (!currentPage.nextPageUrl) {

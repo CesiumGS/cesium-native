@@ -188,6 +188,14 @@ public:
   CesiumAsync::Future<Response<Asset>> asset(int64_t assetID) const;
 
   /**
+   * @brief Gets details of the token with the given ID.
+   *
+   * @param tokenID The token ID.
+   * @return A future that resolves to the token details.
+   */
+  CesiumAsync::Future<Response<Token>> token(const std::string& tokenID) const;
+
+  /**
    * @brief Gets the next page of results from the "List tokens" service.
    *
    * To get the first page, use {@link Connection::tokens}.
