@@ -39,9 +39,8 @@ TilesetReader::getExtensions() const {
   return this->_context;
 }
 
-TilesetReaderResult TilesetReader::readTileset(
-    const gsl::span<const std::byte>& data,
-    const ReadTilesetOptions& /*options*/) const {
+TilesetReaderResult
+TilesetReader::readTileset(const gsl::span<const std::byte>& data) const {
   const CesiumJsonReader::ExtensionReaderContext& context =
       this->getExtensions();
   TilesetReaderResult result = readTilesetJson(context, data);

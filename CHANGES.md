@@ -8,6 +8,10 @@
 - The `CesiumGltfWriter` project now uses the `CesiumGltfWriter` namespace instead of the `CesiumGltf` namespace.
 - The `Cesium3DTilesReader` project now uses the `Cesium3DTilesReader` namespace instead of the `Cesium3DTiles` namespace.
 
+##### Additions :tada:
+
+- Added `Cesium3DTilesWriter` library.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `QuadtreeRasterOverlayTileProvider` that caused incorrect level-of-detail selection for overlays that use a global (or otherwise large) tiling scheme but have non-global (or otherwise smaller) coverage.

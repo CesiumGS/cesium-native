@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
+const generateCombinedWriter = require("./generateCombinedWriter");
 const generateRegisterExtensions = require("./generateRegisterExtensions");
 
 const argv = yargs.options({
@@ -18,6 +19,11 @@ const argv = yargs.options({
   },
   readerOutput: {
     description: "The output directory for the generated reader files.",
+    demandOption: true,
+    type: "string",
+  },
+  writerOutput: {
+    description: "The output directory for the generated writer files.",
     demandOption: true,
     type: "string",
   },
@@ -38,7 +44,12 @@ const argv = yargs.options({
     type: "string",
   },
   readerNamespace: {
-    description: "Namespace to put the generated reader classes in.",
+    description: "Namespace to put the generated reader files in.",
+    demandOption: true,
+    type: "string",
+  },
+  writerNamespace: {
+    description: "Namespace to put the generated writer files in.",
     demandOption: true,
     type: "string",
   },
@@ -86,10 +97,13 @@ const options = {
   config: config,
   namespace: argv.namespace,
   readerNamespace: argv.readerNamespace,
+  writerNamespace: argv.writerNamespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {},
 };
+
+const writers = [];
 
 let schemas = [rootSchema];
 
@@ -108,7 +122,7 @@ for (const extension of config.extensions) {
   config.classes[extensionSchema.title].overrideName = extension.className;
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
-  schemas.push(...generate(options, extensionSchema));
+  schemas.push(...generate(options, extensionSchema, writers));
 
   for (const objectToExtend of extension.attachTo) {
     const objectToExtendSchema = schemaCache.load(
@@ -138,7 +152,7 @@ while (schemas.length > 0) {
     continue;
   }
   processed[schema.sourcePath] = true;
-  schemas.push(...generate(options, schema));
+  schemas.push(...generate(options, schema, writers));
 }
 
 generateRegisterExtensions({
@@ -146,5 +160,15 @@ generateRegisterExtensions({
   config: config,
   namespace: argv.namespace,
   readerNamespace: argv.readerNamespace,
+  extensions: options.extensions,
+});
+
+generateCombinedWriter({
+  writerOutputDir: argv.writerOutput,
+  config: config,
+  namespace: argv.namespace,
+  writerNamespace: argv.writerNamespace,
+  rootSchema: rootSchema,
+  writers: writers,
   extensions: options.extensions,
 });
