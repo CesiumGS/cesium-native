@@ -39,6 +39,7 @@
 #include <CesiumGltf/ExtensionExtMeshFeaturesEnum.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesEnumValue.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesFeatureIdAttribute.h>
+#include <CesiumGltf/ExtensionExtMeshFeaturesFeatureIdTexture.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesPropertyTable.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesPropertyTableProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesPropertyTexture.h>
@@ -128,6 +129,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionNodeExtMeshFeatures& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -794,6 +800,20 @@ void writeJson(
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("channel");
+  writeJson(obj.channel, jsonWriter, context);
+
+  writeTextureInfo(obj, jsonWriter, context);
 
   jsonWriter.EndObject();
 }
@@ -2377,6 +2397,13 @@ void ExtensionMeshPrimitiveExtMeshFeaturesJsonWriter::write(
 
 void ExtensionNodeExtMeshFeaturesJsonWriter::write(
     const CesiumGltf::ExtensionNodeExtMeshFeatures& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtMeshFeaturesFeatureIdTextureJsonWriter::write(
+    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
