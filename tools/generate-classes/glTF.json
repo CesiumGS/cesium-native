@@ -59,7 +59,7 @@
       "overrideName": "ExtensionExtFeatureMetadataFeatureIds"
     },
     "Feature ID Attribute in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIdAttribute"
+      "overrideName": "ExtensionExtFeatureMetadatahasNegativeIndexGuard"
     },
     "Feature ID Texture in EXT_feature_metadata": {
       "overrideName": "ExtensionExtFeatureMetadataFeatureIdTexture"
@@ -109,8 +109,8 @@
     "Enum Value in EXT_mesh_features": {
       "overrideName": "ExtensionExtMeshFeaturesEnumValue"
     },
-    "Feature ID Attribute in EXT_mesh_features": {
-      "overrideName": "ExtensionExtMeshFeaturesFeatureIdAttribute"
+    "Feature ID in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesFeatureId"
     },
     "Feature ID Texture in EXT_mesh_features": {
       "overrideName": "ExtensionExtMeshFeaturesFeatureIdTexture"

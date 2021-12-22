@@ -38,7 +38,7 @@
 #include <CesiumGltf/ExtensionExtMeshFeaturesClassProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesEnum.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesEnumValue.h>
-#include <CesiumGltf/ExtensionExtMeshFeaturesFeatureIdAttribute.h>
+#include <CesiumGltf/ExtensionExtMeshFeaturesFeatureId.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesPropertyTable.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesPropertyTableProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesPropertyTexture.h>
@@ -132,7 +132,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdAttribute& obj,
+    const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -527,8 +527,10 @@ void writeTextureInfo(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-  jsonWriter.Key("index");
-  writeJson(obj.index, jsonWriter, context);
+  if (obj.index > -1) {
+    jsonWriter.Key("index");
+    writeJson(obj.index, jsonWriter, context);
+  }
 
   if (obj.texCoord != 0) {
     jsonWriter.Key("texCoord");
@@ -544,8 +546,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   if (!obj.attributes.empty()) {
     jsonWriter.Key("attributes");
@@ -606,8 +610,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("buffer");
-  writeJson(obj.buffer, jsonWriter, context);
+  if (obj.buffer > -1) {
+    jsonWriter.Key("buffer");
+    writeJson(obj.buffer, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteOffset");
   writeJson(obj.byteOffset, jsonWriter, context);
@@ -703,17 +709,25 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("left");
-  writeJson(obj.left, jsonWriter, context);
+  if (obj.left > -1) {
+    jsonWriter.Key("left");
+    writeJson(obj.left, jsonWriter, context);
+  }
 
-  jsonWriter.Key("bottom");
-  writeJson(obj.bottom, jsonWriter, context);
+  if (obj.bottom > -1) {
+    jsonWriter.Key("bottom");
+    writeJson(obj.bottom, jsonWriter, context);
+  }
 
-  jsonWriter.Key("right");
-  writeJson(obj.right, jsonWriter, context);
+  if (obj.right > -1) {
+    jsonWriter.Key("right");
+    writeJson(obj.right, jsonWriter, context);
+  }
 
-  jsonWriter.Key("top");
-  writeJson(obj.top, jsonWriter, context);
+  if (obj.top > -1) {
+    jsonWriter.Key("top");
+    writeJson(obj.top, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -799,7 +813,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdAttribute& obj,
+    const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -819,7 +833,12 @@ void writeJson(
     writeJson(obj.repeat, jsonWriter, context);
   }
 
-  writeExtensibleObject(obj, jsonWriter, context);
+  if (obj.channel.has_value()) {
+    jsonWriter.Key("channel");
+    writeJson(obj.channel, jsonWriter, context);
+  }
+
+  writeTextureInfo(obj, jsonWriter, context);
 
   jsonWriter.EndObject();
 }
@@ -881,8 +900,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   if (obj.arrayOffsetType !=
       CesiumGltf::ExtensionExtMeshFeaturesPropertyTableProperty::
@@ -1235,8 +1256,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   if (obj.offsetType !=
       CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::
@@ -2046,8 +2069,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("buffer");
-  writeJson(obj.buffer, jsonWriter, context);
+  if (obj.buffer > -1) {
+    jsonWriter.Key("buffer");
+    writeJson(obj.buffer, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteOffset");
   writeJson(obj.byteOffset, jsonWriter, context);
@@ -2145,8 +2170,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("input");
-  writeJson(obj.input, jsonWriter, context);
+  if (obj.input > -1) {
+    jsonWriter.Key("input");
+    writeJson(obj.input, jsonWriter, context);
+  }
 
   if (obj.interpolation !=
       CesiumGltf::AnimationSampler::Interpolation::LINEAR) {
@@ -2154,8 +2181,10 @@ void writeJson(
     writeJson(obj.interpolation, jsonWriter, context);
   }
 
-  jsonWriter.Key("output");
-  writeJson(obj.output, jsonWriter, context);
+  if (obj.output > -1) {
+    jsonWriter.Key("output");
+    writeJson(obj.output, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -2168,8 +2197,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("sampler");
-  writeJson(obj.sampler, jsonWriter, context);
+  if (obj.sampler > -1) {
+    jsonWriter.Key("sampler");
+    writeJson(obj.sampler, jsonWriter, context);
+  }
 
   jsonWriter.Key("target");
   writeJson(obj.target, jsonWriter, context);
@@ -2272,8 +2303,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteOffset");
   writeJson(obj.byteOffset, jsonWriter, context);
@@ -2289,8 +2322,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteOffset");
   writeJson(obj.byteOffset, jsonWriter, context);
@@ -2382,8 +2417,8 @@ void ExtensionNodeExtMeshFeaturesJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionExtMeshFeaturesFeatureIdAttributeJsonWriter::write(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdAttribute& obj,
+void ExtensionExtMeshFeaturesFeatureIdJsonWriter::write(
+    const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

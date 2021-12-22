@@ -21,7 +21,7 @@ struct ExtensionMeshPrimitiveCesiumTileEdges;
 struct ExtensionModelExtMeshFeatures;
 struct ExtensionMeshPrimitiveExtMeshFeatures;
 struct ExtensionNodeExtMeshFeatures;
-struct ExtensionExtMeshFeaturesFeatureIdAttribute;
+struct ExtensionExtMeshFeaturesFeatureId;
 struct ExtensionExtMeshFeaturesPropertyTexture;
 struct ExtensionExtMeshFeaturesPropertyTable;
 struct ExtensionExtMeshFeaturesPropertyTableProperty;
@@ -199,11 +199,11 @@ struct ExtensionNodeExtMeshFeaturesJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionExtMeshFeaturesFeatureIdAttributeJsonWriter {
-  using ValueType = CesiumGltf::ExtensionExtMeshFeaturesFeatureIdAttribute;
+struct ExtensionExtMeshFeaturesFeatureIdJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtMeshFeaturesFeatureId;
 
   static void write(
-      const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdAttribute& obj,
+      const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

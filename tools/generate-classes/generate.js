@@ -478,7 +478,6 @@ function formatWriterPropertyImpl(property) {
   const defaultValue = property.defaultValueWriter || property.defaultValue;
 
   const isId = property.requiredId !== undefined;
-  const isOptionalId = property.requiredId === false;
   const isRequiredEnum = property.requiredEnum === true;
   const isVector = type.startsWith("std::vector");
   const isMap = type.startsWith("std::unordered_map");
@@ -495,7 +494,7 @@ function formatWriterPropertyImpl(property) {
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
-  const hasNegativeIndexGuard = isOptionalId;
+  const hasNegativeIndexGuard = isId;
   const hasGuard =
     hasDefaultValueGuard ||
     hasEmptyGuard ||

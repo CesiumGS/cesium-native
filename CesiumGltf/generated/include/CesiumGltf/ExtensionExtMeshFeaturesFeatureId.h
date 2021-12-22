@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
-#include <CesiumUtility/ExtensibleObject.h>
+#include "CesiumGltf/TextureInfo.h"
 
 #include <cstdint>
 #include <optional>
@@ -14,10 +13,10 @@ namespace CesiumGltf {
  * @brief Feature IDs to be used as indices to property arrays in the property
  * table.
  */
-struct CESIUMGLTF_API ExtensionExtMeshFeaturesFeatureIdAttribute final
-    : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API ExtensionExtMeshFeaturesFeatureId final
+    : public TextureInfo {
   static inline constexpr const char* TypeName =
-      "ExtensionExtMeshFeaturesFeatureIdAttribute";
+      "ExtensionExtMeshFeaturesFeatureId";
 
   /**
    * @brief This integer value is used to construct a string in the format
@@ -38,5 +37,10 @@ struct CESIUMGLTF_API ExtensionExtMeshFeaturesFeatureIdAttribute final
    * vertices is `offset`.
    */
   std::optional<int64_t> repeat;
+
+  /**
+   * @brief Single channel index storing per-texel feature IDs.
+   */
+  std::optional<int64_t> channel;
 };
 } // namespace CesiumGltf
