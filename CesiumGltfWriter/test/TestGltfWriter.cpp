@@ -125,6 +125,10 @@ TEST_CASE("Writes glTF") {
               "index": 0
             },
             "metallicFactor": 0
+          },
+          "occlusionTexture": {
+            "index": 1,
+            "strength": 0.5
           }
         }
       ],
@@ -136,7 +140,10 @@ TEST_CASE("Writes glTF") {
       ],
       "images": [
         {
-          "uri": "CesiumLogoFlat.png"
+          "uri": "BaseColor.png"
+        },
+        {
+          "uri": "Occlusion.png"
         }
       ],
       "samplers": [
@@ -324,7 +331,7 @@ TEST_CASE("Writes glTF with default values removed") {
       ],
       "images": [
         {
-          "uri": "CesiumLogoFlat.png"
+          "uri": "BaseColor.png"
         }
       ],
       "samplers": [
@@ -434,7 +441,7 @@ TEST_CASE("Writes glTF with default values removed") {
       ],
       "images": [
         {
-          "uri": "CesiumLogoFlat.png"
+          "uri": "BaseColor.png"
         }
       ],
       "samplers": [

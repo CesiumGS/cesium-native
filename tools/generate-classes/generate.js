@@ -19,7 +19,8 @@ function generate(options, schema, writers) {
   } = options;
 
   const baseName = getNameFromTitle(config, schema.title);
-  const prefix = schema.prefix && schema.prefix !== baseName ? schema.prefix : "";
+  const prefix =
+    schema.prefix && schema.prefix !== baseName ? schema.prefix : "";
   const name = prefix + baseName;
   const thisConfig = config.classes[schema.title] || {};
 
@@ -337,7 +338,42 @@ function generate(options, schema, writers) {
         }
   `;
 
-  const writeJsonDefinition = `
+  let writeBaseJsonDefinition;
+  let writeJsonDefinition;
+
+  if (thisConfig.isBaseClass) {
+    writeBaseJsonDefinition = `
+        template <typename T>
+        void write${getWriterName(name)}(
+            const T& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+
+          ${indent(
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
+
+          write${getWriterName(base)}(obj, jsonWriter, context);
+        }
+    `;
+
+    writeJsonDefinition = `
+        void writeJson(
+            const ${namespace}::${name}& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+          jsonWriter.StartObject();
+
+          write${getWriterName(name)}(obj, jsonWriter, context);
+
+          jsonWriter.EndObject();
+        }
+    `;
+  } else {
+    writeJsonDefinition = `
         void writeJson(
             const ${namespace}::${name}& obj,
             CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -351,31 +387,12 @@ function generate(options, schema, writers) {
             10
           )}
 
-          ${
-            schema.properties.extensions
-              ? `
-            if (!obj.extensions.empty()) {
-              jsonWriter.Key("extensions");
-              writeJsonExtensions(obj, jsonWriter, context);
-            }
-          `
-              : ""
-          }
-
-          ${
-            schema.properties.extras
-              ? `
-            if (!obj.extras.empty()) {
-              jsonWriter.Key("extras");
-              writeJson(obj.extras, jsonWriter, context);
-            }
-          `
-              : ""
-          }
+          write${getWriterName(base)}(obj, jsonWriter, context);
 
           jsonWriter.EndObject();
         }
-  `;
+    `;
+  }
 
   const writeExtensionsRegistration = `
         ${
@@ -396,6 +413,7 @@ function generate(options, schema, writers) {
     writeJsonDeclaration,
     writeDefinition,
     writeJsonDefinition,
+    writeBaseJsonDefinition,
     writeExtensionsRegistration,
   });
 
@@ -567,6 +585,15 @@ function getReaderName(name, readerNamespace) {
     return `${namespace}::${pieces.groups.name}JsonHandler`;
   } else {
     return `${name}JsonHandler`;
+  }
+}
+
+function getWriterName(name) {
+  const pieces = name.match(qualifiedTypeNameRegex);
+  if (pieces) {
+    return pieces.groups.name;
+  } else {
+    return name;
   }
 }
 

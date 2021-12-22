@@ -172,7 +172,44 @@ function generateCombinedWriter(options) {
             jsonWriter.Null();
           }
         }
+
+        template <typename T>
+        void writeExtensibleObject(
+            const T& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+
+          if (!obj.extensions.empty()) {
+            jsonWriter.Key("extensions");
+            writeJsonExtensions(obj, jsonWriter, context);
+          }
+
+          if (!obj.extras.empty()) {
+            jsonWriter.Key("extras");
+            writeJson(obj.extras, jsonWriter, context);
+          }
+        }
+
+        template <typename T>
+        void writeNamedObject(
+            const T& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+
+          if (!obj.name.empty()) {
+            jsonWriter.Key("name");
+            writeJson(obj.name, jsonWriter, context);
+          }
+
+          writeExtensibleObject(obj, jsonWriter, context);
+        }
         
+        ${writers
+          .map((writer) => {
+            return writer.writeBaseJsonDefinition ?? "";
+          })
+          .join("\n")}
+
         ${writers
           .map((writer) => {
             return writer.writeJsonDefinition;
