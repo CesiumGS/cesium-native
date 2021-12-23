@@ -210,7 +210,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * @brief A callback function that is invoked when a tileset resource fails to
    * load.
    *
-   * Tileset resources include a Cesium ion asset endpoing, a tileset's root
+   * Tileset resources include a Cesium ion asset endpoint, a tileset's root
    * tileset.json or layer.json, an individual tile's content, or an implicit
    * tiling subtree.
    */

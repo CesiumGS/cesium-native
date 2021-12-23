@@ -17,6 +17,7 @@ class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
 class RasterOverlayCollection;
+struct RasterOverlayLoadFailureDetails;
 
 /**
  * @brief Options for loading raster overlays.
@@ -63,6 +64,15 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * the raster overlay maps to approximately 2x2 pixels on the screen.
    */
   double maximumScreenSpaceError = 2.0;
+
+  /**
+   * @brief A callback function that is invoked when a raster overlay resource
+   * fails to load.
+   *
+   * Raster overlay resources include a Cesium ion asset endpoint, any resources
+   * required for raster overlay metadata, or an individual overlay image.
+   */
+  std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
 };
 
 /**

@@ -38,7 +38,6 @@ struct Tileset::LoadIonAssetEndpoint::Private {
         .catchInMainThread([&tileset](const std::exception& e) {
           TilesetLoadFailureDetails failure;
           failure.pTileset = &tileset;
-          failure.pTile = nullptr;
           failure.pRequest = nullptr;
           failure.type = TilesetLoadType::CesiumIon;
           failure.message = fmt::format(
