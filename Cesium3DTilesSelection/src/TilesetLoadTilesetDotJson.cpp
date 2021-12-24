@@ -269,7 +269,8 @@ LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
   return LoadResult{
       std::move(pContext),
       std::move(pRootTile),
-      supportsRasterOverlays};
+      supportsRasterOverlays,
+      std::nullopt};
 }
 
 namespace {
