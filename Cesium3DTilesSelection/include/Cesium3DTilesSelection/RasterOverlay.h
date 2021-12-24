@@ -17,7 +17,7 @@ class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
 class RasterOverlayCollection;
-struct RasterOverlayLoadFailureDetails;
+class RasterOverlayLoadFailureDetails;
 
 /**
  * @brief Options for loading raster overlays.
@@ -219,6 +219,12 @@ public:
    * ownership.
    */
   void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
+
+protected:
+  void reportError(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      RasterOverlayLoadFailureDetails&& errorDetails);
 
 private:
   std::string _name;

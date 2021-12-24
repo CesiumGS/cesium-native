@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/IonRasterOverlay.h"
 
 #include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
+#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TileMapServiceRasterOverlay.h"
@@ -47,10 +48,23 @@ IonRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
+  auto reportError = [this, asyncSystem, pLogger](
+                         std::shared_ptr<IAssetRequest>&& pRequest,
+                         const std::string& message) {
+    this->reportError(
+        asyncSystem,
+        pLogger,
+        RasterOverlayLoadFailureDetails{
+            this,
+            RasterOverlayLoadType::CesiumIon,
+            std::move(pRequest),
+            message});
+  };
+
   return pAssetAccessor->get(asyncSystem, ionUrl)
       .thenInWorkerThread(
-          [name = this->getName(),
-           pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
+          [name = this->getName(), pLogger, reportError](
+              std::shared_ptr<IAssetRequest>&& pRequest)
               -> std::unique_ptr<RasterOverlay> {
             const IAssetResponse* pResponse = pRequest->response();
 
@@ -60,23 +74,26 @@ IonRasterOverlay::createTileProvider(
                 pResponse->data().size());
 
             if (response.HasParseError()) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Error when parsing ion raster overlay response, error code "
-                  "{} at byte offset {}",
-                  response.GetParseError(),
-                  response.GetErrorOffset());
+              reportError(
+                  std::move(pRequest),
+                  fmt::format(
+                      "Error when parsing ion raster overlay response, error "
+                      "code {} at byte offset {}",
+                      response.GetParseError(),
+                      response.GetErrorOffset()));
               return nullptr;
             }
 
             std::string type =
                 JsonHelpers::getStringOrDefault(response, "type", "unknown");
             if (type != "IMAGERY") {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Ion raster overlay metadata response type is not 'IMAGERY', "
-                  "but {}",
-                  type);
+              reportError(
+                  std::move(pRequest),
+                  fmt::format(
+                      "Ion raster overlay metadata response type is not "
+                      "'IMAGERY', "
+                      "but {}",
+                      type));
               return nullptr;
             }
 
@@ -88,10 +105,11 @@ IonRasterOverlay::createTileProvider(
               const auto optionsIt = response.FindMember("options");
               if (optionsIt == response.MemberEnd() ||
                   !optionsIt->value.IsObject()) {
-                SPDLOG_LOGGER_ERROR(
-                    pLogger,
-                    "Cesium ion Bing Maps raster overlay metadata response "
-                    "does not contain 'options' or it is not an object.");
+                reportError(
+                    std::move(pRequest),
+                    fmt::format(
+                        "Cesium ion Bing Maps raster overlay metadata response "
+                        "does not contain 'options' or it is not an object."));
                 return nullptr;
               }
 
