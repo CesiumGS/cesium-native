@@ -2,7 +2,7 @@
 
 #include "Cesium3DTilesReader/Library.h"
 
-#include <Cesium3DTiles/Tileset.h>
+#include <Cesium3DTiles/Schema.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 
 #include <gsl/span>
@@ -17,14 +17,14 @@
 namespace Cesium3DTilesReader {
 
 /**
- * @brief The result of reading a tileset with
- * {@link TilesetReader::readTileset}.
+ * @brief The result of reading a schema with
+ * {@link SchemaReader::readSchema}.
  */
-struct CESIUM3DTILESREADER_API TilesetReaderResult {
+struct CESIUM3DTILESREADER_API SchemaReaderResult {
   /**
-   * @brief The read tileset, or std::nullopt if the tileset could not be read.
+   * @brief The read schema, or std::nullopt if the schema could not be read.
    */
-  std::optional<Cesium3DTiles::Tileset> tileset;
+  std::optional<Cesium3DTiles::Schema> schema;
 
   /**
    * @brief Errors, if any, that occurred during the load process.
@@ -38,34 +38,34 @@ struct CESIUM3DTILESREADER_API TilesetReaderResult {
 };
 
 /**
- * @brief Reads tilesets.
+ * @brief Reads schemas.
  */
-class CESIUM3DTILESREADER_API TilesetReader {
+class CESIUM3DTILESREADER_API SchemaReader {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  TilesetReader();
+  SchemaReader();
 
   /**
    * @brief Gets the context used to control how extensions are loaded from a
-   * tileset.
+   * schema.
    */
   CesiumJsonReader::ExtensionReaderContext& getExtensions();
 
   /**
    * @brief Gets the context used to control how extensions are loaded from a
-   * tileset.
+   * schema.
    */
   const CesiumJsonReader::ExtensionReaderContext& getExtensions() const;
 
   /**
-   * @brief Reads a tileset.
+   * @brief Reads a schema.
    *
-   * @param data The buffer from which to read the tileset.
-   * @return The result of reading the tileset.
+   * @param data The buffer from which to read the schema.
+   * @return The result of reading the schame.
    */
-  TilesetReaderResult readTileset(const gsl::span<const std::byte>& data) const;
+  SchemaReaderResult readSchema(const gsl::span<const std::byte>& data) const;
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;

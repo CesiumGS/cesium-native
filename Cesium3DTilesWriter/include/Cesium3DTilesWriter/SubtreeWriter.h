@@ -53,12 +53,12 @@ public:
   SubtreeWriter();
 
   /**
-   * @brief Gets the context used to control how tileset extensions are written.
+   * @brief Gets the context used to control how subtree extensions are written.
    */
   CesiumJsonWriter::ExtensionWriterContext& getExtensions();
 
   /**
-   * @brief Gets the context used to control how tileset extensions are written.
+   * @brief Gets the context used to control how subtree extensions are written.
    */
   const CesiumJsonWriter::ExtensionWriterContext& getExtensions() const;
 
