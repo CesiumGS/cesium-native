@@ -59,7 +59,7 @@
       "overrideName": "ExtensionExtFeatureMetadataFeatureIds"
     },
     "Feature ID Attribute in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadatahasNegativeIndexGuard"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureIdAttribute"
     },
     "Feature ID Texture in EXT_feature_metadata": {
       "overrideName": "ExtensionExtFeatureMetadataFeatureIdTexture"
