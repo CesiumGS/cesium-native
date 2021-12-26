@@ -33,6 +33,23 @@ struct CESIUMGLTFWRITER_API GltfWriterResult {
 };
 
 /**
+ * @brief Options for how to write a glTF.
+ */
+struct CESIUMGLTFWRITER_API GltfWriterOptions {
+  /**
+   * @brief If the glTF JSON should be pretty printed. Usable with glTF or GLB
+   * (not advised).
+   */
+  bool prettyPrint = false;
+
+  /**
+   * @brief Byte alignment of the GLB binary chunk. When using 64-bit types in
+   * EXT_mesh_features or EXT_feature_metadata this value should be set to 8.
+   */
+  size_t binaryChunkByteAlignment = 4;
+};
+
+/**
  * @brief Writes glTF.
  */
 class CESIUMGLTFWRITER_API GltfWriter {
@@ -62,9 +79,12 @@ public:
    * this function.
    *
    * @param model The model.
+   * @param options Options for how to write the glTF.
    * @return The result of writing the glTF.
    */
-  GltfWriterResult writeGltf(const CesiumGltf::Model& model) const;
+  GltfWriterResult writeGltf(
+      const CesiumGltf::Model& model,
+      const GltfWriterOptions& options = GltfWriterOptions()) const;
 
   /**
    * @brief Serializes the provided model into a glb byte vector.
@@ -75,11 +95,13 @@ public:
    *
    * @param model The model.
    * @param bufferData The buffer data to store in the GLB binary chunk.
+   * @param options Options for how to write the glb.
    * @return The result of writing the glb.
    */
   GltfWriterResult writeGlb(
       const CesiumGltf::Model& model,
-      const std::vector<std::byte>& bufferData) const;
+      const std::vector<std::byte>& bufferData,
+      const GltfWriterOptions& options = GltfWriterOptions()) const;
 
 private:
   CesiumJsonWriter::ExtensionWriterContext _context;

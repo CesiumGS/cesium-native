@@ -11,21 +11,26 @@ namespace CesiumGltfWriter {
 
 namespace {
 
-[[nodiscard]] size_t
-getPadding(size_t byteLength, size_t byteOffset = 0) noexcept {
-  size_t boundary = 8;
-  size_t remainder = (byteOffset + byteLength) % boundary;
-  size_t padding = remainder == 0 ? 0 : boundary - remainder;
+[[nodiscard]] size_t getPadding(
+    size_t byteLength,
+    size_t byteOffset,
+    size_t byteAlignment) noexcept {
+  assert(byteAlignment > 0);
+  size_t remainder = (byteOffset + byteLength) % byteAlignment;
+  size_t padding = remainder == 0 ? 0 : byteAlignment - remainder;
   return padding;
 }
 
 [[nodiscard]] std::vector<std::byte> writeGlbBuffer(
     const std::vector<std::byte>& jsonBuffer,
-    const std::vector<std::byte>& binaryBuffer) {
+    const std::vector<std::byte>& binaryBuffer,
+    size_t binaryChunkByteAlignment) {
 
-  size_t jsonPaddingSize = getPadding(jsonBuffer.size(), 20);
+  size_t jsonPaddingSize =
+      getPadding(jsonBuffer.size(), 20, binaryChunkByteAlignment);
   size_t jsonChunkSize = jsonBuffer.size() + jsonPaddingSize;
-  size_t binaryPaddingSize = getPadding(binaryBuffer.size());
+  size_t binaryPaddingSize =
+      getPadding(binaryBuffer.size(), 20 + jsonChunkSize, 4);
   size_t binaryChunkSize = binaryBuffer.size() + binaryPaddingSize;
   size_t glbSize = 12 + 8 + jsonChunkSize + 8 + binaryChunkSize;
 
@@ -90,34 +95,53 @@ GltfWriter::getExtensions() const {
   return this->_context;
 }
 
-GltfWriterResult GltfWriter::writeGltf(const CesiumGltf::Model& model) const {
+GltfWriterResult GltfWriter::writeGltf(
+    const CesiumGltf::Model& model,
+    const GltfWriterOptions& options) const {
   CESIUM_TRACE("GltfWriter::writeGltf");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
   GltfWriterResult result;
-  CesiumJsonWriter::PrettyJsonWriter writer;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
-  ModelJsonWriter::write(model, writer, context);
-  result.gltfBytes = writer.toBytes();
+  if (options.prettyPrint) {
+    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+  } else {
+    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
+  }
+
+  ModelJsonWriter::write(model, *writer, context);
+  result.gltfBytes = writer->toBytes();
 
   return result;
 }
 
 GltfWriterResult GltfWriter::writeGlb(
     const CesiumGltf::Model& model,
-    const std::vector<std::byte>& bufferData) const {
+    const std::vector<std::byte>& bufferData,
+    const GltfWriterOptions& options) const {
   CESIUM_TRACE("GltfWriter::writeGlb");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
   GltfWriterResult result;
-  CesiumJsonWriter::JsonWriter writer;
 
-  ModelJsonWriter::write(model, writer, context);
-  result.gltfBytes = writeGlbBuffer(writer.toBytes(), bufferData);
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
+
+  if (options.prettyPrint) {
+    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+  } else {
+    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
+  }
+
+  ModelJsonWriter::write(model, *writer, context);
+  result.gltfBytes = writeGlbBuffer(
+      writer->toBytes(),
+      bufferData,
+      options.binaryChunkByteAlignment);
 
   return result;
 }
