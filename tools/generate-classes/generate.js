@@ -29,8 +29,9 @@ function generate(options, schema, writers) {
   schemaCache.pushContext(schema);
 
   let base = "CesiumUtility::ExtensibleObject";
+  let baseSchema;
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
-    const baseSchema = schemaCache.load(schema.allOf[0].$ref);
+    baseSchema = schemaCache.load(schema.allOf[0].$ref);
     base = getNameFromTitle(config, baseSchema.title);
   }
 
@@ -431,9 +432,12 @@ function generate(options, schema, writers) {
     fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
   }
 
-  return lodash.uniq(
-    lodash.flatten(properties.map((property) => property.schemas))
-  );
+  const schemas = lodash.flatten(properties.map((property) => property.schemas));
+  if (baseSchema && !base.includes("::")) {
+    schemas.push(baseSchema);
+  }
+
+  return lodash.uniq(schemas);
 }
 
 function formatProperty(property) {

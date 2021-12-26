@@ -6,6 +6,9 @@
     "Tileset Property": {
       "overrideName": "CesiumUtility::ExtensibleObject"
     },
+    "Metadata Entity": {
+      "isBaseClass": true
+    },
     "3DTILES_content_gltf extension": {
       "overrideName": "Extension3dTilesContentGltf"
     },
@@ -20,6 +23,15 @@
     },
     "3DTILES_multiple_contents extension for 3DTILES_implicit_tiling subtree": {
       "overrideName": "Extension3dTilesImplicitTilingExtension3dTilesMultipleContents"
+    },
+    "3DTILES_metadata 3D Tiles extension": {
+      "overrideName": "ExtensionTileset3dTilesMetadata"
+    },
+    "3DTILES_metadata tile extension": {
+      "overrideName": "ExtensionTile3dTilesMetadata"
+    },
+    "3DTILES_metadata content extension": {
+      "overrideName": "ExtensionContent3dTilesMetadata"
     }
   },
   "extensions": [
@@ -42,6 +54,18 @@
     {
       "extensionName": "3DTILES_multiple_contents",
       "schema": "3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "3DTILES_metadata/schema/tileset.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "3DTILES_metadata/schema/tile.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "3DTILES_metadata/schema/content.3DTILES_metadata.schema.json"
     }
   ]
 }
