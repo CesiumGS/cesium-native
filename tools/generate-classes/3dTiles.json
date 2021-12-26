@@ -32,6 +32,9 @@
     },
     "3DTILES_metadata content extension": {
       "overrideName": "ExtensionContent3dTilesMetadata"
+    },
+    "3DTILES_metadata extension for 3DTILES_implicit_tiling subtree": {
+      "overrideName": "Extension3dTilesImplicitTilingExtension3dTilesMetadata"
     }
   },
   "extensions": [
@@ -54,6 +57,10 @@
     {
       "extensionName": "3DTILES_multiple_contents",
       "schema": "3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "3DTILES_metadata/schema/3DTILES_implicit_tiling/subtree.3DTILES_metadata.schema.json"
     },
     {
       "extensionName": "3DTILES_metadata",

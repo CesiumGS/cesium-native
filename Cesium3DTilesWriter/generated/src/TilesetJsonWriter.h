@@ -15,6 +15,7 @@ struct Extension3dTilesMultipleContents;
 struct Extension3dTilesBoundingVolumeS2;
 struct Extension3dTilesImplicitTiling;
 struct Extension3dTilesImplicitTilingExtension3dTilesMultipleContents;
+struct Extension3dTilesImplicitTilingExtension3dTilesMetadata;
 struct ExtensionTileset3dTilesMetadata;
 struct ExtensionTile3dTilesMetadata;
 struct ExtensionContent3dTilesMetadata;
@@ -29,6 +30,7 @@ struct Enum;
 struct EnumValue;
 struct Class;
 struct Property;
+struct SubtreeMetadataProperty;
 struct Availability;
 struct Subtrees;
 struct Content;
@@ -101,6 +103,19 @@ struct
   static void write(
       const Cesium3DTiles::
           Extension3dTilesImplicitTilingExtension3dTilesMultipleContents& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesImplicitTilingExtension3dTilesMetadataJsonWriter {
+  using ValueType =
+      Cesium3DTiles::Extension3dTilesImplicitTilingExtension3dTilesMetadata;
+
+  static inline constexpr const char* ExtensionName = "3DTILES_metadata";
+
+  static void write(
+      const Cesium3DTiles::
+          Extension3dTilesImplicitTilingExtension3dTilesMetadata& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -233,6 +248,15 @@ struct PropertyJsonWriter {
 
   static void write(
       const Cesium3DTiles::Property& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct SubtreeMetadataPropertyJsonWriter {
+  using ValueType = Cesium3DTiles::SubtreeMetadataProperty;
+
+  static void write(
+      const Cesium3DTiles::SubtreeMetadataProperty& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
