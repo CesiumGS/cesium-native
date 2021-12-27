@@ -4,9 +4,8 @@
 #include <Cesium3DTilesReader/TilesetReader.h>
 
 #include <catch2/catch.hpp>
-#include <rapidjson/document.h>
-
 #include <ctype.h>
+#include <rapidjson/document.h>
 
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {
