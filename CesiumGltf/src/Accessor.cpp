@@ -31,7 +31,7 @@ Accessor::computeNumberOfComponents(const std::string& type) noexcept {
 }
 
 /*static*/ int8_t
-Accessor::computeByteSizeOfComponent(const int32_t componentType) noexcept {
+Accessor::computeByteSizeOfComponent(int32_t componentType) noexcept {
   switch (componentType) {
   case CesiumGltf::Accessor::ComponentType::BYTE:
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
@@ -48,44 +48,6 @@ Accessor::computeByteSizeOfComponent(const int32_t componentType) noexcept {
   }
 }
 
-/*static*/ int64_t Accessor::computeByteSizeOfElement(
-    const std::string& type,
-    const int32_t componentType) noexcept {
-  return int64_t{computeByteSizeOfComponent(componentType)} *
-         int64_t{computeNumberOfComponents(type)};
-}
-
-/*static*/ int64_t Accessor::computeByteSize(
-    const std::string& type,
-    const int32_t componentType,
-    const int64_t count) noexcept {
-  return Accessor::computeByteSizeOfElement(type, componentType) * count;
-}
-
-/*static*/ int32_t
-Accessor::computeIndexComponentType(const int64_t vertexCount) {
-  // glTF 2.0 Spec
-  // (https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html)
-  //
-  // Indices accessor MUST NOT contain the maximum possible value for the
-  // component type used (i.e., 255 for unsigned bytes, 65535 for unsigned
-  // shorts, 4294967295 for unsigned ints).
-  //
-  // Implementation Note:
-  // The maximum values trigger primitive restart in some graphics APIs and
-  // would require client implementations to rebuild the index buffer.
-
-  if (vertexCount < 255) {
-    return CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
-  } else if (vertexCount < 65535) {
-    return CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT;
-  } else if (vertexCount < 4294967295) {
-    return CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
-  } else
-    // TODO Print a warning here!
-    return 0;
-}
-
 int8_t Accessor::computeNumberOfComponents() const noexcept {
   return Accessor::computeNumberOfComponents(this->type);
 }
@@ -94,15 +56,9 @@ int8_t Accessor::computeByteSizeOfComponent() const noexcept {
   return Accessor::computeByteSizeOfComponent(this->componentType);
 }
 
-int64_t Accessor::computeByteSizeOfElement() const noexcept {
-  return Accessor::computeByteSizeOfElement(this->type, this->componentType);
-}
-
-int64_t Accessor::computeByteSize() const noexcept {
-  return Accessor::computeByteSize(
-      this->type,
-      this->componentType,
-      this->count);
+int64_t Accessor::computeBytesPerVertex() const noexcept {
+  return int64_t{this->computeByteSizeOfComponent()} *
+         int64_t{this->computeNumberOfComponents()};
 }
 
 int64_t

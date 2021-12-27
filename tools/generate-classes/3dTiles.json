@@ -22,7 +22,7 @@
       "overrideName": "Extension3dTilesImplicitTiling"
     },
     "3DTILES_multiple_contents extension for 3DTILES_implicit_tiling subtree": {
-      "overrideName": "Extension3dTilesImplicitTilingExtension3dTilesMultipleContents"
+      "overrideName": "ExtensionSubtree3dTilesMultipleContents"
     },
     "3DTILES_metadata 3D Tiles extension": {
       "overrideName": "ExtensionTileset3dTilesMetadata"
@@ -34,7 +34,7 @@
       "overrideName": "ExtensionContent3dTilesMetadata"
     },
     "3DTILES_metadata extension for 3DTILES_implicit_tiling subtree": {
-      "overrideName": "Extension3dTilesImplicitTilingExtension3dTilesMetadata"
+      "overrideName": "ExtensionSubtree3dTilesMetadata"
     }
   },
   "extensions": [

@@ -69,7 +69,7 @@ static MetadataPropertyViewStatus checkStringArrayOffsetBuffer(
 
 MetadataFeatureTableView::MetadataFeatureTableView(
     const Model* pModel,
-    const ExtensionExtFeatureMetadataFeatureTable* pFeatureTable)
+    const FeatureTable* pFeatureTable)
     : _pModel{pModel}, _pFeatureTable{pFeatureTable}, _pClass{nullptr} {
   assert(pModel != nullptr && "model must not be nullptr");
   assert(pFeatureTable != nullptr && "featureTable must not be nullptr");
@@ -81,8 +81,7 @@ MetadataFeatureTableView::MetadataFeatureTableView(
       "Model must contain ExtensionModelExtFeatureMetadata to use "
       "FeatureTableView");
 
-  const std::optional<ExtensionExtFeatureMetadataSchema>& schema =
-      pMetadata->schema;
+  const std::optional<Schema>& schema = pMetadata->schema;
   assert(
       schema != std::nullopt && "ExtensionModelExtFeatureMetadata must contain "
                                 "Schema to use FeatureTableView");
@@ -94,8 +93,7 @@ MetadataFeatureTableView::MetadataFeatureTableView(
   }
 }
 
-const ExtensionExtFeatureMetadataClassProperty*
-MetadataFeatureTableView::getClassProperty(
+const ClassProperty* MetadataFeatureTableView::getClassProperty(
     const std::string& propertyName) const {
   if (_pClass == nullptr) {
     return nullptr;
@@ -192,11 +190,9 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getOffsetBufferSafe(
 
 MetadataPropertyView<std::string_view>
 MetadataFeatureTableView::getStringPropertyValues(
-    const ExtensionExtFeatureMetadataClassProperty& classProperty,
-    const ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty)
-    const {
-  if (classProperty.type !=
-      ExtensionExtFeatureMetadataClassProperty::Type::STRING) {
+    const ClassProperty& classProperty,
+    const FeatureTableProperty& featureTableProperty) const {
+  if (classProperty.type != ClassProperty::Type::STRING) {
     return createInvalidPropertyView<std::string_view>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
@@ -238,17 +234,14 @@ MetadataFeatureTableView::getStringPropertyValues(
 
 MetadataPropertyView<MetadataArrayView<std::string_view>>
 MetadataFeatureTableView::getStringArrayPropertyValues(
-    const ExtensionExtFeatureMetadataClassProperty& classProperty,
-    const ExtensionExtFeatureMetadataFeatureTableProperty& featureTableProperty)
-    const {
-  if (classProperty.type !=
-      ExtensionExtFeatureMetadataClassProperty::Type::ARRAY) {
+    const ClassProperty& classProperty,
+    const FeatureTableProperty& featureTableProperty) const {
+  if (classProperty.type != ClassProperty::Type::ARRAY) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
 
-  if (classProperty.componentType !=
-      ExtensionExtFeatureMetadataClassProperty::ComponentType::STRING) {
+  if (classProperty.componentType != ClassProperty::ComponentType::STRING) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }

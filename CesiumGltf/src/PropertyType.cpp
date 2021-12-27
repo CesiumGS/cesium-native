@@ -1,7 +1,7 @@
 #include "CesiumGltf/PropertyType.h"
 
-#include "CesiumGltf/ExtensionExtFeatureMetadataClassProperty.h"
-#include "CesiumGltf/ExtensionExtFeatureMetadataFeatureTable.h"
+#include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/FeatureTable.h"
 
 namespace CesiumGltf {
 std::string convertPropertyTypeToString(CesiumGltf::PropertyType type) {
@@ -9,92 +9,92 @@ std::string convertPropertyTypeToString(CesiumGltf::PropertyType type) {
   case PropertyType::None:
     return "NONE";
   case PropertyType::Uint8:
-    return ExtensionExtFeatureMetadataClassProperty::Type::UINT8;
+    return ClassProperty::Type::UINT8;
   case PropertyType::Int8:
-    return ExtensionExtFeatureMetadataClassProperty::Type::INT8;
+    return ClassProperty::Type::INT8;
   case PropertyType::Uint16:
-    return ExtensionExtFeatureMetadataClassProperty::Type::UINT16;
+    return ClassProperty::Type::UINT16;
   case PropertyType::Int16:
-    return ExtensionExtFeatureMetadataClassProperty::Type::INT16;
+    return ClassProperty::Type::INT16;
   case PropertyType::Uint32:
-    return ExtensionExtFeatureMetadataClassProperty::Type::UINT32;
+    return ClassProperty::Type::UINT32;
   case PropertyType::Int32:
-    return ExtensionExtFeatureMetadataClassProperty::Type::INT32;
+    return ClassProperty::Type::INT32;
   case PropertyType::Uint64:
-    return ExtensionExtFeatureMetadataClassProperty::Type::UINT64;
+    return ClassProperty::Type::UINT64;
   case PropertyType::Int64:
-    return ExtensionExtFeatureMetadataClassProperty::Type::INT64;
+    return ClassProperty::Type::INT64;
   case PropertyType::Float32:
-    return ExtensionExtFeatureMetadataClassProperty::Type::FLOAT32;
+    return ClassProperty::Type::FLOAT32;
   case PropertyType::Float64:
-    return ExtensionExtFeatureMetadataClassProperty::Type::FLOAT64;
+    return ClassProperty::Type::FLOAT64;
   case PropertyType::Boolean:
-    return ExtensionExtFeatureMetadataClassProperty::Type::BOOLEAN;
+    return ClassProperty::Type::BOOLEAN;
   case PropertyType::Enum:
-    return ExtensionExtFeatureMetadataClassProperty::Type::ENUM;
+    return ClassProperty::Type::ENUM;
   case PropertyType::String:
-    return ExtensionExtFeatureMetadataClassProperty::Type::STRING;
+    return ClassProperty::Type::STRING;
   case PropertyType::Array:
-    return ExtensionExtFeatureMetadataClassProperty::Type::ARRAY;
+    return ClassProperty::Type::ARRAY;
   default:
     return "NONE";
   }
 }
 
 PropertyType convertStringToPropertyType(const std::string& str) {
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::UINT8) {
+  if (str == ClassProperty::Type::UINT8) {
     return PropertyType::Uint8;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::INT8) {
+  if (str == ClassProperty::Type::INT8) {
     return PropertyType::Int8;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::UINT16) {
+  if (str == ClassProperty::Type::UINT16) {
     return PropertyType::Uint16;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::INT16) {
+  if (str == ClassProperty::Type::INT16) {
     return PropertyType::Int16;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::UINT32) {
+  if (str == ClassProperty::Type::UINT32) {
     return PropertyType::Uint32;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::INT32) {
+  if (str == ClassProperty::Type::INT32) {
     return PropertyType::Int32;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::UINT64) {
+  if (str == ClassProperty::Type::UINT64) {
     return PropertyType::Uint64;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::INT64) {
+  if (str == ClassProperty::Type::INT64) {
     return PropertyType::Int64;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::FLOAT32) {
+  if (str == ClassProperty::Type::FLOAT32) {
     return PropertyType::Float32;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::FLOAT64) {
+  if (str == ClassProperty::Type::FLOAT64) {
     return PropertyType::Float64;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::BOOLEAN) {
+  if (str == ClassProperty::Type::BOOLEAN) {
     return PropertyType::Boolean;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::STRING) {
+  if (str == ClassProperty::Type::STRING) {
     return PropertyType::String;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::ENUM) {
+  if (str == ClassProperty::Type::ENUM) {
     return PropertyType::Enum;
   }
 
-  if (str == ExtensionExtFeatureMetadataClassProperty::Type::ARRAY) {
+  if (str == ClassProperty::Type::ARRAY) {
     return PropertyType::Array;
   }
 
@@ -102,23 +102,19 @@ PropertyType convertStringToPropertyType(const std::string& str) {
 }
 
 PropertyType convertOffsetStringToPropertyType(const std::string& str) {
-  if (str ==
-      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT8) {
+  if (str == FeatureTableProperty::OffsetType::UINT8) {
     return PropertyType::Uint8;
   }
 
-  if (str ==
-      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT16) {
+  if (str == FeatureTableProperty::OffsetType::UINT16) {
     return PropertyType::Uint16;
   }
 
-  if (str ==
-      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT32) {
+  if (str == FeatureTableProperty::OffsetType::UINT32) {
     return PropertyType::Uint32;
   }
 
-  if (str ==
-      ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::UINT64) {
+  if (str == FeatureTableProperty::OffsetType::UINT64) {
     return PropertyType::Uint64;
   }
 

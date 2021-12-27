@@ -3,7 +3,6 @@ const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
 const cppReservedWords = require("./cppReservedWords");
-const reservedEnums = require("./reservedEnums");
 
 function resolveProperty(
   schemaCache,
@@ -107,20 +106,6 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       required,
-      namespace,
-      readerNamespace,
-      writerNamespace
-    );
-  } else if (isEnum(propertyDetails)) {
-    return resolveEnum(
-      schemaCache,
-      config,
-      parentName,
-      propertyName,
-      cppSafeName,
-      propertyDetails,
-      isRequired,
-      makeOptional,
       namespace,
       readerNamespace,
       writerNamespace
@@ -665,9 +650,7 @@ function makeNameIntoValidIdentifier(name) {
 }
 
 function makeNameIntoValidEnumIdentifier(name) {
-  if (reservedEnums.indexOf(name) >= 0) {
-    name += "_ENUM";
-  }
+  // May use this in the future to deconflict glTF enums from system header defines
   return name;
 }
 

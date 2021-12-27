@@ -9,15 +9,15 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
-#include <CesiumGltf/ExtensionMaterialKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtMeshFeatures.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionNodeExtMeshFeatures.h>
-#include <CesiumGltf/ExtensionNodeExtMeshGpuInstancing.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
@@ -30,22 +30,22 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveKhrDracoMeshCompressionJsonWriter>();
+      ExtensionKhrDracoMeshCompressionJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveCesiumTileEdgesJsonWriter>();
+      ExtensionCesiumTileEdgesJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveExtMeshFeaturesJsonWriter>();
   context.registerExtension<
       CesiumGltf::Material,
-      ExtensionMaterialKhrMaterialsUnlitJsonWriter>();
+      ExtensionKhrMaterialsUnlitJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
-      ExtensionNodeExtMeshGpuInstancingJsonWriter>();
+      ExtensionExtMeshGpuInstancingJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeExtMeshFeaturesJsonWriter>();

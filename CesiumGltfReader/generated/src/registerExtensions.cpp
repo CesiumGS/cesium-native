@@ -5,15 +5,15 @@
 
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
-#include "ExtensionMaterialKhrMaterialsUnlitJsonHandler.h"
-#include "ExtensionMeshPrimitiveCesiumTileEdgesJsonHandler.h"
+#include "ExtensionCesiumTileEdgesJsonHandler.h"
+#include "ExtensionExtMeshGpuInstancingJsonHandler.h"
+#include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
+#include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler.h"
-#include "ExtensionMeshPrimitiveKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtMeshFeaturesJsonHandler.h"
 #include "ExtensionNodeExtMeshFeaturesJsonHandler.h"
-#include "ExtensionNodeExtMeshGpuInstancingJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -29,22 +29,22 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveKhrDracoMeshCompressionJsonHandler>();
+      ExtensionKhrDracoMeshCompressionJsonHandler>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveCesiumTileEdgesJsonHandler>();
+      ExtensionCesiumTileEdgesJsonHandler>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler>();
   context.registerExtension<
       CesiumGltf::Material,
-      ExtensionMaterialKhrMaterialsUnlitJsonHandler>();
+      ExtensionKhrMaterialsUnlitJsonHandler>();
   context.registerExtension<
       CesiumGltf::Node,
-      ExtensionNodeExtMeshGpuInstancingJsonHandler>();
+      ExtensionExtMeshGpuInstancingJsonHandler>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeExtMeshFeaturesJsonHandler>();

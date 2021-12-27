@@ -23,13 +23,13 @@
       "isBaseClass": true
     },
     "KHR_draco_mesh_compression extension": {
-      "overrideName": "ExtensionMeshPrimitiveKhrDracoMeshCompression"
+      "overrideName": "ExtensionKhrDracoMeshCompression"
     },
     "KHR_materials_unlit glTF extension": {
-      "overrideName": "ExtensionMaterialKhrMaterialsUnlit"
+      "overrideName": "ExtensionKhrMaterialsUnlit"
     },
     "EXT_mesh_gpu_instancing glTF extension": {
-      "overrideName": "ExtensionNodeExtMeshGpuInstancing"
+      "overrideName": "ExtensionExtMeshGpuInstancing"
     },
     "EXT_meshopt_compression buffer extension": {
       "overrideName": "ExtensionBufferExtMeshoptCompression"
@@ -44,49 +44,49 @@
       "overrideName": "ExtensionMeshPrimitiveExtFeatureMetadata"
     },
     "Class Property in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClassProperty"
+      "overrideName": "ClassProperty"
     },
     "Class in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClass"
+      "overrideName": "Class"
     },
     "Enum in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataEnum"
+      "overrideName": "Enum"
     },
     "Enum Value in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataEnumValue"
+      "overrideName": "EnumValue"
     },
     "Feature IDs in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIds"
+      "overrideName": "FeatureIDs"
     },
     "Feature ID Attribute in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIdAttribute"
+      "overrideName": "FeatureIDAttribute"
     },
     "Feature ID Texture in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIdTexture"
+      "overrideName": "FeatureIDTexture"
     },
     "Feature Table Property in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureTableProperty"
+      "overrideName": "FeatureTableProperty"
     },
     "Feature Table in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureTable"
+      "overrideName": "FeatureTable"
     },
     "Feature Texture in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureTexture"
+      "overrideName": "FeatureTexture"
     },
     "Schema in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataSchema"
+      "overrideName": "Schema"
     },
     "Class Property Statistics in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClassPropertyStatistics"
+      "overrideName": "PropertyStatistics"
     },
     "Class Statistics in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClassStatistics"
+      "overrideName": "ClassStatistics"
     },
     "Statistics in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataStatistics"
+      "overrideName": "Statistics"
     },
     "Texture Accessor in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataTextureAccessor"
+      "overrideName": "TextureAccessor"
     },
     "EXT_mesh_features glTF extension": {
       "overrideName": "ExtensionModelExtMeshFeatures"
@@ -128,7 +128,7 @@
       "overrideName": "ExtensionExtMeshFeaturesSchema"
     },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
-      "overrideName": "ExtensionMeshPrimitiveCesiumTileEdges"
+      "overrideName": "ExtensionCesiumTileEdges"
     }
   },
   "extensions": [

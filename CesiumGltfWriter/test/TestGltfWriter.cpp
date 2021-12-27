@@ -1,6 +1,6 @@
 #include "CesiumGltfWriter/GltfWriter.h"
 
-#include <CesiumGltf/ExtensionMeshPrimitiveKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <catch2/catch.hpp>
@@ -557,7 +557,7 @@ TEST_CASE("Writes glb") {
 }
 
 TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
-  const std::vector<std::byte> bufferData;
+  const std::vector<std::byte> bufferData(8);
 
   CesiumGltf::Model model;
   model.asset.version = "2.0";
@@ -574,7 +574,7 @@ TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
 
-  REQUIRE(glbBytesDefaultPadding.size() == 76);
+  REQUIRE(glbBytesDefaultPadding.size() == 84);
 
   options.binaryChunkByteAlignment = 8;
   writeResult = writer.writeGlb(model, bufferData, options);
@@ -583,5 +583,5 @@ TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
 
-  REQUIRE(glbBytesExtraPadding.size() == 80);
+  REQUIRE(glbBytesExtraPadding.size() == 88);
 }

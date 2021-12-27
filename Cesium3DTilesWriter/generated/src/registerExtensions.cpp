@@ -10,10 +10,10 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/Extension3dTilesContentGltf.h>
 #include <Cesium3DTiles/Extension3dTilesImplicitTiling.h>
-#include <Cesium3DTiles/Extension3dTilesImplicitTilingExtension3dTilesMetadata.h>
-#include <Cesium3DTiles/Extension3dTilesImplicitTilingExtension3dTilesMultipleContents.h>
 #include <Cesium3DTiles/Extension3dTilesMultipleContents.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesMetadata.h>
+#include <Cesium3DTiles/ExtensionSubtree3dTilesMetadata.h>
+#include <Cesium3DTiles/ExtensionSubtree3dTilesMultipleContents.h>
 #include <Cesium3DTiles/ExtensionTile3dTilesMetadata.h>
 #include <Cesium3DTiles/ExtensionTileset3dTilesMetadata.h>
 #include <Cesium3DTiles/Subtree.h>
@@ -45,10 +45,10 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
       Extension3dTilesBoundingVolumeS2JsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Subtree,
-      Extension3dTilesImplicitTilingExtension3dTilesMultipleContentsJsonWriter>();
+      ExtensionSubtree3dTilesMultipleContentsJsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Subtree,
-      Extension3dTilesImplicitTilingExtension3dTilesMetadataJsonWriter>();
+      ExtensionSubtree3dTilesMetadataJsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesMetadataJsonWriter>();

@@ -1,5 +1,5 @@
-#include "CesiumGltf/ExtensionExtFeatureMetadataClassProperty.h"
-#include "CesiumGltf/ExtensionExtFeatureMetadataFeatureTableProperty.h"
+#include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/FeatureTableProperty.h"
 #include "CesiumGltf/PropertyType.h"
 
 #include <catch2/catch.hpp>
@@ -9,68 +9,55 @@ using namespace CesiumGltf;
 TEST_CASE("Test PropertyType utilities function") {
   SECTION("Convert string to PropertyType") {
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::UINT8) ==
+        convertStringToPropertyType(ClassProperty::Type::UINT8) ==
         PropertyType::Uint8);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::INT8) ==
+        convertStringToPropertyType(ClassProperty::Type::INT8) ==
         PropertyType::Int8);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::UINT16) ==
+        convertStringToPropertyType(ClassProperty::Type::UINT16) ==
         PropertyType::Uint16);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::INT16) ==
+        convertStringToPropertyType(ClassProperty::Type::INT16) ==
         PropertyType::Int16);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::UINT32) ==
+        convertStringToPropertyType(ClassProperty::Type::UINT32) ==
         PropertyType::Uint32);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::INT32) ==
+        convertStringToPropertyType(ClassProperty::Type::INT32) ==
         PropertyType::Int32);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::UINT64) ==
+        convertStringToPropertyType(ClassProperty::Type::UINT64) ==
         PropertyType::Uint64);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::INT64) ==
+        convertStringToPropertyType(ClassProperty::Type::INT64) ==
         PropertyType::Int64);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::FLOAT32) ==
+        convertStringToPropertyType(ClassProperty::Type::FLOAT32) ==
         PropertyType::Float32);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::FLOAT64) ==
+        convertStringToPropertyType(ClassProperty::Type::FLOAT64) ==
         PropertyType::Float64);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::STRING) ==
+        convertStringToPropertyType(ClassProperty::Type::STRING) ==
         PropertyType::String);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::BOOLEAN) ==
+        convertStringToPropertyType(ClassProperty::Type::BOOLEAN) ==
         PropertyType::Boolean);
 
     REQUIRE(
-        convertStringToPropertyType(
-            ExtensionExtFeatureMetadataClassProperty::Type::ARRAY) ==
+        convertStringToPropertyType(ClassProperty::Type::ARRAY) ==
         PropertyType::Array);
 
     REQUIRE(convertStringToPropertyType("NONESENSE") == PropertyType::None);
@@ -79,77 +66,73 @@ TEST_CASE("Test PropertyType utilities function") {
   SECTION("PropertyType to String") {
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Uint8) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::UINT8);
+        ClassProperty::Type::UINT8);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Int8) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::INT8);
+        ClassProperty::Type::INT8);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Uint16) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::UINT16);
+        ClassProperty::Type::UINT16);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Int16) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::INT16);
+        ClassProperty::Type::INT16);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Uint32) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::UINT32);
+        ClassProperty::Type::UINT32);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Int32) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::INT32);
+        ClassProperty::Type::INT32);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Uint64) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::UINT64);
+        ClassProperty::Type::UINT64);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Int64) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::INT64);
+        ClassProperty::Type::INT64);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Float32) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::FLOAT32);
+        ClassProperty::Type::FLOAT32);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Float64) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::FLOAT64);
+        ClassProperty::Type::FLOAT64);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::String) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::STRING);
+        ClassProperty::Type::STRING);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Boolean) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::BOOLEAN);
+        ClassProperty::Type::BOOLEAN);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Array) ==
-        ExtensionExtFeatureMetadataClassProperty::Type::ARRAY);
+        ClassProperty::Type::ARRAY);
   }
 
   SECTION("OffsetString to PropertyType") {
     REQUIRE(
         convertOffsetStringToPropertyType(
-            ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::
-                UINT8) == PropertyType::Uint8);
+            FeatureTableProperty::OffsetType::UINT8) == PropertyType::Uint8);
 
     REQUIRE(
         convertOffsetStringToPropertyType(
-            ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::
-                UINT16) == PropertyType::Uint16);
+            FeatureTableProperty::OffsetType::UINT16) == PropertyType::Uint16);
 
     REQUIRE(
         convertOffsetStringToPropertyType(
-            ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::
-                UINT32) == PropertyType::Uint32);
+            FeatureTableProperty::OffsetType::UINT32) == PropertyType::Uint32);
 
     REQUIRE(
         convertOffsetStringToPropertyType(
-            ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::
-                UINT64) == PropertyType::Uint64);
+            FeatureTableProperty::OffsetType::UINT64) == PropertyType::Uint64);
 
     REQUIRE(
         convertOffsetStringToPropertyType("NONESENSE") == PropertyType::None);

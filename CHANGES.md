@@ -1,5 +1,17 @@
 # Change Log
 
+### v0.12.0 - 2022-02-01
+
+##### Breaking Changes :mega:
+
+- Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
+- Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, `GltfWriterResult`, and `GltfWriterOptions` instead.
+
+##### Additions :tada:
+
+- Added `TilesetWriterOptions` for writing tilesets.
+- Added `CESIUM_TESTS_ENABLED` option to the build system.
+
 ### v0.11.0 - 2022-01-03
 
 ##### Breaking Changes :mega:
@@ -7,10 +19,6 @@
 - The `CesiumGltfReader` project now uses the `CesiumGltfReader` namespace instead of the `CesiumGltf` namespace.
 - The `CesiumGltfWriter` project now uses the `CesiumGltfWriter` namespace instead of the `CesiumGltf` namespace.
 - The `Cesium3DTilesReader` project now uses the `Cesium3DTilesReader` namespace instead of the `Cesium3DTiles` namespace.
-- Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
-- Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, and `GltfWriterResult` instead.
-- Renamed the following glTF extension classes:
-  - `ExtensionKhrDracoMeshCompression` -> `ExtensionMeshPrimitiveKhrDracoMeshCompression`
 
 ##### Additions :tada:
 

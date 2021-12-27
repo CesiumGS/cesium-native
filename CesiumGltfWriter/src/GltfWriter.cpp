@@ -33,8 +33,8 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
   size_t jsonChunkDataSize = jsonBuffer.size() + jsonPaddingSize;
   size_t glbSize = headerSize + chunkHeaderSize + jsonChunkDataSize;
 
-  size_t binaryPaddingSize;
-  size_t binaryChunkDataSize;
+  size_t binaryPaddingSize = 0;
+  size_t binaryChunkDataSize = 0;
 
   if (binaryBuffer.size() > 0) {
     size_t extraJsonPadding =

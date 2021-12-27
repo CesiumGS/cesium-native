@@ -14,8 +14,8 @@ struct Extension3dTilesContentGltf;
 struct Extension3dTilesMultipleContents;
 struct Extension3dTilesBoundingVolumeS2;
 struct Extension3dTilesImplicitTiling;
-struct Extension3dTilesImplicitTilingExtension3dTilesMultipleContents;
-struct Extension3dTilesImplicitTilingExtension3dTilesMetadata;
+struct ExtensionSubtree3dTilesMultipleContents;
+struct ExtensionSubtree3dTilesMetadata;
 struct ExtensionTileset3dTilesMetadata;
 struct ExtensionTile3dTilesMetadata;
 struct ExtensionContent3dTilesMetadata;
@@ -92,30 +92,25 @@ struct Extension3dTilesImplicitTilingJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct
-    Extension3dTilesImplicitTilingExtension3dTilesMultipleContentsJsonWriter {
-  using ValueType = Cesium3DTiles::
-      Extension3dTilesImplicitTilingExtension3dTilesMultipleContents;
+struct ExtensionSubtree3dTilesMultipleContentsJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionSubtree3dTilesMultipleContents;
 
   static inline constexpr const char* ExtensionName =
       "3DTILES_multiple_contents";
 
   static void write(
-      const Cesium3DTiles::
-          Extension3dTilesImplicitTilingExtension3dTilesMultipleContents& obj,
+      const Cesium3DTiles::ExtensionSubtree3dTilesMultipleContents& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct Extension3dTilesImplicitTilingExtension3dTilesMetadataJsonWriter {
-  using ValueType =
-      Cesium3DTiles::Extension3dTilesImplicitTilingExtension3dTilesMetadata;
+struct ExtensionSubtree3dTilesMetadataJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionSubtree3dTilesMetadata;
 
   static inline constexpr const char* ExtensionName = "3DTILES_metadata";
 
   static void write(
-      const Cesium3DTiles::
-          Extension3dTilesImplicitTilingExtension3dTilesMetadata& obj,
+      const Cesium3DTiles::ExtensionSubtree3dTilesMetadata& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

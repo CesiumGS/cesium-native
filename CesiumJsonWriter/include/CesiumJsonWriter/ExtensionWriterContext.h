@@ -5,6 +5,7 @@
 
 #include <any>
 #include <functional>
+#include <map>
 #include <string>
 #include <unordered_map>
 
@@ -116,7 +117,7 @@ public:
 private:
   using ObjectTypeToHandler =
       std::unordered_map<std::string, ExtensionHandler<std::any>>;
-  using ExtensionNameMap = std::unordered_map<std::string, ObjectTypeToHandler>;
+  using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;
   std::unordered_map<std::string, ExtensionState> _extensionStates;
