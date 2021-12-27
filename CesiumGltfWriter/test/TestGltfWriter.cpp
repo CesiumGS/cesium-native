@@ -20,7 +20,7 @@ void check(const std::string& input, const std::string& expectedOutput) {
 
   CesiumGltfWriter::GltfWriter writer;
   CesiumGltfWriter::GltfWriterResult writeResult = writer.writeGltf(model);
-  const auto gltfBytes = writeResult.gltfBytes;
+  const std::vector<std::byte>& gltfBytes = writeResult.gltfBytes;
 
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
@@ -36,6 +36,12 @@ void check(const std::string& input, const std::string& expectedOutput) {
   expectedJson.Parse(expectedOutput.c_str());
 
   REQUIRE(gltfJson == expectedJson);
+}
+
+bool hasSpaces(const std::string& input) {
+  return std::count_if(input.begin(), input.end(), [](unsigned char c) {
+    return std::isspace(c);
+  });
 }
 } // namespace
 
@@ -125,6 +131,10 @@ TEST_CASE("Writes glTF") {
               "index": 0
             },
             "metallicFactor": 0
+          },
+          "occlusionTexture": {
+            "index": 1,
+            "strength": 0.5
           }
         }
       ],
@@ -136,7 +146,10 @@ TEST_CASE("Writes glTF") {
       ],
       "images": [
         {
-          "uri": "CesiumLogoFlat.png"
+          "uri": "BaseColor.png"
+        },
+        {
+          "uri": "Occlusion.png"
         }
       ],
       "samplers": [
@@ -324,7 +337,7 @@ TEST_CASE("Writes glTF with default values removed") {
       ],
       "images": [
         {
-          "uri": "CesiumLogoFlat.png"
+          "uri": "BaseColor.png"
         }
       ],
       "samplers": [
@@ -434,7 +447,7 @@ TEST_CASE("Writes glTF with default values removed") {
       ],
       "images": [
         {
-          "uri": "CesiumLogoFlat.png"
+          "uri": "BaseColor.png"
         }
       ],
       "samplers": [
@@ -470,6 +483,34 @@ TEST_CASE("Writes glTF with default values removed") {
   check(string, expected);
 }
 
+TEST_CASE("Writes glTF with prettyPrint") {
+  CesiumGltf::Model model;
+  model.asset.version = "2.0";
+
+  CesiumGltfWriter::GltfWriter writer;
+  CesiumGltfWriter::GltfWriterOptions options;
+  options.prettyPrint = false;
+
+  CesiumGltfWriter::GltfWriterResult writeResult =
+      writer.writeGltf(model, options);
+  const std::vector<std::byte>& gltfBytesCompact = writeResult.gltfBytes;
+
+  std::string gltfStringCompact(
+      reinterpret_cast<const char*>(gltfBytesCompact.data()),
+      gltfBytesCompact.size());
+
+  REQUIRE_FALSE(hasSpaces(gltfStringCompact));
+
+  options.prettyPrint = true;
+  writeResult = writer.writeGltf(model, options);
+  const std::vector<std::byte>& gltfBytesPretty = writeResult.gltfBytes;
+  std::string gltfStringPretty(
+      reinterpret_cast<const char*>(gltfBytesPretty.data()),
+      gltfBytesPretty.size());
+
+  REQUIRE(hasSpaces(gltfStringPretty));
+}
+
 TEST_CASE("Writes glb") {
   const std::vector<std::byte> bufferData{
       std::byte('H'),
@@ -493,14 +534,14 @@ TEST_CASE("Writes glb") {
   CesiumGltfWriter::GltfWriter writer;
   CesiumGltfWriter::GltfWriterResult writeResult =
       writer.writeGlb(model, bufferData);
-  const auto gltfBytes = writeResult.gltfBytes;
+  const std::vector<std::byte>& glbBytes = writeResult.gltfBytes;
 
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
 
   // Now read the glb back
   CesiumGltfReader::GltfReader reader;
-  CesiumGltfReader::GltfReaderResult readResult = reader.readGltf(gltfBytes);
+  CesiumGltfReader::GltfReaderResult readResult = reader.readGltf(glbBytes);
 
   REQUIRE(readResult.errors.empty());
   REQUIRE(readResult.warnings.empty());
@@ -513,4 +554,34 @@ TEST_CASE("Writes glb") {
   REQUIRE(readModelBuffer == bufferData);
   REQUIRE(readModel.asset.version == "2.0");
   REQUIRE(readModel.buffers[0].byteLength == 11);
+}
+
+TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
+  const std::vector<std::byte> bufferData(8);
+
+  CesiumGltf::Model model;
+  model.asset.version = "2.0";
+  model.asset.generator = "...";
+
+  CesiumGltfWriter::GltfWriter writer;
+  CesiumGltfWriter::GltfWriterOptions options;
+  options.binaryChunkByteAlignment = 4; // default
+
+  CesiumGltfWriter::GltfWriterResult writeResult =
+      writer.writeGlb(model, bufferData, options);
+  const std::vector<std::byte>& glbBytesDefaultPadding = writeResult.gltfBytes;
+
+  REQUIRE(writeResult.errors.empty());
+  REQUIRE(writeResult.warnings.empty());
+
+  REQUIRE(glbBytesDefaultPadding.size() == 84);
+
+  options.binaryChunkByteAlignment = 8;
+  writeResult = writer.writeGlb(model, bufferData, options);
+  const std::vector<std::byte>& glbBytesExtraPadding = writeResult.gltfBytes;
+
+  REQUIRE(writeResult.errors.empty());
+  REQUIRE(writeResult.warnings.empty());
+
+  REQUIRE(glbBytesExtraPadding.size() == 88);
 }

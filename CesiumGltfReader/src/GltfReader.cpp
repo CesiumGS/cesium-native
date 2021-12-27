@@ -197,12 +197,9 @@ GltfReaderResult readBinaryGltf(
       return result;
     }
 
-    // EXT_feature_metadata and EXT_mesh_feature allow up to 7 bytes of padding
-    // for the binary chunk to ensure 8-byte alignmet for 64-bit types.
-    // Normally only up to 3 bytes of padding are required in core glTF.
     const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
     if (buffer.byteLength > binaryChunkSize ||
-        buffer.byteLength + 7 < binaryChunkSize) {
+        buffer.byteLength + 3 < binaryChunkSize) {
       result.errors.emplace_back("GLB binary chunk size does not match the "
                                  "size of the first buffer in the JSON chunk.");
       return result;

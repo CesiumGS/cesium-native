@@ -88,14 +88,7 @@
     },
     {
       "extensionName": "EXT_feature_metadata",
-<<<<<<< HEAD
-      "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json",
-      "attachTo": [
-        "mesh.primitive"
-      ]
-=======
       "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
->>>>>>> origin/misc-generator
     }
   ]
 }

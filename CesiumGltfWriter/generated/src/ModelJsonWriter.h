@@ -481,6 +481,4 @@ struct AccessorSparseIndicesJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
-
 } // namespace CesiumGltfWriter

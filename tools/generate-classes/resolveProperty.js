@@ -3,7 +3,6 @@ const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
 const cppReservedWords = require("./cppReservedWords");
-const reservedEnums = require("./reservedEnums");
 
 function resolveProperty(
   schemaCache,
