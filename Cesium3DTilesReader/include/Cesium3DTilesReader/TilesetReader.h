@@ -63,7 +63,6 @@ public:
    * @brief Reads a tileset.
    *
    * @param data The buffer from which to read the tileset.
-   * @param options Options for how to read the tileset.
    * @return The result of reading the tileset.
    */
   TilesetReaderResult readTileset(const gsl::span<const std::byte>& data) const;

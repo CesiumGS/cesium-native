@@ -99,6 +99,4 @@ struct AssetJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
-
 } // namespace Cesium3DTilesWriter

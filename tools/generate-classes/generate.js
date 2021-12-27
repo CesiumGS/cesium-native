@@ -18,7 +18,10 @@ function generate(options, schema, writers) {
     extensions,
   } = options;
 
-  const name = getNameFromTitle(config, schema.title);
+  const baseName = getNameFromTitle(config, schema.title);
+  const prefix =
+    schema.prefix && schema.prefix !== baseName ? schema.prefix : "";
+  const name = prefix + baseName;
   const thisConfig = config.classes[schema.title] || {};
 
   console.log(`Generating ${name}`);
@@ -26,8 +29,9 @@ function generate(options, schema, writers) {
   schemaCache.pushContext(schema);
 
   let base = "CesiumUtility::ExtensibleObject";
+  let baseSchema;
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
-    const baseSchema = schemaCache.load(schema.allOf[0].$ref);
+    baseSchema = schemaCache.load(schema.allOf[0].$ref);
     base = getNameFromTitle(config, baseSchema.title);
   }
 
@@ -335,7 +339,42 @@ function generate(options, schema, writers) {
         }
   `;
 
-  const writeJsonDefinition = `
+  let writeBaseJsonDefinition;
+  let writeJsonDefinition;
+
+  if (thisConfig.isBaseClass) {
+    writeBaseJsonDefinition = `
+        template <typename T>
+        void write${getWriterName(name)}(
+            const T& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+
+          ${indent(
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
+
+          write${getWriterName(base)}(obj, jsonWriter, context);
+        }
+    `;
+
+    writeJsonDefinition = `
+        void writeJson(
+            const ${namespace}::${name}& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+          jsonWriter.StartObject();
+
+          write${getWriterName(name)}(obj, jsonWriter, context);
+
+          jsonWriter.EndObject();
+        }
+    `;
+  } else {
+    writeJsonDefinition = `
         void writeJson(
             const ${namespace}::${name}& obj,
             CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -349,31 +388,12 @@ function generate(options, schema, writers) {
             10
           )}
 
-          ${
-            schema.properties.extensions
-              ? `
-            if (!obj.extensions.empty()) {
-              jsonWriter.Key("extensions");
-              writeJsonExtensions(obj, jsonWriter, context);
-            }
-          `
-              : ""
-          }
-
-          ${
-            schema.properties.extras
-              ? `
-            if (!obj.extras.empty()) {
-              jsonWriter.Key("extras");
-              writeJson(obj.extras, jsonWriter, context);
-            }
-          `
-              : ""
-          }
+          write${getWriterName(base)}(obj, jsonWriter, context);
 
           jsonWriter.EndObject();
         }
-  `;
+    `;
+  }
 
   const writeExtensionsRegistration = `
         ${
@@ -394,6 +414,7 @@ function generate(options, schema, writers) {
     writeJsonDeclaration,
     writeDefinition,
     writeJsonDefinition,
+    writeBaseJsonDefinition,
     writeExtensionsRegistration,
   });
 
@@ -411,9 +432,12 @@ function generate(options, schema, writers) {
     fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
   }
 
-  return lodash.uniq(
-    lodash.flatten(properties.map((property) => property.schemas))
-  );
+  const schemas = lodash.flatten(properties.map((property) => property.schemas));
+  if (baseSchema && !base.includes("::")) {
+    schemas.push(baseSchema);
+  }
+
+  return lodash.uniq(schemas);
 }
 
 function formatProperty(property) {
@@ -458,7 +482,6 @@ function formatWriterPropertyImpl(property) {
   const defaultValue = property.defaultValueWriter || property.defaultValue;
 
   const isId = property.requiredId !== undefined;
-  const isOptionalId = property.requiredId === false;
   const isRequiredEnum = property.requiredEnum === true;
   const isVector = type.startsWith("std::vector");
   const isMap = type.startsWith("std::unordered_map");
@@ -475,7 +498,7 @@ function formatWriterPropertyImpl(property) {
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
-  const hasNegativeIndexGuard = isOptionalId;
+  const hasNegativeIndexGuard = isId;
   const hasGuard =
     hasDefaultValueGuard ||
     hasEmptyGuard ||
@@ -565,6 +588,15 @@ function getReaderName(name, readerNamespace) {
     return `${namespace}::${pieces.groups.name}JsonHandler`;
   } else {
     return `${name}JsonHandler`;
+  }
+}
+
+function getWriterName(name) {
+  const pieces = name.match(qualifiedTypeNameRegex);
+  if (pieces) {
+    return pieces.groups.name;
+  } else {
+    return name;
   }
 }
 

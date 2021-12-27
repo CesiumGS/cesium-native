@@ -651,9 +651,7 @@ function makeNameIntoValidIdentifier(name) {
 }
 
 function makeNameIntoValidEnumIdentifier(name) {
-  if (reservedEnums.indexOf(name) >= 0) {
-    name += "_ENUM";
-  }
+  // May use this in the future to deconflict glTF enums from system header defines
   return name;
 }
 

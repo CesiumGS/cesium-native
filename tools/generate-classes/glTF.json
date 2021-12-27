@@ -21,32 +21,81 @@
     },
     "Texture Info": {
       "isBaseClass": true
+    },
+    "KHR_draco_mesh_compression extension": {
+      "overrideName": "ExtensionKhrDracoMeshCompression"
+    },
+    "EXT_feature_metadata glTF extension": {
+      "overrideName": "ExtensionModelExtFeatureMetadata"
+    },
+    "EXT_feature_metadata glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionMeshPrimitiveExtFeatureMetadata"
+    },
+    "Class Property in EXT_feature_metadata": {
+      "overrideName": "ClassProperty"
+    },
+    "Class in EXT_feature_metadata": {
+      "overrideName": "Class"
+    },
+    "Enum in EXT_feature_metadata": {
+      "overrideName": "Enum"
+    },
+    "Enum Value in EXT_feature_metadata": {
+      "overrideName": "EnumValue"
+    },
+    "Feature IDs in EXT_feature_metadata": {
+      "overrideName": "FeatureIDs"
+    },
+    "Feature ID Attribute in EXT_feature_metadata": {
+      "overrideName": "FeatureIDAttribute"
+    },
+    "Feature ID Texture in EXT_feature_metadata": {
+      "overrideName": "FeatureIDTexture"
+    },
+    "Feature Table Property in EXT_feature_metadata": {
+      "overrideName": "FeatureTableProperty"
+    },
+    "Feature Table in EXT_feature_metadata": {
+      "overrideName": "FeatureTable"
+    },
+    "Feature Texture in EXT_feature_metadata": {
+      "overrideName": "FeatureTexture"
+    },
+    "Schema in EXT_feature_metadata": {
+      "overrideName": "Schema"
+    },
+    "Class Property Statistics in EXT_feature_metadata": {
+      "overrideName": "PropertyStatistics"
+    },
+    "Class Statistics in EXT_feature_metadata": {
+      "overrideName": "ClassStatistics"
+    },
+    "Statistics in EXT_feature_metadata": {
+      "overrideName": "Statistics"
+    },
+    "Texture Accessor in EXT_feature_metadata": {
+      "overrideName": "TextureAccessor"
     }
   },
   "extensions": [
     {
-      "className": "ExtensionKhrDracoMeshCompression",
       "extensionName": "KHR_draco_mesh_compression",
-      "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
-      "attachTo": [
-        "mesh.primitive"
-      ]
+      "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json"
     },
     {
-      "className": "ExtensionModelExtFeatureMetadata",
       "extensionName": "EXT_feature_metadata",
-      "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json",
-      "attachTo": [
-        "glTF"
-      ]
+      "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json"
     },
     {
-      "className": "ExtensionMeshPrimitiveExtFeatureMetadata",
       "extensionName": "EXT_feature_metadata",
+<<<<<<< HEAD
       "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json",
       "attachTo": [
         "mesh.primitive"
       ]
+=======
+      "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
+>>>>>>> origin/misc-generator
     }
   ]
 }

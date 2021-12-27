@@ -1,5 +1,16 @@
 # Change Log
 
+### v0.12.0 - 2022-02-01
+
+##### Breaking Changes :mega:
+
+- Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
+
+##### Additions :tada:
+
+- Added `TilesetWriterOptions` for writing tilesets.
+- Added `CESIUM_TESTS_ENABLED` option to the build system.
+
 ### v0.11.0 - 2022-01-03
 
 ##### Breaking Changes :mega:
