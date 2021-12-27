@@ -16,6 +16,10 @@
 
 - Added `Cesium3DTilesWriter` library.
 
+##### Fixes :wrench:
+
+- Fixed a bug in `QuadtreeRasterOverlayTileProvider` that caused incorrect level-of-detail selection for overlays that use a global (or otherwise large) tiling scheme but have non-global (or otherwise smaller) coverage.
+
 ### v0.10.0 - 2021-12-01
 
 ##### Breaking Changes :mega:
