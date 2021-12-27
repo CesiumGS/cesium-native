@@ -59,17 +59,17 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
     }
   )";
 
-  CesiumGltfReader::ReadModelOptions options;
+  CesiumGltfReader::GltfReaderOptions options;
   CesiumGltfReader::GltfReader reader;
-  CesiumGltfReader::ModelReaderResult modelResult = reader.readModel(
+  CesiumGltfReader::GltfReaderResult readerResult = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
-  REQUIRE(modelResult.errors.empty());
-  REQUIRE(modelResult.model.has_value());
+  REQUIRE(readerResult.errors.empty());
+  REQUIRE(readerResult.model.has_value());
 
   ExtensionModelExtFeatureMetadata* pMetadata =
-      modelResult.model->getExtension<ExtensionModelExtFeatureMetadata>();
+      readerResult.model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(pMetadata);
 
   REQUIRE(pMetadata->schema.has_value());

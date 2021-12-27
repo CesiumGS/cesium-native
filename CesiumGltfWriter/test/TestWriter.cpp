@@ -169,7 +169,7 @@ TEST_CASE(
 TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   const auto validateStructure = [](const std::vector<std::byte>& gltfAsset) {
     CesiumGltfReader::GltfReader reader;
-    auto loadedModelResult = reader.readModel(gsl::span(gltfAsset));
+    auto loadedModelResult = reader.readGltf(gsl::span(gltfAsset));
     REQUIRE(loadedModelResult.model.has_value());
     auto& loadedModel = loadedModelResult.model;
 

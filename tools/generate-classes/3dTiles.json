@@ -2,24 +2,22 @@
   "classes": {
     "Tileset Property": {
       "overrideName": "CesiumUtility::ExtensibleObject"
+    },
+    "3DTILES_content_gltf extension": {
+      "overrideName": "Extension3dTilesContentGltf"
+    },
+    "3DTILES_bounding_volume_S2 extension": {
+      "overrideName": "Extension3dTilesBoundingVolumeS2"
     }
   },
   "extensions": [
     {
-      "className": "Extension3dTilesContentGltf",
       "extensionName": "3DTILES_content_gltf",
-      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json",
-      "attachTo": [
-        "tileset"
-      ]
+      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
     },
     {
-      "className": "Extension3dTilesBoundingVolumeS2",
       "extensionName": "3DTILES_bounding_volume_S2",
-      "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json",
-      "attachTo": [
-        "boundingVolume"
-      ]
+      "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
     }
   ]
 }
