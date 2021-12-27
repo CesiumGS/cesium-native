@@ -11,12 +11,10 @@ namespace CesiumGltfWriter {
 
 namespace {
 
-[[nodiscard]] size_t getPadding(
-    size_t byteLength,
-    size_t byteOffset,
-    size_t byteAlignment) noexcept {
+[[nodiscard]] size_t
+getPadding(size_t byteCount, size_t byteAlignment) noexcept {
   assert(byteAlignment > 0);
-  size_t remainder = (byteOffset + byteLength) % byteAlignment;
+  size_t remainder = byteCount % byteAlignment;
   size_t padding = remainder == 0 ? 0 : byteAlignment - remainder;
   return padding;
 }
@@ -25,14 +23,33 @@ namespace {
     const std::vector<std::byte>& jsonBuffer,
     const std::vector<std::byte>& binaryBuffer,
     size_t binaryChunkByteAlignment) {
+  assert(binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
+
+  size_t headerSize = 12;
+  size_t chunkHeaderSize = 8;
 
   size_t jsonPaddingSize =
-      getPadding(jsonBuffer.size(), 20, binaryChunkByteAlignment);
-  size_t jsonChunkSize = jsonBuffer.size() + jsonPaddingSize;
-  size_t binaryPaddingSize =
-      getPadding(binaryBuffer.size(), 20 + jsonChunkSize, 4);
-  size_t binaryChunkSize = binaryBuffer.size() + binaryPaddingSize;
-  size_t glbSize = 12 + 8 + jsonChunkSize + 8 + binaryChunkSize;
+      getPadding(headerSize + chunkHeaderSize + jsonBuffer.size(), 4);
+  size_t jsonChunkDataSize = jsonBuffer.size() + jsonPaddingSize;
+  size_t glbSize = headerSize + chunkHeaderSize + jsonChunkDataSize;
+
+  size_t binaryPaddingSize;
+  size_t binaryChunkDataSize;
+
+  if (binaryBuffer.size() > 0) {
+    size_t extraJsonPadding =
+        getPadding(glbSize + chunkHeaderSize, binaryChunkByteAlignment);
+    if (extraJsonPadding > 0) {
+      jsonPaddingSize += extraJsonPadding;
+      jsonChunkDataSize += extraJsonPadding;
+      glbSize += extraJsonPadding;
+    }
+
+    binaryPaddingSize =
+        getPadding(glbSize + chunkHeaderSize + binaryBuffer.size(), 4);
+    binaryChunkDataSize = binaryBuffer.size() + binaryPaddingSize;
+    glbSize += chunkHeaderSize + binaryChunkDataSize;
+  }
 
   std::vector<std::byte> glb(glbSize);
   uint8_t* glb8 = reinterpret_cast<uint8_t*>(glb.data());
@@ -50,7 +67,7 @@ namespace {
   byteOffset += 4;
 
   // JSON chunk header
-  glb32[byteOffset / 4] = static_cast<uint32_t>(jsonChunkSize);
+  glb32[byteOffset / 4] = static_cast<uint32_t>(jsonChunkDataSize);
   byteOffset += 4;
   glb8[byteOffset++] = 'J';
   glb8[byteOffset++] = 'S';
@@ -65,20 +82,22 @@ namespace {
   memset(glb8 + byteOffset, ' ', jsonPaddingSize);
   byteOffset += jsonPaddingSize;
 
-  // Binary chunk header
-  glb32[byteOffset / 4] = static_cast<uint32_t>(binaryChunkSize);
-  byteOffset += 4;
-  glb8[byteOffset++] = 'B';
-  glb8[byteOffset++] = 'I';
-  glb8[byteOffset++] = 'N';
-  glb8[byteOffset++] = 0;
+  if (binaryBuffer.size() > 0) {
+    // Binary chunk header
+    glb32[byteOffset / 4] = static_cast<uint32_t>(binaryChunkDataSize);
+    byteOffset += 4;
+    glb8[byteOffset++] = 'B';
+    glb8[byteOffset++] = 'I';
+    glb8[byteOffset++] = 'N';
+    glb8[byteOffset++] = 0;
 
-  // Binary chunk
-  memcpy(glb8 + byteOffset, binaryBuffer.data(), binaryBuffer.size());
-  byteOffset += binaryBuffer.size();
+    // Binary chunk
+    memcpy(glb8 + byteOffset, binaryBuffer.data(), binaryBuffer.size());
+    byteOffset += binaryBuffer.size();
 
-  // Binary chunk padding
-  memset(glb8 + byteOffset, 0, binaryPaddingSize);
+    // Binary chunk padding
+    memset(glb8 + byteOffset, 0, binaryPaddingSize);
+  }
 
   return glb;
 }
