@@ -1,8 +1,6 @@
 #pragma once
 
-#include "ExtensionModelExtFeatureMetadata.h"
 #include "FeatureIDTexture.h"
-#include "FeatureTable.h"
 #include "Image.h"
 #include "ImageCesium.h"
 #include "Model.h"
@@ -14,14 +12,13 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace CesiumGltf {
 
 enum class FeatureIDTextureViewStatus {
   Valid,
   InvalidUninitialized,
-  InvalidExtensionMissing,
-  InvalidFeatureTableMissing,
   InvalidTextureIndex,
   InvalidImageIndex,
   InvalidChannel
@@ -33,7 +30,7 @@ public:
       : _pImage(nullptr),
         _channel(0),
         _textureCoordinateIndex(-1),
-        _pFeatureTable(nullptr),
+        _featureTableName(),
         _status(FeatureIDTextureViewStatus::InvalidUninitialized) {}
 
   FeatureIDTextureView(
@@ -42,25 +39,8 @@ public:
       : _pImage(nullptr),
         _channel(0),
         _textureCoordinateIndex(-1),
-        _pFeatureTable(nullptr),
+        _featureTableName(featureIDTexture.featureTable),
         _status(FeatureIDTextureViewStatus::InvalidUninitialized) {
-
-    const ExtensionModelExtFeatureMetadata* pExtension =
-        model.getExtension<ExtensionModelExtFeatureMetadata>();
-
-    if (!pExtension) {
-      this->_status = FeatureIDTextureViewStatus::InvalidExtensionMissing;
-      return;
-    }
-
-    auto tableIt =
-        pExtension->featureTables.find(featureIDTexture.featureTable);
-    if (tableIt == pExtension->featureTables.end()) {
-      this->_status = FeatureIDTextureViewStatus::InvalidFeatureTableMissing;
-      return;
-    }
-
-    this->_pFeatureTable = &tableIt->second;
 
     this->_textureCoordinateIndex =
         featureIDTexture.featureIds.texture.texCoord;
@@ -151,8 +131,8 @@ public:
         this->_pImage->pixelData[pixelOffset + this->_channel]);
   }
 
-  const FeatureTable* getFeatureTable() const noexcept {
-    return this->_pFeatureTable;
+  const std::string& getFeatureTableName() const noexcept {
+    return this->_featureTableName;
   }
 
   int64_t getTextureCoordinateIndex() const noexcept {
@@ -163,7 +143,7 @@ private:
   const ImageCesium* _pImage;
   int32_t _channel;
   int64_t _textureCoordinateIndex;
-  const FeatureTable* _pFeatureTable;
+  std::string _featureTableName;
   FeatureIDTextureViewStatus _status;
 };
 
