@@ -32,6 +32,13 @@ enum class FeatureTexturePropertyComponentType {
   // so change stb call to output more of the original types.
 };
 
+struct FeatureTexturePropertyChannelOffsets {
+  int32_t r = -1;
+  int32_t g = -1;
+  int32_t b = -1;
+  int32_t a = -1;
+};
+
 template <typename T> struct FeatureTexturePropertyValue { T components[4]; };
 
 class FeatureTexturePropertyView {
@@ -42,7 +49,7 @@ public:
         _pClassProperty(nullptr),
         _textureCoordinateIndex(-1),
         _status(FeatureTexturePropertyViewStatus::InvalidUninitialized),
-        _channelOffsets{-1, -1, -1, -1},
+        _channelOffsets(),
         _type(FeatureTexturePropertyComponentType::Uint8),
         _componentCount(0),
         _normalized(false) {}
@@ -56,7 +63,7 @@ public:
         _pClassProperty(&classProperty),
         _textureCoordinateIndex(textureAccessor.texture.texCoord),
         _status(FeatureTexturePropertyViewStatus::InvalidUninitialized),
-        _channelOffsets{-1, -1, -1, -1},
+        _channelOffsets(),
         _type(FeatureTexturePropertyComponentType::Uint8),
         _componentCount(0),
         _normalized(false) {
@@ -102,16 +109,16 @@ public:
       // TODO: should this be case-sensitive?
       switch (textureAccessor.channels[i]) {
       case 'r':
-        this->_channelOffsets[i] = 0;
+        this->_channelOffsets.r = 0;
         break;
       case 'g':
-        this->_channelOffsets[i] = 1;
+        this->_channelOffsets.g = 1;
         break;
       case 'b':
-        this->_channelOffsets[i] = 2;
+        this->_channelOffsets.b = 2;
         break;
       case 'a':
-        this->_channelOffsets[i] = 3;
+        this->_channelOffsets.a = 3;
         break;
       default:
         this->_status = FeatureTexturePropertyViewStatus::InvalidChannelsString;
@@ -156,9 +163,10 @@ public:
         this->_pImage->pixelData.data() + pixelOffset);
 
     FeatureTexturePropertyValue<T> property;
-    for (int i = 0; i < this->_componentCount; ++i) {
-      property.components[i] = *(pRedChannel + this->_channelOffsets[i]);
-    }
+    property.components[0] = *(pRedChannel + this->_channelOffsets.r);
+    property.components[1] = *(pRedChannel + this->_channelOffsets.g);
+    property.components[2] = *(pRedChannel + this->_channelOffsets.b);
+    property.components[3] = *(pRedChannel + this->_channelOffsets.a);
 
     return property;
   }
@@ -181,13 +189,18 @@ public:
 
   const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
+  const FeatureTexturePropertyChannelOffsets
+  getChannelOffsets() const noexcept {
+    return this->_channelOffsets;
+  }
+
 private:
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   const ClassProperty* _pClassProperty;
   int64_t _textureCoordinateIndex;
   FeatureTexturePropertyViewStatus _status;
-  int32_t _channelOffsets[4];
+  FeatureTexturePropertyChannelOffsets _channelOffsets;
   FeatureTexturePropertyComponentType _type;
   int64_t _componentCount;
   bool _normalized;
