@@ -152,14 +152,19 @@ TEST_CASE("Test numeric properties") {
         MetadataPropertyViewStatus::InvalidBufferViewOutOfBound);
   }
 
-  SECTION("Buffer view offset is not a multiple of 8") {
-    model.bufferViews[valueBufferViewIndex].byteOffset = 1;
-    MetadataPropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
-    REQUIRE(
-        uint32Property.status() ==
-        MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes);
-  }
+  /*
+  // TODO: uncomment this when we re-enforce 8-byte alignment.
+  // currently lots of metadata glTFs seem to forget to do
+  // 8-byte alignment.
+    SECTION("Buffer view offset is not a multiple of 8") {
+      model.bufferViews[valueBufferViewIndex].byteOffset = 1;
+      MetadataPropertyView<uint32_t> uint32Property =
+          view.getPropertyView<uint32_t>("TestClassProperty");
+      REQUIRE(
+          uint32Property.status() ==
+          MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes);
+    }
+    */
 
   SECTION("Buffer view length isn't multiple of sizeof(T)") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
