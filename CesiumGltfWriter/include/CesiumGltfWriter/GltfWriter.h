@@ -4,6 +4,8 @@
 
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
+#include <gsl/span>
+
 // forward declarations
 namespace CesiumGltf {
 struct Model;
@@ -100,7 +102,7 @@ public:
    */
   GltfWriterResult writeGlb(
       const CesiumGltf::Model& model,
-      const std::vector<std::byte>& bufferData,
+      const gsl::span<const std::byte>& bufferData,
       const GltfWriterOptions& options = GltfWriterOptions()) const;
 
 private:

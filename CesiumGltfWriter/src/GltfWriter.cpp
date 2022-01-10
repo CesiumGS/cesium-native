@@ -20,8 +20,8 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
 }
 
 [[nodiscard]] std::vector<std::byte> writeGlbBuffer(
-    const std::vector<std::byte>& jsonBuffer,
-    const std::vector<std::byte>& binaryBuffer,
+    const gsl::span<const std::byte>& jsonData,
+    const gsl::span<const std::byte>& bufferData,
     size_t binaryChunkByteAlignment) {
   assert(binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
 
@@ -29,14 +29,14 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
   size_t chunkHeaderSize = 8;
 
   size_t jsonPaddingSize =
-      getPadding(headerSize + chunkHeaderSize + jsonBuffer.size(), 4);
-  size_t jsonChunkDataSize = jsonBuffer.size() + jsonPaddingSize;
+      getPadding(headerSize + chunkHeaderSize + jsonData.size(), 4);
+  size_t jsonChunkDataSize = jsonData.size() + jsonPaddingSize;
   size_t glbSize = headerSize + chunkHeaderSize + jsonChunkDataSize;
 
   size_t binaryPaddingSize = 0;
   size_t binaryChunkDataSize = 0;
 
-  if (binaryBuffer.size() > 0) {
+  if (bufferData.size() > 0) {
     size_t extraJsonPadding =
         getPadding(glbSize + chunkHeaderSize, binaryChunkByteAlignment);
     if (extraJsonPadding > 0) {
@@ -46,8 +46,8 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
     }
 
     binaryPaddingSize =
-        getPadding(glbSize + chunkHeaderSize + binaryBuffer.size(), 4);
-    binaryChunkDataSize = binaryBuffer.size() + binaryPaddingSize;
+        getPadding(glbSize + chunkHeaderSize + bufferData.size(), 4);
+    binaryChunkDataSize = bufferData.size() + binaryPaddingSize;
     glbSize += chunkHeaderSize + binaryChunkDataSize;
   }
 
@@ -75,14 +75,14 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
   glb8[byteOffset++] = 'N';
 
   // JSON chunk
-  memcpy(glb8 + byteOffset, jsonBuffer.data(), jsonBuffer.size());
-  byteOffset += jsonBuffer.size();
+  memcpy(glb8 + byteOffset, jsonData.data(), jsonData.size());
+  byteOffset += jsonData.size();
 
   // JSON chunk padding
   memset(glb8 + byteOffset, ' ', jsonPaddingSize);
   byteOffset += jsonPaddingSize;
 
-  if (binaryBuffer.size() > 0) {
+  if (bufferData.size() > 0) {
     // Binary chunk header
     glb32[byteOffset / 4] = static_cast<uint32_t>(binaryChunkDataSize);
     byteOffset += 4;
@@ -92,8 +92,8 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
     glb8[byteOffset++] = 0;
 
     // Binary chunk
-    memcpy(glb8 + byteOffset, binaryBuffer.data(), binaryBuffer.size());
-    byteOffset += binaryBuffer.size();
+    memcpy(glb8 + byteOffset, bufferData.data(), bufferData.size());
+    byteOffset += bufferData.size();
 
     // Binary chunk padding
     memset(glb8 + byteOffset, 0, binaryPaddingSize);
@@ -139,7 +139,7 @@ GltfWriterResult GltfWriter::writeGltf(
 
 GltfWriterResult GltfWriter::writeGlb(
     const CesiumGltf::Model& model,
-    const std::vector<std::byte>& bufferData,
+    const gsl::span<const std::byte>& bufferData,
     const GltfWriterOptions& options) const {
   CESIUM_TRACE("GltfWriter::writeGlb");
 
@@ -157,8 +157,10 @@ GltfWriterResult GltfWriter::writeGlb(
   }
 
   ModelJsonWriter::write(model, *writer, context);
+  std::vector<std::byte> jsonData = writer->toBytes();
+
   result.gltfBytes = writeGlbBuffer(
-      writer->toBytes(),
+      gsl::span(jsonData),
       bufferData,
       options.binaryChunkByteAlignment);
 

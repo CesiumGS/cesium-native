@@ -535,7 +535,7 @@ TEST_CASE("Writes glb") {
 
   CesiumGltfWriter::GltfWriter writer;
   CesiumGltfWriter::GltfWriterResult writeResult =
-      writer.writeGlb(model, bufferData);
+      writer.writeGlb(model, gsl::span(bufferData));
   const std::vector<std::byte>& glbBytes = writeResult.gltfBytes;
 
   REQUIRE(writeResult.errors.empty());
@@ -570,7 +570,7 @@ TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
   options.binaryChunkByteAlignment = 4; // default
 
   CesiumGltfWriter::GltfWriterResult writeResult =
-      writer.writeGlb(model, bufferData, options);
+      writer.writeGlb(model, gsl::span(bufferData), options);
   const std::vector<std::byte>& glbBytesDefaultPadding = writeResult.gltfBytes;
 
   REQUIRE(writeResult.errors.empty());
@@ -579,7 +579,7 @@ TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
   REQUIRE(glbBytesDefaultPadding.size() == 84);
 
   options.binaryChunkByteAlignment = 8;
-  writeResult = writer.writeGlb(model, bufferData, options);
+  writeResult = writer.writeGlb(model, gsl::span(bufferData), options);
   const std::vector<std::byte>& glbBytesExtraPadding = writeResult.gltfBytes;
 
   REQUIRE(writeResult.errors.empty());
