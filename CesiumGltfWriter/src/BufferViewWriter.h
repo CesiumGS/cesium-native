@@ -5,8 +5,8 @@
 
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeBufferView(
-    const std::vector<BufferView>& animations,
+    const std::vector<CesiumGltf::BufferView>& animations,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

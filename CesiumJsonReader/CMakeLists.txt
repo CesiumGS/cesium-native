@@ -2,7 +2,7 @@ add_library(CesiumJsonReader "")
 configure_cesium_library(CesiumJsonReader)
 
 cesium_glob_files(CESIUM_JSON_READER_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_JSON_READER_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_JSON_READER_HEADERS src/*.h)
 cesium_glob_files(CESIUM_JSON_READER_PUBLIC_HEADERS include/CesiumJsonReader/*.h)
 cesium_glob_files(CESIUM_JSON_READER_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_JSON_READER_TEST_HEADERS test/*.h)

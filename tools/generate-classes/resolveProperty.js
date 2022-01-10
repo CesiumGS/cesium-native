@@ -1,4 +1,4 @@
-const getNameFromSchema = require("./getNameFromSchema");
+const getNameFromTitle = require("./getNameFromTitle");
 const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
@@ -12,7 +12,9 @@ function resolveProperty(
   propertyName,
   propertyDetails,
   required,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   if (Object.keys(propertyDetails).length === 0) {
     // Ignore totally empty properties. The glTF and 3D Tiles JSON schema files often use empty properties in derived classes
@@ -36,7 +38,9 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       required,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
@@ -89,7 +93,9 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       required,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
   } else if (isEnum(propertyDetails)) {
     return resolveEnum(
@@ -99,8 +105,11 @@ function resolveProperty(
       propertyName,
       cppSafeName,
       propertyDetails,
+      isRequired,
       makeOptional,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -112,15 +121,31 @@ function resolveProperty(
         headers: ["<cstdint>"],
         readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
+        requiredId: isRequired,
       };
+    } else if (itemSchema.type !== "object") {
+      return resolveProperty(
+        schemaCache,
+        config,
+        parentName,
+        propertyName,
+        itemSchema,
+        required,
+        namespace,
+        readerNamespace,
+        writerNamespace
+      );
     } else {
-      const type = getNameFromSchema(config, itemSchema);
-      const typeName = getNameFromSchema(config, itemSchema);
-
+      const type = getNameFromTitle(config, itemSchema.title);
       return {
         ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
-        type: makeOptional ? `std::optional<${typeName}>` : typeName,
-        headers: [`"${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
+        type: makeOptional
+          ? `std::optional<${namespace}::${type}>`
+          : `${namespace}::${type}`,
+        headers: [
+          `"${namespace}/${type}.h"`,
+          ...(makeOptional ? ["<optional>"] : []),
+        ],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${type}JsonHandler.h"`],
         schemas: [itemSchema],
@@ -134,13 +159,17 @@ function resolveProperty(
       propertyName,
       propertyDetails.allOf[0],
       required,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
 
     return {
       ...nested,
-      briefDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails).briefDoc,
-      fullDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails).fullDoc,
+      briefDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails)
+        .briefDoc,
+      fullDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails)
+        .fullDoc,
     };
   } else {
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
@@ -201,7 +230,9 @@ function resolveArray(
   cppSafeName,
   propertyDetails,
   required,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   // If there is no items definition, pass an effectively empty object.
   // But if the definition is _actually_ empty, the property will be ignored
@@ -214,7 +245,9 @@ function resolveArray(
     propertyName + ".items",
     propertyDetails.items || { notEmpty: true },
     undefined,
-    namespace
+    namespace,
+    readerNamespace,
+    writerNamespace
   );
 
   if (!itemProperty) {
@@ -247,7 +280,9 @@ function resolveDictionary(
   cppSafeName,
   propertyDetails,
   required,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   const additional = resolveProperty(
     schemaCache,
@@ -257,7 +292,9 @@ function resolveDictionary(
     propertyDetails.additionalProperties,
     // Treat the nested property type as required so it's not wrapped in std::optional.
     [propertyName + ".additionalProperties"],
-    namespace
+    namespace,
+    readerNamespace,
+    writerNamespace
   );
 
   if (!additional) {
@@ -341,8 +378,11 @@ function resolveEnum(
   propertyName,
   cppSafeName,
   propertyDetails,
+  isRequired,
   makeOptional,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   if (!isEnum(propertyDetails)) {
     return undefined;
@@ -355,6 +395,8 @@ function resolveEnum(
   const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
 
   const enumName = toPascalCase(propertyName);
+  const enumDefaultValue = createEnumDefault(enumName, propertyDetails);
+  const enumDefaultValueWriter = `${namespace}::${parentName}::${enumDefaultValue}`;
 
   const readerTypes = createEnumReaderType(
     parentName,
@@ -363,7 +405,11 @@ function resolveEnum(
     propertyDetails
   );
 
-  const propertyDefaultValues = propertyDefaults(propertyName, cppSafeName, propertyDetails);
+  const propertyDefaultValues = propertyDefaults(
+    propertyName,
+    cppSafeName,
+    propertyDetails
+  );
   const enumBriefDoc =
     propertyDefaultValues.briefDoc +
     "\n * \n * Known values are defined in {@link " +
@@ -387,9 +433,8 @@ function resolveEnum(
     ],
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
-    defaultValue: makeOptional
-      ? undefined
-      : createEnumDefault(enumName, propertyDetails),
+    defaultValue: makeOptional ? undefined : enumDefaultValue,
+    defaultValueWriter: makeOptional ? undefined : enumDefaultValueWriter,
     readerHeaders: [`<${namespace}/${parentName}.h>`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
@@ -400,6 +445,7 @@ function resolveEnum(
     ),
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
+    requiredEnum: isRequired,
   };
 
   if (readerTypes.length > 0) {

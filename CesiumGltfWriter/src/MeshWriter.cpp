@@ -54,7 +54,7 @@ void writePrimitive(
 
   if (!primitive.extensions.empty()) {
     j.Key("extensions");
-    CesiumGltf::writeExtensions(primitive.extensions, j);
+    CesiumGltfWriter::writeExtensions(primitive.extensions, j);
   }
 
   if (!primitive.extras.empty()) {
@@ -64,8 +64,8 @@ void writePrimitive(
   j.EndObject();
 }
 
-void CesiumGltf::writeMesh(
-    const std::vector<Mesh>& meshes,
+void CesiumGltfWriter::writeMesh(
+    const std::vector<CesiumGltf::Mesh>& meshes,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (meshes.empty()) {
@@ -101,7 +101,7 @@ void CesiumGltf::writeMesh(
     }
 
     if (!mesh.extensions.empty()) {
-      CesiumGltf::writeExtensions(mesh.extensions, j);
+      CesiumGltfWriter::writeExtensions(mesh.extensions, j);
     }
 
     if (!mesh.extras.empty()) {

@@ -5,8 +5,8 @@
 #include <CesiumGltf/Asset.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
-void CesiumGltf::writeAsset(
-    const Asset& asset,
+void CesiumGltfWriter::writeAsset(
+    const CesiumGltf::Asset& asset,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("asset");

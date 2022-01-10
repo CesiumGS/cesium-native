@@ -3,8 +3,8 @@
 #include <CesiumGltf/AccessorSparse.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeAccessorSparse(
-    const AccessorSparse& accessorSparse,
+    const CesiumGltf::AccessorSparse& accessorSparse,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

@@ -1,6 +1,6 @@
-#include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/WriteModelOptions.h"
-#include "CesiumGltf/Writer.h"
+#include "CesiumGltfReader/GltfReader.h"
+#include "CesiumGltfWriter/WriteModelOptions.h"
+#include "CesiumGltfWriter/Writer.h"
 
 #include <CesiumGltf/AccessorSparseIndices.h>
 #include <CesiumGltf/Buffer.h>
@@ -103,10 +103,11 @@ TEST_CASE(
   CesiumGltf::Model m;
   m.asset.version = "2.0";
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
 
-  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto writeResult =
+      CesiumGltfWriter::writeModelAsEmbeddedBytes(m, options);
   const auto asBytes = writeResult.gltfAssetBytes;
   const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
   const std::string asString(
@@ -121,10 +122,11 @@ TEST_CASE(
   CesiumGltf::Model m;
   m.asset.version = "2.0";
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  CesiumGltfWriter::WriteModelOptions options;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLB;
 
-  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto writeResult =
+      CesiumGltfWriter::writeModelAsEmbeddedBytes(m, options);
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
 
@@ -166,7 +168,7 @@ TEST_CASE(
 
 TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   const auto validateStructure = [](const std::vector<std::byte>& gltfAsset) {
-    CesiumGltf::GltfReader reader;
+    CesiumGltfReader::GltfReader reader;
     auto loadedModelResult = reader.readModel(gsl::span(gltfAsset));
     REQUIRE(loadedModelResult.model.has_value());
     auto& loadedModel = loadedModelResult.model;
@@ -254,20 +256,20 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
 
   const auto model = generateTriangleModel();
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  CesiumGltfWriter::WriteModelOptions options;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
   const auto writeResultGltf =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+      CesiumGltfWriter::writeModelAsEmbeddedBytes(model, options);
   REQUIRE(writeResultGltf.errors.empty());
   REQUIRE(writeResultGltf.warnings.empty());
   validateStructure(writeResultGltf.gltfAssetBytes);
 
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  options.exportType = CesiumGltfWriter::GltfExportType::GLB;
   options.autoConvertDataToBase64 = false;
   const auto writeResultGlb =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+      CesiumGltfWriter::writeModelAsEmbeddedBytes(model, options);
   REQUIRE(writeResultGlb.errors.empty());
   REQUIRE(writeResultGlb.warnings.empty());
   validateStructure(writeResultGlb.gltfAssetBytes);

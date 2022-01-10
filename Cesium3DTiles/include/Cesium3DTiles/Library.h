@@ -1,8 +1,7 @@
 #pragma once
 
 /**
- * @brief Classes for working with [3D
- * Tiles](https://github.com/CesiumGS/3d-tiles).
+ * @brief Classes for using [3D Tiles](https://github.com/CesiumGS/3d-tiles).
  */
 namespace Cesium3DTiles {}
 

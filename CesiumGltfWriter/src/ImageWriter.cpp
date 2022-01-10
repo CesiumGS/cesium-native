@@ -5,7 +5,7 @@
 #include "ExtensionWriter.h"
 
 #include <CesiumGltf/Image.h>
-#include <CesiumGltf/WriteGLTFCallback.h>
+#include <CesiumGltfWriter/WriteGLTFCallback.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
 #include <algorithm>
@@ -27,7 +27,7 @@ mimeTypeToExtensionString(const std::string& mimeType) noexcept {
   return "";
 }
 
-void CesiumGltf::writeImage(
+void CesiumGltfWriter::writeImage(
     WriteModelResult& result,
     const std::vector<CesiumGltf::Image>& images,
     CesiumJsonWriter::JsonWriter& jsonWriter,

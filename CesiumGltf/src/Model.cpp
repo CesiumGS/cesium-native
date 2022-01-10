@@ -10,8 +10,7 @@
 
 #include <algorithm>
 
-using namespace CesiumGltf;
-
+namespace CesiumGltf {
 namespace {
 template <typename T>
 size_t copyElements(std::vector<T>& to, std::vector<T>& from) {
@@ -665,3 +664,4 @@ void Model::generateMissingNormalsSmooth() {
         }
       });
 }
+} // namespace CesiumGltf

@@ -1,22 +1,17 @@
-#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltfReader/GltfReader.h"
 
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/JsonReader.h"
-#include "CesiumUtility/Tracing.h"
-#include "CesiumUtility/Uri.h"
-#include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
-#include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
-#include "ExtensionModelExtFeatureMetadataJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
+#include "registerExtensions.h"
 
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/Uri.h>
 
 #include <rapidjson/reader.h>
 
@@ -32,11 +27,11 @@
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
-
 #pragma pack(push, 1)
 struct GlbHeader {
   uint32_t magic;
@@ -62,10 +57,11 @@ ModelReaderResult readJsonModel(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  CESIUM_TRACE("CesiumGltf::ModelReader::readJsonModel");
+  CESIUM_TRACE("CesiumGltfReader::ModelReader::readJsonModel");
 
   ModelJsonHandler modelHandler(context);
-  ReadJsonResult<Model> jsonResult = JsonReader::readJson(data, modelHandler);
+  CesiumJsonReader::ReadJsonResult<CesiumGltf::Model> jsonResult =
+      CesiumJsonReader::JsonReader::readJson(data, modelHandler);
 
   return ModelReaderResult{
       std::move(jsonResult.value),
@@ -73,7 +69,6 @@ ModelReaderResult readJsonModel(
       std::move(jsonResult.warnings)};
 }
 
-namespace {
 /**
  * @brief Creates a string representation for the given magic value.
  *
@@ -93,12 +88,11 @@ std::string toMagicString(uint32_t i) {
   stream << c0 << c1 << c2 << c3 << " (0x" << std::hex << i << ")";
   return stream.str();
 }
-} // namespace
 
 ModelReaderResult readBinaryModel(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
-  CESIUM_TRACE("CesiumGltf::ModelReader::readBinaryModel");
+  CESIUM_TRACE("CesiumGltfReader::ModelReader::readBinaryModel");
 
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
@@ -188,7 +182,7 @@ ModelReaderResult readBinaryModel(
   ModelReaderResult result = readJsonModel(context, jsonChunk);
 
   if (result.model && !binaryChunk.empty()) {
-    Model& model = result.model.value();
+    CesiumGltf::Model& model = result.model.value();
 
     if (model.buffers.empty()) {
       result.errors.emplace_back(
@@ -196,7 +190,7 @@ ModelReaderResult readBinaryModel(
       return result;
     }
 
-    Buffer& buffer = model.buffers[0];
+    CesiumGltf::Buffer& buffer = model.buffers[0];
     if (buffer.uri) {
       result.errors.emplace_back("GLB has a binary chunk but the first buffer "
                                  "in the JSON chunk also has a 'uri'.");
@@ -223,7 +217,7 @@ void postprocess(
     const GltfReader& reader,
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
-  Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readModel.model.value();
 
   if (options.decodeDataUrls) {
     decodeDataUrls(reader, readModel, options.clearDecodedDataUrls);
@@ -286,17 +280,7 @@ void postprocess(
 
 } // namespace
 
-GltfReader::GltfReader() : _context() {
-  this->_context.registerExtension<
-      MeshPrimitive,
-      ExtensionKhrDracoMeshCompressionJsonHandler>();
-
-  this->_context
-      .registerExtension<Model, ExtensionModelExtFeatureMetadataJsonHandler>();
-  this->_context.registerExtension<
-      MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
-}
+GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
 
 CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
   return this->_context;
@@ -447,12 +431,12 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
 /*static*/
 ImageReaderResult
 GltfReader::readImage(const gsl::span<const std::byte>& data) {
-  CESIUM_TRACE("CesiumGltf::readImage");
+  CESIUM_TRACE("CesiumGltfReader::readImage");
 
   ImageReaderResult result;
 
   result.image.emplace();
-  ImageCesium& image = result.image.value();
+  CesiumGltf::ImageCesium& image = result.image.value();
 
   image.bytesPerChannel = 1;
   image.channels = 4;

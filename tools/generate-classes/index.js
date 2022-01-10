@@ -3,15 +3,12 @@ const path = require("path");
 const fs = require("fs");
 const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
+const generateCombinedWriter = require("./generateCombinedWriter");
+const generateRegisterExtensions = require("./generateRegisterExtensions");
 
 const argv = yargs.options({
   schema: {
-    description: "The path to the JSON schema files.",
-    demandOption: true,
-    type: "string",
-  },
-  root: {
-    description: "The root schema file.",
+    description: "The path to the JSON schema.",
     demandOption: true,
     type: "string",
   },
@@ -22,6 +19,11 @@ const argv = yargs.options({
   },
   readerOutput: {
     description: "The output directory for the generated reader files.",
+    demandOption: true,
+    type: "string",
+  },
+  writerOutput: {
+    description: "The output directory for the generated writer files.",
     demandOption: true,
     type: "string",
   },
@@ -37,7 +39,17 @@ const argv = yargs.options({
     type: "string",
   },
   namespace: {
-    description: "Namespace to put the generated classes/methods in.",
+    description: "Namespace to put the generated classes in.",
+    demandOption: true,
+    type: "string",
+  },
+  readerNamespace: {
+    description: "Namespace to put the generated reader files in.",
+    demandOption: true,
+    type: "string",
+  },
+  writerNamespace: {
+    description: "Namespace to put the generated writer files in.",
     demandOption: true,
     type: "string",
   },
@@ -49,14 +61,26 @@ const argv = yargs.options({
   },
 }).argv;
 
-const schemaCache = new SchemaCache(argv.schema, argv.extensions);
-const rootSchema = schemaCache.load(argv.root);
+function splitSchemaPath(schemaPath) {
+  const schemaNameIndex = schemaPath.lastIndexOf("/") + 1;
+  const schemaName = schemaPath.slice(schemaNameIndex);
+  const schemaBasePath = schemaPath.slice(0, schemaNameIndex);
+  return { schemaName, schemaBasePath };
+}
+
+const { schemaName, schemaBasePath } = splitSchemaPath(argv.schema);
+const schemaCache = new SchemaCache(schemaBasePath, argv.extensions);
+const rootSchema = schemaCache.load(schemaName);
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
 if (argv.oneHandlerFile) {
   // Clear the handler implementation file, and then we'll append to it in `generate`.
-  const readerHeaderOutputDir = path.join(argv.readerOutput, "generated");
+  const readerHeaderOutputDir = path.join(
+    argv.readerOutput,
+    "generated",
+    "src"
+  );
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
   const readerSourceOutputPath = path.join(
     readerHeaderOutputDir,
@@ -72,10 +96,14 @@ const options = {
   readerOutputDir: argv.readerOutput,
   config: config,
   namespace: argv.namespace,
+  readerNamespace: argv.readerNamespace,
+  writerNamespace: argv.writerNamespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {},
 };
+
+const writers = [];
 
 let schemas = [rootSchema];
 
@@ -94,7 +122,7 @@ for (const extension of config.extensions) {
   config.classes[extensionSchema.title].overrideName = extension.className;
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
-  schemas.push(...generate(options, extensionSchema));
+  schemas.push(...generate(options, extensionSchema, writers));
 
   for (const objectToExtend of extension.attachTo) {
     const objectToExtendSchema = schemaCache.load(
@@ -105,7 +133,7 @@ for (const extension of config.extensions) {
       continue;
     }
 
-    if (!options.extensions[objectToExtend]) {
+    if (!options.extensions[objectToExtendSchema.title]) {
       options.extensions[objectToExtendSchema.title] = [];
     }
 
@@ -124,5 +152,23 @@ while (schemas.length > 0) {
     continue;
   }
   processed[schema.sourcePath] = true;
-  schemas.push(...generate(options, schema));
+  schemas.push(...generate(options, schema, writers));
 }
+
+generateRegisterExtensions({
+  readerOutputDir: argv.readerOutput,
+  config: config,
+  namespace: argv.namespace,
+  readerNamespace: argv.readerNamespace,
+  extensions: options.extensions,
+});
+
+generateCombinedWriter({
+  writerOutputDir: argv.writerOutput,
+  config: config,
+  namespace: argv.namespace,
+  writerNamespace: argv.writerNamespace,
+  rootSchema: rootSchema,
+  writers: writers,
+  extensions: options.extensions,
+});

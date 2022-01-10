@@ -3,7 +3,7 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumGltf/ImageManipulation.h>
+#include <CesiumGltfReader/ImageManipulation.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/SpanHelper.h>
 
@@ -11,6 +11,7 @@ using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
 namespace {
@@ -68,8 +69,8 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
       glm::dvec2(rectangle.computeWidth(), rectangle.computeHeight()) /
       rasterTiles;
   const glm::dvec2 totalDimensions = glm::dvec2(
-      this->getCoverageRectangle().computeWidth(),
-      this->getCoverageRectangle().computeHeight());
+      this->getTilingScheme().getRectangle().computeWidth(),
+      this->getTilingScheme().getRectangle().computeHeight());
   const glm::dvec2 totalTileDimensions =
       totalDimensions / glm::dvec2(
                             this->getTilingScheme().getRootTilesX(),

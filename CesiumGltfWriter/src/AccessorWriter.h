@@ -4,8 +4,8 @@
 #include <CesiumGltf/AccessorSpec.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 
-namespace CesiumGltf {
+namespace CesiumGltfWriter {
 void writeAccessor(
-    const std::vector<Accessor>& accessors,
+    const std::vector<CesiumGltf::Accessor>& accessors,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

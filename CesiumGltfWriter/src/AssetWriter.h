@@ -3,6 +3,8 @@
 #include <CesiumGltf/Asset.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 
-namespace CesiumGltf {
-void writeAsset(const Asset& asset, CesiumJsonWriter::JsonWriter& jsonWriter);
+namespace CesiumGltfWriter {
+void writeAsset(
+    const CesiumGltf::Asset& asset,
+    CesiumJsonWriter::JsonWriter& jsonWriter);
 }
