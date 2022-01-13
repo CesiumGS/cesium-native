@@ -105,8 +105,8 @@ struct CESIUMGLTFREADER_API ReadModelOptions {
    * is std::nullopt, KTX v2 textures will be fully decompressed into raw
    * pixels.
    */
-  std::optional<CompressedPixelFormatCesium> ktx2TranscodeTargetFormat =
-      std::nullopt;
+  std::optional<CesiumGltf::CompressedPixelFormatCesium>
+      ktx2TranscodeTargetFormat = std::nullopt;
 };
 
 /**
@@ -176,7 +176,7 @@ public:
    */
   static ImageReaderResult readImage(
       const gsl::span<const std::byte>& data,
-      const std::optional<CompressedPixelFormatCesium>&
+      const std::optional<CesiumGltf::CompressedPixelFormatCesium>&
           ktx2TranscodeTargetFormat = std::nullopt);
 
 private:
