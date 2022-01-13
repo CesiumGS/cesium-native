@@ -55,7 +55,7 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
   readOptions.ktx2TranscodeTargetFormat =
       contentOptions.ktx2TranscodeTargetFormat;
 
-  CesiumGltf::ModelReaderResult loadedModel =
+  CesiumGltfReader::ModelReaderResult loadedModel =
       GltfContent::_gltfReader.readModel(data, readOptions);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(

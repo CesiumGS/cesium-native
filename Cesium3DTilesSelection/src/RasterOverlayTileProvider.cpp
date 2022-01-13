@@ -179,7 +179,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             const gsl::span<const std::byte> data = pResponse->data();
 
-            CesiumGltf::ImageReaderResult loadedImage =
+            CesiumGltfReader::ImageReaderResult loadedImage =
                 RasterOverlayTileProvider::_gltfReader.readImage(
                     data,
                     ktx2TranscodeTargetFormat);
