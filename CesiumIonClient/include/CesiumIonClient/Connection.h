@@ -239,12 +239,34 @@ public:
       const std::optional<std::vector<std::string>>& allowedUrls =
           std::nullopt) const;
 
+  /**
+   * @brief Modifies a token.
+   *
+   * @param tokenID The ID of the token to modify.
+   * @param newName The new name of the token.
+   * @param newAssetIDs The assets that may be accessed by this token. If
+   * `std::nullopt`, access to all assets is allowed.
+   * @param newScopes The new OAuth scopes allowed by this token.
+   * @param newAllowedUrls The new URLs from which this token can be accessed.
+   * If `std::nullopt`, the token can be accessed from any URL.
+   * @return A value-less response. If the response is successful, the token has
+   * been modified.
+   */
   CesiumAsync::Future<Response<NoValue>> modifyToken(
       const std::string& tokenID,
       const std::string& newName,
       const std::optional<std::vector<int64_t>>& newAssetIDs,
       const std::vector<std::string>& newScopes,
       const std::optional<std::vector<std::string>>& newAllowedUrls) const;
+
+  /**
+   * @brief Decodes a token ID from a token.
+   *
+   * @param token The token to decode.
+   * @return The token ID, or std::nullopt if the token ID cannot be determined
+   * from the token.
+   */
+  static std::optional<std::string> getIdFromToken(const std::string& token);
 
 private:
   static CesiumAsync::Future<Connection> completeTokenExchange(

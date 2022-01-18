@@ -766,6 +766,43 @@ Future<Response<NoValue>> Connection::modifyToken(
       });
 }
 
+/*static*/ std::optional<std::string> Connection::getIdFromToken(const std::string& token) {
+  size_t pos = token.find(".");
+  if (pos == std::string::npos) {
+    return std::nullopt;
+  }
+
+  size_t length = token.size() - pos - 1;
+  if (length == 0) {
+    return std::nullopt;
+  }
+
+  std::string decoded(modp_b64_decode_len(length), '\0');
+  size_t decodedLength = modp_b64_decode(decoded.data(), token.data() + pos + 1, length);
+  if (decodedLength == 0 || decodedLength == std::string::npos) {
+    return std::nullopt;
+  }
+
+  decoded.resize(decodedLength);
+
+  rapidjson::Document document;
+  document.Parse(decoded.data(), decoded.size());
+  if (document.HasParseError()) {
+    return std::nullopt;
+  }
+
+  auto jtiIt = document.FindMember("jti");
+  if (jtiIt == document.MemberEnd()) {
+    return std::nullopt;
+  }
+
+  if (!jtiIt->value.IsString()) {
+    return std::nullopt;
+  }
+
+  return jtiIt->value.GetString();
+}
+
 /*static*/ CesiumAsync::Future<Connection> Connection::completeTokenExchange(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
