@@ -186,6 +186,7 @@ Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         "offset {}",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
+    this->notifyTileDoneLoading(nullptr);
     return this->getAsyncSystem().createResolvedFuture();
   }
 
