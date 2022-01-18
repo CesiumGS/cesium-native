@@ -767,18 +767,23 @@ Future<Response<NoValue>> Connection::modifyToken(
 }
 
 /*static*/ std::optional<std::string> Connection::getIdFromToken(const std::string& token) {
-  size_t pos = token.find(".");
-  if (pos == std::string::npos) {
+  size_t startPos = token.find(".");
+  if (startPos == std::string::npos || startPos == token.size() - 1) {
     return std::nullopt;
   }
 
-  size_t length = token.size() - pos - 1;
+  size_t endPos = token.find(".", startPos + 1);
+  if (endPos == std::string::npos) {
+    return std::nullopt;
+  }
+
+  size_t length = endPos - startPos - 1;
   if (length == 0) {
     return std::nullopt;
   }
 
   std::string decoded(modp_b64_decode_len(length), '\0');
-  size_t decodedLength = modp_b64_decode(decoded.data(), token.data() + pos + 1, length);
+  size_t decodedLength = modp_b64_decode(decoded.data(), token.data() + startPos + 1, length);
   if (decodedLength == 0 || decodedLength == std::string::npos) {
     return std::nullopt;
   }
