@@ -766,7 +766,8 @@ Future<Response<NoValue>> Connection::modifyToken(
       });
 }
 
-/*static*/ std::optional<std::string> Connection::getIdFromToken(const std::string& token) {
+/*static*/ std::optional<std::string>
+Connection::getIdFromToken(const std::string& token) {
   size_t startPos = token.find(".");
   if (startPos == std::string::npos || startPos == token.size() - 1) {
     return std::nullopt;
@@ -783,7 +784,8 @@ Future<Response<NoValue>> Connection::modifyToken(
   }
 
   std::string decoded(modp_b64_decode_len(length), '\0');
-  size_t decodedLength = modp_b64_decode(decoded.data(), token.data() + startPos + 1, length);
+  size_t decodedLength =
+      modp_b64_decode(decoded.data(), token.data() + startPos + 1, length);
   if (decodedLength == 0 || decodedLength == std::string::npos) {
     return std::nullopt;
   }
