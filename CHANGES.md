@@ -5,7 +5,7 @@
 ##### Fixes :wrench:
 
 - Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.
-
+ 
 ### v0.11.0 - 2022-01-03
 
 ##### Breaking Changes :mega:
