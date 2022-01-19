@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.12.0 - ????
+
+##### Fixes :wrench:
+
+- Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.
+
 ### v0.11.0 - 2022-01-03
 
 ##### Breaking Changes :mega:
@@ -11,6 +17,10 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesWriter` library.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `QuadtreeRasterOverlayTileProvider` that caused incorrect level-of-detail selection for overlays that use a global (or otherwise large) tiling scheme but have non-global (or otherwise smaller) coverage.
 
 ### v0.10.0 - 2021-12-01
 
