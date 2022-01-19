@@ -91,8 +91,7 @@ IonRasterOverlay::createTileProvider(
                   std::move(pRequest),
                   fmt::format(
                       "Ion raster overlay metadata response type is not "
-                      "'IMAGERY', "
-                      "but {}",
+                      "'IMAGERY', but {}",
                       type));
               return nullptr;
             }

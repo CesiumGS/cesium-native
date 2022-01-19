@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
+#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
@@ -346,35 +347,62 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  auto handleResponse =
-      [pOwner,
-       asyncSystem,
-       pAssetAccessor,
-       pCreditSystem,
-       pPrepareRendererResources,
-       pLogger,
-       baseUrl = this->_url,
-       culture = this->_culture](
-          const std::byte* responseBuffer,
-          size_t responseSize) -> std::unique_ptr<RasterOverlayTileProvider> {
+  auto reportError = [this, asyncSystem, pLogger](
+                         const std::shared_ptr<IAssetRequest>& pRequest,
+                         const std::string& message) {
+    this->reportError(
+        asyncSystem,
+        pLogger,
+        RasterOverlayLoadFailureDetails{
+            this,
+            RasterOverlayLoadType::TileProvider,
+            pRequest,
+            message});
+  };
+
+  auto handleResponse = [pOwner,
+                         asyncSystem,
+                         pAssetAccessor,
+                         pCreditSystem,
+                         pPrepareRendererResources,
+                         pLogger,
+                         baseUrl = this->_url,
+                         culture = this->_culture,
+                         reportError](
+                            const std::shared_ptr<IAssetRequest>& pRequest,
+                            const gsl::span<const std::byte>& data)
+      -> std::unique_ptr<RasterOverlayTileProvider> {
     rapidjson::Document response;
-    response.Parse(reinterpret_cast<const char*>(responseBuffer), responseSize);
+    response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
     if (response.HasParseError()) {
-      SPDLOG_LOGGER_ERROR(
-          pLogger,
-          "Error when parsing Bing Maps imagery metadata, error code "
-          "{} at byte offset {}",
-          response.GetParseError(),
-          response.GetErrorOffset());
+      reportError(
+          pRequest,
+          fmt::format(
+              "Error when parsing Bing Maps imagery metadata, error code "
+              "{} at byte offset {}",
+              response.GetParseError(),
+              response.GetErrorOffset()));
+      return nullptr;
+    }
+
+    rapidjson::Value* pError =
+        rapidjson::Pointer("/errorDetails/0").Get(response);
+    if (pError && pError->IsString()) {
+      reportError(
+          pRequest,
+          fmt::format(
+              "Received an error from the Bing Maps imagery metadata service: "
+              "{}",
+              pError->GetString()));
       return nullptr;
     }
 
     rapidjson::Value* pResource =
         rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
     if (!pResource) {
-      SPDLOG_LOGGER_ERROR(
-          pLogger,
+      reportError(
+          pRequest,
           "Resources were not found in the Bing Maps imagery metadata "
           "response.");
       return nullptr;
@@ -392,9 +420,7 @@ BingMapsRasterOverlay::createTileProvider(
     std::string urlTemplate =
         JsonHelpers::getStringOrDefault(*pResource, "imageUrl", std::string());
     if (urlTemplate.empty()) {
-      SPDLOG_LOGGER_ERROR(
-          pLogger,
-          "Bing Maps tile imageUrl is missing or empty.");
+      reportError(pRequest, "Bing Maps tile imageUrl is missing or empty.");
       return nullptr;
     }
 
@@ -422,34 +448,36 @@ BingMapsRasterOverlay::createTileProvider(
 
   auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
-    return asyncSystem.createResolvedFuture(handleResponse(
-        cacheResultIt->second.data(),
-        cacheResultIt->second.size()));
+    return asyncSystem.createResolvedFuture(
+        handleResponse(nullptr, gsl::span<std::byte>(cacheResultIt->second)));
   }
 
   return pAssetAccessor->get(asyncSystem, metadataUrl)
       .thenInMainThread(
-          [metadataUrl, pLogger, handleResponse](
-              const std::shared_ptr<IAssetRequest>& pRequest)
+          [metadataUrl, pLogger, handleResponse, reportError](
+              std::shared_ptr<IAssetRequest>&& pRequest)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 
             if (pResponse == nullptr) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
+              reportError(
+                  pRequest,
                   "No response received from Bing Maps imagery metadata "
                   "service.");
               return nullptr;
             }
 
-            const std::byte* responseBuffer = pResponse->data().data();
-            const size_t responseSize = pResponse->data().size();
+            std::unique_ptr<RasterOverlayTileProvider> pProvider =
+                handleResponse(pRequest, pResponse->data());
 
-            sessionCache[metadataUrl] = std::vector<std::byte>(
-                pResponse->data().begin(),
-                pResponse->data().end());
+            // If the response successfully created a tile provider, cache it.
+            if (pProvider) {
+              sessionCache[metadataUrl] = std::vector<std::byte>(
+                  pResponse->data().begin(),
+                  pResponse->data().end());
+            }
 
-            return handleResponse(responseBuffer, responseSize);
+            return pProvider;
           });
 }
 
