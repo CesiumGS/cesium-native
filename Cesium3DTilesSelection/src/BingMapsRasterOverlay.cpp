@@ -427,7 +427,7 @@ BingMapsRasterOverlay::createTileProvider(
         cacheResultIt->second.size()));
   }
 
-  return pAssetAccessor->requestAsset(asyncSystem, metadataUrl)
+  return pAssetAccessor->get(asyncSystem, metadataUrl)
       .thenInMainThread(
           [metadataUrl, pLogger, handleResponse](
               const std::shared_ptr<IAssetRequest>& pRequest)
