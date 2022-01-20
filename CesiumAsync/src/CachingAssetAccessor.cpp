@@ -252,14 +252,14 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
       });
 }
 
-Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::startRequest(
+Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::request(
     const AsyncSystem& asyncSystem,
     const std::string& verb,
     const std::string& url,
     const std::vector<THeader>& headers,
     const gsl::span<const std::byte>& contentPayload) {
   return this->_pAssetAccessor
-      ->startRequest(asyncSystem, verb, url, headers, contentPayload);
+      ->request(asyncSystem, verb, url, headers, contentPayload);
 }
 
 void CachingAssetAccessor::tick() noexcept { _pAssetAccessor->tick(); }

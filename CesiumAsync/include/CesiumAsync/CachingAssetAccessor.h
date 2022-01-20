@@ -50,7 +50,7 @@ public:
       const std::string& url,
       const std::vector<THeader>& headers) override;
 
-  virtual Future<std::shared_ptr<IAssetRequest>> startRequest(
+  virtual Future<std::shared_ptr<IAssetRequest>> request(
       const AsyncSystem& asyncSystem,
       const std::string& verb,
       const std::string& url,
