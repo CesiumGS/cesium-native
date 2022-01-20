@@ -650,7 +650,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
       reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
       tokenBuffer.GetSize());
   return this->_pAssetAccessor
-      ->startRequest(
+      ->request(
           this->_asyncSystem,
           "POST",
           Uri::resolve(this->_apiUrl, "v2/tokens"),
@@ -740,7 +740,7 @@ Future<Response<NoValue>> Connection::modifyToken(
       tokenBuffer.GetSize());
 
   return this->_pAssetAccessor
-      ->startRequest(
+      ->request(
           this->_asyncSystem,
           "PATCH",
           url,
@@ -839,7 +839,7 @@ Connection::getIdFromToken(const std::string& token) {
       postBuffer.GetSize());
 
   return pAssetAccessor
-      ->startRequest(
+      ->request(
           asyncSystem,
           "POST",
           Uri::resolve(ionApiUrl, "oauth/token"),

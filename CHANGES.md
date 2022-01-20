@@ -2,10 +2,15 @@
 
 ### v0.12.0 - ????
 
+##### Breaking Changes :mega:
+
+- Renamed `IAssetAccessor::requestAsset` to `get`.
+- Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
+
 ##### Fixes :wrench:
 
 - Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.
- 
+
 ### v0.11.0 - 2022-01-03
 
 ##### Breaking Changes :mega:

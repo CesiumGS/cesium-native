@@ -96,7 +96,7 @@ public:
         std::shared_ptr<IAssetRequest>(testRequest));
   }
 
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> startRequest(
+  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> request(
       const AsyncSystem& asyncSystem,
       const std::string& /* verb */,
       const std::string& /* url */,

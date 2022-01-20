@@ -32,7 +32,7 @@ public:
   }
 
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  startRequest(
+  request(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& /* verb */,
       const std::string& url,
