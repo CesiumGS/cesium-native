@@ -26,9 +26,8 @@ template <typename T> struct ParameterizedTaskUnwrapper {
   }
 
   template <typename Func> static auto unwrapShared(Func&& f) {
-    return [f = std::forward<Func>(f)](const T& t) mutable {
-      return f(t)._task;
-    };
+    return
+        [f = std::forward<Func>(f)](const T& t) mutable { return f(t)._task; };
   }
 };
 
