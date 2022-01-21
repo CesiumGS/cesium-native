@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
+- Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, `GltfWriterResult`, and `GltfWriterOptions` instead.
 
 ##### Additions :tada:
 
