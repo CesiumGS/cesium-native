@@ -131,6 +131,56 @@ uint8_t computeAvailabilityImpl(
 }
 
 
+std::optional<uint32_t> findChildNodeIndexImpl(
+  const AvailabilitySubtree& subtree,
+  const QuadtreeTileID& tileID,
+  const uint32_t subtreeLevels)
+{
+  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << subtreeLevels);
+  uint32_t mortonIndex = getMortonIndex(
+      tileID.x & subtreeRelativeMask,
+      tileID.y & subtreeRelativeMask);
+
+  AvailabilityAccessor subtreeAvailabilityAccessor(
+      subtree.subtreeAvailability,
+      subtree);
+
+  bool subtreeAvailable = false;
+  uint32_t subtreeIndex = 0;
+  if (subtreeAvailabilityAccessor.isConstant()) {
+    subtreeAvailable = subtreeAvailabilityAccessor.getConstant();
+    subtreeIndex = mortonIndex;
+  } else if (subtreeAvailabilityAccessor.isBufferView()) {
+    uint32_t byteIndex = mortonIndex >> 3;
+    uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
+    uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
+
+    gsl::span<const std::byte> clippedSubtreeAvailability =
+        subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
+    uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
+
+    subtreeAvailable = availabilityByte & bitMask;
+
+    // Calculte the index the child subtree is stored in.
+    if (subtreeAvailable) {
+      subtreeIndex =
+          // TODO: maybe partial sums should be precomputed in the subtree
+          // availability, instead of iterating through the buffer each time.
+          AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
+          AvailabilityUtilities::countOnesInByte(
+              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
+    }
+  }
+
+  if (subtreeAvailable) {
+    return subtreeIndex;
+  }
+
+  return std::nullopt;
+}
+
+
+
 
 
 
@@ -393,52 +443,17 @@ AvailabilityNode* QuadtreeAvailability::addNode(
     return nullptr;
   }
 
-  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << this->_subtreeLevels);
-  uint32_t mortonIndex = getMortonIndex(
-      tileID.x & subtreeRelativeMask,
-      tileID.y & subtreeRelativeMask);
-
-  AvailabilityAccessor subtreeAvailabilityAccessor(
-      pParentNode->subtree->subtreeAvailability,
-      *pParentNode->subtree);
-
-  bool subtreeAvailable = false;
-  uint32_t subtreeIndex = 0;
-  if (subtreeAvailabilityAccessor.isConstant()) {
-    subtreeAvailable = subtreeAvailabilityAccessor.getConstant();
-    subtreeIndex = mortonIndex;
-  } else if (subtreeAvailabilityAccessor.isBufferView()) {
-    uint32_t byteIndex = mortonIndex >> 3;
-    uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
-    uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
-
-    gsl::span<const std::byte> clippedSubtreeAvailability =
-        subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
-    uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
-
-    subtreeAvailable = availabilityByte & bitMask;
-
-    // Calculte the index the child subtree is stored in.
-    if (subtreeAvailable) {
-      subtreeIndex =
-          // TODO: maybe partial sums should be precomputed in the subtree
-          // availability, instead of iterating through the buffer each time.
-          AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
-          AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
-    } else {
-      // This subtree is not supposed to be available.
-      return nullptr;
-    }
+  const AvailabilitySubtree& subtree = *pParentNode->subtree;
+  std::optional<uint32_t> optionalSubtreeIndex = findChildNodeIndexImpl(
+    subtree, tileID, this->_subtreeLevels);
+  if (!optionalSubtreeIndex)
+  {
+    return nullptr;
   }
-
-  if (subtreeAvailable) {
-    pParentNode->childNodes[subtreeIndex] =
-        std::make_unique<AvailabilityNode>();
-    return pParentNode->childNodes[subtreeIndex].get();
-  }
-
-  return nullptr;
+  uint32_t subtreeIndex = optionalSubtreeIndex.has_value();
+  pParentNode->childNodes[subtreeIndex] =
+      std::make_unique<AvailabilityNode>();
+  return pParentNode->childNodes[subtreeIndex].get();
 }
 
 bool QuadtreeAvailability::addLoadedSubtree(
@@ -455,6 +470,7 @@ bool QuadtreeAvailability::addLoadedSubtree(
   return true;
 }
 
+
 std::optional<uint32_t> QuadtreeAvailability::findChildNodeIndex(
     const QuadtreeTileID& tileID,
     const AvailabilityNode* pParentNode) const {
@@ -462,48 +478,8 @@ std::optional<uint32_t> QuadtreeAvailability::findChildNodeIndex(
       (tileID.level % this->_subtreeLevels) != 0) {
     return std::nullopt;
   }
-
-  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << this->_subtreeLevels);
-  uint32_t mortonIndex = getMortonIndex(
-      tileID.x & subtreeRelativeMask,
-      tileID.y & subtreeRelativeMask);
-
-  AvailabilityAccessor subtreeAvailabilityAccessor(
-      pParentNode->subtree->subtreeAvailability,
-      *pParentNode->subtree);
-
-  bool subtreeAvailable = false;
-  uint32_t subtreeIndex = 0;
-  if (subtreeAvailabilityAccessor.isConstant()) {
-    subtreeAvailable = subtreeAvailabilityAccessor.getConstant();
-    subtreeIndex = mortonIndex;
-  } else if (subtreeAvailabilityAccessor.isBufferView()) {
-    uint32_t byteIndex = mortonIndex >> 3;
-    uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
-    uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
-
-    gsl::span<const std::byte> clippedSubtreeAvailability =
-        subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
-    uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
-
-    subtreeAvailable = availabilityByte & bitMask;
-
-    // Calculte the index the child subtree is stored in.
-    if (subtreeAvailable) {
-      subtreeIndex =
-          // TODO: maybe partial sums should be precomputed in the subtree
-          // availability, instead of iterating through the buffer each time.
-          AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
-          AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
-    }
-  }
-
-  if (subtreeAvailable) {
-    return subtreeIndex;
-  }
-
-  return std::nullopt;
+  const AvailabilitySubtree& subtree = *pParentNode->subtree;
+  return findChildNodeIndexImpl(subtree, tileID, this->_subtreeLevels);
 }
 
 AvailabilityNode* QuadtreeAvailability::findChildNode(
