@@ -54,6 +54,78 @@ QuadtreeAvailability::QuadtreeAvailability(
       _maximumChildrenSubtrees(1U << (subtreeLevels << 1U)),
       _pRoot(nullptr) {}
 
+
+
+
+uint8_t computeAvailabilityImpl(
+  const AvailabilitySubtree& subtree,
+  const QuadtreeTileID& tileID,
+  uint32_t relativeLevel)
+{
+  AvailabilityAccessor tileAvailabilityAccessor(
+      subtree.tileAvailability,
+      subtree);
+  AvailabilityAccessor contentAvailabilityAccessor(
+      subtree.contentAvailability,
+      subtree);
+  AvailabilityAccessor subtreeAvailability(
+      subtree.subtreeAvailability,
+      subtree);
+
+  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << relativeLevel);
+
+  // Assume the availability info is within this subtree.
+  // If this is not the case, we may return an incorrect availability.
+  uint8_t availability = TileAvailabilityFlags::REACHABLE;
+
+  uint32_t relativeMortonIndex = getMortonIndex(
+      tileID.x & subtreeRelativeMask,
+      tileID.y & subtreeRelativeMask);
+
+  // For reference:
+  // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
+  // The below is identical to:
+  // (4^levelRelativeToSubtree - 1) / 3
+  uint32_t offset = ((1U << (relativeLevel << 1U)) - 1U) / 3U;
+
+  uint32_t availabilityIndex = relativeMortonIndex + offset;
+  uint32_t byteIndex = availabilityIndex >> 3;
+  uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
+  uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
+
+  // Check tile availability.
+  if ((tileAvailabilityAccessor.isConstant() &&
+       tileAvailabilityAccessor.getConstant()) ||
+      (tileAvailabilityAccessor.isBufferView() &&
+       (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
+    availability |= TileAvailabilityFlags::TILE_AVAILABLE;
+  }
+
+  // Check content availability.
+  if ((contentAvailabilityAccessor.isConstant() &&
+       contentAvailabilityAccessor.getConstant()) ||
+      (contentAvailabilityAccessor.isBufferView() &&
+       (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
+    availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
+  }
+
+  // If this is the 0th level within the subtree, we know this tile's
+  // subtree is available and loaded.
+  if (relativeLevel == 0) {
+    // Setting TILE_AVAILABLE here may technically be redundant.
+    availability |= TileAvailabilityFlags::TILE_AVAILABLE;
+    availability |= TileAvailabilityFlags::SUBTREE_AVAILABLE;
+    availability |= TileAvailabilityFlags::SUBTREE_LOADED;
+  }
+
+  return availability;
+
+}
+
+
+
+
+
 uint8_t QuadtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID) const noexcept {
 
@@ -87,47 +159,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
     uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << levelsLeft);
 
     if (levelsLeft < this->_subtreeLevels) {
-      // The availability info is within this subtree.
-      uint8_t availability = TileAvailabilityFlags::REACHABLE;
-
-      uint32_t relativeMortonIndex = getMortonIndex(
-          tileID.x & subtreeRelativeMask,
-          tileID.y & subtreeRelativeMask);
-
-      // For reference:
-      // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
-      // The below is identical to:
-      // (4^levelRelativeToSubtree - 1) / 3
-      uint32_t offset = ((1U << (levelsLeft << 1U)) - 1U) / 3U;
-
-      uint32_t availabilityIndex = relativeMortonIndex + offset;
-      uint32_t byteIndex = availabilityIndex >> 3;
-      uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
-      uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
-
-      // Check tile availability.
-      if ((tileAvailabilityAccessor.isConstant() &&
-           tileAvailabilityAccessor.getConstant()) ||
-          (tileAvailabilityAccessor.isBufferView() &&
-           (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
-        availability |= TileAvailabilityFlags::TILE_AVAILABLE;
-      }
-
-      // Check content availability.
-      if ((contentAvailabilityAccessor.isConstant() &&
-           contentAvailabilityAccessor.getConstant()) ||
-          (contentAvailabilityAccessor.isBufferView() &&
-           (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
-        availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
-      }
-
-      // If this is the 0th level within the subtree, we know this tile's
-      // subtree is available and loaded.
-      if (levelsLeft == 0) {
-        availability |= TileAvailabilityFlags::SUBTREE_AVAILABLE;
-        availability |= TileAvailabilityFlags::SUBTREE_LOADED;
-      }
-
+      uint8_t availability = computeAvailabilityImpl(subtree, tileID, levelsLeft);
       return availability;
     }
 
@@ -308,6 +340,9 @@ bool QuadtreeAvailability::addSubtree(
   return false;
 }
 
+
+
+
 uint8_t QuadtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID,
     const AvailabilityNode* pNode) const noexcept {
@@ -325,63 +360,9 @@ uint8_t QuadtreeAvailability::computeAvailability(
     return 0;
   }
 
-  AvailabilityAccessor tileAvailabilityAccessor(
-      pNode->subtree->tileAvailability,
-      *pNode->subtree);
-  AvailabilityAccessor contentAvailabilityAccessor(
-      pNode->subtree->contentAvailability,
-      *pNode->subtree);
-  AvailabilityAccessor subtreeAvailability(
-      pNode->subtree->subtreeAvailability,
-      *pNode->subtree);
+  const AvailabilitySubtree& subtree = *pNode->subtree;
+  uint8_t availability = computeAvailabilityImpl(subtree, tileID, relativeLevel);
 
-  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << relativeLevel);
-
-  // Assume the availability info is within this subtree.
-  // If this is not the case, we may return an incorrect availability.
-  uint8_t availability = TileAvailabilityFlags::REACHABLE;
-
-  uint32_t relativeMortonIndex = getMortonIndex(
-      tileID.x & subtreeRelativeMask,
-      tileID.y & subtreeRelativeMask);
-
-  // For reference:
-  // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
-  // The below is identical to:
-  // (4^levelRelativeToSubtree - 1) / 3
-  uint32_t offset = ((1U << (relativeLevel << 1U)) - 1U) / 3U;
-
-  uint32_t availabilityIndex = relativeMortonIndex + offset;
-  uint32_t byteIndex = availabilityIndex >> 3;
-  uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
-  uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
-
-  // Check tile availability.
-  if ((tileAvailabilityAccessor.isConstant() &&
-       tileAvailabilityAccessor.getConstant()) ||
-      (tileAvailabilityAccessor.isBufferView() &&
-       (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
-    availability |= TileAvailabilityFlags::TILE_AVAILABLE;
-  }
-
-  // Check content availability.
-  if ((contentAvailabilityAccessor.isConstant() &&
-       contentAvailabilityAccessor.getConstant()) ||
-      (contentAvailabilityAccessor.isBufferView() &&
-       (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
-    availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
-  }
-
-  // If this is the 0th level within the subtree, we know this tile's
-  // subtree is available and loaded.
-  if (relativeLevel == 0) {
-    // Setting TILE_AVAILABLE here may technically be redundant.
-    availability |= TileAvailabilityFlags::TILE_AVAILABLE;
-    availability |= TileAvailabilityFlags::SUBTREE_AVAILABLE;
-    availability |= TileAvailabilityFlags::SUBTREE_LOADED;
-  }
-
-  return availability;
 }
 
 AvailabilityNode* QuadtreeAvailability::addNode(
