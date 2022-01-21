@@ -179,11 +179,6 @@ std::optional<uint32_t> findChildNodeIndexImpl(
   uint32_t mortonIndex = getMortonIndex(
       tileID.x & subtreeRelativeMask,
       tileID.y & subtreeRelativeMask);
-
-  AvailabilityAccessor subtreeAvailabilityAccessor(
-      subtree.subtreeAvailability,
-      subtree);
-
   std::optional<uint32_t> optionalSubtreeIndex =
       computeChildSubtreeIndex(subtree, mortonIndex);
   return optionalSubtreeIndex;
