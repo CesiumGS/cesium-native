@@ -56,6 +56,21 @@ QuadtreeAvailability::QuadtreeAvailability(
 
 
 
+bool isAvailable(const AvailabilityAccessor& availabilityAccessor,
+  const uint32_t byteIndex,
+  const uint8_t bitMask) {
+
+  if (availabilityAccessor.isConstant())
+  {
+    return availabilityAccessor.getConstant();
+  }
+  if (availabilityAccessor.isBufferView())
+  {
+      return ((uint8_t)availabilityAccessor[byteIndex] & bitMask) != 0;
+  }
+  return false;
+}
+
 
 uint8_t computeAvailabilityImpl(
   const AvailabilitySubtree& subtree,
@@ -94,18 +109,12 @@ uint8_t computeAvailabilityImpl(
   uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
   // Check tile availability.
-  if ((tileAvailabilityAccessor.isConstant() &&
-       tileAvailabilityAccessor.getConstant()) ||
-      (tileAvailabilityAccessor.isBufferView() &&
-       (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
+  if (isAvailable(tileAvailabilityAccessor, byteIndex, bitMask)) {
     availability |= TileAvailabilityFlags::TILE_AVAILABLE;
   }
 
   // Check content availability.
-  if ((contentAvailabilityAccessor.isConstant() &&
-       contentAvailabilityAccessor.getConstant()) ||
-      (contentAvailabilityAccessor.isBufferView() &&
-       (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
+  if (isAvailable(contentAvailabilityAccessor, byteIndex, bitMask)) {
     availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
   }
 
@@ -119,7 +128,6 @@ uint8_t computeAvailabilityImpl(
   }
 
   return availability;
-
 }
 
 
