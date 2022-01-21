@@ -153,12 +153,6 @@ uint8_t QuadtreeAvailability::computeAvailability(
   while (pNode && pNode->subtree && tileID.level >= level) {
     const AvailabilitySubtree& subtree = *pNode->subtree;
 
-    AvailabilityAccessor tileAvailabilityAccessor(
-        subtree.tileAvailability,
-        subtree);
-    AvailabilityAccessor contentAvailabilityAccessor(
-        subtree.contentAvailability,
-        subtree);
     AvailabilityAccessor subtreeAvailabilityAccessor(
         subtree.subtreeAvailability,
         subtree);
