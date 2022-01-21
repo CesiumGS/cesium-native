@@ -22,6 +22,13 @@ public:
     this->addReference();
   }
 
+  template <
+      class U,
+      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  IntrusivePointer(const IntrusivePointer<U>& rhs) noexcept : _p(rhs._p) {
+    this->addReference();
+  }
+
   /**
    * @brief Move constructor.
    */
@@ -30,6 +37,13 @@ public:
     // Reference count is unchanged
   }
 
+  template <
+      class U,
+      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  IntrusivePointer(IntrusivePointer<U>&& rhs) noexcept
+      : _p(std::exchange(rhs._p, nullptr)) {
+    // Reference count is unchanged
+  }
   /**
    * @brief Default destructor.
    */
@@ -39,6 +53,23 @@ public:
    * @brief Assignment operator.
    */
   IntrusivePointer& operator=(const IntrusivePointer& rhs) noexcept {
+    if (this->_p != rhs._p) {
+      // addReference the new pointer before releaseReference'ing the old.
+      T* pOld = this->_p;
+      this->_p = rhs._p;
+      addReference();
+
+      if (pOld) {
+        pOld->releaseReference();
+      }
+    }
+
+    return *this;
+  }
+  template <
+      class U,
+      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  IntrusivePointer& operator=(const IntrusivePointer<U>& rhs) noexcept {
     if (this->_p != rhs._p) {
       // addReference the new pointer before releaseReference'ing the old.
       T* pOld = this->_p;
@@ -109,6 +140,12 @@ public:
   bool operator==(const IntrusivePointer<T>& rhs) const noexcept {
     return this->_p == rhs._p;
   }
+  template <
+      class U,
+      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  bool operator==(const IntrusivePointer<U>& rhs) const noexcept {
+    return this->_p == rhs._p;
+  }
 
   /**
    * @brief Returns `true` if two pointers are *not* equal.
@@ -143,5 +180,6 @@ private:
   }
 
   T* _p;
+  template <typename U> friend class IntrusivePointer;
 };
 } // namespace CesiumUtility
