@@ -93,7 +93,7 @@ uint8_t computeAvailabilityImpl(
       tileID.y & subtreeRelativeMask);
 
   // For reference:
-  // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
   // The below is identical to:
   // (4^levelRelativeToSubtree - 1) / 3
   uint32_t offset = ((1U << (relativeLevel << 1U)) - 1U) / 3U;
@@ -154,7 +154,7 @@ std::optional<uint32_t> computeChildSubtreeIndex(
     uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
 
     childSubtreeAvailable = availabilityByte & bitMask;
-    // Calculte the index the child subtree is stored in.
+    // Calculate the index the child subtree is stored in.
     if (childSubtreeAvailable) {
       childSubtreeIndex =
           // TODO: maybe partial sums should be precomputed in the subtree
