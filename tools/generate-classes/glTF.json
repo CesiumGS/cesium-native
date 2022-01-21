@@ -25,6 +25,18 @@
     "KHR_draco_mesh_compression extension": {
       "overrideName": "ExtensionKhrDracoMeshCompression"
     },
+    "KHR_materials_unlit glTF extension": {
+      "overrideName": "ExtensionKhrMaterialsUnlit"
+    },
+    "EXT_mesh_gpu_instancing glTF extension": {
+      "overrideName": "ExtensionExtMeshGpuInstancing"
+    },
+    "EXT_meshopt_compression buffer extension": {
+      "overrideName": "ExtensionBufferExtMeshoptCompression"
+    },
+    "EXT_meshopt_compression bufferView extension": {
+      "overrideName": "ExtensionBufferViewExtMeshoptCompression"
+    },
     "EXT_feature_metadata glTF extension": {
       "overrideName": "ExtensionModelExtFeatureMetadata"
     },
@@ -75,6 +87,48 @@
     },
     "Texture Accessor in EXT_feature_metadata": {
       "overrideName": "TextureAccessor"
+    },
+    "EXT_mesh_features glTF extension": {
+      "overrideName": "ExtensionModelExtMeshFeatures"
+    },
+    "EXT_mesh_features glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
+    },
+    "EXT_mesh_features glTF Node extension": {
+      "overrideName": "ExtensionNodeExtMeshFeatures"
+    },
+    "Class Property in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesClassProperty"
+    },
+    "Class in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesClass"
+    },
+    "Enum in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesEnum"
+    },
+    "Enum Value in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesEnumValue"
+    },
+    "Feature ID in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesFeatureId"
+    },
+    "Feature ID Texture in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesFeatureIdTexture"
+    },
+    "Property Table Property in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesPropertyTableProperty"
+    },
+    "Property Table in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesPropertyTable"
+    },
+    "Property Texture in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesPropertyTexture"
+    },
+    "Schema in EXT_mesh_features": {
+      "overrideName": "ExtensionExtMeshFeaturesSchema"
+    },
+    "CESIUM_tile_edges glTF Mesh Primitive extension": {
+      "overrideName": "ExtensionCesiumTileEdges"
     }
   },
   "extensions": [
@@ -83,12 +137,50 @@
       "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json"
     },
     {
+      "extensionName": "KHR_materials_unlit",
+      "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
+      "attachTo": [
+        "material"
+      ]
+    },
+    {
+      "extensionName": "EXT_mesh_gpu_instancing",
+      "schema": "Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json",
+      "attachTo": [
+        "node"
+      ]
+    },
+    {
+      "extensionName": "EXT_meshopt_compression",
+      "schema": "Vendor/EXT_meshopt_compression/schema/buffer.EXT_meshopt_compression.schema.json"
+    },
+    {
+      "extensionName": "EXT_meshopt_compression",
+      "schema": "Vendor/EXT_meshopt_compression/schema/bufferView.EXT_meshopt_compression.schema.json"
+    },
+    {
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json"
     },
     {
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
+    },
+    {
+      "extensionName": "CESIUM_tile_edges",
+      "schema": "Vendor/CESIUM_tile_edges/schema/mesh.primitive.CESIUM_tile_edges.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/glTF.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/mesh.primitive.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "EXT_mesh_features",
+      "schema": "Vendor/EXT_mesh_features/schema/node.EXT_mesh_features.schema.json"
     }
   ]
 }
