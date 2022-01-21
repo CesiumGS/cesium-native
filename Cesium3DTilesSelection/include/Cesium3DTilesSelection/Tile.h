@@ -468,9 +468,7 @@ public:
   /**
    * @brief Returns the {@link LoadState} of this tile.
    */
-  LoadState getState() const noexcept {
-    return this->_state.load(std::memory_order::memory_order_acquire);
-  }
+  LoadState getState() const noexcept;
 
   /**
    * @brief Set the {@link LoadState} of this tile.

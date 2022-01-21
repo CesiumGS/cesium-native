@@ -43,8 +43,6 @@ function generateCombinedWriter(options) {
             })
             .join("\n")}
 
-        void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context); 
-
         } // namespace ${writerNamespace}
   `;
 
@@ -76,6 +74,14 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
         
+        // Forward declaration to avoid circular dependency since some properties
+        // are vector of unordered_map and others are unordered_map of vector
+        template <typename T>
+        [[maybe_unused]] void writeJson(
+            const std::vector<T>& list,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context);
+
         [[maybe_unused]] void writeJson(
             const std::string& str,
             CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -166,7 +172,44 @@ function generateCombinedWriter(options) {
             jsonWriter.Null();
           }
         }
+
+        template <typename T>
+        void writeExtensibleObject(
+            const T& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+
+          if (!obj.extensions.empty()) {
+            jsonWriter.Key("extensions");
+            writeJsonExtensions(obj, jsonWriter, context);
+          }
+
+          if (!obj.extras.empty()) {
+            jsonWriter.Key("extras");
+            writeJson(obj.extras, jsonWriter, context);
+          }
+        }
+
+        template <typename T>
+        void writeNamedObject(
+            const T& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+
+          if (!obj.name.empty()) {
+            jsonWriter.Key("name");
+            writeJson(obj.name, jsonWriter, context);
+          }
+
+          writeExtensibleObject(obj, jsonWriter, context);
+        }
         
+        ${writers
+          .map((writer) => {
+            return writer.writeBaseJsonDefinition ?? "";
+          })
+          .join("\n")}
+
         ${writers
           .map((writer) => {
             return writer.writeJsonDefinition;
@@ -181,16 +224,7 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
         
-        void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
-          (void)context;
-          ${writers
-            .map((writer) => {
-              return writer.writeExtensionsRegistration;
-            })
-            .join("\n")}
-        }
         } // namespace ${writerNamespace}
-  
   `;
 
   const writerHeaderOutputDir = path.join(writerOutputDir, "generated", "src");
