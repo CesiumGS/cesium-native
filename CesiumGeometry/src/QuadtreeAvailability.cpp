@@ -54,29 +54,24 @@ QuadtreeAvailability::QuadtreeAvailability(
       _maximumChildrenSubtrees(1U << (subtreeLevels << 1U)),
       _pRoot(nullptr) {}
 
+bool isAvailable(
+    const AvailabilityAccessor& availabilityAccessor,
+    const uint32_t byteIndex,
+    const uint8_t bitMask) {
 
-
-bool isAvailable(const AvailabilityAccessor& availabilityAccessor,
-  const uint32_t byteIndex,
-  const uint8_t bitMask) {
-
-  if (availabilityAccessor.isConstant())
-  {
+  if (availabilityAccessor.isConstant()) {
     return availabilityAccessor.getConstant();
   }
-  if (availabilityAccessor.isBufferView())
-  {
-      return ((uint8_t)availabilityAccessor[byteIndex] & bitMask) != 0;
+  if (availabilityAccessor.isBufferView()) {
+    return ((uint8_t)availabilityAccessor[byteIndex] & bitMask) != 0;
   }
   return false;
 }
 
-
 uint8_t computeAvailabilityImpl(
-  const AvailabilitySubtree& subtree,
-  const QuadtreeTileID& tileID,
-  uint32_t relativeLevel)
-{
+    const AvailabilitySubtree& subtree,
+    const QuadtreeTileID& tileID,
+    uint32_t relativeLevel) {
   AvailabilityAccessor tileAvailabilityAccessor(
       subtree.tileAvailability,
       subtree);
@@ -130,76 +125,21 @@ uint8_t computeAvailabilityImpl(
   return availability;
 }
 
-
-std::optional<uint32_t> findChildNodeIndexImpl(
-  const AvailabilitySubtree& subtree,
-  const QuadtreeTileID& tileID,
-  const uint32_t subtreeLevels)
-{
-  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << subtreeLevels);
-  uint32_t mortonIndex = getMortonIndex(
-      tileID.x & subtreeRelativeMask,
-      tileID.y & subtreeRelativeMask);
-
+std::optional<uint32_t> computeChildSubtreeIndex(
+    const AvailabilitySubtree& subtree,
+    uint32_t childSubtreeMortonIndex) {
   AvailabilityAccessor subtreeAvailabilityAccessor(
       subtree.subtreeAvailability,
       subtree);
-
-  bool subtreeAvailable = false;
-  uint32_t subtreeIndex = 0;
-  if (subtreeAvailabilityAccessor.isConstant()) {
-    subtreeAvailable = subtreeAvailabilityAccessor.getConstant();
-    subtreeIndex = mortonIndex;
-  } else if (subtreeAvailabilityAccessor.isBufferView()) {
-    uint32_t byteIndex = mortonIndex >> 3;
-    uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
-    uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
-
-    gsl::span<const std::byte> clippedSubtreeAvailability =
-        subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
-    uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
-
-    subtreeAvailable = availabilityByte & bitMask;
-
-    // Calculte the index the child subtree is stored in.
-    if (subtreeAvailable) {
-      subtreeIndex =
-          // TODO: maybe partial sums should be precomputed in the subtree
-          // availability, instead of iterating through the buffer each time.
-          AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
-          AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
-    }
-  }
-
-  if (subtreeAvailable) {
-    return subtreeIndex;
-  }
-
-  return std::nullopt;
-}
-
-
-
-std::optional<uint32_t> computeChildSubtreeIndex(
-  const AvailabilitySubtree& subtree,
-  uint32_t childSubtreeMortonIndex)
-{
-    AvailabilityAccessor subtreeAvailabilityAccessor(
-        subtree.subtreeAvailability,
-        subtree);
 
   // Check if the needed child subtree exists.
   bool childSubtreeAvailable = false;
   uint32_t childSubtreeIndex = 0;
 
   if (subtreeAvailabilityAccessor.isConstant()) {
-    if (subtreeAvailabilityAccessor.getConstant())
-    {
+    if (subtreeAvailabilityAccessor.getConstant()) {
       return childSubtreeMortonIndex;
-    }
-    else
-    {
+    } else {
       return std::nullopt;
     }
   }
@@ -211,8 +151,7 @@ std::optional<uint32_t> computeChildSubtreeIndex(
 
     gsl::span<const std::byte> clippedSubtreeAvailability =
         subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
-    uint8_t availabilityByte =
-        (uint8_t)subtreeAvailabilityAccessor[byteIndex];
+    uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
 
     childSubtreeAvailable = availabilityByte & bitMask;
     // Calculte the index the child subtree is stored in.
@@ -220,14 +159,11 @@ std::optional<uint32_t> computeChildSubtreeIndex(
       childSubtreeIndex =
           // TODO: maybe partial sums should be precomputed in the subtree
           // availability, instead of iterating through the buffer each time.
-          AvailabilityUtilities::countOnesInBuffer(
-              clippedSubtreeAvailability) +
+          AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
           AvailabilityUtilities::countOnesInByte(
               static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
       return childSubtreeIndex;
-    }
-    else
-    {
+    } else {
       return std::nullopt;
     }
   }
@@ -235,12 +171,28 @@ std::optional<uint32_t> computeChildSubtreeIndex(
   return std::nullopt;
 }
 
+std::optional<uint32_t> findChildNodeIndexImpl(
+    const AvailabilitySubtree& subtree,
+    const QuadtreeTileID& tileID,
+    const uint32_t subtreeLevels) {
+  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << subtreeLevels);
+  uint32_t mortonIndex = getMortonIndex(
+      tileID.x & subtreeRelativeMask,
+      tileID.y & subtreeRelativeMask);
+
+  AvailabilityAccessor subtreeAvailabilityAccessor(
+      subtree.subtreeAvailability,
+      subtree);
+
+  std::optional<uint32_t> optionalSubtreeIndex =
+      computeChildSubtreeIndex(subtree, mortonIndex);
+  return optionalSubtreeIndex;
+}
 
 uint32_t computeChildSubtreeMortonIndex(
-  const QuadtreeTileID& tileID,
-  const uint32_t levelsLeft,
-  const uint32_t subtreeLevels)
-{
+    const QuadtreeTileID& tileID,
+    const uint32_t levelsLeft,
+    const uint32_t subtreeLevels) {
   uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << levelsLeft);
   uint32_t levelsLeftAfterNextLevel = levelsLeft - subtreeLevels;
   uint32_t childSubtreeMortonIndex = getMortonIndex(
@@ -248,7 +200,6 @@ uint32_t computeChildSubtreeMortonIndex(
       (tileID.y & subtreeRelativeMask) >> levelsLeftAfterNextLevel);
   return childSubtreeMortonIndex;
 }
-
 
 uint8_t QuadtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID) const noexcept {
@@ -272,16 +223,21 @@ uint8_t QuadtreeAvailability::computeAvailability(
     uint32_t levelsLeft = tileID.level - level;
 
     if (levelsLeft < this->_subtreeLevels) {
-      uint8_t availability = computeAvailabilityImpl(subtree, tileID, levelsLeft);
+      uint8_t availability =
+          computeAvailabilityImpl(subtree, tileID, levelsLeft);
       return availability;
     }
 
-    uint32_t childSubtreeMortonIndex = computeChildSubtreeMortonIndex(tileID, levelsLeft, this->_subtreeLevels);
+    uint32_t childSubtreeMortonIndex = computeChildSubtreeMortonIndex(
+        tileID,
+        levelsLeft,
+        this->_subtreeLevels);
 
-    std::optional<uint32_t> childSubtreeIndexOptional = computeChildSubtreeIndex(subtree, childSubtreeMortonIndex);
+    std::optional<uint32_t> childSubtreeIndexOptional =
+        computeChildSubtreeIndex(subtree, childSubtreeMortonIndex);
 
     if (childSubtreeIndexOptional.has_value()) {
-    uint32_t childSubtreeIndex = childSubtreeIndexOptional.value();
+      uint32_t childSubtreeIndex = childSubtreeIndexOptional.value();
       pNode = pNode->childNodes[childSubtreeIndex].get();
       level += this->_subtreeLevels;
     } else {
@@ -346,9 +302,13 @@ bool QuadtreeAvailability::addSubtree(
       return false;
     }
 
-    uint32_t childSubtreeMortonIndex = computeChildSubtreeMortonIndex(tileID, levelsLeft, this->_subtreeLevels);
+    uint32_t childSubtreeMortonIndex = computeChildSubtreeMortonIndex(
+        tileID,
+        levelsLeft,
+        this->_subtreeLevels);
 
-    std::optional<uint32_t> childSubtreeIndexOptional = computeChildSubtreeIndex(subtree, childSubtreeMortonIndex);
+    std::optional<uint32_t> childSubtreeIndexOptional =
+        computeChildSubtreeIndex(subtree, childSubtreeMortonIndex);
 
     if (!childSubtreeIndexOptional.has_value()) {
       // TODO: warn of invalid availability
@@ -381,9 +341,6 @@ bool QuadtreeAvailability::addSubtree(
   return false;
 }
 
-
-
-
 uint8_t QuadtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID,
     const AvailabilityNode* pNode) const noexcept {
@@ -402,8 +359,8 @@ uint8_t QuadtreeAvailability::computeAvailability(
   }
 
   const AvailabilitySubtree& subtree = *pNode->subtree;
-  uint8_t availability = computeAvailabilityImpl(subtree, tileID, relativeLevel);
-
+  uint8_t availability =
+      computeAvailabilityImpl(subtree, tileID, relativeLevel);
 }
 
 AvailabilityNode* QuadtreeAvailability::addNode(
@@ -433,15 +390,13 @@ AvailabilityNode* QuadtreeAvailability::addNode(
   }
 
   const AvailabilitySubtree& subtree = *pParentNode->subtree;
-  std::optional<uint32_t> optionalSubtreeIndex = findChildNodeIndexImpl(
-    subtree, tileID, this->_subtreeLevels);
-  if (!optionalSubtreeIndex)
-  {
+  std::optional<uint32_t> optionalSubtreeIndex =
+      findChildNodeIndexImpl(subtree, tileID, this->_subtreeLevels);
+  if (!optionalSubtreeIndex) {
     return nullptr;
   }
   uint32_t subtreeIndex = optionalSubtreeIndex.has_value();
-  pParentNode->childNodes[subtreeIndex] =
-      std::make_unique<AvailabilityNode>();
+  pParentNode->childNodes[subtreeIndex] = std::make_unique<AvailabilityNode>();
   return pParentNode->childNodes[subtreeIndex].get();
 }
 
@@ -458,7 +413,6 @@ bool QuadtreeAvailability::addLoadedSubtree(
 
   return true;
 }
-
 
 std::optional<uint32_t> QuadtreeAvailability::findChildNodeIndex(
     const QuadtreeTileID& tileID,
