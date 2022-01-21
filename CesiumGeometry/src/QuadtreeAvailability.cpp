@@ -236,6 +236,20 @@ std::optional<uint32_t> computeChildSubtreeIndex(
 }
 
 
+uint32_t computeChildSubtreeMortonIndex(
+  const QuadtreeTileID& tileID,
+  const uint32_t levelsLeft,
+  const uint32_t subtreeLevels)
+{
+  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << levelsLeft);
+  uint32_t levelsLeftAfterNextLevel = levelsLeft - subtreeLevels;
+  uint32_t childSubtreeMortonIndex = getMortonIndex(
+      (tileID.x & subtreeRelativeMask) >> levelsLeftAfterNextLevel,
+      (tileID.y & subtreeRelativeMask) >> levelsLeftAfterNextLevel);
+  return childSubtreeMortonIndex;
+}
+
+
 uint8_t QuadtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID) const noexcept {
 
@@ -262,11 +276,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
       return availability;
     }
 
-    uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << levelsLeft);
-    uint32_t levelsLeftAfterNextLevel = levelsLeft - this->_subtreeLevels;
-    uint32_t childSubtreeMortonIndex = getMortonIndex(
-        (tileID.x & subtreeRelativeMask) >> levelsLeftAfterNextLevel,
-        (tileID.y & subtreeRelativeMask) >> levelsLeftAfterNextLevel);
+    uint32_t childSubtreeMortonIndex = computeChildSubtreeMortonIndex(tileID, levelsLeft, this->_subtreeLevels);
 
     std::optional<uint32_t> childSubtreeIndexOptional = computeChildSubtreeIndex(subtree, childSubtreeMortonIndex);
 
@@ -336,11 +346,7 @@ bool QuadtreeAvailability::addSubtree(
       return false;
     }
 
-    uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << levelsLeft);
-    uint32_t levelsLeftAfterChildren = levelsLeft - this->_subtreeLevels;
-    uint32_t childSubtreeMortonIndex = getMortonIndex(
-        (tileID.x & subtreeRelativeMask) >> levelsLeftAfterChildren,
-        (tileID.y & subtreeRelativeMask) >> levelsLeftAfterChildren);
+    uint32_t childSubtreeMortonIndex = computeChildSubtreeMortonIndex(tileID, levelsLeft, this->_subtreeLevels);
 
     std::optional<uint32_t> childSubtreeIndexOptional = computeChildSubtreeIndex(subtree, childSubtreeMortonIndex);
 
@@ -350,7 +356,7 @@ bool QuadtreeAvailability::addSubtree(
     }
     uint32_t childSubtreeIndex = childSubtreeIndexOptional.value();
 
-    if (levelsLeftAfterChildren == 0) {
+    if ((levelsLeft - this->_subtreeLevels) == 0) {
       // This is the child that the new subtree corresponds to.
 
       if (pNode->childNodes[childSubtreeIndex]) {
