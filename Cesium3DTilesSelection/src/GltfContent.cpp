@@ -49,8 +49,8 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
-  CesiumGltfReader::ModelReaderResult loadedModel =
-      GltfContent::_gltfReader.readModel(data);
+  CesiumGltfReader::GltfReaderResult loadedModel =
+      GltfContent::_gltfReader.readGltf(data);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -77,7 +77,7 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              pAssetAccessor,
              std::move(loadedModel))
       .thenInWorkerThread(
-          [pLogger, url](CesiumGltfReader::ModelReaderResult&& resolvedModel) {
+          [pLogger, url](CesiumGltfReader::GltfReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =
                 std::make_unique<TileContentLoadResult>();
 
