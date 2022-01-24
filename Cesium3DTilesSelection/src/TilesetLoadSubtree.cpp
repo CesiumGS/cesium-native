@@ -105,7 +105,7 @@ Tileset::LoadSubtree::Private::requestAvailabilitySubtree(
   std::string url = Private::getResolvedSubtreeUrl(tile);
   assert(!url.empty());
 
-  return tileset.getExternals().pAssetAccessor->requestAsset(
+  return tileset.getExternals().pAssetAccessor->get(
       tileset.getAsyncSystem(),
       url,
       tile.getContext()->requestHeaders);

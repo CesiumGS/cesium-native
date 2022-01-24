@@ -367,7 +367,7 @@ Tileset::requestTileContent(Tile& tile) {
 
   this->notifyTileStartLoading(&tile);
 
-  return this->getExternals().pAssetAccessor->requestAsset(
+  return this->getExternals().pAssetAccessor->get(
       this->getAsyncSystem(),
       url,
       tile.getContext()->requestHeaders);

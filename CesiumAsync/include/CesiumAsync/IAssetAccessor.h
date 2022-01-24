@@ -36,24 +36,27 @@ public:
    * @param headers The headers to include in the request.
    * @return The in-progress asset request.
    */
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> requestAsset(
-      const AsyncSystem& asyncSystem,
+  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
+  get(const AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers = {}) = 0;
 
   /**
-   * @brief Starts a new POST request to the given URL.
+   * @brief Starts a new request to the given URL, using the provided HTTP verb
+   * and the provided content payload.
    *
    * The request proceeds asynchronously without blocking the calling thread.
    *
    * @param asyncSystem The async system used to do work in threads.
+   * @param verb The HTTP verb to use, such as "POST" or "PATCH".
    * @param url The URL of the asset.
    * @param headers The headers to include in the request.
-   * @param contentPayload The payload data of the POST.
+   * @param contentPayload The payload data to include in the request.
    * @return The in-progress asset request.
    */
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> post(
+  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> request(
       const AsyncSystem& asyncSystem,
+      const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers = std::vector<THeader>(),
       const gsl::span<const std::byte>& contentPayload = {}) = 0;

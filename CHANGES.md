@@ -25,6 +25,11 @@
 - Added `hasExtension` to `ExtensibleObject`.
 - Added `CESIUM_TESTS_ENABLED` option to the build system.
 
+##### Breaking Changes :mega:
+
+- Renamed `IAssetAccessor::requestAsset` to `get`.
+- Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
+
 ##### Fixes :wrench:
 
 - Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.

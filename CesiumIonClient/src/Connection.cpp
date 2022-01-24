@@ -291,7 +291,7 @@ parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
 
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/me"),
           {{"Accept", "application/json"},
@@ -367,7 +367,7 @@ static Asset jsonToAsset(const rapidjson::Value& item) {
 
 CesiumAsync::Future<Response<Assets>> Connection::assets() const {
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets"),
           {{"Accept", "application/json"},
@@ -437,7 +437,7 @@ static Token tokenFromJson(const rapidjson::Value& json) {
 
 CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
           {{"Accept", "application/json"},
@@ -487,7 +487,7 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
       CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets/");
 
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(assetsUrl, std::to_string(assetID)),
           {{"Accept", "application/json"},
@@ -552,8 +552,9 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
       reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
       tokenBuffer.GetSize());
   return this->_pAssetAccessor
-      ->post(
+      ->request(
           this->_asyncSystem,
+          "POST",
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
           {{"Content-Type", "application/json"},
            {"Accept", "application/json"},
@@ -617,8 +618,9 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
       postBuffer.GetSize());
 
   return pAssetAccessor
-      ->post(
+      ->request(
           asyncSystem,
+          "POST",
           Uri::resolve(ionApiUrl, "oauth/token"),
           {{"Content-Type", "application/json"},
            {"Accept", "application/json"}},
