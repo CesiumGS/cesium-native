@@ -71,3 +71,76 @@ TEST_CASE("Math::roundUp and roundDown") {
   CHECK(Math::roundUp(-1.995, 0.01) == -2.0);
   CHECK(Math::roundDown(-1.005, 0.01) == -1.0);
 }
+
+TEST_CASE("Math::negativePitoPi") {
+  CHECK(Math::negativePiToPi(0.0) == 0.0);
+  CHECK(Math::negativePiToPi(+Math::ONE_PI) == +Math::ONE_PI);
+  CHECK(Math::negativePiToPi(-Math::ONE_PI) == -Math::ONE_PI);
+  CHECK(Math::negativePiToPi(+Math::ONE_PI - 1.0) == (+Math::ONE_PI - 1.0));
+  CHECK(Math::negativePiToPi(-Math::ONE_PI + 1.0) == (-Math::ONE_PI + 1.0));
+  CHECK(Math::negativePiToPi(+Math::ONE_PI - 0.1) == (+Math::ONE_PI - 0.1));
+  CHECK(Math::negativePiToPi(-Math::ONE_PI + 0.1) == (-Math::ONE_PI + 0.1));
+  CHECK(Math::equalsEpsilon(
+      Math::negativePiToPi(+Math::ONE_PI + 0.1),
+      -Math::ONE_PI + 0.1,
+      Math::EPSILON15));
+  CHECK(Math::negativePiToPi(+2.0 * Math::ONE_PI) == 0.0);
+  CHECK(Math::negativePiToPi(-2.0 * Math::ONE_PI) == 0.0);
+  CHECK(Math::negativePiToPi(+3.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::negativePiToPi(-3.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::negativePiToPi(+4.0 * Math::ONE_PI) == 0.0);
+  CHECK(Math::negativePiToPi(-4.0 * Math::ONE_PI) == 0.0);
+  CHECK(Math::negativePiToPi(+5.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::negativePiToPi(-5.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::negativePiToPi(+6.0 * Math::ONE_PI) == 0.0);
+  CHECK(Math::negativePiToPi(-6.0 * Math::ONE_PI) == 0.0);
+}
+
+TEST_CASE("Math::zeroToTwoPi") {
+  CHECK(Math::zeroToTwoPi(0.0) == 0.0);
+  CHECK(Math::zeroToTwoPi(+Math::ONE_PI) == +Math::ONE_PI);
+  CHECK(Math::zeroToTwoPi(-Math::ONE_PI) == +Math::ONE_PI);
+  CHECK(Math::zeroToTwoPi(+Math::ONE_PI - 1.0) == (+Math::ONE_PI - 1.0));
+  CHECK(Math::equalsEpsilon(
+      Math::zeroToTwoPi(-Math::ONE_PI + 1.0),
+      +Math::ONE_PI + 1.0,
+      Math::EPSILON15));
+  CHECK(Math::zeroToTwoPi(+Math::ONE_PI - 0.1) == (+Math::ONE_PI - 0.1));
+  CHECK(Math::equalsEpsilon(
+      Math::zeroToTwoPi(-Math::ONE_PI + 0.1),
+      +Math::ONE_PI + 0.1,
+      Math::EPSILON15));
+  CHECK(Math::zeroToTwoPi(+2.0 * Math::ONE_PI) == (2.0 * Math::ONE_PI));
+  CHECK(Math::zeroToTwoPi(-2.0 * Math::ONE_PI) == (2.0 * Math::ONE_PI));
+  CHECK(Math::zeroToTwoPi(+3.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::zeroToTwoPi(-3.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::zeroToTwoPi(+4.0 * Math::ONE_PI) == (2.0 * Math::ONE_PI));
+  CHECK(Math::zeroToTwoPi(-4.0 * Math::ONE_PI) == (2.0 * Math::ONE_PI));
+  CHECK(Math::zeroToTwoPi(+5.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::zeroToTwoPi(-5.0 * Math::ONE_PI) == Math::ONE_PI);
+  CHECK(Math::zeroToTwoPi(+6.0 * Math::ONE_PI) == (2.0 * Math::ONE_PI));
+  CHECK(Math::zeroToTwoPi(-6.0 * Math::ONE_PI) == (2.0 * Math::ONE_PI));
+}
+
+TEST_CASE("Math::mod") {
+  CHECK(Math::mod(0.0, 1.0) == 0.0);
+  CHECK(Math::mod(0.1, 1.0) == 0.1);
+  CHECK(Math::mod(0.5, 1.0) == 0.5);
+  CHECK(Math::mod(1.0, 1.0) == 0.0);
+  CHECK(Math::equalsEpsilon(Math::mod(1.1, 1.0), 0.1, Math::EPSILON15));
+  CHECK(Math::mod(-0.0, 1.0) == 0.0);
+  CHECK(Math::mod(-0.1, 1.0) == 0.9);
+  CHECK(Math::mod(-0.5, 1.0) == 0.5);
+  CHECK(Math::mod(-1.0, 1.0) == 0.0);
+  CHECK(Math::equalsEpsilon(Math::mod(-1.1, 1.0), 0.9, Math::EPSILON15));
+  CHECK(Math::mod(0.0, -1.0) == -0.0);
+  CHECK(Math::mod(0.1, -1.0) == -0.9);
+  CHECK(Math::mod(0.5, -1.0) == -0.5);
+  CHECK(Math::mod(1.0, -1.0) == -0.0);
+  CHECK(Math::equalsEpsilon(Math::mod(1.1, -1.0), -0.9, Math::EPSILON15));
+  CHECK(Math::mod(-0.0, -1.0) == -0.0);
+  CHECK(Math::mod(-0.1, -1.0) == -0.1);
+  CHECK(Math::mod(-0.5, -1.0) == -0.5);
+  CHECK(Math::mod(-1.0, -1.0) == -0.0);
+  CHECK(Math::equalsEpsilon(Math::mod(-1.1, -1.0), -0.1, Math::EPSILON15));
+}
