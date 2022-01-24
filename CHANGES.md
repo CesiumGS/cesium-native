@@ -17,11 +17,11 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesWriter` library.
+- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `QuadtreeRasterOverlayTileProvider` that caused incorrect level-of-detail selection for overlays that use a global (or otherwise large) tiling scheme but have non-global (or otherwise smaller) coverage.
-- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ### v0.10.0 - 2021-12-01
 
