@@ -29,6 +29,16 @@
 
 - Renamed `IAssetAccessor::requestAsset` to `get`.
 - Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
+- `Token` in `CesiumIonClient` has been updated to match Cesium ion's v2 REST API endpoint, so several fields have been renamed. The `tokens` method also now returns future that resolves to a `TokenList` instead of a plain vector of `Token` instances.
+
+##### Additions :tada:
+
+- Added new capabilities to `Connection` in `CesiumIonClient`:
+  - The `tokens` method now uses the v2 service endpoint and allows a number of options to be specified.
+  - Added a `token` method to allow details of a single token to be retrieved.
+  - Added `nextPage` and `previousPage` methods to allow paging through tokens.
+  - Added `modifyToken` method.
+  - Added static `getIdFromToken` method to obtain a token ID from a given token value.
 
 ##### Fixes :wrench:
 
