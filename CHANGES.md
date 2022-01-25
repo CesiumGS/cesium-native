@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.12.0 - 2022-02-01
+
+##### Fixes :wrench:
+
+- Fixed incorrect child subtree index calculation in implicit tiles.
+
 ### v0.11.0 - 2022-01-03
 
 ##### Breaking Changes :mega:
