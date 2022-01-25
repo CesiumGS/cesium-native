@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 
 namespace CesiumAsync {
-namespace Impl {
+namespace CesiumImpl {
 
 template <typename TScheduler> class ImmediateScheduler {
 public:
@@ -87,5 +87,5 @@ private:
   }
 };
 
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

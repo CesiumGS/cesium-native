@@ -95,7 +95,7 @@ static double calculateSkirtHeight(
   static const double terrainHeightmapQuality = 0.25;
   static const uint32_t heightmapWidth = 65;
   double levelZeroMaximumGeometricError =
-      ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI *
+      ellipsoid.getMaximumRadius() * CesiumUtility::Math::TwoPi *
       terrainHeightmapQuality / (heightmapWidth * tilingScheme.getRootTilesX());
 
   double levelMaximumGeometricError =

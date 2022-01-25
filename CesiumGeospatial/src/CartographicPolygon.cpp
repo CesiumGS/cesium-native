@@ -33,9 +33,9 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
     // check if the difference crosses the antipole
     if (glm::abs(point[0]) > CesiumUtility::Math::ONE_PI) {
       if (point[0] > 0.0) {
-        point[0] -= CesiumUtility::Math::TWO_PI;
+        point[0] -= CesiumUtility::Math::TwoPi;
       } else {
-        point[0] += CesiumUtility::Math::TWO_PI;
+        point[0] += CesiumUtility::Math::TwoPi;
       }
     }
   }

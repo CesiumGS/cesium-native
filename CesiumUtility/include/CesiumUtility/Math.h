@@ -82,7 +82,7 @@ public:
   /**
    * @brief two times pi
    */
-  static constexpr double TWO_PI = ONE_PI * 2.0;
+  static constexpr double TwoPi = ONE_PI * 2.0;
 
   /**
    * @brief pi divded by two
@@ -280,17 +280,17 @@ public:
    * to the provided angle.
    *
    * @param angle The angle in radians.
-   * @returns The angle in the range [0, `Math::TWO_PI`].
+   * @returns The angle in the range [0, `Math::TwoPi`].
    */
   static double zeroToTwoPi(double angle) noexcept {
-    if (angle >= 0 && angle <= Math::TWO_PI) {
+    if (angle >= 0 && angle <= Math::TwoPi) {
       // Early exit if the input is already inside the range. This avoids
       // unnecessary math which could introduce floating point error.
       return angle;
     }
-    const double mod = Math::mod(angle, Math::TWO_PI);
+    const double mod = Math::mod(angle, Math::TwoPi);
     if (glm::abs(mod) < Math::EPSILON14 && glm::abs(angle) > Math::EPSILON14) {
-      return Math::TWO_PI;
+      return Math::TwoPi;
     }
     return mod;
   }
@@ -398,7 +398,7 @@ public:
    * @snippet TestMath.cpp convertLongitudeRange
    */
   static double convertLongitudeRange(double angle) noexcept {
-    constexpr double twoPi = Math::TWO_PI;
+    constexpr double twoPi = Math::TwoPi;
 
     const double simplified = angle - glm::floor(angle / twoPi) * twoPi;
 

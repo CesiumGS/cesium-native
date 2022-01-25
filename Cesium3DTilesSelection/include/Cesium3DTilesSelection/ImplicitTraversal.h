@@ -107,5 +107,5 @@ void createImplicitOctreeTile(
     Tile& child,
     const CesiumGeometry::OctreeTileID& childID,
     uint8_t availability);
-} // namespace ImplicitTraversalUtilities
+} // namespace CesiumImplicitTraversalUtilities
 } // namespace Cesium3DTilesSelection

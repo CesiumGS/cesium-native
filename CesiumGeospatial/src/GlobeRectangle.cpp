@@ -68,15 +68,15 @@ std::optional<GlobeRectangle> GlobeRectangle::computeIntersection(
   double otherRectangleWest = other._west;
 
   if (rectangleEast < rectangleWest && otherRectangleEast > 0.0) {
-    rectangleEast += CesiumUtility::Math::TWO_PI;
+    rectangleEast += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleEast > 0.0) {
-    otherRectangleEast += CesiumUtility::Math::TWO_PI;
+    otherRectangleEast += CesiumUtility::Math::TwoPi;
   }
 
   if (rectangleEast < rectangleWest && otherRectangleWest < 0.0) {
-    otherRectangleWest += CesiumUtility::Math::TWO_PI;
+    otherRectangleWest += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleWest < 0.0) {
-    rectangleWest += CesiumUtility::Math::TWO_PI;
+    rectangleWest += CesiumUtility::Math::TwoPi;
   }
 
   const double west = CesiumUtility::Math::negativePiToPi(
@@ -108,15 +108,15 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
   double otherRectangleWest = other._west;
 
   if (rectangleEast < rectangleWest && otherRectangleEast > 0.0) {
-    rectangleEast += CesiumUtility::Math::TWO_PI;
+    rectangleEast += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleEast > 0.0) {
-    otherRectangleEast += CesiumUtility::Math::TWO_PI;
+    otherRectangleEast += CesiumUtility::Math::TwoPi;
   }
 
   if (rectangleEast < rectangleWest && otherRectangleWest < 0.0) {
-    otherRectangleWest += CesiumUtility::Math::TWO_PI;
+    otherRectangleWest += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleWest < 0.0) {
-    rectangleWest += CesiumUtility::Math::TWO_PI;
+    rectangleWest += CesiumUtility::Math::TwoPi;
   }
 
   const double west = CesiumUtility::Math::convertLongitudeRange(

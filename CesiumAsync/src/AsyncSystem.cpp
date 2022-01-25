@@ -8,7 +8,7 @@ namespace CesiumAsync {
 AsyncSystem::AsyncSystem(
     const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept
     : _pSchedulers(
-          std::make_shared<Impl::AsyncSystemSchedulers>(pTaskProcessor)) {}
+          std::make_shared<CesiumImpl::AsyncSystemSchedulers>(pTaskProcessor)) {}
 
 void AsyncSystem::dispatchMainThreadTasks() {
   this->_pSchedulers->mainThread.dispatchQueuedContinuations();

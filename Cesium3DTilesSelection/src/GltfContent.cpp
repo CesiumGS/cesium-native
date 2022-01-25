@@ -293,8 +293,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
                  projectedPosition.y < rectangle.minimumY ||
                  projectedPosition.y > rectangle.maximumY)) {
               const double testLongitude = longitude + longitude < 0.0
-                                               ? CesiumUtility::Math::TWO_PI
-                                               : -CesiumUtility::Math::TWO_PI;
+                                               ? CesiumUtility::Math::TwoPi
+                                               : -CesiumUtility::Math::TwoPi;
               const glm::dvec3 projectedPosition2 = projectPosition(
                   projection,
                   Cartographic(testLongitude, latitude, ellipsoidHeight));

@@ -57,11 +57,11 @@ public:
 
 private:
   Promise(
-      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
       const std::shared_ptr<async::event_task<T>>& pEvent) noexcept
       : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
 
-  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
   std::shared_ptr<async::event_task<T>> _pEvent;
 
   friend class AsyncSystem;
@@ -83,11 +83,11 @@ public:
 
 private:
   Promise(
-      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
       const std::shared_ptr<async::event_task<void>>& pEvent) noexcept
       : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
 
-  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
   std::shared_ptr<async::event_task<void>> _pEvent;
 
   friend class AsyncSystem;
