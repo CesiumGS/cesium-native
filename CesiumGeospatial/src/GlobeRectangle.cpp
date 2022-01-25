@@ -7,10 +7,10 @@ using namespace CesiumUtility;
 namespace CesiumGeospatial {
 
 /*static*/ const GlobeRectangle GlobeRectangle::EMPTY{
-    Math::ONE_PI,
-    Math::PI_OVER_TWO,
-    -Math::ONE_PI,
-    -Math::PI_OVER_TWO};
+    Math::OnePi,
+    Math::PiOverTwo,
+    -Math::OnePi,
+    -Math::PiOverTwo};
 
 Cartographic GlobeRectangle::computeCenter() const noexcept {
   double latitudeCenter = (this->_south + this->_north) * 0.5;
@@ -20,19 +20,19 @@ Cartographic GlobeRectangle::computeCenter() const noexcept {
     return Cartographic((this->_west + this->_east) * 0.5, latitudeCenter, 0.0);
   } else {
     // Rectangle crosses the anti-meridian.
-    double westToAntiMeridian = Math::ONE_PI - this->_west;
-    double antiMeridianToEast = this->_east - -Math::ONE_PI;
+    double westToAntiMeridian = Math::OnePi - this->_west;
+    double antiMeridianToEast = this->_east - -Math::OnePi;
     double total = westToAntiMeridian + antiMeridianToEast;
     if (westToAntiMeridian >= antiMeridianToEast) {
       // Center is in the Eastern hemisphere.
       return Cartographic(
-          glm::min(Math::ONE_PI, this->_west + total * 0.5),
+          glm::min(Math::OnePi, this->_west + total * 0.5),
           latitudeCenter,
           0.0);
     } else {
       // Center is in the Western hemisphere.
       return Cartographic(
-          glm::max(-Math::ONE_PI, this->_east - total * 0.5),
+          glm::max(-Math::OnePi, this->_east - total * 0.5),
           latitudeCenter,
           0.0);
     }

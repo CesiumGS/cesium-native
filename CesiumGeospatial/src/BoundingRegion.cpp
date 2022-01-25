@@ -62,7 +62,7 @@ BoundingRegion::BoundingRegion(
       westernMidpointCartesian - easternMidpointCartesian;
   const glm::dvec3 eastWestNormal = glm::normalize(westVector);
 
-  if (!Math::equalsEpsilon(glm::length(eastWestNormal), 1.0, Math::EPSILON6)) {
+  if (!Math::equalsEpsilon(glm::length(eastWestNormal), 1.0, Math::Epsilon6)) {
     this->_planesAreInvalid = true;
     return;
   }
@@ -268,7 +268,7 @@ static OrientedBoundingBox fromPlaneExtents(
   if (!Math::equalsEpsilon(
           ellipsoid.getRadii().x,
           ellipsoid.getRadii().y,
-          Math::EPSILON15)) {
+          Math::Epsilon15)) {
     throw std::runtime_error(
         "Ellipsoid must be an ellipsoid of revolution (radii.x == radii.y)");
   }
@@ -277,7 +277,7 @@ static OrientedBoundingBox fromPlaneExtents(
   double minX, maxX, minY, maxY, minZ, maxZ;
   Plane plane(glm::dvec3(0.0, 0.0, 1.0), 0.0);
 
-  if (rectangle.computeWidth() <= Math::ONE_PI) {
+  if (rectangle.computeWidth() <= Math::OnePi) {
     // The bounding box will be aligned with the tangent plane at the center of
     // the rectangle.
     const Cartographic tangentPointCartographic = rectangle.computeCenter();
@@ -408,8 +408,8 @@ static OrientedBoundingBox fromPlaneExtents(
       Cartographic(centerLongitude, latitudeNearestToEquator, maximumHeight));
   planeOrigin.z = 0.0; // center the plane on the equator to simpify plane
                        // normal calculation
-  const bool isPole = glm::abs(planeOrigin.x) < Math::EPSILON10 &&
-                      glm::abs(planeOrigin.y) < Math::EPSILON10;
+  const bool isPole = glm::abs(planeOrigin.x) < Math::Epsilon10 &&
+                      glm::abs(planeOrigin.y) < Math::Epsilon10;
   const glm::dvec3 planeNormal =
       !isPole ? glm::normalize(planeOrigin) : glm::dvec3(1.0, 0.0, 0.0);
   const glm::dvec3 planeYAxis(0.0, 0.0, 1.0);
@@ -420,7 +420,7 @@ static OrientedBoundingBox fromPlaneExtents(
   // extent in the plane's X dimension.
   const glm::dvec3 horizonCartesian =
       ellipsoid.cartographicToCartesian(Cartographic(
-          centerLongitude + Math::PI_OVER_TWO,
+          centerLongitude + Math::PiOverTwo,
           latitudeNearestToEquator,
           maximumHeight));
   maxX = glm::dot(plane.projectPointOntoPlane(horizonCartesian), planeXAxis);

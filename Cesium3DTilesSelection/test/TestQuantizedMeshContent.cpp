@@ -409,11 +409,11 @@ void checkGridMesh(
       REQUIRE(Math::equalsEpsilon(
           uRatio,
           static_cast<double>(x) / static_cast<double>(verticesWidth - 1),
-          Math::EPSILON4));
+          Math::Epsilon4));
       REQUIRE(Math::equalsEpsilon(
           vRatio,
           static_cast<double>(y) / static_cast<double>(verticesHeight - 1),
-          Math::EPSILON4));
+          Math::Epsilon4));
 
       // check grid positions
       double longitude = Math::lerp(west, east, uRatio);
@@ -428,11 +428,11 @@ void checkGridMesh(
           quantizedMesh.header.boundingSphereCenterZ);
 
       REQUIRE(
-          Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
+          Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
       REQUIRE(
-          Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
+          Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
       REQUIRE(
-          Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+          Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
       ++positionIdx;
 
       // check indices
@@ -494,9 +494,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 
   currentVertexCount += westIndicesCount;
@@ -514,9 +514,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 
   currentVertexCount += southIndicesCount;
@@ -534,9 +534,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON2));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon2));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 
   currentVertexCount += eastIndicesCount;
@@ -553,9 +553,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 }
 
@@ -592,20 +592,20 @@ static void checkGeneratedGridNormal(
     if (!Math::equalsEpsilon(
             glm::dot(expectedNormals[i], expectedNormals[i]),
             0.0,
-            Math::EPSILON7)) {
+            Math::Epsilon7)) {
       expectedNormal = glm::normalize(expectedNormals[i]);
 
       // make sure normal points to the direction of geodetic normal for grid
       // only
       REQUIRE(glm::dot(normal, geodeticNormal) >= 0.0);
 
-      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
     } else {
-      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
     }
   }
 
@@ -628,9 +628,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     ++y;
   }
@@ -642,9 +642,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     --x;
   }
@@ -656,9 +656,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     --y;
   }
@@ -670,9 +670,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     ++x;
   }
@@ -1010,9 +1010,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         static_cast<size_t>(normals.size()) ==
         (verticesWidth * verticesHeight + totalSkirtVerticesCount));
     for (int64_t i = 0; i < normals.size(); ++i) {
-      REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::EPSILON2));
-      REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::EPSILON2));
-      REQUIRE(Math::equalsEpsilon(normals[i].z, normal.z, Math::EPSILON2));
+      REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::Epsilon2));
+      REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::Epsilon2));
+      REQUIRE(Math::equalsEpsilon(normals[i].z, normal.z, Math::Epsilon2));
     }
   }
 }

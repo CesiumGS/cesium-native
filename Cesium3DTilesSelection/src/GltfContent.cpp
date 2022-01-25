@@ -286,8 +286,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
             // gets us closer.
             if (glm::abs(
                     glm::abs(cartographic.value().longitude) -
-                    CesiumUtility::Math::ONE_PI) <
-                    CesiumUtility::Math::EPSILON5 &&
+                    CesiumUtility::Math::OnePi) <
+                    CesiumUtility::Math::Epsilon5 &&
                 (projectedPosition.x < rectangle.minimumX ||
                  projectedPosition.x > rectangle.maximumX ||
                  projectedPosition.y < rectangle.minimumY ||

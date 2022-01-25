@@ -31,7 +31,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
     point[1] = cartographic.y;
 
     // check if the difference crosses the antipole
-    if (glm::abs(point[0]) > CesiumUtility::Math::ONE_PI) {
+    if (glm::abs(point[0]) > CesiumUtility::Math::OnePi) {
       if (point[0] > 0.0) {
         point[0] -= CesiumUtility::Math::TwoPi;
       } else {
@@ -73,7 +73,7 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
 
     const double dif_west = point1.x - west;
     // check if the difference crosses the antipole
-    if (glm::abs(dif_west) > CesiumUtility::Math::ONE_PI) {
+    if (glm::abs(dif_west) > CesiumUtility::Math::OnePi) {
       // east wrapping past the antipole to the west
       if (dif_west > 0.0) {
         west = point1.x;
@@ -86,7 +86,7 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
 
     const double dif_east = point1.x - east;
     // check if the difference crosses the antipole
-    if (glm::abs(dif_east) > CesiumUtility::Math::ONE_PI) {
+    if (glm::abs(dif_east) > CesiumUtility::Math::OnePi) {
       // west wrapping past the antipole to the east
       if (dif_east < 0.0) {
         east = point1.x;
