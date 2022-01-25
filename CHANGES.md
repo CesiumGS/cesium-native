@@ -44,6 +44,7 @@
 
 - Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.
 - Fixed a bug that prevented a continuation attached to a `SharedFuture` from returning a `Future` itself.
+- Fixed `computeDistanceSquaredToPosition` in `BoundingSphere`
 
 ### v0.11.0 - 2022-01-03
 
