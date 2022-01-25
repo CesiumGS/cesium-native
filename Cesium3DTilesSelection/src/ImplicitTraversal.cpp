@@ -541,5 +541,5 @@ void createImplicitChildrenIfNeeded(
     }
   }
 }
-} // namespace CesiumImplicitTraversalUtilities
+} // namespace ImplicitTraversalUtilities
 } // namespace Cesium3DTilesSelection

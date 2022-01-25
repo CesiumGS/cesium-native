@@ -61,7 +61,9 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE(name)                                                     \
-  CesiumUtility::CesiumImpl::ScopedTrace TRACE_NAME_AUX2(cesiumTrace, __LINE__)(name)
+  CesiumUtility::CesiumImpl::ScopedTrace TRACE_NAME_AUX2(                      \
+      cesiumTrace,                                                             \
+      __LINE__)(name)
 
 /**
  * @brief Begins measuring an operation which may span scope but not threads.
@@ -120,7 +122,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN_IN_TRACK(name)                                      \
-  if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {             \
+  if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {       \
     CESIUM_TRACE_BEGIN(name);                                                  \
   }
 
@@ -135,7 +137,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END_IN_TRACK(name)                                        \
-  if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {             \
+  if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {       \
     CESIUM_TRACE_END(name);                                                    \
   }
 
@@ -168,7 +170,7 @@
  *           {@link CESIUM_TRACE_DECLARE_TRACK_SET}.
  */
 #define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
-  CesiumUtility::CesiumImpl::TrackReference TRACE_NAME_AUX2(                         \
+  CesiumUtility::CesiumImpl::TrackReference TRACE_NAME_AUX2(                   \
       cesiumTraceEnlistTrack,                                                  \
       __LINE__)(id);
 

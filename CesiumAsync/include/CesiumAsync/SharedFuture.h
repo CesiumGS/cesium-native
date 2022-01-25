@@ -102,7 +102,9 @@ public:
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            CesiumImpl::WithTracingShared<T>::end(nullptr, std::forward<Func>(f))));
+            CesiumImpl::WithTracingShared<T>::end(
+                nullptr,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -227,7 +229,9 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        CesiumImpl::WithTracingShared<T>::begin(tracingName, std::forward<Func>(f)));
+        CesiumImpl::WithTracingShared<T>::begin(
+            tracingName,
+            std::forward<Func>(f)));
 #else
     auto& task = this->_task;
 #endif

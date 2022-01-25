@@ -57,7 +57,8 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) && {
+  CesiumImpl::ContinuationFutureType_t<Func, T>
+  thenInWorkerThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
         this->_pSchedulers->workerThread.immediate,
         "waiting for worker thread",
@@ -261,7 +262,9 @@ private:
         this->_pSchedulers,
         task.then(
             scheduler,
-            CesiumImpl::WithTracing<T>::end(tracingName, std::forward<Func>(f))));
+            CesiumImpl::WithTracing<T>::end(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   template <typename Func, typename Scheduler>
