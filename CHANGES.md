@@ -56,6 +56,7 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesWriter` library.
+- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 
