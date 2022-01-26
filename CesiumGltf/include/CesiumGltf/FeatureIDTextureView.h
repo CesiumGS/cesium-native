@@ -1,11 +1,11 @@
 #pragma once
 
-#include "FeatureIDTexture.h"
+#include "CesiumGltf/FeatureIDTexture.h"
+#include "CesiumGltf/Texture.h"
+#include "CesiumGltf/TextureAccessor.h"
 #include "Image.h"
 #include "ImageCesium.h"
 #include "Model.h"
-#include "Texture.h"
-#include "TextureAccessor.h"
 
 #include <algorithm>
 #include <cassert>
@@ -21,84 +21,17 @@ enum class FeatureIDTextureViewStatus {
   InvalidUninitialized,
   InvalidTextureIndex,
   InvalidImageIndex,
-  InvalidChannel
+  InvalidChannel,
+  InvalidEmptyImage
 };
 
 class FeatureIDTextureView {
 public:
-  FeatureIDTextureView() noexcept
-      : _pImage(nullptr),
-        _channel(0),
-        _textureCoordinateIndex(-1),
-        _featureTableName(),
-        _status(FeatureIDTextureViewStatus::InvalidUninitialized) {}
+  FeatureIDTextureView() noexcept;
 
   FeatureIDTextureView(
       const Model& model,
-      const FeatureIDTexture& featureIDTexture) noexcept
-      : _pImage(nullptr),
-        _channel(0),
-        _textureCoordinateIndex(-1),
-        _featureTableName(featureIDTexture.featureTable),
-        _status(FeatureIDTextureViewStatus::InvalidUninitialized) {
-
-    this->_textureCoordinateIndex =
-        featureIDTexture.featureIds.texture.texCoord;
-
-    int32_t textureIndex = featureIDTexture.featureIds.texture.index;
-    if (textureIndex < 0 || textureIndex >= model.textures.size()) {
-      this->_status = FeatureIDTextureViewStatus::InvalidTextureIndex;
-      return;
-    }
-
-    const Texture& texture = model.textures[textureIndex];
-
-    // Ignore sampler, we will always use nearest pixel sampling.
-    if (texture.source < 0 || texture.source >= model.images.size()) {
-      this->_status = FeatureIDTextureViewStatus::InvalidImageIndex;
-      return;
-    }
-
-    this->_pImage = &model.images[texture.source].cesium;
-
-    // TODO: is this right?
-    // This assumes that if the channel is g, there must be at least two
-    // channels (r and g). If it is b there must be r, g, and b. If there is a,
-    // then there must be r, g, b, and a.
-    // For instance, if the image has two channels, will those be referred to
-    // as r and g or r and a?
-    if (featureIDTexture.featureIds.channels == "r") {
-      this->_channel = 0;
-    } else if (featureIDTexture.featureIds.channels == "g") {
-      this->_channel = 1;
-    } else if (featureIDTexture.featureIds.channels == "b") {
-      this->_channel = 2;
-    } else if (featureIDTexture.featureIds.channels == "a") {
-      this->_channel = 3;
-    } else {
-      this->_status = FeatureIDTextureViewStatus::InvalidChannel;
-      return;
-    }
-
-    this->_status = FeatureIDTextureViewStatus::Valid;
-
-    // TODO: add more validation steps, check if image has at least one pixel.
-
-    // TODO: once compressed texture support is merged, check that the image is
-    // decompressed here.
-  }
-
-  /**
-   * @brief Get the actual feature ID texture.
-   * @return The feature ID texture.
-   */
-  constexpr const ImageCesium* getImage() const { return _pImage; }
-
-  /**
-   * @brief Get the channel index that this feature ID texture uses.
-   * @return The channel index;
-   */
-  constexpr int32_t getChannel() const { return _channel; }
+      const FeatureIDTexture& featureIDTexture) noexcept;
 
   /**
    * @brief Get the Feature ID for the given texture coordinates.
@@ -111,31 +44,37 @@ public:
    * [0.0, 1.0].
    * @return The feature ID at the nearest pixel to the texture coordinates.
    */
-  int64_t getFeatureID(double u, double v) const noexcept {
-    assert(this->_status == FeatureIDTextureViewStatus::Valid);
+  int64_t getFeatureID(double u, double v) const noexcept;
 
-    int64_t x = std::clamp(
-        std::llround(u * this->_pImage->width),
-        0LL,
-        (int64_t)this->_pImage->width);
-    int64_t y = std::clamp(
-        std::llround(v * this->_pImage->height),
-        0LL,
-        (int64_t)this->_pImage->height);
+  /**
+   * @brief Get the status of this view.
+   *
+   * If invalid, it will not be safe to sample feature ids from this view.
+   */
+  constexpr FeatureIDTextureViewStatus status() const { return _status; }
 
-    int64_t pixelOffset = this->_pImage->bytesPerChannel *
-                          this->_pImage->channels *
-                          (y * this->_pImage->width + x);
+  /**
+   * @brief Get the actual feature ID texture.
+   */
+  constexpr const ImageCesium* getImage() const { return _pImage; }
 
-    return static_cast<int64_t>(
-        this->_pImage->pixelData[pixelOffset + this->_channel]);
-  }
+  /**
+   * @brief Get the channel index that this feature ID texture uses.
+   */
+  constexpr int32_t getChannel() const { return _channel; }
 
-  const std::string& getFeatureTableName() const noexcept {
+  /**
+   * @brief Get the name of the feature table associated with this feature ID
+   * texture.
+   */
+  constexpr const std::string& getFeatureTableName() const {
     return this->_featureTableName;
   }
 
-  int64_t getTextureCoordinateIndex() const noexcept {
+  /**
+   * @brief Get the texture coordinate index for this feature id texture.
+   */
+  constexpr int64_t getTextureCoordinateIndex() const {
     return this->_textureCoordinateIndex;
   }
 

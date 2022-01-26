@@ -1,15 +1,15 @@
 #pragma once
 
-#include "ClassProperty.h"
-#include "ExtensionModelExtFeatureMetadata.h"
-#include "FeatureTexture.h"
+#include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/ExtensionModelExtFeatureMetadata.h"
+#include "CesiumGltf/FeatureTexture.h"
+#include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/Texture.h"
+#include "CesiumGltf/TextureAccessor.h"
+#include "CesiumGltf/TextureInfo.h"
 #include "Image.h"
 #include "ImageCesium.h"
 #include "Model.h"
-#include "Sampler.h"
-#include "Texture.h"
-#include "TextureAccessor.h"
-#include "TextureInfo.h"
 
 #include <cassert>
 #include <cstdint>
@@ -23,6 +23,7 @@ enum class FeatureTexturePropertyViewStatus {
   InvalidTextureIndex,
   InvalidTextureSamplerIndex,
   InvalidTextureSourceIndex,
+  InvalidEmptyImage,
   InvalidChannelsString
 };
 
@@ -43,91 +44,12 @@ template <typename T> struct FeatureTexturePropertyValue { T components[4]; };
 
 class FeatureTexturePropertyView {
 public:
-  FeatureTexturePropertyView() noexcept
-      : _pSampler(nullptr),
-        _pImage(nullptr),
-        _pClassProperty(nullptr),
-        _textureCoordinateIndex(-1),
-        _status(FeatureTexturePropertyViewStatus::InvalidUninitialized),
-        _channelOffsets(),
-        _type(FeatureTexturePropertyComponentType::Uint8),
-        _componentCount(0),
-        _normalized(false) {}
+  FeatureTexturePropertyView() noexcept;
 
   FeatureTexturePropertyView(
       const Model& model,
       const ClassProperty& classProperty,
-      const TextureAccessor& textureAccessor) noexcept
-      : _pSampler(nullptr),
-        _pImage(nullptr),
-        _pClassProperty(&classProperty),
-        _textureCoordinateIndex(textureAccessor.texture.texCoord),
-        _status(FeatureTexturePropertyViewStatus::InvalidUninitialized),
-        _channelOffsets(),
-        _type(FeatureTexturePropertyComponentType::Uint8),
-        _componentCount(0),
-        _normalized(false) {
-
-    if (textureAccessor.texture.index < 0 ||
-        textureAccessor.texture.index >= model.textures.size()) {
-      this->_status = FeatureTexturePropertyViewStatus::InvalidTextureIndex;
-      return;
-    }
-
-    const Texture& texture = model.textures[textureAccessor.texture.index];
-    if (texture.sampler < 0 || texture.sampler >= model.samplers.size()) {
-      this->_status =
-          FeatureTexturePropertyViewStatus::InvalidTextureSamplerIndex;
-      return;
-    }
-
-    this->_pSampler = &model.samplers[texture.sampler];
-
-    if (texture.source < 0 || texture.source >= model.images.size()) {
-      this->_status =
-          FeatureTexturePropertyViewStatus::InvalidTextureSourceIndex;
-      return;
-    }
-
-    this->_pImage = &model.images[texture.source].cesium;
-
-    // TODO: support more types
-    // this->_type = ...
-    this->_componentCount = this->_pClassProperty->componentCount
-                                ? *this->_pClassProperty->componentCount
-                                : 1;
-    this->_normalized = this->_pClassProperty->normalized;
-    if (textureAccessor.channels.length() > 4 ||
-        textureAccessor.channels.length() > this->_pImage->channels ||
-        textureAccessor.channels.length() !=
-            static_cast<size_t>(this->_componentCount)) {
-      this->_status = FeatureTexturePropertyViewStatus::InvalidChannelsString;
-      return;
-    }
-
-    for (int i = 0; i < textureAccessor.channels.length(); ++i) {
-      // TODO: should this be case-sensitive?
-      switch (textureAccessor.channels[i]) {
-      case 'r':
-        this->_channelOffsets.r = 0;
-        break;
-      case 'g':
-        this->_channelOffsets.g = 1;
-        break;
-      case 'b':
-        this->_channelOffsets.b = 2;
-        break;
-      case 'a':
-        this->_channelOffsets.a = 3;
-        break;
-      default:
-        this->_status = FeatureTexturePropertyViewStatus::InvalidChannelsString;
-        return;
-      }
-    }
-
-    this->_status = FeatureTexturePropertyViewStatus::Valid;
-  }
+      const TextureAccessor& textureAccessor) noexcept;
 
   /**
    * @brief Get the property for the given texture coordinates.
@@ -171,25 +93,30 @@ public:
     return property;
   }
 
-  FeatureTexturePropertyViewStatus status() const noexcept {
+  constexpr FeatureTexturePropertyViewStatus status() const noexcept {
     return this->_status;
   }
 
-  FeatureTexturePropertyComponentType getPropertyType() const noexcept {
+  constexpr FeatureTexturePropertyComponentType
+  getPropertyType() const noexcept {
     return this->_type;
   }
 
-  int64_t getComponentCount() const noexcept { return this->_componentCount; }
+  constexpr int64_t getComponentCount() const noexcept {
+    return this->_componentCount;
+  }
 
-  int64_t getTextureCoordinateIndex() const noexcept {
+  constexpr int64_t getTextureCoordinateIndex() const noexcept {
     return this->_textureCoordinateIndex;
   }
 
-  bool isNormalized() const noexcept { return this->_normalized; }
+  constexpr bool isNormalized() const noexcept { return this->_normalized; }
 
-  const ImageCesium* getImage() const noexcept { return this->_pImage; }
+  constexpr const ImageCesium* getImage() const noexcept {
+    return this->_pImage;
+  }
 
-  const FeatureTexturePropertyChannelOffsets
+  constexpr const FeatureTexturePropertyChannelOffsets
   getChannelOffsets() const noexcept {
     return this->_channelOffsets;
   }
