@@ -84,7 +84,7 @@ public:
   /**
    * @brief Get the Feature ID for the given texture coordinates.
    *
-   * Not safe when the status is not Valid.
+   * Will return -1 when the status is not Valid.
    *
    * @param u The u-component of the texture coordinates. Must be within
    * [0.0, 1.0].
@@ -103,6 +103,9 @@ public:
 
   /**
    * @brief Get the actual feature ID texture.
+   *
+   * This will be nullptr if the feature id texture view runs into problems
+   * during construction.
    */
   const ImageCesium* getImage() const { return _pImage; }
 

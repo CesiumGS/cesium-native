@@ -64,7 +64,9 @@ FeatureIDTextureView::FeatureIDTextureView(
 }
 
 int64_t FeatureIDTextureView::getFeatureID(double u, double v) const noexcept {
-  assert(this->_status == FeatureIDTextureViewStatus::Valid);
+  if (this->_status != FeatureIDTextureViewStatus::Valid) {
+    return -1;
+  }
 
   int64_t x = std::clamp(
       std::llround(u * this->_pImage->width),

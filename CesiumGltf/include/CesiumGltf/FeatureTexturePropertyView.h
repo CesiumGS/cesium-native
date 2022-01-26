@@ -127,8 +127,11 @@ public:
   /**
    * @brief Get the property for the given texture coordinates.
    *
-   * Not safe when the status is not Valid.
+   * Will return -1 when the status is not Valid or when the templated
+   * component type doesn't match the image's channel byte-size.
    *
+   * @tparam T The component type to use when interpreting the channels of the
+   * property's pixel value.
    * @param u The u-component of the texture coordinates. Must be within
    * [0.0, 1.0].
    * @param v The v-component of the texture coordinates. Must be within
@@ -138,8 +141,10 @@ public:
   template <typename T>
   FeatureTexturePropertyValue<T>
   getProperty(double u, double v) const noexcept {
-    assert(this->_status == FeatureTexturePropertyViewStatus::Valid);
-    assert(sizeof(T) == this->_pImage->bytesPerChannel);
+    if (this->_status != FeatureTexturePropertyViewStatus::Valid ||
+        sizeof(T) != this->_pImage->bytesPerChannel) {
+      return -1;
+    }
 
     // TODO: actually use the sampler??
     int64_t x = std::clamp(
@@ -203,6 +208,9 @@ public:
 
   /**
    * @brief Get the image containing this property's data.
+   *
+   * This will be nullptr if the feature texture property view runs into
+   * problems during construction.
    */
   const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
