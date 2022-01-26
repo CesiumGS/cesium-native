@@ -151,7 +151,7 @@ uint8_t OctreeAvailability::computeAvailability(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+                static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
@@ -258,7 +258,7 @@ bool OctreeAvailability::addSubtree(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+                static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
@@ -433,7 +433,7 @@ AvailabilityNode* OctreeAvailability::addNode(
           // availability, instead of iterating through the buffer each time.
           AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
           AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
     } else {
       // This subtree is not supposed to be available.
       return nullptr;
@@ -504,7 +504,7 @@ std::optional<uint32_t> OctreeAvailability::findChildNodeIndex(
           // availability, instead of iterating through the buffer each time.
           AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
           AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
     }
   }
 
