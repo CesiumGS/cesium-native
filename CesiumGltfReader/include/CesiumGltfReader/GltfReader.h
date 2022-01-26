@@ -22,9 +22,9 @@ namespace CesiumGltfReader {
 
 /**
  * @brief The result of reading a glTF model with
- * {@link GltfReader::readModel}.
+ * {@link GltfReader::readGltf}.
  */
-struct CESIUMGLTFREADER_API ModelReaderResult {
+struct CESIUMGLTFREADER_API GltfReaderResult {
   /**
    * @brief The read model, or std::nullopt if the model could not be read.
    */
@@ -68,7 +68,7 @@ struct CESIUMGLTFREADER_API ImageReaderResult {
 /**
  * @brief Options for how to read a glTF.
  */
-struct CESIUMGLTFREADER_API ReadModelOptions {
+struct CESIUMGLTFREADER_API GltfReaderOptions {
   /**
    * @brief Whether data URLs in buffers and images should be automatically
    * decoded as part of the load process.
@@ -129,12 +129,12 @@ public:
    * @param options Options for how to read the glTF.
    * @return The result of reading the glTF.
    */
-  ModelReaderResult readModel(
+  GltfReaderResult readGltf(
       const gsl::span<const std::byte>& data,
-      const ReadModelOptions& options = ReadModelOptions()) const;
+      const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
-   * @brief Accepts the result of {@link readModel} and resolves any remaining
+   * @brief Accepts the result of {@link readGltf} and resolves any remaining
    * external buffers and images.
    *
    * @param asyncSystem The async system to use for resolving external data.
@@ -142,14 +142,14 @@ public:
    * @param headers The http headers needed to make any external data requests.
    * @param pAssetAccessor The asset accessor to use to request the external
    * buffers and images.
-   * @param result The result of the synchronous readModel invocation.
+   * @param result The result of the synchronous readGltf invocation.
    */
-  static CesiumAsync::Future<ModelReaderResult> resolveExternalData(
+  static CesiumAsync::Future<GltfReaderResult> resolveExternalData(
       CesiumAsync::AsyncSystem asyncSystem,
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
-      ModelReaderResult&& result);
+      GltfReaderResult&& result);
 
   /**
    * @brief Reads an image from a buffer.

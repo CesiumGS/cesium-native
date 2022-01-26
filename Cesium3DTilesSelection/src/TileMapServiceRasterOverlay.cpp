@@ -147,7 +147,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                                   this->_options.credit.value()))
                             : std::nullopt;
 
-  return pAssetAccessor->requestAsset(asyncSystem, xmlUrl, this->_headers)
+  return pAssetAccessor->get(asyncSystem, xmlUrl, this->_headers)
       .thenInWorkerThread(
           [pOwner,
            asyncSystem,

@@ -6,6 +6,8 @@
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
 
+#include <cctype>
+
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {
   Cesium3DTilesReader::TilesetReader reader;
@@ -38,6 +40,12 @@ void check(const std::string& input, const std::string& expectedOutput) {
   expectedJson.Parse(expectedOutput.c_str());
 
   REQUIRE(tilesetJson == expectedJson);
+}
+
+bool hasSpaces(const std::string& input) {
+  return std::count_if(input.begin(), input.end(), [](unsigned char c) {
+    return std::isspace(c);
+  });
 }
 } // namespace
 
@@ -235,4 +243,32 @@ TEST_CASE("Writes tileset JSON with default values removed") {
   )";
 
   check(string, expected);
+}
+
+TEST_CASE("Writes tileset with prettyPrint") {
+  Cesium3DTiles::Tileset tileset;
+  tileset.asset.version = "2.0";
+
+  Cesium3DTilesWriter::TilesetWriter writer;
+  Cesium3DTilesWriter::TilesetWriterOptions options;
+  options.prettyPrint = false;
+
+  Cesium3DTilesWriter::TilesetWriterResult writeResult =
+      writer.writeTileset(tileset, options);
+  const std::vector<std::byte>& tilesetBytesCompact = writeResult.tilesetBytes;
+
+  std::string tilesetStringCompact(
+      reinterpret_cast<const char*>(tilesetBytesCompact.data()),
+      tilesetBytesCompact.size());
+
+  REQUIRE_FALSE(hasSpaces(tilesetStringCompact));
+
+  options.prettyPrint = true;
+  writeResult = writer.writeTileset(tileset, options);
+  const std::vector<std::byte>& tilesetBytesPretty = writeResult.tilesetBytes;
+  std::string tilesetStringPretty(
+      reinterpret_cast<const char*>(tilesetBytesPretty.data()),
+      tilesetBytesPretty.size());
+
+  REQUIRE(hasSpaces(tilesetStringPretty));
 }
