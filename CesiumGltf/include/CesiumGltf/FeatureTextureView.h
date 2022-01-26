@@ -31,11 +31,9 @@ public:
       const Model& model,
       const FeatureTexture& featureTexture) noexcept;
 
-  constexpr FeatureTextureViewStatus status() const noexcept {
-    return this->_status;
-  }
+  FeatureTextureViewStatus status() const noexcept { return this->_status; }
 
-  constexpr const std::unordered_map<std::string, FeatureTexturePropertyView>&
+  const std::unordered_map<std::string, FeatureTexturePropertyView>&
   getProperties() const noexcept {
     return this->_propertyViews;
   }

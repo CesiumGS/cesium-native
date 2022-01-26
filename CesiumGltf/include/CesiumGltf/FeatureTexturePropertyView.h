@@ -93,30 +93,25 @@ public:
     return property;
   }
 
-  constexpr FeatureTexturePropertyViewStatus status() const noexcept {
+  FeatureTexturePropertyViewStatus status() const noexcept {
     return this->_status;
   }
 
-  constexpr FeatureTexturePropertyComponentType
-  getPropertyType() const noexcept {
+  FeatureTexturePropertyComponentType getPropertyType() const noexcept {
     return this->_type;
   }
 
-  constexpr int64_t getComponentCount() const noexcept {
-    return this->_componentCount;
-  }
+  int64_t getComponentCount() const noexcept { return this->_componentCount; }
 
-  constexpr int64_t getTextureCoordinateIndex() const noexcept {
+  int64_t getTextureCoordinateIndex() const noexcept {
     return this->_textureCoordinateIndex;
   }
 
-  constexpr bool isNormalized() const noexcept { return this->_normalized; }
+  bool isNormalized() const noexcept { return this->_normalized; }
 
-  constexpr const ImageCesium* getImage() const noexcept {
-    return this->_pImage;
-  }
+  const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
-  constexpr const FeatureTexturePropertyChannelOffsets
+  const FeatureTexturePropertyChannelOffsets&
   getChannelOffsets() const noexcept {
     return this->_channelOffsets;
   }

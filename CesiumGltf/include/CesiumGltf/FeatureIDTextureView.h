@@ -51,30 +51,30 @@ public:
    *
    * If invalid, it will not be safe to sample feature ids from this view.
    */
-  constexpr FeatureIDTextureViewStatus status() const { return _status; }
+  FeatureIDTextureViewStatus status() const { return _status; }
 
   /**
    * @brief Get the actual feature ID texture.
    */
-  constexpr const ImageCesium* getImage() const { return _pImage; }
+  const ImageCesium* getImage() const { return _pImage; }
 
   /**
    * @brief Get the channel index that this feature ID texture uses.
    */
-  constexpr int32_t getChannel() const { return _channel; }
+  int32_t getChannel() const { return _channel; }
 
   /**
    * @brief Get the name of the feature table associated with this feature ID
    * texture.
    */
-  constexpr const std::string& getFeatureTableName() const {
+  const std::string& getFeatureTableName() const {
     return this->_featureTableName;
   }
 
   /**
    * @brief Get the texture coordinate index for this feature id texture.
    */
-  constexpr int64_t getTextureCoordinateIndex() const {
+  int64_t getTextureCoordinateIndex() const {
     return this->_textureCoordinateIndex;
   }
 
