@@ -17,22 +17,66 @@
 
 namespace CesiumGltf {
 
+/**
+ * @brief Indicates the status of a feature texture property view.
+ *
+ * The {@link FeatureTexturePropertyView} constructor always completes
+ * successfully. However it may not always reflect the actual content of the
+ * corresponding feature texture property. This enumeration provides the reason.
+ */
 enum class FeatureTexturePropertyViewStatus {
+  /**
+   * @brief This view is valid and ready to use.
+   */
   Valid,
+
+  /**
+   * @brief This view has not been initialized.
+   */
   InvalidUninitialized,
+
+  /**
+   * @brief This feature texture property has a texture index that does not
+   * exist in the glTF.
+   */
   InvalidTextureIndex,
+
+  /**
+   * @brief This feature texture property has a texture sampler index that does
+   * not exist in the glTF.
+   */
   InvalidTextureSamplerIndex,
-  InvalidTextureSourceIndex,
+
+  /**
+   * @brief This feature texture property has an image index that does not
+   * exist in the glTF.
+   */
+  InvalidImageIndex,
+
+  /**
+   * @brief This feature texture property points to an empty image.
+   */
   InvalidEmptyImage,
+
+  /**
+   * @brief This feature texture property has an invalid channels string.
+   */
   InvalidChannelsString
 };
 
+/**
+ * @brief The supported component types that can exist in feature id textures.
+ */
 enum class FeatureTexturePropertyComponentType {
   Uint8
   // TODO: add more types. Currently this is the only one outputted by stb,
   // so change stb call to output more of the original types.
 };
 
+/**
+ * @brief Specifies which channel each component exists in or -1 if the channel
+ * isn't present. This can be used to un-swizzle pixel data.
+ */
 struct FeatureTexturePropertyChannelOffsets {
   int32_t r = -1;
   int32_t g = -1;
@@ -40,12 +84,41 @@ struct FeatureTexturePropertyChannelOffsets {
   int32_t a = -1;
 };
 
+/**
+ * @brief The feature texture property value for a pixel. This will contain
+ * four channels of the specified type.
+ *
+ * Only the first n components will be valid, where n is the number of channels
+ * in this feature texture property.
+ *
+ * @tparam T The component type, must correspond to a valid
+ * {@link FeatureTexturePropertyComponentType}.
+ */
 template <typename T> struct FeatureTexturePropertyValue { T components[4]; };
 
+/**
+ * @brief A view of the data specified by a property from a
+ * {@link FeatureTexture}.
+ *
+ * Provides utilities to sample the feature texture property using texture
+ * coordinates.
+ */
 class FeatureTexturePropertyView {
 public:
+  /**
+   * @brief Construct an uninitialized, invalid view.
+   */
   FeatureTexturePropertyView() noexcept;
 
+  /**
+   * @brief Construct a view of the data specified by a feature texture
+   * property.
+   *
+   * @param model The glTF in which to look for the data specified by the
+   * feature texture property.
+   * @param classProperty The property description.
+   * @param textureAccessor The texture accessor for this property.
+   */
   FeatureTexturePropertyView(
       const Model& model,
       const ClassProperty& classProperty,
@@ -93,24 +166,50 @@ public:
     return property;
   }
 
+  /**
+   * @brief Get the status of this view.
+   *
+   * If invalid, it will not be safe to sample feature ids from this view.
+   */
   FeatureTexturePropertyViewStatus status() const noexcept {
     return this->_status;
   }
 
+  /**
+   * @brief Get the component type for this property.
+   */
   FeatureTexturePropertyComponentType getPropertyType() const noexcept {
     return this->_type;
   }
 
+  /**
+   * @brief Get the component count for this property.
+   *
+   * This is also how many channels a pixel value for this property will use.
+   */
   int64_t getComponentCount() const noexcept { return this->_componentCount; }
 
+  /**
+   * @brief Get the texture coordinate index for this property.
+   */
   int64_t getTextureCoordinateIndex() const noexcept {
     return this->_textureCoordinateIndex;
   }
 
+  /**
+   * @brief Whether the component type for this property should be normalized.
+   */
   bool isNormalized() const noexcept { return this->_normalized; }
 
+  /**
+   * @brief Get the image containing this property's data.
+   */
   const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
+  /**
+   * @brief Get the {@link FeatureTexturePropertyChannelOffsets} that specifies
+   * how to un-swizzle this property's pixel values.
+   */
   const FeatureTexturePropertyChannelOffsets&
   getChannelOffsets() const noexcept {
     return this->_channelOffsets;

@@ -44,7 +44,7 @@ FeatureTexturePropertyView::FeatureTexturePropertyView(
   this->_pSampler = &model.samplers[texture.sampler];
 
   if (texture.source < 0 || texture.source >= model.images.size()) {
-    this->_status = FeatureTexturePropertyViewStatus::InvalidTextureSourceIndex;
+    this->_status = FeatureTexturePropertyViewStatus::InvalidImageIndex;
     return;
   }
 

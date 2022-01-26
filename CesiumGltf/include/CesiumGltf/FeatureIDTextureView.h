@@ -16,19 +16,67 @@
 
 namespace CesiumGltf {
 
+/**
+ * @brief The status of a feature id texture view.
+ *
+ * The {@link FeatureIDTextureView} constructor always completes successfully,
+ * but it may not always reflect the actual content of the
+ * {@link FeatureIDTexture}. This enumeration provides the reason.
+ */
 enum class FeatureIDTextureViewStatus {
+  /**
+   * @brief This view is valid and ready to use.
+   */
   Valid,
+
+  /**
+   * @brief This view has not yet been initialized.
+   */
   InvalidUninitialized,
+
+  /**
+   * @brief This feature id texture has a texture index that doesn't exist in
+   * the glTF.
+   */
   InvalidTextureIndex,
+
+  /**
+   * @brief This feature id texture has an image index that doesn't exist in
+   * the glTF.
+   */
   InvalidImageIndex,
+
+  /**
+   * @brief This feature id texture has an unknown image channel.
+   */
   InvalidChannel,
+
+  /**
+   * @brief This feature id texture has an empty image.
+   */
   InvalidEmptyImage
 };
 
+/**
+ * @brief A view on the image data of {@link FeatureIDTexture}.
+ *
+ * It provides the ability to sample the feature IDs from the
+ * {@link FeatureIDTexture} using texture coordinates.
+ */
 class FeatureIDTextureView {
 public:
+  /**
+   * @brief Constructs an uninitialized and invalid view.
+   */
   FeatureIDTextureView() noexcept;
 
+  /**
+   * @brief Construct a view of the data specified by a
+   * {@link FeatureIDTexture}.
+   *
+   * @param model The glTF in which to look for the feature id texture's data.
+   * @param featureIDTexture The feature id texture to create a view for.
+   */
   FeatureIDTextureView(
       const Model& model,
       const FeatureIDTexture& featureIDTexture) noexcept;
