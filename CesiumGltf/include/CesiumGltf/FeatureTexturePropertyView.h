@@ -127,7 +127,7 @@ public:
   /**
    * @brief Get the property for the given texture coordinates.
    *
-   * Will return -1 when the status is not Valid or when the templated
+   * Will return -1s when the status is not Valid or when the templated
    * component type doesn't match the image's channel byte-size.
    *
    * @tparam T The component type to use when interpreting the channels of the
@@ -143,7 +143,12 @@ public:
   getProperty(double u, double v) const noexcept {
     if (this->_status != FeatureTexturePropertyViewStatus::Valid ||
         sizeof(T) != this->_pImage->bytesPerChannel) {
-      return -1;
+      FeatureTexturePropertyValue<T> property;
+      property.components[0] = -1;
+      property.components[1] = -1;
+      property.components[2] = -1;
+      property.components[3] = -1;
+      return property;
     }
 
     // TODO: actually use the sampler??
