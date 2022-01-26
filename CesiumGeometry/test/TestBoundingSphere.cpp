@@ -1,5 +1,6 @@
 #include "CesiumGeometry/BoundingSphere.h"
 #include "CesiumGeometry/Plane.h"
+#include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
 #include <glm/mat3x3.hpp>
@@ -35,11 +36,22 @@ TEST_CASE("BoundingSphere::intersectPlane") {
       testCase.expectedResult);
 }
 
-TEST_CASE("BoundingSphere::computeDistanceSquaredToPosition") {
+TEST_CASE(
+    "BoundingSphere::computeDistanceSquaredToPosition test outside sphere") {
   BoundingSphere bs(glm::dvec3(0.0), 1.0);
   glm::dvec3 position(-2.0, 1.0, 0.0);
-  double expected = glm::dot(position, position) - 1.0;
-  CHECK(bs.computeDistanceSquaredToPosition(position) == expected);
+  double expected = 1.52786405;
+  CHECK(CesiumUtility::Math::equalsEpsilon(
+      bs.computeDistanceSquaredToPosition(position),
+      expected,
+      CesiumUtility::Math::EPSILON6));
+}
+
+TEST_CASE(
+    "BoundingSphere::computeDistanceSquaredToPosition test inside sphere") {
+  BoundingSphere bs(glm::dvec3(0.0), 1.0);
+  glm::dvec3 position(-.5, 0.5, 0.0);
+  CHECK(bs.computeDistanceSquaredToPosition(position) == 0);
 }
 
 TEST_CASE("BoundingSphere::computeDistanceSquaredToPosition example") {
