@@ -21,20 +21,22 @@ FeatureIDTextureView::FeatureIDTextureView(
   this->_textureCoordinateIndex = featureIDTexture.featureIds.texture.texCoord;
 
   int32_t textureIndex = featureIDTexture.featureIds.texture.index;
-  if (textureIndex < 0 || textureIndex >= model.textures.size()) {
+  if (textureIndex < 0 ||
+      static_cast<size_t>(textureIndex) >= model.textures.size()) {
     this->_status = FeatureIDTextureViewStatus::InvalidTextureIndex;
     return;
   }
 
-  const Texture& texture = model.textures[textureIndex];
+  const Texture& texture = model.textures[static_cast<size_t>(textureIndex)];
 
   // Ignore sampler, we will always use nearest pixel sampling.
-  if (texture.source < 0 || texture.source >= model.images.size()) {
+  if (texture.source < 0 ||
+      static_cast<size_t>(texture.source) >= model.images.size()) {
     this->_status = FeatureIDTextureViewStatus::InvalidImageIndex;
     return;
   }
 
-  this->_pImage = &model.images[texture.source].cesium;
+  this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
 
   // This assumes that if the channel is g, there must be at least two
   // channels (r and g). If it is b there must be r, g, and b. If there is a,
@@ -71,17 +73,18 @@ int64_t FeatureIDTextureView::getFeatureID(double u, double v) const noexcept {
   int64_t x = std::clamp(
       std::llround(u * this->_pImage->width),
       0LL,
-      (int64_t)this->_pImage->width);
+      (long long)this->_pImage->width);
   int64_t y = std::clamp(
       std::llround(v * this->_pImage->height),
       0LL,
-      (int64_t)this->_pImage->height);
+      (long long)this->_pImage->height);
 
   int64_t pixelOffset = this->_pImage->bytesPerChannel *
                         this->_pImage->channels *
                         (y * this->_pImage->width + x);
 
   return static_cast<int64_t>(
-      this->_pImage->pixelData[pixelOffset + this->_channel]);
+      this->_pImage
+          ->pixelData[static_cast<size_t>(pixelOffset + this->_channel)]);
 }
 } // namespace CesiumGltf

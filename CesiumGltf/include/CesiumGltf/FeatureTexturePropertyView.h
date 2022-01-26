@@ -150,11 +150,11 @@ public:
     int64_t x = std::clamp(
         std::llround(u * this->_pImage->width),
         0LL,
-        (int64_t)this->_pImage->width);
+        (long long)this->_pImage->width);
     int64_t y = std::clamp(
         std::llround(v * this->_pImage->height),
         0LL,
-        (int64_t)this->_pImage->height);
+        (long long)this->_pImage->height);
 
     int64_t pixelOffset = this->_pImage->bytesPerChannel *
                           this->_pImage->channels *

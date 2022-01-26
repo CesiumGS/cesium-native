@@ -29,26 +29,30 @@ FeatureTexturePropertyView::FeatureTexturePropertyView(
       _normalized(false) {
 
   if (textureAccessor.texture.index < 0 ||
-      textureAccessor.texture.index >= model.textures.size()) {
+      static_cast<size_t>(textureAccessor.texture.index) >=
+          model.textures.size()) {
     this->_status = FeatureTexturePropertyViewStatus::InvalidTextureIndex;
     return;
   }
 
-  const Texture& texture = model.textures[textureAccessor.texture.index];
-  if (texture.sampler < 0 || texture.sampler >= model.samplers.size()) {
+  const Texture& texture =
+      model.textures[static_cast<size_t>(textureAccessor.texture.index)];
+  if (texture.sampler < 0 ||
+      static_cast<size_t>(texture.sampler) >= model.samplers.size()) {
     this->_status =
         FeatureTexturePropertyViewStatus::InvalidTextureSamplerIndex;
     return;
   }
 
-  this->_pSampler = &model.samplers[texture.sampler];
+  this->_pSampler = &model.samplers[static_cast<size_t>(texture.sampler)];
 
-  if (texture.source < 0 || texture.source >= model.images.size()) {
+  if (texture.source < 0 ||
+      static_cast<size_t>(texture.source) >= model.images.size()) {
     this->_status = FeatureTexturePropertyViewStatus::InvalidImageIndex;
     return;
   }
 
-  this->_pImage = &model.images[texture.source].cesium;
+  this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
 
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_status = FeatureTexturePropertyViewStatus::InvalidEmptyImage;
@@ -62,14 +66,15 @@ FeatureTexturePropertyView::FeatureTexturePropertyView(
                               : 1;
   this->_normalized = this->_pClassProperty->normalized;
   if (textureAccessor.channels.length() > 4 ||
-      textureAccessor.channels.length() > this->_pImage->channels ||
+      textureAccessor.channels.length() >
+          static_cast<size_t>(this->_pImage->channels) ||
       textureAccessor.channels.length() !=
           static_cast<size_t>(this->_componentCount)) {
     this->_status = FeatureTexturePropertyViewStatus::InvalidChannelsString;
     return;
   }
 
-  for (int i = 0; i < textureAccessor.channels.length(); ++i) {
+  for (size_t i = 0; i < textureAccessor.channels.length(); ++i) {
     switch (textureAccessor.channels[i]) {
     case 'r':
       this->_channelOffsets.r = 0;
