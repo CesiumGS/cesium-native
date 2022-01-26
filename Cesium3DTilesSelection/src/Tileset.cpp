@@ -1050,6 +1050,32 @@ static void parseImplicitTileset(
       tile.setRefine(TileRefine::Replace);
     } else if (refine == "ADD") {
       tile.setRefine(TileRefine::Add);
+    } else if (std::equal(
+                   refine.begin(),
+                   refine.end(),
+                   "REPLACE",
+                   [](char i, char j) {
+                     return (std::tolower(i) == std::tolower(j));
+                   })) {
+      tile.setRefine(TileRefine::Replace);
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Tile refine value '{}' should be all uppercase: '{}'",
+          refine,
+          "REPLACE");
+    } else if (std::equal(
+                   refine.begin(),
+                   refine.end(),
+                   "ADD",
+                   [](char i, char j) {
+                     return (std::tolower(i) == std::tolower(j));
+                   })) {
+      tile.setRefine(TileRefine::Add);
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Tile refine value '{}' should be all uppercase: '{}'",
+          refine,
+          "ADD");
     } else {
       SPDLOG_LOGGER_ERROR(
           pLogger,
