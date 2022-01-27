@@ -2,8 +2,6 @@
 
 #include "Library.h"
 
-#include <gsl/narrow>
-
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
@@ -33,7 +31,7 @@ constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
   constexpr const bool is_different_signedness =
       (std::is_signed<T>::value != std::is_signed<U>::value);
 
-  const T t = gsl::narrow_cast<T>(u);
+  const T t = static_cast<T>(u);
 
   if (static_cast<U>(t) != u ||
       (is_different_signedness && ((t < T{}) != (u < U{})))) {

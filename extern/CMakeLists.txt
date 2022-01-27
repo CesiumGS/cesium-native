@@ -2,13 +2,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/Catch2/con
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
 add_subdirectory(Catch2)
 
-add_subdirectory(GSL)
+#add_subdirectory(GSL)
 
-option(URIPARSER_BUILD_TESTS "" off)
-option(URIPARSER_BUILD_DOCS "" off)
-option(URIPARSER_ENABLE_INSTALL "" on)
-option(URIPARSER_BUILD_TOOLS "" off)
-add_subdirectory(uriparser)
+# option(URIPARSER_BUILD_TESTS "" off)
+# option(URIPARSER_BUILD_DOCS "" off)
+# option(URIPARSER_ENABLE_INSTALL "" on)
+# option(URIPARSER_BUILD_TOOLS "" off)
+# add_subdirectory(uriparser)
 
 if ((NOT TARGET draco) AND (NOT TARGET draco_static))
     add_subdirectory(draco)
@@ -21,9 +21,9 @@ endif()
 
 set(CESIUM_NATIVE_DRACO_LIBRARY ${CESIUM_NATIVE_DRACO_LIBRARY} PARENT_SCOPE)
 
-if (NOT TARGET glm)
-    add_subdirectory(glm GLM)
-endif()
+# if (NOT TARGET glm)
+#     add_subdirectory(glm GLM)
+# endif()
 
 set(BUILD_TESTS OFF CACHE BOOL "Build tinyxml2 tests" FORCE)
 add_subdirectory(tinyxml2)

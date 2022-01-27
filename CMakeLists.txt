@@ -157,7 +157,7 @@ endif()
 add_subdirectory(doc)
 
 # Installation of third-party libraries required to use cesium-native
-install(TARGETS uriparser OPTIONAL) # Skips headers
+# install(TARGETS uriparser OPTIONAL) # Skips headers
 
 install(DIRECTORY extern/glm/glm
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -183,7 +183,7 @@ install(TARGETS httplib)
 
 install(TARGETS csprng)
 
-install(TARGETS GSL)
+#install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
