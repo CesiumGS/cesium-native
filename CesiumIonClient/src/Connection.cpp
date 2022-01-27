@@ -783,9 +783,17 @@ Connection::getIdFromToken(const std::string& token) {
     return std::nullopt;
   }
 
+  std::string encoded(token.begin() + startPos + 1, token.begin() + endPos);
+
+  // Add base64 padding, as required by modp_b64_decode.
+  size_t remainder = encoded.size() % 4;
+  if (remainder != 0) {
+    encoded.resize(encoded.size() + 4 - remainder, '=');
+  }
+
   std::string decoded(modp_b64_decode_len(length), '\0');
   size_t decodedLength =
-      modp_b64_decode(decoded.data(), token.data() + startPos + 1, length);
+      modp_b64_decode(decoded.data(), encoded.data(), encoded.size());
   if (decodedLength == 0 || decodedLength == std::string::npos) {
     return std::nullopt;
   }
