@@ -1056,7 +1056,7 @@ static void parseImplicitTileset(
           refineUpper.begin(),
           refineUpper.end(),
           refineUpper.begin(),
-          [](unsigned char c) -> char {
+          [](unsigned char c) -> unsigned char {
             return static_cast<unsigned char>(std::toupper(c));
           });
       if (refineUpper == "REPLACE" || refineUpper == "ADD") {
