@@ -115,6 +115,7 @@ CesiumGltfWriter::WriteModelResult writeModel(
   CesiumGltfWriter::writeExtensions(model.extensions, *writer);
 
   if (!model.extras.empty()) {
+    writer->Key("extras");
     CesiumJsonWriter::writeJsonValue(model.extras, *writer);
   }
 
