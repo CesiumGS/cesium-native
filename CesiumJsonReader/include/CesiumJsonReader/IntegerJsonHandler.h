@@ -38,6 +38,16 @@ public:
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
+  virtual IJsonHandler* readDouble(double d) override {
+    assert(this->_pInteger);
+    double intPart;
+    double fractPart = std::modf(d, &intPart);
+    if (fractPart != 0) {
+      return JsonHandler::readDouble(d);
+    }
+    *this->_pInteger = static_cast<T>(intPart);
+    return this->parent();
+  }
 
   virtual void reportWarning(
       const std::string& warning,
