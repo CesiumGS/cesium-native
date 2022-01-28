@@ -783,7 +783,9 @@ Connection::getIdFromToken(const std::string& token) {
     return std::nullopt;
   }
 
-  std::string encoded(token.begin() + startPos + 1, token.begin() + endPos);
+  std::string encoded(
+      token.begin() + std::string::difference_type(startPos + 1),
+      token.begin() + std::string::difference_type(endPos));
 
   // Add base64 padding, as required by modp_b64_decode.
   size_t remainder = encoded.size() % 4;
