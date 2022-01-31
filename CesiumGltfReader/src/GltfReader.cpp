@@ -359,10 +359,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->requestAsset(
-                  asyncSystem,
-                  Uri::resolve(baseUrl, *buffer.uri),
-                  tHeaders)
+              ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
               .thenInWorkerThread(
                   [pBuffer =
                        &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
@@ -387,10 +384,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
     if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->requestAsset(
-                  asyncSystem,
-                  Uri::resolve(baseUrl, *image.uri),
-                  tHeaders)
+              ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
               .thenInWorkerThread(
                   [pImage = &image](std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();

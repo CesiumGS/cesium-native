@@ -44,14 +44,15 @@ public:
 
   virtual ~CachingAssetAccessor() noexcept override;
 
-  /** @copydoc IAssetAccessor::requestAsset */
-  virtual Future<std::shared_ptr<IAssetRequest>> requestAsset(
-      const AsyncSystem& asyncSystem,
+  /** @copydoc IAssetAccessor::get */
+  virtual Future<std::shared_ptr<IAssetRequest>>
+  get(const AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers) override;
 
-  virtual Future<std::shared_ptr<IAssetRequest>> post(
+  virtual Future<std::shared_ptr<IAssetRequest>> request(
       const AsyncSystem& asyncSystem,
+      const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers,
       const gsl::span<const std::byte>& contentPayload) override;

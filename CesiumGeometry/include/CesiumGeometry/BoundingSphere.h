@@ -50,7 +50,7 @@ public:
 
   /**
    * @brief Computes the distance squared from a position to the closest point
-   * on this bounding sphere.
+   * on this bounding sphere. Returns 0 if the point is inside the sphere.
    *
    * @param position The position.
    * @return The distance squared from the position to the closest point on this
