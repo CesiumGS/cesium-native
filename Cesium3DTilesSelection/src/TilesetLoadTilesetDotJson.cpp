@@ -1,6 +1,7 @@
 #include "TilesetLoadTilesetDotJson.h"
 
 #include "Cesium3DTilesSelection/Tileset.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "TilesetLoadTileFromJson.h"
 #include "calcQuadtreeMaxGeometricError.h"
 
@@ -18,6 +19,17 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
+namespace {
+
+struct LoadResult {
+  std::unique_ptr<TileContext> pContext;
+  std::unique_ptr<Tile> pRootTile;
+  bool supportsRasterOverlays;
+  std::optional<TilesetLoadFailureDetails> failure;
+};
+
+} // namespace
+
 struct Tileset::LoadTilesetDotJson::Private {
   static LoadResult workerThreadHandleResponse(
       std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
@@ -31,6 +43,35 @@ struct Tileset::LoadTilesetDotJson::Private {
       TileContext& context,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
+
+  template <typename T>
+  static auto handlePotentialError(Tileset& tileset, T&& operation) {
+    return std::move(operation)
+        .catchInMainThread([&tileset](const std::exception& e) {
+          TilesetLoadFailureDetails failure;
+          failure.pTileset = &tileset;
+          failure.pRequest = nullptr;
+          failure.type = TilesetLoadType::TilesetJson;
+          failure.message = fmt::format(
+              "Unhandled error for asset {}: {}",
+              tileset.getUrl().value_or(""),
+              e.what());
+          return std::make_optional(failure);
+        })
+        .thenImmediately(
+            [&tileset](
+                std::optional<TilesetLoadFailureDetails>&& maybeFailure) {
+              if (maybeFailure) {
+                tileset.reportError(std::move(*maybeFailure));
+              }
+            })
+        .catchImmediately([](const std::exception& /*e*/) {
+          // We should only land here if tileset.reportError above throws an
+          // exception, which it shouldn't. Flag it in a debug build and ignore
+          // it in a release build.
+          assert(false);
+        });
+  }
 };
 
 CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
@@ -45,34 +86,33 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
 
   CESIUM_TRACE_BEGIN_IN_TRACK("Load tileset.json");
 
-  return tileset.getExternals()
-      .pAssetAccessor->get(tileset.getAsyncSystem(), url, headers)
-      .thenInWorkerThread(
-          [pLogger = tileset.getExternals().pLogger,
-           pContext = std::move(pContext),
-           useWaterMask = tileset.getOptions().contentOptions.enableWaterMask](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            return Private::workerThreadHandleResponse(
-                std::move(pRequest),
-                std::move(pContext),
-                pLogger,
-                useWaterMask);
-          })
-      .thenInMainThread([&tileset](LoadResult&& loadResult) {
-        tileset._supportsRasterOverlays = loadResult.supportsRasterOverlays;
-        tileset.addContext(std::move(loadResult.pContext));
-        tileset._pRootTile = std::move(loadResult.pRootTile);
-        CESIUM_TRACE_END_IN_TRACK("Load tileset.json");
-      })
-      .catchInMainThread([&tileset, url](const std::exception& e) {
-        SPDLOG_LOGGER_ERROR(
-            tileset.getExternals().pLogger,
-            "Unhandled error for tileset {}: {}",
-            url,
-            e.what());
-        tileset._pRootTile.reset();
-        CESIUM_TRACE_END_IN_TRACK("Load tileset.json");
-      });
+  return Private::handlePotentialError(
+             tileset,
+             tileset.getExternals()
+                 .pAssetAccessor->get(tileset.getAsyncSystem(), url, headers)
+                 .thenInWorkerThread(
+                     [pLogger = tileset.getExternals().pLogger,
+                      pContext = std::move(pContext),
+                      useWaterMask =
+                          tileset.getOptions().contentOptions.enableWaterMask](
+                         std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+                       return Private::workerThreadHandleResponse(
+                           std::move(pRequest),
+                           std::move(pContext),
+                           pLogger,
+                           useWaterMask);
+                     })
+                 .thenInMainThread(
+                     [&tileset](LoadResult&& loadResult)
+                         -> std::optional<TilesetLoadFailureDetails> {
+                       tileset._supportsRasterOverlays =
+                           loadResult.supportsRasterOverlays;
+                       tileset.addContext(std::move(loadResult.pContext));
+                       tileset._pRootTile = std::move(loadResult.pRootTile);
+                       return loadResult.failure;
+                     }))
+      .thenImmediately(
+          []() { CESIUM_TRACE_END_IN_TRACK("Load tileset.json"); });
 }
 
 namespace {
@@ -124,29 +164,42 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 }
 } // namespace
 
-Tileset::LoadResult
-Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
+LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
+    std::string message = fmt::format(
         "Did not receive a valid response for tileset {}",
         pRequest->url());
-    return LoadResult{std::move(pContext), nullptr, false};
+    return LoadResult{
+        std::move(pContext),
+        nullptr,
+        false,
+        TilesetLoadFailureDetails{
+            pContext->pTileset,
+            TilesetLoadType::TilesetJson,
+            std::move(pRequest),
+            message}};
   }
 
   if (pResponse->statusCode() != 0 &&
       (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
+    std::string message = fmt::format(
         "Received status code {} for tileset {}",
         pResponse->statusCode(),
         pRequest->url());
-    return LoadResult{std::move(pContext), nullptr, false};
+    return LoadResult{
+        std::move(pContext),
+        nullptr,
+        false,
+        TilesetLoadFailureDetails{
+            pContext->pTileset,
+            TilesetLoadType::TilesetJson,
+            std::move(pRequest),
+            message}};
   }
 
   pContext->baseUrl = pRequest->url();
@@ -157,12 +210,19 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
   tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
   if (tileset.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
+    std::string message = fmt::format(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tileset.GetParseError(),
         tileset.GetErrorOffset());
-    return LoadResult{std::move(pContext), nullptr, false};
+    return LoadResult{
+        std::move(pContext),
+        nullptr,
+        false,
+        TilesetLoadFailureDetails{
+            pContext->pTileset,
+            TilesetLoadType::TilesetJson,
+            std::move(pRequest),
+            message}};
   }
 
   pContext->pTileset->_gltfUpAxis = obtainGltfUpAxis(tileset);
@@ -209,7 +269,8 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
   return LoadResult{
       std::move(pContext),
       std::move(pRootTile),
-      supportsRasterOverlays};
+      supportsRasterOverlays,
+      std::nullopt};
 }
 
 namespace {

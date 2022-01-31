@@ -39,6 +39,7 @@
   - Added `nextPage` and `previousPage` methods to allow paging through tokens.
   - Added `modifyToken` method.
   - Added static `getIdFromToken` method to obtain a token ID from a given token value.
+- Added `loadErrorCallback` to `TilesetOptions` and `RasterOverlayOptions`. This callback is invoked when the `Tileset` or `RasterOverlay` encounter a load error, allowing the error to be handled by application code.
 
 ##### Fixes :wrench:
 

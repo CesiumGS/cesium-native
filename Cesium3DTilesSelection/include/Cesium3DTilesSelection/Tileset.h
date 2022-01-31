@@ -345,12 +345,6 @@ private:
   CesiumAsync::Future<void>
   _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
-  struct LoadResult {
-    std::unique_ptr<TileContext> pContext;
-    std::unique_ptr<Tile> pRootTile;
-    bool supportsRasterOverlays;
-  };
-
   /**
    * @brief Handles a Cesium ion response to refreshing a token, retrying tiles
    * that previously failed due to token expiration.
@@ -609,6 +603,8 @@ private:
       const ImplicitTraversalInfo& implicitInfo,
       double loadPriority);
   void processSubtreeQueue();
+
+  void reportError(TilesetLoadFailureDetails&& errorDetails);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
