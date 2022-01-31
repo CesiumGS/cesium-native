@@ -24,6 +24,7 @@
 - Added `SchemaWriter` and `SchemaReader` for serializing and deserializing schemas in [EXT_mesh_features](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_mesh_features) and [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata).
 - Added `hasExtension` to `ExtensibleObject`.
 - Added `CESIUM_TESTS_ENABLED` option to the build system.
+- Added support in the JSON reader for reading doubles with no fractional value as integers.
 
 ##### Breaking Changes :mega:
 
