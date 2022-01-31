@@ -26,8 +26,12 @@ BoundingSphere::intersectPlane(const Plane& plane) const noexcept {
 
 double BoundingSphere::computeDistanceSquaredToPosition(
     const glm::dvec3& position) const noexcept {
-  const glm::dvec3 diff = position - this->_center;
-  return glm::dot(diff, diff) - this->_radius * this->_radius;
+  const glm::dvec3 diff = this->_center - position;
+  auto distance = glm::length(diff) - this->_radius;
+  if (distance <= 0) {
+    return 0;
+  }
+  return distance * distance;
 }
 
 } // namespace CesiumGeometry

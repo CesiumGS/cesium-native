@@ -88,14 +88,14 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 
 void decodeDataUrls(
     const GltfReader& reader,
-    ModelReaderResult& readModel,
+    GltfReaderResult& readGltf,
     bool clearDecodedDataUrls) {
   CESIUM_TRACE("CesiumGltfReader::decodeDataUrls");
-  if (!readModel.model) {
+  if (!readGltf.model) {
     return;
   }
 
-  CesiumGltf::Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
   for (CesiumGltf::Buffer& buffer : model.buffers) {
     if (!buffer.uri) {
