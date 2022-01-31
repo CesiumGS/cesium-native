@@ -6,6 +6,8 @@
 
 #include <rapidjson/document.h>
 
+#include <cctype>
+
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
