@@ -4,6 +4,7 @@
 #include "Library.h"
 
 #include <cassert>
+#include <cmath>
 
 namespace CesiumJsonReader {
 template <typename T>
