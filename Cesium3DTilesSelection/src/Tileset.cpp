@@ -1050,29 +1050,37 @@ static void parseImplicitTileset(
       tile.setRefine(TileRefine::Replace);
     } else if (refine == "ADD") {
       tile.setRefine(TileRefine::Add);
+    } else if (std::equal(
+                   refine.begin(),
+                   refine.end(),
+                   "REPLACE",
+                   [](char i, char j) {
+                     return (std::tolower(i) == std::tolower(j));
+                   })) {
+      tile.setRefine(TileRefine::Replace);
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Tile refine value '{}' should be all uppercase: '{}'",
+          refine,
+          "REPLACE");
+    } else if (std::equal(
+                   refine.begin(),
+                   refine.end(),
+                   "ADD",
+                   [](char i, char j) {
+                     return (std::tolower(i) == std::tolower(j));
+                   })) {
+      tile.setRefine(TileRefine::Add);
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Tile refine value '{}' should be all uppercase: '{}'",
+          refine,
+          "ADD");
     } else {
-      std::string refineUpper = refine;
-      std::transform(
-          refineUpper.begin(),
-          refineUpper.end(),
-          refineUpper.begin(),
-          [](unsigned char c) -> char {
-            return static_cast<unsigned char>(std::toupper(c));
-          });
-      if (refineUpper == "REPLACE" || refineUpper == "ADD") {
-        SPDLOG_LOGGER_ERROR(
-            pLogger,
-            "Tile refine value '{}' should be uppercase: '{}'",
-            refine,
-            refineUpper);
-        tile.setRefine(
-            refineUpper == "REPLACE" ? TileRefine::Replace : TileRefine::Add);
-      } else {
-        SPDLOG_LOGGER_ERROR(
-            pLogger,
-            "Tile contained an unknown refine value: {}",
-            refine);
-      }
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Tile contained an unknown refine value: {}",
+          refine);
     }
   } else {
     tile.setRefine(parentRefine);
