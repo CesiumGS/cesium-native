@@ -406,7 +406,7 @@ TEST_CASE("KTX2_hacky_test") {
   gltfFile /= "CesiumBalloonKTX2Hacky.glb";
   std::vector<std::byte> data = readFile(gltfFile.string());
   CesiumGltfReader::GltfReader reader;
-  ModelReaderResult result = reader.readModel(data);
+  GltfReaderResult result = reader.readGltf(data);
   REQUIRE(result.model);
 
   const Model& model = result.model.value();
