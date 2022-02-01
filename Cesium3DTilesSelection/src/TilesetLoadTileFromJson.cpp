@@ -6,6 +6,8 @@
 
 #include <rapidjson/document.h>
 
+#include <cctype>
+
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -117,10 +119,28 @@ void Tileset::LoadTileFromJson::execute(
     } else if (refine == "ADD") {
       tile.setRefine(TileRefine::Add);
     } else {
-      SPDLOG_LOGGER_ERROR(
-          pLogger,
-          "Tile contained an unknown refine value: {}",
-          refine);
+      std::string refineUpper = refine;
+      std::transform(
+          refineUpper.begin(),
+          refineUpper.end(),
+          refineUpper.begin(),
+          [](unsigned char c) -> unsigned char {
+            return static_cast<unsigned char>(std::toupper(c));
+          });
+      if (refineUpper == "REPLACE" || refineUpper == "ADD") {
+        SPDLOG_LOGGER_WARN(
+            pLogger,
+            "Tile refine value '{}' should be uppercase: '{}'",
+            refine,
+            refineUpper);
+        tile.setRefine(
+            refineUpper == "REPLACE" ? TileRefine::Replace : TileRefine::Add);
+      } else {
+        SPDLOG_LOGGER_WARN(
+            pLogger,
+            "Tile contained an unknown refine value: {}",
+            refine);
+      }
     }
   } else {
     tile.setRefine(parentRefine);

@@ -4,6 +4,9 @@
 
 ##### Breaking Changes :mega:
 
+- Renamed `IAssetAccessor::requestAsset` to `get`.
+- Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
+- `Token` in `CesiumIonClient` has been updated to match Cesium ion's v2 REST API endpoint, so several fields have been renamed. The `tokens` method also now returns future that resolves to a `TokenList` instead of a plain vector of `Token` instances.
 - Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
 - Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, `GltfWriterResult`, and `GltfWriterOptions` instead.
 
@@ -16,7 +19,7 @@
   - [EXT_meshopt_compression](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Vendor/EXT_meshopt_compression)
   - [EXT_mesh_features](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_mesh_features)
   - [CESIUM_tile_edges](https://github.com/CesiumGS/glTF/pull/47)
-- Added support for the following extensions in `TilesetWriter` and `TilesetReader`: 
+- Added support for the following extensions in `TilesetWriter` and `TilesetReader`:
   - [3DTILES_multiple_contents](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_multiple_contents)
   - [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling)
   - [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata)
@@ -24,15 +27,8 @@
 - Added `SchemaWriter` and `SchemaReader` for serializing and deserializing schemas in [EXT_mesh_features](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_mesh_features) and [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata).
 - Added `hasExtension` to `ExtensibleObject`.
 - Added `CESIUM_TESTS_ENABLED` option to the build system.
-
-##### Breaking Changes :mega:
-
-- Renamed `IAssetAccessor::requestAsset` to `get`.
-- Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
-- `Token` in `CesiumIonClient` has been updated to match Cesium ion's v2 REST API endpoint, so several fields have been renamed. The `tokens` method also now returns future that resolves to a `TokenList` instead of a plain vector of `Token` instances.
-
-##### Additions :tada:
-
+- Added support in the JSON reader for reading doubles with no fractional value as integers.
+- Added case-insensitive comparison for Cesium 3D Tiles "refine" property values.
 - Added new capabilities to `Connection` in `CesiumIonClient`:
   - The `tokens` method now uses the v2 service endpoint and allows a number of options to be specified.
   - Added a `token` method to allow details of a single token to be retrieved.
@@ -40,13 +36,14 @@
   - Added `modifyToken` method.
   - Added static `getIdFromToken` method to obtain a token ID from a given token value.
 - Added `loadErrorCallback` to `TilesetOptions` and `RasterOverlayOptions`. This callback is invoked when the `Tileset` or `RasterOverlay` encounter a load error, allowing the error to be handled by application code.
+- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 
-- Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.
+- Fixes a bug where `notifyTileDoneLoading` was not called when encountering Ion responses that can't be parsed.
 - Fixed a bug that prevented a continuation attached to a `SharedFuture` from returning a `Future` itself.
 - Fixed incorrect child subtree index calculation in implicit tiles.
-- Fixed `computeDistanceSquaredToPosition` in `BoundingSphere`
+- Fixed `computeDistanceSquaredToPosition` in `BoundingSphere`.
 
 ### v0.11.0 - 2022-01-03
 
@@ -59,7 +56,6 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesWriter` library.
-- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 

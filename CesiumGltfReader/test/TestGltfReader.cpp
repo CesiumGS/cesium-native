@@ -360,3 +360,43 @@ TEST_CASE("Unknown MIME types are handled") {
   // because no images could be read.
   REQUIRE(result.model.has_value());
 }
+
+TEST_CASE("Can parse doubles with no fractions as integers") {
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4.0,
+          "componentType": 5121.0
+        }
+      ]
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  CHECK(result.warnings.empty());
+  Model& model = result.model.value();
+  CHECK(model.accessors[0].count == 4);
+  CHECK(
+      model.accessors[0].componentType ==
+      Accessor::ComponentType::UNSIGNED_BYTE);
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4.0,
+          "componentType": 5121.1
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(!result.warnings.empty());
+}
