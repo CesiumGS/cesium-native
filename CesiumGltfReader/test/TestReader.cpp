@@ -31,7 +31,7 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 }
 } // namespace
 
-TEST_CASE("CesiumGltf::GltfReader") {
+TEST_CASE("CesiumGltfReader::GltfReader") {
   using namespace std::string_literals;
 
   std::string s = R"(
@@ -365,7 +365,7 @@ TEST_CASE("KTX2_hacky_test") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /= "CesiumBalloonKTX2Hacky.glb";
   std::vector<std::byte> data = readFile(gltfFile.string());
-  CesiumGltf::GltfReader reader;
+  CesiumGltfReader::GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
 
