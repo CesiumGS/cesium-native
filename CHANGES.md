@@ -25,6 +25,7 @@
 - Added `hasExtension` to `ExtensibleObject`.
 - Added `CESIUM_TESTS_ENABLED` option to the build system.
 - Added support in the JSON reader for reading doubles with no fractional value as integers.
+- Added case-insensitive comparison for refine values.
 
 ##### Breaking Changes :mega:
 
@@ -40,6 +41,7 @@
   - Added `nextPage` and `previousPage` methods to allow paging through tokens.
   - Added `modifyToken` method.
   - Added static `getIdFromToken` method to obtain a token ID from a given token value.
+- Added `loadErrorCallback` to `TilesetOptions` and `RasterOverlayOptions`. This callback is invoked when the `Tileset` or `RasterOverlay` encounter a load error, allowing the error to be handled by application code.
 
 ##### Fixes :wrench:
 

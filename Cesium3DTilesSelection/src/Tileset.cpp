@@ -5,6 +5,7 @@
 #include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "TileUtilities.h"
 #include "TilesetLoadIonAssetEndpoint.h"
@@ -61,11 +62,13 @@ Tileset::Tileset(
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
-  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-  this->notifyTileStartLoading(nullptr);
-  LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
-    this->notifyTileDoneLoading(nullptr);
-  });
+  if (!url.empty()) {
+    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+    this->notifyTileStartLoading(nullptr);
+    LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
+      this->notifyTileDoneLoading(nullptr);
+    });
+  }
 }
 
 Tileset::Tileset(
@@ -94,10 +97,12 @@ Tileset::Tileset(
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
-  CESIUM_TRACE_USE_TRACK_SET(tileset._loadingSlots);
-  this->notifyTileStartLoading(nullptr);
-  LoadIonAssetEndpoint::start(*this).thenInMainThread(
-      [this]() { this->notifyTileDoneLoading(nullptr); });
+  if (ionAssetID > 0) {
+    CESIUM_TRACE_USE_TRACK_SET(tileset._loadingSlots);
+    this->notifyTileStartLoading(nullptr);
+    LoadIonAssetEndpoint::start(*this).thenInMainThread(
+        [this]() { this->notifyTileDoneLoading(nullptr); });
+  }
 }
 
 Tileset::~Tileset() {
@@ -1428,6 +1433,16 @@ void Tileset::processSubtreeQueue() {
         this->_options.maximumSimultaneousSubtreeLoads) {
       break;
     }
+  }
+}
+
+void Tileset::reportError(TilesetLoadFailureDetails&& errorDetails) {
+  SPDLOG_LOGGER_ERROR(this->getExternals().pLogger, errorDetails.message);
+  if (this->getOptions().loadErrorCallback) {
+    this->getExternals().asyncSystem.runInMainThread(
+        [this, errorDetails = std::move(errorDetails)]() mutable {
+          this->getOptions().loadErrorCallback(std::move(errorDetails));
+        });
   }
 }
 
