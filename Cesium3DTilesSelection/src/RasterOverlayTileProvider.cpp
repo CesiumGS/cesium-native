@@ -126,7 +126,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     LoadTileImageFromUrlOptions&& options) const {
 
   return this->getAssetAccessor()
-      ->requestAsset(this->getAsyncSystem(), url, headers)
+      ->get(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
           [options = std::move(options),
            ktx2TranscodeTargetFormat =

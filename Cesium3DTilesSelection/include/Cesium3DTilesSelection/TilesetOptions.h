@@ -12,6 +12,7 @@
 namespace Cesium3DTilesSelection {
 
 class ITileExcluder;
+class TilesetLoadFailureDetails;
 
 /**
  * @brief Options for configuring the parsing of a {@link Tileset}'s content
@@ -214,6 +215,16 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * should not be loaded, it will not be loaded.
    */
   std::vector<std::shared_ptr<ITileExcluder>> excluders;
+
+  /**
+   * @brief A callback function that is invoked when a tileset resource fails to
+   * load.
+   *
+   * Tileset resources include a Cesium ion asset endpoint, a tileset's root
+   * tileset.json or layer.json, an individual tile's content, or an implicit
+   * tiling subtree.
+   */
+  std::function<void(const TilesetLoadFailureDetails&)> loadErrorCallback;
 
   /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content

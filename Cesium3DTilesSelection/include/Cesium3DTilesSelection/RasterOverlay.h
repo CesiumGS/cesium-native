@@ -18,6 +18,7 @@ class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
 class RasterOverlayCollection;
+class RasterOverlayLoadFailureDetails;
 
 /**
  * @brief Options for loading raster overlays.
@@ -72,6 +73,15 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    */
   std::optional<CesiumGltf::CompressedPixelFormatCesium>
       ktx2TranscodeTargetFormat = std::nullopt;
+
+  /**
+   * @brief A callback function that is invoked when a raster overlay resource
+   * fails to load.
+   *
+   * Raster overlay resources include a Cesium ion asset endpoint, any resources
+   * required for raster overlay metadata, or an individual overlay image.
+   */
+  std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
 };
 
 /**
@@ -218,6 +228,12 @@ public:
    * ownership.
    */
   void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
+
+protected:
+  void reportError(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      RasterOverlayLoadFailureDetails&& errorDetails);
 
 private:
   std::string _name;

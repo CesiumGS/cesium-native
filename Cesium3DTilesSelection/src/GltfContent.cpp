@@ -51,29 +51,29 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const TilesetContentOptions& contentOptions) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
-  ReadModelOptions readOptions;
+  GltfReaderOptions readOptions;
   readOptions.ktx2TranscodeTargetFormat =
       contentOptions.ktx2TranscodeTargetFormat;
 
-  CesiumGltfReader::ModelReaderResult loadedModel =
-      GltfContent::_gltfReader.readModel(data, readOptions);
-  if (!loadedModel.errors.empty()) {
+  CesiumGltfReader::GltfReaderResult loadedGltf =
+      GltfContent::_gltfReader.readGltf(data, readOptions);
+  if (!loadedGltf.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.errors, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.errors, "\n- "));
   }
-  if (!loadedModel.warnings.empty()) {
+  if (!loadedGltf.warnings.empty()) {
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Warning when loading binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.warnings, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.warnings, "\n- "));
   }
 
-  if (loadedModel.model) {
-    loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
+  if (loadedGltf.model) {
+    loadedGltf.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   return CesiumGltfReader::GltfReader::resolveExternalData(
@@ -81,10 +81,10 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              url,
              headers,
              pAssetAccessor,
-             std::move(loadedModel),
-             readOptions)
+             readOptions,
+             std::move(loadedGltf))
       .thenInWorkerThread(
-          [pLogger, url](CesiumGltfReader::ModelReaderResult&& resolvedModel) {
+          [pLogger, url](CesiumGltfReader::GltfReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =
                 std::make_unique<TileContentLoadResult>();
 

@@ -25,16 +25,16 @@ namespace CesiumGltfReader {
 
 namespace {
 std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
-    ModelReaderResult& readModel,
+    GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& /* primitive */,
     const CesiumGltf::ExtensionKhrDracoMeshCompression& draco) {
   CESIUM_TRACE("CesiumGltfReader::decodeBufferViewToDracoMesh");
-  CesiumGltf::Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
   CesiumGltf::BufferView* pBufferView =
       CesiumGltf::Model::getSafe(&model.bufferViews, draco.bufferView);
   if (!pBufferView) {
-    readModel.warnings.emplace_back("Draco bufferView index is invalid.");
+    readGltf.warnings.emplace_back("Draco bufferView index is invalid.");
     return nullptr;
   }
 
@@ -43,7 +43,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
   CesiumGltf::Buffer* pBuffer =
       CesiumGltf::Model::getSafe(&model.buffers, bufferView.buffer);
   if (!pBuffer) {
-    readModel.warnings.emplace_back(
+    readGltf.warnings.emplace_back(
         "Draco bufferView has an invalid buffer index.");
     return nullptr;
   }
@@ -53,7 +53,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
   if (bufferView.byteOffset < 0 || bufferView.byteLength < 0 ||
       bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
-    readModel.warnings.emplace_back(
+    readGltf.warnings.emplace_back(
         "Draco bufferView extends beyond its buffer.");
     return nullptr;
   }
@@ -70,7 +70,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
   draco::StatusOr<std::unique_ptr<draco::Mesh>> result =
       decoder.DecodeMeshFromBuffer(&decodeBuffer);
   if (!result.ok()) {
-    readModel.warnings.emplace_back(
+    readGltf.warnings.emplace_back(
         std::string("Draco decoding failed: ") +
         result.status().error_msg_string());
     return nullptr;
@@ -95,11 +95,11 @@ void copyData(const T* pSource, T* pDestination, int64_t length) {
 }
 
 void copyDecodedIndices(
-    ModelReaderResult& readModel,
+    GltfReaderResult& readGltf,
     const CesiumGltf::MeshPrimitive& primitive,
     draco::Mesh* pMesh) {
   CESIUM_TRACE("CesiumGltfReader::copyDecodedIndices");
-  CesiumGltf::Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
   if (primitive.indices < 0) {
     return;
@@ -108,13 +108,12 @@ void copyDecodedIndices(
   CesiumGltf::Accessor* pIndicesAccessor =
       CesiumGltf::Model::getSafe(&model.accessors, primitive.indices);
   if (!pIndicesAccessor) {
-    readModel.warnings.emplace_back(
-        "Primitive indices accessor ID is invalid.");
+    readGltf.warnings.emplace_back("Primitive indices accessor ID is invalid.");
     return;
   }
 
   if (pIndicesAccessor->count != pMesh->num_faces() * 3) {
-    readModel.warnings.emplace_back(
+    readGltf.warnings.emplace_back(
         "indices accessor doesn't match with decoded Draco indices");
     pIndicesAccessor->count = pMesh->num_faces() * 3;
   }
@@ -202,17 +201,17 @@ void copyDecodedIndices(
 }
 
 void copyDecodedAttribute(
-    ModelReaderResult& readModel,
+    GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& /* primitive */,
     CesiumGltf::Accessor* pAccessor,
     const draco::Mesh* pMesh,
     const draco::PointAttribute* pAttribute) {
   CESIUM_TRACE("CesiumGltfReader::copyDecodedAttribute");
-  CesiumGltf::Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
   if (pAccessor->count != pMesh->num_points()) {
-    readModel.warnings.emplace_back("Attribute accessor.count doesn't match "
-                                    "with number of decoded Draco vertices.");
+    readGltf.warnings.emplace_back("Attribute accessor.count doesn't match "
+                                   "with number of decoded Draco vertices.");
 
     pAccessor->count = pMesh->num_points();
   }
@@ -263,7 +262,7 @@ void copyDecodedAttribute(
     doCopy(reinterpret_cast<float*>(buffer.cesium.data.data()));
     break;
   default:
-    readModel.warnings.emplace_back(
+    readGltf.warnings.emplace_back(
         "Accessor uses an unknown componentType: " +
         std::to_string(int32_t(pAccessor->componentType)));
     break;
@@ -271,19 +270,19 @@ void copyDecodedAttribute(
 }
 
 void decodePrimitive(
-    ModelReaderResult& readModel,
+    GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
     CesiumGltf::ExtensionKhrDracoMeshCompression& draco) {
   CESIUM_TRACE("CesiumGltfReader::decodePrimitive");
-  CesiumGltf::Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
   std::unique_ptr<draco::Mesh> pMesh =
-      decodeBufferViewToDracoMesh(readModel, primitive, draco);
+      decodeBufferViewToDracoMesh(readGltf, primitive, draco);
   if (!pMesh) {
     return;
   }
 
-  copyDecodedIndices(readModel, primitive, pMesh.get());
+  copyDecodedIndices(readGltf, primitive, pMesh.get());
 
   for (const std::pair<const std::string, int32_t>& attribute :
        draco.attributes) {
@@ -291,7 +290,7 @@ void decodePrimitive(
     if (primitiveAttrIt == primitive.attributes.end()) {
       // The primitive does not use this attribute. The
       // KHR_draco_mesh_compression spec says this shouldn't happen, so warn.
-      readModel.warnings.emplace_back(
+      readGltf.warnings.emplace_back(
           "Draco extension has the " + attribute.first +
           " attribute, but the primitive does not have that attribute.");
       continue;
@@ -301,7 +300,7 @@ void decodePrimitive(
     CesiumGltf::Accessor* pAccessor =
         CesiumGltf::Model::getSafe(&model.accessors, primitiveAttrIndex);
     if (!pAccessor) {
-      readModel.warnings.emplace_back(
+      readGltf.warnings.emplace_back(
           "Primitive attribute's accessor index is invalid.");
       continue;
     }
@@ -310,14 +309,14 @@ void decodePrimitive(
     const draco::PointAttribute* pAttribute =
         pMesh->GetAttributeByUniqueId(static_cast<uint32_t>(dracoAttrIndex));
     if (pAttribute == nullptr) {
-      readModel.warnings.emplace_back(
+      readGltf.warnings.emplace_back(
           "Draco attribute with unique ID " + std::to_string(dracoAttrIndex) +
           " does not exist.");
       continue;
     }
 
     copyDecodedAttribute(
-        readModel,
+        readGltf,
         primitive,
         pAccessor,
         pMesh.get(),
@@ -326,13 +325,13 @@ void decodePrimitive(
 }
 } // namespace
 
-void decodeDraco(CesiumGltfReader::ModelReaderResult& readModel) {
+void decodeDraco(CesiumGltfReader::GltfReaderResult& readGltf) {
   CESIUM_TRACE("CesiumGltfReader::decodeDraco");
-  if (!readModel.model) {
+  if (!readGltf.model) {
     return;
   }
 
-  CesiumGltf::Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
   for (CesiumGltf::Mesh& mesh : model.meshes) {
     for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
@@ -343,7 +342,7 @@ void decodeDraco(CesiumGltfReader::ModelReaderResult& readModel) {
         continue;
       }
 
-      decodePrimitive(readModel, primitive, *pDraco);
+      decodePrimitive(readGltf, primitive, *pDraco);
     }
   }
 }

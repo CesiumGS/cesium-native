@@ -5,12 +5,13 @@ const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
 const generateCombinedWriter = require("./generateCombinedWriter");
 const generateRegisterExtensions = require("./generateRegisterExtensions");
+const getNameFromTitle = require("./getNameFromTitle");
 
 const argv = yargs.options({
-  schema: {
-    description: "The path to the JSON schema.",
+  schemas: {
+    description: "The paths to the JSON schemas.",
     demandOption: true,
-    type: "string",
+    type: "array",
   },
   output: {
     description: "The output directory for the generated class files.",
@@ -28,9 +29,9 @@ const argv = yargs.options({
     type: "string",
   },
   extensions: {
-    description: "The extensions directory.",
+    description: "The extension directories.",
     demandOption: true,
-    type: "string",
+    type: "array",
   },
   config: {
     description:
@@ -53,6 +54,11 @@ const argv = yargs.options({
     demandOption: true,
     type: "string",
   },
+  writerNamespace: {
+    description: "Namespace to put the generated writer classes in.",
+    demandOption: true,
+    type: "string",
+  },
   oneHandlerFile: {
     description:
       "Generate all the JSON handler implementations into a single file, GeneratedJsonHandlers.cpp.",
@@ -68,9 +74,21 @@ function splitSchemaPath(schemaPath) {
   return { schemaName, schemaBasePath };
 }
 
-const { schemaName, schemaBasePath } = splitSchemaPath(argv.schema);
-const schemaCache = new SchemaCache(schemaBasePath, argv.extensions);
-const rootSchema = schemaCache.load(schemaName);
+const schemaBasePaths = [];
+for (const schemaPath of argv.schemas) {
+  const { _, schemaBasePath } = splitSchemaPath(schemaPath);
+  schemaBasePaths.push(schemaBasePath);
+}
+
+const schemaCache = new SchemaCache(schemaBasePaths, argv.extensions);
+
+let schemas = [];
+for (const schemaPath of argv.schemas) {
+  const { schemaName, _ } = splitSchemaPath(schemaPath);
+  const schema = schemaCache.load(schemaName);
+  schemas.push(schema);
+}
+const rootSchema = schemas[0];
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
@@ -105,13 +123,25 @@ const options = {
 
 const writers = [];
 
-let schemas = [rootSchema];
+function getObjectToExtend(schema, extensionName) {
+  const parts = schema.split("\/");
+  const last = parts[parts.length - 1];
+  const subParts = last.split(".");
+  const extensionNameIndex = subParts.indexOf(extensionName);
+  if (extensionNameIndex == -1 || extensionNameIndex == 0) {
+    return undefined;
+  }
+  const objectToExtend = subParts.slice(0, extensionNameIndex).join(".");
+  return objectToExtend;
+}
 
 for (const extension of config.extensions) {
-  const extensionSchema = schemaCache.loadExtension(extension.schema);
+  const extensionSchema = schemaCache.loadExtension(extension.schema, extension.extensionName);
+  const extensionClassName = getNameFromTitle(config, extensionSchema.title);
+
   if (!extensionSchema) {
     console.warn(
-      `Could not load schema ${extension.schema} for extension class ${extension.className}.`
+      `Could not load schema ${extension.schema} for extension class ${extensionClassName}.`
     );
     continue;
   }
@@ -119,17 +149,31 @@ for (const extension of config.extensions) {
   if (!config.classes[extensionSchema.title]) {
     config.classes[extensionSchema.title] = {};
   }
-  config.classes[extensionSchema.title].overrideName = extension.className;
+  config.classes[extensionSchema.title].overrideName = extensionClassName;
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
   schemas.push(...generate(options, extensionSchema, writers));
 
-  for (const objectToExtend of extension.attachTo) {
+  var objectsToExtend = [];
+  if (extension.attachTo !== undefined) {
+    objectsToExtend = objectsToExtend.concat(extension.attachTo);
+  } else {
+    const attachTo = getObjectToExtend(extension.schema, extension.extensionName, extensionClassName);
+    if (attachTo !== undefined) {
+      objectsToExtend.push(attachTo);
+    }
+  }
+  if (objectsToExtend.length === 0) {
+    console.warn(`Could not find object to extend for extension class ${extensionClassName}`);
+    continue;
+  }
+
+  for (const objectToExtend of objectsToExtend) {
     const objectToExtendSchema = schemaCache.load(
       `${objectToExtend}.schema.json`
     );
     if (!objectToExtendSchema) {
-      console.warn("Could not load schema for ${objectToExtend}.");
+      console.warn(`Could not load schema for ${objectToExtend}.`);
       continue;
     }
 
@@ -139,27 +183,34 @@ for (const extension of config.extensions) {
 
     options.extensions[objectToExtendSchema.title].push({
       name: extension.extensionName,
-      className: extension.className,
+      className: extensionClassName,
     });
   }
 }
 
-const processed = {};
+function processSchemas() {
+  const processed = {};
 
-while (schemas.length > 0) {
-  const schema = schemas.pop();
-  if (processed[schema.sourcePath]) {
-    continue;
+  while (schemas.length > 0) {
+    const schema = schemas.pop();
+    if (processed[schema.sourcePath]) {
+      continue;
+    }
+    processed[schema.sourcePath] = true;
+    schemas.push(...generate(options, schema, writers));
   }
-  processed[schema.sourcePath] = true;
-  schemas.push(...generate(options, schema, writers));
 }
+
+processSchemas();
 
 generateRegisterExtensions({
   readerOutputDir: argv.readerOutput,
+  writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
   readerNamespace: argv.readerNamespace,
+  writerNamespace: argv.writerNamespace,
+  rootSchema: rootSchema,
   extensions: options.extensions,
 });
 

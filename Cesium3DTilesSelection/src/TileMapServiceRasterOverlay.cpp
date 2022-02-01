@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
+#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
@@ -147,7 +148,20 @@ TileMapServiceRasterOverlay::createTileProvider(
                                   this->_options.credit.value()))
                             : std::nullopt;
 
-  return pAssetAccessor->requestAsset(asyncSystem, xmlUrl, this->_headers)
+  auto reportError = [this, asyncSystem, pLogger](
+                         const std::shared_ptr<IAssetRequest>& pRequest,
+                         const std::string& message) {
+    this->reportError(
+        asyncSystem,
+        pLogger,
+        RasterOverlayLoadFailureDetails{
+            this,
+            RasterOverlayLoadType::TileProvider,
+            pRequest,
+            message});
+  };
+
+  return pAssetAccessor->get(asyncSystem, xmlUrl, this->_headers)
       .thenInWorkerThread(
           [pOwner,
            asyncSystem,
@@ -157,13 +171,13 @@ TileMapServiceRasterOverlay::createTileProvider(
            pLogger,
            options = this->_options,
            url = this->_url,
-           headers =
-               this->_headers](const std::shared_ptr<IAssetRequest>& pRequest)
+           headers = this->_headers,
+           reportError](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
+              reportError(
+                  pRequest,
                   "No response received from Tile Map Service.");
               return nullptr;
             }
@@ -175,16 +189,14 @@ TileMapServiceRasterOverlay::createTileProvider(
                 reinterpret_cast<const char*>(data.data()),
                 data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Could not parse tile map service XML.");
+              reportError(pRequest, "Could not parse tile map service XML.");
               return nullptr;
             }
 
             tinyxml2::XMLElement* pRoot = doc.RootElement();
             if (!pRoot) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
+              reportError(
+                  pRequest,
                   "Tile map service XML document does not have a root "
                   "element.");
               return nullptr;

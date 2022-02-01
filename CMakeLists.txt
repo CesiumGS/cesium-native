@@ -9,6 +9,7 @@ project(cesium-native
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
+option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
@@ -146,10 +147,13 @@ add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
 
 # Private Targets
-# enable_testing() MUST be called before add_subdirectory or no tests
-# will be found by ctest
-enable_testing()
-add_subdirectory(CesiumNativeTests)
+if (CESIUM_TESTS_ENABLED)
+    # enable_testing() MUST be called before add_subdirectory or no tests
+    # will be found by ctest
+    enable_testing()
+    add_subdirectory(CesiumNativeTests)
+endif()
+
 add_subdirectory(doc)
 
 # Installation of third-party libraries required to use cesium-native
