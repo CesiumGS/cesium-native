@@ -36,6 +36,7 @@
   - Added `modifyToken` method.
   - Added static `getIdFromToken` method to obtain a token ID from a given token value.
 - Added `loadErrorCallback` to `TilesetOptions` and `RasterOverlayOptions`. This callback is invoked when the `Tileset` or `RasterOverlay` encounter a load error, allowing the error to be handled by application code.
+- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 
@@ -55,7 +56,6 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesWriter` library.
-- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 
