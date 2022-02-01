@@ -49,6 +49,7 @@
 #include <CesiumGltf/FeatureTableProperty.h>
 #include <CesiumGltf/FeatureTexture.h>
 #include <CesiumGltf/Image.h>
+#include <CesiumGltf/KHR_texture_basisuGlTFExtension.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
@@ -75,6 +76,11 @@
 namespace CesiumGltfWriter {
 
 namespace {
+
+void writeJson(
+    const CesiumGltf::KHR_texture_basisuGlTFExtension& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
     const CesiumGltf::ExtensionKhrDracoMeshCompression& obj,
@@ -538,6 +544,22 @@ void writeTextureInfo(
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
+}
+
+void writeJson(
+    const CesiumGltf::KHR_texture_basisuGlTFExtension& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.source > -1) {
+    jsonWriter.Key("source");
+    writeJson(obj.source, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
 }
 
 void writeJson(
@@ -2336,6 +2358,13 @@ void writeJson(
 }
 
 } // namespace
+
+void KHR_texture_basisuGlTFExtensionJsonWriter::write(
+    const CesiumGltf::KHR_texture_basisuGlTFExtension& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
 
 void ExtensionKhrDracoMeshCompressionJsonWriter::write(
     const CesiumGltf::ExtensionKhrDracoMeshCompression& obj,

@@ -18,16 +18,21 @@
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionNodeExtMeshFeatures.h>
+#include <CesiumGltf/KHR_texture_basisuGlTFExtension.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltf/Texture.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 namespace CesiumGltfWriter {
 
 void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
+  context.registerExtension<
+      CesiumGltf::Texture,
+      KHR_texture_basisuGlTFExtensionJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionKhrDracoMeshCompressionJsonWriter>();
