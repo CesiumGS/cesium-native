@@ -13,9 +13,9 @@ namespace CesiumGltf {
  * @brief glTF extension to specify textures using the KTX v2 images with Basis
  * Universal supercompression.
  */
-struct CESIUMGLTF_API ExtensionTextureBasisU final
+struct CESIUMGLTF_API ExtensionKhrTextureBasisu final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ExtensionTextureBasisU";
+  static inline constexpr const char* TypeName = "ExtensionKhrTextureBasisu";
   static inline constexpr const char* ExtensionName = "KHR_texture_basisu";
 
   /**
