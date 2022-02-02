@@ -20,6 +20,14 @@ class CesiumUtilityConan(ConanFile):
       "rapidjson/cci.20211112"
     ]
 
+    exports_sources = [
+      "include/*",
+      "src/*",
+      "test/*",
+      "CMakeLists.txt",
+      "../tools/cmake/cesium.cmake"
+    ]
+
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC

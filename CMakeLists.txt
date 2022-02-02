@@ -6,6 +6,8 @@ project(cesium-native
     LANGUAGES CXX
 )
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
+
 add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGltf)
 

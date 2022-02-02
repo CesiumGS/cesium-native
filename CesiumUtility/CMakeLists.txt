@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(CesiumUtility CXX)
 
-include(${CMAKE_CURRENT_LIST_DIR}/../tools/cmake/cesium.cmake)
+include(cesium)
 
 add_library(CesiumUtility "")
 
