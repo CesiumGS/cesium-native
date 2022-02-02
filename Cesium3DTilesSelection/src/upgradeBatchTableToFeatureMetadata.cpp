@@ -149,8 +149,8 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       type.isInt16 = type.isUint16 = false;
       type.isInt32 = type.isUint32 = false;
       type.isInt64 = type.isUint64 = false;
-      type.isFloat32 = true;
-      type.isFloat64 = true;
+      type.isFloat32 &= true;
+      type.isFloat64 &= true;
       type.isBool = false;
       type.isArray = false;
     } else if (it->IsDouble()) {
@@ -159,7 +159,7 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       type.isInt32 = type.isUint32 = false;
       type.isInt64 = type.isUint64 = false;
       type.isFloat32 = false;
-      type.isFloat64 = true;
+      type.isFloat64 &= true;
       type.isBool = false;
       type.isArray = false;
     } else if (it->IsArray()) {
