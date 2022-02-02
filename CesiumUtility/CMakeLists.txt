@@ -1,38 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(CesiumUtility CXX)
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-   message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
-                 "${CMAKE_BINARY_DIR}/conan.cmake")
-endif()
-
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-conan_cmake_configure(
-  REQUIRES
-    ms-gsl/3.1.0
-    glm/0.9.9.8
-    uriparser/0.9.6
-  GENERATORS
-    CMakeDeps
-)
-
-foreach(TYPE ${CMAKE_CONFIGURATION_TYPES})
-    set(CMAKE_BUILD_TYPE ${TYPE})
-    conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
-
-    conan_cmake_install(PATH_OR_REFERENCE .
-                      BUILD missing
-                      SETTINGS ${settings})
-endforeach()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_BINARY_DIR})
-
-find_package(Microsoft.GSL REQUIRED)
-find_package(glm REQUIRED)
-find_package(uriparser REQUIRED)
+include(${CMAKE_CURRENT_LIST_DIR}/../tools/cmake/cesium.cmake)
 
 add_library(CesiumUtility "")
 
@@ -73,10 +42,17 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
+find_package(Microsoft.GSL REQUIRED)
+find_package(glm REQUIRED)
+find_package(uriparser REQUIRED)
+find_package(rapidjson REQUIRED)
+
 target_link_libraries(CesiumUtility
     PUBLIC
         Microsoft.GSL::GSL
         glm::glm
+        rapidjson::rapidjson
+    PRIVATE
         uriparser::uriparser
 )
 
@@ -84,3 +60,9 @@ install(TARGETS CesiumUtility
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility
 )
+
+add_library(cesium-native::CesiumUtility ALIAS CesiumUtility)
+
+message("** PREFIX ${CMAKE_INSTALL_PREFIX}")
+message("** CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}")
+message("** CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR}")
