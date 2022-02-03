@@ -1,5 +1,6 @@
 from conans import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conan.tools.layout import cmake_layout
 
 class CesiumUtilityConan(ConanFile):
     name = "CesiumUtility"
@@ -29,8 +30,8 @@ class CesiumUtilityConan(ConanFile):
     ]
 
     def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
+      if self.settings.os == "Windows":
+          del self.options.fPIC
 
     def build(self):
       cmake = CMake(self)

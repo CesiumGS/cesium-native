@@ -3,14 +3,17 @@ include(GNUInstallDirs)
 option(CESIUM_USE_CONAN_PACKAGES "Whether to add ${CMAKE_BINARY_DIR}/conan to the module and prefix paths in order to resolve packages installed by Conan." on)
 
 # Tell CMake to look for packages from Conan
-if (CESIUM_USE_CONAN_PACKAGES)
-  if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_MODULE_PATH)
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
-  endif()
-  if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_PREFIX_PATH)
-    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/conan")
-  endif()
-endif()
+# if (CESIUM_USE_CONAN_PACKAGES)
+#   if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_MODULE_PATH)
+#     list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
+#   endif()
+#   if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_PREFIX_PATH)
+#     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/conan")
+#   endif()
+# endif()
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}")
 
 if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL

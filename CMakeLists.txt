@@ -8,8 +8,12 @@ project(cesium-native
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
 
-add_subdirectory(CesiumUtility)
-add_subdirectory(CesiumGltf)
+include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)
+conan_workspace_subdirectories()
+
+
+# add_subdirectory(CesiumUtility)
+# add_subdirectory(CesiumGltf)
 
 # option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 # option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)

@@ -1,9 +1,12 @@
 from conans import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conan.tools.layout import cmake_layout
 
 class CesiumGltfConan(ConanFile):
     name = "CesiumGltf"
     version = "0.12.0"
+    # user = None
+    # channel = None
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"
     url = "<Package recipe repository url here, for issues about the package>"
@@ -31,15 +34,22 @@ class CesiumGltfConan(ConanFile):
     ]
 
     def requirements(self):
+      print("*********** " + self.recipe_folder)
+      print("************ CesiumGltf requirements")
       for lib in self.cesiumNativeDependencies:
         if self.user and self.channel:
-          self.requires("%s/%s@%s/%s" % (lib, self.version, self.user, self.channel))
+          s = "%s/%s@%s/%s" % (lib, self.version, self.user, self.channel)
+          print("********* " + s)
+          self.requires(s)
         else:
-          self.requires("%s/%s" % (lib, self.version))
+          s = "%s/%s" % (lib, self.version)
+          print("********* " + s)
+          self.requires(s)
 
     def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
+      print("************ CesiumGltf config_options")
+      if self.settings.os == "Windows":
+          del self.options.fPIC
 
     def build(self):
       cmake = CMake(self)

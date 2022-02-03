@@ -58,7 +58,7 @@ target_include_directories(
 )
 
 find_package(Microsoft.GSL REQUIRED)
-find_package(CesiumUtility QUIET)
+find_package(CesiumUtility REQUIRED)
 
 target_link_libraries(CesiumGltf
     PUBLIC
@@ -71,4 +71,4 @@ install(TARGETS CesiumGltf
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf
 )
 
-add_library(CesiumGltf::CesiumGltf ALIAS CesiumGltf)
+# add_library(CesiumGltf::CesiumGltf ALIAS CesiumGltf)

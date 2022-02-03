@@ -61,4 +61,4 @@ install(TARGETS CesiumUtility
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility
 )
 
-add_library(CesiumUtility::CesiumUtility ALIAS CesiumUtility)
+# add_library(CesiumUtility::CesiumUtility ALIAS CesiumUtility)
