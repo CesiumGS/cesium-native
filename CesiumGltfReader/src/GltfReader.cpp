@@ -533,13 +533,32 @@ ImageReaderResult GltfReader::readImage(
             image.channels = 4;
           }
 
+          // TODO: use more mips, not just the first
           ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
           ktx_size_t pixelDataSize =
               ktxTexture_GetDataSize(ktxTexture(pTexture));
-          image.pixelData.resize(pixelDataSize);
+          ktx_size_t imageOffset = 0;
+
+          // TODO: are mips always in this order? largest mip at 0
+          // and largest mip at the end of the pixel data buffer.
+          // I.e., the largest mip sits between pixelData + imageOffset and
+          // pixelData + pixelDataSize?
+          if (pTexture->numLevels > 1) {
+            ktxTexture_GetImageOffset(
+                ktxTexture(pTexture),
+                0,
+                0,
+                0,
+                &imageOffset);
+          }
+
+          image.pixelData.resize(pixelDataSize - imageOffset);
           std::uint8_t* u8Pointer =
               reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-          std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
+          std::copy(
+              pixelData + imageOffset,
+              pixelData + pixelDataSize,
+              u8Pointer);
           ktxTexture_Destroy(ktxTexture(pTexture));
 
           return result;
