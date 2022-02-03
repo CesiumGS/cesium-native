@@ -20,7 +20,6 @@ class CesiumUtilityConan(ConanFile):
       "uriparser/0.9.6",
       "rapidjson/cci.20211112"
     ]
-
     exports_sources = [
       "include/*",
       "src/*",
