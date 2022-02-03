@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
 project(CesiumGltf CXX)
 
-include(${CMAKE_CURRENT_LIST_DIR}/../tools/cmake/cesium.cmake)
+include(cesium)
 
 add_library(CesiumGltf "")
+
 configure_cesium_library(CesiumGltf)
 
 cesium_glob_files(CESIUM_GLTF_SOURCES
@@ -62,10 +63,12 @@ find_package(CesiumUtility QUIET)
 target_link_libraries(CesiumGltf
     PUBLIC
         Microsoft.GSL::GSL
-        cesium-native::CesiumUtility
+        CesiumUtility::CesiumUtility
 )
 
 install(TARGETS CesiumGltf
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf
 )
+
+add_library(CesiumGltf::CesiumGltf ALIAS CesiumGltf)

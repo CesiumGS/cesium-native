@@ -61,8 +61,4 @@ install(TARGETS CesiumUtility
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility
 )
 
-add_library(cesium-native::CesiumUtility ALIAS CesiumUtility)
-
-message("** PREFIX ${CMAKE_INSTALL_PREFIX}")
-message("** CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}")
-message("** CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR}")
+add_library(CesiumUtility::CesiumUtility ALIAS CesiumUtility)

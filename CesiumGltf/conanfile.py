@@ -1,5 +1,5 @@
-from conans import ConanFile, CMake, tools
-
+from conans import ConanFile
+from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 
 class CesiumGltfConan(ConanFile):
     name = "CesiumGltf"
@@ -17,47 +17,35 @@ class CesiumGltfConan(ConanFile):
       "ms-gsl/3.1.0"
     ]
 
+    exports_sources = [
+      "generated/*",
+      "include/*",
+      "src/*",
+      "test/*",
+      "CMakeLists.txt",
+      "../tools/cmake/cesium.cmake"
+    ]
+
     cesiumNativeDependencies = [
       "CesiumUtility"
     ]
 
     def requirements(self):
-      if not self.develop:
-        for lib in self.cesiumNativeDependencies:
-          self.requires(lib + "/" + self.version)
+      for lib in self.cesiumNativeDependencies:
+        if self.user and self.channel:
+          self.requires("%s/%s@%s/%s" % (lib, self.version, self.user, self.channel))
+        else:
+          self.requires("%s/%s" % (lib, self.version))
 
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
 
-    def source(self):
-        self.run("git clone https://github.com/conan-io/hello.git")
-        # This small hack might be useful to guarantee proper /MT /MD linkage
-        # in MSVC if the packaged project doesn't have variables to set it
-        # properly
-        tools.replace_in_file("hello/CMakeLists.txt", "PROJECT(HelloWorld)",
-                              '''PROJECT(HelloWorld)
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()''')
-
     def build(self):
-        cmake = CMake(self)
-        cmake.configure(source_folder="hello")
-        cmake.build()
-
-        # Explicit way:
-        # self.run('cmake %s/hello %s'
-        #          % (self.source_folder, cmake.command_line))
-        # self.run("cmake --build . %s" % cmake.build_config)
+      cmake = CMake(self)
+      cmake.configure()
+      cmake.build()
 
     def package(self):
-        self.copy("*.h", dst="include", src="hello")
-        self.copy("*hello.lib", dst="lib", keep_path=False)
-        self.copy("*.dll", dst="bin", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
-        self.copy("*.dylib", dst="lib", keep_path=False)
-        self.copy("*.a", dst="lib", keep_path=False)
-
-    def package_info(self):
-        self.cpp_info.libs = ["hello"]
-
+      cmake = CMake(self)
+      cmake.install()

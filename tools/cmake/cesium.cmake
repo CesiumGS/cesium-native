@@ -5,12 +5,10 @@ option(CESIUM_USE_CONAN_PACKAGES "Whether to add ${CMAKE_BINARY_DIR}/conan to th
 # Tell CMake to look for packages from Conan
 if (CESIUM_USE_CONAN_PACKAGES)
   if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_MODULE_PATH)
-    message("Adding ${CMAKE_BINARY_DIR}/conan")
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
   endif()
   if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_PREFIX_PATH)
-  message("Adding2 ${CMAKE_BINARY_DIR}/conan")
-  list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/conan")
+    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/conan")
   endif()
 endif()
 
