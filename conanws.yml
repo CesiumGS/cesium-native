@@ -3,6 +3,8 @@ editables:
     path: CesiumUtility
   CesiumGltf/0.12.0@user/testing:
     path: CesiumGltf
-root: CesiumGltf/0.12.0@user/testing
+  CesiumGeometry/0.12.0@user/testing:
+    path: CesiumGeometry
+root: CesiumGltf/0.12.0@user/testing, CesiumGeometry/0.12.0@user/testing
 workspace_generator: cmake
 layout: conanlayout.ini

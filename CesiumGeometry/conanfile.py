@@ -1,8 +1,8 @@
 from conans import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 
-class CesiumGltfConan(ConanFile):
-    name = "CesiumGltf"
+class CesiumGeometryConan(ConanFile):
+    name = "CesiumGeometry"
     version = "0.12.0"
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"
@@ -14,10 +14,8 @@ class CesiumGltfConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
-      "ms-gsl/3.1.0"
     ]
     exports_sources = [
-      "generated/*",
       "include/*",
       "src/*",
       "test/*",

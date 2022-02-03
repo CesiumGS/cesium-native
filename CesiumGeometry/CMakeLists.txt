@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumGeometry CXX)
+
+include(cesium)
+
 add_library(CesiumGeometry "")
 
 configure_cesium_library(CesiumGeometry)
@@ -34,8 +39,10 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(CesiumGeometry PUBLIC
-    CesiumUtility
+    CesiumUtility::CesiumUtility
 )
 
 install(TARGETS CesiumGeometry
