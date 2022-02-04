@@ -6,7 +6,7 @@
 using namespace CesiumGltf;
 
 Ktx2TranscodeTargets::Ktx2TranscodeTargets(
-    const SupportedFormats& supportedFormats) {
+    const SupportedGpuCompressedPixelFormats& supportedFormats) {
 
   // Attempts to determine ideal transcode target formats using the logic here:
   // https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/KTXDeveloperGuide.md

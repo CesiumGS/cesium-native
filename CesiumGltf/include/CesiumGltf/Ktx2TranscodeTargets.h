@@ -36,7 +36,7 @@ enum CESIUMGLTF_API GpuCompressedPixelFormat {
  * Each entry in the struct is a bool that represents whether the gpu
  * compressed pixel format with the corresponding name is supported.
  */
-struct CESIUMGLTF_API SupportedFormats {
+struct CESIUMGLTF_API SupportedGpuCompressedPixelFormats {
   bool ETC1_RGB;
   bool ETC2_RGBA;
   bool BC1_RGB;
@@ -120,7 +120,8 @@ struct CESIUMGLTF_API Ktx2TranscodeTargets {
    *
    * @param supportedFormats The supported gpu compressed pixel formats.
    */
-  Ktx2TranscodeTargets(const SupportedFormats& supportedFormats);
+  Ktx2TranscodeTargets(
+      const SupportedGpuCompressedPixelFormats& supportedFormats);
 };
 
 } // namespace CesiumGltf
