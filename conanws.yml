@@ -1,4 +1,5 @@
 editables:
+  &libraries
   CesiumUtility/0.12.0@user/testing:
     path: CesiumUtility
   CesiumGltf/0.12.0@user/testing:
@@ -9,6 +10,11 @@ editables:
     path: CesiumGeospatial
   CesiumAsync/0.12.0@user/testing:
     path: CesiumAsync
-root: CesiumGltf/0.12.0@user/testing, CesiumGeometry/0.12.0@user/testing, CesiumGeospatial/0.12.0@user/testing, CesiumAsync/0.12.0@user/testing
+  CesiumJsonReader/0.12.0@user/testing:
+    path: CesiumJsonReader
+  CesiumJsonWriter/0.12.0@user/testing:
+    path: CesiumJsonWriter
+# Treat every library as a root, so they will all be built.
+root: *libraries
 workspace_generator: cmake
 layout: conanlayout.ini

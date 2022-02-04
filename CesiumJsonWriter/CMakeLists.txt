@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumJsonWriter CXX)
+
+include(cesium)
+
 add_library(CesiumJsonWriter "")
 configure_cesium_library(CesiumJsonWriter)
 
@@ -52,9 +57,11 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(CesiumJsonWriter
     PUBLIC
-        CesiumUtility
+        CesiumUtility::CesiumUtility
 )
 
 install(TARGETS CesiumJsonWriter
