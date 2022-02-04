@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(Cesium3DTiles CXX)
+
+include(cesium)
+
 add_library(Cesium3DTiles "")
 configure_cesium_library(Cesium3DTiles)
 
@@ -51,10 +56,13 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
+find_package(Microsoft.GSL REQUIRED)
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(Cesium3DTiles
     PUBLIC
-        CesiumUtility
-        GSL
+        Microsoft.GSL::GSL
+        CesiumUtility::CesiumUtility
 )
 
 install(TARGETS Cesium3DTiles

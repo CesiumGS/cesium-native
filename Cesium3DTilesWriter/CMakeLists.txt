@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(Cesium3DTilesWriter CXX)
+
+include(cesium)
+
 add_library(Cesium3DTilesWriter "")
 configure_cesium_library(Cesium3DTilesWriter)
 
@@ -51,11 +56,15 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
+find_package(Cesium3DTiles REQUIRED)
+find_package(CesiumJsonWriter REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
+
 target_link_libraries(Cesium3DTilesWriter
     PUBLIC
-        Cesium3DTiles
-        CesiumJsonWriter
-        GSL
+        Microsoft.GSL::GSL
+        Cesium3DTiles::Cesium3DTiles
+        CesiumJsonWriter::CesiumJsonWriter
 )
 
 install(TARGETS Cesium3DTilesWriter

@@ -20,7 +20,7 @@ class CesiumGltfReaderConan(ConanFile):
       "stb/cci.20210713"
     ]
     exports_sources = [
-      "generated/src/*",
+      "generated/*",
       "include/*",
       "src/*",
       "test/*",

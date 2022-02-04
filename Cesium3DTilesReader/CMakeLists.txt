@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(Cesium3DTilesReader CXX)
+
+include(cesium)
+
 add_library(Cesium3DTilesReader "")
 configure_cesium_library(Cesium3DTilesReader)
 
@@ -51,11 +56,15 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
+find_package(Cesium3DTiles REQUIRED)
+find_package(CesiumJsonReader REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
+
 target_link_libraries(Cesium3DTilesReader
     PUBLIC
-        Cesium3DTiles
-        CesiumJsonReader
-        GSL
+        Microsoft.GSL::GSL
+        Cesium3DTiles::Cesium3DTiles
+        CesiumJsonReader::CesiumJsonReader
 )
 
 install(TARGETS Cesium3DTilesReader

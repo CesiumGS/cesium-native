@@ -2,8 +2,8 @@ from conans import ConanFile
 from conans.errors import ConanException
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
-class CesiumGltfConan(ConanFile):
-    name = "CesiumGltf"
+class Cesium3DTilesConan(ConanFile):
+    name = "Cesium3DTiles"
     version = "0.12.0"
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"

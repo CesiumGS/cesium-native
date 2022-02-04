@@ -1,9 +1,8 @@
 from conans import ConanFile
-from conans.errors import ConanException
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
-class CesiumGltfConan(ConanFile):
-    name = "CesiumGltf"
+class Cesium3DTilesReaderConan(ConanFile):
+    name = "Cesium3DTilesReader"
     version = "0.12.0"
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"
@@ -15,7 +14,7 @@ class CesiumGltfConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
-      "ms-gsl/4.0.0"
+      "ms-gsl/4.0.0",
     ]
     exports_sources = [
       "generated/*",
@@ -26,7 +25,8 @@ class CesiumGltfConan(ConanFile):
       "../tools/cmake/cesium.cmake"
     ]
     cesiumNativeDependencies = [
-      "CesiumUtility"
+      "Cesium3DTiles",
+      "CesiumJsonReader",
     ]
 
     def requirements(self):
@@ -61,5 +61,5 @@ class CesiumGltfConan(ConanFile):
       self.folders.build = "../" + self.folders.build + "/" + self.name
       self.folders.generators = self.folders.build + "/conan"
 
-      # And in the source code (i.e. not installed), generated headers are separate
-      self.cpp.source.includedirs = ["include", "generated/include"]
+      # And includes aren't in src
+      self.cpp.source.includedirs = ["include"]
