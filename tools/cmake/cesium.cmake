@@ -77,33 +77,18 @@ function(configure_cesium_library targetName)
 
 endfunction()
 
-macro(cesium_dependencies dependencies)
-  if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
-                  "${CMAKE_BINARY_DIR}/conan.cmake")
-  endif()
+# Workaround for targets that erroneously forget to
+# declare their include directories as `SYSTEM`
+function(target_link_libraries_system target scope)
+  set(libs ${ARGN})
+  foreach(lib ${libs})
+    get_target_property(lib_include_dirs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
 
-  include(${CMAKE_BINARY_DIR}/conan.cmake)
+    if ("${lib_include_dirs}" MATCHES ".*NOTFOUND$")
+        message(FATAL_ERROR "${target}: Cannot use INTERFACE_INCLUDE_DIRECTORIES from target ${lib} as it does not define it")
+    endif()
 
-  conan_cmake_configure(
-    REQUIRES
-      ms-gsl/3.1.0
-      glm/0.9.9.8
-      uriparser/0.9.6
-    GENERATORS
-      CMakeDeps
-  )
-
-  foreach(TYPE ${CMAKE_CONFIGURATION_TYPES})
-      set(CMAKE_BUILD_TYPE ${TYPE})
-      conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
-
-      conan_cmake_install(PATH_OR_REFERENCE .
-                        BUILD missing
-                        SETTINGS ${settings})
+    target_include_directories(${target} SYSTEM ${scope} ${lib_include_dirs})
+    target_link_libraries(${target} ${scope} ${lib})
   endforeach()
-
-  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
-  list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_BINARY_DIR})
-endmacro()
+endfunction()

@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumAsync CXX)
+
+include(cesium)
+
 add_library(CesiumAsync "")
 
 configure_cesium_library(CesiumAsync)
@@ -37,18 +42,20 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src/
 )
 
+find_package(Microsoft.GSL REQUIRED)
+find_package(Async++ REQUIRED)
+find_package(SQLite3 REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(CesiumAsync
     PUBLIC
-        CesiumUtility
-        GSL
+        CesiumUtility::CesiumUtility
+        Microsoft.GSL::GSL
         Async++
+        spdlog::libspdlog
     PRIVATE
-        sqlite3
-)
-
-# These libraries erroneously do NOT list their headers as `SYSTEM` headers
-target_link_libraries_system(CesiumAsync PUBLIC
-    spdlog
+        SQLite::SQLite3
 )
 
 install(TARGETS CesiumAsync
