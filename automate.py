@@ -20,8 +20,8 @@ def main():
 def installDependencies(args):
   libraries = findCesiumLibraries()
 
-  configs = args.config or ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
-  print(configs)
+  configs = args.config or ['Debug', 'Release']
+  print("Installing dependencies for the following build configurations: " + ", ".join(configs))
 
   # Put all libraries in editable mode
   for library in libraries:
@@ -30,7 +30,7 @@ def installDependencies(args):
   # Install dependencies for all libraries, and for all configs
   for config in configs:
     for library in libraries:
-      run("conan install %s %s/0.12.0@user/dev -if build/%s -s build_type=%s" % (library, library, library, config))
+      run("conan install %s %s/0.12.0@user/dev -if build/%s -s build_type=%s --build missing" % (library, library, library, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
