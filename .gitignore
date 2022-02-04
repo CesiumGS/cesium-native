@@ -8,3 +8,7 @@ CMakeSettings.json
 .cache
 *.DS_Store
 test.db
+
+# Conan generates this file in each package directory, for no apparent reason:
+# https://github.com/conan-io/conan/issues/10373
+graph_info.json

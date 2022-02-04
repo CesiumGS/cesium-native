@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumGltfReader CXX)
+
+include(cesium)
+
 add_library(CesiumGltfReader "")
 configure_cesium_library(CesiumGltfReader)
 
@@ -54,13 +59,23 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
+find_package(base64 REQUIRED)
+find_package(draco REQUIRED)
+find_package(stb REQUIRED)
+find_package(CesiumAsync REQUIRED)
+find_package(CesiumGltf REQUIRED)
+find_package(CesiumJsonReader REQUIRED)
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(CesiumGltfReader
     PUBLIC
-        CesiumAsync
-        CesiumGltf
-        CesiumJsonReader
-        modp_b64
-        ${CESIUM_NATIVE_DRACO_LIBRARY}
+        base64::base64
+        draco::draco
+        stb::stb
+        CesiumAsync::CesiumAsync
+        CesiumGltf::CesiumGltf
+        CesiumJsonReader::CesiumJsonReader
+        CesiumUtility::CesiumUtility
 )
 
 install(TARGETS CesiumGltfReader

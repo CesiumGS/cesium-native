@@ -14,6 +14,8 @@ editables:
     path: CesiumJsonReader
   CesiumJsonWriter/0.12.0@user/testing:
     path: CesiumJsonWriter
+  CesiumGltfReader/0.12.0@user/testing:
+    path: CesiumGltfReader
 # Treat every library as a root, so they will all be built.
 root: *libraries
 workspace_generator: cmake

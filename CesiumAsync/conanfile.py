@@ -1,5 +1,5 @@
 from conans import ConanFile
-from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
 class CesiumAsyncConan(ConanFile):
     name = "CesiumAsync"
@@ -53,3 +53,14 @@ class CesiumAsyncConan(ConanFile):
     def package(self):
       cmake = CMake(self)
       cmake.install()
+
+    def layout(self):
+      # Mostly a default cmake layout
+      cmake_layout(self)
+
+      # But build into the top-level build directory
+      self.folders.build = "../" + self.folders.build + "/" + self.name
+      self.folders.generators = self.folders.build + "/conan"
+
+      # And includes aren't in src
+      self.cpp.source.includedirs = ["include"]

@@ -1,5 +1,6 @@
 from conans import ConanFile
-from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conans.errors import ConanException
+from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
 class CesiumGltfConan(ConanFile):
     name = "CesiumGltf"
@@ -17,7 +18,7 @@ class CesiumGltfConan(ConanFile):
       "ms-gsl/3.1.0"
     ]
     exports_sources = [
-      "generated/*",
+      "generated/include/CesiumGltf/*",
       "include/*",
       "src/*",
       "test/*",
@@ -51,3 +52,14 @@ class CesiumGltfConan(ConanFile):
     def package(self):
       cmake = CMake(self)
       cmake.install()
+
+    def layout(self):
+      # Mostly a default cmake layout
+      cmake_layout(self)
+
+      # But build into the top-level build directory
+      self.folders.build = "../" + self.folders.build + "/" + self.name
+      self.folders.generators = self.folders.build + "/conan"
+
+      # And in the source code (i.e. not installed), generated headers are separate
+      self.cpp.source.includedirs = ["include", "generated/include"]

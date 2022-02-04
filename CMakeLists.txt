@@ -8,8 +8,7 @@ project(cesium-native
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
 
-include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)
-conan_workspace_subdirectories()
+include(${CMAKE_BINARY_DIR}/workspace.cmake)
 
 
 # add_subdirectory(CesiumUtility)

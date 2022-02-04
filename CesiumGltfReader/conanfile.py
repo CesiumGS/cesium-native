@@ -1,8 +1,8 @@
 from conans import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
-class CesiumJsonReaderConan(ConanFile):
-    name = "CesiumJsonReader"
+class CesiumGltfReaderConan(ConanFile):
+    name = "CesiumGltfReader"
     version = "0.12.0"
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"
@@ -14,16 +14,23 @@ class CesiumJsonReaderConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
+      "base64/0.4.0",
+      "draco/1.4.3",
       "ms-gsl/3.1.0",
+      "stb/cci.20210713"
     ]
     exports_sources = [
+      "generated/src/*",
       "include/*",
       "src/*",
+      "test/*",
       "CMakeLists.txt",
       "../tools/cmake/cesium.cmake"
     ]
     cesiumNativeDependencies = [
-      "CesiumUtility"
+      "CesiumAsync",
+      "CesiumGltf",
+      "CesiumJsonReader"
     ]
 
     def requirements(self):

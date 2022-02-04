@@ -5,7 +5,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Tracing.h>
 
-#include <modp_b64.h>
+#include <libbase64.h>
 
 #include <cstddef>
 
@@ -15,13 +15,16 @@ namespace {
 
 std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
   CESIUM_TRACE("CesiumGltfReader::decodeBase64");
-  std::vector<std::byte> result(modp_b64_decode_len(data.size()));
+  std::vector<std::byte> result(data.size() * 3 / 4);
 
-  const size_t resultLength = modp_b64_decode(
-      reinterpret_cast<char*>(result.data()),
+  size_t resultLength;
+  const int success = base64_decode(
       reinterpret_cast<const char*>(data.data()),
-      data.size());
-  if (resultLength == size_t(-1)) {
+      data.size(),
+      reinterpret_cast<char*>(result.data()),
+      &resultLength,
+      0);
+  if (success != 1) {
     result.clear();
     result.shrink_to_fit();
   } else {
