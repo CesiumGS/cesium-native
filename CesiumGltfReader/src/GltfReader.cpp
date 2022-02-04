@@ -253,9 +253,8 @@ void postprocess(
       const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
-      ImageReaderResult imageResult = GltfReader::readImage(
-          bufferViewSpan,
-          options.ktx2TranscodeTargetFormat);
+      ImageReaderResult imageResult =
+          GltfReader::readImage(bufferViewSpan, options.ktx2TranscodeTargets);
       readGltf.warnings.insert(
           readGltf.warnings.end(),
           imageResult.warnings.begin(),
@@ -392,8 +391,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
               ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
               .thenInWorkerThread(
                   [pImage = &image,
-                   ktx2TranscodeTargetFormat =
-                       options.ktx2TranscodeTargetFormat](
+                   ktx2TranscodeTargets = options.ktx2TranscodeTargets](
                       std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
 
@@ -402,9 +400,8 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
                     if (pResponse) {
                       pImage->uri = std::nullopt;
 
-                      ImageReaderResult imageResult = readImage(
-                          pResponse->data(),
-                          ktx2TranscodeTargetFormat);
+                      ImageReaderResult imageResult =
+                          readImage(pResponse->data(), ktx2TranscodeTargets);
                       if (imageResult.image) {
                         pImage->cesium = std::move(*imageResult.image);
                         return ExternalBufferLoadResult{true, imageUri};
@@ -446,8 +443,7 @@ bool isKtx(const gsl::span<const std::byte>& data) {
 /*static*/
 ImageReaderResult GltfReader::readImage(
     const gsl::span<const std::byte>& data,
-    const std::optional<CompressedPixelFormatCesium>&
-        ktx2TranscodeTargetFormat) {
+    const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
   CESIUM_TRACE("CesiumGltf::readImage");
 
   ImageReaderResult result;
@@ -468,66 +464,104 @@ ImageReaderResult GltfReader::readImage(
         KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
         &pTexture);
 
-    ktx_transcode_fmt_e targetFormat = KTX_TTF_RGBA32;
-    if (ktx2TranscodeTargetFormat) {
-      switch (*ktx2TranscodeTargetFormat) {
-      case CompressedPixelFormatCesium::ETC1_RGB:
-        targetFormat = KTX_TTF_ETC1_RGB;
-        break;
-      case CompressedPixelFormatCesium::ETC2_RGBA:
-        targetFormat = KTX_TTF_ETC2_RGBA;
-        break;
-      case CompressedPixelFormatCesium::BC1_RGB:
-        targetFormat = KTX_TTF_BC1_RGB;
-        break;
-      case CompressedPixelFormatCesium::BC3_RGBA:
-        targetFormat = KTX_TTF_BC3_RGBA;
-        break;
-      case CompressedPixelFormatCesium::BC4_R:
-        targetFormat = KTX_TTF_BC4_R;
-        break;
-      case CompressedPixelFormatCesium::BC5_RG:
-        targetFormat = KTX_TTF_BC5_RG;
-        break;
-      case CompressedPixelFormatCesium::BC7_RGBA:
-        targetFormat = KTX_TTF_BC7_RGBA;
-        break;
-      case CompressedPixelFormatCesium::PVRTC1_4_RGB:
-        targetFormat = KTX_TTF_PVRTC1_4_RGB;
-        break;
-      case CompressedPixelFormatCesium::PVRTC1_4_RGBA:
-        targetFormat = KTX_TTF_PVRTC1_4_RGBA;
-        break;
-      case CompressedPixelFormatCesium::ASTC_4x4_RGBA:
-        targetFormat = KTX_TTF_ASTC_4x4_RGBA;
-        break;
-      case CompressedPixelFormatCesium::PVRTC2_4_RGB:
-        targetFormat = KTX_TTF_PVRTC2_4_RGB;
-        break;
-      case CompressedPixelFormatCesium::PVRTC2_4_RGBA:
-        targetFormat = KTX_TTF_PVRTC2_4_RGBA;
-        break;
-      case CompressedPixelFormatCesium::ETC2_EAC_R11:
-        targetFormat = KTX_TTF_ETC2_EAC_R11;
-        break;
-      case CompressedPixelFormatCesium::ETC2_EAC_RG11:
-        targetFormat = KTX_TTF_ETC2_EAC_RG11;
-        break;
-      default:
-        targetFormat = KTX_TTF_RGBA32;
-        break;
-      };
-    }
-
     if (errorCode == KTX_SUCCESS) {
       if (ktxTexture2_NeedsTranscoding(pTexture)) {
-        errorCode = ktxTexture2_TranscodeBasis(pTexture, targetFormat, 0);
+        image.channels =
+            static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
+        std::optional<GpuCompressedPixelFormat> transcodeTargetFormat =
+            std::nullopt;
+
+        if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGBA;
+          }
+        } else {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGBA;
+          }
+        }
+
+        ktx_transcode_fmt_e transcodeTargetFormat_ = KTX_TTF_RGBA32;
+        if (transcodeTargetFormat) {
+          switch (*transcodeTargetFormat) {
+          case GpuCompressedPixelFormat::ETC1_RGB:
+            transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
+            break;
+          case GpuCompressedPixelFormat::ETC2_RGBA:
+            transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
+            break;
+          case GpuCompressedPixelFormat::BC1_RGB:
+            transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
+            break;
+          case GpuCompressedPixelFormat::BC3_RGBA:
+            transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
+            break;
+          case GpuCompressedPixelFormat::BC4_R:
+            transcodeTargetFormat_ = KTX_TTF_BC4_R;
+            break;
+          case GpuCompressedPixelFormat::BC5_RG:
+            transcodeTargetFormat_ = KTX_TTF_BC5_RG;
+            break;
+          case GpuCompressedPixelFormat::BC7_RGBA:
+            transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
+            break;
+          case GpuCompressedPixelFormat::PVRTC1_4_RGB:
+            transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
+            break;
+          case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
+            transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
+            break;
+          case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
+            transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
+            break;
+          case GpuCompressedPixelFormat::PVRTC2_4_RGB:
+            transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
+            break;
+          case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
+            transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
+            break;
+          case GpuCompressedPixelFormat::ETC2_EAC_R11:
+            transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
+            break;
+          case GpuCompressedPixelFormat::ETC2_EAC_RG11:
+            transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
+            break;
+          default:
+            transcodeTargetFormat_ = KTX_TTF_RGBA32;
+            break;
+          };
+        }
+
+        errorCode =
+            ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
         if (errorCode == KTX_SUCCESS) {
-          image.compressedPixelFormat = ktx2TranscodeTargetFormat;
+          image.compressedPixelFormat = transcodeTargetFormat;
           image.width = static_cast<int32_t>(pTexture->baseWidth);
           image.height = static_cast<int32_t>(pTexture->baseHeight);
 
-          if (!ktx2TranscodeTargetFormat) {
+          if (!transcodeTargetFormat_) {
             // We fully decompressed the texture in this case.
             image.bytesPerChannel = 1;
             image.channels = 4;

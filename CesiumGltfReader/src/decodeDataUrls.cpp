@@ -124,9 +124,8 @@ void decodeDataUrls(
       continue;
     }
 
-    ImageReaderResult imageResult = reader.readImage(
-        decoded.value().data,
-        options.ktx2TranscodeTargetFormat);
+    ImageReaderResult imageResult =
+        reader.readImage(decoded.value().data, options.ktx2TranscodeTargets);
     if (imageResult.image) {
       image.cesium = std::move(imageResult.image.value());
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltf/Ktx2TranscodeTargets.h"
 #include "CesiumGltf/Library.h"
 
 #include <cstddef>
@@ -8,29 +9,6 @@
 #include <vector>
 
 namespace CesiumGltf {
-
-/**
- * @brief Supported compressed pixel formats.
- */
-enum CESIUMGLTF_API CompressedPixelFormatCesium {
-  KTX2,
-
-  // Block compression formats.
-  ETC1_RGB,
-  ETC2_RGBA,
-  BC1_RGB,
-  BC3_RGBA,
-  BC4_R,
-  BC5_RG,
-  BC7_RGBA,
-  PVRTC1_4_RGB,
-  PVRTC1_4_RGBA,
-  ASTC_4x4_RGBA,
-  PVRTC2_4_RGB,
-  PVRTC2_4_RGBA,
-  ETC2_EAC_R11,
-  ETC2_EAC_RG11
-};
 
 /**
  * @brief Holds {@link Image} properties that are specific to the glTF loader
@@ -60,8 +38,7 @@ struct CESIUMGLTF_API ImageCesium final {
   /**
    * @brief The compressed pixel format, if this image is compressed.
    */
-  std::optional<CompressedPixelFormatCesium> compressedPixelFormat =
-      std::nullopt;
+  std::optional<GpuCompressedPixelFormat> compressedPixelFormat = std::nullopt;
 
   /**
    * @brief The pixel data.

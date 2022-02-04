@@ -52,8 +52,7 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
   GltfReaderOptions readOptions;
-  readOptions.ktx2TranscodeTargetFormat =
-      contentOptions.ktx2TranscodeTargetFormat;
+  readOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
 
   CesiumGltfReader::GltfReaderResult loadedGltf =
       GltfContent::_gltfReader.readGltf(data, readOptions);

@@ -129,8 +129,8 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
       ->get(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
           [options = std::move(options),
-           ktx2TranscodeTargetFormat =
-               this->getOwner().getOptions().ktx2TranscodeTargetFormat](
+           Ktx2TranscodeTargets =
+               this->getOwner().getOptions().ktx2TranscodeTargets](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
@@ -182,7 +182,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             CesiumGltfReader::ImageReaderResult loadedImage =
                 RasterOverlayTileProvider::_gltfReader.readImage(
                     data,
-                    ktx2TranscodeTargetFormat);
+                    Ktx2TranscodeTargets);
 
             if (!loadedImage.errors.empty()) {
               loadedImage.errors.push_back("Image url: " + pRequest->url());

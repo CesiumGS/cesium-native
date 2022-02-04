@@ -3,7 +3,7 @@
 #include "Library.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 
 #include <spdlog/fwd.h>
 
@@ -67,12 +67,10 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
   double maximumScreenSpaceError = 2.0;
 
   /**
-   * @brief The compression format to transcode KTX v2 textures into. If this
-   * is std::nullopt, KTX v2 textures will be fully decompressed into raw
-   * pixels.
+   * @brief For each possible input transmission format, this struct names
+   * the ideal target gpu-compressed pixel format to transcode to.
    */
-  std::optional<CesiumGltf::CompressedPixelFormatCesium>
-      ktx2TranscodeTargetFormat = std::nullopt;
+  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
    * @brief A callback function that is invoked when a raster overlay resource
