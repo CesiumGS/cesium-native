@@ -44,19 +44,20 @@ def generateWorkspace(args):
 def findCesiumLibraries():
   # TODO: Get this from the filesystem, Cesium*
   return [
-    "CesiumUtility",
-    "CesiumGltf",
-    "CesiumGeometry",
-    "CesiumGeospatial",
-    "CesiumAsync",
-    "CesiumJsonReader",
-    "CesiumJsonWriter",
-    "CesiumGltfReader",
-    "CesiumGltfWriter",
-    "Cesium3DTilesSelection",
     "Cesium3DTiles",
     "Cesium3DTilesReader",
+    "Cesium3DTilesSelection",
     "Cesium3DTilesWriter",
+    "CesiumAsync",
+    "CesiumGeometry",
+    "CesiumGeospatial",
+    "CesiumGltf",
+    "CesiumGltfReader",
+    "CesiumGltfWriter",
+    "CesiumIonClient",
+    "CesiumJsonReader",
+    "CesiumJsonWriter",
+    "CesiumUtility",
   ]
 
 def run(command):

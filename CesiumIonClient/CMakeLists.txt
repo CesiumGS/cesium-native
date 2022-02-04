@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumIonClient CXX)
+
+include(cesium)
+
 add_library(CesiumIonClient "")
 
 configure_cesium_library(CesiumIonClient)
@@ -34,14 +39,35 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
+# CSPRNG's CMake setup is old school, and it really only has one source
+# file, so set up a library manually here.
+add_library(csprng ../extern/CSPRNG/source/csprng.cpp)
+target_include_directories(
+    csprng
+    PUBLIC
+        ../extern/CSPRNG/source
+)
+set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
+
+# PicoSHA2 doesn't have CMakeLists.txt at all
+add_library(PicoSHA2 INTERFACE)
+target_include_directories(PicoSHA2 SYSTEM INTERFACE ../extern/PicoSHA2)
+set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../extern/PicoSHA2/picosha2.h")
+
+find_package(base64 REQUIRED)
+find_package(httplib REQUIRED)
+find_package(CesiumAsync REQUIRED)
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(CesiumIonClient
     PUBLIC
-        CesiumAsync
-        CesiumUtility
+        CesiumAsync::CesiumAsync
+        CesiumUtility::CesiumUtility
     PRIVATE
         csprng
-        modp_b64
+        base64::base64
         PicoSHA2
+        httplib::httplib
 )
 
 # httplib erroneously does not declare its include a `SYSTEM` include, so
