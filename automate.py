@@ -27,7 +27,7 @@ def installDependencies(args):
   for library in libraries:
     run("conan editable add %s %s/0.12.0@user/dev" % (library, library))
 
-  # Install dependencies for all libraries, and for all configs
+  # Install dependencies for all libraries in all configurations
   for config in configs:
     for library in libraries:
       run("conan install %s %s/0.12.0@user/dev -if build/%s -s build_type=%s --build missing" % (library, library, library, config))
@@ -51,7 +51,8 @@ def findCesiumLibraries():
     "CesiumAsync",
     "CesiumJsonReader",
     "CesiumJsonWriter",
-    "CesiumGltfReader"
+    "CesiumGltfReader",
+    "CesiumGltfWriter"
   ]
 
 def run(command):

@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumGltfWriter CXX)
+
+include(cesium)
+
 add_library(CesiumGltfWriter "")
 configure_cesium_library(CesiumGltfWriter)
 
@@ -57,11 +62,20 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
+find_package(base64 REQUIRED)
+find_package(stb REQUIRED)
+find_package(CesiumAsync REQUIRED)
+find_package(CesiumGltf REQUIRED)
+find_package(CesiumJsonWriter REQUIRED)
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(CesiumGltfWriter
     PUBLIC
-        CesiumGltf
-        CesiumJsonWriter
-        modp_b64
+        base64::base64
+        stb::stb
+        CesiumGltf::CesiumGltf
+        CesiumUtility::CesiumUtility
+        CesiumJsonWriter::CesiumJsonWriter
 )
 
 install(TARGETS CesiumGltfWriter
