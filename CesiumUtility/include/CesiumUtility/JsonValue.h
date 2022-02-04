@@ -2,6 +2,8 @@
 
 #include "Library.h"
 
+#include <gsl/narrow>
+
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>

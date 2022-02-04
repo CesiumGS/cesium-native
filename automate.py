@@ -52,7 +52,8 @@ def findCesiumLibraries():
     "CesiumJsonReader",
     "CesiumJsonWriter",
     "CesiumGltfReader",
-    "CesiumGltfWriter"
+    "CesiumGltfWriter",
+    "Cesium3DTilesSelection",
   ]
 
 def run(command):

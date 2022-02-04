@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumGltfWriter CXX)
+
+include(cesium)
+
 add_library(Cesium3DTilesSelection "")
 
 configure_cesium_library(Cesium3DTilesSelection)
@@ -40,18 +45,28 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
+find_package(spdlog REQUIRED)
+find_package(tinyxml2 REQUIRED)
+find_package(uriparser REQUIRED)
+
+find_package(CesiumAsync REQUIRED)
+find_package(CesiumGeospatial REQUIRED)
+find_package(CesiumGeometry REQUIRED)
+find_package(CesiumGltf REQUIRED)
+find_package(CesiumGltfReader REQUIRED)
+find_package(CesiumUtility REQUIRED)
+
 target_link_libraries(Cesium3DTilesSelection
     PUBLIC
-        CesiumAsync
-        CesiumGeospatial
-        CesiumGeometry
-        CesiumGltf
-        CesiumGltfReader
-        CesiumUtility
-        spdlog
-    # PRIVATE
-        tinyxml2
-        uriparser
+        spdlog::spdlog
+        tinyxml2::tinyxml2
+        uriparser::uriparser
+        CesiumAsync::CesiumAsync
+        CesiumGeospatial::CesiumGeospatial
+        CesiumGeometry::CesiumGeometry
+        CesiumGltf::CesiumGltf
+        CesiumGltfReader::CesiumGltfReader
+        CesiumUtility::CesiumUtility
 )
 
 install(TARGETS Cesium3DTilesSelection

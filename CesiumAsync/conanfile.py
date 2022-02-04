@@ -15,7 +15,7 @@ class CesiumAsyncConan(ConanFile):
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
       "asyncplusplus/1.1",
-      "ms-gsl/3.1.0",
+      "ms-gsl/4.0.0",
       "spdlog/1.9.2",
       "sqlite3/3.37.2"
     ]

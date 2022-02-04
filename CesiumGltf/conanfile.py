@@ -15,7 +15,7 @@ class CesiumGltfConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
-      "ms-gsl/3.1.0"
+      "ms-gsl/4.0.0"
     ]
     exports_sources = [
       "generated/include/CesiumGltf/*",

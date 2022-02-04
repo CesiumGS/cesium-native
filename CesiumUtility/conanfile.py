@@ -15,7 +15,7 @@ class CesiumUtilityConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
-      "ms-gsl/3.1.0",
+      "ms-gsl/4.0.0",
       "glm/0.9.9.8",
       "uriparser/0.9.6",
       "rapidjson/cci.20211112"

@@ -16,7 +16,7 @@ class CesiumGltfReaderConan(ConanFile):
     requires = [
       "base64/0.4.0",
       "draco/1.4.3",
-      "ms-gsl/3.1.0",
+      "ms-gsl/4.0.0",
       "stb/cci.20210713"
     ]
     exports_sources = [
