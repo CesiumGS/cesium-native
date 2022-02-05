@@ -1,5 +1,6 @@
 import argparse
 import subprocess
+import os
 
 def main():
   argParser = argparse.ArgumentParser(description='Automate cesium-native tasks')
@@ -9,7 +10,7 @@ def main():
 
   installDependenciesParser = subparsers.add_parser('install-dependencies', help='install dependencies required to build cesium-native')
   installDependenciesParser.set_defaults(func=installDependencies)
-  installDependenciesParser.add_argument("--config", action='append')
+  installDependenciesParser.add_argument("--config", action='append', help='A build configuration for which to install dependencies, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo". Can be specified multiple times to install dependencies for multiple configurations. If not specified, dependencies for both "Debug" and "Release" are installed.')
 
   generateWorkspaceParser = subparsers.add_parser('generate-workspace', help='generate the workspace.cmake, referencing each sub-library')
   generateWorkspaceParser.set_defaults(func=generateWorkspace)
@@ -35,6 +36,7 @@ def installDependencies(args):
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
 
+  os.makedirs("build", exist_ok=True)
   filename = 'build/workspace.cmake'
   with open(filename, 'w') as f:
     f.writelines(map(lambda library: "add_subdirectory(%s)\n" % (library), libraries))
