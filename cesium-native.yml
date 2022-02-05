@@ -1,0 +1,11 @@
+---
+version: "0.12.0"
+# Versions of third-party libraries to use from ConanCenter. These are
+# centralized here, rather than in each library.yml, so that all cesium-native
+# libraries agree on the version.
+dependencyVersions:
+  ms-gsl: "4.0.0"
+  glm: "0.9.9.8"
+  uriparser: "0.9.6"
+  rapidjson: "cci.20211112"
+  catch2: "2.13.8"

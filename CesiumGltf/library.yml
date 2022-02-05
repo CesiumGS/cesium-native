@@ -1,0 +1,7 @@
+---
+description: "Lightweight glTF processing and optimization functions."
+dependencies:
+  - CesiumUtility
+  - ms-gsl
+testDependencies:
+  - catch2

@@ -1,0 +1,9 @@
+---
+description: "Utility functions for JSON parsing, URI processing, etc."
+dependencies:
+  - ms-gsl
+  - glm
+  - uriparser
+  - rapidjson
+testDependencies:
+  - catch2

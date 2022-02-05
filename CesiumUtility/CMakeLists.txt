@@ -58,3 +58,5 @@ cesium_tests(
   CesiumUtility
   "${CESIUM_UTILITY_TEST_SOURCES}"
 )
+
+add_library(CesiumUtility::CesiumUtility ALIAS CesiumUtility)

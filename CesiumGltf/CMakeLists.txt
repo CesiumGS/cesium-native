@@ -49,7 +49,7 @@ target_include_directories(
 )
 
 find_package(Microsoft.GSL REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumGltf
     PUBLIC
@@ -66,3 +66,5 @@ cesium_tests(
   CesiumGltf
   "${CESIUM_GLTF_TEST_SOURCES}"
 )
+
+add_library(CesiumGltf::CesiumGltf ALIAS CesiumGltf)

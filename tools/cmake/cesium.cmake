@@ -1,6 +1,6 @@
 include(GNUInstallDirs)
 
-option(CESIUM_USE_CONAN_PACKAGES "Whether to add ${CMAKE_BINARY_DIR}/conan to the module and prefix paths in order to resolve packages installed by Conan." on)
+option(CESIUM_USE_CONAN_PACKAGES "Whether to resolve other cesium-native libraries with Conan." off)
 
 # Tell CMake to look for packages from Conan
 # if (CESIUM_USE_CONAN_PACKAGES)
@@ -129,4 +129,10 @@ macro(cesium_tests target sources)
   include(CTest)
   include(Catch)
   catch_discover_tests(${target}-tests TEST_PREFIX "${target}: ")
+endmacro()
+
+macro(find_cesium_package package)
+  if (CESIUM_USE_CONAN_PACKAGES)
+    find_package("${package}" REQUIRED)
+  endif()
 endmacro()
