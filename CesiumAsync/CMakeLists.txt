@@ -11,13 +11,6 @@ cesium_glob_files(CESIUM_ASYNC_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_ASYNC_HEADERS src/*.h)
 cesium_glob_files(CESIUM_ASYNC_PUBLIC_HEADERS include/CesiumAsync/*.h)
 cesium_glob_files(CESIUM_ASYNC_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_ASYNC_TEST_HEADERS test/*.h)
-
-set_target_properties(CesiumAsync
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_ASYNC_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_ASYNC_TEST_HEADERS}"
-)
 
 set_target_properties(CesiumAsync
     PROPERTIES
@@ -66,4 +59,9 @@ install(TARGETS CesiumAsync
 install(
     DIRECTORY include/CesiumAsync/Impl
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumAsync
+)
+
+cesium_tests(
+  CesiumAsync
+  "${CESIUM_ASYNC_TEST_SOURCES}"
 )

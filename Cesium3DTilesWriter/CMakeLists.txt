@@ -21,16 +21,6 @@ cesium_glob_files(CESIUM_3DTILES_WRITER_PUBLIC_HEADERS
 cesium_glob_files(CESIUM_3DTILES_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
 )
-cesium_glob_files(CESIUM_3DTILES_WRITER_TEST_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
-)
-
-set_target_properties(Cesium3DTilesWriter
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_3DTILES_WRITER_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_3DTILES_WRITER_TEST_HEADERS}"
-        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
-)
 
 set_target_properties(Cesium3DTilesWriter
     PROPERTIES
@@ -70,4 +60,19 @@ target_link_libraries(Cesium3DTilesWriter
 install(TARGETS Cesium3DTilesWriter
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesWriter
+)
+
+cesium_tests(
+  Cesium3DTilesWriter
+  "${CESIUM_3DTILES_WRITER_TEST_SOURCES}"
+)
+
+# The 3D Tiles writer does not require the reader, but the writer's tests do.
+# So add the dependency here.
+find_package(Cesium3DTilesReader REQUIRED)
+
+target_link_libraries(
+  Cesium3DTilesWriter-tests
+  PRIVATE
+    Cesium3DTilesReader::Cesium3DTilesReader
 )

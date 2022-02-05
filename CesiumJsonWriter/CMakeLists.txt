@@ -18,15 +18,6 @@ cesium_glob_files(CESIUM_JSON_WRITER_PUBLIC_HEADERS
 cesium_glob_files(CESIUM_JSON_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
 )
-cesium_glob_files(CESIUM_JSON_WRITER_TEST_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
-)
-
-set_target_properties(CesiumJsonWriter
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_JSON_WRITER_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_JSON_WRITER_TEST_HEADERS}"
-)
 
 set_target_properties(CesiumJsonWriter
     PROPERTIES
@@ -67,4 +58,9 @@ target_link_libraries(CesiumJsonWriter
 install(TARGETS CesiumJsonWriter
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumJsonWriter
+)
+
+cesium_tests(
+  CesiumJsonWriter
+  "${CESIUM_JSON_WRITER_TEST_SOURCES}"
 )

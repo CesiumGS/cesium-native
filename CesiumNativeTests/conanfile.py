@@ -1,9 +1,9 @@
 from conans import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
-class Cesium3DTilesWriterConan(ConanFile):
-    name = "Cesium3DTilesWriter"
-    version = "0.0.0"
+class CesiumNativeTestsConan(ConanFile):
+    name = "CesiumNativeTests"
+    version = "0.12.0"
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"
     url = "<Package recipe repository url here, for issues about the package>"
@@ -14,23 +14,27 @@ class Cesium3DTilesWriterConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     generators = "CMakeToolchain", "CMakeDeps"
     requires = [
-      "ms-gsl/4.0.0",
-    ]
-    developRequires = [
       "catch2/2.13.8",
-      "Cesium3DTilesReader/0.0.0@user/dev",
-    ]
-    cesiumNativeRequires = [
-      "Cesium3DTiles",
-      "CesiumJsonWriter",
     ]
     exports_sources = [
-      "generated/*",
       "include/*",
       "src/*",
       "test/*",
       "CMakeLists.txt",
       "../tools/cmake/cesium.cmake"
+    ]
+    cesiumNativeRequires = [
+      "Cesium3DTilesReader",
+      "Cesium3DTilesWriter",
+      "Cesium3DTilesSelection",
+      "CesiumAsync",
+      "CesiumGeometry",
+      "CesiumGeospatial",
+      "CesiumGltf",
+      "CesiumGltfReader",
+      "CesiumGltfWriter",
+      "CesiumIonClient",
+      "CesiumUtility",
     ]
 
     def requirements(self):
@@ -44,10 +48,6 @@ class Cesium3DTilesWriterConan(ConanFile):
         else:
             self.requires("%s/%s@%s/%s" % (lib, self.version, user, channel))
 
-      if self.develop:
-        for lib in self.developRequires:
-          self.requires(lib)
-
     def config_options(self):
       if self.settings.os == "Windows":
           del self.options.fPIC
@@ -56,15 +56,10 @@ class Cesium3DTilesWriterConan(ConanFile):
       cmake = CMake(self)
       cmake.configure()
       cmake.build()
-      if self.develop:
-        cmake.test()
 
     def package(self):
       cmake = CMake(self)
       cmake.install()
-
-    def package_info(self):
-      self.cpp_info.libs = [self.name]
 
     def layout(self):
       # Mostly a default cmake layout

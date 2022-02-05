@@ -11,13 +11,6 @@ cesium_glob_files(CESIUM_GEOMETRY_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_GEOMETRY_HEADERS src/*.h)
 cesium_glob_files(CESIUM_GEOMETRY_PUBLIC_HEADERS include/CesiumGeometry/*.h)
 cesium_glob_files(CESIUM_GEOMETRY_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_GEOMETRY_TEST_HEADERS test/*.h)
-
-set_target_properties(CesiumGeometry
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_GEOMETRY_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_GEOMETRY_TEST_HEADERS}"
-)
 
 set_target_properties(CesiumGeometry
     PROPERTIES
@@ -48,4 +41,9 @@ target_link_libraries(CesiumGeometry PUBLIC
 install(TARGETS CesiumGeometry
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGeometry
+)
+
+cesium_tests(
+  CesiumGeometry
+  "${CESIUM_GEOMETRY_TEST_SOURCES}"
 )

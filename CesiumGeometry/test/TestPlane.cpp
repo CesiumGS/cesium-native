@@ -1,6 +1,6 @@
 #include "CesiumGeometry/Plane.h"
 
-#include <CesiumGeospatial/Ellipsoid.h>
+// #include <CesiumGeospatial/Ellipsoid.h>
 
 #include <catch2/catch.hpp>
 #include <glm/geometric.hpp>
@@ -43,11 +43,12 @@ TEST_CASE("Plane constructor from normal and distance") {
 
 TEST_CASE("Plane constructor from point and normal") {
   //! [constructor-point-normal]
-  const CesiumGeospatial::Ellipsoid& ellipsoid =
-      CesiumGeospatial::Ellipsoid::WGS84;
-  glm::dvec3 point = ellipsoid.cartographicToCartesian(
-      CesiumGeospatial::Cartographic::fromDegrees(-72.0, 40.0));
-  glm::dvec3 normal = ellipsoid.geodeticSurfaceNormal(point);
-  Plane tangentPlane(point, normal);
+  // TODO: Can't access CesiumGeospatial types from here.
+  // const CesiumGeospatial::Ellipsoid& ellipsoid =
+  //     CesiumGeospatial::Ellipsoid::WGS84;
+  // glm::dvec3 point = ellipsoid.cartographicToCartesian(
+  //     CesiumGeospatial::Cartographic::fromDegrees(-72.0, 40.0));
+  // glm::dvec3 normal = ellipsoid.geodeticSurfaceNormal(point);
+  // Plane tangentPlane(point, normal);
   //! [constructor-point-normal]
 }

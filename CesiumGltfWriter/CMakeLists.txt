@@ -21,15 +21,6 @@ cesium_glob_files(CESIUM_GLTF_WRITER_PUBLIC_HEADERS
 cesium_glob_files(CESIUM_GLTF_WRITER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
 )
-cesium_glob_files(CESIUM_GLTF_WRITER_TEST_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
-)
-
-set_target_properties(CesiumGltfWriter
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_GLTF_WRITER_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_GLTF_WRITER_TEST_HEADERS}"
-)
 
 set_target_properties(CesiumGltfWriter
     PROPERTIES
@@ -81,4 +72,19 @@ target_link_libraries(CesiumGltfWriter
 install(TARGETS CesiumGltfWriter
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltfWriter
+)
+
+cesium_tests(
+  CesiumGltfWriter
+  "${CESIUM_GLTF_WRITER_TEST_SOURCES}"
+)
+
+# The glTF writer does not require the reader, but the writer's tests do.
+# So add the dependency here.
+find_package(CesiumGltfReader REQUIRED)
+
+target_link_libraries(
+  CesiumGltfWriter-tests
+  PRIVATE
+    CesiumGltfReader::CesiumGltfReader
 )

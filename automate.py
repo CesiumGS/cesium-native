@@ -25,12 +25,12 @@ def installDependencies(args):
 
   # Put all libraries in editable mode
   for library in libraries:
-    run("conan editable add %s %s/0.12.0@user/dev" % (library, library))
+    run("conan editable add %s %s/0.0.0@user/dev" % (library, library))
 
   # Install dependencies for all libraries in all configurations
   for config in configs:
     for library in libraries:
-      run("conan install %s %s/0.12.0@user/dev -if build/%s -s build_type=%s --build missing" % (library, library, library, config))
+      run("conan install %s %s/0.0.0@user/dev -if build/%s -s build_type=%s --build missing" % (library, library, library, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
@@ -57,6 +57,7 @@ def findCesiumLibraries():
     "CesiumIonClient",
     "CesiumJsonReader",
     "CesiumJsonWriter",
+    # "CesiumNativeTests",
     "CesiumUtility",
   ]
 

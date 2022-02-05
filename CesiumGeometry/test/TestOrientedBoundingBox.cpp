@@ -1,6 +1,5 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
-
-#include <Cesium3DTilesSelection/ViewState.h>
+#include "CesiumGeometry/Plane.h"
 
 #include <catch2/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -9,7 +8,6 @@
 #include <optional>
 
 using namespace CesiumGeometry;
-using namespace Cesium3DTilesSelection;
 
 TEST_CASE("OrientedBoundingBox::intersectPlane") {
   struct TestCase {

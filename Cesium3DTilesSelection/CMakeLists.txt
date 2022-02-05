@@ -11,14 +11,6 @@ cesium_glob_files(CESIUM_3DTILES_SELECTION_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_3DTILES_SELECTION_HEADERS src/*.h)
 cesium_glob_files(CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS include/Cesium3DTilesSelection/*.h)
 cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_HEADERS test/*.h)
-
-set_target_properties(Cesium3DTilesSelection
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_3DTILES_SELECTION_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_3DTILES_SELECTION_TEST_HEADERS}"
-        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
-)
 
 set_target_properties(Cesium3DTilesSelection
     PROPERTIES
@@ -72,4 +64,9 @@ target_link_libraries(Cesium3DTilesSelection
 install(TARGETS Cesium3DTilesSelection
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesSelection
+)
+
+cesium_tests(
+  Cesium3DTilesSelection
+  "${CESIUM_3DTILES_SELECTION_TEST_SOURCES}"
 )

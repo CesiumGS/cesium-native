@@ -1,9 +1,14 @@
+cmake_minimum_required(VERSION 3.15)
+project(CesiumNativeTests CXX)
+
+include(cesium)
+
 add_executable(cesium-native-tests "")
 configure_cesium_library(cesium-native-tests)
 
 # Add tests here, ensure they define the TEST_SOURCES / TEST_HEADERS
 # properties.
-set(cesium_native_targets
+set(cesium_native_libraries
     Cesium3DTilesReader
     Cesium3DTilesWriter
     Cesium3DTilesSelection
@@ -20,10 +25,15 @@ set(cesium_native_targets
 set(test_sources "")
 set(test_headers "")
 set(test_include_directories "")
-
+set(cesium_native_targets "")
 
 # Iterate through all targets, extracting their private sources and test sources / test headers
-foreach(target ${cesium_native_targets})
+foreach(library ${cesium_native_libraries})
+    find_package(${library} REQUIRED)
+
+    set(target "${library}::${library}")
+    list(APPEND cesium_native_targets "${target}")
+
     get_target_property(target_test_sources ${target} TEST_SOURCES)
     get_target_property(target_test_headers ${target} TEST_HEADERS)
 
@@ -73,10 +83,12 @@ target_include_directories(
         ${test_include_directories}
 )
 
+find_package(catch2 REQUIRED)
+
 target_link_libraries(
     cesium-native-tests
     ${cesium_native_targets}
-    Catch2::Catch2
+    catch2::catch2
 )
 
 include(CTest)

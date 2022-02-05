@@ -3,7 +3,7 @@ from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
 class Cesium3DTilesReaderConan(ConanFile):
     name = "Cesium3DTilesReader"
-    version = "0.12.0"
+    version = "0.0.0"
     license = "<Put the package license here>"
     author = "<Put your name here> <And your email here>"
     url = "<Package recipe repository url here, for issues about the package>"
@@ -16,6 +16,13 @@ class Cesium3DTilesReaderConan(ConanFile):
     requires = [
       "ms-gsl/4.0.0",
     ]
+    developRequires = [
+      "catch2/2.13.8",
+    ]
+    cesiumNativeRequires = [
+      "Cesium3DTiles",
+      "CesiumJsonReader",
+    ]
     exports_sources = [
       "generated/*",
       "include/*",
@@ -24,14 +31,10 @@ class Cesium3DTilesReaderConan(ConanFile):
       "CMakeLists.txt",
       "../tools/cmake/cesium.cmake"
     ]
-    cesiumNativeDependencies = [
-      "Cesium3DTiles",
-      "CesiumJsonReader",
-    ]
 
     def requirements(self):
       # For other cesium-native packages, use the same version, user, and channel.
-      for lib in self.cesiumNativeDependencies:
+      for lib in self.cesiumNativeRequires:
         try:
           user = self.user
           channel = self.channel
@@ -39,6 +42,10 @@ class Cesium3DTilesReaderConan(ConanFile):
             self.requires("%s/%s" % (lib, self.version))
         else:
             self.requires("%s/%s@%s/%s" % (lib, self.version, user, channel))
+
+      if self.develop:
+        for lib in self.developRequires:
+          self.requires(lib)
 
     def config_options(self):
       if self.settings.os == "Windows":
@@ -48,10 +55,15 @@ class Cesium3DTilesReaderConan(ConanFile):
       cmake = CMake(self)
       cmake.configure()
       cmake.build()
+      if self.develop:
+        cmake.test()
 
     def package(self):
       cmake = CMake(self)
       cmake.install()
+
+    def package_info(self):
+      self.cpp_info.libs = [self.name]
 
     def layout(self):
       # Mostly a default cmake layout

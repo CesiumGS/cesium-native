@@ -10,14 +10,6 @@ cesium_glob_files(CESIUM_JSON_READER_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_JSON_READER_HEADERS src/*.h)
 cesium_glob_files(CESIUM_JSON_READER_PUBLIC_HEADERS include/CesiumJsonReader/*.h)
 cesium_glob_files(CESIUM_JSON_READER_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_JSON_READER_TEST_HEADERS test/*.h)
-
-set_target_properties(CesiumJsonReader
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_JSON_READER_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_JSON_READER_TEST_HEADERS}"
-        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
-)
 
 set_target_properties(CesiumJsonReader
     PROPERTIES
@@ -54,4 +46,9 @@ target_link_libraries(CesiumJsonReader
 install(TARGETS CesiumJsonReader
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumJsonReader
+)
+
+cesium_tests(
+  CesiumJsonReader
+  "${CESIUM_JSON_READER_TEST_SOURCES}"
 )

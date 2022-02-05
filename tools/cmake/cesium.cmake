@@ -64,7 +64,7 @@ function(configure_cesium_library targetName)
         )
     endif()
 
-    if (NOT ${targetName} MATCHES "cesium-native-tests")
+    if (NOT ${targetName} MATCHES "-tests")
         string(TOUPPER ${targetName} capitalizedTargetName)
         target_compile_definitions(
             ${targetName}
@@ -74,7 +74,6 @@ function(configure_cesium_library targetName)
 
 
     endif()
-
 endfunction()
 
 # Workaround for targets that erroneously forget to
@@ -92,3 +91,42 @@ function(target_link_libraries_system target scope)
     target_link_libraries(${target} ${scope} ${lib})
   endforeach()
 endfunction()
+
+macro(cesium_tests target sources)
+  find_package(catch2 REQUIRED)
+
+  add_executable(${target}-tests "")
+  configure_cesium_library(${target}-tests)
+
+  target_sources(
+    ${target}-tests
+    PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}/../CesiumNativeTests/src/test-main.cpp
+      ${sources}
+  )
+
+  # Allow tests access to the library's private headers
+  target_include_directories(
+    ${target}-tests
+    PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}/src
+      ${CMAKE_CURRENT_LIST_DIR}/generated/src
+  )
+
+  target_link_libraries(
+    ${target}-tests
+    PRIVATE
+    ${target}
+      catch2::catch2
+  )
+
+  target_compile_definitions(
+    ${target}-tests
+    PRIVATE
+        ${target}_TEST_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/test/data\"
+  )
+
+  include(CTest)
+  include(Catch)
+  catch_discover_tests(${target}-tests TEST_PREFIX "${target}: ")
+endmacro()

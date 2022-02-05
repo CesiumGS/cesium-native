@@ -11,13 +11,6 @@ cesium_glob_files(CESIUM_ION_CLIENT_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_ION_CLIENT_HEADERS src/*.h)
 cesium_glob_files(CESIUM_ION_CLIENT_PUBLIC_HEADERS include/CesiumIonClient/*.h)
 cesium_glob_files(CESIUM_ION_CLIENT_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_ION_CLIENT_TEST_HEADERS test/*.h)
-
-set_target_properties(CesiumIonClient
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_ION_CLIENT_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_ION_CLIENT_TEST_HEADERS}"
-)
 
 set_target_properties(CesiumIonClient
     PROPERTIES
@@ -81,4 +74,9 @@ target_link_libraries_system(CesiumIonClient
 install(TARGETS CesiumIonClient
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumIonClient
+)
+
+cesium_tests(
+  CesiumIonClient
+  "${CESIUM_ION_CLIENT_TEST_SOURCES}"
 )

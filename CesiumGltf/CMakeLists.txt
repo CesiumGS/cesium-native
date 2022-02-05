@@ -22,15 +22,6 @@ cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS
 cesium_glob_files(CESIUM_GLTF_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
 )
-cesium_glob_files(CESIUM_GLTF_TEST_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
-)
-
-set_target_properties(CesiumGltf
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_GLTF_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_GLTF_TEST_HEADERS}"
-)
 
 set_target_properties(CesiumGltf
     PROPERTIES
@@ -69,4 +60,9 @@ target_link_libraries(CesiumGltf
 install(TARGETS CesiumGltf
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf
+)
+
+cesium_tests(
+  CesiumGltf
+  "${CESIUM_GLTF_TEST_SOURCES}"
 )
