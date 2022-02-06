@@ -18,12 +18,13 @@ class CesiumUtilityConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
     requires = [
+      "base64/0.4.0",
       "CesiumAsync/0.12.0@user/dev",
       "CesiumUtility/0.12.0@user/dev",
-      "ms-gsl/4.0.0",
-      "base64/0.4.0",
       "cpp-httplib/0.10.1",
       "csprng/8768a94b4b04213c0798b80824a04ae4990e9847",
+      "ms-gsl/4.0.0",
+      "picosha2/1677374f23352716fc52183255a40c1b8e1d53eb",
     ]
 
     exports_sources = [

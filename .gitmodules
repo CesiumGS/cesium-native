@@ -1,3 +1,0 @@
-[submodule "extern/PicoSHA2"]
-	path = extern/PicoSHA2
-	url = https://github.com/okdshin/PicoSHA2.git

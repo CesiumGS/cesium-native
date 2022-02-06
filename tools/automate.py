@@ -32,7 +32,7 @@ def installDependencies(args):
   os.makedirs('build', exist_ok=True)
 
   with open('cesium-native.yml', 'r') as f:
-    dependenciesYml = yaml.safe_load(f)
+    nativeYml = yaml.safe_load(f)
 
   # Install dependencies for all libraries in all configurations
   for library in libraries:
@@ -43,14 +43,16 @@ def installDependencies(args):
     conanfilename = 'build/conanfile-%s.txt' % (library)
     with open(conanfilename, 'w') as f:
       f.write('[requires]\n')
-      dependencies = [*libraryYml['dependencies'], *libraryYml['testDependencies']]
-      for dependency in dependencies:
-        if dependency in libraries:
-          # Don't install other cesium-native library dependencies from Conan
-          # because we want to use the version in this repo.
-          f.write('# %s\n' % (dependency))
-        else:
-          f.write('%s/%s\n' % (dependency, dependenciesYml['dependencyVersions'][dependency]))
+
+      # Combine the regular and test dependencies.
+      # Filter out dependencies on other cesium-native libraries because we want to
+      # use the version this repo.
+      dependencies = filter(lambda item: not item in libraries, [*libraryYml['dependencies'], *libraryYml['testDependencies']])
+
+      # Resolve the version of each dependency, and write it.
+      resolvedDependencies = resolveDependencies(libraries, nativeYml, dependencies)
+      f.writelines(map(lambda x: x + '\n', resolvedDependencies))
+
       f.write('\n')
       f.write('[generators]\n')
       f.write('CMakeDeps\n')
@@ -129,7 +131,11 @@ def resolveDependencies(nativeLibraries, nativeYml, dependencies):
       else:
         return '%s/%s' % (library, nativeYml['version'])
     else:
-      return '%s/%s' % (library, nativeYml['dependencyVersions'][library])
+      versions = nativeYml['dependencyVersions']
+      if library in versions:
+        return '%s/%s' % (library, versions[library])
+      else:
+        return '%s/specify.version.in.cesium-native.yml' % (library)
 
   return map(resolveDependency, dependencies)
 

@@ -40,6 +40,7 @@ set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_
 find_package(csprng REQUIRED)
 find_package(base64 REQUIRED)
 find_package(httplib REQUIRED)
+find_package(picosha2 REQUIRED)
 find_cesium_package(CesiumAsync)
 find_cesium_package(CesiumUtility)
 
@@ -50,7 +51,7 @@ target_link_libraries(CesiumIonClient
     PRIVATE
         csprng::csprng
         base64::base64
-        PicoSHA2
+        picosha2::picosha2
         httplib::httplib
 )
 

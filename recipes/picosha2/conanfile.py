@@ -4,12 +4,12 @@ from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 from conan.tools.files import patch
 
 class S2GeometryConan(ConanFile):
-  name = "csprng"
-  version = "8768a94b4b04213c0798b80824a04ae4990e9847"
-  license = "BSL-1.0"
-  author = "Michael Thomas Greer"
-  url = "https://github.com/Duthomhas/CSPRNG"
-  description = "A small C & C++ library to use the OS's Crytpgraphically Secure Pseudo-Random Number Generator"
+  name = "picosha2"
+  version = "1677374f23352716fc52183255a40c1b8e1d53eb"
+  license = "MIT"
+  author = "Shintarou Okada (okdshin)"
+  url = "https://github.com/okdshin/PicoSHA2"
+  description = "A header-file-only, SHA256 hash generator in C++."
   settings = "os", "compiler", "build_type", "arch"
   options = {"shared": [True, False], "fPIC": [True, False]}
   default_options = {"shared": False, "fPIC": True}
@@ -18,8 +18,8 @@ class S2GeometryConan(ConanFile):
   ]
   scm = {
     "type": "git",
-    "url": "https://github.com/Duthomhas/CSPRNG.git",
-    "revision": "8768a94b4b04213c0798b80824a04ae4990e9847"
+    "url": "https://github.com/okdshin/PicoSHA2.git",
+    "revision": "1677374f23352716fc52183255a40c1b8e1d53eb"
   }
 
   # The library's CMakeLists.txt isn't usable, so supply our own.
@@ -37,6 +37,3 @@ class S2GeometryConan(ConanFile):
   def package(self):
     cmake = CMake(self)
     cmake.install()
-
-  def package_info(self):
-    self.cpp_info.libs = collect_libs(self)
