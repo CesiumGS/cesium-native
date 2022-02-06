@@ -22,6 +22,7 @@ class CesiumUtilityConan(ConanFile):
       "CesiumGeometry/0.12.0@user/dev",
       "ms-gsl/4.0.0",
       "earcut/2.2.3",
+      "s2geometry/0.9.0",
     ]
 
     exports_sources = [

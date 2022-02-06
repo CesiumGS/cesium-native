@@ -53,7 +53,6 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
-find_cesium_package(CesiumAsync)
 find_cesium_package(CesiumGltf)
 find_cesium_package(CesiumJsonWriter)
 find_cesium_package(CesiumUtility)
@@ -75,14 +74,16 @@ cesium_tests(
   "${CESIUM_GLTF_WRITER_TEST_SOURCES}"
 )
 
-# The glTF writer does not require the reader, but the writer's tests do.
-# So add the dependency here.
-find_cesium_package(CesiumGltfReader)
+if (CESIUM_TESTS_ENABLED)
+  # The glTF writer does not require the reader, but the writer's tests do.
+  # So add the dependency here.
+  find_cesium_package(CesiumGltfReader)
 
-target_link_libraries(
-  CesiumGltfWriter-tests
-  PRIVATE
-    CesiumGltfReader::CesiumGltfReader
-)
+  target_link_libraries(
+    CesiumGltfWriter-tests
+    PRIVATE
+      CesiumGltfReader::CesiumGltfReader
+  )
+endif()
 
 add_library(CesiumGltfWriter::CesiumGltfWriter ALIAS CesiumGltfWriter)

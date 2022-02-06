@@ -67,14 +67,16 @@ cesium_tests(
   "${CESIUM_3DTILES_WRITER_TEST_SOURCES}"
 )
 
-# The 3D Tiles writer does not require the reader, but the writer's tests do.
-# So add the dependency here.
-find_cesium_package(Cesium3DTilesReader)
+if (CESIUM_TESTS_ENABLED)
+  # The 3D Tiles writer does not require the reader, but the writer's tests do.
+  # So add the dependency here.
+  find_cesium_package(Cesium3DTilesReader)
 
-target_link_libraries(
-  Cesium3DTilesWriter-tests
-  PRIVATE
-    Cesium3DTilesReader::Cesium3DTilesReader
-)
+  target_link_libraries(
+    Cesium3DTilesWriter-tests
+    PRIVATE
+      Cesium3DTilesReader::Cesium3DTilesReader
+  )
+endif()
 
 add_library(Cesium3DTilesWriter::Cesium3DTilesWriter ALIAS Cesium3DTilesWriter)
