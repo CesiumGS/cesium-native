@@ -6,5 +6,6 @@ dependencies:
   - ms-gsl
   - base64
   - cpp-httplib
+  - csprng
 testDependencies:
   - catch2

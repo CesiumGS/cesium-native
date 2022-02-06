@@ -23,6 +23,7 @@ class CesiumUtilityConan(ConanFile):
       "ms-gsl/4.0.0",
       "base64/0.4.0",
       "cpp-httplib/0.10.1",
+      "csprng/8768a94b4b04213c0798b80824a04ae4990e9847",
     ]
 
     exports_sources = [
