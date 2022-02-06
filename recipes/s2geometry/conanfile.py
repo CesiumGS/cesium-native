@@ -16,16 +16,14 @@ class S2GeometryConan(ConanFile):
   generators = "CMakeToolchain", "CMakeDeps"
   requires = [
     "openssl/3.0.1",
-    "gtest/cci.20210126"
   ]
   scm = {
     "type": "git",
-    # "subfolder": "s2geometry",
     "url": "https://github.com/google/s2geometry.git",
     "revision": "v0.9.0"
   }
 
-  exports_sources = ['s2geometry-conan.patch']
+  exports_sources = ['patches/0001-no-tests.patch']
 
   def config_options(self):
     if self.settings.os == "Windows":
@@ -35,13 +33,14 @@ class S2GeometryConan(ConanFile):
     tc = CMakeToolchain(self)
     tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
     tc.variables["BUILD_EXAMPLES"] = False
+    tc.variables["GTEST_ROOT"] = False
     tc.generate()
 
     deps = CMakeDeps(self)
     deps.generate()
 
   def build(self):
-    patch(self, patch_file='s2geometry-conan.patch')
+    patch(self, patch_file='patches/0001-no-tests.patch')
 
     cmake = CMake(self)
     cmake.configure()
