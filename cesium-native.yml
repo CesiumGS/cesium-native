@@ -1,5 +1,7 @@
 ---
 version: "0.12.0"
+user: "kring"
+channel: "dev"
 # Versions of third-party libraries to use from ConanCenter. These are
 # centralized here, rather than in each library.yml, so that all cesium-native
 # libraries agree on the version.

@@ -1,6 +1,7 @@
 include(GNUInstallDirs)
 
-option(CESIUM_USE_CONAN_PACKAGES "Whether to resolve other cesium-native libraries with Conan." off)
+option(CESIUM_USE_CONAN_PACKAGES "Whether to resolve other cesium-native libraries with Conan." OFF)
+option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 
 # Tell CMake to look for packages from Conan
 # if (CESIUM_USE_CONAN_PACKAGES)
@@ -93,42 +94,44 @@ function(target_link_libraries_system target scope)
 endfunction()
 
 macro(cesium_tests target sources)
-  find_package(catch2 REQUIRED)
+  if (CESIUM_TESTS_ENABLED)
+    find_package(catch2 REQUIRED)
 
-  add_executable(${target}-tests "")
-  configure_cesium_library(${target}-tests)
+    add_executable(${target}-tests "")
+    configure_cesium_library(${target}-tests)
 
-  target_sources(
-    ${target}-tests
-    PRIVATE
-      ${CMAKE_CURRENT_LIST_DIR}/../CesiumNativeTests/src/test-main.cpp
-      ${sources}
-  )
+    target_sources(
+      ${target}-tests
+      PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/../CesiumNativeTests/src/test-main.cpp
+        ${sources}
+    )
 
-  # Allow tests access to the library's private headers
-  target_include_directories(
-    ${target}-tests
-    PRIVATE
-      ${CMAKE_CURRENT_LIST_DIR}/src
-      ${CMAKE_CURRENT_LIST_DIR}/generated/src
-  )
+    # Allow tests access to the library's private headers
+    target_include_directories(
+      ${target}-tests
+      PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated/src
+    )
 
-  target_link_libraries(
-    ${target}-tests
-    PRIVATE
-    ${target}
-      catch2::catch2
-  )
+    target_link_libraries(
+      ${target}-tests
+      PRIVATE
+      ${target}
+        catch2::catch2
+    )
 
-  target_compile_definitions(
-    ${target}-tests
-    PRIVATE
-        ${target}_TEST_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/test/data\"
-  )
+    target_compile_definitions(
+      ${target}-tests
+      PRIVATE
+          ${target}_TEST_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/test/data\"
+    )
 
-  include(CTest)
-  include(Catch)
-  catch_discover_tests(${target}-tests TEST_PREFIX "${target}: ")
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(${target}-tests TEST_PREFIX "${target}: ")
+  endif()
 endmacro()
 
 macro(find_cesium_package package)

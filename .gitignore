@@ -8,6 +8,7 @@ CMakeSettings.json
 .cache
 *.DS_Store
 test.db
+__pycache__
 
 # Conan generates this file in each package directory, for no apparent reason:
 # https://github.com/conan-io/conan/issues/10373
