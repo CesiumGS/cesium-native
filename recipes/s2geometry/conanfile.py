@@ -33,7 +33,6 @@ class S2GeometryConan(ConanFile):
     tc = CMakeToolchain(self)
     tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
     tc.variables["BUILD_EXAMPLES"] = False
-    tc.variables["GTEST_ROOT"] = False
     tc.generate()
 
     deps = CMakeDeps(self)
