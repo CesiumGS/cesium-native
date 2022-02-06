@@ -1,0 +1,16 @@
+---
+description: "Runtime streaming, decoding, level of detail selection, culling, cache management, and decoding of 3D Tiles."
+dependencies:
+  - spdlog
+  - tinyxml2
+  - ms-gsl
+  - uriparser
+  - rapidjson
+  - CesiumAsync
+  - CesiumGeospatial
+  - CesiumGeometry
+  - CesiumGltf
+  - CesiumGltfReader
+  - CesiumUtility
+testDependencies:
+  - catch2

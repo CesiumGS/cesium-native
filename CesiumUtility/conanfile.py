@@ -7,7 +7,7 @@ from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 class CesiumUtilityConan(ConanFile):
     name = "CesiumUtility"
     version = "0.12.0"
-    user = "kring"
+    user = "user"
     channel = "dev"
     license = "Apache-2.0"
     author = "CesiumGS, Inc. and Contributors"

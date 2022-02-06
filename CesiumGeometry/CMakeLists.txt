@@ -32,7 +32,7 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumGeometry PUBLIC
     CesiumUtility::CesiumUtility
@@ -47,3 +47,5 @@ cesium_tests(
   CesiumGeometry
   "${CESIUM_GEOMETRY_TEST_SOURCES}"
 )
+
+add_library(CesiumGeometry::CesiumGeometry ALIAS CesiumGeometry)

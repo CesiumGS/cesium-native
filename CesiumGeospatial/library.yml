@@ -1,0 +1,9 @@
+---
+description: "3D geospatial math types and functions for ellipsoids, transforms, projections."
+dependencies:
+  - CesiumUtility
+  - CesiumGeometry
+  - ms-gsl
+  - earcut
+testDependencies:
+  - catch2

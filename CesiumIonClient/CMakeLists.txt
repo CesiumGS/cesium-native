@@ -49,8 +49,8 @@ set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_
 
 find_package(base64 REQUIRED)
 find_package(httplib REQUIRED)
-find_package(CesiumAsync REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumAsync)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumIonClient
     PUBLIC
@@ -80,3 +80,5 @@ cesium_tests(
   CesiumIonClient
   "${CESIUM_ION_CLIENT_TEST_SOURCES}"
 )
+
+add_library(CesiumIonClient::CesiumIonClient ALIAS CesiumIonClient)

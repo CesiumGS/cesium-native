@@ -1,5 +1,5 @@
 ---
-description: "Lightweight glTF classes."
+description: "Lightweight 3D Tiles classes."
 dependencies:
   - CesiumUtility
   - ms-gsl

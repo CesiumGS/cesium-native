@@ -46,8 +46,8 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
-find_package(Cesium3DTiles REQUIRED)
-find_package(CesiumJsonReader REQUIRED)
+find_cesium_package(Cesium3DTiles)
+find_cesium_package(CesiumJsonReader)
 find_package(Microsoft.GSL REQUIRED)
 
 target_link_libraries(Cesium3DTilesReader
@@ -66,3 +66,5 @@ cesium_tests(
   Cesium3DTilesReader
   "${CESIUM_3DTILES_READER_TEST_SOURCES}"
 )
+
+add_library(Cesium3DTilesReader::Cesium3DTilesReader ALIAS Cesium3DTilesReader)

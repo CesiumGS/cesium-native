@@ -63,8 +63,8 @@ if (MSVC)
   target_compile_definitions(s2geometry PRIVATE NOMINMAX _USE_MATH_DEFINES)
 endif()
 
-find_package(CesiumUtility REQUIRED)
-find_package(CesiumGeometry REQUIRED)
+find_cesium_package(CesiumUtility)
+find_cesium_package(CesiumGeometry)
 find_package(earcut REQUIRED)
 
 target_link_libraries(CesiumGeospatial PUBLIC
@@ -84,3 +84,5 @@ cesium_tests(
   CesiumGeospatial
   "${CESIUM_GEOSPATIAL_TEST_SOURCES}"
 )
+
+add_library(CesiumGeospatial::CesiumGeospatial ALIAS CesiumGeospatial)

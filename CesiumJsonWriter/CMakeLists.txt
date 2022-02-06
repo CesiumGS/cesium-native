@@ -48,7 +48,7 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumJsonWriter
     PUBLIC
@@ -64,3 +64,5 @@ cesium_tests(
   CesiumJsonWriter
   "${CESIUM_JSON_WRITER_TEST_SOURCES}"
 )
+
+add_library(CesiumJsonWriter::CesiumJsonWriter ALIAS CesiumJsonWriter)

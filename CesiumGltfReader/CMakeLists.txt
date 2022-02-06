@@ -52,10 +52,10 @@ target_include_directories(
 find_package(base64 REQUIRED)
 find_package(draco REQUIRED)
 find_package(stb REQUIRED)
-find_package(CesiumAsync REQUIRED)
-find_package(CesiumGltf REQUIRED)
-find_package(CesiumJsonReader REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumAsync)
+find_cesium_package(CesiumGltf)
+find_cesium_package(CesiumJsonReader)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumGltfReader
     PUBLIC
@@ -77,3 +77,5 @@ cesium_tests(
   CesiumGltfReader
   "${CESIUM_GLTF_READER_TEST_SOURCES}"
 )
+
+add_library(CesiumGltfReader::CesiumGltfReader ALIAS CesiumGltfReader)

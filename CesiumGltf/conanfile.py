@@ -7,18 +7,18 @@ from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 class CesiumUtilityConan(ConanFile):
     name = "CesiumGltf"
     version = "0.12.0"
-    user = "kring"
+    user = "user"
     channel = "dev"
     license = "Apache-2.0"
     author = "CesiumGS, Inc. and Contributors"
     url = "https://github.com/CesiumGS/cesium-native"
-    description = "Lightweight glTF processing and optimization functions."
+    description = "Lightweight glTF classes."
     topics = () # TODO
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
     requires = [
-      "CesiumUtility/0.12.0@kring/dev",
+      "CesiumUtility/0.12.0@user/dev",
       "ms-gsl/4.0.0",
     ]
 

@@ -46,8 +46,8 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
-find_package(Cesium3DTiles REQUIRED)
-find_package(CesiumJsonWriter REQUIRED)
+find_cesium_package(Cesium3DTiles)
+find_cesium_package(CesiumJsonWriter)
 find_package(Microsoft.GSL REQUIRED)
 
 target_link_libraries(Cesium3DTilesWriter
@@ -69,10 +69,12 @@ cesium_tests(
 
 # The 3D Tiles writer does not require the reader, but the writer's tests do.
 # So add the dependency here.
-find_package(Cesium3DTilesReader REQUIRED)
+find_cesium_package(Cesium3DTilesReader)
 
 target_link_libraries(
   Cesium3DTilesWriter-tests
   PRIVATE
     Cesium3DTilesReader::Cesium3DTilesReader
 )
+
+add_library(Cesium3DTilesWriter::Cesium3DTilesWriter ALIAS Cesium3DTilesWriter)

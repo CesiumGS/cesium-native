@@ -1,0 +1,10 @@
+---
+description: "Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API."
+dependencies:
+  - CesiumAsync
+  - CesiumUtility
+  - ms-gsl
+  - base64
+  - cpp-httplib
+testDependencies:
+  - catch2

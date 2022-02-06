@@ -41,12 +41,12 @@ find_package(spdlog REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(uriparser REQUIRED)
 
-find_package(CesiumAsync REQUIRED)
-find_package(CesiumGeospatial REQUIRED)
-find_package(CesiumGeometry REQUIRED)
-find_package(CesiumGltf REQUIRED)
-find_package(CesiumGltfReader REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumAsync)
+find_cesium_package(CesiumGeospatial)
+find_cesium_package(CesiumGeometry)
+find_cesium_package(CesiumGltf)
+find_cesium_package(CesiumGltfReader)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(Cesium3DTilesSelection
     PUBLIC
@@ -70,3 +70,5 @@ cesium_tests(
   Cesium3DTilesSelection
   "${CESIUM_3DTILES_SELECTION_TEST_SOURCES}"
 )
+
+add_library(Cesium3DTilesSelection::Cesium3DTilesSelection ALIAS Cesium3DTilesSelection)

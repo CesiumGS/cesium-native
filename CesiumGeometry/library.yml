@@ -1,0 +1,7 @@
+---
+description: "Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms."
+dependencies:
+  - CesiumUtility
+  - ms-gsl
+testDependencies:
+  - catch2

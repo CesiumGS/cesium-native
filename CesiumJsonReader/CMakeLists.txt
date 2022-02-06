@@ -35,7 +35,7 @@ target_include_directories(
 )
 
 find_package(Microsoft.GSL REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumJsonReader
     PUBLIC
@@ -52,3 +52,5 @@ cesium_tests(
   CesiumJsonReader
   "${CESIUM_JSON_READER_TEST_SOURCES}"
 )
+
+add_library(CesiumJsonReader::CesiumJsonReader ALIAS CesiumJsonReader)

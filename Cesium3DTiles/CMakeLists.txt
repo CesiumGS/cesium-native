@@ -48,7 +48,7 @@ target_include_directories(
 )
 
 find_package(Microsoft.GSL REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(Cesium3DTiles
     PUBLIC
@@ -65,3 +65,5 @@ cesium_tests(
   Cesium3DTiles
   "${CESIUM_3DTILES_TEST_SOURCES}"
 )
+
+add_library(Cesium3DTiles::Cesium3DTiles ALIAS Cesium3DTiles)

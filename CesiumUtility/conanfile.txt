@@ -1,9 +1,0 @@
-[requires]
-catch2/2.13.8
-glm/0.9.9.8
-ms-gsl/4.0.0
-rapidjson/cci.20211112
-uriparser/0.9.6
-
-[generators]
-CMakeDeps

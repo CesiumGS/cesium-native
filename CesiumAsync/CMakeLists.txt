@@ -39,7 +39,7 @@ find_package(Microsoft.GSL REQUIRED)
 find_package(Async++ REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(CesiumUtility REQUIRED)
+find_cesium_package(CesiumUtility)
 
 target_link_libraries(CesiumAsync
     PUBLIC
@@ -65,3 +65,5 @@ cesium_tests(
   CesiumAsync
   "${CESIUM_ASYNC_TEST_SOURCES}"
 )
+
+add_library(CesiumAsync::CesiumAsync ALIAS CesiumAsync)

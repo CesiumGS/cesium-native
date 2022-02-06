@@ -1,0 +1,11 @@
+---
+description: "Classes for multi-threaded asynchronous tasks."
+dependencies:
+  - CesiumUtility
+  - ms-gsl
+  - asyncplusplus
+  - sqlite3
+  - spdlog
+  - rapidjson
+testDependencies:
+  - catch2

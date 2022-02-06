@@ -1,13 +1,22 @@
 ---
 version: "0.12.0"
-user: "kring"
+user: "user"
 channel: "dev"
 # Versions of third-party libraries to use from ConanCenter. These are
 # centralized here, rather than in each library.yml, so that all cesium-native
 # libraries agree on the version.
 dependencyVersions:
-  ms-gsl: "4.0.0"
-  glm: "0.9.9.8"
-  uriparser: "0.9.6"
-  rapidjson: "cci.20211112"
+  asyncplusplus: "1.1"
+  base64: "0.4.0"
   catch2: "2.13.8"
+  cpp-httplib: "0.10.1"
+  draco: "1.4.3"
+  earcut: "2.2.3"
+  glm: "0.9.9.8"
+  ms-gsl: "4.0.0"
+  rapidjson: "cci.20211112"
+  spdlog: "1.9.2"
+  sqlite3: "3.37.2"
+  stb: "cci.20210713"
+  tinyxml2: "9.0.0"
+  uriparser: "0.9.6"
