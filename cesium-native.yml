@@ -23,3 +23,10 @@ dependencyVersions:
   stb: "cci.20210713"
   tinyxml2: "9.0.0"
   uriparser: "0.9.6"
+# Extra Conan recipes for third-party libraries that are needed by
+# cesium-native by not (yet) available on ConanCenter
+# These refer to subdirectories in the recipes directory.
+extraRecipes:
+  - csprng
+  - picosha2
+  - s2geometry

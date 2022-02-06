@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import subprocess
 import os
@@ -34,6 +35,11 @@ def installDependencies(args):
   with open('cesium-native.yml', 'r') as f:
     nativeYml = yaml.safe_load(f)
 
+  # Create packages from custom recipes
+  for recipe in nativeYml['extraRecipes']:
+    for config in configs:
+      run('conan create recipes/%s -s build_type=%s -s compiler.cppstd=17' % (recipe, config))
+
   # Install dependencies for all libraries in all configurations
   for library in libraries:
     with open(library + '/library.yml', 'r') as f:
@@ -59,7 +65,7 @@ def installDependencies(args):
 
     # Install each build configuration
     for config in configs:
-      run('conan install %s -if build/%s/conan -s build_type=%s --build missing' % (conanfilename, library, config))
+      run('conan install %s -if build/%s/conan -s build_type=%s -s compiler.cppstd=17 --build missing' % (conanfilename, library, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
@@ -140,7 +146,7 @@ def resolveDependencies(nativeLibraries, nativeYml, dependencies):
   return map(resolveDependency, dependencies)
 
 def run(command):
-  result = subprocess.run(command)
+  result = subprocess.run(command, shell=True)
   if result.returncode != 0:
     exit(result.returncode)
 
