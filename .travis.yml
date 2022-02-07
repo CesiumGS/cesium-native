@@ -34,6 +34,7 @@ jobs:
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install --version=1.9.2
+        - pip install conan
     - name: Linux + GCC
       os: linux
       dist: focal
@@ -45,6 +46,7 @@ jobs:
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
         - sudo apt-get install cmake doxygen
+        - pip install conan
     - name: Linux + Clang
       os: linux
       dist: focal
@@ -63,8 +65,11 @@ jobs:
         -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
         - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
         - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
+        - pip install conan
     - name: macOS
       os: osx
       osx_image: xcode12
       env:
         - CONAN_PROFILE=macos
+      install:
+        - pip install conan
