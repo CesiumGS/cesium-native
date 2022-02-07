@@ -137,11 +137,10 @@ public:
   /**
    * @brief Applies the glTF's RTC_CENTER, if any, to the given transform.
    *
-   * If the glTF has a Cesium RTC extension, this function will multiply the
+   * If the glTF has a `CESIUM_RTC` extension, this function will multiply the
    * given matrix with the (translation) matrix that is created from the
-   * `RTC_CENTER` in the Cesium RTC extension of the given model. If the given
-   * model does not have this property, then this function will return the
-   * `rootTransform` unchanged.
+   * `RTC_CENTER` in the. If the given model does not have this extension, then
+   * this function will return the `rootTransform` unchanged.
    *
    * @param model The glTF model
    * @param rootTransform The matrix that will be multiplied with the transform
