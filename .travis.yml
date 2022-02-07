@@ -1,13 +1,14 @@
 language: cpp
 # Default scripts, which may be overridden by some jobs
 before_script:
-  - mkdir -p build
-  - cd build
-  - cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..
+  - ./tools/automate.py generate-workspace
+  - ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/linux-gcc
 script:
-  - cmake --build . --config Debug
+  - cd build
+  - cmake -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake ..
+  - cmake --build .
   - ctest -V
-  - cmake --build . --config Debug --target cesium-native-docs
+  # - cmake --build . --config Debug --target cesium-native-docs
 jobs:
   include:
     - name: Check Source Formatting
@@ -21,20 +22,23 @@ jobs:
         - npm run format -- --dry-run -Werror
     - name: Windows + VS2017
       os: windows
+      env:
+        - CONAN_PROFILE=windows-vs2017
       install:
         - choco install doxygen.install --version=1.9.2
-      before_script:
-        - mkdir -p build
-        - cd build
-        - cmake .. -A x64
+        - pip install conan
     - name: Windows + VS2019
       os: windows
+      env:
+        - CONAN_PROFILE=windows-vs2019
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install --version=1.9.2
     - name: Linux + GCC
       os: linux
       dist: focal
+      env:
+        - CONAN_PROFILE=linux-gcc
       install:
         - # As of 2021-08-23, the server listed in the rabbitmq PPA has an expired certificate
         - # and breaks our ability to update. We don't need it, so remove it.
@@ -44,6 +48,10 @@ jobs:
     - name: Linux + Clang
       os: linux
       dist: focal
+      env:
+        - CONAN_PROFILE=linux-clang
+        - CC=clang-10
+        - CXX=clang++-10
       # We're using Clang 10 instead of the default (Clang 7) because of std::variant related failures
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
       install:
@@ -55,14 +63,8 @@ jobs:
         -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
         - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
         - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
-      env:
-        - CC=clang-10
-        - CXX=clang++-10
     - name: macOS
       os: osx
       osx_image: xcode12
-      script:
-        - cmake --build . --config Debug
-        - ctest -V
-        - # Doc build doesn't work on Mac (missing Doxygen). Let's just skip it.
-        - #cmake --build . --config Debug --target cesium-native-docs
+      env:
+        - CONAN_PROFILE=macos
