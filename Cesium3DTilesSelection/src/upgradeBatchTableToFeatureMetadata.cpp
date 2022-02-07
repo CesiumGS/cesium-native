@@ -116,7 +116,7 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       type.isInt64 = type.isUint64 = false;
       type.isFloat32 = false;
       type.isFloat64 = false;
-      type.isBool = true;
+      type.isBool &= true;
       type.isArray = false;
     } else if (it->IsInt64()) {
       const int64_t value = it->GetInt64();
@@ -139,7 +139,7 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       type.isInt16 = type.isUint16 = false;
       type.isInt32 = type.isUint32 = false;
       type.isInt64 = false;
-      type.isUint64 = true;
+      type.isUint64 &= true;
       type.isFloat32 = false;
       type.isFloat64 = false;
       type.isBool = false;
