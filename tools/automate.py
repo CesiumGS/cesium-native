@@ -73,6 +73,7 @@ def installDependencies(args):
   # In single-config environments (e.g. Makefiles), the last one wins but overriding the build config
   # by passing `-DCMAKE_BUILD_TYPE=Release` will still work except that the generated
   # build/conan/conan_toolchain.cmake hardcodes CMAKE_BUILD_TYPE. Comment out that line and you're good.
+  os.makedirs('build/conan', exist_ok=True)
   with open('build/conan/conanfile.txt', 'w') as f:
     f.write('[requires]\n\n')
     f.write('[generators]\n')
