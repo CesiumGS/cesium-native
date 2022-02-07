@@ -788,8 +788,12 @@ Connection::getIdFromToken(const std::string& token) {
 
   std::string decoded(length * 3 / 4, '\0');
   size_t decodedLength;
-  int result =
-      base64_decode(token.data() + startPos + 1, length, decoded.data(), &decodedLength, 0);
+  int result = base64_decode(
+      token.data() + startPos + 1,
+      length,
+      decoded.data(),
+      &decodedLength,
+      0);
   if (result != 0 || decodedLength == std::string::npos) {
     return std::nullopt;
   }
