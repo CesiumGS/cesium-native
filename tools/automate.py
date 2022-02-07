@@ -14,6 +14,7 @@ def main():
   installDependenciesParser = subparsers.add_parser('install-dependencies', help='install dependencies required to build cesium-native')
   installDependenciesParser.set_defaults(func=installDependencies)
   installDependenciesParser.add_argument('--config', action='append', help='A build configuration for which to install dependencies, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo". Can be specified multiple times to install dependencies for multiple configurations. If not specified, dependencies for both "Debug" and "Release" are installed.')
+  installDependenciesParser.add_argument('--profile', help='The Conan build profile to use', default='default')
 
   generateWorkspaceParser = subparsers.add_parser('generate-workspace', help='generate the workspace.cmake, referencing each sub-library')
   generateWorkspaceParser.set_defaults(func=generateWorkspace)
@@ -38,7 +39,7 @@ def installDependencies(args):
   # Create packages from custom recipes
   for recipe in nativeYml['extraRecipes']:
     for config in configs:
-      run('conan create recipes/%s -s build_type=%s -s compiler.cppstd=17' % (recipe, config))
+      run('conan create recipes/%s -pr:b=%s -s build_type=%s' % (recipe, args.profile, config))
 
   # Install dependencies for all libraries in all configurations
   for library in libraries:
@@ -65,7 +66,7 @@ def installDependencies(args):
 
     # Install each build configuration
     for config in configs:
-      run('conan install %s -if build/%s/conan -s build_type=%s -s compiler.cppstd=17 --build missing' % (conanfilename, library, config))
+      run('conan install %s -if build/%s/conan -pr:b=%s -s build_type=%s --build missing' % (conanfilename, library, args.profile, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
