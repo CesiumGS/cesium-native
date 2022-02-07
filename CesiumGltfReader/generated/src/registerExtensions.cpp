@@ -5,6 +5,7 @@
 
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
+#include "ExtensionCesiumRTCJsonHandler.h"
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
@@ -60,5 +61,6 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtMeshFeaturesJsonHandler>();
+  context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
 }
 } // namespace CesiumGltfReader
