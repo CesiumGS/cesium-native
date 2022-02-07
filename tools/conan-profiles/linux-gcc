@@ -1,6 +1,7 @@
 [settings]
 os=Linux
 compiler=gcc
+compiler.version=9
 arch=x86_64
 # Conan uses a weird backward-compatible libstdc++ by default. Use the normal (C++11) one.
 # See https://docs.conan.io/en/latest/howtos/manage_gcc_abi.html
