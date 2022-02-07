@@ -6,6 +6,10 @@
 
 - Added support for `CESIUM_RTC` glTF extension.
 
+##### Fixes :wrench:
+
+- Fixed bug in finding the compatible type of the array of components in the B3DM Feature Table.
+
 ### v0.12.0 - 2022-02-01
 
 ##### Breaking Changes :mega:
