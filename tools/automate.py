@@ -28,7 +28,7 @@ def main():
 def installDependencies(args):
   libraries = findCesiumLibraries()
 
-  configs = args.config or ['Debug', 'Release']
+  configs = args.config or ['Release', 'Debug']
   print('Installing dependencies for the following build configurations: ' + ', '.join(configs))
 
   os.makedirs('build', exist_ok=True)
@@ -67,6 +67,19 @@ def installDependencies(args):
     # Install each build configuration
     for config in configs:
       run('conan install %s -if build/%s/conan -pr:b=%s -s build_type=%s --build missing' % (conanfilename, library, args.profile, config))
+
+  # Generate a toolchain file to make CMake match the Conan settings.
+  # In multi-config environments (e.g. Visual Studio), we need to do this for each build configuration.
+  # In single-config environments (e.g. Makefiles), the last one wins but overriding the build config
+  # by passing `-DCMAKE_BUILD_TYPE=Release` will still work except that the generated
+  # build/conan/conan_toolchain.cmake hardcodes CMAKE_BUILD_TYPE. Comment out that line and you're good.
+  with open('build/conan/conanfile.txt', 'w') as f:
+    f.write('[requires]\n\n')
+    f.write('[generators]\n')
+    f.write('CMakeToolchain')
+
+  for config in configs:
+    run('conan install build/conan/conanfile.txt -if build/conan -pr:b=%s -s build_type=%s' % (args.profile, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
@@ -126,7 +139,6 @@ def findCesiumLibraries():
     'CesiumIonClient',
     'CesiumJsonReader',
     'CesiumJsonWriter',
-    # 'CesiumNativeTests',
     'CesiumUtility',
   ]
 

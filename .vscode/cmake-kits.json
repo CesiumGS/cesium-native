@@ -1,0 +1,6 @@
+[
+    {
+        "name": "Conan Profile",
+        "toolchainFile": "build/conan/conan_toolchain.cmake"
+    }
+]
