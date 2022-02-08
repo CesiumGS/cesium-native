@@ -3,5 +3,5 @@ os=Macos
 arch=x86_64
 compiler=apple-clang
 compiler.version=12.0
-libcxx=libc++
+compiler.libcxx=libc++
 build_type=Debug
