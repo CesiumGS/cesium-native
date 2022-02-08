@@ -7,3 +7,7 @@ arch=x86_64
 # See https://docs.conan.io/en/latest/howtos/manage_gcc_abi.html
 compiler.libcxx=libstdc++11
 build_type=Debug
+
+[env]
+CC=gcc
+CXX=g++

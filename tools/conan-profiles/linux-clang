@@ -1,0 +1,10 @@
+[settings]
+os=Linux
+compiler=clang
+compiler.version=10
+arch=x86_64
+build_type=Debug
+
+[env]
+CC=clang
+CXX=clang++
