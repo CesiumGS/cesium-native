@@ -29,7 +29,7 @@ jobs:
         - choco install doxygen.install --version=1.9.2
         - choco install python --version 3.9.2
         - python -m pip install --upgrade pip
-        - pip install -r ./requirements.txt
+        - pip install conan
       before_script:
         - py -3 ./tools/automate.py generate-workspace
         - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
@@ -43,7 +43,7 @@ jobs:
         - choco install doxygen.install --version=1.9.2
         - choco install python --version 3.9.2
         - python -m pip install --upgrade pip
-        - pip install -r ./requirements.txt
+        - pip install conan
       before_script:
         - py -3 ./tools/automate.py generate-workspace
         - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
@@ -58,7 +58,7 @@ jobs:
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
         - sudo apt-get install cmake doxygen
-        - pip install -r ./requirements.txt
+        - pip install conan
     - name: Linux + Clang
       os: linux
       dist: focal
@@ -75,11 +75,11 @@ jobs:
         -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
         - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
         - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
-        - pip install -r ./requirements.txt
+        - pip install conan
     - name: macOS
       os: osx
       osx_image: xcode12
       env:
         - CONAN_PROFILE=macos-xcode12
       install:
-        - pip3 install -r ./requirements.txt
+        - pip3 install conan
