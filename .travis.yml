@@ -8,7 +8,6 @@ script:
   - cmake -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake ..
   - cmake --build .
   - ctest -V
-  # - cmake --build . --config Debug --target cesium-native-docs
 jobs:
   include:
     - name: Check Source Formatting
@@ -33,6 +32,8 @@ jobs:
       before_script:
         - py -3 ./tools/automate.py generate-workspace
         - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
+      after_script:
+        - cmake --build . --config Debug --target cesium-native-docs
     - name: Windows + VS2019
       os: windows
       env:
