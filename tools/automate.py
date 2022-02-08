@@ -39,7 +39,7 @@ def installDependencies(args):
   # Create packages from custom recipes
   for recipe in nativeYml['extraRecipes']:
     for config in configs:
-      run('conan create recipes/%s -pr=%s -s build_type=%s' % (recipe, args.profile, config))
+      run('conan create recipes/%s -pr:b=%s -s build_type=%s' % (recipe, args.profile, config))
 
   # Install dependencies for all libraries in all configurations
   for library in libraries:
@@ -66,7 +66,7 @@ def installDependencies(args):
 
     # Install each build configuration
     for config in configs:
-      run('conan install %s -if build/%s/conan -pr=%s -s build_type=%s --build missing' % (conanfilename, library, args.profile, config))
+      run('conan install %s -if build/%s/conan -pr:b=%s -s build_type=%s --build missing' % (conanfilename, library, args.profile, config))
 
   # Generate a toolchain file to make CMake match the Conan settings.
   # In multi-config environments (e.g. Visual Studio), we need to do this for each build configuration.
@@ -80,7 +80,7 @@ def installDependencies(args):
     f.write('CMakeToolchain')
 
   for config in configs:
-    run('conan install build/conan/conanfile.txt -if build/conan -pr=%s -s build_type=%s' % (args.profile, config))
+    run('conan install build/conan/conanfile.txt -if build/conan -pr:b=%s -s build_type=%s' % (args.profile, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
