@@ -11,6 +11,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
 enable_testing()
 include(${CMAKE_BINARY_DIR}/workspace.cmake)
 
+add_subdirectory(doc)
+
 
 # add_subdirectory(CesiumUtility)
 # add_subdirectory(CesiumGltf)
