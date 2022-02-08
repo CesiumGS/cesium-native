@@ -11,6 +11,21 @@
 namespace CesiumGltf {
 
 /**
+ * @brief The byte range within a buffer where this mip exists.
+ */
+struct CESIUMGLTF_API ImageCesiumMipPosition {
+  /**
+   * @brief The byte index where this mip begins.
+   */
+  size_t byteOffset;
+
+  /**
+   * @brief The size in bytes of this mip.
+   */
+  size_t byteSize;
+};
+
+/**
  * @brief Holds {@link Image} properties that are specific to the glTF loader
  * rather than part of the glTF spec.
  */
@@ -37,8 +52,20 @@ struct CESIUMGLTF_API ImageCesium final {
 
   /**
    * @brief The compressed pixel format, if this image is compressed.
+   *
+   * If this is std::nullopt, this image is not compressed.
    */
   std::optional<GpuCompressedPixelFormat> compressedPixelFormat = std::nullopt;
+
+  /**
+   * @brief The offset of each mip in the pixel data.
+   *
+   * A list of the positions of each mip's data within the overall pixel buffer.
+   * The first element will be the full image, the second will be the second
+   * biggest and etc. If this is empty, assume the entire buffer is a single
+   * image, the mip map will need to be generated on the client in this case.
+   */
+  std::vector<ImageCesiumMipPosition> mipPositions;
 
   /**
    * @brief The pixel data.
@@ -46,6 +73,9 @@ struct CESIUMGLTF_API ImageCesium final {
    * This will be the raw pixel data when compressedPixelFormat is std::nullopt.
    * Otherwise, this buffer will store the compressed pixel data in the
    * specified format.
+   *
+   * If mipOffsets is not empty, this buffer will contains multiple mips
+   * back-to-back.
    *
    * When this is an uncompressed texture:
    * -The pixel data is consistent with the

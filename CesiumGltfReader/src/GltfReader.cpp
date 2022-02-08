@@ -561,38 +561,38 @@ ImageReaderResult GltfReader::readImage(
           image.width = static_cast<int32_t>(pTexture->baseWidth);
           image.height = static_cast<int32_t>(pTexture->baseHeight);
 
-          if (!transcodeTargetFormat_) {
+          if (!transcodeTargetFormat) {
             // We fully decompressed the texture in this case.
             image.bytesPerChannel = 1;
             image.channels = 4;
           }
 
-          // TODO: use more mips, not just the first
-          ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
-          ktx_size_t pixelDataSize =
-              ktxTexture_GetDataSize(ktxTexture(pTexture));
-          ktx_size_t imageOffset = 0;
-
-          // TODO: are mips always in this order? largest mip at 0
-          // and largest mip at the end of the pixel data buffer.
-          // I.e., the largest mip sits between pixelData + imageOffset and
-          // pixelData + pixelDataSize?
-          if (pTexture->numLevels > 1) {
+          // Copy over the positions of each mip within the buffer.
+          image.mipPositions.resize(pTexture->numLevels);
+          for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
+            ktx_size_t imageOffset;
             ktxTexture_GetImageOffset(
                 ktxTexture(pTexture),
-                0,
+                level,
                 0,
                 0,
                 &imageOffset);
+            ktx_size_t imageSize =
+                ktxTexture_GetImageSize(ktxTexture(pTexture), level);
+
+            image.mipPositions[level] = {imageOffset, imageSize};
           }
 
-          image.pixelData.resize(pixelDataSize - imageOffset);
+          // Copy over the entire buffer, including all mips.
+          ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
+          ktx_size_t pixelDataSize =
+              ktxTexture_GetDataSize(ktxTexture(pTexture));
+
+          image.pixelData.resize(pixelDataSize);
           std::uint8_t* u8Pointer =
               reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-          std::copy(
-              pixelData + imageOffset,
-              pixelData + pixelDataSize,
-              u8Pointer);
+          std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
+
           ktxTexture_Destroy(ktxTexture(pTexture));
 
           return result;
