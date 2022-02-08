@@ -9,5 +9,5 @@ compiler.libcxx=libstdc++11
 build_type=Debug
 
 [env]
-CC=gcc
-CXX=g++
+CC=gcc-9
+CXX=g++-9
