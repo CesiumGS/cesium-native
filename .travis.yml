@@ -24,6 +24,7 @@ jobs:
       os: windows
       env:
         - CONAN_PROFILE=windows-vs2017
+        - PATH=/c/Python39:/c/Python39/Scripts:$PATH
       install:
         - choco install doxygen.install --version=1.9.2
         - choco install python --version 3.9.2
@@ -33,6 +34,7 @@ jobs:
       os: windows
       env:
         - CONAN_PROFILE=windows-vs2019
+        - PATH=/c/Python39:/c/Python39/Scripts:$PATH
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install --version=1.9.2
