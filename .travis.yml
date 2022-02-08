@@ -1,8 +1,8 @@
 language: cpp
 # Default scripts, which may be overridden by some jobs
 before_script:
-  - python3 ./tools/automate.py generate-workspace
-  - python3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
+  - ./tools/automate.py generate-workspace
+  - ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
 script:
   - cd build
   - cmake -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake ..
@@ -30,7 +30,9 @@ jobs:
         - choco install python --version 3.9.2
         - python -m pip install --upgrade pip
         - pip install conan
-        - alias python3=python
+      before_script:
+        - py -3 ./tools/automate.py generate-workspace
+        - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
     - name: Windows + VS2019
       os: windows
       env:
@@ -42,7 +44,9 @@ jobs:
         - choco install python --version 3.9.2
         - python -m pip install --upgrade pip
         - pip install conan
-        - alias python3=python
+      before_script:
+        - py -3 ./tools/automate.py generate-workspace
+        - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
     - name: Linux + GCC
       os: linux
       dist: focal
