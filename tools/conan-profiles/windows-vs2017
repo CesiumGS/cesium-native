@@ -1,0 +1,5 @@
+[settings]
+os=Windows
+compiler=Visual Studio
+compiler.version=15
+arch=x86_64

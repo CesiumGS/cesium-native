@@ -26,6 +26,8 @@ jobs:
         - CONAN_PROFILE=windows-vs2017
       install:
         - choco install doxygen.install --version=1.9.2
+        - choco install python --version 3.9.2
+        - python -m pip install --upgrade pip
         - pip install conan
     - name: Windows + VS2019
       os: windows
@@ -34,12 +36,14 @@ jobs:
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install --version=1.9.2
+        - choco install python --version 3.9.2
+        - python -m pip install --upgrade pip
         - pip install conan
     - name: Linux + GCC
       os: linux
       dist: focal
       env:
-        - CONAN_PROFILE=linux-gcc
+        - CONAN_PROFILE=linux-gcc9
       install:
         - # As of 2021-08-23, the server listed in the rabbitmq PPA has an expired certificate
         - # and breaks our ability to update. We don't need it, so remove it.
@@ -51,9 +55,7 @@ jobs:
       os: linux
       dist: focal
       env:
-        - CONAN_PROFILE=linux-clang
-        - CC=clang-10
-        - CXX=clang++-10
+        - CONAN_PROFILE=linux-clang10
       # We're using Clang 10 instead of the default (Clang 7) because of std::variant related failures
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
       install:
