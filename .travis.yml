@@ -2,7 +2,7 @@ language: cpp
 # Default scripts, which may be overridden by some jobs
 before_script:
   - ./tools/automate.py generate-workspace
-  - ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/linux-gcc
+  - ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
 script:
   - cd build
   - cmake -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake ..
