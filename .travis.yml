@@ -30,6 +30,7 @@ jobs:
         - choco install python --version 3.9.2
         - python -m pip install --upgrade pip
         - pip install conan
+        - alias python3=python
     - name: Windows + VS2019
       os: windows
       env:
@@ -41,6 +42,7 @@ jobs:
         - choco install python --version 3.9.2
         - python -m pip install --upgrade pip
         - pip install conan
+        - alias python3=python
     - name: Linux + GCC
       os: linux
       dist: focal
