@@ -3,68 +3,10 @@ project(CesiumGltf CXX)
 
 include(cesium)
 
-add_library(CesiumGltf "")
-
-configure_cesium_library(CesiumGltf)
-
-cesium_glob_files(CESIUM_GLTF_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
-)
-cesium_glob_files(CESIUM_GLTF_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
-)
-cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltf/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumGltf/*.h
-)
-cesium_glob_files(CESIUM_GLTF_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
-)
-
-set_target_properties(CesiumGltf
-    PROPERTIES
-    PUBLIC_HEADER "${CESIUM_GLTF_PUBLIC_HEADERS}"
-)
-
-target_sources(
-    CesiumGltf
-    PRIVATE
-        ${CESIUM_GLTF_SOURCES}
-        ${CESIUM_GLTF_HEADERS}
+cesium_library(
+  NAME CesiumGltf
+  REQUIRES
     PUBLIC
-        ${CESIUM_GLTF_PUBLIC_HEADERS}
+      Microsoft.GSL::GSL
+      CesiumUtility::CesiumUtility
 )
-
-target_include_directories(
-    CesiumGltf
-    SYSTEM PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include/
-        ${CMAKE_CURRENT_LIST_DIR}/generated/include
-    PRIVATE
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
-        ${CMAKE_CURRENT_LIST_DIR}/src
-        ${CMAKE_CURRENT_LIST_DIR}/generated/src
-)
-
-find_package(Microsoft.GSL REQUIRED)
-find_cesium_package(CesiumUtility)
-
-target_link_libraries(CesiumGltf
-    PUBLIC
-        Microsoft.GSL::GSL
-        CesiumUtility::CesiumUtility
-)
-
-install(TARGETS CesiumGltf
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf
-)
-
-cesium_tests(
-  CesiumGltf
-  "${CESIUM_GLTF_TEST_SOURCES}"
-)
-
-add_library(CesiumGltf::CesiumGltf ALIAS CesiumGltf)

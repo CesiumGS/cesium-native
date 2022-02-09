@@ -36,6 +36,116 @@ function(cesium_glob_files out_var_name regexes)
     set(${ARGV0} "${files}" PARENT_SCOPE)
 endfunction()
 
+# Parameters are:
+# - NAME: the name of the library target to create (required)
+# - REQUIRES: The list of libraries to depend on, further grouped into PUBLIC, PRIVATE, and TEST sections.
+#             PUBLIC dependencies are visible in the public interface of this library. PRIVATE ones are not.
+#             TEST dependencies are only required to build the tests, not the library itself.
+#             Each library is specified in the format "Namespace::Target@Package". "Package" is passed to
+#             find_package. "Namespace::Target" is passed to target_link_libraries. If there's no
+#             "@Package" specified, the "Namespace" is used as the package name.
+function(cesium_library)
+  set(options "")
+  set(oneValueArgs NAME)
+  set(multiValueArgs REQUIRES)
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  if (NOT ARG_NAME)
+    message(WARNING "cesium_library must have a NAME")
+    return()
+  endif()
+
+  cesium_glob_files(SOURCES src/*.c src/*.cpp generated/src/*.c generated/src/*.cpp)
+  cesium_glob_files(HEADERS src/*.h src/*.hpp generated/src/*.h generated/src/*.hpp)
+  cesium_glob_files(TESTS test/*.cpp test/*.hpp tests/*.h)
+  cesium_glob_files(PUBLIC_HEADERS include/${ARG_NAME}/*.h generated/include/${ARG_NAME}/*.h)
+
+  add_library(${ARG_NAME} "")
+  configure_cesium_library(${ARG_NAME})
+
+  target_sources(
+    ${ARG_NAME}
+    PRIVATE
+      ${SOURCES}
+      ${HEADERS}
+    PUBLIC
+      ${PUBLIC_HEADERS}
+  )
+
+  target_include_directories(
+    ${ARG_NAME}
+    SYSTEM PUBLIC
+      include
+      generated/include
+    PRIVATE
+      src
+      generated/src
+  )
+
+  set_target_properties(
+    ${ARG_NAME}
+    PROPERTIES
+      PUBLIC_HEADER
+        "${PUBLIC_HEADERS}"
+  )
+
+  cesium_tests("${ARG_NAME}" "${TESTS}")
+
+  set(CURRENT_ACCESS "PRIVATE")
+  foreach(package ${ARG_REQUIRES})
+    if(package STREQUAL "PUBLIC" OR package STREQUAL "PRIVATE" OR package STREQUAL "TEST")
+      set(CURRENT_ACCESS "${package}")
+      continue()
+    endif()
+
+    set(PACKAGE_NAME "${package}")
+    set(TARGET_NAME "${package}")
+
+    string(FIND "${package}" "@" packageSeparatorPosition)
+    string(FIND "${package}" "::" namespaceSeparatorPosition)
+
+    if (${packageSeparatorPosition} GREATER 0)
+      # There's an @ at the end of the dependency name, so use the string after it as the package name.
+      string(SUBSTRING "${package}" 0 ${packageSeparatorPosition} TARGET_NAME)
+      math(EXPR packageSeparatorPosition "${packageSeparatorPosition} + 1")
+      string(SUBSTRING "${package}" ${packageSeparatorPosition} -1 PACKAGE_NAME)
+    elseif (${namespaceSeparatorPosition} GREATER 0)
+      # The package name as a "Namespace::", so use the namespace as the package name
+      string(SUBSTRING "${package}" 0 ${namespaceSeparatorPosition} PACKAGE_NAME)
+    endif()
+
+    if ("${PACKAGE_NAME}" MATCHES "^Cesium")
+      find_cesium_package("${PACKAGE_NAME}")
+    else()
+      find_package("${PACKAGE_NAME}" REQUIRED)
+    endif()
+
+    if (CURRENT_ACCESS STREQUAL "TEST")
+      # Only add this dependency to the test project
+      if (CESIUM_TESTS_ENABLED AND TESTS)
+        target_link_libraries(
+          ${ARG_NAME}-tests
+          PRIVATE
+            ${TARGET_NAME}
+        )
+      endif()
+    else()
+      target_link_libraries(
+        ${ARG_NAME}
+        ${CURRENT_ACCESS}
+          ${TARGET_NAME}
+      )
+    endif()
+  endforeach()
+
+  install(TARGETS "${ARG_NAME}"
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${ARG_NAME}
+  )
+
+  add_library("${ARG_NAME}::${ARG_NAME}" ALIAS "${ARG_NAME}")
+endfunction()
+
 function(configure_cesium_library targetName)
     if (MSVC)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
@@ -93,8 +203,8 @@ function(target_link_libraries_system target scope)
   endforeach()
 endfunction()
 
-macro(cesium_tests target sources)
-  if (CESIUM_TESTS_ENABLED)
+function(cesium_tests target sources)
+  if (CESIUM_TESTS_ENABLED AND sources)
     find_package(catch2 REQUIRED)
 
     add_executable(${target}-tests "")
@@ -132,7 +242,7 @@ macro(cesium_tests target sources)
     include(Catch)
     catch_discover_tests(${target}-tests TEST_PREFIX "${target}: ")
   endif()
-endmacro()
+endfunction()
 
 macro(find_cesium_package package)
   if (CESIUM_USE_CONAN_PACKAGES)

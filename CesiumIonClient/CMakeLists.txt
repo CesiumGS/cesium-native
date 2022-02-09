@@ -3,74 +3,15 @@ project(CesiumIonClient CXX)
 
 include(cesium)
 
-add_library(CesiumIonClient "")
-
-configure_cesium_library(CesiumIonClient)
-
-cesium_glob_files(CESIUM_ION_CLIENT_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_ION_CLIENT_HEADERS src/*.h)
-cesium_glob_files(CESIUM_ION_CLIENT_PUBLIC_HEADERS include/CesiumIonClient/*.h)
-cesium_glob_files(CESIUM_ION_CLIENT_TEST_SOURCES test/*.cpp)
-
-set_target_properties(CesiumIonClient
-    PROPERTIES
-    PUBLIC_HEADER "${CESIUM_ION_CLIENT_PUBLIC_HEADERS}"
-)
-
-target_sources(
-    CesiumIonClient
-    PRIVATE
-        ${CESIUM_ION_CLIENT_SOURCES}
-        ${CESIUM_ION_CLIENT_HEADERS}
+cesium_library(
+  NAME CesiumIonClient
+  REQUIRES
     PUBLIC
-        ${CESIUM_ION_CLIENT_PUBLIC_HEADERS}
-)
-
-target_include_directories(
-    CesiumIonClient
-    SYSTEM PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
-)
-
-# PicoSHA2 doesn't have CMakeLists.txt at all
-add_library(PicoSHA2 INTERFACE)
-target_include_directories(PicoSHA2 SYSTEM INTERFACE ../extern/PicoSHA2)
-set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../extern/PicoSHA2/picosha2.h")
-
-find_package(csprng REQUIRED)
-find_package(base64 REQUIRED)
-find_package(httplib REQUIRED)
-find_package(picosha2 REQUIRED)
-find_cesium_package(CesiumAsync)
-find_cesium_package(CesiumUtility)
-
-target_link_libraries(CesiumIonClient
-    PUBLIC
-        CesiumAsync::CesiumAsync
-        CesiumUtility::CesiumUtility
+      CesiumAsync::CesiumAsync
+      CesiumUtility::CesiumUtility
     PRIVATE
-        csprng::csprng
-        base64::base64
-        picosha2::picosha2
-        httplib::httplib
+      csprng::csprng
+      base64::base64
+      picosha2::picosha2
+      httplib::httplib
 )
-
-# httplib erroneously does not declare its include a `SYSTEM` include, so
-# we must extract its include_directories using this function and manually
-# reinclude it as 'SYSTEM'.
-target_link_libraries_system(CesiumIonClient
-    PRIVATE
-        httplib::httplib
-)
-
-install(TARGETS CesiumIonClient
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumIonClient
-)
-
-cesium_tests(
-  CesiumIonClient
-  "${CESIUM_ION_CLIENT_TEST_SOURCES}"
-)
-
-add_library(CesiumIonClient::CesiumIonClient ALIAS CesiumIonClient)
