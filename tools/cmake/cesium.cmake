@@ -3,16 +3,6 @@ include(GNUInstallDirs)
 option(CESIUM_USE_CONAN_PACKAGES "Whether to resolve other cesium-native libraries with Conan." OFF)
 option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 
-# Tell CMake to look for packages from Conan
-# if (CESIUM_USE_CONAN_PACKAGES)
-#   if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_MODULE_PATH)
-#     list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
-#   endif()
-#   if (NOT "${CMAKE_BINARY_DIR}/conan" IN_LIST CMAKE_PREFIX_PATH)
-#     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/conan")
-#   endif()
-# endif()
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/conan")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/conan")
 
@@ -185,22 +175,6 @@ function(configure_cesium_library targetName)
 
 
     endif()
-endfunction()
-
-# Workaround for targets that erroneously forget to
-# declare their include directories as `SYSTEM`
-function(target_link_libraries_system target scope)
-  set(libs ${ARGN})
-  foreach(lib ${libs})
-    get_target_property(lib_include_dirs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
-
-    if ("${lib_include_dirs}" MATCHES ".*NOTFOUND$")
-        message(FATAL_ERROR "${target}: Cannot use INTERFACE_INCLUDE_DIRECTORIES from target ${lib} as it does not define it")
-    endif()
-
-    target_include_directories(${target} SYSTEM ${scope} ${lib_include_dirs})
-    target_link_libraries(${target} ${scope} ${lib})
-  endforeach()
 endfunction()
 
 function(cesium_tests target sources)
