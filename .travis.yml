@@ -2,7 +2,7 @@ language: cpp
 # Default scripts, which may be overridden by some jobs
 before_script:
   - ./tools/automate.py generate-workspace
-  - ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
+  - ./tools/automate.py install-dependencies -pr:h tools/conan-profiles/$CONAN_PROFILE --config Debug
 script:
   - cd build
   - cmake -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake ..
@@ -31,7 +31,7 @@ jobs:
         - pip install conan
       before_script:
         - py -3 ./tools/automate.py generate-workspace
-        - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
+        - py -3 ./tools/automate.py install-dependencies -pr:h tools/conan-profiles/$CONAN_PROFILE --config Debug
       after_script:
         - cmake --build . --config Debug --target cesium-native-docs
     - name: Windows + VS2019
@@ -47,7 +47,7 @@ jobs:
         - pip install conan
       before_script:
         - py -3 ./tools/automate.py generate-workspace
-        - py -3 ./tools/automate.py install-dependencies --config Debug --profile tools/conan-profiles/$CONAN_PROFILE
+        - py -3 ./tools/automate.py install-dependencies -pr:h tools/conan-profiles/$CONAN_PROFILE --config Debug
     - name: Linux + GCC
       os: linux
       dist: focal
