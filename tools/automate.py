@@ -4,6 +4,7 @@ import subprocess
 import os
 import yaml
 import jinja2
+from enum import Enum
 
 def main():
   argParser = argparse.ArgumentParser(description='Automate cesium-native tasks')
@@ -14,13 +15,23 @@ def main():
   installDependenciesParser = subparsers.add_parser('install-dependencies', help='install dependencies required to build cesium-native')
   installDependenciesParser.set_defaults(func=installDependencies)
   installDependenciesParser.add_argument('--config', action='append', help='A build configuration for which to install dependencies, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo". Can be specified multiple times to install dependencies for multiple configurations. If not specified, dependencies for both "Debug" and "Release" are installed.')
-  installDependenciesParser.add_argument('--profile', help='The Conan build profile to use', default='default')
+  installDependenciesParser.add_argument('-pr:h', dest='hostProfile', help='The Conan host profile to use', default='default')
+  installDependenciesParser.add_argument('-pr:b', dest='buildProfile', help='The Conan build profile to use', default='default')
 
   generateWorkspaceParser = subparsers.add_parser('generate-workspace', help='generate the workspace.cmake, referencing each sub-library')
   generateWorkspaceParser.set_defaults(func=generateWorkspace)
 
   generateWorkspaceParser = subparsers.add_parser('create-recipes', help='create Conan recipes to package cesium-native libraries')
   generateWorkspaceParser.set_defaults(func=createRecipes)
+
+  listDependenciesParser = subparsers.add_parser('list-dependencies', help='list the cesium-native libraries in dependency order, with libraries depended-upon listed before those that depend on them')
+  listDependenciesParser.set_defaults(func=lambda x: executeInDependencyOrder(findCesiumLibraries(), lambda library: print(library)))
+
+  createPackagesParser = subparsers.add_parser('create-packages', help='create a Conan package (conan create) for each cesium-native library')
+  createPackagesParser.add_argument('--config', help='The build configuration for which to create packages, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo".', default='Debug')
+  createPackagesParser.add_argument('-pr:h', dest='hostProfile', help='The Conan host profile to use', default='default')
+  createPackagesParser.add_argument('-pr:b', dest='buildProfile', help='The Conan build profile to use', default='default')
+  createPackagesParser.set_defaults(func=createPackages)
 
   args = argParser.parse_args()
   args.func(args)
@@ -39,7 +50,7 @@ def installDependencies(args):
   # Create packages from custom recipes
   for recipe in nativeYml['extraRecipes']:
     for config in configs:
-      run('conan create recipes/%s -pr:h=%s -s build_type=%s' % (recipe, args.profile, config))
+      run('conan create recipes/%s -pr:h=%s -pr:b=%s -s build_type=%s' % (recipe, args.hostProfile, args.buildProfile, config))
 
   # Install dependencies for all libraries in all configurations
   for library in libraries:
@@ -66,7 +77,7 @@ def installDependencies(args):
 
     # Install each build configuration
     for config in configs:
-      run('conan install %s -if build/%s/conan -pr:h=%s -s build_type=%s --build missing' % (conanfilename, library, args.profile, config))
+      run('conan install %s -if build/%s/conan -pr:h=%s -pr:b=%s -s build_type=%s --build missing' % (conanfilename, library, args.hostProfile, args.buildProfile, config))
 
   # Generate a toolchain file to make CMake match the Conan settings.
   # In multi-config environments (e.g. Visual Studio), we need to do this for each build configuration.
@@ -80,7 +91,7 @@ def installDependencies(args):
     f.write('CMakeToolchain')
 
   for config in configs:
-    run('conan install build/conan/conanfile.txt -if build/conan -pr:h=%s -s build_type=%s' % (args.profile, config))
+    run('conan install build/conan/conanfile.txt -if build/conan -pr:h=%s -pr:b=%s -s build_type=%s' % (args.hostProfile, args.buildProfile, config))
 
 def generateWorkspace(args):
   libraries = findCesiumLibraries()
@@ -158,6 +169,52 @@ def resolveDependencies(nativeLibraries, nativeYml, dependencies):
         return '%s/specify.version.in.cesium-native.yml' % (library)
 
   return map(resolveDependency, dependencies)
+
+def executeInDependencyOrder(nativeLibraries, func):
+  class State(Enum):
+    NOT_VISITED = 0
+    VISITED_DOWN = 1
+    VISITED_UP = 2
+
+  states = {}
+
+  # Initially all libraries are not visited
+  for library in nativeLibraries:
+    states[library] = State.NOT_VISITED
+
+  def recurse(library):
+    currentState = states[library]
+    if currentState == State.VISITED_DOWN:
+      print('Detected a cycle in the dependency graph while visiting %s!' % (library))
+      return
+
+    if currentState == State.VISITED_UP:
+      # Already visited
+      return
+
+    states[library] = State.VISITED_DOWN
+
+    with open(library + '/library.yml', 'r') as f:
+      libraryYml = yaml.safe_load(f)
+
+    dependencies = [*libraryYml['dependencies'], *libraryYml['testDependencies']]
+    for dependency in dependencies:
+      if dependency.startswith('Cesium'):
+        recurse(dependency)
+
+    states[library] = State.VISITED_UP
+
+    func(library)
+
+  for library in nativeLibraries:
+    recurse(library)
+
+def createPackages(args):
+  def createPackage(library):
+    run('conan create %s -pr:h=%s -pr:b=%s -s build_type=%s' % (library, args.hostProfile, args.buildProfile, args.config))
+
+  nativeLibraries = findCesiumLibraries()
+  executeInDependencyOrder(nativeLibraries, createPackage)
 
 def run(command):
   result = subprocess.run(command, shell=True)

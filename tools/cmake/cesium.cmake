@@ -48,7 +48,13 @@ function(cesium_library)
   cesium_glob_files(SOURCES src/*.c src/*.cpp generated/src/*.c generated/src/*.cpp)
   cesium_glob_files(HEADERS src/*.h src/*.hpp generated/src/*.h generated/src/*.hpp)
   cesium_glob_files(TESTS test/*.cpp test/*.hpp tests/*.h)
-  cesium_glob_files(PUBLIC_HEADERS include/${ARG_NAME}/*.h generated/include/${ARG_NAME}/*.h)
+  cesium_glob_files(
+    PUBLIC_HEADERS
+    include/${ARG_NAME}/*.h
+    include/${ARG_NAME}/Impl/*.h
+    generated/include/${ARG_NAME}/*.h
+    generated/include/${ARG_NAME}/Impl/*.h
+  )
 
   add_library(${ARG_NAME} "")
   configure_cesium_library(${ARG_NAME})
@@ -72,19 +78,17 @@ function(cesium_library)
       generated/src
   )
 
-  set_target_properties(
-    ${ARG_NAME}
-    PROPERTIES
-      PUBLIC_HEADER
-        "${PUBLIC_HEADERS}"
-  )
-
   cesium_tests("${ARG_NAME}" "${TESTS}")
 
   set(CURRENT_ACCESS "PRIVATE")
   foreach(package ${ARG_REQUIRES})
     if(package STREQUAL "PUBLIC" OR package STREQUAL "PRIVATE" OR package STREQUAL "TEST")
       set(CURRENT_ACCESS "${package}")
+      continue()
+    endif()
+
+    # Don't load TEST packages if tests are disabled
+    if(CURRENT_ACCESS STREQUAL "TEST" AND NOT CESIUM_TESTS_ENABLED)
       continue()
     endif()
 
@@ -130,8 +134,14 @@ function(cesium_library)
 
   install(TARGETS "${ARG_NAME}"
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${ARG_NAME}
   )
+
+  # We can't use install(TARGETS x PUBLIC_HEADER DESTINATION y) because PUBLIC_HEADER copies all
+  # the files into the DESTINATION without preserving subdirectories. Copy the files manually instead.
+  if (EXISTS "generated/include")
+    install(DIRECTORY generated/include/ TYPE INCLUDE)
+  endif()
+  install(DIRECTORY include/ TYPE INCLUDE)
 
   add_library("${ARG_NAME}::${ARG_NAME}" ALIAS "${ARG_NAME}")
 endfunction()
