@@ -804,7 +804,7 @@ Connection::getIdFromToken(const std::string& token) {
       decoded.data(),
       &decodedLength,
       0);
-  if (result != 0 || decodedLength == std::string::npos) {
+  if (result != 1 || decodedLength == std::string::npos) {
     return std::nullopt;
   }
 
