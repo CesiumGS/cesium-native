@@ -786,11 +786,21 @@ Connection::getIdFromToken(const std::string& token) {
     return std::nullopt;
   }
 
-  std::string decoded(length * 3 / 4, '\0');
+  std::string encoded(
+      token.begin() + std::string::difference_type(startPos + 1),
+      token.begin() + std::string::difference_type(endPos));
+
+  // Add base64 padding, as required by base64_decode.
+  size_t remainder = encoded.size() % 4;
+  if (remainder != 0) {
+    encoded.resize(encoded.size() + 4 - remainder, '=');
+  }
+
+  std::string decoded(encoded.size() * 3 / 4, '\0');
   size_t decodedLength;
   int result = base64_decode(
-      token.data() + startPos + 1,
-      length,
+      encoded.data(),
+      encoded.size(),
       decoded.data(),
       &decodedLength,
       0);
