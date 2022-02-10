@@ -466,6 +466,9 @@ ImageReaderResult GltfReader::readImage(
 
     if (errorCode == KTX_SUCCESS) {
       if (ktxTexture2_NeedsTranscoding(pTexture)) {
+
+        CESIUM_TRACE("Transcode KTXv2");
+
         image.channels =
             static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
         std::optional<GpuCompressedPixelFormat> transcodeTargetFormat =
@@ -606,34 +609,38 @@ ImageReaderResult GltfReader::readImage(
     return result;
   }
 
-  image.bytesPerChannel = 1;
-  image.channels = 4;
+  {
+    CESIUM_TRACE("Decode JPG / PNG");
 
-  int channelsInFile;
-  stbi_uc* pImage = stbi_load_from_memory(
-      reinterpret_cast<const stbi_uc*>(data.data()),
-      static_cast<int>(data.size()),
-      &image.width,
-      &image.height,
-      &channelsInFile,
-      image.channels);
-  if (pImage) {
-    CESIUM_TRACE(
-        "copy image " + std::to_string(image.width) + "x" +
-        std::to_string(image.height) + "x" + std::to_string(image.channels) +
-        "x" + std::to_string(image.bytesPerChannel));
-    // std::uint8_t is not implicitly convertible to std::byte, so we must use
-    // reinterpret_cast to (safely) force the conversion.
-    const auto lastByte =
-        image.width * image.height * image.channels * image.bytesPerChannel;
-    image.pixelData.resize(static_cast<std::size_t>(lastByte));
-    std::uint8_t* u8Pointer =
-        reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-    std::copy(pImage, pImage + lastByte, u8Pointer);
-    stbi_image_free(pImage);
-  } else {
-    result.image.reset();
-    result.errors.emplace_back(stbi_failure_reason());
+    image.bytesPerChannel = 1;
+    image.channels = 4;
+
+    int channelsInFile;
+    stbi_uc* pImage = stbi_load_from_memory(
+        reinterpret_cast<const stbi_uc*>(data.data()),
+        static_cast<int>(data.size()),
+        &image.width,
+        &image.height,
+        &channelsInFile,
+        image.channels);
+    if (pImage) {
+      CESIUM_TRACE(
+          "copy image " + std::to_string(image.width) + "x" +
+          std::to_string(image.height) + "x" + std::to_string(image.channels) +
+          "x" + std::to_string(image.bytesPerChannel));
+      // std::uint8_t is not implicitly convertible to std::byte, so we must use
+      // reinterpret_cast to (safely) force the conversion.
+      const auto lastByte =
+          image.width * image.height * image.channels * image.bytesPerChannel;
+      image.pixelData.resize(static_cast<std::size_t>(lastByte));
+      std::uint8_t* u8Pointer =
+          reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+      std::copy(pImage, pImage + lastByte, u8Pointer);
+      stbi_image_free(pImage);
+    } else {
+      result.image.reset();
+      result.errors.emplace_back(stbi_failure_reason());
+    }
   }
 
   return result;
