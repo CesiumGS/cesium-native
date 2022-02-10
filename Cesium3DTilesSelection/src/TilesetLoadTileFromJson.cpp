@@ -90,8 +90,11 @@ void Tileset::LoadTileFromJson::execute(
   std::optional<double> geometricError =
       JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a geometricError");
-    return;
+    geometricError = tile.getNonZeroGeometricError();
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Tile did not contain a geometricError. "
+        "Using half of the parent tile's geometric error.");
   }
 
   tile.setBoundingVolume(

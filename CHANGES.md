@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for `CESIUM_RTC` glTF extension.
+- Added support for tiles that do not have a geometric error.
 
 ##### Fixes :wrench:
 
