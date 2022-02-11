@@ -51,11 +51,11 @@ struct CESIUMGLTF_API ImageCesium final {
   int32_t bytesPerChannel = 1;
 
   /**
-   * @brief The compressed pixel format, if this image is compressed.
-   *
-   * If this is std::nullopt, this image is not compressed.
+   * @brief The gpu compressed pixel format for this image or NONE if it is not
+   * compressed.
    */
-  std::optional<GpuCompressedPixelFormat> compressedPixelFormat = std::nullopt;
+  GpuCompressedPixelFormat compressedPixelFormat =
+      GpuCompressedPixelFormat::NONE;
 
   /**
    * @brief The offset of each mip in the pixel data.

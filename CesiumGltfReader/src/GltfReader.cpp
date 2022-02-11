@@ -471,8 +471,7 @@ ImageReaderResult GltfReader::readImage(
 
         image.channels =
             static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
-        std::optional<GpuCompressedPixelFormat> transcodeTargetFormat =
-            std::nullopt;
+        GpuCompressedPixelFormat transcodeTargetFormat = NONE;
 
         if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
           switch (image.channels) {
@@ -507,55 +506,54 @@ ImageReaderResult GltfReader::readImage(
         }
 
         ktx_transcode_fmt_e transcodeTargetFormat_ = KTX_TTF_RGBA32;
-        if (transcodeTargetFormat) {
-          switch (*transcodeTargetFormat) {
-          case GpuCompressedPixelFormat::ETC1_RGB:
-            transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
-            break;
-          case GpuCompressedPixelFormat::ETC2_RGBA:
-            transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
-            break;
-          case GpuCompressedPixelFormat::BC1_RGB:
-            transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
-            break;
-          case GpuCompressedPixelFormat::BC3_RGBA:
-            transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
-            break;
-          case GpuCompressedPixelFormat::BC4_R:
-            transcodeTargetFormat_ = KTX_TTF_BC4_R;
-            break;
-          case GpuCompressedPixelFormat::BC5_RG:
-            transcodeTargetFormat_ = KTX_TTF_BC5_RG;
-            break;
-          case GpuCompressedPixelFormat::BC7_RGBA:
-            transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
-            break;
-          case GpuCompressedPixelFormat::PVRTC1_4_RGB:
-            transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
-            break;
-          case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
-            transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
-            break;
-          case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
-            transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
-            break;
-          case GpuCompressedPixelFormat::PVRTC2_4_RGB:
-            transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
-            break;
-          case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
-            transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
-            break;
-          case GpuCompressedPixelFormat::ETC2_EAC_R11:
-            transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
-            break;
-          case GpuCompressedPixelFormat::ETC2_EAC_RG11:
-            transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
-            break;
-          default:
-            transcodeTargetFormat_ = KTX_TTF_RGBA32;
-            break;
-          };
-        }
+        switch (transcodeTargetFormat) {
+        case GpuCompressedPixelFormat::ETC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::ETC2_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::BC3_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC4_R:
+          transcodeTargetFormat_ = KTX_TTF_BC4_R;
+          break;
+        case GpuCompressedPixelFormat::BC5_RG:
+          transcodeTargetFormat_ = KTX_TTF_BC5_RG;
+          break;
+        case GpuCompressedPixelFormat::BC7_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_R11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_RG11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
+          break;
+        // case NONE:
+        default:
+          transcodeTargetFormat_ = KTX_TTF_RGBA32;
+          break;
+        };
 
         errorCode =
             ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
@@ -564,7 +562,7 @@ ImageReaderResult GltfReader::readImage(
           image.width = static_cast<int32_t>(pTexture->baseWidth);
           image.height = static_cast<int32_t>(pTexture->baseHeight);
 
-          if (!transcodeTargetFormat) {
+          if (transcodeTargetFormat == GpuCompressedPixelFormat::NONE) {
             // We fully decompressed the texture in this case.
             image.bytesPerChannel = 1;
             image.channels = 4;

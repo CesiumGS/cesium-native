@@ -2,14 +2,13 @@
 
 #include "CesiumGltf/Library.h"
 
-#include <optional>
-
 namespace CesiumGltf {
 
 /**
  * @brief Supported gpu compressed pixel formats.
  */
 enum CESIUMGLTF_API GpuCompressedPixelFormat {
+  NONE,
   ETC1_RGB,
   ETC2_RGBA,
   BC1_RGB,
@@ -64,53 +63,52 @@ struct CESIUMGLTF_API Ktx2TranscodeTargets {
 
   /**
    * @brief The gpu pixel compression format to transcode Red ETC1S textures
-   * into, if one exists. Otherwise it will be decompressed into raw pixels.
+   * into. If NONE, it will be decompressed into raw pixels.
    */
-  std::optional<GpuCompressedPixelFormat> ETC1S_R = std::nullopt;
+  GpuCompressedPixelFormat ETC1S_R = GpuCompressedPixelFormat::NONE;
 
   /**
    * @brief The gpu pixel compression format to transcode Red-Green ETC1S
    * textures into, if one exists. Otherwise it will be decompressed into raw
    * pixels.
    */
-  std::optional<GpuCompressedPixelFormat> ETC1S_RG = std::nullopt;
+  GpuCompressedPixelFormat ETC1S_RG = GpuCompressedPixelFormat::NONE;
+
+  /**
+   * @brief The gpu pixel compression format to transcode RGB ETC1S textures
+   * into. If NONE, it will be decompressed into raw pixels.
+   */
+  GpuCompressedPixelFormat ETC1S_RGB = GpuCompressedPixelFormat::NONE;
+
+  /**
+   * @brief The gpu pixel compression format to transcode RGBA ETC1S textures
+   * into. If NONE, it will be decompressed into raw pixels.
+   */
+  GpuCompressedPixelFormat ETC1S_RGBA = GpuCompressedPixelFormat::NONE;
 
   /**
    * @brief The gpu pixel compression format to transcode Red UASTC textures
-   * into, if one exists. Otherwise it will be decompressed into raw pixels.
+   * into. If NONE, it will be decompressed into raw pixels.
    */
-  std::optional<GpuCompressedPixelFormat> ETC1S_RGB = std::nullopt;
-
-  /**
-   * @brief The gpu pixel compression format to transcode Red UASTC textures
-   * into, if one exists. Otherwise it will be decompressed into raw pixels.
-   */
-  std::optional<GpuCompressedPixelFormat> ETC1S_RGBA = std::nullopt;
-
-  /**
-   * @brief The gpu pixel compression format to transcode Red UASTC textures
-   * into, if one exists. Otherwise it will be decompressed into raw pixels.
-   */
-  std::optional<GpuCompressedPixelFormat> UASTC_R = std::nullopt;
+  GpuCompressedPixelFormat UASTC_R = GpuCompressedPixelFormat::NONE;
 
   /**
    * @brief The gpu pixel compression format to transcode Red-Green UASTC
-   * textures into, if one exists. Otherwise it will be decompressed into raw
-   * pixels.
+   * textures into. If NONE, it will be decompressed into raw pixels.
    */
-  std::optional<GpuCompressedPixelFormat> UASTC_RG = std::nullopt;
+  GpuCompressedPixelFormat UASTC_RG = GpuCompressedPixelFormat::NONE;
 
   /**
    * @brief The gpu pixel compression format to transcode RGB UASTC textures
-   * into, if one exists. Otherwise it will be decompressed into raw pixels.
+   * into. If NONE, it will be decompressed into raw pixels.
    */
-  std::optional<GpuCompressedPixelFormat> UASTC_RGB = std::nullopt;
+  GpuCompressedPixelFormat UASTC_RGB = GpuCompressedPixelFormat::NONE;
 
   /**
    * @brief The gpu pixel compression format to transcode RGBA UASTC textures
-   * into, if one exists. Otherwise it will be decompressed into raw pixels.
+   * into. If NONE, it will be decompressed into raw pixels.
    */
-  std::optional<GpuCompressedPixelFormat> UASTC_RGBA = std::nullopt;
+  GpuCompressedPixelFormat UASTC_RGBA = GpuCompressedPixelFormat::NONE;
 
   Ktx2TranscodeTargets() {}
 
