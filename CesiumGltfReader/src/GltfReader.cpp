@@ -471,7 +471,8 @@ ImageReaderResult GltfReader::readImage(
 
         image.channels =
             static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
-        GpuCompressedPixelFormat transcodeTargetFormat = NONE;
+        GpuCompressedPixelFormat transcodeTargetFormat =
+            GpuCompressedPixelFormat::NONE;
 
         if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
           switch (image.channels) {

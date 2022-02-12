@@ -7,7 +7,7 @@ namespace CesiumGltf {
 /**
  * @brief Supported gpu compressed pixel formats.
  */
-enum CESIUMGLTF_API GpuCompressedPixelFormat {
+enum class CESIUMGLTF_API GpuCompressedPixelFormat {
   NONE,
   ETC1_RGB,
   ETC2_RGBA,
