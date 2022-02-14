@@ -89,7 +89,7 @@ Ktx2TranscodeTargets::Ktx2TranscodeTargets(
   }
   // TODO: else { decodeToQuantized ? }
 
-  // Find the transcode target for UASTC RG
+  // Find the transcode target for UASTC Red-Green
   if (supportedFormats.ASTC_4x4_RGBA) {
     this->UASTC_RG = GpuCompressedPixelFormat::ASTC_4x4_RGBA;
   } else if (supportedFormats.BC7_RGBA) {
@@ -102,7 +102,7 @@ Ktx2TranscodeTargets::Ktx2TranscodeTargets(
   }
   // TODO: else { decode to RG8 or RGR565 }
 
-  // Find the transcode target for UASTC RG
+  // Find the transcode target for UASTC Red
   if (supportedFormats.ASTC_4x4_RGBA) {
     this->UASTC_R = GpuCompressedPixelFormat::ASTC_4x4_RGBA;
   } else if (supportedFormats.BC7_RGBA) {

@@ -61,7 +61,7 @@ GltfReaderResult readJsonGltf(
   CESIUM_TRACE("CesiumGltfReader::GltfReader::readJsonGltf");
 
   ModelJsonHandler modelHandler(context);
-  CesiumJsonReader::ReadJsonResult<CesiumGltf::Model> jsonResult =
+  CesiumJsonReader::ReadJsonResult<Model> jsonResult =
       CesiumJsonReader::JsonReader::readJson(data, modelHandler);
 
   return GltfReaderResult{
@@ -183,7 +183,7 @@ GltfReaderResult readBinaryGltf(
   GltfReaderResult result = readJsonGltf(context, jsonChunk);
 
   if (result.model && !binaryChunk.empty()) {
-    CesiumGltf::Model& model = result.model.value();
+    Model& model = result.model.value();
 
     if (model.buffers.empty()) {
       result.errors.emplace_back(
@@ -191,7 +191,7 @@ GltfReaderResult readBinaryGltf(
       return result;
     }
 
-    CesiumGltf::Buffer& buffer = model.buffers[0];
+    Buffer& buffer = model.buffers[0];
     if (buffer.uri) {
       result.errors.emplace_back("GLB has a binary chunk but the first buffer "
                                  "in the JSON chunk also has a 'uri'.");
@@ -218,15 +218,15 @@ void postprocess(
     const GltfReader& reader,
     GltfReaderResult& readGltf,
     const GltfReaderOptions& options) {
-  CesiumGltf::Model& model = readGltf.model.value();
+  Model& model = readGltf.model.value();
 
   if (options.decodeDataUrls) {
     decodeDataUrls(reader, readGltf, options);
   }
 
   if (options.decodeEmbeddedImages) {
-    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
-    for (CesiumGltf::Image& image : model.images) {
+    CESIUM_TRACE("CesiumGltfReader::decodeEmbeddedImages");
+    for (Image& image : model.images) {
       // Ignore external images for now.
       if (image.uri) {
         continue;
@@ -234,8 +234,7 @@ void postprocess(
 
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
-      const CesiumGltf::Buffer& buffer =
-          Model::getSafe(model.buffers, bufferView.buffer);
+      const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
 
       if (bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
@@ -329,13 +328,13 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
   // Get a rough count of how many external buffers we may have.
   // Some of these may be data uris though.
   size_t uriBuffersCount = 0;
-  for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
+  for (const Buffer& buffer : result.model->buffers) {
     if (buffer.uri) {
       ++uriBuffersCount;
     }
   }
 
-  for (const CesiumGltf::Image& image : result.model->images) {
+  for (const Image& image : result.model->images) {
     if (image.uri) {
       ++uriBuffersCount;
     }
@@ -359,7 +358,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
   constexpr std::string_view dataPrefix = "data:";
   constexpr size_t dataPrefixLength = dataPrefix.size();
 
-  for (CesiumGltf::Buffer& buffer : pResult->model->buffers) {
+  for (Buffer& buffer : pResult->model->buffers) {
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
@@ -384,7 +383,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
     }
   }
 
-  for (CesiumGltf::Image& image : pResult->model->images) {
+  for (Image& image : pResult->model->images) {
     if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
@@ -444,17 +443,14 @@ bool isKtx(const gsl::span<const std::byte>& data) {
 ImageReaderResult GltfReader::readImage(
     const gsl::span<const std::byte>& data,
     const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
-  CESIUM_TRACE("CesiumGltf::readImage");
+  CESIUM_TRACE("CesiumGltfReader::readImage");
 
   ImageReaderResult result;
 
   result.image.emplace();
-  CesiumGltf::ImageCesium& image = result.image.value();
+  ImageCesium& image = result.image.value();
 
   if (isKtx(data)) {
-    // TODO: better error handling; make sure KTX-Software doesn't throw
-    // exceptions
-
     ktxTexture2* pTexture = nullptr;
     KTX_error_code errorCode;
 
