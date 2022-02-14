@@ -117,9 +117,13 @@ struct CESIUMGLTF_API Ktx2TranscodeTargets {
    * compressed formats.
    *
    * @param supportedFormats The supported gpu compressed pixel formats.
+   * @param preserveHighQuality Whether to preserve texture quality when
+   * transcoding KTXv2 textures. If this is true, the texture may be fully
+   * decompressed instead of picking a lossy target gpu compressed pixel format.
    */
   Ktx2TranscodeTargets(
-      const SupportedGpuCompressedPixelFormats& supportedFormats);
+      const SupportedGpuCompressedPixelFormats& supportedFormats,
+      bool preserveHighQuality);
 };
 
 } // namespace CesiumGltf
