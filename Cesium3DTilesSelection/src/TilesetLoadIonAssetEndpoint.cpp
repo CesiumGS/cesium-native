@@ -60,6 +60,9 @@ struct Tileset::LoadIonAssetEndpoint::Private {
           assert(false);
         });
   }
+
+  static std::unordered_map<std::string, std::shared_ptr<IAssetRequest>>
+      endpointCache;
 };
 
 CesiumAsync::Future<void>
@@ -78,14 +81,21 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
     ionUrl += "?access_token=" + ionAccessToken;
   }
 
+  auto cacheIt = Private::endpointCache.find(ionUrl);
+
   auto operation =
-      tileset._externals.pAssetAccessor->get(tileset._asyncSystem, ionUrl)
-          .thenInMainThread(
-              [&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
-                return Private::mainThreadHandleResponse(
-                    tileset,
-                    std::move(pRequest));
-              });
+      cacheIt != Private::endpointCache.end()
+          ? Private::mainThreadHandleResponse(
+                tileset,
+                std::move(cacheIt->second))
+          : tileset._externals.pAssetAccessor->get(tileset._asyncSystem, ionUrl)
+                .thenInMainThread(
+                    [&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
+                      Private::endpointCache[pRequest->url()] = pRequest;
+                      return Private::mainThreadHandleResponse(
+                          tileset,
+                          std::move(pRequest));
+                    });
 
   return Private::handlePotentialError(tileset, std::move(operation))
       .thenImmediately(
@@ -338,3 +348,6 @@ Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
 
   return FailedTileAction::Wait;
 }
+
+std::unordered_map<std::string, std::shared_ptr<IAssetRequest>>
+    Tileset::LoadIonAssetEndpoint::Private::endpointCache;
