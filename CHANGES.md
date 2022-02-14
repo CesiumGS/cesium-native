@@ -6,6 +6,7 @@
 
 - Added support for `CESIUM_RTC` glTF extension.
 - Added support for tiles that do not have a geometric error.
+- Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
 
 ##### Fixes :wrench:
 
