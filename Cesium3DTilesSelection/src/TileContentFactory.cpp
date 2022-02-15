@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "QuantizedMeshContent.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 
@@ -35,27 +36,6 @@ void TileContentFactory::registerContentType(
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
-  // This is a hack to support gltf/glb content directly. Is there a more
-  // elegant way to do this instead of check the extension here?
-  const std::string& url = input.pRequest->url();
-  size_t extensionPos = url.rfind(".");
-  if (extensionPos < url.size()) {
-    std::string extension = url.substr(extensionPos);
-    std::string lowerCaseExtension;
-    std::transform(
-        extension.begin(),
-        extension.end(),
-        std::back_inserter(lowerCaseExtension),
-        [](char c) noexcept { return static_cast<char>(::tolower(c)); });
-
-    if (lowerCaseExtension == ".gltf" || lowerCaseExtension == ".glb") {
-      auto itMagic = TileContentFactory::_loadersByMagic.find("glTF");
-      if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-        return itMagic->second->load(input);
-      }
-    }
-  }
-
   const gsl::span<const std::byte>& data = input.pRequest->response()->data();
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
@@ -71,6 +51,32 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
       TileContentFactory::_loadersByContentType.find(baseContentType);
   if (itContentType != TileContentFactory::_loadersByContentType.end()) {
     return itContentType->second->load(input);
+  }
+
+  std::string_view url = input.pRequest->url();
+  std::string_view urlWithoutQueries = url.substr(0, url.find("?"));
+  size_t extensionPos = urlWithoutQueries.rfind(".");
+  if (extensionPos < urlWithoutQueries.size()) {
+    std::string_view extension = urlWithoutQueries.substr(extensionPos);
+    std::string lowerCaseExtension;
+    std::transform(
+        extension.begin(),
+        extension.end(),
+        std::back_inserter(lowerCaseExtension),
+        [](char c) noexcept { return static_cast<char>(::tolower(c)); });
+
+    if (lowerCaseExtension == ".gltf" || lowerCaseExtension == ".glb") {
+      auto itGltfLoader = TileContentFactory::_loadersByMagic.find("glTF");
+      if (itGltfLoader != TileContentFactory::_loadersByMagic.end()) {
+        return itGltfLoader->second->load(input);
+      }
+    } else if (lowerCaseExtension == ".terrain") {
+      auto itTerrainLoader = TileContentFactory::_loadersByContentType.find(
+          QuantizedMeshContent::CONTENT_TYPE);
+      if (itTerrainLoader != TileContentFactory::_loadersByContentType.end()) {
+        return itTerrainLoader->second->load(input);
+      }
+    }
   }
 
   // Determine if this is plausibly a JSON external tileset.
