@@ -75,6 +75,21 @@ public:
       const std::shared_ptr<TileContentLoader>& pLoader);
 
   /**
+   * @brief Register the given function for the given file extension.
+   *
+   * The given string is a file extension including the "." (e.g. ".ext"). It
+   * is used for deciding whether the given loader should be used to create the
+   * {@link TileContentLoadResult} from a {@link TileContentLoadInput} with the
+   * same file extension in its url.
+   *
+   * @param fileExtension The file extension.
+   * @param pLoader The loader that will be used to create the tile content
+   */
+  static void registerFileExtension(
+      const std::string& fileExtension,
+      const std::shared_ptr<TileContentLoader>& pLoader);
+
+  /**
    * @brief Creates the {@link TileContentLoadResult} from the given
    * {@link TileContentLoadInput}.
    *
@@ -110,6 +125,8 @@ private:
       _loadersByMagic;
   static std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
       _loadersByContentType;
+  static std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
+      _loadersByFileExtension;
 };
 
 } // namespace Cesium3DTilesSelection

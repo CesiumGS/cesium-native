@@ -34,6 +34,21 @@ void TileContentFactory::registerContentType(
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
+void TileContentFactory::registerFileExtension(
+    const std::string& fileExtension,
+    const std::shared_ptr<TileContentLoader>& pLoader) {
+
+  SPDLOG_INFO("Registering file extension {}", fileExtension);
+
+  std::string lowerCaseFileExtension;
+  std::transform(
+      fileExtension.begin(),
+      fileExtension.end(),
+      std::back_inserter(lowerCaseFileExtension),
+      [](char c) noexcept { return static_cast<char>(::tolower(c)); });
+  TileContentFactory::_loadersByFileExtension[lowerCaseFileExtension] = pLoader;
+}
+
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
   const gsl::span<const std::byte>& data = input.pRequest->response()->data();
@@ -65,17 +80,10 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
         std::back_inserter(lowerCaseExtension),
         [](char c) noexcept { return static_cast<char>(::tolower(c)); });
 
-    if (lowerCaseExtension == ".gltf" || lowerCaseExtension == ".glb") {
-      auto itGltfLoader = TileContentFactory::_loadersByMagic.find("glTF");
-      if (itGltfLoader != TileContentFactory::_loadersByMagic.end()) {
-        return itGltfLoader->second->load(input);
-      }
-    } else if (lowerCaseExtension == ".terrain") {
-      auto itTerrainLoader = TileContentFactory::_loadersByContentType.find(
-          QuantizedMeshContent::CONTENT_TYPE);
-      if (itTerrainLoader != TileContentFactory::_loadersByContentType.end()) {
-        return itTerrainLoader->second->load(input);
-      }
+    auto itExtension =
+        TileContentFactory::_loadersByFileExtension.find(lowerCaseExtension);
+    if (itExtension != TileContentFactory::_loadersByFileExtension.end()) {
+      return itExtension->second->load(input);
     }
   }
 
@@ -128,5 +136,6 @@ std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
     TileContentFactory::_loadersByMagic;
 std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
     TileContentFactory::_loadersByContentType;
-
+std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
+    TileContentFactory::_loadersByFileExtension;
 } // namespace Cesium3DTilesSelection
