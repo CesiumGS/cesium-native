@@ -23,7 +23,11 @@ class S2GeometryConan(ConanFile):
     "revision": "v0.9.0"
   }
 
-  exports_sources = ['patches/0001-no-tests.patch']
+  exports_sources = [
+    'patches/0001-no-tests.patch',
+    'patches/0002-openssl-target.patch',
+    'patches/0003-cmake-version.patch'
+  ]
 
   def config_options(self):
     if self.settings.os == "Windows":
@@ -40,6 +44,8 @@ class S2GeometryConan(ConanFile):
 
   def build(self):
     patch(self, patch_file='patches/0001-no-tests.patch')
+    patch(self, patch_file='patches/0002-openssl-target.patch')
+    patch(self, patch_file='patches/0003-cmake-version.patch')
 
     cmake = CMake(self)
     cmake.configure()
