@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "CesiumUtility"
+    name = "cesiumutility"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -59,3 +59,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "CesiumUtility")
+      self.cpp_info.set_property("cmake_target_name", "CesiumUtility::CesiumUtility")

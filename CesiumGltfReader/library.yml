@@ -1,10 +1,10 @@
 ---
 description: "glTF deserialization / decoding, including glTF extension support (`KHR_draco_mesh_compression` etc)."
 dependencies:
-  - CesiumAsync
-  - CesiumGltf
-  - CesiumJsonReader
-  - CesiumUtility
+  - cesiumasync
+  - cesiumgltf
+  - cesiumjsonreader
+  - cesiumutility
   - ms-gsl
   - base64
   - draco

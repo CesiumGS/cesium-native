@@ -2,8 +2,8 @@
 description: "Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API."
 dependencies:
   - base64
-  - CesiumAsync
-  - CesiumUtility
+  - cesiumasync
+  - cesiumutility
   - cpp-httplib
   - csprng
   - ms-gsl

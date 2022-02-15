@@ -1,7 +1,7 @@
 ---
 description: "Classes for multi-threaded asynchronous tasks."
 dependencies:
-  - CesiumUtility
+  - cesiumutility
   - ms-gsl
   - asyncplusplus
   - sqlite3

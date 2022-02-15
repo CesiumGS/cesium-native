@@ -1,7 +1,7 @@
 ---
 description: "Reads JSON from a buffer into statically-typed classes."
 dependencies:
-  - CesiumUtility
+  - cesiumutility
   - ms-gsl
   - rapidjson
 testDependencies:

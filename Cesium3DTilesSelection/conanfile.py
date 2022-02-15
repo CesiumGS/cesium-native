@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "Cesium3DTilesSelection"
+    name = "cesium3dtilesselection"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -23,12 +23,12 @@ class CesiumUtilityConan(ConanFile):
       "ms-gsl/4.0.0",
       "uriparser/0.9.6",
       "rapidjson/cci.20211112",
-      "CesiumAsync/0.12.0@user/dev",
-      "CesiumGeospatial/0.12.0@user/dev",
-      "CesiumGeometry/0.12.0@user/dev",
-      "CesiumGltf/0.12.0@user/dev",
-      "CesiumGltfReader/0.12.0@user/dev",
-      "CesiumUtility/0.12.0@user/dev",
+      "cesiumasync/0.12.0@user/dev",
+      "cesiumgeospatial/0.12.0@user/dev",
+      "cesiumgeometry/0.12.0@user/dev",
+      "cesiumgltf/0.12.0@user/dev",
+      "cesiumgltfreader/0.12.0@user/dev",
+      "cesiumutility/0.12.0@user/dev",
     ]
 
     exports_sources = [
@@ -66,3 +66,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "Cesium3DTilesSelection")
+      self.cpp_info.set_property("cmake_target_name", "Cesium3DTilesSelection::Cesium3DTilesSelection")

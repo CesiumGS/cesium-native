@@ -1,7 +1,7 @@
 ---
 description: "Lightweight glTF classes."
 dependencies:
-  - CesiumUtility
+  - cesiumutility
   - ms-gsl
 testDependencies:
   - catch2

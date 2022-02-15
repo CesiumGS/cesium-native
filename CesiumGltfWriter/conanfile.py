@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "CesiumGltfWriter"
+    name = "cesiumgltfwriter"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -18,9 +18,9 @@ class CesiumUtilityConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
     requires = [
-      "CesiumUtility/0.12.0@user/dev",
-      "CesiumGltf/0.12.0@user/dev",
-      "CesiumJsonWriter/0.12.0@user/dev",
+      "cesiumutility/0.12.0@user/dev",
+      "cesiumgltf/0.12.0@user/dev",
+      "cesiumjsonwriter/0.12.0@user/dev",
       "ms-gsl/4.0.0",
     ]
 
@@ -59,3 +59,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "CesiumGltfWriter")
+      self.cpp_info.set_property("cmake_target_name", "CesiumGltfWriter::CesiumGltfWriter")

@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "Cesium3DTilesReader"
+    name = "cesium3dtilesreader"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -18,9 +18,9 @@ class CesiumUtilityConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
     requires = [
-      "Cesium3DTiles/0.12.0@user/dev",
-      "CesiumUtility/0.12.0@user/dev",
-      "CesiumJsonReader/0.12.0@user/dev",
+      "cesium3dtiles/0.12.0@user/dev",
+      "cesiumutility/0.12.0@user/dev",
+      "cesiumjsonreader/0.12.0@user/dev",
       "ms-gsl/4.0.0",
       "rapidjson/cci.20211112",
     ]
@@ -60,3 +60,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "Cesium3DTilesReader")
+      self.cpp_info.set_property("cmake_target_name", "Cesium3DTilesReader::Cesium3DTilesReader")

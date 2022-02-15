@@ -6,11 +6,11 @@ dependencies:
   - ms-gsl
   - uriparser
   - rapidjson
-  - CesiumAsync
-  - CesiumGeospatial
-  - CesiumGeometry
-  - CesiumGltf
-  - CesiumGltfReader
-  - CesiumUtility
+  - cesiumasync
+  - cesiumgeospatial
+  - cesiumgeometry
+  - cesiumgltf
+  - cesiumgltfreader
+  - cesiumutility
 testDependencies:
   - catch2

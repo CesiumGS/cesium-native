@@ -1,7 +1,7 @@
 ---
 description: "Lightweight glTF processing and optimization functions."
 dependencies:
-  - CesiumUtility
+  - cesiumutility
   - ms-gsl
   - rapidjson
 testDependencies:

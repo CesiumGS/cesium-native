@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "CesiumGeospatial"
+    name = "cesiumgeospatial"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -18,8 +18,8 @@ class CesiumUtilityConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
     requires = [
-      "CesiumUtility/0.12.0@user/dev",
-      "CesiumGeometry/0.12.0@user/dev",
+      "cesiumutility/0.12.0@user/dev",
+      "cesiumgeometry/0.12.0@user/dev",
       "ms-gsl/4.0.0",
       "earcut/2.2.3",
       "s2geometry/0.9.0",
@@ -60,3 +60,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "CesiumGeospatial")
+      self.cpp_info.set_property("cmake_target_name", "CesiumGeospatial::CesiumGeospatial")

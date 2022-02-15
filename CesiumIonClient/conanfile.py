@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "CesiumIonClient"
+    name = "cesiumionclient"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -19,8 +19,8 @@ class CesiumUtilityConan(ConanFile):
     default_options = {"shared": False, "fPIC": True}
     requires = [
       "base64/0.4.0",
-      "CesiumAsync/0.12.0@user/dev",
-      "CesiumUtility/0.12.0@user/dev",
+      "cesiumasync/0.12.0@user/dev",
+      "cesiumutility/0.12.0@user/dev",
       "cpp-httplib/0.10.1",
       "csprng/8768a94b4b04213c0798b80824a04ae4990e9847",
       "ms-gsl/4.0.0",
@@ -62,3 +62,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "CesiumIonClient")
+      self.cpp_info.set_property("cmake_target_name", "CesiumIonClient::CesiumIonClient")

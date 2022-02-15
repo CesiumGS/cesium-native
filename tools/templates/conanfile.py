@@ -3,7 +3,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "{{name}}"
+    name = "{{conanName}}"
     version = "{{native.version}}"
     {% if native.user %}
     user = "{{native.user}}"
@@ -60,3 +60,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "{{name}}")
+      self.cpp_info.set_property("cmake_target_name", "{{name}}::{{name}}")

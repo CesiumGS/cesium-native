@@ -5,7 +5,7 @@ from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class CesiumUtilityConan(ConanFile):
-    name = "CesiumAsync"
+    name = "cesiumasync"
     version = "0.12.0"
     user = "user"
     channel = "dev"
@@ -18,7 +18,7 @@ class CesiumUtilityConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
     requires = [
-      "CesiumUtility/0.12.0@user/dev",
+      "cesiumutility/0.12.0@user/dev",
       "ms-gsl/4.0.0",
       "asyncplusplus/1.1",
       "sqlite3/3.37.2",
@@ -61,3 +61,5 @@ class CesiumUtilityConan(ConanFile):
 
     def package_info(self):
       self.cpp_info.libs = tools.collect_libs(self)
+      self.cpp_info.set_property("cmake_file_name", "CesiumAsync")
+      self.cpp_info.set_property("cmake_target_name", "CesiumAsync::CesiumAsync")
