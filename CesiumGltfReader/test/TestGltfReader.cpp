@@ -1,6 +1,7 @@
 #include "CesiumGltfReader/GltfReader.h"
 
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 
 #include <catch2/catch.hpp>
@@ -359,4 +360,69 @@ TEST_CASE("Unknown MIME types are handled") {
   // Note: The result.errors will not be empty,
   // because no images could be read.
   REQUIRE(result.model.has_value());
+}
+
+TEST_CASE("Can parse doubles with no fractions as integers") {
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4.0,
+          "componentType": 5121.0
+        }
+      ]
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  CHECK(result.warnings.empty());
+  Model& model = result.model.value();
+  CHECK(model.accessors[0].count == 4);
+  CHECK(
+      model.accessors[0].componentType ==
+      Accessor::ComponentType::UNSIGNED_BYTE);
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4.0,
+          "componentType": 5121.1
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(!result.warnings.empty());
+}
+
+TEST_CASE("Can apply RTC CENTER if model uses Cesium RTC extension") {
+  const std::string s = R"(
+    {
+      "extensions": {
+          "CESIUM_RTC": {
+              "center": [6378137.0, 0.0, 0.0]
+          }
+      }
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  REQUIRE(result.model.has_value());
+  Model& model = result.model.value();
+  const ExtensionCesiumRTC* cesiumRTC =
+      model.getExtension<ExtensionCesiumRTC>();
+  REQUIRE(cesiumRTC);
+  std::vector<double> rtcCenter = {6378137.0, 0.0, 0.0};
+  CHECK(cesiumRTC->center == rtcCenter);
 }
