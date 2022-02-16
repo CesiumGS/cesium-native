@@ -5,12 +5,10 @@
       "toBeInherited": true
     },
     "glTF Property": {
-      "overrideName": "CesiumUtility::ExtensibleObject",
-      "manuallyDefined": true
+      "overrideName": "CesiumUtility::ExtensibleObject"
     },
     "glTF Child of Root Property": {
-      "overrideName": "CesiumGltf::NamedObject",
-      "manuallyDefined": true
+      "overrideName": "CesiumGltf::NamedObject"
     },
     "Buffer": {
       "toBeInherited": true
@@ -134,12 +132,6 @@
     },
     "CESIUM_RTC": {
       "overrideName": "ExtensionCesiumRTC"
-    },
-    "MAXAR_mesh_variants glTF extension": {
-      "overrideName": "ExtensionModelMaxarMeshVariants"
-    },
-    "MAXAR_mesh_variants node extension": {
-      "overrideName": "ExtensionNodeMaxarMeshVariants"
     }
   },
   "extensions": [
@@ -199,14 +191,6 @@
       "attachTo" : [
 	      "glTF"
       ]
-    },
-    {
-      "extensionName": "MAXAR_mesh_variants",
-      "schema": "Vendor/MAXAR_mesh_variants/schema/glTF.MAXAR_mesh_variants.schema.json"
-    },
-    {
-      "extensionName": "MAXAR_mesh_variants",
-      "schema": "Vendor/MAXAR_mesh_variants/schema/node.MAXAR_mesh_variants.schema.json"
     }
   ]
 }
