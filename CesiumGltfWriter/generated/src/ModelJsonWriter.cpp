@@ -42,7 +42,9 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/FeatureIDAttribute.h>
 #include <CesiumGltf/FeatureIDTexture.h>
 #include <CesiumGltf/FeatureIDs.h>
@@ -134,6 +136,16 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionCesiumRTC& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionModelMaxarMeshVariants& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionNodeMaxarMeshVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -827,6 +839,43 @@ void writeJson(
   if (!obj.center.empty()) {
     jsonWriter.Key("center");
     writeJson(obj.center, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionModelMaxarMeshVariants& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.defaultProperty > -1) {
+    jsonWriter.Key("default");
+    writeJson(obj.defaultProperty, jsonWriter, context);
+  }
+
+  if (!obj.variants.empty()) {
+    jsonWriter.Key("variants");
+    writeJson(obj.variants, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionNodeMaxarMeshVariants& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.mappings.empty()) {
+    jsonWriter.Key("mappings");
+    writeJson(obj.mappings, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2438,6 +2487,20 @@ void ExtensionNodeExtMeshFeaturesJsonWriter::write(
 
 void ExtensionCesiumRTCJsonWriter::write(
     const CesiumGltf::ExtensionCesiumRTC& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionModelMaxarMeshVariantsJsonWriter::write(
+    const CesiumGltf::ExtensionModelMaxarMeshVariants& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionNodeMaxarMeshVariantsJsonWriter::write(
+    const CesiumGltf::ExtensionNodeMaxarMeshVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
