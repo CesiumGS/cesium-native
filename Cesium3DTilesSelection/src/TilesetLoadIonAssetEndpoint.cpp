@@ -60,6 +60,13 @@ struct Tileset::LoadIonAssetEndpoint::Private {
           assert(false);
         });
   }
+
+  struct ionResponse {
+    std::string baseUrl;
+    std::vector<std::string> tilesetCredits;
+  };
+
+  static std::unordered_map<std::string, ionResponse> endpointCache;
 };
 
 CesiumAsync::Future<void>
@@ -76,6 +83,34 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
                        std::to_string(ionAssetID) + "/endpoint";
   if (!ionAccessToken.empty()) {
     ionUrl += "?access_token=" + ionAccessToken;
+  }
+
+  auto cacheIt = Private::endpointCache.find(ionUrl);
+
+  if (cacheIt != Private::endpointCache.end()) {
+    const auto& cachedResponse = cacheIt->second;
+    for (const auto& credit : cachedResponse.tilesetCredits) {
+      tileset._tilesetCredits.push_back(
+          tileset.getExternals().pCreditSystem->createCredit(credit));
+    }
+    auto pContext = std::make_unique<TileContext>();
+    pContext->pTileset = &tileset;
+    pContext->baseUrl = cachedResponse.baseUrl;
+    pContext->requestHeaders.push_back(
+        std::make_pair("Authorization", "Bearer " + ionAccessToken));
+    pContext->failedTileCallback = Private::onIonTileFailed;
+    auto operation =
+        LoadTilesetDotJson::start(
+            tileset,
+            pContext->baseUrl,
+            pContext->requestHeaders,
+            std::move(pContext))
+            .thenImmediately([]() -> std::optional<TilesetLoadFailureDetails> {
+              return std::nullopt;
+            });
+    return Private::handlePotentialError(tileset, std::move(operation))
+        .thenImmediately(
+            []() { CESIUM_TRACE_END_IN_TRACK("Tileset from ion startup"); });
   }
 
   auto operation =
@@ -191,6 +226,13 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
   pContext->requestHeaders.push_back(
       std::make_pair("Authorization", "Bearer " + accessToken));
   pContext->failedTileCallback = Private::onIonTileFailed;
+  Private::ionResponse response;
+  response.baseUrl = pContext->baseUrl;
+  for (const auto& credit : tileset._tilesetCredits) {
+    response.tilesetCredits.push_back(
+        tileset.getExternals().pCreditSystem->getHtml(credit));
+  }
+  endpointCache[pRequest->url()] = response;
   return LoadTilesetDotJson::start(
              tileset,
              pContext->baseUrl,
@@ -338,3 +380,8 @@ Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
 
   return FailedTileAction::Wait;
 }
+
+std::unordered_map<
+    std::string,
+    Tileset::LoadIonAssetEndpoint::Private::ionResponse>
+    Tileset::LoadIonAssetEndpoint::Private::endpointCache;
