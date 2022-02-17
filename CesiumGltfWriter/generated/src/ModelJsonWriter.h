@@ -24,6 +24,8 @@ struct ExtensionNodeExtMeshFeatures;
 struct ExtensionCesiumRTC;
 struct ExtensionModelMaxarMeshVariants;
 struct ExtensionNodeMaxarMeshVariants;
+struct ExtensionNodeMaxarMeshVariantsMappingsValue;
+struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionExtMeshFeaturesFeatureId;
 struct TextureInfo;
 struct ExtensionExtMeshFeaturesPropertyTexture;
@@ -231,6 +233,24 @@ struct ExtensionNodeMaxarMeshVariantsJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionNodeMaxarMeshVariants& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionNodeMaxarMeshVariantsMappingsValueJsonWriter {
+  using ValueType = CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue;
+
+  static void write(
+      const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModelMaxarMeshVariantsValueJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelMaxarMeshVariantsValue;
+
+  static void write(
+      const CesiumGltf::ExtensionModelMaxarMeshVariantsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
