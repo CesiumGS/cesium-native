@@ -6,6 +6,7 @@
 
 - Added support for `CESIUM_RTC` glTF extension.
 - Added support for tiles that do not have a geometric error.
+- Exposed ion endpoint URL as a parameter.
 
 ##### Fixes :wrench:
 
