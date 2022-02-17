@@ -61,8 +61,7 @@ public:
       uint32_t ionAssetID,
       const std::string& ionAccessToken,
       const TilesetOptions& options = TilesetOptions(),
-      const std::string& ionAssetEndpointUrl =
-          "https://api.cesium.com/");
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
    * @brief Destroys this tileset.

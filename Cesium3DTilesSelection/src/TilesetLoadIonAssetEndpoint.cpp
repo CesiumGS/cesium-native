@@ -341,5 +341,3 @@ Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
 
   return FailedTileAction::Wait;
 }
-
-std::string
