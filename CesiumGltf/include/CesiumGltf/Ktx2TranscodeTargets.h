@@ -110,7 +110,7 @@ struct CESIUMGLTF_API Ktx2TranscodeTargets {
    */
   GpuCompressedPixelFormat UASTC_RGBA = GpuCompressedPixelFormat::NONE;
 
-  Ktx2TranscodeTargets() {}
+  Ktx2TranscodeTargets() = default;
 
   /**
    * @brief Determine ideal transcode targets based on a list of supported gpu
