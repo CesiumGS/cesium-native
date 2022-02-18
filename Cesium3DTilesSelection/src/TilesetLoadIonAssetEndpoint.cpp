@@ -32,7 +32,7 @@ struct Tileset::LoadIonAssetEndpoint::Private {
 
   static FailedTileAction onIonTileFailed(Tile& failedTile);
 
-  static std::string createEndpointResource(Tileset& tileset);
+  static std::string createEndpointResource(const Tileset& tileset);
 
   template <typename T>
   static auto handlePotentialError(Tileset& tileset, T&& operation) {
@@ -65,11 +65,11 @@ struct Tileset::LoadIonAssetEndpoint::Private {
 };
 
 std::string Tileset::LoadIonAssetEndpoint::Private::createEndpointResource(
-    Tileset& tileset) {
+    const Tileset& tileset) {
   std::string ionUrl = tileset._ionAssetEndpointUrl.value() + "v1/assets/" +
                        std::to_string(tileset._ionAssetID.value()) +
                        "/endpoint";
-  if (!tileset._ionAccessToken.has_value()) {
+  if (tileset._ionAccessToken.has_value()) {
     ionUrl += "?access_token=" + tileset._ionAccessToken.value();
   }
 
