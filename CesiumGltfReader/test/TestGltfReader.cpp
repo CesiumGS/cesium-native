@@ -401,7 +401,7 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
   CHECK(!result.warnings.empty());
 }
 
-TEST_CASE("KTX2_hacky_test") {
+TEST_CASE("Test KTX2") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /= "CesiumBalloonKTX2Hacky.glb";
   std::vector<std::byte> data = readFile(gltfFile.string());
