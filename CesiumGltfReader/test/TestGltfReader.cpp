@@ -1,6 +1,7 @@
 #include "CesiumGltfReader/GltfReader.h"
 
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 
 #include <catch2/catch.hpp>
@@ -411,4 +412,29 @@ TEST_CASE("Test KTX2") {
 
   const Model& model = result.model.value();
   REQUIRE(model.meshes.size() == 1);
+}
+
+TEST_CASE("Can apply RTC CENTER if model uses Cesium RTC extension") {
+  const std::string s = R"(
+    {
+      "extensions": {
+          "CESIUM_RTC": {
+              "center": [6378137.0, 0.0, 0.0]
+          }
+      }
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  REQUIRE(result.model.has_value());
+  Model& model = result.model.value();
+  const ExtensionCesiumRTC* cesiumRTC =
+      model.getExtension<ExtensionCesiumRTC>();
+  REQUIRE(cesiumRTC);
+  std::vector<double> rtcCenter = {6378137.0, 0.0, 0.0};
+  CHECK(cesiumRTC->center == rtcCenter);
 }

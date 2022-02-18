@@ -9,6 +9,7 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
@@ -66,5 +67,6 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtMeshFeaturesJsonWriter>();
+  context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
 }
 } // namespace CesiumGltfWriter

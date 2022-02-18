@@ -1,5 +1,16 @@
 # Change Log
 
+### v0.13.0 - ????
+
+##### Additions :tada:
+
+- Added support for `CESIUM_RTC` glTF extension.
+- Added support for tiles that do not have a geometric error.
+
+##### Fixes :wrench:
+
+- Fixed bug in finding the compatible type of the array of components in the B3DM Feature Table.
+
 ### v0.12.0 - 2022-02-01
 
 ##### Breaking Changes :mega:

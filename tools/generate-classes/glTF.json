@@ -132,6 +132,9 @@
     },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
       "overrideName": "ExtensionCesiumTileEdges"
+    },
+    "CESIUM_RTC": {
+      "overrideName": "ExtensionCesiumRTC"
     }
   },
   "extensions": [
@@ -191,6 +194,13 @@
     {
       "extensionName": "EXT_mesh_features",
       "schema": "Vendor/EXT_mesh_features/schema/node.EXT_mesh_features.schema.json"
+    },
+    {
+      "extensionName": "CESIUM_RTC",
+      "schema": "../1.0/Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
+      "attachTo" : [
+	      "glTF"
+      ]
     }
   ]
 }
