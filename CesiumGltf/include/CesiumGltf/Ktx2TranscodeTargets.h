@@ -36,20 +36,20 @@ enum class CESIUMGLTF_API GpuCompressedPixelFormat {
  * compressed pixel format with the corresponding name is supported.
  */
 struct CESIUMGLTF_API SupportedGpuCompressedPixelFormats {
-  bool ETC1_RGB;
-  bool ETC2_RGBA;
-  bool BC1_RGB;
-  bool BC3_RGBA;
-  bool BC4_R;
-  bool BC5_RG;
-  bool BC7_RGBA;
-  bool PVRTC1_4_RGB;
-  bool PVRTC1_4_RGBA;
-  bool ASTC_4x4_RGBA;
-  bool PVRTC2_4_RGB;
-  bool PVRTC2_4_RGBA;
-  bool ETC2_EAC_R11;
-  bool ETC2_EAC_RG11;
+  bool ETC1_RGB{};
+  bool ETC2_RGBA{};
+  bool BC1_RGB{};
+  bool BC3_RGBA{};
+  bool BC4_R{};
+  bool BC5_RG{};
+  bool BC7_RGBA{};
+  bool PVRTC1_4_RGB{};
+  bool PVRTC1_4_RGBA{};
+  bool ASTC_4x4_RGBA{};
+  bool PVRTC2_4_RGB{};
+  bool PVRTC2_4_RGBA{};
+  bool ETC2_EAC_R11{};
+  bool ETC2_EAC_RG11{};
 };
 
 /**
