@@ -31,7 +31,7 @@ protected:
 
 private:
   Cesium3DTiles::Availability* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _bufferView;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _bitstream;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _availableCount;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _constant;
 };

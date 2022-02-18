@@ -5,6 +5,8 @@
 #include "AvailabilityJsonHandler.h"
 #include "BufferJsonHandler.h"
 #include "BufferViewJsonHandler.h"
+#include "PropertyTableJsonHandler.h"
+#include "SubtreeMetadataJsonHandler.h"
 
 #include <Cesium3DTiles/Subtree.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
@@ -40,7 +42,14 @@ private:
       ArrayJsonHandler<Cesium3DTiles::BufferView, BufferViewJsonHandler>
           _bufferViews;
   AvailabilityJsonHandler _tileAvailability;
+  CesiumJsonReader::
+      ArrayJsonHandler<Cesium3DTiles::Availability, AvailabilityJsonHandler>
+          _contentAvailability;
   AvailabilityJsonHandler _childSubtreeAvailability;
-  AvailabilityJsonHandler _contentAvailability;
+  PropertyTableJsonHandler _tileMetadata;
+  CesiumJsonReader::
+      ArrayJsonHandler<Cesium3DTiles::PropertyTable, PropertyTableJsonHandler>
+          _contentMetadata;
+  SubtreeMetadataJsonHandler _subtreeMetadata;
 };
 } // namespace Cesium3DTilesReader

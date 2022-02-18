@@ -5,9 +5,8 @@
 #include "ExtensionExtMeshFeaturesFeatureIdJsonHandler.h"
 
 #include <CesiumGltf/ExtensionMeshPrimitiveExtMeshFeatures.h>
-#include <CesiumJsonReader/ArrayJsonHandler.h>
+#include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
-#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;
@@ -88,15 +87,9 @@ protected:
 
 private:
   CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<
+  CesiumJsonReader::DictionaryJsonHandler<
       CesiumGltf::ExtensionExtMeshFeaturesFeatureId,
       ExtensionExtMeshFeaturesFeatureIdJsonHandler>
       _featureIds;
-  CesiumJsonReader::
-      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
-          _propertyTables;
-  CesiumJsonReader::
-      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
-          _propertyTextures;
 };
 } // namespace CesiumGltfReader

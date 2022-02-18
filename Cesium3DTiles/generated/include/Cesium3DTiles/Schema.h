@@ -22,7 +22,7 @@ struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief Unique identifier for the schema.
    */
-  std::optional<std::string> id;
+  std::string id;
 
   /**
    * @brief The name of the schema, e.g. for display purposes.

@@ -90,7 +90,7 @@ private:
   Cesium3DTiles::Extension3dTilesImplicitTiling* _pObject = nullptr;
   CesiumJsonReader::StringJsonHandler _subdivisionScheme;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _subtreeLevels;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _maximumLevel;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _availableLevels;
   SubtreesJsonHandler _subtrees;
 };
 } // namespace Cesium3DTilesReader

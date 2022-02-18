@@ -20,8 +20,10 @@ struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
 
   /**
    * @brief The URI (or IRI) of the external schema file. Relative paths are
-   * relative to the file containing the buffer JSON. If `uri` is omitted, the
-   * buffer is assumed to refer to the binary chunk of the subtree file.
+   * relative to the file containing the buffer JSON. `uri` is required when
+   * using the JSON subtree format and not required when using the binary
+   * subtree format - when omitted the buffer refers to the binary chunk of the
+   * subtree file.
    */
   std::optional<std::string> uri;
 

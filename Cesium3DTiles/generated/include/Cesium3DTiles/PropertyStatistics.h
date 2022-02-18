@@ -19,79 +19,64 @@ struct CESIUM3DTILES_API PropertyStatistics final
 
   /**
    * @brief The minimum property value occurring in the tileset. Only applicable
-   * for single-value numeric types, fixed-length arrays of numeric types,
-   * `VECN`, and `MATN` types. For single-value numeric types this is a single
-   * number. For fixed-length arrays, `VECN`, and `MATN` types, this is an array
-   * of component-wise minimum values. The `normalized` property has no effect
-   * on the minimum, which always contains integer values.
+   * to `SCALAR`, `VECN`, and `MATN` types. The `normalized`, `offset`, and
+   * `scale` properties have no effect on the minimum, it always corresponds to
+   * the actual value.
    */
   CesiumUtility::JsonValue min;
 
   /**
    * @brief The maximum property value occurring in the tileset. Only applicable
-   * for single-value numeric types, fixed-length arrays of numeric types,
-   * `VECN`, and `MATN` types. For single-value numeric types this is a single
-   * number. For fixed-length arrays, `VECN`, and `MATN` types, this is an array
-   * of component-wise maximum values. The `normalized` property has no effect
-   * on the maximum, which always contains integer values.
+   * to `SCALAR`, `VECN`, and `MATN` types. The `normalized`, `offset`, and
+   * `scale` properties have no effect on the maximum, it always corresponds to
+   * the actual value.
    */
   CesiumUtility::JsonValue max;
 
   /**
    * @brief The arithmetic mean of property values occurring in the tileset.
-   * Only applicable for single-value numeric types, fixed-length arrays of
-   * numeric types, `VECN`, and `MATN` types. For single-value numeric types
-   * this is a single number. For fixed-length arrays, `VECN`, and `MATN` types,
-   * this is an array of component-wise mean values. The `normalized` property
-   * has no effect on the mean, which always contains integer values.
+   * Only applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
+   * `offset`, and `scale` properties have no effect on the mean, it always
+   * corresponds to the actual value.
    */
   CesiumUtility::JsonValue mean;
 
   /**
    * @brief The median of property values occurring in the tileset. Only
-   * applicable for single-value numeric types, fixed-length arrays of numeric
-   * types, `VECN`, and `MATN` types. For single-value numeric types this is a
-   * single number. For fixed-length arrays, `VECN`, and `MATN` types, this is
-   * an array of component-wise median values. The `normalized` property has no
-   * effect on the median, which always contains integer values.
+   * applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
+   * `offset`, and `scale` properties have no effect on the median, it always
+   * corresponds to the actual value.
    */
   CesiumUtility::JsonValue median;
 
   /**
    * @brief The standard deviation of property values occurring in the tileset.
-   * Only applicable for single-value numeric types, fixed-length arrays of
-   * numeric types, `VECN`, and `MATN` types. For single-value numeric types
-   * this is a single number. For fixed-length arrays, `VECN`, and `MATN` types,
-   * this is an array of component-wise standard deviation values. The
-   * `normalized` property has no effect on the standard deviation, which always
-   * contains integer values.
+   * Only applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
+   * `offset`, and `scale` properties have no effect on the standard deviation,
+   * it always corresponds to the actual value.
    */
   CesiumUtility::JsonValue standardDeviation;
 
   /**
    * @brief The variance of property values occurring in the tileset. Only
-   * applicable for single-value numeric types, fixed-length arrays of numeric
-   * types, `VECN`, and `MATN` types. For single-value numeric types this is a
-   * single number. For fixed-length arrays, `VECN`, and `MATN` types, this is
-   * an array of component-wise variance values. The `normalized` property has
-   * no effect on the variance, which always contains integer values.
+   * applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
+   * `offset`, and `scale` properties have no effect on the variance, it always
+   * corresponds to the actual value.
    */
   CesiumUtility::JsonValue variance;
 
   /**
    * @brief The sum of property values occurring in the tileset. Only applicable
-   * for single-value numeric types, fixed-length arrays of numeric types,
-   * `VECN`, and `MATN` types. For single-value numeric types this is a single
-   * number. For fixed-length arrays, `VECN`, and `MATN` types, this is an array
-   * of component-wise sum values. The `normalized` property has no effect on
-   * the sum, which always contains integer values.
+   * to `SCALAR`, `VECN`, and `MATN` types. The `normalized`, `offset`, and
+   * `scale` properties have no effect on the sum, it always corresponds to the
+   * actual value.
    */
   CesiumUtility::JsonValue sum;
 
   /**
    * @brief A dictionary, where each key corresponds to an enum `name` and each
    * value is the number of occurrences of that enum. Only applicable when
-   * `componentType` is `ENUM`. For fixed-length arrays, this is an array of
+   * `type` is `ENUM`. For fixed-length arrays, this is an array of
    * component-wise occurrences.
    */
   std::unordered_map<std::string, CesiumUtility::JsonValue> occurrences;

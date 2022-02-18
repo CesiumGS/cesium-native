@@ -7,13 +7,11 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <cstdint>
-#include <vector>
+#include <unordered_map>
 
 namespace CesiumGltf {
 /**
- * @brief `EXT_mesh_features` extension for a primitive in a glTF model, to
- * associate it with the root `EXT_mesh_features` object.
+ * @brief Feature ID sets of a mesh primitive.
  */
 struct CESIUMGLTF_API ExtensionMeshPrimitiveExtMeshFeatures final
     : public CesiumUtility::ExtensibleObject {
@@ -22,24 +20,11 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveExtMeshFeatures final
   static inline constexpr const char* ExtensionName = "EXT_mesh_features";
 
   /**
-   * @brief An array of feature IDs. A property table at index `i` corresponds
-   * to the `featureIds` entry at the same index. Additional feature ID entries
-   * may be present, so the length of the `featureIds` array must be greater
-   * than or equal to the length of the `propertyTables` array.
+   * @brief A dictionary, where each key is the ID of the feature ID set, and
+   * each value is an object describing where feature IDs are stored. Set IDs
+   * may contain only alphanumeric and underscore characters.
    */
-  std::vector<CesiumGltf::ExtensionExtMeshFeaturesFeatureId> featureIds;
-
-  /**
-   * @brief An array of IDs of property tables from the root `EXT_mesh_features`
-   * object. A property table at index `i` corresponds to the `featureIds` entry
-   * at the same index.
-   */
-  std::vector<int32_t> propertyTables;
-
-  /**
-   * @brief An array of IDs of property textures from the root
-   * `EXT_mesh_features` object.
-   */
-  std::vector<int32_t> propertyTextures;
+  std::unordered_map<std::string, CesiumGltf::ExtensionExtMeshFeaturesFeatureId>
+      featureIds;
 };
 } // namespace CesiumGltf

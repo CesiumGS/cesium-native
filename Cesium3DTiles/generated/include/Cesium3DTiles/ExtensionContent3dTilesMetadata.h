@@ -3,18 +3,19 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-
-#include <CesiumUtility/ExtensibleObject.h>
+#include "Cesium3DTiles/MetadataEntity.h"
 
 #include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
 /**
- * @brief An object containing metadata about a content.
+ * @brief An object containing metadata about content. This extension must not
+ * be added to contents of tiles using the `3DTILES_implicit_tiling` extension
+ * since content metadata is provided separately in the subtrees.
  */
 struct CESIUM3DTILES_API ExtensionContent3dTilesMetadata final
-    : public CesiumUtility::ExtensibleObject {
+    : public MetadataEntity {
   static inline constexpr const char* TypeName =
       "ExtensionContent3dTilesMetadata";
   static inline constexpr const char* ExtensionName = "3DTILES_metadata";
