@@ -149,6 +149,9 @@ endfunction()
 function(configure_cesium_library targetName)
     if (MSVC)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
+
+        # Don't warn about missing PDBs, because this is normal for Debug libraries from Conan.
+        target_link_options(${targetName} PRIVATE /ignore:4099)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
     endif()
