@@ -11,8 +11,8 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "args": [
-        "editable",
-        "off"
+        "generate-library-recipes",
+        "--editable"
       ]
     },
     {

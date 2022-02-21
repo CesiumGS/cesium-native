@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conans import tools
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
+import os
 
 class {{name}}Conan(ConanFile):
     name = "{{conanName}}"
@@ -66,7 +67,7 @@ class {{name}}Conan(ConanFile):
 
     def layout(self):
       self.folders.source = "."
-      self.folders.build = "../build/{{name}}"
+      self.folders.build = os.path.join("..", "{{buildFolder}}", "{{name}}")
       self.folders.generators = self.folders.build + "/conan"
       self.cpp.source.includedirs = ["include", "generated/include"]
       self.cpp.source.libdirs = [self.folders.build + "/Debug"]

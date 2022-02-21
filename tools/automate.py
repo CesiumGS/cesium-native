@@ -2,6 +2,7 @@
 import argparse
 import subprocess
 import os
+from unittest import skip
 import yaml
 import jinja2
 from enum import Enum
@@ -16,36 +17,38 @@ env = jinja2.Environment(
 def main():
   argParser = argparse.ArgumentParser(description='Automate cesium-native tasks')
 
-  subparsers = argParser.add_subparsers(dest='task', help='automation command')
+  subparsers = argParser.add_subparsers(dest='task', help='Automation command to invoke')
   subparsers.required = True
 
-  installDependenciesParser = subparsers.add_parser('install-dependencies', help='install dependencies required to build cesium-native')
+  installDependenciesParser = subparsers.add_parser('install-dependencies', help='Install dependencies required to build cesium-native')
   installDependenciesParser.set_defaults(func=installDependencies)
   installDependenciesParser.add_argument('--config', action='append', help='A build configuration for which to install dependencies, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo". Can be specified multiple times to install dependencies for multiple configurations. If not specified, dependencies for both "Debug" and "Release" are installed.')
   installDependenciesParser.add_argument('-pr:h', dest='hostProfile', help='The Conan host profile to use', default='default')
   installDependenciesParser.add_argument('-pr:b', dest='buildProfile', help='The Conan build profile to use', default='default')
 
-  generateWorkspaceParser = subparsers.add_parser('generate-workspace', help='generate the workspace.cmake, referencing each sub-library')
+  generateWorkspaceParser = subparsers.add_parser('generate-workspace', help='Generate the workspace.cmake, referencing each sub-library')
   generateWorkspaceParser.set_defaults(func=generateWorkspace)
 
-  generateWorkspaceParser = subparsers.add_parser('create-recipes', help='create Conan recipes to package cesium-native libraries')
-  generateWorkspaceParser.set_defaults(func=createRecipes)
-
-  listDependenciesParser = subparsers.add_parser('list-dependencies', help='list the cesium-native libraries in dependency order, with libraries depended-upon listed before those that depend on them')
+  listDependenciesParser = subparsers.add_parser('list-dependencies', help='List the cesium-native libraries in dependency order, with libraries depended-upon listed before those that depend on them')
   listDependenciesParser.set_defaults(func=lambda x: executeInDependencyOrder(findCesiumLibraries(), print))
 
-  createPackagesParser = subparsers.add_parser('create-packages', help='create a Conan package (conan create) for each cesium-native library')
+  createPackagesParser = subparsers.add_parser('create-packages', help='Create a Conan package (conan create) for each cesium-native library')
   createPackagesParser.add_argument('--config', help='The build configuration for which to create packages, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo".', default='Debug')
   createPackagesParser.add_argument('-pr:h', dest='hostProfile', help='The Conan host profile to use', default='default')
   createPackagesParser.add_argument('-pr:b', dest='buildProfile', help='The Conan build profile to use', default='default')
   createPackagesParser.set_defaults(func=createPackages)
 
-  editablesParser = subparsers.add_parser('editable', help='change the Conan editable state of the cesium-native libraries')
-  editablesParser.add_argument('state', choices=('on', 'off'), help='on to enable editable mode, off to disable it.')
+  editablesParser = subparsers.add_parser('editable', help='Change the Conan editable state of the cesium-native libraries')
+  editablesParser.add_argument('state', choices=('on', 'off'), help='On to enable editable mode, off to disable it.')
   editablesParser.set_defaults(func=editable)
 
-  exportRecipesParser = subparsers.add_parser('export-recipes', help='export the recipes in the "recipes" subdirectory to the Conan cache')
+  exportRecipesParser = subparsers.add_parser('conan-export-recipes', help='Export the recipes in the "recipes" subdirectory to the Conan cache')
   exportRecipesParser.set_defaults(func=exportRecipes)
+
+  generateLibraryRecipesParser = subparsers.add_parser('generate-library-recipes', help='Generate conanfile.py files for each Cesium library, and one in the root directory that depends on all the others.')
+  generateLibraryRecipesParser.add_argument('--editable', action='store_true', help='Generate recipes for use with Cesium packages in Conan\'s "editable" mode. These recipes will not include dependencies _between_ Cesium libraries, because these are handled by CMake in the development workflow.')
+  generateLibraryRecipesParser.add_argument('--build-folder', dest='buildFolder', help='The CMake/Conan build folder path to use in editable mode. If this is a relative path, it is relative to the cesium-native root directory. This option is ignored if --editable is not specified. Defaults to "build".', default='build')
+  generateLibraryRecipesParser.set_defaults(func=generateLibraryRecipes)
 
   args = argParser.parse_args()
   args.func(args)
@@ -117,8 +120,15 @@ def generateWorkspace(args):
 
   print('Workspace file written to ' + filename)
 
-def createRecipes(args, template='create-conanfile.py', skipNativeDependencies=False):
-  template = env.get_template(template)
+def generateLibraryRecipes(args):
+  if args.editable:
+    templateFile = "editable-conanfile.py"
+    skipNativeDependencies = True
+  else:
+    templateFile = "create-conanfile.py"
+    skipNativeDependencies = False
+
+  template = env.get_template(templateFile)
 
   libraries = findCesiumLibraries()
 
@@ -130,7 +140,7 @@ def createRecipes(args, template='create-conanfile.py', skipNativeDependencies=F
     with open(library + '/library.yml', 'r') as f:
       libraryYml = yaml.safe_load(f)
 
-      path = '%s' % (library)
+      path = library
       os.makedirs(path, exist_ok=True)
       with open(path + '/conanfile.py', 'w') as f:
         f.write('# Do not edit this file! It is created by running "tools/automate.py create-recipes" or "tools/automate.py editable"\n\n')
@@ -140,8 +150,21 @@ def createRecipes(args, template='create-conanfile.py', skipNativeDependencies=F
           native=nativeYml,
           library=libraryYml,
           dependencies=resolveDependencies(libraries, nativeYml, libraryYml['dependencies'], skipNativeDependencies),
-          testDependencies=resolveDependencies(libraries, nativeYml, libraryYml['testDependencies'], skipNativeDependencies)
+          testDependencies=resolveDependencies(libraries, nativeYml, libraryYml['testDependencies'], skipNativeDependencies),
+          buildFolder=args.buildFolder
         ))
+
+  # Write a top-level recipe
+  rootTemplate = env.get_template('root-conanfile.py')
+  with open('conanfile.py', 'w') as f:
+    f.write('# Do not edit this file! It is created by running "tools/automate.py create-recipes" or "tools/automate.py editable"\n\n')
+    f.write(rootTemplate.render(
+      native=nativeYml,
+      skipNativeDependencies=skipNativeDependencies,
+      dependencies=resolveDependencies(libraries, nativeYml, (name.lower() for name in libraries), False),
+      testDependencies=[],
+      buildFolder=args.buildFolder
+    ))
 
 def editable(args):
   with open('cesium-native.yml', 'r') as f:
@@ -154,17 +177,13 @@ def editable(args):
     run('conan editable remove %s/%s@%s/%s' % (library.lower(), nativeYml['version'], nativeYml['user'], nativeYml['channel']))
 
   if args.state == 'on':
-    print("Generating conanfile.py for each cesium-native library in editable mode")
     template = 'editable-conanfile.py'
     skipNativeDependencies = True
     command = makeEditable
   else:
-    print("Generating conanfile.py for each cesium-native library as a standard package (non-editable mode)")
     template = 'create-conanfile.py'
     skipNativeDependencies = False
     command = makeNonEditable
-
-  createRecipes(args, template, skipNativeDependencies)
 
   libraries = findCesiumLibraries()
   executeInDependencyOrder(libraries, command)
