@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-import subprocess
+import glob
 import os
-from unittest import skip
-import yaml
-import jinja2
+import subprocess
 from enum import Enum
+from unittest import skip
+
+import jinja2
+import yaml
 
 env = jinja2.Environment(
     loader=jinja2.PackageLoader("automate"),
@@ -121,23 +123,11 @@ def exportLibraries(args):
   executeInDependencyOrder(libraries, lambda library: run('conan export %s' % (library)))
 
 def findCesiumLibraries():
-  # TODO: Get this from the filesystem, Cesium*
-  return [
-    'Cesium3DTiles',
-    'Cesium3DTilesReader',
-    'Cesium3DTilesSelection',
-    'Cesium3DTilesWriter',
-    'CesiumAsync',
-    'CesiumGeometry',
-    'CesiumGeospatial',
-    'CesiumGltf',
-    'CesiumGltfReader',
-    'CesiumGltfWriter',
-    'CesiumIonClient',
-    'CesiumJsonReader',
-    'CesiumJsonWriter',
-    'CesiumUtility',
-  ]
+  libraries = []
+  for library in glob.glob("Cesium*/", recursive=False):
+    if os.path.exists(library + 'library.yml'):
+      libraries.append(os.path.dirname(library))
+  return libraries
 
 def resolveDependencies(nativeLibraries, nativeYml, dependencies, skipNativeDependencies):
   def resolveDependency(library):
