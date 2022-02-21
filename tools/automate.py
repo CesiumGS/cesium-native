@@ -20,20 +20,8 @@ def main():
   subparsers = argParser.add_subparsers(dest='task', help='Automation command to invoke')
   subparsers.required = True
 
-  installDependenciesParser = subparsers.add_parser('install-dependencies', help='Install dependencies required to build cesium-native')
-  installDependenciesParser.set_defaults(func=installDependencies)
-  installDependenciesParser.add_argument('--config', action='append', help='A build configuration for which to install dependencies, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo". Can be specified multiple times to install dependencies for multiple configurations. If not specified, dependencies for both "Debug" and "Release" are installed.')
-  installDependenciesParser.add_argument('-pr:h', dest='hostProfile', help='The Conan host profile to use', default='default')
-  installDependenciesParser.add_argument('-pr:b', dest='buildProfile', help='The Conan build profile to use', default='default')
-
   listDependenciesParser = subparsers.add_parser('list-dependencies', help='List the cesium-native libraries in dependency order, with libraries depended-upon listed before those that depend on them')
   listDependenciesParser.set_defaults(func=lambda x: executeInDependencyOrder(findCesiumLibraries(), print))
-
-  createPackagesParser = subparsers.add_parser('create-packages', help='Create a Conan package (conan create) for each cesium-native library')
-  createPackagesParser.add_argument('--config', help='The build configuration for which to create packages, such as "Debug", "Release", "MinSizeRel", or "RelWithDebInfo".', default='Debug')
-  createPackagesParser.add_argument('-pr:h', dest='hostProfile', help='The Conan host profile to use', default='default')
-  createPackagesParser.add_argument('-pr:b', dest='buildProfile', help='The Conan build profile to use', default='default')
-  createPackagesParser.set_defaults(func=createPackages)
 
   editablesParser = subparsers.add_parser('editable', help='Change the Conan editable state of the cesium-native libraries')
   editablesParser.add_argument('state', choices=('on', 'off'), help='On to enable editable mode, off to disable it.')
@@ -47,65 +35,11 @@ def main():
   generateLibraryRecipesParser.add_argument('--build-folder', dest='buildFolder', help='The CMake/Conan build folder path to use in editable mode. If this is a relative path, it is relative to the cesium-native root directory. This option is ignored if --editable is not specified. Defaults to "build".', default='build')
   generateLibraryRecipesParser.set_defaults(func=generateLibraryRecipes)
 
+  exportLibrariesParser = subparsers.add_parser('conan-export-libraries', help='Add every Cesium library to the Conan cache by running "conan export" on it')
+  exportLibrariesParser.set_defaults(func=exportLibraries)
+
   args = argParser.parse_args()
   args.func(args)
-
-def installDependencies(args):
-  libraries = findCesiumLibraries()
-
-  configs = args.config or ['Release', 'Debug']
-  print('Installing dependencies for the following build configurations: ' + ', '.join(configs))
-
-  os.makedirs('build', exist_ok=True)
-
-  with open('cesium-native.yml', 'r') as f:
-    nativeYml = yaml.safe_load(f)
-
-  # Create packages from custom recipes
-  for recipe in nativeYml['extraRecipes']:
-    for config in configs:
-      run('conan create recipes/%s -pr:h=%s -pr:b=%s -s build_type=%s' % (recipe, args.hostProfile, args.buildProfile, config))
-
-  # Install dependencies for all libraries in all configurations
-  for library in libraries:
-    with open(library + '/library.yml', 'r') as f:
-      libraryYml = yaml.safe_load(f)
-
-    # Generate a conanfile.txt with this library's dependencies
-    conanfilename = 'build/conanfile-%s.txt' % (library)
-    with open(conanfilename, 'w') as f:
-      f.write('[requires]\n')
-
-      # Combine the regular and test dependencies.
-      dependencies = [*libraryYml['dependencies'], *libraryYml['testDependencies']]
-
-      # Resolve the version of each dependency, and write it.
-      # Skip dependencies on other cesium-native libraries because we want to
-      # use the version this repo.
-      resolvedDependencies = resolveDependencies(libraries, nativeYml, dependencies, True)
-      f.writelines(map(lambda x: x + '\n', resolvedDependencies))
-
-      f.write('\n')
-      f.write('[generators]\n')
-      f.write('CMakeDeps\n')
-
-    # Install each build configuration
-    for config in configs:
-      run('conan install %s -if build/%s/conan -pr:h=%s -pr:b=%s -s build_type=%s --build missing' % (conanfilename, library, args.hostProfile, args.buildProfile, config))
-
-  # Generate a toolchain file to make CMake match the Conan settings.
-  # In multi-config environments (e.g. Visual Studio), we need to do this for each build configuration.
-  # In single-config environments (e.g. Makefiles), the last one wins but overriding the build config
-  # by passing `-DCMAKE_BUILD_TYPE=Release` will still work except that the generated
-  # build/conan/conan_toolchain.cmake hardcodes CMAKE_BUILD_TYPE. Comment out that line and you're good.
-  os.makedirs('build/conan', exist_ok=True)
-  with open('build/conan/conanfile.txt', 'w') as f:
-    f.write('[requires]\n\n')
-    f.write('[generators]\n')
-    f.write('CMakeToolchain')
-
-  for config in configs:
-    run('conan install build/conan/conanfile.txt -if build/conan -pr:h=%s -pr:b=%s -s build_type=%s' % (args.hostProfile, args.buildProfile, config))
 
 def generateLibraryRecipes(args):
   if args.editable:
@@ -182,6 +116,10 @@ def exportRecipes(args):
   for recipe in nativeYml['extraRecipes']:
       run('conan export recipes/%s' % (recipe))
 
+def exportLibraries(args):
+  libraries = findCesiumLibraries()
+  executeInDependencyOrder(libraries, lambda library: run('conan export %s' % (library)))
+
 def findCesiumLibraries():
   # TODO: Get this from the filesystem, Cesium*
   return [
@@ -257,13 +195,6 @@ def executeInDependencyOrder(nativeLibraries, func):
 
   for library in nativeLibraries:
     recurse(library.lower())
-
-def createPackages(args):
-  def createPackage(library):
-    run('conan create %s -pr:h=%s -pr:b=%s -s build_type=%s' % (library, args.hostProfile, args.buildProfile, args.config))
-
-  nativeLibraries = findCesiumLibraries()
-  executeInDependencyOrder(nativeLibraries, createPackage)
 
 def run(command):
   result = subprocess.run(command, shell=True)
