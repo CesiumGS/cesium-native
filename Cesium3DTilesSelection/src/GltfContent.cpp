@@ -37,7 +37,8 @@ GltfContent::load(const TileContentLoadInput& input) {
       input.pRequest->url(),
       input.pRequest->headers(),
       input.pAssetAccessor,
-      input.pRequest->response()->data());
+      input.pRequest->response()->data(),
+      input.contentOptions);
 }
 
 /*static*/
@@ -47,28 +48,32 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const std::string& url,
     const HttpHeaders& headers,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const gsl::span<const std::byte>& data) {
+    const gsl::span<const std::byte>& data,
+    const TilesetContentOptions& contentOptions) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
-  CesiumGltfReader::GltfReaderResult loadedModel =
-      GltfContent::_gltfReader.readGltf(data);
-  if (!loadedModel.errors.empty()) {
+  GltfReaderOptions readOptions;
+  readOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
+
+  CesiumGltfReader::GltfReaderResult loadedGltf =
+      GltfContent::_gltfReader.readGltf(data, readOptions);
+  if (!loadedGltf.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.errors, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.errors, "\n- "));
   }
-  if (!loadedModel.warnings.empty()) {
+  if (!loadedGltf.warnings.empty()) {
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Warning when loading binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.warnings, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.warnings, "\n- "));
   }
 
-  if (loadedModel.model) {
-    loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
+  if (loadedGltf.model) {
+    loadedGltf.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   return CesiumGltfReader::GltfReader::resolveExternalData(
@@ -76,7 +81,8 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              url,
              headers,
              pAssetAccessor,
-             std::move(loadedModel))
+             readOptions,
+             std::move(loadedGltf))
       .thenInWorkerThread(
           [pLogger, url](CesiumGltfReader::GltfReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =

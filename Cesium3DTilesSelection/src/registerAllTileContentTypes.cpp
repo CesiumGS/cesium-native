@@ -11,7 +11,11 @@ namespace Cesium3DTilesSelection {
 
 void registerAllTileContentTypes() {
 
-  TileContentFactory::registerMagic("glTF", std::make_shared<GltfContent>());
+  std::shared_ptr<GltfContent> gltfLoader = std::make_shared<GltfContent>();
+  std::shared_ptr<QuantizedMeshContent> quantizedMeshLoader =
+      std::make_shared<QuantizedMeshContent>();
+
+  TileContentFactory::registerMagic("glTF", gltfLoader);
   TileContentFactory::registerMagic(
       "b3dm",
       std::make_shared<Batched3DModelContent>());
@@ -24,7 +28,11 @@ void registerAllTileContentTypes() {
 
   TileContentFactory::registerContentType(
       QuantizedMeshContent::CONTENT_TYPE,
-      std::make_shared<QuantizedMeshContent>());
+      quantizedMeshLoader);
+
+  TileContentFactory::registerFileExtension(".gltf", gltfLoader);
+  TileContentFactory::registerFileExtension(".glb", gltfLoader);
+  TileContentFactory::registerFileExtension(".terrain", quantizedMeshLoader);
 }
 
 } // namespace Cesium3DTilesSelection
