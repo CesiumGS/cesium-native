@@ -1,7 +1,7 @@
 [
     {
       "name": "Conan Default",
-      "toolchainFile": "build/conan/conan_toolchain.cmake"
+      "toolchainFile": "build/conan/conan_toolchain.cmake",
     },
     {
         "name": "Conan + Visual Studio 2017",

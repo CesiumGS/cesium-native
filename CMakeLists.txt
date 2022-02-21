@@ -9,6 +9,7 @@ project(cesium-native
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
 
 enable_testing()
+option(CESIUM_TESTS_ENABLED "Whether to enable tests" OFF)
 include(${CMAKE_BINARY_DIR}/workspace.cmake)
 
 add_subdirectory(doc)
