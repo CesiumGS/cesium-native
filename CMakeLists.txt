@@ -6,11 +6,18 @@ project(cesium-native
     LANGUAGES CXX
 )
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
-
 enable_testing()
 option(CESIUM_TESTS_ENABLED "Whether to enable tests" OFF)
-include(${CMAKE_BINARY_DIR}/workspace.cmake)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
+include(cesium)
+
+file(GLOB libraryFiles LIST_DIRECTORIES true "${CMAKE_CURRENT_LIST_DIR}/Cesium*")
+foreach(library ${libraryFiles})
+  if(IS_DIRECTORY "${library}" AND EXISTS "${library}/library.yml")
+    add_subdirectory(${library})
+  endif()
+endforeach()
 
 add_subdirectory(doc)
 

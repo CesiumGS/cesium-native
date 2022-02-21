@@ -15,7 +15,7 @@ class CesiumNativeConan(ConanFile):
     url = "https://github.com/CesiumGS/cesium-native"
     description = "Top-level package that depends on all the other cesium-native library packages"
     topics = () # TODO
-    settings = []
+    settings = "os", "compiler", "build_type", "arch"
     options = []
     requires = [
       {% for lib in dependencies %}

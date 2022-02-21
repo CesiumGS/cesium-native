@@ -24,6 +24,9 @@ class {{name}}Conan(ConanFile):
       {% for lib in dependencies %}
       "{{lib}}",
       {% endfor %}
+      {% for lib in testDependencies %}
+      "{{lib}}",
+      {% endfor %}
     ]
 
     exports_sources = [
