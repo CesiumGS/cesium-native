@@ -152,10 +152,10 @@ TEST_CASE("Test numeric properties") {
         MetadataPropertyViewStatus::InvalidBufferViewOutOfBound);
   }
 
+  // Even though the EXT_feature_metadata spec technically compels us to
+  // enforce an 8-byte alignment, we avoid doing so for compatibility with
+  // incorrect glTFs.
   /*
-  // TODO: uncomment this when we re-enforce 8-byte alignment.
-  // currently lots of metadata glTFs seem to forget to do
-  // 8-byte alignment.
     SECTION("Buffer view offset is not a multiple of 8") {
       model.bufferViews[valueBufferViewIndex].byteOffset = 1;
       MetadataPropertyView<uint32_t> uint32Property =

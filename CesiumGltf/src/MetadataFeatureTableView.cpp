@@ -124,8 +124,10 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
     return MetadataPropertyViewStatus::InvalidValueBufferIndex;
   }
 
-  // TODO: investigate why this causes lots of metadata gltfs to fail, are they
-  // all incorrectly built?
+  // This is technically required for the EXT_feature_metadata spec, but not
+  // necessarily required for EXT_mesh_features. Due to the discrepancy between
+  // the two specs, a lot of EXT_feature_metadata glTFs fail to be 8-byte
+  // aligned. To be forgiving and more compatible, we do not enforce this.
   /*
   if (pBufferView->byteOffset % 8 != 0) {
     return MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes;
