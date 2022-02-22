@@ -86,13 +86,13 @@ Next, export the Cesium Native libraries to the Conan cache. This won't create a
 Now you can build any Cesium Native library using the normal `conan create` command in the root directory. Because no binaries exist yet for many of the libraries, it is necessary to a use at least the `--build=missing` option. For example, the following command creates a Release package for all of the Cesium Native libraries using the default host and build profiles:
 
 ```
-conan create . --build=missing --build=outdated -pr:h=default -pr:b=default -s build_type=Release
+conan create . --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
 ```
 
 You can also create a package for a single Ceisum Native library (and the packages it depends on) by running the `conan create` in the library's subdirectory:
 
 ```
-conan create CesiumUtility --build=missing --build=outdated -pr:h=default -pr:b=default -s build_type=Release
+conan create CesiumUtility --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
 ```
 
 #### Development Workflow
@@ -116,7 +116,7 @@ By default, various files for the CMake build are generated in the `build` subdi
 Then we need to do a `conan install` to actually download or build all of the dependencies. Be sure to specify suitable profiles and build type to the install command. It is also usually necessary to include at least `--build=missing`. For example, to install all dependencies for a debug build with the default profile, use:
 
 ```
-conan install . --build=missing --build=outdated -pr:h=default -pr:b=default -s build_type=Release
+conan install . --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
 ```
 
 (Note the symmetry with the `conan create` command in the previous section; it is not a coincidence!)
