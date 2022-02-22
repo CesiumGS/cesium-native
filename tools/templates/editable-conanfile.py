@@ -46,7 +46,7 @@ class {{name}}Conan(ConanFile):
       tc = CMakeToolchain(self)
       # In editable mode, don't reference other cesium-native libraries via Conan
       tc.variables["CESIUM_USE_CONAN_PACKAGES"] = False
-      tc.variables["CESIUM_TESTS_ENABLED"] = False # TODO
+      tc.variables["CESIUM_TESTS_ENABLED"] = True
       tc.generate()
 
       deps = CMakeDeps(self)
