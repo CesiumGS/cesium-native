@@ -10,5 +10,6 @@ dependencies:
   - draco
   - rapidjson
   - stb
+  - ktx
 testDependencies:
   - catch2

@@ -92,7 +92,7 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 void decodeDataUrls(
     const GltfReader& reader,
     GltfReaderResult& readGltf,
-    bool clearDecodedDataUrls) {
+    const GltfReaderOptions& options) {
   CESIUM_TRACE("CesiumGltfReader::decodeDataUrls");
   if (!readGltf.model) {
     return;
@@ -112,7 +112,7 @@ void decodeDataUrls(
 
     buffer.cesium.data = std::move(decoded.value().data);
 
-    if (clearDecodedDataUrls) {
+    if (options.clearDecodedDataUrls) {
       buffer.uri.reset();
     }
   }
@@ -127,12 +127,13 @@ void decodeDataUrls(
       continue;
     }
 
-    ImageReaderResult imageResult = reader.readImage(decoded.value().data);
+    ImageReaderResult imageResult =
+        reader.readImage(decoded.value().data, options.ktx2TranscodeTargets);
     if (imageResult.image) {
       image.cesium = std::move(imageResult.image.value());
     }
 
-    if (clearDecodedDataUrls) {
+    if (options.clearDecodedDataUrls) {
       image.uri.reset();
     }
   }

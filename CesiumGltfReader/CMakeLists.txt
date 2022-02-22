@@ -15,4 +15,5 @@ cesium_library(
       base64::base64
       draco::draco
       stb::stb
+      ktx::libktx
 )
