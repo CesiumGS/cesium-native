@@ -5,3 +5,4 @@ dependencies:
   - ms-gsl
 testDependencies:
   - catch2
+  - cesiumgeospatial

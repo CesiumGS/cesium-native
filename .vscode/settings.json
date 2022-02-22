@@ -108,7 +108,11 @@
       "charconv": "cpp",
       "format": "cpp",
       "coroutine": "cpp",
-      "util": "cpp"
+      "assert": "cpp",
+      "cfenv": "cpp",
+      "ktxint.h": "c",
+      "texture.h": "c",
+      "gl_format.h": "c"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

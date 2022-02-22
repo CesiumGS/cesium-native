@@ -8,4 +8,6 @@ cesium_library(
   REQUIRES
     PUBLIC
       CesiumUtility::CesiumUtility
+    TEST
+      CesiumGeospatial::CesiumGeospatial
 )
