@@ -126,10 +126,12 @@ It is possible to run this install command multiple times with a different `-s b
 Finally, we build Cesium Native using CMake. Be sure to match the Conan profile settings and options (which control how the third-party library binaries are generated) with the CMake configuration (which controls how the Cesium Native libraries are built). It can be helpful to use a Conan CMake toolchain file generated in the install step above, but not every setting is captured in the toolchain so conflicts are still possible. Configure Cesium Native's CMake build with:
 
 ```
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/CesiumUtility/conan/conan_toolchain.cmake
 ```
 
-And build it with:
+Each library has its own `conan_toolchain.cmake`, but it's not possible to use a separate toolchain for each library so the command above arbitrarily uses CesiumUtility's. It shouldn't matter which you use if they're all created by the same `conan install`, because they will have the same settings.
+
+Next, build the Cesium Native libraries with:
 
 ```
 cmake --build build

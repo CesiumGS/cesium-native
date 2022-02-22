@@ -1,11 +1,11 @@
 [
     {
       "name": "Conan Default",
-      "toolchainFile": "build/conan/conan_toolchain.cmake",
+      "toolchainFile": "build/CesiumUtility/conan/conan_toolchain.cmake",
     },
     {
         "name": "Conan + Visual Studio 2017",
-        "toolchainFile": "build/conan/conan_toolchain.cmake",
+        "toolchainFile": "build/CesiumUtility/conan/conan_toolchain.cmake",
         "preferredGenerator": {
           "name": "Visual Studio 15 2017",
           "platform": "x64",
@@ -14,7 +14,7 @@
     },
     {
       "name": "Conan + Visual Studio 2019",
-      "toolchainFile": "build/conan/conan_toolchain.cmake",
+      "toolchainFile": "build/CesiumUtility/conan/conan_toolchain.cmake",
       "preferredGenerator": {
         "name": "Visual Studio 16 2019",
         "platform": "x64",

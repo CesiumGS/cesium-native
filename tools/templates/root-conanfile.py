@@ -17,17 +17,12 @@ class CesiumNativeConan(ConanFile):
     topics = () # TODO
     settings = "os", "compiler", "build_type", "arch"
     options = []
+    generators = []
     requires = [
       {% for lib in dependencies %}
       "{{lib}}",
       {% endfor %}
     ]
-
-    def generate(self):
-      tc = CMakeToolchain(self)
-      tc.variables["CESIUM_USE_CONAN_PACKAGES"] = {{'False' if skipNativeDependencies else 'True'}}
-      tc.variables["CESIUM_TESTS_ENABLED"] = True
-      tc.generate()
 
     def layout(self):
       self.folders.source = "."
