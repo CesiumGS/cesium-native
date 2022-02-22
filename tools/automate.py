@@ -155,9 +155,11 @@ def executeInDependencyOrder(nativeLibraries, func):
 
   states = {}
 
+  lowercaseNativeLibraries = [library.lower() for library in nativeLibraries]
+
   # Initially all libraries are not visited
   for library in nativeLibraries:
-    states[library.lower()] = State.NOT_VISITED
+    states[library] = State.NOT_VISITED
 
   def recurse(library):
     currentState = states[library]
@@ -177,14 +179,16 @@ def executeInDependencyOrder(nativeLibraries, func):
     dependencies = [*libraryYml['dependencies'], *libraryYml['testDependencies']]
     for dependency in dependencies:
       if dependency.startswith('cesium'):
-        recurse(dependency)
+        # Find this library (with different case) in the list of cesium-native libraries
+        index = lowercaseNativeLibraries.index(dependency)
+        recurse(nativeLibraries[index])
 
     states[library] = State.VISITED_UP
 
     func(library)
 
   for library in nativeLibraries:
-    recurse(library.lower())
+    recurse(library)
 
 def run(command):
   result = subprocess.run(command, shell=True)

@@ -97,7 +97,17 @@ conan create CesiumUtility --build=outdated --build=cascade -pr:h=default -pr:b=
 
 #### Development Workflow
 
-If you do plan to modify Cesium Native, the above can be time consuming because every build in the Conan cache is a clean build from scratch. In development, it's helpful to be able to iterate more quickly. We can do that with Conan's "editables" feature. First, enable editable mode for every Cesium Native library:
+If you do plan to modify Cesium Native, the above can be time consuming because every build in the Conan cache is a clean build from scratch. In development, it's helpful to be able to iterate more quickly. We can do that with Conan's "editables" feature. First, generate `conanfile.py` recipes for each Cesium Native library for use in editable mode:
+
+```
+./tools/automate.py generate-library-recipes --editable
+```
+
+These recipes are different from the ones used above in that they only list third-party dependencies. During development, dependencies among Cesium Native libraries are handled internally by CMake. 
+
+By default, various files for the CMake build are generated in the `build` subdirectory of the cesium-native root. To specify an alternate directory, specify the `--build-folder` option.
+
+Next, enable editable mode for every Cesium Native library:
 
 ```
 ./tools/automate.py editable on
@@ -105,15 +115,7 @@ If you do plan to modify Cesium Native, the above can be time consuming because 
 
 (Note: You can't create regular Conan packages using `conan create` or `conan export` while the packages are in editable mode. To disable editable mode, run `./tools/automate.py editable off`.)
 
-Next, we need to make sure that built binaries for the third-party libraries required by Cesium Native are in the Conan cache, and that Cesium Native knows how to find them. To that end, we need a Conan recipe for each Cesium library. These recipes are different from the ones used above in that they only list third-party dependencies. During development, dependencies among Cesium Native libraries are handled internally by CMake. To generate these `conanfile.py` files, run:
-
-```
-./tools/automate.py generate-library-recipes --editable
-```
-
-By default, various files for the CMake build are generated in the `build` subdirectory of the cesium-native root. To specify an alternate directory, specify the `--build-folder` option.
-
-Then we need to do a `conan install` to actually download or build all of the dependencies. Be sure to specify suitable profiles and build type to the install command. It is also usually necessary to include at least `--build=missing`. For example, to install all dependencies for a debug build with the default profile, use:
+Then we need to do a `conan install` to actually download or build all of the dependencies. Be sure to specify suitable profiles and build type to the install command. It is also usually necessary to include at least `--build=missing`; `--build=outdated --build=cascade` are recommended. For example, to install all dependencies for a debug build with the default profile, use:
 
 ```
 conan install . --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
