@@ -251,34 +251,36 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
 }
 
 namespace {
-  /**
-   * @brief Tries to obtain the `accessToken` from the JSON of the
-   * given response.
-   *
-   * @param pIonResponse The response
-   * @return The access token if successful
-   */
-  std::optional<std::string> GetNewAccessToken(const IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
-    const gsl::span<const std::byte> data = pIonResponse->data();
-    rapidjson::Document ionResponse;
-    ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-    if (ionResponse.HasParseError()) {
-      SPDLOG_LOGGER_ERROR(
+/**
+ * @brief Tries to obtain the `accessToken` from the JSON of the
+ * given response.
+ *
+ * @param pIonResponse The response
+ * @return The access token if successful
+ */
+std::optional<std::string> GetNewAccessToken(
+    const IAssetResponse* pIonResponse,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  const gsl::span<const std::byte> data = pIonResponse->data();
+  rapidjson::Document ionResponse;
+  ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+  if (ionResponse.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
         pLogger,
         "Error when parsing Cesium ion response, error code {} at byte offset "
         "{}",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
-      return std::nullopt;
-    }
-    return JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
+    return std::nullopt;
+  }
+  return JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
 }
-  /**
-   * @brief Updates the context request header with the given token.
-   *
-   * @param pContext The context
-   * @param accessToken The token
-   */
+/**
+ * @brief Updates the context request header with the given token.
+ *
+ * @param pContext The context
+ * @param accessToken The token
+ */
 void updateContextWithNewToken(
     TileContext* pContext,
     const std::string& accessToken) {
@@ -307,15 +309,15 @@ void Tileset::LoadIonAssetEndpoint::Private::
   bool failed = true;
   if (pIonResponse && pIonResponse->statusCode() >= 200 &&
       pIonResponse->statusCode() < 300) {
-      auto accessToken = GetNewAccessToken(pIonResponse, pLogger);
-      if (accessToken.has_value()){
-        failed = false;
-        updateContextWithNewToken(pContext, accessToken.value());
-        // update cache with new access token
-        auto cacheIt = Private::endpointCache.find(pIonRequest->url());
-        if (cacheIt != Private::endpointCache.end()) {
-          cacheIt->second.accessToken = accessToken.value();
-        }
+    auto accessToken = GetNewAccessToken(pIonResponse, pLogger);
+    if (accessToken.has_value()) {
+      failed = false;
+      updateContextWithNewToken(pContext, accessToken.value());
+      // update cache with new access token
+      auto cacheIt = Private::endpointCache.find(pIonRequest->url());
+      if (cacheIt != Private::endpointCache.end()) {
+        cacheIt->second.accessToken = accessToken.value();
+      }
     }
   }
 
