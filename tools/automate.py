@@ -176,7 +176,7 @@ def executeInDependencyOrder(nativeLibraries, func):
     with open(library + '/library.yml', 'r') as f:
       libraryYml = yaml.safe_load(f)
 
-    dependencies = [*libraryYml['dependencies'], *libraryYml['testDependencies']]
+    dependencies = libraryYml['dependencies']
     for dependency in dependencies:
       if dependency.startswith('cesium'):
         # Find this library (with different case) in the list of cesium-native libraries
