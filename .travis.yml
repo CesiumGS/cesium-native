@@ -1,11 +1,13 @@
 language: cpp
 # Default scripts, which may be overridden by some jobs
 before_script:
-  - ./tools/automate.py generate-workspace
-  - ./tools/automate.py install-dependencies -pr:h tools/conan-profiles/$CONAN_PROFILE --config Debug
+  - ./tools/automate.py conan-export-recipes
+  - ./tools/automate.py editable on
+  - ./tools/automate.py generate-library-recipes --editable
+  - conan install . --build=outdated --build=cascade -pr:h=tools/conan-profiles/$CONAN_PROFILE -pr:b=tools/conan-profiles/$CONAN_PROFILE -s build_type=Release
 script:
   - cd build
-  - cmake -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake ..
+  - cmake -DCMAKE_TOOLCHAIN_FILE=build/CesiumUtility/conan/conan_toolchain.cmake ..
   - cmake --build .
   - ctest -V
 jobs:
@@ -30,8 +32,10 @@ jobs:
         - python -m pip install --upgrade pip
         - pip install conan
       before_script:
-        - py -3 ./tools/automate.py generate-workspace
-        - py -3 ./tools/automate.py install-dependencies -pr:h tools/conan-profiles/$CONAN_PROFILE --config Debug
+        - py -3 ./tools/automate.py conan-export-recipes
+        - py -3 ./tools/automate.py editable on
+        - py -3 ./tools/automate.py generate-library-recipes --editable
+        - conan install . --build=outdated --build=cascade -pr:h=tools/conan-profiles/$CONAN_PROFILE -pr:b=tools/conan-profiles/$CONAN_PROFILE -s build_type=Release
       after_script:
         - cmake --build . --config Debug --target cesium-native-docs
     - name: Windows + VS2019
@@ -46,8 +50,10 @@ jobs:
         - python -m pip install --upgrade pip
         - pip install conan
       before_script:
-        - py -3 ./tools/automate.py generate-workspace
-        - py -3 ./tools/automate.py install-dependencies -pr:h tools/conan-profiles/$CONAN_PROFILE --config Debug
+        - py -3 ./tools/automate.py conan-export-recipes
+        - py -3 ./tools/automate.py editable on
+        - py -3 ./tools/automate.py generate-library-recipes --editable
+        - conan install . --build=outdated --build=cascade -pr:h=tools/conan-profiles/$CONAN_PROFILE -pr:b=tools/conan-profiles/$CONAN_PROFILE -s build_type=Release
     - name: Linux + GCC
       os: linux
       dist: focal
