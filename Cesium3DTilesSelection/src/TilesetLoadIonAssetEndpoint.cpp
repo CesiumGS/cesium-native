@@ -251,39 +251,37 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
 }
 
 namespace {
-
-/**
- * @brief Tries to update the context request headers with a new token.
- *
- * This will try to obtain the `accessToken` from the JSON of the
- * given response, and set it as the `Bearer ...` value of the
- * `Authorization` header of the request headers of the given
- * context.
- *
- * @param pContext The context
- * @param pIonResponse The response
- * @return Whether the update succeeded
- */
-bool updateContextWithNewToken(
-    TileContext* pContext,
-    const IAssetResponse* pIonResponse,
-    const std::shared_ptr<spdlog::logger>& pLogger) {
-  const gsl::span<const std::byte> data = pIonResponse->data();
-
-  rapidjson::Document ionResponse;
-  ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-  if (ionResponse.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
+  /**
+   * @brief Tries to obtain the `accessToken` from the JSON of the
+   * given response.
+   *
+   * @param pIonResponse The response
+   * @return The access token if successful
+   */
+  std::optional<std::string> GetNewAccessToken(const IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
+    const gsl::span<const std::byte> data = pIonResponse->data();
+    rapidjson::Document ionResponse;
+    ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+    if (ionResponse.HasParseError()) {
+      SPDLOG_LOGGER_ERROR(
         pLogger,
         "Error when parsing Cesium ion response, error code {} at byte offset "
         "{}",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
-    return false;
-  }
-  std::string accessToken =
-      JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
-
+      return std::nullopt;
+    }
+    return JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
+}
+  /**
+   * @brief Updates the context request header with the given token.
+   *
+   * @param pContext The context
+   * @param accessToken The token
+   */
+void updateContextWithNewToken(
+    TileContext* pContext,
+    const std::string& accessToken) {
   auto authIt = std::find_if(
       pContext->requestHeaders.begin(),
       pContext->requestHeaders.end(),
@@ -294,7 +292,6 @@ bool updateContextWithNewToken(
     pContext->requestHeaders.push_back(
         std::make_pair("Authorization", "Bearer " + accessToken));
   }
-  return true;
 }
 
 } // namespace
@@ -310,7 +307,16 @@ void Tileset::LoadIonAssetEndpoint::Private::
   bool failed = true;
   if (pIonResponse && pIonResponse->statusCode() >= 200 &&
       pIonResponse->statusCode() < 300) {
-    failed = !updateContextWithNewToken(pContext, pIonResponse, pLogger);
+      auto accessToken = GetNewAccessToken(pIonResponse, pLogger);
+      if (accessToken.has_value()){
+        failed = false;
+        updateContextWithNewToken(pContext, accessToken.value());
+        // update cache with new access token
+        auto cacheIt = Private::endpointCache.find(pIonRequest->url());
+        if (cacheIt != Private::endpointCache.end()) {
+          cacheIt->second.accessToken = accessToken.value();
+        }
+    }
   }
 
   // Put all auth-failed tiles in this context back into the Unloaded state.
