@@ -10,12 +10,7 @@
     "format": "clang-format -i \"--glob=@(Cesium*)/**/*.@(cpp|h|hpp)\"",
     "check-format": "check-clang-format",
     "generate-gltf": "cd tools/generate-classes && npm run generate-gltf && cd ../.. && npm run format",
-    "generate-3d-tiles": "cd tools/generate-classes && npm run generate-3d-tiles && cd ../.. && npm run format",
-    "dependencies-debug": "conan install . -if build/conan -s build_type=Debug",
-    "dependencies-release": "conan install . -if build/conan -s build_type=Release",
-    "dependencies-relwithdebinfo": "conan install . -if build/conan -s build_type=RelWithDebInfo",
-    "dependencies-minsizerel": "conan install . -if build/conan -s build_type=MinSizeRel",
-    "dependencies": "npm run dependencies-debug && npm run dependencies-release && npm run dependencies-relwithdebinfo && npm run dependencies-minsizerel"
+    "generate-3d-tiles": "cd tools/generate-classes && npm run generate-3d-tiles && cd ../.. && npm run format"
   },
   "repository": {
     "type": "git",
