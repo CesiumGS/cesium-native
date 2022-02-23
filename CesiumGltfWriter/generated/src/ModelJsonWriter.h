@@ -12,6 +12,7 @@ class ExtensionWriterContext;
 namespace CesiumGltf {
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
+struct ExtensionKhrTextureBasisu;
 struct ExtensionExtMeshGpuInstancing;
 struct ExtensionBufferExtMeshoptCompression;
 struct ExtensionBufferViewExtMeshoptCompression;
@@ -21,6 +22,7 @@ struct ExtensionCesiumTileEdges;
 struct ExtensionModelExtMeshFeatures;
 struct ExtensionMeshPrimitiveExtMeshFeatures;
 struct ExtensionNodeExtMeshFeatures;
+struct ExtensionCesiumRTC;
 struct ExtensionExtMeshFeaturesFeatureId;
 struct TextureInfo;
 struct ExtensionExtMeshFeaturesPropertyTexture;
@@ -96,6 +98,17 @@ struct ExtensionKhrMaterialsUnlitJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionKhrMaterialsUnlit& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrTextureBasisuJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrTextureBasisu;
+
+  static inline constexpr const char* ExtensionName = "KHR_texture_basisu";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrTextureBasisu& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -195,6 +208,17 @@ struct ExtensionNodeExtMeshFeaturesJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionNodeExtMeshFeatures& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionCesiumRTCJsonWriter {
+  using ValueType = CesiumGltf::ExtensionCesiumRTC;
+
+  static inline constexpr const char* ExtensionName = "CESIUM_RTC";
+
+  static void write(
+      const CesiumGltf::ExtensionCesiumRTC& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

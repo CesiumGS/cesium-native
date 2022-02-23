@@ -1,9 +1,29 @@
 # Change Log
 
+### v0.13.0 - ????
+
+##### Additions :tada:
+
+- Added support for `CESIUM_RTC` glTF extension.
+- Added support for tiles that do not have a geometric error.
+- Exposed ion endpoint URL as a parameter.
+- `TilesetOptions` and `RasterOverlayOptions` each have a new option to report which formats are supported on the client platform. Ideal formats amongst the available ones are picked for each KTX2 texture that is later encountered.
+- The image API can now convey which gpu pixel compression format (if any) is used. This will inform what to expect in the image's pixel buffer.
+- The image API can now also contain pre-computed mipmaps, if they exist. In that case, all the mips will be in the pixel buffer and the delineation between each mip will be described in `ImageCesium::mipPositions`.
+- Added the auto-generated classes for `KHR_texture_basisu`.
+- Tilesets can now have content with the following extensions: ".gltf", ".glb", and ".terrain".
+
+##### Fixes :wrench:
+
+- Fixed bug in finding the compatible type of the array of components in the B3DM Feature Table.
+
 ### v0.12.0 - 2022-02-01
 
 ##### Breaking Changes :mega:
 
+- Renamed `IAssetAccessor::requestAsset` to `get`.
+- Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
+- `Token` in `CesiumIonClient` has been updated to match Cesium ion's v2 REST API endpoint, so several fields have been renamed. The `tokens` method also now returns future that resolves to a `TokenList` instead of a plain vector of `Token` instances.
 - Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
 - Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, `GltfWriterResult`, and `GltfWriterOptions` instead.
 - Renamed constants in `CesiumUtility::Math` to use PascalCase instead of SCREAMING_SNAKE_CASE.
@@ -25,15 +45,8 @@
 - Added `SchemaWriter` and `SchemaReader` for serializing and deserializing schemas in [EXT_mesh_features](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_mesh_features) and [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata).
 - Added `hasExtension` to `ExtensibleObject`.
 - Added `CESIUM_TESTS_ENABLED` option to the build system.
-
-##### Breaking Changes :mega:
-
-- Renamed `IAssetAccessor::requestAsset` to `get`.
-- Renamed `IAssetAccessor::post` to `request` and added a new parameter in the second position to specify the HTTP verb to use.
-- `Token` in `CesiumIonClient` has been updated to match Cesium ion's v2 REST API endpoint, so several fields have been renamed. The `tokens` method also now returns future that resolves to a `TokenList` instead of a plain vector of `Token` instances.
-
-##### Additions :tada:
-
+- Added support in the JSON reader for reading doubles with no fractional value as integers.
+- Added case-insensitive comparison for Cesium 3D Tiles "refine" property values.
 - Added new capabilities to `Connection` in `CesiumIonClient`:
   - The `tokens` method now uses the v2 service endpoint and allows a number of options to be specified.
   - Added a `token` method to allow details of a single token to be retrieved.
@@ -41,11 +54,14 @@
   - Added `modifyToken` method.
   - Added static `getIdFromToken` method to obtain a token ID from a given token value.
 - Added `loadErrorCallback` to `TilesetOptions` and `RasterOverlayOptions`. This callback is invoked when the `Tileset` or `RasterOverlay` encounter a load error, allowing the error to be handled by application code.
+- Enable `IntrusivePointer<T>` to be converted to `IntrusivePointer<U>` if U is a base class of T.
 
 ##### Fixes :wrench:
 
-- Fixes a bug where `notifyTileDoneLoading` is not called when encountering Ion responses that can't be parsed.
+- Fixes a bug where `notifyTileDoneLoading` was not called when encountering Ion responses that can't be parsed.
 - Fixed a bug that prevented a continuation attached to a `SharedFuture` from returning a `Future` itself.
+- Fixed incorrect child subtree index calculation in implicit tiles.
+- Fixed `computeDistanceSquaredToPosition` in `BoundingSphere`.
 
 ### v0.11.0 - 2022-01-03
 

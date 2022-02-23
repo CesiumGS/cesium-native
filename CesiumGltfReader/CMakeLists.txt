@@ -61,6 +61,8 @@ target_link_libraries(CesiumGltfReader
         CesiumJsonReader
         modp_b64
         ${CESIUM_NATIVE_DRACO_LIBRARY}
+    PRIVATE
+        ktx_read
 )
 
 install(TARGETS CesiumGltfReader

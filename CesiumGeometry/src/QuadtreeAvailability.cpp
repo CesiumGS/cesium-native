@@ -163,7 +163,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+                static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
@@ -269,7 +269,7 @@ bool QuadtreeAvailability::addSubtree(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+                static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
@@ -442,7 +442,7 @@ AvailabilityNode* QuadtreeAvailability::addNode(
           // availability, instead of iterating through the buffer each time.
           AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
           AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
     } else {
       // This subtree is not supposed to be available.
       return nullptr;
@@ -512,7 +512,7 @@ std::optional<uint32_t> QuadtreeAvailability::findChildNodeIndex(
           // availability, instead of iterating through the buffer each time.
           AvailabilityUtilities::countOnesInBuffer(clippedSubtreeAvailability) +
           AvailabilityUtilities::countOnesInByte(
-              static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
+              static_cast<uint8_t>(availabilityByte << (8 - bitIndex)));
     }
   }
 

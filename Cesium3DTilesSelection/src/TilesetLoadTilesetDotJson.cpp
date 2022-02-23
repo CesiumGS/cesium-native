@@ -196,7 +196,7 @@ LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext->pTileset,
+            pContext ? pContext->pTileset : nullptr,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
             message}};

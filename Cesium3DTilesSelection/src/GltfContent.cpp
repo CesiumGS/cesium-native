@@ -8,6 +8,7 @@
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
+#include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Math.h>
@@ -36,7 +37,8 @@ GltfContent::load(const TileContentLoadInput& input) {
       input.pRequest->url(),
       input.pRequest->headers(),
       input.pAssetAccessor,
-      input.pRequest->response()->data());
+      input.pRequest->response()->data(),
+      input.contentOptions);
 }
 
 /*static*/
@@ -46,28 +48,32 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const std::string& url,
     const HttpHeaders& headers,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const gsl::span<const std::byte>& data) {
+    const gsl::span<const std::byte>& data,
+    const TilesetContentOptions& contentOptions) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
-  CesiumGltfReader::GltfReaderResult loadedModel =
-      GltfContent::_gltfReader.readGltf(data);
-  if (!loadedModel.errors.empty()) {
+  GltfReaderOptions readOptions;
+  readOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
+
+  CesiumGltfReader::GltfReaderResult loadedGltf =
+      GltfContent::_gltfReader.readGltf(data, readOptions);
+  if (!loadedGltf.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.errors, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.errors, "\n- "));
   }
-  if (!loadedModel.warnings.empty()) {
+  if (!loadedGltf.warnings.empty()) {
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Warning when loading binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.warnings, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.warnings, "\n- "));
   }
 
-  if (loadedModel.model) {
-    loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
+  if (loadedGltf.model) {
+    loadedGltf.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   return CesiumGltfReader::GltfReader::resolveExternalData(
@@ -75,7 +81,8 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              url,
              headers,
              pAssetAccessor,
-             std::move(loadedModel))
+             readOptions,
+             std::move(loadedGltf))
       .thenInWorkerThread(
           [pLogger, url](CesiumGltfReader::GltfReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =
@@ -406,22 +413,17 @@ GltfContent::createRasterOverlayTextureCoordinates(
 /*static*/ glm::dmat4x4 GltfContent::applyRtcCenter(
     const CesiumGltf::Model& gltf,
     const glm::dmat4x4& rootTransform) {
-  auto rtcCenterIt = gltf.extras.find("RTC_CENTER");
-  if (rtcCenterIt == gltf.extras.end()) {
+  const ExtensionCesiumRTC* cesiumRTC = gltf.getExtension<ExtensionCesiumRTC>();
+  if (cesiumRTC == nullptr) {
     return rootTransform;
   }
-  const CesiumUtility::JsonValue& rtcCenter = rtcCenterIt->second;
-  const std::vector<CesiumUtility::JsonValue>* pArray =
-      std::get_if<CesiumUtility::JsonValue::Array>(&rtcCenter.value);
-  if (!pArray) {
+  const std::vector<double>& rtcCenter = cesiumRTC->center;
+  if (rtcCenter.size() != 3) {
     return rootTransform;
   }
-  if (pArray->size() != 3) {
-    return rootTransform;
-  }
-  const double x = (*pArray)[0].getSafeNumberOrDefault(0.0);
-  const double y = (*pArray)[1].getSafeNumberOrDefault(0.0);
-  const double z = (*pArray)[2].getSafeNumberOrDefault(0.0);
+  const double x = rtcCenter[0];
+  const double y = rtcCenter[1];
+  const double z = rtcCenter[2];
   const glm::dmat4x4 rtcTransform(
       glm::dvec4(1.0, 0.0, 0.0, 0.0),
       glm::dvec4(0.0, 1.0, 0.0, 0.0),

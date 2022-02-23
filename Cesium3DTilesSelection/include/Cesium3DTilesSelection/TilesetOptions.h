@@ -2,6 +2,8 @@
 
 #include "Library.h"
 
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -36,6 +38,12 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * normals.
    */
   bool generateMissingNormalsSmooth = false;
+
+  /**
+   * @brief For each possible input transmission format, this struct names
+   * the ideal target gpu-compressed pixel format to transcode to.
+   */
+  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 };
 
 /**

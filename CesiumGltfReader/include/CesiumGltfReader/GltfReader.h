@@ -6,6 +6,8 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
@@ -98,6 +100,12 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * extension should be automatically decoded as part of the load process.
    */
   bool decodeDraco = true;
+
+  /**
+   * @brief For each possible input transmission format, this struct names
+   * the ideal target gpu-compressed pixel format to transcode to.
+   */
+  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 };
 
 /**
@@ -142,6 +150,7 @@ public:
    * @param headers The http headers needed to make any external data requests.
    * @param pAssetAccessor The asset accessor to use to request the external
    * buffers and images.
+   * @param options Options for how to read the glTF.
    * @param result The result of the synchronous readGltf invocation.
    */
   static CesiumAsync::Future<GltfReaderResult> resolveExternalData(
@@ -149,6 +158,7 @@ public:
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+      const GltfReaderOptions& options,
       GltfReaderResult&& result);
 
   /**
@@ -158,9 +168,14 @@ public:
    * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
    *
    * @param data The buffer from which to read the image.
+   * @param ktx2TranscodeTargetFormat The compression format to transcode
+   * KTX v2 textures into. If this is std::nullopt, KTX v2 textures will be
+   * fully decompressed into raw pixels.
    * @return The result of reading the image.
    */
-  static ImageReaderResult readImage(const gsl::span<const std::byte>& data);
+  static ImageReaderResult readImage(
+      const gsl::span<const std::byte>& data,
+      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;

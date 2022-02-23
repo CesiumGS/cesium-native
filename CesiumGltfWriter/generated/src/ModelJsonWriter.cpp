@@ -24,6 +24,7 @@
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesClass.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesClassProperty.h>
@@ -37,6 +38,7 @@
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
+#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
@@ -87,6 +89,11 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
+    const CesiumGltf::ExtensionKhrTextureBasisu& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
     const CesiumGltf::ExtensionExtMeshGpuInstancing& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
@@ -128,6 +135,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionNodeExtMeshFeatures& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionCesiumRTC& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -573,6 +585,22 @@ void writeJson(
 }
 
 void writeJson(
+    const CesiumGltf::ExtensionKhrTextureBasisu& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.source > -1) {
+    jsonWriter.Key("source");
+    writeJson(obj.source, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
     const CesiumGltf::ExtensionExtMeshGpuInstancing& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -805,6 +833,22 @@ void writeJson(
   if (!obj.propertyTables.empty()) {
     jsonWriter.Key("propertyTables");
     writeJson(obj.propertyTables, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionCesiumRTC& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.center.empty()) {
+    jsonWriter.Key("center");
+    writeJson(obj.center, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2351,6 +2395,13 @@ void ExtensionKhrMaterialsUnlitJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
+void ExtensionKhrTextureBasisuJsonWriter::write(
+    const CesiumGltf::ExtensionKhrTextureBasisu& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
 void ExtensionExtMeshGpuInstancingJsonWriter::write(
     const CesiumGltf::ExtensionExtMeshGpuInstancing& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -2409,6 +2460,13 @@ void ExtensionMeshPrimitiveExtMeshFeaturesJsonWriter::write(
 
 void ExtensionNodeExtMeshFeaturesJsonWriter::write(
     const CesiumGltf::ExtensionNodeExtMeshFeatures& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionCesiumRTCJsonWriter::write(
+    const CesiumGltf::ExtensionCesiumRTC& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
