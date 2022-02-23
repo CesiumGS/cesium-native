@@ -3,6 +3,7 @@ project(CesiumGltfReader CXX)
 
 include(cesium)
 
+message("******${CMAKE_BUILD_TYPE}")
 cesium_library(
   NAME CesiumGltfReader
   REQUIRES
@@ -15,5 +16,5 @@ cesium_library(
       base64::base64
       draco::draco
       stb::stb
-      ktx::libktx
+      ktx::libktx@Ktx
 )
