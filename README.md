@@ -15,7 +15,7 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 *<p align="center">A high-level architecture of Cesium for Unreal, Cesium Native and Unreal Engine streaming content from Cesium ion.</p>*
 
 
-### <a id="libraries"></a>:card_file_box: Libraries Overview
+### 🗃 Libraries Overview
 
 | Library | Description |
 | -- | -- |
@@ -35,11 +35,11 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 | **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
 
 
-### :green_book:License
+### 📗 License
 
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium Native is free for both commercial and non-commercial use.
 
-## 🚀Getting Started
+## 🚀 Getting Started
 
 There are a few common ways to use Cesium Native. Click a link below for instructions:
 
