@@ -3,7 +3,6 @@ project(CesiumGltfReader CXX)
 
 include(cesium)
 
-message("******${CMAKE_BUILD_TYPE}")
 cesium_library(
   NAME CesiumGltfReader
   REQUIRES
