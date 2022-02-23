@@ -11,7 +11,7 @@ Cesium Native uses a number of third-party libraries, and these dependencies are
 
 ## Clone the repo
 
-First, check out the repo from GitHub with:
+First, clone the repo from GitHub with:
 
 ```bash
 git clone https://github.com/CesiumGS/cesium-native.git
@@ -29,7 +29,7 @@ This generally only needs to be done once, but may need to happen again if Cesiu
 
 ## Generate Recipes
 
-Cesium Native is divided into [multiple libraries](../README.md#-libraries-overview), each of which has its own list of dependencies defined in its `library.yml`. We want to use Conan to install these dependencies, but first we need a `conanfile.py` recipe for each library. We can generate the recipes by running:
+Cesium Native is divided into [multiple libraries](../README.md#-libraries-overview), each of which has its own list of dependencies defined in its `library.yml`. We want to use Conan to install these dependencies, but first we need a `conanfile.py` recipe for each library. We can generate the recipes from the yml files by running:
 
 ```
 ./tools/automate.py generate-library-recipes --editable
@@ -70,9 +70,9 @@ Now that all the dependencies are in place, we can build Cesium Native using CMa
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/CesiumUtility/conan/conan_toolchain.cmake
 ```
 
-On single-configuration systems, the toolchain file specifies the `CMAKE_BUILD_TYPE`, so if it is also specified on the command-line or elsewhere it will be ignored. Be sure to invoke the `conan install` above for the configuration you want to use.
+On single-configuration systems, the toolchain file specifies the `CMAKE_BUILD_TYPE`, so if it that option is also specified on the command-line or elsewhere it will be ignored. Be sure to invoke the `conan install` above for the configuration you want to use.
 
-Note thouigh that the toolchain file unfortunately does not capture _every_ setting relevant to the build. For example, if your profile specifies the use of Visual Studio 2017, but CMake on your system defaults to using Clang, you'll get compile or link errors as a result of the dependencies being compiled differently from the Cesium Native libraries. There's no universal solution to this problem, but if it happens to you, you can can probably fix it either by adjusting the [Conan profile](https://docs.conan.io/en/latest/using_packages/using_profiles.html) and reinstalling dependencies, or by specifying a generator or options to CMake. For example, to force CMake to use Visual Studio 2017, you can configure with:
+Note, though, that the toolchain file unfortunately does not capture _every_ setting relevant to the build. For example, if your profile specifies the use of Visual Studio 2017, but CMake on your system defaults to using Clang, you'll get compile or link errors as a result of the dependencies being compiled differently from the Cesium Native libraries. There's no universal solution to this problem, but if it happens to you, you can can probably fix it either by adjusting the [Conan profile](https://docs.conan.io/en/latest/using_packages/using_profiles.html) and reinstalling dependencies, or by specifying a generator or options to CMake. For example, to force CMake to use Visual Studio 2017, you can configure with:
 
 ```
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/CesiumUtility/conan/conan_toolchain.cmake -G "Visual Studio 15 2017 Win64"

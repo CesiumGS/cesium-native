@@ -9,7 +9,7 @@ If you're not planning to change Cesium Native itself, but just want to create s
 
 ## Clone the repo
 
-First, check out the repo from GitHub with:
+First, clone the repo from GitHub with:
 
 ```bash
 git clone https://github.com/CesiumGS/cesium-native.git
@@ -27,7 +27,7 @@ This generally only needs to be done once, but may need to happen again if Cesiu
 
 ## Generate Recipes
 
-Cesium Native is divided into [multiple libraries](../README.md#-libraries-overview), each of which has its own list of dependencies and other informationed defined in its `library.yml`. The `cesium-native.yml` file in the root directory contains settings common to all of the Cesium Native libraries, including the version, user, and channel of the packages to be created. To create a package for each of the Cesium Native libraries, we first need a `conanfile.py` recipe for each library. We can generate the recipes by running:
+Cesium Native is divided into [multiple libraries](../README.md#-libraries-overview), each of which has its own list of dependencies and other information defined in its `library.yml`. The `cesium-native.yml` file in the root directory contains settings common to all of the Cesium Native libraries, including the version, user, and channel of the packages to be created. To create a package for each of the Cesium Native libraries, we first need a `conanfile.py` recipe for each library. We can generate the recipes from the yml files by running:
 
 ```
 ./tools/automate.py generate-library-recipes
@@ -53,7 +53,7 @@ This simply invokes `conan export` for each Cesium Native library, adding the re
 
 ## Create Packages
 
-With all of the library packages exported to the Conan cache, we can now create a binary package for any of them with a normal `conan create` on any library's directory. Because no binaries exist yet for many of the libraries, It is also usually necessary to include at least the `--build=missing` option; `--build=outdated --build=cascade` are recommended. For example, the following command creates a Release package for `CesiumGltf` using the default host and build profiles:
+With all of the library packages exported to the Conan cache, we can now create a binary package for any of them with a normal `conan create` on any libraries' directories. Because no binaries exist yet for many of the libraries, It is also usually necessary to include at least the `--build=missing` option; `--build=outdated --build=cascade` are recommended. For example, the following command creates a Release package for `CesiumGltf` using the default host and build profiles:
 
 ```
 conan create CesiumGltf --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
