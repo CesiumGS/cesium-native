@@ -15,7 +15,7 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 *<p align="center">A high-level architecture of Cesium for Unreal, Cesium Native and Unreal Engine streaming content from Cesium ion.</p>*
 
 
-### :card_file_box:Libraries Overview
+### <a id="libraries"></a>:card_file_box: Libraries Overview
 
 | Library | Description |
 | -- | -- |
@@ -39,127 +39,10 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium Native is free for both commercial and non-commercial use.
 
-## 💻Developers
+## 🚀Getting Started
 
-### ⭐Prerequisites
+There are a few common ways to use Cesium Native. Click a link below for instructions:
 
-* Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
-* [CMake](https://cmake.org/)
-* [Conan](https://conan.io/)
-
-### :rocket:Getting Started
-
-#### Clone the repo
-
-Check out the repo with:
-
-```bash
-git clone git@github.com:CesiumGS/cesium-native.git
-```
-
-#### Add third-party packages to the Conan cache
-
-Cesium Native requires a few third-party packages that are not (yet) on Conan Center. These need to be added to the local Conan cache prior to any of the steps below. You can manually `conan export` each subdirectory of `recipes/`, or run an automation command to do them all in one go:
-
-```
-./tools/automate.py conan-export-recipes
-```
-
-This generally only needs to be done once, but may need to happen again if Cesium Native is later updated with a new or changed third-party library. It's quick and harmless to run multiple times.
-
-### Create Conan Packages
-
-If you're not planning to change Cesium Native itself, but just want to create some Conan packages in your Conan cache that you can upload to a package repository or use from another Conan-enabled application, that's easy to do. First, you'll need a recipe (conanfile.py) for each Cesium Native library, suitable for this purpose. To generate those, run:
-
-```
-./tools/automate.py generate-library-recipes
-```
-
-This will generate a `conanfile.py` in each `Cesium*` library directory. Note that the version, user, and channel of the packages is controlled by the values in `cesium-native.yml`. The requirements (dependencies) of each library are specified in the `library.yml` file in each library directory.
-
-Next, export the Cesium Native libraries to the Conan cache. This won't create any binaries for them yet:
-
-```
-./tools/automate.py conan-export-libraries
-```
-
-Now you can build any Cesium Native library using the normal `conan create` command in the root directory. Because no binaries exist yet for many of the libraries, it is necessary to a use at least the `--build=missing` option. For example, the following command creates a Release package for all of the Cesium Native libraries using the default host and build profiles:
-
-```
-conan create . --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
-```
-
-You can also create a package for a single Ceisum Native library (and the packages it depends on) by running the `conan create` in the library's subdirectory:
-
-```
-conan create CesiumUtility --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
-```
-
-#### Development Workflow
-
-If you do plan to modify Cesium Native, the above can be time consuming because every build in the Conan cache is a clean build from scratch. In development, it's helpful to be able to iterate more quickly. We can do that with Conan's "editables" feature. First, generate `conanfile.py` recipes for each Cesium Native library for use in editable mode:
-
-```
-./tools/automate.py generate-library-recipes --editable
-```
-
-These recipes are different from the ones used above in that they only list third-party dependencies. During development, dependencies among Cesium Native libraries are handled internally by CMake. 
-
-By default, various files for the CMake build are generated in the `build` subdirectory of the cesium-native root. To specify an alternate directory, specify the `--build-folder` option.
-
-Next, enable editable mode for every Cesium Native library:
-
-```
-./tools/automate.py editable on
-```
-
-(Note: You can't create regular Conan packages using `conan create` or `conan export` while the packages are in editable mode. To disable editable mode, run `./tools/automate.py editable off`.)
-
-Then we need to do a `conan install` to actually download or build all of the dependencies. Be sure to specify suitable profiles and build type to the install command. It is also usually necessary to include at least `--build=missing`; `--build=outdated --build=cascade` are recommended. For example, to install all dependencies for a debug build with the default profile, use:
-
-```
-conan install . --build=outdated --build=cascade -pr:h=default -pr:b=default -s build_type=Release
-```
-
-(Note the symmetry with the `conan create` command in the previous section; it is not a coincidence!)
-
-It is possible to run this install command multiple times with a different `-s build_type` each time, making it easier to switch between Debug/Release builds. This is true even on CMake single-configuration systems like Unix Makefiles.
-
-Finally, we build Cesium Native using CMake. Be sure to match the Conan profile settings and options (which control how the third-party library binaries are generated) with the CMake configuration (which controls how the Cesium Native libraries are built). It can be helpful to use a Conan CMake toolchain file generated in the install step above, but not every setting is captured in the toolchain so conflicts are still possible. Configure Cesium Native's CMake build with:
-
-```
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/CesiumUtility/conan/conan_toolchain.cmake
-```
-
-Each library has its own `conan_toolchain.cmake`, but it's not possible to use a separate toolchain for each library so the command above arbitrarily uses CesiumUtility's. It shouldn't matter which you use if they're all created by the same `conan install`, because they will have the same settings.
-
-Next, build the Cesium Native libraries with:
-
-```
-cmake --build build
-```
-
-As long as the dependencies don't change, we can simply invoke the CMake build above (and configure when necessary) for a quick development cycle.
-
-#### Compile
-
-You can then build cesium-native on the command-line with CMake:
-
-```bash
-## Windows compilation using Visual Studio
-cmake -B build -S . -G "Visual Studio 15 2017 Win64"
-cmake --build build --config Debug
-cmake --build build --config Release
-
-## Linux compilation
-cmake -B build -S .
-cmake --build build
-```
-
-Or, you can easily build it in Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2017 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
-
-#### Generate Documentation
-
-* Install [Doxygen](https://www.doxygen.nl/).
-* Run: `cmake --build build --target cesium-native-docs`
-* Open `build/doc/html/index.html`
+* [Install with Conan](doc/install-from-conan.md): Start using Cesium Native quickly by using packaged releases from the Conan Package Manager.
+* [Development Workflow](doc/development-workflow.md): Compile Cesium Native yourself, run the tests, and perhaps use your modified version in another application.
+* [Create Conan Packages](doc/creating-conan-packages.md): Create Cesium Native packages in your local Conan cache, to publish to a Conan repository or use in other applications.
