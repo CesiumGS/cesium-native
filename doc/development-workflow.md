@@ -29,7 +29,7 @@ This generally only needs to be done once, but may need to happen again if Cesiu
 
 ## Generate Recipes
 
-Cesium Native is divided into [multiple libraries](../README.md#libraries), each of which has its own list of dependencies defined in its `library.yml`. We want to use Conan to install these dependencies, but first we need a `conanfile.py` recipe for each library. We can generate the recipes by running:
+Cesium Native is divided into [multiple libraries](../README.md#-libraries-overview), each of which has its own list of dependencies defined in its `library.yml`. We want to use Conan to install these dependencies, but first we need a `conanfile.py` recipe for each library. We can generate the recipes by running:
 
 ```
 ./tools/automate.py generate-library-recipes --editable

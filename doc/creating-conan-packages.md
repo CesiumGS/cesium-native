@@ -27,7 +27,7 @@ This generally only needs to be done once, but may need to happen again if Cesiu
 
 ## Generate Recipes
 
-Cesium Native is divided into [multiple libraries](../README.md#libraries), each of which has its own list of dependencies and other informationed defined in its `library.yml`. The `cesium-native.yml` file in the root directory contains settings common to all of the Cesium Native libraries, including the version, user, and channel of the packages to be created. To create a package for each of the Cesium Native libraries, we first need a `conanfile.py` recipe for each library. We can generate the recipes by running:
+Cesium Native is divided into [multiple libraries](../README.md#-libraries-overview), each of which has its own list of dependencies and other informationed defined in its `library.yml`. The `cesium-native.yml` file in the root directory contains settings common to all of the Cesium Native libraries, including the version, user, and channel of the packages to be created. To create a package for each of the Cesium Native libraries, we first need a `conanfile.py` recipe for each library. We can generate the recipes by running:
 
 ```
 ./tools/automate.py generate-library-recipes
