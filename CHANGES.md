@@ -6,6 +6,7 @@
 
 - Added support for `CESIUM_RTC` glTF extension.
 - Added support for tiles that do not have a geometric error.
+- Exposed ion endpoint URL as a parameter.
 - `TilesetOptions` and `RasterOverlayOptions` each have a new option to report which formats are supported on the client platform. Ideal formats amongst the available ones are picked for each KTX2 texture that is later encountered.
 - The image API can now convey which gpu pixel compression format (if any) is used. This will inform what to expect in the image's pixel buffer.
 - The image API can now also contain pre-computed mipmaps, if they exist. In that case, all the mips will be in the pixel buffer and the delineation between each mip will be described in `ImageCesium::mipPositions`.

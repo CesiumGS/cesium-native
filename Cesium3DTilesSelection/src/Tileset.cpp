@@ -75,7 +75,8 @@ Tileset::Tileset(
     const TilesetExternals& externals,
     uint32_t ionAssetID,
     const std::string& ionAccessToken,
-    const TilesetOptions& options)
+    const TilesetOptions& options,
+    const std::string& ionAssetEndpointUrl)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
       _userCredit(
@@ -86,6 +87,7 @@ Tileset::Tileset(
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
       _isRefreshingIonToken(false),
+      _ionAssetEndpointUrl(ionAssetEndpointUrl),
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
