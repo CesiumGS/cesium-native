@@ -4,6 +4,10 @@ add_subdirectory(Catch2)
 
 add_subdirectory(GSL)
 
+option(KTX_FEATURE_STATIC_LIBRARY "" on)
+option(KTX_FEATURE_TESTS "" off)
+add_subdirectory(KTX-Software)
+
 option(URIPARSER_BUILD_TESTS "" off)
 option(URIPARSER_BUILD_DOCS "" off)
 option(URIPARSER_ENABLE_INSTALL "" on)

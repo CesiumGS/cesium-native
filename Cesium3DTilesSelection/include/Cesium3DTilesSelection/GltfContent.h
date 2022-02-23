@@ -55,6 +55,7 @@ public:
    * @param pAssetAccessor The asset accessor to use to resolve external
    * content.
    * @param data The actual glTF data
+   * @param contentOptions The content options for loading this glTF.
    * @return The {@link TileContentLoadResult}
    */
   static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
@@ -63,7 +64,8 @@ public:
       const std::string& url,
       const CesiumAsync::HttpHeaders& headers,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const gsl::span<const std::byte>& data);
+      const gsl::span<const std::byte>& data,
+      const TilesetContentOptions& contentOptions);
 
   /**
    * @brief Creates texture coordinates for mapping {@link RasterOverlay} tiles

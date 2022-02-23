@@ -100,7 +100,7 @@ Tileset::Tileset(
       _distancesStack(),
       _nextDistancesVector(0) {
   if (ionAssetID > 0) {
-    CESIUM_TRACE_USE_TRACK_SET(tileset._loadingSlots);
+    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
