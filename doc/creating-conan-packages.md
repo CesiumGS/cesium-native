@@ -1,6 +1,6 @@
 If you're not planning to change Cesium Native itself, but just want to create some Conan packages in your Conan cache that you can upload to a package repository or use from another Conan-enabled application, that's easy to do by following these instructions.
 
-## ⭐Prerequisites
+## Prerequisites
 
 * Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
 * [CMake](https://cmake.org/) for build automation

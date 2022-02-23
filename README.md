@@ -43,6 +43,6 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 
 There are a few common ways to use Cesium Native. Click a link below for instructions:
 
-* [Install with Conan](doc/install-from-conan.md): Start using Cesium Native quickly by using packaged releases from the Conan Package Manager.
+* [Install with Conan](doc/install-with-conan.md): Start using Cesium Native quickly by using packaged releases from the Conan Package Manager.
 * [Development Workflow](doc/development-workflow.md): Compile Cesium Native yourself, run the tests, and perhaps use your modified version in another application.
 * [Create Conan Packages](doc/creating-conan-packages.md): Create Cesium Native packages in your local Conan cache, to publish to a Conan repository or use in other applications.

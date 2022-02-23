@@ -2,7 +2,7 @@ The Cesium Native development workflow allows you to compile Cesium Native on yo
 
 Cesium Native uses a number of third-party libraries, and these dependencies are most easily (by far!) installed by using the [Conan Package Manager](https://conan.io/), as described in the instructions below. While the use of Cesium Native without Conan is possible, it is likely to be challenging and is outside the scope of this document.
 
-## ⭐Prerequisites
+## Prerequisites
 
 * Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
 * [CMake](https://cmake.org/) for build automation
