@@ -267,6 +267,11 @@ public:
    * @returns The angle in the range [`-Math::ONE_PI`, `Math::ONE_PI`].
    */
   static double negativePiToPi(double angle) noexcept {
+    if (angle >= -Math::ONE_PI && angle <= Math::ONE_PI) {
+      // Early exit if the input is already inside the range. This avoids
+      // unnecessary math which could introduce floating point error.
+      return angle;
+    }
     return Math::zeroToTwoPi(angle + Math::ONE_PI) - Math::ONE_PI;
   }
 
@@ -278,6 +283,11 @@ public:
    * @returns The angle in the range [0, `Math::TWO_PI`].
    */
   static double zeroToTwoPi(double angle) noexcept {
+    if (angle >= 0 && angle <= Math::TWO_PI) {
+      // Early exit if the input is already inside the range. This avoids
+      // unnecessary math which could introduce floating point error.
+      return angle;
+    }
     const double mod = Math::mod(angle, Math::TWO_PI);
     if (glm::abs(mod) < Math::EPSILON14 && glm::abs(angle) > Math::EPSILON14) {
       return Math::TWO_PI;
@@ -293,6 +303,11 @@ public:
    * @returns The remainder.
    */
   static double mod(double m, double n) noexcept {
+    if (Math::sign(m) == Math::sign(n) && glm::abs(m) < glm::abs(n)) {
+      // Early exit if the input does not need to be modded. This avoids
+      // unnecessary math which could introduce floating point error.
+      return m;
+    }
     return fmod(fmod(m, n) + n, n);
   }
 

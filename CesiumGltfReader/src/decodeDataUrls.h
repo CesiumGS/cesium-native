@@ -2,11 +2,12 @@
 
 namespace CesiumGltfReader {
 
-struct ModelReaderResult;
+struct GltfReaderResult;
+struct GltfReaderOptions;
 class GltfReader;
 
 void decodeDataUrls(
     const GltfReader& reader,
-    ModelReaderResult& readModel,
-    bool clearDecodedDataUrls);
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& clearDecodedDataUrls);
 } // namespace CesiumGltfReader

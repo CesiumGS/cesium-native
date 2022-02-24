@@ -13,6 +13,7 @@
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
+#include <ktx.h>
 #include <rapidjson/reader.h>
 
 #include <algorithm>
@@ -53,17 +54,17 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
   return reinterpret_cast<const GlbHeader*>(data.data())->magic == 0x46546C67;
 }
 
-ModelReaderResult readJsonModel(
+GltfReaderResult readJsonGltf(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  CESIUM_TRACE("CesiumGltfReader::ModelReader::readJsonModel");
+  CESIUM_TRACE("CesiumGltfReader::GltfReader::readJsonGltf");
 
   ModelJsonHandler modelHandler(context);
-  CesiumJsonReader::ReadJsonResult<CesiumGltf::Model> jsonResult =
+  CesiumJsonReader::ReadJsonResult<Model> jsonResult =
       CesiumJsonReader::JsonReader::readJson(data, modelHandler);
 
-  return ModelReaderResult{
+  return GltfReaderResult{
       std::move(jsonResult.value),
       std::move(jsonResult.errors),
       std::move(jsonResult.warnings)};
@@ -89,10 +90,10 @@ std::string toMagicString(uint32_t i) {
   return stream.str();
 }
 
-ModelReaderResult readBinaryModel(
+GltfReaderResult readBinaryGltf(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
-  CESIUM_TRACE("CesiumGltfReader::ModelReader::readBinaryModel");
+  CESIUM_TRACE("CesiumGltfReader::GltfReader::readBinaryGltf");
 
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
@@ -179,10 +180,10 @@ ModelReaderResult readBinaryModel(
     binaryChunk = glbData.subspan(binaryStart, pBinaryChunkHeader->chunkLength);
   }
 
-  ModelReaderResult result = readJsonModel(context, jsonChunk);
+  GltfReaderResult result = readJsonGltf(context, jsonChunk);
 
   if (result.model && !binaryChunk.empty()) {
-    CesiumGltf::Model& model = result.model.value();
+    Model& model = result.model.value();
 
     if (model.buffers.empty()) {
       result.errors.emplace_back(
@@ -190,7 +191,7 @@ ModelReaderResult readBinaryModel(
       return result;
     }
 
-    CesiumGltf::Buffer& buffer = model.buffers[0];
+    Buffer& buffer = model.buffers[0];
     if (buffer.uri) {
       result.errors.emplace_back("GLB has a binary chunk but the first buffer "
                                  "in the JSON chunk also has a 'uri'.");
@@ -215,16 +216,16 @@ ModelReaderResult readBinaryModel(
 
 void postprocess(
     const GltfReader& reader,
-    ModelReaderResult& readModel,
-    const ReadModelOptions& options) {
-  CesiumGltf::Model& model = readModel.model.value();
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& options) {
+  Model& model = readGltf.model.value();
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(reader, readModel, options.clearDecodedDataUrls);
+    decodeDataUrls(reader, readGltf, options);
   }
 
   if (options.decodeEmbeddedImages) {
-    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
+    CESIUM_TRACE("CesiumGltfReader::decodeEmbeddedImages");
     for (Image& image : model.images) {
       // Ignore external images for now.
       if (image.uri) {
@@ -237,7 +238,7 @@ void postprocess(
 
       if (bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
-        readModel.warnings.emplace_back(
+        readGltf.warnings.emplace_back(
             "Image bufferView's byte offset is " +
             std::to_string(bufferView.byteOffset) + " and the byteLength is " +
             std::to_string(bufferView.byteLength) + ", the result is " +
@@ -251,30 +252,31 @@ void postprocess(
       const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
-      ImageReaderResult imageResult = reader.readImage(bufferViewSpan);
-      readModel.warnings.insert(
-          readModel.warnings.end(),
+      ImageReaderResult imageResult =
+          GltfReader::readImage(bufferViewSpan, options.ktx2TranscodeTargets);
+      readGltf.warnings.insert(
+          readGltf.warnings.end(),
           imageResult.warnings.begin(),
           imageResult.warnings.end());
-      readModel.errors.insert(
-          readModel.errors.end(),
+      readGltf.errors.insert(
+          readGltf.errors.end(),
           imageResult.errors.begin(),
           imageResult.errors.end());
       if (imageResult.image) {
         image.cesium = std::move(imageResult.image.value());
       } else {
         if (image.mimeType) {
-          readModel.errors.emplace_back(
+          readGltf.errors.emplace_back(
               "Declared image MIME Type: " + image.mimeType.value());
         } else {
-          readModel.errors.emplace_back("Image does not declare a MIME Type");
+          readGltf.errors.emplace_back("Image does not declare a MIME Type");
         }
       }
     }
   }
 
   if (options.decodeDraco) {
-    decodeDraco(readModel);
+    decodeDraco(readGltf);
   }
 }
 
@@ -291,14 +293,14 @@ GltfReader::getExtensions() const {
   return this->_context;
 }
 
-ModelReaderResult GltfReader::readModel(
+GltfReaderResult GltfReader::readGltf(
     const gsl::span<const std::byte>& data,
-    const ReadModelOptions& options) const {
+    const GltfReaderOptions& options) const {
 
   const CesiumJsonReader::ExtensionReaderContext& context =
       this->getExtensions();
-  ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(context, data)
-                                                : readJsonModel(context, data);
+  GltfReaderResult result = isBinaryGltf(data) ? readBinaryGltf(context, data)
+                                               : readJsonGltf(context, data);
 
   if (result.model) {
     postprocess(*this, result, options);
@@ -308,12 +310,13 @@ ModelReaderResult GltfReader::readModel(
 }
 
 /*static*/
-Future<ModelReaderResult> GltfReader::resolveExternalData(
+Future<GltfReaderResult> GltfReader::resolveExternalData(
     AsyncSystem asyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,
     std::shared_ptr<IAssetAccessor> pAssetAccessor,
-    ModelReaderResult&& result) {
+    const GltfReaderOptions& options,
+    GltfReaderResult&& result) {
 
   // TODO: Can we avoid this copy conversion?
   std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
@@ -341,7 +344,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  auto pResult = std::make_unique<ModelReaderResult>(std::move(result));
+  auto pResult = std::make_unique<GltfReaderResult>(std::move(result));
 
   struct ExternalBufferLoadResult {
     bool success = false;
@@ -359,10 +362,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->requestAsset(
-                  asyncSystem,
-                  Uri::resolve(baseUrl, *buffer.uri),
-                  tHeaders)
+              ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
               .thenInWorkerThread(
                   [pBuffer =
                        &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
@@ -387,12 +387,11 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->requestAsset(
-                  asyncSystem,
-                  Uri::resolve(baseUrl, *image.uri),
-                  tHeaders)
+              ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
               .thenInWorkerThread(
-                  [pImage = &image](std::shared_ptr<IAssetRequest>&& pRequest) {
+                  [pImage = &image,
+                   ktx2TranscodeTargets = options.ktx2TranscodeTargets](
+                      std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
 
                     std::string imageUri = *pImage->uri;
@@ -401,7 +400,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                       pImage->uri = std::nullopt;
 
                       ImageReaderResult imageResult =
-                          readImage(pResponse->data());
+                          readImage(pResponse->data(), ktx2TranscodeTargets);
                       if (imageResult.image) {
                         pImage->cesium = std::move(*imageResult.image);
                         return ExternalBufferLoadResult{true, imageUri};
@@ -428,44 +427,215 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
           });
 }
 
+bool isKtx(const gsl::span<const std::byte>& data) {
+  const size_t ktxMagicByteLength = 12;
+  if (data.size() < ktxMagicByteLength) {
+    return false;
+  }
+
+  const uint8_t ktxMagic[ktxMagicByteLength] =
+      {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
+
+  return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
+}
+
 /*static*/
-ImageReaderResult
-GltfReader::readImage(const gsl::span<const std::byte>& data) {
+ImageReaderResult GltfReader::readImage(
+    const gsl::span<const std::byte>& data,
+    const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
   CESIUM_TRACE("CesiumGltfReader::readImage");
 
   ImageReaderResult result;
 
   result.image.emplace();
-  CesiumGltf::ImageCesium& image = result.image.value();
+  ImageCesium& image = result.image.value();
 
-  image.bytesPerChannel = 1;
-  image.channels = 4;
+  if (isKtx(data)) {
+    ktxTexture2* pTexture = nullptr;
+    KTX_error_code errorCode;
 
-  int channelsInFile;
-  stbi_uc* pImage = stbi_load_from_memory(
-      reinterpret_cast<const stbi_uc*>(data.data()),
-      static_cast<int>(data.size()),
-      &image.width,
-      &image.height,
-      &channelsInFile,
-      image.channels);
-  if (pImage) {
-    CESIUM_TRACE(
-        "copy image " + std::to_string(image.width) + "x" +
-        std::to_string(image.height) + "x" + std::to_string(image.channels) +
-        "x" + std::to_string(image.bytesPerChannel));
-    // std::uint8_t is not implicitly convertible to std::byte, so we must use
-    // reinterpret_cast to (safely) force the conversion.
-    const auto lastByte =
-        image.width * image.height * image.channels * image.bytesPerChannel;
-    image.pixelData.resize(static_cast<std::size_t>(lastByte));
-    std::uint8_t* u8Pointer =
-        reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-    std::copy(pImage, pImage + lastByte, u8Pointer);
-    stbi_image_free(pImage);
-  } else {
+    errorCode = ktxTexture2_CreateFromMemory(
+        reinterpret_cast<const std::uint8_t*>(data.data()),
+        data.size(),
+        KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+        &pTexture);
+
+    if (errorCode == KTX_SUCCESS) {
+      if (ktxTexture2_NeedsTranscoding(pTexture)) {
+
+        CESIUM_TRACE("Transcode KTXv2");
+
+        image.channels =
+            static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
+        GpuCompressedPixelFormat transcodeTargetFormat =
+            GpuCompressedPixelFormat::NONE;
+
+        if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGBA;
+          }
+        } else {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGBA;
+          }
+        }
+
+        ktx_transcode_fmt_e transcodeTargetFormat_ = KTX_TTF_RGBA32;
+        switch (transcodeTargetFormat) {
+        case GpuCompressedPixelFormat::ETC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::ETC2_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::BC3_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC4_R:
+          transcodeTargetFormat_ = KTX_TTF_BC4_R;
+          break;
+        case GpuCompressedPixelFormat::BC5_RG:
+          transcodeTargetFormat_ = KTX_TTF_BC5_RG;
+          break;
+        case GpuCompressedPixelFormat::BC7_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_R11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_RG11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
+          break;
+        // case NONE:
+        default:
+          transcodeTargetFormat_ = KTX_TTF_RGBA32;
+          break;
+        };
+
+        errorCode =
+            ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
+        if (errorCode == KTX_SUCCESS) {
+          image.compressedPixelFormat = transcodeTargetFormat;
+          image.width = static_cast<int32_t>(pTexture->baseWidth);
+          image.height = static_cast<int32_t>(pTexture->baseHeight);
+
+          if (transcodeTargetFormat == GpuCompressedPixelFormat::NONE) {
+            // We fully decompressed the texture in this case.
+            image.bytesPerChannel = 1;
+            image.channels = 4;
+          }
+
+          // Copy over the positions of each mip within the buffer.
+          image.mipPositions.resize(pTexture->numLevels);
+          for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
+            ktx_size_t imageOffset;
+            ktxTexture_GetImageOffset(
+                ktxTexture(pTexture),
+                level,
+                0,
+                0,
+                &imageOffset);
+            ktx_size_t imageSize =
+                ktxTexture_GetImageSize(ktxTexture(pTexture), level);
+
+            image.mipPositions[level] = {imageOffset, imageSize};
+          }
+
+          // Copy over the entire buffer, including all mips.
+          ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
+          ktx_size_t pixelDataSize =
+              ktxTexture_GetDataSize(ktxTexture(pTexture));
+
+          image.pixelData.resize(pixelDataSize);
+          std::uint8_t* u8Pointer =
+              reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+          std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
+
+          ktxTexture_Destroy(ktxTexture(pTexture));
+
+          return result;
+        }
+      }
+    }
+
     result.image.reset();
-    result.errors.emplace_back(stbi_failure_reason());
+    result.errors.emplace_back("KTX2 loading failed");
+
+    return result;
+  }
+
+  {
+    CESIUM_TRACE("Decode JPG / PNG");
+
+    image.bytesPerChannel = 1;
+    image.channels = 4;
+
+    int channelsInFile;
+    stbi_uc* pImage = stbi_load_from_memory(
+        reinterpret_cast<const stbi_uc*>(data.data()),
+        static_cast<int>(data.size()),
+        &image.width,
+        &image.height,
+        &channelsInFile,
+        image.channels);
+    if (pImage) {
+      CESIUM_TRACE(
+          "copy image " + std::to_string(image.width) + "x" +
+          std::to_string(image.height) + "x" + std::to_string(image.channels) +
+          "x" + std::to_string(image.bytesPerChannel));
+      // std::uint8_t is not implicitly convertible to std::byte, so we must use
+      // reinterpret_cast to (safely) force the conversion.
+      const auto lastByte =
+          image.width * image.height * image.channels * image.bytesPerChannel;
+      image.pixelData.resize(static_cast<std::size_t>(lastByte));
+      std::uint8_t* u8Pointer =
+          reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+      std::copy(pImage, pImage + lastByte, u8Pointer);
+      stbi_image_free(pImage);
+    } else {
+      result.image.reset();
+      result.errors.emplace_back(stbi_failure_reason());
+    }
   }
 
   return result;

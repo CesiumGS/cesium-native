@@ -53,12 +53,15 @@ public:
    * @param ionAccessToken The Cesium ion access token authorizing access to the
    * asset.
    * @param options Additional options for the tileset.
+   * @param ionAssetEndpointUrl The URL of the ion asset endpoint. Defaults
+   * to Cesium ion but a custom endpoint can be specified.
    */
   Tileset(
       const TilesetExternals& externals,
       uint32_t ionAssetID,
       const std::string& ionAccessToken,
-      const TilesetOptions& options = TilesetOptions());
+      const TilesetOptions& options = TilesetOptions(),
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
    * @brief Destroys this tileset.
@@ -345,53 +348,6 @@ private:
   CesiumAsync::Future<void>
   _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
-  struct LoadResult {
-    std::unique_ptr<TileContext> pContext;
-    std::unique_ptr<Tile> pRootTile;
-    bool supportsRasterOverlays;
-  };
-
-  /**
-   * @brief Handles the response that was received for an tileset.json request.
-   *
-   * This function is supposed to be called on the main thread.
-   *
-   * It the response for the given request consists of a valid tileset JSON,
-   * then {@link createTile} or {@link _createTerrainTile} will be called.
-   * Otherwise, and error message will be printed and the root tile of the
-   * return value will be `nullptr`.
-   *
-   * @param pRequest The request for which the response was received.
-   * @return The LoadResult structure
-   */
-  static LoadResult _handleTilesetResponse(
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
-      std::unique_ptr<TileContext>&& pContext,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      bool useWaterMask);
-
-  CesiumAsync::Future<void> _loadTilesetJson(
-      const std::string& url,
-      const std::vector<std::pair<std::string, std::string>>& headers =
-          std::vector<std::pair<std::string, std::string>>(),
-      std::unique_ptr<TileContext>&& pContext = nullptr);
-
-  static void _createTile(
-      Tile& tile,
-      std::vector<std::unique_ptr<TileContext>>& newContexts,
-      const rapidjson::Value& tileJson,
-      const glm::dmat4& parentTransform,
-      TileRefine parentRefine,
-      const TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger);
-  static void _createTerrainTile(
-      Tile& tile,
-      const rapidjson::Value& layerJson,
-      TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      bool useWaterMask);
-  FailedTileAction _onIonTileFailed(Tile& failedTile);
-
   /**
    * @brief Handles a Cesium ion response to refreshing a token, retrying tiles
    * that previously failed due to token expiration.
@@ -536,7 +492,6 @@ private:
   void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
-  std::string getResolvedSubtreeUrl(const Tile& tile) const;
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
@@ -552,6 +507,7 @@ private:
   std::optional<uint32_t> _ionAssetID;
   std::optional<std::string> _ionAccessToken;
   bool _isRefreshingIonToken;
+  std::optional<std::string> _ionAssetEndpointUrl;
 
   TilesetOptions _options;
 
@@ -646,15 +602,21 @@ private:
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
-  void loadSubtree(const SubtreeLoadRecord& loadRecord);
   void addSubtreeToLoadQueue(
       Tile& tile,
       const ImplicitTraversalInfo& implicitInfo,
       double loadPriority);
   void processSubtreeQueue();
 
+  void reportError(TilesetLoadFailureDetails&& errorDetails);
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
+
+  class LoadIonAssetEndpoint;
+  class LoadTilesetDotJson;
+  class LoadTileFromJson;
+  class LoadSubtree;
 };
 
 } // namespace Cesium3DTilesSelection

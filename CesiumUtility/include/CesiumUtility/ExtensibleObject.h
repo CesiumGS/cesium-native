@@ -14,6 +14,17 @@ namespace CesiumUtility {
  */
 struct CESIUMUTILITY_API ExtensibleObject {
   /**
+   * @brief Checks if an extension exists given its static type.
+   *
+   * @tparam T The type of the extension.
+   * @return A boolean indicating whether the extension exists.
+   */
+  template <typename T> bool hasExtension() const noexcept {
+    auto it = this->extensions.find(T::ExtensionName);
+    return it != this->extensions.end();
+  }
+
+  /**
    * @brief Gets an extension given its static type.
    *
    * @tparam T The type of the extension.

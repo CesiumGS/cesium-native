@@ -33,6 +33,16 @@ struct CESIUM3DTILESWRITER_API TilesetWriterResult {
 };
 
 /**
+ * @brief Options for how to write a tileset.
+ */
+struct CESIUM3DTILESWRITER_API TilesetWriterOptions {
+  /**
+   * @brief If the tileset JSON should be pretty printed.
+   */
+  bool prettyPrint = false;
+};
+
+/**
  * @brief Writes tilesets.
  */
 class CESIUM3DTILESWRITER_API TilesetWriter {
@@ -53,13 +63,16 @@ public:
   const CesiumJsonWriter::ExtensionWriterContext& getExtensions() const;
 
   /**
-   * @brief Serializes the provided tileset object into a byte vector.
+   * @brief Serializes the provided tileset object into a byte vector using the
+   * provided flags to convert.
    *
    * @param tileset The tileset.
    * @param options Options for how to write the tileset.
    * @return The result of writing the tileset.
    */
-  TilesetWriterResult writeTileset(const Cesium3DTiles::Tileset& tileset) const;
+  TilesetWriterResult writeTileset(
+      const Cesium3DTiles::Tileset& tileset,
+      const TilesetWriterOptions& options = TilesetWriterOptions()) const;
 
 private:
   CesiumJsonWriter::ExtensionWriterContext _context;

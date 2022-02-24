@@ -8,6 +8,7 @@
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -71,9 +72,10 @@ rapidjson::Document parseFeatureTableJsonData(
   if (rtcIt != document.MemberEnd() && rtcIt->value.IsArray() &&
       rtcIt->value.Size() == 3 && rtcIt->value[0].IsNumber() &&
       rtcIt->value[1].IsNumber() && rtcIt->value[2].IsNumber()) {
-    // Add the RTC_CENTER value to the glTF itself.
+    // Add the RTC_CENTER value to the glTF as a CESIUM_RTC extension.
     rapidjson::Value& rtcValue = rtcIt->value;
-    gltf.extras["RTC_CENTER"] = {
+    auto& cesiumRTC = gltf.addExtension<CesiumGltf::ExtensionCesiumRTC>();
+    cesiumRTC.center = {
         rtcValue[0].GetDouble(),
         rtcValue[1].GetDouble(),
         rtcValue[2].GetDouble()};
@@ -189,7 +191,8 @@ Batched3DModelContent::load(const TileContentLoadInput& input) {
              url,
              headers,
              pAssetAccessor,
-             glbData)
+             glbData,
+             input.contentOptions)
       .thenInWorkerThread([header = std::move(header),
                            headerLength,
                            pLogger,

@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
+#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
@@ -134,5 +135,18 @@ void RasterOverlay::destroySafely(
   if (!pTileProvider || pTileProvider->getNumberOfTilesLoading() == 0) {
     // No tile provider or no tiles loading, so it's safe to delete!
     this->_pSelf.reset();
+  }
+}
+
+void RasterOverlay::reportError(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    RasterOverlayLoadFailureDetails&& errorDetails) {
+  SPDLOG_LOGGER_ERROR(pLogger, errorDetails.message);
+  if (this->getOptions().loadErrorCallback) {
+    asyncSystem.runInMainThread(
+        [this, errorDetails = std::move(errorDetails)]() mutable {
+          this->getOptions().loadErrorCallback(std::move(errorDetails));
+        });
   }
 }

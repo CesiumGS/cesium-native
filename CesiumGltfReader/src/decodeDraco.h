@@ -1,7 +1,7 @@
 #pragma once
 
 namespace CesiumGltfReader {
-struct ModelReaderResult;
+struct GltfReaderResult;
 
-void decodeDraco(ModelReaderResult& readModel);
+void decodeDraco(GltfReaderResult& readGltf);
 } // namespace CesiumGltfReader
