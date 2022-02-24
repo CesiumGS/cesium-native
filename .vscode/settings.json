@@ -108,6 +108,7 @@
       "charconv": "cpp",
       "format": "cpp",
       "coroutine": "cpp",
+      "*.idl": "cpp",
       "assert": "cpp",
       "cfenv": "cpp",
       "ktxint.h": "c",
