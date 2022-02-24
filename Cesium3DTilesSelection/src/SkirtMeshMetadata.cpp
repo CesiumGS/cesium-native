@@ -20,11 +20,12 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
   const JsonValue& gltfSkirtMeshMetadata = skirtIt->second;
   const auto* pNoSkirtRange =
       gltfSkirtMeshMetadata.getValuePtrForKey<JsonValue::Array>("noSkirtRange");
-  if (!pNoSkirtRange || pNoSkirtRange->size() != 2) {
+  if (!pNoSkirtRange || pNoSkirtRange->size() != 4) {
     return std::nullopt;
   }
 
-  if (!(*pNoSkirtRange)[0].isNumber() || !(*pNoSkirtRange)[1].isNumber()) {
+  if (!(*pNoSkirtRange)[0].isNumber() || !(*pNoSkirtRange)[1].isNumber() ||
+      !(*pNoSkirtRange)[2].isNumber() || !(*pNoSkirtRange)[3].isNumber()) {
     return std::nullopt;
   }
 
@@ -32,14 +33,23 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
       (*pNoSkirtRange)[0].getSafeNumberOrDefault<double>(-1.0);
   const double noSkirtIndicesCount =
       (*pNoSkirtRange)[1].getSafeNumberOrDefault<double>(-1.0);
+  const double noSkirtVerticesBegin =
+      (*pNoSkirtRange)[0].getSafeNumberOrDefault<double>(-1.0);
+  const double noSkirtVerticesCount =
+      (*pNoSkirtRange)[1].getSafeNumberOrDefault<double>(-1.0);
 
-  if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0) {
+  if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0 ||
+      noSkirtVerticesBegin < 0.0 || noSkirtVerticesCount < 0.0) {
     return std::nullopt;
   }
 
   skirtMeshMetadata.noSkirtIndicesBegin =
       static_cast<uint32_t>(noSkirtIndicesBegin);
   skirtMeshMetadata.noSkirtIndicesCount =
+      static_cast<uint32_t>(noSkirtIndicesCount);
+  skirtMeshMetadata.noSkirtVerticesBegin =
+      static_cast<uint32_t>(noSkirtIndicesBegin);
+  skirtMeshMetadata.noSkirtVerticesCount =
       static_cast<uint32_t>(noSkirtIndicesCount);
 
   const auto* pMeshCenter =
@@ -90,7 +100,9 @@ JsonValue::Object SkirtMeshMetadata::createGltfExtras(
            {"noSkirtRange",
             JsonValue::Array{
                 skirtMeshMetadata.noSkirtIndicesBegin,
-                skirtMeshMetadata.noSkirtIndicesCount}},
+                skirtMeshMetadata.noSkirtIndicesCount,
+                skirtMeshMetadata.noSkirtVerticesBegin,
+                skirtMeshMetadata.noSkirtVerticesCount}},
            {"meshCenter",
             JsonValue::Array{
                 skirtMeshMetadata.meshCenter.x,
