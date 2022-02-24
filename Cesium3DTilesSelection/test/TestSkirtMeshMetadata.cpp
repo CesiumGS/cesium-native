@@ -75,7 +75,7 @@ TEST_CASE("Test converting skirt mesh metadata to gltf extras") {
 TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
   // mock gltf extras for skirt mesh metadata
   JsonValue::Object gltfSkirtMeshMetadata = {
-      {"noSkirtRange", JsonValue::Array{0, 12}},
+      {"noSkirtRange", JsonValue::Array{0, 12, 24, 48}},
       {"meshCenter", JsonValue::Array{1.0, 2.0, 3.0}},
       {"skirtWestHeight", 12.4},
       {"skirtSouthHeight", 10.0},
@@ -90,6 +90,8 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
 
     REQUIRE(skirtMeshMetadata.noSkirtIndicesBegin == 0);
     REQUIRE(skirtMeshMetadata.noSkirtIndicesCount == 12);
+    REQUIRE(skirtMeshMetadata.noSkirtVerticesBegin == 24);
+    REQUIRE(skirtMeshMetadata.noSkirtVerticesCount == 48);
     REQUIRE(Math::equalsEpsilon(
         skirtMeshMetadata.meshCenter.x,
         1.0,
