@@ -1090,6 +1090,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   SkirtMeshMetadata skirtMeshMetadata;
   skirtMeshMetadata.noSkirtIndicesBegin = 0;
   skirtMeshMetadata.noSkirtIndicesCount = indicesCount;
+  skirtMeshMetadata.noSkirtVerticesBegin = 0;
+  skirtMeshMetadata.noSkirtVerticesCount = vertexCount;
   skirtMeshMetadata.meshCenter = center;
   skirtMeshMetadata.skirtWestHeight = skirtHeight;
   skirtMeshMetadata.skirtSouthHeight = skirtHeight;

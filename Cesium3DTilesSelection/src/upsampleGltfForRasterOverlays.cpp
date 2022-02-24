@@ -643,6 +643,9 @@ static bool upsamplePrimitiveForRasterOverlays(
     skirtMeshMetadata->noSkirtIndicesBegin = 0;
     skirtMeshMetadata->noSkirtIndicesCount =
         static_cast<uint32_t>(indices.size());
+    skirtMeshMetadata->noSkirtVerticesBegin = 0;
+    skirtMeshMetadata->noSkirtVerticesCount =
+        uint32_t(newVertexFloats.size() / size_t(vertexSizeFloats));
     skirtMeshMetadata->meshCenter = parentSkirtMeshMetadata->meshCenter;
     addSkirts(
         newVertexFloats,
