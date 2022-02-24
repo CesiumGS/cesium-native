@@ -395,8 +395,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
         int64_t vertexBegin, vertexEnd;
         if (skirtMeshMetadata.has_value()) {
           vertexBegin = skirtMeshMetadata->noSkirtVerticesBegin;
-          vertexEnd = skirtMeshMetadata->noSkirtIndicesBegin +
-                      skirtMeshMetadata->noSkirtIndicesCount;
+          vertexEnd = skirtMeshMetadata->noSkirtVerticesBegin +
+                      skirtMeshMetadata->noSkirtVerticesCount;
         } else {
           vertexBegin = 0;
           vertexEnd = positionView.size();

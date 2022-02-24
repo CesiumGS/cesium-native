@@ -34,9 +34,9 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
   const double noSkirtIndicesCount =
       (*pNoSkirtRange)[1].getSafeNumberOrDefault<double>(-1.0);
   const double noSkirtVerticesBegin =
-      (*pNoSkirtRange)[0].getSafeNumberOrDefault<double>(-1.0);
+      (*pNoSkirtRange)[2].getSafeNumberOrDefault<double>(-1.0);
   const double noSkirtVerticesCount =
-      (*pNoSkirtRange)[1].getSafeNumberOrDefault<double>(-1.0);
+      (*pNoSkirtRange)[3].getSafeNumberOrDefault<double>(-1.0);
 
   if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0 ||
       noSkirtVerticesBegin < 0.0 || noSkirtVerticesCount < 0.0) {
@@ -48,9 +48,9 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
   skirtMeshMetadata.noSkirtIndicesCount =
       static_cast<uint32_t>(noSkirtIndicesCount);
   skirtMeshMetadata.noSkirtVerticesBegin =
-      static_cast<uint32_t>(noSkirtIndicesBegin);
+      static_cast<uint32_t>(noSkirtVerticesBegin);
   skirtMeshMetadata.noSkirtVerticesCount =
-      static_cast<uint32_t>(noSkirtIndicesCount);
+      static_cast<uint32_t>(noSkirtVerticesCount);
 
   const auto* pMeshCenter =
       gltfSkirtMeshMetadata.getValuePtrForKey<JsonValue::Array>("meshCenter");
