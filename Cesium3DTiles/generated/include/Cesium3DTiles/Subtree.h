@@ -51,8 +51,8 @@ struct CESIUM3DTILES_API Subtree final
   /**
    * @brief An array of content availability objects. If the tile has a single
    * content this array will have one element; if the tile has multiple contents
-   * - as supported by EXT_multiple_contents and 3D Tiles 1.1 - this array will
-   * have multiple elements.
+   * - as supported by 3DTILES_multiple_contents and 3D Tiles 1.1 - this array
+   * will have multiple elements.
    */
   std::vector<Cesium3DTiles::Availability> contentAvailability;
 

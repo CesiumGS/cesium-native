@@ -104,19 +104,17 @@ struct CESIUM3DTILES_API ClassProperty final
   std::optional<std::string> enumType;
 
   /**
-   * @brief The number of elements in the property. When `count` is greater than
-   * 1 the property is a fixed-length array of `count` elements. When `count` is
-   * 1 the property is a single element. Only applicable when `hasFixedCount` is
-   * true.
+   * @brief Whether the property is an array. When `count` is defined the
+   * property is a fixed-length array. Otherwise the property is a
+   * variable-length array.
    */
-  int64_t count = 1;
+  bool array = false;
 
   /**
-   * @brief When true, indicates the property has a fixed number of elements
-   * (see `count`). When false, indicates that the property is a variable-length
-   * array.
+   * @brief The number of array elements. May only be defined when `array` is
+   * true.
    */
-  bool hasFixedCount = true;
+  std::optional<int64_t> count;
 
   /**
    * @brief Specifies whether integer values are normalized. Only applicable to

@@ -794,14 +794,14 @@ void writeJson(
     writeJson(obj.enumType, jsonWriter, context);
   }
 
-  if (obj.count != 1) {
-    jsonWriter.Key("count");
-    writeJson(obj.count, jsonWriter, context);
+  if (obj.array != false) {
+    jsonWriter.Key("array");
+    writeJson(obj.array, jsonWriter, context);
   }
 
-  if (obj.hasFixedCount != true) {
-    jsonWriter.Key("hasFixedCount");
-    writeJson(obj.hasFixedCount, jsonWriter, context);
+  if (obj.count.has_value()) {
+    jsonWriter.Key("count");
+    writeJson(obj.count, jsonWriter, context);
   }
 
   if (obj.normalized != false) {

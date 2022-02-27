@@ -1101,8 +1101,8 @@ ClassPropertyJsonHandler::ClassPropertyJsonHandler(
       _type(),
       _componentType(),
       _enumType(),
+      _array(),
       _count(),
-      _hasFixedCount(),
       _normalized(),
       _offset(),
       _scale(),
@@ -1146,10 +1146,10 @@ ClassPropertyJsonHandler::readObjectKeyClassProperty(
     return property("componentType", this->_componentType, o.componentType);
   if ("enumType"s == str)
     return property("enumType", this->_enumType, o.enumType);
+  if ("array"s == str)
+    return property("array", this->_array, o.array);
   if ("count"s == str)
     return property("count", this->_count, o.count);
-  if ("hasFixedCount"s == str)
-    return property("hasFixedCount", this->_hasFixedCount, o.hasFixedCount);
   if ("normalized"s == str)
     return property("normalized", this->_normalized, o.normalized);
   if ("offset"s == str)

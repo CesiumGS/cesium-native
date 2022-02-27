@@ -23,7 +23,7 @@ struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
    * relative to the file containing the buffer JSON. `uri` is required when
    * using the JSON subtree format and not required when using the binary
    * subtree format - when omitted the buffer refers to the binary chunk of the
-   * subtree file.
+   * subtree file. Data URIs are not allowed.
    */
   std::optional<std::string> uri;
 

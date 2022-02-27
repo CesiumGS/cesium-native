@@ -39,8 +39,8 @@ private:
   CesiumJsonReader::StringJsonHandler _type;
   CesiumJsonReader::StringJsonHandler _componentType;
   CesiumJsonReader::StringJsonHandler _enumType;
+  CesiumJsonReader::BoolJsonHandler _array;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-  CesiumJsonReader::BoolJsonHandler _hasFixedCount;
   CesiumJsonReader::BoolJsonHandler _normalized;
   CesiumJsonReader::JsonObjectJsonHandler _offset;
   CesiumJsonReader::JsonObjectJsonHandler _scale;
