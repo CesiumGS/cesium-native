@@ -55,12 +55,6 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
       CesiumGltf::MeshPrimitive,
       ExtensionKhrDracoMeshCompressionJsonWriter>();
   context.registerExtension<
-      CesiumGltf::Texture,
-      ExtensionKhrTextureBasisuJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::Node,
-      ExtensionExtMeshGpuInstancingJsonWriter>();
-  context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeExtInstanceFeaturesJsonWriter>();
   context.registerExtension<
@@ -75,5 +69,8 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Texture,
+      ExtensionKhrTextureBasisuJsonWriter>();
 }
 } // namespace CesiumGltfWriter

@@ -54,12 +54,6 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       CesiumGltf::MeshPrimitive,
       ExtensionKhrDracoMeshCompressionJsonHandler>();
   context.registerExtension<
-      CesiumGltf::Texture,
-      ExtensionKhrTextureBasisuJsonHandler>();
-  context.registerExtension<
-      CesiumGltf::Node,
-      ExtensionExtMeshGpuInstancingJsonHandler>();
-  context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeExtInstanceFeaturesJsonHandler>();
   context.registerExtension<
@@ -74,5 +68,8 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Texture,
+      ExtensionKhrTextureBasisuJsonHandler>();
 }
 } // namespace CesiumGltfReader

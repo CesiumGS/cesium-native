@@ -187,20 +187,6 @@
       "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json"
     },
     {
-      "extensionName": "KHR_texture_basisu",
-      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
-      "attachTo": [
-        "texture"
-      ]
-    },
-    {
-      "extensionName": "EXT_mesh_gpu_instancing",
-      "schema": "Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json",
-      "attachTo": [
-        "node"
-      ]
-    },
-    {
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
     },
@@ -244,6 +230,13 @@
       "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
       "attachTo": [
         "material"
+      ]
+    },
+    {
+      "extensionName": "KHR_texture_basisu",
+      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
+      "attachTo": [
+        "texture"
       ]
     }
   ]
