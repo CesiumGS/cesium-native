@@ -616,26 +616,40 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("min");
-  writeJson(obj.min, jsonWriter, context);
+  if (obj.min.has_value()) {
+    jsonWriter.Key("min");
+    writeJson(obj.min, jsonWriter, context);
+  }
 
-  jsonWriter.Key("max");
-  writeJson(obj.max, jsonWriter, context);
+  if (obj.max.has_value()) {
+    jsonWriter.Key("max");
+    writeJson(obj.max, jsonWriter, context);
+  }
 
-  jsonWriter.Key("mean");
-  writeJson(obj.mean, jsonWriter, context);
+  if (obj.mean.has_value()) {
+    jsonWriter.Key("mean");
+    writeJson(obj.mean, jsonWriter, context);
+  }
 
-  jsonWriter.Key("median");
-  writeJson(obj.median, jsonWriter, context);
+  if (obj.median.has_value()) {
+    jsonWriter.Key("median");
+    writeJson(obj.median, jsonWriter, context);
+  }
 
-  jsonWriter.Key("standardDeviation");
-  writeJson(obj.standardDeviation, jsonWriter, context);
+  if (obj.standardDeviation.has_value()) {
+    jsonWriter.Key("standardDeviation");
+    writeJson(obj.standardDeviation, jsonWriter, context);
+  }
 
-  jsonWriter.Key("variance");
-  writeJson(obj.variance, jsonWriter, context);
+  if (obj.variance.has_value()) {
+    jsonWriter.Key("variance");
+    writeJson(obj.variance, jsonWriter, context);
+  }
 
-  jsonWriter.Key("sum");
-  writeJson(obj.sum, jsonWriter, context);
+  if (obj.sum.has_value()) {
+    jsonWriter.Key("sum");
+    writeJson(obj.sum, jsonWriter, context);
+  }
 
   if (!obj.occurrences.empty()) {
     jsonWriter.Key("occurrences");
@@ -809,28 +823,40 @@ void writeJson(
     writeJson(obj.normalized, jsonWriter, context);
   }
 
-  jsonWriter.Key("offset");
-  writeJson(obj.offset, jsonWriter, context);
+  if (obj.offset.has_value()) {
+    jsonWriter.Key("offset");
+    writeJson(obj.offset, jsonWriter, context);
+  }
 
-  jsonWriter.Key("scale");
-  writeJson(obj.scale, jsonWriter, context);
+  if (obj.scale.has_value()) {
+    jsonWriter.Key("scale");
+    writeJson(obj.scale, jsonWriter, context);
+  }
 
-  jsonWriter.Key("max");
-  writeJson(obj.max, jsonWriter, context);
+  if (obj.max.has_value()) {
+    jsonWriter.Key("max");
+    writeJson(obj.max, jsonWriter, context);
+  }
 
-  jsonWriter.Key("min");
-  writeJson(obj.min, jsonWriter, context);
+  if (obj.min.has_value()) {
+    jsonWriter.Key("min");
+    writeJson(obj.min, jsonWriter, context);
+  }
 
   if (obj.required != false) {
     jsonWriter.Key("required");
     writeJson(obj.required, jsonWriter, context);
   }
 
-  jsonWriter.Key("noData");
-  writeJson(obj.noData, jsonWriter, context);
+  if (obj.noData.has_value()) {
+    jsonWriter.Key("noData");
+    writeJson(obj.noData, jsonWriter, context);
+  }
 
-  jsonWriter.Key("default");
-  writeJson(obj.defaultProperty, jsonWriter, context);
+  if (obj.defaultProperty.has_value()) {
+    jsonWriter.Key("default");
+    writeJson(obj.defaultProperty, jsonWriter, context);
+  }
 
   if (obj.semantic.has_value()) {
     jsonWriter.Key("semantic");
@@ -980,17 +1006,25 @@ void writeJson(
     writeJson(obj.stringOffsetType, jsonWriter, context);
   }
 
-  jsonWriter.Key("offset");
-  writeJson(obj.offset, jsonWriter, context);
+  if (obj.offset.has_value()) {
+    jsonWriter.Key("offset");
+    writeJson(obj.offset, jsonWriter, context);
+  }
 
-  jsonWriter.Key("scale");
-  writeJson(obj.scale, jsonWriter, context);
+  if (obj.scale.has_value()) {
+    jsonWriter.Key("scale");
+    writeJson(obj.scale, jsonWriter, context);
+  }
 
-  jsonWriter.Key("max");
-  writeJson(obj.max, jsonWriter, context);
+  if (obj.max.has_value()) {
+    jsonWriter.Key("max");
+    writeJson(obj.max, jsonWriter, context);
+  }
 
-  jsonWriter.Key("min");
-  writeJson(obj.min, jsonWriter, context);
+  if (obj.min.has_value()) {
+    jsonWriter.Key("min");
+    writeJson(obj.min, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 

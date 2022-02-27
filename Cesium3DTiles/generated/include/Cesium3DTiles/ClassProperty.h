@@ -130,13 +130,13 @@ struct CESIUM3DTILES_API ClassProperty final
    * @brief An offset to apply to property values. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types.
    */
-  CesiumUtility::JsonValue offset;
+  std::optional<CesiumUtility::JsonValue> offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types.
    */
-  CesiumUtility::JsonValue scale;
+  std::optional<CesiumUtility::JsonValue> scale;
 
   /**
    * @brief Maximum allowed value for the property. Only applicable to `SCALAR`,
@@ -144,7 +144,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * properties have no effect on the maximum, it always corresponds to the
    * actual value.
    */
-  CesiumUtility::JsonValue max;
+  std::optional<CesiumUtility::JsonValue> max;
 
   /**
    * @brief Minimum allowed value for the property. Only applicable to `SCALAR`,
@@ -152,7 +152,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * properties have no effect on the minimum, it always corresponds to the
    * actual value.
    */
-  CesiumUtility::JsonValue min;
+  std::optional<CesiumUtility::JsonValue> min;
 
   /**
    * @brief If required, the property must be present in every entity conforming
@@ -168,13 +168,13 @@ struct CESIUM3DTILES_API ClassProperty final
    * value — wherever it appears. `BOOLEAN` properties may not specify `noData`
    * values.
    */
-  CesiumUtility::JsonValue noData;
+  std::optional<CesiumUtility::JsonValue> noData;
 
   /**
    * @brief A default value to use when encountering a `noData` value or an
    * omitted property.
    */
-  CesiumUtility::JsonValue defaultProperty;
+  std::optional<CesiumUtility::JsonValue> defaultProperty;
 
   /**
    * @brief An identifier that describes how this property should be

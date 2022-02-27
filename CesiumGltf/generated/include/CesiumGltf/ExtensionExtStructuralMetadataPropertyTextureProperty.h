@@ -8,6 +8,7 @@
 #include <CesiumUtility/JsonValue.h>
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace CesiumGltf {
@@ -32,14 +33,14 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyTextureProperty
    * `VECN`, and `MATN` types. Overrides the class property's `offset` if both
    * are defined.
    */
-  CesiumUtility::JsonValue offset;
+  std::optional<CesiumUtility::JsonValue> offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types. Overrides the class property's `scale` if both
    * are defined.
    */
-  CesiumUtility::JsonValue scale;
+  std::optional<CesiumUtility::JsonValue> scale;
 
   /**
    * @brief Maximum value present in the property values. Only applicable to
@@ -47,7 +48,7 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyTextureProperty
    * properties have no effect on the maximum, it always corresponds to the
    * actual value.
    */
-  CesiumUtility::JsonValue max;
+  std::optional<CesiumUtility::JsonValue> max;
 
   /**
    * @brief Minimum value present in the property values. Only applicable to
@@ -55,6 +56,6 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyTextureProperty
    * properties have no effect on the maximum, it always corresponds to the
    * actual value.
    */
-  CesiumUtility::JsonValue min;
+  std::optional<CesiumUtility::JsonValue> min;
 };
 } // namespace CesiumGltf

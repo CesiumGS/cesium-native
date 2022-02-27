@@ -7,6 +7,7 @@
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <optional>
 #include <string>
 
 namespace CesiumGltf {
@@ -28,13 +29,13 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyAttributeProperty
    * `VECN`, and `MATN` types. Overrides the class property's `offset` if both
    * are defined.
    */
-  CesiumUtility::JsonValue offset;
+  std::optional<CesiumUtility::JsonValue> offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types. Overrides the class property's `scale` if both
    * are defined.
    */
-  CesiumUtility::JsonValue scale;
+  std::optional<CesiumUtility::JsonValue> scale;
 };
 } // namespace CesiumGltf

@@ -7,6 +7,7 @@
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <optional>
 #include <unordered_map>
 
 namespace Cesium3DTiles {
@@ -23,7 +24,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `scale` properties have no effect on the minimum, it always corresponds to
    * the actual value.
    */
-  CesiumUtility::JsonValue min;
+  std::optional<CesiumUtility::JsonValue> min;
 
   /**
    * @brief The maximum property value occurring in the tileset. Only applicable
@@ -31,7 +32,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `scale` properties have no effect on the maximum, it always corresponds to
    * the actual value.
    */
-  CesiumUtility::JsonValue max;
+  std::optional<CesiumUtility::JsonValue> max;
 
   /**
    * @brief The arithmetic mean of property values occurring in the tileset.
@@ -39,7 +40,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `offset`, and `scale` properties have no effect on the mean, it always
    * corresponds to the actual value.
    */
-  CesiumUtility::JsonValue mean;
+  std::optional<CesiumUtility::JsonValue> mean;
 
   /**
    * @brief The median of property values occurring in the tileset. Only
@@ -47,7 +48,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `offset`, and `scale` properties have no effect on the median, it always
    * corresponds to the actual value.
    */
-  CesiumUtility::JsonValue median;
+  std::optional<CesiumUtility::JsonValue> median;
 
   /**
    * @brief The standard deviation of property values occurring in the tileset.
@@ -55,7 +56,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `offset`, and `scale` properties have no effect on the standard deviation,
    * it always corresponds to the actual value.
    */
-  CesiumUtility::JsonValue standardDeviation;
+  std::optional<CesiumUtility::JsonValue> standardDeviation;
 
   /**
    * @brief The variance of property values occurring in the tileset. Only
@@ -63,7 +64,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `offset`, and `scale` properties have no effect on the variance, it always
    * corresponds to the actual value.
    */
-  CesiumUtility::JsonValue variance;
+  std::optional<CesiumUtility::JsonValue> variance;
 
   /**
    * @brief The sum of property values occurring in the tileset. Only applicable
@@ -71,7 +72,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `scale` properties have no effect on the sum, it always corresponds to the
    * actual value.
    */
-  CesiumUtility::JsonValue sum;
+  std::optional<CesiumUtility::JsonValue> sum;
 
   /**
    * @brief A dictionary, where each key corresponds to an enum `name` and each
