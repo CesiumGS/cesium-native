@@ -26,7 +26,9 @@
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesFeatureId.h>
 #include <CesiumGltf/ExtensionExtMeshFeaturesFeatureIdTexture.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
@@ -45,11 +47,9 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltf/ExtensionNodeExtInstanceFeatures.h>
 #include <CesiumGltf/FeatureIDAttribute.h>
 #include <CesiumGltf/FeatureIDTexture.h>
 #include <CesiumGltf/FeatureIDs.h>
@@ -105,12 +105,12 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionNodeExtInstanceFeatures& obj,
+    const CesiumGltf::ExtensionExtInstanceFeatures& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures& obj,
+    const CesiumGltf::ExtensionExtMeshFeatures& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -700,7 +700,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionNodeExtInstanceFeatures& obj,
+    const CesiumGltf::ExtensionExtInstanceFeatures& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -716,7 +716,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures& obj,
+    const CesiumGltf::ExtensionExtMeshFeatures& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2605,15 +2605,15 @@ void ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionNodeExtInstanceFeaturesJsonWriter::write(
-    const CesiumGltf::ExtensionNodeExtInstanceFeatures& obj,
+void ExtensionExtInstanceFeaturesJsonWriter::write(
+    const CesiumGltf::ExtensionExtInstanceFeatures& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionMeshPrimitiveExtMeshFeaturesJsonWriter::write(
-    const CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures& obj,
+void ExtensionExtMeshFeaturesJsonWriter::write(
+    const CesiumGltf::ExtensionExtMeshFeatures& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

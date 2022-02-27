@@ -4,7 +4,7 @@
 
 #include "ExtensionExtMeshFeaturesFeatureIdJsonHandler.h"
 
-#include <CesiumGltf/ExtensionMeshPrimitiveExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
@@ -13,19 +13,19 @@ class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-class ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler
+class ExtensionExtMeshFeaturesJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler,
       public CesiumJsonReader::IExtensionJsonHandler {
 public:
-  using ValueType = CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures;
+  using ValueType = CesiumGltf::ExtensionExtMeshFeatures;
 
   static inline constexpr const char* ExtensionName = "EXT_mesh_features";
 
-  ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler(
+  ExtensionExtMeshFeaturesJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures* pObject);
+      CesiumGltf::ExtensionExtMeshFeatures* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
@@ -80,13 +80,13 @@ public:
   }
 
 protected:
-  IJsonHandler* readObjectKeyExtensionMeshPrimitiveExtMeshFeatures(
+  IJsonHandler* readObjectKeyExtensionExtMeshFeatures(
       const std::string& objectType,
       const std::string_view& str,
-      CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures& o);
+      CesiumGltf::ExtensionExtMeshFeatures& o);
 
 private:
-  CesiumGltf::ExtensionMeshPrimitiveExtMeshFeatures* _pObject = nullptr;
+  CesiumGltf::ExtensionExtMeshFeatures* _pObject = nullptr;
   CesiumJsonReader::DictionaryJsonHandler<
       CesiumGltf::ExtensionExtMeshFeaturesFeatureId,
       ExtensionExtMeshFeaturesFeatureIdJsonHandler>

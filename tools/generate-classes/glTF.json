@@ -95,22 +95,16 @@
       "overrideName": "TextureAccessor"
     },
     "EXT_instance_features glTF Node extension": {
-      "overrideName": "ExtensionNodeExtInstanceFeatures"
+      "overrideName": "ExtensionExtInstanceFeatures"
     },
     "Feature ID in EXT_instance_features": {
       "overrideName": "ExtensionExtInstanceFeaturesFeatureId"
     },
-    "Feature ID Attribute in EXT_instance_features": {
-      "overrideName": "ExtensionExtInstanceFeaturesFeatureIdAttribute"
-    },
     "EXT_mesh_features glTF Mesh Primitive extension": {
-      "overrideName": "ExtensionMeshPrimitiveExtMeshFeatures"
+      "overrideName": "ExtensionExtMeshFeatures"
     },
     "Feature ID in EXT_mesh_features": {
       "overrideName": "ExtensionExtMeshFeaturesFeatureId"
-    },
-    "Feature ID Attribute in EXT_mesh_features": {
-      "overrideName": "ExtensionExtMeshFeaturesFeatureIdAttribute"
     },
     "Feature ID Texture in EXT_mesh_features": {
       "overrideName": "ExtensionExtMeshFeaturesFeatureIdTexture"

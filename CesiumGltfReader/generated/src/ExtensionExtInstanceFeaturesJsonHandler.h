@@ -4,7 +4,7 @@
 
 #include "ExtensionExtInstanceFeaturesFeatureIdJsonHandler.h"
 
-#include <CesiumGltf/ExtensionNodeExtInstanceFeatures.h>
+#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
@@ -13,19 +13,19 @@ class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-class ExtensionNodeExtInstanceFeaturesJsonHandler
+class ExtensionExtInstanceFeaturesJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler,
       public CesiumJsonReader::IExtensionJsonHandler {
 public:
-  using ValueType = CesiumGltf::ExtensionNodeExtInstanceFeatures;
+  using ValueType = CesiumGltf::ExtensionExtInstanceFeatures;
 
   static inline constexpr const char* ExtensionName = "EXT_instance_features";
 
-  ExtensionNodeExtInstanceFeaturesJsonHandler(
+  ExtensionExtInstanceFeaturesJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionNodeExtInstanceFeatures* pObject);
+      CesiumGltf::ExtensionExtInstanceFeatures* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
@@ -80,13 +80,13 @@ public:
   }
 
 protected:
-  IJsonHandler* readObjectKeyExtensionNodeExtInstanceFeatures(
+  IJsonHandler* readObjectKeyExtensionExtInstanceFeatures(
       const std::string& objectType,
       const std::string_view& str,
-      CesiumGltf::ExtensionNodeExtInstanceFeatures& o);
+      CesiumGltf::ExtensionExtInstanceFeatures& o);
 
 private:
-  CesiumGltf::ExtensionNodeExtInstanceFeatures* _pObject = nullptr;
+  CesiumGltf::ExtensionExtInstanceFeatures* _pObject = nullptr;
   CesiumJsonReader::DictionaryJsonHandler<
       CesiumGltf::ExtensionExtInstanceFeaturesFeatureId,
       ExtensionExtInstanceFeaturesFeatureIdJsonHandler>

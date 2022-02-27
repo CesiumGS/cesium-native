@@ -13,10 +13,9 @@ namespace CesiumGltf {
 /**
  * @brief Feature ID sets of a mesh primitive.
  */
-struct CESIUMGLTF_API ExtensionMeshPrimitiveExtMeshFeatures final
+struct CESIUMGLTF_API ExtensionExtMeshFeatures final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionMeshPrimitiveExtMeshFeatures";
+  static inline constexpr const char* TypeName = "ExtensionExtMeshFeatures";
   static inline constexpr const char* ExtensionName = "EXT_mesh_features";
 
   /**

@@ -14,10 +14,9 @@ namespace CesiumGltf {
  * @brief An object describing per-instance feature IDs to be used as indices to
  * property arrays in the property table.
  */
-struct CESIUMGLTF_API ExtensionNodeExtInstanceFeatures final
+struct CESIUMGLTF_API ExtensionExtInstanceFeatures final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionNodeExtInstanceFeatures";
+  static inline constexpr const char* TypeName = "ExtensionExtInstanceFeatures";
   static inline constexpr const char* ExtensionName = "EXT_instance_features";
 
   /**
