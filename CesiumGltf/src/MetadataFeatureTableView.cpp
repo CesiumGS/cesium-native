@@ -124,9 +124,15 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
     return MetadataPropertyViewStatus::InvalidValueBufferIndex;
   }
 
+  // This is technically required for the EXT_feature_metadata spec, but not
+  // necessarily required for EXT_mesh_features. Due to the discrepancy between
+  // the two specs, a lot of EXT_feature_metadata glTFs fail to be 8-byte
+  // aligned. To be forgiving and more compatible, we do not enforce this.
+  /*
   if (pBufferView->byteOffset % 8 != 0) {
     return MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes;
   }
+  */
 
   if (pBufferView->byteOffset + pBufferView->byteLength >
       static_cast<int64_t>(pBuffer->cesium.data.size())) {
@@ -229,7 +235,8 @@ MetadataFeatureTableView::getStringPropertyValues(
       offsetBuffer,
       offsetType,
       0,
-      _pFeatureTable->count);
+      _pFeatureTable->count,
+      classProperty.normalized);
 }
 
 MetadataPropertyView<MetadataArrayView<std::string_view>>
@@ -304,7 +311,8 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
         stringOffsetBuffer,
         offsetType,
         componentCount,
-        _pFeatureTable->count);
+        _pFeatureTable->count,
+        classProperty.normalized);
   }
 
   // dynamic array
@@ -372,6 +380,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
       stringOffsetBuffer,
       offsetType,
       0,
-      _pFeatureTable->count);
+      _pFeatureTable->count,
+      classProperty.normalized);
 }
 } // namespace CesiumGltf

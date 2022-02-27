@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "QuantizedMeshContent.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 
@@ -33,6 +34,21 @@ void TileContentFactory::registerContentType(
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
+void TileContentFactory::registerFileExtension(
+    const std::string& fileExtension,
+    const std::shared_ptr<TileContentLoader>& pLoader) {
+
+  SPDLOG_INFO("Registering file extension {}", fileExtension);
+
+  std::string lowerCaseFileExtension;
+  std::transform(
+      fileExtension.begin(),
+      fileExtension.end(),
+      std::back_inserter(lowerCaseFileExtension),
+      [](char c) noexcept { return static_cast<char>(::tolower(c)); });
+  TileContentFactory::_loadersByFileExtension[lowerCaseFileExtension] = pLoader;
+}
+
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
   const gsl::span<const std::byte>& data = input.pRequest->response()->data();
@@ -50,6 +66,25 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
       TileContentFactory::_loadersByContentType.find(baseContentType);
   if (itContentType != TileContentFactory::_loadersByContentType.end()) {
     return itContentType->second->load(input);
+  }
+
+  std::string_view url = input.pRequest->url();
+  std::string_view urlWithoutQueries = url.substr(0, url.find("?"));
+  size_t extensionPos = urlWithoutQueries.rfind(".");
+  if (extensionPos < urlWithoutQueries.size()) {
+    std::string_view extension = urlWithoutQueries.substr(extensionPos);
+    std::string lowerCaseExtension;
+    std::transform(
+        extension.begin(),
+        extension.end(),
+        std::back_inserter(lowerCaseExtension),
+        [](char c) noexcept { return static_cast<char>(::tolower(c)); });
+
+    auto itExtension =
+        TileContentFactory::_loadersByFileExtension.find(lowerCaseExtension);
+    if (itExtension != TileContentFactory::_loadersByFileExtension.end()) {
+      return itExtension->second->load(input);
+    }
   }
 
   // Determine if this is plausibly a JSON external tileset.
@@ -101,5 +136,6 @@ std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
     TileContentFactory::_loadersByMagic;
 std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
     TileContentFactory::_loadersByContentType;
-
+std::unordered_map<std::string, std::shared_ptr<TileContentLoader>>
+    TileContentFactory::_loadersByFileExtension;
 } // namespace Cesium3DTilesSelection

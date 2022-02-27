@@ -25,6 +25,21 @@
     "CESIUM_RTC": {
       "overrideName": "ExtensionCesiumRTC"
     },
+    "KHR_draco_mesh_compression extension": {
+      "overrideName": "ExtensionKhrDracoMeshCompression"
+    },
+    "KHR_materials_unlit glTF extension": {
+      "overrideName": "ExtensionKhrMaterialsUnlit"
+    },
+    "KHR_texture_basisu glTF extension": {
+      "overrideName": "ExtensionKhrTextureBasisu"
+    },
+    "EXT_mesh_gpu_instancing glTF extension": {
+      "overrideName": "ExtensionExtMeshGpuInstancing"
+    },
+    "EXT_meshopt_compression buffer extension": {
+      "overrideName": "ExtensionBufferExtMeshoptCompression"
+    },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
       "overrideName": "ExtensionCesiumTileEdges"
     },
@@ -159,7 +174,9 @@
     {
       "extensionName": "CESIUM_RTC",
       "schema": "../1.0/Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
-      "attachTo": ["glTF"]
+      "attachTo": [
+        "glTF"
+      ]
     },
     {
       "extensionName": "CESIUM_tile_edges",
@@ -168,6 +185,20 @@
     {
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json"
+    },
+    {
+      "extensionName": "KHR_texture_basisu",
+      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
+      "attachTo": [
+        "texture"
+      ]
+    },
+    {
+      "extensionName": "EXT_mesh_gpu_instancing",
+      "schema": "Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json",
+      "attachTo": [
+        "node"
+      ]
     },
     {
       "extensionName": "EXT_feature_metadata",
@@ -184,7 +215,9 @@
     {
       "extensionName": "EXT_mesh_gpu_instancing",
       "schema": "Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json",
-      "attachTo": ["node"]
+      "attachTo": [
+        "node"
+      ]
     },
     {
       "extensionName": "EXT_meshopt_compression",
@@ -209,7 +242,9 @@
     {
       "extensionName": "KHR_materials_unlit",
       "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
-      "attachTo": ["material"]
+      "attachTo": [
+        "material"
+      ]
     }
   ]
 }
