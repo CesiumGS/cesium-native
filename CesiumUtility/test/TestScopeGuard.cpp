@@ -43,7 +43,7 @@ TEST_CASE("Test release()") {
   int check = 0;
   {
     CesiumUtility::ScopeGuard guard{ExitFunctor{&check}};
-    guard.release();
+    guard.Release();
   }
 
   CHECK(check == 0);

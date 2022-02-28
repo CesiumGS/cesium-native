@@ -4,48 +4,48 @@
 #include <type_traits>
 
 namespace CesiumUtility {
-template <typename ExistFunction> class ScopeGuard {
+template <typename ExitFunction> class ScopeGuard {
 public:
   template <
-      typename ExistFunctionArg,
+      typename ExitFunctionArg,
       typename std::enable_if_t<!std::is_same_v<
-          std::remove_reference_t<std::remove_const_t<ExistFunctionArg>>,
-          ScopeGuard<ExistFunction>>, int> = 0>
-  explicit ScopeGuard(ExistFunctionArg&& existFunction)
-      : _callExistFuncOnDestruct{true},
-        _existFunc{std::forward<ExistFunctionArg>(existFunction)} {}
+          std::remove_reference_t<std::remove_const_t<ExitFunctionArg>>,
+          ScopeGuard<ExitFunction>>, int> = 0>
+  explicit ScopeGuard(ExitFunctionArg&& _exitFunc)
+      : _callExitFuncOnDestruct{true},
+        _exitFunc{std::forward<ExitFunctionArg>(_exitFunc)} {}
 
   ScopeGuard(const ScopeGuard& rhs) = delete;
 
   ScopeGuard(ScopeGuard&& rhs) noexcept
-      : _callExistFuncOnDestruct{rhs._callExistFuncOnDestruct},
-        _existFunc{std::move(rhs._existFunc)} {
-    rhs.release();
+      : _callExitFuncOnDestruct{rhs._callExitFuncOnDestruct},
+        _exitFunc{std::move(rhs._exitFunc)} {
+    rhs.Release();
   }
 
   ScopeGuard& operator=(const ScopeGuard& rhs) = delete;
 
   ScopeGuard& operator=(ScopeGuard&& rhs) noexcept {
     if (&rhs != this) {
-      _callExistFuncOnDestruct = rhs._callExistFuncOnDestruct;
-      _existFunc = std::move(rhs._existFunc);
-      rhs.release();
+      _callExitFuncOnDestruct = rhs._callExitFuncOnDestruct;
+      _exitFunc = std::move(rhs._exitFunc);
+      rhs.Release();
     }
 
     return *this;
   }
 
   ~ScopeGuard() noexcept {
-    if (_callExistFuncOnDestruct) {
-      _existFunc();
+    if (_callExitFuncOnDestruct) {
+      _exitFunc();
     }
   }
 
-  void release() noexcept { _callExistFuncOnDestruct = false; }
+  void Release() noexcept { _callExitFuncOnDestruct = false; }
 
 private:
-  bool _callExistFuncOnDestruct;
-  ExistFunction _existFunc;
+  bool _callExitFuncOnDestruct;
+  ExitFunction _exitFunc;
 };
 
 template <typename ExistFunction>
