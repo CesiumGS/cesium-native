@@ -4,8 +4,21 @@
 #include <utility>
 
 namespace CesiumUtility {
+/**
+ * @brief A utility that will automatically call the lambda function when
+ * exiting a scope.
+ *
+ * @tparam ExitFunction The function type to be called when the guard is out of
+ * scope.
+ */
 template <typename ExitFunction> class ScopeGuard {
 public:
+  /**
+   * @brief Constructor.
+   *
+   * @param ExitFunctionArg The function type to be called when the guard is out
+   * of scope
+   */
   template <
       typename ExitFunctionArg,
       typename std::enable_if_t<
@@ -19,6 +32,10 @@ public:
 
   ScopeGuard(const ScopeGuard& rhs) = delete;
 
+  /**
+   * @brief Move constructor. The rhs will move its lambda to the lhs, and the
+   * rhs will not call its lambda upon exiting a scope
+   */
   ScopeGuard(ScopeGuard&& rhs) noexcept
       : _callExitFuncOnDestruct{rhs._callExitFuncOnDestruct},
         _exitFunc{std::move(rhs._exitFunc)} {
@@ -27,6 +44,10 @@ public:
 
   ScopeGuard& operator=(const ScopeGuard& rhs) = delete;
 
+  /**
+   * @brief Move assignment operator. The rhs will move its lambda to the lhs,
+   * and the rhs will not call its lambda upon exiting a scope
+   */
   ScopeGuard& operator=(ScopeGuard&& rhs) noexcept {
     if (&rhs != this) {
       _callExitFuncOnDestruct = rhs._callExitFuncOnDestruct;
@@ -37,12 +58,20 @@ public:
     return *this;
   }
 
+  /**
+   * @brief Destructor. The guard will execute the lambda function when exiting
+   * a scope if it's not released
+   */
   ~ScopeGuard() noexcept {
     if (_callExitFuncOnDestruct) {
       _exitFunc();
     }
   }
 
+  /**
+   * @brief Upon calling ScopeGuard::Release(), the guard will not execute the
+   * lambda function when exiting a scope
+   */
   void Release() noexcept { _callExitFuncOnDestruct = false; }
 
 private:
