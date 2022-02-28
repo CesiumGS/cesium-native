@@ -1,4 +1,5 @@
 #include <CesiumUtility/ScopeGuard.h>
+
 #include <Catch2/catch.hpp>
 
 namespace {

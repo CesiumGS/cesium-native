@@ -1,16 +1,18 @@
 #pragma once
 
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace CesiumUtility {
 template <typename ExitFunction> class ScopeGuard {
 public:
   template <
       typename ExitFunctionArg,
-      typename std::enable_if_t<!std::is_same_v<
-          std::remove_reference_t<std::remove_const_t<ExitFunctionArg>>,
-          ScopeGuard<ExitFunction>>, int> = 0>
+      typename std::enable_if_t<
+          !std::is_same_v<
+              std::remove_reference_t<std::remove_const_t<ExitFunctionArg>>,
+              ScopeGuard<ExitFunction>>,
+          int> = 0>
   explicit ScopeGuard(ExitFunctionArg&& _exitFunc)
       : _callExitFuncOnDestruct{true},
         _exitFunc{std::forward<ExitFunctionArg>(_exitFunc)} {}
@@ -49,5 +51,5 @@ private:
 };
 
 template <typename ExistFunction>
-ScopeGuard(ExistFunction)->ScopeGuard<ExistFunction>;
+ScopeGuard(ExistFunction) -> ScopeGuard<ExistFunction>;
 } // namespace CesiumUtility

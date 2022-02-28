@@ -18,8 +18,8 @@
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
