@@ -5,6 +5,7 @@
 namespace Cesium3DTilesSelection {
 
 Credit CreditSystem::createCredit(const std::string& html) {
+  std::lock_guard<std::mutex> lock(_lock);
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
@@ -27,7 +28,6 @@ const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
 }
 
 void CreditSystem::addCreditToFrame(Credit credit) {
-  std::lock_guard<std::mutex> lock(_lock);
   // if this credit has already been added to the current frame, there's nothing
   // to do
   if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
