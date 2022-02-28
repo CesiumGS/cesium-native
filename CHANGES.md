@@ -13,6 +13,7 @@
 - Added the auto-generated classes for `KHR_texture_basisu`.
 - Tilesets can now have content with the following extensions: ".gltf", ".glb", and ".terrain".
 - Add ScopeGuard utility to automatically execute function when exiting a scope.
+- Create tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
 
 ##### Fixes :wrench:
 
