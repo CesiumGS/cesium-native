@@ -239,6 +239,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
 void* processNewTileContent(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
     TileContentLoadResult& content,
     bool generateMissingNormalsSmooth,
     CesiumGeometry::Axis gltfUpAxis,
@@ -251,6 +252,10 @@ void* processNewTileContent(
   }
 
   CesiumGltf::Model& model = *content.model;
+
+  if (model.asset.copyright.has_value()) {
+    content.credit = pCreditSystem->createCredit(*model.asset.copyright);
+  }
 
   // TODO The `extras` are currently the only way to
   // pass arbitrary information to the consumer, so the
@@ -393,6 +398,7 @@ void Tile::loadContent() {
           [loadInput = std::move(loadInput),
            asyncSystem = tileset.getAsyncSystem(),
            pLogger = tileset.getExternals().pLogger,
+           pCreditSystem = tileset.getExternals().pCreditSystem,
            pAssetAccessor = tileset.getExternals().pAssetAccessor,
            gltfUpAxis,
            projections = std::move(projections),
@@ -442,6 +448,7 @@ void Tile::loadContent() {
                 // Forward status code to the load result.
                 .thenInWorkerThread([statusCode = pResponse->statusCode(),
                                      loadInput = std::move(loadInput),
+                                     pCreditSystem = pCreditSystem,
                                      gltfUpAxis,
                                      projections = std::move(projections),
                                      generateMissingNormalsSmooth,
@@ -464,6 +471,7 @@ void Tile::loadContent() {
                     pRendererResources = processNewTileContent(
                         pPrepareRendererResources,
                         loadInput.pLogger,
+                        pCreditSystem,
                         *pContent,
                         generateMissingNormalsSmooth,
                         gltfUpAxis,
@@ -968,6 +976,7 @@ void Tile::upsampleParent(
                pTileset->getOptions()
                    .contentOptions.generateMissingNormalsSmooth,
            pLogger = pTileset->getExternals().pLogger,
+           pCreditSystem = pTileset->getExternals().pCreditSystem,
            pPrepareRendererResources =
                pTileset->getExternals().pPrepareRendererResources]() mutable {
             std::unique_ptr<TileContentLoadResult> pContent =
@@ -985,6 +994,7 @@ void Tile::upsampleParent(
             void* pRendererResources = processNewTileContent(
                 pPrepareRendererResources,
                 pLogger,
+                pCreditSystem,
                 *pContent,
                 generateMissingNormalsSmooth,
                 gltfUpAxis,
