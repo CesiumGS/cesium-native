@@ -18,6 +18,7 @@
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
@@ -588,13 +589,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   distances.resize(frustums.size());
   ++this->_nextDistancesVector;
 
-  // Use a unique_ptr to ensure the _nextDistancesVector gets decrements when we
+  // Use a ScopeGuard to ensure the _nextDistancesVector gets decrements when we
   // leave this scope.
-  const auto decrementNextDistancesVector = [this](std::vector<double>*) {
-    --this->_nextDistancesVector;
-  };
-  std::unique_ptr<std::vector<double>, decltype(decrementNextDistancesVector)>
-      autoDecrement(&distances, decrementNextDistancesVector);
+  CesiumUtility::ScopeGuard guard{[this]() { --this->_nextDistancesVector; }};
 
   std::transform(
       frustums.begin(),
