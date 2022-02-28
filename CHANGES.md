@@ -14,6 +14,7 @@
 - Tilesets can now have content with the following extensions: ".gltf", ".glb", and ".terrain".
 - Create tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
 - Add glTF copyright information to the list of credits.
+- Credits are now sorted based on the number of occurrences.
 
 ##### Fixes :wrench:
 
