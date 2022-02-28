@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -91,5 +92,6 @@ private:
   int32_t _currentFrameNumber = 0;
   std::vector<Credit> _creditsToShowThisFrame;
   std::vector<Credit> _creditsToNoLongerShowThisFrame;
+  std::mutex _lock;
 };
 } // namespace Cesium3DTilesSelection

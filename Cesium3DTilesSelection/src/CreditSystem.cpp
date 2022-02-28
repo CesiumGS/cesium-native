@@ -27,6 +27,7 @@ const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
 }
 
 void CreditSystem::addCreditToFrame(Credit credit) {
+  std::lock_guard<std::mutex> lock(_lock);
   // if this credit has already been added to the current frame, there's nothing
   // to do
   if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
