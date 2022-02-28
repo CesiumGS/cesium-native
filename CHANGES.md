@@ -13,6 +13,7 @@
 - Added the auto-generated classes for `KHR_texture_basisu`.
 - Tilesets can now have content with the following extensions: ".gltf", ".glb", and ".terrain".
 - Create tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
+- Add glTF copyright information to the list of credits. 
 
 ##### Fixes :wrench:
 
