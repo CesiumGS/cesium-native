@@ -12,6 +12,7 @@
 - The image API can now also contain pre-computed mipmaps, if they exist. In that case, all the mips will be in the pixel buffer and the delineation between each mip will be described in `ImageCesium::mipPositions`.
 - Added the auto-generated classes for `KHR_texture_basisu`.
 - Tilesets can now have content with the following extensions: ".gltf", ".glb", and ".terrain".
+- Create tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
 
 ##### Fixes :wrench:
 
