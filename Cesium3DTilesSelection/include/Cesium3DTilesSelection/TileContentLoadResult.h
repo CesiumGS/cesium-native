@@ -75,8 +75,8 @@ struct TileContentLoadResult {
   std::optional<CesiumGltf::Model> model{};
 
   /**
- * @brief Contains the copyright information of the glTF model.
- */
+   * @brief Contains the copyright information of the glTF model.
+   */
   std::optional<Cesium3DTilesSelection::Credit> credit{};
 
   /**
