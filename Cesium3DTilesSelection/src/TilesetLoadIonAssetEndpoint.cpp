@@ -210,11 +210,11 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
 
       for (const rapidjson::Value& attribution :
            attributionsIt->value.GetArray()) {
-        AssetEndpointAttribution endpointAttribution;
         const auto html = attribution.FindMember("html");
         if (html != attribution.MemberEnd() && html->value.IsString()) {
+          AssetEndpointAttribution& endpointAttribution =
+              endpoint.attributions.emplace_back();
           endpointAttribution.html = html->value.GetString();
-          endpoint.attributions.push_back(endpointAttribution);
         }
         // TODO: mandate the user show certain credits on screen, as opposed to
         // an expandable panel auto showOnScreen =
@@ -258,7 +258,7 @@ namespace {
  * @param pIonResponse The response
  * @return The access token if successful
  */
-std::optional<std::string> GetNewAccessToken(
+std::optional<std::string> getNewAccessToken(
     const IAssetResponse* pIonResponse,
     const std::shared_ptr<spdlog::logger>& pLogger) {
   const gsl::span<const std::byte> data = pIonResponse->data();
@@ -309,7 +309,7 @@ void Tileset::LoadIonAssetEndpoint::Private::
   bool failed = true;
   if (pIonResponse && pIonResponse->statusCode() >= 200 &&
       pIonResponse->statusCode() < 300) {
-    auto accessToken = GetNewAccessToken(pIonResponse, pLogger);
+    auto accessToken = getNewAccessToken(pIonResponse, pLogger);
     if (accessToken.has_value()) {
       failed = false;
       updateContextWithNewToken(pContext, accessToken.value());
