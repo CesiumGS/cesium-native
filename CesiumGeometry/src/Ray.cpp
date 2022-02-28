@@ -13,7 +13,7 @@ namespace CesiumGeometry {
 Ray::Ray(const glm::dvec3& origin, const glm::dvec3& direction)
     : _origin(origin), _direction(direction) {
   //>>includeStart('debug', pragmas.debug);
-  if (!Math::equalsEpsilon(glm::length(direction), 1.0, Math::EPSILON6)) {
+  if (!Math::equalsEpsilon(glm::length(direction), 1.0, Math::Epsilon6)) {
     throw std::invalid_argument("direction must be normalized.");
   }
   //>>includeEnd('debug');

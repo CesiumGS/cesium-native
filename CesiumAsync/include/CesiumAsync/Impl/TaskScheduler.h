@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace CesiumAsync {
-namespace Impl {
+namespace CesiumImpl {
 
 class TaskScheduler {
 public:
@@ -19,5 +19,5 @@ private:
   std::shared_ptr<ITaskProcessor> _pTaskProcessor;
 };
 
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync
