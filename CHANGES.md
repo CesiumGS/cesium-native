@@ -17,6 +17,7 @@
 ##### Fixes :wrench:
 
 - Fixed bug in finding the compatible type of the array of components in the B3DM Feature Table.
+- Fixed bug where implicit tiles were not receiving the root transform.
 
 ### v0.12.0 - 2022-02-01
 
