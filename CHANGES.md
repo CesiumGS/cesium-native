@@ -1,23 +1,26 @@
 # Change Log
 
-### v0.13.0 - ????
+### v0.13.0 - 2022-03-01
+
+##### Breaking Changes :mega:
+
+- Renamed constants in `CesiumUtility::Math` to use PascalCase instead of SCREAMING_SNAKE_CASE.
 
 ##### Additions :tada:
 
-- Added support for `CESIUM_RTC` glTF extension.
-- Added support for tiles that do not have a geometric error.
-- Exposed ion endpoint URL as a parameter.
-- `TilesetOptions` and `RasterOverlayOptions` each have a new option to report which formats are supported on the client platform. Ideal formats amongst the available ones are picked for each KTX2 texture that is later encountered.
-- The image API can now convey which gpu pixel compression format (if any) is used. This will inform what to expect in the image's pixel buffer.
-- The image API can now also contain pre-computed mipmaps, if they exist. In that case, all the mips will be in the pixel buffer and the delineation between each mip will be described in `ImageCesium::mipPositions`.
-- Added the auto-generated classes for `KHR_texture_basisu`.
-- Tilesets can now have content with the following extensions: ".gltf", ".glb", and ".terrain".
-- Create tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
+- Added support for the `CESIUM_RTC` and `KHR_texture_basisu` glTF extensions.
+- Added support for 3D Tiles that do not have a geometric error, improving compatibility with tilesets that don't quite match the 3D Tiles spec.
+- Exposed the Cesium ion endpoint URL as a parameter on tilesets and raster overlays.
+- `TilesetOptions` and `RasterOverlayOptions` each have a new option to report which compressed textured formats are supported on the client platform. Ideal formats amongst the available ones are picked for each KTX2 texture that is later encountered.
+- The `ImageCesium` class nows convey which GPU pixel compression format (if any) is used. This informs what to expect in the image's pixel buffer.
+- The `ImageCesium` class can now contain pre-computed mipmaps, if they exist. In that case, all the mips will be in the pixel buffer and the delineation between each mip will be described in `ImageCesium::mipPositions`.
+- Tileset content with the known file extensions ".gltf", ".glb", and ".terrain" can now be loaded even if the Content-Type is incorrect. This is especially helpful for loading tilesets from `file:` URLs.
+- Created tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
 
 ##### Fixes :wrench:
 
-- Fixed bug in finding the compatible type of the array of components in the B3DM Feature Table.
-- Fixed bug where implicit tiles were not receiving the root transform.
+- Fixed bug that could cause properties types in a B3DM Batch Table to be deduced incorrectly, leading to a crash when accessing property values.
+- Fixed a bug where implicit tiles were not receiving the root transform and so could sometimes end up in the wrong place.
 
 ### v0.12.0 - 2022-02-01
 
@@ -28,7 +31,6 @@
 - `Token` in `CesiumIonClient` has been updated to match Cesium ion's v2 REST API endpoint, so several fields have been renamed. The `tokens` method also now returns future that resolves to a `TokenList` instead of a plain vector of `Token` instances.
 - Renamed `GltfReader::readModel`, `ModelReaderResult`, and `ReadModelOptions` to `GltfReader::readGltf`, `GltfReaderResult`, and `GltfReaderOptions` respectively.
 - Removed `writeModelAsEmbeddedBytes`, `writeModelAndExternalFiles`, `WriteModelResult`, `WriteModelOptions`, and `WriteGLTFCallback`. Use `GltfWriter::writeGltf`, `GltfWriter::writeGlb`, `GltfWriterResult`, and `GltfWriterOptions` instead.
-- Renamed constants in `CesiumUtility::Math` to use PascalCase instead of SCREAMING_SNAKE_CASE.
 
 ##### Additions :tada:
 
