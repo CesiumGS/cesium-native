@@ -147,7 +147,8 @@ public:
         _offsetType{},
         _offsetSize{},
         _componentCount{},
-        _instanceCount{} {}
+        _instanceCount{},
+        _normalized{} {}
 
   /**
    * @brief Construct a new instance pointing to the data specified by
@@ -158,6 +159,7 @@ public:
    * @param offsetType The offset type of the arrayOffsetBuffer and stringOffsetBuffer that is specified by {@link FeatureTableProperty::offsetType}
    * @param componentCount The number of elements for fixed array value which is specified by {@link FeatureTableProperty::componentCount}
    * @param instanceCount The number of instances specified by {@link FeatureTable::count}
+   * @param normalized Whether this property has a normalized integer type.
    */
   MetadataPropertyView(
       MetadataPropertyViewStatus status,
@@ -166,7 +168,8 @@ public:
       gsl::span<const std::byte> stringOffsetBuffer,
       PropertyType offsetType,
       int64_t componentCount,
-      int64_t instanceCount) noexcept
+      int64_t instanceCount,
+      bool normalized) noexcept
       : _status{status},
         _valueBuffer{valueBuffer},
         _arrayOffsetBuffer{arrayOffsetBuffer},
@@ -174,7 +177,8 @@ public:
         _offsetType{offsetType},
         _offsetSize{getOffsetSize(offsetType)},
         _componentCount{componentCount},
-        _instanceCount{instanceCount} {}
+        _instanceCount{instanceCount},
+        _normalized{normalized} {}
 
   /**
    * @brief Gets the status of this property view.
@@ -229,6 +233,21 @@ public:
    * @return The number of instances in the FeatureTable
    */
   int64_t size() const noexcept { return _instanceCount; }
+
+  /**
+   * @brief Get the component count of this property. Only applicable when the
+   * property is an array type.
+   *
+   * @return The component count of this property.
+   */
+  int64_t getComponentCount() const noexcept { return _componentCount; }
+
+  /**
+   * @brief Whether this property has a normalized integer type.
+   *
+   * @return Whether this property has a normalized integer type.
+   */
+  bool isNormalized() const noexcept { return _normalized; }
 
 private:
   ElementType getNumeric(int64_t instance) const noexcept {
@@ -387,5 +406,6 @@ private:
   int64_t _offsetSize;
   int64_t _componentCount;
   int64_t _instanceCount;
+  bool _normalized;
 };
 } // namespace CesiumGltf

@@ -75,7 +75,8 @@ Tileset::Tileset(
     const TilesetExternals& externals,
     uint32_t ionAssetID,
     const std::string& ionAccessToken,
-    const TilesetOptions& options)
+    const TilesetOptions& options,
+    const std::string& ionAssetEndpointUrl)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
       _userCredit(
@@ -86,6 +87,7 @@ Tileset::Tileset(
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
       _isRefreshingIonToken(false),
+      _ionAssetEndpointUrl(ionAssetEndpointUrl),
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
@@ -98,7 +100,7 @@ Tileset::Tileset(
       _distancesStack(),
       _nextDistancesVector(0) {
   if (ionAssetID > 0) {
-    CESIUM_TRACE_USE_TRACK_SET(tileset._loadingSlots);
+    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
@@ -1323,7 +1325,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
       glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
       const double magnitude = glm::length(tileDirection);
 
-      if (magnitude >= CesiumUtility::Math::EPSILON5) {
+      if (magnitude >= CesiumUtility::Math::Epsilon5) {
         tileDirection /= magnitude;
         const double loadPriority =
             (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;

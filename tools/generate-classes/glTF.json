@@ -30,6 +30,9 @@
     "KHR_materials_unlit glTF extension": {
       "overrideName": "ExtensionKhrMaterialsUnlit"
     },
+    "KHR_texture_basisu glTF extension": {
+      "overrideName": "ExtensionKhrTextureBasisu"
+    },
     "EXT_mesh_gpu_instancing glTF extension": {
       "overrideName": "ExtensionExtMeshGpuInstancing"
     },
@@ -152,6 +155,13 @@
       "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
       "attachTo": [
         "material"
+      ]
+    },
+    {
+      "extensionName": "KHR_texture_basisu",
+      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
+      "attachTo": [
+        "texture"
       ]
     },
     {

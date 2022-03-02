@@ -12,6 +12,7 @@ class ExtensionWriterContext;
 namespace CesiumGltf {
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
+struct ExtensionKhrTextureBasisu;
 struct ExtensionExtMeshGpuInstancing;
 struct ExtensionBufferExtMeshoptCompression;
 struct ExtensionBufferViewExtMeshoptCompression;
@@ -101,6 +102,17 @@ struct ExtensionKhrMaterialsUnlitJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionKhrMaterialsUnlit& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrTextureBasisuJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrTextureBasisu;
+
+  static inline constexpr const char* ExtensionName = "KHR_texture_basisu";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrTextureBasisu& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

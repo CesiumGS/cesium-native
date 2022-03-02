@@ -32,7 +32,7 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 }
 } // namespace
 
-TEST_CASE("CesiumGltf::GltfReader") {
+TEST_CASE("CesiumGltfReader::GltfReader") {
   using namespace std::string_literals;
 
   std::string s = R"(
@@ -400,6 +400,18 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   CHECK(!result.warnings.empty());
+}
+
+TEST_CASE("Test KTX2") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "CesiumBalloonKTX2Hacky.glb";
+  std::vector<std::byte> data = readFile(gltfFile.string());
+  CesiumGltfReader::GltfReader reader;
+  GltfReaderResult result = reader.readGltf(data);
+  REQUIRE(result.model);
+
+  const Model& model = result.model.value();
+  REQUIRE(model.meshes.size() == 1);
 }
 
 TEST_CASE("Can apply RTC CENTER if model uses Cesium RTC extension") {

@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 
 #include <spdlog/fwd.h>
 
@@ -64,6 +65,12 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * the raster overlay maps to approximately 2x2 pixels on the screen.
    */
   double maximumScreenSpaceError = 2.0;
+
+  /**
+   * @brief For each possible input transmission format, this struct names
+   * the ideal target gpu-compressed pixel format to transcode to.
+   */
+  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
    * @brief A callback function that is invoked when a raster overlay resource

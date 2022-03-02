@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "SkirtMeshMetadata.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
@@ -37,7 +38,8 @@ GltfContent::load(const TileContentLoadInput& input) {
       input.pRequest->url(),
       input.pRequest->headers(),
       input.pAssetAccessor,
-      input.pRequest->response()->data());
+      input.pRequest->response()->data(),
+      input.contentOptions);
 }
 
 /*static*/
@@ -47,28 +49,32 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const std::string& url,
     const HttpHeaders& headers,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const gsl::span<const std::byte>& data) {
+    const gsl::span<const std::byte>& data,
+    const TilesetContentOptions& contentOptions) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
 
-  CesiumGltfReader::GltfReaderResult loadedModel =
-      GltfContent::_gltfReader.readGltf(data);
-  if (!loadedModel.errors.empty()) {
+  GltfReaderOptions readOptions;
+  readOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
+
+  CesiumGltfReader::GltfReaderResult loadedGltf =
+      GltfContent::_gltfReader.readGltf(data, readOptions);
+  if (!loadedGltf.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.errors, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.errors, "\n- "));
   }
-  if (!loadedModel.warnings.empty()) {
+  if (!loadedGltf.warnings.empty()) {
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Warning when loading binary glTF from {}:\n- {}",
         url,
-        CesiumUtility::joinToString(loadedModel.warnings, "\n- "));
+        CesiumUtility::joinToString(loadedGltf.warnings, "\n- "));
   }
 
-  if (loadedModel.model) {
-    loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
+  if (loadedGltf.model) {
+    loadedGltf.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   return CesiumGltfReader::GltfReader::resolveExternalData(
@@ -76,7 +82,8 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              url,
              headers,
              pAssetAccessor,
-             std::move(loadedModel))
+             readOptions,
+             std::move(loadedGltf))
       .thenInWorkerThread(
           [pLogger, url](CesiumGltfReader::GltfReaderResult&& resolvedModel) {
             std::unique_ptr<TileContentLoadResult> pResult =
@@ -207,6 +214,18 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
+        std::optional<SkirtMeshMetadata> skirtMeshMetadata =
+            SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
+        int64_t vertexBegin, vertexEnd;
+        if (skirtMeshMetadata.has_value()) {
+          vertexBegin = skirtMeshMetadata->noSkirtVerticesBegin;
+          vertexEnd = skirtMeshMetadata->noSkirtVerticesBegin +
+                      skirtMeshMetadata->noSkirtVerticesCount;
+        } else {
+          vertexBegin = 0;
+          vertexEnd = positionView.size();
+        }
+
         for (size_t i = 0; i < projections.size(); ++i) {
           const int uvBufferId = static_cast<int>(buffers.size());
           CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
@@ -265,7 +284,10 @@ GltfContent::createRasterOverlayTextureCoordinates(
             continue;
           }
 
-          computedBounds.expandToIncludePosition(*cartographic);
+          // exclude skirt vertices from bounds
+          if (positionIndex >= vertexBegin && positionIndex < vertexEnd) {
+            computedBounds.expandToIncludePosition(*cartographic);
+          }
 
           // Generate texture coordinates at this position for each projection
           for (size_t projectionIndex = 0; projectionIndex < projections.size();
@@ -287,15 +309,15 @@ GltfContent::createRasterOverlayTextureCoordinates(
             // gets us closer.
             if (glm::abs(
                     glm::abs(cartographic.value().longitude) -
-                    CesiumUtility::Math::ONE_PI) <
-                    CesiumUtility::Math::EPSILON5 &&
+                    CesiumUtility::Math::OnePi) <
+                    CesiumUtility::Math::Epsilon5 &&
                 (projectedPosition.x < rectangle.minimumX ||
                  projectedPosition.x > rectangle.maximumX ||
                  projectedPosition.y < rectangle.minimumY ||
                  projectedPosition.y > rectangle.maximumY)) {
               const double testLongitude = longitude + longitude < 0.0
-                                               ? CesiumUtility::Math::TWO_PI
-                                               : -CesiumUtility::Math::TWO_PI;
+                                               ? CesiumUtility::Math::TwoPi
+                                               : -CesiumUtility::Math::TwoPi;
               const glm::dvec3 projectedPosition2 = projectPosition(
                   projection,
                   Cartographic(testLongitude, latitude, ellipsoidHeight));
@@ -383,7 +405,19 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        for (int64_t i = 0; i < positionView.size(); ++i) {
+        std::optional<SkirtMeshMetadata> skirtMeshMetadata =
+            SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
+        int64_t vertexBegin, vertexEnd;
+        if (skirtMeshMetadata.has_value()) {
+          vertexBegin = skirtMeshMetadata->noSkirtVerticesBegin;
+          vertexEnd = skirtMeshMetadata->noSkirtVerticesBegin +
+                      skirtMeshMetadata->noSkirtVerticesCount;
+        } else {
+          vertexBegin = 0;
+          vertexEnd = positionView.size();
+        }
+
+        for (int64_t i = vertexBegin; i < vertexEnd; ++i) {
           // Get the ECEF position
           const glm::vec3 position = positionView[i];
           const glm::dvec3 positionEcef =

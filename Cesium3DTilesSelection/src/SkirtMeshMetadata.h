@@ -9,6 +9,8 @@ struct SkirtMeshMetadata {
   SkirtMeshMetadata() noexcept
       : noSkirtIndicesBegin{0},
         noSkirtIndicesCount{0},
+        noSkirtVerticesBegin{0},
+        noSkirtVerticesCount{0},
         meshCenter{0.0, 0.0, 0.0},
         skirtWestHeight{0.0},
         skirtSouthHeight{0.0},
@@ -23,6 +25,8 @@ struct SkirtMeshMetadata {
 
   uint32_t noSkirtIndicesBegin;
   uint32_t noSkirtIndicesCount;
+  uint32_t noSkirtVerticesBegin;
+  uint32_t noSkirtVerticesCount;
   glm::dvec3 meshCenter;
   double skirtWestHeight;
   double skirtSouthHeight;
