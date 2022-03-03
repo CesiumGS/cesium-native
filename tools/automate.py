@@ -5,6 +5,7 @@ import os
 import subprocess
 from enum import Enum
 from unittest import skip
+from functools import wraps
 
 import jinja2
 import yaml
@@ -44,6 +45,8 @@ def main():
   args.func(args)
 
 def generateLibraryRecipes(args):
+  cdToRoot()
+
   if args.editable:
     templateFile = "editable-conanfile.py"
     skipNativeDependencies = True
@@ -55,8 +58,7 @@ def generateLibraryRecipes(args):
 
   libraries = findCesiumLibraries()
 
-  with open('cesium-native.yml', 'r') as f:
-    nativeYml = yaml.safe_load(f)
+  nativeYml = cesiumNativeYml()
 
   # Write a recipe for every library.
   for library in libraries:
@@ -90,14 +92,15 @@ def generateLibraryRecipes(args):
     ))
 
 def editable(args):
-  with open('cesium-native.yml', 'r') as f:
-    nativeYml = yaml.safe_load(f)
+  cdToRoot()
 
-  def makeEditable(library):
-    run('conan editable add %s %s/%s@%s/%s' % (library, library.lower(), nativeYml['version'], nativeYml['user'], nativeYml['channel']))
+  nativeYml = cesiumNativeYml()
 
-  def makeNonEditable(library):
-    run('conan editable remove %s/%s@%s/%s' % (library.lower(), nativeYml['version'], nativeYml['user'], nativeYml['channel']))
+  def makeEditable(library, path):
+    run('conan editable add %s %s/%s@%s/%s' % (path, library, nativeYml['version'], nativeYml['user'], nativeYml['channel']))
+
+  def makeNonEditable(library, path):
+    run('conan editable remove %s/%s@%s/%s' % (library, nativeYml['version'], nativeYml['user'], nativeYml['channel']))
 
   if args.state == 'on':
     template = 'editable-conanfile.py'
@@ -109,16 +112,20 @@ def editable(args):
     command = makeNonEditable
 
   libraries = findCesiumLibraries()
-  executeInDependencyOrder(libraries, command)
+  executeInDependencyOrder(libraries, lambda library: command(library.lower(), library))
+  command("cesium-native", ".")
 
 def exportRecipes(args):
-  with open('cesium-native.yml', 'r') as f:
-    nativeYml = yaml.safe_load(f)
+  cdToRoot()
+
+  nativeYml = cesiumNativeYml()
 
   for recipe in nativeYml['extraRecipes']:
       run('conan export recipes/%s' % (recipe))
 
 def exportLibraries(args):
+  cdToRoot()
+
   libraries = findCesiumLibraries()
   executeInDependencyOrder(libraries, lambda library: run('conan export %s' % (library)))
 
@@ -148,6 +155,8 @@ def resolveDependencies(nativeLibraries, nativeYml, dependencies, skipNativeDepe
   return filter(lambda s: len(s) > 0, map(resolveDependency, dependencies))
 
 def executeInDependencyOrder(nativeLibraries, func):
+  cdToRoot()
+
   class State(Enum):
     NOT_VISITED = 0
     VISITED_DOWN = 1
@@ -194,6 +203,14 @@ def run(command):
   result = subprocess.run(command, shell=True)
   if result.returncode != 0:
     exit(result.returncode)
+
+# Change the current working directory to the cesium-native root directory.
+def cdToRoot():
+  os.chdir(os.path.dirname(os.path.realpath(__file__)) + "/..")
+
+def cesiumNativeYml():
+  with open(os.path.dirname(os.path.realpath(__file__)) + '/../cesium-native.yml', 'r') as f:
+    return yaml.safe_load(f)
 
 if __name__ == "__main__":
   main()

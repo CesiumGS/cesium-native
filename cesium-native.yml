@@ -14,7 +14,7 @@ dependencyVersions:
   draco: "1.4.3"
   earcut: "2.2.3"
   glm: "0.9.9.8"
-  ktx: "4.0.0"
+  ktx: "a7159924a6095488d8fb1ded358113d85813f669"
   ms-gsl: "4.0.0"
   picosha2: "1677374f23352716fc52183255a40c1b8e1d53eb"
   rapidjson: "cci.20211112"
@@ -29,5 +29,6 @@ dependencyVersions:
 # These refer to subdirectories in the recipes directory.
 extraRecipes:
   - csprng
+  - ktx
   - picosha2
   - s2geometry

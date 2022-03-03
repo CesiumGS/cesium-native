@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 891156f9..029d05d5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -220,7 +220,7 @@ macro(commom_lib_settings lib write)
+     target_compile_definitions(
+         ${lib}
+     PUBLIC
+-        "$<$<CONFIG:Debug>:_DEBUG;DEBUG>"
++        "$<$<CONFIG:Debug>:DEBUG>"
+     PRIVATE
+         LIBKTX
+     )
