@@ -15,7 +15,7 @@ namespace {
 
 std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
   CESIUM_TRACE("CesiumGltfReader::decodeBase64");
-  std::vector<std::byte> result(data.size() * 3 / 4);
+  std::vector<std::byte> result(data.size() / 4 * 3 + 2);
 
   size_t resultLength;
   const int success = base64_decode(

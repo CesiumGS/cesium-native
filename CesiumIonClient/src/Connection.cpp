@@ -34,7 +34,7 @@ using namespace CesiumUtility;
 
 namespace {
 std::string encodeBase64(const std::vector<uint8_t>& bytes) {
-  const size_t count = bytes.size() * 4 / 3;
+  const size_t count = (bytes.size() + 2) / 3 * 4 + 1;
   std::string result(count, 0);
   size_t actualLength;
   base64_encode(
