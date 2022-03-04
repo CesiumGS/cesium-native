@@ -216,7 +216,7 @@ function(cesium_tests target sources)
       ${target}-tests
       PRIVATE
       ${target}
-        catch2::catch2
+        Catch2::Catch2
     )
 
     target_compile_definitions(

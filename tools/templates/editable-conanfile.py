@@ -73,4 +73,18 @@ class {{name}}Conan(ConanFile):
       self.folders.build = os.path.join("..", "{{buildFolder}}", "{{name}}")
       self.folders.generators = self.folders.build + "/conan"
       self.cpp.source.includedirs = ["include", "generated/include"]
-      self.cpp.source.libdirs = [self.folders.build + "/Debug"]
+
+      gen = self.conf["tools.cmake.cmaketoolchain:generator"]
+      if gen:
+          multi = "Visual" in gen or "Xcode" in gen or "Multi-Config" in gen
+      else:
+          compiler = self.settings.get_safe("compiler")
+          if compiler in ("Visual Studio", "msvc"):
+              multi = True
+          else:
+              multi = False
+
+      if multi:
+        self.cpp.source.libdirs = [self.folders.build + "/" + str(self.settings.build_type)]
+      else:
+        self.cpp.source.libdirs = [self.folders.build]
