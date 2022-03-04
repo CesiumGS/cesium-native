@@ -192,7 +192,7 @@ endfunction()
 
 function(cesium_tests target sources)
   if (CESIUM_TESTS_ENABLED AND sources)
-    find_package(catch2 REQUIRED)
+    find_package(Catch2 REQUIRED)
 
     add_executable(${target}-tests "")
     configure_cesium_library(${target}-tests)
