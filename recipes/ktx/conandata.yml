@@ -3,7 +3,7 @@ sources:
     url: "https://github.com/KhronosGroup/KTX-Software/archive/refs/tags/v4.0.0.tar.gz"
     sha256: "6091f5064d0cfd54c6155bb6c0d2ba7287f312d109010e9b702839ac78529fd3"
   "a7159924a6095488d8fb1ded358113d85813f669":
-    url: "https://github.com/KhronosGroup/KTX-Software/archive/a7159924a6095488d8fb1ded358113d85813f669.zip"
+    url: "https://github.com/KhronosGroup/KTX-Software/archive/a7159924a6095488d8fb1ded358113d85813f669.tar.gz"
     sha256: "d8774eeb477155991cdc67ae4aa8cdb68059c23b814b1863ff5dc05650b25caf"
 patches:
   "4.0.0":
