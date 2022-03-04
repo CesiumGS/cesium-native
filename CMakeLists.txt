@@ -7,7 +7,7 @@ project(cesium-native
 )
 
 enable_testing()
-option(CESIUM_TESTS_ENABLED "Whether to enable tests" OFF)
+option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
 include(cesium)
