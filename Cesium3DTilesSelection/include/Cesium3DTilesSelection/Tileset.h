@@ -172,6 +172,10 @@ public:
    */
   const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums);
 
+  const ViewUpdateResult& getViewUpdateResult() const noexcept;
+
+  void unloadCachedTiles(size_t maxContentSize, bool shouldRemoveContentLastFrame) noexcept;
+
   /**
    * @brief Notifies the tileset that the given tile has started loading.
    * This method may be called from any thread.
@@ -488,7 +492,6 @@ private:
       bool culled) const noexcept;
 
   void _processLoadQueue();
-  void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
@@ -565,6 +568,8 @@ private:
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
+  CesiumUtility::DoublyLinkedListPointers<Tileset> _visibleTilesetLink;
+  using VisibleTilesetList = CesiumUtility::DoublyLinkedList<Tileset, &Tileset::_visibleTilesetLink>;
 
   RasterOverlayCollection _overlays;
 
@@ -613,6 +618,7 @@ private:
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 
+  friend class TilesetGlobalCache;
   class LoadIonAssetEndpoint;
   class LoadTilesetDotJson;
   class LoadTileFromJson;

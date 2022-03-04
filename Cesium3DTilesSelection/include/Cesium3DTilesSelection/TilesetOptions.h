@@ -11,6 +11,7 @@
 
 namespace Cesium3DTilesSelection {
 
+class TilesetGlobalCache;
 class ITileExcluder;
 class TilesetLoadFailureDetails;
 
@@ -229,6 +230,8 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * and construction of Gltf models.
    */
   TilesetContentOptions contentOptions;
+
+  TilesetGlobalCache* tilesetGlobalCache{nullptr};
 };
 
 } // namespace Cesium3DTilesSelection

@@ -6,6 +6,7 @@
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
+#include "Cesium3DTilesSelection/TilesetGlobalCache.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "TileUtilities.h"
 #include "TilesetLoadIonAssetEndpoint.h"
@@ -108,6 +109,10 @@ Tileset::Tileset(
 }
 
 Tileset::~Tileset() {
+  if (_options.tilesetGlobalCache) {
+    _options.tilesetGlobalCache->removeTileset(*this);
+  }
+
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _loadsInProgress not
   // being decremented correctly when an async load ends.
@@ -275,7 +280,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   result.tilesLoadingHighPriority =
       static_cast<uint32_t>(this->_loadQueueHigh.size());
 
-  this->_unloadCachedTiles();
+  if (_options.tilesetGlobalCache && !result.tilesToRenderThisFrame.empty()) {
+    _options.tilesetGlobalCache->markTilesetRecentlyVisible(*this);
+  }
+  this->unloadCachedTiles(_options.maximumCachedBytes, false);
   this->_processLoadQueue();
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -320,6 +328,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   this->_previousFrameNumber = currentFrameNumber;
 
   return result;
+}
+
+const ViewUpdateResult& Tileset::getViewUpdateResult() const noexcept {
+  return _updateResult;
 }
 
 void Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
@@ -636,8 +648,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         frameState.currentFrameNumber,
         TileSelectionState::Result::Culled));
 
-    // Preload this culled sibling if requested.
-    if (this->_options.preloadSiblings) {
+    // Preload this culled sibling if requested. Don't load the root tile if it's culled
+    if (this->_options.preloadSiblings && &tile != _pRootTile.get()) {
       addTileToLoadQueue(
           this->_loadQueueLow,
           implicitInfo,
@@ -1185,13 +1197,13 @@ void Tileset::_processLoadQueue() {
   this->processSubtreeQueue();
 }
 
-void Tileset::_unloadCachedTiles() noexcept {
-  const int64_t maxBytes = this->getOptions().maximumCachedBytes;
+void Tileset::unloadCachedTiles(size_t maxCacheSize, bool shouldRemoveContentLastFrame) noexcept {
+  const int64_t maxBytes = maxCacheSize;
 
   Tile* pTile = this->_loadedTiles.head();
 
   while (this->getTotalDataBytes() > maxBytes) {
-    if (pTile == nullptr || pTile == this->_pRootTile.get()) {
+    if (pTile == nullptr || (!shouldRemoveContentLastFrame && pTile == this->_pRootTile.get())) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
       // for rendering last frame.
