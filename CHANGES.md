@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.14.0 - YYYY-MM-DD
+
+##### Fixes :wrench:
+
+- Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
+
 ### v0.13.0 - 2022-03-01
 
 ##### Breaking Changes :mega:
