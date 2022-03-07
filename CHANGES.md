@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added option to display credits on screen.
+
 ### v0.13.0 - 2022-03-01
 
 ##### Breaking Changes :mega:
