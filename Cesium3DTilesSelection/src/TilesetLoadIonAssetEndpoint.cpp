@@ -161,7 +161,8 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
         if (html != attribution.MemberEnd() && html->value.IsString()) {
           tileset._tilesetCredits.push_back(
               tileset.getExternals().pCreditSystem->createCredit(
-                  html->value.GetString()));
+                  html->value.GetString(),
+                  tileset._options.showCreditsOnScreen));
         }
         // TODO: mandate the user show certain credits on screen, as opposed to
         // an expandable panel auto showOnScreen =

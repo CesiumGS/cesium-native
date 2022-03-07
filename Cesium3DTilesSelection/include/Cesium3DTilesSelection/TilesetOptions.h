@@ -69,6 +69,8 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    */
   std::optional<std::string> credit;
 
+  bool showCreditsOnScreen = false;
+
   /**
    * @brief The maximum number of pixels of error when rendering this tileset.
    * This is used to select an appropriate level-of-detail.

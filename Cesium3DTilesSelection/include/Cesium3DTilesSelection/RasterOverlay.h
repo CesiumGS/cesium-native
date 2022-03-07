@@ -80,6 +80,8 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * required for raster overlay metadata, or an individual overlay image.
    */
   std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
+
+  bool showCreditsOnScreen = false;
 };
 
 /**
