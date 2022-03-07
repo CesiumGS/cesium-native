@@ -1186,12 +1186,34 @@ void Tileset::_processLoadQueue() {
 }
 
 void Tileset::_unloadCachedTiles() noexcept {
+  // const int64_t maxBytes = this->getOptions().maximumCachedBytes;
+
+  // Tile* pTile = this->_loadedTiles.head();
+
+  // while (this->getTotalDataBytes() > maxBytes) {
+  //  if (pTile == nullptr || pTile == this->_pRootTile.get()) {
+  //    // We've either removed all tiles or the next tile is the root.
+  //    // The root tile marks the beginning of the tiles that were used
+  //    // for rendering last frame.
+  //    break;
+  //  }
+
+  //  Tile* pNext = this->_loadedTiles.next(*pTile);
+
+  //  const bool removed = pTile->unloadContent();
+  //  if (removed) {
+  //    this->_loadedTiles.remove(*pTile);
+  //  }
+
+  //  pTile = pNext;
+  //}
+
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   Tile* pTile = this->_loadedTiles.head();
 
   while (this->getTotalDataBytes() > maxBytes) {
-    if (pTile == nullptr || pTile == this->_pRootTile.get()) {
+    if (pTile == nullptr) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
       // for rendering last frame.
@@ -1199,10 +1221,13 @@ void Tileset::_unloadCachedTiles() noexcept {
     }
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
-
-    const bool removed = pTile->unloadContent();
-    if (removed) {
-      this->_loadedTiles.remove(*pTile);
+    if (pTile->getLastSelectionState().getOriginalResult(
+            this->_previousFrameNumber + 1) !=
+        TileSelectionState::Result::Rendered) {
+      const bool removed = pTile->unloadContent();
+      if (removed) {
+        this->_loadedTiles.remove(*pTile);
+      }
     }
 
     pTile = pNext;
