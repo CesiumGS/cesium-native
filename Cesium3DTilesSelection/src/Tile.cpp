@@ -541,8 +541,9 @@ void Tile::processLoadedContent() {
         this->setUnconditionallyRefine();
       }
       // else if it has a model, try to get the copyright
-      else if(this->_pContent->model->asset.copyright) {
-        this->_pContent->credit = externals.pCreditSystem->createCredit(*this->_pContent->model->asset.copyright);
+      else if (this->_pContent->model->asset.copyright) {
+        this->_pContent->credit = externals.pCreditSystem->createCredit(
+            *this->_pContent->model->asset.copyright);
       }
 
       // A new and improved bounding volume.

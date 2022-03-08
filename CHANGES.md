@@ -15,6 +15,7 @@
 - Create tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
 - Add glTF copyright information to the list of credits.
 - Credits are now sorted based on the number of occurrences.
+- Added option to show credits on screen.
 
 ##### Fixes :wrench:
 

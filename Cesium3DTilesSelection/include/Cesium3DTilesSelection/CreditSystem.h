@@ -44,7 +44,12 @@ public:
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    */
-  Credit createCredit(const std::string& html);
+  Credit createCredit(const std::string& html, bool showOnScreen = false);
+
+  /**
+   * @brief Gets whether or not the credit should be shown on screen.
+   */
+  const bool shouldBeShownOnScreen(Credit credit) const noexcept;
 
   /**
    * @brief Get the HTML string for this credit
@@ -80,12 +85,13 @@ private:
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
-  struct HtmlAndLastFrameNumber {
+  struct HtmlAndShowOnScreenAndLastFrameNumber {
     std::string html;
+    bool showOnScreen;
     int32_t lastFrameNumber;
   };
 
-  std::vector<HtmlAndLastFrameNumber> _credits;
+  std::vector<HtmlAndShowOnScreenAndLastFrameNumber> _credits;
 
   int32_t _currentFrameNumber = 0;
   std::vector<Credit> _creditsToShowThisFrame;

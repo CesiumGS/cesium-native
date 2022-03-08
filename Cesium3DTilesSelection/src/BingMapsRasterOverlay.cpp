@@ -270,7 +270,8 @@ namespace {
  */
 std::vector<CreditAndCoverageAreas> collectCredits(
     const rapidjson::Value* pResource,
-    const std::shared_ptr<CreditSystem>& pCreditSystem) {
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    bool showCreditsOnScreen) {
   std::vector<CreditAndCoverageAreas> credits;
   const auto attributionsIt = pResource->FindMember("imageryProviders");
   if (attributionsIt != pResource->MemberEnd() &&
@@ -318,7 +319,9 @@ std::vector<CreditAndCoverageAreas> collectCredits(
       if (creditString != attribution.MemberEnd() &&
           creditString->value.IsString()) {
         credits.push_back(
-            {pCreditSystem->createCredit(creditString->value.GetString()),
+            {pCreditSystem->createCredit(
+                 creditString->value.GetString(),
+                 showCreditsOnScreen),
              coverageAreas});
       }
     }
@@ -424,9 +427,11 @@ BingMapsRasterOverlay::createTileProvider(
       return nullptr;
     }
 
+    bool showCredits = pOwner->getOptions().showCreditsOnScreen;
     std::vector<CreditAndCoverageAreas> credits =
-        collectCredits(pResource, pCreditSystem);
-    Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
+        collectCredits(pResource, pCreditSystem, showCredits);
+    Credit bingCredit =
+        pCreditSystem->createCredit(BING_LOGO_HTML, showCredits);
 
     return std::make_unique<BingMapsTileProvider>(
         *pOwner,
