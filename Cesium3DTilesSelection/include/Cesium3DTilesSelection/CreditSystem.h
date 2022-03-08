@@ -22,7 +22,6 @@ public:
   bool operator==(const Credit& rhs) const noexcept {
     return this->id == rhs.id;
   }
-  bool operator<(const Credit& rhs) const noexcept { return this->id < rhs.id; }
 
 private:
   size_t id;
