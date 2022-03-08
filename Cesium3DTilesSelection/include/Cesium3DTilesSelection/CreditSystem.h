@@ -49,7 +49,7 @@ public:
   /**
    * @brief Gets whether or not the credit should be shown on screen.
    */
-  const bool shouldBeShownOnScreen(Credit credit) const noexcept;
+  bool shouldBeShownOnScreen(Credit credit) const noexcept;
 
   /**
    * @brief Get the HTML string for this credit
