@@ -1,6 +1,6 @@
 #include "CesiumAsync/Impl/TaskScheduler.h"
 
-using namespace CesiumAsync::Impl;
+using namespace CesiumAsync::CesiumImpl;
 
 TaskScheduler::TaskScheduler(
     const std::shared_ptr<CesiumAsync::ITaskProcessor>& pTaskProcessor)

@@ -7,7 +7,7 @@ namespace CesiumAsync {
 template <class T> class Future;
 template <class T> class SharedFuture;
 
-namespace Impl {
+namespace CesiumImpl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
@@ -31,5 +31,5 @@ template <typename T> struct RemoveFuture<const async::shared_task<T>> {
 
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

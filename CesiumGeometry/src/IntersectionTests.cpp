@@ -15,7 +15,7 @@ namespace CesiumGeometry {
 IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
   const double denominator = glm::dot(plane.getNormal(), ray.getDirection());
 
-  if (glm::abs(denominator) < Math::EPSILON15) {
+  if (glm::abs(denominator) < Math::Epsilon15) {
     // Ray is parallel to plane.  The ray may be in the polygon's plane.
     return std::optional<glm::dvec3>();
   }

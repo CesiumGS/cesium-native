@@ -167,6 +167,7 @@ void createImplicitQuadtreeTile(
   child.setContext(parent.getContext());
   child.setParent(&parent);
   child.setRefine(parent.getRefine());
+  child.setTransform(parent.getTransform());
 
   if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);
@@ -249,6 +250,7 @@ void createImplicitOctreeTile(
   child.setContext(parent.getContext());
   child.setParent(&parent);
   child.setRefine(parent.getRefine());
+  child.setTransform(parent.getTransform());
 
   if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);
