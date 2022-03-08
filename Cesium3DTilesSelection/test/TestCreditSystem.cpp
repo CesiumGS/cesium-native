@@ -4,6 +4,29 @@
 
 using namespace Cesium3DTilesSelection;
 
+TEST_CASE("Test sorting credits by frequency") {
+  CreditSystem creditSystem;
+
+  std::string html0 = "<html>Credit0</html>";
+  std::string html1 = "<html>Credit1</html>";
+  std::string html2 = "<html>Credit2</html>";
+
+  Credit credit0 = creditSystem.createCredit(html0);
+  Credit credit1 = creditSystem.createCredit(html1);
+  Credit credit2 = creditSystem.createCredit(html2);
+
+  creditSystem.addCreditToFrame(credit0);
+  for (int i = 0; i < 2; i++) {
+    creditSystem.addCreditToFrame(credit1);
+  }
+  for (int i = 0; i < 3; i++) {
+    creditSystem.addCreditToFrame(credit2);
+  }
+
+  std::vector<Credit> expectedShow{credit2, credit1, credit0};
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow);
+}
+
 TEST_CASE("Test basic credit handling") {
 
   CreditSystem creditSystem;
@@ -29,29 +52,30 @@ TEST_CASE("Test basic credit handling") {
   // REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide0);
 
   // Start frame 1: Add 1 and 2, remove 0
-  creditSystem.startNextFrame();
+  // creditSystem.startNextFrame();
 
-  creditSystem.addCreditToFrame(credit1);
-  creditSystem.addCreditToFrame(credit2);
+  // creditSystem.addCreditToFrame(credit1);
+  // creditSystem.addCreditToFrame(credit2);
 
-  std::vector<Credit> expectedShow1{credit1, credit2};
-  std::vector<Credit> actualShow1 = creditSystem.getCreditsToShowThisFrame();
+  //std::vector<Credit> expectedShow1{credit1, credit2};
+  // std::vector<Credit> actualShow1 = creditSystem.getCreditsToShowThisFrame();
 
-  //std::vector<Credit> expectedHide1{credit0};
-  // REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide1);
+  ////std::vector<Credit> expectedHide1{credit0};
+  //// REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() ==
+  ///expectedHide1);
 
-  // Start frame 2: Add nothing, remove 1 and 2
-  creditSystem.startNextFrame();
+  //// Start frame 2: Add nothing, remove 1 and 2
+  // creditSystem.startNextFrame();
 
-  //std::vector<Credit> expectedShow2{};
-  // REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow2);
+  ////std::vector<Credit> expectedShow2{};
+  //// REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow2);
 
-  std::vector<Credit> expectedHide2{credit1, credit2};
-  std::vector<Credit> actualHide2 =
-      creditSystem.getCreditsToNoLongerShowThisFrame();
+  //std::vector<Credit> expectedHide2{credit1, credit2};
+  // std::vector<Credit> actualHide2 =
+  //     creditSystem.getCreditsToNoLongerShowThisFrame();
 
-  // Start frame 3: Add nothing, remove nothing
-  creditSystem.startNextFrame();
+  //// Start frame 3: Add nothing, remove nothing
+  // creditSystem.startNextFrame();
 
   //std::vector<Credit> expectedShow3{};
   // REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow3);
