@@ -65,13 +65,13 @@ const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
   if (_creditsToShowThisFrame.size() < 2) {
     return _creditsToShowThisFrame;
   }
-  const auto& counts = _creditCounts;
-  std::sort(
-      _creditsToShowThisFrame.begin(),
-      _creditsToShowThisFrame.end(),
-      [&counts](const Credit& a, const Credit& b) {
-        return counts.at(a.id) >= counts.at(b.id);
-      });
+  // const auto& counts = _creditCounts;
+  // std::sort(
+  //     _creditsToShowThisFrame.begin(),
+  //     _creditsToShowThisFrame.end(),
+  //     [&counts](const Credit& a, const Credit& b) {
+  //       return counts.at(a.id) >= counts.at(b.id);
+  //     });
   return _creditsToShowThisFrame;
 }
 } // namespace Cesium3DTilesSelection
