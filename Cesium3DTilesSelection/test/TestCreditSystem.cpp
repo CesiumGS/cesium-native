@@ -44,6 +44,7 @@ TEST_CASE("Test basic credit handling") {
   // Frame 0: Add 0 and 1
   creditSystem.addCreditToFrame(credit0);
   creditSystem.addCreditToFrame(credit1);
+  creditSystem.addCreditToFrame(credit2);
 
   std::vector<Credit> expectedShow0{credit0, credit1};
   std::vector<Credit> actualShow0 = creditSystem.getCreditsToShowThisFrame();
@@ -62,7 +63,7 @@ TEST_CASE("Test basic credit handling") {
 
   ////std::vector<Credit> expectedHide1{credit0};
   //// REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() ==
-  ///expectedHide1);
+  /// expectedHide1);
 
   //// Start frame 2: Add nothing, remove 1 and 2
   // creditSystem.startNextFrame();

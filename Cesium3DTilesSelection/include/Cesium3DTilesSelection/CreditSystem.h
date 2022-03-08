@@ -65,7 +65,7 @@ public:
   /**
    * @brief Get the credits to show this frame.
    */
-  const std::vector<Credit>& getCreditsToShowThisFrame();
+  const std::vector<Credit>& getCreditsToShowThisFrame() noexcept;
 
   /**
    * @brief Get the credits that were shown last frame but should no longer be
