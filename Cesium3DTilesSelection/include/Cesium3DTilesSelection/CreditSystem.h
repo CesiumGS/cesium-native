@@ -2,7 +2,6 @@
 
 #include "Library.h"
 
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -92,6 +91,5 @@ private:
   std::vector<Credit> _creditsToShowThisFrame;
   std::vector<Credit> _creditsToNoLongerShowThisFrame;
   std::unordered_map<size_t, int32_t> _creditCounts;
-  std::mutex _lock;
 };
 } // namespace Cesium3DTilesSelection
