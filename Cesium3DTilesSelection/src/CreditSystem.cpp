@@ -62,6 +62,9 @@ void CreditSystem::startNextFrame() noexcept {
 
 const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() {
   // sort credits based on the number of occurrences
+  if (_creditsToShowThisFrame.size() < 1) {
+    return _creditsToShowThisFrame;
+  }
   const auto& counts = _creditCounts;
   std::sort(
       _creditsToShowThisFrame.begin(),
