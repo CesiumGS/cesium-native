@@ -53,7 +53,10 @@ TEST_CASE("Test basic credit handling") {
   REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow2);
 
   std::vector<Credit> expectedHide2{credit1, credit2};
-  REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide2);
+  REQUIRE(std::is_permutation(
+      expectedHide2.begin(),
+      expectedHide2.end(),
+      creditSystem.getCreditsToNoLongerShowThisFrame().begin()));
 
   // Start frame 3: Add nothing, remove nothing
   creditSystem.startNextFrame();
