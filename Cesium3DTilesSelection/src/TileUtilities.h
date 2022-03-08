@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-namespace Impl {
+namespace CesiumImpl {
 
 /**
  * @brief Returns whether the tile is completely inside a polygon.
@@ -33,5 +33,5 @@ bool withinPolygons(
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
         cartographicPolygons) noexcept;
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace Cesium3DTilesSelection

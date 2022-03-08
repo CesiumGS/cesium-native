@@ -25,6 +25,13 @@ public:
   void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
 
   /**
+   * @brief Will be called when the task completed successfully.
+   *
+   * @param value The value that was computed by the asynchronous task.
+   */
+  void resolve(const T& value) const { this->_pEvent->set(value); }
+
+  /**
    * @brief Will be called when the task failed.
    *
    * @param error The error that caused the task to fail.
@@ -57,11 +64,11 @@ public:
 
 private:
   Promise(
-      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
       const std::shared_ptr<async::event_task<T>>& pEvent) noexcept
       : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
 
-  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
   std::shared_ptr<async::event_task<T>> _pEvent;
 
   friend class AsyncSystem;
@@ -83,11 +90,11 @@ public:
 
 private:
   Promise(
-      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
       const std::shared_ptr<async::event_task<void>>& pEvent) noexcept
       : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
 
-  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
   std::shared_ptr<async::event_task<void>> _pEvent;
 
   friend class AsyncSystem;

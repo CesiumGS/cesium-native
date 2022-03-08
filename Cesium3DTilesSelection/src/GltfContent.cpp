@@ -309,15 +309,15 @@ GltfContent::createRasterOverlayTextureCoordinates(
             // gets us closer.
             if (glm::abs(
                     glm::abs(cartographic.value().longitude) -
-                    CesiumUtility::Math::ONE_PI) <
-                    CesiumUtility::Math::EPSILON5 &&
+                    CesiumUtility::Math::OnePi) <
+                    CesiumUtility::Math::Epsilon5 &&
                 (projectedPosition.x < rectangle.minimumX ||
                  projectedPosition.x > rectangle.maximumX ||
                  projectedPosition.y < rectangle.minimumY ||
                  projectedPosition.y > rectangle.maximumY)) {
               const double testLongitude = longitude + longitude < 0.0
-                                               ? CesiumUtility::Math::TWO_PI
-                                               : -CesiumUtility::Math::TWO_PI;
+                                               ? CesiumUtility::Math::TwoPi
+                                               : -CesiumUtility::Math::TwoPi;
               const glm::dvec3 projectedPosition2 = projectPosition(
                   projection,
                   Cartographic(testLongitude, latitude, ellipsoidHeight));

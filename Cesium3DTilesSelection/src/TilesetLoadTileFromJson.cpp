@@ -412,6 +412,7 @@ void parseImplicitTileset(
         childTile.setBoundingVolume(tile.getBoundingVolume());
         childTile.setGeometricError(tile.getGeometricError());
         childTile.setRefine(tile.getRefine());
+        childTile.setTransform(tile.getTransform());
 
         tile.setUnconditionallyRefine();
       }
