@@ -25,44 +25,44 @@ TEST_CASE("Test basic credit handling") {
   std::vector<Credit> expectedShow0{credit0, credit1};
   auto actualShow0 = creditSystem.getCreditsToShowThisFrame();
   std::sort(actualShow0.begin(), actualShow0.end());
-  // REQUIRE(expectedShow0 == actualShow0);
+  REQUIRE(expectedShow0 == actualShow0);
 
-  //std::vector<Credit> expectedHide0{};
-  // REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide0);
+  std::vector<Credit> expectedHide0{};
+  REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide0);
 
-  //// Start frame 1: Add 1 and 2, remove 0
-  // creditSystem.startNextFrame();
+  // Start frame 1: Add 1 and 2, remove 0
+  creditSystem.startNextFrame();
 
-  // creditSystem.addCreditToFrame(credit1);
-  // creditSystem.addCreditToFrame(credit2);
+  creditSystem.addCreditToFrame(credit1);
+  creditSystem.addCreditToFrame(credit2);
 
-  //std::vector<Credit> expectedShow1{credit1, credit2};
-  // auto actualShow1 = creditSystem.getCreditsToShowThisFrame();
-  // std::sort(actualShow1.begin(), actualShow1.end());
-  // REQUIRE(expectedShow1 == actualShow1);
+  std::vector<Credit> expectedShow1{credit1, credit2};
+  auto actualShow1 = creditSystem.getCreditsToShowThisFrame();
+  std::sort(actualShow1.begin(), actualShow1.end());
+  REQUIRE(expectedShow1 == actualShow1);
 
-  //std::vector<Credit> expectedHide1{credit0};
-  // REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide1);
+  std::vector<Credit> expectedHide1{credit0};
+  REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide1);
 
-  //// Start frame 2: Add nothing, remove 1 and 2
-  // creditSystem.startNextFrame();
+  // Start frame 2: Add nothing, remove 1 and 2
+  creditSystem.startNextFrame();
 
-  //std::vector<Credit> expectedShow2{};
-  // REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow2);
+  std::vector<Credit> expectedShow2{};
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow2);
 
-  //std::vector<Credit> expectedHide2{credit1, credit2};
-  // auto actualHide2 = creditSystem.getCreditsToNoLongerShowThisFrame();
-  // std::sort(actualHide2.begin(), actualHide2.end());
-  // REQUIRE(expectedHide2 == actualHide2);
+  std::vector<Credit> expectedHide2{credit1, credit2};
+  auto actualHide2 = creditSystem.getCreditsToNoLongerShowThisFrame();
+  std::sort(actualHide2.begin(), actualHide2.end());
+  REQUIRE(expectedHide2 == actualHide2);
 
-  //// Start frame 3: Add nothing, remove nothing
-  // creditSystem.startNextFrame();
+  // Start frame 3: Add nothing, remove nothing
+  creditSystem.startNextFrame();
 
-  //std::vector<Credit> expectedShow3{};
-  // REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow3);
+  std::vector<Credit> expectedShow3{};
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow3);
 
-  //std::vector<Credit> expectedHide3{};
-  // REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide3);
+  std::vector<Credit> expectedHide3{};
+  REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide3);
 }
 
 TEST_CASE("Test wrong credit handling") {
