@@ -16,7 +16,7 @@ TEST_CASE("Test basic credit handling") {
   Credit credit1 = creditSystem.createCredit(html1);
   Credit credit2 = creditSystem.createCredit(html2);
 
-  //REQUIRE(creditSystem.getHtml(credit1) == html1);
+  // REQUIRE(creditSystem.getHtml(credit1) == html1);
 
   // Frame 0: Add 0 and 1
   creditSystem.addCreditToFrame(credit0);
