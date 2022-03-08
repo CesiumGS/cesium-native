@@ -23,10 +23,7 @@ TEST_CASE("Test basic credit handling") {
   creditSystem.addCreditToFrame(credit1);
 
   std::vector<Credit> expectedShow0{credit0, credit1};
-  REQUIRE(std::is_permutation(
-      expectedShow0.begin(),
-      expectedShow0.end(),
-      creditSystem.getCreditsToShowThisFrame().begin()));
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow0);
 
   std::vector<Credit> expectedHide0{};
   REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide0);
@@ -38,10 +35,7 @@ TEST_CASE("Test basic credit handling") {
   creditSystem.addCreditToFrame(credit2);
 
   std::vector<Credit> expectedShow1{credit1, credit2};
-  REQUIRE(std::is_permutation(
-      expectedShow1.begin(),
-      expectedShow1.end(),
-      creditSystem.getCreditsToShowThisFrame().begin()));
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow1);
 
   std::vector<Credit> expectedHide1{credit0};
   REQUIRE(creditSystem.getCreditsToNoLongerShowThisFrame() == expectedHide1);

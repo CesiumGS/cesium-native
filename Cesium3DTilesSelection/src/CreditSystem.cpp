@@ -67,14 +67,17 @@ void CreditSystem::startNextFrame() noexcept {
   _currentFrameNumber++;
 }
 
-const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() {
+const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
   // sort credits based on the number of occurrences
+  if (_creditsToShowThisFrame.size() < 2) {
+    return _creditsToShowThisFrame;
+  }
   const auto& counts = _creditCounts;
   std::sort(
       _creditsToShowThisFrame.begin(),
       _creditsToShowThisFrame.end(),
       [&counts](const Credit& a, const Credit& b) {
-        return counts.at(a.id) >= counts.at(b.id);
+        return counts.at(a.id) > counts.at(b.id);
       });
   return _creditsToShowThisFrame;
 }
