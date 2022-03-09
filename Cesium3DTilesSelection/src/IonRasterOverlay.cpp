@@ -132,19 +132,20 @@ IonRasterOverlay::createTileProvider(
                       response.GetErrorOffset()));
               return std::nullopt;
             }
-            ExternalAssetEndpoint endpoint;
-            endpoint.type =
+
+            std::string type =
                 JsonHelpers::getStringOrDefault(response, "type", "unknown");
-            if (endpoint.type != "IMAGERY") {
+            if (type != "IMAGERY") {
               reportError(
                   std::move(pRequest),
                   fmt::format(
                       "Ion raster overlay metadata response type is not "
                       "'IMAGERY', but {}",
-                      endpoint.type));
+                      type));
               return std::nullopt;
             }
 
+            ExternalAssetEndpoint endpoint;
             endpoint.externalType = JsonHelpers::getStringOrDefault(
                 response,
                 "externalType",
