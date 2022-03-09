@@ -19,23 +19,29 @@ using namespace CesiumAsync;
 using namespace CesiumUtility;
 
 struct Tileset::LoadIonAssetEndpoint::Private {
+
   struct AssetEndpointAttribution {
     std::string html;
     bool collapsible;
   };
+
   struct AssetEndpoint {
     std::string type;
     std::string url;
     std::string accessToken;
     std::vector<AssetEndpointAttribution> attributions;
   };
+
   static std::unordered_map<std::string, AssetEndpoint> endpointCache;
+
   static Future<std::optional<TilesetLoadFailureDetails>>
   mainThreadLoadTilesetFromAssetEndpoint(
       Tileset& tileset,
       const AssetEndpoint& endpoint);
+
   static Future<std::optional<TilesetLoadFailureDetails>>
   loadAssetEndpoint(Tileset& tileset, const std::string& url);
+
   static Future<std::optional<TilesetLoadFailureDetails>>
   mainThreadHandleResponse(
       Tileset& tileset,
