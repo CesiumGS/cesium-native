@@ -643,6 +643,9 @@ static bool upsamplePrimitiveForRasterOverlays(
     skirtMeshMetadata->noSkirtIndicesBegin = 0;
     skirtMeshMetadata->noSkirtIndicesCount =
         static_cast<uint32_t>(indices.size());
+    skirtMeshMetadata->noSkirtVerticesBegin = 0;
+    skirtMeshMetadata->noSkirtVerticesCount =
+        uint32_t(newVertexFloats.size() / size_t(vertexSizeFloats));
     skirtMeshMetadata->meshCenter = parentSkirtMeshMetadata->meshCenter;
     addSkirts(
         newVertexFloats,
@@ -867,21 +870,21 @@ static void addEdge(
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
             0.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.west.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
             1.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.east.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
             thresholdU,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       if (keepAboveU) {
         edgeIndices.west.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
       } else {
@@ -892,21 +895,21 @@ static void addEdge(
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
             0.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
             1.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.north.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
             thresholdV,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       if (keepAboveV) {
         edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
       } else {

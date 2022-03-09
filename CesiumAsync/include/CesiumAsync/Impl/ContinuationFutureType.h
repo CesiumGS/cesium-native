@@ -7,7 +7,7 @@ namespace CesiumAsync {
 
 template <typename T> class Future;
 
-namespace Impl {
+namespace CesiumImpl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
@@ -21,5 +21,5 @@ using ContinuationFutureType_t = typename ContinuationFutureType<Func, T>::type;
 
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

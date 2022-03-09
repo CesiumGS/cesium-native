@@ -384,7 +384,8 @@ private:
         gsl::span<const std::byte>(),
         PropertyType::None,
         0,
-        _pFeatureTable->count);
+        _pFeatureTable->count,
+        classProperty.normalized);
   }
 
   MetadataPropertyView<std::string_view> getStringPropertyValues(
@@ -461,7 +462,8 @@ private:
           gsl::span<const std::byte>(),
           PropertyType::None,
           static_cast<size_t>(componentCount),
-          static_cast<size_t>(_pFeatureTable->count));
+          static_cast<size_t>(_pFeatureTable->count),
+          classProperty.normalized);
     }
 
     // dynamic array
@@ -492,7 +494,8 @@ private:
         gsl::span<const std::byte>(),
         offsetType,
         0,
-        static_cast<size_t>(_pFeatureTable->count));
+        static_cast<size_t>(_pFeatureTable->count),
+        classProperty.normalized);
   }
 
   MetadataPropertyView<MetadataArrayView<std::string_view>>
@@ -522,7 +525,8 @@ private:
         gsl::span<const std::byte>(),
         PropertyType::None,
         0,
-        0);
+        0,
+        false);
   }
 
   const Model* _pModel;

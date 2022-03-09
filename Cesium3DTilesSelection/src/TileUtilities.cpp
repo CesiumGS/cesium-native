@@ -9,7 +9,7 @@
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
-namespace Impl {
+namespace CesiumImpl {
 
 bool withinPolygons(
     const BoundingVolume& boundingVolume,
@@ -132,6 +132,6 @@ bool withinPolygons(
 
   return false;
 }
-} // namespace Impl
+} // namespace CesiumImpl
 
 } // namespace Cesium3DTilesSelection

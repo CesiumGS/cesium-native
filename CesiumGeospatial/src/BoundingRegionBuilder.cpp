@@ -10,7 +10,7 @@ using namespace CesiumUtility;
 namespace {
 
 bool isCloseToPole(double latitude, double tolerance) {
-  return Math::PI_OVER_TWO - glm::abs(latitude) < tolerance;
+  return Math::PiOverTwo - glm::abs(latitude) < tolerance;
 }
 
 } // namespace
@@ -18,7 +18,7 @@ bool isCloseToPole(double latitude, double tolerance) {
 namespace CesiumGeospatial {
 
 BoundingRegionBuilder::BoundingRegionBuilder() noexcept
-    : _poleTolerance(Math::EPSILON10),
+    : _poleTolerance(Math::Epsilon10),
       _rectangle(GlobeRectangle::EMPTY),
       _minimumHeight(std::numeric_limits<double>::max()),
       _maximumHeight(std::numeric_limits<double>::lowest()),
@@ -85,8 +85,8 @@ bool BoundingRegionBuilder::expandToIncludePosition(
           this->_rectangle.getWest() - position.longitude;
       if (positionToWestDistance < 0.0) {
         const double antiMeridianToWest =
-            this->_rectangle.getWest() - (-Math::ONE_PI);
-        const double positionToAntiMeridian = Math::ONE_PI - position.longitude;
+            this->_rectangle.getWest() - (-Math::OnePi);
+        const double positionToAntiMeridian = Math::OnePi - position.longitude;
         positionToWestDistance = antiMeridianToWest + positionToAntiMeridian;
       }
 
@@ -94,9 +94,9 @@ bool BoundingRegionBuilder::expandToIncludePosition(
           position.longitude - this->_rectangle.getEast();
       if (eastToPositionDistance < 0.0) {
         const double antiMeridianToPosition =
-            position.longitude - (-Math::ONE_PI);
+            position.longitude - (-Math::OnePi);
         const double eastToAntiMeridian =
-            Math::ONE_PI - this->_rectangle.getEast();
+            Math::OnePi - this->_rectangle.getEast();
         eastToPositionDistance = antiMeridianToPosition + eastToAntiMeridian;
       }
 

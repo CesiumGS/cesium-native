@@ -49,6 +49,8 @@ struct Tileset::LoadIonAssetEndpoint::Private {
 
   static FailedTileAction onIonTileFailed(Tile& failedTile);
 
+  static std::string createEndpointResource(const Tileset& tileset);
+
   template <typename T>
   static auto handlePotentialError(Tileset& tileset, T&& operation) {
     return std::move(operation)
@@ -79,6 +81,18 @@ struct Tileset::LoadIonAssetEndpoint::Private {
   }
 };
 
+std::string Tileset::LoadIonAssetEndpoint::Private::createEndpointResource(
+    const Tileset& tileset) {
+  std::string ionUrl = tileset._ionAssetEndpointUrl.value() + "v1/assets/" +
+                       std::to_string(tileset._ionAssetID.value()) +
+                       "/endpoint";
+  if (tileset._ionAccessToken.has_value()) {
+    ionUrl += "?access_token=" + tileset._ionAccessToken.value();
+  }
+
+  return ionUrl;
+}
+
 std::unordered_map<
     std::string,
     Tileset::LoadIonAssetEndpoint::Private::AssetEndpoint>
@@ -103,6 +117,7 @@ Tileset::LoadIonAssetEndpoint::Private::loadAssetEndpoint(
                   std::move(pRequest));
             });
 }
+
 Future<std::optional<TilesetLoadFailureDetails>>
 Tileset::LoadIonAssetEndpoint::Private::mainThreadLoadTilesetFromAssetEndpoint(
     Tileset& tileset,
@@ -137,14 +152,8 @@ Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
 
   CESIUM_TRACE_BEGIN_IN_TRACK("Tileset from ion startup");
 
-  uint32_t ionAssetID = *tileset._ionAssetID;
-  std::string ionAccessToken = *tileset._ionAccessToken;
+  std::string ionUrl = Private::createEndpointResource(tileset);
 
-  std::string ionUrl = "https://api.cesium.com/v1/assets/" +
-                       std::to_string(ionAssetID) + "/endpoint";
-  if (!ionAccessToken.empty()) {
-    ionUrl += "?access_token=" + ionAccessToken;
-  }
   return Private::handlePotentialError(
              tileset,
              Private::loadAssetEndpoint(tileset, ionUrl))
@@ -363,11 +372,7 @@ Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
   if (!tileset._isRefreshingIonToken) {
     tileset._isRefreshingIonToken = true;
 
-    std::string url = "https://api.cesium.com/v1/assets/" +
-                      std::to_string(tileset._ionAssetID.value()) + "/endpoint";
-    if (tileset._ionAccessToken) {
-      url += "?access_token=" + tileset._ionAccessToken.value();
-    }
+    std::string url = Private::createEndpointResource(tileset);
 
     tileset.notifyTileStartLoading(nullptr);
 
