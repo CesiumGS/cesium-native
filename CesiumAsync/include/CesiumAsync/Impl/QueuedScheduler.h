@@ -4,7 +4,7 @@
 #include "cesium-async++.h"
 
 namespace CesiumAsync {
-namespace Impl {
+namespace CesiumImpl {
 
 class QueuedScheduler {
 public:
@@ -18,5 +18,5 @@ private:
   async::fifo_scheduler _scheduler;
 };
 
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

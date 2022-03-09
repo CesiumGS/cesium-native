@@ -32,10 +32,10 @@ public:
    * from -PI/2 to +PI/2 radians latitude.
    */
   static constexpr GlobeRectangle MAXIMUM_GLOBE_RECTANGLE = GlobeRectangle(
-      -CesiumUtility::Math::ONE_PI,
-      -CesiumUtility::Math::PI_OVER_TWO,
-      CesiumUtility::Math::ONE_PI,
-      CesiumUtility::Math::PI_OVER_TWO);
+      -CesiumUtility::Math::OnePi,
+      -CesiumUtility::Math::PiOverTwo,
+      CesiumUtility::Math::OnePi,
+      CesiumUtility::Math::PiOverTwo);
 
   /**
    * @brief Computes the maximum rectangle that can be covered with this
@@ -48,9 +48,9 @@ public:
   static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(
       const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept {
     const double longitudeValue =
-        ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
+        ellipsoid.getMaximumRadius() * CesiumUtility::Math::OnePi;
     const double latitudeValue =
-        ellipsoid.getMaximumRadius() * CesiumUtility::Math::PI_OVER_TWO;
+        ellipsoid.getMaximumRadius() * CesiumUtility::Math::PiOverTwo;
     return CesiumGeometry::Rectangle(
         -longitudeValue,
         -latitudeValue,

@@ -44,7 +44,7 @@ TEST_CASE(
   CHECK(CesiumUtility::Math::equalsEpsilon(
       bs.computeDistanceSquaredToPosition(position),
       expected,
-      CesiumUtility::Math::EPSILON6));
+      CesiumUtility::Math::Epsilon6));
 }
 
 TEST_CASE(

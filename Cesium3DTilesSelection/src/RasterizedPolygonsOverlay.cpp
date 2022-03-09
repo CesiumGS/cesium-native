@@ -27,7 +27,7 @@ void rasterizePolygons(
   CesiumGltf::ImageCesium& image = loaded.image.emplace();
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
-  if (Cesium3DTilesSelection::Impl::withinPolygons(
+  if (Cesium3DTilesSelection::CesiumImpl::withinPolygons(
           rectangle,
           cartographicPolygons)) {
     loaded.moreDetailAvailable = false;

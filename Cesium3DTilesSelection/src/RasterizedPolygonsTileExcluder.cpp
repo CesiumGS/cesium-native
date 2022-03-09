@@ -12,7 +12,7 @@ RasterizedPolygonsTileExcluder::RasterizedPolygonsTileExcluder(
 
 bool RasterizedPolygonsTileExcluder::shouldExclude(
     const Tile& tile) const noexcept {
-  return Cesium3DTilesSelection::Impl::withinPolygons(
+  return Cesium3DTilesSelection::CesiumImpl::withinPolygons(
       tile.getBoundingVolume(),
       this->_pOverlay->getPolygons());
 }

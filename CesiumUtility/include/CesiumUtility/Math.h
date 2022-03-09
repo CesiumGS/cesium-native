@@ -12,82 +12,82 @@ namespace CesiumUtility {
 class CESIUMUTILITY_API Math final {
 public:
   /** @brief 0.1 */
-  static constexpr double EPSILON1 = 1e-1;
+  static constexpr double Epsilon1 = 1e-1;
 
   /** @brief 0.01 */
-  static constexpr double EPSILON2 = 1e-2;
+  static constexpr double Epsilon2 = 1e-2;
 
   /** @brief 0.001 */
-  static constexpr double EPSILON3 = 1e-3;
+  static constexpr double Epsilon3 = 1e-3;
 
   /** @brief 0.0001 */
-  static constexpr double EPSILON4 = 1e-4;
+  static constexpr double Epsilon4 = 1e-4;
 
   /** @brief 0.00001 */
-  static constexpr double EPSILON5 = 1e-5;
+  static constexpr double Epsilon5 = 1e-5;
 
   /** @brief 0.000001 */
-  static constexpr double EPSILON6 = 1e-6;
+  static constexpr double Epsilon6 = 1e-6;
 
   /** @brief 0.0000001 */
-  static constexpr double EPSILON7 = 1e-7;
+  static constexpr double Epsilon7 = 1e-7;
 
   /** @brief 0.00000001 */
-  static constexpr double EPSILON8 = 1e-8;
+  static constexpr double Epsilon8 = 1e-8;
 
   /** @brief 0.000000001 */
-  static constexpr double EPSILON9 = 1e-9;
+  static constexpr double Epsilon9 = 1e-9;
 
   /** @brief 0.0000000001 */
-  static constexpr double EPSILON10 = 1e-10;
+  static constexpr double Epsilon10 = 1e-10;
 
   /** @brief 0.00000000001 */
-  static constexpr double EPSILON11 = 1e-11;
+  static constexpr double Epsilon11 = 1e-11;
 
   /** @brief 0.000000000001 */
-  static constexpr double EPSILON12 = 1e-12;
+  static constexpr double Epsilon12 = 1e-12;
 
   /** @brief 0.0000000000001 */
-  static constexpr double EPSILON13 = 1e-13;
+  static constexpr double Epsilon13 = 1e-13;
 
   /** @brief 0.00000000000001 */
-  static constexpr double EPSILON14 = 1e-14;
+  static constexpr double Epsilon14 = 1e-14;
 
   /** @brief 0.000000000000001 */
-  static constexpr double EPSILON15 = 1e-15;
+  static constexpr double Epsilon15 = 1e-15;
 
   /** @brief 0.0000000000000001 */
-  static constexpr double EPSILON16 = 1e-16;
+  static constexpr double Epsilon16 = 1e-16;
 
   /** @brief 0.00000000000000001 */
-  static constexpr double EPSILON17 = 1e-17;
+  static constexpr double Epsilon17 = 1e-17;
 
   /** @brief 0.000000000000000001 */
-  static constexpr double EPSILON18 = 1e-18;
+  static constexpr double Epsilon18 = 1e-18;
 
   /** @brief 0.0000000000000000001 */
-  static constexpr double EPSILON19 = 1e-19;
+  static constexpr double Epsilon19 = 1e-19;
 
   /** @brief 0.00000000000000000001 */
-  static constexpr double EPSILON20 = 1e-20;
+  static constexpr double Epsilon20 = 1e-20;
 
   /** @brief 0.000000000000000000001 */
-  static constexpr double EPSILON21 = 1e-21;
+  static constexpr double Epsilon21 = 1e-21;
 
   /**
    * @brief pi
    */
-  static constexpr double ONE_PI = 3.14159265358979323846;
+  static constexpr double OnePi = 3.14159265358979323846;
 
   /**
    * @brief two times pi
    */
-  static constexpr double TWO_PI = ONE_PI * 2.0;
+  static constexpr double TwoPi = OnePi * 2.0;
 
   /**
    * @brief pi divded by two
    */
-  static constexpr double PI_OVER_TWO = ONE_PI / 2.0;
+  static constexpr double PiOverTwo = OnePi / 2.0;
 
   /**
    * @brief Converts a relative to an absolute epsilon, for the epsilon-equality
@@ -264,15 +264,15 @@ public:
    * equivalent to the provided angle.
    *
    * @param angle The angle in radians.
-   * @returns The angle in the range [`-Math::ONE_PI`, `Math::ONE_PI`].
+   * @returns The angle in the range [`-Math::OnePi`, `Math::OnePi`].
    */
   static double negativePiToPi(double angle) noexcept {
-    if (angle >= -Math::ONE_PI && angle <= Math::ONE_PI) {
+    if (angle >= -Math::OnePi && angle <= Math::OnePi) {
       // Early exit if the input is already inside the range. This avoids
       // unnecessary math which could introduce floating point error.
       return angle;
     }
-    return Math::zeroToTwoPi(angle + Math::ONE_PI) - Math::ONE_PI;
+    return Math::zeroToTwoPi(angle + Math::OnePi) - Math::OnePi;
   }
 
   /**
@@ -280,17 +280,17 @@ public:
    * to the provided angle.
    *
    * @param angle The angle in radians.
-   * @returns The angle in the range [0, `Math::TWO_PI`].
+   * @returns The angle in the range [0, `Math::TwoPi`].
    */
   static double zeroToTwoPi(double angle) noexcept {
-    if (angle >= 0 && angle <= Math::TWO_PI) {
+    if (angle >= 0 && angle <= Math::TwoPi) {
       // Early exit if the input is already inside the range. This avoids
       // unnecessary math which could introduce floating point error.
       return angle;
     }
-    const double mod = Math::mod(angle, Math::TWO_PI);
-    if (glm::abs(mod) < Math::EPSILON14 && glm::abs(angle) > Math::EPSILON14) {
-      return Math::TWO_PI;
+    const double mod = Math::mod(angle, Math::TwoPi);
+    if (glm::abs(mod) < Math::Epsilon14 && glm::abs(angle) > Math::Epsilon14) {
+      return Math::TwoPi;
     }
     return mod;
   }
@@ -318,7 +318,7 @@ public:
    * @returns The corresponding angle in radians.
    */
   static constexpr double degreesToRadians(double angleDegrees) noexcept {
-    return angleDegrees * Math::ONE_PI / 180.0;
+    return angleDegrees * Math::OnePi / 180.0;
   }
 
   /**
@@ -328,7 +328,7 @@ public:
    * @returns The corresponding angle in degrees.
    */
   static constexpr double radiansToDegrees(double angleRadians) noexcept {
-    return angleRadians * 180.0 / Math::ONE_PI;
+    return angleRadians * 180.0 / Math::OnePi;
   }
 
   /**
@@ -387,25 +387,25 @@ public:
   }
 
   /**
-   * Converts a longitude value, in radians, to the range [`-Math::ONE_PI`,
-   * `Math::ONE_PI`).
+   * Converts a longitude value, in radians, to the range [`-Math::OnePi`,
+   * `Math::OnePi`).
    *
    * @param angle The longitude value, in radians, to convert to the range
-   * [`-Math::ONE_PI`, `Math::ONE_PI`).
-   * @returns The equivalent longitude value in the range [`-Math::ONE_PI`,
-   * `Math::ONE_PI`).
+   * [`-Math::OnePi`, `Math::OnePi`).
+   * @returns The equivalent longitude value in the range [`-Math::OnePi`,
+   * `Math::OnePi`).
    *
    * @snippet TestMath.cpp convertLongitudeRange
    */
   static double convertLongitudeRange(double angle) noexcept {
-    constexpr double twoPi = Math::TWO_PI;
+    constexpr double twoPi = Math::TwoPi;
 
     const double simplified = angle - glm::floor(angle / twoPi) * twoPi;
 
-    if (simplified < -Math::ONE_PI) {
+    if (simplified < -Math::OnePi) {
       return simplified + twoPi;
     }
-    if (simplified >= Math::ONE_PI) {
+    if (simplified >= Math::OnePi) {
       return simplified - twoPi;
     }
 

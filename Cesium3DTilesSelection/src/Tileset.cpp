@@ -1332,7 +1332,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
       glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
       const double magnitude = glm::length(tileDirection);
 
-      if (magnitude >= CesiumUtility::Math::EPSILON5) {
+      if (magnitude >= CesiumUtility::Math::Epsilon5) {
         tileDirection /= magnitude;
         const double loadPriority =
             (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;

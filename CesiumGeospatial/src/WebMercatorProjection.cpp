@@ -11,13 +11,13 @@ namespace CesiumGeospatial {
 
 /*static*/ const double WebMercatorProjection::MAXIMUM_LATITUDE =
     WebMercatorProjection::mercatorAngleToGeodeticLatitude(
-        CesiumUtility::Math::ONE_PI);
+        CesiumUtility::Math::OnePi);
 
 /*static*/ const GlobeRectangle WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE =
     GlobeRectangle(
-        -CesiumUtility::Math::ONE_PI,
+        -CesiumUtility::Math::OnePi,
         -MAXIMUM_LATITUDE,
-        CesiumUtility::Math::ONE_PI,
+        CesiumUtility::Math::OnePi,
         MAXIMUM_LATITUDE);
 
 WebMercatorProjection::WebMercatorProjection(
@@ -71,7 +71,7 @@ CesiumGeospatial::GlobeRectangle WebMercatorProjection::unproject(
 
 /*static*/ double WebMercatorProjection::mercatorAngleToGeodeticLatitude(
     double mercatorAngle) noexcept {
-  return CesiumUtility::Math::PI_OVER_TWO -
+  return CesiumUtility::Math::PiOverTwo -
          2.0 * glm::atan(glm::exp(-mercatorAngle));
 }
 
