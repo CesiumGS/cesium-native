@@ -6,6 +6,10 @@
 
 - Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
 
+##### Additions :tada:
+
+- Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
+
 ### v0.13.0 - 2022-03-01
 
 ##### Breaking Changes :mega:
