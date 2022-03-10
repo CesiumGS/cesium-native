@@ -111,16 +111,19 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, void> runInWorkerThread(Func&& f) const {
+  CesiumImpl::ContinuationFutureType_t<Func, void>
+  runInWorkerThread(Func&& f) const {
     static const char* tracingName = "waiting for worker thread";
 
     CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
-    return Impl::ContinuationFutureType_t<Func, void>(
+    return CesiumImpl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->workerThread.immediate,
-            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
+            CesiumImpl::WithTracing<void>::end(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -138,16 +141,19 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, void> runInMainThread(Func&& f) const {
+  CesiumImpl::ContinuationFutureType_t<Func, void>
+  runInMainThread(Func&& f) const {
     static const char* tracingName = "waiting for main thread";
 
     CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
-    return Impl::ContinuationFutureType_t<Func, void>(
+    return CesiumImpl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThread.immediate,
-            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
+            CesiumImpl::WithTracing<void>::end(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -160,17 +166,19 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, void>
+  CesiumImpl::ContinuationFutureType_t<Func, void>
   runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
     static const char* tracingName = "waiting for thread pool";
 
     CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
-    return Impl::ContinuationFutureType_t<Func, void>(
+    return CesiumImpl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
             threadPool._pScheduler->immediate,
-            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
+            CesiumImpl::WithTracing<void>::end(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -300,7 +308,7 @@ private:
     return Future<std::vector<T>>(this->_pSchedulers, std::move(task));
   }
 
-  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
 
   template <typename T> friend class Future;
 };

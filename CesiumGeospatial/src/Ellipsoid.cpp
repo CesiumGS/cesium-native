@@ -137,7 +137,7 @@ Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept {
     const double derivative = -2.0 * denominator;
 
     correction = func / derivative;
-  } while (glm::abs(func) > Math::EPSILON12);
+  } while (glm::abs(func) > Math::Epsilon12);
 
   return glm::dvec3(
       positionX * xMultiplier,
