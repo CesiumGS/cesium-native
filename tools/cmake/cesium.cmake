@@ -239,7 +239,7 @@ macro(find_cesium_package package)
   endif()
 endmacro()
 
-function(cesium_install_requirement_configuration configuration libraries)
+function(cesium_install_requirement_configuration configuration libraries access)
   foreach(library ${libraries})
     # If library isn't a really target, it's probably a system library or something. Ignore it.
     if (NOT TARGET ${library})
@@ -255,13 +255,13 @@ function(cesium_install_requirement_configuration configuration libraries)
         set_target_properties(${library} PROPERTIES FILE_INSTALLED true)
         get_target_property(LIBRARY_PATH ${library} IMPORTED_LOCATION)
         # message("## ${configuration}: Microtarget ${library} ${LIBRARY_PATH}")
-        install(FILES "$<$<CONFIG:${configuration}>:${LIBRARY_PATH}>" DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        install(FILES "$<$<CONFIG:${configuration}>:${LIBRARY_PATH}>" TYPE LIB)
       endif()
     else()
-      # This is a regular target, recurse.
+      # This is a regular target, so recurse.
       # Assumption: we don't need headers for our dependency's dependencies
       # message("## ${configuration}: ${library}")
-      cesium_install_requirement(${library} "PRIVATE")
+      cesium_install_requirement(${library} "PRIVATE" "${access}")
     endif()
   endforeach()
 endfunction()
@@ -271,17 +271,25 @@ function(cesium_install_requirement requirement access)
     return()
   endif()
 
+  # Copy includes for public libraries
+  if (access STREQUAL "PUBLIC")
+    # TODO: need to account for generator expressions in the include dirs, too.
+    get_target_property(INCLUDE_DIRS "${requirement}" INTERFACE_INCLUDE_DIRECTORIES)
+    install(FILES ${INCLUDE_DIRS} TYPE INCLUDE)
+  endif()
+
+  # Copy libs for all libraries
   get_target_property(LIBRARIES "${requirement}" INTERFACE_LINK_LIBRARIES)
   # message("***** ${LIBRARIES}")
   string(GENEX_STRIP "${LIBRARIES}" NOT_CONFIG_SPECIFIC)
-  cesium_install_requirement_configuration("ALL" "${NOT_CONFIG_SPECIFIC}")
+  cesium_install_requirement_configuration("ALL" "${NOT_CONFIG_SPECIFIC}" "${access}")
 
   set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:([^>]+)>:([^>]*)>")
   while (LIBRARIES MATCHES ${CONFIGURATION_REGEX})
     # Remove the matched part
     string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
     string(SUBSTRING "${LIBRARIES}" ${MATCH_LENGTH} -1 LIBRARIES)
-    # 1: configuration, 2: library list for configuration
-    cesium_install_requirement_configuration("${CMAKE_MATCH_1}" "${CMAKE_MATCH_2}")
+    # MATCH_1: configuration, MATCH_2: library list for configuration
+    cesium_install_requirement_configuration("${CMAKE_MATCH_1}" "${CMAKE_MATCH_2}" "${access}")
   endwhile()
 endfunction()
