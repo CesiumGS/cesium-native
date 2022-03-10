@@ -266,6 +266,42 @@ function(cesium_install_requirement_configuration configuration libraries access
   endforeach()
 endfunction()
 
+# Gets the configurations X for which a given value has $<$<CONFIG:X>:Y> generator expressions
+function(cesium_get_value_configurations value outputVariable)
+  set(input "${value}")
+  set(output "")
+  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:([^>]+)>:([^>]*)>")
+
+  while (input MATCHES ${CONFIGURATION_REGEX})
+    # Remove the matched part
+    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
+    string(SUBSTRING "${input}" ${MATCH_LENGTH} -1 input)
+    # MATCH_1: configuration, MATCH_2: value for configuration
+    list(APPEND output "${CMAKE_MATCH_1}")
+  endwhile()
+
+  set(${outputVariable} "${output}" PARENT_SCOPE)
+endfunction()
+
+# Gets the value of a property by evaluating $<$<CONFIG:X>:Y> generator
+# expressions for X=configuration and removing all others. The relative order
+# of generator and non-generator list elements is not preserved.
+function(cesium_get_configuration_value value configuration outputVariable)
+  set(input "${value}")
+  string(GENEX_STRIP "${value}" output)
+  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:${configuration}>:([^>]*)>")
+
+  while (input MATCHES ${CONFIGURATION_REGEX})
+    # Remove the matched part
+    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
+    string(SUBSTRING "${input}" ${MATCH_LENGTH} -1 input)
+    # MATCH_1: value for configuration
+    list(APPEND output "${CMAKE_MATCH_1}")
+  endwhile()
+
+  set(${outputVariable} "${output}" PARENT_SCOPE)
+endfunction()
+
 function(cesium_install_requirement requirement access)
   if (NOT CESIUM_INSTALL_REQUIREMENTS)
     return()
@@ -273,9 +309,15 @@ function(cesium_install_requirement requirement access)
 
   # Copy includes for public libraries
   if (access STREQUAL "PUBLIC")
-    # TODO: need to account for generator expressions in the include dirs, too.
     get_target_property(INCLUDE_DIRS "${requirement}" INTERFACE_INCLUDE_DIRECTORIES)
-    install(FILES ${INCLUDE_DIRS} TYPE INCLUDE)
+    cesium_get_value_configurations("${INCLUDE_DIRS}" INCLUDE_CONFIGS)
+    foreach (INCLUDE_CONFIG ${INCLUDE_CONFIGS})
+      cesium_get_configuration_value("${INCLUDE_DIRS}" "${INCLUDE_CONFIG}" CONFIG_INCLUDES)
+      foreach (INCLUDE ${CONFIG_INCLUDES})
+        install(DIRECTORY "$<$<CONFIG:${INCLUDE_CONFIG}>:${INCLUDE}/>" TYPE INCLUDE)
+      endforeach()
+    endforeach()
+    # message("****** ${INCLUDE_CONFIGS}")
   endif()
 
   # Copy libs for all libraries
