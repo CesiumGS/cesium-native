@@ -39,7 +39,7 @@ public:
   ScopeGuard(ScopeGuard&& rhs) noexcept
       : _callExitFuncOnDestruct{rhs._callExitFuncOnDestruct},
         _exitFunc{std::move(rhs._exitFunc)} {
-    rhs.Release();
+    rhs.release();
   }
 
   ScopeGuard& operator=(const ScopeGuard& rhs) = delete;
@@ -52,7 +52,7 @@ public:
     if (&rhs != this) {
       _callExitFuncOnDestruct = rhs._callExitFuncOnDestruct;
       _exitFunc = std::move(rhs._exitFunc);
-      rhs.Release();
+      rhs.release();
     }
 
     return *this;
@@ -69,10 +69,10 @@ public:
   }
 
   /**
-   * @brief Upon calling ScopeGuard::Release(), the guard will not execute the
+   * @brief Upon calling ScopeGuard::release(), the guard will not execute the
    * lambda function when exiting a scope
    */
-  void Release() noexcept { _callExitFuncOnDestruct = false; }
+  void release() noexcept { _callExitFuncOnDestruct = false; }
 
 private:
   bool _callExitFuncOnDestruct;
