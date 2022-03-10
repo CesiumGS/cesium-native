@@ -9,6 +9,7 @@
 ##### Additions :tada:
 
 - Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
+- Add ScopeGuard utility to automatically execute function when exiting a scope.
 
 ### v0.13.0 - 2022-03-01
 
