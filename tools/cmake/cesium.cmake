@@ -239,6 +239,76 @@ macro(find_cesium_package package)
   endif()
 endmacro()
 
+# Given a `value`, which is a string or list where some parts or items are
+# wrapped in $<$<CONFIG:X>:Y> generator expressions, returns in outputVariable
+# the  complete list of configurations X for which the value varies. If the value
+# has a meaningful part (not just a semicolon) that exists for all configurations,
+# the outputVariable will contain an element "*".
+# Not supported:
+#  - CONFIG generator expressions with a list of configurations (instead of just one)
+#  - The effect of MAP_IMPORTED_CONFIG_<CONFIG>
+function(cesium_get_value_configurations value outputVariable)
+  set(INPUT "${value}")
+  set(OUTPUT "")
+  set(ADDED_STAR "") # Have we added the "*" configuration to the list yet?
+  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:([^>]+)>:([^>]*)>")
+
+  while (INPUT MATCHES ${CONFIGURATION_REGEX})
+    # Remove from the beginning through to the matched part
+    string(FIND "${INPUT}" "${CMAKE_MATCH_0}" MATCH_START)
+    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
+    math(EXPR MATCH_END "${MATCH_START}+${MATCH_LENGTH}")
+    string(SUBSTRING "${INPUT}" 0 ${MATCH_START} REMOVED)
+    string(STRIP "${REMOVED}" REMOVED)
+    if (NOT ADDED_STAR AND REMOVED AND NOT REMOVED STREQUAL ";")
+      list(APPEND OUTPUT "*")
+      set(ADDED_STAR "yes")
+    endif()
+    string(SUBSTRING "${INPUT}" ${MATCH_END} -1 INPUT)
+    # MATCH_1: configuration, MATCH_2: value for configuration
+    list(APPEND OUTPUT "${CMAKE_MATCH_1}")
+  endwhile()
+
+  if (NOT ADDED_STAR AND INPUT AND NOT INPUT STREQUAL ";")
+    list(APPEND OUTPUT "*")
+    set(ADDED_STAR "yes")
+  endif()
+
+  set(${outputVariable} "${OUTPUT}" PARENT_SCOPE)
+endfunction()
+
+# Gets the value of a property by evaluating $<$<CONFIG:X>:Y> generator
+# expressions for X=configuration and removing all other generator expressions.
+function(cesium_get_configuration_value value configuration outputVariable)
+  set(INPUT "${value}")
+  set(OUTPUT "")
+  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:${configuration}>:([^>]*)>")
+
+  while (INPUT MATCHES ${CONFIGURATION_REGEX})
+    # Add everything up to the matched part to the output, but strip
+    # out any generator expressions from it.
+    string(FIND "${INPUT}" "${CMAKE_MATCH_0}" MATCH_START)
+    string(SUBSTRING "${INPUT}" 0 ${MATCH_START} BEFORE_MATCH)
+    string(APPEND OUTPUT "${BEFORE_MATCH}")
+
+    # Add the content of the matched configuration generator
+    # expression to the output.
+    list(APPEND OUTPUT "${CMAKE_MATCH_1}")
+
+    # Remove the processed part from the INPUT string
+    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
+    math(EXPR MATCH_END "${MATCH_START}+${MATCH_LENGTH}")
+    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
+    string(SUBSTRING "${INPUT}" ${MATCH_END} -1 INPUT)
+  endwhile()
+
+  # Append any remaining INPUT to the end, minus any generator expressions
+  string(APPEND OUTPUT "${INPUT}")
+  string(GENEX_STRIP "${OUTPUT}" OUTPUT)
+
+  set(${outputVariable} "${OUTPUT}" PARENT_SCOPE)
+endfunction()
+
 function(cesium_install_requirement_configuration configuration libraries access)
   foreach(library ${libraries})
     # If library isn't a really target, it's probably a system library or something. Ignore it.
@@ -266,42 +336,6 @@ function(cesium_install_requirement_configuration configuration libraries access
   endforeach()
 endfunction()
 
-# Gets the configurations X for which a given value has $<$<CONFIG:X>:Y> generator expressions
-function(cesium_get_value_configurations value outputVariable)
-  set(input "${value}")
-  set(output "")
-  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:([^>]+)>:([^>]*)>")
-
-  while (input MATCHES ${CONFIGURATION_REGEX})
-    # Remove the matched part
-    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
-    string(SUBSTRING "${input}" ${MATCH_LENGTH} -1 input)
-    # MATCH_1: configuration, MATCH_2: value for configuration
-    list(APPEND output "${CMAKE_MATCH_1}")
-  endwhile()
-
-  set(${outputVariable} "${output}" PARENT_SCOPE)
-endfunction()
-
-# Gets the value of a property by evaluating $<$<CONFIG:X>:Y> generator
-# expressions for X=configuration and removing all others. The relative order
-# of generator and non-generator list elements is not preserved.
-function(cesium_get_configuration_value value configuration outputVariable)
-  set(input "${value}")
-  string(GENEX_STRIP "${value}" output)
-  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:${configuration}>:([^>]*)>")
-
-  while (input MATCHES ${CONFIGURATION_REGEX})
-    # Remove the matched part
-    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
-    string(SUBSTRING "${input}" ${MATCH_LENGTH} -1 input)
-    # MATCH_1: value for configuration
-    list(APPEND output "${CMAKE_MATCH_1}")
-  endwhile()
-
-  set(${outputVariable} "${output}" PARENT_SCOPE)
-endfunction()
-
 function(cesium_install_requirement requirement access)
   if (NOT CESIUM_INSTALL_REQUIREMENTS)
     return()
@@ -317,12 +351,12 @@ function(cesium_install_requirement requirement access)
         install(DIRECTORY "$<$<CONFIG:${INCLUDE_CONFIG}>:${INCLUDE}/>" TYPE INCLUDE)
       endforeach()
     endforeach()
-    # message("****** ${INCLUDE_CONFIGS}")
   endif()
 
   # Copy libs for all libraries
   get_target_property(LIBRARIES "${requirement}" INTERFACE_LINK_LIBRARIES)
-  # message("***** ${LIBRARIES}")
+  # cesium_get_value_configurations("${INCLUDE_DIRS}" INCLUDE_CONFIGS)
+
   string(GENEX_STRIP "${LIBRARIES}" NOT_CONFIG_SPECIFIC)
   cesium_install_requirement_configuration("ALL" "${NOT_CONFIG_SPECIFIC}" "${access}")
 
