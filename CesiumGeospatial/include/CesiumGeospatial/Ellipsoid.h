@@ -53,7 +53,7 @@ public:
             1.0 / (radii.x * radii.x),
             1.0 / (radii.y * radii.y),
             1.0 / (radii.z * radii.z)),
-        _centerToleranceSquared(CesiumUtility::Math::EPSILON1) {}
+        _centerToleranceSquared(CesiumUtility::Math::Epsilon1) {}
 
   /**
    * @brief Returns the radii in x-, y-, and z-direction.

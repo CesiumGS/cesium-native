@@ -19,7 +19,7 @@ Plane::Plane() noexcept : Plane(glm::dvec3(0.0, 0.0, 1.0), 0.0) {}
 Plane::Plane(const glm::dvec3& normal, double distance)
     : _normal(normal), _distance(distance) {
   //>>includeStart('debug', pragmas.debug);
-  if (!Math::equalsEpsilon(glm::length(normal), 1.0, Math::EPSILON6)) {
+  if (!Math::equalsEpsilon(glm::length(normal), 1.0, Math::Epsilon6)) {
     throw std::invalid_argument("normal must be normalized.");
   }
   //>>includeEnd('debug');

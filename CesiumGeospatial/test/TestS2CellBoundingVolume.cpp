@@ -34,7 +34,7 @@ TEST_CASE("S2CellBoundingVolume") {
         glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
         testDistance,
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
 
     // Test against the first side plane.
     Plane sidePlane0(
@@ -50,7 +50,7 @@ TEST_CASE("S2CellBoundingVolume") {
         glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
         testDistance,
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
   }
 
   SECTION("Case II - distanceToCamera works when camera is facing two planes") {
@@ -64,7 +64,7 @@ TEST_CASE("S2CellBoundingVolume") {
         glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
         testDistance,
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
 
     // Test with first and second side planes.
     position =
@@ -75,7 +75,7 @@ TEST_CASE("S2CellBoundingVolume") {
         tileS2Cell.computeDistanceSquaredToPosition(position),
         2.0,
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
 
     // Test with bottom plane and second side plane. Handles the obtuse dihedral
     // angle case.
@@ -87,7 +87,7 @@ TEST_CASE("S2CellBoundingVolume") {
         glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
         10000.0,
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
   }
 
   SECTION(
@@ -97,7 +97,7 @@ TEST_CASE("S2CellBoundingVolume") {
         tileS2Cell.computeDistanceSquaredToPosition(position),
         3.0,
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
   }
 
   SECTION("Case IV - distanceToCamera works when camera is facing more than "
@@ -108,7 +108,7 @@ TEST_CASE("S2CellBoundingVolume") {
         Ellipsoid::WGS84.getMaximumRadius() +
             tileS2Cell.getBoundingPlanes()[1].getDistance(),
         0.0,
-        Math::EPSILON7));
+        Math::Epsilon7));
   }
 
   SECTION("intersect plane") {
