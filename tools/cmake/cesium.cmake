@@ -140,7 +140,7 @@ function(cesium_library)
 
   # We can't use install(TARGETS x PUBLIC_HEADER DESTINATION y) because PUBLIC_HEADER copies all
   # the files into the DESTINATION without preserving subdirectories. Copy the files manually instead.
-  if (EXISTS "generated/include")
+  if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/generated/include")
     install(DIRECTORY generated/include/ TYPE INCLUDE)
   endif()
   install(DIRECTORY include/ TYPE INCLUDE)
@@ -329,9 +329,9 @@ function(cesium_install_requirement_configuration configuration libraries access
       endif()
     else()
       # This is a regular target, so recurse.
-      # Assumption: we don't need headers for our dependency's dependencies
+      # Only public libraries will be included in INTERFACE_LINK_LIBRARIES.
       # message("## ${configuration}: ${library}")
-      cesium_install_requirement(${library} "PRIVATE" "${access}")
+      cesium_install_requirement(${library} "PUBLIC" "${access}")
     endif()
   endforeach()
 endfunction()
