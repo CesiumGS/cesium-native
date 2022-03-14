@@ -14,6 +14,7 @@
 
 namespace Cesium3DTilesSelection {
 
+struct Credit;
 class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
@@ -153,6 +154,8 @@ public:
   const RasterOverlayTileProvider* getPlaceholder() const noexcept {
     return this->_pPlaceholder.get();
   }
+
+  std::vector<Credit> _credits;
 
   /**
    * @brief Returns whether this overlay is in the process of being destroyed.

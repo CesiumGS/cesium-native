@@ -58,7 +58,13 @@ IonRasterOverlay::createTileProvider(
         std::vector<CesiumAsync::IAssetAccessor::THeader>{
             std::make_pair("Authorization", "Bearer " + endpoint.accessToken)});
   }
-
+  if (pCreditSystem) {
+    for (const auto& attribution : endpoint.attributions) {
+      pOwner->_credits.push_back(pCreditSystem->createCredit(
+          attribution.html,
+          !attribution.collapsible || this->getOptions().showCreditsOnScreen));
+    }
+  }
   return pAggregatedOverlay->createTileProvider(
       asyncSystem,
       pAssetAccessor,
@@ -160,6 +166,28 @@ IonRasterOverlay::createTileProvider(
                         "Cesium ion Bing Maps raster overlay metadata response "
                         "does not contain 'options' or it is not an object."));
                 return std::nullopt;
+              }
+
+              const auto attributionsIt = response.FindMember("attributions");
+              if (attributionsIt != response.MemberEnd() &&
+                  attributionsIt->value.IsArray()) {
+
+                for (const rapidjson::Value& attribution :
+                     attributionsIt->value.GetArray()) {
+                  AssetEndpointAttribution& endpointAttribution =
+                      endpoint.attributions.emplace_back();
+                  const auto html = attribution.FindMember("html");
+                  if (html != attribution.MemberEnd() &&
+                      html->value.IsString()) {
+                    endpointAttribution.html = html->value.GetString();
+                  }
+                  auto collapsible = attribution.FindMember("collapsible");
+                  if (collapsible != attribution.MemberEnd() &&
+                      collapsible->value.IsBool()) {
+                    endpointAttribution.collapsible =
+                        collapsible->value.GetBool();
+                  }
+                }
               }
 
               const auto& options = optionsIt->value;

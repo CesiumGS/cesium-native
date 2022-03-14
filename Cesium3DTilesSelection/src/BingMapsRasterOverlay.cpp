@@ -171,7 +171,7 @@ protected:
     options.allowEmptyImages = true;
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    std::vector<Credit>& tileCredits = options.credits;
+    std::vector<Credit>& tileCredits = options.credits = getOwner()._credits;
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
