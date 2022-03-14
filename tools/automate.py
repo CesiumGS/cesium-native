@@ -204,12 +204,18 @@ def run(command):
   if result.returncode != 0:
     exit(result.returncode)
 
+def getRootDirectory():
+  scriptPath = os.path.dirname(os.path.realpath(__file__))
+  rootDirectory = os.path.normpath(os.path.join(scriptPath, ".."))
+  return rootDirectory
+
 # Change the current working directory to the cesium-native root directory.
 def cdToRoot():
-  os.chdir(os.path.dirname(os.path.realpath(__file__)) + "/..")
+  os.chdir(getRootDirectory())
 
 def cesiumNativeYml():
-  with open(os.path.dirname(os.path.realpath(__file__)) + '/../cesium-native.yml', 'r') as f:
+  nativeYmlPath = os.path.join(getRootDirectory(), "cesium-native.yml")
+  with open(nativeYmlPath, 'r') as f:
     return yaml.safe_load(f)
 
 if __name__ == "__main__":
