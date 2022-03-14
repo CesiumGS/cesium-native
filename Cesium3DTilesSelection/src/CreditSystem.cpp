@@ -12,8 +12,10 @@ Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
     }
   }
 
+  bool isIon = html.find("ion-credit.png") != std::string::npos;
+
   // this is a new credit so add it to _credits
-  _credits.push_back({html, showOnScreen, -1});
+  _credits.push_back({html, showOnScreen, -1, isIon});
 
   // return a Credit handle to the newly created entry
   return Credit(_credits.size() - 1);
@@ -31,6 +33,13 @@ const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
     return _credits[credit.id].html;
   }
   return INVALID_CREDIT_MESSAGE;
+}
+
+bool CreditSystem::isIon(Credit credit) const noexcept {
+  if (credit.id < _credits.size()) {
+    return _credits[credit.id].isIon;
+  }
+  return false;
 }
 
 void CreditSystem::addCreditToFrame(Credit credit) {
