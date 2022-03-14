@@ -8,12 +8,11 @@
 #include <gsl/span>
 #include <rapidjson/reader.h>
 
-#include <filesystem>
 #include <fstream>
 #include <string>
 
 namespace {
-std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
+std::vector<std::byte> readFile(const std::string& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   REQUIRE(file);
 
@@ -30,8 +29,8 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;
 
-  std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
-  tilesetFile /= "tileset.json";
+  std::string tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
+  tilesetFile += "/tileset.json";
   std::vector<std::byte> data = readFile(tilesetFile);
   Cesium3DTilesReader::TilesetReader reader;
   Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(data);

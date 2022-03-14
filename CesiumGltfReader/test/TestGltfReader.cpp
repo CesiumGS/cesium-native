@@ -9,7 +9,6 @@
 #include <gsl/span>
 #include <rapidjson/reader.h>
 
-#include <filesystem>
 #include <fstream>
 #include <string>
 
@@ -18,7 +17,7 @@ using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
 namespace {
-std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
+std::vector<std::byte> readFile(const std::string& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   REQUIRE(file);
 
@@ -109,9 +108,9 @@ TEST_CASE("CesiumGltfReader::GltfReader") {
 }
 
 TEST_CASE("Read TriangleWithoutIndices") {
-  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /=
-      "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
+  std::string gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile +=
+      "/TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile);
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(data);
@@ -403,9 +402,9 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
 }
 
 TEST_CASE("Test KTX2") {
-  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /= "CesiumBalloonKTX2Hacky.glb";
-  std::vector<std::byte> data = readFile(gltfFile.string());
+  std::string gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile += "/CesiumBalloonKTX2Hacky.glb";
+  std::vector<std::byte> data = readFile(gltfFile);
   CesiumGltfReader::GltfReader reader;
   GltfReaderResult result = reader.readGltf(data);
   REQUIRE(result.model);

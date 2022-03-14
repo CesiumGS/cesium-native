@@ -15,7 +15,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <filesystem>
 #include <fstream>
 
 using namespace CesiumAsync;
@@ -23,7 +22,7 @@ using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
-static std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
+static std::vector<std::byte> readFile(const std::string& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   REQUIRE(file);
 
@@ -126,8 +125,8 @@ TEST_CASE("Test replace refinement for render") {
   //
   // ll_ll.b3dm
   //
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ReplaceTileset";
+  std::string testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath += "/ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -146,7 +145,7 @@ TEST_CASE("Test replace refinement for render") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(testDataPath + "/" + file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -522,8 +521,8 @@ TEST_CASE("Test replace refinement for render") {
 TEST_CASE("Test additive refinement") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "AddTileset";
+  std::string testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath += "/AddTileset";
   std::vector<std::string> files{
       "tileset.json",
       "tileset2.json",
@@ -542,7 +541,7 @@ TEST_CASE("Test additive refinement") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(testDataPath + "/" + file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -680,8 +679,8 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
           "additive refinement") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ErrorChildrenAddTileset";
+  std::string testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath += "/ErrorChildrenAddTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -698,7 +697,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(testDataPath + "/" + file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -770,8 +769,8 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 TEST_CASE("Test multiple frustums") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ReplaceTileset";
+  std::string testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath += "/ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -790,7 +789,7 @@ TEST_CASE("Test multiple frustums") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(testDataPath + "/" + file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
