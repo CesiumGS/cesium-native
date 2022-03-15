@@ -220,6 +220,16 @@ public:
   const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
   /**
+   * @brief Get the swizzle string for this texture's channels. Used to
+   * determine which channel represents red, green, blue, and alpha
+   * respectively.
+   */
+  const std::string& getSwizzle() const noexcept {
+    const static std::string empty_str = "";
+    return this->_pSwizzle ? *this->_pSwizzle : empty_str;
+  }
+
+  /**
    * @brief Get the {@link FeatureTexturePropertyChannelOffsets} that specifies
    * how to un-swizzle this property's pixel values.
    */
@@ -232,6 +242,7 @@ private:
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   const ClassProperty* _pClassProperty;
+  const std::string* _pSwizzle;
   int64_t _textureCoordinateIndex;
   FeatureTexturePropertyViewStatus _status;
   FeatureTexturePropertyChannelOffsets _channelOffsets;
