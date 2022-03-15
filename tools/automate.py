@@ -205,8 +205,12 @@ def run(command):
     exit(result.returncode)
 
 def getRootDirectory():
-  scriptPath = os.path.dirname(os.path.realpath(__file__))
-  rootDirectory = os.path.normpath(os.path.join(scriptPath, ".."))
+  scriptFile = __file__
+  scriptFileReal = os.path.realpath(scriptFile)
+  scriptPath = os.path.dirname(scriptFileReal)
+  joined = os.path.join(scriptPath, "..")
+  rootDirectory = os.path.normpath(joined)
+  print("*** scriptFile " + scriptFile + "\nscriptFileReal " + scriptFileReal + "\nscriptPath " + scriptPath + "\njoined " + joined + "\nrootDirectory " + rootDirectory)
   return rootDirectory
 
 # Change the current working directory to the cesium-native root directory.
