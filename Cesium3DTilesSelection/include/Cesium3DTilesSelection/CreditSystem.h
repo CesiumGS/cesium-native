@@ -98,7 +98,7 @@ private:
     int count = 0;
   };
 
-  std::vector<HtmlAndShowOnScreenAndLastFrameNumber> _credits;
+  std::vector<HtmlAndLastFrameNumber> _credits;
 
   int32_t _currentFrameNumber = 0;
   std::vector<Credit> _creditsToShowThisFrame;
