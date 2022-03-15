@@ -17,6 +17,11 @@ env = jinja2.Environment(
     lstrip_blocks=True
 )
 
+# In seems that in some versions of Python, os.path.realpath doesn't
+# work correctly after the current working directory changes. So we grab this
+# here right at the start before the current working directory can change.
+thisScriptFile = os.path.realpath(__file__)
+
 def main():
   argParser = argparse.ArgumentParser(description='Automate cesium-native tasks')
 
@@ -205,12 +210,10 @@ def run(command):
     exit(result.returncode)
 
 def getRootDirectory():
-  scriptFile = __file__
-  scriptFileReal = os.path.realpath(scriptFile)
-  scriptPath = os.path.dirname(scriptFileReal)
+  scriptPath = os.path.dirname(thisScriptFile)
   joined = os.path.join(scriptPath, "..")
   rootDirectory = os.path.normpath(joined)
-  print("*** scriptFile " + scriptFile + "\nscriptFileReal " + scriptFileReal + "\nscriptPath " + scriptPath + "\njoined " + joined + "\nrootDirectory " + rootDirectory)
+  print("*** scriptPath " + scriptPath + "\njoined " + joined + "\nrootDirectory " + rootDirectory)
   return rootDirectory
 
 # Change the current working directory to the cesium-native root directory.
