@@ -90,11 +90,12 @@ private:
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
-  struct HtmlAndShowOnScreenAndLastFrameNumber {
+  struct HtmlAndLastFrameNumber {
     std::string html;
     bool showOnScreen;
     int32_t lastFrameNumber;
     bool isIon;
+    int count = 0;
   };
 
   std::vector<HtmlAndShowOnScreenAndLastFrameNumber> _credits;
@@ -102,6 +103,5 @@ private:
   int32_t _currentFrameNumber = 0;
   std::vector<Credit> _creditsToShowThisFrame;
   std::vector<Credit> _creditsToNoLongerShowThisFrame;
-  std::unordered_map<size_t, int32_t> _creditCounts;
 };
 } // namespace Cesium3DTilesSelection

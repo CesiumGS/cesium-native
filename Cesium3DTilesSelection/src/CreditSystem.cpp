@@ -46,13 +46,12 @@ void CreditSystem::addCreditToFrame(Credit credit) {
   // if this credit has already been added to the current frame, there's nothing
   // to do
   if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
-    ++_creditCounts[credit.id];
+    ++_credits[credit.id].count;
     return;
   }
 
   // add the credit to this frame
   _creditsToShowThisFrame.push_back(credit);
-  _creditCounts[credit.id] = 1;
 
   // if the credit was shown last frame, remove it from
   // _creditsToNoLongerShowThisFrame since it will still be shown
@@ -72,8 +71,10 @@ void CreditSystem::addCreditToFrame(Credit credit) {
 void CreditSystem::startNextFrame() noexcept {
   _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
   _creditsToShowThisFrame.clear();
-  _creditCounts.clear();
   _currentFrameNumber++;
+  for (const auto& credit : _creditsToNoLongerShowThisFrame) {
+    _credits[credit.id].count = 0;
+  }
 }
 
 const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
@@ -81,12 +82,16 @@ const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
   if (_creditsToShowThisFrame.size() < 2) {
     return _creditsToShowThisFrame;
   }
-  const auto& counts = _creditCounts;
   std::sort(
       _creditsToShowThisFrame.begin(),
       _creditsToShowThisFrame.end(),
-      [&counts](const Credit& a, const Credit& b) {
-        return counts.at(a.id) > counts.at(b.id);
+      [this](const Credit& a, const Credit& b) {
+        int32_t aCounts = _credits[a.id].count;
+        int32_t bCounts = _credits[b.id].count;
+        if (aCounts == bCounts)
+          return a.id < b.id;
+        else
+          return aCounts > bCounts;
       });
   return _creditsToShowThisFrame;
 }
