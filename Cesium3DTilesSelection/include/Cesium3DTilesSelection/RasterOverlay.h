@@ -128,6 +128,13 @@ public:
   }
 
   /**
+   * @brief Gets the credits for this overlay.
+   */
+  const std::vector<Credit>& getCredits() const noexcept {
+    return this->_credits;
+  }
+
+  /**
    * @brief Gets the tile provider for this overlay.
    *
    * @return `nullptr` if {@link createTileProvider} has not yet been called or
@@ -154,8 +161,6 @@ public:
   const RasterOverlayTileProvider* getPlaceholder() const noexcept {
     return this->_pPlaceholder.get();
   }
-
-  std::vector<Credit> _credits;
 
   /**
    * @brief Returns whether this overlay is in the process of being destroyed.
@@ -240,6 +245,7 @@ protected:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlayLoadFailureDetails&& errorDetails);
+  std::vector<Credit> _credits;
 
 private:
   std::string _name;

@@ -43,6 +43,13 @@ IonRasterOverlay::createTileProvider(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     RasterOverlay* pOwner) {
+  if (pCreditSystem) {
+    for (const auto& attribution : endpoint.attributions) {
+      _credits.push_back(pCreditSystem->createCredit(
+          attribution.html,
+          !attribution.collapsible || this->getOptions().showCreditsOnScreen));
+    }
+  }
   std::unique_ptr<RasterOverlay> pAggregatedOverlay = nullptr;
   if (endpoint.externalType == "BING") {
     pAggregatedOverlay = std::make_unique<BingMapsRasterOverlay>(
@@ -57,13 +64,6 @@ IonRasterOverlay::createTileProvider(
         endpoint.url,
         std::vector<CesiumAsync::IAssetAccessor::THeader>{
             std::make_pair("Authorization", "Bearer " + endpoint.accessToken)});
-  }
-  if (pCreditSystem) {
-    for (const auto& attribution : endpoint.attributions) {
-      pOwner->_credits.push_back(pCreditSystem->createCredit(
-          attribution.html,
-          !attribution.collapsible || this->getOptions().showCreditsOnScreen));
-    }
   }
   return pAggregatedOverlay->createTileProvider(
       asyncSystem,
