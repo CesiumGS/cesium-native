@@ -25,6 +25,13 @@ public:
   void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
 
   /**
+   * @brief Will be called when the task completed successfully.
+   *
+   * @param value The value that was computed by the asynchronous task.
+   */
+  void resolve(const T& value) const { this->_pEvent->set(value); }
+
+  /**
    * @brief Will be called when the task failed.
    *
    * @param error The error that caused the task to fail.

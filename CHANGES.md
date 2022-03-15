@@ -1,9 +1,15 @@
 # Change Log
+### v0.14.0 - YYYY-MM-DD
 
-### ???? - ????
+##### Fixes :wrench:
+
+- Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
 
 ##### Additions :tada:
 
+- Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
+- Add ScopeGuard utility to automatically execute function when exiting a scope.
+- Add glTF copyright information to the list of tileset credits.
 - Expose the swizzle string in feature texture property views.
 
 ### v0.13.0 - 2022-03-01
