@@ -1,5 +1,11 @@
 # Change Log
 
+### ???? - ????
+
+##### Additions :tada:
+
+- Expose the swizzle string in feature texture property views.
+
 ### v0.13.0 - 2022-03-01
 
 ##### Breaking Changes :mega:
