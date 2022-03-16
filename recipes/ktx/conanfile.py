@@ -12,6 +12,7 @@ class KtxConan(ConanFile):
     topics = ("ktx", "texture", "khronos")
     homepage = "https://github.com/KhronosGroup/KTX-Software"
     url = "https://github.com/conan-io/conan-center-index"
+    short_paths = True
 
     settings = "os", "arch", "compiler", "build_type"
     options = {

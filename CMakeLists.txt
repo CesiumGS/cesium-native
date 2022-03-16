@@ -6,10 +6,20 @@ project(cesium-native
     LANGUAGES CXX C
 )
 
-enable_testing()
-option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/cmake")
+
+option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
+option(CESIUM_CONAN_INSTALL "Whether to install dependencies from Conan" ON)
+option(CESIUM_CONAN_LESS_CONFIGS "Whether to use the Release configuration of Conan dependencies in the MinSizeRel and RelWithDebInfo configurations" ON)
+
+if (CESIUM_TESTS_ENABLED)
+  enable_testing()
+endif()
+
+if (CESIUM_CONAN_INSTALL)
+  include(ConfigureConan)
+endif()
+
 include(cesium)
 
 file(GLOB libraryFiles LIST_DIRECTORIES true "${CMAKE_CURRENT_LIST_DIR}/Cesium*")

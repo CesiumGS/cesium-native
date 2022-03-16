@@ -196,6 +196,16 @@ function(cesium_tests target sources)
   if (CESIUM_TESTS_ENABLED AND sources)
     find_package(Catch2 REQUIRED)
 
+    if (CESIUM_CONAN_LESS_CONFIGS)
+      # Use Release config for both MinSizeRel and RelWithDebInfo
+      set_target_properties(
+        Catch2::Catch2
+        PROPERTIES
+          MAP_IMPORTED_CONFIG_MINSIZEREL Release
+          MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+      )
+    endif()
+
     add_executable(${target}-tests "")
     configure_cesium_library(${target}-tests)
 
@@ -321,7 +331,7 @@ function(cesium_install_requirement_configuration configuration libraries access
       # So we can get the actual binary from its IMPORTED_LOCATION property.
       # But first make sure we haven't already installed this file.
       get_target_property(FILE_INSTALLED ${library} FILE_INSTALLED)
-      if (NOT FILE_INSTALLED)
+      if (CESIUM_INSTALL_REQUIREMENTS AND NOT FILE_INSTALLED)
         set_target_properties(${library} PROPERTIES FILE_INSTALLED true)
         get_target_property(LIBRARY_PATH ${library} IMPORTED_LOCATION)
         # message("## ${configuration}: Microtarget ${library} ${LIBRARY_PATH}")
@@ -337,12 +347,20 @@ function(cesium_install_requirement_configuration configuration libraries access
 endfunction()
 
 function(cesium_install_requirement requirement access)
-  if (NOT CESIUM_INSTALL_REQUIREMENTS)
-    return()
+  message("****** cesium_install_requirement ${requirement}")
+  if (CESIUM_CONAN_LESS_CONFIGS)
+    # Use Release config for both MinSizeRel and RelWithDebInfo
+    message("**** ${requirement}")
+    set_target_properties(
+      ${requirement}
+      PROPERTIES
+        MAP_IMPORTED_CONFIG_MINSIZEREL Release
+        MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+    )
   endif()
 
   # Copy includes for public libraries
-  if (access STREQUAL "PUBLIC")
+  if (CESIUM_INSTALL_REQUIREMENTS AND access STREQUAL "PUBLIC")
     get_target_property(INCLUDE_DIRS "${requirement}" INTERFACE_INCLUDE_DIRECTORIES)
     cesium_get_value_configurations("${INCLUDE_DIRS}" INCLUDE_CONFIGS)
     foreach (INCLUDE_CONFIG ${INCLUDE_CONFIGS})
@@ -355,7 +373,6 @@ function(cesium_install_requirement requirement access)
 
   # Copy libs for all libraries
   get_target_property(LIBRARIES "${requirement}" INTERFACE_LINK_LIBRARIES)
-  # cesium_get_value_configurations("${INCLUDE_DIRS}" INCLUDE_CONFIGS)
 
   string(GENEX_STRIP "${LIBRARIES}" NOT_CONFIG_SPECIFIC)
   cesium_install_requirement_configuration("ALL" "${NOT_CONFIG_SPECIFIC}" "${access}")
