@@ -25,17 +25,33 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyAttributeProperty
   std::string attribute;
 
   /**
-   * @brief An offset to apply to property values. Only applicable to `SCALAR`,
-   * `VECN`, and `MATN` types. Overrides the class property's `offset` if both
-   * are defined.
+   * @brief An offset to apply to property values. Only applicable when the
+   * component type is `FLOAT32` or `FLOAT64`, or when the property is
+   * `normalized`. Overrides the class property's `offset` if both are defined.
    */
   std::optional<CesiumUtility::JsonValue> offset;
 
   /**
-   * @brief A scale to apply to property values. Only applicable to `SCALAR`,
-   * `VECN`, and `MATN` types. Overrides the class property's `scale` if both
-   * are defined.
+   * @brief A scale to apply to property values. Only applicable when the
+   * component type is `FLOAT32` or `FLOAT64`, or when the property is
+   * `normalized`. Overrides the class property's `scale` if both are defined.
    */
   std::optional<CesiumUtility::JsonValue> scale;
+
+  /**
+   * @brief Maximum value present in the property values. Only applicable to
+   * `SCALAR`, `VECN`, and `MATN` types. This is the maximum of all property
+   * values, after the transforms based on the `normalized`, `offset`, and
+   * `scale` properties have been applied.
+   */
+  std::optional<CesiumUtility::JsonValue> max;
+
+  /**
+   * @brief Minimum value present in the property values. Only applicable to
+   * `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property
+   * values, after the transforms based on the `normalized`, `offset`, and
+   * `scale` properties have been applied.
+   */
+  std::optional<CesiumUtility::JsonValue> min;
 };
 } // namespace CesiumGltf

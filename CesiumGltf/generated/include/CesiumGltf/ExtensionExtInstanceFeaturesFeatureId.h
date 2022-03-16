@@ -8,10 +8,11 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 
 namespace CesiumGltf {
 /**
- * @brief Feature IDs stored in a GPU mesh instanting attribute
+ * @brief Feature IDs stored in a GPU mesh instancing attribute
  */
 struct CESIUMGLTF_API ExtensionExtInstanceFeaturesFeatureId final
     : public CesiumUtility::ExtensibleObject {
@@ -28,6 +29,12 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeaturesFeatureId final
    * instance.
    */
   std::optional<int64_t> nullFeatureId;
+
+  /**
+   * @brief A label assigned to this feature ID set. Labels must be alphanumeric
+   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+   */
+  std::optional<std::string> label;
 
   /**
    * @brief An integer value used to construct a string in the format

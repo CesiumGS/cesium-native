@@ -949,6 +949,16 @@ void writeJson(
     writeJson(obj.scale, jsonWriter, context);
   }
 
+  if (obj.max.has_value()) {
+    jsonWriter.Key("max");
+    writeJson(obj.max, jsonWriter, context);
+  }
+
+  if (obj.min.has_value()) {
+    jsonWriter.Key("min");
+    writeJson(obj.min, jsonWriter, context);
+  }
+
   writeExtensibleObject(obj, jsonWriter, context);
 
   jsonWriter.EndObject();
@@ -1336,6 +1346,11 @@ void writeJson(
     writeJson(obj.nullFeatureId, jsonWriter, context);
   }
 
+  if (obj.label.has_value()) {
+    jsonWriter.Key("label");
+    writeJson(obj.label, jsonWriter, context);
+  }
+
   if (obj.attribute.has_value()) {
     jsonWriter.Key("attribute");
     writeJson(obj.attribute, jsonWriter, context);
@@ -1385,6 +1400,11 @@ void writeJson(
   if (obj.nullFeatureId.has_value()) {
     jsonWriter.Key("nullFeatureId");
     writeJson(obj.nullFeatureId, jsonWriter, context);
+  }
+
+  if (obj.label.has_value()) {
+    jsonWriter.Key("label");
+    writeJson(obj.label, jsonWriter, context);
   }
 
   if (obj.attribute.has_value()) {

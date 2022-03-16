@@ -128,29 +128,31 @@ struct CESIUM3DTILES_API ClassProperty final
 
   /**
    * @brief An offset to apply to property values. Only applicable to `SCALAR`,
-   * `VECN`, and `MATN` types.
+   * `VECN`, and `MATN` types when the component type is `FLOAT32` or `FLOAT64`,
+   * or when the property is `normalized`.
    */
   std::optional<CesiumUtility::JsonValue> offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable to `SCALAR`,
-   * `VECN`, and `MATN` types.
+   * `VECN`, and `MATN` types when the component type is `FLOAT32` or `FLOAT64`,
+   * or when the property is `normalized`.
    */
   std::optional<CesiumUtility::JsonValue> scale;
 
   /**
    * @brief Maximum allowed value for the property. Only applicable to `SCALAR`,
-   * `VECN`, and `MATN` types. The `normalized`, `offset`, and `scale`
-   * properties have no effect on the maximum, it always corresponds to the
-   * actual value.
+   * `VECN`, and `MATN` types. This is the maximum of all property values, after
+   * the transforms based on the `normalized`, `offset`, and `scale` properties
+   * have been applied.
    */
   std::optional<CesiumUtility::JsonValue> max;
 
   /**
    * @brief Minimum allowed value for the property. Only applicable to `SCALAR`,
-   * `VECN`, and `MATN` types. The `normalized`, `offset`, and `scale`
-   * properties have no effect on the minimum, it always corresponds to the
-   * actual value.
+   * `VECN`, and `MATN` types. This is the minimum of all property values, after
+   * the transforms based on the `normalized`, `offset`, and `scale` properties
+   * have been applied.
    */
   std::optional<CesiumUtility::JsonValue> min;
 
@@ -166,13 +168,17 @@ struct CESIUM3DTILES_API ClassProperty final
   /**
    * @brief A `noData` value represents missing data — also known as a sentinel
    * value — wherever it appears. `BOOLEAN` properties may not specify `noData`
-   * values.
+   * values. This is given as the plain property value, without the transforms
+   * from the `normalized`, `offset`, and `scale` properties. Must not be
+   * defined if `required` is true.
    */
   std::optional<CesiumUtility::JsonValue> noData;
 
   /**
    * @brief A default value to use when encountering a `noData` value or an
-   * omitted property.
+   * omitted property. The value is given in its final form, taking the effect
+   * of `normalized`, `offset`, and `scale` properties into account. Must not be
+   * defined if `required` is true.
    */
   std::optional<CesiumUtility::JsonValue> defaultProperty;
 

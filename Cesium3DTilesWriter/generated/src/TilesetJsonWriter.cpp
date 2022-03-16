@@ -161,17 +161,17 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
+    const Cesium3DTiles::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
     const Cesium3DTiles::PropertyTable& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
     const Cesium3DTiles::PropertyTableProperty& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context);
-
-void writeJson(
-    const Cesium3DTiles::Availability& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -485,9 +485,9 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (!obj.content.empty()) {
-    jsonWriter.Key("content");
-    writeJson(obj.content, jsonWriter, context);
+  if (!obj.contents.empty()) {
+    jsonWriter.Key("contents");
+    writeJson(obj.contents, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -567,6 +567,9 @@ void writeJson(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
+
+  jsonWriter.Key("id");
+  writeJson(obj.id, jsonWriter, context);
 
   writeMetadataEntity(obj, jsonWriter, context);
 
@@ -898,6 +901,11 @@ void writeJson(
     writeJson(obj.bufferViews, jsonWriter, context);
   }
 
+  if (!obj.propertyTables.empty()) {
+    jsonWriter.Key("propertyTables");
+    writeJson(obj.propertyTables, jsonWriter, context);
+  }
+
   jsonWriter.Key("tileAvailability");
   writeJson(obj.tileAvailability, jsonWriter, context);
 
@@ -941,6 +949,32 @@ void writeJson(
   if (!obj.properties.empty()) {
     jsonWriter.Key("properties");
     writeJson(obj.properties, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.bitstream.has_value()) {
+    jsonWriter.Key("bitstream");
+    writeJson(obj.bitstream, jsonWriter, context);
+  }
+
+  if (obj.availableCount.has_value()) {
+    jsonWriter.Key("availableCount");
+    writeJson(obj.availableCount, jsonWriter, context);
+  }
+
+  if (obj.constant.has_value()) {
+    jsonWriter.Key("constant");
+    writeJson(obj.constant, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -1024,32 +1058,6 @@ void writeJson(
   if (obj.min.has_value()) {
     jsonWriter.Key("min");
     writeJson(obj.min, jsonWriter, context);
-  }
-
-  writeExtensibleObject(obj, jsonWriter, context);
-
-  jsonWriter.EndObject();
-}
-
-void writeJson(
-    const Cesium3DTiles::Availability& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-
-  if (obj.bitstream.has_value()) {
-    jsonWriter.Key("bitstream");
-    writeJson(obj.bitstream, jsonWriter, context);
-  }
-
-  if (obj.availableCount.has_value()) {
-    jsonWriter.Key("availableCount");
-    writeJson(obj.availableCount, jsonWriter, context);
-  }
-
-  if (obj.constant.has_value()) {
-    jsonWriter.Key("constant");
-    writeJson(obj.constant, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -1384,6 +1392,13 @@ void SubtreeMetadataJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
+void AvailabilityJsonWriter::write(
+    const Cesium3DTiles::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
 void PropertyTableJsonWriter::write(
     const Cesium3DTiles::PropertyTable& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -1393,13 +1408,6 @@ void PropertyTableJsonWriter::write(
 
 void PropertyTablePropertyJsonWriter::write(
     const Cesium3DTiles::PropertyTableProperty& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-void AvailabilityJsonWriter::write(
-    const Cesium3DTiles::Availability& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

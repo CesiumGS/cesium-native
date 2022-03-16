@@ -1015,7 +1015,9 @@ ExtensionExtStructuralMetadataPropertyAttributePropertyJsonHandler::
     : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _attribute(),
       _offset(),
-      _scale() {}
+      _scale(),
+      _max(),
+      _min() {}
 
 void ExtensionExtStructuralMetadataPropertyAttributePropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1052,6 +1054,10 @@ ExtensionExtStructuralMetadataPropertyAttributePropertyJsonHandler::
     return property("offset", this->_offset, o.offset);
   if ("scale"s == str)
     return property("scale", this->_scale, o.scale);
+  if ("max"s == str)
+    return property("max", this->_max, o.max);
+  if ("min"s == str)
+    return property("min", this->_min, o.min);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
@@ -1703,6 +1709,7 @@ ExtensionExtMeshFeaturesFeatureIdJsonHandler::
     : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _featureCount(),
       _nullFeatureId(),
+      _label(),
       _attribute(),
       _texture(context),
       _propertyTable() {}
@@ -1735,6 +1742,8 @@ CesiumJsonReader::IJsonHandler* ExtensionExtMeshFeaturesFeatureIdJsonHandler::
     return property("featureCount", this->_featureCount, o.featureCount);
   if ("nullFeatureId"s == str)
     return property("nullFeatureId", this->_nullFeatureId, o.nullFeatureId);
+  if ("label"s == str)
+    return property("label", this->_label, o.label);
   if ("attribute"s == str)
     return property("attribute", this->_attribute, o.attribute);
   if ("texture"s == str)
@@ -1811,6 +1820,7 @@ ExtensionExtInstanceFeaturesFeatureIdJsonHandler::
     : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _featureCount(),
       _nullFeatureId(),
+      _label(),
       _attribute(),
       _propertyTable() {}
 
@@ -1843,6 +1853,8 @@ ExtensionExtInstanceFeaturesFeatureIdJsonHandler::
     return property("featureCount", this->_featureCount, o.featureCount);
   if ("nullFeatureId"s == str)
     return property("nullFeatureId", this->_nullFeatureId, o.nullFeatureId);
+  if ("label"s == str)
+    return property("label", this->_label, o.label);
   if ("attribute"s == str)
     return property("attribute", this->_attribute, o.attribute);
   if ("propertyTable"s == str)

@@ -7,11 +7,11 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <unordered_map>
+#include <vector>
 
 namespace CesiumGltf {
 /**
- * @brief Feature ID sets of a mesh primitive.
+ * @brief An object describing feature IDs for a mesh primitive.
  */
 struct CESIUMGLTF_API ExtensionExtMeshFeatures final
     : public CesiumUtility::ExtensibleObject {
@@ -19,11 +19,8 @@ struct CESIUMGLTF_API ExtensionExtMeshFeatures final
   static inline constexpr const char* ExtensionName = "EXT_mesh_features";
 
   /**
-   * @brief A dictionary, where each key is the ID of the feature ID set, and
-   * each value is an object describing where feature IDs are stored. Set IDs
-   * may contain only alphanumeric and underscore characters.
+   * @brief An array of feature ID sets.
    */
-  std::unordered_map<std::string, CesiumGltf::ExtensionExtMeshFeaturesFeatureId>
-      featureIds;
+  std::vector<CesiumGltf::ExtensionExtMeshFeaturesFeatureId> featureIds;
 };
 } // namespace CesiumGltf

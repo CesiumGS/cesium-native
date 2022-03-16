@@ -33,9 +33,9 @@ struct ClassProperty;
 struct Subtrees;
 struct Subtree;
 struct SubtreeMetadata;
+struct Availability;
 struct PropertyTable;
 struct PropertyTableProperty;
-struct Availability;
 struct BufferView;
 struct Buffer;
 struct Tileset;
@@ -269,6 +269,15 @@ struct SubtreeMetadataJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct AvailabilityJsonWriter {
+  using ValueType = Cesium3DTiles::Availability;
+
+  static void write(
+      const Cesium3DTiles::Availability& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct PropertyTableJsonWriter {
   using ValueType = Cesium3DTiles::PropertyTable;
 
@@ -283,15 +292,6 @@ struct PropertyTablePropertyJsonWriter {
 
   static void write(
       const Cesium3DTiles::PropertyTableProperty& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct AvailabilityJsonWriter {
-  using ValueType = Cesium3DTiles::Availability;
-
-  static void write(
-      const Cesium3DTiles::Availability& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

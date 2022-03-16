@@ -32,8 +32,8 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataClass final
 
   /**
    * @brief A dictionary, where each key is a property ID and each value is an
-   * object defining the property. Property IDs may contain only alphanumeric
-   * and underscore characters.
+   * object defining the property. Property IDs must be alphanumeric identifiers
+   * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<
       std::string,

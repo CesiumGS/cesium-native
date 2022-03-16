@@ -5,8 +5,8 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/MetadataEntity.h"
 
+#include <cstdint>
 #include <optional>
-#include <string>
 
 namespace Cesium3DTiles {
 /**
@@ -21,9 +21,9 @@ struct CESIUM3DTILES_API ExtensionContent3dTilesMetadata final
   static inline constexpr const char* ExtensionName = "3DTILES_metadata";
 
   /**
-   * @brief The group this content belongs to. The value must correspond to a
-   * group ID declared in the `groups` dictionary.
+   * @brief The group this content belongs to. The value is an index into the
+   * array of `groups` that is defined for the containing tileset.
    */
-  std::optional<std::string> group;
+  std::optional<int64_t> group;
 };
 } // namespace Cesium3DTiles

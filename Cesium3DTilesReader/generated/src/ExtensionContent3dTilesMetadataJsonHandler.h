@@ -5,7 +5,7 @@
 #include "MetadataEntityJsonHandler.h"
 
 #include <Cesium3DTiles/ExtensionContent3dTilesMetadata.h>
-#include <CesiumJsonReader/StringJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;
@@ -84,6 +84,6 @@ protected:
 
 private:
   Cesium3DTiles::ExtensionContent3dTilesMetadata* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _group;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _group;
 };
 } // namespace Cesium3DTilesReader

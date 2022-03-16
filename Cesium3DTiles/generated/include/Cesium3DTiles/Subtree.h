@@ -11,6 +11,7 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -33,6 +34,11 @@ struct CESIUM3DTILES_API Subtree final
    * @brief An array of buffer views.
    */
   std::vector<Cesium3DTiles::BufferView> bufferViews;
+
+  /**
+   * @brief An array of property tables.
+   */
+  std::vector<Cesium3DTiles::PropertyTable> propertyTables;
 
   /**
    * @brief The availability of tiles in the subtree. The availability bitstream
@@ -71,23 +77,23 @@ struct CESIUM3DTILES_API Subtree final
   Cesium3DTiles::Availability childSubtreeAvailability;
 
   /**
-   * @brief A property table containing tile metadata. Tile metadata only exists
-   * for available tiles and is tightly packed by increasing tile index. To
-   * access individual tile metadata, implementations may create a mapping from
-   * tile indices to tile metadata indices.
+   * @brief Index of the property table containing tile metadata. Tile metadata
+   * only exists for available tiles and is tightly packed by increasing tile
+   * index. To access individual tile metadata, implementations may create a
+   * mapping from tile indices to tile metadata indices.
    */
-  std::optional<Cesium3DTiles::PropertyTable> tileMetadata;
+  std::optional<int64_t> tileMetadata;
 
   /**
-   * @brief An array of property tables containing content metadata. If the tile
-   * has a single content this array will have one element; if the tile has
-   * multiple contents - as supported by EXT_multiple_contents and 3D Tiles 1.1
-   * - this array will have multiple elements. Content metadata only exists for
-   * available contents and is tightly packed by increasing tile index. To
-   * access individual content metadata, implementations may create a mapping
-   * from tile indices to content metadata indices.
+   * @brief An array of indexes to property tables containing content metadata.
+   * If the tile has a single content this array will have one element; if the
+   * tile has multiple contents - as supported by EXT_multiple_contents and 3D
+   * Tiles 1.1 - this array will have multiple elements. Content metadata only
+   * exists for available contents and is tightly packed by increasing tile
+   * index. To access individual content metadata, implementations may create a
+   * mapping from tile indices to content metadata indices.
    */
-  std::vector<Cesium3DTiles::PropertyTable> contentMetadata;
+  std::vector<int64_t> contentMetadata;
 
   /**
    * @brief Subtree metadata encoded in JSON.

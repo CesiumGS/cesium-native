@@ -11,6 +11,7 @@
 #include <Cesium3DTiles/Subtree.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;
@@ -41,14 +42,17 @@ private:
   CesiumJsonReader::
       ArrayJsonHandler<Cesium3DTiles::BufferView, BufferViewJsonHandler>
           _bufferViews;
+  CesiumJsonReader::
+      ArrayJsonHandler<Cesium3DTiles::PropertyTable, PropertyTableJsonHandler>
+          _propertyTables;
   AvailabilityJsonHandler _tileAvailability;
   CesiumJsonReader::
       ArrayJsonHandler<Cesium3DTiles::Availability, AvailabilityJsonHandler>
           _contentAvailability;
   AvailabilityJsonHandler _childSubtreeAvailability;
-  PropertyTableJsonHandler _tileMetadata;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _tileMetadata;
   CesiumJsonReader::
-      ArrayJsonHandler<Cesium3DTiles::PropertyTable, PropertyTableJsonHandler>
+      ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>>
           _contentMetadata;
   SubtreeMetadataJsonHandler _subtreeMetadata;
 };

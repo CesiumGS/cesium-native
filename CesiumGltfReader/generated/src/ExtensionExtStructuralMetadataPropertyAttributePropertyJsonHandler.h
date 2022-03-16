@@ -40,5 +40,7 @@ private:
   CesiumJsonReader::StringJsonHandler _attribute;
   CesiumJsonReader::JsonObjectJsonHandler _offset;
   CesiumJsonReader::JsonObjectJsonHandler _scale;
+  CesiumJsonReader::JsonObjectJsonHandler _max;
+  CesiumJsonReader::JsonObjectJsonHandler _min;
 };
 } // namespace CesiumGltfReader

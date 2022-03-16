@@ -22,7 +22,8 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataSchema final
       "ExtensionExtStructuralMetadataSchema";
 
   /**
-   * @brief Unique identifier for the schema.
+   * @brief Unique identifier for the schema. Schema IDs must be alphanumeric
+   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::string id;
 
@@ -43,8 +44,8 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataSchema final
 
   /**
    * @brief A dictionary, where each key is a class ID and each value is an
-   * object defining the class. Class IDs may contain only alphanumeric and
-   * underscore characters.
+   * object defining the class. Class IDs must be alphanumeric identifiers
+   * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<
       std::string,
@@ -53,8 +54,8 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataSchema final
 
   /**
    * @brief A dictionary, where each key is an enum ID and each value is an
-   * object defining the values for the enum. Enum IDs may contain only
-   * alphanumeric and underscore characters.
+   * object defining the values for the enum. Enum IDs must be alphanumeric
+   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::
       unordered_map<std::string, CesiumGltf::ExtensionExtStructuralMetadataEnum>

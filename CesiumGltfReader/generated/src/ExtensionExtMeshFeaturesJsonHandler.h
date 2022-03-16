@@ -5,7 +5,7 @@
 #include "ExtensionExtMeshFeaturesFeatureIdJsonHandler.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
-#include <CesiumJsonReader/DictionaryJsonHandler.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
@@ -87,7 +87,7 @@ protected:
 
 private:
   CesiumGltf::ExtensionExtMeshFeatures* _pObject = nullptr;
-  CesiumJsonReader::DictionaryJsonHandler<
+  CesiumJsonReader::ArrayJsonHandler<
       CesiumGltf::ExtensionExtMeshFeaturesFeatureId,
       ExtensionExtMeshFeaturesFeatureIdJsonHandler>
       _featureIds;

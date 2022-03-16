@@ -5,7 +5,7 @@
 #include "ExtensionExtInstanceFeaturesFeatureIdJsonHandler.h"
 
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
-#include <CesiumJsonReader/DictionaryJsonHandler.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
@@ -87,7 +87,7 @@ protected:
 
 private:
   CesiumGltf::ExtensionExtInstanceFeatures* _pObject = nullptr;
-  CesiumJsonReader::DictionaryJsonHandler<
+  CesiumJsonReader::ArrayJsonHandler<
       CesiumGltf::ExtensionExtInstanceFeaturesFeatureId,
       ExtensionExtInstanceFeaturesFeatureIdJsonHandler>
       _featureIds;

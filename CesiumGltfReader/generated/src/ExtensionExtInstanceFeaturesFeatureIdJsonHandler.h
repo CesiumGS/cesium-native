@@ -5,6 +5,7 @@
 #include <CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;
@@ -34,6 +35,7 @@ private:
   CesiumGltf::ExtensionExtInstanceFeaturesFeatureId* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _featureCount;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _nullFeatureId;
+  CesiumJsonReader::StringJsonHandler _label;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _attribute;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _propertyTable;
 };

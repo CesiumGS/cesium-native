@@ -89,6 +89,6 @@ protected:
 private:
   Cesium3DTiles::Extension3dTilesMultipleContents* _pObject = nullptr;
   CesiumJsonReader::ArrayJsonHandler<Cesium3DTiles::Content, ContentJsonHandler>
-      _content;
+      _contents;
 };
 } // namespace Cesium3DTilesReader

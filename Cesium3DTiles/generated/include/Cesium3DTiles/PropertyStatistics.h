@@ -20,57 +20,57 @@ struct CESIUM3DTILES_API PropertyStatistics final
 
   /**
    * @brief The minimum property value occurring in the tileset. Only applicable
-   * to `SCALAR`, `VECN`, and `MATN` types. The `normalized`, `offset`, and
-   * `scale` properties have no effect on the minimum, it always corresponds to
-   * the actual value.
+   * to `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property
+   * values, after the transforms based on the `normalized`, `offset`, and
+   * `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> min;
 
   /**
    * @brief The maximum property value occurring in the tileset. Only applicable
-   * to `SCALAR`, `VECN`, and `MATN` types. The `normalized`, `offset`, and
-   * `scale` properties have no effect on the maximum, it always corresponds to
-   * the actual value.
+   * to `SCALAR`, `VECN`, and `MATN` types. This is the maximum of all property
+   * values, after the transforms based on the `normalized`, `offset`, and
+   * `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> max;
 
   /**
    * @brief The arithmetic mean of property values occurring in the tileset.
-   * Only applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
-   * `offset`, and `scale` properties have no effect on the mean, it always
-   * corresponds to the actual value.
+   * Only applicable to `SCALAR`, `VECN`, and `MATN` types. This is the mean of
+   * all property values, after the transforms based on the `normalized`,
+   * `offset`, and `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> mean;
 
   /**
    * @brief The median of property values occurring in the tileset. Only
-   * applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
-   * `offset`, and `scale` properties have no effect on the median, it always
-   * corresponds to the actual value.
+   * applicable to `SCALAR`, `VECN`, and `MATN` types. This is the median of all
+   * property values, after the transforms based on the `normalized`, `offset`,
+   * and `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> median;
 
   /**
    * @brief The standard deviation of property values occurring in the tileset.
-   * Only applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
-   * `offset`, and `scale` properties have no effect on the standard deviation,
-   * it always corresponds to the actual value.
+   * Only applicable to `SCALAR`, `VECN`, and `MATN` types. This is the standard
+   * deviation of all property values, after the transforms based on the
+   * `normalized`, `offset`, and `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> standardDeviation;
 
   /**
    * @brief The variance of property values occurring in the tileset. Only
-   * applicable to `SCALAR`, `VECN`, and `MATN` types. The `normalized`,
-   * `offset`, and `scale` properties have no effect on the variance, it always
-   * corresponds to the actual value.
+   * applicable to `SCALAR`, `VECN`, and `MATN` types. This is the variance of
+   * all property values, after the transforms based on the `normalized`,
+   * `offset`, and `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> variance;
 
   /**
    * @brief The sum of property values occurring in the tileset. Only applicable
-   * to `SCALAR`, `VECN`, and `MATN` types. The `normalized`, `offset`, and
-   * `scale` properties have no effect on the sum, it always corresponds to the
-   * actual value.
+   * to `SCALAR`, `VECN`, and `MATN` types. This is the sum of all property
+   * values, after the transforms based on the `normalized`, `offset`, and
+   * `scale` properties have been applied.
    */
   std::optional<CesiumUtility::JsonValue> sum;
 
