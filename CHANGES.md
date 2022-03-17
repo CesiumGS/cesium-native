@@ -35,6 +35,7 @@
 
 - Fixed bug that could cause properties types in a B3DM Batch Table to be deduced incorrectly, leading to a crash when accessing property values.
 - Fixed a bug where implicit tiles were not receiving the root transform and so could sometimes end up in the wrong place.
+- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was true.
 
 ### v0.12.0 - 2022-02-01
 
