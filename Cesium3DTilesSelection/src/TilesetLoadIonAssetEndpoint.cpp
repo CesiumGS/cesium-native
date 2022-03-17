@@ -22,7 +22,7 @@ struct Tileset::LoadIonAssetEndpoint::Private {
 
   struct AssetEndpointAttribution {
     std::string html;
-    bool collapsible;
+    bool collapsible = true;
   };
 
   struct AssetEndpoint {
@@ -132,7 +132,9 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadLoadTilesetFromAssetEndpoint(
     for (auto& endpointAttribution : endpoint.attributions) {
       tileset._tilesetCredits.push_back(
           tileset.getExternals().pCreditSystem->createCredit(
-              endpointAttribution.html));
+              endpointAttribution.html,
+              tileset._options.showCreditsOnScreen ||
+                  !endpointAttribution.collapsible));
     }
   }
   auto pContext = std::make_unique<TileContext>();
@@ -225,16 +227,17 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
 
       for (const rapidjson::Value& attribution :
            attributionsIt->value.GetArray()) {
+        AssetEndpointAttribution& endpointAttribution =
+            endpoint.attributions.emplace_back();
         const auto html = attribution.FindMember("html");
         if (html != attribution.MemberEnd() && html->value.IsString()) {
-          AssetEndpointAttribution& endpointAttribution =
-              endpoint.attributions.emplace_back();
           endpointAttribution.html = html->value.GetString();
         }
-        // TODO: mandate the user show certain credits on screen, as opposed to
-        // an expandable panel auto showOnScreen =
-        // attribution.FindMember("collapsible");
-        // ...
+        auto collapsible = attribution.FindMember("collapsible");
+        if (collapsible != attribution.MemberEnd() &&
+            collapsible->value.IsBool()) {
+          endpointAttribution.collapsible = collapsible->value.GetBool();
+        }
       }
     }
   }

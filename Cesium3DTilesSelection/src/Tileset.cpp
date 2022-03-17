@@ -48,7 +48,8 @@ Tileset::Tileset(
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
               : std::nullopt),
       _url(url),
       _isRefreshingIonToken(false),
@@ -83,7 +84,8 @@ Tileset::Tileset(
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
               : std::nullopt),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),

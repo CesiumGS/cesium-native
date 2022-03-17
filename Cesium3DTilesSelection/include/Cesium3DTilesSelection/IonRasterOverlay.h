@@ -51,6 +51,11 @@ private:
   uint32_t _ionAssetID;
   std::string _ionAccessToken;
 
+  struct AssetEndpointAttribution {
+    std::string html;
+    bool collapsible = true;
+  };
+
   struct ExternalAssetEndpoint {
     std::string externalType;
     std::string url;
@@ -58,6 +63,7 @@ private:
     std::string key;
     std::string culture;
     std::string accessToken;
+    std::vector<AssetEndpointAttribution> attributions;
   };
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;

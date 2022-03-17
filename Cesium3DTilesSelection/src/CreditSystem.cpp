@@ -4,7 +4,7 @@
 
 namespace Cesium3DTilesSelection {
 
-Credit CreditSystem::createCredit(const std::string& html) {
+Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
@@ -12,11 +12,20 @@ Credit CreditSystem::createCredit(const std::string& html) {
     }
   }
 
+  bool isIon = html.find("ion-credit.png") != std::string::npos;
+
   // this is a new credit so add it to _credits
-  _credits.push_back({html, -1});
+  _credits.push_back({html, showOnScreen, -1, isIon});
 
   // return a Credit handle to the newly created entry
   return Credit(_credits.size() - 1);
+}
+
+bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
+  if (credit.id < _credits.size()) {
+    return _credits[credit.id].showOnScreen;
+  }
+  return false;
 }
 
 const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
@@ -26,10 +35,18 @@ const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
   return INVALID_CREDIT_MESSAGE;
 }
 
+bool CreditSystem::isIon(Credit credit) const noexcept {
+  if (credit.id < _credits.size()) {
+    return _credits[credit.id].isIon;
+  }
+  return false;
+}
+
 void CreditSystem::addCreditToFrame(Credit credit) {
   // if this credit has already been added to the current frame, there's nothing
   // to do
   if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
+    ++_credits[credit.id].count;
     return;
   }
 
@@ -55,5 +72,27 @@ void CreditSystem::startNextFrame() noexcept {
   _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
   _creditsToShowThisFrame.clear();
   _currentFrameNumber++;
+  for (const auto& credit : _creditsToNoLongerShowThisFrame) {
+    _credits[credit.id].count = 0;
+  }
+}
+
+const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
+  // sort credits based on the number of occurrences
+  if (_creditsToShowThisFrame.size() < 2) {
+    return _creditsToShowThisFrame;
+  }
+  std::sort(
+      _creditsToShowThisFrame.begin(),
+      _creditsToShowThisFrame.end(),
+      [this](const Credit& a, const Credit& b) {
+        int32_t aCounts = _credits[a.id].count;
+        int32_t bCounts = _credits[b.id].count;
+        if (aCounts == bCounts)
+          return a.id < b.id;
+        else
+          return aCounts > bCounts;
+      });
+  return _creditsToShowThisFrame;
 }
 } // namespace Cesium3DTilesSelection
