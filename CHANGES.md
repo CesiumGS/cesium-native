@@ -1,5 +1,4 @@
 # Change Log
-
 ### v0.14.0 - YYYY-MM-DD
 
 ##### Fixes :wrench:
@@ -13,6 +12,7 @@
 - Add glTF copyright information to the list of tileset credits.
 - Credits are now sorted based on the number of occurrences.
 - Added option to show credits on screen.
+- Expose the swizzle string in feature texture property views.
 
 ### v0.13.0 - 2022-03-01
 
