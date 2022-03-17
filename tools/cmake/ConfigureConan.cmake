@@ -1,4 +1,5 @@
 # cmake-conan configuration
+option(CESIUM_CONAN_LESS_CONFIGS "Whether to use the Release configuration of Conan dependencies in the MinSizeRel and RelWithDebInfo configurations" ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_BINARY_DIR})
@@ -14,7 +15,7 @@ endif()
 include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
 function(cesium_conan_install CONANFILE)
-  if (CMAKE_CONFIGURATION_TYPES)
+  if (CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     if (CESIUM_CONAN_LESS_CONFIGS)
       set(CONFIGS "Debug;Release")
     else()
@@ -22,7 +23,6 @@ function(cesium_conan_install CONANFILE)
     endif()
 
     foreach(TYPE ${CONFIGS})
-        message("**** ${CMAKE_CXX_FLAGS_${TYPE}}")
         set(CMAKE_BUILD_TYPE ${TYPE})
         conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
         conan_cmake_install(
