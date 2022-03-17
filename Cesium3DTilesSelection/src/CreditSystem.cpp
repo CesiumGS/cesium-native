@@ -30,6 +30,7 @@ void CreditSystem::addCreditToFrame(Credit credit) {
   // if this credit has already been added to the current frame, there's nothing
   // to do
   if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
+    ++_credits[credit.id].count;
     return;
   }
 
@@ -55,5 +56,27 @@ void CreditSystem::startNextFrame() noexcept {
   _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
   _creditsToShowThisFrame.clear();
   _currentFrameNumber++;
+  for (const auto& credit : _creditsToNoLongerShowThisFrame) {
+    _credits[credit.id].count = 0;
+  }
+}
+
+const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
+  // sort credits based on the number of occurrences
+  if (_creditsToShowThisFrame.size() < 2) {
+    return _creditsToShowThisFrame;
+  }
+  std::sort(
+      _creditsToShowThisFrame.begin(),
+      _creditsToShowThisFrame.end(),
+      [this](const Credit& a, const Credit& b) {
+        int32_t aCounts = _credits[a.id].count;
+        int32_t bCounts = _credits[b.id].count;
+        if (aCounts == bCounts)
+          return a.id < b.id;
+        else
+          return aCounts > bCounts;
+      });
+  return _creditsToShowThisFrame;
 }
 } // namespace Cesium3DTilesSelection

@@ -11,6 +11,7 @@
 - Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
 - Add ScopeGuard utility to automatically execute function when exiting a scope.
 - Add glTF copyright information to the list of tileset credits.
+- Credits are now sorted based on the number of occurrences.
 
 ### v0.13.0 - 2022-03-01
 

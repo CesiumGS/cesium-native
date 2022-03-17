@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -64,9 +65,7 @@ public:
   /**
    * @brief Get the credits to show this frame.
    */
-  const std::vector<Credit>& getCreditsToShowThisFrame() const noexcept {
-    return _creditsToShowThisFrame;
-  }
+  const std::vector<Credit>& getCreditsToShowThisFrame() noexcept;
 
   /**
    * @brief Get the credits that were shown last frame but should no longer be
@@ -84,6 +83,7 @@ private:
   struct HtmlAndLastFrameNumber {
     std::string html;
     int32_t lastFrameNumber;
+    int count = 0;
   };
 
   std::vector<HtmlAndLastFrameNumber> _credits;
