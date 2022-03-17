@@ -13,36 +13,31 @@ endif()
 
 include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
-if (CMAKE_CONFIGURATION_TYPES)
-  if (CESIUM_CONAN_LESS_CONFIGS)
-    set(CONFIGS "Debug;Release")
+function(cesium_conan_install CONANFILE)
+  if (CMAKE_CONFIGURATION_TYPES)
+    if (CESIUM_CONAN_LESS_CONFIGS)
+      set(CONFIGS "Debug;Release")
+    else()
+      set(CONFIGS "${CMAKE_CONFIGURATION_TYPES}")
+    endif()
+
+    foreach(TYPE ${CONFIGS})
+        message("**** ${CMAKE_CXX_FLAGS_${TYPE}}")
+        set(CMAKE_BUILD_TYPE ${TYPE})
+        conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
+        conan_cmake_install(
+          PATH_OR_REFERENCE "${CONANFILE}"
+          BUILD outdated
+          BUILD cascade
+          SETTINGS ${settings})
+        unset(CMAKE_BUILD_TYPE)
+    endforeach()
   else()
-    set(CONFIGS "${CMAKE_CONFIGURATION_TYPES}")
+    conan_cmake_autodetect(settings)
+    conan_cmake_install(
+      PATH_OR_REFERENCE "${CONANFILE}"
+      BUILD outdated
+      BUILD cascade
+      SETTINGS ${settings})
   endif()
-
-  foreach(TYPE ${CONFIGS})
-      set(CMAKE_BUILD_TYPE ${TYPE})
-      conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
-      conan_cmake_install(
-        PATH_OR_REFERENCE "${CMAKE_CURRENT_SOURCE_DIR}/conanfile.py"
-        BUILD outdated
-        BUILD cascade
-        #REMOTE conan-center
-        SETTINGS ${settings})
-      unset(CMAKE_BUILD_TYPE)
-  endforeach()
-else()
-  conan_cmake_autodetect(settings)
-  conan_cmake_install(
-    PATH_OR_REFERENCE "${CMAKE_CURRENT_SOURCE_DIR}/conanfile.py"
-    BUILD outdated
-    BUILD cascade
-    #REMOTE conan-center
-    SETTINGS ${settings})
-endif()
-
-# conan_cmake_install(PATH_OR_REFERENCE .
-#                     BUILD missing
-#                     REMOTE conan-center
-#                     SETTINGS ${settings})
-
+endfunction()

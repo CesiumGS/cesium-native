@@ -18,6 +18,7 @@ endif()
 
 if (CESIUM_CONAN_INSTALL)
   include(ConfigureConan)
+  cesium_conan_install("${CMAKE_CURRENT_SOURCE_DIR}/conanfile.py")
 endif()
 
 include(cesium)
