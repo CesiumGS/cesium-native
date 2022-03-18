@@ -12,7 +12,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <memory>
+#include <cstring>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -1175,8 +1175,8 @@ namespace {
 struct BufferRangeToCopy {
   int32_t sourceBuffer = -1;
   int32_t targetBuffer = -1;
-  size_t byteOffset = 0;
-  size_t byteLength = 0;
+  int64_t byteOffset = 0;
+  int64_t byteLength = 0;
 };
 } // namespace
 
@@ -1193,30 +1193,29 @@ static int32_t createCopiedBufferView(
     std::vector<BufferRangeToCopy>& bufferRanges) {
 
   // Check invalid buffer view.
-  if (parentBufferViewId < 0 ||
-      parentBufferViewId >= parentModel.bufferViews.size()) {
+  if (parentBufferViewId < 0 || static_cast<size_t>(parentBufferViewId) >=
+                                    parentModel.bufferViews.size()) {
     return -1;
   }
 
   const BufferView& parentBufferView =
-      parentModel.bufferViews[parentBufferViewId];
+      parentModel.bufferViews[static_cast<size_t>(parentBufferViewId)];
 
   // Check invalid buffer.
   if (parentBufferView.buffer < 0 ||
-      parentBufferView.buffer >= parentModel.buffers.size()) {
+      static_cast<size_t>(parentBufferView.buffer) >=
+          parentModel.buffers.size()) {
     // Should we return a valid buffer view with an invalid buffer instead?
     return -1;
   }
 
   for (BufferRangeToCopy& existingRange : bufferRanges) {
     if (existingRange.sourceBuffer == parentBufferView.buffer) {
-      if (static_cast<size_t>(parentBufferView.byteOffset) <
-          existingRange.byteOffset) {
+      if (parentBufferView.byteOffset < existingRange.byteOffset) {
         existingRange.byteOffset = parentBufferView.byteOffset;
       }
 
-      if (static_cast<size_t>(parentBufferView.byteLength) >
-          existingRange.byteLength) {
+      if (parentBufferView.byteLength > existingRange.byteLength) {
         existingRange.byteLength = parentBufferView.byteLength;
       }
 
@@ -1251,14 +1250,17 @@ static void resolveCopiedBufferViews(
     Model& result,
     const std::vector<BufferRangeToCopy>& bufferRanges) {
   for (const BufferRangeToCopy& bufferRange : bufferRanges) {
-    Buffer& targetBuffer = result.buffers[bufferRange.targetBuffer];
-    targetBuffer.cesium.data.resize(bufferRange.byteLength);
+    Buffer& targetBuffer =
+        result.buffers[static_cast<size_t>(bufferRange.targetBuffer)];
+    targetBuffer.cesium.data.resize(
+        static_cast<size_t>(bufferRange.byteLength));
 
-    const Buffer& sourceBuffer = parentModel.buffers[bufferRange.sourceBuffer];
+    const Buffer& sourceBuffer =
+        parentModel.buffers[static_cast<size_t>(bufferRange.sourceBuffer)];
     std::memcpy(
         targetBuffer.cesium.data.data(),
-        &sourceBuffer.cesium.data[bufferRange.byteOffset],
-        bufferRange.byteLength);
+        &sourceBuffer.cesium.data[static_cast<size_t>(bufferRange.byteOffset)],
+        static_cast<size_t>(bufferRange.byteLength));
 
     // Fix the byteOffset in any buffer views pointing to this buffer.
     for (BufferView& bufferView : result.bufferViews) {
