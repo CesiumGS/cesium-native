@@ -12,7 +12,8 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <unordered_map>
+#include <memory>
+#include <vector>
 
 using namespace CesiumGltf;
 
@@ -96,12 +97,6 @@ static bool
 isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.y % 2) == 0;
 }
-
-static int32_t copyBufferIfUnique(
-    const Model& parentModel,
-    const BufferView& bufferView,
-    Model& result,
-    std::unordered_map<int32_t, int32_t>& bufferRemap);
 
 static void copyMetadataTables(const Model& parentModel, Model& result);
 
@@ -1176,88 +1171,133 @@ static bool upsamplePrimitiveForRasterOverlays(
   return false;
 }
 
-static int32_t copyBufferIfUnique(
+namespace {
+struct BufferRangeToCopy {
+  int32_t sourceBuffer = -1;
+  int32_t targetBuffer = -1;
+  size_t byteOffset = 0;
+  size_t byteLength = 0;
+};
+} // namespace
+
+// Copy a buffer view from a parent to a child while accumulating a list of
+// unique buffers that are referenced. For each referenced buffer, track the
+// the range that needs to be copied. This lets us eliminate duplicate buffers
+// as well as reduce memcpy-ing sections of the buffer that aren't needed
+// by the buffer views (e.g. textures, attributes that will be reconstructed
+// anyways, etc).
+static int32_t createCopiedBufferView(
     const Model& parentModel,
-    const BufferView& bufferView,
+    int32_t parentBufferViewId,
     Model& result,
-    std::unordered_map<int32_t, int32_t>& bufferRemap) {
-  if (bufferView.buffer < 0 ||
-      bufferView.buffer >= parentModel.buffers.size()) {
+    std::vector<BufferRangeToCopy>& bufferRanges) {
+
+  // Check invalid buffer view.
+  if (parentBufferViewId < 0 ||
+      parentBufferViewId >= parentModel.bufferViews.size()) {
     return -1;
   }
 
-  auto remappedBufferIt = bufferRemap.find(bufferView.buffer);
-  if (remappedBufferIt != bufferRemap.end()) {
-    return remappedBufferIt->second;
+  const BufferView& parentBufferView =
+      parentModel.bufferViews[parentBufferViewId];
+
+  // Check invalid buffer.
+  if (parentBufferView.buffer < 0 ||
+      parentBufferView.buffer >= parentModel.buffers.size()) {
+    // Should we return a valid buffer view with an invalid buffer instead?
+    return -1;
   }
 
-  const Buffer& parentBuffer = parentModel.buffers[bufferView.buffer];
+  for (BufferRangeToCopy& existingRange : bufferRanges) {
+    if (existingRange.sourceBuffer == parentBufferView.buffer) {
+      if (static_cast<size_t>(parentBufferView.byteOffset) <
+          existingRange.byteOffset) {
+        existingRange.byteOffset = parentBufferView.byteOffset;
+      }
 
-  int32_t bufferId = static_cast<int32_t>(result.buffers.size());
-  Buffer& buffer = result.buffers.emplace_back();
-  buffer.cesium = parentBuffer.cesium;
+      if (static_cast<size_t>(parentBufferView.byteLength) >
+          existingRange.byteLength) {
+        existingRange.byteLength = parentBufferView.byteLength;
+      }
 
-  bufferRemap[bufferView.buffer] = bufferId;
-  return bufferId;
+      int32_t newBufferViewId = static_cast<int32_t>(result.bufferViews.size());
+      BufferView& newBufferView =
+          result.bufferViews.emplace_back(parentBufferView);
+      newBufferView.buffer = existingRange.targetBuffer;
+      return newBufferViewId;
+    }
+  }
+
+  BufferRangeToCopy& bufferRange = bufferRanges.emplace_back();
+  bufferRange.sourceBuffer = parentBufferView.buffer;
+  bufferRange.targetBuffer = static_cast<int32_t>(result.buffers.size());
+  result.buffers.emplace_back();
+
+  bufferRange.byteOffset = parentBufferView.byteOffset;
+  bufferRange.byteLength = parentBufferView.byteLength;
+
+  int32_t newBufferViewId = static_cast<int32_t>(result.bufferViews.size());
+  BufferView& newBufferView = result.bufferViews.emplace_back(parentBufferView);
+  newBufferView.buffer = bufferRange.targetBuffer;
+
+  return newBufferViewId;
 }
 
+// Finalize the buffer view copies by copying over the accumulated buffer
+// ranges into new buffers. Fix the byteOffset of the buffer views since
+// unneeded sections may have been trimmed from the front.
+static void resolveCopiedBufferViews(
+    const Model& parentModel,
+    Model& result,
+    const std::vector<BufferRangeToCopy>& bufferRanges) {
+  for (const BufferRangeToCopy& bufferRange : bufferRanges) {
+    Buffer& targetBuffer = result.buffers[bufferRange.targetBuffer];
+    targetBuffer.cesium.data.resize(bufferRange.byteLength);
+
+    const Buffer& sourceBuffer = parentModel.buffers[bufferRange.sourceBuffer];
+    std::memcpy(
+        targetBuffer.cesium.data.data(),
+        &sourceBuffer.cesium.data[bufferRange.byteOffset],
+        bufferRange.byteLength);
+
+    // Fix the byteOffset in any buffer views pointing to this buffer.
+    for (BufferView& bufferView : result.bufferViews) {
+      if (bufferView.buffer == bufferRange.targetBuffer) {
+        bufferView.byteOffset -= bufferRange.byteOffset;
+      }
+    }
+  }
+}
+
+// Copy and reconstruct buffer views and buffers from EXT_feature_metadata
+// feature tables.
 static void copyMetadataTables(const Model& parentModel, Model& result) {
   ExtensionModelExtFeatureMetadata* pMetadata =
       result.getExtension<ExtensionModelExtFeatureMetadata>();
   if (pMetadata) {
-    std::unordered_map<int32_t, int32_t> bufferRemap;
+    std::vector<BufferRangeToCopy> bufferRanges;
     for (auto& featureTablePair : pMetadata->featureTables) {
       for (auto& propertyPair : featureTablePair.second.properties) {
         FeatureTableProperty& property = propertyPair.second;
 
-        if (property.bufferView >= 0 &&
-            property.bufferView < parentModel.bufferViews.size()) {
-          const BufferView& parentBufferView =
-              parentModel.bufferViews[property.bufferView];
-
-          property.bufferView = static_cast<int32_t>(result.bufferViews.size());
-          BufferView& bufferView =
-              result.bufferViews.emplace_back(parentBufferView);
-
-          bufferView.buffer =
-              copyBufferIfUnique(parentModel, bufferView, result, bufferRemap);
-        }
-
-        if (property.arrayOffsetBufferView >= 0 &&
-            property.arrayOffsetBufferView < parentModel.bufferViews.size()) {
-          const BufferView& parentBufferView =
-              parentModel.bufferViews[property.arrayOffsetBufferView];
-
-          property.arrayOffsetBufferView =
-              static_cast<int32_t>(result.bufferViews.size());
-          BufferView& bufferView =
-              result.bufferViews.emplace_back(parentBufferView);
-
-          bufferView.buffer = copyBufferIfUnique(
-              parentModel,
-              parentBufferView,
-              result,
-              bufferRemap);
-        }
-
-        if (property.stringOffsetBufferView >= 0 &&
-            property.stringOffsetBufferView < parentModel.bufferViews.size()) {
-          const BufferView& parentBufferView =
-              parentModel.bufferViews[property.stringOffsetBufferView];
-
-          property.stringOffsetBufferView =
-              static_cast<int32_t>(result.bufferViews.size());
-          BufferView& bufferView =
-              result.bufferViews.emplace_back(parentBufferView);
-
-          bufferView.buffer = copyBufferIfUnique(
-              parentModel,
-              parentBufferView,
-              result,
-              bufferRemap);
-        }
+        property.bufferView = createCopiedBufferView(
+            parentModel,
+            property.bufferView,
+            result,
+            bufferRanges);
+        property.arrayOffsetBufferView = createCopiedBufferView(
+            parentModel,
+            property.arrayOffsetBufferView,
+            result,
+            bufferRanges);
+        property.stringOffsetBufferView = createCopiedBufferView(
+            parentModel,
+            property.stringOffsetBufferView,
+            result,
+            bufferRanges);
       }
     }
+    resolveCopiedBufferViews(parentModel, result, bufferRanges);
   }
 }
 
