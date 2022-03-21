@@ -29,15 +29,21 @@ function generate(options, schema, writers) {
   schemaCache.pushContext(schema);
 
   let base = "CesiumUtility::ExtensibleObject";
+  let baseSchemaRef;
   let baseSchema;
-  if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
-    baseSchema = schemaCache.load(schema.allOf[0].$ref);
+  if (schema.$ref) {
+    baseSchemaRef = schema.$ref;
+  } else if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
+    baseSchemaRef = schema.allOf[0].$ref;
+  }
+  if (baseSchemaRef) {
+    baseSchema = schemaCache.load(baseSchemaRef);
     base = getNameFromTitle(config, baseSchema.title);
   }
 
   const required = schema.required || [];
 
-  const properties = Object.keys(schema.properties)
+  let properties = Object.keys(schema.properties)
     .map((key) =>
       resolveProperty(
         schemaCache,
@@ -52,6 +58,16 @@ function generate(options, schema, writers) {
       )
     )
     .filter((property) => property !== undefined);
+
+  // Filter out derived properties
+  const derivedProperties = [];
+  properties = properties.filter((property) => {
+    if (baseSchema && baseSchema.properties[property.name]) {
+      derivedProperties.push(property);
+      return false;
+    }
+    return true;
+  });
 
   const localTypes = lodash.uniq(
     lodash.flatten(properties.map((property) => property.localTypes))
@@ -97,7 +113,7 @@ function generate(options, schema, writers) {
                     .join("\n\n"),
                   16
                 )}
-                ${thisConfig.toBeInherited ? privateSpecConstructor(name) : ""}
+                ${createConstructor(name, derivedProperties, thisConfig, schema)}
             };
         }
     `;
@@ -530,15 +546,66 @@ function formatWriterPropertyImpl(property) {
   return result;
 }
 
-function privateSpecConstructor(name) {
-  return `
+function gatherInitializers(name, property, initializers) {
+  if (property.default !== undefined) {
+    initializers.push(
+      `${name} = ${
+        typeof property.default === "string"
+          ? `"${property.default.toString()}"`
+          : property.default
+      };`
+    );
+    return;
+  }
+
+  const nestedProperties = property.properties;
+  for (const nestedName in nestedProperties) {
+    const nestedProperty = nestedProperties[nestedName];
+    gatherInitializers(`${name}.${nestedName}`, nestedProperty, initializers);
+  }
+}
+
+function createConstructor(name, derivedProperties, thisConfig, schema) {
+  const className = thisConfig.toBeInherited ? `${name}Spec` : name;
+
+  let constructor = "";
+
+  if (derivedProperties.length > 0) {
+    // The derived class's constructor initializes member variables of the base case for derived properties
+    constructor = `
+    ${className}() {
+      ${indent(
+        derivedProperties
+          .map((derivedProperty) => {
+            const initializers = [];
+            gatherInitializers(
+              derivedProperty.name,
+              schema.properties[derivedProperty.name],
+              initializers
+            );
+            return initializers.join("\n");
+          })
+          .join("\n"),
+        16
+      )}
+    }
+  `;
+  } else if (thisConfig.toBeInherited) {
+    constructor = `${className}() = default;`;
+  }
+
+  if (thisConfig.toBeInherited) {
+    return `
     private:
       /**
        * @brief This class is not meant to be instantiated directly. Use {@link ${name}} instead.
        */
-      ${name}Spec() = default;
+      ${constructor}
       friend struct ${name};
   `;
+  }
+
+  return constructor;
 }
 
 const qualifiedTypeNameRegex = /(?:(?<namespace>.+)::)?(?<name>.+)/;
