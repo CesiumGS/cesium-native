@@ -543,9 +543,19 @@ void Tile::processLoadedContent() {
       }
       // else if it has a model, try to get the copyright
       else if (this->_pContent->model->asset.copyright) {
-        this->_pContent->credit = externals.pCreditSystem->createCredit(
-            *this->_pContent->model->asset.copyright,
-            this->getTileset()->getOptions().showCreditsOnScreen);
+        if (!perTileCredits.has_value()) {
+          perTileCredits = std::make_optional<std::vector<Credit>>();
+        }
+        const auto& copyright = *this->_pContent->model->asset.copyright;
+        size_t start = 0;
+        size_t end;
+        do {
+          end = copyright.find(',', start);
+          perTileCredits->push_back(externals.pCreditSystem->createCredit(
+              copyright.substr(start, end - start),
+              this->getTileset()->getOptions().showCreditsOnScreen));
+          start = end + 1;
+        } while (end != std::string::npos);
       }
 
       // A new and improved bounding volume.

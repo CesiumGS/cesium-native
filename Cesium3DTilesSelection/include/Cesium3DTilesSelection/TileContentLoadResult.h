@@ -77,7 +77,7 @@ struct TileContentLoadResult {
   /**
    * @brief Contains the copyright information of the glTF model.
    */
-  std::optional<Cesium3DTilesSelection::Credit> credit{};
+  std::optional<std::vector<Cesium3DTilesSelection::Credit>> credits{};
 
   /**
    * @brief The new contexts used by the `childTiles`, if any.
