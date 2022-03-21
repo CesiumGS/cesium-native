@@ -57,11 +57,6 @@ public:
   const std::string& getHtml(Credit credit) const noexcept;
 
   /**
-   * @brief Get whether this credit is the Cesium logo.
-   */
-  bool isIon(Credit credit) const noexcept;
-
-  /**
    * @brief Adds the Credit to the set of credits to show this frame
    */
   void addCreditToFrame(Credit credit);
@@ -94,7 +89,6 @@ private:
     std::string html;
     bool showOnScreen;
     int32_t lastFrameNumber;
-    bool isIon;
     int count = 0;
   };
 
