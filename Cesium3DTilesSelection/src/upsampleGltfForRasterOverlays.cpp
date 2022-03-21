@@ -1171,26 +1171,13 @@ static bool upsamplePrimitiveForRasterOverlays(
   return false;
 }
 
-namespace {
-struct BufferRangeToCopy {
-  int32_t sourceBuffer = -1;
-  int32_t targetBuffer = -1;
-  int64_t byteOffset = 0;
-  int64_t byteLength = 0;
-};
-} // namespace
-
-// Copy a buffer view from a parent to a child while accumulating a list of
-// unique buffers that are referenced. For each referenced buffer, track the
-// the range that needs to be copied. This lets us eliminate duplicate buffers
-// as well as reduce memcpy-ing sections of the buffer that aren't needed
-// by the buffer views (e.g. textures, attributes that will be reconstructed
-// anyways, etc).
-static int32_t createCopiedBufferView(
+// Copy a buffer view from a parent to a child. Create a new buffer on the
+// child corresponding to the section of the parent buffer specified by the
+// view.
+static int32_t copyBufferView(
     const Model& parentModel,
     int32_t parentBufferViewId,
-    Model& result,
-    std::vector<BufferRangeToCopy>& bufferRanges) {
+    Model& result) {
 
   // Check invalid buffer view.
   if (parentBufferViewId < 0 || static_cast<size_t>(parentBufferViewId) >=
@@ -1209,66 +1196,27 @@ static int32_t createCopiedBufferView(
     return -1;
   }
 
-  for (BufferRangeToCopy& existingRange : bufferRanges) {
-    if (existingRange.sourceBuffer == parentBufferView.buffer) {
-      if (parentBufferView.byteOffset < existingRange.byteOffset) {
-        existingRange.byteOffset = parentBufferView.byteOffset;
-      }
+  const Buffer& parentBuffer =
+      parentModel.buffers[static_cast<size_t>(parentBufferView.buffer)];
 
-      if (parentBufferView.byteLength > existingRange.byteLength) {
-        existingRange.byteLength = parentBufferView.byteLength;
-      }
+  size_t bufferId = result.buffers.size();
+  Buffer& buffer = result.buffers.emplace_back();
+  buffer.byteLength = parentBufferView.byteLength;
+  buffer.cesium.data.resize(static_cast<size_t>(parentBufferView.byteLength));
+  std::memcpy(
+      buffer.cesium.data.data(),
+      &parentBuffer.cesium
+           .data[static_cast<size_t>(parentBufferView.byteOffset)],
+      static_cast<size_t>(parentBufferView.byteLength));
 
-      int32_t newBufferViewId = static_cast<int32_t>(result.bufferViews.size());
-      BufferView& newBufferView =
-          result.bufferViews.emplace_back(parentBufferView);
-      newBufferView.buffer = existingRange.targetBuffer;
-      return newBufferViewId;
-    }
-  }
+  size_t bufferViewId = result.bufferViews.size();
+  BufferView& bufferView = result.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(bufferId);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = parentBufferView.byteLength;
+  bufferView.byteStride = parentBufferView.byteStride;
 
-  BufferRangeToCopy& bufferRange = bufferRanges.emplace_back();
-  bufferRange.sourceBuffer = parentBufferView.buffer;
-  bufferRange.targetBuffer = static_cast<int32_t>(result.buffers.size());
-  result.buffers.emplace_back();
-
-  bufferRange.byteOffset = parentBufferView.byteOffset;
-  bufferRange.byteLength = parentBufferView.byteLength;
-
-  int32_t newBufferViewId = static_cast<int32_t>(result.bufferViews.size());
-  BufferView& newBufferView = result.bufferViews.emplace_back(parentBufferView);
-  newBufferView.buffer = bufferRange.targetBuffer;
-
-  return newBufferViewId;
-}
-
-// Finalize the buffer view copies by copying over the accumulated buffer
-// ranges into new buffers. Fix the byteOffset of the buffer views since
-// unneeded sections may have been trimmed from the front.
-static void resolveCopiedBufferViews(
-    const Model& parentModel,
-    Model& result,
-    const std::vector<BufferRangeToCopy>& bufferRanges) {
-  for (const BufferRangeToCopy& bufferRange : bufferRanges) {
-    Buffer& targetBuffer =
-        result.buffers[static_cast<size_t>(bufferRange.targetBuffer)];
-    targetBuffer.cesium.data.resize(
-        static_cast<size_t>(bufferRange.byteLength));
-
-    const Buffer& sourceBuffer =
-        parentModel.buffers[static_cast<size_t>(bufferRange.sourceBuffer)];
-    std::memcpy(
-        targetBuffer.cesium.data.data(),
-        &sourceBuffer.cesium.data[static_cast<size_t>(bufferRange.byteOffset)],
-        static_cast<size_t>(bufferRange.byteLength));
-
-    // Fix the byteOffset in any buffer views pointing to this buffer.
-    for (BufferView& bufferView : result.bufferViews) {
-      if (bufferView.buffer == bufferRange.targetBuffer) {
-        bufferView.byteOffset -= bufferRange.byteOffset;
-      }
-    }
-  }
+  return static_cast<int32_t>(bufferViewId);
 }
 
 // Copy and reconstruct buffer views and buffers from EXT_feature_metadata
@@ -1277,29 +1225,20 @@ static void copyMetadataTables(const Model& parentModel, Model& result) {
   ExtensionModelExtFeatureMetadata* pMetadata =
       result.getExtension<ExtensionModelExtFeatureMetadata>();
   if (pMetadata) {
-    std::vector<BufferRangeToCopy> bufferRanges;
     for (auto& featureTablePair : pMetadata->featureTables) {
       for (auto& propertyPair : featureTablePair.second.properties) {
         FeatureTableProperty& property = propertyPair.second;
 
-        property.bufferView = createCopiedBufferView(
-            parentModel,
-            property.bufferView,
-            result,
-            bufferRanges);
-        property.arrayOffsetBufferView = createCopiedBufferView(
-            parentModel,
-            property.arrayOffsetBufferView,
-            result,
-            bufferRanges);
-        property.stringOffsetBufferView = createCopiedBufferView(
+        property.bufferView =
+            copyBufferView(parentModel, property.bufferView, result);
+        property.arrayOffsetBufferView =
+            copyBufferView(parentModel, property.arrayOffsetBufferView, result);
+        property.stringOffsetBufferView = copyBufferView(
             parentModel,
             property.stringOffsetBufferView,
-            result,
-            bufferRanges);
+            result);
       }
     }
-    resolveCopiedBufferViews(parentModel, result, bufferRanges);
   }
 }
 
