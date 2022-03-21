@@ -89,7 +89,7 @@ private:
     std::string html;
     bool showOnScreen;
     int32_t lastFrameNumber;
-    int count = 0;
+    int count;
   };
 
   std::vector<HtmlAndLastFrameNumber> _credits;

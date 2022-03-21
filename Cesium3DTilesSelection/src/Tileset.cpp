@@ -290,11 +290,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       pCreditSystem->addCreditToFrame(this->_userCredit.value());
     }
 
-    // per-tileset ion-specified credit
-    for (const Credit& credit : this->_tilesetCredits) {
-      pCreditSystem->addCreditToFrame(credit);
-    }
-
     // per-raster overlay credit
     for (auto& pOverlay : this->_overlays) {
       const std::optional<Credit>& overlayCredit =
@@ -316,6 +311,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
             pCreditSystem->addCreditToFrame(credit);
           }
         }
+      }
+      // per-tile ion-specified credit
+      for (const Credit& credit : tile->getCredits()) {
+        pCreditSystem->addCreditToFrame(credit);
       }
 
       if (tile->getContent() != nullptr &&

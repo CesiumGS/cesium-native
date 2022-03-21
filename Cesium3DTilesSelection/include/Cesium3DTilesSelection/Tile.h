@@ -517,6 +517,10 @@ public:
     return this->_rasterTiles;
   }
 
+  const std::vector<Credit>& getCredits() const noexcept {
+    return this->_credits;
+  }
+
   /**
    * @brief Determines if this tile is currently renderable.
    */
@@ -625,6 +629,9 @@ private:
   TileContext* _pContext;
   Tile* _pParent;
   std::vector<Tile> _children;
+
+  // per tile credits
+  std::vector<Credit> _credits;
 
   // Properties from tileset.json.
   // These are immutable after the tile leaves TileState::Unloaded.

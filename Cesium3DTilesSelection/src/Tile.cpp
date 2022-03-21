@@ -349,6 +349,7 @@ void Tile::loadContent() {
   this->setState(LoadState::ContentLoading);
 
   Tileset& tileset = *this->getTileset();
+  this->_credits = tileset.getTilesetCredits();
 
   // If this is an upsampled tile, we need to derive this tile's content from
   // its parent.

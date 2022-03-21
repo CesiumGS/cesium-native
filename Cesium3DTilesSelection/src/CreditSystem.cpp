@@ -13,7 +13,7 @@ Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
   }
 
   // this is a new credit so add it to _credits
-  _credits.push_back({html, showOnScreen, -1});
+  _credits.push_back({html, showOnScreen, -1, 0});
 
   // return a Credit handle to the newly created entry
   return Credit(_credits.size() - 1);
