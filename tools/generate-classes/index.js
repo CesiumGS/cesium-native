@@ -124,7 +124,7 @@ const options = {
 const writers = [];
 
 function getObjectToExtend(schema, extensionName) {
-  const parts = schema.split("\/");
+  const parts = schema.split("/");
   const last = parts[parts.length - 1];
   const subParts = last.split(".");
   const extensionNameIndex = subParts.indexOf(extensionName);
@@ -136,7 +136,10 @@ function getObjectToExtend(schema, extensionName) {
 }
 
 for (const extension of config.extensions) {
-  const extensionSchema = schemaCache.loadExtension(extension.schema, extension.extensionName);
+  const extensionSchema = schemaCache.loadExtension(
+    extension.schema,
+    extension.extensionName
+  );
   const extensionClassName = getNameFromTitle(config, extensionSchema.title);
 
   if (!extensionSchema) {
@@ -158,13 +161,19 @@ for (const extension of config.extensions) {
   if (extension.attachTo !== undefined) {
     objectsToExtend = objectsToExtend.concat(extension.attachTo);
   } else {
-    const attachTo = getObjectToExtend(extension.schema, extension.extensionName, extensionClassName);
+    const attachTo = getObjectToExtend(
+      extension.schema,
+      extension.extensionName,
+      extensionClassName
+    );
     if (attachTo !== undefined) {
       objectsToExtend.push(attachTo);
     }
   }
   if (objectsToExtend.length === 0) {
-    console.warn(`Could not find object to extend for extension class ${extensionClassName}`);
+    console.warn(
+      `Could not find object to extend for extension class ${extensionClassName}`
+    );
     continue;
   }
 

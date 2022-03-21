@@ -432,7 +432,9 @@ function generate(options, schema, writers) {
     fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
   }
 
-  const schemas = lodash.flatten(properties.map((property) => property.schemas));
+  const schemas = lodash.flatten(
+    properties.map((property) => property.schemas)
+  );
   if (baseSchema && !base.includes("::")) {
     schemas.push(baseSchema);
   }
