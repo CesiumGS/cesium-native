@@ -145,7 +145,8 @@ TileMapServiceRasterOverlay::createTileProvider(
 
   const std::optional<Credit> credit =
       this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
-                                  this->_options.credit.value()))
+                                  this->_options.credit.value(),
+                                  pOwner->getOptions().showCreditsOnScreen))
                             : std::nullopt;
 
   auto reportError = [this, asyncSystem, pLogger](

@@ -14,6 +14,7 @@
 
 namespace Cesium3DTilesSelection {
 
+struct Credit;
 class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
@@ -80,6 +81,11 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * required for raster overlay metadata, or an individual overlay image.
    */
   std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
+
+  /**
+   * @brief Whether or not to display the credits on screen.
+   */
+  bool showCreditsOnScreen = false;
 };
 
 /**
@@ -119,6 +125,13 @@ public:
   /** @copydoc getOptions */
   const RasterOverlayOptions& getOptions() const noexcept {
     return this->_options;
+  }
+
+  /**
+   * @brief Gets the credits for this overlay.
+   */
+  const std::vector<Credit>& getCredits() const noexcept {
+    return this->_credits;
   }
 
   /**
@@ -232,6 +245,7 @@ protected:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlayLoadFailureDetails&& errorDetails);
+  std::vector<Credit> _credits;
 
 private:
   std::string _name;

@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -43,12 +44,22 @@ public:
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    */
-  Credit createCredit(const std::string& html);
+  Credit createCredit(const std::string& html, bool showOnScreen = false);
+
+  /**
+   * @brief Gets whether or not the credit should be shown on screen.
+   */
+  bool shouldBeShownOnScreen(Credit credit) const noexcept;
 
   /**
    * @brief Get the HTML string for this credit
    */
   const std::string& getHtml(Credit credit) const noexcept;
+
+  /**
+   * @brief Get whether this credit is the Cesium logo.
+   */
+  bool isIon(Credit credit) const noexcept;
 
   /**
    * @brief Adds the Credit to the set of credits to show this frame
@@ -64,9 +75,7 @@ public:
   /**
    * @brief Get the credits to show this frame.
    */
-  const std::vector<Credit>& getCreditsToShowThisFrame() const noexcept {
-    return _creditsToShowThisFrame;
-  }
+  const std::vector<Credit>& getCreditsToShowThisFrame() noexcept;
 
   /**
    * @brief Get the credits that were shown last frame but should no longer be
@@ -83,7 +92,10 @@ private:
 
   struct HtmlAndLastFrameNumber {
     std::string html;
+    bool showOnScreen;
     int32_t lastFrameNumber;
+    bool isIon;
+    int count = 0;
   };
 
   std::vector<HtmlAndLastFrameNumber> _credits;
