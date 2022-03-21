@@ -725,10 +725,10 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      if (tile.getState() == Tile::LoadState::ContentLoaded) {
-        tile.processLoadedContent();
+      if (child.getState() == Tile::LoadState::ContentLoaded) {
+        child.processLoadedContent();
         ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
-            tile,
+            child,
             childInfo);
       }
       child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
