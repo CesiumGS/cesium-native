@@ -42,13 +42,13 @@
  * @param filename The path and named of the file in which to record traces.
  */
 #define CESIUM_TRACE_INIT(filename)                                            \
-  CesiumUtility::Impl::Tracer::instance().startTracing(filename)
+  CesiumUtility::CesiumImpl::Tracer::instance().startTracing(filename)
 
 /**
  * @brief Shuts down tracing and closes the JSON tracing file.
  */
 #define CESIUM_TRACE_SHUTDOWN()                                                \
-  CesiumUtility::Impl::Tracer::instance().endTracing()
+  CesiumUtility::CesiumImpl::Tracer::instance().endTracing()
 
 /**
  * @brief Measures and records the time spent in the current scope.
@@ -61,7 +61,9 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE(name)                                                     \
-  CesiumUtility::Impl::ScopedTrace TRACE_NAME_AUX2(cesiumTrace, __LINE__)(name)
+  CesiumUtility::CesiumImpl::ScopedTrace TRACE_NAME_AUX2(                      \
+      cesiumTrace,                                                             \
+      __LINE__)(name)
 
 /**
  * @brief Begins measuring an operation which may span scope but not threads.
@@ -95,7 +97,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN(name)                                               \
-  CesiumUtility::Impl::Tracer::instance().writeAsyncEventBegin(name)
+  CesiumUtility::CesiumImpl::Tracer::instance().writeAsyncEventBegin(name)
 
 /**
  * @brief Ends measuring an operation which may span scopes but not threads.
@@ -107,7 +109,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END(name)                                                 \
-  CesiumUtility::Impl::Tracer::instance().writeAsyncEventEnd(name)
+  CesiumUtility::CesiumImpl::Tracer::instance().writeAsyncEventEnd(name)
 
 /**
  * @brief Begins measuring an operation that may span both scopes and threads.
@@ -120,7 +122,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN_IN_TRACK(name)                                      \
-  if (CesiumUtility::Impl::TrackReference::current() != nullptr) {             \
+  if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {       \
     CESIUM_TRACE_BEGIN(name);                                                  \
   }
 
@@ -135,7 +137,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END_IN_TRACK(name)                                        \
-  if (CesiumUtility::Impl::TrackReference::current() != nullptr) {             \
+  if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {       \
     CESIUM_TRACE_END(name);                                                    \
   }
 
@@ -154,7 +156,7 @@
  * @param name A human-friendly name for this set of tracks.
  */
 #define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)                               \
-  CesiumUtility::Impl::TrackSet id { name }
+  CesiumUtility::CesiumImpl::TrackSet id { name }
 
 /**
  * @brief Begins using a track set in this thread.
@@ -168,7 +170,7 @@
  *           {@link CESIUM_TRACE_DECLARE_TRACK_SET}.
  */
 #define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
-  CesiumUtility::Impl::TrackReference TRACE_NAME_AUX2(                         \
+  CesiumUtility::CesiumImpl::TrackReference TRACE_NAME_AUX2(                   \
       cesiumTraceEnlistTrack,                                                  \
       __LINE__)(id);
 
@@ -182,7 +184,7 @@
  * {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
  */
 #define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()                                    \
-  tracingTrack = CesiumUtility::Impl::LambdaCaptureTrack()
+  tracingTrack = CesiumUtility::CesiumImpl::LambdaCaptureTrack()
 
 /**
  * @brief Uses a captured track for the current thread and the current scope.
@@ -195,7 +197,7 @@
   CESIUM_TRACE_USE_TRACK_SET(tracingTrack)
 
 namespace CesiumUtility {
-namespace Impl {
+namespace CesiumImpl {
 
 // The following are internal classes used by the tracing framework, do not use
 // directly.
@@ -335,7 +337,7 @@ private:
   friend class LambdaCaptureTrack;
 };
 
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumUtility
 
 #endif // CESIUM_TRACING_ENABLED

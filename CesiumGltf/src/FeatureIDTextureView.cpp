@@ -5,7 +5,7 @@ namespace CesiumGltf {
 FeatureIDTextureView::FeatureIDTextureView() noexcept
     : _pImage(nullptr),
       _channel(0),
-      _textureCoordinateIndex(-1),
+      _textureCoordinateAttributeId(-1),
       _featureTableName(),
       _status(FeatureIDTextureViewStatus::InvalidUninitialized) {}
 
@@ -14,11 +14,12 @@ FeatureIDTextureView::FeatureIDTextureView(
     const FeatureIDTexture& featureIDTexture) noexcept
     : _pImage(nullptr),
       _channel(0),
-      _textureCoordinateIndex(-1),
+      _textureCoordinateAttributeId(-1),
       _featureTableName(featureIDTexture.featureTable),
       _status(FeatureIDTextureViewStatus::InvalidUninitialized) {
 
-  this->_textureCoordinateIndex = featureIDTexture.featureIds.texture.texCoord;
+  this->_textureCoordinateAttributeId =
+      featureIDTexture.featureIds.texture.texCoord;
 
   int32_t textureIndex = featureIDTexture.featureIds.texture.index;
   if (textureIndex < 0 ||

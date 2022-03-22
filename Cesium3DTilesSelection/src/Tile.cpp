@@ -104,7 +104,7 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
 
 double Tile::getNonZeroGeometricError() const noexcept {
   double geometricError = this->getGeometricError();
-  if (geometricError > Math::EPSILON5) {
+  if (geometricError > Math::Epsilon5) {
     // Tile's geometric error is good.
     return geometricError;
   }
@@ -116,7 +116,7 @@ double Tile::getNonZeroGeometricError() const noexcept {
     if (!pParent->getUnconditionallyRefine()) {
       divisor *= 2.0;
       double ancestorError = pParent->getGeometricError();
-      if (ancestorError > Math::EPSILON5) {
+      if (ancestorError > Math::Epsilon5) {
         return ancestorError / divisor;
       }
     }
@@ -127,7 +127,7 @@ double Tile::getNonZeroGeometricError() const noexcept {
   // No sensible geometric error all the way to the root of the tile tree.
   // So just use a tiny geometric error and raster selection will be limited by
   // quadtree tile count or texture resolution size.
-  return Math::EPSILON5;
+  return Math::Epsilon5;
 }
 
 void Tile::setTileID(const TileID& id) noexcept { this->_id = id; }
@@ -539,6 +539,12 @@ void Tile::processLoadedContent() {
       // tile, which is sometimes useful.
       if (!this->_pContent->model) {
         this->setUnconditionallyRefine();
+      }
+      // else if it has a model, try to get the copyright
+      else if (this->_pContent->model->asset.copyright) {
+        this->_pContent->credit = externals.pCreditSystem->createCredit(
+            *this->_pContent->model->asset.copyright,
+            this->getTileset()->getOptions().showCreditsOnScreen);
       }
 
       // A new and improved bounding volume.

@@ -2,6 +2,7 @@ const fs = require("fs");
 const getNameFromTitle = require("./getNameFromTitle");
 const indent = require("./indent");
 const lodash = require("lodash");
+const NameFormatters = require("./NameFormatters");
 const path = require("path");
 const resolveProperty = require("./resolveProperty");
 const unindent = require("./unindent");
@@ -48,6 +49,7 @@ function generate(options, schema, writers) {
       resolveProperty(
         schemaCache,
         config,
+        schema,
         name,
         key,
         schema.properties[key],
@@ -77,7 +79,7 @@ function generate(options, schema, writers) {
 
   let headers = lodash.uniq([
     `"${namespace}/Library.h"`,
-    getIncludeFromName(base, namespace),
+    NameFormatters.getIncludeFromName(base, namespace),
     ...lodash.flatten(properties.map((property) => property.headers)),
   ]);
 
@@ -132,7 +134,7 @@ function generate(options, schema, writers) {
   fs.writeFileSync(headerOutputPath, unindent(header), "utf-8");
 
   let readerHeaders = lodash.uniq([
-    getReaderIncludeFromName(base, readerNamespace),
+    NameFormatters.getReaderIncludeFromName(base, readerNamespace),
     `<${namespace}/${name}.h>`,
     ...lodash.flatten(properties.map((property) => property.readerHeaders)),
   ]);
@@ -148,7 +150,7 @@ function generate(options, schema, writers) {
     lodash.flatten(properties.map((property) => property.readerLocalTypes))
   );
 
-  const baseReader = getReaderName(base, readerNamespace);
+  const baseReader = NameFormatters.getReaderName(base, readerNamespace);
 
   // prettier-ignore
   const readerHeader = `
@@ -311,7 +313,7 @@ function generate(options, schema, writers) {
             10
           )}` : `(void)o;`}
 
-          return this->readObjectKey${removeNamespace(base)}(objectType, str, *this->_pObject);
+          return this->readObjectKey${NameFormatters.removeNamespace(base)}(objectType, str, *this->_pObject);
         }
 
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
@@ -361,7 +363,7 @@ function generate(options, schema, writers) {
   if (thisConfig.isBaseClass) {
     writeBaseJsonDefinition = `
         template <typename T>
-        void write${getWriterName(name)}(
+        void write${NameFormatters.getWriterName(name)}(
             const T& obj,
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -373,7 +375,7 @@ function generate(options, schema, writers) {
             10
           )}
 
-          write${getWriterName(base)}(obj, jsonWriter, context);
+          write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
         }
     `;
 
@@ -384,7 +386,7 @@ function generate(options, schema, writers) {
             const CesiumJsonWriter::ExtensionWriterContext& context) {
           jsonWriter.StartObject();
 
-          write${getWriterName(name)}(obj, jsonWriter, context);
+          write${NameFormatters.getWriterName(name)}(obj, jsonWriter, context);
 
           jsonWriter.EndObject();
         }
@@ -404,7 +406,7 @@ function generate(options, schema, writers) {
             10
           )}
 
-          write${getWriterName(base)}(obj, jsonWriter, context);
+          write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
 
           jsonWriter.EndObject();
         }
@@ -606,76 +608,6 @@ function createConstructor(name, derivedProperties, thisConfig, schema) {
   }
 
   return constructor;
-}
-
-const qualifiedTypeNameRegex = /(?:(?<namespace>.+)::)?(?<name>.+)/;
-
-function getReaderNamespace(namespace, readerNamespace) {
-  if (namespace === "CesiumUtility") {
-    return "CesiumJsonReader";
-  }
-  return readerNamespace;
-}
-
-function getIncludeFromName(name, namespace) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces && pieces.groups && pieces.groups.namespace) {
-    if (pieces.groups.namespace === namespace) {
-      return `"${namespace}/${pieces.groups.name}.h"`;
-    } else {
-      return `<${pieces.groups.namespace}/${pieces.groups.name}.h>`;
-    }
-  } else {
-    return `"${namespace}/${name}.h"`;
-  }
-}
-
-function getReaderIncludeFromName(name, readerNamespace) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces && pieces.groups && pieces.groups.namespace) {
-    const namespace = getReaderNamespace(
-      pieces.groups.namespace,
-      readerNamespace
-    );
-    if (namespace === readerNamespace) {
-      return `"${pieces.groups.name}JsonHandler.h"`;
-    } else {
-      return `<${namespace}/${pieces.groups.name}JsonHandler.h>`;
-    }
-  } else {
-    return `"${name}JsonHandler.h"`;
-  }
-}
-
-function getReaderName(name, readerNamespace) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces && pieces.groups && pieces.groups.namespace) {
-    const namespace = getReaderNamespace(
-      pieces.groups.namespace,
-      readerNamespace
-    );
-    return `${namespace}::${pieces.groups.name}JsonHandler`;
-  } else {
-    return `${name}JsonHandler`;
-  }
-}
-
-function getWriterName(name) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces) {
-    return pieces.groups.name;
-  } else {
-    return name;
-  }
-}
-
-function removeNamespace(name) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces && pieces.groups && pieces.groups.namespace) {
-    return pieces.groups.name;
-  } else {
-    return name;
-  }
 }
 
 module.exports = generate;

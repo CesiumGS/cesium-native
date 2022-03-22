@@ -1,12 +1,14 @@
+const cppReservedWords = require("./cppReservedWords");
 const getNameFromTitle = require("./getNameFromTitle");
-const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
-const cppReservedWords = require("./cppReservedWords");
+const NameFormatters = require("./NameFormatters");
+const unindent = require("./unindent");
 
 function resolveProperty(
   schemaCache,
   config,
+  parentSchema,
   parentName,
   propertyName,
   propertyDetails,
@@ -49,6 +51,7 @@ function resolveProperty(
     return resolveArray(
       schemaCache,
       config,
+      parentSchema,
       parentName,
       propertyName,
       cppSafeName,
@@ -97,13 +100,38 @@ function resolveProperty(
           ? `"${propertyDetails.default.toString()}"`
           : undefined,
     };
+  } else if (propertyDetails.type === "object" && propertyDetails.properties) {
+    // This is an anonymous, inline object definition
+    const name = createAnonymousPropertyTypeTitle(parentName, propertyName);
+    const schema = {
+      ...propertyDetails,
+      title: name,
+      sourcePath: parentSchema.sourcePath
+    };
+    const type = getNameFromTitle(config, schema.title);
+    return {
+      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
+      type: makeOptional
+        ? `std::optional<${NameFormatters.getName(type, namespace)}>`
+        : `${NameFormatters.getName(type, namespace)}`,
+      headers: [
+        NameFormatters.getIncludeFromName(type, namespace),
+        ...(makeOptional ? ["<optional>"] : []),
+      ],
+      readerType: NameFormatters.getReaderName(type, readerNamespace),
+      readerHeaders: [
+        NameFormatters.getReaderIncludeFromName(type, readerNamespace),
+      ],
+      schemas: [schema],
+    };
   } else if (
-    propertyDetails.type == "object" &&
+    propertyDetails.type === "object" &&
     propertyDetails.additionalProperties
   ) {
     return resolveDictionary(
       schemaCache,
       config,
+      parentSchema,
       parentName,
       propertyName,
       cppSafeName,
@@ -145,6 +173,7 @@ function resolveProperty(
       return resolveProperty(
         schemaCache,
         config,
+        parentSchema,
         parentName,
         propertyName,
         itemSchema,
@@ -158,14 +187,16 @@ function resolveProperty(
       return {
         ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
         type: makeOptional
-          ? `std::optional<${namespace}::${type}>`
-          : `${namespace}::${type}`,
+          ? `std::optional<${NameFormatters.getName(type, namespace)}>`
+          : `${NameFormatters.getName(type, namespace)}`,
         headers: [
-          `"${namespace}/${type}.h"`,
+          NameFormatters.getIncludeFromName(type, namespace),
           ...(makeOptional ? ["<optional>"] : []),
         ],
-        readerType: `${type}JsonHandler`,
-        readerHeaders: [`"${type}JsonHandler.h"`],
+        readerType: NameFormatters.getReaderName(type, readerNamespace),
+        readerHeaders: [
+          NameFormatters.getReaderIncludeFromName(type, readerNamespace),
+        ],
         schemas: [itemSchema],
       };
     }
@@ -173,6 +204,7 @@ function resolveProperty(
     const nested = resolveProperty(
       schemaCache,
       config,
+      parentSchema,
       parentName,
       propertyName,
       propertyDetails.allOf[0],
@@ -248,6 +280,7 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
 function resolveArray(
   schemaCache,
   config,
+  parentSchema,
   parentName,
   propertyName,
   cppSafeName,
@@ -264,6 +297,7 @@ function resolveArray(
   const itemProperty = resolveProperty(
     schemaCache,
     config,
+    parentSchema,
     parentName,
     propertyName + ".items",
     propertyDetails.items || { notEmpty: true },
@@ -298,6 +332,7 @@ function resolveArray(
 function resolveDictionary(
   schemaCache,
   config,
+  parentSchema,
   parentName,
   propertyName,
   cppSafeName,
@@ -310,6 +345,7 @@ function resolveDictionary(
   const additional = resolveProperty(
     schemaCache,
     config,
+    parentSchema,
     parentName,
     propertyName + ".additionalProperties",
     propertyDetails.additionalProperties,
@@ -676,6 +712,17 @@ function makeNameIntoValidIdentifier(name) {
 function makeNameIntoValidEnumIdentifier(name) {
   // May use this in the future to deconflict glTF enums from system header defines
   return name;
+}
+
+function createAnonymousPropertyTypeTitle(parentName, propertyName) {
+  const propertyWithoutItems = toPascalCase(propertyName.replace(".items",  ""));
+  let result = parentName;
+  if (!result.endsWith(propertyWithoutItems)) {
+    result += " " + propertyWithoutItems;
+  }
+  result += " Value";
+
+  return result;
 }
 
 module.exports = resolveProperty;
