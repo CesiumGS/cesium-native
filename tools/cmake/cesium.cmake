@@ -355,17 +355,12 @@ function(cesium_install_requirement requirement access)
 
   # Copy libs for all libraries
   get_target_property(LIBRARIES "${requirement}" INTERFACE_LINK_LIBRARIES)
-  # cesium_get_value_configurations("${INCLUDE_DIRS}" INCLUDE_CONFIGS)
 
-  string(GENEX_STRIP "${LIBRARIES}" NOT_CONFIG_SPECIFIC)
-  cesium_install_requirement_configuration("ALL" "${NOT_CONFIG_SPECIFIC}" "${access}")
-
-  set(CONFIGURATION_REGEX "\\$<\\$<CONFIG:([^>]+)>:([^>]*)>")
-  while (LIBRARIES MATCHES ${CONFIGURATION_REGEX})
-    # Remove the matched part
-    string(LENGTH "${CMAKE_MATCH_0}" MATCH_LENGTH)
-    string(SUBSTRING "${LIBRARIES}" ${MATCH_LENGTH} -1 LIBRARIES)
-    # MATCH_1: configuration, MATCH_2: library list for configuration
-    cesium_install_requirement_configuration("${CMAKE_MATCH_1}" "${CMAKE_MATCH_2}" "${access}")
-  endwhile()
+  cesium_get_value_configurations("${LIBRARIES}" LIBRARY_CONFIGS)
+  foreach (LIBRARY_CONFIG ${LIBRARY_CONFIGS})
+    cesium_get_configuration_value("${LIBRARIES}" "${LIBRARY_CONFIG}" CONFIG_LIBRARIES)
+    foreach (LIBRARY ${CONFIG_LIBRARIES})
+      cesium_install_requirement_configuration("${LIBRARY_CONFIG}" "${CONFIG_LIBRARIES}" "${access}")
+    endforeach()
+  endforeach()
 endfunction()
