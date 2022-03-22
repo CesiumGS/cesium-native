@@ -552,16 +552,17 @@ void Tile::processLoadedContent() {
       }
       // else if it has a model, try to get the copyright
       else if (this->_pContent->model->asset.copyright) {
-        if (!perTileCredits.has_value()) {
-          perTileCredits = std::make_optional<std::vector<Credit>>();
-        }
         const auto& copyright = *this->_pContent->model->asset.copyright;
         size_t start = 0;
         size_t end;
+        size_t ltrim;
+        size_t rtrim;
         do {
-          end = copyright.find(',', start);
-          perTileCredits->push_back(externals.pCreditSystem->createCredit(
-              copyright.substr(start, end - start),
+          ltrim = copyright.find_first_not_of(" \t", start);
+          end = copyright.find(';', ltrim);
+          rtrim = copyright.find_last_not_of(" \t", end - 1);
+          perTileCredits.push_back(externals.pCreditSystem->createCredit(
+              copyright.substr(ltrim, rtrim - ltrim + 1),
               this->getTileset()->getOptions().showCreditsOnScreen));
           start = end + 1;
         } while (end != std::string::npos);
