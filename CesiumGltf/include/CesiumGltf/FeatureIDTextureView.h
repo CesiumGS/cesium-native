@@ -123,16 +123,17 @@ public:
   }
 
   /**
-   * @brief Get the texture coordinate index for this feature id texture.
+   * @brief Get the texture coordinate attribute index for this feature id
+   * texture.
    */
-  int64_t getTextureCoordinateIndex() const {
-    return this->_textureCoordinateIndex;
+  int64_t getTextureCoordinateAttributeId() const {
+    return this->_textureCoordinateAttributeId;
   }
 
 private:
   const ImageCesium* _pImage;
   int32_t _channel;
-  int64_t _textureCoordinateIndex;
+  int64_t _textureCoordinateAttributeId;
   std::string _featureTableName;
   FeatureIDTextureViewStatus _status;
 };

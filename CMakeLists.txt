@@ -82,7 +82,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 function(configure_cesium_library targetName)
     if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
+        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
     endif()
