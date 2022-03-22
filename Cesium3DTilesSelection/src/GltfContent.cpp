@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "SkirtMeshMetadata.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
@@ -213,6 +214,18 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
+        std::optional<SkirtMeshMetadata> skirtMeshMetadata =
+            SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
+        int64_t vertexBegin, vertexEnd;
+        if (skirtMeshMetadata.has_value()) {
+          vertexBegin = skirtMeshMetadata->noSkirtVerticesBegin;
+          vertexEnd = skirtMeshMetadata->noSkirtVerticesBegin +
+                      skirtMeshMetadata->noSkirtVerticesCount;
+        } else {
+          vertexBegin = 0;
+          vertexEnd = positionView.size();
+        }
+
         for (size_t i = 0; i < projections.size(); ++i) {
           const int uvBufferId = static_cast<int>(buffers.size());
           CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
@@ -271,7 +284,10 @@ GltfContent::createRasterOverlayTextureCoordinates(
             continue;
           }
 
-          computedBounds.expandToIncludePosition(*cartographic);
+          // exclude skirt vertices from bounds
+          if (positionIndex >= vertexBegin && positionIndex < vertexEnd) {
+            computedBounds.expandToIncludePosition(*cartographic);
+          }
 
           // Generate texture coordinates at this position for each projection
           for (size_t projectionIndex = 0; projectionIndex < projections.size();
@@ -293,15 +309,15 @@ GltfContent::createRasterOverlayTextureCoordinates(
             // gets us closer.
             if (glm::abs(
                     glm::abs(cartographic.value().longitude) -
-                    CesiumUtility::Math::ONE_PI) <
-                    CesiumUtility::Math::EPSILON5 &&
+                    CesiumUtility::Math::OnePi) <
+                    CesiumUtility::Math::Epsilon5 &&
                 (projectedPosition.x < rectangle.minimumX ||
                  projectedPosition.x > rectangle.maximumX ||
                  projectedPosition.y < rectangle.minimumY ||
                  projectedPosition.y > rectangle.maximumY)) {
               const double testLongitude = longitude + longitude < 0.0
-                                               ? CesiumUtility::Math::TWO_PI
-                                               : -CesiumUtility::Math::TWO_PI;
+                                               ? CesiumUtility::Math::TwoPi
+                                               : -CesiumUtility::Math::TwoPi;
               const glm::dvec3 projectedPosition2 = projectPosition(
                   projection,
                   Cartographic(testLongitude, latitude, ellipsoidHeight));
@@ -389,7 +405,19 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        for (int64_t i = 0; i < positionView.size(); ++i) {
+        std::optional<SkirtMeshMetadata> skirtMeshMetadata =
+            SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
+        int64_t vertexBegin, vertexEnd;
+        if (skirtMeshMetadata.has_value()) {
+          vertexBegin = skirtMeshMetadata->noSkirtVerticesBegin;
+          vertexEnd = skirtMeshMetadata->noSkirtVerticesBegin +
+                      skirtMeshMetadata->noSkirtVerticesCount;
+        } else {
+          vertexBegin = 0;
+          vertexEnd = positionView.size();
+        }
+
+        for (int64_t i = vertexBegin; i < vertexEnd; ++i) {
           // Get the ECEF position
           const glm::vec3 position = positionView[i];
           const glm::dvec3 positionEcef =

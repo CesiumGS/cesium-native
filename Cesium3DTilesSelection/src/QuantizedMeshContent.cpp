@@ -676,7 +676,7 @@ static std::vector<std::byte> generateNormals(
 
   for (size_t i = 0; i < normals.size(); i += 3) {
     glm::vec3 normal(normals[i], normals[i + 1], normals[i + 2]);
-    if (!Math::equalsEpsilon(glm::dot(normal, normal), 0.0, Math::EPSILON7)) {
+    if (!Math::equalsEpsilon(glm::dot(normal, normal), 0.0, Math::Epsilon7)) {
       normal = glm::normalize(normal);
       normals[i] = normal.x;
       normals[i + 1] = normal.y;
@@ -1090,6 +1090,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   SkirtMeshMetadata skirtMeshMetadata;
   skirtMeshMetadata.noSkirtIndicesBegin = 0;
   skirtMeshMetadata.noSkirtIndicesCount = indicesCount;
+  skirtMeshMetadata.noSkirtVerticesBegin = 0;
+  skirtMeshMetadata.noSkirtVerticesCount = vertexCount;
   skirtMeshMetadata.meshCenter = center;
   skirtMeshMetadata.skirtWestHeight = skirtHeight;
   skirtMeshMetadata.skirtSouthHeight = skirtHeight;

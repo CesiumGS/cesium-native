@@ -25,7 +25,7 @@ TEST_CASE("BoundingRegionBuilder") {
     CHECK(!rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
     CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
 
-    builder.expandToIncludePosition(Cartographic(Math::ONE_PI, 1.0, 0.0));
+    builder.expandToIncludePosition(Cartographic(Math::OnePi, 1.0, 0.0));
     rectangle = builder.toRegion().getRectangle();
     CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
     CHECK(rectangle.contains(Cartographic(1.0, 0.0, 0.0)));

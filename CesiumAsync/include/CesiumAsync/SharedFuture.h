@@ -12,12 +12,12 @@
 
 namespace CesiumAsync {
 
-namespace Impl {
+namespace CesiumImpl {
 
 template <typename R> struct ParameterizedTaskUnwrapper;
 struct TaskUnwrapper;
 
-} // namespace Impl
+} // namespace CesiumImpl
 
 /**
  * @brief A value that will be available in the future, as produced by
@@ -48,7 +48,7 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) {
+  CesiumImpl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) {
     return this->thenWithScheduler(
         this->_pSchedulers->workerThread.immediate,
         "waiting for worker thread",
@@ -74,7 +74,7 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) {
+  CesiumImpl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) {
     return this->thenWithScheduler(
         this->_pSchedulers->mainThread.immediate,
         "waiting for main thread",
@@ -97,12 +97,14 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, T> thenImmediately(Func&& f) {
-    return Impl::ContinuationFutureType_t<Func, T>(
+  CesiumImpl::ContinuationFutureType_t<Func, T> thenImmediately(Func&& f) {
+    return CesiumImpl::ContinuationFutureType_t<Func, T>(
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::WithTracingShared<T>::end(nullptr, std::forward<Func>(f))));
+            CesiumImpl::WithTracingShared<T>::end(
+                nullptr,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -124,7 +126,7 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <typename Func>
-  Impl::ContinuationFutureType_t<Func, T>
+  CesiumImpl::ContinuationFutureType_t<Func, T>
   thenInThreadPool(const ThreadPool& threadPool, Func&& f) {
     return this->thenWithScheduler(
         threadPool._pScheduler->immediate,
@@ -211,12 +213,12 @@ public:
 
 private:
   SharedFuture(
-      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
       async::shared_task<T>&& task) noexcept
       : _pSchedulers(pSchedulers), _task(std::move(task)) {}
 
   template <typename Func, typename Scheduler>
-  Impl::ContinuationFutureType_t<Func, T>
+  CesiumImpl::ContinuationFutureType_t<Func, T>
   thenWithScheduler(Scheduler& scheduler, const char* tracingName, Func&& f) {
     // It would be nice if tracingName were a template parameter instead of a
     // function parameter, but that triggers a bug in VS2017. It was previously
@@ -227,41 +229,43 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        Impl::WithTracingShared<T>::begin(tracingName, std::forward<Func>(f)));
+        CesiumImpl::WithTracingShared<T>::begin(
+            tracingName,
+            std::forward<Func>(f)));
 #else
     auto& task = this->_task;
 #endif
 
-    return Impl::ContinuationFutureType_t<Func, T>(
+    return CesiumImpl::ContinuationFutureType_t<Func, T>(
         this->_pSchedulers,
         task.then(
             scheduler,
-            Impl::WithTracingShared<T>::end(
+            CesiumImpl::WithTracingShared<T>::end(
                 tracingName,
                 std::forward<Func>(f))));
   }
 
   template <typename Func, typename Scheduler>
-  Impl::ContinuationFutureType_t<Func, std::exception>
+  CesiumImpl::ContinuationFutureType_t<Func, std::exception>
   catchWithScheduler(Scheduler& scheduler, Func&& f) {
-    return Impl::ContinuationFutureType_t<Func, std::exception>(
+    return CesiumImpl::ContinuationFutureType_t<Func, std::exception>(
         this->_pSchedulers,
         this->_task.then(
             async::inline_scheduler(),
-            Impl::
+            CesiumImpl::
                 CatchFunction<Func, T, Scheduler, const async::shared_task<T>&>{
                     scheduler,
                     std::forward<Func>(f)}));
   }
 
-  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
   async::shared_task<T> _task;
 
   friend class AsyncSystem;
 
-  template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
+  template <typename R> friend struct CesiumImpl::ParameterizedTaskUnwrapper;
 
-  friend struct Impl::TaskUnwrapper;
+  friend struct CesiumImpl::TaskUnwrapper;
 
   template <typename R> friend class Future;
   template <typename R> friend class SharedFuture;

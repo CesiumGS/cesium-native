@@ -167,7 +167,7 @@ public:
     double east = this->_east;
     const double west = this->_west;
     if (east < west) {
-      east += CesiumUtility::Math::TWO_PI;
+      east += CesiumUtility::Math::TwoPi;
     }
     return east - west;
   }

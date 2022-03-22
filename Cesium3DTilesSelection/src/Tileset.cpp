@@ -19,6 +19,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
@@ -47,7 +48,8 @@ Tileset::Tileset(
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
               : std::nullopt),
       _url(url),
       _isRefreshingIonToken(false),
@@ -82,7 +84,8 @@ Tileset::Tileset(
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
               : std::nullopt),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
@@ -313,6 +316,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
             pCreditSystem->addCreditToFrame(credit);
           }
         }
+      }
+
+      if (tile->getContent() != nullptr &&
+          tile->getContent()->credit.has_value()) {
+        pCreditSystem->addCreditToFrame(*tile->getContent()->credit);
       }
     }
   }
@@ -588,13 +596,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   distances.resize(frustums.size());
   ++this->_nextDistancesVector;
 
-  // Use a unique_ptr to ensure the _nextDistancesVector gets decrements when we
+  // Use a ScopeGuard to ensure the _nextDistancesVector gets decrements when we
   // leave this scope.
-  const auto decrementNextDistancesVector = [this](std::vector<double>*) {
-    --this->_nextDistancesVector;
-  };
-  std::unique_ptr<std::vector<double>, decltype(decrementNextDistancesVector)>
-      autoDecrement(&distances, decrementNextDistancesVector);
+  CesiumUtility::ScopeGuard guard{[this]() { --this->_nextDistancesVector; }};
 
   std::transform(
       frustums.begin(),
@@ -721,10 +725,10 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      if (tile.getState() == Tile::LoadState::ContentLoaded) {
-        tile.processLoadedContent();
+      if (child.getState() == Tile::LoadState::ContentLoaded) {
+        child.processLoadedContent();
         ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
-            tile,
+            child,
             childInfo);
       }
       child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
@@ -1325,7 +1329,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
       glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
       const double magnitude = glm::length(tileDirection);
 
-      if (magnitude >= CesiumUtility::Math::EPSILON5) {
+      if (magnitude >= CesiumUtility::Math::Epsilon5) {
         tileDirection /= magnitude;
         const double loadPriority =
             (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;

@@ -35,7 +35,7 @@ public:
    * square.  That is, the rectangle is equal in the X and Y directions.
    *
    * The constant value is computed by calling:
-   *    `CesiumGeospatial::WebMercatorProjection::mercatorAngleToGeodeticLatitude(CesiumUtility::Math::ONE_PI)`
+   *    `CesiumGeospatial::WebMercatorProjection::mercatorAngleToGeodeticLatitude(CesiumUtility::Math::OnePi)`
    */
   static const double MAXIMUM_LATITUDE;
 
@@ -57,7 +57,7 @@ public:
   static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(
       const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept {
     const double value =
-        ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
+        ellipsoid.getMaximumRadius() * CesiumUtility::Math::OnePi;
     return CesiumGeometry::Rectangle(-value, -value, value, value);
   }
 
