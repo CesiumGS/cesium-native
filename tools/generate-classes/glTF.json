@@ -5,10 +5,12 @@
       "toBeInherited": true
     },
     "glTF Property": {
-      "overrideName": "CesiumUtility::ExtensibleObject"
+      "overrideName": "CesiumUtility::ExtensibleObject",
+      "manuallyDefined": true
     },
     "glTF Child of Root Property": {
-      "overrideName": "CesiumGltf::NamedObject"
+      "overrideName": "CesiumGltf::NamedObject",
+      "manuallyDefined": true
     },
     "Buffer": {
       "toBeInherited": true
@@ -162,6 +164,12 @@
     },
     "KHR_materials_unlit glTF extension": {
       "overrideName": "ExtensionKhrMaterialsUnlit"
+    },
+    "MAXAR_mesh_variants glTF extension": {
+      "overrideName": "ExtensionModelMaxarMeshVariants"
+    },
+    "MAXAR_mesh_variants node extension": {
+      "overrideName": "ExtensionNodeMaxarMeshVariants"
     }
   },
   "extensions": [
@@ -232,6 +240,14 @@
       "attachTo": [
         "texture"
       ]
+    },
+    {
+      "extensionName": "MAXAR_mesh_variants",
+      "schema": "Vendor/MAXAR_mesh_variants/schema/glTF.MAXAR_mesh_variants.schema.json"
+    },
+    {
+      "extensionName": "MAXAR_mesh_variants",
+      "schema": "Vendor/MAXAR_mesh_variants/schema/node.MAXAR_mesh_variants.schema.json"
     }
   ]
 }

@@ -4,6 +4,7 @@
 ##### Fixes :wrench:
 
 - Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
+- Fix upsampling for EXT_feature_metadata feature tables.
 
 ##### Additions :tada:
 
@@ -13,6 +14,7 @@
 - Credits are now sorted based on the number of occurrences.
 - Added option to show credits on screen.
 - Expose the swizzle string in feature texture property views.
+- Add a type trait check for if something is a metadata array.
 
 ### v0.13.0 - 2022-03-01
 

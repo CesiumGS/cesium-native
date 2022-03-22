@@ -17,6 +17,8 @@
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
+#include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
+#include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -39,6 +41,9 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       CesiumGltf::Model,
       ExtensionModelExtStructuralMetadataJsonHandler>();
   context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelMaxarMeshVariantsJsonHandler>();
+  context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonHandler>();
   context.registerExtension<
@@ -59,6 +64,9 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtMeshGpuInstancingJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNodeMaxarMeshVariantsJsonHandler>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();

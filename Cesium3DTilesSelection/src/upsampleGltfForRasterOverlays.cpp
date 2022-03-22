@@ -6,11 +6,14 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
+#include <vector>
 
 using namespace CesiumGltf;
 
@@ -95,6 +98,8 @@ isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.y % 2) == 0;
 }
 
+static void copyMetadataTables(const Model& parentModel, Model& result);
+
 Model upsampleGltfForRasterOverlays(
     const Model& parentModel,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
@@ -118,9 +123,14 @@ Model upsampleGltfForRasterOverlays(
   result.extensionsRequired = parentModel.extensionsRequired;
   result.asset = parentModel.asset;
   result.extras = parentModel.extras;
-  // result.extensions = parentModel.extensions;
+
+  // TODO: check if this is enough, not enough, or overkill
+  result.extensions = parentModel.extensions;
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
+
+  // Copy EXT_feature_metadata feature table buffer views and unique buffers.
+  copyMetadataTables(parentModel, result);
 
   // If the glTF has a name, update it with upsample info.
   auto nameIt = result.extras.find("Cesium3DTiles_TileUrl");
@@ -457,7 +467,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     attribute.second = static_cast<int>(model.accessors.size());
     model.accessors.emplace_back();
     Accessor& newAccessor = model.accessors.back();
-    newAccessor.bufferView = static_cast<int>(vertexBufferIndex);
+    newAccessor.bufferView = static_cast<int>(vertexBufferViewIndex);
     newAccessor.byteOffset = vertexSizeFloats * int64_t(sizeof(float));
     newAccessor.componentType = Accessor::ComponentType::FLOAT;
     newAccessor.type = accessor.type;
@@ -1159,6 +1169,77 @@ static bool upsamplePrimitiveForRasterOverlays(
   }
 
   return false;
+}
+
+// Copy a buffer view from a parent to a child. Create a new buffer on the
+// child corresponding to the section of the parent buffer specified by the
+// view.
+static int32_t copyBufferView(
+    const Model& parentModel,
+    int32_t parentBufferViewId,
+    Model& result) {
+
+  // Check invalid buffer view.
+  if (parentBufferViewId < 0 || static_cast<size_t>(parentBufferViewId) >=
+                                    parentModel.bufferViews.size()) {
+    return -1;
+  }
+
+  const BufferView& parentBufferView =
+      parentModel.bufferViews[static_cast<size_t>(parentBufferViewId)];
+
+  // Check invalid buffer.
+  if (parentBufferView.buffer < 0 ||
+      static_cast<size_t>(parentBufferView.buffer) >=
+          parentModel.buffers.size()) {
+    // Should we return a valid buffer view with an invalid buffer instead?
+    return -1;
+  }
+
+  const Buffer& parentBuffer =
+      parentModel.buffers[static_cast<size_t>(parentBufferView.buffer)];
+
+  size_t bufferId = result.buffers.size();
+  Buffer& buffer = result.buffers.emplace_back();
+  buffer.byteLength = parentBufferView.byteLength;
+  buffer.cesium.data.resize(static_cast<size_t>(parentBufferView.byteLength));
+  std::memcpy(
+      buffer.cesium.data.data(),
+      &parentBuffer.cesium
+           .data[static_cast<size_t>(parentBufferView.byteOffset)],
+      static_cast<size_t>(parentBufferView.byteLength));
+
+  size_t bufferViewId = result.bufferViews.size();
+  BufferView& bufferView = result.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(bufferId);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = parentBufferView.byteLength;
+  bufferView.byteStride = parentBufferView.byteStride;
+
+  return static_cast<int32_t>(bufferViewId);
+}
+
+// Copy and reconstruct buffer views and buffers from EXT_feature_metadata
+// feature tables.
+static void copyMetadataTables(const Model& parentModel, Model& result) {
+  ExtensionModelExtFeatureMetadata* pMetadata =
+      result.getExtension<ExtensionModelExtFeatureMetadata>();
+  if (pMetadata) {
+    for (auto& featureTablePair : pMetadata->featureTables) {
+      for (auto& propertyPair : featureTablePair.second.properties) {
+        FeatureTableProperty& property = propertyPair.second;
+
+        property.bufferView =
+            copyBufferView(parentModel, property.bufferView, result);
+        property.arrayOffsetBufferView =
+            copyBufferView(parentModel, property.arrayOffsetBufferView, result);
+        property.stringOffsetBufferView = copyBufferView(
+            parentModel,
+            property.stringOffsetBufferView,
+            result);
+      }
+    }
+  }
 }
 
 } // namespace Cesium3DTilesSelection

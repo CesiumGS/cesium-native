@@ -21,6 +21,8 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
+#include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
@@ -39,6 +41,9 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtStructuralMetadataJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelMaxarMeshVariantsJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();
@@ -60,6 +65,9 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtMeshGpuInstancingJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNodeMaxarMeshVariantsJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();
