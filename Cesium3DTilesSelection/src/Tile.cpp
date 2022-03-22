@@ -537,15 +537,10 @@ void Tile::processLoadedContent() {
       // add per-tile ion-specified credit
       const auto& tilesetCredits = this->getTileset()->getTilesetCredits();
       if (!tilesetCredits.empty()) {
-        if (!perTileCredits.has_value()) {
-          this->_pContent->credits =
-              std::make_optional<std::vector<Credit>>(tilesetCredits);
-        } else {
-          perTileCredits->insert(
-              perTileCredits->end(),
-              tilesetCredits.begin(),
-              tilesetCredits.end());
-        }
+        perTileCredits.insert(
+            perTileCredits.end(),
+            tilesetCredits.begin(),
+            tilesetCredits.end());
       }
 
       // If this tile has no model, we want to unconditionally refine past it.
