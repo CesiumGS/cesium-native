@@ -349,7 +349,6 @@ void Tile::loadContent() {
   this->setState(LoadState::ContentLoading);
 
   Tileset& tileset = *this->getTileset();
-  this->_credits = tileset.getTilesetCredits();
 
   // If this is an upsampled tile, we need to derive this tile's content from
   // its parent.
@@ -531,6 +530,21 @@ void Tile::processLoadedContent() {
 
             this->_pContext->pTileset->addContext(std::move(pNewContext));
           }
+        }
+      }
+
+      auto& perTileCredits = this->_pContent->credits;
+      // add per-tile ion-specified credit
+      const auto& tilesetCredits = this->getTileset()->getTilesetCredits();
+      if (!tilesetCredits.empty()) {
+        if (!perTileCredits.has_value()) {
+          this->_pContent->credits =
+              std::make_optional<std::vector<Credit>>(tilesetCredits);
+        } else {
+          perTileCredits->insert(
+              perTileCredits->end(),
+              tilesetCredits.begin(),
+              tilesetCredits.end());
         }
       }
 

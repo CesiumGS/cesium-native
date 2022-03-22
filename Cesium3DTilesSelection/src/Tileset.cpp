@@ -312,11 +312,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
           }
         }
       }
-      // per-tile ion-specified credit
-      for (const Credit& credit : tile->getCredits()) {
-        pCreditSystem->addCreditToFrame(credit);
-      }
-
       if (tile->getContent() != nullptr &&
           tile->getContent()->credits.has_value()) {
         for (const Credit& credit : *tile->getContent()->credits) {
