@@ -62,6 +62,7 @@ function generate(options, schema, writers) {
     .filter((property) => property !== undefined);
 
   // Filter out derived properties
+  // TODO: this causes differences in MAXAR_mesh_variants, but perhaps good ones
   const derivedProperties = [];
   properties = properties.filter((property) => {
     if (baseSchema && baseSchema.properties[property.name]) {
