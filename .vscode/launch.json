@@ -32,6 +32,14 @@
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run-script", "generate-tilers-config"]
+        },
+        {
+            "name": "npm run generate-gltf",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "generate-gltf"]
         }
     ]
 }
