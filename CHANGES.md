@@ -1,16 +1,20 @@
 # Change Log
-
 ### v0.14.0 - YYYY-MM-DD
 
 ##### Fixes :wrench:
 
 - Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
+- Fix upsampling for EXT_feature_metadata feature tables.
 
 ##### Additions :tada:
 
 - Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
 - Add ScopeGuard utility to automatically execute function when exiting a scope.
 - Add glTF copyright information to the list of tileset credits.
+- Credits are now sorted based on the number of occurrences.
+- Added option to show credits on screen.
+- Expose the swizzle string in feature texture property views.
+- Add a type trait check for if something is a metadata array.
 
 ### v0.13.0 - 2022-03-01
 
@@ -33,6 +37,7 @@
 
 - Fixed bug that could cause properties types in a B3DM Batch Table to be deduced incorrectly, leading to a crash when accessing property values.
 - Fixed a bug where implicit tiles were not receiving the root transform and so could sometimes end up in the wrong place.
+- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was true.
 
 ### v0.12.0 - 2022-02-01
 

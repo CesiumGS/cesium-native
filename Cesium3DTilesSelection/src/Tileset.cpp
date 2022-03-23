@@ -48,7 +48,8 @@ Tileset::Tileset(
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
               : std::nullopt),
       _url(url),
       _isRefreshingIonToken(false),
@@ -83,7 +84,8 @@ Tileset::Tileset(
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
               : std::nullopt),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
@@ -723,10 +725,10 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      if (tile.getState() == Tile::LoadState::ContentLoaded) {
-        tile.processLoadedContent();
+      if (child.getState() == Tile::LoadState::ContentLoaded) {
+        child.processLoadedContent();
         ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
-            tile,
+            child,
             childInfo);
       }
       child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
