@@ -253,6 +253,17 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
         return computeFogDensity(fogDensityTable, frustum);
       });
 
+  if (_options.enableDynamicScreenSpaceError) {
+    _dynamicScreenSpaceErrorDensities.resize(frustums.size());
+    std::transform(
+        frustums.begin(),
+        frustums.end(),
+        _dynamicScreenSpaceErrorDensities.begin(),
+        [pRootTile, this](const auto& frustum) -> double {
+          return calcDynamicSSEDensity(*pRootTile, frustum);
+        });
+  }
+
   FrameState frameState{
       frustums,
       std::move(fogDensities),
@@ -504,6 +515,11 @@ static bool isVisibleFromCamera(
   return false;
 }
 
+static double computeFog(double distance, double fogDensity) noexcept {
+  const double fogScalar = distance * fogDensity;
+  return 1.0 - glm::exp(-(fogScalar * fogScalar));
+}
+
 /**
  * @brief Returns whether a tile at the given distance is visible in the fog.
  *
@@ -516,8 +532,7 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
     return true;
   }
 
-  const double fogScalar = distance * fogDensity;
-  return glm::exp(-(fogScalar * fogScalar)) > 0.0;
+  return computeFog(distance, fogDensity) < 1.0;
 }
 
 // Visits a tile for possible rendering. When we call this function with a tile:
@@ -761,8 +776,22 @@ bool Tileset::_meetsSse(
     const double distance = distances[i];
 
     // Does this tile meet the screen-space error?
-    const double sse =
+    double sse =
         frustum.computeScreenSpaceError(tile.getGeometricError(), distance);
+    if (_options.enableDynamicScreenSpaceError) {
+      double height = frustum.getPositionCartographic()->height;
+      double height_t = (height - _options.dynamicScreenSpaceErrorCloseHeight) /
+                        (_options.dynamicScreenSpaceErrorFarHeight -
+                         _options.dynamicScreenSpaceErrorCloseHeight);
+      height_t = glm::clamp(height_t, 0.0, 1.0);
+      double density = glm::smoothstep(
+                           _options.dynamicScreenSpaceErrorNearDistance,
+                           _options.dynamicScreenSpaceErrorFarDistance,
+                           distance) *
+                       (1.0 - height_t);
+      sse -= density * _options.dynamicScreenSpaceErrorFactor;
+    }
+
     if (sse > largestSse) {
       largestSse = sse;
     }
@@ -1288,6 +1317,71 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
   }
 
   return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
+}
+
+double Tileset::calcDynamicSSEDensity(const Tile &tile, const ViewState& frustum) const noexcept 
+{
+  const auto &boundingVolume = tile.getBoundingVolume();
+  glm::dvec3 cameraUp;
+  glm::dvec3 cameraDirection;
+  double height = 0.0;
+  double minHeight = 0.0;
+  double maxHeight = 0.0;
+  if (auto region = std::get_if<BoundingRegion>(&boundingVolume)) {
+    cameraUp = glm::normalize(frustum.getPosition());
+    cameraDirection = frustum.getDirection();
+    height = frustum.getPositionCartographic()->height;
+    minHeight = region->getMinimumHeight();
+    maxHeight = region->getMaximumHeight();
+  } else if (auto looseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume)) {
+    const auto& internalRegion = looseRegion->getBoundingRegion();
+
+    cameraUp = glm::normalize(frustum.getPosition());
+    cameraDirection = frustum.getDirection();
+    height = frustum.getPositionCartographic()->height;
+    minHeight = internalRegion.getMinimumHeight();
+    maxHeight = internalRegion.getMaximumHeight();
+  } else {
+    const auto& wgs84 = CesiumGeospatial::Ellipsoid::WGS84;
+    glm::dvec3 tileCenter = getBoundingVolumeCenter(boundingVolume);
+    if (glm::length(tileCenter) > wgs84.getMinimumRadius()) {
+      auto tileCenterCarto = wgs84.cartesianToCartographic(tileCenter);
+      cameraUp = glm::normalize(frustum.getPosition());
+      cameraDirection = frustum.getDirection();
+      height = frustum.getPositionCartographic()->height;
+      minHeight = 0.0;
+      maxHeight = tileCenterCarto->height * 2.0;
+    } else {
+      auto localTransform = glm::inverse(tile.getTransform());
+      auto localCameraPosition = localTransform * glm::dvec4(frustum.getPosition(), 1.0);
+      auto localBoundingVolume =
+          transformBoundingVolume(localTransform, boundingVolume);
+      cameraUp = glm::dvec3(0.0, 0.0, 1.0);
+      cameraDirection =
+          glm::dvec3(localTransform * glm::dvec4(frustum.getDirection(), 0.0));
+      cameraDirection = glm::normalize(cameraDirection);
+      height = localCameraPosition.z;
+      if (auto sphere = std::get_if<BoundingSphere>(&localBoundingVolume)) {
+        double radius = sphere->getRadius();
+        minHeight = height - radius;
+        maxHeight = height + radius;
+      } else if (auto obb = std::get_if<OrientedBoundingBox>(&localBoundingVolume)) {
+        const glm::dvec3& obbLengths = obb->getLengths();
+        minHeight = height - obbLengths.z;
+        maxHeight = height + obbLengths.z;
+      }
+    }
+  }
+
+  double heightFalloff = _options.dynamicScreenSpaceErrorHeightFallOff;
+  double heightClose = minHeight + (maxHeight - minHeight) * heightFalloff;
+  double heightFar = maxHeight;
+  double height_t =
+      glm::clamp((height - heightClose) / (heightFar - heightClose), 0.0, 1.0);
+  double dot = glm::abs(glm::dot(cameraDirection, cameraUp));
+  double horizontalFactor = (1.0 - dot) * (1.0 - height_t);
+
+  return _options.dynamicScreenSpaceErrorDensity * horizontalFactor;
 }
 
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {

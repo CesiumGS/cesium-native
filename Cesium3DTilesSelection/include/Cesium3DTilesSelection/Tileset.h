@@ -493,6 +493,8 @@ private:
 
   std::string getResolvedContentUrl(const Tile& tile) const;
 
+  double calcDynamicSSEDensity(const Tile &tile, const ViewState& frustum) const noexcept;
+
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
@@ -588,6 +590,8 @@ private:
   // selection.
   std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
   size_t _nextDistancesVector;
+
+  std::vector<double> _dynamicScreenSpaceErrorDensities;
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 

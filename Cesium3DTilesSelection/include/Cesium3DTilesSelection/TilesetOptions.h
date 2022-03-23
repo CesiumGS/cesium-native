@@ -74,6 +74,15 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    */
   bool showCreditsOnScreen = false;
 
+  bool enableDynamicScreenSpaceError = true;
+  double dynamicScreenSpaceErrorDensity = 0.00278;
+  double dynamicScreenSpaceErrorFactor = 4.0;
+  double dynamicScreenSpaceErrorHeightFallOff = 0.25;
+  double dynamicScreenSpaceErrorNearDistance = 10000.0;
+  double dynamicScreenSpaceErrorFarDistance = 40000.0;
+  double dynamicScreenSpaceErrorCloseHeight = 0.0;
+  double dynamicScreenSpaceErrorFarHeight = 8000.0;
+
   /**
    * @brief The maximum number of pixels of error when rendering this tileset.
    * This is used to select an appropriate level-of-detail.
