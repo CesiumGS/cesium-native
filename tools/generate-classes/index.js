@@ -54,11 +54,6 @@ const argv = yargs.options({
     demandOption: true,
     type: "string",
   },
-  writerNamespace: {
-    description: "Namespace to put the generated writer classes in.",
-    demandOption: true,
-    type: "string",
-  },
   oneHandlerFile: {
     description:
       "Generate all the JSON handler implementations into a single file, GeneratedJsonHandlers.cpp.",
