@@ -904,17 +904,16 @@ int64_t Tile::computeByteSize() const noexcept {
       bytes += int64_t(buffer.cesium.data.size());
     }
 
-    // For images loaded from buffers, subtract the buffer size and add
-    // the decoded image size instead.
     const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
     for (const CesiumGltf::Image& image : model.images) {
       const int32_t bufferView = image.bufferView;
-      if (bufferView < 0 ||
-          bufferView >= static_cast<int32_t>(bufferViews.size())) {
-        continue;
+      // For images loaded from buffers, subtract the buffer size before adding
+      // the decoded image size.
+      if (bufferView >= 0 &&
+          bufferView < static_cast<int32_t>(bufferViews.size())) {
+        bytes -= bufferViews[size_t(bufferView)].byteLength;
       }
 
-      bytes -= bufferViews[size_t(bufferView)].byteLength;
       bytes += int64_t(image.cesium.pixelData.size());
     }
   }
