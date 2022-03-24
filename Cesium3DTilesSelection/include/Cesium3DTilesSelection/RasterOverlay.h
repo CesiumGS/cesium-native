@@ -4,6 +4,7 @@
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltf/Sampler.h>
 
 #include <spdlog/fwd.h>
 
@@ -86,6 +87,11 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * @brief Whether or not to display the credits on screen.
    */
   bool showCreditsOnScreen = false;
+
+  /**
+   * @brief The filter to apply to the image.
+   */
+  int32_t filter = CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
 };
 
 /**

@@ -98,8 +98,9 @@ public:
    * data is passed to {@link prepareRasterInMainThread} as the
    * `pLoadThreadResult` parameter.
    */
-  virtual void*
-  prepareRasterInLoadThread(const CesiumGltf::ImageCesium& image) = 0;
+  virtual void* prepareRasterInLoadThread(
+      const CesiumGltf::ImageCesium& image,
+      int filter) = 0;
 
   /**
    * @brief Further preprares a raster overlay tile.
