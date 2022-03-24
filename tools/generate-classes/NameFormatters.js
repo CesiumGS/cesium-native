@@ -30,7 +30,8 @@ const NameFormatters = {
         return `<${pieces.groups.namespace}/${pieces.groups.name}.h>`;
       }
     } else {
-      return `"${namespace}/${name}.h"`;
+      const includePath = namespace.split("::").join("/");
+      return `"${includePath}/${name}.h"`;
     }
   },
 

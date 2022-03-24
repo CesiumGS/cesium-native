@@ -11,7 +11,7 @@
     "check-format": "check-clang-format",
     "generate-gltf": "cd tools/generate-classes && npm run generate-gltf && cd ../.. && npm run format",
     "generate-3d-tiles": "cd tools/generate-classes && npm run generate-3d-tiles && cd ../.. && npm run format",
-    "generate-tilers-config": "cd tools/generate-classes && npm run generate-tilers-config"
+    "generate-tilers-config": "cd tools/generate-classes && npm run generate-tilers-config && cd ../../../tilers && cmake --build build-debug-clang-13 --target clang-format-fix-all"
   },
   "repository": {
     "type": "git",

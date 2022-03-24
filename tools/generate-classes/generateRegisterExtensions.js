@@ -35,6 +35,8 @@ function generateRegisterExtensions(options) {
     }
   }
 
+  const includePath = namespace.split("::").join("/");
+
   const rootSchemaName = getNameFromTitle(config, rootSchema.title);
 
   const filename = "registerExtensions";
@@ -63,7 +65,7 @@ function generateRegisterExtensions(options) {
 
         ${classNames
           .map((className) => {
-            return `#include <${namespace}/${className}.h>`;
+            return `#include <${includePath}/${className}.h>`;
           })
           .join("\n")}
         
@@ -112,13 +114,13 @@ function generateRegisterExtensions(options) {
 
         ${classNames
           .map((className) => {
-            return `#include <${namespace}/${className}.h>`;
+            return `#include <${includePath}/${className}.h>`;
           })
           .join("\n")}
         
         ${extensionClassNames
           .map((extensionClassName) => {
-            return `#include <${namespace}/${extensionClassName}.h>`;
+            return `#include <${includePath}/${extensionClassName}.h>`;
           })
           .join("\n")}  
   

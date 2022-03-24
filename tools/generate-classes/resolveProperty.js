@@ -500,6 +500,7 @@ function resolveEnum(
     "\n * \n * Known values are defined in {@link " +
     enumName +
     "}.\n *";
+  const includePath = namespace.split("::").join("/");
   const result = {
     ...propertyDefaultValues,
     localTypes: [
@@ -520,7 +521,7 @@ function resolveEnum(
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: makeOptional ? undefined : enumDefaultValue,
     defaultValueWriter: makeOptional ? undefined : enumDefaultValueWriter,
-    readerHeaders: [`<${namespace}/${parentName}.h>`],
+    readerHeaders: [`<${includePath}/${parentName}.h>`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
       parentName,
