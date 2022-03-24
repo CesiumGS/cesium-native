@@ -94,6 +94,10 @@ public:
     return this->_ionAccessToken;
   }
 
+  const std::vector<Credit> getTilesetCredits() const noexcept {
+    return this->_tilesetCredits;
+  }
+
   /**
    * @brief Gets the {@link TilesetExternals} that summarize the external
    * interfaces used by this tileset.
