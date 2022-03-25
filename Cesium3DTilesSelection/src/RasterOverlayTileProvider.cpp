@@ -235,8 +235,7 @@ struct LoadResult {
 static LoadResult createLoadResultFromLoadedImage(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    LoadedRasterOverlayImage&& loadedImage,
-    int32_t filter) {
+    LoadedRasterOverlayImage&& loadedImage) {
   if (!loadedImage.image.has_value()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -273,7 +272,7 @@ static LoadResult createLoadResultFromLoadedImage(
     void* pRendererResources = nullptr;
     if (pPrepareRendererResources) {
       pRendererResources =
-          pPrepareRendererResources->prepareRasterInLoadThread(image, filter);
+          pPrepareRendererResources->prepareRasterInLoadThread(image);
     }
 
     LoadResult result;
@@ -312,14 +311,12 @@ void RasterOverlayTileProvider::doLoad(
   this->loadTileImage(tile)
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
-           pLogger = this->getLogger(),
-           filter = this->_pOwner->getOptions().filter](
-              LoadedRasterOverlayImage&& loadedImage) {
+           pLogger =
+               this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
             return createLoadResultFromLoadedImage(
                 pPrepareRendererResources,
                 pLogger,
-                std::move(loadedImage),
-                filter);
+                std::move(loadedImage));
           })
       .thenInMainThread(
           [this, &tile, isThrottledLoad](LoadResult&& result) noexcept {
