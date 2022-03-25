@@ -86,6 +86,8 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * @brief Whether or not to display the credits on screen.
    */
   bool showCreditsOnScreen = false;
+
+  void* pRendererOptions = nullptr;
 };
 
 /**
