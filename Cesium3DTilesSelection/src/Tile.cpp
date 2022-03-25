@@ -533,6 +533,16 @@ void Tile::processLoadedContent() {
         }
       }
 
+      auto& perTileCredits = this->_pContent->credits;
+      // add per-tile ion-specified credit
+      const auto& tilesetCredits = this->getTileset()->getTilesetCredits();
+      if (!tilesetCredits.empty()) {
+        perTileCredits.insert(
+            perTileCredits.end(),
+            tilesetCredits.begin(),
+            tilesetCredits.end());
+      }
+
       // If this tile has no model, we want to unconditionally refine past it.
       // Note that "no" model is different from having a model, but it is blank.
       // In the latter case, we'll happily render nothing in the space of this
@@ -542,9 +552,20 @@ void Tile::processLoadedContent() {
       }
       // else if it has a model, try to get the copyright
       else if (this->_pContent->model->asset.copyright) {
-        this->_pContent->credit = externals.pCreditSystem->createCredit(
-            *this->_pContent->model->asset.copyright,
-            this->getTileset()->getOptions().showCreditsOnScreen);
+        const auto& copyright = *this->_pContent->model->asset.copyright;
+        size_t start = 0;
+        size_t end;
+        size_t ltrim;
+        size_t rtrim;
+        do {
+          ltrim = copyright.find_first_not_of(" \t", start);
+          end = copyright.find(';', ltrim);
+          rtrim = copyright.find_last_not_of(" \t", end - 1);
+          perTileCredits.push_back(externals.pCreditSystem->createCredit(
+              copyright.substr(ltrim, rtrim - ltrim + 1),
+              this->getTileset()->getOptions().showCreditsOnScreen));
+          start = end + 1;
+        } while (end != std::string::npos);
       }
 
       // A new and improved bounding volume.
@@ -904,17 +925,16 @@ int64_t Tile::computeByteSize() const noexcept {
       bytes += int64_t(buffer.cesium.data.size());
     }
 
-    // For images loaded from buffers, subtract the buffer size and add
-    // the decoded image size instead.
     const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
     for (const CesiumGltf::Image& image : model.images) {
       const int32_t bufferView = image.bufferView;
-      if (bufferView < 0 ||
-          bufferView >= static_cast<int32_t>(bufferViews.size())) {
-        continue;
+      // For images loaded from buffers, subtract the buffer size before adding
+      // the decoded image size.
+      if (bufferView >= 0 &&
+          bufferView < static_cast<int32_t>(bufferViews.size())) {
+        bytes -= bufferViews[size_t(bufferView)].byteLength;
       }
 
-      bytes -= bufferViews[size_t(bufferView)].byteLength;
       bytes += int64_t(image.cesium.pixelData.size());
     }
   }
