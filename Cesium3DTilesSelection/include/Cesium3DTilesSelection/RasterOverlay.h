@@ -87,6 +87,13 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    */
   bool showCreditsOnScreen = false;
 
+  /**
+   * @brief Arbitrary data that will be passed to {@link prepareRasterInLoadThread},
+   * for example, data to control the per-raster overlay client-specific texture
+   * properties.
+   *
+   * This pointer can and will be accessed by multiple threads simultaneously.
+   */
   void* pRendererOptions = nullptr;
 };
 

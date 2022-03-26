@@ -230,6 +230,7 @@ struct LoadResult {
  * @param pPrepareRendererResources The `IPrepareRendererResources`
  * @param pLogger The logger
  * @param loadedImage The `LoadedRasterOverlayImage`
+ * @param pRendererOptions Renderer options
  * @return The `LoadResult`
  */
 static LoadResult createLoadResultFromLoadedImage(

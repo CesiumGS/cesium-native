@@ -94,6 +94,7 @@ public:
    * This method is invoked in the load thread, and it may not modify the tile.
    *
    * @param image The raster tile image to prepare.
+   * @param pRendererOptions Renderer options associated with the raster overlay tile from {@link RasterOverlayOptions::pRendererOptions}.
    * @returns Arbitrary data representing the result of the load process. This
    * data is passed to {@link prepareRasterInMainThread} as the
    * `pLoadThreadResult` parameter.
