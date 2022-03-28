@@ -10,11 +10,6 @@
     "license": "Boost Software License 1.0"
   },
   {
-    "name": "cesium-native",
-    "url": "https://github.com/CesiumGS/cesium-native",
-    "license": "Apache 2.0"
-  },
-  {
     "name": "cmake-modules",
     "url": "https://github.com/bilke/cmake-modules",
     "license": "Boost Software License 1.0"
@@ -38,11 +33,6 @@
     "name": "earcut",
     "url": "https://github.com/mapbox/earcut.hpp",
     "license": "ISC License"
-  },
-  {
-    "name": "Font Awesome Icons",
-    "url": "https://fontawesome.com/",
-    "license": "CC BY 4.0 License"
   },
   {
     "name": "GLM",
