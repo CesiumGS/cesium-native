@@ -46,7 +46,7 @@ public:
 
   virtual void* prepareRasterInLoadThread(
       const CesiumGltf::ImageCesium& /*image*/,
-      void* /*pRendererOptions*/) override {
+      const std::any& /*rendererOptions*/) override {
     return new LoadThreadRasterResult{};
   }
 

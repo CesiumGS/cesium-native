@@ -7,6 +7,7 @@
 
 #include <spdlog/fwd.h>
 
+#include <any>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -92,9 +93,10 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * for example, data to control the per-raster overlay client-specific texture
    * properties.
    *
-   * This pointer can and will be accessed by multiple threads simultaneously.
+   * This object is copied and given to background texture preparation threads,
+   * so it must be inexpensive to copy.
    */
-  void* pRendererOptions = nullptr;
+  std::any rendererOptions;
 };
 
 /**
