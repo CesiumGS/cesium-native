@@ -82,7 +82,7 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
 
   auto birdCountIt = treesIt->second.properties.find("birdCount");
   REQUIRE(birdCountIt != treesIt->second.properties.end());
-  REQUIRE(birdCountIt->second.max.isNull());
-  REQUIRE(!birdCountIt->second.min.isNull());
-  REQUIRE(birdCountIt->second.min.getSafeNumberOrDefault(-1) == 1);
+  REQUIRE(!birdCountIt->second.max.has_value());
+  REQUIRE(birdCountIt->second.min.has_value());
+  REQUIRE(birdCountIt->second.min->getSafeNumberOrDefault(-1) == 1);
 }

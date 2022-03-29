@@ -139,7 +139,23 @@ function resolveProperty(
       writerNamespace
     );
   } else if (propertyDetails.$ref) {
-    const itemSchema = schemaCache.load(propertyDetails.$ref);
+    let itemSchema = schemaCache.load(propertyDetails.$ref);
+
+    // Get a "sub-schema" when the $ref points to an inner key.
+    // e.g. definitions.schema.json#/definitions/numericValue
+    const innerKeyMarker = "#/";
+    const innerKeyIndex = propertyDetails.$ref.indexOf(innerKeyMarker);
+    if (
+      innerKeyIndex != -1 &&
+      innerKeyIndex + innerKeyMarker.length < propertyDetails.$ref.length
+    ) {
+      const innerKeys = propertyDetails.$ref
+        .slice(innerKeyIndex + innerKeyMarker.length)
+        .split("/");
+      for (let key of innerKeys) {
+        itemSchema = itemSchema[key];
+      }
+    }
     if (itemSchema.title === "glTF Id") {
       return {
         ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
@@ -206,8 +222,13 @@ function resolveProperty(
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
     return {
       ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
-      type: `CesiumUtility::JsonValue`,
-      headers: [`<CesiumUtility/JsonValue.h>`],
+      type: makeOptional
+        ? `std::optional<CesiumUtility::JsonValue>`
+        : `CesiumUtility::JsonValue`,
+      headers: [
+        `<CesiumUtility/JsonValue.h>`,
+        ...(makeOptional ? ["<optional>"] : []),
+      ],
       readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
       readerHeaders: [`<CesiumJsonReader/JsonObjectJsonHandler.h>`],
     };

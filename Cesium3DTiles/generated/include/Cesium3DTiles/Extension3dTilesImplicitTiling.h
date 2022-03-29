@@ -12,7 +12,8 @@
 namespace Cesium3DTiles {
 /**
  * @brief This extension allows a tile to be implicitly subdivided. Tile and
- * content availability is stored in subtrees which are referenced externally.
+ * content availability and metadata is stored in subtrees which are referenced
+ * externally.
  */
 struct CESIUM3DTILES_API Extension3dTilesImplicitTiling final
     : public CesiumUtility::ExtensibleObject {
@@ -41,17 +42,14 @@ struct CESIUM3DTILES_API Extension3dTilesImplicitTiling final
   /**
    * @brief The number of distinct levels in each subtree. For example, a
    * quadtree with `subtreeLevels = 2` will have subtrees with 5 nodes (one root
-   * and 4 children)
+   * and 4 children).
    */
   int64_t subtreeLevels = int64_t();
 
   /**
-   * @brief The level of the deepest available tile. Levels are numbered from 0
-   * starting at the tile with the `3DTILES_implicit_tiling` extension. This
-   * tile's children are at level 1, the children's children are at level 2, and
-   * so on.
+   * @brief The numbers of the levels in the tree with available tiles.
    */
-  int64_t maximumLevel = int64_t();
+  int64_t availableLevels = int64_t();
 
   /**
    * @brief An object describing the location of subtree files.

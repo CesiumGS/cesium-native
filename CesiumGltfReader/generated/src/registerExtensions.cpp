@@ -7,16 +7,17 @@
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionCesiumRTCJsonHandler.h"
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
+#include "ExtensionExtInstanceFeaturesJsonHandler.h"
+#include "ExtensionExtMeshFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
-#include "ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler.h"
+#include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
-#include "ExtensionModelExtMeshFeaturesJsonHandler.h"
+#include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
-#include "ExtensionNodeExtMeshFeaturesJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
@@ -32,30 +33,37 @@ namespace CesiumGltfReader {
 
 void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
+  context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
   context.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionKhrDracoMeshCompressionJsonHandler>();
+      CesiumGltf::Model,
+      ExtensionModelExtFeatureMetadataJsonHandler>();
   context.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
+      CesiumGltf::Model,
+      ExtensionModelExtStructuralMetadataJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelMaxarMeshVariantsJsonHandler>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonHandler>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtMeshFeaturesJsonHandler>();
+      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
   context.registerExtension<
-      CesiumGltf::Material,
-      ExtensionKhrMaterialsUnlitJsonHandler>();
+      CesiumGltf::MeshPrimitive,
+      ExtensionExtMeshFeaturesJsonHandler>();
   context.registerExtension<
-      CesiumGltf::Texture,
-      ExtensionKhrTextureBasisuJsonHandler>();
+      CesiumGltf::MeshPrimitive,
+      ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionKhrDracoMeshCompressionJsonHandler>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionExtInstanceFeaturesJsonHandler>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtMeshGpuInstancingJsonHandler>();
-  context.registerExtension<
-      CesiumGltf::Node,
-      ExtensionNodeExtMeshFeaturesJsonHandler>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonHandler>();
@@ -66,14 +74,10 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonHandler>();
   context.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonHandler>();
+      CesiumGltf::Material,
+      ExtensionKhrMaterialsUnlitJsonHandler>();
   context.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelExtMeshFeaturesJsonHandler>();
-  context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
-  context.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelMaxarMeshVariantsJsonHandler>();
+      CesiumGltf::Texture,
+      ExtensionKhrTextureBasisuJsonHandler>();
 }
 } // namespace CesiumGltfReader

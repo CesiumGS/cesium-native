@@ -146,7 +146,7 @@ struct CESIUMGLTF_API ClassProperty final
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values: they always correspond to the integer values.
    */
-  CesiumUtility::JsonValue max;
+  std::optional<CesiumUtility::JsonValue> max;
 
   /**
    * @brief Minimum allowed values for property values. Only applicable for
@@ -155,7 +155,7 @@ struct CESIUMGLTF_API ClassProperty final
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values: they always correspond to the integer values.
    */
-  CesiumUtility::JsonValue min;
+  std::optional<CesiumUtility::JsonValue> min;
 
   /**
    * @brief A default value to use when the property value is not defined. If
@@ -165,7 +165,7 @@ struct CESIUMGLTF_API ClassProperty final
    * `ENUM` use the enum `name`, not the integer value. For `ARRAY` use a JSON
    * array containing values matching the `componentType`.
    */
-  CesiumUtility::JsonValue defaultProperty;
+  std::optional<CesiumUtility::JsonValue> defaultProperty;
 
   /**
    * @brief If true, this property is optional.

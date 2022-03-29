@@ -5,11 +5,20 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/MetadataEntity.h"
 
+#include <string>
+
 namespace Cesium3DTiles {
 /**
  * @brief An object containing metadata about a group.
  */
 struct CESIUM3DTILES_API GroupMetadata final : public MetadataEntity {
   static inline constexpr const char* TypeName = "GroupMetadata";
+
+  /**
+   * @brief Unique identifier for the group within the tileset. This must be an
+   * alphanumeric identifier matching the regular expression
+   * `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+   */
+  std::string id;
 };
 } // namespace Cesium3DTiles

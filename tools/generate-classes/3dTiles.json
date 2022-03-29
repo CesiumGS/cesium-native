@@ -1,28 +1,19 @@
 {
   "classes": {
-    "Subtree Property": {
-      "overrideName": "CesiumUtility::ExtensibleObject"
-    },
     "Tileset Property": {
       "overrideName": "CesiumUtility::ExtensibleObject"
-    },
-    "Metadata Entity": {
-      "isBaseClass": true
-    },
-    "3DTILES_content_gltf extension": {
-      "overrideName": "Extension3dTilesContentGltf"
-    },
-    "3DTILES_multiple_contents tile extension": {
-      "overrideName": "Extension3dTilesMultipleContents"
     },
     "3DTILES_bounding_volume_S2 extension": {
       "overrideName": "Extension3dTilesBoundingVolumeS2"
     },
+    "3DTILES_content_gltf extension": {
+      "overrideName": "Extension3dTilesContentGltf"
+    },
     "3DTILES_implicit_tiling tile extension": {
       "overrideName": "Extension3dTilesImplicitTiling"
     },
-    "3DTILES_multiple_contents extension for 3DTILES_implicit_tiling subtree": {
-      "overrideName": "ExtensionSubtree3dTilesMultipleContents"
+    "Subtree Property": {
+      "overrideName": "CesiumUtility::ExtensibleObject"
     },
     "3DTILES_metadata 3D Tiles extension": {
       "overrideName": "ExtensionTileset3dTilesMetadata"
@@ -30,41 +21,32 @@
     "3DTILES_metadata tile extension": {
       "overrideName": "ExtensionTile3dTilesMetadata"
     },
-    "3DTILES_metadata content extension": {
+    "3DTILES_metadata tile content extension": {
       "overrideName": "ExtensionContent3dTilesMetadata"
     },
-    "3DTILES_metadata extension for 3DTILES_implicit_tiling subtree": {
-      "overrideName": "ExtensionSubtree3dTilesMetadata"
+    "Metadata Entity": {
+      "isBaseClass": true
+    },
+    "3DTILES_multiple_contents tile extension": {
+      "overrideName": "Extension3dTilesMultipleContents"
     }
   },
   "extensions": [
     {
-      "extensionName": "3DTILES_content_gltf",
-      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_multiple_contents",
-      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json"
-    },
-    {
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_content_gltf",
+      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
     },
     {
       "extensionName": "3DTILES_implicit_tiling",
       "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
     },
     {
-      "extensionName": "3DTILES_multiple_contents",
-      "schema": "3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json"
-    },
-    {
       "extensionName": "3DTILES_metadata",
-      "schema": "3DTILES_metadata/schema/3DTILES_implicit_tiling/subtree.3DTILES_metadata.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_metadata",
-      "schema": "3DTILES_metadata/schema/tileset.3DTILES_metadata.schema.json"
+      "schema": "3DTILES_metadata/schema/content.3DTILES_metadata.schema.json"
     },
     {
       "extensionName": "3DTILES_metadata",
@@ -72,7 +54,11 @@
     },
     {
       "extensionName": "3DTILES_metadata",
-      "schema": "3DTILES_metadata/schema/content.3DTILES_metadata.schema.json"
+      "schema": "3DTILES_metadata/schema/tileset.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_multiple_contents",
+      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json"
     }
   ]
 }
