@@ -7,6 +7,7 @@
 
 #include <spdlog/fwd.h>
 
+#include <any>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -86,6 +87,16 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * @brief Whether or not to display the credits on screen.
    */
   bool showCreditsOnScreen = false;
+
+  /**
+   * @brief Arbitrary data that will be passed to {@link prepareRasterInLoadThread},
+   * for example, data to control the per-raster overlay client-specific texture
+   * properties.
+   *
+   * This object is copied and given to background texture preparation threads,
+   * so it must be inexpensive to copy.
+   */
+  std::any rendererOptions;
 };
 
 /**

@@ -1,6 +1,10 @@
 # Change Log
 ### v0.14.0 - YYYY-MM-DD
 
+##### Breaking Changes :mega:
+
+- Added a parameter to `prepareRasterInLoadThread`
+
 ##### Fixes :wrench:
 
 - Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
@@ -16,6 +20,7 @@
 - Added option to show credits on screen.
 - Expose the swizzle string in feature texture property views.
 - Add a type trait check for if something is a metadata array.
+- Add option to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
 
 ### v0.13.0 - 2022-03-01
 
