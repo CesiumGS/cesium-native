@@ -24,7 +24,7 @@ struct WebMapServiceRasterOverlayOptions {
   /**
    * @brief web map service version. 1.3.0 by default
    */
-  std::optional<std::string> version;
+  std::optional<std::string> version = "1.3.0";
 
   /**
    * @brief comma separated Web Map Service layer names. 
@@ -48,24 +48,24 @@ struct WebMapServiceRasterOverlayOptions {
    * level is small, such as four or less. A larger number is likely to
    * result in rendering problems.
    */
-  std::optional<uint32_t> minimumLevel;
+  std::optional<uint32_t> minimumLevel = 0;
 
   /**
    * @brief The maximum level-of-detail supported by the imagery provider.
    *
    * This will be `std::nullopt` if there is no limit.
    */
-  std::optional<uint32_t> maximumLevel;
+  std::optional<uint32_t> maximumLevel = 14;
 
   /**
    * @brief Pixel width of image tiles.
    */
-  std::optional<uint32_t> tileWidth;
+  std::optional<uint32_t> tileWidth = 256;
 
   /**
    * @brief Pixel height of image tiles.
    */
-  std::optional<uint32_t> tileHeight;
+  std::optional<uint32_t> tileHeight = 256;
 };
 
 /**
