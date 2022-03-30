@@ -188,7 +188,8 @@ static bool validateCapabilities(
     const std::string maxHeightText = pOptionalServiceMaxHeight->GetText();
     try {
       const int maxHeight = std::stoi(maxHeightText);
-      const int optionalTileHeight = static_cast<int>(options.tileHeight.value());
+      const int optionalTileHeight =
+          static_cast<int>(options.tileHeight.value());
       if (optionalTileHeight > maxHeight) {
         error = fmt::format(
             "configured tile height ({}) exceeds "
