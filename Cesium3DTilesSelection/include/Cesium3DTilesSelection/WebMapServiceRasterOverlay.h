@@ -27,7 +27,7 @@ struct WebMapServiceRasterOverlayOptions {
   std::optional<std::string> version = "1.3.0";
 
   /**
-   * @brief comma separated Web Map Service layer names. 
+   * @brief comma separated Web Map Service layer names.
    */
   std::string layers;
 
@@ -97,7 +97,8 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlay* pOwner) override;
 

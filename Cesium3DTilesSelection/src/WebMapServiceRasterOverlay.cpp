@@ -73,48 +73,50 @@ public:
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
- 
+
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
 
-    //SPDLOG_LOGGER_INFO(getLogger(), "tileID: level>" + std::to_string(tileID.level) + "; x>" + std::to_string(tileID.x) + "; y>" + std::to_string(tileID.y));
+    // SPDLOG_LOGGER_INFO(getLogger(), "tileID: level>" +
+    // std::to_string(tileID.level) + "; x>" + std::to_string(tileID.x) + "; y>"
+    // + std::to_string(tileID.y));
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
-        CesiumGeospatial::unprojectRectangleSimple(this->getProjection(), options.rectangle);
+        CesiumGeospatial::unprojectRectangleSimple(
+            this->getProjection(),
+            options.rectangle);
 
     const std::string urlTemplate =
-        "{baseUrl}?request=GetMap&TRANSPARENT=TRUE&version={version}&service=wms&"
+        "{baseUrl}?request=GetMap&TRANSPARENT=TRUE&version={version}&service="
+        "wms&"
         "format=image/png&styles="
         "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
         "&layers={layername}&crs=EPSG:4326";
 
-    const auto radiansToDegrees = [](double rad) { 
-        return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
+    const auto radiansToDegrees = [](double rad) {
+      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
     };
 
-    const std::map<std::string, std::string> urlTemplateMap = { 
-      {"baseUrl", this->_url},
-      {"version", this->_version},
-      {"maxx", radiansToDegrees(tileRectangle.getNorth())},
-      {"maxy", radiansToDegrees(tileRectangle.getEast())},
-      {"minx", radiansToDegrees(tileRectangle.getSouth())},
-      {"miny", radiansToDegrees(tileRectangle.getWest())},
-      {"layername", this->_layername},
-      {"width", std::to_string(this->getWidth())},
-      {"height", std::to_string(this->getHeight())}
-    };
+    const std::map<std::string, std::string> urlTemplateMap = {
+        {"baseUrl", this->_url},
+        {"version", this->_version},
+        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
+        {"maxy", radiansToDegrees(tileRectangle.getEast())},
+        {"minx", radiansToDegrees(tileRectangle.getSouth())},
+        {"miny", radiansToDegrees(tileRectangle.getWest())},
+        {"layername", this->_layername},
+        {"width", std::to_string(this->getWidth())},
+        {"height", std::to_string(this->getHeight())}};
 
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         urlTemplate,
-        [
-          &map=urlTemplateMap
-        ](const std::string& placeholder) {
+        [&map = urlTemplateMap](const std::string& placeholder) {
           auto it = map.find(placeholder);
           return it == map.end() ? "{" + placeholder + "}" : it->second;
-        }); 
+        });
 
-    //SPDLOG_LOGGER_INFO(getLogger(), url);
+    // SPDLOG_LOGGER_INFO(getLogger(), url);
 
     return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
   }
@@ -136,11 +138,14 @@ WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _baseUrl(url),
       _headers(headers),
-      _options(wmsOptions) {} 
+      _options(wmsOptions) {}
 
 WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() {}
 
-static bool validateCapabilities(tinyxml2::XMLElement* pRoot, const WebMapServiceRasterOverlayOptions& options, std::string& error) {
+static bool validateCapabilities(
+    tinyxml2::XMLElement* pRoot,
+    const WebMapServiceRasterOverlayOptions& options,
+    std::string& error) {
   tinyxml2::XMLElement* pService = pRoot->FirstChildElement("Service");
   if (!pService) {
     error = "Web map service XML document does not have a Service "
@@ -148,8 +153,7 @@ static bool validateCapabilities(tinyxml2::XMLElement* pRoot, const WebMapServic
     return false;
   }
 
-  tinyxml2::XMLElement* pServiceName =
-      pService->FirstChildElement("Name");
+  tinyxml2::XMLElement* pServiceName = pService->FirstChildElement("Name");
   if (!pServiceName) {
     error = "Invalid web map service XML document (Service > Name is "
             "missing) ";
@@ -162,7 +166,7 @@ static bool validateCapabilities(tinyxml2::XMLElement* pRoot, const WebMapServic
     const std::string maxWidthText = pOptionalServiceMaxWidth->GetText();
     try {
       const int maxWidth = std::stoi(maxWidthText);
-      const int optionalTileWidth = options.tileWidth.value_or(256);
+      const int optionalTileWidth = static_cast<int>(options.tileWidth.value());
       if (optionalTileWidth > maxWidth) {
         error = fmt::format(
             "configured tile width ({}) exceeds "
@@ -172,7 +176,7 @@ static bool validateCapabilities(tinyxml2::XMLElement* pRoot, const WebMapServic
             maxWidth);
         return false;
       }
-    } catch (std::invalid_argument&) { 
+    } catch (std::invalid_argument&) {
       error = "Invalid web map service XML document";
       return false;
     }
@@ -184,7 +188,7 @@ static bool validateCapabilities(tinyxml2::XMLElement* pRoot, const WebMapServic
     const std::string maxHeightText = pOptionalServiceMaxHeight->GetText();
     try {
       const int maxHeight = std::stoi(maxHeightText);
-      const int optionalTileHeight = options.tileHeight.value_or(256);
+      const int optionalTileHeight = static_cast<int>(options.tileHeight.value());
       if (optionalTileHeight > maxHeight) {
         error = fmt::format(
             "configured tile height ({}) exceeds "
@@ -198,38 +202,39 @@ static bool validateCapabilities(tinyxml2::XMLElement* pRoot, const WebMapServic
       error = "Invalid web map service XML document";
       return false;
     }
-  } 
+  }
 
   std::vector<std::string> configLayers{};
   std::stringstream sstream(options.layers);
   std::string layer;
   const char delimiter = ',';
-  while (std::getline(sstream, layer, delimiter)) { 
-    if (layer.size() > 0) { 
+  while (std::getline(sstream, layer, delimiter)) {
+    if (layer.size() > 0) {
       configLayers.push_back(layer);
     }
-  } 
- 
+  }
+
   tinyxml2::XMLElement* pOptionalServiceLayerLimit =
       pService->FirstChildElement("LayerLimit");
-  if (pOptionalServiceLayerLimit) { 
+  if (pOptionalServiceLayerLimit) {
     try {
-      const int layerLimit = std::stoi(pOptionalServiceLayerLimit->GetText()); 
-      if (configLayers.size() > layerLimit) { 
+      const int layerLimit = std::stoi(pOptionalServiceLayerLimit->GetText());
+      const int numLayers = static_cast<int>(configLayers.size());
+      if (numLayers > layerLimit) {
         char buffer[512];
         std::sprintf(
             buffer,
             "the number of configured layers (%d) exceeds WMS LayerLimit %d",
-            static_cast<int>(configLayers.size()),
+            numLayers,
             layerLimit);
         error = buffer;
         return false;
       }
-    } catch (std::invalid_argument const&) { 
+    } catch (std::invalid_argument const&) {
       error = "Invalid web map service XML document";
       return false;
     }
-  } 
+  }
 
   return true;
 }
@@ -241,20 +246,20 @@ WebMapServiceRasterOverlay::createTileProvider(
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner)
-{
+    RasterOverlay* pOwner) {
 
-  std::string xmlUrlGetcapabilities = CesiumUtility::Uri::substituteTemplateParameters(
-      "{baseUrl}?request=GetCapabilities&version={version}&service=WMS",
-      [this](const std::string& placeholder) {
-        if (placeholder == "baseUrl") {
-          return this->_baseUrl;
-        } else if (placeholder == "version") {
-          return this->_options.version.value();
-        }
-        // Keep other placeholders
-        return "{" + placeholder + "}";
-      });
+  std::string xmlUrlGetcapabilities =
+      CesiumUtility::Uri::substituteTemplateParameters(
+          "{baseUrl}?request=GetCapabilities&version={version}&service=WMS",
+          [this](const std::string& placeholder) {
+            if (placeholder == "baseUrl") {
+              return this->_baseUrl;
+            } else if (placeholder == "version") {
+              return this->_options.version.value();
+            }
+            // Keep other placeholders
+            return "{" + placeholder + "}";
+          });
 
   pOwner = pOwner ? pOwner : this;
 
@@ -318,7 +323,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             }
 
             std::string validationError;
-            if (!validateCapabilities(pRoot, options, validationError)) { 
+            if (!validateCapabilities(pRoot, options, validationError)) {
               reportError(pRequest, validationError);
               return nullptr;
             }
@@ -333,7 +338,10 @@ WebMapServiceRasterOverlay::createTileProvider(
 
             const int rootTilesX = 2;
             const int rootTilesY = 1;
-            CesiumGeometry::QuadtreeTilingScheme tilingScheme(coverageRectangle, rootTilesX, rootTilesY);
+            CesiumGeometry::QuadtreeTilingScheme tilingScheme(
+                coverageRectangle,
+                rootTilesX,
+                rootTilesY);
 
             return std::make_unique<WebMapServiceTileProvider>(
                 *pOwner,
@@ -344,17 +352,18 @@ WebMapServiceRasterOverlay::createTileProvider(
                 pLogger,
                 projection,
                 tilingScheme,
-                coverageRectangle, 
+                coverageRectangle,
                 url,
                 headers,
                 options.version.value(),
                 options.layers,
-                options.fileExtension.has_value() ? "." + options.fileExtension.value() : "",
+                options.fileExtension.has_value()
+                    ? "." + options.fileExtension.value()
+                    : "",
                 options.tileWidth.value(),
                 options.tileHeight.value(),
                 options.minimumLevel.value(),
-                options.maximumLevel.value()
-              );
+                options.maximumLevel.value());
           });
 }
 
