@@ -58,7 +58,7 @@ public:
    */
   Tileset(
       const TilesetExternals& externals,
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       const std::string& ionAccessToken,
       const TilesetOptions& options = TilesetOptions(),
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
@@ -82,7 +82,7 @@ public:
    * If the tileset references a URL, this property
    * will not have a value.
    */
-  std::optional<uint32_t> getIonAssetID() const noexcept {
+  std::optional<int64_t> getIonAssetID() const noexcept {
     return this->_ionAssetID;
   }
 
@@ -508,7 +508,7 @@ private:
   std::vector<Credit> _tilesetCredits;
 
   std::optional<std::string> _url;
-  std::optional<uint32_t> _ionAssetID;
+  std::optional<int64_t> _ionAssetID;
   std::optional<std::string> _ionAccessToken;
   bool _isRefreshingIonToken;
   std::optional<std::string> _ionAssetEndpointUrl;
