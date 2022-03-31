@@ -42,8 +42,8 @@ public:
       const std::string& url,
       const std::vector<IAssetAccessor::THeader>& headers,
       const std::string& version,
-      const std::string& layername,
-      const std::string& fileExtension,
+      const std::string& layers,
+      const std::string& format,
       uint32_t width,
       uint32_t height,
       uint32_t minimumLevel,
@@ -65,8 +65,8 @@ public:
         _url(url),
         _headers(headers),
         _version(version),
-        _layername(layername),
-        _fileExtension(fileExtension) {}
+        _layers(layers),
+        _format(format) {}
 
   virtual ~WebMapServiceTileProvider() {}
 
@@ -78,21 +78,18 @@ protected:
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
 
-    // SPDLOG_LOGGER_INFO(getLogger(), "tileID: level>" +
-    // std::to_string(tileID.level) + "; x>" + std::to_string(tileID.x) + "; y>"
-    // + std::to_string(tileID.y));
-
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
             options.rectangle);
 
     const std::string urlTemplate =
-        "{baseUrl}?request=GetMap&TRANSPARENT=TRUE&version={version}&service="
-        "wms&"
-        "format=image/png&styles="
+        this->_url +
+        "?request=GetMap&TRANSPARENT=TRUE&version={version}&service="
+        "WMS&"
+        "format={format}&styles="
         "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
-        "&layers={layername}&crs=EPSG:4326";
+        "&layers={layers}&crs=EPSG:4326";
 
     const auto radiansToDegrees = [](double rad) {
       return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
@@ -105,7 +102,8 @@ protected:
         {"maxy", radiansToDegrees(tileRectangle.getEast())},
         {"minx", radiansToDegrees(tileRectangle.getSouth())},
         {"miny", radiansToDegrees(tileRectangle.getWest())},
-        {"layername", this->_layername},
+        {"layers", this->_layers},
+        {"format", this->_format},
         {"width", std::to_string(this->getWidth())},
         {"height", std::to_string(this->getHeight())}};
 
@@ -113,10 +111,9 @@ protected:
         urlTemplate,
         [&map = urlTemplateMap](const std::string& placeholder) {
           auto it = map.find(placeholder);
-          return it == map.end() ? "{" + placeholder + "}" : it->second;
+          return it == map.end() ? "{" + placeholder + "}"
+                                 : Uri::escape(it->second);
         });
-
-    // SPDLOG_LOGGER_INFO(getLogger(), url);
 
     return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
   }
@@ -125,8 +122,8 @@ private:
   std::string _url;
   std::vector<IAssetAccessor::THeader> _headers;
   std::string _version;
-  std::string _layername;
-  std::string _fileExtension;
+  std::string _layers;
+  std::string _format;
 };
 
 WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
@@ -166,7 +163,7 @@ static bool validateCapabilities(
     const std::string maxWidthText = pOptionalServiceMaxWidth->GetText();
     try {
       const int maxWidth = std::stoi(maxWidthText);
-      const int optionalTileWidth = static_cast<int>(options.tileWidth.value());
+      const int optionalTileWidth = static_cast<int>(options.tileWidth);
       if (optionalTileWidth > maxWidth) {
         error = fmt::format(
             "configured tile width ({}) exceeds "
@@ -188,8 +185,7 @@ static bool validateCapabilities(
     const std::string maxHeightText = pOptionalServiceMaxHeight->GetText();
     try {
       const int maxHeight = std::stoi(maxHeightText);
-      const int optionalTileHeight =
-          static_cast<int>(options.tileHeight.value());
+      const int optionalTileHeight = static_cast<int>(options.tileHeight);
       if (optionalTileHeight > maxHeight) {
         error = fmt::format(
             "configured tile height ({}) exceeds "
@@ -256,7 +252,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (placeholder == "baseUrl") {
               return this->_baseUrl;
             } else if (placeholder == "version") {
-              return this->_options.version.value();
+              return Uri::escape(this->_options.version);
             }
             // Keep other placeholders
             return "{" + placeholder + "}";
@@ -356,15 +352,13 @@ WebMapServiceRasterOverlay::createTileProvider(
                 coverageRectangle,
                 url,
                 headers,
-                options.version.value(),
+                options.version,
                 options.layers,
-                options.fileExtension.has_value()
-                    ? "." + options.fileExtension.value()
-                    : "",
-                options.tileWidth.value(),
-                options.tileHeight.value(),
-                options.minimumLevel.value(),
-                options.maximumLevel.value());
+                options.format,
+                options.tileWidth,
+                options.tileHeight,
+                options.minimumLevel,
+                options.maximumLevel);
           });
 }
 

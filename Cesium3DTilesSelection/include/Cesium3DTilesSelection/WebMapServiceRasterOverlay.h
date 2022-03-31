@@ -17,24 +17,25 @@ namespace Cesium3DTilesSelection {
 class CreditSystem;
 
 /**
- * @brief Options for web map service accesses.
+ * @brief Options for Web Map Service (WMS) overlays.
  */
 struct WebMapServiceRasterOverlayOptions {
 
   /**
-   * @brief web map service version. 1.3.0 by default
+   * @brief The Web Map Service version. The default is "1.3.0".
    */
-  std::optional<std::string> version = "1.3.0";
+  std::string version = "1.3.0";
 
   /**
-   * @brief comma separated Web Map Service layer names.
+   * @brief Comma separated Web Map Service layer names to request.
    */
   std::string layers;
 
   /**
-   * @brief The file extension for images on the server.
+   * @brief The image format to request, expressed as a MIME type to be given to
+   * the server. The default is "image/png".
    */
-  std::optional<std::string> fileExtension;
+  std::string format = "image/png";
 
   /**
    * @brief A credit for the data source, which is displayed on the canvas.
@@ -48,28 +49,26 @@ struct WebMapServiceRasterOverlayOptions {
    * level is small, such as four or less. A larger number is likely to
    * result in rendering problems.
    */
-  std::optional<uint32_t> minimumLevel = 0;
+  int32_t minimumLevel = 0;
 
   /**
    * @brief The maximum level-of-detail supported by the imagery provider.
-   *
-   * This will be `std::nullopt` if there is no limit.
    */
-  std::optional<uint32_t> maximumLevel = 14;
+  int32_t maximumLevel = 14;
 
   /**
    * @brief Pixel width of image tiles.
    */
-  std::optional<uint32_t> tileWidth = 256;
+  int32_t tileWidth = 256;
 
   /**
    * @brief Pixel height of image tiles.
    */
-  std::optional<uint32_t> tileHeight = 256;
+  int32_t tileHeight = 256;
 };
 
 /**
- * @brief A {@link RasterOverlay} based on tile map service imagery.
+ * @brief A {@link RasterOverlay} accessing images from a Web Map Service (WMS) server.
  */
 class CESIUM3DTILESSELECTION_API WebMapServiceRasterOverlay final
     : public RasterOverlay {
@@ -81,7 +80,7 @@ public:
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
-   * @param tmsOptions The {@link WebMapServiceRasterOverlayOptions}.
+   * @param wmsOptions The {@link WebMapServiceRasterOverlayOptions}.
    * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   WebMapServiceRasterOverlay(
