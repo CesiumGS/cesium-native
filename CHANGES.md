@@ -1,4 +1,5 @@
 # Change Log
+
 ### v0.14.0 - YYYY-MM-DD
 
 ##### Breaking Changes :mega:
@@ -21,6 +22,7 @@
 - Expose the swizzle string in feature texture property views.
 - Add a type trait check for if something is a metadata array.
 - Add option to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
+- Added `WebMapServiceRasterOverlay`.
 
 ### v0.13.0 - 2022-03-01
 
