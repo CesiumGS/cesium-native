@@ -4,7 +4,8 @@
 
 ##### Breaking Changes :mega:
 
-- Added a parameter to `prepareRasterInLoadThread`
+- Added a parameter to `prepareRasterInLoadThread`.
+- Changed the type of Cesium ion asset IDs from `uint32_t` to `int64_t`.
 
 ##### Fixes :wrench:
 
