@@ -299,8 +299,18 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       }
     }
 
+    auto lastVisibleTile = _lastVisibleTiles.head();
+    while (lastVisibleTile) {
+      result.tilesToNoLongerRenderThisFrame.emplace_back(lastVisibleTile);
+      auto next = _lastVisibleTiles.next(lastVisibleTile);
+      _lastVisibleTiles.remove(*lastVisibleTile);
+      lastVisibleTile = next;
+    }
+
     // per-tile credits
     for (auto& tile : result.tilesToRenderThisFrame) {
+      _lastVisibleTiles.insertAtTail(*tile);
+
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           tile->getMappedRasterTiles();
       for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
@@ -408,58 +418,6 @@ int64_t Tileset::getTotalDataBytes() const noexcept {
   }
 
   return bytes;
-}
-
-static void markTileNonRendered(
-    TileSelectionState::Result lastResult,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Rendered) {
-    result.tilesToNoLongerRenderThisFrame.push_back(&tile);
-  }
-}
-
-static void markTileNonRendered(
-    int32_t lastFrameNumber,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markTileNonRendered(lastResult, tile, result);
-}
-
-static void markChildrenNonRendered(
-    int32_t lastFrameNumber,
-    TileSelectionState::Result lastResult,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Refined) {
-    for (Tile& child : tile.getChildren()) {
-      const TileSelectionState::Result childLastResult =
-          child.getLastSelectionState().getResult(lastFrameNumber);
-      markTileNonRendered(childLastResult, child, result);
-      markChildrenNonRendered(lastFrameNumber, childLastResult, child, result);
-    }
-  }
-}
-
-static void markChildrenNonRendered(
-    int32_t lastFrameNumber,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
-}
-
-static void markTileAndChildrenNonRendered(
-    int32_t lastFrameNumber,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markTileNonRendered(lastResult, tile, result);
-  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
 }
 
 /**
@@ -630,7 +588,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   }
 
   if (!shouldVisit) {
-    markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
     tile.setLastSelectionState(TileSelectionState(
         frameState.currentFrameNumber,
         TileSelectionState::Result::Culled));
@@ -679,6 +636,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       frameState.currentFrameNumber,
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
+  _lastVisibleTiles.remove(tile);
 
   double loadPriority = addTileToLoadQueue(
       this->_loadQueueMedium,
@@ -807,11 +765,11 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
 
-  markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
   tile.setLastSelectionState(TileSelectionState(
       frameState.currentFrameNumber,
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
+  _lastVisibleTiles.remove(tile);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
@@ -829,6 +787,7 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
     Tile& tile,
     ViewUpdateResult& result,
     bool areChildrenRenderable) {
+  (void)(result);
 
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
@@ -842,9 +801,7 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
         TileSelectionState::Result::Rendered;
     noChildrenTraversalDetails.notYetRenderableCount =
         areChildrenRenderable ? 0 : 1;
-  } else {
-    markTileNonRendered(frameState.lastFrameNumber, tile, result);
-  }
+  } 
 
   tile.setLastSelectionState(TileSelectionState(
       frameState.currentFrameNumber,
@@ -862,6 +819,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
     result.tilesToRenderThisFrame.push_back(&tile);
+    _lastVisibleTiles.remove(tile);
     addTileToLoadQueue(
         this->_loadQueueMedium,
         implicitInfo,
@@ -915,6 +873,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 
   if (tile.getRefine() != Cesium3DTilesSelection::TileRefine::Add) {
     renderList.push_back(&tile);
+    _lastVisibleTiles.remove(tile);
   }
 
   tile.setLastSelectionState(TileSelectionState(
@@ -1118,9 +1077,6 @@ Tileset::TraversalDetails Tileset::_visitTile(
         queuedForLoad,
         distances);
   } else {
-    if (tile.getRefine() != TileRefine::Add) {
-      markTileNonRendered(frameState.lastFrameNumber, tile, result);
-    }
     tile.setLastSelectionState(TileSelectionState(
         frameState.currentFrameNumber,
         TileSelectionState::Result::Refined));

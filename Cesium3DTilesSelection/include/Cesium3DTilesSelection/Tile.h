@@ -649,6 +649,7 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+  CesiumUtility::DoublyLinkedListPointers<Tile> _visibleTilesLinks;
 
 public:
   /**
@@ -656,6 +657,9 @@ public:
    */
   typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks>
       LoadedLinkedList;
+
+  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_visibleTilesLinks>
+      VisibleLinkedList;
 };
 
 } // namespace Cesium3DTilesSelection

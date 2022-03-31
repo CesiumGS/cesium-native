@@ -569,6 +569,7 @@ private:
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
+  Tile::VisibleLinkedList _lastVisibleTiles;
 
   RasterOverlayCollection _overlays;
 
