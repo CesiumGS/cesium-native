@@ -75,7 +75,7 @@ Tileset::Tileset(
 
 Tileset::Tileset(
     const TilesetExternals& externals,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     const std::string& ionAccessToken,
     const TilesetOptions& options,
     const std::string& ionAssetEndpointUrl)

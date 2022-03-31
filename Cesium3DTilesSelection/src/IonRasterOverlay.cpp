@@ -22,7 +22,7 @@ namespace Cesium3DTilesSelection {
 
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     const std::string& ionAccessToken,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
