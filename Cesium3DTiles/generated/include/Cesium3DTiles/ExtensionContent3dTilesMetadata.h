@@ -3,26 +3,27 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/MetadataEntity.h"
 
-#include <CesiumUtility/ExtensibleObject.h>
-
+#include <cstdint>
 #include <optional>
-#include <string>
 
 namespace Cesium3DTiles {
 /**
- * @brief An object containing metadata about a content.
+ * @brief An object containing metadata about content. This extension must not
+ * be added to contents of tiles using the `3DTILES_implicit_tiling` extension
+ * since content metadata is provided separately in the subtrees.
  */
 struct CESIUM3DTILES_API ExtensionContent3dTilesMetadata final
-    : public CesiumUtility::ExtensibleObject {
+    : public MetadataEntity {
   static inline constexpr const char* TypeName =
       "ExtensionContent3dTilesMetadata";
   static inline constexpr const char* ExtensionName = "3DTILES_metadata";
 
   /**
-   * @brief The group this content belongs to. The value must correspond to a
-   * group ID declared in the `groups` dictionary.
+   * @brief The group this content belongs to. The value is an index into the
+   * array of `groups` that is defined for the containing tileset.
    */
-  std::optional<std::string> group;
+  std::optional<int64_t> group;
 };
 } // namespace Cesium3DTiles

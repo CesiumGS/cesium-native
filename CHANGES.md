@@ -1,15 +1,49 @@
 # Change Log
+### v0.14.0 - YYYY-MM-DD
 
-### v0.13.0 - ????
+##### Breaking Changes :mega:
 
-##### Additions :tada:
-
-- Added support for `CESIUM_RTC` glTF extension.
-- Added support for tiles that do not have a geometric error.
+- Added a parameter to `prepareRasterInLoadThread`
 
 ##### Fixes :wrench:
 
-- Fixed bug in finding the compatible type of the array of components in the B3DM Feature Table.
+- Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
+- Fix upsampling for EXT_feature_metadata feature tables.
+- Fixed a bug that could cause the size of external images to be accounted for incorrectly when tracking the number of bytes loaded for caching purposes.
+
+##### Additions :tada:
+
+- Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
+- Add ScopeGuard utility to automatically execute function when exiting a scope.
+- Add glTF copyright information to the list of tileset credits.
+- Credits are now sorted based on the number of occurrences.
+- Added option to show credits on screen.
+- Expose the swizzle string in feature texture property views.
+- Add a type trait check for if something is a metadata array.
+- Add option to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
+
+### v0.13.0 - 2022-03-01
+
+##### Breaking Changes :mega:
+
+- Renamed constants in `CesiumUtility::Math` to use PascalCase instead of SCREAMING_SNAKE_CASE.
+
+##### Additions :tada:
+
+- Added support for the `CESIUM_RTC` and `KHR_texture_basisu` glTF extensions.
+- Added support for 3D Tiles that do not have a geometric error, improving compatibility with tilesets that don't quite match the 3D Tiles spec.
+- Exposed the Cesium ion endpoint URL as a parameter on tilesets and raster overlays.
+- `TilesetOptions` and `RasterOverlayOptions` each have a new option to report which compressed textured formats are supported on the client platform. Ideal formats amongst the available ones are picked for each KTX2 texture that is later encountered.
+- The `ImageCesium` class nows convey which GPU pixel compression format (if any) is used. This informs what to expect in the image's pixel buffer.
+- The `ImageCesium` class can now contain pre-computed mipmaps, if they exist. In that case, all the mips will be in the pixel buffer and the delineation between each mip will be described in `ImageCesium::mipPositions`.
+- Tileset content with the known file extensions ".gltf", ".glb", and ".terrain" can now be loaded even if the Content-Type is incorrect. This is especially helpful for loading tilesets from `file:` URLs.
+- Created tighter fitting bounding volumes for terrain tiles by excluding skirt vertices.
+
+##### Fixes :wrench:
+
+- Fixed bug that could cause properties types in a B3DM Batch Table to be deduced incorrectly, leading to a crash when accessing property values.
+- Fixed a bug where implicit tiles were not receiving the root transform and so could sometimes end up in the wrong place.
+- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was true.
 
 ### v0.12.0 - 2022-02-01
 

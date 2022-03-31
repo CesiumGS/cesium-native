@@ -62,27 +62,28 @@ const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "<a href=\"http://www.bing.com\"><img "
     "src=\"data:image/"
-    "png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAbCAMAAABm83BQAAAASFBMVEVHcEz////"
+    "png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAATCAMAAAAj1DqpAAAAq1BMVEUAAAD////"
     "//////////////////////////////////////////////////////////////////////////"
-    "/////////////8FevL4AAAAF3RSTlMAkOregA8v82/"
-    "RHwZAxGBLn6q3ViY5GFKj09UAAAKPSURBVHja7dXZbqswEAZg77vBCzDv/"
-    "6bH9oi4CVHUKGp7c/4L7IDxp4xHgnChyN8FAKw4yB8Fegy55L/"
-    "+hzpNLXSRfW60+WVdwwgLbZ4h/7qunKoRmCTEGfeDun+q96J7ButPn3tM4aneEu91p/"
-    "w5leqxIHLf+"
-    "1Ovdnne2oIiZ7wKbq48broBYFQ90z2H9obQpl9q5QBa4LYFAPhe9LmhDYJFxhWpzFpc5AXjkdm"
-    "tTZUmhtmoo8MublN66scYudgedU8hkQZD0ylkyCYBLB1nEIWwmsNNL9m3lXzlqmGsV6yWNvXJD"
-    "l3ktlJmLtt91iC53rouA8YaN/"
-    "WSC9PCT30cgoG+WwHarj7D1LnvA9d7H0Tu9cUqg2o6FKy+FU0T9z0f4Japj9g69Tze1+"
-    "DJBmhJPXXcMtkxrGPA2Nr1gD+"
-    "MbTq914l9ojt5KKFhuemG9HCQxADFVXbq2J0ijSHws9OqYEvXPd7YdXuol3vd19N/"
-    "6PkV2E1fkAGJN3ri1APq9Iu+RG0L5cvoOoyDvim3deoj4qrj6K46/Zae4ir7mq/6zkZJDI/"
-    "ui+4yXHU85uOiz8qzF7rSEo/qa+UXi6Ms8aZLoeG5vgAnV10B83guL/"
-    "SK0AZDX3FZFASj4NQXBmfo1JXbAgVYrnq/FNnLqF/"
-    "oAf97wa6z40fVByF+rGCop9nwZXv8xmlDnukbAx0tpJfnHst+"
-    "hCjw3AWvxyZ0L0EW6li5IXAXu16+7+"
-    "YYBU7tSU077p987xNqedvWwnGuV2OoyxhU6mdLOYsrEWF0XY2M5W1sVxhr797pzHjydrQm38jQ"
-    "r4EZKsn7qVA+0Fc+D/ytOIedA+EDnXjD8MDfDIWYercK8oE+WuPtA8fGAWA5kA/0fwpdN1P/"
-    "sv/SAAAAAElFTkSuQmCC\" title=\"Bing Imagery\"/></a>";
+    "//////////////////////////////////////////////////////////////////////////"
+    "////////////////////////////////////////////////////////////////////////"
+    "Nr6iZAAAAOHRSTlMABRRJ0xkgCix/"
+    "uOGFYTMmHQh7EANWTQ2s5ZSLaURBzZB0blE6MPLav6SfiD81tJpl68kW98NauovCUzcAAAJxSU"
+    "RBVDjLtdTpcpswEADgFQiQzCnAYAMGzGUw+I6P93+yStC0djudZKaJ/"
+    "kjaXb7RrADAsazAd4zH4xR7fP4G+HEXR/"
+    "4OePYKozQog5oBqKb6pbCUbTKMcwUCXH4tvOxVizYJeJX3nzApZM9/"
+    "gtcAl02PUIhAY8gho48UchERsWTMtjxAan0R29DeOXxiSLMtRzheTaQRVqPmTAfpGd7pJqT7iu"
+    "WR0eLrwKNGdm6NdhAVpHfjPLKSPN6mAHac910AUCTr3OhMBHUUx3SEpbLhb93e3bER1hemO4sU"
+    "kPFKWyzztMz2IdBNUd3Ob7KoqDMT+cd27UEQe0AqBlXngXtPGZBuQIYJSBnhy6V9iLEsJ1g/"
+    "42VHJvjsABRLR8UGT82bEbYWPEhmBECJHBFgDi+nvVgeKYrnvy+vbN+"
+    "EfJxaQUNFvu7DEd5q3NNVGctC1Ce4D0UHuClFKqAhcfu7Be5N5IYI0oOpvMPgGA1fmb96DMfGH"
+    "uHDBJc4fYINARvKCPuJMR92Ww6PB01z8Il7kH/"
+    "C6nrzeIWL0wtcbUQuaP6G1S2fw8UOaDK2QjyM5PsI2+bUCX01wb1DTLzQnlsRXlvC7P3bn/"
+    "BBtTsJ/"
+    "PnVAjpzANTtDjQfnL2AN20j2NOhRu9fXoY7G1bXgW1zBhBkKqzOeDbbTq2oqcYJV8C5g6hRJvR"
+    "Qg9vFt1tkIlQUJaUcnsbbPtCe/hU7vpHSi2/"
+    "VPoCy4jvbTKr0VIkKjyCAkDAAxuu8eRFIxOOXVydFxTPkWAQenCY3MyX4eFCs/jPnu/"
+    "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
+    "\" title=\"Bing Imagery\"/></a>";
 
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
@@ -171,7 +172,9 @@ protected:
     options.allowEmptyImages = true;
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    std::vector<Credit>& tileCredits = options.credits;
+    std::vector<Credit>& tileCredits = options.credits =
+        this->getOwner().getCredits();
+    tileCredits.push_back(*this->getCredit());
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
@@ -270,7 +273,8 @@ namespace {
  */
 std::vector<CreditAndCoverageAreas> collectCredits(
     const rapidjson::Value* pResource,
-    const std::shared_ptr<CreditSystem>& pCreditSystem) {
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    bool showCreditsOnScreen) {
   std::vector<CreditAndCoverageAreas> credits;
   const auto attributionsIt = pResource->FindMember("imageryProviders");
   if (attributionsIt != pResource->MemberEnd() &&
@@ -318,7 +322,9 @@ std::vector<CreditAndCoverageAreas> collectCredits(
       if (creditString != attribution.MemberEnd() &&
           creditString->value.IsString()) {
         credits.push_back(
-            {pCreditSystem->createCredit(creditString->value.GetString()),
+            {pCreditSystem->createCredit(
+                 creditString->value.GetString(),
+                 showCreditsOnScreen),
              coverageAreas});
       }
     }
@@ -424,9 +430,11 @@ BingMapsRasterOverlay::createTileProvider(
       return nullptr;
     }
 
+    bool showCredits = pOwner->getOptions().showCreditsOnScreen;
     std::vector<CreditAndCoverageAreas> credits =
-        collectCredits(pResource, pCreditSystem);
-    Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
+        collectCredits(pResource, pCreditSystem, showCredits);
+    Credit bingCredit =
+        pCreditSystem->createCredit(BING_LOGO_HTML, showCredits);
 
     return std::make_unique<BingMapsTileProvider>(
         *pOwner,

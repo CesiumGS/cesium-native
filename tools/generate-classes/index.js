@@ -197,6 +197,10 @@ function processSchemas() {
       continue;
     }
     processed[schema.sourcePath] = true;
+
+    if ((options.config.classes[schema.title] || {}).manuallyDefined) {
+      continue;
+    }
     schemas.push(...generate(options, schema, writers));
   }
 }

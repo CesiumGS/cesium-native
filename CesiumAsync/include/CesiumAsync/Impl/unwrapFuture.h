@@ -4,7 +4,7 @@
 #include "ContinuationReturnType.h"
 
 namespace CesiumAsync {
-namespace Impl {
+namespace CesiumImpl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
@@ -73,5 +73,5 @@ template <typename Func> auto unwrapSharedFuture(Func&& f) {
 
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

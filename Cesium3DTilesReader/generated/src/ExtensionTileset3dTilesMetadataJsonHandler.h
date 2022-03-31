@@ -8,7 +8,7 @@
 #include "TilesetMetadataJsonHandler.h"
 
 #include <Cesium3DTiles/ExtensionTileset3dTilesMetadata.h>
-#include <CesiumJsonReader/DictionaryJsonHandler.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
@@ -94,10 +94,9 @@ private:
   SchemaJsonHandler _schema;
   CesiumJsonReader::StringJsonHandler _schemaUri;
   StatisticsJsonHandler _statistics;
-  CesiumJsonReader::DictionaryJsonHandler<
-      Cesium3DTiles::GroupMetadata,
-      GroupMetadataJsonHandler>
-      _groups;
+  CesiumJsonReader::
+      ArrayJsonHandler<Cesium3DTiles::GroupMetadata, GroupMetadataJsonHandler>
+          _groups;
   TilesetMetadataJsonHandler _tileset;
 };
 } // namespace Cesium3DTilesReader

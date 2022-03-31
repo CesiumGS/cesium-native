@@ -44,7 +44,7 @@ TEST_CASE("BoundingRegion") {
     auto testCase = GENERATE_COPY(
         // Inside bounding region
         TestCase{
-            rectangle.getWest() + Math::EPSILON6,
+            rectangle.getWest() + Math::Epsilon6,
             rectangle.getSouth(),
             region.getMinimumHeight(),
             0.0},
@@ -84,7 +84,7 @@ TEST_CASE("BoundingRegion") {
     CHECK(Math::equalsEpsilon(
         sqrt(region.computeDistanceSquaredToPosition(position)),
         testCase.expectedDistance,
-        Math::EPSILON6));
+        Math::Epsilon6));
   }
 
   SECTION("computeDistanceSquaredToPosition with degenerate region") {
@@ -123,7 +123,7 @@ TEST_CASE("BoundingRegion") {
     CHECK(Math::equalsEpsilon(
         sqrt(region.computeDistanceSquaredToPosition(position)),
         testCase.expectedDistance,
-        Math::EPSILON6));
+        Math::Epsilon6));
   }
 
   SECTION("intersectPlane") {

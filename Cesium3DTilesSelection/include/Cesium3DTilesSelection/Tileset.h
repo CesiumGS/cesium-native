@@ -53,12 +53,15 @@ public:
    * @param ionAccessToken The Cesium ion access token authorizing access to the
    * asset.
    * @param options Additional options for the tileset.
+   * @param ionAssetEndpointUrl The URL of the ion asset endpoint. Defaults
+   * to Cesium ion but a custom endpoint can be specified.
    */
   Tileset(
       const TilesetExternals& externals,
       uint32_t ionAssetID,
       const std::string& ionAccessToken,
-      const TilesetOptions& options = TilesetOptions());
+      const TilesetOptions& options = TilesetOptions(),
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
    * @brief Destroys this tileset.
@@ -89,6 +92,10 @@ public:
    */
   std::optional<std::string> getIonAccessToken() const noexcept {
     return this->_ionAccessToken;
+  }
+
+  const std::vector<Credit> getTilesetCredits() const noexcept {
+    return this->_tilesetCredits;
   }
 
   /**
@@ -504,6 +511,7 @@ private:
   std::optional<uint32_t> _ionAssetID;
   std::optional<std::string> _ionAccessToken;
   bool _isRefreshingIonToken;
+  std::optional<std::string> _ionAssetEndpointUrl;
 
   TilesetOptions _options;
 

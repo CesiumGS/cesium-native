@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CreditSystem.h"
 #include "Tile.h"
 #include "TileContext.h"
 
@@ -72,6 +73,11 @@ struct TileContentLoadResult {
    * be "rendered", but it is rendered as nothing.
    */
   std::optional<CesiumGltf::Model> model{};
+
+  /**
+   * @brief Contains the copyright information of the glTF model.
+   */
+  std::vector<Cesium3DTilesSelection::Credit> credits{};
 
   /**
    * @brief The new contexts used by the `childTiles`, if any.

@@ -24,6 +24,6 @@ struct CESIUM3DTILES_API Extension3dTilesMultipleContents final
   /**
    * @brief An array of contents.
    */
-  std::vector<Cesium3DTiles::Content> content;
+  std::vector<Cesium3DTiles::Content> contents;
 };
 } // namespace Cesium3DTiles

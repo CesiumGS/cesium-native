@@ -302,14 +302,14 @@ public:
   /**
    * @brief Gets the tile's geometric error as if by calling
    * {@link getGeometricError}, except that if the error is smaller than
-   * {@link Math::EPSILON5} the returned geometric error is instead computed as
+   * {@link Math::Epsilon5} the returned geometric error is instead computed as
    * half of the parent tile's (non-zero) geometric error.
    *
    * This is useful for determining when to refine what would ordinarily be a
    * leaf tile, for example to attach more detailed raster overlays to it.
    *
    * If this tile and all of its ancestors have a geometric error less than
-   * {@link Math::EPSILON5}, returns {@link Math::EPSILON5}.
+   * {@link Math::Epsilon5}, returns {@link Math::Epsilon5}.
    *
    * @return The non-zero geometric error.
    */

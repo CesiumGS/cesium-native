@@ -12,7 +12,7 @@
 
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 namespace Cesium3DTiles {
 /**
@@ -40,11 +40,9 @@ struct CESIUM3DTILES_API ExtensionTileset3dTilesMetadata final
   std::optional<Cesium3DTiles::Statistics> statistics;
 
   /**
-   * @brief A dictionary, where each key is a group ID and each value is an
-   * object defining the group. Group IDs may contain only alphanumeric and
-   * underscore characters
+   * @brief An array of groups.
    */
-  std::unordered_map<std::string, Cesium3DTiles::GroupMetadata> groups;
+  std::vector<Cesium3DTiles::GroupMetadata> groups;
 
   /**
    * @brief An object containing metadata about the tileset.

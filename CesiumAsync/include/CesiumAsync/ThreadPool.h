@@ -24,7 +24,7 @@ private:
     Scheduler(int32_t numberOfThreads);
     void schedule(async::task_run_handle t);
 
-    Impl::ImmediateScheduler<Scheduler> immediate{this};
+    CesiumImpl::ImmediateScheduler<Scheduler> immediate{this};
 
     async::threadpool_scheduler scheduler;
   };
@@ -38,7 +38,7 @@ private:
     return []() noexcept { ThreadPool::_scope.reset(); };
   }
 
-  static thread_local Impl::ImmediateScheduler<Scheduler>::SchedulerScope
+  static thread_local CesiumImpl::ImmediateScheduler<Scheduler>::SchedulerScope
       _scope;
 
   std::shared_ptr<Scheduler> _pScheduler;

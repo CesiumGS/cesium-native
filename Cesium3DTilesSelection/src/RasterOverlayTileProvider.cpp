@@ -128,7 +128,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
   return this->getAssetAccessor()
       ->get(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [options = std::move(options)](
+          [options = std::move(options),
+           Ktx2TranscodeTargets =
+               this->getOwner().getOptions().ktx2TranscodeTargets](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
@@ -178,7 +180,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             const gsl::span<const std::byte> data = pResponse->data();
 
             CesiumGltfReader::ImageReaderResult loadedImage =
-                RasterOverlayTileProvider::_gltfReader.readImage(data);
+                RasterOverlayTileProvider::_gltfReader.readImage(
+                    data,
+                    Ktx2TranscodeTargets);
 
             if (!loadedImage.errors.empty()) {
               loadedImage.errors.push_back("Image url: " + pRequest->url());
@@ -226,12 +230,14 @@ struct LoadResult {
  * @param pPrepareRendererResources The `IPrepareRendererResources`
  * @param pLogger The logger
  * @param loadedImage The `LoadedRasterOverlayImage`
+ * @param rendererOptions Renderer options
  * @return The `LoadResult`
  */
 static LoadResult createLoadResultFromLoadedImage(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    LoadedRasterOverlayImage&& loadedImage) {
+    LoadedRasterOverlayImage&& loadedImage,
+    const std::any& rendererOptions) {
   if (!loadedImage.image.has_value()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -267,8 +273,9 @@ static LoadResult createLoadResultFromLoadedImage(
 
     void* pRendererResources = nullptr;
     if (pPrepareRendererResources) {
-      pRendererResources =
-          pPrepareRendererResources->prepareRasterInLoadThread(image);
+      pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(
+          image,
+          rendererOptions);
     }
 
     LoadResult result;
@@ -307,12 +314,14 @@ void RasterOverlayTileProvider::doLoad(
   this->loadTileImage(tile)
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
-           pLogger =
-               this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
+           pLogger = this->getLogger(),
+           rendererOptions = this->_pOwner->getOptions().rendererOptions](
+              LoadedRasterOverlayImage&& loadedImage) {
             return createLoadResultFromLoadedImage(
                 pPrepareRendererResources,
                 pLogger,
-                std::move(loadedImage));
+                std::move(loadedImage),
+                rendererOptions);
           })
       .thenInMainThread(
           [this, &tile, isThrottledLoad](LoadResult&& result) noexcept {

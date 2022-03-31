@@ -44,8 +44,9 @@ public:
     }
   }
 
-  virtual void*
-  prepareRasterInLoadThread(const CesiumGltf::ImageCesium& /*image*/) override {
+  virtual void* prepareRasterInLoadThread(
+      const CesiumGltf::ImageCesium& /*image*/,
+      const std::any& /*rendererOptions*/) override {
     return new LoadThreadRasterResult{};
   }
 

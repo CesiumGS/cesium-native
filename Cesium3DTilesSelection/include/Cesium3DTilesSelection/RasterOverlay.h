@@ -3,9 +3,11 @@
 #include "Library.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 
 #include <spdlog/fwd.h>
 
+#include <any>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -13,6 +15,7 @@
 
 namespace Cesium3DTilesSelection {
 
+struct Credit;
 class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
@@ -66,6 +69,12 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
   double maximumScreenSpaceError = 2.0;
 
   /**
+   * @brief For each possible input transmission format, this struct names
+   * the ideal target gpu-compressed pixel format to transcode to.
+   */
+  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+
+  /**
    * @brief A callback function that is invoked when a raster overlay resource
    * fails to load.
    *
@@ -73,6 +82,21 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * required for raster overlay metadata, or an individual overlay image.
    */
   std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
+
+  /**
+   * @brief Whether or not to display the credits on screen.
+   */
+  bool showCreditsOnScreen = false;
+
+  /**
+   * @brief Arbitrary data that will be passed to {@link prepareRasterInLoadThread},
+   * for example, data to control the per-raster overlay client-specific texture
+   * properties.
+   *
+   * This object is copied and given to background texture preparation threads,
+   * so it must be inexpensive to copy.
+   */
+  std::any rendererOptions;
 };
 
 /**
@@ -112,6 +136,13 @@ public:
   /** @copydoc getOptions */
   const RasterOverlayOptions& getOptions() const noexcept {
     return this->_options;
+  }
+
+  /**
+   * @brief Gets the credits for this overlay.
+   */
+  const std::vector<Credit>& getCredits() const noexcept {
+    return this->_credits;
   }
 
   /**
@@ -225,6 +256,7 @@ protected:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlayLoadFailureDetails&& errorDetails);
+  std::vector<Credit> _credits;
 
 private:
   std::string _name;

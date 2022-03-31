@@ -191,7 +191,8 @@ Batched3DModelContent::load(const TileContentLoadInput& input) {
              url,
              headers,
              pAssetAccessor,
-             glbData)
+             glbData,
+             input.contentOptions)
       .thenInWorkerThread([header = std::move(header),
                            headerLength,
                            pLogger,

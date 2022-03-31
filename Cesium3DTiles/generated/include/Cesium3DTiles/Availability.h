@@ -32,9 +32,8 @@ struct CESIUM3DTILES_API Availability final
    * available. The bitstream conforms to the boolean array encoding described
    * in the [3D Metadata specification](../../specification/Metadata). If an
    * element is available, its bit is 1, and if it is unavailable, its bit is 0.
-   * The `bufferView` `byteOffset` must be aligned to a multiple of 8 bytes.
    */
-  std::optional<int64_t> bufferView;
+  std::optional<int64_t> bitstream;
 
   /**
    * @brief A number indicating how many 1 bits exist in the availability
