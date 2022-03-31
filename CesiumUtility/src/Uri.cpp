@@ -140,7 +140,7 @@ std::string Uri::escape(const std::string& s) {
       result.data(),
       URI_FALSE,
       URI_FALSE);
-  result.resize(pTerminator - result.data());
+  result.resize(size_t(pTerminator - result.data()));
   return result;
 }
 } // namespace CesiumUtility
