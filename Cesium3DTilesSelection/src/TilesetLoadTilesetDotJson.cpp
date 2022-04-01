@@ -435,12 +435,47 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     }
   }
 
+  const auto availableIt = layerJson.FindMember("available");
+  if (availableIt != layerJson.MemberEnd() && availableIt->value.IsArray()) {
+
+    const auto& available = availableIt->value;
+    if (available.Size() == 0) {
+      return;
+    }
+
+    for (rapidjson::SizeType i = 0; i < available.Size(); ++i) {
+      const auto& rangesAtLevelJson = available[i];
+      if (!rangesAtLevelJson.IsArray()) {
+        continue;
+      }
+
+      for (rapidjson::SizeType j = 0; j < rangesAtLevelJson.Size(); ++j) {
+        const auto& rangeJson = rangesAtLevelJson[j];
+        if (!rangeJson.IsObject()) {
+          continue;
+        }
+
+        context.implicitContext->rectangleAvailability->addAvailableTileRange(
+            CesiumGeometry::QuadtreeTileRectangularRange{
+                i,
+                JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
+                JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
+                JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
+                JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)});
+      }
+    }
+  }
+
   std::string parentUrl =
       JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
 
   if (!parentUrl.empty()) {
-    std::string resolvedUrl =
-        Uri::resolve(context.baseUrl, parentUrl + "layer.json");
+    std::string resolvedUrl = Uri::resolve(context.baseUrl, parentUrl);
+    // append forward slash if necessary
+    if (resolvedUrl[resolvedUrl.size() - 1] != '/') {
+      resolvedUrl += '/';
+    }
+    resolvedUrl += "layer.json";
     auto pAsyncSystem = context.pTileset->getAsyncSystem();
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
     pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
