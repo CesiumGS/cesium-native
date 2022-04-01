@@ -39,7 +39,8 @@ struct Tileset::LoadTilesetDotJson::Private {
 
   static void workerThreadLoadTileContext(
       const rapidjson::Value& layerJson,
-      TileContext& context,
+      const TileContext& context,
+      std::optional<ImplicitTilingContext>& implicitContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -329,20 +330,10 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     const rapidjson::Value& layerJson,
-    TileContext& context,
+    const TileContext& context,
+    std::optional<ImplicitTilingContext>& implicitContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
-  context.requestHeaders.push_back(std::make_pair(
-      "Accept",
-      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01"));
-
-  const auto tilesetVersionIt = layerJson.FindMember("version");
-  if (tilesetVersionIt != layerJson.MemberEnd() &&
-      tilesetVersionIt->value.IsString()) {
-    context.version = tilesetVersionIt->value.GetString();
-  }
-
   std::optional<std::vector<double>> optionalBounds =
       JsonHelpers::getDoubles(layerJson, -1, "bounds");
   std::vector<double> bounds;
@@ -402,7 +393,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
   std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
   uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
 
-  context.implicitContext = {
+  implicitContext = {
       urls,
       std::nullopt,
       tilingScheme,
@@ -429,7 +420,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       createExtensionsQueryParameter(knownExtensions, extensions);
 
   if (!extensionsToRequest.empty()) {
-    for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
+    for (std::string& url : implicitContext->tileTemplateUrls) {
       url =
           CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
     }
@@ -455,7 +446,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
           continue;
         }
 
-        context.implicitContext->rectangleAvailability->addAvailableTileRange(
+        implicitContext->rectangleAvailability->addAvailableTileRange(
             CesiumGeometry::QuadtreeTileRectangularRange{
                 i,
                 JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
@@ -480,7 +471,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
     pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
         .thenInWorkerThread(
-            [pLogger, &context, useWaterMask](
+            [pLogger, &context, &implicitContext, useWaterMask](
                 std::shared_ptr<IAssetRequest>&& pRequest) mutable {
               const IAssetResponse* pResponse = pRequest->response();
               if (!pResponse) {
@@ -519,12 +510,12 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                 return;
               }
 
-              context.pUnderlyingContext = std::make_unique<TileContext>();
-              context.pUnderlyingContext->baseUrl = context.baseUrl;
-              context.pUnderlyingContext->pTileset = context.pTileset;
+              implicitContext->pUnderlyingContext =
+                  std::make_unique<std::optional<ImplicitTilingContext>>();
               Private::workerThreadLoadTileContext(
                   parentLayerJson,
-                  *context.pUnderlyingContext.get(),
+                  context,
+                  *implicitContext->pUnderlyingContext,
                   pLogger,
                   useWaterMask);
             });
@@ -537,9 +528,22 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
+
+  context.requestHeaders.push_back(std::make_pair(
+      "Accept",
+      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
+      "*;q=0.01"));
+
+  const auto tilesetVersionIt = layerJson.FindMember("version");
+  if (tilesetVersionIt != layerJson.MemberEnd() &&
+      tilesetVersionIt->value.IsString()) {
+    context.version = tilesetVersionIt->value.GetString();
+  }
+
   Private::workerThreadLoadTileContext(
       layerJson,
       context,
+      context.implicitContext,
       pLogger,
       useWaterMask);
   tile.setContext(&context);
