@@ -37,6 +37,12 @@ struct Tileset::LoadTilesetDotJson::Private {
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
+  static void workerThreadLoadTileContext(
+      const rapidjson::Value& layerJson,
+      TileContext& context,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      bool useWaterMask);
+
   static void workerThreadLoadTerrainTile(
       Tile& tile,
       const rapidjson::Value& layerJson,
@@ -321,8 +327,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 } // namespace
 
-void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
-    Tile& tile,
+void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     const rapidjson::Value& layerJson,
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -430,9 +435,85 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     }
   }
 
+  std::string parentUrl =
+      JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
+
+  if (!parentUrl.empty()) {
+    std::string resolvedUrl =
+        Uri::resolve(context.baseUrl, parentUrl + "layer.json");
+    auto pAsyncSystem = context.pTileset->getAsyncSystem();
+    auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
+    pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
+        .thenInWorkerThread(
+            [pLogger, &context, useWaterMask](
+                std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+              const IAssetResponse* pResponse = pRequest->response();
+              if (!pResponse) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Did not receive a valid response for parent layer.json {}",
+                    pRequest->url());
+                return;
+              }
+
+              if (pResponse->statusCode() != 0 &&
+                  (pResponse->statusCode() < 200 ||
+                   pResponse->statusCode() >= 300)) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Received status code {} for parent layer.json {}",
+                    pResponse->statusCode(),
+                    pRequest->url());
+                return;
+              }
+
+              const gsl::span<const std::byte> data = pResponse->data();
+              rapidjson::Document parentLayerJson;
+              parentLayerJson.Parse(
+                  reinterpret_cast<const char*>(data.data()),
+                  data.size());
+
+              if (parentLayerJson.HasParseError()) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Error when parsing layer.json, error code {} at byte "
+                    "offset ",
+                    "{}",
+                    parentLayerJson.GetParseError(),
+                    parentLayerJson.GetErrorOffset());
+                return;
+              }
+
+              context.pUnderlyingContext = std::make_unique<TileContext>();
+              context.pUnderlyingContext->baseUrl = context.baseUrl;
+              context.pUnderlyingContext->pTileset = context.pTileset;
+              Private::workerThreadLoadTileContext(
+                  parentLayerJson,
+                  *context.pUnderlyingContext.get(),
+                  pLogger,
+                  useWaterMask);
+            });
+  }
+}
+
+void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
+    Tile& tile,
+    const rapidjson::Value& layerJson,
+    TileContext& context,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    bool useWaterMask) {
+  Private::workerThreadLoadTileContext(
+      layerJson,
+      context,
+      pLogger,
+      useWaterMask);
   tile.setContext(&context);
-  tile.setBoundingVolume(boundingVolume);
+  tile.setBoundingVolume(context.implicitContext->implicitRootBoundingVolume);
   tile.setGeometricError(999999999.0);
+
+  const auto& tilingScheme = context.implicitContext->quadtreeTilingScheme;
+  auto quadtreeXTiles = tilingScheme->getRootTilesX();
+  const auto& projection = *context.implicitContext->projection;
   tile.createChildTiles(quadtreeXTiles);
 
   for (uint32_t i = 0; i < quadtreeXTiles; ++i) {
