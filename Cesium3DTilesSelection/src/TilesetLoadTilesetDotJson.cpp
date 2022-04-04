@@ -39,8 +39,7 @@ struct Tileset::LoadTilesetDotJson::Private {
 
   static void workerThreadLoadTileContext(
       const rapidjson::Value& layerJson,
-      const TileContext& context,
-      std::optional<ImplicitTilingContext>& implicitContext,
+      TileContext& context,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -330,8 +329,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     const rapidjson::Value& layerJson,
-    const TileContext& context,
-    std::optional<ImplicitTilingContext>& implicitContext,
+    TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   std::optional<std::vector<double>> optionalBounds =
@@ -393,7 +391,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
   std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
   uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
 
-  implicitContext = {
+  context.implicitContext = {
       urls,
       std::nullopt,
       tilingScheme,
@@ -420,7 +418,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       createExtensionsQueryParameter(knownExtensions, extensions);
 
   if (!extensionsToRequest.empty()) {
-    for (std::string& url : implicitContext->tileTemplateUrls) {
+    for (std::string& url : context.implicitContext->tileTemplateUrls) {
       url =
           CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
     }
@@ -446,7 +444,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
           continue;
         }
 
-        implicitContext->rectangleAvailability->addAvailableTileRange(
+        context.implicitContext->rectangleAvailability->addAvailableTileRange(
             CesiumGeometry::QuadtreeTileRectangularRange{
                 i,
                 JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
@@ -471,7 +469,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
     pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
         .thenInWorkerThread(
-            [pLogger, &context, &implicitContext, useWaterMask](
+            [pLogger, &context, useWaterMask](
                 std::shared_ptr<IAssetRequest>&& pRequest) mutable {
               const IAssetResponse* pResponse = pRequest->response();
               if (!pResponse) {
@@ -510,12 +508,10 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                 return;
               }
 
-              implicitContext->pUnderlyingContext =
-                  std::make_unique<std::optional<ImplicitTilingContext>>();
+              context.pUnderlyingContext = std::make_unique<TileContext>();
               Private::workerThreadLoadTileContext(
                   parentLayerJson,
-                  context,
-                  *implicitContext->pUnderlyingContext,
+                  *context.pUnderlyingContext,
                   pLogger,
                   useWaterMask);
             });
@@ -543,7 +539,6 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
   Private::workerThreadLoadTileContext(
       layerJson,
       context,
-      context.implicitContext,
       pLogger,
       useWaterMask);
   tile.setContext(&context);
