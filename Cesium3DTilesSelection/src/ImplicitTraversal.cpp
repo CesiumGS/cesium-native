@@ -157,14 +157,37 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
+// Finds the first context in a "pUnderlyingContext" chain that has a given tile
+// ID available. If the ID is not available from any context, returns nullptr.
+TileContext* findContextWithTileID(
+    TileContext* pStart,
+    const QuadtreeTileID& id,
+    uint8_t& availability) {
+  TileContext* pCurrent = pStart;
+
+  while (pCurrent) {
+    if (pCurrent->implicitContext) {
+      availability =
+          pCurrent->implicitContext->rectangleAvailability->isTileAvailable(id);
+      if (availability) {
+        return pCurrent;
+      }
+    }
+    pCurrent = pCurrent->pUnderlyingContext.get();
+  }
+
+  return pStart;
+}
+
 void createImplicitQuadtreeTile(
+    const TileContext* tileContext,
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
     uint8_t availability) {
 
-  child.setContext(parent.getContext());
+  child.setContext(const_cast<TileContext*>(tileContext));
   child.setParent(&parent);
   child.setRefine(parent.getRefine());
   child.setTransform(parent.getTransform());
@@ -330,11 +353,16 @@ void createImplicitChildrenIfNeeded(
       uint8_t nw = 0;
       uint8_t ne = 0;
 
+      TileContext* pSW = nullptr;
+      TileContext* pSE = nullptr;
+      TileContext* pNW = nullptr;
+      TileContext* pNE = nullptr;
+
       if (implicitContext.rectangleAvailability) {
-        sw = implicitContext.rectangleAvailability->isTileAvailable(swID);
-        se = implicitContext.rectangleAvailability->isTileAvailable(seID);
-        nw = implicitContext.rectangleAvailability->isTileAvailable(nwID);
-        ne = implicitContext.rectangleAvailability->isTileAvailable(neID);
+        pSW = findContextWithTileID(pContext, swID, sw);
+        pSE = findContextWithTileID(pContext, seID, se);
+        pNW = findContextWithTileID(pContext, nwID, nw);
+        pNE = findContextWithTileID(pContext, neID, ne);
       } else if (implicitContext.quadtreeAvailability) {
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {
@@ -400,24 +428,28 @@ void createImplicitChildrenIfNeeded(
         gsl::span<Tile> children = tile.getChildren();
 
         createImplicitQuadtreeTile(
+            pSW,
             implicitContext,
             tile,
             children[0],
             swID,
             sw);
         createImplicitQuadtreeTile(
+            pSE,
             implicitContext,
             tile,
             children[1],
             seID,
             se);
         createImplicitQuadtreeTile(
+            pNW,
             implicitContext,
             tile,
             children[2],
             nwID,
             nw);
         createImplicitQuadtreeTile(
+            pNE,
             implicitContext,
             tile,
             children[3],
@@ -431,6 +463,7 @@ void createImplicitChildrenIfNeeded(
 
         if (sw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
+              tile.getContext(),
               implicitContext,
               tile,
               children[childIndex++],
@@ -440,6 +473,7 @@ void createImplicitChildrenIfNeeded(
 
         if (se & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
+              tile.getContext(),
               implicitContext,
               tile,
               children[childIndex++],
@@ -449,6 +483,7 @@ void createImplicitChildrenIfNeeded(
 
         if (nw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
+              tile.getContext(),
               implicitContext,
               tile,
               children[childIndex++],
@@ -458,6 +493,7 @@ void createImplicitChildrenIfNeeded(
 
         if (ne & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
+              tile.getContext(),
               implicitContext,
               tile,
               children[childIndex],

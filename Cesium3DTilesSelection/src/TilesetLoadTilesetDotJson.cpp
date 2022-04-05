@@ -332,6 +332,16 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
+  context.requestHeaders.push_back(std::make_pair(
+      "Accept",
+      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
+      "*;q=0.01"));
+
+  const auto tilesetVersionIt = layerJson.FindMember("version");
+  if (tilesetVersionIt != layerJson.MemberEnd() &&
+      tilesetVersionIt->value.IsString()) {
+    context.version = tilesetVersionIt->value.GetString();
+  }
   std::optional<std::vector<double>> optionalBounds =
       JsonHelpers::getDoubles(layerJson, -1, "bounds");
   std::vector<double> bounds;
@@ -509,6 +519,8 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
               }
 
               context.pUnderlyingContext = std::make_unique<TileContext>();
+              context.pUnderlyingContext->baseUrl = context.baseUrl;
+              context.pUnderlyingContext->pTileset = context.pTileset;
               Private::workerThreadLoadTileContext(
                   parentLayerJson,
                   *context.pUnderlyingContext,
@@ -524,18 +536,6 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
-
-  context.requestHeaders.push_back(std::make_pair(
-      "Accept",
-      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01"));
-
-  const auto tilesetVersionIt = layerJson.FindMember("version");
-  if (tilesetVersionIt != layerJson.MemberEnd() &&
-      tilesetVersionIt->value.IsString()) {
-    context.version = tilesetVersionIt->value.GetString();
-  }
-
   Private::workerThreadLoadTileContext(
       layerJson,
       context,
