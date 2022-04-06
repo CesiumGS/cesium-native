@@ -165,7 +165,7 @@ TileContext* findContextWithTileID(
     uint8_t& availability) {
   TileContext* pCurrent = pStart;
 
-  while (pCurrent) {
+  while (true) {
     if (pCurrent->implicitContext) {
       availability =
           pCurrent->implicitContext->rectangleAvailability->isTileAvailable(id);
@@ -173,10 +173,14 @@ TileContext* findContextWithTileID(
         return pCurrent;
       }
     }
-    pCurrent = pCurrent->pUnderlyingContext.get();
+    if (pCurrent->pUnderlyingContext.get()) {
+      pCurrent = pCurrent->pUnderlyingContext.get();
+    } else {
+      break;
+    }
   }
 
-  return pStart;
+  return pCurrent;
 }
 
 void createImplicitQuadtreeTile(
@@ -358,11 +362,13 @@ void createImplicitChildrenIfNeeded(
       TileContext* pNW = nullptr;
       TileContext* pNE = nullptr;
 
+      auto pRootContext = pContext->pRootContext;
+
       if (implicitContext.rectangleAvailability) {
-        pSW = findContextWithTileID(pContext, swID, sw);
-        pSE = findContextWithTileID(pContext, seID, se);
-        pNW = findContextWithTileID(pContext, nwID, nw);
-        pNE = findContextWithTileID(pContext, neID, ne);
+        pSW = findContextWithTileID(pRootContext, swID, sw);
+        pSE = findContextWithTileID(pRootContext, seID, se);
+        pNW = findContextWithTileID(pRootContext, nwID, nw);
+        pNE = findContextWithTileID(pRootContext, neID, ne);
       } else if (implicitContext.quadtreeAvailability) {
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {

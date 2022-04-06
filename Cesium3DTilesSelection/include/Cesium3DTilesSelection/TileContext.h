@@ -227,6 +227,8 @@ public:
    * underlyingContext.
    */
   std::unique_ptr<TileContext> pUnderlyingContext;
+
+  TileContext* pRootContext = nullptr;
 };
 
 } // namespace Cesium3DTilesSelection

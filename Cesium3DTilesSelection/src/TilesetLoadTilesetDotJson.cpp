@@ -1,5 +1,6 @@
 #include "TilesetLoadTilesetDotJson.h"
 
+#include "Cesium3DTilesSelection/ImplicitTraversal.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "TilesetLoadTileFromJson.h"
@@ -40,6 +41,7 @@ struct Tileset::LoadTilesetDotJson::Private {
   static void workerThreadLoadTileContext(
       const rapidjson::Value& layerJson,
       TileContext& context,
+      TileContext* rootContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -330,12 +332,15 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     const rapidjson::Value& layerJson,
     TileContext& context,
+    TileContext* rootContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   context.requestHeaders.push_back(std::make_pair(
       "Accept",
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
       "*;q=0.01"));
+
+  context.pRootContext = rootContext;
 
   const auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
@@ -434,8 +439,13 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     }
   }
 
+  const auto availabilityLevelsIt =
+      layerJson.FindMember("metadataAvailability");
   const auto availableIt = layerJson.FindMember("available");
-  if (availableIt != layerJson.MemberEnd() && availableIt->value.IsArray()) {
+
+  if (availableIt != layerJson.MemberEnd() &&
+      availabilityLevelsIt == layerJson.MemberEnd() &&
+      availableIt->value.IsArray()) {
 
     const auto& available = availableIt->value;
     if (available.Size() == 0) {
@@ -463,8 +473,12 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                 JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)});
       }
     }
+  } else if (
+      availabilityLevelsIt != layerJson.MemberEnd() &&
+      availabilityLevelsIt->value.IsInt()) {
+    context.implicitContext->rectangleAvailability->addAvailableTileRange(
+        CesiumGeometry::QuadtreeTileRectangularRange{0, 0, 0, 1, 0});
   }
-
   std::string parentUrl =
       JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
 
@@ -479,7 +493,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
     pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
         .thenInWorkerThread(
-            [pLogger, &context, useWaterMask](
+            [pLogger, &context, rootContext, useWaterMask](
                 std::shared_ptr<IAssetRequest>&& pRequest) mutable {
               const IAssetResponse* pResponse = pRequest->response();
               if (!pResponse) {
@@ -519,11 +533,12 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
               }
 
               context.pUnderlyingContext = std::make_unique<TileContext>();
-              context.pUnderlyingContext->baseUrl = context.baseUrl;
+              context.pUnderlyingContext->baseUrl = pRequest->url();
               context.pUnderlyingContext->pTileset = context.pTileset;
               Private::workerThreadLoadTileContext(
                   parentLayerJson,
                   *context.pUnderlyingContext,
+                  rootContext,
                   pLogger,
                   useWaterMask);
             });
@@ -539,6 +554,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
   Private::workerThreadLoadTileContext(
       layerJson,
       context,
+      &context,
       pLogger,
       useWaterMask);
   tile.setContext(&context);
@@ -554,7 +570,13 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     Tile& childTile = tile.getChildren()[i];
     QuadtreeTileID id(0, i, 0);
 
-    childTile.setContext(&context);
+    uint8_t availability = 0;
+    auto pChildContext = ImplicitTraversalUtilities::findContextWithTileID(
+        &context,
+        id,
+        availability);
+
+    childTile.setContext(pChildContext);
     childTile.setParent(&tile);
     childTile.setTileID(id);
     const CesiumGeospatial::GlobeRectangle childGlobeRectangle =
