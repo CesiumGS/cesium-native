@@ -10,6 +10,7 @@
 - Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
 - Fix upsampling for EXT_feature_metadata feature tables.
 - Fixed a bug that could cause the size of external images to be accounted for incorrectly when tracking the number of bytes loaded for caching purposes.
+- Fixed an issue where Ion Raster Overlay crashes when its aggregated overlay isn't saved
 
 ##### Additions :tada:
 
