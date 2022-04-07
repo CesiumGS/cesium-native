@@ -5,6 +5,7 @@
 
 #include <any>
 #include <optional>
+#include <variant>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
@@ -18,8 +19,20 @@ enum class TileLoadState {
   Done = 3
 };
 
-struct TileContent {
+struct RenderContent {
   std::optional<CesiumGltf::Model> model{};
+  void* renderResources{nullptr};
+};
+
+struct ExternalContent {};
+
+struct EmptyContent {};
+
+using TileContentPackage =
+    std::variant<RenderContent, ExternalContent, EmptyContent>;
+
+struct TileContent {
+  TileContentPackage contentPackage;
 
   std::vector<Cesium3DTilesSelection::Credit> credits{};
 

@@ -3,6 +3,8 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverterResult.h>
 #include <CesiumGltfReader/GltfReader.h>
 
+#include <gsl/span>
+
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {

@@ -2,7 +2,7 @@
 
 #include <Cesium3DTilesSelection/Exp_GltfConverterResult.h>
 
-#include <GSL/span>
+#include <gsl/span>
 
 #include <optional>
 #include <string>

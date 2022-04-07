@@ -3,7 +3,7 @@
 #include <Cesium3DTilesSelection/Exp_ErrorList.h>
 #include <CesiumGltf/Model.h>
 
-#include <GSL/span>
+#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
