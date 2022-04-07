@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/SimpleTilesetLoader.h>
+#include <Cesium3DTilesSelection/Exp_SimpleTilesetLoader.h>
 
 namespace Cesium3DTilesSelection {
 SimpleTilesetLoader::SimpleTilesetLoader(
@@ -13,26 +13,26 @@ SimpleTilesetLoader::SimpleTilesetLoader(
 CesiumAsync::Future<void> SimpleTilesetLoader::requestTileContent(
     Tile& tile,
     CesiumAsync::IAssetAccessor& assetAccessor,
-    CesiumAsync::AsyncSystem& asyncSystem) override {
+    CesiumAsync::AsyncSystem& asyncSystem) {
   (void)(tile);
   (void)(assetAccessor);
-  return asyncSystem.createResolvedFuture<void>();
+  return asyncSystem.createResolvedFuture();
 }
 
 TileLoadState
-SimpleTilesetLoader::processLoadedContentSome(Tile& tile) override
+SimpleTilesetLoader::processLoadedContentSome(Tile& tile) 
 {
   (void)(tile);
   return TileLoadState::Unloaded;
 }
 
 TileLoadState
-SimpleTilesetLoader::processLoadedContentTillDone(Tile& tile) override {
+SimpleTilesetLoader::processLoadedContentTillDone(Tile& tile) {
   (void)(tile);
   return TileLoadState::Unloaded;
 }
 
-bool SimpleTilesetLoader::unloadTileContent(Tile& tile) override {
+bool SimpleTilesetLoader::unloadTileContent(Tile& tile) {
   (void)(tile);
   return false;
 }

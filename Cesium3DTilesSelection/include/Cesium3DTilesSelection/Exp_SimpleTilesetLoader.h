@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 
 namespace Cesium3DTilesSelection {
 class SimpleTilesetLoader : public TilesetContentLoader {

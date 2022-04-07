@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/CreditSystem.h>
 #include <CesiumGltf/Model.h>
 #include <optional>
+#include <any>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
@@ -23,6 +24,8 @@ struct TileContent {
 
   TileLoadState state{TileLoadState::Unloaded};
 
-  TilesetContentLoader* loader{nullptr};
+  std::any tilesetLoaderCustomData{};
+
+  TilesetContentLoader* tilesetLoader{nullptr};
 };
 } // namespace Cesium3DTilesSelection
