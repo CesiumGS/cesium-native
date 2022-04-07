@@ -2,6 +2,7 @@
 
 #include <Cesium3DTilesSelection/Exp_ErrorList.h>
 #include <CesiumGltf/Model.h>
+
 #include <optional>
 
 namespace Cesium3DTilesSelection {
@@ -10,4 +11,4 @@ struct GltfConverterResult {
 
   ErrorList errors;
 };
-}
+} // namespace Cesium3DTilesSelection

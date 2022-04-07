@@ -7,8 +7,7 @@ SimpleTilesetLoader::SimpleTilesetLoader(
     std::string&& version)
     : _baseUrl{std::move(baseUrl)},
       _requestHeaders{std::move(requestHeaders)},
-      _version{std::move(version)}
-{}
+      _version{std::move(version)} {}
 
 CesiumAsync::Future<void> SimpleTilesetLoader::requestTileContent(
     Tile& tile,
@@ -19,15 +18,12 @@ CesiumAsync::Future<void> SimpleTilesetLoader::requestTileContent(
   return asyncSystem.createResolvedFuture();
 }
 
-TileLoadState
-SimpleTilesetLoader::processLoadedContentSome(Tile& tile) 
-{
+TileLoadState SimpleTilesetLoader::processLoadedContentSome(Tile& tile) {
   (void)(tile);
   return TileLoadState::Unloaded;
 }
 
-TileLoadState
-SimpleTilesetLoader::processLoadedContentTillDone(Tile& tile) {
+TileLoadState SimpleTilesetLoader::processLoadedContentTillDone(Tile& tile) {
   (void)(tile);
   return TileLoadState::Unloaded;
 }

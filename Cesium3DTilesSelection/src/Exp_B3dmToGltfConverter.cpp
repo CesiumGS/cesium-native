@@ -1,7 +1,8 @@
 #include <Cesium3DTilesSelection/Exp_B3dmToGltfConverter.h>
-#include <Cesium3DTilesSelection/Exp_BinaryToGltfConverter.h>
 #include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
+#include <Cesium3DTilesSelection/Exp_BinaryToGltfConverter.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+
 #include <rapidjson/document.h>
 #include <spdlog/fmt/fmt.h>
 

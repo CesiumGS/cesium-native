@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 struct ErrorList {

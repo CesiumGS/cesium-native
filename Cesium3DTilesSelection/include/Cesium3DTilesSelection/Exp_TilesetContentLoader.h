@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Exp_TileContent.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 
 namespace Cesium3DTilesSelection {
 class Tile;
@@ -23,4 +23,4 @@ public:
 
   virtual bool unloadTileContent(Tile& tile) = 0;
 };
-}
+} // namespace Cesium3DTilesSelection

@@ -2,8 +2,9 @@
 
 #include <Cesium3DTilesSelection/CreditSystem.h>
 #include <CesiumGltf/Model.h>
-#include <optional>
+
 #include <any>
+#include <optional>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;

@@ -2,8 +2,10 @@
 
 #include <Cesium3DTilesSelection/Exp_ErrorList.h>
 #include <CesiumGltf/Model.h>
-#include <rapidjson/document.h>
+
 #include <GSL/span>
+#include <rapidjson/document.h>
+
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {

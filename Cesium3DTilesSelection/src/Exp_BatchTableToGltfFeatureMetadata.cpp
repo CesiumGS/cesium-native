@@ -1,13 +1,16 @@
-#include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+
+#include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+
 #include <glm/glm.hpp>
-#include <spdlog/fmt/fmt.h>
 #include <rapidjson/writer.h>
+#include <spdlog/fmt/fmt.h>
+
 #include <map>
 #include <type_traits>
 
@@ -1240,8 +1243,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convert(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData,
-    CesiumGltf::Model& gltf)
-{
+    CesiumGltf::Model& gltf) {
   // Check to make sure a char of rapidjson is 1 byte
   static_assert(
       sizeof(rapidjson::Value::Ch) == 1,
@@ -1371,4 +1373,4 @@ ErrorList BatchTableToGltfFeatureMetadata::convert(
 
   return result;
 }
-}
+} // namespace Cesium3DTilesSelection

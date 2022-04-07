@@ -1,10 +1,12 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Exp_GltfConverterResult.h>
+
 #include <GSL/span>
+
+#include <optional>
 #include <string>
 #include <string_view>
-#include <optional>
 
 namespace Cesium3DTilesSelection {
 class GltfConverters {
@@ -12,8 +14,7 @@ public:
   using ConverterFun =
       GltfConverterResult (*)(const gsl::span<const std::byte>& content);
 
-  static void
-  registerMagic(const std::string& magic, ConverterFun converter);
+  static void registerMagic(const std::string& magic, ConverterFun converter);
 
   static void registerFileExtension(
       const std::string& fileExtension,

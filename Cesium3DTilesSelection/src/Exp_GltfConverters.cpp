@@ -1,4 +1,5 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
+
 #include <spdlog/spdlog.h>
 
 namespace Cesium3DTilesSelection {
@@ -10,7 +11,7 @@ void GltfConverters::registerMagic(
 }
 
 void GltfConverters::registerFileExtension(
-  const std::string& fileExtension,
+    const std::string& fileExtension,
     ConverterFun converter) {
   SPDLOG_INFO("Registering file extension {}", fileExtension);
 
@@ -60,13 +61,13 @@ GltfConverters::convert(const gsl::span<const std::byte>& content) {
 }
 
 std::string GltfConverters::toLowerCase(const std::string_view& str) {
-    std::string result;
-    std::transform(
-        str.begin(),
-        str.end(),
-        std::back_inserter(result),
-        [](char c) noexcept { return static_cast<char>(::tolower(c)); });
+  std::string result;
+  std::transform(
+      str.begin(),
+      str.end(),
+      std::back_inserter(result),
+      [](char c) noexcept { return static_cast<char>(::tolower(c)); });
 
-    return result;
+  return result;
 }
 } // namespace Cesium3DTilesSelection
