@@ -12,6 +12,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -229,6 +230,10 @@ public:
   std::unique_ptr<TileContext> pUnderlyingContext;
 
   TileContext* pRootContext = nullptr;
+
+  std::optional<int> availabilityLevels;
+
+  std::unordered_set<CesiumGeometry::QuadtreeTileID> tilesLoaded;
 };
 
 } // namespace Cesium3DTilesSelection

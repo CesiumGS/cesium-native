@@ -157,6 +157,41 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
+std::optional<QuadtreeTileID>
+getAvailabilityTile(const TileContext* pContext, const QuadtreeTileID& id) {
+  if (id.level == 0) {
+    return std::nullopt;
+  }
+
+  auto availabilityLevels = *pContext->availabilityLevels;
+  auto parentLevel = id.level % availabilityLevels == 0
+                         ? id.level - availabilityLevels
+                         : (id.level / availabilityLevels) * availabilityLevels;
+
+  auto divisor = 1 << (id.level - parentLevel);
+  auto parentX = id.x / divisor;
+  auto parentY = id.y / divisor;
+
+  return std::make_optional<QuadtreeTileID>(parentLevel, parentX, parentY);
+}
+
+// goes up the tree until it finds a tile that is available using same context.
+const TileContext*
+checkLayer(const TileContext* pContext, const QuadtreeTileID& id) {
+  if (!pContext->availabilityLevels) {
+    // not in this player
+    return false;
+  }
+  auto tile = getAvailabilityTile(pContext, id);
+  while (tile) {
+    if (pContext->implicitContext->rectangleAvailability->isTileAvailable(id)) {
+      return pContext;
+    }
+    tile = getAvailabilityTile(pContext, *tile);
+  }
+  return nullptr;
+}
+
 // Finds the first context in a "pUnderlyingContext" chain that has a given tile
 // ID available. If the ID is not available from any context, returns nullptr.
 TileContext* findContextWithTileID(
