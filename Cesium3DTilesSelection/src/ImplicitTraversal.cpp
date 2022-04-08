@@ -3,14 +3,32 @@
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/TileContext.h"
+#include "Cesium3DTilesSelection/Tileset.h"
+#include "CesiumAsync/AsyncSystem.h"
 
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
+
+Future<uint8_t> fetchAvailability(
+    const std::string& url,
+    const QuadtreeTileID& tileID,
+    TileContext* pChildContext,
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
+  return pAssetAccessor->get(asyncSystem, url, pChildContext->requestHeaders)
+      .thenInWorkerThread([pChildContext, tileID](
+                              std::shared_ptr<CesiumAsync::IAssetRequest>&&) {
+        uint8_t ret = 0;
+        ret = TileAvailabilityFlags::CONTENT_AVAILABLE;
+        return ret;
+      });
+}
 
 ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
     : pParentNode(nullptr),
@@ -208,9 +226,9 @@ TileContext* findContextWithTileID(
       if (availability) {
         return pCurrent;
       } else if (
+          pCurrent->tilesLoaded.find(parentID) == pCurrent->tilesLoaded.end() &&
           pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
-              parentID) &&
-          pCurrent->tilesLoaded.find(parentID) == pCurrent->tilesLoaded.end()) {
+              parentID)) {
         availability = TileAvailabilityFlags::UNKNOWN;
         return pCurrent;
       }
@@ -411,6 +429,61 @@ void createImplicitChildrenIfNeeded(
         pSE = findContextWithTileID(pRootContext, seID, *pQuadtreeTileID, se);
         pNW = findContextWithTileID(pRootContext, nwID, *pQuadtreeTileID, nw);
         pNE = findContextWithTileID(pRootContext, neID, *pQuadtreeTileID, ne);
+
+        int anyUnknowns = sw & TileAvailabilityFlags::UNKNOWN + se &
+                          TileAvailabilityFlags::UNKNOWN + nw &
+                          TileAvailabilityFlags::UNKNOWN + ne &
+                          TileAvailabilityFlags::UNKNOWN;
+
+        if (anyUnknowns > 0) {
+          const auto& externals = tile.getTileset()->getExternals();
+          const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
+          auto& pAssetAccessor = externals.pAssetAccessor;
+
+          TileContext* contexts[4] = {pSW, pSE, pNW, pNE};
+          QuadtreeTileID tileIDs[4] = {swID, seID, nwID, neID};
+          uint8_t availables[4] = {sw, se, nw, ne};
+          std::vector<CesiumAsync::Future<uint8_t>> futs;
+          for (int i = 0; i < 4; i++) {
+            auto pChildContext = contexts[i];
+            auto url = pChildContext->pTileset->getResolvedContentUrl(
+                *pChildContext,
+                tileIDs[i]);
+
+            auto fut = fetchAvailability(
+                url,
+                tileIDs[i],
+                pChildContext,
+                asyncSystem,
+                pAssetAccessor);
+
+            futs.push_back(std::move(fut));
+          }
+          asyncSystem.all(std::move(futs))
+              .thenInMainThread(
+                  [&tile, &tileIDs, contexts](std::vector<uint8_t>&& results) {
+                    if ((results[0] & TileAvailabilityFlags::TILE_AVAILABLE) ||
+                        (results[1] & TileAvailabilityFlags::TILE_AVAILABLE) ||
+                        (results[2] & TileAvailabilityFlags::TILE_AVAILABLE) ||
+                        (results[3] & TileAvailabilityFlags::TILE_AVAILABLE)) {
+
+                      tile.createChildTiles(4);
+                      gsl::span<Tile> children = tile.getChildren();
+
+                      for (int i = 0; i < 4; i++) {
+                        createImplicitQuadtreeTile(
+                            contexts[i],
+                            *contexts[i]->implicitContext,
+                            tile,
+                            children[i],
+                            tileIDs[i],
+                            results[i]);
+                      }
+                    }
+                  });
+          return;
+        }
+
       } else if (implicitContext.quadtreeAvailability) {
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {

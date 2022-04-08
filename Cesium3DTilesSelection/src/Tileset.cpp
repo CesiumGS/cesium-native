@@ -372,7 +372,8 @@ void Tileset::loadTilesFromJson(
 
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
 Tileset::requestTileContent(Tile& tile) {
-  std::string url = this->getResolvedContentUrl(tile);
+  std::string url =
+      this->getResolvedContentUrl(*tile.getContext(), tile.getTileID());
   assert(!url.empty());
 
   this->notifyTileStartLoading(&tile);
@@ -1212,7 +1213,9 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
 
-std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
+std::string Tileset::getResolvedContentUrl(
+    const TileContext& context,
+    const TileID& tileID) const {
   struct Operation {
     const TileContext& context;
 
@@ -1277,12 +1280,12 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
     }
   };
 
-  std::string url = std::visit(Operation{*tile.getContext()}, tile.getTileID());
+  std::string url = std::visit(Operation{context}, tileID);
   if (url.empty()) {
     return url;
   }
 
-  return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
+  return CesiumUtility::Uri::resolve(context.baseUrl, url, true);
 }
 
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {

@@ -286,6 +286,9 @@ public:
     return this->_gltfUpAxis;
   }
 
+  std::string
+  getResolvedContentUrl(const TileContext& context, const TileID& tileID) const;
+
 private:
   /**
    * @brief The result of traversing one branch of the tile hierarchy.
@@ -494,8 +497,6 @@ private:
   void _processLoadQueue();
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
-
-  std::string getResolvedContentUrl(const Tile& tile) const;
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
