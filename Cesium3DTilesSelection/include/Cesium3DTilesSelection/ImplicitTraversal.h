@@ -93,6 +93,7 @@ namespace ImplicitTraversalUtilities {
 TileContext* findContextWithTileID(
     TileContext* pStart,
     const CesiumGeometry::QuadtreeTileID& id,
+    const CesiumGeometry::QuadtreeTileID& parentID,
     uint8_t& availability);
 
 void createImplicitChildrenIfNeeded(

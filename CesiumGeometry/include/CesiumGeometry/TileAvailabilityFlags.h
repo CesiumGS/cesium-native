@@ -34,7 +34,9 @@ enum CESIUMGEOMETRY_API TileAvailabilityFlags {
    * If a tile is not reachable, the above flags being false may simply
    * indicate that a subtree needed to reach this tile has not yet been loaded.
    */
-  REACHABLE = 16U
+  REACHABLE = 16U,
+
+  UNKNOWN = 32U
 };
 
 } // namespace CesiumGeometry

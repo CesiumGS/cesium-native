@@ -197,6 +197,7 @@ checkLayer(const TileContext* pContext, const QuadtreeTileID& id) {
 TileContext* findContextWithTileID(
     TileContext* pStart,
     const QuadtreeTileID& id,
+    const QuadtreeTileID& parentID,
     uint8_t& availability) {
   TileContext* pCurrent = pStart;
 
@@ -205,6 +206,12 @@ TileContext* findContextWithTileID(
       availability =
           pCurrent->implicitContext->rectangleAvailability->isTileAvailable(id);
       if (availability) {
+        return pCurrent;
+      } else if (
+          pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
+              parentID) &&
+          pCurrent->tilesLoaded.find(parentID) == pCurrent->tilesLoaded.end()) {
+        availability = TileAvailabilityFlags::UNKNOWN;
         return pCurrent;
       }
     }
@@ -400,10 +407,10 @@ void createImplicitChildrenIfNeeded(
       auto pRootContext = pContext->pRootContext;
 
       if (implicitContext.rectangleAvailability) {
-        pSW = findContextWithTileID(pRootContext, swID, sw);
-        pSE = findContextWithTileID(pRootContext, seID, se);
-        pNW = findContextWithTileID(pRootContext, nwID, nw);
-        pNE = findContextWithTileID(pRootContext, neID, ne);
+        pSW = findContextWithTileID(pRootContext, swID, *pQuadtreeTileID, sw);
+        pSE = findContextWithTileID(pRootContext, seID, *pQuadtreeTileID, se);
+        pNW = findContextWithTileID(pRootContext, nwID, *pQuadtreeTileID, nw);
+        pNE = findContextWithTileID(pRootContext, neID, *pQuadtreeTileID, ne);
       } else if (implicitContext.quadtreeAvailability) {
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {

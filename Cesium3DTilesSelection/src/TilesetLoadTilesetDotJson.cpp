@@ -575,6 +575,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     auto pChildContext = ImplicitTraversalUtilities::findContextWithTileID(
         &context,
         id,
+        id,
         availability);
 
     childTile.setContext(pChildContext);
