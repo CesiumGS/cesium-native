@@ -47,6 +47,12 @@ public:
       const std::string& url,
       const gsl::span<const std::byte>& data,
       bool enableWaterMask);
+
+  static std::optional<
+      std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>
+  GetAvailability(
+      const gsl::span<const std::byte>& data,
+      const CesiumGeometry::QuadtreeTileID& tileID);
 };
 
 } // namespace Cesium3DTilesSelection

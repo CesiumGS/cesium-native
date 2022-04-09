@@ -1181,6 +1181,153 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   return pResult;
 }
 
+std::optional<std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>
+QuantizedMeshContent::GetAvailability(
+    const gsl::span<const std::byte>& data,
+    const CesiumGeometry::QuadtreeTileID& tileID) {
+  if (data.size() < headerLength) {
+    return std::nullopt;
+  }
+
+  const QuantizedMeshHeader* header =
+      reinterpret_cast<const QuantizedMeshHeader*>(data.data());
+
+  size_t readIndex = headerLength;
+
+  // skip u buffer, v buffer, and height buffer
+  readIndex += 3 * header->vertexCount * sizeof(uint16_t);
+
+  if (readIndex > data.size()) {
+    return std::nullopt;
+  }
+
+  // parse the indices buffer
+  uint32_t indexSizeBytes;
+  if (header->vertexCount > 65536) {
+    indexSizeBytes = sizeof(uint32_t);
+    if ((readIndex % 4) != 0) {
+      readIndex += 2;
+      if (readIndex > data.size()) {
+        return std::nullopt;
+      }
+    }
+
+    const uint32_t indicesCount = 3 * readValue<uint32_t>(data, readIndex, 0);
+    readIndex += sizeof(uint32_t);
+
+    if (readIndex > data.size()) {
+      return std::nullopt;
+    }
+
+    readIndex += indicesCount * sizeof(uint32_t);
+
+    if (readIndex > data.size()) {
+      return std::nullopt;
+    }
+  } else {
+    // 16-bit indices
+    indexSizeBytes = sizeof(uint16_t);
+    const uint32_t indicesCount = 3 * readValue<uint32_t>(data, readIndex, 0);
+    readIndex += sizeof(uint32_t);
+
+    if (readIndex > data.size()) {
+      return std::nullopt;
+    }
+
+    readIndex += indicesCount * sizeof(uint16_t);
+
+    if (readIndex > data.size()) {
+      return std::nullopt;
+    }
+  }
+
+  for (int i = 0; i < 4; i++) {
+    uint32_t edgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+    readIndex += sizeof(uint32_t) + edgeIndicesCount * indexSizeBytes;
+    if (readIndex > data.size()) {
+      return std::nullopt;
+    }
+  }
+
+  while (readIndex < data.size()) {
+    if (readIndex + extensionHeaderLength > data.size()) {
+      return std::nullopt;
+    }
+
+    const uint8_t extensionID =
+        *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+    readIndex += sizeof(uint8_t);
+    const uint32_t extensionLength =
+        *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+    readIndex += sizeof(uint32_t);
+    if (extensionID == 4) {
+      if (readIndex + sizeof(uint32_t) > data.size()) {
+        return std::nullopt;
+      }
+
+      const uint32_t metadataJsonLength =
+          *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+
+      if (readIndex + sizeof(uint32_t) + metadataJsonLength > data.size()) {
+        return std::nullopt;
+      }
+
+      auto metadataString = gsl::span<const char>(
+          reinterpret_cast<const char*>(
+              data.data() + sizeof(uint32_t) + readIndex),
+          metadataJsonLength);
+
+      rapidjson::Document metadata;
+      metadata.Parse(
+          reinterpret_cast<const char*>(metadataString.data()),
+          metadataString.size());
+
+      if (metadata.HasParseError()) {
+        return std::nullopt;
+      }
+
+      const auto availableIt = metadata.FindMember("available");
+      if (availableIt == metadata.MemberEnd() ||
+          !availableIt->value.IsArray()) {
+        return std::nullopt;
+      }
+
+      const auto& available = availableIt->value;
+      if (available.Size() == 0) {
+        return std::nullopt;
+      }
+
+      std::vector<CesiumGeometry::QuadtreeTileRectangularRange> rectangles;
+
+      uint32_t level = tileID.level + 1;
+      for (rapidjson::SizeType i = 0; i < available.Size(); ++i) {
+        const auto& rangesAtLevelJson = available[i];
+        if (!rangesAtLevelJson.IsArray()) {
+          continue;
+        }
+
+        for (rapidjson::SizeType j = 0; j < rangesAtLevelJson.Size(); ++j) {
+          const auto& rangeJson = rangesAtLevelJson[j];
+          if (!rangeJson.IsObject()) {
+            continue;
+          }
+
+          rectangles.push_back(CesiumGeometry::QuadtreeTileRectangularRange{
+              level,
+              JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
+              JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
+              JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
+              JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)});
+        }
+
+        ++level;
+      }
+      return rectangles;
+    }
+  }
+  return std::nullopt;
+}
+
 struct TileRange {
   uint32_t minimumX;
   uint32_t minimumY;

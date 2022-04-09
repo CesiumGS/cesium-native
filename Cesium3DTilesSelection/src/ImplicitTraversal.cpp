@@ -5,6 +5,8 @@
 #include "Cesium3DTilesSelection/TileContext.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "QuantizedMeshContent.h"
 
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
@@ -15,19 +17,34 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
 
-Future<uint8_t> fetchAvailability(
+Future<std::optional<std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>>
+fetchAvailability(
     const std::string& url,
     const QuadtreeTileID& tileID,
     TileContext* pChildContext,
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
   return pAssetAccessor->get(asyncSystem, url, pChildContext->requestHeaders)
-      .thenInWorkerThread([pChildContext, tileID](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&) {
-        uint8_t ret = 0;
-        ret = TileAvailabilityFlags::CONTENT_AVAILABLE;
-        return ret;
-      });
+      .thenInWorkerThread(
+          [pChildContext,
+           tileID](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
+              -> std::optional<
+                  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>> {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (pResponse) {
+
+              uint16_t statusCode = pResponse->statusCode();
+
+              if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+                return std::nullopt;
+              }
+
+              const gsl::span<const std::byte>& data = pResponse->data();
+
+              return QuantizedMeshContent::GetAvailability(data, tileID);
+            }
+            return std::nullopt;
+          });
 }
 
 ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
@@ -443,7 +460,9 @@ void createImplicitChildrenIfNeeded(
           TileContext* contexts[4] = {pSW, pSE, pNW, pNE};
           QuadtreeTileID tileIDs[4] = {swID, seID, nwID, neID};
           uint8_t availables[4] = {sw, se, nw, ne};
-          std::vector<CesiumAsync::Future<uint8_t>> futs;
+          std::vector<CesiumAsync::Future<std::optional<
+              std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>>>
+              futs;
           for (int i = 0; i < 4; i++) {
             auto pChildContext = contexts[i];
             auto url = pChildContext->pTileset->getResolvedContentUrl(
@@ -461,7 +480,10 @@ void createImplicitChildrenIfNeeded(
           }
           asyncSystem.all(std::move(futs))
               .thenInMainThread(
-                  [&tile, &tileIDs, contexts](std::vector<uint8_t>&& results) {
+                  [&tile, &tileIDs, contexts](
+                      std::vector<std::optional<std::vector<
+                          CesiumGeometry::QuadtreeTileRectangularRange>>>&&) {
+                    uint8_t results[4] = {0, 0, 0, 0};
                     if ((results[0] & TileAvailabilityFlags::TILE_AVAILABLE) ||
                         (results[1] & TileAvailabilityFlags::TILE_AVAILABLE) ||
                         (results[2] & TileAvailabilityFlags::TILE_AVAILABLE) ||
