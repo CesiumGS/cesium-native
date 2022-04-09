@@ -6,6 +6,7 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
 #include "QuantizedMeshContent.h"
 
 #include <CesiumGeometry/TileAvailabilityFlags.h>
@@ -480,10 +481,27 @@ void createImplicitChildrenIfNeeded(
           }
           asyncSystem.all(std::move(futs))
               .thenInMainThread(
-                  [&tile, &tileIDs, contexts](
+                  [&tile, &tileIDs, pQuadtreeTileID, contexts](
                       std::vector<std::optional<std::vector<
-                          CesiumGeometry::QuadtreeTileRectangularRange>>>&&) {
+                          CesiumGeometry::QuadtreeTileRectangularRange>>>&&
+                          rectangles) {
                     uint8_t results[4] = {0, 0, 0, 0};
+
+                    for (int i = 0; i < 4; i++) {
+                      auto& implicitContext =
+                          contexts[i]->implicitContext.value();
+                      if (rectangles[i].has_value()) {
+
+                        for (const QuadtreeTileRectangularRange& range :
+                             *rectangles[i]) {
+                          implicitContext.rectangleAvailability
+                              ->addAvailableTileRange(range);
+                        }
+
+                        results[i] = implicitContext.rectangleAvailability
+                                         ->isTileAvailable(*pQuadtreeTileID);
+                      }
+                    }
                     if ((results[0] & TileAvailabilityFlags::TILE_AVAILABLE) ||
                         (results[1] & TileAvailabilityFlags::TILE_AVAILABLE) ||
                         (results[2] & TileAvailabilityFlags::TILE_AVAILABLE) ||
@@ -491,7 +509,6 @@ void createImplicitChildrenIfNeeded(
 
                       tile.createChildTiles(4);
                       gsl::span<Tile> children = tile.getChildren();
-
                       for (int i = 0; i < 4; i++) {
                         createImplicitQuadtreeTile(
                             contexts[i],
