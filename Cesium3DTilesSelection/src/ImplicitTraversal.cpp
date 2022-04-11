@@ -3,70 +3,14 @@
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/TileContext.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
-#include "QuantizedMeshContent.h"
 
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
-
-Future<std::unique_ptr<TileContentLoadResult>> fetchAvailability(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const QuadtreeTileID& tileID,
-    TileContext* pChildContext,
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
-  return pAssetAccessor->get(asyncSystem, url, pChildContext->requestHeaders)
-      .thenInWorkerThread(
-          [&pLogger, url, pChildContext, tileID](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-              -> std::unique_ptr<TileContentLoadResult> {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (pResponse) {
-
-              uint16_t statusCode = pResponse->statusCode();
-
-              if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-                return nullptr;
-              }
-
-              const gsl::span<const std::byte>& data = pResponse->data();
-
-              // return QuantizedMeshContent::GetAvailability(data, tileID);
-
-              CesiumGeometry::Rectangle tileRectangle =
-                  pChildContext->implicitContext->quadtreeTilingScheme
-                      ->tileToRectangle(tileID);
-
-              BoundingRegion boundingVolume = BoundingRegion(
-                  GlobeRectangle(
-                      tileRectangle.minimumX,
-                      tileRectangle.minimumY,
-                      tileRectangle.maximumX,
-                      tileRectangle.maximumY),
-                  0.0,
-                  0.0);
-
-              return std::move(QuantizedMeshContent::load(
-                  pLogger,
-                  tileID,
-                  boundingVolume,
-                  url,
-                  data,
-                  false));
-            }
-            return nullptr;
-          });
-}
 
 ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
     : pParentNode(nullptr),
@@ -213,73 +157,73 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
-std::optional<QuadtreeTileID>
-getAvailabilityTile(const TileContext* pContext, const QuadtreeTileID& id) {
-  if (id.level == 0) {
-    return std::nullopt;
+void HandleLayeredTerrain(Tile& tile) {
+  auto pContext = tile.getContext();
+  auto& implicitContext = *pContext->implicitContext;
+  auto pQuadtreeTileID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+
+  const CesiumGeometry::QuadtreeTileID swID(
+      pQuadtreeTileID->level + 1,
+      pQuadtreeTileID->x * 2,
+      pQuadtreeTileID->y * 2);
+  const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+  const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+  const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+
+  uint8_t sw = 0;
+  uint8_t se = 0;
+  uint8_t nw = 0;
+  uint8_t ne = 0;
+
+  sw = implicitContext.rectangleAvailability->isTileAvailable(swID);
+  se = implicitContext.rectangleAvailability->isTileAvailable(seID);
+  nw = implicitContext.rectangleAvailability->isTileAvailable(nwID);
+  ne = implicitContext.rectangleAvailability->isTileAvailable(neID);
+
+  size_t childCount = static_cast<size_t>(
+      (sw & TileAvailabilityFlags::TILE_AVAILABLE) +
+      (se & TileAvailabilityFlags::TILE_AVAILABLE) +
+      (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
+      (ne & TileAvailabilityFlags::TILE_AVAILABLE));
+
+  if (childCount > 0) {
+    // For quantized mesh, if any children are available, we need to create
+    // all four in order to avoid holes. But non-available tiles will be
+    // upsampled instead of loaded.
+
+    tile.createChildTiles(4);
+    gsl::span<Tile> children = tile.getChildren();
+
+    createImplicitQuadtreeTile(
+        pContext,
+        implicitContext,
+        tile,
+        children[0],
+        swID,
+        sw);
+    createImplicitQuadtreeTile(
+        pContext,
+        implicitContext,
+        tile,
+        children[1],
+        seID,
+        se);
+    createImplicitQuadtreeTile(
+        pContext,
+        implicitContext,
+        tile,
+        children[2],
+        nwID,
+        nw);
+    createImplicitQuadtreeTile(
+        pContext,
+        implicitContext,
+        tile,
+        children[3],
+        neID,
+        ne);
   }
-
-  auto availabilityLevels = *pContext->availabilityLevels;
-  auto parentLevel = id.level % availabilityLevels == 0
-                         ? id.level - availabilityLevels
-                         : (id.level / availabilityLevels) * availabilityLevels;
-
-  auto divisor = 1 << (id.level - parentLevel);
-  auto parentX = id.x / divisor;
-  auto parentY = id.y / divisor;
-
-  return std::make_optional<QuadtreeTileID>(parentLevel, parentX, parentY);
-}
-
-// goes up the tree until it finds a tile that is available using same context.
-const TileContext*
-checkLayer(const TileContext* pContext, const QuadtreeTileID& id) {
-  if (!pContext->availabilityLevels) {
-    // not in this player
-    return false;
-  }
-  auto tile = getAvailabilityTile(pContext, id);
-  while (tile) {
-    if (pContext->implicitContext->rectangleAvailability->isTileAvailable(id)) {
-      return pContext;
-    }
-    tile = getAvailabilityTile(pContext, *tile);
-  }
-  return nullptr;
-}
-
-// Finds the first context in a "pUnderlyingContext" chain that has a given tile
-// ID available. If the ID is not available from any context, returns nullptr.
-TileContext* findContextWithTileID(
-    TileContext* pStart,
-    const QuadtreeTileID& id,
-    const QuadtreeTileID& parentID,
-    uint8_t& availability,
-    bool& unknowns) {
-  TileContext* pCurrent = pStart;
-
-  while (true) {
-    if (pCurrent->implicitContext) {
-      availability =
-          pCurrent->implicitContext->rectangleAvailability->isTileAvailable(id);
-      if (availability) {
-        return pCurrent;
-      } else if (
-          pCurrent->tilesLoaded.find(parentID) == pCurrent->tilesLoaded.end() &&
-          pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
-              parentID)) {
-        unknowns = true;
-        return pCurrent;
-      }
-    }
-    if (pCurrent->pUnderlyingContext.get()) {
-      pCurrent = pCurrent->pUnderlyingContext.get();
-    } else {
-      break;
-    }
-  }
-
-  return pCurrent;
 }
 
 void createImplicitQuadtreeTile(
@@ -443,6 +387,9 @@ void createImplicitChildrenIfNeeded(
       // Check if any child tiles are known to be available, and create them if
       // they are.
 
+      if (implicitContext.rectangleAvailability) {
+        return HandleLayeredTerrain(tile);
+      }
       const QuadtreeTileID swID(
           pQuadtreeTileID->level + 1,
           pQuadtreeTileID->x * 2,
@@ -456,110 +403,7 @@ void createImplicitChildrenIfNeeded(
       uint8_t nw = 0;
       uint8_t ne = 0;
 
-      TileContext* pSW = nullptr;
-      TileContext* pSE = nullptr;
-      TileContext* pNW = nullptr;
-      TileContext* pNE = nullptr;
-
-      if (implicitContext.rectangleAvailability) {
-        bool unknowns = false;
-        pSW = findContextWithTileID(
-            pContext,
-            swID,
-            *pQuadtreeTileID,
-            sw,
-            unknowns);
-        pSE = findContextWithTileID(
-            pContext,
-            seID,
-            *pQuadtreeTileID,
-            se,
-            unknowns);
-        pNW = findContextWithTileID(
-            pContext,
-            nwID,
-            *pQuadtreeTileID,
-            nw,
-            unknowns);
-        pNE = findContextWithTileID(
-            pContext,
-            neID,
-            *pQuadtreeTileID,
-            ne,
-            unknowns);
-
-        if (unknowns) {
-          const auto& externals = tile.getTileset()->getExternals();
-          const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
-          auto& pAssetAccessor = externals.pAssetAccessor;
-          auto& pLogger = externals.pLogger;
-
-          TileContext* contexts[4] = {pSW, pSE, pNW, pNE};
-          QuadtreeTileID tileIDs[4] = {swID, seID, nwID, neID};
-          uint8_t availables[4] = {sw, se, nw, ne};
-          std::vector<Future<std::unique_ptr<TileContentLoadResult>>> futs;
-          for (int i = 0; i < 4; i++) {
-            auto pChildContext = contexts[i];
-            auto url = pChildContext->pTileset->getResolvedContentUrl(
-                *pChildContext,
-                tileIDs[i]);
-
-            auto fut = fetchAvailability(
-                pLogger,
-                url,
-                tileIDs[i],
-                pChildContext,
-                asyncSystem,
-                pAssetAccessor);
-
-            futs.push_back(std::move(fut));
-          }
-          asyncSystem.all(std::move(futs))
-              .thenInMainThread(
-                  [&tile, &tileIDs, pQuadtreeTileID, contexts](
-                      std::vector<std::unique_ptr<TileContentLoadResult>>&&
-                          loadResults) {
-                    uint8_t results[4] = {0, 0, 0, 0};
-
-                    for (int i = 0; i < 4; i++) {
-                      auto& implicitContext =
-                          contexts[i]->implicitContext.value();
-                      auto& loadResult = loadResults[i];
-                      if (loadResult &&
-                          !loadResult->availableTileRectangles.empty()) {
-
-                        for (const QuadtreeTileRectangularRange& range :
-                             loadResult->availableTileRectangles) {
-                          implicitContext.rectangleAvailability
-                              ->addAvailableTileRange(range);
-                        }
-
-                        results[i] = implicitContext.rectangleAvailability
-                                         ->isTileAvailable(*pQuadtreeTileID);
-                      }
-                    }
-                    if ((results[0] & TileAvailabilityFlags::TILE_AVAILABLE) ||
-                        (results[1] & TileAvailabilityFlags::TILE_AVAILABLE) ||
-                        (results[2] & TileAvailabilityFlags::TILE_AVAILABLE) ||
-                        (results[3] & TileAvailabilityFlags::TILE_AVAILABLE)) {
-
-                      tile.createChildTiles(4);
-                      gsl::span<Tile> children = tile.getChildren();
-                      for (int i = 0; i < 4; i++) {
-                        createImplicitQuadtreeTile(
-                            contexts[i],
-                            *contexts[i]->implicitContext,
-                            tile,
-                            children[i],
-                            tileIDs[i],
-                            results[i]);
-                      }
-                    }
-                  });
-          return;
-        }
-
-      } else if (implicitContext.quadtreeAvailability) {
+      if (implicitContext.quadtreeAvailability) {
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {
           // If the tiles are in child subtrees, we know enough about them to
@@ -615,43 +459,7 @@ void createImplicitChildrenIfNeeded(
           (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
           (ne & TileAvailabilityFlags::TILE_AVAILABLE));
 
-      if (implicitContext.rectangleAvailability && childCount > 0) {
-        // For quantized mesh, if any children are available, we need to create
-        // all four in order to avoid holes. But non-available tiles will be
-        // upsampled instead of loaded.
-
-        tile.createChildTiles(4);
-        gsl::span<Tile> children = tile.getChildren();
-
-        createImplicitQuadtreeTile(
-            pSW,
-            implicitContext,
-            tile,
-            children[0],
-            swID,
-            sw);
-        createImplicitQuadtreeTile(
-            pSE,
-            implicitContext,
-            tile,
-            children[1],
-            seID,
-            se);
-        createImplicitQuadtreeTile(
-            pNW,
-            implicitContext,
-            tile,
-            children[2],
-            nwID,
-            nw);
-        createImplicitQuadtreeTile(
-            pNE,
-            implicitContext,
-            tile,
-            children[3],
-            neID,
-            ne);
-      } else if (implicitContext.quadtreeAvailability) {
+      if (implicitContext.quadtreeAvailability) {
 
         tile.createChildTiles(childCount);
         gsl::span<Tile> children = tile.getChildren();
@@ -659,7 +467,7 @@ void createImplicitChildrenIfNeeded(
 
         if (sw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              tile.getContext(),
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -669,7 +477,7 @@ void createImplicitChildrenIfNeeded(
 
         if (se & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              tile.getContext(),
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -679,7 +487,7 @@ void createImplicitChildrenIfNeeded(
 
         if (nw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              tile.getContext(),
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -689,7 +497,7 @@ void createImplicitChildrenIfNeeded(
 
         if (ne & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              tile.getContext(),
+              pContext,
               implicitContext,
               tile,
               children[childIndex],
