@@ -50,6 +50,7 @@ public:
 private:
   int64_t _ionAssetID;
   std::string _ionAccessToken;
+  std::unique_ptr<RasterOverlay> _pAggregatedOverlay;
 
   struct AssetEndpointAttribution {
     std::string html;

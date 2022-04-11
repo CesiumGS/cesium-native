@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a crash caused by using an aggregated overlay of `IonRasterOverlay` after it is freed.
+
 ### v0.14.0 - 2022-04-01
 
 ##### Breaking Changes :mega:
