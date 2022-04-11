@@ -570,11 +570,13 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     QuadtreeTileID id(0, i, 0);
 
     uint8_t availability = 0;
+    bool dummy = false;
     auto pChildContext = ImplicitTraversalUtilities::findContextWithTileID(
         &context,
         id,
         id,
-        availability);
+        availability,
+        dummy);
 
     childTile.setContext(pChildContext);
     childTile.setParent(&tile);

@@ -18,8 +18,8 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
 
-Future<std::optional<std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>>
-fetchAvailability(
+Future<std::unique_ptr<TileContentLoadResult>> fetchAvailability(
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const QuadtreeTileID& tileID,
     TileContext* pChildContext,
@@ -27,24 +27,44 @@ fetchAvailability(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
   return pAssetAccessor->get(asyncSystem, url, pChildContext->requestHeaders)
       .thenInWorkerThread(
-          [pChildContext,
-           tileID](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-              -> std::optional<
-                  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>> {
+          [&pLogger, url, pChildContext, tileID](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
+              -> std::unique_ptr<TileContentLoadResult> {
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse) {
 
               uint16_t statusCode = pResponse->statusCode();
 
               if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-                return std::nullopt;
+                return nullptr;
               }
 
               const gsl::span<const std::byte>& data = pResponse->data();
 
-              return QuantizedMeshContent::GetAvailability(data, tileID);
+              // return QuantizedMeshContent::GetAvailability(data, tileID);
+
+              CesiumGeometry::Rectangle tileRectangle =
+                  pChildContext->implicitContext->quadtreeTilingScheme
+                      ->tileToRectangle(tileID);
+
+              BoundingRegion boundingVolume = BoundingRegion(
+                  GlobeRectangle(
+                      tileRectangle.minimumX,
+                      tileRectangle.minimumY,
+                      tileRectangle.maximumX,
+                      tileRectangle.maximumY),
+                  0.0,
+                  0.0);
+
+              return std::move(QuantizedMeshContent::load(
+                  pLogger,
+                  tileID,
+                  boundingVolume,
+                  url,
+                  data,
+                  false));
             }
-            return std::nullopt;
+            return nullptr;
           });
 }
 
@@ -234,7 +254,8 @@ TileContext* findContextWithTileID(
     TileContext* pStart,
     const QuadtreeTileID& id,
     const QuadtreeTileID& parentID,
-    uint8_t& availability) {
+    uint8_t& availability,
+    bool& unknowns) {
   TileContext* pCurrent = pStart;
 
   while (true) {
@@ -247,7 +268,7 @@ TileContext* findContextWithTileID(
           pCurrent->tilesLoaded.find(parentID) == pCurrent->tilesLoaded.end() &&
           pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
               parentID)) {
-        availability = TileAvailabilityFlags::REACHABLE;
+        unknowns = true;
         return pCurrent;
       }
     }
@@ -441,27 +462,42 @@ void createImplicitChildrenIfNeeded(
       TileContext* pNE = nullptr;
 
       if (implicitContext.rectangleAvailability) {
-        pSW = findContextWithTileID(pContext, swID, *pQuadtreeTileID, sw);
-        pSE = findContextWithTileID(pContext, seID, *pQuadtreeTileID, se);
-        pNW = findContextWithTileID(pContext, nwID, *pQuadtreeTileID, nw);
-        pNE = findContextWithTileID(pContext, neID, *pQuadtreeTileID, ne);
+        bool unknowns = false;
+        pSW = findContextWithTileID(
+            pContext,
+            swID,
+            *pQuadtreeTileID,
+            sw,
+            unknowns);
+        pSE = findContextWithTileID(
+            pContext,
+            seID,
+            *pQuadtreeTileID,
+            se,
+            unknowns);
+        pNW = findContextWithTileID(
+            pContext,
+            nwID,
+            *pQuadtreeTileID,
+            nw,
+            unknowns);
+        pNE = findContextWithTileID(
+            pContext,
+            neID,
+            *pQuadtreeTileID,
+            ne,
+            unknowns);
 
-        int anyUnknowns = sw & TileAvailabilityFlags::REACHABLE +
-                          se & TileAvailabilityFlags::REACHABLE +
-                          nw & TileAvailabilityFlags::REACHABLE +
-                          ne & TileAvailabilityFlags::REACHABLE;
-
-        if (anyUnknowns > 0) {
+        if (unknowns) {
           const auto& externals = tile.getTileset()->getExternals();
           const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
           auto& pAssetAccessor = externals.pAssetAccessor;
+          auto& pLogger = externals.pLogger;
 
           TileContext* contexts[4] = {pSW, pSE, pNW, pNE};
           QuadtreeTileID tileIDs[4] = {swID, seID, nwID, neID};
           uint8_t availables[4] = {sw, se, nw, ne};
-          std::vector<CesiumAsync::Future<std::optional<
-              std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>>>
-              futs;
+          std::vector<Future<std::unique_ptr<TileContentLoadResult>>> futs;
           for (int i = 0; i < 4; i++) {
             auto pChildContext = contexts[i];
             auto url = pChildContext->pTileset->getResolvedContentUrl(
@@ -469,6 +505,7 @@ void createImplicitChildrenIfNeeded(
                 tileIDs[i]);
 
             auto fut = fetchAvailability(
+                pLogger,
                 url,
                 tileIDs[i],
                 pChildContext,
@@ -480,18 +517,19 @@ void createImplicitChildrenIfNeeded(
           asyncSystem.all(std::move(futs))
               .thenInMainThread(
                   [&tile, &tileIDs, pQuadtreeTileID, contexts](
-                      std::vector<std::optional<std::vector<
-                          CesiumGeometry::QuadtreeTileRectangularRange>>>&&
-                          rectangles) {
+                      std::vector<std::unique_ptr<TileContentLoadResult>>&&
+                          loadResults) {
                     uint8_t results[4] = {0, 0, 0, 0};
 
                     for (int i = 0; i < 4; i++) {
                       auto& implicitContext =
                           contexts[i]->implicitContext.value();
-                      if (rectangles[i].has_value()) {
+                      auto& loadResult = loadResults[i];
+                      if (loadResult &&
+                          !loadResult->availableTileRectangles.empty()) {
 
                         for (const QuadtreeTileRectangularRange& range :
-                             *rectangles[i]) {
+                             loadResult->availableTileRectangles) {
                           implicitContext.rectangleAvailability
                               ->addAvailableTileRange(range);
                         }
