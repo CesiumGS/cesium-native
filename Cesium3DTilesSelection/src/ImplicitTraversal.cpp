@@ -247,7 +247,7 @@ TileContext* findContextWithTileID(
           pCurrent->tilesLoaded.find(parentID) == pCurrent->tilesLoaded.end() &&
           pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
               parentID)) {
-        availability = TileAvailabilityFlags::UNKNOWN;
+        availability = TileAvailabilityFlags::REACHABLE;
         return pCurrent;
       }
     }
@@ -446,10 +446,10 @@ void createImplicitChildrenIfNeeded(
         pNW = findContextWithTileID(pContext, nwID, *pQuadtreeTileID, nw);
         pNE = findContextWithTileID(pContext, neID, *pQuadtreeTileID, ne);
 
-        int anyUnknowns = sw & TileAvailabilityFlags::UNKNOWN + se &
-                          TileAvailabilityFlags::UNKNOWN + nw &
-                          TileAvailabilityFlags::UNKNOWN + ne &
-                          TileAvailabilityFlags::UNKNOWN;
+        int anyUnknowns = sw & TileAvailabilityFlags::REACHABLE +
+                          se & TileAvailabilityFlags::REACHABLE +
+                          nw & TileAvailabilityFlags::REACHABLE +
+                          ne & TileAvailabilityFlags::REACHABLE;
 
         if (anyUnknowns > 0) {
           const auto& externals = tile.getTileset()->getExternals();
