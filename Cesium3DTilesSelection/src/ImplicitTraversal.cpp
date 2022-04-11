@@ -157,6 +157,43 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
+CesiumGeometry::QuadtreeTileID GetParentTile(
+    const TileContext* pContext,
+    uint32_t x,
+    uint32_t y,
+    uint32_t level) {
+
+  auto availabilityLevels = *pContext->availabilityLevels;
+
+  auto parentLevel = level % availabilityLevels == 0
+                         ? level - availabilityLevels
+                         : (level / availabilityLevels) * availabilityLevels;
+
+  auto divisor = 1 << (level - parentLevel);
+  auto parentX = x / divisor;
+  auto parentY = y / divisor;
+
+  return QuadtreeTileID(parentLevel, parentX, parentY);
+}
+
+std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAncestorTile(
+    const TileContext* pContext,
+    const CesiumGeometry::QuadtreeTileID& tileID) {
+  if (!pContext->availabilityLevels) {
+    return std::nullopt;
+  }
+
+  while (tileID.level > 0) {
+    auto tile = GetParentTile(pContext, tileID.x, tileID.y, tileID.level);
+    if (pContext->implicitContext->rectangleAvailability->isTileAvailable(
+            tileID) &&
+        pContext->tilesLoaded.find(tile) != pContext->tilesLoaded.end()) {
+      return std::make_optional<QuadtreeTileID>(tile);
+    }
+  }
+  return std::nullopt;
+}
+
 void HandleLayeredTerrain(Tile& tile) {
   auto pContext = tile.getContext();
   auto& implicitContext = *pContext->implicitContext;
@@ -175,6 +212,38 @@ void HandleLayeredTerrain(Tile& tile) {
   uint8_t se = 0;
   uint8_t nw = 0;
   uint8_t ne = 0;
+
+  const QuadtreeTileID* ids[4] = {&swID, &seID, &nwID, &neID};
+  uint8_t* availabilities[4] = {&sw, &se, &nw, &ne};
+  TileContext* contexts[4] = {pContext};
+
+  std::optional<CesiumGeometry::QuadtreeTileID> unloadedAncestorTile;
+
+  for (int i = 0; i < 2; i++) {
+    const QuadtreeTileID* id = ids[i];
+    uint8_t& available = *availabilities[i];
+    auto pCurrent = contexts[i];
+    while (true) {
+      available =
+          pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
+              *id);
+      if (available) {
+        contexts[i] = pCurrent;
+        break;
+      }
+
+      unloadedAncestorTile = GetUnloadedAncestorTile(pCurrent, *id);
+      if (unloadedAncestorTile) {
+        // need to load prerequisite tile before going any further
+      }
+
+      if (pCurrent->pUnderlyingContext) {
+        pCurrent = pCurrent->pUnderlyingContext.get();
+      } else {
+        break;
+      }
+    }
+  }
 
   sw = implicitContext.rectangleAvailability->isTileAvailable(swID);
   se = implicitContext.rectangleAvailability->isTileAvailable(seID);
