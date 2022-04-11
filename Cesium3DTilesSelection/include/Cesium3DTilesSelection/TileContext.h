@@ -229,8 +229,6 @@ public:
    */
   std::unique_ptr<TileContext> pUnderlyingContext;
 
-  TileContext* pRootContext = nullptr;
-
   std::optional<int> availabilityLevels;
 
   std::unordered_set<CesiumGeometry::QuadtreeTileID> tilesLoaded;

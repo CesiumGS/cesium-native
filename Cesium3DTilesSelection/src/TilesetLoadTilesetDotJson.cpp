@@ -335,8 +335,6 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     TileContext* rootContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
-  context.pRootContext = rootContext;
-
   const auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
       tilesetVersionIt->value.IsString()) {

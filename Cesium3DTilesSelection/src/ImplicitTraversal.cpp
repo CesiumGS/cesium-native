@@ -440,13 +440,11 @@ void createImplicitChildrenIfNeeded(
       TileContext* pNW = nullptr;
       TileContext* pNE = nullptr;
 
-      auto pRootContext = pContext->pRootContext;
-
       if (implicitContext.rectangleAvailability) {
-        pSW = findContextWithTileID(pRootContext, swID, *pQuadtreeTileID, sw);
-        pSE = findContextWithTileID(pRootContext, seID, *pQuadtreeTileID, se);
-        pNW = findContextWithTileID(pRootContext, nwID, *pQuadtreeTileID, nw);
-        pNE = findContextWithTileID(pRootContext, neID, *pQuadtreeTileID, ne);
+        pSW = findContextWithTileID(pContext, swID, *pQuadtreeTileID, sw);
+        pSE = findContextWithTileID(pContext, seID, *pQuadtreeTileID, se);
+        pNW = findContextWithTileID(pContext, nwID, *pQuadtreeTileID, nw);
+        pNE = findContextWithTileID(pContext, neID, *pQuadtreeTileID, ne);
 
         int anyUnknowns = sw & TileAvailabilityFlags::UNKNOWN + se &
                           TileAvailabilityFlags::UNKNOWN + nw &
