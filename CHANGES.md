@@ -1,27 +1,43 @@
 # Change Log
-### v0.14.0 - YYYY-MM-DD
 
-##### Breaking Changes :mega:
-
-- Added a parameter to `prepareRasterInLoadThread`
+### ? - ?
 
 ##### Fixes :wrench:
 
-- Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
-- Fix upsampling for EXT_feature_metadata feature tables.
-- Fixed a bug that could cause the size of external images to be accounted for incorrectly when tracking the number of bytes loaded for caching purposes.
-- Fixed an issue where Ion Raster Overlay crashes when its aggregated overlay isn't saved
+- Fixed a crash caused by using an aggregated overlay of `IonRasterOverlay` after it is freed.
+
+### v0.14.0 - 2022-04-01
+
+##### Breaking Changes :mega:
+
+- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareRasterInLoadThread`.
+- Changed the type of Cesium ion asset IDs from `uint32_t` to `int64_t`.
+- Various changes in the `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` namespaces to match the evolving 3D Tiles Next specifications.
+- Removed `getTextureCoordinateIndex` from `FeatureIDTextureView` and `FeatureTexturePropertyView`. Use `getTextureCoordinateAttributeId` instead.
 
 ##### Additions :tada:
 
-- Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
-- Add ScopeGuard utility to automatically execute function when exiting a scope.
-- Add glTF copyright information to the list of tileset credits.
-- Credits are now sorted based on the number of occurrences.
-- Added option to show credits on screen.
-- Expose the swizzle string in feature texture property views.
-- Add a type trait check for if something is a metadata array.
-- Add option to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
+- Added `WebMapServiceRasterOverlay` to pull raster overlays from a WMS server.
+- Added support for the following glTF extensions to `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`:
+  - `EXT_instance_features`
+  - `EXT_structural_metadata`
+  - `MAXAR_mesh_variants`
+- Added an in-memory cache for Cesium ion asset endpoint responses in order to avoid repeated requests.
+- Added `ScopeGuard` class to automatically a execute function when exiting a scope.
+- The glTF `copyright` property, if present, is now included in the credits that `Tileset` adds to the `CreditSystem`. If the `copyright` has multiple parts separate by semicolons, these are treated as separate credits.
+- Credits reported by `CreditSystem::getCreditsToShowThisFrame` are now sorted based on the number of occurrences, with the most common credits first.
+- `Tileset` and `RasterOverlay` credits can now be shown on the screen, rather than in a separate credit popup.
+- Added `FeatureTexturePropertyView::getSwizzle` method.
+- Added `IsMetadataArray` template to check if a type is a `MetadataArrayView`.
+- Added a `rendererOptions` property to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
+- Added `Uri::escape`.
+
+##### Fixes :wrench:
+
+- Fixed an issue that could lead to compilation failures when passing an lvalue reference to `Promise::resolve()`.
+- Fixed upsampling for `EXT_feature_metadata` feature tables.
+- Fixed a bug that could cause the size of external images to be accounted for incorrectly when tracking the number of bytes loaded for caching purposes.
+- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was enabled.
 
 ### v0.13.0 - 2022-03-01
 
@@ -44,7 +60,6 @@
 
 - Fixed bug that could cause properties types in a B3DM Batch Table to be deduced incorrectly, leading to a crash when accessing property values.
 - Fixed a bug where implicit tiles were not receiving the root transform and so could sometimes end up in the wrong place.
-- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was true.
 
 ### v0.12.0 - 2022-02-01
 

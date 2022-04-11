@@ -20,5 +20,7 @@ public:
   static std::string substituteTemplateParameters(
       const std::string& templateUri,
       const std::function<SubstitutionCallbackSignature>& substitutionCallback);
+
+  static std::string escape(const std::string& s);
 };
 } // namespace CesiumUtility
