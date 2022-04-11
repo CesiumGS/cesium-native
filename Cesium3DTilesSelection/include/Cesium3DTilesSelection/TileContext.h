@@ -229,7 +229,7 @@ public:
    */
   std::unique_ptr<TileContext> pUnderlyingContext;
 
-  std::optional<int> availabilityLevels;
+  std::optional<uint32_t> availabilityLevels;
 
   std::unordered_set<CesiumGeometry::QuadtreeTileID> tilesLoaded;
 };

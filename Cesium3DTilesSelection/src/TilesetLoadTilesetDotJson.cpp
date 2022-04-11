@@ -469,6 +469,8 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
   } else if (
       availabilityLevelsIt != layerJson.MemberEnd() &&
       availabilityLevelsIt->value.IsInt()) {
+    context.availabilityLevels =
+        std::make_optional<uint32_t>(availabilityLevelsIt->value.GetInt());
     context.implicitContext->rectangleAvailability->addAvailableTileRange(
         CesiumGeometry::QuadtreeTileRectangularRange{0, 0, 0, 1, 0});
   }
@@ -569,16 +571,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     Tile& childTile = tile.getChildren()[i];
     QuadtreeTileID id(0, i, 0);
 
-    uint8_t availability = 0;
-    bool dummy = false;
-    auto pChildContext = ImplicitTraversalUtilities::findContextWithTileID(
-        &context,
-        id,
-        id,
-        availability,
-        dummy);
-
-    childTile.setContext(pChildContext);
+    childTile.setContext(&context);
     childTile.setParent(&tile);
     childTile.setTileID(id);
     const CesiumGeospatial::GlobeRectangle childGlobeRectangle =

@@ -161,38 +161,33 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
-CesiumGeometry::QuadtreeTileID GetParentTile(
-    const TileContext* pContext,
-    uint32_t x,
-    uint32_t y,
-    uint32_t level) {
+CesiumGeometry::QuadtreeTileID
+GetParentTile(uint32_t x, uint32_t y, uint32_t level) {
 
-  auto availabilityLevels = *pContext->availabilityLevels;
+  // auto parentLevel = level % availabilityLevels == 0
+  //                        ? level - availabilityLevels
+  //                        : (level / availabilityLevels) * availabilityLevels;
 
-  auto parentLevel = level % availabilityLevels == 0
-                         ? level - availabilityLevels
-                         : (level / availabilityLevels) * availabilityLevels;
-
-  auto divisor = 1 << (level - parentLevel);
-  auto parentX = x / divisor;
-  auto parentY = y / divisor;
+  auto parentLevel = level - 1;
+  auto parentX = x / 2;
+  auto parentY = y / 2;
 
   return QuadtreeTileID(parentLevel, parentX, parentY);
 }
 
 std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAncestorTile(
     const TileContext* pContext,
-    const CesiumGeometry::QuadtreeTileID& tileID) {
+    CesiumGeometry::QuadtreeTileID tileID) {
   if (!pContext->availabilityLevels) {
     return std::nullopt;
   }
 
   while (tileID.level > 0) {
-    auto tile = GetParentTile(pContext, tileID.x, tileID.y, tileID.level);
+    tileID = GetParentTile(tileID.x, tileID.y, tileID.level);
     if (pContext->implicitContext->rectangleAvailability->isTileAvailable(
             tileID) &&
-        pContext->tilesLoaded.find(tile) != pContext->tilesLoaded.end()) {
-      return std::make_optional<QuadtreeTileID>(tile);
+        pContext->tilesLoaded.find(tileID) == pContext->tilesLoaded.end()) {
+      return std::make_optional<QuadtreeTileID>(tileID);
     }
   }
   return std::nullopt;
@@ -200,7 +195,6 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAncestorTile(
 
 void HandleLayeredTerrain(Tile& tile) {
   auto pContext = tile.getContext();
-  auto& implicitContext = *pContext->implicitContext;
   auto pQuadtreeTileID =
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
 
@@ -212,20 +206,15 @@ void HandleLayeredTerrain(Tile& tile) {
   const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
   const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
-  uint8_t sw = 0;
-  uint8_t se = 0;
-  uint8_t nw = 0;
-  uint8_t ne = 0;
-
   const QuadtreeTileID* ids[4] = {&swID, &seID, &nwID, &neID};
-  uint8_t* availabilities[4] = {&sw, &se, &nw, &ne};
-  TileContext* contexts[4] = {pContext};
+  uint8_t availabilities[4] = {0, 0, 0, 0};
+  TileContext* contexts[4] = {pContext, pContext, pContext, pContext};
 
   std::optional<CesiumGeometry::QuadtreeTileID> unloadedAncestorTile;
 
   for (int i = 0; i < 4; i++) {
     const QuadtreeTileID* id = ids[i];
-    uint8_t& available = *availabilities[i];
+    uint8_t& available = availabilities[i];
     auto pCurrent = contexts[i];
     while (true) {
       available =
@@ -238,18 +227,20 @@ void HandleLayeredTerrain(Tile& tile) {
 
       unloadedAncestorTile = GetUnloadedAncestorTile(pCurrent, *id);
       if (unloadedAncestorTile) {
+        auto tileToLoad = *unloadedAncestorTile;
         // need to load prerequisite tile before going any further
 
         const auto& externals = tile.getTileset()->getExternals();
         const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
         auto& pAssetAccessor = externals.pAssetAccessor;
         auto pLogger = externals.pLogger;
-        auto url = pCurrent->pTileset->getResolvedContentUrl(*pCurrent, *id);
+        auto url =
+            pCurrent->pTileset->getResolvedContentUrl(*pCurrent, tileToLoad);
 
         CesiumAsync::Future<int> future =
             pAssetAccessor->get(asyncSystem, url, pCurrent->requestHeaders)
                 .thenInWorkerThread(
-                    [&pLogger, url, pCurrent, id](
+                    [&pLogger, url, pCurrent, tileToLoad](
                         std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
                         -> std::unique_ptr<TileContentLoadResult> {
                       const CesiumAsync::IAssetResponse* pResponse =
@@ -267,7 +258,7 @@ void HandleLayeredTerrain(Tile& tile) {
 
                         CesiumGeometry::Rectangle tileRectangle =
                             pCurrent->implicitContext->quadtreeTilingScheme
-                                ->tileToRectangle(*id);
+                                ->tileToRectangle(tileToLoad);
 
                         BoundingRegion boundingVolume = BoundingRegion(
                             GlobeRectangle(
@@ -280,7 +271,7 @@ void HandleLayeredTerrain(Tile& tile) {
 
                         return std::move(QuantizedMeshContent::load(
                             pLogger,
-                            *id,
+                            tileToLoad,
                             boundingVolume,
                             url,
                             data,
@@ -289,19 +280,19 @@ void HandleLayeredTerrain(Tile& tile) {
                       return nullptr;
                     })
                 .thenInMainThread(
-                    [&tile, pCurrent](
+                    [&tile, pCurrent, tileToLoad](
                         std::unique_ptr<TileContentLoadResult>&& result) {
+                      pCurrent->tilesLoaded.insert(tileToLoad);
                       if (result && !result->availableTileRectangles.empty()) {
                         for (const CesiumGeometry::QuadtreeTileRectangularRange&
                                  range : result->availableTileRectangles) {
                           pCurrent->implicitContext->rectangleAvailability
                               ->addAvailableTileRange(range);
                         }
-                        HandleLayeredTerrain(tile);
                       }
+                      HandleLayeredTerrain(tile);
                       return 0;
                     });
-        ;
         std::vector<CesiumAsync::Future<int>> vector;
         vector.push_back(std::move(future));
         asyncSystem.all(std::move(vector));
@@ -315,16 +306,11 @@ void HandleLayeredTerrain(Tile& tile) {
     }
   }
 
-  sw = implicitContext.rectangleAvailability->isTileAvailable(swID);
-  se = implicitContext.rectangleAvailability->isTileAvailable(seID);
-  nw = implicitContext.rectangleAvailability->isTileAvailable(nwID);
-  ne = implicitContext.rectangleAvailability->isTileAvailable(neID);
-
   size_t childCount = static_cast<size_t>(
-      (sw & TileAvailabilityFlags::TILE_AVAILABLE) +
-      (se & TileAvailabilityFlags::TILE_AVAILABLE) +
-      (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
-      (ne & TileAvailabilityFlags::TILE_AVAILABLE));
+      (availabilities[0] & TileAvailabilityFlags::TILE_AVAILABLE) +
+      (availabilities[1] & TileAvailabilityFlags::TILE_AVAILABLE) +
+      (availabilities[2] & TileAvailabilityFlags::TILE_AVAILABLE) +
+      (availabilities[3] & TileAvailabilityFlags::TILE_AVAILABLE));
 
   if (childCount > 0) {
     // For quantized mesh, if any children are available, we need to create
@@ -335,33 +321,33 @@ void HandleLayeredTerrain(Tile& tile) {
     gsl::span<Tile> children = tile.getChildren();
 
     createImplicitQuadtreeTile(
-        pContext,
-        implicitContext,
+        contexts[0],
+        *contexts[0]->implicitContext,
         tile,
         children[0],
         swID,
-        sw);
+        availabilities[0]);
     createImplicitQuadtreeTile(
-        pContext,
-        implicitContext,
+        contexts[1],
+        *contexts[1]->implicitContext,
         tile,
         children[1],
         seID,
-        se);
+        availabilities[1]);
     createImplicitQuadtreeTile(
-        pContext,
-        implicitContext,
+        contexts[2],
+        *contexts[2]->implicitContext,
         tile,
         children[2],
         nwID,
-        nw);
+        availabilities[2]);
     createImplicitQuadtreeTile(
-        pContext,
-        implicitContext,
+        contexts[3],
+        *contexts[3]->implicitContext,
         tile,
         children[3],
         neID,
-        ne);
+        availabilities[3]);
   }
 }
 
