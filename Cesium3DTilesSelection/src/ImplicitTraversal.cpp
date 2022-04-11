@@ -3,6 +3,10 @@
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/TileContext.h"
+#include "Cesium3DTilesSelection/Tileset.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
+#include "QuantizedMeshContent.h"
 
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
@@ -219,7 +223,7 @@ void HandleLayeredTerrain(Tile& tile) {
 
   std::optional<CesiumGeometry::QuadtreeTileID> unloadedAncestorTile;
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 4; i++) {
     const QuadtreeTileID* id = ids[i];
     uint8_t& available = *availabilities[i];
     auto pCurrent = contexts[i];
@@ -235,8 +239,74 @@ void HandleLayeredTerrain(Tile& tile) {
       unloadedAncestorTile = GetUnloadedAncestorTile(pCurrent, *id);
       if (unloadedAncestorTile) {
         // need to load prerequisite tile before going any further
-      }
 
+        const auto& externals = tile.getTileset()->getExternals();
+        const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
+        auto& pAssetAccessor = externals.pAssetAccessor;
+        auto pLogger = externals.pLogger;
+        auto url = pCurrent->pTileset->getResolvedContentUrl(*pCurrent, *id);
+
+        CesiumAsync::Future<int> future =
+            pAssetAccessor->get(asyncSystem, url, pCurrent->requestHeaders)
+                .thenInWorkerThread(
+                    [&pLogger, url, pCurrent, id](
+                        std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
+                        -> std::unique_ptr<TileContentLoadResult> {
+                      const CesiumAsync::IAssetResponse* pResponse =
+                          pRequest->response();
+                      if (pResponse) {
+                        uint16_t statusCode = pResponse->statusCode();
+
+                        if (statusCode != 0 &&
+                            (statusCode < 200 || statusCode >= 300)) {
+                          return nullptr;
+                        }
+
+                        const gsl::span<const std::byte>& data =
+                            pResponse->data();
+
+                        CesiumGeometry::Rectangle tileRectangle =
+                            pCurrent->implicitContext->quadtreeTilingScheme
+                                ->tileToRectangle(*id);
+
+                        BoundingRegion boundingVolume = BoundingRegion(
+                            GlobeRectangle(
+                                tileRectangle.minimumX,
+                                tileRectangle.minimumY,
+                                tileRectangle.maximumX,
+                                tileRectangle.maximumY),
+                            0,
+                            0);
+
+                        return std::move(QuantizedMeshContent::load(
+                            pLogger,
+                            *id,
+                            boundingVolume,
+                            url,
+                            data,
+                            false));
+                      }
+                      return nullptr;
+                    })
+                .thenInMainThread(
+                    [&tile, pCurrent](
+                        std::unique_ptr<TileContentLoadResult>&& result) {
+                      if (result && !result->availableTileRectangles.empty()) {
+                        for (const CesiumGeometry::QuadtreeTileRectangularRange&
+                                 range : result->availableTileRectangles) {
+                          pCurrent->implicitContext->rectangleAvailability
+                              ->addAvailableTileRange(range);
+                        }
+                        HandleLayeredTerrain(tile);
+                      }
+                      return 0;
+                    });
+        ;
+        std::vector<CesiumAsync::Future<int>> vector;
+        vector.push_back(std::move(future));
+        asyncSystem.all(std::move(vector));
+        return;
+      }
       if (pCurrent->pUnderlyingContext) {
         pCurrent = pCurrent->pUnderlyingContext.get();
       } else {
@@ -453,8 +523,8 @@ void createImplicitChildrenIfNeeded(
         std::get_if<OctreeTileID>(&tile.getTileID());
 
     if (pQuadtreeTileID) {
-      // Check if any child tiles are known to be available, and create them if
-      // they are.
+      // Check if any child tiles are known to be available, and create them
+      // if they are.
 
       if (implicitContext.rectangleAvailability) {
         return HandleLayeredTerrain(tile);
@@ -476,9 +546,9 @@ void createImplicitChildrenIfNeeded(
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {
           // If the tiles are in child subtrees, we know enough about them to
-          // decide whether to create the tile itself and whether each will act
-          // as the root to a child subtree, but we do not yet know if they
-          // will have content.
+          // decide whether to create the tile itself and whether each will
+          // act as the root to a child subtree, but we do not yet know if
+          // they will have content.
           if (implicitContext.quadtreeAvailability->findChildNodeIndex(
                   swID,
                   implicitInfo.pCurrentNode)) {
@@ -576,8 +646,8 @@ void createImplicitChildrenIfNeeded(
       }
 
     } else if (pOctreeTileID && implicitContext.octreeAvailability) {
-      // Check if any child tiles are known to be available, and create them if
-      // they are.
+      // Check if any child tiles are known to be available, and create them
+      // if they are.
 
       uint8_t availabilities[8];
       OctreeTileID childIDs[8];
