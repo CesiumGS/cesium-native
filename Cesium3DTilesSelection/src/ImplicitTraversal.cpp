@@ -191,7 +191,8 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
     tileID = GetAvailabilityTile(pContext, tileID.x, tileID.y, tileID.level);
     if (pContext->implicitContext->rectangleAvailability->isTileAvailable(
             tileID) &&
-        pContext->availabilityTilesLoaded.find(tileID) == pContext->availabilityTilesLoaded.end()) {
+        pContext->availabilityTilesLoaded.find(tileID) ==
+            pContext->availabilityTilesLoaded.end()) {
       return std::make_optional<QuadtreeTileID>(tileID);
     }
   }
@@ -298,9 +299,6 @@ void HandleLayeredTerrain(Tile& tile) {
                       }
                       return 0;
                     });
-        std::vector<CesiumAsync::Future<int>> vector;
-        vector.push_back(std::move(future));
-        asyncSystem.all(std::move(vector));
         return;
       }
       if (pCurrent->pUnderlyingContext) {
