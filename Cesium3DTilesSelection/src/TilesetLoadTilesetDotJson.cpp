@@ -3,6 +3,7 @@
 #include "Cesium3DTilesSelection/ImplicitTraversal.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
+#include "QuantizedMeshContent.h"
 #include "TilesetLoadTileFromJson.h"
 #include "calcQuadtreeMaxGeometricError.h"
 
@@ -39,7 +40,7 @@ struct Tileset::LoadTilesetDotJson::Private {
       bool useWaterMask);
 
   static void workerThreadLoadTileContext(
-      const rapidjson::Value& layerJson,
+      const rapidjson::Document& layerJson,
       TileContext& context,
       TileContext* rootContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -47,7 +48,7 @@ struct Tileset::LoadTilesetDotJson::Private {
 
   static void workerThreadLoadTerrainTile(
       Tile& tile,
-      const rapidjson::Value& layerJson,
+      const rapidjson::Document& layerJson,
       TileContext& context,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
@@ -330,7 +331,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 } // namespace
 
 void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
-    const rapidjson::Value& layerJson,
+    const rapidjson::Document& layerJson,
     TileContext& context,
     TileContext* rootContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -434,6 +435,19 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
 
   const auto availabilityLevelsIt =
       layerJson.FindMember("metadataAvailability");
+
+  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+      availableTileRectangles;
+  QuantizedMeshContent::processAvailability(
+      layerJson,
+      0,
+      availableTileRectangles);
+  if (availableTileRectangles.size() > 0) {
+    for (const auto& rectangle : availableTileRectangles) {
+      context.implicitContext->rectangleAvailability->addAvailableTileRange(
+          rectangle);
+    }
+  }
   const auto availableIt = layerJson.FindMember("available");
 
   if (availableIt != layerJson.MemberEnd() &&
@@ -544,7 +558,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
 
 void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     Tile& tile,
-    const rapidjson::Value& layerJson,
+    const rapidjson::Document& layerJson,
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {

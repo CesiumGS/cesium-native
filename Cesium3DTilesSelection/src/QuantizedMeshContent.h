@@ -5,6 +5,8 @@
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
 
+#include <rapidjson/document.h>
+
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {
@@ -48,11 +50,14 @@ public:
       const gsl::span<const std::byte>& data,
       bool enableWaterMask);
 
-  static std::optional<
-      std::vector<CesiumGeometry::QuadtreeTileRectangularRange>>
-  GetAvailability(
-      const gsl::span<const std::byte>& data,
-      const CesiumGeometry::QuadtreeTileID& tileID);
+  static std::optional<gsl::span<const char>>
+  loadMetadata(const gsl::span<const std::byte>& data);
+
+  static void processAvailability(
+      const rapidjson::Document& metadata,
+      uint32_t startingLevel,
+      std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&
+          availableTileRectangles);
 };
 
 } // namespace Cesium3DTilesSelection

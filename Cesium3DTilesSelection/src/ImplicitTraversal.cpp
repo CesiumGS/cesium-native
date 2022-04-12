@@ -248,7 +248,9 @@ void HandleLayeredTerrain(Tile& tile) {
             .thenInWorkerThread(
                 [&pLogger, url, pCurrent, tileToLoad](
                     std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-                    -> std::unique_ptr<TileContentLoadResult> {
+                    -> std::vector<
+                        CesiumGeometry::QuadtreeTileRectangularRange> {
+                  std::vector<CesiumGeometry::QuadtreeTileRectangularRange> ret;
                   const CesiumAsync::IAssetResponse* pResponse =
                       pRequest->response();
                   if (pResponse) {
@@ -256,48 +258,50 @@ void HandleLayeredTerrain(Tile& tile) {
 
                     if (statusCode != 0 &&
                         (statusCode < 200 || statusCode >= 300)) {
-                      return nullptr;
+                      return ret;
                     }
 
-                    const gsl::span<const std::byte>& data = pResponse->data();
+                    std::optional<gsl::span<const char>> metadataString =
+                        QuantizedMeshContent::loadMetadata(pResponse->data());
+                    if (metadataString) {
+                      rapidjson::Document metadata;
+                      metadata.Parse(
+                          reinterpret_cast<const char*>(metadataString->data()),
+                          metadataString->size());
 
-                    CesiumGeometry::Rectangle tileRectangle =
-                        pCurrent->implicitContext->quadtreeTilingScheme
-                            ->tileToRectangle(tileToLoad);
-
-                    BoundingRegion boundingVolume = BoundingRegion(
-                        GlobeRectangle(
-                            tileRectangle.minimumX,
-                            tileRectangle.minimumY,
-                            tileRectangle.maximumX,
-                            tileRectangle.maximumY),
-                        0,
-                        0);
-
-                    return std::move(QuantizedMeshContent::load(
-                        pLogger,
-                        tileToLoad,
-                        boundingVolume,
-                        url,
-                        data,
-                        false));
+                      if (metadata.HasParseError()) {
+                        SPDLOG_LOGGER_ERROR(
+                            pLogger,
+                            "Error when parsing metadata, error code {} at "
+                            "byte "
+                            "offset {}",
+                            metadata.GetParseError(),
+                            metadata.GetErrorOffset());
+                      } else {
+                        QuantizedMeshContent::processAvailability(
+                            metadata,
+                            tileToLoad.level + 1,
+                            ret);
+                      }
+                    }
                   }
-                  return nullptr;
+                  return ret;
                 })
-            .thenInMainThread([&tile, pCurrent, tileToLoad](
-                                  std::unique_ptr<TileContentLoadResult>&&
-                                      result) {
-              --tile.getContext()->availabilityLoadsInProgress;
-              pCurrent->availabilityTilesLoaded.insert(tileToLoad);
-              if (result && !result->availableTileRectangles.empty()) {
-                for (const CesiumGeometry::QuadtreeTileRectangularRange& range :
-                     result->availableTileRectangles) {
-                  pCurrent->implicitContext->rectangleAvailability
-                      ->addAvailableTileRange(range);
-                }
-                HandleLayeredTerrain(tile);
-              }
-            })
+            .thenInMainThread(
+                [&tile, pCurrent, tileToLoad](
+                    std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
+                        availableTileRectangles) {
+                  --tile.getContext()->availabilityLoadsInProgress;
+                  pCurrent->availabilityTilesLoaded.insert(tileToLoad);
+                  if (!availableTileRectangles.empty()) {
+                    for (const CesiumGeometry::QuadtreeTileRectangularRange&
+                             range : availableTileRectangles) {
+                      pCurrent->implicitContext->rectangleAvailability
+                          ->addAvailableTileRange(range);
+                    }
+                    HandleLayeredTerrain(tile);
+                  }
+                })
             .catchInMainThread([pLogger, &tile, pCurrent, tileToLoad](
                                    const std::exception& e) {
               SPDLOG_LOGGER_ERROR(pLogger, "{}", e.what());
