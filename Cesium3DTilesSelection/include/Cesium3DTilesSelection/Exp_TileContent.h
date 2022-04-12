@@ -21,7 +21,6 @@ enum class TileLoadState {
 
 struct TileRenderContent {
   std::optional<CesiumGltf::Model> model{};
-  void* renderResources{nullptr};
 };
 
 struct TileExternalContent {};
@@ -34,11 +33,7 @@ using TileContentKind =
 struct TileContent {
   TileContentKind contentKind;
 
-  std::vector<Cesium3DTilesSelection::Credit> credits{};
-
   TileLoadState state{TileLoadState::Unloaded};
-
-  std::any tilesetLoaderCustomData{};
 
   TilesetContentLoader* tilesetLoader{nullptr};
 };

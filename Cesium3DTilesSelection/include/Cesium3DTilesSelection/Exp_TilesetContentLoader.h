@@ -1,9 +1,14 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Exp_TileContent.h>
+#include <Cesium3DTilesSelection/Exp_TileContentLoadInfo.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+
+#include <spdlog/logger.h>
+
+#include <memory>
 
 namespace Cesium3DTilesSelection {
 class Tile;
@@ -12,15 +17,24 @@ class TilesetContentLoader {
 public:
   virtual ~TilesetContentLoader() = default;
 
-  virtual CesiumAsync::Future<void> requestTileContent(
+  void loadTileContent(
       Tile& tile,
-      CesiumAsync::IAssetAccessor& assetAccessor,
-      CesiumAsync::AsyncSystem& asyncSystem) = 0;
+      CesiumAsync::AsyncSystem& asyncSystem,
+      std::shared_ptr<CesiumAsync::IAssetAccessor>& assetAccessor,
+      std::shared_ptr<spdlog::logger>& logger);
 
-  virtual TileLoadState processLoadedContentSome(Tile& tile) = 0;
+  void updateTileContent(Tile& tile);
 
-  virtual TileLoadState processLoadedContentTillDone(Tile& tile) = 0;
+  bool unloadTileContent(Tile& tile);
 
-  virtual bool unloadTileContent(Tile& tile) = 0;
+private:
+  virtual CesiumAsync::Future<TileContentKind>
+  doLoadTileContent(Tile& tile, const TileContentLoadInfo& loadInfo) = 0;
+
+  virtual void doProcessLoadedContent(Tile& tile) = 0;
+
+  virtual void doUpdateTileContent(Tile& tile) = 0;
+
+  virtual bool doUnloadTileContent(Tile& tile) = 0;
 };
 } // namespace Cesium3DTilesSelection

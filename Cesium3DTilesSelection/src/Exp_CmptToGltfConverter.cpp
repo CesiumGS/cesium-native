@@ -22,8 +22,9 @@ static_assert(sizeof(CmptHeader) == 16);
 static_assert(sizeof(InnerHeader) == 12);
 } // namespace
 
-GltfConverterResult
-CmptToGltfConverter::convert(const gsl::span<const std::byte>& cmptBinary, const CesiumGltfReader::GltfReaderOptions& options) {
+GltfConverterResult CmptToGltfConverter::convert(
+    const gsl::span<const std::byte>& cmptBinary,
+    const CesiumGltfReader::GltfReaderOptions& options) {
   GltfConverterResult result;
   if (cmptBinary.size() < sizeof(CmptHeader)) {
     result.errors.emplace_warning("Composite tile must be at least 16 bytes.");

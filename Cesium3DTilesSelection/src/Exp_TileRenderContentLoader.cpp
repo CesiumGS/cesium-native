@@ -1,8 +1,6 @@
-#include <Cesium3DTilesSelection/Exp_TileRenderContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
-
+#include <Cesium3DTilesSelection/Exp_TileRenderContentLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
-
 #include <CesiumUtility/joinToString.h>
 
 #include <spdlog/logger.h>
@@ -44,23 +42,22 @@ void logErrorsAndWarnings(
 }
 
 TileRenderContentLoadResult postProcessGltf(
-    const TileContentLoadInput& loadInput,
-    CesiumGltfReader::GltfReaderResult&& gltfResult)
-{
-  const std::string& tileUrl = loadInput.pRequest->url();
-  logErrors(loadInput.pLogger, tileUrl, gltfResult.errors);
-  logWarnings(loadInput.pLogger, tileUrl, gltfResult.warnings);
+    const std::shared_ptr<CesiumAsync::IAssetRequest>& completedTileRequest,
+    const TileContentLoadInfo& loadInfo,
+    CesiumGltfReader::GltfReaderResult&& gltfResult) {
+  const std::string& tileUrl = completedTileRequest->url();
+  logErrors(loadInfo.pLogger, tileUrl, gltfResult.errors);
+  logWarnings(loadInfo.pLogger, tileUrl, gltfResult.warnings);
   if (!gltfResult.model) {
     return TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily};
   }
 
-  if (loadInput.contentOptions.generateMissingNormalsSmooth) {
+  if (loadInfo.contentOptions.generateMissingNormalsSmooth) {
     gltfResult.model->generateMissingNormalsSmooth();
   }
 
   TileRenderContentLoadResult result;
   result.content.model = std::move(gltfResult.model);
-  result.content.renderResources = nullptr;
   result.state = TileLoadState::ContentLoaded;
   return result;
 }
@@ -72,11 +69,11 @@ bool TileRenderContentLoader::canCreateRenderContent(
   return GltfConverters::canConvertContent(tileUrl, tileContentBinary);
 }
 
-CesiumAsync::Future<TileRenderContentLoadResult>
-TileRenderContentLoader::load(TileContentLoadInput&& loadInput) {
-  auto& asyncSystem = loadInput.asyncSystem;
-  const auto& completedTileRequest = loadInput.pRequest;
-  const auto& assetAccessor = loadInput.pAssetAccessor;
+CesiumAsync::Future<TileRenderContentLoadResult> TileRenderContentLoader::load(
+    const std::shared_ptr<CesiumAsync::IAssetRequest>& completedTileRequest,
+    const TileContentLoadInfo& loadInfo) {
+  auto& asyncSystem = loadInfo.asyncSystem;
+  const auto& assetAccessor = loadInfo.pAssetAccessor;
 
   auto response = completedTileRequest->response();
   if (!response) {
@@ -94,12 +91,12 @@ TileRenderContentLoader::load(TileContentLoadInput&& loadInput) {
   const std::string& tileUrl = completedTileRequest->url();
   CesiumGltfReader::GltfReaderOptions gltfOptions;
   gltfOptions.ktx2TranscodeTargets =
-      loadInput.contentOptions.ktx2TranscodeTargets;
+      loadInfo.contentOptions.ktx2TranscodeTargets;
   GltfConverterResult result =
       GltfConverters::convert(tileUrl, response->data(), gltfOptions);
 
   // Report any errors if there are any
-  logErrorsAndWarnings(loadInput.pLogger, tileUrl, result.errors);
+  logErrorsAndWarnings(loadInfo.pLogger, tileUrl, result.errors);
   if (result.errors) {
     return asyncSystem.createResolvedFuture<TileRenderContentLoadResult>(
         TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily});
@@ -117,9 +114,12 @@ TileRenderContentLoader::load(TileContentLoadInput&& loadInput) {
              assetAccessor,
              gltfOptions,
              std::move(gltfResult))
-      .thenImmediately([originalInput = std::move(loadInput)](
+      .thenImmediately([loadInfo, completedTileRequest](
                            CesiumGltfReader::GltfReaderResult&& gltfResult) {
-        return postProcessGltf(originalInput, std::move(gltfResult));
+        return postProcessGltf(
+            completedTileRequest,
+            loadInfo,
+            std::move(gltfResult));
       });
 }
 } // namespace Cesium3DTilesSelection
