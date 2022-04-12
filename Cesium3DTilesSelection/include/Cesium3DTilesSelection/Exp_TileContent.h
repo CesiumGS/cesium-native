@@ -19,22 +19,51 @@ enum class TileLoadState {
   Done = 3
 };
 
+struct TileUnknownContent {};
+
+struct TileEmptyContent {};
+
+struct TileExternalContent {};
+
 struct TileRenderContent {
   std::optional<CesiumGltf::Model> model{};
 };
 
-struct TileExternalContent {};
+using TileContentKind = std::variant<
+    TileUnknownContent,
+    TileEmptyContent,
+    TileExternalContent,
+    TileRenderContent>;
 
-struct TileEmptyContent {};
+class TileContent {
+public:
+  TileContent(TilesetContentLoader* pLoader);
 
-using TileContentKind =
-    std::variant<TileRenderContent, TileExternalContent, TileEmptyContent>;
+  TileLoadState getState() const noexcept;
 
-struct TileContent {
-  TileContentKind contentKind;
+  bool isExternalContent() const noexcept;
 
-  TileLoadState state{TileLoadState::Unloaded};
+  bool isEmptyContent() const noexcept;
 
-  TilesetContentLoader* tilesetLoader{nullptr};
+  bool isRenderContent() const noexcept;
+
+  const TileRenderContent* getRenderContent() const noexcept;
+
+  TileRenderContent* getRenderContent() noexcept;
+
+  TilesetContentLoader* getLoader() noexcept;
+
+private:
+  void setContentKind(TileContentKind&& contentKind);
+
+  void setContentKind(const TileContentKind& contentKind);
+
+  void setState(TileLoadState state) noexcept;
+
+  TileContentKind _contentKind;
+  TileLoadState _state;
+  TilesetContentLoader* _pLoader;
+
+  friend class TilesetContentLoader;
 };
 } // namespace Cesium3DTilesSelection

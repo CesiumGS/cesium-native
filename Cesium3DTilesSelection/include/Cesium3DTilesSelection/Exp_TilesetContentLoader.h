@@ -20,14 +20,21 @@ public:
   void loadTileContent(
       Tile& tile,
       CesiumAsync::AsyncSystem& asyncSystem,
-      std::shared_ptr<CesiumAsync::IAssetAccessor>& assetAccessor,
-      std::shared_ptr<spdlog::logger>& logger);
+      std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      std::shared_ptr<spdlog::logger>& pLogger,
+      const TilesetContentOptions &contentOptions);
 
   void updateTileContent(Tile& tile);
 
   bool unloadTileContent(Tile& tile);
 
 private:
+  static void setTileContentState(TileContent &content, TileContentKind&& contentKind, TileLoadState state);
+
+  void processContentLoadedState(Tile& tile);
+
+  void processDoneState(Tile& tile);
+
   virtual CesiumAsync::Future<TileContentKind>
   doLoadTileContent(const TileContentLoadInfo& loadInfo) = 0;
 

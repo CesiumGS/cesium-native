@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/Exp_TileContent.h>
 #include "BoundingVolume.h"
 #include "Library.h"
 #include "RasterMappedTo3DTile.h"
@@ -611,6 +612,23 @@ public:
    */
   int64_t computeByteSize() const noexcept;
 
+  /*****************************************************
+   *
+   * Experimental methods.
+   *
+   *****************************************************/
+  void exp_SetContent(const std::shared_ptr<TileContent>& pContent) noexcept {
+    exp_pContent = pContent;
+  }
+
+  const TileContent* exp_GetContent() const noexcept {
+    return exp_pContent.get();
+  }
+
+  TileContent* exp_GetContent() noexcept {
+    return exp_pContent.get();
+  }
+
 private:
   /**
    * @brief Upsample the parent of this tile.
@@ -648,6 +666,13 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+
+  /*****************************************************
+   *
+   * Experimental Data.
+   *
+   *****************************************************/
+  std::shared_ptr<TileContent> exp_pContent;
 
 public:
   /**

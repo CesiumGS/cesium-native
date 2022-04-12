@@ -19,16 +19,16 @@ namespace Cesium3DTilesSelection {
 struct TileContentLoadInfo {
   TileContentLoadInfo(
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const TilesetContentOptions& contentOptions,
       const Tile& tile);
 
   CesiumAsync::AsyncSystem asyncSystem;
 
-  std::shared_ptr<spdlog::logger> pLogger;
-
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+
+  std::shared_ptr<spdlog::logger> pLogger;
 
   TileID tileID;
 
