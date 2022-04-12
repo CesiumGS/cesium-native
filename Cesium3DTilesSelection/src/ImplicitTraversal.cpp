@@ -180,7 +180,7 @@ CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
   return QuadtreeTileID(parentLevel, parentX, parentY);
 }
 
-std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAncestorTile(
+std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
     const TileContext* pContext,
     CesiumGeometry::QuadtreeTileID tileID) {
   if (!pContext->availabilityLevels) {
@@ -191,7 +191,7 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAncestorTile(
     tileID = GetAvailabilityTile(pContext, tileID.x, tileID.y, tileID.level);
     if (pContext->implicitContext->rectangleAvailability->isTileAvailable(
             tileID) &&
-        pContext->tilesLoaded.find(tileID) == pContext->tilesLoaded.end()) {
+        pContext->availabilityTilesLoaded.find(tileID) == pContext->availabilityTilesLoaded.end()) {
       return std::make_optional<QuadtreeTileID>(tileID);
     }
   }
@@ -215,7 +215,7 @@ void HandleLayeredTerrain(Tile& tile) {
   uint8_t availabilities[4] = {0, 0, 0, 0};
   TileContext* contexts[4] = {pContext, pContext, pContext, pContext};
 
-  std::optional<CesiumGeometry::QuadtreeTileID> unloadedAncestorTile;
+  std::optional<CesiumGeometry::QuadtreeTileID> unloadedAvailabilityTile;
 
   for (int i = 0; i < 4; i++) {
     const QuadtreeTileID* id = ids[i];
@@ -230,9 +230,9 @@ void HandleLayeredTerrain(Tile& tile) {
         break;
       }
 
-      unloadedAncestorTile = GetUnloadedAncestorTile(pCurrent, *id);
-      if (unloadedAncestorTile) {
-        auto tileToLoad = *unloadedAncestorTile;
+      unloadedAvailabilityTile = GetUnloadedAvailabilityTile(pCurrent, *id);
+      if (unloadedAvailabilityTile) {
+        auto tileToLoad = *unloadedAvailabilityTile;
         // need to load prerequisite tile before going any further
 
         const auto& externals = tile.getTileset()->getExternals();
@@ -287,15 +287,15 @@ void HandleLayeredTerrain(Tile& tile) {
                 .thenInMainThread(
                     [&tile, pCurrent, tileToLoad](
                         std::unique_ptr<TileContentLoadResult>&& result) {
-                      pCurrent->tilesLoaded.insert(tileToLoad);
                       if (result && !result->availableTileRectangles.empty()) {
+                        pCurrent->availabilityTilesLoaded.insert(tileToLoad);
                         for (const CesiumGeometry::QuadtreeTileRectangularRange&
                                  range : result->availableTileRectangles) {
                           pCurrent->implicitContext->rectangleAvailability
                               ->addAvailableTileRange(range);
+                          HandleLayeredTerrain(tile);
                         }
                       }
-                      HandleLayeredTerrain(tile);
                       return 0;
                     });
         std::vector<CesiumAsync::Future<int>> vector;

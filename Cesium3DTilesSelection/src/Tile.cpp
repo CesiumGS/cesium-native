@@ -578,9 +578,9 @@ void Tile::processLoadedContent() {
         const QuadtreeTileID* pQuadtreeTileID =
             std::get_if<QuadtreeTileID>(&this->getTileID());
         if (pQuadtreeTileID) {
-          this->getContext()->tilesLoaded.insert(*pQuadtreeTileID);
           if (context.quadtreeTilingScheme && context.rectangleAvailability &&
               !this->_pContent->availableTileRectangles.empty()) {
+            this->getContext()->availabilityTilesLoaded.insert(*pQuadtreeTileID);
             for (const QuadtreeTileRectangularRange& range :
                  this->_pContent->availableTileRectangles) {
               context.rectangleAvailability->addAvailableTileRange(range);
