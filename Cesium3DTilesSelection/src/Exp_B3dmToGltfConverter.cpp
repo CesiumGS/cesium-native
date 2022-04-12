@@ -117,6 +117,7 @@ void convertB3dmContentToGltf(
     const gsl::span<const std::byte>& b3dmBinary,
     const B3dmHeader& header,
     uint32_t headerLength,
+    const CesiumGltfReader::GltfReaderOptions& options,
     GltfConverterResult& result) {
   const uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
                             header.featureTableBinaryByteLength +
@@ -134,7 +135,8 @@ void convertB3dmContentToGltf(
   const gsl::span<const std::byte> glbData =
       b3dmBinary.subspan(glbStart, glbEnd - glbStart);
 
-  GltfConverterResult binToGltfResult = BinaryToGltfConverter::convert(glbData);
+  GltfConverterResult binToGltfResult =
+      BinaryToGltfConverter::convert(glbData, options);
 
   result.model = std::move(binToGltfResult.model);
   result.errors.merge(std::move(binToGltfResult.errors));
@@ -227,8 +229,9 @@ void convertB3dmMetadataToGltfFeatureMetadata(
 }
 } // namespace
 
-GltfConverterResult
-B3dmToGltfConverter::convert(const gsl::span<const std::byte>& b3dmBinary) {
+GltfConverterResult B3dmToGltfConverter::convert(
+    const gsl::span<const std::byte>& b3dmBinary,
+    const CesiumGltfReader::GltfReaderOptions& options) {
   GltfConverterResult result;
   B3dmHeader header;
   uint32_t headerLength;
@@ -237,7 +240,7 @@ B3dmToGltfConverter::convert(const gsl::span<const std::byte>& b3dmBinary) {
     return result;
   }
 
-  convertB3dmContentToGltf(b3dmBinary, header, headerLength, result);
+  convertB3dmContentToGltf(b3dmBinary, header, headerLength, options, result);
   if (result.errors) {
     return result;
   }

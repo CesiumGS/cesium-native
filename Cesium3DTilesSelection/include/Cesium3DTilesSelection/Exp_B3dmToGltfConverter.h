@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Exp_GltfConverterResult.h>
+
+#include <CesiumGltfReader/GltfReader.h>
+
 #include <CesiumGltf/Model.h>
 
 #include <gsl/span>
@@ -9,7 +12,8 @@
 
 namespace Cesium3DTilesSelection {
 struct B3dmToGltfConverter {
-  static GltfConverterResult
-  convert(const gsl::span<const std::byte>& b3dmBinary);
+  static GltfConverterResult convert(
+      const gsl::span<const std::byte>& b3dmBinary,
+      const CesiumGltfReader::GltfReaderOptions& options);
 };
 } // namespace Cesium3DTilesSelection

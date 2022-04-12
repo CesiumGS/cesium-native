@@ -10,8 +10,9 @@
 namespace Cesium3DTilesSelection {
 struct BinaryToGltfConverter {
 public:
-  static GltfConverterResult
-  convert(const gsl::span<const std::byte>& gltfBinary);
+  static GltfConverterResult convert(
+      const gsl::span<const std::byte>& gltfBinary,
+      const CesiumGltfReader::GltfReaderOptions& options);
 
 private:
   static CesiumGltfReader::GltfReader _gltfReader;

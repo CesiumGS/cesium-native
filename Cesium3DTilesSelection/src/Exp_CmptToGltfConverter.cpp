@@ -23,7 +23,7 @@ static_assert(sizeof(InnerHeader) == 12);
 } // namespace
 
 GltfConverterResult
-CmptToGltfConverter::convert(const gsl::span<const std::byte>& cmptBinary) {
+CmptToGltfConverter::convert(const gsl::span<const std::byte>& cmptBinary, const CesiumGltfReader::GltfReaderOptions& options) {
   GltfConverterResult result;
   if (cmptBinary.size() < sizeof(CmptHeader)) {
     result.errors.emplace_warning("Composite tile must be at least 16 bytes.");
@@ -77,7 +77,7 @@ CmptToGltfConverter::convert(const gsl::span<const std::byte>& cmptBinary) {
 
     pos += pInner->byteLength;
 
-    innerTiles.emplace_back(GltfConverters::convert(innerData));
+    innerTiles.emplace_back(GltfConverters::convert(innerData, options));
   }
 
   uint32_t tilesLength = pHeader->tilesLength;

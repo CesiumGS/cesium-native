@@ -20,7 +20,6 @@
 #include <unordered_map>
 
 namespace Cesium3DTilesSelection {
-class TileContent;
 class Tileset;
 
 /**

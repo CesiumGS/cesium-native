@@ -19,20 +19,20 @@ enum class TileLoadState {
   Done = 3
 };
 
-struct RenderContent {
+struct TileRenderContent {
   std::optional<CesiumGltf::Model> model{};
   void* renderResources{nullptr};
 };
 
-struct ExternalContent {};
+struct TileExternalContent {};
 
-struct EmptyContent {};
+struct TileEmptyContent {};
 
-using TileContentPackage =
-    std::variant<RenderContent, ExternalContent, EmptyContent>;
+using TileContentKind =
+    std::variant<TileRenderContent, TileExternalContent, TileEmptyContent>;
 
 struct TileContent {
-  TileContentPackage contentPackage;
+  TileContentKind contentKind;
 
   std::vector<Cesium3DTilesSelection::Credit> credits{};
 

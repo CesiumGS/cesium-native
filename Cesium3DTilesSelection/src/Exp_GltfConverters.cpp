@@ -19,41 +19,56 @@ void GltfConverters::registerFileExtension(
   _loadersByFileExtension[lowerCaseFileExtension] = converter;
 }
 
+bool GltfConverters::canConvertContent(
+    const std::string& filePath,
+    const gsl::span<const std::byte>& content) {
+  bool canConvert = false;
+  // using magic first
+  if (content.size() >= 4) {
+    std::string magic(reinterpret_cast<const char*>(content.data()), 4);
+    canConvert = _loadersByMagic.find(magic) != _loadersByMagic.end();
+    if (canConvert) {
+      return true;
+    }
+  }
+
+  // if magic content is not possible, use file extensions
+  std::string extension = getFileExtension(filePath);
+  return _loadersByFileExtension.find(extension) !=
+         _loadersByFileExtension.end();
+}
+
 GltfConverterResult GltfConverters::convert(
+    const std::string& filePath,
     const gsl::span<const std::byte>& content,
-    const std::string& filePath) {
+    const CesiumGltfReader::GltfReaderOptions& options) {
   // using magic first
   if (content.size() >= 4) {
     std::string magic(reinterpret_cast<const char*>(content.data()), 4);
     auto converterIter = _loadersByMagic.find(magic);
     if (converterIter != _loadersByMagic.end()) {
-      return converterIter->second(content);
+      return converterIter->second(content, options);
     }
   }
 
   // if magic content is not possible, use file extensions
-  std::string_view url = filePath;
-  std::string_view urlWithoutQueries = url.substr(0, url.find("?"));
-  size_t extensionPos = urlWithoutQueries.rfind(".");
-  if (extensionPos < urlWithoutQueries.size()) {
-    std::string_view extension = urlWithoutQueries.substr(extensionPos);
-    std::string lowerCaseExtension = toLowerCase(extension);
-    auto itExtension = _loadersByFileExtension.find(lowerCaseExtension);
-    if (itExtension != _loadersByFileExtension.end()) {
-      return itExtension->second(content);
-    }
+  std::string extension = getFileExtension(filePath);
+  auto itExtension = _loadersByFileExtension.find(extension);
+  if (itExtension != _loadersByFileExtension.end()) {
+    return itExtension->second(content, options);
   }
 
   return GltfConverterResult{};
 }
 
-GltfConverterResult
-GltfConverters::convert(const gsl::span<const std::byte>& content) {
+GltfConverterResult GltfConverters::convert(
+    const gsl::span<const std::byte>& content,
+    const CesiumGltfReader::GltfReaderOptions& options) {
   if (content.size() >= 4) {
     std::string magic(reinterpret_cast<const char*>(content.data()), 4);
     auto converterIter = _loadersByMagic.find(magic);
     if (converterIter != _loadersByMagic.end()) {
-      return converterIter->second(content);
+      return converterIter->second(content, options);
     }
   }
 
@@ -69,5 +84,17 @@ std::string GltfConverters::toLowerCase(const std::string_view& str) {
       [](char c) noexcept { return static_cast<char>(::tolower(c)); });
 
   return result;
+}
+
+std::string GltfConverters::getFileExtension(const std::string_view& filePath) {
+  std::string_view urlWithoutQueries = filePath.substr(0, filePath.find("?"));
+  size_t extensionPos = urlWithoutQueries.rfind(".");
+  if (extensionPos < urlWithoutQueries.size()) {
+    std::string_view extension = urlWithoutQueries.substr(extensionPos);
+    std::string lowerCaseExtension = toLowerCase(extension);
+    return lowerCaseExtension;
+  }
+
+  return "";
 }
 } // namespace Cesium3DTilesSelection

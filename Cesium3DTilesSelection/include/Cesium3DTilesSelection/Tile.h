@@ -26,7 +26,6 @@
 
 namespace Cesium3DTilesSelection {
 class Tileset;
-class TileContent;
 struct TileContentLoadResult;
 
 /**
