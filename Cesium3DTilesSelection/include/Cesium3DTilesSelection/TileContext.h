@@ -232,6 +232,8 @@ public:
   std::optional<uint32_t> availabilityLevels;
 
   std::unordered_set<CesiumGeometry::QuadtreeTileID> availabilityTilesLoaded;
+
+  uint32_t availabilityLoadsInProgress = 0;
 };
 
 } // namespace Cesium3DTilesSelection

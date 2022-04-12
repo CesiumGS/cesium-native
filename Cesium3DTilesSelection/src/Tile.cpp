@@ -580,7 +580,8 @@ void Tile::processLoadedContent() {
         if (pQuadtreeTileID) {
           if (context.quadtreeTilingScheme && context.rectangleAvailability &&
               !this->_pContent->availableTileRectangles.empty()) {
-            this->getContext()->availabilityTilesLoaded.insert(*pQuadtreeTileID);
+            this->getContext()->availabilityTilesLoaded.insert(
+                *pQuadtreeTileID);
             for (const QuadtreeTileRectangularRange& range :
                  this->_pContent->availableTileRectangles) {
               context.rectangleAvailability->addAvailableTileRange(range);
@@ -903,7 +904,8 @@ void Tile::update(
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (moreRasterDetailAvailable && this->_children.empty()) {
+    if (moreRasterDetailAvailable && this->_children.empty() &&
+        this->_pContext->availabilityLoadsInProgress == 0) {
       createQuadtreeSubdividedChildren(*this);
     }
   }
