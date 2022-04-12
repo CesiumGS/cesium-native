@@ -50,12 +50,12 @@ TileRenderContentLoadResult postProcessGltf(
   const std::string& tileUrl = loadInput.pRequest->url();
   logErrors(loadInput.pLogger, tileUrl, gltfResult.errors);
   logWarnings(loadInput.pLogger, tileUrl, gltfResult.warnings);
-  if (!gltfResult.errors.empty()) {
+  if (!gltfResult.model) {
     return TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily};
   }
 
   if (loadInput.contentOptions.generateMissingNormalsSmooth) {
-
+    gltfResult.model->generateMissingNormalsSmooth();
   }
 
   TileRenderContentLoadResult result;
