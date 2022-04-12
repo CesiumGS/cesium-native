@@ -161,16 +161,21 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
-CesiumGeometry::QuadtreeTileID
-GetParentTile(uint32_t x, uint32_t y, uint32_t level) {
+CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
+    const TileContext* pContext,
+    uint32_t x,
+    uint32_t y,
+    uint32_t level) {
 
-  // auto parentLevel = level % availabilityLevels == 0
-  //                        ? level - availabilityLevels
-  //                        : (level / availabilityLevels) * availabilityLevels;
+  auto availabilityLevels = *pContext->availabilityLevels;
 
-  auto parentLevel = level - 1;
-  auto parentX = x / 2;
-  auto parentY = y / 2;
+  auto parentLevel = level % availabilityLevels == 0
+                         ? level - availabilityLevels
+                         : (level / availabilityLevels) * availabilityLevels;
+
+  auto divisor = 1 << (level - parentLevel);
+  auto parentX = x / divisor;
+  auto parentY = y / divisor;
 
   return QuadtreeTileID(parentLevel, parentX, parentY);
 }
@@ -183,7 +188,7 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAncestorTile(
   }
 
   while (tileID.level > 0) {
-    tileID = GetParentTile(tileID.x, tileID.y, tileID.level);
+    tileID = GetAvailabilityTile(pContext, tileID.x, tileID.y, tileID.level);
     if (pContext->implicitContext->rectangleAvailability->isTileAvailable(
             tileID) &&
         pContext->tilesLoaded.find(tileID) == pContext->tilesLoaded.end()) {
