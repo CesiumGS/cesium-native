@@ -29,7 +29,7 @@ public:
 
 private:
   virtual CesiumAsync::Future<TileContentKind>
-  doLoadTileContent(Tile& tile, const TileContentLoadInfo& loadInfo) = 0;
+  doLoadTileContent(const TileContentLoadInfo& loadInfo) = 0;
 
   virtual void doProcessLoadedContent(Tile& tile) = 0;
 
