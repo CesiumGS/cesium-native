@@ -6,6 +6,11 @@
 
 - Fixed a crash caused by using an aggregated overlay of `IonRasterOverlay` after it is freed.
 
+##### Additions :tada:
+
+- Added support for loading availability metadata in the layer.json.
+- Added support for loading multiple layers of quantized-mesh terrain.
+
 ### v0.14.0 - 2022-04-01
 
 ##### Breaking Changes :mega:
