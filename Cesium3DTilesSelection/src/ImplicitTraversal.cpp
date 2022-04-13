@@ -164,7 +164,7 @@ namespace ImplicitTraversalUtilities {
 inline CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
     uint32_t availabilityLevels) {
-  auto parentLevel =
+  uint32_t parentLevel =
       tileID.level % availabilityLevels == 0
           ? tileID.level - availabilityLevels
           : (tileID.level / availabilityLevels) * availabilityLevels;
