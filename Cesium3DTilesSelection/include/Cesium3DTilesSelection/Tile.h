@@ -621,6 +621,10 @@ public:
     exp_pContent = pContent;
   }
 
+  const std::shared_ptr<TileContent>& exp_GetSharedContent() noexcept {
+    return exp_pContent;
+  }
+
   const TileContent* exp_GetContent() const noexcept {
     return exp_pContent.get();
   }

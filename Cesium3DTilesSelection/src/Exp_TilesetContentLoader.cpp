@@ -18,9 +18,7 @@ void TilesetContentLoader::loadTileContent(
       contentOptions,
       tile};
 
-  std::shared_ptr<TileContent> pTileContent =
-      std::make_shared<TileContent>(this);
-  tile.exp_SetContent(pTileContent);
+  std::shared_ptr<TileContent> pTileContent = tile.exp_GetSharedContent();
   doLoadTileContent(loadInfo).thenInMainThread(
       [pTileContent](TileContentKind&& contentKind) {
         TilesetContentLoader::setTileContentState(
