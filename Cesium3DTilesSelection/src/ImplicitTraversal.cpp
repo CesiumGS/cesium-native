@@ -161,45 +161,35 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
-CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
-    const TileContext* pContext,
-    uint32_t x,
-    uint32_t y,
-    uint32_t level) {
+inline CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    uint32_t availabilityLevels) {
+  auto parentLevel =
+      tileID.level % availabilityLevels == 0
+          ? tileID.level - availabilityLevels
+          : (tileID.level / availabilityLevels) * availabilityLevels;
 
-  auto availabilityLevels = *pContext->availabilityLevels;
-
-  auto parentLevel = level % availabilityLevels == 0
-                         ? level - availabilityLevels
-                         : (level / availabilityLevels) * availabilityLevels;
-
-  auto divisor = 1 << (level - parentLevel);
-  auto parentX = x / divisor;
-  auto parentY = y / divisor;
-
-  return QuadtreeTileID(parentLevel, parentX, parentY);
+  auto divisor = 1 << (tileID.level - parentLevel);
+  return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
 }
 
 std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
     const TileContext* pContext,
-    CesiumGeometry::QuadtreeTileID tileID) {
-  if (!pContext->availabilityLevels) {
-    return std::nullopt;
-  }
-
+    CesiumGeometry::QuadtreeTileID tileID,
+    uint32_t availabilityLevels) {
   while (tileID.level > 0) {
-    tileID = GetAvailabilityTile(pContext, tileID.x, tileID.y, tileID.level);
-    if (pContext->implicitContext->rectangleAvailability->isTileAvailable(
-            tileID) &&
-        pContext->availabilityTilesLoaded.find(tileID) ==
-            pContext->availabilityTilesLoaded.end()) {
+    tileID = GetAvailabilityTile(tileID, availabilityLevels);
+    if (pContext->availabilityTilesLoaded.find(tileID) ==
+            pContext->availabilityTilesLoaded.end() &&
+        pContext->implicitContext->rectangleAvailability->isTileAvailable(
+            tileID)) {
       return std::make_optional<QuadtreeTileID>(tileID);
     }
   }
   return std::nullopt;
 }
 
-void HandleLayeredTerrain(
+void HandleQuantizedMesh(
     Tile& parentTile,
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID);
@@ -208,20 +198,22 @@ void FetchAvailabilityTile(
     Tile& parentTile,
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID,
-    TileContext* pCurrent,
-    const CesiumGeometry::QuadtreeTileID& tileToLoad) {
+    TileContext* childContext,
+    const CesiumGeometry::QuadtreeTileID& availabilityTileID) {
   const auto& externals = parentTile.getTileset()->getExternals();
   const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
   auto& pAssetAccessor = externals.pAssetAccessor;
   auto pLogger = externals.pLogger;
-  auto url = pCurrent->pTileset->getResolvedContentUrl(*pCurrent, tileToLoad);
+  auto url = childContext->pTileset->getResolvedContentUrl(
+      *childContext,
+      availabilityTileID);
 
-  pAssetAccessor->get(asyncSystem, url, pCurrent->requestHeaders)
+  ++parentContext->availabilityLoadsInProgress;
+  pAssetAccessor->get(asyncSystem, url, childContext->requestHeaders)
       .thenInWorkerThread(
-          [&pLogger, url, pCurrent, tileToLoad](
+          [&pLogger, url, childContext, availabilityTileID](
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
               -> std::vector<CesiumGeometry::QuadtreeTileRectangularRange> {
-            std::vector<CesiumGeometry::QuadtreeTileRectangularRange> ret;
             const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
             if (pResponse) {
               uint16_t statusCode = pResponse->statusCode();
@@ -231,33 +223,32 @@ void FetchAvailabilityTile(
                 return QuantizedMeshContent::loadMetadata(
                     pLogger,
                     pResponse->data(),
-                    tileToLoad);
+                    availabilityTileID);
               }
             }
-            return std::vector<CesiumGeometry::QuadtreeTileRectangularRange>();
+            return {};
           })
       .thenInMainThread(
-          [&parentTile, parentContext, parentID, pCurrent, tileToLoad](
+          [&parentTile,
+           parentContext,
+           parentID,
+           childContext,
+           availabilityTileID](
               std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                   rectangles) {
             --parentTile.getContext()->availabilityLoadsInProgress;
-            pCurrent->availabilityTilesLoaded.insert(tileToLoad);
+            childContext->availabilityTilesLoaded.insert(availabilityTileID);
             if (!rectangles.empty()) {
-              for (const CesiumGeometry::QuadtreeTileRectangularRange& range :
-                   rectangles) {
-                pCurrent->implicitContext->rectangleAvailability
+              for (const auto& range : rectangles) {
+                childContext->implicitContext->rectangleAvailability
                     ->addAvailableTileRange(range);
               }
             }
-            HandleLayeredTerrain(parentTile, parentContext, parentID);
-          })
-      .catchInMainThread([pLogger, &parentTile, pCurrent, tileToLoad](
-                             const std::exception& e) {
-        SPDLOG_LOGGER_ERROR(pLogger, "{}", e.what());
-      });
+            HandleQuantizedMesh(parentTile, parentContext, parentID);
+          });
 }
 
-void HandleLayeredTerrain(
+void HandleQuantizedMesh(
     Tile& parentTile,
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID) {
@@ -270,41 +261,42 @@ void HandleLayeredTerrain(
   const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
   const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
-  uint8_t availabilities[4] = {0, 0, 0, 0};
+  uint8_t availabilities[4] = {};
+
   TileContext* childContexts[4] =
       {parentContext, parentContext, parentContext, parentContext};
-
-  std::optional<CesiumGeometry::QuadtreeTileID> unloadedAvailabilityTile;
   bool anyAvailable = false;
 
   for (int i = 0; i < 4; i++) {
     const QuadtreeTileID* id = childIDs[i];
     uint8_t& available = availabilities[i];
-    auto pCurrent = childContexts[i];
+    auto childContext = childContexts[i];
     while (true) {
       available =
-          pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
+          childContext->implicitContext->rectangleAvailability->isTileAvailable(
               *id);
       if (available) {
-        childContexts[i] = pCurrent;
         anyAvailable = true;
+        childContexts[i] = childContext;
         break;
       }
-
-      unloadedAvailabilityTile = GetUnloadedAvailabilityTile(pCurrent, *id);
-      if (unloadedAvailabilityTile) {
-        ++parentContext->availabilityLoadsInProgress;
-        auto tileToLoad = *unloadedAvailabilityTile;
-        // load parent availability tile before going any further
-        return FetchAvailabilityTile(
-            parentTile,
-            parentContext,
-            parentID,
-            pCurrent,
-            tileToLoad);
+      if (childContext->availabilityLevels) {
+        auto unloadedAvailabilityTile = GetUnloadedAvailabilityTile(
+            childContext,
+            *id,
+            *childContext->availabilityLevels);
+        if (unloadedAvailabilityTile) {
+          // load parent availability tile before going any further
+          return FetchAvailabilityTile(
+              parentTile,
+              parentContext,
+              parentID,
+              childContext,
+              *unloadedAvailabilityTile);
+        }
       }
-      if (pCurrent->pUnderlyingContext) {
-        pCurrent = pCurrent->pUnderlyingContext.get();
+      if (childContext->pUnderlyingContext) {
+        childContext = childContext->pUnderlyingContext.get();
       } else {
         break;
       }
@@ -493,7 +485,7 @@ void createImplicitChildrenIfNeeded(
       // if they are.
 
       if (implicitContext.rectangleAvailability) {
-        return HandleLayeredTerrain(tile, pContext, pQuadtreeTileID);
+        return HandleQuantizedMesh(tile, pContext, pQuadtreeTileID);
       }
       const QuadtreeTileID swID(
           pQuadtreeTileID->level + 1,

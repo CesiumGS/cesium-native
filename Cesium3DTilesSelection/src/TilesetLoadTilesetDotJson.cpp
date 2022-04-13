@@ -1,6 +1,5 @@
 #include "TilesetLoadTilesetDotJson.h"
 
-#include "Cesium3DTilesSelection/ImplicitTraversal.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "QuantizedMeshContent.h"
@@ -42,7 +41,6 @@ struct Tileset::LoadTilesetDotJson::Private {
   static void workerThreadLoadTileContext(
       const rapidjson::Document& layerJson,
       TileContext& context,
-      TileContext* rootContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -333,7 +331,6 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     const rapidjson::Document& layerJson,
     TileContext& context,
-    TileContext* rootContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   const auto tilesetVersionIt = layerJson.FindMember("version");
@@ -427,7 +424,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       createExtensionsQueryParameter(knownExtensions, extensions);
 
   if (!extensionsToRequest.empty()) {
-    for (std::string& url : context.implicitContext->tileTemplateUrls) {
+    for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
       url =
           CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
     }
@@ -436,55 +433,22 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
   const auto availabilityLevelsIt =
       layerJson.FindMember("metadataAvailability");
 
-  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
-      availableTileRectangles =
-          QuantizedMeshContent::loadAvailabilityRectangles(layerJson, 0);
-  if (availableTileRectangles.size() > 0) {
-    for (const auto& rectangle : availableTileRectangles) {
-      context.implicitContext->rectangleAvailability->addAvailableTileRange(
-          rectangle);
-    }
-  }
-  const auto availableIt = layerJson.FindMember("available");
-
-  if (availableIt != layerJson.MemberEnd() &&
-      availabilityLevelsIt == layerJson.MemberEnd() &&
-      availableIt->value.IsArray()) {
-
-    const auto& available = availableIt->value;
-    if (available.Size() == 0) {
-      return;
-    }
-
-    for (rapidjson::SizeType i = 0; i < available.Size(); ++i) {
-      const auto& rangesAtLevelJson = available[i];
-      if (!rangesAtLevelJson.IsArray()) {
-        continue;
-      }
-
-      for (rapidjson::SizeType j = 0; j < rangesAtLevelJson.Size(); ++j) {
-        const auto& rangeJson = rangesAtLevelJson[j];
-        if (!rangeJson.IsObject()) {
-          continue;
-        }
-
-        context.implicitContext->rectangleAvailability->addAvailableTileRange(
-            CesiumGeometry::QuadtreeTileRectangularRange{
-                i,
-                JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
-                JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
-                JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
-                JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)});
-      }
-    }
-  } else if (
-      availabilityLevelsIt != layerJson.MemberEnd() &&
+  if (availabilityLevelsIt != layerJson.MemberEnd() &&
       availabilityLevelsIt->value.IsInt()) {
     context.availabilityLevels =
         std::make_optional<uint32_t>(availabilityLevelsIt->value.GetInt());
-    context.implicitContext->rectangleAvailability->addAvailableTileRange(
-        CesiumGeometry::QuadtreeTileRectangularRange{0, 0, 0, 1, 0});
+  } else {
+    std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+        availableTileRectangles =
+            QuantizedMeshContent::loadAvailabilityRectangles(layerJson, 0);
+    if (availableTileRectangles.size() > 0) {
+      for (const auto& rectangle : availableTileRectangles) {
+        context.implicitContext->rectangleAvailability->addAvailableTileRange(
+            rectangle);
+      }
+    }
   }
+
   std::string parentUrl =
       JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
 
@@ -499,7 +463,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
     pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
         .thenInWorkerThread(
-            [pLogger, &context, rootContext, useWaterMask](
+            [pLogger, &context, useWaterMask](
                 std::shared_ptr<IAssetRequest>&& pRequest) mutable {
               const IAssetResponse* pResponse = pRequest->response();
               if (!pResponse) {
@@ -546,7 +510,6 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
               Private::workerThreadLoadTileContext(
                   parentLayerJson,
                   *context.pUnderlyingContext,
-                  rootContext,
                   pLogger,
                   useWaterMask);
             });
@@ -566,7 +529,6 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
   Private::workerThreadLoadTileContext(
       layerJson,
       context,
-      &context,
       pLogger,
       useWaterMask);
   tile.setContext(&context);
