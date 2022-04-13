@@ -2,15 +2,14 @@
 
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumUtility/JsonHelpers.h"
+#include "CesiumUtility/Uri.h"
 #include "QuantizedMeshContent.h"
 #include "TilesetLoadTileFromJson.h"
 #include "calcQuadtreeMaxGeometricError.h"
-
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeospatial/GeographicProjection.h>
-#include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
 
@@ -447,6 +446,16 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
             rectangle);
       }
     }
+  }
+
+  const auto attributionIt = layerJson.FindMember("attribution");
+
+  if (attributionIt != layerJson.MemberEnd() &&
+      attributionIt->value.IsString()) {
+    context.credit = std::make_optional<Credit>(
+        context.pTileset->getExternals().pCreditSystem->createCredit(
+            attributionIt->value.GetString(),
+            context.pTileset->_options.showCreditsOnScreen));
   }
 
   std::string parentUrl =

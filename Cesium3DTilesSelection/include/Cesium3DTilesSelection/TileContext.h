@@ -2,6 +2,7 @@
 
 #include "BoundingVolume.h"
 
+#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <CesiumGeometry/Availability.h>
 #include <CesiumGeometry/OctreeAvailability.h>
 #include <CesiumGeometry/OctreeTilingScheme.h>
@@ -19,7 +20,6 @@ namespace Cesium3DTilesSelection {
 
 class Tileset;
 class TileContext;
-
 /**
  * @brief A tiling context that was created for implicit quadtree or octree
  * tiles.
@@ -248,6 +248,11 @@ public:
    * using this context.
    */
   uint32_t availabilityLoadsInProgress = 0;
+
+  /**
+   * @brief Any attribution associated with this context/layer.
+   */
+  std::optional<Credit> credit;
 };
 
 } // namespace Cesium3DTilesSelection

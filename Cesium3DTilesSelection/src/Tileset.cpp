@@ -317,6 +317,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
           pCreditSystem->addCreditToFrame(credit);
         }
       }
+      if (tile->getContext()->credit) {
+        pCreditSystem->addCreditToFrame(*tile->getContext()->credit);
+      }
     }
   }
 
