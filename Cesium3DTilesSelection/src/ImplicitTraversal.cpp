@@ -200,43 +200,43 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
 }
 
 void HandleLayeredTerrain(
-    Tile& tile,
-    TileContext* pContext,
-    const CesiumGeometry::QuadtreeTileID* pQuadtreeTileID) {
+    Tile& parentTile,
+    TileContext* parentContext,
+    const CesiumGeometry::QuadtreeTileID* parentID) {
   const CesiumGeometry::QuadtreeTileID swID(
-      pQuadtreeTileID->level + 1,
-      pQuadtreeTileID->x * 2,
-      pQuadtreeTileID->y * 2);
+      parentID->level + 1,
+      parentID->x * 2,
+      parentID->y * 2);
   const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
   const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
   const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
-  const QuadtreeTileID* ids[4] = {&swID, &seID, &nwID, &neID};
+  const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
   uint8_t availabilities[4] = {0, 0, 0, 0};
-  TileContext* contexts[4] = {pContext, pContext, pContext, pContext};
+  TileContext* childContexts[4] = {parentContext, parentContext, parentContext, parentContext};
 
   std::optional<CesiumGeometry::QuadtreeTileID> unloadedAvailabilityTile;
 
   for (int i = 0; i < 4; i++) {
-    const QuadtreeTileID* id = ids[i];
+    const QuadtreeTileID* id = childIDs[i];
     uint8_t& available = availabilities[i];
-    auto pCurrent = contexts[i];
+    auto pCurrent = childContexts[i];
     while (true) {
       available =
           pCurrent->implicitContext->rectangleAvailability->isTileAvailable(
               *id);
       if (available) {
-        contexts[i] = pCurrent;
+        childContexts[i] = pCurrent;
         break;
       }
 
       unloadedAvailabilityTile = GetUnloadedAvailabilityTile(pCurrent, *id);
       if (unloadedAvailabilityTile) {
-        ++pContext->availabilityLoadsInProgress;
+        ++parentContext->availabilityLoadsInProgress;
         auto tileToLoad = *unloadedAvailabilityTile;
         // need to load prerequisite tile before going any further
 
-        const auto& externals = tile.getTileset()->getExternals();
+        const auto& externals = parentTile.getTileset()->getExternals();
         const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
         auto& pAssetAccessor = externals.pAssetAccessor;
         auto pLogger = externals.pLogger;
@@ -287,10 +287,10 @@ void HandleLayeredTerrain(
                   return ret;
                 })
             .thenInMainThread(
-                [&tile, pContext, pQuadtreeTileID, pCurrent, tileToLoad](
+                [&parentTile, parentContext, parentID, pCurrent, tileToLoad](
                     std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                         availableTileRectangles) {
-                  --tile.getContext()->availabilityLoadsInProgress;
+                  --parentTile.getContext()->availabilityLoadsInProgress;
                   pCurrent->availabilityTilesLoaded.insert(tileToLoad);
                   if (!availableTileRectangles.empty()) {
                     for (const CesiumGeometry::QuadtreeTileRectangularRange&
@@ -299,9 +299,9 @@ void HandleLayeredTerrain(
                           ->addAvailableTileRange(range);
                     }
                   }
-                  HandleLayeredTerrain(tile, pContext, pQuadtreeTileID);
+                  HandleLayeredTerrain(parentTile, parentContext, parentID);
                 })
-            .catchInMainThread([pLogger, &tile, pCurrent, tileToLoad](
+            .catchInMainThread([pLogger, &parentTile, pCurrent, tileToLoad](
                                    const std::exception& e) {
               SPDLOG_LOGGER_ERROR(pLogger, "{}", e.what());
             });
@@ -326,37 +326,18 @@ void HandleLayeredTerrain(
     // all four in order to avoid holes. But non-available tiles will be
     // upsampled instead of loaded.
 
-    tile.createChildTiles(4);
-    gsl::span<Tile> children = tile.getChildren();
+    parentTile.createChildTiles(4);
+    gsl::span<Tile> children = parentTile.getChildren();
 
-    createImplicitQuadtreeTile(
-        contexts[0],
-        *contexts[0]->implicitContext,
-        tile,
-        children[0],
-        swID,
-        availabilities[0]);
-    createImplicitQuadtreeTile(
-        contexts[1],
-        *contexts[1]->implicitContext,
-        tile,
-        children[1],
-        seID,
-        availabilities[1]);
-    createImplicitQuadtreeTile(
-        contexts[2],
-        *contexts[2]->implicitContext,
-        tile,
-        children[2],
-        nwID,
-        availabilities[2]);
-    createImplicitQuadtreeTile(
-        contexts[3],
-        *contexts[3]->implicitContext,
-        tile,
-        children[3],
-        neID,
-        availabilities[3]);
+    for (int i = 0; i < 4; i++) {
+      createImplicitQuadtreeTile(
+          childContexts[i],
+          *childContexts[i]->implicitContext,
+          parentTile,
+          children[i],
+          *childIDs[i],
+          availabilities[i]);
+    }
   }
 }
 
