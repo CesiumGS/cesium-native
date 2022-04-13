@@ -169,7 +169,7 @@ inline CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
           ? tileID.level - availabilityLevels
           : (tileID.level / availabilityLevels) * availabilityLevels;
 
-  auto divisor = 1 << (tileID.level - parentLevel);
+  uint32_t divisor = 1 << (tileID.level - parentLevel);
   return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
 }
 
