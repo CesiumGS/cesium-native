@@ -437,11 +437,8 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       layerJson.FindMember("metadataAvailability");
 
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
-      availableTileRectangles;
-  QuantizedMeshContent::processAvailability(
-      layerJson,
-      0,
-      availableTileRectangles);
+      availableTileRectangles =
+          QuantizedMeshContent::loadAvailabilityRectangles(layerJson, 0);
   if (availableTileRectangles.size() > 0) {
     for (const auto& rectangle : availableTileRectangles) {
       context.implicitContext->rectangleAvailability->addAvailableTileRange(

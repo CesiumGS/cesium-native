@@ -50,14 +50,15 @@ public:
       const gsl::span<const std::byte>& data,
       bool enableWaterMask);
 
-  static std::optional<gsl::span<const char>>
-  loadMetadata(const gsl::span<const std::byte>& data);
+  static std::vector<CesiumGeometry::QuadtreeTileRectangularRange> loadMetadata(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const gsl::span<const std::byte>& data,
+      const CesiumGeometry::QuadtreeTileID& tileID);
 
-  static void processAvailability(
+  static std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+  loadAvailabilityRectangles(
       const rapidjson::Document& metadata,
-      uint32_t startingLevel,
-      std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&
-          availableTileRectangles);
+      uint32_t startingLevel);
 };
 
 } // namespace Cesium3DTilesSelection

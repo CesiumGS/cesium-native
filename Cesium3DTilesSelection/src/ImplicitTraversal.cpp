@@ -202,6 +202,64 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
 void HandleLayeredTerrain(
     Tile& parentTile,
     TileContext* parentContext,
+    const CesiumGeometry::QuadtreeTileID* parentID);
+
+void FetchAvailabilityTile(
+    Tile& parentTile,
+    TileContext* parentContext,
+    const CesiumGeometry::QuadtreeTileID* parentID,
+    TileContext* pCurrent,
+    const CesiumGeometry::QuadtreeTileID& tileToLoad) {
+  const auto& externals = parentTile.getTileset()->getExternals();
+  const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
+  auto& pAssetAccessor = externals.pAssetAccessor;
+  auto pLogger = externals.pLogger;
+  auto url = pCurrent->pTileset->getResolvedContentUrl(*pCurrent, tileToLoad);
+
+  pAssetAccessor->get(asyncSystem, url, pCurrent->requestHeaders)
+      .thenInWorkerThread(
+          [&pLogger, url, pCurrent, tileToLoad](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
+              -> std::vector<CesiumGeometry::QuadtreeTileRectangularRange> {
+            std::vector<CesiumGeometry::QuadtreeTileRectangularRange> ret;
+            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+            if (pResponse) {
+              uint16_t statusCode = pResponse->statusCode();
+
+              if (!(statusCode != 0 &&
+                    (statusCode < 200 || statusCode >= 300))) {
+                return QuantizedMeshContent::loadMetadata(
+                    pLogger,
+                    pResponse->data(),
+                    tileToLoad);
+              }
+            }
+            return std::vector<CesiumGeometry::QuadtreeTileRectangularRange>();
+          })
+      .thenInMainThread(
+          [&parentTile, parentContext, parentID, pCurrent, tileToLoad](
+              std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
+                  rectangles) {
+            --parentTile.getContext()->availabilityLoadsInProgress;
+            pCurrent->availabilityTilesLoaded.insert(tileToLoad);
+            if (!rectangles.empty()) {
+              for (const CesiumGeometry::QuadtreeTileRectangularRange& range :
+                   rectangles) {
+                pCurrent->implicitContext->rectangleAvailability
+                    ->addAvailableTileRange(range);
+              }
+            }
+            HandleLayeredTerrain(parentTile, parentContext, parentID);
+          })
+      .catchInMainThread([pLogger, &parentTile, pCurrent, tileToLoad](
+                             const std::exception& e) {
+        SPDLOG_LOGGER_ERROR(pLogger, "{}", e.what());
+      });
+}
+
+void HandleLayeredTerrain(
+    Tile& parentTile,
+    TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID) {
   const CesiumGeometry::QuadtreeTileID swID(
       parentID->level + 1,
@@ -213,9 +271,11 @@ void HandleLayeredTerrain(
 
   const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
   uint8_t availabilities[4] = {0, 0, 0, 0};
-  TileContext* childContexts[4] = {parentContext, parentContext, parentContext, parentContext};
+  TileContext* childContexts[4] =
+      {parentContext, parentContext, parentContext, parentContext};
 
   std::optional<CesiumGeometry::QuadtreeTileID> unloadedAvailabilityTile;
+  bool anyAvailable = false;
 
   for (int i = 0; i < 4; i++) {
     const QuadtreeTileID* id = childIDs[i];
@@ -227,6 +287,7 @@ void HandleLayeredTerrain(
               *id);
       if (available) {
         childContexts[i] = pCurrent;
+        anyAvailable = true;
         break;
       }
 
@@ -234,78 +295,13 @@ void HandleLayeredTerrain(
       if (unloadedAvailabilityTile) {
         ++parentContext->availabilityLoadsInProgress;
         auto tileToLoad = *unloadedAvailabilityTile;
-        // need to load prerequisite tile before going any further
-
-        const auto& externals = parentTile.getTileset()->getExternals();
-        const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
-        auto& pAssetAccessor = externals.pAssetAccessor;
-        auto pLogger = externals.pLogger;
-        auto url =
-            pCurrent->pTileset->getResolvedContentUrl(*pCurrent, tileToLoad);
-
-        pAssetAccessor->get(asyncSystem, url, pCurrent->requestHeaders)
-            .thenInWorkerThread(
-                [&pLogger, url, pCurrent, tileToLoad](
-                    std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-                    -> std::vector<
-                        CesiumGeometry::QuadtreeTileRectangularRange> {
-                  std::vector<CesiumGeometry::QuadtreeTileRectangularRange> ret;
-                  const CesiumAsync::IAssetResponse* pResponse =
-                      pRequest->response();
-                  if (pResponse) {
-                    uint16_t statusCode = pResponse->statusCode();
-
-                    if (statusCode != 0 &&
-                        (statusCode < 200 || statusCode >= 300)) {
-                      return ret;
-                    }
-
-                    std::optional<gsl::span<const char>> metadataString =
-                        QuantizedMeshContent::loadMetadata(pResponse->data());
-                    if (metadataString) {
-                      rapidjson::Document metadata;
-                      metadata.Parse(
-                          reinterpret_cast<const char*>(metadataString->data()),
-                          metadataString->size());
-
-                      if (metadata.HasParseError()) {
-                        SPDLOG_LOGGER_ERROR(
-                            pLogger,
-                            "Error when parsing metadata, error code {} at "
-                            "byte "
-                            "offset {}",
-                            metadata.GetParseError(),
-                            metadata.GetErrorOffset());
-                      } else {
-                        QuantizedMeshContent::processAvailability(
-                            metadata,
-                            tileToLoad.level + 1,
-                            ret);
-                      }
-                    }
-                  }
-                  return ret;
-                })
-            .thenInMainThread(
-                [&parentTile, parentContext, parentID, pCurrent, tileToLoad](
-                    std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
-                        availableTileRectangles) {
-                  --parentTile.getContext()->availabilityLoadsInProgress;
-                  pCurrent->availabilityTilesLoaded.insert(tileToLoad);
-                  if (!availableTileRectangles.empty()) {
-                    for (const CesiumGeometry::QuadtreeTileRectangularRange&
-                             range : availableTileRectangles) {
-                      pCurrent->implicitContext->rectangleAvailability
-                          ->addAvailableTileRange(range);
-                    }
-                  }
-                  HandleLayeredTerrain(parentTile, parentContext, parentID);
-                })
-            .catchInMainThread([pLogger, &parentTile, pCurrent, tileToLoad](
-                                   const std::exception& e) {
-              SPDLOG_LOGGER_ERROR(pLogger, "{}", e.what());
-            });
-        return;
+        // load parent availability tile before going any further
+        return FetchAvailabilityTile(
+            parentTile,
+            parentContext,
+            parentID,
+            pCurrent,
+            tileToLoad);
       }
       if (pCurrent->pUnderlyingContext) {
         pCurrent = pCurrent->pUnderlyingContext.get();
@@ -315,13 +311,7 @@ void HandleLayeredTerrain(
     }
   }
 
-  size_t childCount = static_cast<size_t>(
-      (availabilities[0] & TileAvailabilityFlags::TILE_AVAILABLE) +
-      (availabilities[1] & TileAvailabilityFlags::TILE_AVAILABLE) +
-      (availabilities[2] & TileAvailabilityFlags::TILE_AVAILABLE) +
-      (availabilities[3] & TileAvailabilityFlags::TILE_AVAILABLE));
-
-  if (childCount > 0) {
+  if (anyAvailable) {
     // For quantized mesh, if any children are available, we need to create
     // all four in order to avoid holes. But non-available tiles will be
     // upsampled instead of loaded.
