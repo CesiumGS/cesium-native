@@ -299,8 +299,8 @@ void HandleLayeredTerrain(Tile& tile) {
                       pCurrent->implicitContext->rectangleAvailability
                           ->addAvailableTileRange(range);
                     }
-                    HandleLayeredTerrain(tile);
                   }
+                  HandleLayeredTerrain(tile);
                 })
             .catchInMainThread([pLogger, &tile, pCurrent, tileToLoad](
                                    const std::exception& e) {
