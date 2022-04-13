@@ -199,11 +199,10 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
   return std::nullopt;
 }
 
-void HandleLayeredTerrain(Tile& tile) {
-  auto pContext = tile.getContext();
-  auto pQuadtreeTileID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
-
+void HandleLayeredTerrain(
+    Tile& tile,
+    TileContext* pContext,
+    const CesiumGeometry::QuadtreeTileID* pQuadtreeTileID) {
   const CesiumGeometry::QuadtreeTileID swID(
       pQuadtreeTileID->level + 1,
       pQuadtreeTileID->x * 2,
@@ -288,7 +287,7 @@ void HandleLayeredTerrain(Tile& tile) {
                   return ret;
                 })
             .thenInMainThread(
-                [&tile, pCurrent, tileToLoad](
+                [&tile, pContext, pQuadtreeTileID, pCurrent, tileToLoad](
                     std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                         availableTileRectangles) {
                   --tile.getContext()->availabilityLoadsInProgress;
@@ -300,7 +299,7 @@ void HandleLayeredTerrain(Tile& tile) {
                           ->addAvailableTileRange(range);
                     }
                   }
-                  HandleLayeredTerrain(tile);
+                  HandleLayeredTerrain(tile, pContext, pQuadtreeTileID);
                 })
             .catchInMainThread([pLogger, &tile, pCurrent, tileToLoad](
                                    const std::exception& e) {
@@ -523,7 +522,7 @@ void createImplicitChildrenIfNeeded(
       // if they are.
 
       if (implicitContext.rectangleAvailability) {
-        return HandleLayeredTerrain(tile);
+        return HandleLayeredTerrain(tile, pContext, pQuadtreeTileID);
       }
       const QuadtreeTileID swID(
           pQuadtreeTileID->level + 1,
