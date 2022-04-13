@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TileContent.h>
 #include "BoundingVolume.h"
 #include "Library.h"
 #include "RasterMappedTo3DTile.h"
@@ -10,6 +9,7 @@
 #include "TileRefine.h"
 #include "TileSelectionState.h"
 
+#include <Cesium3DTilesSelection/Exp_TileContent.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/DoublyLinkedList.h>
@@ -625,9 +625,7 @@ public:
     return exp_pContent.get();
   }
 
-  TileContent* exp_GetContent() noexcept {
-    return exp_pContent.get();
-  }
+  TileContent* exp_GetContent() noexcept { return exp_pContent.get(); }
 
 private:
   /**

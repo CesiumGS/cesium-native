@@ -2,11 +2,8 @@
 
 #include <Cesium3DTilesSelection/Exp_TileContent.h>
 #include <Cesium3DTilesSelection/Exp_TileContentLoadInfo.h>
-#include <CesiumAsync/AsyncSystem.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/Future.h>
-#include <CesiumAsync/IAssetAccessor.h>
-
-#include <spdlog/logger.h>
 
 #include <memory>
 
@@ -15,25 +12,33 @@ class Tile;
 
 class TilesetContentLoader {
 public:
+  TilesetContentLoader(const TilesetExternals& externals);
+
   virtual ~TilesetContentLoader() = default;
 
-  void loadTileContent(
-      Tile& tile,
-      CesiumAsync::AsyncSystem& asyncSystem,
-      std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      std::shared_ptr<spdlog::logger>& pLogger,
-      const TilesetContentOptions &contentOptions);
+  void loadTileContent(Tile& tile, const TilesetContentOptions& contentOptions);
 
   void updateTileContent(Tile& tile);
 
   bool unloadTileContent(Tile& tile);
 
 private:
-  static void setTileContentState(TileContent &content, TileContentKind&& contentKind, TileLoadState state);
+  static void setTileContentState(
+      TileContent& content,
+      TileContentKind&& contentKind,
+      TileLoadState state);
 
-  void processContentLoadedState(Tile& tile);
+  static void resetTileContent(TileContent& content);
 
-  void processDoneState(Tile& tile);
+  void updateFailedTemporarilyState(Tile& tile);
+
+  void updateContentLoadedState(Tile& tile);
+
+  void updateDoneState(Tile& tile);
+
+  bool unloadContentLoadedState(Tile& tile);
+
+  bool unloadDoneState(Tile& tile);
 
   virtual CesiumAsync::Future<TileContentKind>
   doLoadTileContent(const TileContentLoadInfo& loadInfo) = 0;
@@ -43,5 +48,7 @@ private:
   virtual void doUpdateTileContent(Tile& tile) = 0;
 
   virtual bool doUnloadTileContent(Tile& tile) = 0;
+
+  TilesetExternals _externals;
 };
 } // namespace Cesium3DTilesSelection
