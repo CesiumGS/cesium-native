@@ -311,7 +311,7 @@ void HandleQuantizedMesh(
     parentTile.createChildTiles(4);
     gsl::span<Tile> children = parentTile.getChildren();
 
-    for (int i = 0; i < 4; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
       createImplicitQuadtreeTile(
           childContexts[i],
           *childContexts[i]->implicitContext,
