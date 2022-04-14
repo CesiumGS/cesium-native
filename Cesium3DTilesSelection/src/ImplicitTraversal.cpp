@@ -209,6 +209,8 @@ void FetchAvailabilityTile(
       availabilityTileID);
 
   ++parentContext->availabilityLoadsInProgress;
+  // Make sure that the tileset is not destroyed while availability is loading.
+  parentTile.getTileset()->notifyTileStartLoading(nullptr);
   pAssetAccessor->get(asyncSystem, url, childContext->requestHeaders)
       .thenInWorkerThread(
           [pLogger, url, availabilityTileID](
@@ -237,6 +239,7 @@ void FetchAvailabilityTile(
               std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                   rectangles) {
             --parentTile.getContext()->availabilityLoadsInProgress;
+            parentTile.getTileset()->notifyTileDoneLoading(nullptr);
             childContext->availabilityTilesLoaded.insert(availabilityTileID);
             if (!rectangles.empty()) {
               for (const auto& range : rectangles) {
