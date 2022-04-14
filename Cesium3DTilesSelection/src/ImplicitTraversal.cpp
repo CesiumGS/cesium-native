@@ -161,6 +161,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 }
 
 namespace {
+
 inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
     int32_t availabilityLevels) {
@@ -191,26 +192,26 @@ std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
 
 void createQuantizedMeshChildren(
     Tile& parentTile,
-    TileContext* parentContext,
-    const CesiumGeometry::QuadtreeTileID* parentID);
+    TileContext* pParentContext,
+    const CesiumGeometry::QuadtreeTileID* pParentID);
 
 void requestAvailabilityTile(
     Tile& parentTile,
-    TileContext* parentContext,
-    const CesiumGeometry::QuadtreeTileID* parentID,
-    TileContext* childContext,
+    TileContext* pParentContext,
+    const CesiumGeometry::QuadtreeTileID* pParentID,
+    TileContext* pChildContext,
     const CesiumGeometry::QuadtreeTileID& availabilityTileID) {
   const Cesium3DTilesSelection::TilesetExternals& externals =
       parentTile.getTileset()->getExternals();
-  std::string url = childContext->pTileset->getResolvedContentUrl(
-      *childContext,
+  std::string url = pChildContext->pTileset->getResolvedContentUrl(
+      *pChildContext,
       availabilityTileID);
 
-  ++parentContext->availabilityLoadsInProgress;
+  ++pParentContext->availabilityLoadsInProgress;
   // Make sure that the tileset is not destroyed while availability is loading.
   parentTile.getTileset()->notifyTileStartLoading(nullptr);
   externals.pAssetAccessor
-      ->get(externals.asyncSystem, url, childContext->requestHeaders)
+      ->get(externals.asyncSystem, url, pChildContext->requestHeaders)
       .thenInWorkerThread(
           [pLogger = externals.pLogger, url, availabilityTileID](
               std::shared_ptr<IAssetRequest>&& pRequest)
@@ -231,32 +232,32 @@ void requestAvailabilityTile(
           })
       .thenInMainThread(
           [&parentTile,
-           parentContext,
-           parentID,
-           childContext,
+           pParentContext,
+           pParentID,
+           pChildContext,
            availabilityTileID](
               std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                   rectangles) {
             --parentTile.getContext()->availabilityLoadsInProgress;
             parentTile.getTileset()->notifyTileDoneLoading(nullptr);
-            childContext->availabilityTilesLoaded.insert(availabilityTileID);
+            pChildContext->availabilityTilesLoaded.insert(availabilityTileID);
             if (!rectangles.empty()) {
               for (const QuadtreeTileRectangularRange& range : rectangles) {
-                childContext->implicitContext->rectangleAvailability
+                pChildContext->implicitContext->rectangleAvailability
                     ->addAvailableTileRange(range);
               }
             }
-            createQuantizedMeshChildren(parentTile, parentContext, parentID);
+            createQuantizedMeshChildren(parentTile, pParentContext, pParentID);
           });
 }
 void createQuantizedMeshChildren(
     Tile& parentTile,
-    TileContext* parentContext,
-    const CesiumGeometry::QuadtreeTileID* parentID) {
+    TileContext* pParentContext,
+    const CesiumGeometry::QuadtreeTileID* pParentID) {
   const CesiumGeometry::QuadtreeTileID swID(
-      parentID->level + 1,
-      parentID->x * 2,
-      parentID->y * 2);
+      pParentID->level + 1,
+      pParentID->x * 2,
+      pParentID->y * 2);
   const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
   const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
   const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
@@ -265,40 +266,39 @@ void createQuantizedMeshChildren(
   uint8_t availabilities[4] = {};
 
   TileContext* childContexts[4] =
-      {parentContext, parentContext, parentContext, parentContext};
+      {pParentContext, pParentContext, pParentContext, pParentContext};
   bool anyAvailable = false;
 
   for (int i = 0; i < 4; i++) {
-    const QuadtreeTileID* id = childIDs[i];
+    TileContext* pChildContext = childContexts[i];
+    const QuadtreeTileID* pChildID = childIDs[i];
     uint8_t& available = availabilities[i];
-    TileContext* childContext = childContexts[i];
     while (true) {
-      available =
-          childContext->implicitContext->rectangleAvailability->isTileAvailable(
-              *id);
+      available = pChildContext->implicitContext->rectangleAvailability
+                      ->isTileAvailable(*pChildID);
       if (available) {
         anyAvailable = true;
-        childContexts[i] = childContext;
+        childContexts[i] = pChildContext;
         break;
       }
-      if (childContext->availabilityLevels) {
+      if (pChildContext->availabilityLevels) {
         std::optional<QuadtreeTileID> unloadedAvailabilityTile =
             getUnloadedAvailabilityTile(
-                childContext,
-                *id,
-                *childContext->availabilityLevels);
+                pChildContext,
+                *pChildID,
+                *pChildContext->availabilityLevels);
         if (unloadedAvailabilityTile) {
           // load parent availability tile before going any further
           return requestAvailabilityTile(
               parentTile,
-              parentContext,
-              parentID,
-              childContext,
+              pParentContext,
+              pParentID,
+              pChildContext,
               *unloadedAvailabilityTile);
         }
       }
-      if (childContext->pUnderlyingContext) {
-        childContext = childContext->pUnderlyingContext.get();
+      if (pChildContext->pUnderlyingContext) {
+        pChildContext = pChildContext->pUnderlyingContext.get();
       } else {
         break;
       }
