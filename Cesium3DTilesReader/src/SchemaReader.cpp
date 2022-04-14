@@ -5,6 +5,8 @@
 
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Tracing.h>
+#pragma warning(disable : 4324)
+#include <Tracy.hpp>
 
 namespace Cesium3DTilesReader {
 
@@ -14,7 +16,9 @@ SchemaReaderResult readSchemaJson(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  CESIUM_TRACE("Cesium3DTilesReader::SchemaReader::readSchemaJson");
+
+  //CESIUM_TRACE("Cesium3DTilesReader::SchemaReader::readSchemaJson");
+  ZoneScoped
 
   SchemaJsonHandler schemaHandler(context);
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Schema> jsonResult =

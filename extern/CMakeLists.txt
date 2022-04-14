@@ -107,6 +107,10 @@ add_library(earcut INTERFACE)
 target_include_directories(earcut SYSTEM INTERFACE earcut/include)
 set_target_properties(earcut PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/earcut/include/mapbox/earcut.hpp")
 
+if(CESIUM_TRACING_ENABLED)
+  add_subdirectory(tracy)
+endif()
+
 set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" CACHE INTERNAL
     "Include directory for spdlog"
 )
