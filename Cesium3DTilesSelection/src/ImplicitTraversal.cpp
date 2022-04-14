@@ -160,8 +160,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
   }
 }
 
-namespace ImplicitTraversalUtilities {
-
+namespace {
 inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
     uint32_t availabilityLevels) {
@@ -242,7 +241,7 @@ void requestAvailabilityTile(
             parentTile.getTileset()->notifyTileDoneLoading(nullptr);
             childContext->availabilityTilesLoaded.insert(availabilityTileID);
             if (!rectangles.empty()) {
-              for (const QuadtreeTileRectangularRange&& range : rectangles) {
+              for (const QuadtreeTileRectangularRange& range : rectangles) {
                 childContext->implicitContext->rectangleAvailability
                     ->addAvailableTileRange(range);
               }
@@ -250,7 +249,6 @@ void requestAvailabilityTile(
             createQuantizedMeshChildren(parentTile, parentContext, parentID);
           });
 }
-
 void createQuantizedMeshChildren(
     Tile& parentTile,
     TileContext* parentContext,
@@ -316,7 +314,7 @@ void createQuantizedMeshChildren(
     gsl::span<Tile> children = parentTile.getChildren();
 
     for (uint32_t i = 0; i < 4; i++) {
-      createImplicitQuadtreeTile(
+      ImplicitTraversalUtilities::createImplicitQuadtreeTile(
           childContexts[i],
           *childContexts[i]->implicitContext,
           parentTile,
@@ -326,6 +324,9 @@ void createQuantizedMeshChildren(
     }
   }
 }
+} // namespace
+
+namespace ImplicitTraversalUtilities {
 
 void createImplicitQuadtreeTile(
     const TileContext* tileContext,
