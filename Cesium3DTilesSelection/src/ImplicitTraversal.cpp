@@ -273,7 +273,7 @@ void createQuantizedMeshChildren(
     TileContext* pChildContext = childContexts[i];
     const QuadtreeTileID* pChildID = childIDs[i];
     uint8_t& available = availabilities[i];
-    while (true) {
+    while (pChildContext) {
       available = pChildContext->implicitContext->rectangleAvailability
                       ->isTileAvailable(*pChildID);
       if (available) {
@@ -297,11 +297,7 @@ void createQuantizedMeshChildren(
               *unloadedAvailabilityTile);
         }
       }
-      if (pChildContext->pUnderlyingContext) {
-        pChildContext = pChildContext->pUnderlyingContext.get();
-      } else {
-        break;
-      }
+      pChildContext = pChildContext->pUnderlyingContext.get();
     }
   }
 
