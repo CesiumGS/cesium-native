@@ -11,6 +11,7 @@
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
 
+using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
@@ -200,23 +201,22 @@ void FetchAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID* parentID,
     TileContext* childContext,
     const CesiumGeometry::QuadtreeTileID& availabilityTileID) {
-  const auto& externals = parentTile.getTileset()->getExternals();
-  const CesiumAsync::AsyncSystem& asyncSystem = externals.asyncSystem;
-  auto& pAssetAccessor = externals.pAssetAccessor;
-  auto pLogger = externals.pLogger;
-  auto url = childContext->pTileset->getResolvedContentUrl(
+  const Cesium3DTilesSelection::TilesetExternals& externals =
+      parentTile.getTileset()->getExternals();
+  std::string url = childContext->pTileset->getResolvedContentUrl(
       *childContext,
       availabilityTileID);
 
   ++parentContext->availabilityLoadsInProgress;
   // Make sure that the tileset is not destroyed while availability is loading.
   parentTile.getTileset()->notifyTileStartLoading(nullptr);
-  pAssetAccessor->get(asyncSystem, url, childContext->requestHeaders)
+  externals.pAssetAccessor
+      ->get(externals.asyncSystem, url, childContext->requestHeaders)
       .thenInWorkerThread(
-          [pLogger, url, availabilityTileID](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-              -> std::vector<CesiumGeometry::QuadtreeTileRectangularRange> {
-            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+          [pLogger = externals.pLogger, url, availabilityTileID](
+              std::shared_ptr<IAssetRequest>&& pRequest)
+              -> std::vector<QuadtreeTileRectangularRange> {
+            const IAssetResponse* pResponse = pRequest->response();
             if (pResponse) {
               uint16_t statusCode = pResponse->statusCode();
 
@@ -242,7 +242,7 @@ void FetchAvailabilityTile(
             parentTile.getTileset()->notifyTileDoneLoading(nullptr);
             childContext->availabilityTilesLoaded.insert(availabilityTileID);
             if (!rectangles.empty()) {
-              for (const auto& range : rectangles) {
+              for (const QuadtreeTileRectangularRange&& range : rectangles) {
                 childContext->implicitContext->rectangleAvailability
                     ->addAvailableTileRange(range);
               }
@@ -273,7 +273,7 @@ void createQuantizedMeshChildren(
   for (int i = 0; i < 4; i++) {
     const QuadtreeTileID* id = childIDs[i];
     uint8_t& available = availabilities[i];
-    auto childContext = childContexts[i];
+    TileContext* childContext = childContexts[i];
     while (true) {
       available =
           childContext->implicitContext->rectangleAvailability->isTileAvailable(
@@ -284,10 +284,11 @@ void createQuantizedMeshChildren(
         break;
       }
       if (childContext->availabilityLevels) {
-        auto unloadedAvailabilityTile = GetUnloadedAvailabilityTile(
-            childContext,
-            *id,
-            *childContext->availabilityLevels);
+        std::optional<QuadtreeTileID> unloadedAvailabilityTile =
+            GetUnloadedAvailabilityTile(
+                childContext,
+                *id,
+                *childContext->availabilityLevels);
         if (unloadedAvailabilityTile) {
           // load parent availability tile before going any further
           return FetchAvailabilityTile(
