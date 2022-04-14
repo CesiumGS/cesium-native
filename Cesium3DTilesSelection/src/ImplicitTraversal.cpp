@@ -211,7 +211,7 @@ void FetchAvailabilityTile(
   ++parentContext->availabilityLoadsInProgress;
   pAssetAccessor->get(asyncSystem, url, childContext->requestHeaders)
       .thenInWorkerThread(
-          [&pLogger, url, availabilityTileID](
+          [pLogger, url, availabilityTileID](
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
               -> std::vector<CesiumGeometry::QuadtreeTileRectangularRange> {
             const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
