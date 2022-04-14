@@ -162,7 +162,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace ImplicitTraversalUtilities {
 
-inline CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
+inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
     uint32_t availabilityLevels) {
   uint32_t parentLevel =
@@ -174,12 +174,12 @@ inline CesiumGeometry::QuadtreeTileID GetAvailabilityTile(
   return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
 }
 
-std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
+std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
     const TileContext* pContext,
     CesiumGeometry::QuadtreeTileID tileID,
     uint32_t availabilityLevels) {
   while (tileID.level > 0) {
-    tileID = GetAvailabilityTile(tileID, availabilityLevels);
+    tileID = getAvailabilityTile(tileID, availabilityLevels);
     if (pContext->availabilityTilesLoaded.find(tileID) ==
             pContext->availabilityTilesLoaded.end() &&
         pContext->implicitContext->rectangleAvailability->isTileAvailable(
@@ -195,7 +195,7 @@ void createQuantizedMeshChildren(
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID);
 
-void FetchAvailabilityTile(
+void requestAvailabilityTile(
     Tile& parentTile,
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID,
@@ -285,13 +285,13 @@ void createQuantizedMeshChildren(
       }
       if (childContext->availabilityLevels) {
         std::optional<QuadtreeTileID> unloadedAvailabilityTile =
-            GetUnloadedAvailabilityTile(
+            getUnloadedAvailabilityTile(
                 childContext,
                 *id,
                 *childContext->availabilityLevels);
         if (unloadedAvailabilityTile) {
           // load parent availability tile before going any further
-          return FetchAvailabilityTile(
+          return requestAvailabilityTile(
               parentTile,
               parentContext,
               parentID,
