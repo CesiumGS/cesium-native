@@ -163,7 +163,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 namespace {
 inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
-    uint32_t availabilityLevels) {
+    int32_t availabilityLevels) {
   uint32_t parentLevel =
       tileID.level % availabilityLevels == 0
           ? tileID.level - availabilityLevels
@@ -176,7 +176,7 @@ inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
 std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
     const TileContext* pContext,
     CesiumGeometry::QuadtreeTileID tileID,
-    uint32_t availabilityLevels) {
+    int32_t availabilityLevels) {
   while (tileID.level > 0) {
     tileID = getAvailabilityTile(tileID, availabilityLevels);
     if (pContext->availabilityTilesLoaded.find(tileID) ==

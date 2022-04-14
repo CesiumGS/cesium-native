@@ -235,7 +235,7 @@ public:
    * If `availabilityLevels` is `n`, then availability information is stored
    * every `n`th level in the tile tree.
    */
-  std::optional<uint32_t> availabilityLevels;
+  std::optional<int32_t> availabilityLevels;
 
   /**
    * @brief A hash set of the indices of the loaded availability tiles for this
