@@ -189,7 +189,7 @@ std::optional<CesiumGeometry::QuadtreeTileID> GetUnloadedAvailabilityTile(
   return std::nullopt;
 }
 
-void HandleQuantizedMesh(
+void createQuantizedMeshChildren(
     Tile& parentTile,
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID);
@@ -244,11 +244,11 @@ void FetchAvailabilityTile(
                     ->addAvailableTileRange(range);
               }
             }
-            HandleQuantizedMesh(parentTile, parentContext, parentID);
+            createQuantizedMeshChildren(parentTile, parentContext, parentID);
           });
 }
 
-void HandleQuantizedMesh(
+void createQuantizedMeshChildren(
     Tile& parentTile,
     TileContext* parentContext,
     const CesiumGeometry::QuadtreeTileID* parentID) {
@@ -485,7 +485,7 @@ void createImplicitChildrenIfNeeded(
       // if they are.
 
       if (implicitContext.rectangleAvailability) {
-        return HandleQuantizedMesh(tile, pContext, pQuadtreeTileID);
+        return createQuantizedMeshChildren(tile, pContext, pQuadtreeTileID);
       }
       const QuadtreeTileID swID(
           pQuadtreeTileID->level + 1,
