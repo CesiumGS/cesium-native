@@ -204,7 +204,7 @@ IonRasterOverlay::createTileProvider(
               endpoint.url =
                   JsonHelpers::getStringOrDefault(response, "url", "");
               endpoint.accessToken =
-                  JsonHelpers::getStringOrDefault(response, "accessToken");
+                  JsonHelpers::getStringOrDefault(response, "accessToken", "");
             }
             return endpoint;
           })

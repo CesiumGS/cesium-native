@@ -2,14 +2,17 @@
 
 ### ? - ?
 
-##### Fixes :wrench:
-
-- Fixed a crash caused by using an aggregated overlay of `IonRasterOverlay` after it is freed.
-
 ##### Additions :tada:
 
 - Added support for loading availability metadata in the layer.json.
 - Added support for loading multiple layers of quantized-mesh terrain.
+
+### v0.14.1 - 2022-04-14
+
+##### Fixes :wrench:
+
+- Fixed a crash caused by using an aggregated overlay of `IonRasterOverlay` after it is freed.
+- Fix a bug introduced in v0.14.0 that caused Tile Map Service (TMS) overlays from Cesium ion to fail to load.
 
 ### v0.14.0 - 2022-04-01
 
