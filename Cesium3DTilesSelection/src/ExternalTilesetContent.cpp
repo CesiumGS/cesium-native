@@ -79,7 +79,7 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const auto contentIt = rootIt->value.FindMember("content");
-    if (contentIt == tilesetJson.MemberEnd()) {
+    if (contentIt == rootIt->value.MemberEnd()) {
       Tile& rootTile = pResult->childTiles.value()[0];
 
       // A tile is unrenderable if it _does_ have content, but that content has
