@@ -713,6 +713,8 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
   gsl::span<Tile> children = tile.getChildren();
   bool waitingForChildren = false;
   for (Tile& child : children) {
+    this->_markTileVisited(child);
+
     if (!child.isRenderable() && !child.isExternalTileset()) {
       waitingForChildren = true;
 
@@ -727,7 +729,6 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
             childInfo);
       }
       child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
-      this->_markTileVisited(child);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
