@@ -1,4 +1,6 @@
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/Tile.h>
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 
@@ -11,16 +13,11 @@ TilesetContentLoader::TilesetContentLoader(const TilesetExternals& externals)
 void TilesetContentLoader::loadTileContent(
     Tile& tile,
     const TilesetContentOptions& contentOptions) {
-  TileContentLoadInfo loadInfo{
-      _externals.asyncSystem,
-      _externals.pAssetAccessor,
-      _externals.pLogger,
-      contentOptions,
-      tile};
-
   std::shared_ptr<TileContent> pTileContent = tile.exp_GetSharedContent();
-  doLoadTileContent(loadInfo).thenInMainThread(
-      [pTileContent](TileContentKind&& contentKind) {
+  pTileContent->setLoaderCustomDataHandle(_customDataStorage.createHandle());
+  pTileContent->setState(TileLoadState::ContentLoading);
+  doLoadTileContent(tile, contentOptions)
+      .thenInMainThread([pTileContent](TileContentKind&& contentKind) {
         TilesetContentLoader::setTileContentState(
             *pTileContent,
             std::move(contentKind),
@@ -79,6 +76,8 @@ void TilesetContentLoader::setTileContentState(
 }
 
 void TilesetContentLoader::resetTileContent(TileContent& content) {
+  _customDataStorage.destroyHandle(content.getLoaderCustomDataHandle());
+  content.setLoaderCustomDataHandle(TileUserDataStorage::NullHandle);
   content.setContentKind(TileUnknownContent{});
   content.setState(TileLoadState::Unloaded);
 }

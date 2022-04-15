@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/CreditSystem.h>
+#include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
 #include <CesiumGltf/Model.h>
 
 #include <any>
@@ -60,8 +60,13 @@ private:
 
   void setState(TileLoadState state) noexcept;
 
+  TileUserDataStorage::Handle getLoaderCustomDataHandle() const;
+
+  void setLoaderCustomDataHandle(TileUserDataStorage::Handle handle);
+
   TileContentKind _contentKind;
   TileLoadState _state;
+  TileUserDataStorage::Handle _loaderCustomDataHandle;
   TilesetContentLoader* _pLoader;
 
   friend class TilesetContentLoader;

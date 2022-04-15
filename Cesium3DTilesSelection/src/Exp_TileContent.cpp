@@ -4,6 +4,7 @@ namespace Cesium3DTilesSelection {
 TileContent::TileContent(TilesetContentLoader* pLoader)
     : _contentKind{TileUnknownContent{}},
       _state{TileLoadState::Unloaded},
+      _loaderCustomDataHandle{TileUserDataStorage::NullHandle},
       _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
@@ -40,4 +41,12 @@ void TileContent::setContentKind(const TileContentKind& contentKind) {
 
 void TileContent::setState(TileLoadState state) noexcept { _state = state; }
 
+TileUserDataStorage::Handle TileContent::getLoaderCustomDataHandle() const {
+  return _loaderCustomDataHandle;
+}
+
+void TileContent::setLoaderCustomDataHandle(
+    TileUserDataStorage::Handle handle) {
+  _loaderCustomDataHandle = handle;
+}
 } // namespace Cesium3DTilesSelection

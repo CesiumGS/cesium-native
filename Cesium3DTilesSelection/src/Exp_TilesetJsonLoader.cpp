@@ -9,6 +9,10 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
+struct WorkerExternalContent {
+  TilesetContentLoaderResult externalTilesetLoaders;
+};
+
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
  * tileset.
@@ -346,29 +350,42 @@ TilesetContentLoaderResult TilesetJsonLoader::createLoader(
   return result;
 }
 
-CesiumAsync::Future<TileContentKind>
-TilesetJsonLoader::doLoadTileContent(const TileContentLoadInfo& loadInfo) {
-  const std::string* url = std::get_if<std::string>(&loadInfo.tileID);
-  const CesiumAsync::AsyncSystem& asyncSystem = loadInfo.asyncSystem;
-  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor =
-      loadInfo.pAssetAccessor;
+CesiumAsync::Future<TileContentKind> TilesetJsonLoader::doLoadTileContent(
+    Tile& tile,
+    const TilesetContentOptions& contentOptions) {
+  const CesiumAsync::AsyncSystem& asyncSystem = _externals.asyncSystem;
 
+  const std::string* url = std::get_if<std::string>(&tile.getTileID());
   if (!url) {
     return asyncSystem.createResolvedFuture<TileContentKind>(
         TileUnknownContent{});
   }
 
-  auto requestHeaders = _requestHeaders;
+  WorkerExternalContent& workerExternalContentResult =
+      createUserData<WorkerExternalContent>(tile);
+
+  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor =
+      _externals.pAssetAccessor;
+
+  TileContentLoadInfo loadInfo{
+      asyncSystem,
+      pAssetAccessor,
+      _externals.pLogger,
+      contentOptions,
+      tile};
+
   return pAssetAccessor->get(asyncSystem, *url, _requestHeaders)
-      .thenInWorkerThread([loadInfo,
+      .thenInWorkerThread([loadInfo = std::move(loadInfo),
+                           &workerExternalContentResult,
                            externals = _externals,
-                           requestHeaders = std::move(requestHeaders)](
+                           requestHeaders = _requestHeaders](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         return TileRenderContentLoader::load(pCompletedRequest, loadInfo)
             .thenImmediately(
                 [externals,
                  pCompletedRequest,
+                 &workerExternalContentResult,
                  requestHeaders = std::move(requestHeaders)](
                     TileRenderContentLoadResult&& result) mutable
                 -> TileContentKind {
@@ -378,13 +395,16 @@ TilesetJsonLoader::doLoadTileContent(const TileContentLoadInfo& loadInfo) {
                     const auto& responseData =
                         pCompletedRequest->response()->data();
                     const auto& tileUrl = pCompletedRequest->url();
-                    auto externalTileset = TilesetJsonLoader::createLoader(
-                        externals,
-                        tileUrl,
-                        requestHeaders,
-                        responseData);
+                    workerExternalContentResult.externalTilesetLoaders =
+                        TilesetJsonLoader::createLoader(
+                            externals,
+                            tileUrl,
+                            requestHeaders,
+                            responseData);
                     return TileExternalContent{};
-                  } else if (result.reason == TileRenderContentFailReason::DataRequestFailed) {
+                  } else if (
+                      result.reason ==
+                      TileRenderContentFailReason::DataRequestFailed) {
                     return TileUnknownContent{};
                   } else {
                     return result.content;
