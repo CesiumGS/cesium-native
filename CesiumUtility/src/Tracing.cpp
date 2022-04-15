@@ -3,6 +3,18 @@
 #include <algorithm>
 #include <cassert>
 
+namespace CesiumUtility {
+
+bool isCesiumTracingEnabled() {
+#ifdef TRACY_ENABLE
+  return true;
+#else
+  return false;
+#endif
+}
+
+} // namespace CesiumUtility
+
 #if CESIUM_TRACING_ENABLED
 
 namespace CesiumUtility {

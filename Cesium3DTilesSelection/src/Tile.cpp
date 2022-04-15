@@ -22,9 +22,6 @@
 
 #include <cstddef>
 
-#pragma warning(disable : 4324)
-#include <Tracy.hpp>
-
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -329,8 +326,7 @@ void* processNewTileContent(
   void* pRendererResources = nullptr;
 
   if (pPrepareRendererResources) {
-    ZoneScoped
-    //CESIUM_TRACE("prepareInLoadThread");
+    ZoneScopedN("prepareInLoadThread");
     pRendererResources =
         pPrepareRendererResources->prepareInLoadThread(model, tileTransform);
   }

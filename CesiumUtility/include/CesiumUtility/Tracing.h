@@ -1,35 +1,52 @@
 #pragma once
 
-// If the build system doesn't enable the tracing support
-// consider it disabled by default.
-#ifndef CESIUM_TRACING_ENABLED
-#define CESIUM_TRACING_ENABLED 0
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4324)
 #endif
 
-#if !CESIUM_TRACING_ENABLED
+#include <Tracy.hpp>
 
-#define CESIUM_TRACE_INIT(filename)
-#define CESIUM_TRACE_SHUTDOWN()
-#define CESIUM_TRACE(name)
-#define CESIUM_TRACE_BEGIN(name)
-#define CESIUM_TRACE_END(name)
-#define CESIUM_TRACE_BEGIN_IN_TRACK(name)
-#define CESIUM_TRACE_END_IN_TRACK(name)
-#define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)
-#define CESIUM_TRACE_USE_TRACK_SET(id)
-#define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK() tracingTrack = false
-#define CESIUM_TRACE_USE_CAPTURED_TRACK()
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
-#else
+// // If the build system doesn't enable the tracing support
+// // consider it disabled by default.
+// #ifndef CESIUM_TRACING_ENABLED
+// #define CESIUM_TRACING_ENABLED 0
+// #endif
 
-#include <atomic>
-#include <cassert>
-#include <chrono>
-#include <fstream>
-#include <mutex>
-#include <string>
-#include <thread>
-#include <vector>
+namespace CesiumUtility {
+
+bool isCesiumTracingEnabled();
+
+} // namespace CesiumUtility
+
+// #if !CESIUM_TRACING_ENABLED
+
+// #define CESIUM_TRACE_INIT(filename)
+// #define CESIUM_TRACE_SHUTDOWN()
+// #define CESIUM_TRACE(name) ZoneScopedN(name)
+// // #define CESIUM_TRACE_BEGIN(name) TracyCZone(ctx, true)
+// // #define CESIUM_TRACE_END(name) TracyCZoneEnd(ctx)
+// #define CESIUM_TRACE_BEGIN_IN_TRACK(name)
+// #define CESIUM_TRACE_END_IN_TRACK(name)
+// #define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)
+// #define CESIUM_TRACE_USE_TRACK_SET(id)
+// #define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK() tracingTrack = false
+// #define CESIUM_TRACE_USE_CAPTURED_TRACK()
+
+// #else
+
+// #include <atomic>
+// #include <cassert>
+// #include <chrono>
+// #include <fstream>
+// #include <mutex>
+// #include <string>
+// #include <thread>
+// #include <vector>
 
 // helper macros to avoid shadowing variables
 #define TRACE_NAME_AUX1(A, B) A##B
@@ -41,14 +58,12 @@
  *
  * @param filename The path and named of the file in which to record traces.
  */
-#define CESIUM_TRACE_INIT(filename)                                            \
-  CesiumUtility::CesiumImpl::Tracer::instance().startTracing(filename)
+#define CESIUM_TRACE_INIT(filename)
 
 /**
  * @brief Shuts down tracing and closes the JSON tracing file.
  */
-#define CESIUM_TRACE_SHUTDOWN()                                                \
-  CesiumUtility::CesiumImpl::Tracer::instance().endTracing()
+#define CESIUM_TRACE_SHUTDOWN()
 
 /**
  * @brief Measures and records the time spent in the current scope.
@@ -60,56 +75,7 @@
  *
  * @param name The name of the measured operation.
  */
-#define CESIUM_TRACE(name)                                                     \
-  CesiumUtility::CesiumImpl::ScopedTrace TRACE_NAME_AUX2(                      \
-      cesiumTrace,                                                             \
-      __LINE__)(name)
-
-/**
- * @brief Begins measuring an operation which may span scope but not threads.
- *
- * Begins measuring the time of an operation which completes with a
- * corresponding call to {@link CESIUM_TRACE_END}. If the calling thread is
- * operating in a track ({@link CESIUM_TRACE_USE_TRACK_SET}), the
- * time is recorded in the track. Otherwise, is is recorded against the current
- * thread.
- *
- * Extreme care must be taken to match calls to `CESIUM_TRACE_BEGIN` and
- * `CESIUM_TRACE_END`:
- *
- *   * Paired calls must use an identical `name`.
- *   * If either BEGIN or END is called from a thread operating in a track,
- *     then both must be, and it must be the same track in
- *     both cases. In this case BEGIN and END may be called from different
- *     threads. However, it safer to use {@link CESIUM_TRACE_BEGIN_IN_TRACK}
- *     in this scenario.
- *   * If either BEGIN or END is called from a thread _not_ enlisted into a
- *     track, then both must be called from the same thread and neither
- *     thread may be in a track.
- *   * Paired calls must not be interleaved with other BEGIN/END calls for the
- *     same thread or track. Other BEGIN/END pairs may be fully
- *     nested within this one, but this pair must not END in between a nested
- *     measurement's BEGIN and END calls.
- *
- * Failure to ensure the above may lead to generation of a trace file that the
- * Chromium trace viewer is not able to correctly interpret.
- *
- * @param name The name of the measured operation.
- */
-#define CESIUM_TRACE_BEGIN(name)                                               \
-  CesiumUtility::CesiumImpl::Tracer::instance().writeAsyncEventBegin(name)
-
-/**
- * @brief Ends measuring an operation which may span scopes but not threads.
- *
- * Finishes measuring the time of an operation that began with a call to
- * {@link CESIUM_TRACE_BEGIN}. See the documentation for that macro for more
- * details and caveats.
- *
- * @param name The name of the measured operation.
- */
-#define CESIUM_TRACE_END(name)                                                 \
-  CesiumUtility::CesiumImpl::Tracer::instance().writeAsyncEventEnd(name)
+#define CESIUM_TRACE(name) ZoneScopedN(name)
 
 /**
  * @brief Begins measuring an operation that may span both scopes and threads.
@@ -123,7 +89,7 @@
  */
 #define CESIUM_TRACE_BEGIN_IN_TRACK(name)                                      \
   if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {       \
-    CESIUM_TRACE_BEGIN(name);                                                  \
+    TracyCZoneN(ctx, name, true);                                              \
   }
 
 /**
@@ -138,7 +104,7 @@
  */
 #define CESIUM_TRACE_END_IN_TRACK(name)                                        \
   if (CesiumUtility::CesiumImpl::TrackReference::current() != nullptr) {       \
-    CESIUM_TRACE_END(name);                                                    \
+    TracyCZoneEnd(ctx); \
   }
 
 /**
@@ -196,148 +162,148 @@
 #define CESIUM_TRACE_USE_CAPTURED_TRACK()                                      \
   CESIUM_TRACE_USE_TRACK_SET(tracingTrack)
 
-namespace CesiumUtility {
-namespace CesiumImpl {
+// namespace CesiumUtility {
+// namespace CesiumImpl {
 
-// The following are internal classes used by the tracing framework, do not use
-// directly.
+// // The following are internal classes used by the tracing framework, do not use
+// // directly.
 
-struct Trace {
-  std::string name;
-  int64_t start;
-  int64_t duration;
-  std::thread::id threadID;
-};
+// struct Trace {
+//   std::string name;
+//   int64_t start;
+//   int64_t duration;
+//   std::thread::id threadID;
+// };
 
-class TrackReference;
+// class TrackReference;
 
-class Tracer {
-public:
-  static Tracer& instance();
+// class Tracer {
+// public:
+//   static Tracer& instance();
 
-  ~Tracer();
+//   ~Tracer();
 
-  void startTracing(const std::string& filePath = "trace.json");
-  void endTracing();
+//   void startTracing(const std::string& filePath = "trace.json");
+//   void endTracing();
 
-  void writeCompleteEvent(const Trace& trace);
-  void writeAsyncEventBegin(const char* name, int64_t id);
-  void writeAsyncEventBegin(const char* name);
-  void writeAsyncEventEnd(const char* name, int64_t id);
-  void writeAsyncEventEnd(const char* name);
+//   void writeCompleteEvent(const Trace& trace);
+//   void writeAsyncEventBegin(const char* name, int64_t id);
+//   void writeAsyncEventBegin(const char* name);
+//   void writeAsyncEventEnd(const char* name, int64_t id);
+//   void writeAsyncEventEnd(const char* name);
 
-  int64_t allocateTrackID();
+//   int64_t allocateTrackID();
 
-private:
-  Tracer();
+// private:
+//   Tracer();
 
-  int64_t getCurrentThreadTrackID() const;
-  void writeAsyncEvent(
-      const char* category,
-      const char* name,
-      char type,
-      int64_t id);
+//   int64_t getCurrentThreadTrackID() const;
+//   void writeAsyncEvent(
+//       const char* category,
+//       const char* name,
+//       char type,
+//       int64_t id);
 
-  std::ofstream _output;
-  uint32_t _numTraces;
-  std::mutex _lock;
-  std::atomic<int64_t> _lastAllocatedID;
-};
+//   std::ofstream _output;
+//   uint32_t _numTraces;
+//   std::mutex _lock;
+//   std::atomic<int64_t> _lastAllocatedID;
+// };
 
-class ScopedTrace {
-public:
-  explicit ScopedTrace(const std::string& message);
-  ~ScopedTrace();
+// class ScopedTrace {
+// public:
+//   explicit ScopedTrace(const std::string& message);
+//   ~ScopedTrace();
 
-  void reset();
+//   void reset();
 
-  ScopedTrace(const ScopedTrace& rhs) = delete;
-  ScopedTrace(ScopedTrace&& rhs) = delete;
-  ScopedTrace& operator=(const ScopedTrace& rhs) = delete;
-  ScopedTrace& operator=(ScopedTrace&& rhs) = delete;
+//   ScopedTrace(const ScopedTrace& rhs) = delete;
+//   ScopedTrace(ScopedTrace&& rhs) = delete;
+//   ScopedTrace& operator=(const ScopedTrace& rhs) = delete;
+//   ScopedTrace& operator=(ScopedTrace&& rhs) = delete;
 
-private:
-  std::string _name;
-  std::chrono::steady_clock::time_point _startTime;
-  std::thread::id _threadId;
-  bool _reset;
-};
+// private:
+//   std::string _name;
+//   std::chrono::steady_clock::time_point _startTime;
+//   std::thread::id _threadId;
+//   bool _reset;
+// };
 
-class TrackSet {
-public:
-  explicit TrackSet(const char* name);
-  ~TrackSet();
+// class TrackSet {
+// public:
+//   explicit TrackSet(const char* name);
+//   ~TrackSet();
 
-  size_t acquireTrack();
-  void addReference(size_t trackIndex) noexcept;
-  void releaseReference(size_t trackIndex) noexcept;
+//   size_t acquireTrack();
+//   void addReference(size_t trackIndex) noexcept;
+//   void releaseReference(size_t trackIndex) noexcept;
 
-  int64_t getTracingID(size_t trackIndex) noexcept;
+//   int64_t getTracingID(size_t trackIndex) noexcept;
 
-private:
-  struct Track {
-    Track(int64_t id_, bool inUse_)
-        : id(id_), referenceCount(0), inUse(inUse_) {}
+// private:
+//   struct Track {
+//     Track(int64_t id_, bool inUse_)
+//         : id(id_), referenceCount(0), inUse(inUse_) {}
 
-    int64_t id;
-    int32_t referenceCount;
-    bool inUse;
-  };
+//     int64_t id;
+//     int32_t referenceCount;
+//     bool inUse;
+//   };
 
-  std::string name;
-  std::vector<Track> tracks;
-  std::mutex mutex;
-};
+//   std::string name;
+//   std::vector<Track> tracks;
+//   std::mutex mutex;
+// };
 
-class LambdaCaptureTrack {
-public:
-  LambdaCaptureTrack();
-  LambdaCaptureTrack(LambdaCaptureTrack&& rhs) noexcept;
-  LambdaCaptureTrack(const LambdaCaptureTrack& rhs) noexcept;
-  ~LambdaCaptureTrack();
-  LambdaCaptureTrack& operator=(const LambdaCaptureTrack& rhs) noexcept;
-  LambdaCaptureTrack& operator=(LambdaCaptureTrack&& rhs) noexcept;
+// class LambdaCaptureTrack {
+// public:
+//   LambdaCaptureTrack();
+//   LambdaCaptureTrack(LambdaCaptureTrack&& rhs) noexcept;
+//   LambdaCaptureTrack(const LambdaCaptureTrack& rhs) noexcept;
+//   ~LambdaCaptureTrack();
+//   LambdaCaptureTrack& operator=(const LambdaCaptureTrack& rhs) noexcept;
+//   LambdaCaptureTrack& operator=(LambdaCaptureTrack&& rhs) noexcept;
 
-private:
-  TrackSet* pSet;
-  size_t index;
+// private:
+//   TrackSet* pSet;
+//   size_t index;
 
-  friend class TrackReference;
-};
+//   friend class TrackReference;
+// };
 
-// An RAII object to reference an async operation track.
-// When the last instance associated with a particular track index is destroyed,
-// the track is released back to the track set.
-class TrackReference {
-public:
-  static TrackReference* current();
+// // An RAII object to reference an async operation track.
+// // When the last instance associated with a particular track index is destroyed,
+// // the track is released back to the track set.
+// class TrackReference {
+// public:
+//   static TrackReference* current();
 
-  TrackReference(TrackSet& set) noexcept;
-  TrackReference(TrackSet& set, size_t index) noexcept;
-  TrackReference(const LambdaCaptureTrack& lambdaCapture) noexcept;
-  ~TrackReference() noexcept;
+//   TrackReference(TrackSet& set) noexcept;
+//   TrackReference(TrackSet& set, size_t index) noexcept;
+//   TrackReference(const LambdaCaptureTrack& lambdaCapture) noexcept;
+//   ~TrackReference() noexcept;
 
-  operator bool() const noexcept;
-  int64_t getTracingID() const noexcept;
+//   operator bool() const noexcept;
+//   int64_t getTracingID() const noexcept;
 
-  TrackReference(const TrackReference& rhs) = delete;
-  TrackReference(TrackReference&& rhs) = delete;
-  TrackReference& operator=(const TrackReference& rhs) = delete;
-  TrackReference& operator=(TrackReference&& rhs) = delete;
+//   TrackReference(const TrackReference& rhs) = delete;
+//   TrackReference(TrackReference&& rhs) = delete;
+//   TrackReference& operator=(const TrackReference& rhs) = delete;
+//   TrackReference& operator=(TrackReference&& rhs) = delete;
 
-private:
-  void enlistCurrentThread();
-  void dismissCurrentThread();
+// private:
+//   void enlistCurrentThread();
+//   void dismissCurrentThread();
 
-  TrackSet* pSet;
-  size_t index;
+//   TrackSet* pSet;
+//   size_t index;
 
-  static thread_local std::vector<TrackReference*> _threadEnlistedTracks;
+//   static thread_local std::vector<TrackReference*> _threadEnlistedTracks;
 
-  friend class LambdaCaptureTrack;
-};
+//   friend class LambdaCaptureTrack;
+// };
 
-} // namespace CesiumImpl
-} // namespace CesiumUtility
+// } // namespace CesiumImpl
+// } // namespace CesiumUtility
 
-#endif // CESIUM_TRACING_ENABLED
+// #endif // CESIUM_TRACING_ENABLED
