@@ -70,6 +70,25 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
       *pContext,
       pLogger);
 
+  // Special case: if the root tile of an external tileset has no content,
+  // treat it as unrenderable rather than rendering a hole in its place.
+  // This is arguably contrary to the 3D Tiles spec (see
+  // https://github.com/CesiumGS/3d-tiles/issues/609), but it's very
+  // convenient when an external tileset conceptually has multiple roots.
+  // It also brings us closer to CesiumJS's behavior.
+  const auto rootIt = tilesetJson.FindMember("root");
+  if (rootIt != tilesetJson.MemberEnd()) {
+    const auto contentIt = rootIt->value.FindMember("content");
+    if (contentIt == tilesetJson.MemberEnd()) {
+      Tile& rootTile = pResult->childTiles.value()[0];
+
+      // A tile is unrenderable if it _does_ have content, but that content has
+      // a _nullopt_ model. Yes, this is confusing.
+      rootTile.setEmptyContent();
+      rootTile.setState(Tile::LoadState::ContentLoaded);
+    }
+  }
+
   return pResult;
 }
 
