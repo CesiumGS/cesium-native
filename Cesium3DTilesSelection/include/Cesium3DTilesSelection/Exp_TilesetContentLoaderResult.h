@@ -1,9 +1,8 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/Exp_ErrorList.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/Exp_ErrorList.h>
-
 #include <CesiumGeometry/Axis.h>
 
 #include <memory>

@@ -19,8 +19,8 @@ void GltfConverters::registerFileExtension(
   _loadersByFileExtension[lowerCaseFileExtension] = converter;
 }
 
-GltfConverters::ConverterFun GltfConverters::getConverterByFileExtension(
-    const std::string& filePath) {
+GltfConverters::ConverterFun
+GltfConverters::getConverterByFileExtension(const std::string& filePath) {
   std::string extension = getFileExtension(filePath);
   auto itExtension = _loadersByFileExtension.find(extension);
   if (itExtension != _loadersByFileExtension.end()) {

@@ -2,13 +2,12 @@
 
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoaderResult.h>
-
 #include <CesiumAsync/IAssetAccessor.h>
 
 #include <gsl/span>
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace Cesium3DTilesSelection {
 class TilesetJsonLoader : public TilesetContentLoader {

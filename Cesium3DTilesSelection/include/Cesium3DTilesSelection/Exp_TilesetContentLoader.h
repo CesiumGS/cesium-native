@@ -2,8 +2,8 @@
 
 #include <Cesium3DTilesSelection/Exp_TileContent.h>
 #include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
 
 #include <memory>

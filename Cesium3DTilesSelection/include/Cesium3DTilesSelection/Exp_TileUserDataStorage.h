@@ -1,6 +1,7 @@
 #pragma once
 
 #include <entt/entity/registry.hpp>
+
 #include <cstdint>
 
 namespace Cesium3DTilesSelection {
