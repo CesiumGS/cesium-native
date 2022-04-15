@@ -1,4 +1,7 @@
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
+#include <Cesium3DTilesSelection/Exp_TileRenderContentLoader.h>
+
+#include <CesiumAsync/IAssetResponse.h>
 
 #include <CesiumUtility/JsonHelpers.h>
 
@@ -294,16 +297,21 @@ void parseTileJsonRecursively(
 
 TilesetJsonLoader::TilesetJsonLoader(
     const TilesetExternals& externals,
-    const std::string& baseUrl)
-    : TilesetContentLoader(externals), _baseUrl{baseUrl}, _root{nullptr} {}
+    const std::string& baseUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
+    : TilesetContentLoader(externals),
+      _baseUrl{baseUrl},
+      _requestHeaders{requestHeaders} {}
 
 TilesetContentLoaderResult TilesetJsonLoader::createLoader(
-  const TilesetExternals& externals,
-  const std::string& baseUrl,
-  const gsl::span<const std::byte>& tilesetJsonBinary)
-{
+    const TilesetExternals& externals,
+    const std::string& baseUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const gsl::span<const std::byte>& tilesetJsonBinary) {
   rapidjson::Document tilesetJson;
-  tilesetJson.Parse(reinterpret_cast<const char*>(tilesetJsonBinary.data()), tilesetJsonBinary.size());
+  tilesetJson.Parse(
+      reinterpret_cast<const char*>(tilesetJsonBinary.data()),
+      tilesetJsonBinary.size());
   if (tilesetJson.HasParseError()) {
     TilesetContentLoaderResult result;
     result.errors.emplace_error(fmt::format(
@@ -316,7 +324,8 @@ TilesetContentLoaderResult TilesetJsonLoader::createLoader(
   TilesetContentLoaderResult result;
   result.pRootTile = std::make_unique<Tile>();
   result.gltfUpAxis = obtainGltfUpAxis(tilesetJson, externals.pLogger);
-  result.pLoader = std::make_unique<TilesetJsonLoader>(externals, baseUrl);
+  result.pLoader =
+      std::make_unique<TilesetJsonLoader>(externals, baseUrl, requestHeaders);
   if (result.errors) {
     return result;
   }
@@ -338,8 +347,50 @@ TilesetContentLoaderResult TilesetJsonLoader::createLoader(
 }
 
 CesiumAsync::Future<TileContentKind>
-TilesetJsonLoader::doLoadTileContent(const TileContentLoadInfo& loadInfo)
-{
+TilesetJsonLoader::doLoadTileContent(const TileContentLoadInfo& loadInfo) {
+  const std::string* url = std::get_if<std::string>(&loadInfo.tileID);
+  const CesiumAsync::AsyncSystem& asyncSystem = loadInfo.asyncSystem;
+  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor =
+      loadInfo.pAssetAccessor;
+
+  if (!url) {
+    return asyncSystem.createResolvedFuture<TileContentKind>(
+        TileUnknownContent{});
+  }
+
+  auto requestHeaders = _requestHeaders;
+  return pAssetAccessor->get(asyncSystem, *url, _requestHeaders)
+      .thenInWorkerThread([loadInfo,
+                           externals = _externals,
+                           requestHeaders = std::move(requestHeaders)](
+                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                  pCompletedRequest) mutable {
+        return TileRenderContentLoader::load(pCompletedRequest, loadInfo)
+            .thenImmediately(
+                [externals,
+                 pCompletedRequest,
+                 requestHeaders = std::move(requestHeaders)](
+                    TileRenderContentLoadResult&& result) mutable
+                -> TileContentKind {
+                  if (result.reason ==
+                      TileRenderContentFailReason::UnsupportedFormat) {
+                    // create external tileset
+                    const auto& responseData =
+                        pCompletedRequest->response()->data();
+                    const auto& tileUrl = pCompletedRequest->url();
+                    auto externalTileset = TilesetJsonLoader::createLoader(
+                        externals,
+                        tileUrl,
+                        requestHeaders,
+                        responseData);
+                    return TileExternalContent{};
+                  } else if (result.reason == TileRenderContentFailReason::DataRequestFailed) {
+                    return TileUnknownContent{};
+                  } else {
+                    return result.content;
+                  }
+                });
+      });
 }
 
 void TilesetJsonLoader::doProcessLoadedContent(Tile& tile) {}

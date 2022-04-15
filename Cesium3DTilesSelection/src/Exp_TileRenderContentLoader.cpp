@@ -49,7 +49,9 @@ TileRenderContentLoadResult postProcessGltf(
   logErrors(loadInfo.pLogger, tileUrl, gltfResult.errors);
   logWarnings(loadInfo.pLogger, tileUrl, gltfResult.warnings);
   if (!gltfResult.model) {
-    return TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily};
+    return TileRenderContentLoadResult{
+        {},
+        TileRenderContentFailReason::ConversionFailed};
   }
 
   if (loadInfo.contentOptions.generateMissingNormalsSmooth) {
@@ -58,48 +60,70 @@ TileRenderContentLoadResult postProcessGltf(
 
   TileRenderContentLoadResult result;
   result.content.model = std::move(gltfResult.model);
-  result.state = TileLoadState::ContentLoaded;
+  result.reason = TileRenderContentFailReason::Success;
   return result;
 }
 } // namespace
-
-bool TileRenderContentLoader::canCreateRenderContent(
-    const std::string& tileUrl,
-    const gsl::span<const std::byte>& tileContentBinary) {
-  return GltfConverters::canConvertContent(tileUrl, tileContentBinary);
-}
 
 CesiumAsync::Future<TileRenderContentLoadResult> TileRenderContentLoader::load(
     const std::shared_ptr<CesiumAsync::IAssetRequest>& completedTileRequest,
     const TileContentLoadInfo& loadInfo) {
   auto& asyncSystem = loadInfo.asyncSystem;
   const auto& assetAccessor = loadInfo.pAssetAccessor;
+  const std::string& tileUrl = completedTileRequest->url();
 
   auto response = completedTileRequest->response();
   if (!response) {
+    SPDLOG_LOGGER_ERROR(
+        loadInfo.pLogger,
+        "Did not receive a valid response for tile content {}",
+        tileUrl);
     return asyncSystem.createResolvedFuture<TileRenderContentLoadResult>(
-        TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily});
+        TileRenderContentLoadResult{
+            {},
+            TileRenderContentFailReason::DataRequestFailed});
   }
 
   uint16_t statusCode = response->statusCode();
   if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+    SPDLOG_LOGGER_ERROR(
+        loadInfo.pLogger,
+        "Received status code {} for tile content {}",
+        statusCode,
+        tileUrl);
     return asyncSystem.createResolvedFuture<TileRenderContentLoadResult>(
-        TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily});
+        TileRenderContentLoadResult{
+            {},
+            TileRenderContentFailReason::DataRequestFailed});
+  }
+
+  // find converter
+  const auto& responseData = response->data();
+  auto converter = GltfConverters::getConverterByMagic(responseData);
+  if (!converter) {
+    converter = GltfConverters::getConverterByFileExtension(tileUrl);
+  }
+
+  if (!converter) {
+    return asyncSystem.createResolvedFuture<TileRenderContentLoadResult>(
+        TileRenderContentLoadResult{
+            {},
+            TileRenderContentFailReason::UnsupportedFormat});
   }
 
   // Convert to gltf
-  const std::string& tileUrl = completedTileRequest->url();
   CesiumGltfReader::GltfReaderOptions gltfOptions;
   gltfOptions.ktx2TranscodeTargets =
       loadInfo.contentOptions.ktx2TranscodeTargets;
-  GltfConverterResult result =
-      GltfConverters::convert(tileUrl, response->data(), gltfOptions);
+  GltfConverterResult result = converter(responseData, gltfOptions);
 
   // Report any errors if there are any
   logErrorsAndWarnings(loadInfo.pLogger, tileUrl, result.errors);
   if (result.errors) {
     return asyncSystem.createResolvedFuture<TileRenderContentLoadResult>(
-        TileRenderContentLoadResult{{}, TileLoadState::FailedTemporarily});
+        TileRenderContentLoadResult{
+            {},
+            TileRenderContentFailReason::ConversionFailed});
   }
 
   // Download any external image or buffer urls in the gltf if there are any

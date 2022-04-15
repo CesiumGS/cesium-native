@@ -12,17 +12,19 @@
 #include <memory>
 
 namespace Cesium3DTilesSelection {
-struct TileRenderContentLoadResult {
-  TileRenderContent content;
-  TileLoadState state;
+enum class TileRenderContentFailReason {
+  DataRequestFailed,
+  UnsupportedFormat,
+  ConversionFailed,
+  Success
 };
 
-class TileRenderContentLoader {
-public:
-  static bool canCreateRenderContent(
-      const std::string& tileUrl,
-      const gsl::span<const std::byte>& tileContentBinary);
+struct TileRenderContentLoadResult {
+  TileRenderContent content;
+  TileRenderContentFailReason reason;
+};
 
+struct TileRenderContentLoader {
   static CesiumAsync::Future<TileRenderContentLoadResult> load(
       const std::shared_ptr<CesiumAsync::IAssetRequest>& completedTileRequest,
       const TileContentLoadInfo& loadInfo);

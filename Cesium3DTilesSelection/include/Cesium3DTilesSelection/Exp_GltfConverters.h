@@ -22,8 +22,10 @@ public:
       const std::string& fileExtension,
       ConverterFun converter);
 
-  static bool canConvertContent(
-      const std::string& filePath,
+  static ConverterFun getConverterByFileExtension(
+      const std::string& filePath);
+
+  static ConverterFun getConverterByMagic(
       const gsl::span<const std::byte>& content);
 
   static GltfConverterResult convert(

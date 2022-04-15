@@ -49,6 +49,7 @@ private:
 
   virtual bool doUnloadTileContent(Tile& tile) = 0;
 
+protected:
   TilesetExternals _externals;
 };
 } // namespace Cesium3DTilesSelection
