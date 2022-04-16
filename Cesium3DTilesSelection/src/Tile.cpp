@@ -865,7 +865,6 @@ void Tile::update(
     }
   }
 
-  // TODO: if there's no model, we can actually free any existing overlays.
   if (this->getState() == LoadState::Done &&
       this->getTileset()->supportsRasterOverlays() && this->getContent() &&
       this->getContent()->model) {
@@ -923,6 +922,12 @@ void Tile::update(
     if (moreRasterDetailAvailable && this->_children.empty()) {
       createQuadtreeSubdividedChildren(*this);
     }
+  } else if (
+      this->getState() == LoadState::Done && !this->_rasterTiles.empty()) {
+    // We can't hang raster images on a tile without geometry, and their existence
+    // can prevent the tile from being deemed done loading. So clear them out
+    // here.
+    this->_rasterTiles.clear();
   }
 }
 
