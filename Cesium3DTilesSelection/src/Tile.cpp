@@ -924,9 +924,9 @@ void Tile::update(
     }
   } else if (
       this->getState() == LoadState::Done && !this->_rasterTiles.empty()) {
-    // We can't hang raster images on a tile without geometry, and their existence
-    // can prevent the tile from being deemed done loading. So clear them out
-    // here.
+    // We can't hang raster images on a tile without geometry, and their
+    // existence can prevent the tile from being deemed done loading. So clear
+    // them out here.
     this->_rasterTiles.clear();
   }
 }
