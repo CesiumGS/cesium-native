@@ -599,25 +599,6 @@ bool Tile::unloadContent() noexcept {
       return false;
     }
 
-    // Very rarely, we can end up unloading a tile that is not associated with
-    // a tileset at all. This can happen when:
-    //
-    // 1. ExternalTilesetContent creates content-less root tiles with an initial
-    //    state of ContentLoaded.
-    // 2. These tiles are initially added to TileContentLoadResult.
-    // 3. When the processLoadedContent is called on the parent tile, the child
-    //    tiles (including the one created in step 2) are copied to the parent
-    //    tile's childTiles property.
-    //
-    // If the root tile created in (1) is deleted between steps (2) and (3)
-    // because its parent content is unloaded, we'll find ourselves in this
-    // method right here with a nullptr TileContext::pTileset. Exit early
-    // because the unloading steps below are unnecessary in this case, and
-    // because we'd crash if we tried to do them.
-    if (this->getTileset() == nullptr) {
-      return true;
-    }
-
     // If a child tile is being upsampled from this one, we can't unload this
     // one yet.
     if (this->getState() == Tile::LoadState::Done &&

@@ -701,11 +701,12 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   return traversalDetails;
 }
 
-bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
+bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
     const FrameState& frameState,
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo,
     const std::vector<double>& distances) {
+  // This method should only be called in "Forbid Holes" mode.
   assert(this->_options.forbidHoles);
 
   bool waitingForChildren = false;
@@ -747,7 +748,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
       // we don't care because all tiles must be loaded before we can render any
       // of them, so their relative priority doesn't matter.
       ImplicitTraversalInfo childInfo(&child, &implicitInfo);
-      waitingForChildren |= this->_queueLoadOfChildrenRequiredForRefinement(
+      waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
           frameState,
           child,
           childInfo,
@@ -1022,11 +1023,12 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // are loaded. But don't queue the children for load until we _want_ to
   // refine this tile.
   if (wantToRefine && this->_options.forbidHoles) {
-    const bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(
-        frameState,
-        tile,
-        implicitInfo,
-        distances);
+    const bool waitingForChildren =
+        this->_queueLoadOfChildrenRequiredForForbidHoles(
+            frameState,
+            tile,
+            implicitInfo,
+            distances);
     wantToRefine = !waitingForChildren;
   }
 
