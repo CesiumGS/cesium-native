@@ -1412,14 +1412,20 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
         // We distinguish whether the tileset creator wanted (1) or (2) by
         // comparing this tile's geometricError to the geometricError of its
         // parent tile. If this tile's error is greater than or equal to its
-        // parent, treat it as (1). If it's less, treat it was (2).
+        // parent, treat it as (1). If it's less, treat it as (2).
         //
         // For a tile with no parent there's no difference between the
         // behaviors.
         double myGeometricError = tile.getNonZeroGeometricError();
+
+        Tile* pAncestor = tile.getParent();
+        while (pAncestor && pAncestor->getUnconditionallyRefine()) {
+          pAncestor = pAncestor->getParent();
+        }
+
         double parentGeometricError =
-            tile.getParent() ? tile.getParent()->getNonZeroGeometricError()
-                             : myGeometricError * 2.0;
+            pAncestor ? pAncestor->getNonZeroGeometricError()
+                      : myGeometricError * 2.0;
         if (myGeometricError >= parentGeometricError) {
           tile.setEmptyContent();
         }
