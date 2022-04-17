@@ -1409,7 +1409,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
         //    hole. To have this behavior, the tile should _not_ have content at
         //    all.
         //
-        // We distinguish whether the tileset createor wanted (1) or (2) by
+        // We distinguish whether the tileset creator wanted (1) or (2) by
         // comparing this tile's geometricError to the geometricError of its
         // parent tile. If this tile's error is greater than or equal to its
         // parent, treat it as (1). If it's less, treat it was (2).

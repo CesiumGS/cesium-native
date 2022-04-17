@@ -472,10 +472,10 @@ private:
    * @param tile The tile that is potentially being refined.
    * @param implicitInfo The implicit traversal info.
    * @param distance The distance to the tile.
-   * @return true Some of the required descendents are not yet loaded, so this tile
-   * _cannot_ yet be refined.
-   * @return false All of the required descendents (if there are any) are loaded,
-   * so this tile _can_ be refined.
+   * @return true Some of the required descendents are not yet loaded, so this
+   * tile _cannot_ yet be refined.
+   * @return false All of the required descendents (if there are any) are
+   * loaded, so this tile _can_ be refined.
    */
   bool _queueLoadOfChildrenRequiredForForbidHoles(
       const FrameState& frameState,
