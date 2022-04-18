@@ -325,14 +325,14 @@ void createQuantizedMeshChildren(
 namespace ImplicitTraversalUtilities {
 
 void createImplicitQuadtreeTile(
-    const TileContext* tileContext,
+    const TileContext* pTileContext,
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
     uint8_t availability) {
 
-  child.setContext(const_cast<TileContext*>(tileContext));
+  child.setContext(const_cast<TileContext*>(pTileContext));
   child.setParent(&parent);
   child.setRefine(parent.getRefine());
   child.setTransform(parent.getTransform());
