@@ -24,7 +24,7 @@ public:
       const gsl::span<const std::byte>& tilesetJsonBinary);
 
 private:
-  CesiumAsync::Future<TileContentKind> doLoadTileContent(
+  CesiumAsync::Future<TileLoadResult> doLoadTileContent(
       Tile& tile,
       const TilesetContentOptions& contentOptions) override;
 

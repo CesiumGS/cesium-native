@@ -72,8 +72,8 @@ CesiumAsync::Future<TileRenderContentLoadResult> TileRenderContentLoader::load(
   const auto& assetAccessor = loadInfo.pAssetAccessor;
   const std::string& tileUrl = completedTileRequest->url();
 
-  auto response = completedTileRequest->response();
-  if (!response) {
+  auto pResponse = completedTileRequest->response();
+  if (!pResponse) {
     SPDLOG_LOGGER_ERROR(
         loadInfo.pLogger,
         "Did not receive a valid response for tile content {}",
@@ -84,7 +84,7 @@ CesiumAsync::Future<TileRenderContentLoadResult> TileRenderContentLoader::load(
             TileRenderContentFailReason::DataRequestFailed});
   }
 
-  uint16_t statusCode = response->statusCode();
+  uint16_t statusCode = pResponse->statusCode();
   if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
     SPDLOG_LOGGER_ERROR(
         loadInfo.pLogger,
@@ -98,7 +98,7 @@ CesiumAsync::Future<TileRenderContentLoadResult> TileRenderContentLoader::load(
   }
 
   // find converter
-  const auto& responseData = response->data();
+  const auto& responseData = pResponse->data();
   auto converter = GltfConverters::getConverterByMagic(responseData);
   if (!converter) {
     converter = GltfConverters::getConverterByFileExtension(tileUrl);

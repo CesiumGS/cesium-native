@@ -617,12 +617,8 @@ public:
    * Experimental methods.
    *
    *****************************************************/
-  void exp_SetContent(const std::shared_ptr<TileContent>& pContent) noexcept {
-    exp_pContent = pContent;
-  }
-
-  const std::shared_ptr<TileContent>& exp_GetSharedContent() noexcept {
-    return exp_pContent;
+  void exp_SetContent(std::unique_ptr<TileContent>&& pContent) noexcept {
+    exp_pContent = std::move(pContent);
   }
 
   const TileContent* exp_GetContent() const noexcept {
@@ -674,7 +670,7 @@ private:
    * Experimental Data.
    *
    *****************************************************/
-  std::shared_ptr<TileContent> exp_pContent;
+  std::unique_ptr<TileContent> exp_pContent;
 
 public:
   /**

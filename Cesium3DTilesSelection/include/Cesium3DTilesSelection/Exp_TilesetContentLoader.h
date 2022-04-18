@@ -11,6 +11,20 @@
 namespace Cesium3DTilesSelection {
 class Tile;
 
+struct TileLoadResult {
+  TileContentKind contentKind;
+  TileLoadState state;
+  uint16_t httpStatusCode;
+};
+
+enum class FailedTemporarilyTileAction {
+  GiveUp,
+  Retry,
+  Wait
+};
+
+using FailedTemporarilyTileCallback = std::function<FailedTemporarilyTileAction(Tile &tile)>;
+
 class TilesetContentLoader {
 public:
   TilesetContentLoader(const TilesetExternals& externals);
@@ -23,13 +37,20 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
+  void setTileFailedTemporarilyCallback(FailedTemporarilyTileCallback callback);
+
 private:
   static void setTileContentState(
       TileContent& content,
       TileContentKind&& contentKind,
-      TileLoadState state);
+      TileLoadState state,
+      uint16_t httpStatusCode);
 
   void resetTileContent(TileContent& content);
+
+  void deleteAllTileUserData(TileContent& content);
+
+  void updateFailedState(Tile& tile);
 
   void updateFailedTemporarilyState(Tile& tile);
 
@@ -41,7 +62,7 @@ private:
 
   bool unloadDoneState(Tile& tile);
 
-  virtual CesiumAsync::Future<TileContentKind> doLoadTileContent(
+  virtual CesiumAsync::Future<TileLoadResult> doLoadTileContent(
       Tile& tile,
       const TilesetContentOptions& contentOptions) = 0;
 
@@ -51,6 +72,7 @@ private:
 
   virtual bool doUnloadTileContent(Tile& tile) = 0;
 
+  FailedTemporarilyTileCallback _failedTemporarilyCallback;
   TileUserDataStorage _customDataStorage;
 
 protected:
@@ -86,7 +108,6 @@ protected:
     auto handle = tile.exp_GetContent()->getLoaderCustomDataHandle();
     _customDataStorage.deleteUserData<UserData>(handle);
   }
-
   TilesetExternals _externals;
 };
 } // namespace Cesium3DTilesSelection

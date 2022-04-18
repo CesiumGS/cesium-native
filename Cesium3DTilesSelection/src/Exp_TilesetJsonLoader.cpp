@@ -171,7 +171,7 @@ void parseTileJsonRecursively(
   }
 
   tile.setParent(parentTile);
-  tile.exp_SetContent(std::make_shared<TileContent>(&currentLoader));
+  tile.exp_SetContent(std::make_unique<TileContent>(&currentLoader));
 
   const std::optional<glm::dmat4x4> tileTransform =
       CesiumUtility::JsonHelpers::getTransformProperty(tileJson, "transform");
@@ -348,15 +348,15 @@ TilesetContentLoaderResult TilesetJsonLoader::createLoader(
   return result;
 }
 
-CesiumAsync::Future<TileContentKind> TilesetJsonLoader::doLoadTileContent(
+CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
     Tile& tile,
     const TilesetContentOptions& contentOptions) {
   const CesiumAsync::AsyncSystem& asyncSystem = _externals.asyncSystem;
 
   const std::string* url = std::get_if<std::string>(&tile.getTileID());
   if (!url) {
-    return asyncSystem.createResolvedFuture<TileContentKind>(
-        TileUnknownContent{});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult{TileUnknownContent{}, TileLoadState::Failed});
   }
 
   WorkerExternalContent& workerExternalContentResult =
@@ -386,32 +386,74 @@ CesiumAsync::Future<TileContentKind> TilesetJsonLoader::doLoadTileContent(
                  &workerExternalContentResult,
                  requestHeaders = std::move(requestHeaders)](
                     TileRenderContentLoadResult&& result) mutable
-                -> TileContentKind {
+                -> TileLoadResult {
+                  auto pResponse = pCompletedRequest->response();
+                  uint16_t statusCode = pResponse->statusCode();
                   if (result.reason ==
                       TileRenderContentFailReason::UnsupportedFormat) {
                     // create external tileset
                     const auto& responseData =
                         pCompletedRequest->response()->data();
                     const auto& tileUrl = pCompletedRequest->url();
+
+                    // Save the parsed external tileset into custom data.
+                    // We will propagate it back to tile later in the main
+                    // thread
                     workerExternalContentResult.externalTilesetLoaders =
                         TilesetJsonLoader::createLoader(
                             externals,
                             tileUrl,
                             requestHeaders,
                             responseData);
-                    return TileExternalContent{};
+
+                    // check and log any errors
+                    const auto& errors = workerExternalContentResult
+                                             .externalTilesetLoaders.errors;
+                    if (errors) {
+                      return {
+                          TileExternalContent{},
+                          TileLoadState::Failed,
+                          statusCode};
+                    }
+
+                    // mark this tile has external content
+                    return {
+                        TileExternalContent{},
+                        TileLoadState::ContentLoaded,
+                        statusCode};
                   } else if (
                       result.reason ==
                       TileRenderContentFailReason::DataRequestFailed) {
-                    return TileUnknownContent{};
+                    return {
+                        std::move(result.content),
+                        TileLoadState::FailedTemporarily,
+                        statusCode};
+                  } else if (
+                      result.reason ==
+                      TileRenderContentFailReason::ConversionFailed) {
+                    return {
+                        std::move(result.content),
+                        TileLoadState::Failed,
+                        statusCode};
                   } else {
-                    return result.content;
+                    return {
+                        std::move(result.content),
+                        TileLoadState::ContentLoaded,
+                        statusCode};
                   }
                 });
       });
 }
 
-void TilesetJsonLoader::doProcessLoadedContent(Tile& tile) {}
+void TilesetJsonLoader::doProcessLoadedContent(Tile& tile) {
+  TileContent* pContent = tile.exp_GetContent();
+  if (pContent->isExternalContent()) {
+    WorkerExternalContent &processedExternal =
+        getUserData<WorkerExternalContent>(tile);
+  }
+
+  deleteUserData<WorkerExternalContent>(tile);
+}
 
 void TilesetJsonLoader::doUpdateTileContent(Tile& tile) {}
 

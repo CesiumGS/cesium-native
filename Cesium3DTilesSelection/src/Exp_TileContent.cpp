@@ -2,12 +2,17 @@
 
 namespace Cesium3DTilesSelection {
 TileContent::TileContent(TilesetContentLoader* pLoader)
-    : _contentKind{TileUnknownContent{}},
+    : _httpStatusCode{0},
       _state{TileLoadState::Unloaded},
+      _contentKind{TileUnknownContent{}},
       _loaderCustomDataHandle{TileUserDataStorage::NullHandle},
       _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
+
+uint16_t TileContent::getHttpStatusCode() const noexcept {
+  return _httpStatusCode;
+}
 
 bool TileContent::isExternalContent() const noexcept {
   return std::holds_alternative<TileExternalContent>(_contentKind);
@@ -40,6 +45,10 @@ void TileContent::setContentKind(const TileContentKind& contentKind) {
 }
 
 void TileContent::setState(TileLoadState state) noexcept { _state = state; }
+
+void TileContent::setHttpStatusCode(uint16_t statusCode) noexcept {
+  _httpStatusCode = statusCode;
+}
 
 TileUserDataStorage::Handle TileContent::getLoaderCustomDataHandle() const {
   return _loaderCustomDataHandle;
