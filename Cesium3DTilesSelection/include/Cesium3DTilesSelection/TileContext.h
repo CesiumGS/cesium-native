@@ -253,6 +253,15 @@ public:
    * @brief Any attribution associated with this context/layer.
    */
   std::optional<Credit> credit;
+
+  /**
+   * @brief A hash map of futures of availability tiles that are currently
+   * loading.
+   */
+  std::unordered_map<
+      CesiumGeometry::QuadtreeTileID,
+      CesiumAsync::SharedFuture<int>>
+      availabilityTilesLoading;
 };
 
 } // namespace Cesium3DTilesSelection
