@@ -44,13 +44,12 @@ private:
       TileContent& content,
       TileContentKind&& contentKind,
       TileLoadState state,
-      uint16_t httpStatusCode);
+      uint16_t httpStatusCode,
+      void* pRenderResources);
 
   void resetTileContent(TileContent& content);
 
   void deleteAllTileUserData(TileContent& content);
-
-  void updateFailedState(Tile& tile);
 
   void updateFailedTemporarilyState(Tile& tile);
 
@@ -58,9 +57,9 @@ private:
 
   void updateDoneState(Tile& tile);
 
-  bool unloadContentLoadedState(Tile& tile);
+  void unloadContentLoadedState(Tile& tile);
 
-  bool unloadDoneState(Tile& tile);
+  void unloadDoneState(Tile& tile);
 
   virtual CesiumAsync::Future<TileLoadResult> doLoadTileContent(
       Tile& tile,

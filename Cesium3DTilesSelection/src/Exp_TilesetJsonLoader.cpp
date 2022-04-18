@@ -310,6 +310,38 @@ void parseTileJsonRecursively(
     tile.createChildTiles(std::move(childTiles));
   }
 }
+
+TileLoadResult parseExternalTilesetInWorkerThread(
+    const std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const TilesetExternals& externals,
+    WorkerExternalContent& workerExternalContent) {
+  // create external tileset
+  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
+  const auto& responseData = pResponse->data();
+  const auto& tileUrl = pCompletedRequest->url();
+  uint16_t statusCode = pResponse->statusCode();
+
+  // Save the parsed external tileset into custom data.
+  // We will propagate it back to tile later in the main
+  // thread
+  workerExternalContent.externalTilesetLoaders =
+      TilesetJsonLoader::createLoader(
+          externals,
+          tileUrl,
+          requestHeaders,
+          responseData);
+
+  // check and log any errors
+  const auto& errors = workerExternalContent.externalTilesetLoaders.errors;
+  if (errors) {
+    logErrors(externals.pLogger, tileUrl, errors);
+    return {TileExternalContent{}, TileLoadState::Failed, statusCode};
+  }
+
+  // mark this tile has external content
+  return {TileExternalContent{}, TileLoadState::ContentLoaded, statusCode};
+}
 } // namespace
 
 TilesetJsonLoader::TilesetJsonLoader(
@@ -408,40 +440,6 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
                   auto pResponse = pCompletedRequest->response();
                   uint16_t statusCode = pResponse->statusCode();
                   if (result.reason ==
-                      TileRenderContentFailReason::UnsupportedFormat) {
-                    // create external tileset
-                    const auto& responseData =
-                        pCompletedRequest->response()->data();
-                    const auto& tileUrl = pCompletedRequest->url();
-
-                    // Save the parsed external tileset into custom data.
-                    // We will propagate it back to tile later in the main
-                    // thread
-                    workerExternalContentResult->externalTilesetLoaders =
-                        TilesetJsonLoader::createLoader(
-                            externals,
-                            tileUrl,
-                            requestHeaders,
-                            responseData);
-
-                    // check and log any errors
-                    const auto& errors = workerExternalContentResult
-                                             ->externalTilesetLoaders.errors;
-                    if (errors) {
-                      logErrors(externals.pLogger, tileUrl, errors);
-                      return {
-                          TileExternalContent{},
-                          TileLoadState::Failed,
-                          statusCode};
-                    }
-
-                    // mark this tile has external content
-                    return {
-                        TileExternalContent{},
-                        TileLoadState::ContentLoaded,
-                        statusCode};
-                  } else if (
-                      result.reason ==
                       TileRenderContentFailReason::DataRequestFailed) {
                     return {
                         std::move(result.content),
@@ -454,6 +452,14 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
                         std::move(result.content),
                         TileLoadState::Failed,
                         statusCode};
+                  } else if (
+                      result.reason ==
+                      TileRenderContentFailReason::UnsupportedFormat) {
+                    return parseExternalTilesetInWorkerThread(
+                        pCompletedRequest,
+                        requestHeaders,
+                        externals,
+                        *workerExternalContentResult);
                   } else {
                     return {
                         std::move(result.content),

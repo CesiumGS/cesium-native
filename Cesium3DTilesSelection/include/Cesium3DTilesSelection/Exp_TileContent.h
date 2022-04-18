@@ -68,10 +68,15 @@ private:
 
   void setLoaderCustomDataHandle(TileUserDataStorage::Handle handle);
 
+  void setRenderResources(void* pRenderResources) noexcept;
+
+  void* getRenderResources() noexcept;
+
   uint16_t _httpStatusCode;
   TileLoadState _state;
   TileContentKind _contentKind;
   TileUserDataStorage::Handle _loaderCustomDataHandle;
+  void* _pRenderResources;
   TilesetContentLoader* _pLoader;
 
   friend class TilesetContentLoader;
