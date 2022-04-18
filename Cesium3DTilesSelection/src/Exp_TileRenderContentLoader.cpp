@@ -138,8 +138,8 @@ CesiumAsync::Future<TileRenderContentLoadResult> TileRenderContentLoader::load(
              assetAccessor,
              gltfOptions,
              std::move(gltfResult))
-      .thenImmediately([loadInfo, completedTileRequest](
-                           CesiumGltfReader::GltfReaderResult&& gltfResult) {
+      .thenInWorkerThread([loadInfo, completedTileRequest](
+                              CesiumGltfReader::GltfReaderResult&& gltfResult) {
         return postProcessGltf(
             completedTileRequest,
             loadInfo,

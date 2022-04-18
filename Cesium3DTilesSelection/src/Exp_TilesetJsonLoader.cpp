@@ -2,14 +2,29 @@
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
+#include <spdlog/logger.h>
 
 namespace Cesium3DTilesSelection {
 namespace {
 struct WorkerExternalContent {
   TilesetContentLoaderResult externalTilesetLoaders;
 };
+
+void logErrors(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const ErrorList& errorLists) {
+  if (errorLists) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Failed to load {}:\n- {}",
+        url,
+        CesiumUtility::joinToString(errorLists.errors, "\n- "));
+  }
+}
 
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
@@ -356,11 +371,14 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
   const std::string* url = std::get_if<std::string>(&tile.getTileID());
   if (!url) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult{TileUnknownContent{}, TileLoadState::Failed});
+        TileLoadResult{TileUnknownContent{}, TileLoadState::Failed, 0});
   }
 
-  WorkerExternalContent& workerExternalContentResult =
-      createUserData<WorkerExternalContent>(tile);
+  WorkerExternalContent* workerExternalContentResult =
+      tryGetUserData<WorkerExternalContent>(tile);
+  if (!workerExternalContentResult) {
+    workerExternalContentResult = &createUserData<WorkerExternalContent>(tile);
+  }
 
   const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor =
       _externals.pAssetAccessor;
@@ -374,7 +392,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
 
   return pAssetAccessor->get(asyncSystem, *url, _requestHeaders)
       .thenInWorkerThread([loadInfo = std::move(loadInfo),
-                           &workerExternalContentResult,
+                           workerExternalContentResult,
                            externals = _externals,
                            requestHeaders = _requestHeaders](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
@@ -383,7 +401,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
             .thenImmediately(
                 [externals,
                  pCompletedRequest,
-                 &workerExternalContentResult,
+                 workerExternalContentResult,
                  requestHeaders = std::move(requestHeaders)](
                     TileRenderContentLoadResult&& result) mutable
                 -> TileLoadResult {
@@ -399,7 +417,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
                     // Save the parsed external tileset into custom data.
                     // We will propagate it back to tile later in the main
                     // thread
-                    workerExternalContentResult.externalTilesetLoaders =
+                    workerExternalContentResult->externalTilesetLoaders =
                         TilesetJsonLoader::createLoader(
                             externals,
                             tileUrl,
@@ -408,8 +426,9 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
 
                     // check and log any errors
                     const auto& errors = workerExternalContentResult
-                                             .externalTilesetLoaders.errors;
+                                             ->externalTilesetLoaders.errors;
                     if (errors) {
+                      logErrors(externals.pLogger, tileUrl, errors);
                       return {
                           TileExternalContent{},
                           TileLoadState::Failed,
@@ -448,14 +467,27 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
 void TilesetJsonLoader::doProcessLoadedContent(Tile& tile) {
   TileContent* pContent = tile.exp_GetContent();
   if (pContent->isExternalContent()) {
-    WorkerExternalContent &processedExternal =
+    WorkerExternalContent& processedExternal =
         getUserData<WorkerExternalContent>(tile);
-  }
+    TilesetContentLoaderResult& externalTilesetLoaders =
+        processedExternal.externalTilesetLoaders;
+    std::unique_ptr<Tile>& pExternalRoot = externalTilesetLoaders.pRootTile;
+    if (pExternalRoot) {
+      // propagate all the external tiles to be the children of this tile
+      tile.createChildTiles(1);
+      gsl::span<Tile> children = tile.getChildren();
+      children[0] = std::move(*pExternalRoot);
+      children[0].setParent(&tile);
 
-  deleteUserData<WorkerExternalContent>(tile);
+      // save the loader of the external tileset in this loader
+      _children.emplace_back(std::move(externalTilesetLoaders.pLoader));
+    }
+  }
 }
 
-void TilesetJsonLoader::doUpdateTileContent(Tile& tile) {}
+void TilesetJsonLoader::doUpdateTileContent([[maybe_unused]] Tile& tile) {}
 
-bool TilesetJsonLoader::doUnloadTileContent(Tile& tile) {}
+bool TilesetJsonLoader::doUnloadTileContent([[maybe_unused]] Tile& tile) {
+  return true;
+}
 } // namespace Cesium3DTilesSelection
