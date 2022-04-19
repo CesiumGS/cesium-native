@@ -109,17 +109,23 @@ std::string convertHeadersToString(const HttpHeaders& headers) {
   return buffer.GetString();
 }
 
-HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
+std::optional<HttpHeaders> convertStringToHeaders(
+    const std::string& serializedHeaders,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
   rapidjson::Document document;
   document.Parse(serializedHeaders.c_str());
-
-  HttpHeaders headers;
+  if (document.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Unable to parse http header string from cache.");
+    return std::nullopt;
+  }
+  std::optional<HttpHeaders> headers = std::make_optional<HttpHeaders>();
   for (rapidjson::Document::ConstMemberIterator it = document.MemberBegin();
        it != document.MemberEnd();
        ++it) {
-    headers.insert({it->name.GetString(), it->value.GetString()});
+    headers->insert({it->name.GetString(), it->value.GetString()});
   }
-
   return headers;
 }
 
@@ -354,9 +360,11 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   std::string serializedResponseHeaders =
       reinterpret_cast<const char*>(CESIUM_SQLITE(
           sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 2));
-  HttpHeaders responseHeaders =
-      convertStringToHeaders(serializedResponseHeaders);
-
+  std::optional<HttpHeaders> responseHeaders =
+      convertStringToHeaders(serializedResponseHeaders, this->_pImpl->_pLogger);
+  if (!responseHeaders) {
+    return std::nullopt;
+  }
   const uint16_t statusCode = static_cast<uint16_t>(CESIUM_SQLITE(
       sqlite3_column_int)(this->_pImpl->_getEntryStmtWrapper.get(), 3));
 
@@ -373,7 +381,11 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   std::string serializedRequestHeaders =
       reinterpret_cast<const char*>(CESIUM_SQLITE(
           sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 5));
-  HttpHeaders requestHeaders = convertStringToHeaders(serializedRequestHeaders);
+  std::optional<HttpHeaders> requestHeaders =
+      convertStringToHeaders(serializedRequestHeaders, this->_pImpl->_pLogger);
+  if (!requestHeaders) {
+    return std::nullopt;
+  }
 
   std::string requestMethod = reinterpret_cast<const char*>(CESIUM_SQLITE(
       sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 6));
@@ -423,12 +435,12 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   return CacheItem{
       expiryTime,
       CacheRequest{
-          std::move(requestHeaders),
+          std::move(*requestHeaders),
           std::move(requestMethod),
           std::move(requestUrl)},
       CacheResponse{
           statusCode,
-          std::move(responseHeaders),
+          std::move(*responseHeaders),
           std::move(responseData)}};
 }
 
