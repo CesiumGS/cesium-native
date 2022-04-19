@@ -67,6 +67,9 @@ Tileset::Tileset(
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
+    if (this->_externals.pTileOcclusionProxyPool) {
+      this->_externals.pTileOcclusionProxyPool->initPool(500);
+    }
     LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
       this->notifyTileDoneLoading(nullptr);
     });
@@ -105,6 +108,9 @@ Tileset::Tileset(
   if (ionAssetID > 0) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
+    if (this->_externals.pTileOcclusionProxyPool) {
+      this->_externals.pTileOcclusionProxyPool->initPool(500);
+    }
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
   }
@@ -120,6 +126,10 @@ Tileset::~Tileset() {
              std::memory_order::memory_order_acquire) > 0) {
     this->_externals.pAssetAccessor->tick();
     this->_asyncSystem.dispatchMainThreadTasks();
+  }
+
+  if (this->_externals.pTileOcclusionProxyPool) {
+    this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
 
   // Wait for all overlays to wrap up their loading, too.
@@ -277,6 +287,12 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       static_cast<uint32_t>(this->_loadQueueMedium.size());
   result.tilesLoadingHighPriority =
       static_cast<uint32_t>(this->_loadQueueHigh.size());
+
+  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
+      this->getExternals().pTileOcclusionProxyPool;
+  if (pOcclusionPool) {
+    pOcclusionPool->pruneOcclusionProxyMappings();
+  }
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();
@@ -573,6 +589,21 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     culled = true;
     if (this->_options.enableFrustumCulling) {
       // frustum culling is enabled so we shouldn't visit this off-screen tile
+      shouldVisit = false;
+    }
+  }
+
+  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
+      this->getExternals().pTileOcclusionProxyPool;
+  if (pOcclusionPool) {
+    const TileOcclusionRendererProxy* pOcclusion =
+        pOcclusionPool->fetchOcclusionProxyForTile(
+            tile,
+            frameState.currentFrameNumber);
+    if (pOcclusion && pOcclusion->isOccluded() &&
+        pOcclusion->getLastUpdatedFrame() >=
+            frameState.currentFrameNumber - 5) {
+      culled = true;
       shouldVisit = false;
     }
   }
@@ -1020,7 +1051,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     //
     // Note that even if we decide to render a tile here, it may later get
     // "kicked" in favor of an ancestor.
-    const TileSelectionState lastFrameSelectionState =
+    const TileSelectionState& lastFrameSelectionState =
         tile.getLastSelectionState();
     const bool renderThisTile = shouldRenderThisTile(
         tile,

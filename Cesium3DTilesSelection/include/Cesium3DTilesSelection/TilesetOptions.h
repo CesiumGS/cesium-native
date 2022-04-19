@@ -144,6 +144,11 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   bool enableFrustumCulling = true;
 
   /**
+   * @brief Enable culling of occluded tiles, as reported by the renderer.
+   */
+  bool enableOcclusionCulling = true;
+
+  /**
    * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
    */
   bool enableFogCulling = true;
