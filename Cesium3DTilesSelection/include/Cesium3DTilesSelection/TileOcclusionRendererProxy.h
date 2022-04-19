@@ -37,7 +37,7 @@ protected:
    * @param pTile The tile that this proxy represents or nullptr if the proxy
    * is back in the pool.
    */
-  virtual void reset(const Tile& pTile);
+  virtual void reset(const Tile* pTile);
 
   /**
    * @brief Update the tile occlusion proxy.

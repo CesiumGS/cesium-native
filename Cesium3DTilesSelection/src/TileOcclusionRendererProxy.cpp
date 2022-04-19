@@ -58,6 +58,7 @@ TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(
   pAssignedProxy->_usedLastFrame = true;
 
   this->_tileToOcclusionProxyMapping.emplace(&tile, pAssignedProxy);
+  pAssignedProxy->reset(&tile);
 
   return pAssignedProxy;
 }
@@ -67,6 +68,7 @@ void TileOcclusionRendererProxyPool::pruneOcclusionProxyMappings() {
     if (!pair.second->_usedLastFrame) {
       // This tile was not traversed last frame, unmap the proxy and re-add it
       // to the free list.
+      pair.second->reset(nullptr);
       pair.second->_pNext = this->_pFreeProxiesHead;
       this->_pFreeProxiesHead = pair.second;
       this->_tileToOcclusionProxyMapping.erase(pair.first);
