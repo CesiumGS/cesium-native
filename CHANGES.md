@@ -12,6 +12,7 @@
 - Fixed a bug that could sometimes cause tilesets to fail to show their full detail when making changes to raster overlays.
 - Fixed a bug that could cause holes even with `TilesetOptions::forbidHoles` enabled, particularly when using external tilesets.
 - Tiles will no longer be selected to render when they have no content and they have a higher "geometric error" than their parent. In previous versions, this situation could briefly lead to holes while the children of such tiles loaded.
+- Fixed a bug where getting bad data from sqlite cache could cause a crash.
 
 ### v0.14.1 - 2022-04-14
 
