@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 
+#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
@@ -14,6 +15,7 @@
 #include "TilesetLoadTilesetDotJson.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -22,6 +24,7 @@
 #include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
@@ -67,9 +70,20 @@ Tileset::Tileset(
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
-    LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
-      this->notifyTileDoneLoading(nullptr);
-    });
+    TilesetJsonLoader::createLoader(externals, url, {})
+        .thenInMainThread([this](TilesetContentLoaderResult&& result) {
+          this->_pRootTile = std::move(result.pRootTile);
+          this->_pTilesetLoader = std::move(result.pLoader);
+          this->_gltfUpAxis = result.gltfUpAxis;
+          if (result.errors) {
+            this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
+                this,
+                TilesetLoadType::TilesetJson,
+                nullptr,
+                CesiumUtility::joinToString(result.errors, "\n- ")});
+          }
+          this->notifyTileDoneLoading(nullptr);
+        });
   }
 }
 

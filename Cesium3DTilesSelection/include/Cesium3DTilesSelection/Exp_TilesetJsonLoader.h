@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoaderResult.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/Future.h>
 
 #include <gsl/span>
 
@@ -14,28 +15,28 @@ class TilesetJsonLoader : public TilesetContentLoader {
 public:
   TilesetJsonLoader(
       const TilesetExternals& externals,
-      const std::string& baseUrl,
+      const std::string& baseUrl);
+
+  CesiumAsync::Future<TileLoadResult> doLoadTileContent(
+      Tile& tile,
+      const TilesetContentOptions& contentOptions,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
+      override;
+
+  void doProcessLoadedContent(Tile& tile) override;
+
+  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+      const TilesetExternals& externals,
+      const std::string& tilesetJsonUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   static TilesetContentLoaderResult createLoader(
       const TilesetExternals& externals,
       const std::string& baseUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const gsl::span<const std::byte>& tilesetJsonBinary);
 
 private:
-  CesiumAsync::Future<TileLoadResult> doLoadTileContent(
-      Tile& tile,
-      const TilesetContentOptions& contentOptions) override;
-
-  void doProcessLoadedContent(Tile& tile) override;
-
-  void doUpdateTileContent(Tile& tile) override;
-
-  bool doUnloadTileContent(Tile& tile) override;
-
   std::string _baseUrl;
-  std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::vector<std::unique_ptr<TilesetContentLoader>> _children;
 };
 } // namespace Cesium3DTilesSelection

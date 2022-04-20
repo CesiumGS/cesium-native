@@ -5,6 +5,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 
 #include <memory>
 
@@ -16,14 +17,6 @@ struct TileLoadResult {
   TileLoadState state;
   uint16_t httpStatusCode;
 };
-
-enum class FailedTemporarilyTileAction {
-  GiveUp,
-  Retry,
-  Wait
-};
-
-using FailedTemporarilyTileCallback = std::function<FailedTemporarilyTileAction(Tile &tile)>;
 
 class TilesetContentLoader {
 public:
@@ -37,7 +30,13 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
-  void setTileFailedTemporarilyCallback(FailedTemporarilyTileCallback callback);
+  virtual CesiumAsync::Future<TileLoadResult> doLoadTileContent(
+      Tile& tile,
+      const TilesetContentOptions& contentOptions,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>&
+          requestHeaders) = 0;
+
+  virtual void doProcessLoadedContent(Tile& tile) = 0;
 
 private:
   static void setTileContentState(
@@ -47,31 +46,12 @@ private:
       uint16_t httpStatusCode,
       void* pRenderResources);
 
-  void resetTileContent(TileContent& content);
-
-  void deleteAllTileUserData(TileContent& content);
-
-  void updateFailedTemporarilyState(Tile& tile);
-
   void updateContentLoadedState(Tile& tile);
-
-  void updateDoneState(Tile& tile);
 
   void unloadContentLoadedState(Tile& tile);
 
   void unloadDoneState(Tile& tile);
 
-  virtual CesiumAsync::Future<TileLoadResult> doLoadTileContent(
-      Tile& tile,
-      const TilesetContentOptions& contentOptions) = 0;
-
-  virtual void doProcessLoadedContent(Tile& tile) = 0;
-
-  virtual void doUpdateTileContent(Tile& tile) = 0;
-
-  virtual bool doUnloadTileContent(Tile& tile) = 0;
-
-  FailedTemporarilyTileCallback _failedTemporarilyCallback;
   TileUserDataStorage _customDataStorage;
 
 protected:
@@ -107,6 +87,8 @@ protected:
     auto handle = tile.exp_GetContent()->getLoaderCustomDataHandle();
     _customDataStorage.deleteUserData<UserData>(handle);
   }
+
   TilesetExternals _externals;
+  std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
 };
 } // namespace Cesium3DTilesSelection

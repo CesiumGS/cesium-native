@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include "ImplicitTraversal.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
@@ -592,6 +593,8 @@ private:
   // selection.
   std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
   size_t _nextDistancesVector;
+
+  std::unique_ptr<TilesetContentLoader> _pTilesetLoader;
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 

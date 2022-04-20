@@ -22,15 +22,20 @@ void TilesetContentLoader::loadTileContent(
     const TilesetContentOptions& contentOptions) {
   TileContent* pContent = tile.exp_GetContent();
 
+  if (pContent->getState() != TileLoadState::Unloaded &&
+      pContent->getState() != TileLoadState::FailedTemporarily) {
+    return;
+  }
+
   // create a user storage handle if it doesn't have any. This allows derived
-  // and other processor to add custom user data to the tile if needed
+  // and other processors to add custom user data to the tile if needed
   auto userStorageHandle = pContent->getLoaderCustomDataHandle();
   if (!_customDataStorage.isValidHandle(userStorageHandle)) {
     pContent->setLoaderCustomDataHandle(_customDataStorage.createHandle());
   }
 
   pContent->setState(TileLoadState::ContentLoading);
-  doLoadTileContent(tile, contentOptions)
+  doLoadTileContent(tile, contentOptions, {})
       .thenInWorkerThread(
           [pPrepareRendererResources = _externals.pPrepareRendererResources,
            transform = tile.getTransform()](TileLoadResult&& result) {
@@ -50,30 +55,29 @@ void TilesetContentLoader::loadTileContent(
                 std::move(result),
                 pRenderResources};
           })
-      .thenInMainThread(
-          [pContent](TileLoadResultAndRenderResources&& pair) {
-            TileLoadResult& result = pair.result;
-            if (result.state == TileLoadState::ContentLoaded ||
-                result.state == TileLoadState::Failed ||
-                result.state == TileLoadState::FailedTemporarily) {
-              TilesetContentLoader::setTileContentState(
-                  *pContent,
-                  std::move(result.contentKind),
-                  result.state,
-                  result.httpStatusCode,
-                  pair.pRenderResources);
-            } else {
-              // any states other than the three above are regarded as failed.
-              // We will never allow derived class to influence the state of a
-              // tile
-              TilesetContentLoader::setTileContentState(
-                  *pContent,
-                  std::move(result.contentKind),
-                  TileLoadState::Failed,
-                  result.httpStatusCode,
-                  nullptr);
-            }
-          });
+      .thenInMainThread([pContent](TileLoadResultAndRenderResources&& pair) {
+        TileLoadResult& result = pair.result;
+        if (result.state == TileLoadState::ContentLoaded ||
+            result.state == TileLoadState::Failed ||
+            result.state == TileLoadState::FailedTemporarily) {
+          TilesetContentLoader::setTileContentState(
+              *pContent,
+              std::move(result.contentKind),
+              result.state,
+              result.httpStatusCode,
+              pair.pRenderResources);
+        } else {
+          // any states other than the three above are regarded as failed.
+          // We will never allow derived class to influence the state of a
+          // tile
+          TilesetContentLoader::setTileContentState(
+              *pContent,
+              std::move(result.contentKind),
+              TileLoadState::Failed,
+              result.httpStatusCode,
+              nullptr);
+        }
+      });
 }
 
 void TilesetContentLoader::updateTileContent(Tile& tile) {
@@ -84,14 +88,8 @@ void TilesetContentLoader::updateTileContent(Tile& tile) {
 
   TileLoadState state = pContent->getState();
   switch (state) {
-  case TileLoadState::FailedTemporarily:
-    updateFailedTemporarilyState(tile);
-    break;
   case TileLoadState::ContentLoaded:
     updateContentLoadedState(tile);
-    break;
-  case TileLoadState::Done:
-    updateDoneState(tile);
     break;
   default:
     break;
@@ -113,10 +111,6 @@ bool TilesetContentLoader::unloadTileContent(Tile& tile) {
     return false;
   }
 
-  if (!doUnloadTileContent(tile)) {
-    return false;
-  }
-
   switch (state) {
   case TileLoadState::ContentLoaded:
     unloadContentLoadedState(tile);
@@ -125,15 +119,20 @@ bool TilesetContentLoader::unloadTileContent(Tile& tile) {
     unloadDoneState(tile);
     break;
   default:
-    resetTileContent(*pContent);
+    break;
   }
 
-  return true;
-}
+  // we will only ever remove all user data when this tile is unloaded
+  auto customDataHandle = pContent->getLoaderCustomDataHandle();
+  if (_customDataStorage.isValidHandle(customDataHandle)) {
+    _customDataStorage.destroyHandle(customDataHandle);
+    pContent->setLoaderCustomDataHandle(TileUserDataStorage::NullHandle);
+  }
 
-void TilesetContentLoader::setTileFailedTemporarilyCallback(
-    FailedTemporarilyTileCallback callback) {
-  _failedTemporarilyCallback = std::move(callback);
+  pContent->setContentKind(TileUnknownContent{});
+  pContent->setHttpStatusCode(0);
+  pContent->setState(TileLoadState::Unloaded);
+  return true;
 }
 
 void TilesetContentLoader::setTileContentState(
@@ -146,38 +145,6 @@ void TilesetContentLoader::setTileContentState(
   content.setState(state);
   content.setHttpStatusCode(httpStatusCode);
   content.setRenderResources(pRenderResources);
-}
-
-void TilesetContentLoader::resetTileContent(TileContent& content) {
-  deleteAllTileUserData(content);
-  content.setContentKind(TileUnknownContent{});
-  content.setState(TileLoadState::Unloaded);
-  content.setHttpStatusCode(0);
-}
-
-void TilesetContentLoader::deleteAllTileUserData(TileContent& content) {
-  auto customDataHandle = content.getLoaderCustomDataHandle();
-  if (_customDataStorage.isValidHandle(customDataHandle)) {
-    _customDataStorage.destroyHandle(customDataHandle);
-    content.setLoaderCustomDataHandle(TileUserDataStorage::NullHandle);
-  }
-}
-
-void TilesetContentLoader::updateFailedTemporarilyState(Tile& tile) {
-  TileContent* pContent = tile.exp_GetContent();
-
-  if (_failedTemporarilyCallback) {
-    FailedTemporarilyTileAction action = _failedTemporarilyCallback(tile);
-    if (action == FailedTemporarilyTileAction::GiveUp) {
-      // move to failed state
-      deleteAllTileUserData(*pContent);
-      pContent->setState(TileLoadState::Failed);
-    } else if (action == FailedTemporarilyTileAction::Retry) {
-      // make sure that this tile has the correct invariant for an unloaded
-      // state
-      resetTileContent(*pContent);
-    }
-  }
 }
 
 void TilesetContentLoader::updateContentLoadedState(Tile& tile) {
@@ -198,10 +165,6 @@ void TilesetContentLoader::updateContentLoadedState(Tile& tile) {
   pContent->setState(TileLoadState::Done);
 }
 
-void TilesetContentLoader::updateDoneState(Tile& tile) {
-  doUpdateTileContent(tile);
-}
-
 void TilesetContentLoader::unloadContentLoadedState(Tile& tile) {
   TileContent* pContent = tile.exp_GetContent();
   void* pWorkerRenderResources = pContent->getRenderResources();
@@ -209,8 +172,6 @@ void TilesetContentLoader::unloadContentLoadedState(Tile& tile) {
       tile,
       pWorkerRenderResources,
       nullptr);
-
-  resetTileContent(*pContent);
 }
 
 void TilesetContentLoader::unloadDoneState(Tile& tile) {
@@ -220,7 +181,5 @@ void TilesetContentLoader::unloadDoneState(Tile& tile) {
       tile,
       nullptr,
       pMainThreadRenderResources);
-
-  resetTileContent(*pContent);
 }
 } // namespace Cesium3DTilesSelection
