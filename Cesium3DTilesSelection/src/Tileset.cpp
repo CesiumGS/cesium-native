@@ -80,7 +80,7 @@ Tileset::Tileset(
                 this,
                 TilesetLoadType::TilesetJson,
                 nullptr,
-                CesiumUtility::joinToString(result.errors, "\n- ")});
+                CesiumUtility::joinToString(result.errors.errors, "\n- ")});
           }
           this->notifyTileDoneLoading(nullptr);
         });

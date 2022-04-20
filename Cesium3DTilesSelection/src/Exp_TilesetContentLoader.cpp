@@ -135,6 +135,12 @@ bool TilesetContentLoader::unloadTileContent(Tile& tile) {
   return true;
 }
 
+void TilesetContentLoader::setRequestHeadersChangeListenser(
+  std::function<void(CesiumAsync::IAssetAccessor::THeader&& changedHeader)>
+  listener) {
+  _requestHeadersChangeListener = std::move(listener);
+}
+
 void TilesetContentLoader::setTileContentState(
     TileContent& content,
     TileContentKind&& contentKind,
@@ -181,5 +187,10 @@ void TilesetContentLoader::unloadDoneState(Tile& tile) {
       tile,
       nullptr,
       pMainThreadRenderResources);
+}
+
+void TilesetContentLoader::broadCastRequestHeaderChange(
+    CesiumAsync::IAssetAccessor::THeader&& header) {
+  _requestHeadersChangeListener(std::move(header));
 }
 } // namespace Cesium3DTilesSelection

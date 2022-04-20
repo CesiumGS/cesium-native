@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/Exp_ErrorList.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
 
 #include <memory>
@@ -23,6 +24,8 @@ struct TilesetContentLoaderResult {
   CesiumGeometry::Axis gltfUpAxis{CesiumGeometry::Axis::Y};
 
   std::vector<LoaderCreditResult> credits;
+
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 
   ErrorList errors;
 };

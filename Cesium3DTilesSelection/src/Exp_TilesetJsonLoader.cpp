@@ -311,77 +311,7 @@ void parseTileJsonRecursively(
   }
 }
 
-TileLoadResult parseExternalTilesetInWorkerThread(
-    const std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
-    const TilesetExternals& externals,
-    WorkerExternalContent& workerExternalContent) {
-  // create external tileset
-  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
-  const auto& responseData = pResponse->data();
-  const auto& tileUrl = pCompletedRequest->url();
-  uint16_t statusCode = pResponse->statusCode();
-
-  // Save the parsed external tileset into custom data.
-  // We will propagate it back to tile later in the main
-  // thread
-  workerExternalContent.externalTilesetLoaders =
-      TilesetJsonLoader::createLoader(externals, tileUrl, responseData);
-
-  // check and log any errors
-  const auto& errors = workerExternalContent.externalTilesetLoaders.errors;
-  if (errors) {
-    logErrors(externals.pLogger, tileUrl, errors);
-    return {TileExternalContent{}, TileLoadState::Failed, statusCode};
-  }
-
-  // mark this tile has external content
-  return {TileExternalContent{}, TileLoadState::ContentLoaded, statusCode};
-}
-} // namespace
-
-TilesetJsonLoader::TilesetJsonLoader(
-    const TilesetExternals& externals,
-    const std::string& baseUrl)
-    : TilesetContentLoader(externals),
-      _baseUrl{baseUrl} {}
-
-CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
-    const TilesetExternals& externals,
-    const std::string& tilesetJsonUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  return externals.pAssetAccessor->get(externals.asyncSystem, tilesetJsonUrl, requestHeaders)
-      .thenInWorkerThread(
-          [externals](const std::shared_ptr<CesiumAsync::IAssetRequest>&
-                          pCompletedRequest) {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            const std::string& tileUrl = pCompletedRequest->url();
-            if (!pResponse) {
-              TilesetContentLoaderResult result;
-              result.errors.emplace_error(fmt::format(
-                  "Did not receive a valid response for tile content {}",
-                  tileUrl));
-              return result;
-            }
-
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              TilesetContentLoaderResult result;
-              result.errors.emplace_error(fmt::format(
-                  "Received status code {} for tile content {}",
-                  statusCode,
-                  tileUrl));
-              return result;
-            }
-
-            return TilesetJsonLoader::createLoader(
-                externals,
-                pCompletedRequest->url(),
-                pResponse->data());
-          });
-}
-
-TilesetContentLoaderResult TilesetJsonLoader::createLoader(
+TilesetContentLoaderResult parseTilesetJson(
     const TilesetExternals& externals,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& tilesetJsonBinary) {
@@ -421,6 +351,78 @@ TilesetContentLoaderResult TilesetJsonLoader::createLoader(
   }
 
   return result;
+}
+
+
+TileLoadResult parseExternalTilesetInWorkerThread(
+    const std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
+    const TilesetExternals& externals,
+    WorkerExternalContent& workerExternalContent) {
+  // create external tileset
+  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
+  const auto& responseData = pResponse->data();
+  const auto& tileUrl = pCompletedRequest->url();
+  uint16_t statusCode = pResponse->statusCode();
+
+  // Save the parsed external tileset into custom data.
+  // We will propagate it back to tile later in the main
+  // thread
+  workerExternalContent.externalTilesetLoaders =
+      parseTilesetJson(externals, tileUrl, responseData);
+
+  // check and log any errors
+  const auto& errors = workerExternalContent.externalTilesetLoaders.errors;
+  if (errors) {
+    logErrors(externals.pLogger, tileUrl, errors);
+    return {TileExternalContent{}, TileLoadState::Failed, statusCode};
+  }
+
+  // mark this tile has external content
+  return {TileExternalContent{}, TileLoadState::ContentLoaded, statusCode};
+}
+} // namespace
+
+TilesetJsonLoader::TilesetJsonLoader(
+    const TilesetExternals& externals,
+    const std::string& baseUrl)
+    : TilesetContentLoader(externals),
+      _baseUrl{baseUrl} {}
+
+CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
+    const TilesetExternals& externals,
+    const std::string& tilesetJsonUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+  return externals.pAssetAccessor
+      ->get(externals.asyncSystem, tilesetJsonUrl, requestHeaders)
+      .thenInWorkerThread(
+          [externals](const std::shared_ptr<CesiumAsync::IAssetRequest>&
+                          pCompletedRequest) {
+            const CesiumAsync::IAssetResponse* pResponse =
+                pCompletedRequest->response();
+            const std::string& tileUrl = pCompletedRequest->url();
+            if (!pResponse) {
+              TilesetContentLoaderResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Did not receive a valid response for tile content {}",
+                  tileUrl));
+              return result;
+            }
+
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              TilesetContentLoaderResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Received status code {} for tile content {}",
+                  statusCode,
+                  tileUrl));
+              return result;
+            }
+
+            return parseTilesetJson(
+                externals,
+                pCompletedRequest->url(),
+                pResponse->data());
+          });
 }
 
 CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doLoadTileContent(
@@ -510,7 +512,6 @@ void TilesetJsonLoader::doProcessLoadedContent(Tile& tile) {
     pLoader->doProcessLoadedContent(tile);
   }
 
-  TileContent* pContent = tile.exp_GetContent();
   if (pContent->isExternalContent()) {
     WorkerExternalContent& processedExternal =
         getUserData<WorkerExternalContent>(tile);

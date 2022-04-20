@@ -91,6 +91,7 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
       .thenImmediately(
           [credits = std::move(credits),
            externals,
+           requestHeaders,
            ionAssetID,
            ionAccessToken = std::move(ionAccessToken),
            ionAssetEndpointUrl = std::move(ionAssetEndpointUrl)](
@@ -112,12 +113,13 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
                   std::move(ionAccessToken),
                   std::move(ionAssetEndpointUrl),
                   std::move(result.pLoader));
-              result.gltfUpAxis = tilesetJsonResult.gltfUpAxis;
               result.pRootTile = std::move(tilesetJsonResult.pRootTile);
+              result.gltfUpAxis = tilesetJsonResult.gltfUpAxis;
               result.credits = std::move(tilesetJsonResult.credits);
+              result.requestHeaders = std::move(requestHeaders);
             }
             result.errors = std::move(tilesetJsonResult.errors);
-            return std::move(result);
+            return result;
           });
 }
 
@@ -299,7 +301,8 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread() {
               auto accessToken =
                   getNewAccessToken(pIonResponse, _externals.pLogger);
               if (accessToken) {
-                updateContextWithNewToken(pContext, *accessToken);
+                broadCastRequestHeaderChange(
+                    std::make_pair("Authorization", "Bearer " + *accessToken));
 
                 // update cache with new access token
                 auto cacheIt = endpointCache.find(pIonRequest->url());

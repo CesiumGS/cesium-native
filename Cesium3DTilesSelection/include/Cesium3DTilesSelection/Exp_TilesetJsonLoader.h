@@ -30,11 +30,6 @@ public:
       const std::string& tilesetJsonUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
-  static TilesetContentLoaderResult createLoader(
-      const TilesetExternals& externals,
-      const std::string& baseUrl,
-      const gsl::span<const std::byte>& tilesetJsonBinary);
-
 private:
   std::string _baseUrl;
   std::vector<std::unique_ptr<TilesetContentLoader>> _children;

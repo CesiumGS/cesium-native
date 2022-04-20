@@ -30,6 +30,10 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
+  void setRequestHeadersChangeListenser(
+      std::function<void(CesiumAsync::IAssetAccessor::THeader&& changedHeader)>
+          listener);
+
   virtual CesiumAsync::Future<TileLoadResult> doLoadTileContent(
       Tile& tile,
       const TilesetContentOptions& contentOptions,
@@ -53,6 +57,8 @@ private:
   void unloadDoneState(Tile& tile);
 
   TileUserDataStorage _customDataStorage;
+  std::function<void(CesiumAsync::IAssetAccessor::THeader&& changedHeader)>
+      _requestHeadersChangeListener;
 
 protected:
   template <class UserData, class... Args>
@@ -88,7 +94,9 @@ protected:
     _customDataStorage.deleteUserData<UserData>(handle);
   }
 
+  void
+  broadCastRequestHeaderChange(CesiumAsync::IAssetAccessor::THeader&& header);
+
   TilesetExternals _externals;
-  std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
 };
 } // namespace Cesium3DTilesSelection
