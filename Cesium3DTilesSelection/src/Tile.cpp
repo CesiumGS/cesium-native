@@ -502,13 +502,6 @@ void Tile::processLoadedContent() {
   const TilesetExternals& externals = this->getTileset()->getExternals();
 
   if (this->getState() == LoadState::ContentLoaded) {
-    if (externals.pPrepareRendererResources) {
-      this->_pRendererResources =
-          externals.pPrepareRendererResources->prepareInMainThread(
-              *this,
-              this->getRendererResources());
-    }
-
     if (this->_pContent) {
       // Apply children from content, but only if we don't already have
       // children.
@@ -586,6 +579,13 @@ void Tile::processLoadedContent() {
           }
         }
       }
+    }
+
+    if (externals.pPrepareRendererResources) {
+      this->_pRendererResources =
+          externals.pPrepareRendererResources->prepareInMainThread(
+              *this,
+              this->getRendererResources());
     }
 
     this->setState(LoadState::Done);
