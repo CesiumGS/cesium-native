@@ -16,7 +16,7 @@ public:
    *
    * @return The occlusion state.
    */
-  virtual bool isOccluded() const;
+  virtual bool isOccluded() const = 0;
 
   /**
    * @brief Get the last frame where a definitive occlusion state was
@@ -24,11 +24,10 @@ public:
    *
    * @return The frame number.
    */
-  virtual int32_t getLastUpdatedFrame() const;
+  virtual int32_t getLastUpdatedFrame() const = 0;
 
 protected:
   friend class TileOcclusionRendererProxyPool;
-
   /**
    * @brief Reset this proxy to target a new tile. If nullptr, this proxy is
    * back in the pool and will not be used for further occlusion until reset
@@ -37,17 +36,17 @@ protected:
    * @param pTile The tile that this proxy represents or nullptr if the proxy
    * is back in the pool.
    */
-  virtual void reset(const Tile* pTile);
+  virtual void reset(const Tile* pTile) = 0;
 
   /**
    * @brief Update the tile occlusion proxy.
    *
    * @param currentFrame The current frame number.
    */
-  virtual void update(int32_t currentFrame);
+  virtual void update(int32_t currentFrame) = 0;
 
 private:
-  friend class TileOcclusionRendererProxyPool;
+  // friend class TileOcclusionRendererProxyPool;
 
   bool _usedLastFrame = false;
   TileOcclusionRendererProxy* _pNext;
@@ -55,6 +54,8 @@ private:
 
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxyPool {
 public:
+  virtual ~TileOcclusionRendererProxyPool();
+
   /**
    * @brief Initialize a pool of {@link TileOcclusionRendererProxy}s of the
    * given size.
@@ -95,21 +96,21 @@ protected:
    *
    * @return A new occlusion proxy.
    */
-  virtual TileOcclusionRendererProxy* createProxy();
+  virtual TileOcclusionRendererProxy* createProxy() = 0;
 
   /**
    * @brief Destroy a {@link TileOcclusionRendererProxy} that is done being used.
    *
    * @param pProxy The proxy to be destroyed.
    */
-  virtual void destroyProxy(TileOcclusionRendererProxy* pProxy);
+  virtual void destroyProxy(TileOcclusionRendererProxy* pProxy) = 0;
 
 private:
   // Singly linked list representing the free proxies in the pool
   TileOcclusionRendererProxy* _pFreeProxiesHead;
   // The currently used proxies in the pool
   std::unordered_map<const Tile*, TileOcclusionRendererProxy*>
-      _tileToOcclusionProxyMapping;
+      _tileToOcclusionProxyMappings;
 };
 
 } // namespace Cesium3DTilesSelection

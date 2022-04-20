@@ -2,13 +2,12 @@
 
 namespace Cesium3DTilesSelection {
 
-void TileOcclusionRendererProxy::update(int32_t currentFrame) {
-  this->update(currentFrame);
-  this->_usedLastFrame = true;
+TileOcclusionRendererProxyPool::~TileOcclusionRendererProxyPool() {
+  destroyPool();
 }
 
 void TileOcclusionRendererProxyPool::initPool(int32_t poolSize) {
-  this->_tileToOcclusionProxyMapping.reserve(poolSize);
+  this->_tileToOcclusionProxyMappings.reserve(poolSize);
 
   TileOcclusionRendererProxy* pLastProxy = nullptr;
   for (int32_t i = 0; i < poolSize; ++i) {
@@ -23,11 +22,11 @@ void TileOcclusionRendererProxyPool::initPool(int32_t poolSize) {
 }
 
 void TileOcclusionRendererProxyPool::destroyPool() {
-  for (auto& pair : this->_tileToOcclusionProxyMapping) {
+  for (auto& pair : this->_tileToOcclusionProxyMappings) {
     this->destroyProxy(pair.second);
   }
 
-  this->_tileToOcclusionProxyMapping.clear();
+  this->_tileToOcclusionProxyMappings.clear();
 
   TileOcclusionRendererProxy* pCurrent = this->_pFreeProxiesHead;
   while (pCurrent) {
@@ -41,8 +40,8 @@ const TileOcclusionRendererProxy*
 TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(
     const Tile& tile,
     int32_t currentFrame) {
-  auto mappingIt = this->_tileToOcclusionProxyMapping.find(&tile);
-  if (mappingIt != this->_tileToOcclusionProxyMapping.end()) {
+  auto mappingIt = this->_tileToOcclusionProxyMappings.find(&tile);
+  if (mappingIt != this->_tileToOcclusionProxyMappings.end()) {
     TileOcclusionRendererProxy* pProxy = mappingIt->second;
 
     pProxy->update(currentFrame);
@@ -51,30 +50,36 @@ TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(
     return pProxy;
   }
 
+  if (!this->_pFreeProxiesHead) {
+    return nullptr;
+  }
+
   TileOcclusionRendererProxy* pAssignedProxy = this->_pFreeProxiesHead;
   this->_pFreeProxiesHead =
       this->_pFreeProxiesHead ? this->_pFreeProxiesHead->_pNext : nullptr;
   pAssignedProxy->_pNext = nullptr;
   pAssignedProxy->_usedLastFrame = true;
 
-  this->_tileToOcclusionProxyMapping.emplace(&tile, pAssignedProxy);
+  this->_tileToOcclusionProxyMappings.emplace(&tile, pAssignedProxy);
   pAssignedProxy->reset(&tile);
 
   return pAssignedProxy;
 }
 
 void TileOcclusionRendererProxyPool::pruneOcclusionProxyMappings() {
-  for (auto& pair : this->_tileToOcclusionProxyMapping) {
-    if (!pair.second->_usedLastFrame) {
+  for (auto iter = this->_tileToOcclusionProxyMappings.begin();
+       iter != this->_tileToOcclusionProxyMappings.end();) {
+    if (!iter->second->_usedLastFrame) {
       // This tile was not traversed last frame, unmap the proxy and re-add it
       // to the free list.
-      pair.second->reset(nullptr);
-      pair.second->_pNext = this->_pFreeProxiesHead;
-      this->_pFreeProxiesHead = pair.second;
-      this->_tileToOcclusionProxyMapping.erase(pair.first);
+      iter->second->reset(nullptr);
+      iter->second->_pNext = this->_pFreeProxiesHead;
+      this->_pFreeProxiesHead = iter->second;
+      iter = this->_tileToOcclusionProxyMappings.erase(iter);
     } else {
       // Reset the flag.
-      pair.second->_usedLastFrame = false;
+      iter->second->_usedLastFrame = false;
+      ++iter;
     }
   }
 }
