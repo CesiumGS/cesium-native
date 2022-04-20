@@ -792,7 +792,6 @@ void SqliteCache::destroyDatabase() {
     SPDLOG_LOGGER_ERROR(
         this->_pImpl->_pLogger,
         "Unable to delete database file.");
-    return;
   }
   createConnection();
 }
