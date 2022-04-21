@@ -51,11 +51,11 @@ void TileContent::setHttpStatusCode(uint16_t statusCode) noexcept {
   _httpStatusCode = statusCode;
 }
 
-TileUserDataStorage::Handle TileContent::getLoaderCustomDataHandle() const {
+TileUserDataStorage::Handle TileContent::getCustomDataHandle() const {
   return _loaderCustomDataHandle;
 }
 
-void TileContent::setLoaderCustomDataHandle(
+void TileContent::setCustomDataHandle(
     TileUserDataStorage::Handle handle) {
   _loaderCustomDataHandle = handle;
 }
@@ -65,4 +65,13 @@ void TileContent::setRenderResources(void* pRenderResources) noexcept {
 }
 
 void* TileContent::getRenderResources() noexcept { return _pRenderResources; }
+
+void TileContent::setTileInitializerCallback(
+  std::function<void(Tile&)> callback) {
+  _deferredTileInitializer = std::move(callback);
+}
+
+std::function<void(Tile&)>& TileContent::getTileInitializerCallback() {
+  return _deferredTileInitializer;
+}
 } // namespace Cesium3DTilesSelection

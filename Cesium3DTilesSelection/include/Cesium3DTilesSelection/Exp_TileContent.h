@@ -3,12 +3,13 @@
 #include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
 #include <CesiumGltf/Model.h>
 
-#include <any>
 #include <optional>
 #include <variant>
+#include <functional>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
+class Tile;
 
 enum class TileLoadState {
   Failed = -2,
@@ -53,6 +54,8 @@ public:
 
   TileRenderContent* getRenderContent() noexcept;
 
+  TileUserDataStorage::Handle getCustomDataHandle() const;
+
   TilesetContentLoader* getLoader() noexcept;
 
 private:
@@ -64,21 +67,24 @@ private:
 
   void setHttpStatusCode(uint16_t statusCode) noexcept;
 
-  TileUserDataStorage::Handle getLoaderCustomDataHandle() const;
-
-  void setLoaderCustomDataHandle(TileUserDataStorage::Handle handle);
+  void setCustomDataHandle(TileUserDataStorage::Handle handle);
 
   void setRenderResources(void* pRenderResources) noexcept;
 
   void* getRenderResources() noexcept;
+
+  void setTileInitializerCallback(std::function<void(Tile&)> callback);
+
+  std::function<void(Tile&)> &getTileInitializerCallback();
 
   uint16_t _httpStatusCode;
   TileLoadState _state;
   TileContentKind _contentKind;
   TileUserDataStorage::Handle _loaderCustomDataHandle;
   void* _pRenderResources;
+  std::function<void(Tile&)> _deferredTileInitializer;
   TilesetContentLoader* _pLoader;
 
-  friend class TilesetContentLoader;
+  friend class TilesetContentManager;
 };
 } // namespace Cesium3DTilesSelection

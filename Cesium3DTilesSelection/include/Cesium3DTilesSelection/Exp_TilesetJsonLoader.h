@@ -2,6 +2,7 @@
 
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Future.h>
 
@@ -13,17 +14,15 @@
 namespace Cesium3DTilesSelection {
 class TilesetJsonLoader : public TilesetContentLoader {
 public:
-  TilesetJsonLoader(
-      const TilesetExternals& externals,
-      const std::string& baseUrl);
+  TilesetJsonLoader(const std::string& baseUrl);
 
-  CesiumAsync::Future<TileLoadResult> doLoadTileContent(
-      Tile& tile,
-      const TilesetContentOptions& contentOptions,
+  CesiumAsync::Future<TileLoadResult> loadTileContent(
+      TilesetContentLoader &currentLoader,
+      const TileContentLoadInfo& loadInfo,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
-  void doProcessLoadedContent(Tile& tile) override;
+  void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
       const TilesetExternals& externals,
