@@ -190,87 +190,10 @@ std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
   return std::nullopt;
 }
 
-void createQuantizedMeshChildren(
-    Tile& parentTile,
-    TileContext* pParentContext,
-    const CesiumGeometry::QuadtreeTileID* pParentID);
+} // namespace
 
-void requestAvailabilityTile(
-    Tile& parentTile,
-    TileContext* pParentContext,
-    const CesiumGeometry::QuadtreeTileID* pParentID,
-    TileContext* pChildContext,
-    const CesiumGeometry::QuadtreeTileID& availabilityTileID) {
-  const Cesium3DTilesSelection::TilesetExternals& externals =
-      parentTile.getTileset()->getExternals();
-  std::string url = pChildContext->pTileset->getResolvedContentUrl(
-      *pChildContext,
-      availabilityTileID);
+namespace ImplicitTraversalUtilities {
 
-  auto futureIt =
-      pChildContext->availabilityTilesLoading.find(availabilityTileID);
-
-  if (futureIt != pChildContext->availabilityTilesLoading.end()) {
-    futureIt->second.thenInMainThread(
-        [&parentTile, pParentContext, pParentID](int) {
-          createQuantizedMeshChildren(parentTile, pParentContext, pParentID);
-        });
-  } else {
-    ++pParentContext->availabilityLoadsInProgress;
-    // Make sure that the tileset is not destroyed while availability is
-    // loading.
-    parentTile.getTileset()->notifyTileStartLoading(nullptr);
-
-    auto future =
-        externals.pAssetAccessor
-            ->get(externals.asyncSystem, url, pChildContext->requestHeaders)
-            .thenInWorkerThread(
-                [pLogger = externals.pLogger, url, availabilityTileID](
-                    std::shared_ptr<IAssetRequest>&& pRequest)
-                    -> std::vector<QuadtreeTileRectangularRange> {
-                  const IAssetResponse* pResponse = pRequest->response();
-                  if (pResponse) {
-                    uint16_t statusCode = pResponse->statusCode();
-
-                    if (!(statusCode != 0 &&
-                          (statusCode < 200 || statusCode >= 300))) {
-                      return QuantizedMeshContent::loadMetadata(
-                          pLogger,
-                          pResponse->data(),
-                          availabilityTileID);
-                    }
-                  }
-                  return {};
-                })
-            .thenInMainThread(
-                [&parentTile, pChildContext, availabilityTileID](
-                    std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
-                        rectangles) {
-                  --parentTile.getContext()->availabilityLoadsInProgress;
-                  parentTile.getTileset()->notifyTileDoneLoading(nullptr);
-                  pChildContext->availabilityTilesLoaded.insert(
-                      availabilityTileID);
-                  pChildContext->availabilityTilesLoading.erase(
-                      availabilityTileID);
-                  if (!rectangles.empty()) {
-                    for (const QuadtreeTileRectangularRange& range :
-                         rectangles) {
-                      pChildContext->implicitContext->rectangleAvailability
-                          ->addAvailableTileRange(range);
-                    }
-                  }
-                  return 0;
-                })
-            .share();
-
-    future.thenInMainThread([&parentTile, pParentContext, pParentID](int) {
-      createQuantizedMeshChildren(parentTile, pParentContext, pParentID);
-    });
-
-    pChildContext->availabilityTilesLoading.insert(
-        {availabilityTileID, std::move(future)});
-  }
-}
 void createQuantizedMeshChildren(
     Tile& parentTile,
     TileContext* pParentContext,
@@ -310,12 +233,11 @@ void createQuantizedMeshChildren(
                 static_cast<uint32_t>(*pChildContext->availabilityLevels));
         if (unloadedAvailabilityTile) {
           // load parent availability tile before going any further
-          return requestAvailabilityTile(
+          parentTile.getTileset()->requestAvailabilityTile(
               parentTile,
-              pParentContext,
-              pParentID,
-              pChildContext,
-              *unloadedAvailabilityTile);
+              *unloadedAvailabilityTile,
+              pChildContext);
+          return;
         }
       }
       pChildContext = pChildContext->pUnderlyingContext.get();
@@ -341,9 +263,6 @@ void createQuantizedMeshChildren(
     }
   }
 }
-} // namespace
-
-namespace ImplicitTraversalUtilities {
 
 void createImplicitQuadtreeTile(
     const TileContext* pTileContext,

@@ -905,7 +905,8 @@ void Tile::update(
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
     if (moreRasterDetailAvailable && this->_children.empty() &&
-        this->_pContext->availabilityLoadsInProgress == 0) {
+        this->_pContext->tilesRequestingAvailability.find(this) ==
+            this->_pContext->tilesRequestingAvailability.end()) {
       createQuadtreeSubdividedChildren(*this);
     }
   }

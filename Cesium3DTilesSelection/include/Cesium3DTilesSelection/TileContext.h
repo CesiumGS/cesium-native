@@ -247,21 +247,12 @@ public:
    * @brief A counter of how many availability tiles are currently being fetched
    * using this context.
    */
-  uint32_t availabilityLoadsInProgress = 0;
+  std::unordered_set<Tile*> tilesRequestingAvailability;
 
   /**
    * @brief Any attribution associated with this context/layer.
    */
   std::optional<Credit> credit;
-
-  /**
-   * @brief A hash map of futures of availability tiles that are currently
-   * loading.
-   */
-  std::unordered_map<
-      CesiumGeometry::QuadtreeTileID,
-      CesiumAsync::SharedFuture<int>>
-      availabilityTilesLoading;
 };
 
 } // namespace Cesium3DTilesSelection

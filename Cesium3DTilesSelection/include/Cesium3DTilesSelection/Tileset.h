@@ -241,6 +241,11 @@ public:
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   requestAvailabilitySubtree(Tile& tile);
 
+  void requestAvailabilityTile(
+      Tile& tile,
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      TileContext* pTileContext);
+
   /**
    * @brief Add the given {@link TileContext} to this tile set.
    *
@@ -560,6 +565,17 @@ private:
     }
   };
 
+  struct AvailabilityLoadRecord {
+    CesiumGeometry::QuadtreeTileID tileID;
+    const TileContext* pTileContext;
+    std::vector<Tile*> pTiles;
+
+    bool operator==(const AvailabilityLoadRecord& rhs) const noexcept {
+      return this->tileID == rhs.tileID &&
+             this->pTileContext == rhs.pTileContext;
+    }
+  };
+
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
@@ -568,6 +584,8 @@ private:
   std::vector<SubtreeLoadRecord> _subtreeLoadQueue;
   std::atomic<uint32_t>
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
+
+  std::vector<AvailabilityLoadRecord> _availabilityLoading;
 
   Tile::LoadedLinkedList _loadedTiles;
 

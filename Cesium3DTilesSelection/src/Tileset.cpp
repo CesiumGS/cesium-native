@@ -7,6 +7,7 @@
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "QuantizedMeshContent.h"
 #include "TileUtilities.h"
 #include "TilesetLoadIonAssetEndpoint.h"
 #include "TilesetLoadSubtree.h"
@@ -14,6 +15,7 @@
 #include "TilesetLoadTilesetDotJson.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -117,7 +119,8 @@ Tileset::~Tileset() {
   while (this->_loadsInProgress.load(std::memory_order::memory_order_acquire) >
              0 ||
          this->_subtreeLoadsInProgress.load(
-             std::memory_order::memory_order_acquire) > 0) {
+             std::memory_order::memory_order_acquire) > 0 ||
+         this->_availabilityLoading.size() > 0) {
     this->_externals.pAssetAccessor->tick();
     this->_asyncSystem.dispatchMainThreadTasks();
   }
@@ -385,6 +388,80 @@ Tileset::requestTileContent(Tile& tile) {
       this->getAsyncSystem(),
       url,
       tile.getContext()->requestHeaders);
+}
+
+void Tileset::requestAvailabilityTile(
+    Tile& parentTile,
+    const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+    TileContext* pChildContext) {
+  parentTile.getContext()->tilesRequestingAvailability.insert(&parentTile);
+  AvailabilityLoadRecord record{
+      availabilityTileID,
+      pChildContext,
+      {&parentTile}};
+  auto recordIt = std::find(
+      _availabilityLoading.begin(),
+      _availabilityLoading.end(),
+      record);
+  if (recordIt != _availabilityLoading.end()) {
+    recordIt->pTiles.push_back(&parentTile);
+  } else {
+    _availabilityLoading.push_back(record);
+
+    std::string url = getResolvedContentUrl(*pChildContext, availabilityTileID);
+
+    auto future =
+        _externals.pAssetAccessor
+            ->get(_externals.asyncSystem, url, pChildContext->requestHeaders)
+            .thenInWorkerThread(
+                [pLogger = _externals.pLogger, url, availabilityTileID](
+                    std::shared_ptr<IAssetRequest>&& pRequest)
+                    -> std::vector<QuadtreeTileRectangularRange> {
+                  const IAssetResponse* pResponse = pRequest->response();
+                  if (pResponse) {
+                    uint16_t statusCode = pResponse->statusCode();
+
+                    if (!(statusCode != 0 &&
+                          (statusCode < 200 || statusCode >= 300))) {
+                      return QuantizedMeshContent::loadMetadata(
+                          pLogger,
+                          pResponse->data(),
+                          availabilityTileID);
+                    }
+                  }
+                  return {};
+                })
+            .thenInMainThread(
+                [pChildContext, availabilityTileID, this, record](
+                    std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
+                        rectangles) {
+                  auto recordIt = std::find(
+                      _availabilityLoading.begin(),
+                      _availabilityLoading.end(),
+                      record);
+                  if (recordIt != _availabilityLoading.end()) {
+                    pChildContext->availabilityTilesLoaded.insert(
+                        availabilityTileID);
+                    if (!rectangles.empty()) {
+                      for (const QuadtreeTileRectangularRange& range :
+                           rectangles) {
+                        pChildContext->implicitContext->rectangleAvailability
+                            ->addAvailableTileRange(range);
+                      }
+                    }
+
+                    const std::vector<Tile*>& pTiles = recordIt->pTiles;
+                    for (Tile* pTile : pTiles) {
+                      pTile->getContext()->tilesRequestingAvailability.erase(
+                          pTile);
+                      ImplicitTraversalUtilities::createQuantizedMeshChildren(
+                          *pTile,
+                          pTile->getContext(),
+                          std::get_if<QuadtreeTileID>(&pTile->getTileID()));
+                    }
+                  }
+                });
+  }
 }
 
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
