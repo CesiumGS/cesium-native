@@ -90,10 +90,6 @@ struct ImplicitTraversalInfo {
 
 namespace ImplicitTraversalUtilities {
 
-CesiumGeometry::QuadtreeTileID getAvailabilityTile(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    uint32_t availabilityLevels);
-
 void createImplicitChildrenIfNeeded(
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo);

@@ -904,38 +904,8 @@ void Tile::update(
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-
-    // Skip upsampling if the tile has no children because it is waiting for an
-    // availability tile to load.
-    bool skipUpsampling = false;
-    if (this->_pContext->availabilityLoadsInProgress > 0 &&
-        this->_pContext->availabilityLevels) {
-      int32_t availabilityLevels = *this->_pContext->availabilityLevels;
-      const QuadtreeTileID* pQuadtreeTileID =
-          std::get_if<QuadtreeTileID>(&this->getTileID());
-      if (pQuadtreeTileID) {
-        QuadtreeTileID tileID = *pQuadtreeTileID;
-        while (true) {
-          TileContext* pContext = this->_pContext;
-          while (pContext) {
-            if (pContext->availabilityTilesLoaded.find(tileID) ==
-                pContext->availabilityTilesLoaded.end()) {
-              skipUpsampling = true;
-              break;
-            }
-            pContext = pContext->pUnderlyingContext.get();
-          }
-          if (skipUpsampling || tileID.level == 0) {
-            break;
-          }
-          tileID = ImplicitTraversalUtilities::getAvailabilityTile(
-              tileID,
-              availabilityLevels);
-        }
-      }
-    }
     if (moreRasterDetailAvailable && this->_children.empty() &&
-        !skipUpsampling) {
+        this->_pContext->availabilityLoadsInProgress == 0) {
       createQuadtreeSubdividedChildren(*this);
     }
   }

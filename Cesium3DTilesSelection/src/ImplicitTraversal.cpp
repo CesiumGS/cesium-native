@@ -162,14 +162,24 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
 namespace {
 
+inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    uint32_t availabilityLevels) {
+  uint32_t parentLevel =
+      tileID.level % availabilityLevels == 0
+          ? tileID.level - availabilityLevels
+          : (tileID.level / availabilityLevels) * availabilityLevels;
+
+  uint32_t divisor = 1U << (tileID.level - parentLevel);
+  return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
+}
+
 std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
     const TileContext* pContext,
     CesiumGeometry::QuadtreeTileID tileID,
     uint32_t availabilityLevels) {
   while (tileID.level > 0) {
-    tileID = ImplicitTraversalUtilities::getAvailabilityTile(
-        tileID,
-        availabilityLevels);
+    tileID = getAvailabilityTile(tileID, availabilityLevels);
     if (pContext->availabilityTilesLoaded.find(tileID) ==
             pContext->availabilityTilesLoaded.end() &&
         pContext->implicitContext->rectangleAvailability->isTileAvailable(
@@ -334,18 +344,6 @@ void createQuantizedMeshChildren(
 } // namespace
 
 namespace ImplicitTraversalUtilities {
-
-CesiumGeometry::QuadtreeTileID getAvailabilityTile(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    uint32_t availabilityLevels) {
-  uint32_t parentLevel =
-      tileID.level % availabilityLevels == 0
-          ? tileID.level - availabilityLevels
-          : (tileID.level / availabilityLevels) * availabilityLevels;
-
-  uint32_t divisor = 1U << (tileID.level - parentLevel);
-  return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
-}
 
 void createImplicitQuadtreeTile(
     const TileContext* pTileContext,
