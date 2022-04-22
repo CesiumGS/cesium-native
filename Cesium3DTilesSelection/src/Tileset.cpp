@@ -14,6 +14,7 @@
 #include "TilesetLoadTilesetDotJson.h"
 
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
+#include <Cesium3DTilesSelection/Exp_CesiumIonTilesetLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
@@ -72,16 +73,22 @@ Tileset::Tileset(
     this->notifyTileStartLoading(nullptr);
     TilesetJsonLoader::createLoader(externals, url, {})
         .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          this->_pRootTile = std::move(result.pRootTile);
-          this->_pTilesetLoader = std::move(result.pLoader);
-          this->_gltfUpAxis = result.gltfUpAxis;
           if (result.errors) {
             this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
                 this,
                 TilesetLoadType::TilesetJson,
                 nullptr,
                 CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+          } else {
+            this->_pRootTile = std::move(result.pRootTile);
+            this->_gltfUpAxis = result.gltfUpAxis;
+            this->_pTilesetContentManager =
+                std::make_unique<TilesetContentManager>(
+                    _externals,
+                    std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+                    std::move(result.pLoader));
           }
+
           this->notifyTileDoneLoading(nullptr);
         });
   }
@@ -119,8 +126,41 @@ Tileset::Tileset(
   if (ionAssetID > 0) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
-    LoadIonAssetEndpoint::start(*this).thenInMainThread(
-        [this]() { this->notifyTileDoneLoading(nullptr); });
+
+    auto authorizationChangeListener = [this](
+                                           const std::string& header,
+                                           const std::string& headerValue) {
+      if (this->_pTilesetContentManager) {
+        this->_pTilesetContentManager->updateRequestHeader(header, headerValue);
+      }
+    };
+
+    CesiumIonTilesetLoader::createLoader(
+        externals,
+        ionAssetID,
+        ionAccessToken,
+        ionAssetEndpointUrl,
+        authorizationChangeListener,
+        options.showCreditsOnScreen)
+        .thenInMainThread([this](TilesetContentLoaderResult&& result) {
+          if (result.errors) {
+            this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
+                this,
+                TilesetLoadType::CesiumIon,
+                nullptr,
+                CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+          } else {
+            this->_pRootTile = std::move(result.pRootTile);
+            this->_gltfUpAxis = result.gltfUpAxis;
+            this->_pTilesetContentManager =
+                std::make_unique<TilesetContentManager>(
+                    _externals,
+                    std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+                    std::move(result.pLoader));
+          }
+
+          this->notifyTileDoneLoading(nullptr);
+        });
   }
 }
 

@@ -206,6 +206,20 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   return true;
 }
 
+void TilesetContentManager::updateRequestHeader(
+    const std::string& header,
+    const std::string& headerValue) {
+  auto authIt = std::find_if(
+      _requestHeaders.begin(),
+      _requestHeaders.end(),
+      [&header](auto& headerPair) { return headerPair.first == header; });
+  if (authIt != _requestHeaders.end()) {
+    authIt->second = headerValue;
+  } else {
+    _requestHeaders.emplace_back(header, headerValue);
+  }
+}
+
 void TilesetContentManager::setTileContent(
     TileContent& content,
     TileContentKind&& contentKind,

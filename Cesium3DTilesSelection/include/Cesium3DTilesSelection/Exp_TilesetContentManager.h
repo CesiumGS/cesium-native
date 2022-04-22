@@ -23,6 +23,8 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
+  void updateRequestHeader(const std::string &header, const std::string &headerValue);
+
 private:
   static void setTileContent(
       TileContent& content,

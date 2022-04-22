@@ -2,7 +2,6 @@
 
 #include <Cesium3DTilesSelection/Exp_TileContent.h>
 #include <Cesium3DTilesSelection/Exp_TileContentLoadInfo.h>
-#include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 

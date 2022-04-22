@@ -10,7 +10,7 @@
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/Exp_TilesetContentManager.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
@@ -594,7 +594,7 @@ private:
   std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
   size_t _nextDistancesVector;
 
-  std::unique_ptr<TilesetContentLoader> _pTilesetLoader;
+  std::unique_ptr<TilesetContentManager> _pTilesetContentManager;
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
