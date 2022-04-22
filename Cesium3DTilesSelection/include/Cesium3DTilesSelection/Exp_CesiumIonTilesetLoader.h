@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 
-#include <string>
 #include <functional>
+#include <string>
 
 namespace Cesium3DTilesSelection {
 class CesiumIonTilesetLoader : public TilesetContentLoader {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include "ImplicitTraversal.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
@@ -11,6 +10,7 @@
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>

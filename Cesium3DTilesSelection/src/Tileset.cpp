@@ -1,6 +1,5 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 
-#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
@@ -14,6 +13,7 @@
 #include "TilesetLoadTileFromJson.h"
 #include "TilesetLoadTilesetDotJson.h"
 
+#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>

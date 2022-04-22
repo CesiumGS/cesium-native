@@ -6,8 +6,8 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTilesSelection {
 class Tile;

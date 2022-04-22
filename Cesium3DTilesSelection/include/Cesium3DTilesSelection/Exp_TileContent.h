@@ -3,9 +3,9 @@
 #include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
 #include <CesiumGltf/Model.h>
 
+#include <functional>
 #include <optional>
 #include <variant>
-#include <functional>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
@@ -71,7 +71,7 @@ private:
 
   void setTileInitializerCallback(std::function<void(Tile&)> callback);
 
-  std::function<void(Tile&)> &getTileInitializerCallback();
+  std::function<void(Tile&)>& getTileInitializerCallback();
 
   TileLoadState _state;
   TileContentKind _contentKind;

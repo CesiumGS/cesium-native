@@ -4,7 +4,9 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
+
 #include <rapidjson/document.h>
+
 #include <unordered_map>
 
 namespace Cesium3DTilesSelection {

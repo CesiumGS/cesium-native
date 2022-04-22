@@ -3,8 +3,8 @@
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 
 #include <gsl/span>
 
@@ -17,7 +17,7 @@ public:
   TilesetJsonLoader(const std::string& baseUrl);
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
-      TilesetContentLoader &currentLoader,
+      TilesetContentLoader& currentLoader,
       const TileContentLoadInfo& loadInfo,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
