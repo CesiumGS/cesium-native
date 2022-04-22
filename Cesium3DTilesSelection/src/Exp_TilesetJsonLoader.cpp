@@ -1,5 +1,5 @@
-#include <Cesium3DTilesSelection/Exp_TileRenderContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
+#include <Cesium3DTilesSelection/Exp_GltfConverters.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/joinToString.h>
@@ -11,8 +11,8 @@ namespace Cesium3DTilesSelection {
 namespace {
 struct ExternalContentInitializer {
   // Have to use shared_ptr here to make this functor copyable. Otherwise,
-  // std::function won't work with move-only type as it's a type-erasured container.
-  // Unfortunately, std::move_only_function is scheduled for C++23.
+  // std::function won't work with move-only type as it's a type-erasured
+  // container. Unfortunately, std::move_only_function is scheduled for C++23.
   std::shared_ptr<TilesetContentLoaderResult> pExternalTilesetLoaders;
   TilesetJsonLoader* tilesetJsonLoader;
 
@@ -38,14 +38,35 @@ struct ExternalContentInitializer {
 void logErrors(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
-    const ErrorList& errorLists) {
-  if (errorLists) {
+    const std::vector<std::string>& errors) {
+  if (!errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load {}:\n- {}",
         url,
-        CesiumUtility::joinToString(errorLists.errors, "\n- "));
+        CesiumUtility::joinToString(errors, "\n- "));
   }
+}
+
+void logWarnings(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const std::vector<std::string>& warnings) {
+  if (!warnings.empty()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Warning when loading {}:\n- {}",
+        url,
+        CesiumUtility::joinToString(warnings, "\n- "));
+  }
+}
+
+void logErrorsAndWarnings(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const ErrorList& errorLists) {
+  logErrors(pLogger, url, errorLists.errors);
+  logWarnings(pLogger, url, errorLists.warnings);
 }
 
 /**
@@ -375,14 +396,13 @@ TilesetContentLoaderResult parseTilesetJson(
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
-    const std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
     const std::shared_ptr<spdlog::logger>& pLogger,
+    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer) {
   // create external tileset
   const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
   const auto& responseData = pResponse->data();
   const auto& tileUrl = pCompletedRequest->url();
-  uint16_t statusCode = pResponse->statusCode();
 
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
@@ -395,15 +415,19 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   const auto& errors =
       externalContentInitializer.pExternalTilesetLoaders->errors;
   if (errors) {
-    logErrors(pLogger, tileUrl, errors);
-    return {TileExternalContent{}, TileLoadState::Failed, statusCode, {}};
+    logErrors(pLogger, tileUrl, errors.errors);
+    return TileLoadResult{
+        TileExternalContent{},
+        TileLoadState::Failed,
+        std::move(pCompletedRequest),
+        {}};
   }
 
   // mark this tile has external content
-  return {
+  return TileLoadResult{
       TileExternalContent{},
       TileLoadState::ContentLoaded,
-      statusCode,
+      std::move(pCompletedRequest),
       std::move(externalContentInitializer)};
 }
 } // namespace
@@ -480,46 +504,70 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
            externalContentInitializer = std::move(externalContentInitializer)](
               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                   pCompletedRequest) mutable {
-            return TileRenderContentLoader::load(pCompletedRequest, loadInfo)
-                .thenImmediately(
-                    [pCompletedRequest,
-                     loadInfo,
-                     externalContentInitializer =
-                         std::move(externalContentInitializer)](
-                        TileRenderContentLoadResult&& result) mutable
-                    -> TileLoadResult {
-                      auto pResponse = pCompletedRequest->response();
-                      uint16_t statusCode = pResponse->statusCode();
-                      if (result.reason ==
-                          TileRenderContentFailReason::DataRequestFailed) {
-                        return {
-                            std::move(result.content),
-                            TileLoadState::FailedTemporarily,
-                            statusCode,
-                            {}};
-                      } else if (
-                          result.reason ==
-                          TileRenderContentFailReason::ConversionFailed) {
-                        return {
-                            std::move(result.content),
-                            TileLoadState::Failed,
-                            statusCode,
-                            {}};
-                      } else if (
-                          result.reason ==
-                          TileRenderContentFailReason::UnsupportedFormat) {
-                        return parseExternalTilesetInWorkerThread(
-                            pCompletedRequest,
-                            loadInfo.pLogger,
-                            std::move(externalContentInitializer));
-                      } else {
-                        return {
-                            std::move(result.content),
-                            TileLoadState::ContentLoaded,
-                            statusCode,
-                            {}};
-                      }
-                    });
+            auto pResponse = pCompletedRequest->response();
+            const std::string& tileUrl = pCompletedRequest->url();
+            if (!pResponse) {
+              SPDLOG_LOGGER_ERROR(
+                  loadInfo.pLogger,
+                  "Did not receive a valid response for tile content {}",
+                  tileUrl);
+              return TileLoadResult{
+                  TileUnknownContent{},
+                  TileLoadState::FailedTemporarily,
+                  std::move(pCompletedRequest),
+                  {}};
+            }
+
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              SPDLOG_LOGGER_ERROR(
+                  loadInfo.pLogger,
+                  "Received status code {} for tile content {}",
+                  statusCode,
+                  tileUrl);
+              return TileLoadResult{
+                  TileUnknownContent{},
+                  TileLoadState::FailedTemporarily,
+                  std::move(pCompletedRequest),
+                  {}};
+            }
+
+            // find gltf converter
+            const auto& responseData = pResponse->data();
+            auto converter = GltfConverters::getConverterByMagic(responseData);
+            if (!converter) {
+              converter = GltfConverters::getConverterByFileExtension(tileUrl);
+            }
+
+            if (converter) {
+              // Convert to gltf
+              CesiumGltfReader::GltfReaderOptions gltfOptions;
+              gltfOptions.ktx2TranscodeTargets =
+                  loadInfo.contentOptions.ktx2TranscodeTargets;
+              GltfConverterResult result = converter(responseData, gltfOptions);
+
+              // Report any errors if there are any
+              logErrorsAndWarnings(loadInfo.pLogger, tileUrl, result.errors);
+              if (result.errors) {
+                return TileLoadResult{
+                    TileUnknownContent{},
+                    TileLoadState::FailedTemporarily,
+                    std::move(pCompletedRequest),
+                    {}};
+              }
+
+              return TileLoadResult{
+                  TileRenderContent{std::move(result.model)},
+                  TileLoadState::ContentLoaded,
+                  std::move(pCompletedRequest),
+                  {}};
+            } else {
+              // not a renderable content, then it must be external tileset
+              return parseExternalTilesetInWorkerThread(
+                  loadInfo.pLogger,
+                  std::move(pCompletedRequest),
+                  std::move(externalContentInitializer));
+            }
           });
 }
 

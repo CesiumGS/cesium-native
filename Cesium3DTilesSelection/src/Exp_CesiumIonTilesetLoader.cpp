@@ -257,10 +257,14 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
     return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         TileLoadState::FailedTemporarily,
-        0});
+        nullptr,
+        {}});
   } else if (_refreshTokenState == TokenRefreshState::Failed) {
-    return loadInfo.asyncSystem.createResolvedFuture(
-        TileLoadResult{TileUnknownContent{}, TileLoadState::Failed, 0});
+    return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
+        TileUnknownContent{},
+        TileLoadState::Failed,
+        nullptr,
+        {}});
   }
 
   // TODO: the way this is structured, requests already in progress
@@ -277,10 +281,15 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
   return _pAggregatedLoader
       ->loadTileContent(currentLoader, loadInfo, requestHeaders)
       .thenImmediately([asyncSystem = loadInfo.asyncSystem,
-                        refreshTokenInMainThread](TileLoadResult&& result) {
+                        refreshTokenInMainThread =
+                            std::move(refreshTokenInMainThread)](
+                           TileLoadResult&& result) mutable {
         // check to see if we need to refresh token
-        if (result.httpStatusCode == 401) {
-          asyncSystem.runInMainThread(refreshTokenInMainThread);
+        if (result.pCompletedRequest) {
+          auto response = result.pCompletedRequest->response();
+          if (response->statusCode() == 401) {
+            asyncSystem.runInMainThread(std::move(refreshTokenInMainThread));
+          }
         }
 
         return std::move(result);

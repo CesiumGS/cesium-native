@@ -2,18 +2,13 @@
 
 namespace Cesium3DTilesSelection {
 TileContent::TileContent(TilesetContentLoader* pLoader)
-    : _httpStatusCode{0},
-      _state{TileLoadState::Unloaded},
+    : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _loaderCustomDataHandle{TileUserDataStorage::NullHandle},
       _pRenderResources{nullptr},
       _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
-
-uint16_t TileContent::getHttpStatusCode() const noexcept {
-  return _httpStatusCode;
-}
 
 bool TileContent::isExternalContent() const noexcept {
   return std::holds_alternative<TileExternalContent>(_contentKind);
@@ -47,16 +42,11 @@ void TileContent::setContentKind(const TileContentKind& contentKind) {
 
 void TileContent::setState(TileLoadState state) noexcept { _state = state; }
 
-void TileContent::setHttpStatusCode(uint16_t statusCode) noexcept {
-  _httpStatusCode = statusCode;
-}
-
 TileUserDataStorage::Handle TileContent::getCustomDataHandle() const {
   return _loaderCustomDataHandle;
 }
 
-void TileContent::setCustomDataHandle(
-    TileUserDataStorage::Handle handle) {
+void TileContent::setCustomDataHandle(TileUserDataStorage::Handle handle) {
   _loaderCustomDataHandle = handle;
 }
 
@@ -67,7 +57,7 @@ void TileContent::setRenderResources(void* pRenderResources) noexcept {
 void* TileContent::getRenderResources() noexcept { return _pRenderResources; }
 
 void TileContent::setTileInitializerCallback(
-  std::function<void(Tile&)> callback) {
+    std::function<void(Tile&)> callback) {
   _deferredTileInitializer = std::move(callback);
 }
 

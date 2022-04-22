@@ -30,7 +30,6 @@ private:
       TileContentKind&& contentKind,
       std::function<void(Tile &)>&& tileInitializer,
       TileLoadState state,
-      uint16_t httpStatusCode,
       void* pRenderResources);
 
   void updateContentLoadedState(Tile& tile);

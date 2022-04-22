@@ -15,7 +15,7 @@ class Tile;
 struct TileLoadResult {
   TileContentKind contentKind;
   TileLoadState state;
-  uint16_t httpStatusCode;
+  std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
   std::function<void(Tile&)> deferredTileInitializer;
 };
 

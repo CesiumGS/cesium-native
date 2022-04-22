@@ -2,6 +2,7 @@
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_TileContentLoadInfo.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -9,6 +10,78 @@ struct TileLoadResultAndRenderResources {
   TileLoadResult result;
   void* pRenderResources{nullptr};
 };
+
+TileLoadResultAndRenderResources postProcessGltf(
+    const TileContentLoadInfo& loadInfo,
+    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    TileLoadResult&& result) {
+  TileRenderContent& renderContent =
+      std::get<TileRenderContent>(result.contentKind);
+  const TilesetContentOptions& tilesetOptions = loadInfo.contentOptions;
+  if (tilesetOptions.generateMissingNormalsSmooth) {
+    renderContent.model->generateMissingNormalsSmooth();
+  }
+
+  void* pRenderResources = pPrepareRendererResources->prepareInLoadThread(
+      *renderContent.model,
+      loadInfo.tileTransform);
+
+  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
+}
+
+CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
+    const TileContentLoadInfo& loadInfo,
+    TileLoadResult&& result,
+    std::shared_ptr<IPrepareRendererResources>&& pPrepareRendererResources) {
+  void* pRenderResources = nullptr;
+  if (result.state == TileLoadState::ContentLoaded) {
+    TileRenderContent* pRenderContent =
+        std::get_if<TileRenderContent>(&result.contentKind);
+    if (pRenderContent && pRenderContent->model) {
+      // Download any external image or buffer urls in the gltf if there are any
+      CesiumGltfReader::GltfReaderResult gltfResult{
+          std::move(*pRenderContent->model),
+          {},
+          {}};
+
+      CesiumAsync::HttpHeaders requestHeaders;
+      std::string baseUrl;
+      if (result.pCompletedRequest) {
+        requestHeaders = result.pCompletedRequest->headers();
+        baseUrl = result.pCompletedRequest->url();
+      }
+
+      CesiumGltfReader::GltfReaderOptions gltfOptions;
+      gltfOptions.ktx2TranscodeTargets =
+          loadInfo.contentOptions.ktx2TranscodeTargets;
+
+      return CesiumGltfReader::GltfReader::resolveExternalData(
+                 loadInfo.asyncSystem,
+                 baseUrl,
+                 requestHeaders,
+                 loadInfo.pAssetAccessor,
+                 gltfOptions,
+                 std::move(gltfResult))
+          .thenInWorkerThread(
+              [loadInfo,
+               result = std::move(result),
+               pPrepareRendererResources =
+                   std::move(pPrepareRendererResources)](
+                  CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
+                TileRenderContent& renderContent =
+                    std::get<TileRenderContent>(result.contentKind);
+                renderContent.model = std::move(gltfResult.model);
+                return postProcessGltf(
+                    loadInfo,
+                    pPrepareRendererResources,
+                    std::move(result));
+              });
+    }
+  }
+
+  return loadInfo.asyncSystem.createResolvedFuture(
+      TileLoadResultAndRenderResources{std::move(result), pRenderResources});
+}
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
@@ -47,22 +120,11 @@ void TilesetContentManager::loadTileContent(
   _pLoader->loadTileContent(*pContent->getLoader(), loadInfo, _requestHeaders)
       .thenInWorkerThread(
           [pPrepareRendererResources = _externals.pPrepareRendererResources,
-           transform = tile.getTransform()](TileLoadResult&& result) {
-            void* pRenderResources = nullptr;
-            if (result.state == TileLoadState::ContentLoaded) {
-              TileRenderContent* pRenderContent =
-                  std::get_if<TileRenderContent>(&result.contentKind);
-              if (pRenderContent && pRenderContent->model) {
-                pRenderResources =
-                    pPrepareRendererResources->prepareInLoadThread(
-                        *pRenderContent->model,
-                        transform);
-              }
-            }
-
-            return TileLoadResultAndRenderResources{
+           loadInfo](TileLoadResult&& result) mutable {
+            return postProcessContent(
+                loadInfo,
                 std::move(result),
-                pRenderResources};
+                std::move(pPrepareRendererResources));
           })
       .thenInMainThread([pContent](TileLoadResultAndRenderResources&& pair) {
         TileLoadResult& result = pair.result;
@@ -74,7 +136,6 @@ void TilesetContentManager::loadTileContent(
               std::move(result.contentKind),
               std::move(result.deferredTileInitializer),
               result.state,
-              result.httpStatusCode,
               pair.pRenderResources);
         } else {
           // any states other than the three above are regarded as failed.
@@ -85,7 +146,6 @@ void TilesetContentManager::loadTileContent(
               std::move(result.contentKind),
               std::move(result.deferredTileInitializer),
               TileLoadState::Failed,
-              result.httpStatusCode,
               nullptr);
         }
       });
@@ -141,7 +201,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   pContent->setContentKind(TileUnknownContent{});
-  pContent->setHttpStatusCode(0);
+  pContent->setTileInitializerCallback({});
   pContent->setState(TileLoadState::Unloaded);
   return true;
 }
@@ -149,14 +209,12 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 void TilesetContentManager::setTileContent(
     TileContent& content,
     TileContentKind&& contentKind,
-    std::function<void(Tile &)>&& tileInitializer,
+    std::function<void(Tile&)>&& tileInitializer,
     TileLoadState state,
-    uint16_t httpStatusCode,
     void* pRenderResources) {
   content.setContentKind(std::move(contentKind));
   content.setTileInitializerCallback(std::move(tileInitializer));
   content.setState(state);
-  content.setHttpStatusCode(httpStatusCode);
   content.setRenderResources(pRenderResources);
 }
 
@@ -189,6 +247,7 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
       tile,
       pWorkerRenderResources,
       nullptr);
+  pContent->setRenderResources(nullptr);
 }
 
 void TilesetContentManager::unloadDoneState(Tile& tile) {
@@ -198,5 +257,6 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
       tile,
       nullptr,
       pMainThreadRenderResources);
+  pContent->setRenderResources(nullptr);
 }
 } // namespace Cesium3DTilesSelection

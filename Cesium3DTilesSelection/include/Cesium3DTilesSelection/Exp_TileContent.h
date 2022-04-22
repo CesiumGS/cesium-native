@@ -42,8 +42,6 @@ public:
 
   TileLoadState getState() const noexcept;
 
-  uint16_t getHttpStatusCode() const noexcept;
-
   bool isExternalContent() const noexcept;
 
   bool isEmptyContent() const noexcept;
@@ -65,8 +63,6 @@ private:
 
   void setState(TileLoadState state) noexcept;
 
-  void setHttpStatusCode(uint16_t statusCode) noexcept;
-
   void setCustomDataHandle(TileUserDataStorage::Handle handle);
 
   void setRenderResources(void* pRenderResources) noexcept;
@@ -77,7 +73,6 @@ private:
 
   std::function<void(Tile&)> &getTileInitializerCallback();
 
-  uint16_t _httpStatusCode;
   TileLoadState _state;
   TileContentKind _contentKind;
   TileUserDataStorage::Handle _loaderCustomDataHandle;
