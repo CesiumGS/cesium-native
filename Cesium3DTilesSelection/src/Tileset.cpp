@@ -392,22 +392,24 @@ Tileset::requestTileContent(Tile& tile) {
 
 void Tileset::requestAvailabilityTile(
     Tile& tile,
+    const ImplicitTraversalInfo& implicitInfo,
     const CesiumGeometry::QuadtreeTileID& availabilityTileID,
     TileContext* pAvailabilityContext) {
   tile.getContext()->tilesWaitingForAvailability.insert(&tile);
   AvailabilityLoadRecord record{
       availabilityTileID,
       pAvailabilityContext,
-      {&tile}};
+      {{&tile, implicitInfo}}};
   auto recordIt = std::find(
       _availabilityLoading.begin(),
       _availabilityLoading.end(),
       record);
   if (recordIt != _availabilityLoading.end()) {
-    recordIt->pTiles.push_back(&tile);
+    recordIt->pTiles.push_back({&tile, implicitInfo});
   } else {
     _availabilityLoading.push_back(record);
-    std::string url = getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
+    std::string url =
+        getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
     _externals.pAssetAccessor
         ->get(_externals.asyncSystem, url, pAvailabilityContext->requestHeaders)
         .thenInWorkerThread(
@@ -432,7 +434,8 @@ void Tileset::requestAvailabilityTile(
             [pAvailabilityContext, availabilityTileID, this](
                 std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                     rectangles) {
-              pAvailabilityContext->availabilityTilesLoaded.insert(availabilityTileID);
+              pAvailabilityContext->availabilityTilesLoaded.insert(
+                  availabilityTileID);
               if (!rectangles.empty()) {
                 for (const QuadtreeTileRectangularRange& range : rectangles) {
                   pAvailabilityContext->implicitContext->rectangleAvailability
@@ -442,15 +445,19 @@ void Tileset::requestAvailabilityTile(
               const auto recordIt = std::find(
                   _availabilityLoading.begin(),
                   _availabilityLoading.end(),
-                  AvailabilityLoadRecord{availabilityTileID, pAvailabilityContext});
-              std::vector<Tile*> pTiles = std::move(recordIt->pTiles);
+                  AvailabilityLoadRecord{
+                      availabilityTileID,
+                      pAvailabilityContext});
+              std::vector<std::pair<Tile*, ImplicitTraversalInfo>> pTiles =
+                  std::move(recordIt->pTiles);
               this->_availabilityLoading.erase(recordIt);
-              for (Tile* pTile : pTiles) {
-                pTile->getContext()->tilesWaitingForAvailability.erase(pTile);
-                ImplicitTraversalUtilities::createQuantizedMeshChildren(
-                    *pTile,
-                    pTile->getContext(),
-                    std::get_if<QuadtreeTileID>(&pTile->getTileID()));
+              for (const std::pair<Tile*, ImplicitTraversalInfo>& pTile :
+                   pTiles) {
+                pTile.first->getContext()->tilesWaitingForAvailability.erase(
+                    pTile.first);
+                ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
+                    *pTile.first,
+                    pTile.second);
               }
             });
   }

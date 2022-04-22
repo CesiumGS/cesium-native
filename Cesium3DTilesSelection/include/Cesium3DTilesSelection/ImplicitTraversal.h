@@ -92,6 +92,7 @@ namespace ImplicitTraversalUtilities {
 
 void createQuantizedMeshChildren(
     Tile& parentTile,
+    const ImplicitTraversalInfo& implicitInfo,
     TileContext* pParentContext,
     const CesiumGeometry::QuadtreeTileID* pParentID);
 

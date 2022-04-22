@@ -196,6 +196,7 @@ namespace ImplicitTraversalUtilities {
 
 void createQuantizedMeshChildren(
     Tile& parentTile,
+    const ImplicitTraversalInfo& implicitInfo,
     TileContext* pParentContext,
     const CesiumGeometry::QuadtreeTileID* pParentID) {
   const CesiumGeometry::QuadtreeTileID swID(
@@ -235,6 +236,7 @@ void createQuantizedMeshChildren(
           // load parent availability tile before going any further
           parentTile.getTileset()->requestAvailabilityTile(
               parentTile,
+              implicitInfo,
               *unloadedAvailabilityTile,
               pChildContext);
           return;
@@ -426,7 +428,11 @@ void createImplicitChildrenIfNeeded(
       // if they are.
 
       if (implicitContext.rectangleAvailability) {
-        return createQuantizedMeshChildren(tile, pContext, pQuadtreeTileID);
+        return createQuantizedMeshChildren(
+            tile,
+            implicitInfo,
+            pContext,
+            pQuadtreeTileID);
       }
       const QuadtreeTileID swID(
           pQuadtreeTileID->level + 1,

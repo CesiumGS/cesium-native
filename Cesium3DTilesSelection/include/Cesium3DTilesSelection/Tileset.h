@@ -243,6 +243,7 @@ public:
 
   void requestAvailabilityTile(
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       const CesiumGeometry::QuadtreeTileID& availabilityTileID,
       TileContext* pAvailabilityContext);
 
@@ -568,7 +569,7 @@ private:
   struct AvailabilityLoadRecord {
     CesiumGeometry::QuadtreeTileID tileID;
     const TileContext* pTileContext;
-    std::vector<Tile*> pTiles;
+    std::vector<std::pair<Tile*, ImplicitTraversalInfo>> pTiles;
 
     bool operator==(const AvailabilityLoadRecord& rhs) const noexcept {
       return this->tileID == rhs.tileID &&
