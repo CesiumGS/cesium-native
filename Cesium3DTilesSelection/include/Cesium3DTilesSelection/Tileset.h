@@ -243,8 +243,8 @@ public:
 
   void requestAvailabilityTile(
       Tile& tile,
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      TileContext* pTileContext);
+      const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+      TileContext* pAvailabilityContext);
 
   /**
    * @brief Add the given {@link TileContext} to this tile set.

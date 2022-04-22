@@ -247,7 +247,7 @@ public:
    * @brief A counter of how many availability tiles are currently being fetched
    * using this context.
    */
-  std::unordered_set<Tile*> tilesRequestingAvailability;
+  std::unordered_set<Tile*> tilesWaitingForAvailability;
 
   /**
    * @brief Any attribution associated with this context/layer.

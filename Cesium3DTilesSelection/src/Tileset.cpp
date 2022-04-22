@@ -391,25 +391,25 @@ Tileset::requestTileContent(Tile& tile) {
 }
 
 void Tileset::requestAvailabilityTile(
-    Tile& parentTile,
+    Tile& tile,
     const CesiumGeometry::QuadtreeTileID& availabilityTileID,
-    TileContext* pChildContext) {
-  parentTile.getContext()->tilesRequestingAvailability.insert(&parentTile);
+    TileContext* pAvailabilityContext) {
+  tile.getContext()->tilesWaitingForAvailability.insert(&tile);
   AvailabilityLoadRecord record{
       availabilityTileID,
-      pChildContext,
-      {&parentTile}};
+      pAvailabilityContext,
+      {&tile}};
   auto recordIt = std::find(
       _availabilityLoading.begin(),
       _availabilityLoading.end(),
       record);
   if (recordIt != _availabilityLoading.end()) {
-    recordIt->pTiles.push_back(&parentTile);
+    recordIt->pTiles.push_back(&tile);
   } else {
     _availabilityLoading.push_back(record);
-    std::string url = getResolvedContentUrl(*pChildContext, availabilityTileID);
+    std::string url = getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
     _externals.pAssetAccessor
-        ->get(_externals.asyncSystem, url, pChildContext->requestHeaders)
+        ->get(_externals.asyncSystem, url, pAvailabilityContext->requestHeaders)
         .thenInWorkerThread(
             [pLogger = _externals.pLogger, url, availabilityTileID](
                 std::shared_ptr<IAssetRequest>&& pRequest)
@@ -429,24 +429,24 @@ void Tileset::requestAvailabilityTile(
               return {};
             })
         .thenInMainThread(
-            [pChildContext, availabilityTileID, this](
+            [pAvailabilityContext, availabilityTileID, this](
                 std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                     rectangles) {
-              pChildContext->availabilityTilesLoaded.insert(availabilityTileID);
+              pAvailabilityContext->availabilityTilesLoaded.insert(availabilityTileID);
               if (!rectangles.empty()) {
                 for (const QuadtreeTileRectangularRange& range : rectangles) {
-                  pChildContext->implicitContext->rectangleAvailability
+                  pAvailabilityContext->implicitContext->rectangleAvailability
                       ->addAvailableTileRange(range);
                 }
               }
               const auto recordIt = std::find(
                   _availabilityLoading.begin(),
                   _availabilityLoading.end(),
-                  AvailabilityLoadRecord{availabilityTileID, pChildContext});
+                  AvailabilityLoadRecord{availabilityTileID, pAvailabilityContext});
               std::vector<Tile*> pTiles = std::move(recordIt->pTiles);
               this->_availabilityLoading.erase(recordIt);
               for (Tile* pTile : pTiles) {
-                pTile->getContext()->tilesRequestingAvailability.erase(pTile);
+                pTile->getContext()->tilesWaitingForAvailability.erase(pTile);
                 ImplicitTraversalUtilities::createQuantizedMeshChildren(
                     *pTile,
                     pTile->getContext(),
