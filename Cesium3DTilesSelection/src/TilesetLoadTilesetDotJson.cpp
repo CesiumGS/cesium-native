@@ -434,7 +434,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
 
   if (availabilityLevelsIt != layerJson.MemberEnd() &&
       availabilityLevelsIt->value.IsInt()) {
-    context.availabilityLevels =
+    context.implicitContext->availabilityLevels =
         std::make_optional<uint32_t>(availabilityLevelsIt->value.GetInt());
   } else {
     std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
@@ -452,7 +452,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
 
   if (attributionIt != layerJson.MemberEnd() &&
       attributionIt->value.IsString()) {
-    context.credit = std::make_optional<Credit>(
+    context.implicitContext->credit = std::make_optional<Credit>(
         context.pTileset->getExternals().pCreditSystem->createCredit(
             attributionIt->value.GetString(),
             context.pTileset->_options.showCreditsOnScreen));

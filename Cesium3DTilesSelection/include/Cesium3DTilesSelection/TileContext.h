@@ -99,6 +99,31 @@ public:
    * context.
    */
   std::optional<CesiumGeometry::OctreeAvailability> octreeAvailability;
+
+  /**
+   * @brief Availability level from the layer.json.
+   *
+   * If `availabilityLevels` is `n`, then availability information is stored
+   * every `n`th level in the tile tree.
+   */
+  std::optional<int32_t> availabilityLevels;
+
+  /**
+   * @brief A hash set of the indices of the loaded availability tiles for this
+   * context.
+   */
+  std::unordered_set<CesiumGeometry::QuadtreeTileID> availabilityTilesLoaded;
+
+  /**
+   * @brief A counter of how many availability tiles are currently being fetched
+   * using this context.
+   */
+  std::unordered_set<Tile*> tilesWaitingForAvailability;
+
+  /**
+   * @brief Any attribution associated with this context/layer.
+   */
+  std::optional<Credit> credit;
 };
 
 /**
@@ -228,31 +253,6 @@ public:
    * underlyingContext.
    */
   std::unique_ptr<TileContext> pUnderlyingContext;
-
-  /**
-   * @brief Availability level from the layer.json.
-   *
-   * If `availabilityLevels` is `n`, then availability information is stored
-   * every `n`th level in the tile tree.
-   */
-  std::optional<int32_t> availabilityLevels;
-
-  /**
-   * @brief A hash set of the indices of the loaded availability tiles for this
-   * context.
-   */
-  std::unordered_set<CesiumGeometry::QuadtreeTileID> availabilityTilesLoaded;
-
-  /**
-   * @brief A counter of how many availability tiles are currently being fetched
-   * using this context.
-   */
-  std::unordered_set<Tile*> tilesWaitingForAvailability;
-
-  /**
-   * @brief Any attribution associated with this context/layer.
-   */
-  std::optional<Credit> credit;
 };
 
 } // namespace Cesium3DTilesSelection

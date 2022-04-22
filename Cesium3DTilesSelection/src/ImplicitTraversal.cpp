@@ -180,8 +180,8 @@ std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
     uint32_t availabilityLevels) {
   while (tileID.level > 0) {
     tileID = getAvailabilityTile(tileID, availabilityLevels);
-    if (pContext->availabilityTilesLoaded.find(tileID) ==
-            pContext->availabilityTilesLoaded.end() &&
+    if (pContext->implicitContext->availabilityTilesLoaded.find(tileID) ==
+            pContext->implicitContext->availabilityTilesLoaded.end() &&
         pContext->implicitContext->rectangleAvailability->isTileAvailable(
             tileID)) {
       return std::make_optional<QuadtreeTileID>(tileID);
@@ -387,13 +387,12 @@ void createImplicitChildrenIfNeeded(
               *childContexts[i] = pChildContext;
               break;
             }
-            if (pChildContext->availabilityLevels) {
+            if (pChildContext->implicitContext->availabilityLevels) {
               std::optional<QuadtreeTileID> unloadedAvailabilityTile =
                   getUnloadedAvailabilityTile(
                       pChildContext,
                       *pChildID,
-                      static_cast<uint32_t>(
-                          *pChildContext->availabilityLevels));
+                      static_cast<uint32_t>(*pChildContext->implicitContext->availabilityLevels));
               if (unloadedAvailabilityTile) {
                 // load parent availability tile before going any further
                 tile.getTileset()->requestAvailabilityTile(

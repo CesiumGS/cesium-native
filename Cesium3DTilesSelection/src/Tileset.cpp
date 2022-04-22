@@ -320,8 +320,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
           pCreditSystem->addCreditToFrame(credit);
         }
       }
-      if (tile->getContext()->credit) {
-        pCreditSystem->addCreditToFrame(*tile->getContext()->credit);
+      if (tile->getContext()->implicitContext &&
+          tile->getContext()->implicitContext->credit) {
+        pCreditSystem->addCreditToFrame(
+            *tile->getContext()->implicitContext->credit);
       }
     }
   }
@@ -395,7 +397,7 @@ void Tileset::requestAvailabilityTile(
     const ImplicitTraversalInfo& implicitInfo,
     const CesiumGeometry::QuadtreeTileID& availabilityTileID,
     TileContext* pAvailabilityContext) {
-  tile.getContext()->tilesWaitingForAvailability.insert(&tile);
+  tile.getContext()->implicitContext->tilesWaitingForAvailability.insert(&tile);
   AvailabilityLoadRecord record{
       availabilityTileID,
       pAvailabilityContext,
@@ -434,7 +436,7 @@ void Tileset::requestAvailabilityTile(
             [pAvailabilityContext, availabilityTileID, this](
                 std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                     rectangles) {
-              pAvailabilityContext->availabilityTilesLoaded.insert(
+              pAvailabilityContext->implicitContext->availabilityTilesLoaded.insert(
                   availabilityTileID);
               if (!rectangles.empty()) {
                 for (const QuadtreeTileRectangularRange& range : rectangles) {
@@ -453,7 +455,7 @@ void Tileset::requestAvailabilityTile(
               this->_availabilityLoading.erase(recordIt);
               for (const std::pair<Tile*, ImplicitTraversalInfo>& pTile :
                    pTiles) {
-                pTile.first->getContext()->tilesWaitingForAvailability.erase(
+                pTile.first->getContext()->implicitContext->tilesWaitingForAvailability.erase(
                     pTile.first);
                 ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
                     *pTile.first,
