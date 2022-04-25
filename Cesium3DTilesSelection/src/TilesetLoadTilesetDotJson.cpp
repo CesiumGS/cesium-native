@@ -2,14 +2,15 @@
 
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeospatial/GeographicProjection.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Uri.h"
 #include "QuantizedMeshContent.h"
 #include "TilesetLoadTileFromJson.h"
 #include "calcQuadtreeMaxGeometricError.h"
+
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
 

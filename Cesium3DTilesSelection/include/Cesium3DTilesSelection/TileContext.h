@@ -1,8 +1,8 @@
 #pragma once
 
 #include "BoundingVolume.h"
+#include "Cesium3DTilesSelection/CreditSystem.h"
 
-#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <CesiumGeometry/Availability.h>
 #include <CesiumGeometry/OctreeAvailability.h>
 #include <CesiumGeometry/OctreeTilingScheme.h>

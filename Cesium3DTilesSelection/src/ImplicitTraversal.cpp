@@ -4,10 +4,10 @@
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/TileContext.h"
 #include "Cesium3DTilesSelection/Tileset.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
 #include "QuantizedMeshContent.h"
 
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
 
