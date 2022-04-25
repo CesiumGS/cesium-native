@@ -907,8 +907,8 @@ void Tile::update(
     if (moreRasterDetailAvailable && this->_children.empty() &&
         this->_pContext->implicitContext &&
         this->_pContext->implicitContext->tilesWaitingForAvailability.find(
-            this) ==
-            this->_pContext->implicitContext->tilesWaitingForAvailability.end()) {
+            this) == this->_pContext->implicitContext
+                         ->tilesWaitingForAvailability.end()) {
       createQuadtreeSubdividedChildren(*this);
     }
   }

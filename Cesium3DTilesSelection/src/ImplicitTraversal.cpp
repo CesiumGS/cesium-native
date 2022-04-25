@@ -392,7 +392,8 @@ void createImplicitChildrenIfNeeded(
                   getUnloadedAvailabilityTile(
                       pChildContext,
                       *pChildID,
-                      static_cast<uint32_t>(*pChildContext->implicitContext->availabilityLevels));
+                      static_cast<uint32_t>(
+                          *pChildContext->implicitContext->availabilityLevels));
               if (unloadedAvailabilityTile) {
                 // load parent availability tile before going any further
                 tile.getTileset()->requestAvailabilityTile(

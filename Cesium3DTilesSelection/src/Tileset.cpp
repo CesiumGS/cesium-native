@@ -436,8 +436,8 @@ void Tileset::requestAvailabilityTile(
             [pAvailabilityContext, availabilityTileID, this](
                 std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                     rectangles) {
-              pAvailabilityContext->implicitContext->availabilityTilesLoaded.insert(
-                  availabilityTileID);
+              pAvailabilityContext->implicitContext->availabilityTilesLoaded
+                  .insert(availabilityTileID);
               if (!rectangles.empty()) {
                 for (const QuadtreeTileRectangularRange& range : rectangles) {
                   pAvailabilityContext->implicitContext->rectangleAvailability
@@ -455,8 +455,9 @@ void Tileset::requestAvailabilityTile(
               this->_availabilityLoading.erase(recordIt);
               for (const std::pair<Tile*, ImplicitTraversalInfo>& pTile :
                    pTiles) {
-                pTile.first->getContext()->implicitContext->tilesWaitingForAvailability.erase(
-                    pTile.first);
+                pTile.first->getContext()
+                    ->implicitContext->tilesWaitingForAvailability.erase(
+                        pTile.first);
                 ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
                     *pTile.first,
                     pTile.second);
