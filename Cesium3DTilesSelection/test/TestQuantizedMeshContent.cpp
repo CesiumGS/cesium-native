@@ -704,6 +704,10 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
       projection,
       QuadtreeRectangleAvailability(tilingScheme, 23),
       std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      {},
+      {},
       std::nullopt};
 
   SECTION("Check quantized mesh that has uint16_t indices") {
