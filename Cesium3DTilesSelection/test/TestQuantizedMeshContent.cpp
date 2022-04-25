@@ -1047,6 +1047,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
       projection,
       QuadtreeRectangleAvailability(tilingScheme, 23),
       std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      {},
+      {},
       std::nullopt};
 
   // mock quantized mesh
