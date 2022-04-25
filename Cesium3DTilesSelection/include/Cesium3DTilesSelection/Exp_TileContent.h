@@ -22,8 +22,6 @@ enum class TileLoadState {
 
 struct TileUnknownContent {};
 
-struct TileEmptyContent {};
-
 struct TileExternalContent {};
 
 struct TileRenderContent {
@@ -32,7 +30,6 @@ struct TileRenderContent {
 
 using TileContentKind = std::variant<
     TileUnknownContent,
-    TileEmptyContent,
     TileExternalContent,
     TileRenderContent>;
 
@@ -43,8 +40,6 @@ public:
   TileLoadState getState() const noexcept;
 
   bool isExternalContent() const noexcept;
-
-  bool isEmptyContent() const noexcept;
 
   bool isRenderContent() const noexcept;
 

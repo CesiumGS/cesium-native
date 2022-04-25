@@ -14,10 +14,6 @@ bool TileContent::isExternalContent() const noexcept {
   return std::holds_alternative<TileExternalContent>(_contentKind);
 }
 
-bool TileContent::isEmptyContent() const noexcept {
-  return std::holds_alternative<TileEmptyContent>(_contentKind);
-}
-
 bool TileContent::isRenderContent() const noexcept {
   return std::holds_alternative<TileRenderContent>(_contentKind);
 }

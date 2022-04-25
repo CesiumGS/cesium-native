@@ -80,11 +80,6 @@ struct TileContentLoadResult {
   std::vector<Cesium3DTilesSelection::Credit> credits{};
 
   /**
-   * @brief The new contexts used by the `childTiles`, if any.
-   */
-  std::vector<std::unique_ptr<TileContext>> newTileContexts;
-
-  /**
    * @brief New child tiles discovered by loading this tile.
    *
    * For example, if the content is an external tileset, this property

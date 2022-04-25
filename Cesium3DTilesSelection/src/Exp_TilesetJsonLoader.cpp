@@ -3,6 +3,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/joinToString.h>
+#include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
@@ -17,15 +18,15 @@ struct ExternalContentInitializer {
   TilesetJsonLoader* tilesetJsonLoader;
 
   void operator()(Tile& tile) {
-    TileContent* pContent = tile.exp_GetContent();
-    if (pContent->isExternalContent()) {
+    TileContent* pContent = tile.getContent();
+    if (pContent && pContent->isExternalContent()) {
       std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
       if (pExternalRoot) {
         // propagate all the external tiles to be the children of this tile
-        tile.createChildTiles(1);
-        gsl::span<Tile> children = tile.getChildren();
+        std::vector<Tile> children(1);
         children[0] = std::move(*pExternalRoot);
         children[0].setParent(&tile);
+        tile.createChildTiles(std::move(children));
 
         // save the loader of the external tileset in this loader
         tilesetJsonLoader->addChildLoader(
@@ -229,7 +230,6 @@ void parseTileJsonRecursively(
   }
 
   tile.setParent(parentTile);
-  tile.exp_SetContent(std::make_unique<TileContent>(&currentLoader));
 
   const std::optional<glm::dmat4x4> tileTransform =
       CesiumUtility::JsonHelpers::getTransformProperty(tileJson, "transform");
@@ -249,6 +249,7 @@ void parseTileJsonRecursively(
 
     if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
       contentUri = uriIt->value.GetString();
+      tile.setContent(std::make_unique<TileContent>(&currentLoader));
       tile.setTileID(contentUri);
     }
 
@@ -498,7 +499,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
   const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor =
       loadInfo.pAssetAccessor;
 
-  return pAssetAccessor->get(asyncSystem, *url, requestHeaders)
+  std::string resolvedUrl = CesiumUtility::Uri::resolve(_baseUrl, *url, true);
+  return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
       .thenInWorkerThread(
           [loadInfo,
            externalContentInitializer = std::move(externalContentInitializer)](

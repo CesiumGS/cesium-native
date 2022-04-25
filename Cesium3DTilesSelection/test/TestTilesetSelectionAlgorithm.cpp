@@ -170,9 +170,9 @@ TEST_CASE("Test replace refinement for render") {
 
   // check the tiles status
   const Tile* root = tileset.getRootTile();
-  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  REQUIRE(root->getState() == TileLoadState::ContentLoading);
   for (const auto& child : root->getChildren()) {
-    REQUIRE(child.getState() == Tile::LoadState::Unloaded);
+    REQUIRE(child.getState() == TileLoadState::Unloaded);
   }
 
   SECTION("No refinement happen when tile meet SSE") {
@@ -196,10 +196,10 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
       // Check tile state. Ensure root meet sse
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Unloaded);
+        REQUIRE(child.getState() == TileLoadState::Unloaded);
       }
 
       // check result
@@ -215,7 +215,7 @@ TEST_CASE("Test replace refinement for render") {
 
       // check children state are still unloaded
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Unloaded);
+        REQUIRE(child.getState() == TileLoadState::Unloaded);
       }
     }
   }
@@ -255,10 +255,10 @@ TEST_CASE("Test replace refinement for render") {
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
       // Children begin loading as well
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::ContentLoading);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -281,10 +281,10 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Failed);
+        REQUIRE(child.getState() == TileLoadState::Failed);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -326,17 +326,17 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
       // check tiles status. All the children should have loading status
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(zoomInViewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::ContentLoading);
       }
 
       const Tile& ll = root->getChildren().front();
       REQUIRE(!doesTileMeetSSE(zoomInViewState, ll, tileset));
 
       const Tile& ll_ll = ll.getChildren().front();
-      REQUIRE(ll_ll.getState() == Tile::LoadState::ContentLoading);
+      REQUIRE(ll_ll.getState() == TileLoadState::ContentLoading);
       REQUIRE(doesTileMeetSSE(zoomInViewState, ll_ll, tileset));
 
       // check result
@@ -359,24 +359,24 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
       // check tiles status. All the children should have loading status
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(zoomInViewState, *root, tileset));
 
       // the first child of root isn't rendered because it doesn't meet sse. It
       // will be refined to its child which is ready to be rendered
       const Tile& ll = root->getChildren().front();
-      REQUIRE(ll.getState() == Tile::LoadState::Failed);
+      REQUIRE(ll.getState() == TileLoadState::Failed);
       REQUIRE(!doesTileMeetSSE(zoomInViewState, ll, tileset));
 
       const Tile& ll_ll = ll.getChildren().front();
-      REQUIRE(ll_ll.getState() == Tile::LoadState::Done);
+      REQUIRE(ll_ll.getState() == TileLoadState::Done);
       REQUIRE(doesTileMeetSSE(zoomInViewState, ll_ll, tileset));
 
       // the rest of the root's children are ready to be rendered since they all
       // meet sse
       for (size_t i = 1; i < root->getChildren().size(); ++i) {
         const Tile& child = root->getChildren()[i];
-        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(child.getState() == TileLoadState::Done);
         REQUIRE(doesTileMeetSSE(zoomInViewState, child, tileset));
       }
 
@@ -415,24 +415,24 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
       // check tiles status. All the children should have loading status
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(zoomOutViewState, *root, tileset));
 
       // The first child of root isn't rendered because it is failed to load
       // even though it meets sse. Use its child instead since the child is
       // rendered last frame
       const Tile& ll = root->getChildren().front();
-      REQUIRE(ll.getState() == Tile::LoadState::Failed);
+      REQUIRE(ll.getState() == TileLoadState::Failed);
       REQUIRE(doesTileMeetSSE(zoomOutViewState, ll, tileset));
 
       const Tile& ll_ll = ll.getChildren().front();
-      REQUIRE(ll_ll.getState() == Tile::LoadState::Done);
+      REQUIRE(ll_ll.getState() == TileLoadState::Done);
 
       // the rest of the root's children are ready to be rendered since they all
       // meet sse
       for (size_t i = 1; i < root->getChildren().size(); ++i) {
         const Tile& child = root->getChildren()[i];
-        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(child.getState() == TileLoadState::Done);
         REQUIRE(doesTileMeetSSE(zoomOutViewState, child, tileset));
       }
 
@@ -464,10 +464,10 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::ContentLoading);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -491,9 +491,9 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // check tile states
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(child.getState() == TileLoadState::Done);
       }
 
       // check result
@@ -567,7 +567,7 @@ TEST_CASE("Test additive refinement") {
   // root is external tileset. Since its content is loading, we won't know if it
   // has children or not
   const Tile* root = tileset.getRootTile();
-  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  REQUIRE(root->getState() == TileLoadState::ContentLoading);
   REQUIRE(root->getChildren().size() == 0);
 
   SECTION("Load external tilesets") {
@@ -579,19 +579,19 @@ TEST_CASE("Test additive refinement") {
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // root is rendered first
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       REQUIRE(root->getChildren().size() == 1);
 
       // root's children don't have content loading right now, so only root get
       // rendered
       const Tile& parentB3DM = root->getChildren().front();
-      REQUIRE(parentB3DM.getState() == Tile::LoadState::ContentLoading);
+      REQUIRE(parentB3DM.getState() == TileLoadState::ContentLoading);
       REQUIRE(!doesTileMeetSSE(viewState, parentB3DM, tileset));
       REQUIRE(parentB3DM.getChildren().size() == 4);
 
       for (const Tile& child : parentB3DM.getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::ContentLoading);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -613,19 +613,19 @@ TEST_CASE("Test additive refinement") {
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // root is rendered first
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       REQUIRE(root->getChildren().size() == 1);
 
       // root's children don't have content loading right now, so only root get
       // rendered
       const Tile& parentB3DM = root->getChildren().front();
-      REQUIRE(parentB3DM.getState() == Tile::LoadState::Done);
+      REQUIRE(parentB3DM.getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, parentB3DM, tileset));
       REQUIRE(parentB3DM.getChildren().size() == 4);
 
       for (const Tile& child : parentB3DM.getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(child.getState() == TileLoadState::Done);
 
         if (*std::get_if<std::string>(&child.getTileID()) !=
             "tileset3/tileset3.json") {
@@ -640,7 +640,7 @@ TEST_CASE("Test additive refinement") {
               doesTileMeetSSE(viewState, child.getChildren().front(), tileset));
           REQUIRE(
               child.getChildren().front().getState() ==
-              Tile::LoadState::ContentLoading);
+              TileLoadState::ContentLoading);
         }
       }
 
@@ -723,7 +723,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 
   Tile* root = tileset.getRootTile();
   REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
-  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  REQUIRE(root->getState() == TileLoadState::ContentLoading);
   REQUIRE(root->getChildren().size() == 3);
 
   // 1st frame. Root doesn't meet sse, so load children. But they are
@@ -732,7 +732,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     ViewUpdateResult result = tileset.updateView({viewState});
 
     for (const Tile& child : root->getChildren()) {
-      CHECK(child.getState() == Tile::LoadState::ContentLoading);
+      CHECK(child.getState() == TileLoadState::ContentLoading);
     }
 
     REQUIRE(result.tilesToRenderThisFrame.size() == 1);
@@ -752,7 +752,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 
     REQUIRE(root->isRenderable());
     for (const Tile& child : root->getChildren()) {
-      REQUIRE(child.getState() == Tile::LoadState::Done);
+      REQUIRE(child.getState() == TileLoadState::Done);
       REQUIRE(child.isRenderable());
     }
 
@@ -814,9 +814,9 @@ TEST_CASE("Test multiple frustums") {
 
   // check the tiles status
   const Tile* root = tileset.getRootTile();
-  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  REQUIRE(root->getState() == TileLoadState::ContentLoading);
   for (const auto& child : root->getChildren()) {
-    REQUIRE(child.getState() == Tile::LoadState::Unloaded);
+    REQUIRE(child.getState() == TileLoadState::Unloaded);
   }
 
   // Zoom to tileset. Expect the root will not meet sse in this configure
@@ -843,11 +843,11 @@ TEST_CASE("Test multiple frustums") {
 
       // Check tile state. Ensure root meets sse for only the zoomed out
       // ViewState
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::ContentLoading);
       }
 
       // check result
@@ -863,11 +863,11 @@ TEST_CASE("Test multiple frustums") {
 
       // Check tile state. Ensure root meets sse for only the zoomed out
       // ViewState
-      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(child.getState() == TileLoadState::Done);
       }
 
       // check result

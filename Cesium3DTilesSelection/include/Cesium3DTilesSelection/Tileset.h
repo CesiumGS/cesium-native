@@ -71,30 +71,6 @@ public:
    */
   ~Tileset();
 
-  /**
-   * @brief Gets the URL that was used to construct this tileset.
-   * If the tileset references a Cesium ion asset,
-   * this property will not have a value.
-   */
-  std::optional<std::string> getUrl() const noexcept { return this->_url; }
-
-  /**
-   * @brief Gets the Cesium ion asset ID of this tileset.
-   * If the tileset references a URL, this property
-   * will not have a value.
-   */
-  std::optional<uint32_t> getIonAssetID() const noexcept {
-    return this->_ionAssetID;
-  }
-
-  /**
-   * @brief Gets the Cesium ion access token to use to access this tileset.
-   * If the tileset references a URL, this property will not have a value.
-   */
-  std::optional<std::string> getIonAccessToken() const noexcept {
-    return this->_ionAccessToken;
-  }
-
   const std::vector<Credit> getTilesetCredits() const noexcept {
     return this->_tilesetCredits;
   }
@@ -195,63 +171,6 @@ public:
   void notifyTileUnloading(Tile* pTile) noexcept;
 
   /**
-   * @brief Loads a tile tree from a tileset.json file.
-   *
-   * This method is safe to call from any thread.
-   *
-   * @param rootTile A blank tile into which to load the root.
-   * @param newContexts The new contexts that are generated from recursively
-   * parsing the tiles.
-   * @param tilesetJson The parsed tileset.json.
-   * @param parentTransform The new tile's parent transform.
-   * @param parentRefine The default refinment to use if not specified
-   * explicitly for this tile.
-   * @param context The context of the new tiles.
-   * @param pLogger The logger.
-   */
-  static void loadTilesFromJson(
-      Tile& rootTile,
-      std::vector<std::unique_ptr<TileContext>>& newContexts,
-      const rapidjson::Value& tilesetJson,
-      const glm::dmat4& parentTransform,
-      TileRefine parentRefine,
-      const TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger);
-
-  /**
-   * @brief Request to load the content for the given tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * Do not call this function if the tile has no content to load.
-   *
-   * @param tile The tile for which the content is requested.
-   * @return A future that resolves when the content response is received.
-   */
-  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  requestTileContent(Tile& tile);
-
-  /**
-   * @brief Request to load the availability subtree for the given tile.
-   *
-   * This function is not supposed to be called by client.
-   *
-   * @param tile The tile for which the subtree is requested.
-   * @return A future that resolves when the subtree response is received.
-   */
-  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  requestAvailabilitySubtree(Tile& tile);
-
-  /**
-   * @brief Add the given {@link TileContext} to this tile set.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param pNewContext The new context. May not be `nullptr`.
-   */
-  void addContext(std::unique_ptr<TileContext>&& pNewContext);
-
-  /**
    * @brief Invokes a function for each tile that is currently loaded.
    *
    * @param callback The function to invoke.
@@ -339,39 +258,6 @@ private:
   };
 
   /**
-   * @brief Handles the response that was received for an asset request.
-   *
-   * This function is supposed to be called on the main thread.
-   *
-   * It the response for the given request consists of a valid JSON,
-   * then {@link _loadTilesetJson} will be called. Otherwise, an error
-   * message will be printed and {@link notifyTileDoneLoading} will be
-   * called with a `nullptr`.
-   *
-   * @param pRequest The request for which the response was received.
-   */
-  CesiumAsync::Future<void>
-  _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
-
-  /**
-   * @brief Handles a Cesium ion response to refreshing a token, retrying tiles
-   * that previously failed due to token expiration.
-   *
-   * If the token refresh request succeeded, tiles that are in the
-   * `FailedTemporarily` {@link Tile::LoadState} with an `httpStatusCode` of 401
-   * will be returned to the `Unloaded` state so that they can be retried with
-   * the new token. If the token refresh request failed, these tiles will be
-   * marked `Failed` permanently.
-   *
-   * @param pIonRequest The request.
-   * @param pContext The context.
-   */
-  void _handleTokenRefreshResponse(
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
-      TileContext* pContext,
-      const std::shared_ptr<spdlog::logger>& pLogger);
-
-  /**
    * @brief Input information that is constant throughout the traversal.
    *
    * An instance of this structure is created upon entry of the top-level
@@ -387,7 +273,6 @@ private:
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
       Tile& tile,
       const std::vector<double>& distances,
       ViewUpdateResult& result);
@@ -403,7 +288,6 @@ private:
   bool _kickDescendantsAndRenderTile(
       const FrameState& frameState,
       Tile& tile,
-      const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
@@ -415,7 +299,6 @@ private:
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -424,14 +307,12 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
-      const ImplicitTraversalInfo implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -456,7 +337,6 @@ private:
   bool _loadAndRenderAdditiveRefinedTile(
       const FrameState& frameState,
       Tile& tile,
-      const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
       const std::vector<double>& distances);
 
@@ -484,7 +364,6 @@ private:
   bool _queueLoadOfChildrenRequiredForRefinement(
       const FrameState& frameState,
       Tile& tile,
-      const ImplicitTraversalInfo& implicitInfo,
       const std::vector<double>& distances);
   bool _meetsSse(
       const std::vector<ViewState>& frustums,
@@ -496,9 +375,6 @@ private:
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
-  std::string getResolvedContentUrl(const Tile& tile) const;
-
-  std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 
@@ -507,12 +383,6 @@ private:
   std::optional<Credit> _userCredit;
   //  credits provided with the tileset from Cesium Ion
   std::vector<Credit> _tilesetCredits;
-
-  std::optional<std::string> _url;
-  std::optional<uint32_t> _ionAssetID;
-  std::optional<std::string> _ionAccessToken;
-  bool _isRefreshingIonToken;
-  std::optional<std::string> _ionAssetEndpointUrl;
 
   TilesetOptions _options;
 
@@ -536,39 +406,10 @@ private:
     }
   };
 
-  struct SubtreeLoadRecord {
-    /**
-     * @brief The root tile of the subtree to load.
-     */
-    Tile* pTile;
-
-    /**
-     * @brief The implicit traversal information which will tell us what subtree
-     * to load and which parent to attach it to.
-     */
-    ImplicitTraversalInfo implicitInfo;
-
-    /**
-     * @brief The relative priority of loading this tile.
-     *
-     * Lower priority values load sooner.
-     */
-    double priority;
-
-    bool operator<(const SubtreeLoadRecord& rhs) const noexcept {
-      return this->priority < rhs.priority;
-    }
-  };
-
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
   std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
-
-  std::vector<SubtreeLoadRecord> _subtreeLoadQueue;
-  std::atomic<uint32_t>
-      _subtreeLoadsInProgress; // TODO: does this need to be atomic?
-
   Tile::LoadedLinkedList _loadedTiles;
 
   RasterOverlayCollection _overlays;
@@ -600,7 +441,6 @@ private:
 
   static double addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
-      const ImplicitTraversalInfo& implicitInfo,
       const std::vector<ViewState>& frustums,
       Tile& tile,
       const std::vector<double>& distances);
@@ -609,21 +449,10 @@ private:
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
-  void addSubtreeToLoadQueue(
-      Tile& tile,
-      const ImplicitTraversalInfo& implicitInfo,
-      double loadPriority);
-  void processSubtreeQueue();
-
   void reportError(TilesetLoadFailureDetails&& errorDetails);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
-
-  class LoadIonAssetEndpoint;
-  class LoadTilesetDotJson;
-  class LoadTileFromJson;
-  class LoadSubtree;
 };
 
 } // namespace Cesium3DTilesSelection

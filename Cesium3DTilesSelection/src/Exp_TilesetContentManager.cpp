@@ -95,7 +95,10 @@ TilesetContentManager::TilesetContentManager(
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetContentOptions& contentOptions) {
-  TileContent* pContent = tile.exp_GetContent();
+  TileContent* pContent = tile.getContent();
+  if (!pContent) {
+    return;
+  }
 
   if (pContent->getState() != TileLoadState::Unloaded &&
       pContent->getState() != TileLoadState::FailedTemporarily) {
@@ -152,7 +155,7 @@ void TilesetContentManager::loadTileContent(
 }
 
 void TilesetContentManager::updateTileContent(Tile& tile) {
-  const TileContent* pContent = tile.exp_GetContent();
+  const TileContent* pContent = tile.getContent();
   if (!pContent) {
     return;
   }
@@ -168,7 +171,7 @@ void TilesetContentManager::updateTileContent(Tile& tile) {
 }
 
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
-  TileContent* pContent = tile.exp_GetContent();
+  TileContent* pContent = tile.getContent();
   if (!pContent) {
     return true;
   }
@@ -234,7 +237,7 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   // initialize this tile content first
-  TileContent* pContent = tile.exp_GetContent();
+  TileContent* pContent = tile.getContent();
   auto& tileInitializer = pContent->getTileInitializerCallback();
   if (tileInitializer) {
     tileInitializer(tile);
@@ -255,7 +258,7 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
 }
 
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
-  TileContent* pContent = tile.exp_GetContent();
+  TileContent* pContent = tile.getContent();
   void* pWorkerRenderResources = pContent->getRenderResources();
   _externals.pPrepareRendererResources->free(
       tile,
@@ -265,7 +268,7 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
 }
 
 void TilesetContentManager::unloadDoneState(Tile& tile) {
-  TileContent* pContent = tile.exp_GetContent();
+  TileContent* pContent = tile.getContent();
   void* pMainThreadRenderResources = pContent->getRenderResources();
   _externals.pPrepareRendererResources->free(
       tile,
