@@ -515,7 +515,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
-                  TileLoadState::FailedTemporarily,
+                  TileLoadState::Failed,
                   std::move(pCompletedRequest),
                   {}};
             }
@@ -529,7 +529,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
-                  TileLoadState::FailedTemporarily,
+                  TileLoadState::Failed,
                   std::move(pCompletedRequest),
                   {}};
             }
