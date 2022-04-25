@@ -450,17 +450,18 @@ void Tileset::requestAvailabilityTile(
                   AvailabilityLoadRecord{
                       availabilityTileID,
                       pAvailabilityContext});
-              std::vector<std::pair<Tile*, ImplicitTraversalInfo>> pTiles =
+              std::vector<std::pair<Tile*, ImplicitTraversalInfo>> pairs =
                   std::move(recordIt->pTiles);
               this->_availabilityLoading.erase(recordIt);
-              for (const std::pair<Tile*, ImplicitTraversalInfo>& pTile :
-                   pTiles) {
-                pTile.first->getContext()
-                    ->implicitContext->tilesWaitingForAvailability.erase(
-                        pTile.first);
+              for (const std::pair<Tile*, ImplicitTraversalInfo>& pair :
+                   pairs) {
+                Tile* pTile = pair.first;
+                const ImplicitTraversalInfo& implicitInfo = pair.second;
+                pTile->getContext()
+                    ->implicitContext->tilesWaitingForAvailability.erase(pTile);
                 ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
-                    *pTile.first,
-                    pTile.second);
+                    *pTile,
+                    implicitInfo);
               }
             });
   }

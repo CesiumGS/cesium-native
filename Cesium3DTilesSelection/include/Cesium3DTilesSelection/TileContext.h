@@ -115,8 +115,8 @@ public:
   std::unordered_set<CesiumGeometry::QuadtreeTileID> availabilityTilesLoaded;
 
   /**
-   * @brief A counter of how many availability tiles are currently being fetched
-   * using this context.
+   * @brief A set tiles that are currently waiting for an availability tile to
+   * load.
    */
   std::unordered_set<Tile*> tilesWaitingForAvailability;
 

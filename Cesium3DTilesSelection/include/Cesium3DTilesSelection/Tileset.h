@@ -241,6 +241,16 @@ public:
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   requestAvailabilitySubtree(Tile& tile);
 
+  /**
+   * @brief Request to load an availability tile.
+   *
+   * This function is not supposed to be called by client.
+   *
+   * @param tile The tile that needs the availability tile.
+   * @param implicitInfo The implicit info of the said tile.
+   * @param availabilityTileID The ID of the availability tile.
+   * @param pAvailabilityContext The tile context of the availability tile.
+   */
   void requestAvailabilityTile(
       Tile& tile,
       const ImplicitTraversalInfo& implicitInfo,
@@ -567,8 +577,20 @@ private:
   };
 
   struct AvailabilityLoadRecord {
+    /**
+     * @brief The ID of the availability tile.
+     */
     CesiumGeometry::QuadtreeTileID tileID;
+
+    /**
+     * @brief The tile context of the availability tile.
+     */
     const TileContext* pTileContext;
+
+    /**
+     * @brief List of tiles and related info that rely on this availability
+     * tile.
+     */
     std::vector<std::pair<Tile*, ImplicitTraversalInfo>> pTiles;
 
     bool operator==(const AvailabilityLoadRecord& rhs) const noexcept {
