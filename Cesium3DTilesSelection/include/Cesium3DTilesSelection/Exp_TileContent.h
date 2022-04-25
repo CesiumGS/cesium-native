@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
 #include <CesiumGltf/Model.h>
 
 #include <functional>
@@ -47,8 +46,6 @@ public:
 
   TileRenderContent* getRenderContent() noexcept;
 
-  TileUserDataStorage::Handle getCustomDataHandle() const;
-
   TilesetContentLoader* getLoader() noexcept;
 
 private:
@@ -57,8 +54,6 @@ private:
   void setContentKind(const TileContentKind& contentKind);
 
   void setState(TileLoadState state) noexcept;
-
-  void setCustomDataHandle(TileUserDataStorage::Handle handle);
 
   void setRenderResources(void* pRenderResources) noexcept;
 
@@ -70,7 +65,6 @@ private:
 
   TileLoadState _state;
   TileContentKind _contentKind;
-  TileUserDataStorage::Handle _loaderCustomDataHandle;
   void* _pRenderResources;
   std::function<void(Tile&)> _deferredTileInitializer;
   TilesetContentLoader* _pLoader;

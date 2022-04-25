@@ -105,13 +105,6 @@ void TilesetContentManager::loadTileContent(
     return;
   }
 
-  // create a user storage handle if it doesn't have any. This allows derived
-  // and other processors to add custom user data to the tile if needed
-  auto userStorageHandle = pContent->getCustomDataHandle();
-  if (!_customDataStorage.isValidHandle(userStorageHandle)) {
-    pContent->setCustomDataHandle(_customDataStorage.createHandle());
-  }
-
   TileContentLoadInfo loadInfo{
       _externals.asyncSystem,
       _externals.pAssetAccessor,
@@ -194,13 +187,6 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   default:
     break;
-  }
-
-  // we will only ever remove all user data when this tile is unloaded
-  auto customDataHandle = pContent->getCustomDataHandle();
-  if (_customDataStorage.isValidHandle(customDataHandle)) {
-    _customDataStorage.destroyHandle(customDataHandle);
-    pContent->setCustomDataHandle(TileUserDataStorage::NullHandle);
   }
 
   pContent->setContentKind(TileUnknownContent{});

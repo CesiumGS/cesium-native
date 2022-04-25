@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TileUserDataStorage.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -42,6 +41,5 @@ private:
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
-  TileUserDataStorage _customDataStorage;
 };
 } // namespace Cesium3DTilesSelection
