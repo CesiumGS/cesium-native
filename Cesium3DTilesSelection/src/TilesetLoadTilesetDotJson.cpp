@@ -417,6 +417,10 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
           *tilingScheme,
           maxZoom),
       std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      {},
+      {},
       std::nullopt};
 
   std::vector<std::string> extensions =

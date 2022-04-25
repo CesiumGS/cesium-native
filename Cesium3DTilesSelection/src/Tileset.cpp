@@ -449,7 +449,8 @@ void Tileset::requestAvailabilityTile(
                   _availabilityLoading.end(),
                   AvailabilityLoadRecord{
                       availabilityTileID,
-                      pAvailabilityContext});
+                      pAvailabilityContext,
+                      {}});
               std::vector<std::pair<Tile*, ImplicitTraversalInfo>> pairs =
                   std::move(recordIt->pTiles);
               this->_availabilityLoading.erase(recordIt);
