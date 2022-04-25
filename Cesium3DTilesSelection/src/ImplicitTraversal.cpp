@@ -407,9 +407,7 @@ void createImplicitChildrenIfNeeded(
             pChildContext = pChildContext->pUnderlyingContext.get();
           }
         }
-      }
-
-      if (implicitContext.quadtreeAvailability) {
+      } else if (implicitContext.quadtreeAvailability) {
         if ((swID.level %
              implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {
           // If the tiles are in child subtrees, we know enough about them to

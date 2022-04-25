@@ -322,6 +322,10 @@ void parseImplicitTileset(
           GeographicProjection(),
           std::nullopt,
           std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          {},
+          {},
           std::nullopt};
 
       TileID rootID = "";
