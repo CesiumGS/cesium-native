@@ -460,9 +460,11 @@ void Tileset::requestAvailabilityTile(
                 const ImplicitTraversalInfo& implicitInfo = pair.second;
                 pTile->getContext()
                     ->implicitContext->tilesWaitingForAvailability.erase(pTile);
-                ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
-                    *pTile,
-                    implicitInfo);
+                if (pTile->getState() == Tile::LoadState::ContentLoaded) {
+                  ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
+                      *pTile,
+                      implicitInfo);
+                }
               }
             });
   }
