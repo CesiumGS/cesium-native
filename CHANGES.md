@@ -4,8 +4,17 @@
 
 ##### Additions :tada:
 
+- Improved the load performance when `TilesetOptions::forbidHoles` is enabled by only loading child tiles when their parent does not meet the necessary screen-space error requirement.
 - Added support for loading availability metadata in the layer.json.
 - Added support for loading multiple layers of quantized-mesh terrain.
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause the same tiles to be continually loaded and unloaded when `TilesetOptions::forbidHoles` was enabled.
+- Fixed a bug that could sometimes cause tilesets to fail to show their full detail when making changes to raster overlays.
+- Fixed a bug that could cause holes even with `TilesetOptions::forbidHoles` enabled, particularly when using external tilesets.
+- Tiles will no longer be selected to render when they have no content and they have a higher "geometric error" than their parent. In previous versions, this situation could briefly lead to holes while the children of such tiles loaded.
+- Fixed a bug where getting bad data from sqlite cache could cause a crash. If the sqlite database is corrupt, it will be deleted and recreated.
 
 ### v0.14.1 - 2022-04-14
 

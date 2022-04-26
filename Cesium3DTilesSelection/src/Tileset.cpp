@@ -786,18 +786,21 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   return traversalDetails;
 }
 
-bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
+bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
     const FrameState& frameState,
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo,
     const std::vector<double>& distances) {
-  if (!this->_options.forbidHoles) {
-    return false;
-  }
+  // This method should only be called in "Forbid Holes" mode.
+  assert(this->_options.forbidHoles);
+
+  bool waitingForChildren = false;
+
   // If we're forbidding holes, don't refine if any children are still loading.
   gsl::span<Tile> children = tile.getChildren();
-  bool waitingForChildren = false;
   for (Tile& child : children) {
+    this->_markTileVisited(child);
+
     if (!child.isRenderable() && !child.isExternalTileset()) {
       waitingForChildren = true;
 
@@ -812,7 +815,6 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
             childInfo);
       }
       child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
-      this->_markTileVisited(child);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -823,8 +825,22 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
           frameState.frustums,
           child,
           distances);
+    } else if (child.getUnconditionallyRefine()) {
+      // This child tile is set to unconditionally refine. That means refining
+      // _to_ it will immediately refine _through_ it. So we need to make sure
+      // its children are renderable, too.
+      // The distances are not correct for the child's children, but once again
+      // we don't care because all tiles must be loaded before we can render any
+      // of them, so their relative priority doesn't matter.
+      ImplicitTraversalInfo childInfo(&child, &implicitInfo);
+      waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
+          frameState,
+          child,
+          childInfo,
+          distances);
     }
   }
+
   return waitingForChildren;
 }
 
@@ -1085,14 +1101,23 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
-  const bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(
-      frameState,
-      tile,
-      implicitInfo,
-      distances);
 
-  if (!unconditionallyRefine &&
-      (meetsSse || ancestorMeetsSse || waitingForChildren)) {
+  bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
+
+  // In "Forbid Holes" mode, we cannot refine this tile until all its children
+  // are loaded. But don't queue the children for load until we _want_ to
+  // refine this tile.
+  if (wantToRefine && this->_options.forbidHoles) {
+    const bool waitingForChildren =
+        this->_queueLoadOfChildrenRequiredForForbidHoles(
+            frameState,
+            tile,
+            implicitInfo,
+            distances);
+    wantToRefine = !waitingForChildren;
+  }
+
+  if (!wantToRefine) {
     // This tile (or an ancestor) is the one we want to render this frame, but
     // we'll do different things depending on the state of this tile and on what
     // we did _last_ frame.
@@ -1459,6 +1484,38 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
       // state if needed.
       if (tile.getState() == Tile::LoadState::Unloaded) {
         tile.setState(Tile::LoadState::ContentLoaded);
+
+        // There are two possible ways to handle a tile with no content:
+        //
+        // 1. Treat it as a placeholder used for more efficient culling, but
+        //    never render it. Refining to this tile is equivalent to refining
+        //    to its children. To have this behavior, the tile _should_ have
+        //    content, but that content's model should be std::nullopt.
+        // 2. Treat it as an indication that nothing need be rendered in this
+        //    area at this level-of-detail. In other words, "render" it as a
+        //    hole. To have this behavior, the tile should _not_ have content at
+        //    all.
+        //
+        // We distinguish whether the tileset creator wanted (1) or (2) by
+        // comparing this tile's geometricError to the geometricError of its
+        // parent tile. If this tile's error is greater than or equal to its
+        // parent, treat it as (1). If it's less, treat it as (2).
+        //
+        // For a tile with no parent there's no difference between the
+        // behaviors.
+        double myGeometricError = tile.getNonZeroGeometricError();
+
+        Tile* pAncestor = tile.getParent();
+        while (pAncestor && pAncestor->getUnconditionallyRefine()) {
+          pAncestor = pAncestor->getParent();
+        }
+
+        double parentGeometricError =
+            pAncestor ? pAncestor->getNonZeroGeometricError()
+                      : myGeometricError * 2.0;
+        if (myGeometricError >= parentGeometricError) {
+          tile.setEmptyContent();
+        }
       }
     } else if (shouldLoad) {
       loadQueue.push_back({&tile, highestLoadPriority});
