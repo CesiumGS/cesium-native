@@ -15,6 +15,7 @@
 
 #include <map>
 #include <type_traits>
+#include <unordered_set>
 
 using namespace CesiumGltf;
 
@@ -39,6 +40,41 @@ struct CompatibleTypes {
   std::optional<MaskedType> componentType;
   std::optional<uint32_t> minComponentCount;
   std::optional<uint32_t> maxComponentCount;
+
+  CompatibleTypes combine(const CompatibleTypes& rhs) const {
+    CompatibleTypes result;
+    result.type = combine(this->type, rhs.type);
+    result.componentType = combine(this->type, rhs.type);
+    if (this->minComponentCount || rhs.minComponentCount) {
+      result.minComponentCount = glm::min(
+          this->minComponentCount.value_or(1),
+          rhs.minComponentCount.value_or(1));
+    }
+    if (this->maxComponentCount || rhs.maxComponentCount) {
+      result.maxComponentCount = glm::max(
+          this->maxComponentCount.value_or(1),
+          rhs.maxComponentCount.value_or(1));
+    }
+    return result;
+  }
+
+private:
+  static MaskedType combine(const MaskedType& lhs, const MaskedType& rhs) {
+    MaskedType result;
+    result.isInt8 = lhs.isInt8 && rhs.isInt8;
+    result.isUint8 = lhs.isUint8 && rhs.isUint8;
+    result.isInt16 = lhs.isInt16 && rhs.isInt16;
+    result.isUint16 = lhs.isUint16 && rhs.isUint16;
+    result.isInt32 = lhs.isInt32 && rhs.isInt32;
+    result.isUint32 = lhs.isUint32 && rhs.isUint32;
+    result.isInt64 = lhs.isInt64 && rhs.isInt64;
+    result.isUint64 = lhs.isUint64 && rhs.isUint64;
+    result.isFloat32 = lhs.isFloat32 && rhs.isFloat32;
+    result.isFloat64 = lhs.isFloat64 && rhs.isFloat64;
+    result.isBool = lhs.isBool && rhs.isBool;
+    result.isArray = lhs.isArray && rhs.isArray;
+    return result;
+  }
 };
 
 struct BinaryProperty {
@@ -102,12 +138,13 @@ void copyStringBuffer(
   }
 }
 
-CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
+template <typename TValueGetter>
+CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
   MaskedType type;
   std::optional<MaskedType> componentType;
   std::optional<uint32_t> minComponentCount;
   std::optional<uint32_t> maxComponentCount;
-  for (auto it = propertyValue.Begin(); it != propertyValue.End(); ++it) {
+  for (auto it = propertyValue.begin(); it != propertyValue.end(); ++it) {
     if (it->IsBool()) {
       // Should we allow conversion of bools to numeric 0 or 1? Nah.
       type.isInt8 = type.isUint8 = false;
@@ -171,7 +208,8 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       type.isFloat64 = false;
       type.isBool = false;
       type.isArray &= true;
-      CompatibleTypes currentComponentType = findCompatibleTypes(*it);
+      CompatibleTypes currentComponentType =
+          findCompatibleTypes(ArrayOfPropertyValues(*it));
       if (!componentType) {
         componentType = currentComponentType.type;
       } else {
@@ -211,20 +249,21 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
   return {type, componentType, minComponentCount, maxComponentCount};
 }
 
+template <typename TValueGetter>
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
     ClassProperty& classProperty,
     const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
-    const rapidjson::Value& propertyValue) {
-  assert(propertyValue.Size() >= featureTable.count);
+    const TValueGetter& propertyValue) {
+  assert(propertyValue.size() >= featureTable.count);
 
   rapidjson::StringBuffer rapidjsonStrBuffer;
   std::vector<uint64_t> rapidjsonOffsets;
   rapidjsonOffsets.reserve(static_cast<size_t>(featureTable.count + 1));
   rapidjsonOffsets.emplace_back(0);
 
-  auto it = propertyValue.Begin();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
     if (!it->IsString()) {
       // Everything else that is not string will be serialized by json
@@ -307,15 +346,59 @@ void updateExtensionWithJsonStringProperty(
   featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
 }
 
-template <typename T, typename TRapidJson = T>
+class ArrayOfPropertyValues {
+public:
+  class const_iterator {
+  public:
+    const_iterator(const rapidjson::Value* p) : _p(p) {}
+
+    const_iterator& operator++() {
+      ++this->_p;
+      return *this;
+    }
+
+    bool operator==(const const_iterator& rhs) const {
+      return this->_p == rhs._p;
+    }
+
+    bool operator!=(const const_iterator& rhs) const {
+      return this->_p != rhs._p;
+    }
+
+    const rapidjson::Value& operator*() const { return *this->_p; }
+
+    const rapidjson::Value* operator->() const { return this->_p; }
+
+  private:
+    const rapidjson::Value* _p;
+  };
+
+  ArrayOfPropertyValues(const rapidjson::Value& propertyValues)
+      : _propertyValues(propertyValues) {}
+
+  const_iterator begin() const {
+    return const_iterator(this->_propertyValues.Begin());
+  }
+
+  const_iterator end() const {
+    return const_iterator(this->_propertyValues.End());
+  }
+
+  int64_t size() const { return this->_propertyValues.Size(); }
+
+private:
+  const rapidjson::Value& _propertyValues;
+};
+
+template <typename T, typename TRapidJson = T, typename TValueGetter>
 void updateExtensionWithJsonNumericProperty(
     Model& gltf,
     ClassProperty& classProperty,
     const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
-    const rapidjson::Value& propertyValue,
+    const TValueGetter& propertyValue,
     const std::string& typeName) {
-  assert(propertyValue.Size() >= featureTable.count);
+  assert(propertyValue.size() >= featureTable.count);
 
   classProperty.type = typeName;
 
@@ -335,7 +418,7 @@ void updateExtensionWithJsonNumericProperty(
   featureTableProperty.bufferView = int32_t(bufferViewIndex);
 
   T* p = reinterpret_cast<T*>(buffer.cesium.data.data());
-  auto it = propertyValue.Begin();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
     *p = static_cast<T>(it->Get<TRapidJson>());
     ++p;
@@ -343,25 +426,27 @@ void updateExtensionWithJsonNumericProperty(
   }
 }
 
+template <typename TValueGetter>
 void updateExtensionWithJsonBoolProperty(
     Model& gltf,
     ClassProperty& classProperty,
     const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
-    const rapidjson::Value& propertyValue) {
-  assert(propertyValue.Size() >= featureTable.count);
+    const TValueGetter& propertyValue) {
+  assert(propertyValue.size() >= featureTable.count);
 
   std::vector<std::byte> data(static_cast<size_t>(
       glm::ceil(static_cast<double>(featureTable.count) / 8.0)));
-  const auto& jsonArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (rapidjson::SizeType i = 0;
        i < static_cast<rapidjson::SizeType>(featureTable.count);
        ++i) {
-    const bool value = jsonArray[i].GetBool();
+    const bool value = it->GetBool();
     const size_t byteIndex = i / 8;
     const size_t bitIndex = i % 8;
     data[byteIndex] =
         static_cast<std::byte>(value << bitIndex) | data[byteIndex];
+    ++it;
   }
 
   const size_t bufferIndex = gltf.buffers.size();
@@ -380,23 +465,26 @@ void updateExtensionWithJsonBoolProperty(
   classProperty.type = "BOOLEAN";
 }
 
-template <typename TRapidjson, typename ValueType, typename OffsetType>
+template <
+    typename TRapidjson,
+    typename ValueType,
+    typename OffsetType,
+    typename TValueGetter>
 void copyNumericDynamicArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
     const FeatureTable& featureTable,
-    const rapidjson::Value& propertyValue) {
+    const TValueGetter& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
   offsetBuffer.resize(
       sizeof(OffsetType) * static_cast<size_t>(featureTable.count + 1));
   ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
   OffsetType* offsetValue = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
-  const auto& jsonOuterArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& jsonArrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& jsonArrayMember = *it;
     *offsetValue = prevOffset;
     ++offsetValue;
     for (const auto& valueJson : jsonArrayMember.GetArray()) {
@@ -406,21 +494,22 @@ void copyNumericDynamicArrayBuffers(
 
     prevOffset = static_cast<OffsetType>(
         prevOffset + jsonArrayMember.Size() * sizeof(ValueType));
+
+    ++it;
   }
 
   *offsetValue = prevOffset;
 }
 
-template <typename TRapidjson, typename ValueType>
+template <typename TRapidjson, typename ValueType, typename TValueGetter>
 void updateNumericArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTableProperty& featureTableProperty,
     const FeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
-    const rapidjson::Value& propertyValue) {
-  assert(propertyValue.Size() >= featureTable.count);
-  const auto& jsonOuterArray = propertyValue.GetArray();
+    const TValueGetter& propertyValue) {
+  assert(propertyValue.size() >= featureTable.count);
 
   // check if it's a fixed array
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
@@ -428,13 +517,14 @@ void updateNumericArrayProperty(
                                *compatibleTypes.minComponentCount;
     std::vector<std::byte> valueBuffer(sizeof(ValueType) * numOfValues);
     ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
+    auto it = propertyValue.begin();
     for (int64_t i = 0; i < featureTable.count; ++i) {
-      const auto& jsonArrayMember =
-          jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+      const auto& jsonArrayMember = *it;
       for (const auto& valueJson : jsonArrayMember.GetArray()) {
         *value = static_cast<ValueType>(valueJson.Get<TRapidjson>());
         ++value;
       }
+      ++it;
     }
 
     Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
@@ -460,10 +550,11 @@ void updateNumericArrayProperty(
 
   // total size of value buffer
   size_t numOfElements = 0;
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& jsonArrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& jsonArrayMember = *it;
     numOfElements += jsonArrayMember.Size();
+    ++it;
   }
 
   PropertyType offsetType = PropertyType::None;
@@ -537,22 +628,21 @@ void updateNumericArrayProperty(
   featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
 }
 
-template <typename OffsetType>
+template <typename OffsetType, typename TValueGetter>
 void copyStringArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t totalByteLength,
     size_t numOfString,
     const FeatureTable& featureTable,
-    const rapidjson::Value& propertyValue) {
+    const TValueGetter& propertyValue) {
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize((numOfString + 1) * sizeof(OffsetType));
   OffsetType offset = 0;
   size_t offsetIndex = 0;
-  const auto& jsonOuterArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& arrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& arrayMember = *it;
     for (const auto& str : arrayMember.GetArray()) {
       OffsetType byteLength = static_cast<OffsetType>(
           str.GetStringLength() * sizeof(rapidjson::Value::Ch));
@@ -564,6 +654,7 @@ void copyStringArrayBuffers(
       offset = static_cast<OffsetType>(offset + byteLength);
       ++offsetIndex;
     }
+    ++it;
   }
 
   std::memcpy(
@@ -572,47 +663,48 @@ void copyStringArrayBuffers(
       sizeof(OffsetType));
 }
 
-template <typename OffsetType>
+template <typename OffsetType, typename TValueGetter>
 void copyArrayOffsetBufferForStringArrayProperty(
     std::vector<std::byte>& offsetBuffer,
     const FeatureTable& featureTable,
-    const rapidjson::Value& propertyValue) {
+    const TValueGetter& propertyValue) {
   OffsetType prevOffset = 0;
   offsetBuffer.resize(
       static_cast<size_t>(featureTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
-  const auto& jsonOuterArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& arrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& arrayMember = *it;
     *offset = prevOffset;
     prevOffset = static_cast<OffsetType>(
         prevOffset + arrayMember.Size() * sizeof(OffsetType));
     ++offset;
+    ++it;
   }
 
   *offset = prevOffset;
 }
 
+template <typename TValueGetter>
 void updateStringArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTableProperty& featureTableProperty,
     const FeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
-    const rapidjson::Value& propertyValue) {
-  assert(propertyValue.Size() >= featureTable.count);
+    const TValueGetter& propertyValue) {
+  assert(propertyValue.size() >= featureTable.count);
 
   size_t numOfString = 0;
   size_t totalChars = 0;
-  const auto& jsonOuterArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& arrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& arrayMember = *it;
     numOfString += arrayMember.Size();
     for (const auto& str : arrayMember.GetArray()) {
       totalChars += str.GetStringLength();
     }
+    ++it;
   }
 
   const uint64_t totalByteLength = totalChars * sizeof(rapidjson::Value::Ch);
@@ -748,13 +840,13 @@ void updateStringArrayProperty(
   featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
 }
 
-template <typename OffsetType>
+template <typename OffsetType, typename TValueGetter>
 void copyBooleanArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
     const FeatureTable& featureTable,
-    const rapidjson::Value& propertyValue) {
+    const TValueGetter& propertyValue) {
   size_t currentIndex = 0;
   const size_t totalByteLength =
       static_cast<size_t>(glm::ceil(static_cast<double>(numOfElements) / 8.0));
@@ -763,10 +855,9 @@ void copyBooleanArrayBuffers(
       static_cast<size_t>(featureTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
-  const auto& jsonOuterArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& arrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& arrayMember = *it;
 
     *offset = prevOffset;
     ++offset;
@@ -779,19 +870,22 @@ void copyBooleanArrayBuffers(
           static_cast<std::byte>(value << bitIndex) | valueBuffer[byteIndex];
       ++currentIndex;
     }
+
+    ++it;
   }
 
   *offset = prevOffset;
 }
 
+template <typename TValueGetter>
 void updateBooleanArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTableProperty& featureTableProperty,
     const FeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
-    const rapidjson::Value& propertyValue) {
-  assert(propertyValue.Size() >= featureTable.count);
+    const TValueGetter& propertyValue) {
+  assert(propertyValue.size() >= featureTable.count);
 
   // fixed array of boolean
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
@@ -801,10 +895,9 @@ void updateBooleanArrayProperty(
         glm::ceil(static_cast<double>(numOfElements) / 8.0));
     std::vector<std::byte> valueBuffer(totalByteLength);
     size_t currentIndex = 0;
-    const auto& jsonOuterArray = propertyValue.GetArray();
+    auto it = propertyValue.begin();
     for (int64_t i = 0; i < featureTable.count; ++i) {
-      const auto& arrayMember =
-          jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+      const auto& arrayMember = *it;
       for (const auto& data : arrayMember.GetArray()) {
         const bool value = data.GetBool();
         const size_t byteIndex = currentIndex / 8;
@@ -813,6 +906,7 @@ void updateBooleanArrayProperty(
             static_cast<std::byte>(value << bitIndex) | valueBuffer[byteIndex];
         ++currentIndex;
       }
+      ++it;
     }
 
     Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
@@ -836,11 +930,11 @@ void updateBooleanArrayProperty(
 
   // dynamic array of boolean
   size_t numOfElements = 0;
-  const auto& jsonOuterArray = propertyValue.GetArray();
+  auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    const auto& arrayMember =
-        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+    const auto& arrayMember = *it;
     numOfElements += arrayMember.Size();
+    ++it;
   }
 
   std::vector<std::byte> valueBuffer;
@@ -912,14 +1006,15 @@ void updateBooleanArrayProperty(
   featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
 }
 
+template <typename TValueGetter>
 void updateExtensionWithArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
-    const rapidjson::Value& propertyValue) {
-  assert(propertyValue.Size() >= featureTable.count);
+    const TValueGetter& propertyValue) {
+  assert(propertyValue.size() >= featureTable.count);
 
   if (compatibleTypes.componentType->isBool) {
     updateBooleanArrayProperty(
@@ -1020,14 +1115,15 @@ void updateExtensionWithArrayProperty(
   }
 }
 
+template <typename TValueGetter>
 void updateExtensionWithJsonProperty(
     Model& gltf,
     ClassProperty& classProperty,
     const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
-    const rapidjson::Value& propertyValue) {
+    const TValueGetter& propertyValue) {
 
-  if (propertyValue.Empty() || propertyValue.Size() < featureTable.count) {
+  if (propertyValue.size() == 0 || propertyValue.size() < featureTable.count) {
     // No property to infer the type from, so assume string.
     updateExtensionWithJsonStringProperty(
         gltf,
@@ -1241,6 +1337,286 @@ void updateExtensionWithBinaryProperty(
   binaryProperty.gltfByteOffset = gltfBufferOffset;
   binaryProperty.byteLength = static_cast<int64_t>(bufferView.byteLength);
 }
+
+class BatchTableHierarchyPropertyValues {
+public:
+  class const_iterator {
+  public:
+    const_iterator(
+        const std::string& propertyName,
+        const rapidjson::Value::ConstArray& classes,
+        const rapidjson::Value::ConstArray& classIds,
+        const rapidjson::Value::ConstArray& parentIds,
+        const std::vector<uint32_t>& instanceIndices,
+        int64_t currentIndex)
+        : _propertyName(propertyName),
+          _classes(classes),
+          _classIds(classIds),
+          _parentIds(parentIds),
+          _instanceIndices(instanceIndices),
+          _currentIndex(currentIndex) {}
+
+    const_iterator& operator++() {
+      ++this->_currentIndex;
+      return *this;
+    }
+
+    bool operator==(const const_iterator& rhs) const {
+      return this->_currentIndex == rhs._currentIndex;
+    }
+
+    bool operator!=(const const_iterator& rhs) const {
+      return this->_currentIndex != rhs._currentIndex;
+    }
+
+    const rapidjson::Value& operator*() const {
+      // A static null value, to return when there is no value defined for this
+      // instance and property.
+      static const rapidjson::Value nullValue{};
+
+      const rapidjson::Value* pResult = this->getValue(this->_currentIndex);
+      if (pResult) {
+        return *pResult;
+      }
+
+      int64_t id = this->_currentIndex;
+
+      while (true) {
+        if (id < 0 || id >= this->_parentIds.Size()) {
+          return nullValue;
+        }
+
+        const rapidjson::Value& parentIdValue =
+            this->_parentIds[rapidjson::SizeType(id)];
+        if (!parentIdValue.IsInt64()) {
+          return nullValue;
+        }
+
+        int64_t parentId = parentIdValue.GetInt64();
+        if (parentId == id) {
+          return nullValue;
+        }
+
+        pResult = this->getValue(parentId);
+        if (pResult) {
+          return *pResult;
+        }
+
+        id = parentId;
+      }
+    }
+
+    const rapidjson::Value* operator->() const { return &(**this); }
+
+    const rapidjson::Value* getValue(int64_t index) const {
+      assert(index < this->_classIds.Size());
+      const rapidjson::Value& classIdValue =
+          this->_classIds[rapidjson::SizeType(index)];
+      if (!classIdValue.IsInt64()) {
+        return nullptr;
+      }
+
+      int64_t classId = classIdValue.GetInt64();
+      int64_t instanceId = this->_instanceIndices[index];
+
+      if (classId < 0 || classId >= this->_classes.Size()) {
+        return nullptr;
+      }
+
+      const rapidjson::Value& thisClass =
+          this->_classes[rapidjson::SizeType(classId)];
+      auto instancesIt = thisClass.FindMember("instances");
+      if (instancesIt == thisClass.MemberEnd()) {
+        return nullptr;
+      }
+
+      auto propertyIt =
+          instancesIt->value.FindMember(this->_propertyName.c_str());
+      if (propertyIt == instancesIt->value.MemberEnd()) {
+        return nullptr;
+      }
+
+      if (instanceId < 0 || instanceId >= propertyIt->value.Size()) {
+        return nullptr;
+      }
+
+      return &propertyIt->value[rapidjson::SizeType(instanceId)];
+    }
+
+  private:
+    const std::string& _propertyName;
+    const rapidjson::Value::ConstArray _classes;
+    const rapidjson::Value::ConstArray _classIds;
+    const rapidjson::Value::ConstArray _parentIds;
+    const std::vector<uint32_t>& _instanceIndices;
+    int64_t _currentIndex;
+  };
+
+  BatchTableHierarchyPropertyValues(
+      const rapidjson::Value& batchTableHierarchy,
+      const std::string& propertyName)
+      : _batchTableHierarchy(batchTableHierarchy), _propertyName(propertyName) {
+
+    auto classesIt = batchTableHierarchy.FindMember("classes");
+    if (classesIt == batchTableHierarchy.MemberEnd()) {
+      return;
+    }
+
+    auto classIdsIt = batchTableHierarchy.FindMember("classIds");
+    if (classIdsIt == batchTableHierarchy.MemberEnd() ||
+        !classIdsIt->value.IsArray()) {
+      return;
+    }
+
+    auto instancesLengthIt = batchTableHierarchy.FindMember("instancesLength");
+    if (instancesLengthIt == batchTableHierarchy.MemberEnd() ||
+        !instancesLengthIt->value.IsInt64()) {
+      return;
+    }
+
+    int64_t instancesLength = instancesLengthIt->value.GetInt64();
+
+    std::vector<uint32_t> classInstancesSeen(classesIt->value.Size(), 0);
+    this->_instanceIndices.resize(instancesLength, 0);
+
+    size_t instanceIndex = 0;
+    for (const rapidjson::Value& classIdValue : classIdsIt->value.GetArray()) {
+      if (!classIdValue.IsInt64()) {
+        continue;
+      }
+
+      int64_t classId = classIdValue.GetInt64();
+      if (classId < 0 || classId >= int64_t(classInstancesSeen.size())) {
+        // Invalid class ID
+        continue;
+      }
+
+      this->_instanceIndices[instanceIndex] = classInstancesSeen[classId];
+      ++classInstancesSeen[classId];
+
+      ++instanceIndex;
+
+      if (instanceIndex >= this->_instanceIndices.size()) {
+        // Shouldn't happen in a correctly-defined batch table hierarchy, but
+        // don't overflow buffers if it does.
+        break;
+      }
+    }
+  }
+
+  const_iterator begin() const { return createIterator(0); }
+
+  const_iterator end() const {
+    return createIterator(this->_instanceIndices.size());
+  }
+
+  int64_t size() const { return this->_instanceIndices.size(); }
+
+private:
+  const_iterator createIterator(int64_t index) const {
+    rapidjson::Value emptyArray;
+    emptyArray.SetArray();
+
+    auto classesIt = this->_batchTableHierarchy.FindMember("classes");
+    const rapidjson::Value::ConstArray classes =
+        (classesIt != this->_batchTableHierarchy.MemberEnd() ? classesIt->value
+                                                             : emptyArray)
+            .GetArray();
+
+    auto classIdsIt = this->_batchTableHierarchy.FindMember("classIds");
+    const rapidjson::Value::ConstArray classIds =
+        (classIdsIt != this->_batchTableHierarchy.MemberEnd()
+             ? classIdsIt->value
+             : emptyArray)
+            .GetArray();
+
+    auto parentIdsIt = this->_batchTableHierarchy.FindMember("parentIds");
+    const rapidjson::Value::ConstArray parentIds =
+        (parentIdsIt != this->_batchTableHierarchy.MemberEnd()
+             ? parentIdsIt->value
+             : emptyArray)
+            .GetArray();
+
+    return const_iterator(
+        this->_propertyName,
+        classes,
+        classIds,
+        parentIds,
+        this->_instanceIndices,
+        index);
+  }
+
+  const rapidjson::Value& _batchTableHierarchy;
+  const std::string& _propertyName;
+  std::vector<uint32_t> _instanceIndices;
+};
+
+void updateExtensionWithBatchTableHierarchy(
+    Model& gltf,
+    Class& classDefinition,
+    FeatureTable& featureTable,
+    const rapidjson::Value& batchTableHierarchy,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  // EXT_feature_metadata can't support hierarchy, so we need to flatten it.
+  // It also can't support multiple classes with a single set of feature IDs.
+  // So essentially every property of every class gets added to the one class
+  // definition.
+  auto classesIt = batchTableHierarchy.FindMember("classes");
+  if (classesIt == batchTableHierarchy.MemberEnd()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "3DTILES_batch_table_hierarchy does not contain required \"classes\" "
+        "property.");
+    return;
+  }
+
+  // Find all the properties.
+  std::unordered_set<std::string> properties;
+
+  for (auto classIt = classesIt->value.Begin();
+       classIt != classesIt->value.End();
+       ++classIt) {
+    auto instancesIt = classIt->FindMember("instances");
+    for (auto propertyIt = instancesIt->value.MemberBegin();
+         propertyIt != instancesIt->value.MemberEnd();
+         ++propertyIt) {
+      properties.insert(propertyIt->name.GetString());
+    }
+  }
+
+  for (const std::string& name : properties) {
+    ClassProperty& classProperty =
+        classDefinition.properties.emplace(name, ClassProperty()).first->second;
+    classProperty.name = name;
+
+    FeatureTableProperty& featureTableProperty =
+        featureTable.properties.emplace(name, FeatureTableProperty())
+            .first->second;
+
+    updateExtensionWithJsonProperty(
+        gltf,
+        classProperty,
+        featureTable,
+        featureTableProperty,
+        BatchTableHierarchyPropertyValues(batchTableHierarchy, name));
+  }
+  // // Create each property.
+  // for (const std::string& name : properties) {
+  //   // const CompatibleTypes& compatibleTypes = property.second;
+
+  //   ClassProperty& classProperty =
+  //       classDefinition.properties.emplace(name,
+  //       ClassProperty()).first->second;
+  //   classProperty.name = name;
+
+  //   // FeatureTableProperty& featureTableProperty =
+  //   featureTable.properties.emplace(name,
+  //   FeatureTableProperty()).first->second;
+  // }
+
+  //
+}
+
 } // namespace
 
 namespace Cesium3DTilesSelection {
@@ -1325,7 +1701,7 @@ void upgradeBatchTableToFeatureMetadata(
           classProperty,
           featureTable,
           featureTableProperty,
-          propertyValue);
+          ArrayOfPropertyValues(propertyValue));
     } else {
       BinaryProperty& binaryProperty = binaryProperties.emplace_back();
       updateExtensionWithBinaryProperty(
@@ -1340,6 +1716,21 @@ void upgradeBatchTableToFeatureMetadata(
           propertyValue,
           pLogger);
       gltfBufferOffset += roundUp(binaryProperty.byteLength, 8);
+    }
+  }
+
+  // Convert 3DTILES_batch_table_hierarchy
+  auto extensionsIt = batchTableJson.FindMember("extensions");
+  if (extensionsIt != batchTableJson.MemberEnd()) {
+    auto bthIt =
+        extensionsIt->value.FindMember("3DTILES_batch_table_hierarchy");
+    if (bthIt != extensionsIt->value.MemberEnd()) {
+      updateExtensionWithBatchTableHierarchy(
+          gltf,
+          classDefinition,
+          featureTable,
+          bthIt->value,
+          pLogger);
     }
   }
 
