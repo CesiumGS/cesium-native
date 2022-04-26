@@ -11,9 +11,15 @@
 namespace Cesium3DTilesSelection {
 class Tile;
 
+enum class TileLoadResultState {
+  Success,
+  Failed,
+  RetryLater
+};
+
 struct TileLoadResult {
   TileContentKind contentKind;
-  TileLoadState state;
+  TileLoadResultState state;
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
   std::function<void(Tile&)> deferredTileInitializer;
 };

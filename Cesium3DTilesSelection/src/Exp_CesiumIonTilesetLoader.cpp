@@ -258,13 +258,13 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
   if (_refreshTokenState == TokenRefreshState::Loading) {
     return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
-        TileLoadState::FailedTemporarily,
+        TileLoadResultState::RetryLater,
         nullptr,
         {}});
   } else if (_refreshTokenState == TokenRefreshState::Failed) {
     return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
-        TileLoadState::Failed,
+        TileLoadResultState::Failed,
         nullptr,
         {}});
   }
@@ -290,11 +290,8 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
         if (result.pCompletedRequest) {
           auto response = result.pCompletedRequest->response();
           if (response->statusCode() == 401) {
-            // mark this tile to Failed Temporarily, so that it can be reloaded again
-            if (result.state == TileLoadState::Failed) {
-              result.state = TileLoadState::FailedTemporarily;
-            }
-
+            // retry later
+            result.state = TileLoadResultState::RetryLater;
             asyncSystem.runInMainThread(std::move(refreshTokenInMainThread));
           }
         }

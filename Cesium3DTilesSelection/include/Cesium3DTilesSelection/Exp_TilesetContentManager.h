@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -27,10 +28,8 @@ public:
 private:
   static void setTileContent(
       TileContent& content,
-      TileContentKind&& contentKind,
-      std::function<void(Tile&)>&& tileInitializer,
-      TileLoadState state,
-      void* pRenderResources);
+      TileLoadResult&& result,
+      void* pWorkerRenderResources);
 
   void updateContentLoadedState(Tile& tile);
 

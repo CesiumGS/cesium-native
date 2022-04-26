@@ -34,7 +34,7 @@ CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
     TileLoadResult&& result,
     std::shared_ptr<IPrepareRendererResources>&& pPrepareRendererResources) {
   void* pRenderResources = nullptr;
-  if (result.state == TileLoadState::ContentLoaded) {
+  if (result.state == TileLoadResultState::Success) {
     TileRenderContent* pRenderContent =
         std::get_if<TileRenderContent>(&result.contentKind);
     if (pRenderContent && pRenderContent->model) {
@@ -123,27 +123,10 @@ void TilesetContentManager::loadTileContent(
                 std::move(pPrepareRendererResources));
           })
       .thenInMainThread([pContent](TileLoadResultAndRenderResources&& pair) {
-        TileLoadResult& result = pair.result;
-        if (result.state == TileLoadState::ContentLoaded ||
-            result.state == TileLoadState::Failed ||
-            result.state == TileLoadState::FailedTemporarily) {
-          TilesetContentManager::setTileContent(
-              *pContent,
-              std::move(result.contentKind),
-              std::move(result.deferredTileInitializer),
-              result.state,
-              pair.pRenderResources);
-        } else {
-          // any states other than the three above are regarded as failed.
-          // We will never allow derived class to influence the state of a
-          // tile
-          TilesetContentManager::setTileContent(
-              *pContent,
-              std::move(result.contentKind),
-              std::move(result.deferredTileInitializer),
-              TileLoadState::Failed,
-              nullptr);
-        }
+        TilesetContentManager::setTileContent(
+            *pContent,
+            std::move(pair.result),
+            pair.pRenderResources);
       });
 }
 
@@ -211,14 +194,26 @@ void TilesetContentManager::updateRequestHeader(
 
 void TilesetContentManager::setTileContent(
     TileContent& content,
-    TileContentKind&& contentKind,
-    std::function<void(Tile&)>&& tileInitializer,
-    TileLoadState state,
-    void* pRenderResources) {
-  content.setContentKind(std::move(contentKind));
-  content.setTileInitializerCallback(std::move(tileInitializer));
-  content.setState(state);
-  content.setRenderResources(pRenderResources);
+    TileLoadResult&& result,
+    void* pWorkerRenderResources) {
+  switch (result.state) {
+  case TileLoadResultState::Success:
+    content.setState(TileLoadState::ContentLoaded);
+    break;
+  case TileLoadResultState::Failed:
+    content.setState(TileLoadState::Failed);
+    break;
+  case TileLoadResultState::RetryLater:
+    content.setState(TileLoadState::FailedTemporarily);
+    break;
+  default:
+    assert(false && "Cannot handle an unknown TileLoadResultState");
+    break;
+  }
+
+  content.setContentKind(std::move(result.contentKind));
+  content.setTileInitializerCallback(std::move(result.deferredTileInitializer));
+  content.setRenderResources(pWorkerRenderResources);
 }
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {

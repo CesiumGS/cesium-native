@@ -419,7 +419,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     logErrors(pLogger, tileUrl, errors.errors);
     return TileLoadResult{
         TileExternalContent{},
-        TileLoadState::Failed,
+        TileLoadResultState::Failed,
         std::move(pCompletedRequest),
         {}};
   }
@@ -427,7 +427,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // mark this tile has external content
   return TileLoadResult{
       TileExternalContent{},
-      TileLoadState::ContentLoaded,
+      TileLoadResultState::Success,
       std::move(pCompletedRequest),
       std::move(externalContentInitializer)};
 }
@@ -491,7 +491,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
   const std::string* url = std::get_if<std::string>(&loadInfo.tileID);
   if (!url) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult{TileUnknownContent{}, TileLoadState::Failed, 0, {}});
+        TileLoadResult{TileUnknownContent{}, TileLoadResultState::Failed, 0, {}});
   }
 
   ExternalContentInitializer externalContentInitializer{nullptr, this};
@@ -515,7 +515,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
-                  TileLoadState::Failed,
+                  TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
                   {}};
             }
@@ -529,7 +529,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
-                  TileLoadState::Failed,
+                  TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
                   {}};
             }
@@ -553,14 +553,14 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               if (result.errors) {
                 return TileLoadResult{
                     TileRenderContent{std::nullopt},
-                    TileLoadState::Failed,
+                    TileLoadResultState::Failed,
                     std::move(pCompletedRequest),
                     {}};
               }
 
               return TileLoadResult{
                   TileRenderContent{std::move(result.model)},
-                  TileLoadState::ContentLoaded,
+                  TileLoadResultState::Success,
                   std::move(pCompletedRequest),
                   {}};
             } else {
