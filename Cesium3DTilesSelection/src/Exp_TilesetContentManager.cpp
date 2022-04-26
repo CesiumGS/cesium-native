@@ -229,8 +229,13 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
     tileInitializer(tile);
   }
 
+  // if tile is external tileset, then it will be refined no matter what
+  if (pContent->isExternalContent()) {
+    tile.setUnconditionallyRefine();
+  }
+
   // create render resources in the main thread
-  TileRenderContent* pRenderContent = pContent->getRenderContent();
+  const TileRenderContent* pRenderContent = pContent->getRenderContent();
   if (pRenderContent && pRenderContent->model) {
     void* pWorkerRenderResources = pContent->getRenderResources();
     void* pMainThreadRenderResources =

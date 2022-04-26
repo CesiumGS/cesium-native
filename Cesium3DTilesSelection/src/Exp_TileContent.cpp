@@ -21,10 +21,6 @@ const TileRenderContent* TileContent::getRenderContent() const noexcept {
   return std::get_if<TileRenderContent>(&_contentKind);
 }
 
-TileRenderContent* TileContent::getRenderContent() noexcept {
-  return std::get_if<TileRenderContent>(&_contentKind);
-}
-
 TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }
 
 void TileContent::setContentKind(TileContentKind&& contentKind) {
@@ -41,7 +37,7 @@ void TileContent::setRenderResources(void* pRenderResources) noexcept {
   _pRenderResources = pRenderResources;
 }
 
-void* TileContent::getRenderResources() noexcept { return _pRenderResources; }
+void* TileContent::getRenderResources() const noexcept { return _pRenderResources; }
 
 void TileContent::setTileInitializerCallback(
     std::function<void(Tile&)> callback) {

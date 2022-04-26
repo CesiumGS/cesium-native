@@ -11,12 +11,12 @@ class TilesetContentLoader;
 class Tile;
 
 enum class TileLoadState {
-  Failed = -2,
   FailedTemporarily = -1,
   Unloaded = 0,
   ContentLoading = 1,
   ContentLoaded = 2,
-  Done = 3
+  Done = 3,
+  Failed = 4,
 };
 
 struct TileUnknownContent {};
@@ -44,9 +44,9 @@ public:
 
   const TileRenderContent* getRenderContent() const noexcept;
 
-  TileRenderContent* getRenderContent() noexcept;
-
   TilesetContentLoader* getLoader() noexcept;
+
+  void* getRenderResources() const noexcept;
 
 private:
   void setContentKind(TileContentKind&& contentKind);
@@ -56,8 +56,6 @@ private:
   void setState(TileLoadState state) noexcept;
 
   void setRenderResources(void* pRenderResources) noexcept;
-
-  void* getRenderResources() noexcept;
 
   void setTileInitializerCallback(std::function<void(Tile&)> callback);
 

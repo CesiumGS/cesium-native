@@ -552,8 +552,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               logErrorsAndWarnings(loadInfo.pLogger, tileUrl, result.errors);
               if (result.errors) {
                 return TileLoadResult{
-                    TileUnknownContent{},
-                    TileLoadState::FailedTemporarily,
+                    TileRenderContent{std::nullopt},
+                    TileLoadState::Failed,
                     std::move(pCompletedRequest),
                     {}};
               }
