@@ -188,12 +188,13 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     std::string message = fmt::format(
         "Did not receive a valid response for tileset {}",
         pRequest->url());
+    const Tileset* pTileset = pContext->pTileset;
     return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext->pTileset,
+            pTileset,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
             message}});
@@ -205,12 +206,13 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         "Received status code {} for tileset {}",
         pResponse->statusCode(),
         pRequest->url());
+    const Tileset* pTileset = pContext->pTileset;
     return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext ? pContext->pTileset : nullptr,
+            pTileset,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
             message}});
@@ -228,12 +230,13 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tileset.GetParseError(),
         tileset.GetErrorOffset());
+    const Tileset* pTileset = pContext->pTileset;
     return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext->pTileset,
+            pTileset,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
             message}});
