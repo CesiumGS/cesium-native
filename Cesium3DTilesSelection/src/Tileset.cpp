@@ -82,7 +82,7 @@ Tileset::Tileset(
             this->_pTilesetContentManager =
                 std::make_unique<TilesetContentManager>(
                     _externals,
-                    std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+                    std::move(result.requestHeaders),
                     std::move(result.pLoader));
           }
 
@@ -147,7 +147,7 @@ Tileset::Tileset(
             this->_pTilesetContentManager =
                 std::make_unique<TilesetContentManager>(
                     _externals,
-                    std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+                    std::move(result.requestHeaders),
                     std::move(result.pLoader));
           }
 

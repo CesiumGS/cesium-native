@@ -118,7 +118,7 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
                   ionAssetID,
                   std::move(ionAccessToken),
                   std::move(ionAssetEndpointUrl),
-                  std::move(result.pLoader),
+                  std::move(tilesetJsonResult.pLoader),
                   std::move(headerChangeListener));
               result.pRootTile = std::move(tilesetJsonResult.pRootTile);
               result.gltfUpAxis = tilesetJsonResult.gltfUpAxis;
