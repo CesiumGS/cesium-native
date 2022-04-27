@@ -42,41 +42,6 @@ struct CompatibleTypes {
   std::optional<MaskedType> componentType;
   std::optional<uint32_t> minComponentCount;
   std::optional<uint32_t> maxComponentCount;
-
-  CompatibleTypes combine(const CompatibleTypes& rhs) const {
-    CompatibleTypes result;
-    result.type = combine(this->type, rhs.type);
-    result.componentType = combine(this->type, rhs.type);
-    if (this->minComponentCount || rhs.minComponentCount) {
-      result.minComponentCount = glm::min(
-          this->minComponentCount.value_or(1),
-          rhs.minComponentCount.value_or(1));
-    }
-    if (this->maxComponentCount || rhs.maxComponentCount) {
-      result.maxComponentCount = glm::max(
-          this->maxComponentCount.value_or(1),
-          rhs.maxComponentCount.value_or(1));
-    }
-    return result;
-  }
-
-private:
-  static MaskedType combine(const MaskedType& lhs, const MaskedType& rhs) {
-    MaskedType result;
-    result.isInt8 = lhs.isInt8 && rhs.isInt8;
-    result.isUint8 = lhs.isUint8 && rhs.isUint8;
-    result.isInt16 = lhs.isInt16 && rhs.isInt16;
-    result.isUint16 = lhs.isUint16 && rhs.isUint16;
-    result.isInt32 = lhs.isInt32 && rhs.isInt32;
-    result.isUint32 = lhs.isUint32 && rhs.isUint32;
-    result.isInt64 = lhs.isInt64 && rhs.isInt64;
-    result.isUint64 = lhs.isUint64 && rhs.isUint64;
-    result.isFloat32 = lhs.isFloat32 && rhs.isFloat32;
-    result.isFloat64 = lhs.isFloat64 && rhs.isFloat64;
-    result.isBool = lhs.isBool && rhs.isBool;
-    result.isArray = lhs.isArray && rhs.isArray;
-    return result;
-  }
 };
 
 struct BinaryProperty {
@@ -1369,7 +1334,15 @@ void updateExtensionWithBatchTableHierarchy(
     for (auto propertyIt = instancesIt->value.MemberBegin();
          propertyIt != instancesIt->value.MemberEnd();
          ++propertyIt) {
-      properties.insert(propertyIt->name.GetString());
+      if (propertyIt->value.IsObject()) {
+        SPDLOG_LOGGER_WARN(
+            pLogger,
+            "Property {} uses binary values. Only JSON-based "
+            "3DTILES_batch_table_hierarchy properties are currently supported.",
+            propertyIt->name.GetString());
+      } else {
+        properties.insert(propertyIt->name.GetString());
+      }
     }
   }
 

@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Improved the load performance when `TilesetOptions::forbidHoles` is enabled by only loading child tiles when their parent does not meet the necessary screen-space error requirement.
+- Added support for metadata from the `3DTILES_batch_table_hierarchy` extension.
 
 ##### Fixes :wrench:
 

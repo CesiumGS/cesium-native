@@ -22,14 +22,16 @@ BatchTableHierarchyPropertyValues::BatchTableHierarchyPropertyValues(
   static const rapidjson::Value emptyArray = createEmptyArray();
 
   auto classIdsIt = this->_batchTableHierarchy.FindMember("classIds");
-  if (classIdsIt == this->_batchTableHierarchy.MemberEnd() || !classIdsIt->value.IsArray()) {
+  if (classIdsIt == this->_batchTableHierarchy.MemberEnd() ||
+      !classIdsIt->value.IsArray()) {
     this->_pClassIDs = &emptyArray;
   } else {
     this->_pClassIDs = &classIdsIt->value;
   }
 
   auto parentIdsIt = this->_batchTableHierarchy.FindMember("parentIds");
-  if (parentIdsIt == this->_batchTableHierarchy.MemberEnd() || !parentIdsIt->value.IsArray()) {
+  if (parentIdsIt == this->_batchTableHierarchy.MemberEnd() ||
+      !parentIdsIt->value.IsArray()) {
     this->_pParentIDs = &emptyArray;
   } else {
     this->_pParentIDs = &parentIdsIt->value;
