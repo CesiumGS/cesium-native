@@ -387,7 +387,7 @@ void updateExtensionWithJsonNumericProperty(
   T* p = reinterpret_cast<T*>(buffer.cesium.data.data());
   auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    *p = static_cast<T>(it->Get<TRapidJson>());
+    *p = static_cast<T>(it->template Get<TRapidJson>());
     ++p;
     ++it;
   }
@@ -455,7 +455,7 @@ void copyNumericDynamicArrayBuffers(
     *offsetValue = prevOffset;
     ++offsetValue;
     for (const auto& valueJson : jsonArrayMember.GetArray()) {
-      *value = static_cast<ValueType>(valueJson.Get<TRapidjson>());
+      *value = static_cast<ValueType>(valueJson.template Get<TRapidjson>());
       ++value;
     }
 
@@ -488,7 +488,7 @@ void updateNumericArrayProperty(
     for (int64_t i = 0; i < featureTable.count; ++i) {
       const auto& jsonArrayMember = *it;
       for (const auto& valueJson : jsonArrayMember.GetArray()) {
-        *value = static_cast<ValueType>(valueJson.Get<TRapidjson>());
+        *value = static_cast<ValueType>(valueJson.template Get<TRapidjson>());
         ++value;
       }
       ++it;
