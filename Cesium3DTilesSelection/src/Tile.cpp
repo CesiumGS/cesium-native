@@ -482,7 +482,9 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->setState(loadResult.state);
+        return ImplicitTraversalUtilities::loadAvailability(*this)
+            .thenImmediately(
+                [this, state = loadResult.state]() { this->setState(state); });
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();
