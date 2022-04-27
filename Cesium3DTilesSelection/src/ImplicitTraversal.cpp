@@ -352,28 +352,14 @@ CesiumAsync::Future<void> loadAvailability(Tile& tile) {
     const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
     const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
     const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-    uint8_t sw = 0;
-    uint8_t se = 0;
-    uint8_t nw = 0;
-    uint8_t ne = 0;
-
-    TileContext* pContext = tile.getContext();
-    TileContext* pSW = pContext;
-    TileContext* pSE = pContext;
-    TileContext* pNW = pContext;
-    TileContext* pNE = pContext;
-
     const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
-    uint8_t* availabilities[4] = {&sw, &se, &nw, &ne};
-    TileContext** childContexts[4] = {&pSW, &pSE, &pNW, &pNE};
+
     for (int i = 0; i < 4; i++) {
-      TileContext* pChildContext = *childContexts[i];
+      TileContext* pChildContext = tile.getContext();
       const QuadtreeTileID* pChildID = childIDs[i];
       while (pChildContext) {
-        uint8_t available =
-            pChildContext->implicitContext->rectangleAvailability
-                ->isTileAvailable(*pChildID);
-        if (available) {
+        if (pChildContext->implicitContext->rectangleAvailability
+                ->isTileAvailable(*pChildID)) {
           break;
         }
         if (pChildContext->implicitContext->availabilityLevels) {

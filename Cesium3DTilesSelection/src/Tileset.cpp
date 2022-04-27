@@ -394,7 +394,7 @@ Tileset::requestTileContent(Tile& tile) {
 CesiumAsync::SharedFuture<int> Tileset::requestAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& availabilityTileID,
     TileContext* pAvailabilityContext) {
-   AvailabilityLoadRecord record{
+  AvailabilityLoadRecord record{
       availabilityTileID,
       pAvailabilityContext,
       _asyncSystem.createResolvedFuture(0).share()};
@@ -402,58 +402,62 @@ CesiumAsync::SharedFuture<int> Tileset::requestAvailabilityTile(
       _availabilityLoading.begin(),
       _availabilityLoading.end(),
       record);
-   if (recordIt != _availabilityLoading.end()) {
+  if (recordIt != _availabilityLoading.end()) {
     return recordIt->future;
-   }
+  }
 
   std::string url =
       getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
-  record.future = _externals.pAssetAccessor
-      ->get(_externals.asyncSystem, url, pAvailabilityContext->requestHeaders)
-      .thenInWorkerThread(
-          [pLogger = _externals.pLogger, url, availabilityTileID](
-              std::shared_ptr<IAssetRequest>&& pRequest)
-              -> std::vector<QuadtreeTileRectangularRange> {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (pResponse) {
-              uint16_t statusCode = pResponse->statusCode();
+  record.future =
+      _externals.pAssetAccessor
+          ->get(
+              _externals.asyncSystem,
+              url,
+              pAvailabilityContext->requestHeaders)
+          .thenInWorkerThread(
+              [pLogger = _externals.pLogger, url, availabilityTileID](
+                  std::shared_ptr<IAssetRequest>&& pRequest)
+                  -> std::vector<QuadtreeTileRectangularRange> {
+                const IAssetResponse* pResponse = pRequest->response();
+                if (pResponse) {
+                  uint16_t statusCode = pResponse->statusCode();
 
-              if (!(statusCode != 0 &&
-                    (statusCode < 200 || statusCode >= 300))) {
-                return QuantizedMeshContent::loadMetadata(
-                    pLogger,
-                    pResponse->data(),
-                    availabilityTileID);
-              }
-            }
-            return {};
-          })
-      .thenInMainThread(
-          [pAvailabilityContext, availabilityTileID, this](
-              std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
-                  rectangles) {
-            pAvailabilityContext->implicitContext->availabilityTilesLoaded
-                .insert(availabilityTileID);
-            if (!rectangles.empty()) {
-              for (const QuadtreeTileRectangularRange& range : rectangles) {
-                pAvailabilityContext->implicitContext->rectangleAvailability
-                    ->addAvailableTileRange(range);
-              }
-            }
-            AvailabilityLoadRecord record{
-                availabilityTileID,
-                pAvailabilityContext,
-                _asyncSystem.createResolvedFuture(0).share()};
-            auto recordIt = std::find(
-                _availabilityLoading.begin(),
-                _availabilityLoading.end(),
-                record);
-            if (recordIt != _availabilityLoading.end()) {
-              _availabilityLoading.erase(recordIt);
-            }
-            return 0;
-          })
-      .share();
+                  if (!(statusCode != 0 &&
+                        (statusCode < 200 || statusCode >= 300))) {
+                    return QuantizedMeshContent::loadMetadata(
+                        pLogger,
+                        pResponse->data(),
+                        availabilityTileID);
+                  }
+                }
+                return {};
+              })
+          .thenInMainThread(
+              [pAvailabilityContext, availabilityTileID, this](
+                  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
+                      rectangles) {
+                pAvailabilityContext->implicitContext->availabilityTilesLoaded
+                    .insert(availabilityTileID);
+                if (!rectangles.empty()) {
+                  for (const QuadtreeTileRectangularRange& range : rectangles) {
+                    pAvailabilityContext->implicitContext->rectangleAvailability
+                        ->addAvailableTileRange(range);
+                  }
+                }
+                AvailabilityLoadRecord record{
+                    availabilityTileID,
+                    pAvailabilityContext,
+                    _asyncSystem.createResolvedFuture(0).share()};
+                auto recordIt = std::find(
+                    _availabilityLoading.begin(),
+                    _availabilityLoading.end(),
+                    record);
+                if (recordIt != _availabilityLoading.end()) {
+                  _availabilityLoading.erase(recordIt);
+                }
+                return 0;
+              })
+          .share();
   _availabilityLoading.push_back(record);
   return record.future;
 }
