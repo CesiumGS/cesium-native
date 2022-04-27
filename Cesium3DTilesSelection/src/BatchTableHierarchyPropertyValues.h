@@ -8,6 +8,12 @@
 namespace Cesium3DTilesSelection {
 namespace CesiumImpl {
 
+/**
+ * @brief An adaptor that flattens a batch table hierarchy, making it appear as
+ * a flat list of instances with a flat list of properties.
+ *
+ * @private
+ */
 class BatchTableHierarchyPropertyValues {
 public:
   class const_iterator {
@@ -38,27 +44,62 @@ public:
     mutable const rapidjson::Value* _pCachedValue;
   };
 
+  /**
+   * @brief Constructs a new instance from a 3DTILES_batch_table_hierarchy JSON
+   * value.
+   *
+   * @param batchTableHierarchy The 3DTILES_batch_table_hierarchy JSON value.
+   * This value must remain valid for the entire lifetime of the
+   * BatchTableHierarchyPropertyValues instance, or undefined behavior will
+   * result.
+   */
   BatchTableHierarchyPropertyValues(
       const rapidjson::Value& batchTableHierarchy);
 
+  /**
+   * @brief Sets the name of the property whose values are to be enumerated.
+   *
+   * It is more efficient to re-use an instance to access different properties
+   * than to create a new instance per property.
+   *
+   * @param propertyName The property name.
+   */
   void setProperty(const std::string& propertyName);
 
+  /**
+   * @brief Gets an iterator for the value of this property for this first
+   * feature.
+   */
   const_iterator begin() const;
+
+  /**
+   * @brief Gets an iterator just past the last feature.
+   */
   const_iterator end() const;
 
+  /**
+   * @brief Gets the total number of features.
+   *
+   * Note that because a batch table hierarchy has extra entities that do not
+   * correspond to actual features, this size may be greater than the number of
+   * features. A correctly-constructed batch table hierarchy should not report a
+   * size less than the number of features, but clients must not assume that the
+   * batch table hierarchy is correctly constructed.
+   */
   int64_t size() const;
 
 private:
   const_iterator createIterator(int64_t index) const;
 
   const rapidjson::Value& _batchTableHierarchy;
-  std::string _propertyName;
+  const rapidjson::Value* _pClassIDs;
+  const rapidjson::Value* _pParentIDs;
 
   // The index of each instance within its class.
   std::vector<uint32_t> _instanceIndices;
 
   // A pointer to the current property in each class.
-  std::vector<const rapidjson::Value*> _indexOfPropertyInClass;
+  std::vector<const rapidjson::Value*> _propertyInClass;
 };
 
 } // namespace CesiumImpl

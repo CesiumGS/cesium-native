@@ -2,21 +2,41 @@
 
 using namespace Cesium3DTilesSelection::CesiumImpl;
 
+namespace {
+
+rapidjson::Value createEmptyArray() {
+  rapidjson::Value result;
+  result.SetArray();
+  return result;
+}
+
+} // namespace
+
 BatchTableHierarchyPropertyValues::BatchTableHierarchyPropertyValues(
     const rapidjson::Value& batchTableHierarchy)
     : _batchTableHierarchy(batchTableHierarchy),
-      _propertyName(),
+      _pClassIDs(nullptr),
+      _pParentIDs(nullptr),
       _instanceIndices(),
-      _indexOfPropertyInClass() {
+      _propertyInClass() {
+  static const rapidjson::Value emptyArray = createEmptyArray();
+
+  auto classIdsIt = this->_batchTableHierarchy.FindMember("classIds");
+  if (classIdsIt == this->_batchTableHierarchy.MemberEnd() || !classIdsIt->value.IsArray()) {
+    this->_pClassIDs = &emptyArray;
+  } else {
+    this->_pClassIDs = &classIdsIt->value;
+  }
+
+  auto parentIdsIt = this->_batchTableHierarchy.FindMember("parentIds");
+  if (parentIdsIt == this->_batchTableHierarchy.MemberEnd() || !parentIdsIt->value.IsArray()) {
+    this->_pParentIDs = &emptyArray;
+  } else {
+    this->_pParentIDs = &parentIdsIt->value;
+  }
 
   auto classesIt = batchTableHierarchy.FindMember("classes");
   if (classesIt == batchTableHierarchy.MemberEnd()) {
-    return;
-  }
-
-  auto classIdsIt = batchTableHierarchy.FindMember("classIds");
-  if (classIdsIt == batchTableHierarchy.MemberEnd() ||
-      !classIdsIt->value.IsArray()) {
     return;
   }
 
@@ -58,9 +78,7 @@ BatchTableHierarchyPropertyValues::BatchTableHierarchyPropertyValues(
 
 void BatchTableHierarchyPropertyValues::setProperty(
     const std::string& propertyName) {
-  this->_propertyName = propertyName;
-
-  this->_indexOfPropertyInClass.clear();
+  this->_propertyInClass.clear();
 
   auto classesIt = this->_batchTableHierarchy.FindMember("classes");
   if (classesIt == this->_batchTableHierarchy.MemberEnd() ||
@@ -78,22 +96,22 @@ void BatchTableHierarchyPropertyValues::setProperty(
   for (auto it = classes.Begin(); it != classes.End(); ++it) {
     auto instancesIt = it->FindMember("instances");
     if (instancesIt == it->MemberEnd()) {
-      this->_indexOfPropertyInClass.emplace_back(nullptr);
+      this->_propertyInClass.emplace_back(nullptr);
       continue;
     }
 
     auto propertyIt = instancesIt->value.FindMember(propertyNameValue);
     if (propertyIt == instancesIt->value.MemberEnd()) {
-      this->_indexOfPropertyInClass.emplace_back(nullptr);
+      this->_propertyInClass.emplace_back(nullptr);
       continue;
     }
 
     if (!propertyIt->value.IsArray()) {
-      this->_indexOfPropertyInClass.emplace_back(nullptr);
+      this->_propertyInClass.emplace_back(nullptr);
       continue;
     }
 
-    this->_indexOfPropertyInClass.emplace_back(&propertyIt->value);
+    this->_propertyInClass.emplace_back(&propertyIt->value);
   }
 }
 
@@ -111,37 +129,12 @@ int64_t BatchTableHierarchyPropertyValues::size() const {
   return int64_t(this->_instanceIndices.size());
 }
 
-namespace {
-
-rapidjson::Value createEmptyArray() {
-  rapidjson::Value result;
-  result.SetArray();
-  return result;
-}
-
-} // namespace
-
 BatchTableHierarchyPropertyValues::const_iterator
 BatchTableHierarchyPropertyValues::createIterator(int64_t index) const {
-  static const rapidjson::Value emptyArray = createEmptyArray();
-
-  auto classIdsIt = this->_batchTableHierarchy.FindMember("classIds");
-  const rapidjson::Value::ConstArray classIds =
-      (classIdsIt != this->_batchTableHierarchy.MemberEnd() ? classIdsIt->value
-                                                            : emptyArray)
-          .GetArray();
-
-  auto parentIdsIt = this->_batchTableHierarchy.FindMember("parentIds");
-  const rapidjson::Value::ConstArray parentIds =
-      (parentIdsIt != this->_batchTableHierarchy.MemberEnd()
-           ? parentIdsIt->value
-           : emptyArray)
-          .GetArray();
-
   return const_iterator(
-      this->_indexOfPropertyInClass,
-      classIds,
-      parentIds,
+      this->_propertyInClass,
+      *this->_pClassIDs,
+      *this->_pParentIDs,
       this->_instanceIndices,
       index);
 }
