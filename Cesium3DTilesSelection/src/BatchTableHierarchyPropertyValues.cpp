@@ -13,8 +13,10 @@ rapidjson::Value createEmptyArray() {
 } // namespace
 
 BatchTableHierarchyPropertyValues::BatchTableHierarchyPropertyValues(
-    const rapidjson::Value& batchTableHierarchy)
+    const rapidjson::Value& batchTableHierarchy,
+    int64_t batchLength)
     : _batchTableHierarchy(batchTableHierarchy),
+      _batchLength(batchLength),
       _pClassIDs(nullptr),
       _pParentIDs(nullptr),
       _instanceIndices(),
@@ -124,11 +126,11 @@ BatchTableHierarchyPropertyValues::begin() const {
 
 BatchTableHierarchyPropertyValues::const_iterator
 BatchTableHierarchyPropertyValues::end() const {
-  return createIterator(int64_t(this->_instanceIndices.size()));
+  return createIterator(this->size());
 }
 
 int64_t BatchTableHierarchyPropertyValues::size() const {
-  return int64_t(this->_instanceIndices.size());
+  return std::min(int64_t(this->_instanceIndices.size()), this->_batchLength);
 }
 
 BatchTableHierarchyPropertyValues::const_iterator

@@ -1362,7 +1362,8 @@ void updateExtensionWithBatchTableHierarchy(
   }
 
   BatchTableHierarchyPropertyValues batchTableHierarchyValues(
-      batchTableHierarchy);
+      batchTableHierarchy,
+      featureTable.count);
 
   for (const std::string& name : properties) {
     ClassProperty& classProperty =

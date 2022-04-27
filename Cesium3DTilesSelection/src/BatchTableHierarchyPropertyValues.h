@@ -52,9 +52,12 @@ public:
    * This value must remain valid for the entire lifetime of the
    * BatchTableHierarchyPropertyValues instance, or undefined behavior will
    * result.
+   * @param batchLength The number of features, which may be less than the
+   * number of instances in the batch table hierarchy.
    */
   BatchTableHierarchyPropertyValues(
-      const rapidjson::Value& batchTableHierarchy);
+      const rapidjson::Value& batchTableHierarchy,
+      int64_t batchLength);
 
   /**
    * @brief Sets the name of the property whose values are to be enumerated.
@@ -80,11 +83,8 @@ public:
   /**
    * @brief Gets the total number of features.
    *
-   * Note that because a batch table hierarchy has extra entities that do not
-   * correspond to actual features, this size may be greater than the number of
-   * features. A correctly-constructed batch table hierarchy should not report a
-   * size less than the number of features, but clients must not assume that the
-   * batch table hierarchy is correctly constructed.
+   * This is the smaller of the number of features (given to the constructor as
+   * `batchLength`) and the number of instances in the batch table hierarchy.
    */
   int64_t size() const;
 
@@ -92,6 +92,7 @@ private:
   const_iterator createIterator(int64_t index) const;
 
   const rapidjson::Value& _batchTableHierarchy;
+  int64_t _batchLength;
   const rapidjson::Value* _pClassIDs;
   const rapidjson::Value* _pParentIDs;
 
