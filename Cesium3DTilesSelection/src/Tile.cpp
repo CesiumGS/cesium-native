@@ -502,7 +502,6 @@ void Tile::loadContent() {
 }
 
 void Tile::processLoadedContent() {
-
   const TilesetExternals& externals = this->getTileset()->getExternals();
 
   if (this->getState() == LoadState::ContentLoaded) {

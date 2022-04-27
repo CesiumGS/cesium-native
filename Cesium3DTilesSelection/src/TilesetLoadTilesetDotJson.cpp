@@ -497,7 +497,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                     pLogger,
                     "Did not receive a valid response for parent layer.json {}",
                     pRequest->url());
-                return;
+                return asyncSystem.createResolvedFuture();
               }
 
               if (pResponse->statusCode() != 0 &&
@@ -508,7 +508,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                     "Received status code {} for parent layer.json {}",
                     pResponse->statusCode(),
                     pRequest->url());
-                return;
+                return asyncSystem.createResolvedFuture();
               }
 
               const gsl::span<const std::byte> data = pResponse->data();
@@ -525,7 +525,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                     "{}",
                     parentLayerJson.GetParseError(),
                     parentLayerJson.GetErrorOffset());
-                return;
+                return asyncSystem.createResolvedFuture();
               }
 
               context.pUnderlyingContext = std::make_unique<TileContext>();
@@ -533,7 +533,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
               context.pUnderlyingContext->pTileset = context.pTileset;
               context.pUnderlyingContext->requestHeaders =
                   context.requestHeaders;
-              Private::workerThreadLoadTileContext(
+              return Private::workerThreadLoadTileContext(
                   parentLayerJson,
                   *context.pUnderlyingContext,
                   asyncSystem,
