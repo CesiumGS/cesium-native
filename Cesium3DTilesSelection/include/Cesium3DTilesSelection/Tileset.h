@@ -249,7 +249,7 @@ public:
    * @param availabilityTileID The ID of the availability tile.
    * @param pAvailabilityContext The tile context of the availability tile.
    */
-  CesiumAsync::Future<void> requestAvailabilityTile(
+  CesiumAsync::SharedFuture<int> requestAvailabilityTile(
       const CesiumGeometry::QuadtreeTileID& availabilityTileID,
       TileContext* pAvailabilityContext);
 
@@ -569,6 +569,28 @@ private:
     }
   };
 
+  struct AvailabilityLoadRecord {
+    /**
+     * @brief The ID of the availability tile.
+     */
+    CesiumGeometry::QuadtreeTileID tileID;
+
+    /**
+     * @brief The tile context of the availability tile.
+     */
+    const TileContext* pTileContext;
+
+    /**
+     * @brief A shared future of the availability loading.
+     */
+    CesiumAsync::SharedFuture<int> future;
+
+    bool operator==(const AvailabilityLoadRecord& rhs) const noexcept {
+      return this->tileID == rhs.tileID &&
+             this->pTileContext == rhs.pTileContext;
+    }
+  };
+
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
@@ -577,6 +599,8 @@ private:
   std::vector<SubtreeLoadRecord> _subtreeLoadQueue;
   std::atomic<uint32_t>
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
+
+  std::vector<AvailabilityLoadRecord> _availabilityLoading;
 
   Tile::LoadedLinkedList _loadedTiles;
 

@@ -390,7 +390,7 @@ CesiumAsync::Future<void> loadAvailability(Tile& tile) {
                     *unloadedAvailabilityTile,
                     pChildContext)
                 .thenInWorkerThread(
-                    [&tile]() { return loadAvailability(tile); });
+                    [&tile](int) { return loadAvailability(tile); });
           }
         }
         pChildContext = pChildContext->pUnderlyingContext.get();

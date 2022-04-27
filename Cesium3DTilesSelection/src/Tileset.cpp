@@ -391,12 +391,24 @@ Tileset::requestTileContent(Tile& tile) {
       tile.getContext()->requestHeaders);
 }
 
-CesiumAsync::Future<void> Tileset::requestAvailabilityTile(
+CesiumAsync::SharedFuture<int> Tileset::requestAvailabilityTile(
     const CesiumGeometry::QuadtreeTileID& availabilityTileID,
     TileContext* pAvailabilityContext) {
+   AvailabilityLoadRecord record{
+      availabilityTileID,
+      pAvailabilityContext,
+      _asyncSystem.createResolvedFuture(0).share()};
+  auto recordIt = std::find(
+      _availabilityLoading.begin(),
+      _availabilityLoading.end(),
+      record);
+   if (recordIt != _availabilityLoading.end()) {
+    return recordIt->future;
+   }
+
   std::string url =
       getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
-  return _externals.pAssetAccessor
+  record.future = _externals.pAssetAccessor
       ->get(_externals.asyncSystem, url, pAvailabilityContext->requestHeaders)
       .thenInWorkerThread(
           [pLogger = _externals.pLogger, url, availabilityTileID](
@@ -428,7 +440,22 @@ CesiumAsync::Future<void> Tileset::requestAvailabilityTile(
                     ->addAvailableTileRange(range);
               }
             }
-          });
+            AvailabilityLoadRecord record{
+                availabilityTileID,
+                pAvailabilityContext,
+                _asyncSystem.createResolvedFuture(0).share()};
+            auto recordIt = std::find(
+                _availabilityLoading.begin(),
+                _availabilityLoading.end(),
+                record);
+            if (recordIt != _availabilityLoading.end()) {
+              _availabilityLoading.erase(recordIt);
+            }
+            return 0;
+          })
+      .share();
+  _availabilityLoading.push_back(record);
+  return record.future;
 }
 
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
