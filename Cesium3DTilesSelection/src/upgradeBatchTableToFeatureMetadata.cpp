@@ -105,6 +105,50 @@ void copyStringBuffer(
   }
 }
 
+class ArrayOfPropertyValues {
+public:
+  class const_iterator {
+  public:
+    const_iterator(const rapidjson::Value* p) : _p(p) {}
+
+    const_iterator& operator++() {
+      ++this->_p;
+      return *this;
+    }
+
+    bool operator==(const const_iterator& rhs) const {
+      return this->_p == rhs._p;
+    }
+
+    bool operator!=(const const_iterator& rhs) const {
+      return this->_p != rhs._p;
+    }
+
+    const rapidjson::Value& operator*() const { return *this->_p; }
+
+    const rapidjson::Value* operator->() const { return this->_p; }
+
+  private:
+    const rapidjson::Value* _p;
+  };
+
+  ArrayOfPropertyValues(const rapidjson::Value& propertyValues)
+      : _propertyValues(propertyValues) {}
+
+  const_iterator begin() const {
+    return const_iterator(this->_propertyValues.Begin());
+  }
+
+  const_iterator end() const {
+    return const_iterator(this->_propertyValues.End());
+  }
+
+  int64_t size() const { return this->_propertyValues.Size(); }
+
+private:
+  const rapidjson::Value& _propertyValues;
+};
+
 template <typename TValueGetter>
 CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
   MaskedType type;
@@ -312,50 +356,6 @@ void updateExtensionWithJsonStringProperty(
   featureTableProperty.bufferView = valueBufferViewIdx;
   featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
 }
-
-class ArrayOfPropertyValues {
-public:
-  class const_iterator {
-  public:
-    const_iterator(const rapidjson::Value* p) : _p(p) {}
-
-    const_iterator& operator++() {
-      ++this->_p;
-      return *this;
-    }
-
-    bool operator==(const const_iterator& rhs) const {
-      return this->_p == rhs._p;
-    }
-
-    bool operator!=(const const_iterator& rhs) const {
-      return this->_p != rhs._p;
-    }
-
-    const rapidjson::Value& operator*() const { return *this->_p; }
-
-    const rapidjson::Value* operator->() const { return this->_p; }
-
-  private:
-    const rapidjson::Value* _p;
-  };
-
-  ArrayOfPropertyValues(const rapidjson::Value& propertyValues)
-      : _propertyValues(propertyValues) {}
-
-  const_iterator begin() const {
-    return const_iterator(this->_propertyValues.Begin());
-  }
-
-  const_iterator end() const {
-    return const_iterator(this->_propertyValues.End());
-  }
-
-  int64_t size() const { return this->_propertyValues.Size(); }
-
-private:
-  const rapidjson::Value& _propertyValues;
-};
 
 template <typename T, typename TRapidJson = T, typename TValueGetter>
 void updateExtensionWithJsonNumericProperty(
