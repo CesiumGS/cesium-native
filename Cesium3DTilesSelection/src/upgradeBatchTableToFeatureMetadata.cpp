@@ -1324,6 +1324,21 @@ void updateExtensionWithBatchTableHierarchy(
     return;
   }
 
+  auto parentCountsIt = batchTableHierarchy.FindMember("parentCounts");
+  if (parentCountsIt != batchTableHierarchy.MemberEnd() &&
+      parentCountsIt->value.IsArray()) {
+    for (const auto& element : parentCountsIt->value.GetArray()) {
+      if (!element.IsInt64() || element.GetInt64() != 1LL) {
+        SPDLOG_LOGGER_WARN(
+            pLogger,
+            "3DTILES_batch_table_hierarchy with a \"parentCounts\" property is "
+            "not currently supported. All instances must have at most one "
+            "parent.");
+        return;
+      }
+    }
+  }
+
   // Find all the properties.
   std::unordered_set<std::string> properties;
 
