@@ -14,10 +14,10 @@
 //#include <string>
 //#include <vector>
 //
-//namespace Cesium3DTilesSelection {
+// namespace Cesium3DTilesSelection {
 //
-//class Tileset;
-//class TileContext;
+// class Tileset;
+// class TileContext;
 //
 ///**
 // * @brief A tiling context that was created for implicit quadtree or octree
@@ -26,8 +26,8 @@
 // * The URLs for the individual tiles are computed from the base URL of the
 // * tileset.
 // */
-//class ImplicitTilingContext final {
-//public:
+// class ImplicitTilingContext final {
+// public:
 //  /**
 //   * @brief The templates for the relative URLs of tiles.
 //   *
@@ -103,7 +103,7 @@
 ///**
 // * @brief The action to take for a failed tile.
 // */
-//enum class FailedTileAction {
+// enum class FailedTileAction {
 //  /**
 //   * @brief This failure is considered permanent and this tile should not be
 //   * retried.
@@ -125,18 +125,18 @@
 ///**
 // * @brief Signature of {@link FailedTileCallback}.
 // */
-//typedef FailedTileAction FailedTileSignature(Tile& failedTile);
+// typedef FailedTileAction FailedTileSignature(Tile& failedTile);
 //
 ///**
 // * @brief A function that serves as a callback for failed tile loading
 // * in a {@link TileContext}.
 // */
-//typedef std::function<FailedTileSignature> FailedTileCallback;
+// typedef std::function<FailedTileSignature> FailedTileCallback;
 //
 ///**
 // * @brief Signature of {@link ContextInitializerCallback}.
 // */
-//typedef void ContextInitializerSignature(
+// typedef void ContextInitializerSignature(
 //    const TileContext& parentContext,
 //    TileContext& currentContext);
 //
@@ -144,7 +144,8 @@
 // * @brief A function that serves as a callback for initializing a new
 // * {@link TileContext} from properties of the parent context.
 // */
-//typedef std::function<ContextInitializerSignature> ContextInitializerCallback;
+// typedef std::function<ContextInitializerSignature>
+// ContextInitializerCallback;
 //
 ///**
 // * @brief A context in which a {@link Tileset} operates.
@@ -166,8 +167,8 @@
 // * Tilesets that contain terrain tiles may additionally create
 // * an {@link ImplicitTilingContext}.
 // */
-//class TileContext final {
-//public:
+// class TileContext final {
+// public:
 //  /**
 //   * @brief The {@link Tileset} that this context belongs to.
 //   */

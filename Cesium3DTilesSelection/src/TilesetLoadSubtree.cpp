@@ -8,18 +8,18 @@
 //#include <CesiumGeometry/QuadtreeTileID.h>
 //#include <CesiumUtility/Uri.h>
 //
-//using namespace Cesium3DTilesSelection;
-//using namespace CesiumAsync;
-//using namespace CesiumGeometry;
+// using namespace Cesium3DTilesSelection;
+// using namespace CesiumAsync;
+// using namespace CesiumGeometry;
 //
-//struct Tileset::LoadSubtree::Private {
+// struct Tileset::LoadSubtree::Private {
 //  static Future<std::shared_ptr<IAssetRequest>>
 //  requestAvailabilitySubtree(const Tileset& tileset, Tile& tile);
 //
 //  static std::string getResolvedSubtreeUrl(const Tile& tile);
 //};
 //
-//Future<void> Tileset::LoadSubtree::start(
+// Future<void> Tileset::LoadSubtree::start(
 //    Tileset& tileset,
 //    const SubtreeLoadRecord& loadRecord) {
 //  if (!loadRecord.pTile) {
@@ -55,7 +55,8 @@
 //
 //            if (pResponse) {
 //              uint16_t statusCode = pResponse->statusCode();
-//              if (statusCode == 0 || (statusCode >= 200 && statusCode < 300)) {
+//              if (statusCode == 0 || (statusCode >= 200 && statusCode < 300))
+//              {
 //                return AvailabilitySubtreeContent::load(
 //                    asyncSystem,
 //                    pLogger,
@@ -71,7 +72,8 @@
 //          })
 //      .thenInMainThread(
 //          [loadRecord,
-//           pNewNode](std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
+//           pNewNode](std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable
+//           {
 //            if (loadRecord.pTile && pNewNode) {
 //              TileContext* pContext = loadRecord.pTile->getContext();
 //              if (pContext && pContext->implicitContext) {
@@ -81,7 +83,8 @@
 //                  implicitContext.quadtreeAvailability->addLoadedSubtree(
 //                      pNewNode,
 //                      std::move(*pSubtree.release()));
-//                } else if (loadRecord.implicitInfo.usingImplicitOctreeTiling) {
+//                } else if (loadRecord.implicitInfo.usingImplicitOctreeTiling)
+//                {
 //                  implicitContext.octreeAvailability->addLoadedSubtree(
 //                      pNewNode,
 //                      std::move(*pSubtree.release()));
@@ -98,8 +101,8 @@
 //      });
 //}
 //
-//Future<std::shared_ptr<IAssetRequest>>
-//Tileset::LoadSubtree::Private::requestAvailabilitySubtree(
+// Future<std::shared_ptr<IAssetRequest>>
+// Tileset::LoadSubtree::Private::requestAvailabilitySubtree(
 //    const Tileset& tileset,
 //    Tile& tile) {
 //  std::string url = Private::getResolvedSubtreeUrl(tile);
@@ -111,8 +114,8 @@
 //      tile.getContext()->requestHeaders);
 //}
 //
-//std::string
-//Tileset::LoadSubtree::Private::getResolvedSubtreeUrl(const Tile& tile) {
+// std::string
+// Tileset::LoadSubtree::Private::getResolvedSubtreeUrl(const Tile& tile) {
 //  struct Operation {
 //    const TileContext& context;
 //

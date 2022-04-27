@@ -14,11 +14,11 @@
 //
 //#include <cassert>
 //
-//using namespace Cesium3DTilesSelection;
-//using namespace CesiumAsync;
-//using namespace CesiumUtility;
+// using namespace Cesium3DTilesSelection;
+// using namespace CesiumAsync;
+// using namespace CesiumUtility;
 //
-//struct Tileset::LoadIonAssetEndpoint::Private {
+// struct Tileset::LoadIonAssetEndpoint::Private {
 //
 //  struct AssetEndpointAttribution {
 //    std::string html;
@@ -80,14 +80,15 @@
 //            })
 //        .catchImmediately([](const std::exception& /*e*/) {
 //          // We should only land here if tileset.reportError above throws an
-//          // exception, which it shouldn't. Flag it in a debug build and ignore
+//          // exception, which it shouldn't. Flag it in a debug build and
+//          ignore
 //          // it in a release build.
 //          assert(false);
 //        });
 //  }
 //};
 //
-//std::string Tileset::LoadIonAssetEndpoint::Private::createEndpointResource(
+// std::string Tileset::LoadIonAssetEndpoint::Private::createEndpointResource(
 //    const Tileset& tileset) {
 //  std::string ionUrl = tileset._ionAssetEndpointUrl.value() + "v1/assets/" +
 //                       std::to_string(tileset._ionAssetID.value()) +
@@ -99,13 +100,13 @@
 //  return ionUrl;
 //}
 //
-//std::unordered_map<
+// std::unordered_map<
 //    std::string,
 //    Tileset::LoadIonAssetEndpoint::Private::AssetEndpoint>
 //    Tileset::LoadIonAssetEndpoint::Private::endpointCache;
 //
-//Future<std::optional<TilesetLoadFailureDetails>>
-//Tileset::LoadIonAssetEndpoint::Private::loadAssetEndpoint(
+// Future<std::optional<TilesetLoadFailureDetails>>
+// Tileset::LoadIonAssetEndpoint::Private::loadAssetEndpoint(
 //    Tileset& tileset,
 //    const std::string& url) {
 //  auto cacheIt = endpointCache.find(url);
@@ -115,7 +116,8 @@
 //          return mainThreadLoadTilesetFromAssetEndpoint(tileset, endpoint);
 //        });
 //  } else
-//    return tileset._externals.pAssetAccessor->get(tileset.getAsyncSystem(), url)
+//    return tileset._externals.pAssetAccessor->get(tileset.getAsyncSystem(),
+//    url)
 //        .thenInMainThread(
 //            [&tileset](std::shared_ptr<IAssetRequest>&& pRequest) {
 //              return Private::mainThreadHandleResponse(
@@ -124,8 +126,8 @@
 //            });
 //}
 //
-//Future<std::optional<TilesetLoadFailureDetails>>
-//Tileset::LoadIonAssetEndpoint::Private::mainThreadLoadTilesetFromAssetEndpoint(
+// Future<std::optional<TilesetLoadFailureDetails>>
+// Tileset::LoadIonAssetEndpoint::Private::mainThreadLoadTilesetFromAssetEndpoint(
 //    Tileset& tileset,
 //    const Private::AssetEndpoint& endpoint) {
 //  if (tileset.getExternals().pCreditSystem) {
@@ -153,8 +155,8 @@
 //      });
 //}
 //
-//CesiumAsync::Future<void>
-//Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
+// CesiumAsync::Future<void>
+// Tileset::LoadIonAssetEndpoint::start(Tileset& tileset) {
 //  assert(tileset._ionAssetID.has_value());
 //  assert(tileset._ionAccessToken.has_value());
 //
@@ -169,8 +171,8 @@
 //          []() { CESIUM_TRACE_END_IN_TRACK("Tileset from ion startup"); });
 //}
 //
-//Future<std::optional<TilesetLoadFailureDetails>>
-//Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
+// Future<std::optional<TilesetLoadFailureDetails>>
+// Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
 //    Tileset& tileset,
 //    std::shared_ptr<IAssetRequest>&& pRequest) {
 //  const IAssetResponse* pResponse = pRequest->response();
@@ -248,7 +250,8 @@
 //
 //  std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
 //  if (type == "TERRAIN") {
-//    // For terrain resources, we need to append `/layer.json` to the end of the
+//    // For terrain resources, we need to append `/layer.json` to the end of
+//    the
 //    // URL.
 //    url = CesiumUtility::Uri::resolve(url, "layer.json", true);
 //  } else if (type != "3DTILES") {
@@ -268,7 +271,7 @@
 //  return mainThreadLoadTilesetFromAssetEndpoint(tileset, endpoint);
 //}
 //
-//namespace {
+// namespace {
 ///**
 // * @brief Tries to obtain the `accessToken` from the JSON of the
 // * given response.
@@ -276,7 +279,7 @@
 // * @param pIonResponse The response
 // * @return The access token if successful
 // */
-//std::optional<std::string> getNewAccessToken(
+// std::optional<std::string> getNewAccessToken(
 //    const IAssetResponse* pIonResponse,
 //    const std::shared_ptr<spdlog::logger>& pLogger) {
 //  const gsl::span<const std::byte> data = pIonResponse->data();
@@ -299,7 +302,7 @@
 // * @param pContext The context
 // * @param accessToken The token
 // */
-//void updateContextWithNewToken(
+// void updateContextWithNewToken(
 //    TileContext* pContext,
 //    const std::string& accessToken) {
 //  auto authIt = std::find_if(
@@ -316,7 +319,7 @@
 //
 //} // namespace
 //
-//void Tileset::LoadIonAssetEndpoint::Private::
+// void Tileset::LoadIonAssetEndpoint::Private::
 //    mainThreadHandleTokenRefreshResponse(
 //        Tileset& tileset,
 //        std::shared_ptr<IAssetRequest>&& pIonRequest,
@@ -344,8 +347,10 @@
 //  //}
 //
 //  //// Put all auth-failed tiles in this context back into the Unloaded state.
-//  //// TODO: the way this is structured, requests already in progress with the old
-//  //// key might complete after the key has been updated, and there's nothing here
+//  //// TODO: the way this is structured, requests already in progress with the
+//  old
+//  //// key might complete after the key has been updated, and there's nothing
+//  here
 //  //// clever enough to avoid refreshing the key _again_ in that instance.
 //  //Tile* pTile = tileset._loadedTiles.head();
 //
@@ -364,8 +369,8 @@
 //  //}
 //}
 //
-//FailedTileAction
-//Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
+// FailedTileAction
+// Tileset::LoadIonAssetEndpoint::Private::onIonTileFailed(Tile& failedTile) {
 //  TileContentLoadResult* pContent = failedTile.getContent();
 //  if (!pContent) {
 //    return FailedTileAction::GiveUp;

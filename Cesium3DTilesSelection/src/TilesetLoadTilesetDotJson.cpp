@@ -13,15 +13,15 @@
 //
 //#include <rapidjson/document.h>
 //
-//using namespace Cesium3DTilesSelection;
-//using namespace CesiumAsync;
-//using namespace CesiumGeometry;
-//using namespace CesiumGeospatial;
-//using namespace CesiumUtility;
+// using namespace Cesium3DTilesSelection;
+// using namespace CesiumAsync;
+// using namespace CesiumGeometry;
+// using namespace CesiumGeospatial;
+// using namespace CesiumUtility;
 //
-//namespace {
+// namespace {
 //
-//struct LoadResult {
+// struct LoadResult {
 //  std::unique_ptr<TileContext> pContext;
 //  std::unique_ptr<Tile> pRootTile;
 //  bool supportsRasterOverlays;
@@ -30,7 +30,7 @@
 //
 //} // namespace
 //
-//struct Tileset::LoadTilesetDotJson::Private {
+// struct Tileset::LoadTilesetDotJson::Private {
 //  static LoadResult workerThreadHandleResponse(
 //      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
 //      std::unique_ptr<TileContext>&& pContext,
@@ -67,14 +67,15 @@
 //            })
 //        .catchImmediately([](const std::exception& /*e*/) {
 //          // We should only land here if tileset.reportError above throws an
-//          // exception, which it shouldn't. Flag it in a debug build and ignore
+//          // exception, which it shouldn't. Flag it in a debug build and
+//          ignore
 //          // it in a release build.
 //          assert(false);
 //        });
 //  }
 //};
 //
-//CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
+// CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
 //    Tileset& tileset,
 //    const std::string& url,
 //    const std::vector<std::pair<std::string, std::string>>& headers,
@@ -115,7 +116,7 @@
 //          []() { CESIUM_TRACE_END_IN_TRACK("Load tileset.json"); });
 //}
 //
-//namespace {
+// namespace {
 ///**
 // * @brief Obtains the up-axis that should be used for glTF content of the
 // * tileset.
@@ -133,7 +134,7 @@
 // * @param tileset The tileset JSON
 // * @return The up-axis to use for glTF content
 // */
-//CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
+// CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 //  const auto assetIt = tileset.FindMember("asset");
 //  if (assetIt == tileset.MemberEnd()) {
 //    return CesiumGeometry::Axis::Y;
@@ -164,7 +165,7 @@
 //}
 //} // namespace
 //
-//LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
+// LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
 //    std::shared_ptr<IAssetRequest>&& pRequest,
 //    std::unique_ptr<TileContext>&& pContext,
 //    const std::shared_ptr<spdlog::logger>& pLogger,
@@ -273,7 +274,7 @@
 //      std::nullopt};
 //}
 //
-//namespace {
+// namespace {
 //
 ///**
 // * @brief Creates the query parameter string for the extensions in the given
@@ -286,7 +287,7 @@
 // * @param extensions The layer JSON
 // * @return The extensions (possibly the empty string)
 // */
-//std::string createExtensionsQueryParameter(
+// std::string createExtensionsQueryParameter(
 //    const std::vector<std::string>& knownExtensions,
 //    const std::vector<std::string>& extensions) {
 //
@@ -313,7 +314,7 @@
 // * @param globeRectangle The {@link CesiumGeospatial::GlobeRectangle}
 // * @return The {@link BoundingRegionWithLooseFittingHeights}
 // */
-//BoundingVolume createDefaultLooseEarthBoundingVolume(
+// BoundingVolume createDefaultLooseEarthBoundingVolume(
 //    const CesiumGeospatial::GlobeRectangle& globeRectangle) {
 //  return BoundingRegionWithLooseFittingHeights(
 //      BoundingRegion(globeRectangle, -1000.0, -9000.0));
@@ -321,7 +322,7 @@
 //
 //} // namespace
 //
-//void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
+// void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
 //    Tile& tile,
 //    const rapidjson::Value& layerJson,
 //    TileContext& context,
@@ -395,7 +396,8 @@
 //          1);
 //
 //  std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
-//  uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
+//  uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom",
+//  30);
 //
 //  context.implicitContext = {
 //      urls,
@@ -424,9 +426,11 @@
 //      createExtensionsQueryParameter(knownExtensions, extensions);
 //
 //  if (!extensionsToRequest.empty()) {
-//    for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
+//    for (std::string& url : context.implicitContext.value().tileTemplateUrls)
+//    {
 //      url =
-//          CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
+//          CesiumUtility::Uri::addQuery(url, "extensions",
+//          extensionsToRequest);
 //    }
 //  }
 //
@@ -443,7 +447,8 @@
 //    childTile.setParent(&tile);
 //    childTile.setTileID(id);
 //    const CesiumGeospatial::GlobeRectangle childGlobeRectangle =
-//        unprojectRectangleSimple(projection, tilingScheme->tileToRectangle(id));
+//        unprojectRectangleSimple(projection,
+//        tilingScheme->tileToRectangle(id));
 //    childTile.setBoundingVolume(
 //        createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
 //    childTile.setGeometricError(

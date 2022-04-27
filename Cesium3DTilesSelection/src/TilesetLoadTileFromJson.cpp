@@ -8,18 +8,18 @@
 //
 //#include <cctype>
 //
-//using namespace Cesium3DTilesSelection;
-//using namespace CesiumGeometry;
-//using namespace CesiumGeospatial;
-//using namespace CesiumUtility;
+// using namespace Cesium3DTilesSelection;
+// using namespace CesiumGeometry;
+// using namespace CesiumGeospatial;
+// using namespace CesiumUtility;
 //
-//namespace {
+// namespace {
 //
-//std::optional<BoundingVolume> getBoundingVolumeProperty(
+// std::optional<BoundingVolume> getBoundingVolumeProperty(
 //    const rapidjson::Value& tileJson,
 //    const std::string& key);
 //
-//void parseImplicitTileset(
+// void parseImplicitTileset(
 //    Tile& tile,
 //    const rapidjson::Value& tileJson,
 //    const char* contentUri,
@@ -28,7 +28,7 @@
 //
 //} // namespace
 //
-//void Tileset::LoadTileFromJson::execute(
+// void Tileset::LoadTileFromJson::execute(
 //    Tile& tile,
 //    std::vector<std::unique_ptr<TileContext>>& newContexts,
 //    const rapidjson::Value& tileJson,
@@ -79,8 +79,9 @@
 //    return;
 //  }
 //
-//  const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&*boundingVolume);
-//  const BoundingRegionWithLooseFittingHeights* pLooseRegion =
+//  const BoundingRegion* pRegion =
+//  std::get_if<BoundingRegion>(&*boundingVolume); const
+//  BoundingRegionWithLooseFittingHeights* pLooseRegion =
 //      std::get_if<BoundingRegionWithLooseFittingHeights>(&*boundingVolume);
 //
 //  if (!pRegion && pLooseRegion) {
@@ -175,9 +176,9 @@
 //  }
 //}
 //
-//namespace {
+// namespace {
 //
-//std::optional<BoundingVolume> getBoundingVolumeProperty(
+// std::optional<BoundingVolume> getBoundingVolumeProperty(
 //    const rapidjson::Value& tileJson,
 //    const std::string& key) {
 //  const auto bvIt = tileJson.FindMember(key.c_str());
@@ -263,7 +264,7 @@
 //  return std::nullopt;
 //}
 //
-//void parseImplicitTileset(
+// void parseImplicitTileset(
 //    Tile& tile,
 //    const rapidjson::Value& tileJson,
 //    const char* contentUri,
@@ -271,7 +272,8 @@
 //    std::vector<std::unique_ptr<TileContext>>& newContexts) {
 //
 //  auto extensionsIt = tileJson.FindMember("extensions");
-//  if (extensionsIt != tileJson.MemberEnd() && extensionsIt->value.IsObject()) {
+//  if (extensionsIt != tileJson.MemberEnd() && extensionsIt->value.IsObject())
+//  {
 //    auto extension = extensionsIt->value.GetObject();
 //    auto implicitTilingIt = extension.FindMember("3DTILES_implicit_tiling");
 //    if (implicitTilingIt != extension.MemberEnd() &&
@@ -401,7 +403,8 @@
 //        pContext->implicitContext = std::make_optional<ImplicitTilingContext>(
 //            std::move(implicitContext));
 //
-//        // This will act as a dummy tile representing the implicit tileset. Its
+//        // This will act as a dummy tile representing the implicit tileset.
+//        Its
 //        // only child will act as the actual root content of the new tileset.
 //        tile.createChildTiles(1);
 //

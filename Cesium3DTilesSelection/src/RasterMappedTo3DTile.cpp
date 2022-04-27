@@ -17,34 +17,35 @@ using namespace CesiumUtility;
 namespace {
 //
 //// Find the given overlay in the given tile.
-//RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
-//  std::vector<RasterMappedTo3DTile>& tiles = tile.getMappedRasterTiles();
-//  auto parentTileIt = std::find_if(
-//      tiles.begin(),
-//      tiles.end(),
-//      [&overlay](RasterMappedTo3DTile& raster) noexcept {
-//        return raster.getReadyTile() &&
-//               &raster.getReadyTile()->getOverlay() == &overlay;
-//      });
-//  if (parentTileIt != tiles.end()) {
-//    RasterMappedTo3DTile& mapped = *parentTileIt;
+// RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay)
+// {
+//   std::vector<RasterMappedTo3DTile>& tiles = tile.getMappedRasterTiles();
+//   auto parentTileIt = std::find_if(
+//       tiles.begin(),
+//       tiles.end(),
+//       [&overlay](RasterMappedTo3DTile& raster) noexcept {
+//         return raster.getReadyTile() &&
+//                &raster.getReadyTile()->getOverlay() == &overlay;
+//       });
+//   if (parentTileIt != tiles.end()) {
+//     RasterMappedTo3DTile& mapped = *parentTileIt;
 //
-//    // Prefer the loading tile if there is one.
-//    if (mapped.getLoadingTile()) {
-//      return mapped.getLoadingTile();
-//    } else {
-//      return mapped.getReadyTile();
-//    }
-//  }
+//     // Prefer the loading tile if there is one.
+//     if (mapped.getLoadingTile()) {
+//       return mapped.getLoadingTile();
+//     } else {
+//       return mapped.getReadyTile();
+//     }
+//   }
 //
-//  return nullptr;
-//}
+//   return nullptr;
+// }
 
 } // namespace
 
 namespace Cesium3DTilesSelection {
 //
-//RasterMappedTo3DTile::RasterMappedTo3DTile(
+// RasterMappedTo3DTile::RasterMappedTo3DTile(
 //    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
 //    int32_t textureCoordinateIndex)
 //    : _pLoadingTile(pRasterTile),
@@ -55,8 +56,8 @@ namespace Cesium3DTilesSelection {
 //      _state(AttachmentState::Unattached),
 //      _originalFailed(false) {}
 //
-//RasterOverlayTile::MoreDetailAvailable
-//RasterMappedTo3DTile::update(Tile& tile) {
+// RasterOverlayTile::MoreDetailAvailable
+// RasterMappedTo3DTile::update(Tile& tile) {
 //  if (this->getState() == AttachmentState::Attached) {
 //    return !this->_originalFailed && this->_pReadyTile &&
 //                   this->_pReadyTile->isMoreDetailAvailable() !=
@@ -88,9 +89,11 @@ namespace Cesium3DTilesSelection {
 //
 //  // If the loading tile is now ready, make it the ready tile.
 //  if (this->_pLoadingTile &&
-//      this->_pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded) {
+//      this->_pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded)
+//      {
 //    // Unattach the old tile
-//    if (this->_pReadyTile && this->getState() != AttachmentState::Unattached) {
+//    if (this->_pReadyTile && this->getState() != AttachmentState::Unattached)
+//    {
 //      const TilesetExternals& externals = tile.getTileset()->getExternals();
 //      externals.pPrepareRendererResources->detachRasterInMainThread(
 //          tile,
@@ -160,7 +163,8 @@ namespace Cesium3DTilesSelection {
 //                                       : AttachmentState::Attached;
 //  }
 //
-//  // TODO: check more precise raster overlay tile availability, rather than just
+//  // TODO: check more precise raster overlay tile availability, rather than
+//  just
 //  // max level?
 //  if (this->_pLoadingTile) {
 //    return RasterOverlayTile::MoreDetailAvailable::Unknown;
@@ -173,7 +177,7 @@ namespace Cesium3DTilesSelection {
 //  }
 //}
 //
-//void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
+// void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
 //  if (this->getState() == AttachmentState::Unattached) {
 //    return;
 //  }
@@ -192,7 +196,7 @@ namespace Cesium3DTilesSelection {
 //  this->_state = AttachmentState::Unattached;
 //}
 //
-//bool RasterMappedTo3DTile::loadThrottled() noexcept {
+// bool RasterMappedTo3DTile::loadThrottled() noexcept {
 //  RasterOverlayTile* pLoading = this->getLoadingTile();
 //  if (!pLoading) {
 //    return true;
@@ -209,14 +213,15 @@ namespace Cesium3DTilesSelection {
 //  return pProvider->loadTileThrottled(*pLoading);
 //}
 //
-//namespace {
+// namespace {
 //
-//IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay& overlay) {
+// IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay&
+// overlay) {
 //  // Rectangle and geometric error don't matter for a placeholder.
 //  return overlay.getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0));
 //}
 //
-//std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
+// std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
 //    const Projection& projection,
 //    const BoundingVolume& boundingVolume) {
 //  const BoundingRegion* pRegion =
@@ -232,7 +237,7 @@ namespace Cesium3DTilesSelection {
 //  return projectRectangleSimple(projection, pRegion->getRectangle());
 //}
 //
-//int32_t addProjectionToList(
+// int32_t addProjectionToList(
 //    std::vector<Projection>& projections,
 //    const Projection& projection) {
 //  auto it = std::find(projections.begin(), projections.end(), projection);
@@ -244,7 +249,7 @@ namespace Cesium3DTilesSelection {
 //  }
 //}
 //
-//glm::dvec2 computeDesiredScreenPixels(
+// glm::dvec2 computeDesiredScreenPixels(
 //    const Tile& tile,
 //    const Projection& projection,
 //    const Rectangle& rectangle,
@@ -258,20 +263,23 @@ namespace Cesium3DTilesSelection {
 //  //
 //  // It works like this:
 //  // * Estimate the size of the projected rectangle in world coordinates.
-//  // * Compute the distance at which tile will switch to its children, based on
+//  // * Compute the distance at which tile will switch to its children, based
+//  on
 //  // its geometric error and the tileset SSE.
 //  // * Compute the on-screen size of the projected rectangle at that distance.
 //  //
 //  // For the two compute steps, we use the usual perspective projection SSE
 //  // equation:
-//  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
+//  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 *
+//  fovY))
 //  //
 //  // Conveniently a bunch of terms cancel out, so the screen pixel size at the
 //  // switch distance is not actually dependent on the screen dimensions or
 //  // field-of-view angle.
 //  double geometryError = tile.getNonZeroGeometricError();
-//  double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
-//  glm::dvec2 diameters = computeProjectedRectangleSize(
+//  double geometrySSE =
+//  tile.getTileset()->getOptions().maximumScreenSpaceError; glm::dvec2
+//  diameters = computeProjectedRectangleSize(
 //      projection,
 //      rectangle,
 //      maxHeight,
@@ -279,7 +287,7 @@ namespace Cesium3DTilesSelection {
 //  return diameters * geometrySSE / geometryError;
 //}
 //
-//RasterMappedTo3DTile* addRealTile(
+// RasterMappedTo3DTile* addRealTile(
 //    Tile& tile,
 //    RasterOverlayTileProvider& provider,
 //    const Rectangle& rectangle,
@@ -308,7 +316,8 @@ namespace Cesium3DTilesSelection {
 //        RasterMappedTo3DTile(getPlaceholderTile(overlay), -1));
 //  }
 //
-//  // We can get a more accurate estimate of the real-world size of the projected
+//  // We can get a more accurate estimate of the real-world size of the
+//  projected
 //  // rectangle if we consider the rectangle at the true height of the geometry
 //  // rather than assuming it's on the ellipsoid. This will make basically no
 //  // difference for small tiles (because surface normals on opposite ends of
@@ -320,9 +329,9 @@ namespace Cesium3DTilesSelection {
 //
 //  const Projection& projection = pProvider->getProjection();
 //
-//  // If the tile is loaded, use the precise rectangle computed from the content.
-//  const TileContentLoadResult* pContent = tile.getContent();
-//  if (pContent) {
+//  // If the tile is loaded, use the precise rectangle computed from the
+//  content. const TileContentLoadResult* pContent = tile.getContent(); if
+//  (pContent) {
 //    const Rectangle* pRectangle =
 //        pContent->overlayDetails
 //            ? pContent->overlayDetails->findRectangleForOverlayProjection(
@@ -340,8 +349,10 @@ namespace Cesium3DTilesSelection {
 //          Ellipsoid::WGS84);
 //      return addRealTile(tile, *pProvider, *pRectangle, screenPixels, index);
 //    } else {
-//      // We don't have a precise rectangle for this projection, which means the
-//      // tile was loaded before we knew we needed this projection. We'll need to
+//      // We don't have a precise rectangle for this projection, which means
+//      the
+//      // tile was loaded before we knew we needed this projection. We'll need
+//      to
 //      // reload the tile (later).
 //      int32_t existingIndex =
 //          pContent->overlayDetails
@@ -384,7 +395,7 @@ namespace Cesium3DTilesSelection {
 //  }
 //}
 //
-//void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
+// void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
 //  if (!this->_pReadyTile || !tile.getContent() ||
 //      !tile.getContent()->overlayDetails) {
 //    // This shouldn't happen

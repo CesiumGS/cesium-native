@@ -10,15 +10,15 @@
 
 namespace Cesium3DTilesSelection {
 //
-//class Tile;
-//class TileContext;
+// class Tile;
+// class TileContext;
 //
 ///**
 // * @brief Loads a tile (and its children) from the JSON representation of the
 // * tile as expressed in the 3D Tiles tileset.json.
 // */
-//class Tileset::LoadTileFromJson {
-//public:
+// class Tileset::LoadTileFromJson {
+// public:
 //  static void execute(
 //      Tile& tile,
 //      std::vector<std::unique_ptr<TileContext>>& newContexts,

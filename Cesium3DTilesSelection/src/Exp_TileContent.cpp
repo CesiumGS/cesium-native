@@ -37,7 +37,9 @@ void TileContent::setRenderResources(void* pRenderResources) noexcept {
   _pRenderResources = pRenderResources;
 }
 
-void* TileContent::getRenderResources() const noexcept { return _pRenderResources; }
+void* TileContent::getRenderResources() const noexcept {
+  return _pRenderResources;
+}
 
 void TileContent::setTileInitializerCallback(
     std::function<void(Tile&)> callback) {

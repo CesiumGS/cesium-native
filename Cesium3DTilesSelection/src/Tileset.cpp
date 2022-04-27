@@ -13,8 +13,8 @@
 #include "TilesetLoadTileFromJson.h"
 #include "TilesetLoadTilesetDotJson.h"
 
-#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <Cesium3DTilesSelection/Exp_CesiumIonTilesetLoader.h>
+#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
@@ -281,12 +281,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       currentFrameNumber};
 
   if (!frustums.empty()) {
-    this->_visitTileIfNeeded(
-        frameState,
-        0,
-        false,
-        *pRootTile,
-        result);
+    this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
   } else {
     result = ViewUpdateResult();
   }
@@ -461,7 +456,7 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     const FrameState& frameState,
-    //ImplicitTraversalInfo implicitInfo,
+    // ImplicitTraversalInfo implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -569,7 +564,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     if (this->_options.preloadSiblings) {
       addTileToLoadQueue(
           this->_loadQueueLow,
-          //implicitInfo,
+          // implicitInfo,
           frustums,
           tile,
           distances);
@@ -627,7 +622,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     const FrameState& frameState,
     Tile& tile,
-    //const ImplicitTraversalInfo& implicitInfo,
+    // const ImplicitTraversalInfo& implicitInfo,
     const std::vector<double>& distances) {
   if (!this->_options.forbidHoles) {
     return false;
@@ -909,10 +904,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
-  const bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(
-      frameState,
-      tile,
-      distances);
+  const bool waitingForChildren =
+      _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
 
   if (!unconditionallyRefine &&
       (meetsSse || ancestorMeetsSse || waitingForChildren)) {
@@ -970,11 +963,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // Refine!
 
-  bool queuedForLoad = _loadAndRenderAdditiveRefinedTile(
-      frameState,
-      tile,
-      result,
-      distances);
+  bool queuedForLoad =
+      _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distances);
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
@@ -1152,7 +1142,8 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
 void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
     int32_t maximumLoadsInProgress) {
-  if (this->_pTilesetContentManager->getNumOfTilesLoading() >= maximumLoadsInProgress) {
+  if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
+      maximumLoadsInProgress) {
     return;
   }
 
@@ -1163,7 +1154,8 @@ void Tileset::processQueue(
     _pTilesetContentManager->loadTileContent(
         *record.pTile,
         _options.contentOptions);
-    if (this->_pTilesetContentManager->getNumOfTilesLoading() >= maximumLoadsInProgress) {
+    if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
+        maximumLoadsInProgress) {
       break;
     }
   }

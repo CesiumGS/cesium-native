@@ -25,7 +25,9 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
-  void updateRequestHeader(const std::string &header, const std::string &headerValue);
+  void updateRequestHeader(
+      const std::string& header,
+      const std::string& headerValue);
 
   int32_t getNumOfTilesLoading() const noexcept;
 

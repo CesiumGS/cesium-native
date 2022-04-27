@@ -11,11 +11,7 @@
 namespace Cesium3DTilesSelection {
 class Tile;
 
-enum class TileLoadResultState {
-  Success,
-  Failed,
-  RetryLater
-};
+enum class TileLoadResultState { Success, Failed, RetryLater };
 
 struct TileLoadResult {
   TileContentKind contentKind;

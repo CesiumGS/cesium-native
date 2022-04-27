@@ -27,10 +27,8 @@ struct TileRenderContent {
   std::optional<CesiumGltf::Model> model{};
 };
 
-using TileContentKind = std::variant<
-    TileUnknownContent,
-    TileExternalContent,
-    TileRenderContent>;
+using TileContentKind =
+    std::variant<TileUnknownContent, TileExternalContent, TileRenderContent>;
 
 class TileContent {
 public:

@@ -13,8 +13,8 @@
 
 namespace Cesium3DTilesSelection {
 //
-//CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-//ExternalTilesetContent::load(const TileContentLoadInput& input) {
+// CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+// ExternalTilesetContent::load(const TileContentLoadInput& input) {
 //  return input.asyncSystem.createResolvedFuture(load(
 //      input.pLogger,
 //      input.tileTransform,
@@ -23,7 +23,8 @@ namespace Cesium3DTilesSelection {
 //      input.pRequest->response()->data()));
 //}
 //
-///*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
+///*static*/ std::unique_ptr<TileContentLoadResult>
+///ExternalTilesetContent::load(
 //    const std::shared_ptr<spdlog::logger>& pLogger,
 //    const glm::dmat4& tileTransform,
 //    TileRefine tileRefine,

@@ -37,8 +37,7 @@ TileContentLoadInput::TileContentLoadInput(const Tile& tile)
       tileRefine(tile.getRefine()),
       tileGeometricError(tile.getGeometricError()),
       tileTransform(tile.getTransform()),
-      contentOptions() {
-}
+      contentOptions() {}
 
 TileContentLoadInput::TileContentLoadInput(
     const AsyncSystem& asyncSystem_,
@@ -56,8 +55,7 @@ TileContentLoadInput::TileContentLoadInput(
       tileRefine(tile.getRefine()),
       tileGeometricError(tile.getGeometricError()),
       tileTransform(tile.getTransform()),
-      contentOptions() {
-}
+      contentOptions() {}
 
 TileContentLoadInput::TileContentLoadInput(
     const AsyncSystem& asyncSystem_,

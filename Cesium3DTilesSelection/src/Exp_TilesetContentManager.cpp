@@ -293,14 +293,15 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
   pContent->setRenderResources(nullptr);
 }
 
-void TilesetContentManager::notifyTileStartLoading([[maybe_unused]] Tile& tile) noexcept {
+void TilesetContentManager::notifyTileStartLoading(
+    [[maybe_unused]] Tile& tile) noexcept {
   ++_tilesLoadOnProgress;
 }
 
 void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
   assert(_tilesLoadOnProgress > 0 && "There are no tiles currently on the fly");
   --_tilesLoadOnProgress;
-    _tilesDataUsed += tile.computeByteSize();
+  _tilesDataUsed += tile.computeByteSize();
 }
 
 void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {

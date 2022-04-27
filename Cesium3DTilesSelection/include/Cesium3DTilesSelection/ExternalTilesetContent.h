@@ -15,15 +15,15 @@
 
 namespace Cesium3DTilesSelection {
 //
-//class Tileset;
+// class Tileset;
 //
 ///**
 // * @brief Creates a {@link TileContentLoadResult} from 3D Tiles external
 // * `tileset.json` data.
 // */
-//class CESIUM3DTILESSELECTION_API ExternalTilesetContent final
+// class CESIUM3DTILESSELECTION_API ExternalTilesetContent final
 //    : public TileContentLoader {
-//public:
+// public:
 //  /**
 //   * @copydoc TileContentLoader::load
 //   *
@@ -33,7 +33,7 @@ namespace Cesium3DTilesSelection {
 //  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 //  load(const TileContentLoadInput& input) override;
 //
-//private:
+// private:
 //  /**
 //   * @brief Create the {@link TileContentLoadResult} from the given input data.
 //   *

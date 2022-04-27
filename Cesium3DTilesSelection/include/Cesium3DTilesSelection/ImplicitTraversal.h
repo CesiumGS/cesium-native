@@ -15,7 +15,7 @@ namespace Cesium3DTilesSelection {
 // * @brief Useful implicit tiling information for traversal of the current
 // * tile.
 // */
-//struct ImplicitTraversalInfo {
+// struct ImplicitTraversalInfo {
 //
 //  /**
 //   * @brief The parent subtree node to the current one.
@@ -80,7 +80,8 @@ namespace Cesium3DTilesSelection {
 //   * @brief Attempt to initialize an instance for the given {@link Tile}.
 //   *
 //   * @param pTile The tile.
-//   * @param pParentInfo The parent tile's implicit info. If this does not exist
+//   * @param pParentInfo The parent tile's implicit info. If this does not
+//   exist
 //   * it can be assumed that the parent was not an implicit tile.
 //   */
 //  ImplicitTraversalInfo(
@@ -88,20 +89,20 @@ namespace Cesium3DTilesSelection {
 //      const ImplicitTraversalInfo* pParentInfo = nullptr) noexcept;
 //};
 //
-//namespace ImplicitTraversalUtilities {
+// namespace ImplicitTraversalUtilities {
 //
-//void createImplicitChildrenIfNeeded(
+// void createImplicitChildrenIfNeeded(
 //    Tile& tile,
 //    const ImplicitTraversalInfo& implicitInfo);
 //
-//void createImplicitQuadtreeTile(
+// void createImplicitQuadtreeTile(
 //    const ImplicitTilingContext& implicitContext,
 //    Tile& parent,
 //    Tile& child,
 //    const CesiumGeometry::QuadtreeTileID& childID,
 //    uint8_t availability);
 //
-//void createImplicitOctreeTile(
+// void createImplicitOctreeTile(
 //    const ImplicitTilingContext& implicitContext,
 //    Tile& parent,
 //    Tile& child,

@@ -2,8 +2,8 @@
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/joinToString.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>

@@ -12,7 +12,7 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 //
-//ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
+// ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
 //    : pParentNode(nullptr),
 //      pCurrentNode(nullptr),
 //      availability(0U),
@@ -20,7 +20,7 @@ namespace Cesium3DTilesSelection {
 //      usingImplicitOctreeTiling(false),
 //      shouldQueueSubtreeLoad(false) {}
 //
-//ImplicitTraversalInfo::ImplicitTraversalInfo(
+// ImplicitTraversalInfo::ImplicitTraversalInfo(
 //    Tile* pTile,
 //    const ImplicitTraversalInfo* pParentInfo) noexcept
 //    : pParentNode(nullptr),
@@ -59,7 +59,8 @@ namespace Cesium3DTilesSelection {
 //
 //  // This tile was created and it uses implicit tiling, so the tile is implied
 //  // to be available.
-//  // We explicitly consider all tiles here to be at least TILE_AVAILABLE by the
+//  // We explicitly consider all tiles here to be at least TILE_AVAILABLE by
+//  the
 //  // fact that they are being traversed. This is built on the assumption that
 //  // createImplicitChildrenIfNeeded(...) wouldn't have created this tile if it
 //  // wasn't available.
@@ -67,12 +68,14 @@ namespace Cesium3DTilesSelection {
 //
 //  if (!pParentInfo ||
 //      (!pParentInfo->pParentNode && !pParentInfo->pCurrentNode)) {
-//    // The parent was not an implicit tile. Check to see if the current tile is
+//    // The parent was not an implicit tile. Check to see if the current tile
+//    is
 //    // the root to an implicit tileset.
 //
 //    if (pQuadtreeID && pQuadtreeID->level == 0 &&
 //        implicitContext.quadtreeAvailability) {
-//      this->pCurrentNode = implicitContext.quadtreeAvailability->getRootNode();
+//      this->pCurrentNode =
+//      implicitContext.quadtreeAvailability->getRootNode();
 //      this->usingImplicitQuadtreeTiling = true;
 //
 //      if (!this->pCurrentNode) {
@@ -126,7 +129,8 @@ namespace Cesium3DTilesSelection {
 //        this->pCurrentNode = pParentInfo->pCurrentNode;
 //      } else {
 //        this->pParentNode = pParentInfo->pCurrentNode;
-//        this->pCurrentNode = implicitContext.octreeAvailability->findChildNode(
+//        this->pCurrentNode =
+//        implicitContext.octreeAvailability->findChildNode(
 //            *pOctreeID,
 //            pParentInfo->pCurrentNode);
 //
@@ -155,9 +159,9 @@ namespace Cesium3DTilesSelection {
 //  }
 //}
 //
-//namespace ImplicitTraversalUtilities {
+// namespace ImplicitTraversalUtilities {
 //
-//void createImplicitQuadtreeTile(
+// void createImplicitQuadtreeTile(
 //    const ImplicitTilingContext& implicitContext,
 //    Tile& parent,
 //    Tile& child,
@@ -240,7 +244,7 @@ namespace Cesium3DTilesSelection {
 //  }
 //}
 //
-//void createImplicitOctreeTile(
+// void createImplicitOctreeTile(
 //    const ImplicitTilingContext& implicitContext,
 //    Tile& parent,
 //    Tile& child,
@@ -300,7 +304,7 @@ namespace Cesium3DTilesSelection {
 //  }
 //}
 //
-//void createImplicitChildrenIfNeeded(
+// void createImplicitChildrenIfNeeded(
 //    Tile& tile,
 //    const ImplicitTraversalInfo& implicitInfo) {
 //
@@ -314,7 +318,8 @@ namespace Cesium3DTilesSelection {
 //        std::get_if<OctreeTileID>(&tile.getTileID());
 //
 //    if (pQuadtreeTileID) {
-//      // Check if any child tiles are known to be available, and create them if
+//      // Check if any child tiles are known to be available, and create them
+//      if
 //      // they are.
 //
 //      const QuadtreeTileID swID(
@@ -339,7 +344,8 @@ namespace Cesium3DTilesSelection {
 //        if ((swID.level %
 //             implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {
 //          // If the tiles are in child subtrees, we know enough about them to
-//          // decide whether to create the tile itself and whether each will act
+//          // decide whether to create the tile itself and whether each will
+//          act
 //          // as the root to a child subtree, but we do not yet know if they
 //          // will have content.
 //          if (implicitContext.quadtreeAvailability->findChildNodeIndex(
@@ -392,7 +398,8 @@ namespace Cesium3DTilesSelection {
 //          (ne & TileAvailabilityFlags::TILE_AVAILABLE));
 //
 //      if (implicitContext.rectangleAvailability && childCount > 0) {
-//        // For quantized mesh, if any children are available, we need to create
+//        // For quantized mesh, if any children are available, we need to
+//        create
 //        // all four in order to avoid holes. But non-available tiles will be
 //        // upsampled instead of loaded.
 //
@@ -467,7 +474,8 @@ namespace Cesium3DTilesSelection {
 //      }
 //
 //    } else if (pOctreeTileID && implicitContext.octreeAvailability) {
-//      // Check if any child tiles are known to be available, and create them if
+//      // Check if any child tiles are known to be available, and create them
+//      if
 //      // they are.
 //
 //      uint8_t availabilities[8];
@@ -528,7 +536,8 @@ namespace Cesium3DTilesSelection {
 //      tile.createChildTiles(availableChildren);
 //      gsl::span<Tile> children = tile.getChildren();
 //
-//      for (uint8_t relativeChildId = 0, availableChild = 0; relativeChildId < 8;
+//      for (uint8_t relativeChildId = 0, availableChild = 0; relativeChildId <
+//      8;
 //           ++relativeChildId) {
 //        uint8_t availability = availabilities[relativeChildId];
 //        if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {

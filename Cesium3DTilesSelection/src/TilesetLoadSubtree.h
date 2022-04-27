@@ -9,12 +9,12 @@ namespace Cesium3DTilesSelection {
 ///**
 // * @brief Loads a tileset's implicitly-tiled subtree.
 // */
-//class Tileset::LoadSubtree {
-//public:
+// class Tileset::LoadSubtree {
+// public:
 //  static CesiumAsync::Future<void>
 //  start(Tileset& tileset, const SubtreeLoadRecord& loadRecord);
 //
-//private:
+// private:
 //  struct Private;
 //};
 //
