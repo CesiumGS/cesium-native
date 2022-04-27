@@ -483,8 +483,10 @@ void Tile::loadContent() {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
         return ImplicitTraversalUtilities::loadAvailability(*this)
-            .thenImmediately(
-                [this, state = loadResult.state]() { this->setState(state); });
+            .thenImmediately([this, state = loadResult.state]() {
+              this->setState(state);
+              this->getTileset()->notifyTileDoneLoading(this);
+            });
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();
@@ -496,12 +498,7 @@ void Tile::loadContent() {
             this->getTileset()->getExternals().pLogger,
             "An exception occurred while loading tile: {}",
             e.what());
-      })
-      .thenInWorkerThread([this]() {
-        return ImplicitTraversalUtilities::loadAvailability(*this);
-      })
-      .thenInMainThread(
-          [this]() { this->getTileset()->notifyTileDoneLoading(this); });
+      });
 }
 
 void Tile::processLoadedContent() {

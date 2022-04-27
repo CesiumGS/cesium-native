@@ -376,6 +376,8 @@ CesiumAsync::Future<void> loadAvailability(Tile& tile) {
                     *unloadedAvailabilityTile,
                     pChildContext)
                 .thenInWorkerThread(
+                    // call recursively to make sure availabilty is checked for
+                    // the rest of the children.
                     [&tile](int) { return loadAvailability(tile); });
           }
         }
