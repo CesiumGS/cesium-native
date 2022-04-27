@@ -495,10 +495,14 @@ void Tile::loadContent() {
             this->getTileset()->getExternals().pLogger,
             "An exception occurred while loading tile: {}",
             e.what());
+      })
+      .thenInWorkerThread([this]() {
+        return ImplicitTraversalUtilities::loadAvailability(*this);
       });
 }
 
 void Tile::processLoadedContent() {
+
   const TilesetExternals& externals = this->getTileset()->getExternals();
 
   if (this->getState() == LoadState::ContentLoaded) {
@@ -903,11 +907,7 @@ void Tile::update(
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (moreRasterDetailAvailable && this->_children.empty() &&
-        this->_pContext->implicitContext &&
-        this->_pContext->implicitContext->tilesWaitingForAvailability.find(
-            this) == this->_pContext->implicitContext
-                         ->tilesWaitingForAvailability.end()) {
+    if (moreRasterDetailAvailable && this->_children.empty()) {
       createQuadtreeSubdividedChildren(*this);
     }
   } else if (

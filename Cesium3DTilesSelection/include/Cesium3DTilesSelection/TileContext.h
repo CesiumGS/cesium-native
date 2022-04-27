@@ -115,12 +115,6 @@ public:
   std::unordered_set<CesiumGeometry::QuadtreeTileID> availabilityTilesLoaded;
 
   /**
-   * @brief A set tiles that are currently waiting for an availability tile to
-   * load.
-   */
-  std::unordered_set<Tile*> tilesWaitingForAvailability;
-
-  /**
    * @brief Any attribution associated with this context/layer.
    */
   std::optional<Credit> credit;

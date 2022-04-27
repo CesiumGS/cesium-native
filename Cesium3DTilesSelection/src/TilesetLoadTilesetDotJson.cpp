@@ -423,7 +423,6 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       std::nullopt,
       std::nullopt,
       {},
-      {},
       std::nullopt};
 
   std::vector<std::string> extensions =
