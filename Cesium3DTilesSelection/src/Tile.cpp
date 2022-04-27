@@ -103,8 +103,12 @@ int64_t Tile::computeByteSize() const noexcept {
   int64_t bytes = 0;
 
   const TileContent* pContent = this->getContent();
-  if (pContent && pContent->isRenderContent()) {
-    const TileRenderContent* pRenderContent = pContent->getRenderContent();
+  if (!pContent) {
+    return 0;
+  }
+
+  const TileRenderContent* pRenderContent = pContent->getRenderContent();
+  if (pRenderContent && pRenderContent->model) {
     const CesiumGltf::Model& model = pRenderContent->model.value();
 
     // Add up the glTF buffers

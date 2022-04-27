@@ -17,6 +17,8 @@ public:
       std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
       std::unique_ptr<TilesetContentLoader> pLoader);
 
+  ~TilesetContentManager() noexcept;
+
   void loadTileContent(Tile& tile, const TilesetContentOptions& contentOptions);
 
   void updateTileContent(Tile& tile);
@@ -24,6 +26,10 @@ public:
   bool unloadTileContent(Tile& tile);
 
   void updateRequestHeader(const std::string &header, const std::string &headerValue);
+
+  int32_t getNumOfTilesLoading() const noexcept;
+
+  int64_t getSizeOfTilesDataUsed() const noexcept;
 
 private:
   static void setTileContent(
@@ -37,8 +43,16 @@ private:
 
   void unloadDoneState(Tile& tile);
 
+  void notifyTileStartLoading(Tile& tile) noexcept;
+
+  void notifyTileDoneLoading(Tile& tile) noexcept;
+
+  void notifyTileUnloading(Tile& tile) noexcept;
+
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
+  int32_t _tilesLoadOnProgress;
+  int64_t _tilesDataUsed;
 };
 } // namespace Cesium3DTilesSelection

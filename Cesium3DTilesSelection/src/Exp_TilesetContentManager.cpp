@@ -90,7 +90,19 @@ TilesetContentManager::TilesetContentManager(
     std::unique_ptr<TilesetContentLoader> pLoader)
     : _externals{externals},
       _requestHeaders{std::move(requestHeaders)},
-      _pLoader{std::move(pLoader)} {}
+      _pLoader{std::move(pLoader)},
+      _tilesLoadOnProgress{0},
+      _tilesDataUsed{0} {}
+
+TilesetContentManager::~TilesetContentManager() noexcept {
+  // Wait for all asynchronous loading to terminate.
+  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
+  // being decremented correctly when an async load ends.
+  while (_tilesLoadOnProgress > 0) {
+    _externals.pAssetAccessor->tick();
+    _externals.asyncSystem.dispatchMainThreadTasks();
+  }
+}
 
 void TilesetContentManager::loadTileContent(
     Tile& tile,
@@ -104,6 +116,8 @@ void TilesetContentManager::loadTileContent(
       pContent->getState() != TileLoadState::FailedTemporarily) {
     return;
   }
+
+  notifyTileStartLoading(tile);
 
   TileContentLoadInfo loadInfo{
       _externals.asyncSystem,
@@ -122,11 +136,13 @@ void TilesetContentManager::loadTileContent(
                 std::move(result),
                 std::move(pPrepareRendererResources));
           })
-      .thenInMainThread([pContent](TileLoadResultAndRenderResources&& pair) {
+      .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         TilesetContentManager::setTileContent(
-            *pContent,
+            *tile.getContent(),
             std::move(pair.result),
             pair.pRenderResources);
+
+        notifyTileDoneLoading(tile);
       });
 }
 
@@ -161,6 +177,12 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
+  if (pContent->isExternalContent()) {
+    return true;
+  }
+
+  notifyTileUnloading(tile);
+
   switch (state) {
   case TileLoadState::ContentLoaded:
     unloadContentLoadedState(tile);
@@ -190,6 +212,14 @@ void TilesetContentManager::updateRequestHeader(
   } else {
     _requestHeaders.emplace_back(header, headerValue);
   }
+}
+
+int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
+  return _tilesLoadOnProgress;
+}
+
+int64_t TilesetContentManager::getSizeOfTilesDataUsed() const noexcept {
+  return _tilesDataUsed;
 }
 
 void TilesetContentManager::setTileContent(
@@ -261,5 +291,19 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
       nullptr,
       pMainThreadRenderResources);
   pContent->setRenderResources(nullptr);
+}
+
+void TilesetContentManager::notifyTileStartLoading([[maybe_unused]] Tile& tile) noexcept {
+  ++_tilesLoadOnProgress;
+}
+
+void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
+  assert(_tilesLoadOnProgress > 0 && "There are no tiles currently on the fly");
+  --_tilesLoadOnProgress;
+    _tilesDataUsed += tile.computeByteSize();
+}
+
+void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {
+  _tilesDataUsed -= tile.computeByteSize();
 }
 } // namespace Cesium3DTilesSelection

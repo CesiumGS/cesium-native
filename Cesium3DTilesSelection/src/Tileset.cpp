@@ -58,16 +58,13 @@ Tileset::Tileset(
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _loadsInProgress(0),
       _overlays(*this),
-      _tileDataBytes(0),
       _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    this->notifyTileStartLoading(nullptr);
     TilesetJsonLoader::createLoader(externals, url, {})
         .thenInMainThread([this](TilesetContentLoaderResult&& result) {
           if (result.errors) {
@@ -85,8 +82,6 @@ Tileset::Tileset(
                     std::move(result.requestHeaders),
                     std::move(result.pLoader));
           }
-
-          this->notifyTileDoneLoading(nullptr);
         });
   }
 }
@@ -108,17 +103,13 @@ Tileset::Tileset(
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _loadsInProgress(0),
       _overlays(*this),
-      _tileDataBytes(0),
       _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
   if (ionAssetID > 0) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    this->notifyTileStartLoading(nullptr);
-
     auto authorizationChangeListener = [this](
                                            const std::string& header,
                                            const std::string& headerValue) {
@@ -150,22 +141,11 @@ Tileset::Tileset(
                     std::move(result.requestHeaders),
                     std::move(result.pLoader));
           }
-
-          this->notifyTileDoneLoading(nullptr);
         });
   }
 }
 
 Tileset::~Tileset() {
-  // Wait for all asynchronous loading to terminate.
-  // If you're hanging here, it's most likely caused by _loadsInProgress not
-  // being decremented correctly when an async load ends.
-  while (this->_loadsInProgress.load(std::memory_order::memory_order_acquire) >
-         0) {
-    this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
-  }
-
   // Wait for all overlays to wrap up their loading, too.
   uint32_t tilesLoading = 1;
   while (tilesLoading > 0) {
@@ -234,7 +214,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
       this->_updateResult.tilesToRenderThisFrame;
 
   this->updateView(frustums);
-  while (this->_loadsInProgress > 0) {
+  while (this->_pTilesetContentManager->getNumOfTilesLoading() > 0) {
     this->_externals.pAssetAccessor->tick();
     this->updateView(frustums);
   }
@@ -345,33 +325,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   return result;
 }
 
-void Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
-  ++this->_loadsInProgress;
-
-  if (pTile) {
-    CESIUM_TRACE_BEGIN_IN_TRACK(
-        TileIdUtilities::createTileIdString(pTile->getTileID()).c_str());
-  }
-}
-
-void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
-  assert(this->_loadsInProgress > 0);
-  --this->_loadsInProgress;
-
-  if (pTile) {
-    this->_tileDataBytes += pTile->computeByteSize();
-
-    CESIUM_TRACE_END_IN_TRACK(
-        TileIdUtilities::createTileIdString(pTile->getTileID()).c_str());
-  }
-}
-
-void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
-  if (pTile) {
-    this->_tileDataBytes -= pTile->computeByteSize();
-  }
-}
-
 void Tileset::forEachLoadedTile(
     const std::function<void(Tile& tile)>& callback) {
   Tile* pCurrent = this->_loadedTiles.head();
@@ -383,7 +336,7 @@ void Tileset::forEachLoadedTile(
 }
 
 int64_t Tileset::getTotalDataBytes() const noexcept {
-  int64_t bytes = this->_tileDataBytes;
+  int64_t bytes = this->_pTilesetContentManager->getSizeOfTilesDataUsed();
 
   for (auto& pOverlay : this->_overlays) {
     const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
@@ -1118,16 +1071,13 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 void Tileset::_processLoadQueue() {
   this->processQueue(
       this->_loadQueueHigh,
-      this->_loadsInProgress,
-      this->_options.maximumSimultaneousTileLoads);
+      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
   this->processQueue(
       this->_loadQueueMedium,
-      this->_loadsInProgress,
-      this->_options.maximumSimultaneousTileLoads);
+      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
   this->processQueue(
       this->_loadQueueLow,
-      this->_loadsInProgress,
-      this->_options.maximumSimultaneousTileLoads);
+      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
 }
 
 void Tileset::_unloadCachedTiles() noexcept {
@@ -1201,9 +1151,8 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
 
 void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
-    const std::atomic<uint32_t>& loadsInProgress,
-    uint32_t maximumLoadsInProgress) {
-  if (loadsInProgress >= maximumLoadsInProgress) {
+    int32_t maximumLoadsInProgress) {
+  if (this->_pTilesetContentManager->getNumOfTilesLoading() >= maximumLoadsInProgress) {
     return;
   }
 
@@ -1214,7 +1163,7 @@ void Tileset::processQueue(
     _pTilesetContentManager->loadTileContent(
         *record.pTile,
         _options.contentOptions);
-    if (loadsInProgress >= maximumLoadsInProgress) {
+    if (this->_pTilesetContentManager->getNumOfTilesLoading() >= maximumLoadsInProgress) {
       break;
     }
   }

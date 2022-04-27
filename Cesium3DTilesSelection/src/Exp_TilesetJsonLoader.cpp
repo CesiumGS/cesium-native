@@ -358,7 +358,8 @@ void parseTileJsonRecursively(
 TilesetContentLoaderResult parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
-    const gsl::span<const std::byte>& tilesetJsonBinary) {
+    const gsl::span<const std::byte>& tilesetJsonBinary,
+    const glm::dmat4& parentTransform) {
   rapidjson::Document tilesetJson;
   tilesetJson.Parse(
       reinterpret_cast<const char*>(tilesetJsonBinary.data()),
@@ -386,7 +387,7 @@ TilesetContentLoaderResult parseTilesetJson(
     parseTileJsonRecursively(
         pLogger,
         rootJson,
-        glm::dmat4(1.0),
+        parentTransform,
         TileRefine::Replace,
         nullptr,
         *result.pRootTile,
@@ -397,7 +398,7 @@ TilesetContentLoaderResult parseTilesetJson(
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
-    const std::shared_ptr<spdlog::logger>& pLogger,
+    const TileContentLoadInfo& loadInfo,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer) {
   // create external tileset
@@ -409,14 +410,17 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // We will propagate it back to tile later in the main
   // thread
   externalContentInitializer.pExternalTilesetLoaders =
-      std::make_shared<TilesetContentLoaderResult>(
-          parseTilesetJson(pLogger, tileUrl, responseData));
+      std::make_shared<TilesetContentLoaderResult>(parseTilesetJson(
+          loadInfo.pLogger,
+          tileUrl,
+          responseData,
+          loadInfo.tileTransform));
 
   // check and log any errors
   const auto& errors =
       externalContentInitializer.pExternalTilesetLoaders->errors;
   if (errors) {
-    logErrors(pLogger, tileUrl, errors.errors);
+    logErrors(loadInfo.pLogger, tileUrl, errors.errors);
     return TileLoadResult{
         TileExternalContent{},
         TileLoadResultState::Failed,
@@ -469,7 +473,8 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
         return parseTilesetJson(
             pLogger,
             pCompletedRequest->url(),
-            pResponse->data());
+            pResponse->data(),
+            glm::dmat4(1.0));
       });
 }
 
@@ -490,8 +495,11 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
   // this loader only handles Url ID
   const std::string* url = std::get_if<std::string>(&loadInfo.tileID);
   if (!url) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult{TileUnknownContent{}, TileLoadResultState::Failed, 0, {}});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
+        TileUnknownContent{},
+        TileLoadResultState::Failed,
+        0,
+        {}});
   }
 
   ExternalContentInitializer externalContentInitializer{nullptr, this};
@@ -566,7 +574,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
             } else {
               // not a renderable content, then it must be external tileset
               return parseExternalTilesetInWorkerThread(
-                  loadInfo.pLogger,
+                  loadInfo,
                   std::move(pCompletedRequest),
                   std::move(externalContentInitializer));
             }

@@ -154,23 +154,6 @@ public:
   const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums);
 
   /**
-   * @brief Notifies the tileset that the given tile has started loading.
-   * This method may be called from any thread.
-   */
-  void notifyTileStartLoading(Tile* pTile) noexcept;
-
-  /**
-   * @brief Notifies the tileset that the given tile has finished loading and is
-   * ready to render. This method may be called from any thread.
-   */
-  void notifyTileDoneLoading(Tile* pTile) noexcept;
-
-  /**
-   * @brief Notifies the tileset that the given tile is about to be unloaded.
-   */
-  void notifyTileUnloading(Tile* pTile) noexcept;
-
-  /**
    * @brief Invokes a function for each tile that is currently loaded.
    *
    * @param callback The function to invoke.
@@ -409,12 +392,9 @@ private:
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
-  std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
   Tile::LoadedLinkedList _loadedTiles;
 
   RasterOverlayCollection _overlays;
-
-  int64_t _tileDataBytes;
 
   bool _supportsRasterOverlays;
 
@@ -446,8 +426,7 @@ private:
       const std::vector<double>& distances);
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
-      const std::atomic<uint32_t>& loadsInProgress,
-      uint32_t maximumLoadsInProgress);
+      int32_t maximumLoadsInProgress);
 
   void reportError(TilesetLoadFailureDetails&& errorDetails);
 
