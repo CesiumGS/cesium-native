@@ -482,7 +482,6 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
       .catchInMainThread([this](const std::exception& e) {
@@ -498,7 +497,9 @@ void Tile::loadContent() {
       })
       .thenInWorkerThread([this]() {
         return ImplicitTraversalUtilities::loadAvailability(*this);
-      });
+      })
+      .thenInMainThread(
+          [this]() { this->getTileset()->notifyTileDoneLoading(this); });
 }
 
 void Tile::processLoadedContent() {
