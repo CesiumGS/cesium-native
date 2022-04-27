@@ -14,8 +14,8 @@ public:
   public:
     const_iterator(
         const std::vector<const rapidjson::Value*>& propertyInClass,
-        const rapidjson::Value::ConstArray& classIds,
-        const rapidjson::Value::ConstArray& parentIds,
+        const rapidjson::Value& classIds,
+        const rapidjson::Value& parentIds,
         const std::vector<uint32_t>& instanceIndices,
         int64_t currentIndex);
 
@@ -31,8 +31,8 @@ public:
     const rapidjson::Value* getValue(int64_t index) const;
 
     const std::vector<const rapidjson::Value*>& _propertyInClass;
-    const rapidjson::Value::ConstArray _classIds;
-    const rapidjson::Value::ConstArray _parentIds;
+    const rapidjson::Value& _classIds;
+    const rapidjson::Value& _parentIds;
     const std::vector<uint32_t>& _instanceIndices;
     int64_t _currentIndex;
     mutable const rapidjson::Value* _pCachedValue;

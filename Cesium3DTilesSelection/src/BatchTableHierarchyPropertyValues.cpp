@@ -29,7 +29,7 @@ BatchTableHierarchyPropertyValues::BatchTableHierarchyPropertyValues(
   int64_t instancesLength = instancesLengthIt->value.GetInt64();
 
   std::vector<uint32_t> classInstancesSeen(classesIt->value.Size(), 0);
-  this->_instanceIndices.resize(instancesLength, 0);
+  this->_instanceIndices.resize(size_t(instancesLength), 0);
 
   size_t instanceIndex = 0;
   for (const rapidjson::Value& classIdValue : classIdsIt->value.GetArray()) {
@@ -43,8 +43,8 @@ BatchTableHierarchyPropertyValues::BatchTableHierarchyPropertyValues(
       continue;
     }
 
-    this->_instanceIndices[instanceIndex] = classInstancesSeen[classId];
-    ++classInstancesSeen[classId];
+    this->_instanceIndices[instanceIndex] = classInstancesSeen[size_t(classId)];
+    ++classInstancesSeen[size_t(classId)];
 
     ++instanceIndex;
 
@@ -104,11 +104,11 @@ BatchTableHierarchyPropertyValues::begin() const {
 
 BatchTableHierarchyPropertyValues::const_iterator
 BatchTableHierarchyPropertyValues::end() const {
-  return createIterator(this->_instanceIndices.size());
+  return createIterator(int64_t(this->_instanceIndices.size()));
 }
 
 int64_t BatchTableHierarchyPropertyValues::size() const {
-  return this->_instanceIndices.size();
+  return int64_t(this->_instanceIndices.size());
 }
 
 namespace {
@@ -148,8 +148,8 @@ BatchTableHierarchyPropertyValues::createIterator(int64_t index) const {
 
 BatchTableHierarchyPropertyValues::const_iterator::const_iterator(
     const std::vector<const rapidjson::Value*>& propertyInClass,
-    const rapidjson::Value::ConstArray& classIds,
-    const rapidjson::Value::ConstArray& parentIds,
+    const rapidjson::Value& classIds,
+    const rapidjson::Value& parentIds,
     const std::vector<uint32_t>& instanceIndices,
     int64_t currentIndex)
     : _propertyInClass(propertyInClass),
@@ -239,13 +239,13 @@ BatchTableHierarchyPropertyValues::const_iterator::getValue(
   }
 
   int64_t classId = classIdValue.GetInt64();
-  int64_t instanceId = this->_instanceIndices[index];
+  int64_t instanceId = this->_instanceIndices[size_t(index)];
 
   if (classId < 0 || classId >= int64_t(this->_propertyInClass.size())) {
     return nullptr;
   }
 
-  const rapidjson::Value* pProperty = this->_propertyInClass[classId];
+  const rapidjson::Value* pProperty = this->_propertyInClass[size_t(classId)];
   if (pProperty == nullptr) {
     return nullptr;
   }
