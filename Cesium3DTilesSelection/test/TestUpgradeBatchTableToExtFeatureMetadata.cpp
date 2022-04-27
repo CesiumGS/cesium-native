@@ -1191,3 +1191,183 @@ TEST_CASE("Cannot write pass batch length table") {
         2);
   }
 }
+
+TEST_CASE("Converts Feature Classes 3DTILES_batch_table_hierarchy to "
+          "EXT_feature_metadata") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 8
+    }
+  )";
+
+  // "Feature classes" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-classes
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Lamp",
+              "length" : 3,
+              "instances" : {
+                "lampStrength" : [10, 5, 7],
+                "lampColor" : ["yellow", "white", "white"]
+              }
+            },
+            {
+              "name" : "Car",
+              "length" : 3,
+              "instances" : {
+                "carType" : ["truck", "bus", "sedan"],
+                "carColor" : ["green", "blue", "red"]
+              }
+            },
+            {
+              "name" : "Tree",
+              "length" : 2,
+              "instances" : {
+                "treeHeight" : [10, 15],
+                "treeAge" : [5, 8]
+              }
+            }
+          ],
+          "instancesLength" : 8,
+          "classIds" : [0, 0, 0, 1, 1, 1, 2, 2]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      gltf,
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>());
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 6);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 6);
+
+  // Even though some of these properties are numeric, they become STRING
+  // because not every feature has every property, and only STRING can
+  // represent null.
+  std::map<std::string, std::string> expectedProperties{
+      std::make_pair("lampStrength", "STRING"),
+      std::make_pair("lampColor", "STRING"),
+      std::make_pair("carType", "STRING"),
+      std::make_pair("carColor", "STRING"),
+      std::make_pair("treeHeight", "STRING"),
+      std::make_pair("treeAge", "STRING")};
+
+  for (const auto& expected : expectedProperties) {
+    auto it = defaultClass.properties.find(expected.first);
+    REQUIRE(it != defaultClass.properties.end());
+    CHECK(it->second.type == expected.second);
+  }
+
+  {
+    std::vector<std::string> expected =
+        {"10", "5", "7", "null", "null", "null", "null", "null"};
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        "lampStrength",
+        "STRING",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::string> expected =
+        {"yellow", "white", "white", "null", "null", "null", "null", "null"};
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        "lampColor",
+        "STRING",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::string> expected =
+        {"null", "null", "null", "truck", "bus", "sedan", "null", "null"};
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        "carType",
+        "STRING",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::string> expected =
+        {"null", "null", "null", "green", "blue", "red", "null", "null"};
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        "carColor",
+        "STRING",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::string> expected =
+        {"null", "null", "null", "null", "null", "null", "10", "15"};
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        "treeHeight",
+        "STRING",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::string> expected =
+        {"null", "null", "null", "null", "null", "null", "5", "8"};
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        "treeAge",
+        "STRING",
+        expected,
+        expected.size());
+  }
+}
