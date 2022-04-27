@@ -1343,20 +1343,20 @@ public:
   class const_iterator {
   public:
     const_iterator(
-        const std::string& propertyName,
-        const rapidjson::Value::ConstArray& classes,
+        const std::vector<const rapidjson::Value*>& propertyInClass,
         const rapidjson::Value::ConstArray& classIds,
         const rapidjson::Value::ConstArray& parentIds,
         const std::vector<uint32_t>& instanceIndices,
         int64_t currentIndex)
-        : _propertyName(propertyName),
-          _classes(classes),
+        : _propertyInClass(propertyInClass),
           _classIds(classIds),
           _parentIds(parentIds),
           _instanceIndices(instanceIndices),
-          _currentIndex(currentIndex) {}
+          _currentIndex(currentIndex),
+          _pCachedValue(nullptr) {}
 
     const_iterator& operator++() {
+      this->_pCachedValue = nullptr;
       ++this->_currentIndex;
       return *this;
     }
@@ -1374,8 +1374,13 @@ public:
       // instance and property.
       static const rapidjson::Value nullValue{};
 
+      if (this->_pCachedValue) {
+        return *this->_pCachedValue;
+      }
+
       const rapidjson::Value* pResult = this->getValue(this->_currentIndex);
       if (pResult) {
+        this->_pCachedValue = pResult;
         return *pResult;
       }
 
@@ -1383,22 +1388,26 @@ public:
 
       while (true) {
         if (id < 0 || id >= this->_parentIds.Size()) {
+          this->_pCachedValue = &nullValue;
           return nullValue;
         }
 
         const rapidjson::Value& parentIdValue =
             this->_parentIds[rapidjson::SizeType(id)];
         if (!parentIdValue.IsInt64()) {
+          this->_pCachedValue = &nullValue;
           return nullValue;
         }
 
         int64_t parentId = parentIdValue.GetInt64();
         if (parentId == id) {
+          this->_pCachedValue = &nullValue;
           return nullValue;
         }
 
         pResult = this->getValue(parentId);
         if (pResult) {
+          this->_pCachedValue = pResult;
           return *pResult;
         }
 
@@ -1419,43 +1428,37 @@ public:
       int64_t classId = classIdValue.GetInt64();
       int64_t instanceId = this->_instanceIndices[index];
 
-      if (classId < 0 || classId >= this->_classes.Size()) {
+      if (classId < 0 || classId >= int64_t(this->_propertyInClass.size())) {
         return nullptr;
       }
 
-      const rapidjson::Value& thisClass =
-          this->_classes[rapidjson::SizeType(classId)];
-      auto instancesIt = thisClass.FindMember("instances");
-      if (instancesIt == thisClass.MemberEnd()) {
+      const rapidjson::Value* pProperty = this->_propertyInClass[classId];
+      if (pProperty == nullptr) {
         return nullptr;
       }
 
-      auto propertyIt =
-          instancesIt->value.FindMember(this->_propertyName.c_str());
-      if (propertyIt == instancesIt->value.MemberEnd()) {
+      assert(pProperty->IsArray());
+      if (instanceId < 0 || instanceId >= pProperty->Size()) {
         return nullptr;
       }
 
-      if (instanceId < 0 || instanceId >= propertyIt->value.Size()) {
-        return nullptr;
-      }
-
-      return &propertyIt->value[rapidjson::SizeType(instanceId)];
+      return &(*pProperty)[rapidjson::SizeType(instanceId)];
     }
 
   private:
-    const std::string& _propertyName;
-    const rapidjson::Value::ConstArray _classes;
+    const std::vector<const rapidjson::Value*>& _propertyInClass;
     const rapidjson::Value::ConstArray _classIds;
     const rapidjson::Value::ConstArray _parentIds;
     const std::vector<uint32_t>& _instanceIndices;
     int64_t _currentIndex;
+    mutable const rapidjson::Value* _pCachedValue;
   };
 
-  BatchTableHierarchyPropertyValues(
-      const rapidjson::Value& batchTableHierarchy,
-      const std::string& propertyName)
-      : _batchTableHierarchy(batchTableHierarchy), _propertyName(propertyName) {
+  BatchTableHierarchyPropertyValues(const rapidjson::Value& batchTableHierarchy)
+      : _batchTableHierarchy(batchTableHierarchy),
+        _propertyName(),
+        _instanceIndices(),
+        _indexOfPropertyInClass() {
 
     auto classesIt = batchTableHierarchy.FindMember("classes");
     if (classesIt == batchTableHierarchy.MemberEnd()) {
@@ -1504,6 +1507,46 @@ public:
     }
   }
 
+  void setProperty(const std::string& propertyName) {
+    this->_propertyName = propertyName;
+
+    this->_indexOfPropertyInClass.clear();
+
+    auto classesIt = this->_batchTableHierarchy.FindMember("classes");
+    if (classesIt == this->_batchTableHierarchy.MemberEnd() ||
+        !classesIt->value.IsArray()) {
+      return;
+    }
+
+    auto classes = classesIt->value.GetArray();
+
+    rapidjson::Value propertyNameValue;
+    propertyNameValue.SetString(
+        propertyName.data(),
+        rapidjson::SizeType(propertyName.size()));
+
+    for (auto it = classes.Begin(); it != classes.End(); ++it) {
+      auto instancesIt = it->FindMember("instances");
+      if (instancesIt == it->MemberEnd()) {
+        this->_indexOfPropertyInClass.emplace_back(nullptr);
+        continue;
+      }
+
+      auto propertyIt = instancesIt->value.FindMember(propertyNameValue);
+      if (propertyIt == instancesIt->value.MemberEnd()) {
+        this->_indexOfPropertyInClass.emplace_back(nullptr);
+        continue;
+      }
+
+      if (!propertyIt->value.IsArray()) {
+        this->_indexOfPropertyInClass.emplace_back(nullptr);
+        continue;
+      }
+
+      this->_indexOfPropertyInClass.emplace_back(&propertyIt->value);
+    }
+  }
+
   const_iterator begin() const { return createIterator(0); }
 
   const_iterator end() const {
@@ -1513,15 +1556,14 @@ public:
   int64_t size() const { return this->_instanceIndices.size(); }
 
 private:
-  const_iterator createIterator(int64_t index) const {
-    rapidjson::Value emptyArray;
-    emptyArray.SetArray();
+  static rapidjson::Value createEmptyArray() {
+    rapidjson::Value result;
+    result.SetArray();
+    return result;
+  }
 
-    auto classesIt = this->_batchTableHierarchy.FindMember("classes");
-    const rapidjson::Value::ConstArray classes =
-        (classesIt != this->_batchTableHierarchy.MemberEnd() ? classesIt->value
-                                                             : emptyArray)
-            .GetArray();
+  const_iterator createIterator(int64_t index) const {
+    static const rapidjson::Value emptyArray = createEmptyArray();
 
     auto classIdsIt = this->_batchTableHierarchy.FindMember("classIds");
     const rapidjson::Value::ConstArray classIds =
@@ -1538,8 +1580,7 @@ private:
             .GetArray();
 
     return const_iterator(
-        this->_propertyName,
-        classes,
+        this->_indexOfPropertyInClass,
         classIds,
         parentIds,
         this->_instanceIndices,
@@ -1547,8 +1588,13 @@ private:
   }
 
   const rapidjson::Value& _batchTableHierarchy;
-  const std::string& _propertyName;
+  std::string _propertyName;
+
+  // The index of each instance within its class.
   std::vector<uint32_t> _instanceIndices;
+
+  // A pointer to the current property in each class.
+  std::vector<const rapidjson::Value*> _indexOfPropertyInClass;
 };
 
 void updateExtensionWithBatchTableHierarchy(
@@ -1584,6 +1630,9 @@ void updateExtensionWithBatchTableHierarchy(
     }
   }
 
+  BatchTableHierarchyPropertyValues batchTableHierarchyValues(
+      batchTableHierarchy);
+
   for (const std::string& name : properties) {
     ClassProperty& classProperty =
         classDefinition.properties.emplace(name, ClassProperty()).first->second;
@@ -1593,28 +1642,15 @@ void updateExtensionWithBatchTableHierarchy(
         featureTable.properties.emplace(name, FeatureTableProperty())
             .first->second;
 
+    batchTableHierarchyValues.setProperty(name);
+
     updateExtensionWithJsonProperty(
         gltf,
         classProperty,
         featureTable,
         featureTableProperty,
-        BatchTableHierarchyPropertyValues(batchTableHierarchy, name));
+        batchTableHierarchyValues);
   }
-  // // Create each property.
-  // for (const std::string& name : properties) {
-  //   // const CompatibleTypes& compatibleTypes = property.second;
-
-  //   ClassProperty& classProperty =
-  //       classDefinition.properties.emplace(name,
-  //       ClassProperty()).first->second;
-  //   classProperty.name = name;
-
-  //   // FeatureTableProperty& featureTableProperty =
-  //   featureTable.properties.emplace(name,
-  //   FeatureTableProperty()).first->second;
-  // }
-
-  //
 }
 
 } // namespace
