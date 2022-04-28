@@ -23,7 +23,6 @@
 
 namespace Cesium3DTilesSelection {
 class Tileset;
-struct TileContentLoadResult;
 
 /**
  * @brief A tile in a {@link Tileset}.

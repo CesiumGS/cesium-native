@@ -6,10 +6,9 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 
-#include <gsl/span>
-
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 class TilesetJsonLoader : public TilesetContentLoader {

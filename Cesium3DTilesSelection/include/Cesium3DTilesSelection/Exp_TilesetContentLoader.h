@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 class Tile;
