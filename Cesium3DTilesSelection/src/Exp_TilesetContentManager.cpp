@@ -178,7 +178,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   if (pContent->isExternalContent()) {
-    return true;
+    return false;
   }
 
   notifyTileUnloading(tile);
