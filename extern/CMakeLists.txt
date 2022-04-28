@@ -129,5 +129,3 @@ set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
 )
 
-add_subdirectory(entt)
-
