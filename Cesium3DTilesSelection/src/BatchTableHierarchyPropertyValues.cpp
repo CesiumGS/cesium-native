@@ -1,5 +1,7 @@
 #include "BatchTableHierarchyPropertyValues.h"
 
+#include <glm/common.hpp>
+
 using namespace Cesium3DTilesSelection::CesiumImpl;
 
 namespace {
@@ -130,7 +132,7 @@ BatchTableHierarchyPropertyValues::end() const {
 }
 
 int64_t BatchTableHierarchyPropertyValues::size() const {
-  return std::min(int64_t(this->_instanceIndices.size()), this->_batchLength);
+  return glm::min(int64_t(this->_instanceIndices.size()), this->_batchLength);
 }
 
 BatchTableHierarchyPropertyValues::const_iterator
