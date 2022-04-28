@@ -12,7 +12,7 @@ Thus, a tile which is the root of a subtree will wait in the `Unloaded` state un
 
 This is really important, because it ensures:
 
-1. We don't call `createImplicitChildrenIfNeeded` before we know whether the implicit children exist. And that we _do_ call it after we know whether or not the implicit children exist. This method is only called once on the transition from `ContentLoaded` to `Done`, but the mechanism above ensures we never arrive that that state too early.
+1. We don't call `createImplicitChildrenIfNeeded` before we know whether the implicit children exist. And that we _do_ call it after we know whether or not the implicit children exist. This method is only called once on the transition from `ContentLoaded` to `Done`, but the mechanism above ensures we never arrive at that state too early.
 2. We don't erroneously upsample tiles that seemingly have no children, but that will once we load availability.
 
 ## Application to quantized-mesh and layers
