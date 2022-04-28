@@ -217,6 +217,20 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
   return std::nullopt;
 }
 
+void parseImplicitTileset(
+    const rapidjson::Value& implicitExtensionJson,
+    Tile& tile,
+    TilesetContentLoader& currentLoader)
+{
+  (void)(implicitExtensionJson);
+  (void)(tile);
+  (void)(currentLoader);
+
+  // mark this implicit tile as external tileset
+  tile.setContent(
+      std::make_unique<TileContent>(&currentLoader, TileExternalContent{}));
+}
+
 void parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const rapidjson::Value& tileJson,
@@ -231,36 +245,14 @@ void parseTileJsonRecursively(
 
   tile.setParent(parentTile);
 
+  // parse tile transform
   const std::optional<glm::dmat4x4> tileTransform =
       CesiumUtility::JsonHelpers::getTransformProperty(tileJson, "transform");
   glm::dmat4x4 transform =
       parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
   tile.setTransform(transform);
 
-  const auto contentIt = tileJson.FindMember("content");
-  const auto childrenIt = tileJson.FindMember("children");
-
-  const char* contentUri = nullptr;
-  if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject()) {
-    auto uriIt = contentIt->value.FindMember("uri");
-    if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
-      uriIt = contentIt->value.FindMember("url");
-    }
-
-    if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      contentUri = uriIt->value.GetString();
-      tile.setContent(std::make_unique<TileContent>(&currentLoader));
-      tile.setTileID(contentUri);
-    }
-
-    std::optional<BoundingVolume> contentBoundingVolume =
-        getBoundingVolumeProperty(contentIt->value, "boundingVolume");
-    if (contentBoundingVolume) {
-      tile.setContentBoundingVolume(
-          transformBoundingVolume(transform, contentBoundingVolume.value()));
-    }
-  }
-
+  // parse bounding volume
   std::optional<BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
@@ -268,6 +260,18 @@ void parseTileJsonRecursively(
     return;
   }
 
+  tile.setBoundingVolume(
+      transformBoundingVolume(transform, boundingVolume.value()));
+
+  // parse viewer request volume
+  std::optional<BoundingVolume> viewerRequestVolume =
+      getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
+  if (viewerRequestVolume) {
+    tile.setViewerRequestVolume(
+        transformBoundingVolume(transform, viewerRequestVolume.value()));
+  }
+
+  // parse geometric error
   std::optional<double> geometricError =
       CesiumUtility::JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
@@ -278,8 +282,6 @@ void parseTileJsonRecursively(
         "Using half of the parent tile's geometric error.");
   }
 
-  tile.setBoundingVolume(
-      transformBoundingVolume(transform, boundingVolume.value()));
   const glm::dvec3 scale = glm::dvec3(
       glm::length(transform[0]),
       glm::length(transform[1]),
@@ -288,13 +290,7 @@ void parseTileJsonRecursively(
       glm::max(scale.x, glm::max(scale.y, scale.z));
   tile.setGeometricError(geometricError.value() * maxScaleComponent);
 
-  std::optional<BoundingVolume> viewerRequestVolume =
-      getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
-  if (viewerRequestVolume) {
-    tile.setViewerRequestVolume(
-        transformBoundingVolume(transform, viewerRequestVolume.value()));
-  }
-
+  // parse refinement
   const auto refineIt = tileJson.FindMember("refine");
   if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
     std::string refine = refineIt->value.GetString();
@@ -330,28 +326,70 @@ void parseTileJsonRecursively(
     tile.setRefine(parentRefine);
   }
 
-  // Check for the 3DTILES_implicit_tiling extension
-  if (childrenIt == tileJson.MemberEnd()) {
-    if (contentUri) {
-      // parseImplicitTileset(tile, tileJson, contentUri, context, newContexts);
-    }
-  } else if (childrenIt->value.IsArray()) {
-    const auto& childrenJson = childrenIt->value;
-    std::vector<Tile> childTiles(childrenJson.Size());
-    for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
-      const auto& childJson = childrenJson[i];
-      Tile& child = childTiles[i];
-      parseTileJsonRecursively(
-          pLogger,
-          childJson,
-          transform,
-          tile.getRefine(),
-          &tile,
-          child,
-          currentLoader);
+  // Parse content member to determine tile content Url.
+  const auto contentIt = tileJson.FindMember("content");
+  bool hasContentMember =
+      (contentIt != tileJson.MemberEnd()) && (contentIt->value.IsObject());
+  const char* contentUri = nullptr;
+  if (hasContentMember) {
+    auto uriIt = contentIt->value.FindMember("uri");
+    if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
+      uriIt = contentIt->value.FindMember("url");
     }
 
-    tile.createChildTiles(std::move(childTiles));
+    if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
+      contentUri = uriIt->value.GetString();
+    }
+  }
+
+  // determine if tile points to implicit tiling extension
+  const auto extensionIt = tileJson.FindMember("extensions");
+  bool hasImplicitContent = false;
+  if (extensionIt != tileJson.MemberEnd()) {
+    // this is an external tile pointing to an implicit tileset
+    const auto& extensions = extensionIt->value;
+    const auto implicitExtensionIt = extensions.FindMember("3DTILES_implicit_tiling");
+    hasImplicitContent = implicitExtensionIt != extensions.MemberEnd();
+    if (hasImplicitContent) {
+      parseImplicitTileset(implicitExtensionIt->value, tile, currentLoader);
+    } 
+  }
+
+  // this is a regular tile
+  if (!hasImplicitContent) {
+    if (hasContentMember) {
+      if (contentUri) {
+        tile.setContent(std::make_unique<TileContent>(&currentLoader));
+        tile.setTileID(contentUri);
+      }
+
+      std::optional<BoundingVolume> contentBoundingVolume =
+          getBoundingVolumeProperty(contentIt->value, "boundingVolume");
+      if (contentBoundingVolume) {
+        tile.setContentBoundingVolume(
+            transformBoundingVolume(transform, contentBoundingVolume.value()));
+      }
+    }
+
+    const auto childrenIt = tileJson.FindMember("children");
+    if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {
+      const auto& childrenJson = childrenIt->value;
+      std::vector<Tile> childTiles(childrenJson.Size());
+      for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
+        const auto& childJson = childrenJson[i];
+        Tile& child = childTiles[i];
+        parseTileJsonRecursively(
+            pLogger,
+            childJson,
+            transform,
+            tile.getRefine(),
+            &tile,
+            child,
+            currentLoader);
+      }
+
+      tile.createChildTiles(std::move(childTiles));
+    }
   }
 }
 

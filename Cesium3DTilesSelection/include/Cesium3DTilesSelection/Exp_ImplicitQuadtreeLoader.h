@@ -5,7 +5,7 @@
 namespace Cesium3DTilesSelection {
 class ImplicitQuadtreeLoader : public TilesetContentLoader {
 public:
-  ImplicitQuadtreeLoader(std::string&& baseUrl);
+  ImplicitQuadtreeLoader(const std::string& baseUrl);
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
       TilesetContentLoader& currentLoader,

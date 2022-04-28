@@ -5,6 +5,14 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
     : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
+      _deferredTileInitializer {},
+      _pLoader{pLoader} {}
+
+TileContent::TileContent(TilesetContentLoader* pLoader, TileExternalContent externalContent)
+    : _state{TileLoadState::ContentLoaded},
+      _contentKind{externalContent},
+      _pRenderResources{nullptr},
+      _deferredTileInitializer {},
       _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }

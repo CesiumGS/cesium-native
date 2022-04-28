@@ -34,6 +34,8 @@ class TileContent {
 public:
   TileContent(TilesetContentLoader* pLoader);
 
+  TileContent(TilesetContentLoader* pLoader, TileExternalContent externalContent);
+
   TileLoadState getState() const noexcept;
 
   bool isExternalContent() const noexcept;
