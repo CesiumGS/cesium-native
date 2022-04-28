@@ -220,15 +220,14 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
 void parseImplicitTileset(
     const rapidjson::Value& implicitExtensionJson,
     Tile& tile,
-    TilesetContentLoader& currentLoader)
+    TilesetJsonLoader& currentLoader)
 {
-  (void)(implicitExtensionJson);
-  (void)(tile);
-  (void)(currentLoader);
-
   // mark this implicit tile as external tileset
   tile.setContent(
       std::make_unique<TileContent>(&currentLoader, TileExternalContent{}));
+  (void)(implicitExtensionJson);
+  (void)(tile);
+  (void)(currentLoader);
 }
 
 void parseTileJsonRecursively(
@@ -238,7 +237,7 @@ void parseTileJsonRecursively(
     TileRefine parentRefine,
     Tile* parentTile,
     Tile& tile,
-    TilesetContentLoader& currentLoader) {
+    TilesetJsonLoader& currentLoader) {
   if (!tileJson.IsObject()) {
     return;
   }
@@ -411,14 +410,9 @@ TilesetContentLoaderResult parseTilesetJson(
     return result;
   }
 
-  TilesetContentLoaderResult result;
-  result.pRootTile = std::make_unique<Tile>();
-  result.gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
-  result.pLoader = std::make_unique<TilesetJsonLoader>(baseUrl);
-  if (result.errors) {
-    return result;
-  }
-
+  auto pRootTile = std::make_unique<Tile>();
+  auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
+  auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl);
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -428,11 +422,17 @@ TilesetContentLoaderResult parseTilesetJson(
         parentTransform,
         TileRefine::Replace,
         nullptr,
-        *result.pRootTile,
-        *result.pLoader);
+        *pRootTile,
+        *pLoader);
   }
 
-  return result;
+  return TilesetContentLoaderResult{
+      std::move(pLoader),
+      std::move(pRootTile),
+      gltfUpAxis,
+      std::vector<LoaderCreditResult>{},
+      std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+      ErrorList{}};
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
