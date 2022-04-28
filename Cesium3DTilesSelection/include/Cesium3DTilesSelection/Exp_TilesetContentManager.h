@@ -25,13 +25,15 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
-  void updateRequestHeader(
-      const std::string& header,
-      const std::string& headerValue);
+  const std::vector<CesiumAsync::IAssetAccessor::THeader>&
+  getRequestHeaders() const noexcept;
+
+  std::vector<CesiumAsync::IAssetAccessor::THeader>&
+  getRequestHeaders() noexcept;
 
   int32_t getNumOfTilesLoading() const noexcept;
 
-  int64_t getSizeOfTilesDataUsed() const noexcept;
+  int64_t getTilesDataUsed() const noexcept;
 
 private:
   static void setTileContent(

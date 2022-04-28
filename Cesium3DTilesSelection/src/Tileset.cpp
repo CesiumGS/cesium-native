@@ -59,7 +59,6 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(*this),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
@@ -104,7 +103,6 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(*this),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
@@ -114,7 +112,17 @@ Tileset::Tileset(
                                            const std::string& header,
                                            const std::string& headerValue) {
       if (this->_pTilesetContentManager) {
-        this->_pTilesetContentManager->updateRequestHeader(header, headerValue);
+        auto& requestHeaders =
+            this->_pTilesetContentManager->getRequestHeaders();
+        auto authIt = std::find_if(
+            requestHeaders.begin(),
+            requestHeaders.end(),
+            [&header](auto& headerPair) { return headerPair.first == header; });
+        if (authIt != requestHeaders.end()) {
+          authIt->second = headerValue;
+        } else {
+          requestHeaders.emplace_back(header, headerValue);
+        }
       }
     };
 
@@ -255,11 +263,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     return result;
   }
 
-  if (!this->supportsRasterOverlays() && this->_overlays.size() > 0) {
-    this->_externals.pLogger->warn(
-        "Only quantized-mesh terrain tilesets currently support overlays.");
-  }
-
   this->_loadQueueHigh.clear();
   this->_loadQueueMedium.clear();
   this->_loadQueueLow.clear();
@@ -331,7 +334,7 @@ void Tileset::forEachLoadedTile(
 }
 
 int64_t Tileset::getTotalDataBytes() const noexcept {
-  int64_t bytes = this->_pTilesetContentManager->getSizeOfTilesDataUsed();
+  int64_t bytes = this->_pTilesetContentManager->getTilesDataUsed();
 
   for (auto& pOverlay : this->_overlays) {
     const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
@@ -1160,15 +1163,4 @@ void Tileset::processQueue(
     }
   }
 }
-
-void Tileset::reportError(TilesetLoadFailureDetails&& errorDetails) {
-  SPDLOG_LOGGER_ERROR(this->getExternals().pLogger, errorDetails.message);
-  if (this->getOptions().loadErrorCallback) {
-    this->getExternals().asyncSystem.runInMainThread(
-        [this, errorDetails = std::move(errorDetails)]() mutable {
-          this->getOptions().loadErrorCallback(std::move(errorDetails));
-        });
-  }
-}
-
 } // namespace Cesium3DTilesSelection

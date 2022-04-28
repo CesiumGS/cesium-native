@@ -154,6 +154,14 @@ public:
   const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums);
 
   /**
+   * @brief Determines if this tileset supports raster overlays.
+   *
+   * Currently, raster overlays can only be draped over quantized-mesh terrain
+   * tilesets.
+   */
+  bool supportsRasterOverlays() const noexcept { return true; }
+
+  /**
    * @brief Invokes a function for each tile that is currently loaded.
    *
    * @param callback The function to invoke.
@@ -165,16 +173,6 @@ public:
    * are currently loaded.
    */
   int64_t getTotalDataBytes() const noexcept;
-
-  /**
-   * @brief Determines if this tileset supports raster overlays.
-   *
-   * Currently, raster overlays can only be draped over quantized-mesh terrain
-   * tilesets.
-   */
-  bool supportsRasterOverlays() const noexcept {
-    return this->_supportsRasterOverlays;
-  }
 
   /**
    * @brief Returns the value indicating the glTF up-axis.
@@ -396,8 +394,6 @@ private:
 
   RasterOverlayCollection _overlays;
 
-  bool _supportsRasterOverlays;
-
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.
    *
@@ -427,8 +423,6 @@ private:
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       int32_t maximumLoadsInProgress);
-
-  void reportError(TilesetLoadFailureDetails&& errorDetails);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;

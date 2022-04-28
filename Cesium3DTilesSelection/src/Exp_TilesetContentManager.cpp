@@ -200,25 +200,21 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   return true;
 }
 
-void TilesetContentManager::updateRequestHeader(
-    const std::string& header,
-    const std::string& headerValue) {
-  auto authIt = std::find_if(
-      _requestHeaders.begin(),
-      _requestHeaders.end(),
-      [&header](auto& headerPair) { return headerPair.first == header; });
-  if (authIt != _requestHeaders.end()) {
-    authIt->second = headerValue;
-  } else {
-    _requestHeaders.emplace_back(header, headerValue);
-  }
+const std::vector<CesiumAsync::IAssetAccessor::THeader>&
+TilesetContentManager::getRequestHeaders() const noexcept {
+  return _requestHeaders;
+}
+
+std::vector<CesiumAsync::IAssetAccessor::THeader>&
+TilesetContentManager::getRequestHeaders() noexcept {
+  return _requestHeaders;
 }
 
 int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
   return _tilesLoadOnProgress;
 }
 
-int64_t TilesetContentManager::getSizeOfTilesDataUsed() const noexcept {
+int64_t TilesetContentManager::getTilesDataUsed() const noexcept {
   return _tilesDataUsed;
 }
 
