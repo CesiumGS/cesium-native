@@ -15,6 +15,7 @@
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
+#include <spdlog/sinks/ringbuffer_sink.h>
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
@@ -1514,4 +1515,189 @@ TEST_CASE("Converts Feature Hierarchy 3DTILES_batch_table_hierarchy example to "
         expected.values,
         expected.values.size());
   }
+}
+
+TEST_CASE(
+    "3DTILES_batch_table_hierarchy with parentCounts is ok if all are 1") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 3
+    }
+  )";
+
+  // "Feature hierarchy" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-hierarchy
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Parent1",
+              "length" : 3,
+              "instances" : {
+                "some_property" : ["a", "b", "c"]
+              }
+            },
+            {
+              "name" : "Parent2",
+              "length" : 3,
+              "instances" : {
+                "another_property" : ["d", "e", "f"]
+              }
+            },
+            {
+              "name" : "Main",
+              "length" : 3,
+              "instances" : {
+                "third" : [1, 2, 3]
+              }
+            }
+          ],
+          "instancesLength" : 5,
+          "classIds" : [2, 2, 2, 0, 1],
+          "parentCounts": [1, 1, 1, 1, 1],
+          "parentIds" : [3, 3, 3, 4, 4]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+  spdlog::default_logger()->sinks().emplace_back(pLog);
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      gltf,
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>());
+
+  // There should not be any log messages about parentCounts, since they're
+  // all 1.
+  std::vector<std::string> logMessages = pLog->last_formatted();
+  REQUIRE(logMessages.size() == 0);
+
+  // There should actually be metadata properties as normal.
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+}
+
+TEST_CASE(
+    "3DTILES_batch_table_hierarchy with parentCounts != 1 is not supported") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 3
+    }
+  )";
+
+  // "Feature hierarchy" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-hierarchy
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Parent1",
+              "length" : 3,
+              "instances" : {
+                "some_property" : ["a", "b", "c"]
+              }
+            },
+            {
+              "name" : "Parent2",
+              "length" : 3,
+              "instances" : {
+                "another_property" : ["d", "e", "f"]
+              }
+            },
+            {
+              "name" : "Main",
+              "length" : 3,
+              "instances" : {
+                "third" : [1, 2, 3]
+              }
+            }
+          ],
+          "instancesLength" : 5,
+          "classIds" : [2, 2, 2, 0, 1],
+          "parentCounts": [2, 2, 2, 1, 1],
+          "parentIds" : [3, 4, 3, 4, 3, 4, 3, 4]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+  spdlog::default_logger()->sinks().emplace_back(pLog);
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      gltf,
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>());
+
+  // There should be a log message about parentCounts, and no properties.
+  std::vector<std::string> logMessages = pLog->last_formatted();
+  REQUIRE(logMessages.size() == 1);
+  CHECK(logMessages[0].find("parentCounts") != std::string::npos);
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 0);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 0);
 }
