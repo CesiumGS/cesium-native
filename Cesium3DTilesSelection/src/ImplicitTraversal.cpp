@@ -344,44 +344,44 @@ CesiumAsync::Future<void> loadAvailability(Tile& tile) {
         std::get_if<QuadtreeTileID>(&tile.getTileID());
     if (pQuadtreeTileID &&
         tile.getContext()->implicitContext->rectangleAvailability) {
-    }
-    const QuadtreeTileID swID(
-        pQuadtreeTileID->level + 1,
-        pQuadtreeTileID->x * 2,
-        pQuadtreeTileID->y * 2);
-    const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-    const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
+      const QuadtreeTileID swID(
+          pQuadtreeTileID->level + 1,
+          pQuadtreeTileID->x * 2,
+          pQuadtreeTileID->y * 2);
+      const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+      const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+      const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+      const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
 
-    for (int i = 0; i < 4; i++) {
-      TileContext* pChildContext = tile.getContext();
-      const QuadtreeTileID* pChildID = childIDs[i];
-      while (pChildContext) {
-        if (pChildContext->implicitContext->rectangleAvailability
-                ->isTileAvailable(*pChildID)) {
-          break;
-        }
-        if (pChildContext->implicitContext->availabilityLevels) {
-          std::optional<QuadtreeTileID> unloadedAvailabilityTile =
-              getUnloadedAvailabilityTile(
-                  pChildContext,
-                  *pChildID,
-                  static_cast<uint32_t>(
-                      *pChildContext->implicitContext->availabilityLevels));
-          if (unloadedAvailabilityTile) {
-            // load parent availability tile before going any further
-            return tile.getTileset()
-                ->requestAvailabilityTile(
-                    *unloadedAvailabilityTile,
-                    pChildContext)
-                .thenInWorkerThread(
-                    // call recursively to make sure availabilty is checked for
-                    // the rest of the children.
-                    [&tile](int) { return loadAvailability(tile); });
+      for (int i = 0; i < 4; i++) {
+        TileContext* pChildContext = tile.getContext();
+        const QuadtreeTileID* pChildID = childIDs[i];
+        while (pChildContext) {
+          if (pChildContext->implicitContext->rectangleAvailability
+                  ->isTileAvailable(*pChildID)) {
+            break;
           }
+          if (pChildContext->implicitContext->availabilityLevels) {
+            std::optional<QuadtreeTileID> unloadedAvailabilityTile =
+                getUnloadedAvailabilityTile(
+                    pChildContext,
+                    *pChildID,
+                    static_cast<uint32_t>(
+                        *pChildContext->implicitContext->availabilityLevels));
+            if (unloadedAvailabilityTile) {
+              // load parent availability tile before going any further
+              return tile.getTileset()
+                  ->requestAvailabilityTile(
+                      *unloadedAvailabilityTile,
+                      pChildContext)
+                  .thenInWorkerThread(
+                      // call recursively to make sure availabilty is checked
+                      // for the rest of the children.
+                      [&tile](int) { return loadAvailability(tile); });
+            }
+          }
+          pChildContext = pChildContext->pUnderlyingContext.get();
         }
-        pChildContext = pChildContext->pUnderlyingContext.get();
       }
     }
   }
