@@ -90,8 +90,6 @@ struct ImplicitTraversalInfo {
 
 namespace ImplicitTraversalUtilities {
 
-CesiumAsync::Future<void> loadAvailability(Tile& tile);
-
 void createImplicitChildrenIfNeeded(
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo);

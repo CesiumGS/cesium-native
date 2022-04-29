@@ -6,12 +6,9 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "QuantizedMeshContent.h"
 
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
 
-using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
@@ -160,38 +157,6 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
   }
 }
 
-namespace {
-
-inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    uint32_t availabilityLevels) {
-  uint32_t parentLevel =
-      tileID.level % availabilityLevels == 0
-          ? tileID.level - availabilityLevels
-          : (tileID.level / availabilityLevels) * availabilityLevels;
-
-  uint32_t divisor = 1U << (tileID.level - parentLevel);
-  return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
-}
-
-std::optional<CesiumGeometry::QuadtreeTileID> getUnloadedAvailabilityTile(
-    const TileContext* pContext,
-    CesiumGeometry::QuadtreeTileID tileID,
-    uint32_t availabilityLevels) {
-  while (tileID.level > 0) {
-    tileID = getAvailabilityTile(tileID, availabilityLevels);
-    if (pContext->implicitContext->availabilityTilesLoaded.find(tileID) ==
-            pContext->implicitContext->availabilityTilesLoaded.end() &&
-        pContext->implicitContext->rectangleAvailability->isTileAvailable(
-            tileID)) {
-      return std::make_optional<QuadtreeTileID>(tileID);
-    }
-  }
-  return std::nullopt;
-}
-
-} // namespace
-
 namespace ImplicitTraversalUtilities {
 
 void createImplicitQuadtreeTile(
@@ -336,56 +301,6 @@ void createImplicitOctreeTile(
         tileMinHeight,
         tileMinHeight + tileSizeZ));
   }
-}
-
-CesiumAsync::Future<void> loadAvailability(Tile& tile) {
-  if (tile.getContext()->implicitContext) {
-    const QuadtreeTileID* pQuadtreeTileID =
-        std::get_if<QuadtreeTileID>(&tile.getTileID());
-    if (pQuadtreeTileID &&
-        tile.getContext()->implicitContext->rectangleAvailability) {
-      const QuadtreeTileID swID(
-          pQuadtreeTileID->level + 1,
-          pQuadtreeTileID->x * 2,
-          pQuadtreeTileID->y * 2);
-      const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-      const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-      const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-      const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
-
-      for (int i = 0; i < 4; i++) {
-        TileContext* pChildContext = tile.getContext();
-        const QuadtreeTileID* pChildID = childIDs[i];
-        while (pChildContext) {
-          if (pChildContext->implicitContext->rectangleAvailability
-                  ->isTileAvailable(*pChildID)) {
-            break;
-          }
-          if (pChildContext->implicitContext->availabilityLevels) {
-            std::optional<QuadtreeTileID> unloadedAvailabilityTile =
-                getUnloadedAvailabilityTile(
-                    pChildContext,
-                    *pChildID,
-                    static_cast<uint32_t>(
-                        *pChildContext->implicitContext->availabilityLevels));
-            if (unloadedAvailabilityTile) {
-              // load parent availability tile before going any further
-              return tile.getTileset()
-                  ->requestAvailabilityTile(
-                      *unloadedAvailabilityTile,
-                      pChildContext)
-                  .thenInMainThread(
-                      // call recursively to make sure availabilty is checked
-                      // for the rest of the children.
-                      [&tile](int) { return loadAvailability(tile); });
-            }
-          }
-          pChildContext = pChildContext->pUnderlyingContext.get();
-        }
-      }
-    }
-  }
-  return tile.getTileset()->getAsyncSystem().createResolvedFuture();
 }
 
 void createImplicitChildrenIfNeeded(
@@ -540,7 +455,7 @@ void createImplicitChildrenIfNeeded(
 
         if (sw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pSW,
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -550,7 +465,7 @@ void createImplicitChildrenIfNeeded(
 
         if (se & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pSE,
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -560,7 +475,7 @@ void createImplicitChildrenIfNeeded(
 
         if (nw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pNW,
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -570,7 +485,7 @@ void createImplicitChildrenIfNeeded(
 
         if (ne & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pNE,
+              pContext,
               implicitContext,
               tile,
               children[childIndex],

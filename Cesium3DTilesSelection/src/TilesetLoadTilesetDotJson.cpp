@@ -422,7 +422,6 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      {},
       std::nullopt};
 
   std::vector<std::string> extensions =
@@ -533,6 +532,12 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
               context.pUnderlyingContext->pTileset = context.pTileset;
               context.pUnderlyingContext->requestHeaders =
                   context.requestHeaders;
+              if (context.pTopContext) {
+                context.pUnderlyingContext->pTopContext = context.pTopContext;
+              } else {
+                context.pUnderlyingContext->pTopContext = &context;
+              }
+
               return Private::workerThreadLoadTileContext(
                   parentLayerJson,
                   *context.pUnderlyingContext,

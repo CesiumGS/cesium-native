@@ -385,81 +385,99 @@ Tileset::requestTileContent(Tile& tile) {
 
   this->notifyTileStartLoading(&tile);
 
-  return this->getExternals().pAssetAccessor->get(
-      this->getAsyncSystem(),
-      url,
-      tile.getContext()->requestHeaders);
-}
+  Future<std::shared_ptr<IAssetRequest>> tileFuture =
+      this->getExternals().pAssetAccessor->get(
+          this->getAsyncSystem(),
+          url,
+          tile.getContext()->requestHeaders);
 
-CesiumAsync::SharedFuture<int> Tileset::requestAvailabilityTile(
-    const CesiumGeometry::QuadtreeTileID& availabilityTileID,
-    TileContext* pAvailabilityContext) {
-  AvailabilityLoadRecord record{
-      availabilityTileID,
-      pAvailabilityContext,
-      _asyncSystem.createResolvedFuture(0).share()};
-  auto recordIt = std::find(
-      _availabilityLoading.begin(),
-      _availabilityLoading.end(),
-      record);
-  if (recordIt != _availabilityLoading.end()) {
-    return recordIt->future;
+  // In addition to loading the main tile, we also need to load the same tile in
+  // any underlying contexts for which this tile is an availability level. This
+  // is necessary because, when we later create this tile's children, we need to
+  // be able to create children that are only available from an underlying
+  // layer, and we can only do that if we know they're available.
+  TileContext* pTileContext = tile.getContext();
+  TileContext* pContext =
+      pTileContext->pTopContext ? pTileContext->pTopContext : pTileContext;
+
+  const QuadtreeTileID* pQuadtreeTileID =
+      std::get_if<QuadtreeTileID>(&tile.getTileID());
+
+  if (pQuadtreeTileID && pContext->implicitContext &&
+      pContext->implicitContext->rectangleAvailability &&
+      pContext->implicitContext->availabilityLevels) {
+    uint32_t level = pQuadtreeTileID->level;
+    std::vector<Future<int>> layerFutures;
+    while (pContext) {
+      if (pContext != pTileContext && pContext->implicitContext &&
+          pContext->implicitContext->availabilityLevels) {
+        uint32_t availabilityLevels =
+            *pContext->implicitContext->availabilityLevels;
+        if ((level % availabilityLevels) == 0) {
+          // This tile has availability data, so load it.
+          layerFutures.emplace_back(this->_requestQuantizedMeshAvailabilityTile(
+              *pQuadtreeTileID,
+              pContext));
+        }
+      }
+
+      pContext = pContext->pUnderlyingContext.get();
+    }
+
+    // If we need to load any tiles for availability, do that and then return
+    // the data for the actual tile.
+    if (!layerFutures.empty()) {
+      return this->getAsyncSystem()
+          .all(std::move(layerFutures))
+          .thenImmediately(
+              [tileFuture = std::move(tileFuture)](std::vector<int>&&) mutable {
+                return std::move(tileFuture);
+              });
+    }
   }
 
+  return tileFuture;
+}
+
+Future<int> Tileset::_requestQuantizedMeshAvailabilityTile(
+    const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+    TileContext* pAvailabilityContext) {
   std::string url =
       getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
-  record.future =
-      _externals.pAssetAccessor
-          ->get(
-              _externals.asyncSystem,
-              url,
-              pAvailabilityContext->requestHeaders)
-          .thenInWorkerThread(
-              [pLogger = _externals.pLogger, url, availabilityTileID](
-                  std::shared_ptr<IAssetRequest>&& pRequest)
-                  -> std::vector<QuadtreeTileRectangularRange> {
-                const IAssetResponse* pResponse = pRequest->response();
-                if (pResponse) {
-                  uint16_t statusCode = pResponse->statusCode();
 
-                  if (!(statusCode != 0 &&
-                        (statusCode < 200 || statusCode >= 300))) {
-                    return QuantizedMeshContent::loadMetadata(
-                        pLogger,
-                        pResponse->data(),
-                        availabilityTileID);
-                  }
-                }
-                return {};
-              })
-          .thenInMainThread(
-              [pAvailabilityContext, availabilityTileID, this](
-                  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
-                      rectangles) {
-                pAvailabilityContext->implicitContext->availabilityTilesLoaded
-                    .insert(availabilityTileID);
-                if (!rectangles.empty()) {
-                  for (const QuadtreeTileRectangularRange& range : rectangles) {
-                    pAvailabilityContext->implicitContext->rectangleAvailability
-                        ->addAvailableTileRange(range);
-                  }
-                }
-                AvailabilityLoadRecord record{
-                    availabilityTileID,
-                    pAvailabilityContext,
-                    _asyncSystem.createResolvedFuture(0).share()};
-                auto recordIt = std::find(
-                    _availabilityLoading.begin(),
-                    _availabilityLoading.end(),
-                    record);
-                if (recordIt != _availabilityLoading.end()) {
-                  _availabilityLoading.erase(recordIt);
-                }
-                return 0;
-              })
-          .share();
-  _availabilityLoading.push_back(record);
-  return record.future;
+  return this->getExternals()
+      .pAssetAccessor
+      ->get(this->getAsyncSystem(), url, pAvailabilityContext->requestHeaders)
+      .thenInWorkerThread(
+          [pLogger = _externals.pLogger,
+           availabilityTileID](std::shared_ptr<IAssetRequest>&& pRequest)
+              -> std::vector<QuadtreeTileRectangularRange> {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (pResponse) {
+              uint16_t statusCode = pResponse->statusCode();
+
+              if (!(statusCode != 0 &&
+                    (statusCode < 200 || statusCode >= 300))) {
+                return QuantizedMeshContent::loadMetadata(
+                    pLogger,
+                    pResponse->data(),
+                    availabilityTileID);
+              }
+            }
+            return {};
+          })
+      .thenInMainThread(
+          [pAvailabilityContext](
+              std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
+                  rectangles) {
+            if (!rectangles.empty()) {
+              for (const QuadtreeTileRectangularRange& range : rectangles) {
+                pAvailabilityContext->implicitContext->rectangleAvailability
+                    ->addAvailableTileRange(range);
+              }
+            }
+            return 0;
+          });
 }
 
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {

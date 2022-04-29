@@ -242,18 +242,6 @@ public:
   requestAvailabilitySubtree(Tile& tile);
 
   /**
-   * @brief Request to load an availability tile.
-   *
-   * This function is not supposed to be called by client.
-   *
-   * @param availabilityTileID The ID of the availability tile.
-   * @param pAvailabilityContext The tile context of the availability tile.
-   */
-  CesiumAsync::SharedFuture<int> requestAvailabilityTile(
-      const CesiumGeometry::QuadtreeTileID& availabilityTileID,
-      TileContext* pAvailabilityContext);
-
-  /**
    * @brief Add the given {@link TileContext} to this tile set.
    *
    * This function is not supposed to be called by clients.
@@ -569,28 +557,6 @@ private:
     }
   };
 
-  struct AvailabilityLoadRecord {
-    /**
-     * @brief The ID of the availability tile.
-     */
-    CesiumGeometry::QuadtreeTileID tileID;
-
-    /**
-     * @brief The tile context of the availability tile.
-     */
-    const TileContext* pTileContext;
-
-    /**
-     * @brief A shared future of the availability loading.
-     */
-    CesiumAsync::SharedFuture<int> future;
-
-    bool operator==(const AvailabilityLoadRecord& rhs) const noexcept {
-      return this->tileID == rhs.tileID &&
-             this->pTileContext == rhs.pTileContext;
-    }
-  };
-
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
@@ -599,8 +565,6 @@ private:
   std::vector<SubtreeLoadRecord> _subtreeLoadQueue;
   std::atomic<uint32_t>
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
-
-  std::vector<AvailabilityLoadRecord> _availabilityLoading;
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -647,6 +611,10 @@ private:
   void processSubtreeQueue();
 
   void reportError(TilesetLoadFailureDetails&& errorDetails);
+
+  CesiumAsync::Future<int> _requestQuantizedMeshAvailabilityTile(
+      const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+      TileContext* pAvailabilityContext);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
