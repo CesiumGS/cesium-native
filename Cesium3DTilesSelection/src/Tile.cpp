@@ -482,8 +482,8 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->setState(loadResult.state);
         this->getTileset()->notifyTileDoneLoading(this);
+        this->setState(loadResult.state);
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();

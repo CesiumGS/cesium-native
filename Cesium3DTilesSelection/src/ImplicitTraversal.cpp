@@ -6,12 +6,9 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "QuantizedMeshContent.h"
 
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/S2CellID.h>
 
-using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
@@ -159,22 +156,6 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
             this->pCurrentNode));
   }
 }
-
-namespace {
-
-inline CesiumGeometry::QuadtreeTileID getAvailabilityTile(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    uint32_t availabilityLevels) {
-  uint32_t parentLevel =
-      tileID.level % availabilityLevels == 0
-          ? tileID.level - availabilityLevels
-          : (tileID.level / availabilityLevels) * availabilityLevels;
-
-  uint32_t divisor = 1U << (tileID.level - parentLevel);
-  return QuadtreeTileID(parentLevel, tileID.x / divisor, tileID.y / divisor);
-}
-
-} // namespace
 
 namespace ImplicitTraversalUtilities {
 
