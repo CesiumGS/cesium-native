@@ -225,9 +225,6 @@ void parseImplicitTileset(
   // mark this implicit tile as external tileset
   tile.setContent(
       std::make_unique<TileContent>(&currentLoader, TileExternalContent{}));
-  (void)(implicitExtensionJson);
-  (void)(tile);
-  (void)(currentLoader);
 }
 
 void parseTileJsonRecursively(
@@ -348,7 +345,8 @@ void parseTileJsonRecursively(
     // this is an external tile pointing to an implicit tileset
     const auto& extensions = extensionIt->value;
     const auto implicitExtensionIt = extensions.FindMember("3DTILES_implicit_tiling");
-    hasImplicitContent = implicitExtensionIt != extensions.MemberEnd();
+    hasImplicitContent = implicitExtensionIt != extensions.MemberEnd() &&
+                         implicitExtensionIt->value.IsObject();
     if (hasImplicitContent) {
       parseImplicitTileset(implicitExtensionIt->value, tile, currentLoader);
     } 

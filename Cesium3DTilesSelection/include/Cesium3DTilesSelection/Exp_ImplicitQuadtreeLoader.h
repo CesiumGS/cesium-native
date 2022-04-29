@@ -15,5 +15,7 @@ public:
 
 private:
   std::string _baseUrl;
+  std::string _contentUrlTemplate;
+  std::string _subtreeUrlTemplate;
 };
 } // namespace Cesium3DTilesSelection
