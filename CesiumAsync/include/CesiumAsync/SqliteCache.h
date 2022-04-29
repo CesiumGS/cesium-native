@@ -58,5 +58,7 @@ public:
 private:
   struct Impl;
   std::unique_ptr<Impl> _pImpl;
+  void createConnection() const;
+  void destroyDatabase();
 };
 } // namespace CesiumAsync

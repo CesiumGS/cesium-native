@@ -13,6 +13,7 @@
 - Fixed a bug that could cause holes even with `TilesetOptions::forbidHoles` enabled, particularly when using external tilesets.
 - Tiles will no longer be selected to render when they have no content and they have a higher "geometric error" than their parent. In previous versions, this situation could briefly lead to holes while the children of such tiles loaded.
 - Fixed a bug where `IPrepareRendererResources::prepareInMainThread` was called on a `Tile` before that `Tile` was updated with loaded content.
+- Fixed a bug where getting bad data from sqlite cache could cause a crash. If the sqlite database is corrupt, it will be deleted and recreated.
 
 ### v0.14.1 - 2022-04-14
 

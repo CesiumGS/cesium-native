@@ -109,17 +109,23 @@ std::string convertHeadersToString(const HttpHeaders& headers) {
   return buffer.GetString();
 }
 
-HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
+std::optional<HttpHeaders> convertStringToHeaders(
+    const std::string& serializedHeaders,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
   rapidjson::Document document;
   document.Parse(serializedHeaders.c_str());
-
-  HttpHeaders headers;
+  if (document.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Unable to parse http header string from cache.");
+    return std::nullopt;
+  }
+  std::optional<HttpHeaders> headers = std::make_optional<HttpHeaders>();
   for (rapidjson::Document::ConstMemberIterator it = document.MemberBegin();
        it != document.MemberEnd();
        ++it) {
-    headers.insert({it->name.GetString(), it->value.GetString()});
+    headers->insert({it->name.GetString(), it->value.GetString()});
   }
-
   return headers;
 }
 
@@ -162,9 +168,13 @@ SqliteStatementPtr prepareStatement(
 namespace CesiumAsync {
 
 struct SqliteCache::Impl {
-  Impl(const std::shared_ptr<spdlog::logger>& pLogger, uint64_t maxItems)
+  Impl(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::string& databaseName,
+      uint64_t maxItems)
       : _pLogger(pLogger),
         _pConnection(nullptr),
+        _databaseName(databaseName),
         _maxItems(maxItems),
         _getEntryStmtWrapper(),
         _updateLastAccessedTimeStmtWrapper(),
@@ -176,6 +186,7 @@ struct SqliteCache::Impl {
 
   std::shared_ptr<spdlog::logger> _pLogger;
   SqliteConnectionPtr _pConnection;
+  std::string _databaseName;
   uint64_t _maxItems;
   mutable std::mutex _mutex;
   SqliteStatementPtr _getEntryStmtWrapper;
@@ -191,9 +202,14 @@ SqliteCache::SqliteCache(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& databaseName,
     uint64_t maxItems)
-    : _pImpl(std::make_unique<Impl>(pLogger, maxItems)) {
+    : _pImpl(std::make_unique<Impl>(pLogger, databaseName, maxItems)) {
+  createConnection();
+}
+
+void SqliteCache::createConnection() const {
   CESIUM_SQLITE(sqlite3*) pConnection;
-  int status = CESIUM_SQLITE(sqlite3_open)(databaseName.c_str(), &pConnection);
+  int status = CESIUM_SQLITE(
+      sqlite3_open)(this->_pImpl->_databaseName.c_str(), &pConnection);
   if (status != SQLITE_OK) {
     throw std::runtime_error(CESIUM_SQLITE(sqlite3_errstr)(status));
   }
@@ -354,9 +370,11 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   std::string serializedResponseHeaders =
       reinterpret_cast<const char*>(CESIUM_SQLITE(
           sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 2));
-  HttpHeaders responseHeaders =
-      convertStringToHeaders(serializedResponseHeaders);
-
+  std::optional<HttpHeaders> responseHeaders =
+      convertStringToHeaders(serializedResponseHeaders, this->_pImpl->_pLogger);
+  if (!responseHeaders) {
+    return std::nullopt;
+  }
   const uint16_t statusCode = static_cast<uint16_t>(CESIUM_SQLITE(
       sqlite3_column_int)(this->_pImpl->_getEntryStmtWrapper.get(), 3));
 
@@ -373,7 +391,11 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   std::string serializedRequestHeaders =
       reinterpret_cast<const char*>(CESIUM_SQLITE(
           sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 5));
-  HttpHeaders requestHeaders = convertStringToHeaders(serializedRequestHeaders);
+  std::optional<HttpHeaders> requestHeaders =
+      convertStringToHeaders(serializedRequestHeaders, this->_pImpl->_pLogger);
+  if (!requestHeaders) {
+    return std::nullopt;
+  }
 
   std::string requestMethod = reinterpret_cast<const char*>(CESIUM_SQLITE(
       sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 6));
@@ -423,12 +445,12 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   return CacheItem{
       expiryTime,
       CacheRequest{
-          std::move(requestHeaders),
+          std::move(*requestHeaders),
           std::move(requestMethod),
           std::move(requestUrl)},
       CacheResponse{
           statusCode,
-          std::move(responseHeaders),
+          std::move(*responseHeaders),
           std::move(responseData)}};
 }
 
@@ -579,6 +601,9 @@ bool SqliteCache::storeEntry(
   status = CESIUM_SQLITE(sqlite3_step)(
       this->_pImpl->_storeResponseStmtWrapper.get());
   if (status != SQLITE_DONE) {
+    if (status == SQLITE_CORRUPT) {
+      destroyDatabase();
+    }
     SPDLOG_LOGGER_ERROR(
         this->_pImpl->_pLogger,
         CESIUM_SQLITE(sqlite3_errstr)(status));
@@ -622,6 +647,9 @@ bool SqliteCache::prune() {
     }
 
     if (totalItemsQueryStatus != SQLITE_ROW) {
+      if (totalItemsQueryStatus == SQLITE_CORRUPT) {
+        destroyDatabase();
+      }
       SPDLOG_LOGGER_ERROR(
           this->_pImpl->_pLogger,
           CESIUM_SQLITE(sqlite3_errstr)(totalItemsQueryStatus));
@@ -661,6 +689,9 @@ bool SqliteCache::prune() {
     deleteExpiredStatus = CESIUM_SQLITE(sqlite3_step)(
         this->_pImpl->_deleteExpiredStmtWrapper.get());
     if (deleteExpiredStatus != SQLITE_DONE) {
+      if (deleteExpiredStatus == SQLITE_CORRUPT) {
+        destroyDatabase();
+      }
       SPDLOG_LOGGER_ERROR(
           this->_pImpl->_pLogger,
           CESIUM_SQLITE(sqlite3_errstr)(deleteExpiredStatus));
@@ -711,6 +742,9 @@ bool SqliteCache::prune() {
     deleteLLRUStatus =
         CESIUM_SQLITE(sqlite3_step)(this->_pImpl->_deleteLRUStmtWrapper.get());
     if (deleteLLRUStatus != SQLITE_DONE) {
+      if (deleteLLRUStatus == SQLITE_CORRUPT) {
+        destroyDatabase();
+      }
       SPDLOG_LOGGER_ERROR(
           this->_pImpl->_pLogger,
           CESIUM_SQLITE(sqlite3_errstr)(deleteLLRUStatus));
@@ -736,6 +770,9 @@ bool SqliteCache::clearAll() {
   status =
       CESIUM_SQLITE(sqlite3_step)(this->_pImpl->_clearAllStmtWrapper.get());
   if (status != SQLITE_DONE) {
+    if (status == SQLITE_CORRUPT) {
+      destroyDatabase();
+    }
     SPDLOG_LOGGER_ERROR(
         this->_pImpl->_pLogger,
         CESIUM_SQLITE(sqlite3_errstr)(status));
@@ -743,6 +780,20 @@ bool SqliteCache::clearAll() {
   }
 
   return true;
+}
+
+void SqliteCache::destroyDatabase() {
+  std::shared_ptr<spdlog::logger> pLogger = _pImpl->_pLogger;
+  std::string databaseName = _pImpl->_databaseName;
+  uint64_t maxItems = _pImpl->_maxItems;
+  _pImpl.reset();
+  _pImpl = std::make_unique<Impl>(pLogger, databaseName, maxItems);
+  if (remove(_pImpl->_databaseName.c_str()) != 0) {
+    SPDLOG_LOGGER_ERROR(
+        this->_pImpl->_pLogger,
+        "Unable to delete database file.");
+  }
+  createConnection();
 }
 
 } // namespace CesiumAsync
