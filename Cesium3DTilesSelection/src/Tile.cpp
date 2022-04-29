@@ -574,12 +574,13 @@ void Tile::processLoadedContent() {
       }
 
       if (!this->_pContent->availableTileRectangles.empty() &&
-          this->getContext()->implicitContext &&
-          context.rectangleAvailability) {
+          this->getContext()->implicitContext) {
         ImplicitTilingContext& context = *this->getContext()->implicitContext;
-        for (const QuadtreeTileRectangularRange& range :
-             this->_pContent->availableTileRectangles) {
-          context.rectangleAvailability->addAvailableTileRange(range);
+        if (context.rectangleAvailability) {
+          for (const QuadtreeTileRectangularRange& range :
+               this->_pContent->availableTileRectangles) {
+            context.rectangleAvailability->addAvailableTileRange(range);
+          }
         }
       }
     }
