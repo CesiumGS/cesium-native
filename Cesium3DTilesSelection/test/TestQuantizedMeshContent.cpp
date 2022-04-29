@@ -706,7 +706,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      {},
       std::nullopt};
 
   SECTION("Check quantized mesh that has uint16_t indices") {
@@ -1048,7 +1047,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      {},
       std::nullopt};
 
   // mock quantized mesh

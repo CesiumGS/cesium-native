@@ -482,11 +482,8 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        return ImplicitTraversalUtilities::loadAvailability(*this)
-            .thenImmediately([this, state = loadResult.state]() {
-              this->setState(state);
-              this->getTileset()->notifyTileDoneLoading(this);
-            });
+        this->setState(loadResult.state);
+        this->getTileset()->notifyTileDoneLoading(this);
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();
@@ -576,20 +573,13 @@ void Tile::processLoadedContent() {
         this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
       }
 
-      if (this->getContext()->implicitContext) {
+      if (!this->_pContent->availableTileRectangles.empty() &&
+          this->getContext()->implicitContext &&
+          context.rectangleAvailability) {
         ImplicitTilingContext& context = *this->getContext()->implicitContext;
-        const QuadtreeTileID* pQuadtreeTileID =
-            std::get_if<QuadtreeTileID>(&this->getTileID());
-        if (pQuadtreeTileID) {
-          if (context.quadtreeTilingScheme && context.rectangleAvailability &&
-              !this->_pContent->availableTileRectangles.empty()) {
-            this->getContext()->implicitContext->availabilityTilesLoaded.insert(
-                *pQuadtreeTileID);
-            for (const QuadtreeTileRectangularRange& range :
-                 this->_pContent->availableTileRectangles) {
-              context.rectangleAvailability->addAvailableTileRange(range);
-            }
-          }
+        for (const QuadtreeTileRectangularRange& range :
+             this->_pContent->availableTileRectangles) {
+          context.rectangleAvailability->addAvailableTileRange(range);
         }
       }
     }

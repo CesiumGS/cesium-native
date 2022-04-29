@@ -324,7 +324,6 @@ void parseImplicitTileset(
           std::nullopt,
           std::nullopt,
           std::nullopt,
-          {},
           std::nullopt};
 
       TileID rootID = "";

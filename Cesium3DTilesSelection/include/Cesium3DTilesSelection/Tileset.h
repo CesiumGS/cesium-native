@@ -242,18 +242,6 @@ public:
   requestAvailabilitySubtree(Tile& tile);
 
   /**
-   * @brief Request to load an availability tile.
-   *
-   * This function is not supposed to be called by client.
-   *
-   * @param availabilityTileID The ID of the availability tile.
-   * @param pAvailabilityContext The tile context of the availability tile.
-   */
-  CesiumAsync::SharedFuture<int> requestAvailabilityTile(
-      const CesiumGeometry::QuadtreeTileID& availabilityTileID,
-      TileContext* pAvailabilityContext);
-
-  /**
    * @brief Add the given {@link TileContext} to this tile set.
    *
    * This function is not supposed to be called by clients.
@@ -647,6 +635,10 @@ private:
   void processSubtreeQueue();
 
   void reportError(TilesetLoadFailureDetails&& errorDetails);
+
+  CesiumAsync::Future<int> _requestQuantizedMeshAvailabilityTile(
+      const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+      TileContext* pAvailabilityContext);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
