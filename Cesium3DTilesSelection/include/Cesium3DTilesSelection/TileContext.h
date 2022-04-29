@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "Cesium3DTilesSelection/CreditSystem.h"
+#include "CreditSystem.h"
 
 #include <CesiumGeometry/Availability.h>
 #include <CesiumGeometry/OctreeAvailability.h>
@@ -19,6 +19,7 @@ namespace Cesium3DTilesSelection {
 
 class Tileset;
 class TileContext;
+
 /**
  * @brief A tiling context that was created for implicit quadtree or octree
  * tiles.
@@ -105,7 +106,7 @@ public:
    * If `availabilityLevels` is `n`, then availability information is stored
    * every `n`th level in the tile tree.
    */
-  std::optional<int32_t> availabilityLevels;
+  std::optional<uint32_t> availabilityLevels;
 
   /**
    * @brief Any attribution associated with this context/layer.

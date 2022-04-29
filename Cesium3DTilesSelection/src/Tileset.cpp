@@ -412,7 +412,7 @@ Tileset::requestTileContent(Tile& tile) {
       if (pContext != pTileContext && pContext->implicitContext &&
           pContext->implicitContext->availabilityLevels) {
         uint32_t availabilityLevels =
-            uint32_t(*pContext->implicitContext->availabilityLevels);
+            *pContext->implicitContext->availabilityLevels;
         if ((level % availabilityLevels) == 0) {
           // This tile has availability data, so load it.
           layerFutures.emplace_back(this->_requestQuantizedMeshAvailabilityTile(
