@@ -411,7 +411,9 @@ Tileset::requestTileContent(Tile& tile) {
     while (pContext) {
       if (pContext != pTileContext && pContext->implicitContext &&
           pContext->implicitContext->availabilityLevels) {
-        if ((level % *pContext->implicitContext->availabilityLevels) == 0) {
+        uint32_t availabilityLevels =
+            uint32_t(*pContext->implicitContext->availabilityLevels);
+        if ((level % availabilityLevels) == 0) {
           // This tile has availability data, so load it.
           layerFutures.emplace_back(this->_requestQuantizedMeshAvailabilityTile(
               *pQuadtreeTileID,
@@ -465,7 +467,7 @@ Future<int> Tileset::_requestQuantizedMeshAvailabilityTile(
             return {};
           })
       .thenInMainThread(
-          [pAvailabilityContext, availabilityTileID, this](
+          [pAvailabilityContext](
               std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
                   rectangles) {
             if (!rectangles.empty()) {
