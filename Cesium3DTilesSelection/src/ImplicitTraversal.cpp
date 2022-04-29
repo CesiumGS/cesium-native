@@ -160,14 +160,14 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 namespace ImplicitTraversalUtilities {
 
 void createImplicitQuadtreeTile(
-    const TileContext* pTileContext,
+    TileContext* pTileContext,
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
     uint8_t availability) {
 
-  child.setContext(const_cast<TileContext*>(pTileContext));
+  child.setContext(pTileContext);
   child.setParent(&parent);
   child.setRefine(parent.getRefine());
   child.setTransform(parent.getTransform());
@@ -332,15 +332,16 @@ void createImplicitChildrenIfNeeded(
       uint8_t nw = 0;
       uint8_t ne = 0;
 
-      TileContext* pSW = pContext;
-      TileContext* pSE = pContext;
-      TileContext* pNW = pContext;
-      TileContext* pNE = pContext;
+      TileContext* pSWContext = pContext;
+      TileContext* pSEContext = pContext;
+      TileContext* pNWContext = pContext;
+      TileContext* pNEContext = pContext;
 
       if (implicitContext.rectangleAvailability) {
         const QuadtreeTileID* childIDs[4] = {&swID, &seID, &nwID, &neID};
         uint8_t* availabilities[4] = {&sw, &se, &nw, &ne};
-        TileContext** childContexts[4] = {&pSW, &pSE, &pNW, &pNE};
+        TileContext** childContexts[4] =
+            {&pSWContext, &pSEContext, &pNWContext, &pNEContext};
         for (int i = 0; i < 4; i++) {
           TileContext* pChildContext = *childContexts[i];
           const QuadtreeTileID* pChildID = childIDs[i];
@@ -420,29 +421,29 @@ void createImplicitChildrenIfNeeded(
         gsl::span<Tile> children = tile.getChildren();
 
         createImplicitQuadtreeTile(
-            pSW,
-            *pSW->implicitContext,
+            pSWContext,
+            *pSWContext->implicitContext,
             tile,
             children[0],
             swID,
             sw);
         createImplicitQuadtreeTile(
-            pSE,
-            *pSE->implicitContext,
+            pSEContext,
+            *pSEContext->implicitContext,
             tile,
             children[1],
             seID,
             se);
         createImplicitQuadtreeTile(
-            pNW,
-            *pNW->implicitContext,
+            pNWContext,
+            *pNWContext->implicitContext,
             tile,
             children[2],
             nwID,
             nw);
         createImplicitQuadtreeTile(
-            pNE,
-            *pNE->implicitContext,
+            pNEContext,
+            *pNEContext->implicitContext,
             tile,
             children[3],
             neID,

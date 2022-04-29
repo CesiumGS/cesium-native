@@ -483,10 +483,8 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       resolvedUrl += '/';
     }
     resolvedUrl += "layer.json";
-    auto pAsyncSystem = context.pTileset->getAsyncSystem();
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
-    return pAssetAccessor
-        ->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
+    return pAssetAccessor->get(asyncSystem, resolvedUrl, context.requestHeaders)
         .thenInWorkerThread(
             [asyncSystem, pLogger, &context, useWaterMask](
                 std::shared_ptr<IAssetRequest>&& pRequest) mutable {
