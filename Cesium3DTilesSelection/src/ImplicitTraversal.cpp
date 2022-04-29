@@ -455,7 +455,7 @@ void createImplicitChildrenIfNeeded(
 
         if (sw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pSW,
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -465,7 +465,7 @@ void createImplicitChildrenIfNeeded(
 
         if (se & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pSE,
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -475,7 +475,7 @@ void createImplicitChildrenIfNeeded(
 
         if (nw & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pNW,
+              pContext,
               implicitContext,
               tile,
               children[childIndex++],
@@ -485,7 +485,7 @@ void createImplicitChildrenIfNeeded(
 
         if (ne & TileAvailabilityFlags::TILE_AVAILABLE) {
           createImplicitQuadtreeTile(
-              pNE,
+              pContext,
               implicitContext,
               tile,
               children[childIndex],
