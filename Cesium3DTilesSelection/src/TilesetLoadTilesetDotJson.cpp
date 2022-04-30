@@ -274,14 +274,22 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
-    Private::workerThreadLoadTerrainTile(
-        *pRootTile,
-        tileset,
-        *pContext,
-        asyncSystem,
-        pLogger,
-        useWaterMask);
-    supportsRasterOverlays = true;
+    return Private::workerThreadLoadTerrainTile(
+               *pRootTile,
+               tileset,
+               *pContext,
+               asyncSystem,
+               pLogger,
+               useWaterMask)
+        .thenImmediately([pRootTile = std::move(pRootTile),
+                          pContext = std::move(pContext)]() mutable {
+          pRootTile->getContext();
+          return LoadResult{
+              std::move(pContext),
+              std::move(pRootTile),
+              true,
+              std::nullopt};
+        });
   }
 
   return asyncSystem.createResolvedFuture(LoadResult{
