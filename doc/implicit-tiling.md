@@ -17,9 +17,7 @@ This is really important, because it ensures:
 
 ## Application to quantized-mesh and layers
 
-(not implemented yet)
-
-In quantized-mesh, we already know that a tile has content available, but then we learn about availability in deeper levels from the content of that tile. We can't prevent content load until we have availability data, because then we'd never have content or availability data. However, getting both back at the same time is nearly as good. We just need to make sure we load the tile in any layers for which this tile is at an availability level, and add the availability data to the appropriate context, prior to allowing the tile to enter the `ContentLoaded` state. That way we will always have the necessary availability information prior to calling `createImplicitChildrenIfNeeded`.
+In quantized-mesh, we already know that a tile has content available, but then we learn about availability in deeper levels from the content of that tile. We can't prevent content load until we have availability data, because then we'd never have content or availability data. However, getting both back at the same time is nearly as good. We just need to make sure we load the tile in any layers for which this tile is at an availability level, and add the availability data to the appropriate context, prior to allowing the tile to enter the `ContentLoaded` state. That way we will always have the necessary availability information prior to calling `createImplicitChildrenIfNeeded`. This currently happens in `Tileset::requestTileContent`.
 
 ## Level skipping with implicit tiling and quantized-mesh
 
