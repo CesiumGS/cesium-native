@@ -283,7 +283,6 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
                useWaterMask)
         .thenImmediately([pRootTile = std::move(pRootTile),
                           pContext = std::move(pContext)]() mutable {
-          pRootTile->getContext();
           return LoadResult{
               std::move(pContext),
               std::move(pRootTile),
