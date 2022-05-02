@@ -1,5 +1,11 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
+#include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
@@ -219,12 +225,102 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
 
 void parseImplicitTileset(
     const rapidjson::Value& implicitExtensionJson,
+    const char* contentUri,
     Tile& tile,
-    TilesetJsonLoader& currentLoader)
-{
+    TilesetJsonLoader& currentLoader) {
   // mark this implicit tile as external tileset
+  tile.setTileID("");
   tile.setContent(
       std::make_unique<TileContent>(&currentLoader, TileExternalContent{}));
+
+  auto implicitTiling = implicitExtensionJson.GetObject();
+  auto tilingSchemeIt = implicitTiling.FindMember("subdivisionScheme");
+  auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
+  auto maximumLevelIt = implicitTiling.FindMember("maximumLevel");
+  auto subtreesIt = implicitTiling.FindMember("subtrees");
+
+  // check that all the required properties above are available
+  bool hasTilingSchemeProp = tilingSchemeIt != implicitTiling.MemberEnd() &&
+                             tilingSchemeIt->value.IsString();
+  bool hasSubtreeLevelsProp = subtreeLevelsIt != implicitTiling.MemberEnd() &&
+                              subtreeLevelsIt->value.IsUint();
+  bool hasMaximumLevelProp = maximumLevelIt != implicitTiling.MemberEnd() &&
+                             maximumLevelIt->value.IsUint();
+  bool hasSubtreesProp =
+      subtreesIt != implicitTiling.MemberEnd() && subtreesIt->value.IsObject();
+  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp || !hasMaximumLevelProp ||
+      !hasSubtreesProp) {
+    return;
+  }
+
+  auto subtrees = subtreesIt->value.GetObject();
+  auto subtreesUriIt = subtrees.FindMember("uri");
+  if (subtreesUriIt == subtrees.MemberEnd() ||
+      !subtreesUriIt->value.IsString()) {
+    return;
+  }
+
+  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
+  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+    return;
+  }
+
+  // create implicit loaders
+  uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
+  uint32_t maximumLevel = maximumLevelIt->value.GetUint();
+  const char* subtreesUri = subtreesUriIt->value.GetString();
+  const char* subdivisionScheme = tilingSchemeIt->value.GetString();
+
+  const CesiumGeospatial::BoundingRegion* pRegion =
+      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
+  const CesiumGeometry::OrientedBoundingBox* pBox =
+      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
+  const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
+      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
+
+  if (std::strcmp(subdivisionScheme, "QUADTREE") == 0) {
+    // the implicit loader will be the child loader of this tileset json loader
+    TilesetContentLoader* pImplicitLoader = nullptr;
+    if (pRegion) {
+      auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+          currentLoader.getBaseUrl(),
+          contentUri,
+          subtreesUri,
+          subtreeLevels,
+          maximumLevel,
+          *pRegion);
+      pImplicitLoader = pLoader.get();
+      currentLoader.addChildLoader(std::move(pLoader));
+    } else if (pBox) {
+      auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+          currentLoader.getBaseUrl(),
+          contentUri,
+          subtreesUri,
+          subtreeLevels,
+          maximumLevel,
+          *pBox);
+      pImplicitLoader = pLoader.get();
+      currentLoader.addChildLoader(std::move(pLoader));
+    } else if (pS2Cell) {
+      auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+          currentLoader.getBaseUrl(),
+          contentUri,
+          subtreesUri,
+          subtreeLevels,
+          maximumLevel,
+          *pS2Cell);
+      pImplicitLoader = pLoader.get();
+      currentLoader.addChildLoader(std::move(pLoader));
+    }
+
+    // create an implicit root to associate with the above implicit loader
+    std::vector<Tile> implicitRootTile(1);
+    implicitRootTile[0].setParent(&tile);
+    implicitRootTile[0].setContent(
+        std::make_unique<TileContent>(pImplicitLoader));
+    tile.createChildTiles(std::move(implicitRootTile));
+  } else if (std::strcmp(subdivisionScheme, "OCTREE") == 0) {
+  }
 }
 
 void parseTileJsonRecursively(
@@ -344,12 +440,17 @@ void parseTileJsonRecursively(
   if (extensionIt != tileJson.MemberEnd()) {
     // this is an external tile pointing to an implicit tileset
     const auto& extensions = extensionIt->value;
-    const auto implicitExtensionIt = extensions.FindMember("3DTILES_implicit_tiling");
+    const auto implicitExtensionIt =
+        extensions.FindMember("3DTILES_implicit_tiling");
     hasImplicitContent = implicitExtensionIt != extensions.MemberEnd() &&
                          implicitExtensionIt->value.IsObject();
     if (hasImplicitContent) {
-      parseImplicitTileset(implicitExtensionIt->value, tile, currentLoader);
-    } 
+      parseImplicitTileset(
+          implicitExtensionIt->value,
+          contentUri,
+          tile,
+          currentLoader);
+    }
   }
 
   // this is a regular tile
@@ -445,16 +546,14 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
-  externalContentInitializer.pExternalTilesetLoaders =
-      std::make_shared<TilesetContentLoaderResult>(parseTilesetJson(
-          loadInfo.pLogger,
-          tileUrl,
-          responseData,
-          loadInfo.tileTransform));
+  TilesetContentLoaderResult externalTilesetLoader = parseTilesetJson(
+      loadInfo.pLogger,
+      tileUrl,
+      responseData,
+      loadInfo.tileTransform);
 
   // check and log any errors
-  const auto& errors =
-      externalContentInitializer.pExternalTilesetLoaders->errors;
+  const auto& errors = externalTilesetLoader.errors;
   if (errors) {
     logErrors(loadInfo.pLogger, tileUrl, errors.errors);
     return TileLoadResult{
@@ -463,6 +562,10 @@ TileLoadResult parseExternalTilesetInWorkerThread(
         std::move(pCompletedRequest),
         {}};
   }
+
+  externalContentInitializer.pExternalTilesetLoaders =
+      std::make_shared<TilesetContentLoaderResult>(
+          std::move(externalTilesetLoader));
 
   // mark this tile has external content
   return TileLoadResult{
@@ -615,6 +718,10 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   std::move(externalContentInitializer));
             }
           });
+}
+
+const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
+  return _baseUrl;
 }
 
 void TilesetJsonLoader::addChildLoader(

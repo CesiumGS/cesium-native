@@ -21,6 +21,8 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  const std::string& getBaseUrl() const noexcept;
+
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
