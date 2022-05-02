@@ -5,6 +5,8 @@
 ##### Additions :tada:
 
 - Improved the load performance when `TilesetOptions::forbidHoles` is enabled by only loading child tiles when their parent does not meet the necessary screen-space error requirement.
+- Added support for loading availability metadata in the layer.json.
+- Added support for loading multiple layers of quantized-mesh terrain.
 
 ##### Fixes :wrench:
 

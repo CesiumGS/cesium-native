@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
+#include "QuantizedMeshContent.h"
 #include "TilesetLoadTileFromJson.h"
 #include "calcQuadtreeMaxGeometricError.h"
 
@@ -31,16 +32,25 @@ struct LoadResult {
 } // namespace
 
 struct Tileset::LoadTilesetDotJson::Private {
-  static LoadResult workerThreadHandleResponse(
+  static Future<LoadResult> workerThreadHandleResponse(
       std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
       std::unique_ptr<TileContext>&& pContext,
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
-  static void workerThreadLoadTerrainTile(
-      Tile& tile,
-      const rapidjson::Value& layerJson,
+  static Future<void> workerThreadLoadTileContext(
+      const rapidjson::Document& layerJson,
       TileContext& context,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      bool useWaterMask);
+
+  static Future<void> workerThreadLoadTerrainTile(
+      Tile& tile,
+      const rapidjson::Document& layerJson,
+      TileContext& context,
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -92,6 +102,7 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
                  .pAssetAccessor->get(tileset.getAsyncSystem(), url, headers)
                  .thenInWorkerThread(
                      [pLogger = tileset.getExternals().pLogger,
+                      asyncSystem = tileset.getAsyncSystem(),
                       pContext = std::move(pContext),
                       useWaterMask =
                           tileset.getOptions().contentOptions.enableWaterMask](
@@ -99,6 +110,7 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
                        return Private::workerThreadHandleResponse(
                            std::move(pRequest),
                            std::move(pContext),
+                           asyncSystem,
                            pLogger,
                            useWaterMask);
                      })
@@ -164,9 +176,11 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 }
 } // namespace
 
-LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
+Future<LoadResult>
+Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
+    const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   const IAssetResponse* pResponse = pRequest->response();
@@ -174,15 +188,16 @@ LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     std::string message = fmt::format(
         "Did not receive a valid response for tileset {}",
         pRequest->url());
-    return LoadResult{
+    const Tileset* pTileset = pContext->pTileset;
+    return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext->pTileset,
+            pTileset,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
-            message}};
+            message}});
   }
 
   if (pResponse->statusCode() != 0 &&
@@ -191,15 +206,16 @@ LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         "Received status code {} for tileset {}",
         pResponse->statusCode(),
         pRequest->url());
-    return LoadResult{
+    const Tileset* pTileset = pContext->pTileset;
+    return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext ? pContext->pTileset : nullptr,
+            pTileset,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
-            message}};
+            message}});
   }
 
   pContext->baseUrl = pRequest->url();
@@ -214,15 +230,16 @@ LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tileset.GetParseError(),
         tileset.GetErrorOffset());
-    return LoadResult{
+    const Tileset* pTileset = pContext->pTileset;
+    return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
         TilesetLoadFailureDetails{
-            pContext->pTileset,
+            pTileset,
             TilesetLoadType::TilesetJson,
             std::move(pRequest),
-            message}};
+            message}});
   }
 
   pContext->pTileset->_gltfUpAxis = obtainGltfUpAxis(tileset);
@@ -257,20 +274,29 @@ LoadResult Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
-    Private::workerThreadLoadTerrainTile(
-        *pRootTile,
-        tileset,
-        *pContext,
-        pLogger,
-        useWaterMask);
-    supportsRasterOverlays = true;
+    return Private::workerThreadLoadTerrainTile(
+               *pRootTile,
+               tileset,
+               *pContext,
+               asyncSystem,
+               pLogger,
+               useWaterMask)
+        .thenImmediately([pRootTile = std::move(pRootTile),
+                          pContext = std::move(pContext)]() mutable {
+          pRootTile->getContext();
+          return LoadResult{
+              std::move(pContext),
+              std::move(pRootTile),
+              true,
+              std::nullopt};
+        });
   }
 
-  return LoadResult{
+  return asyncSystem.createResolvedFuture(LoadResult{
       std::move(pContext),
       std::move(pRootTile),
       supportsRasterOverlays,
-      std::nullopt};
+      std::nullopt});
 }
 
 namespace {
@@ -321,23 +347,17 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 } // namespace
 
-void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
-    Tile& tile,
-    const rapidjson::Value& layerJson,
+Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
+    const rapidjson::Document& layerJson,
     TileContext& context,
+    const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
-  context.requestHeaders.push_back(std::make_pair(
-      "Accept",
-      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01"));
-
   const auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
       tilesetVersionIt->value.IsString()) {
     context.version = tilesetVersionIt->value.GetString();
   }
-
   std::optional<std::vector<double>> optionalBounds =
       JsonHelpers::getDoubles(layerJson, -1, "bounds");
   std::vector<double> bounds;
@@ -382,7 +402,7 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
         pLogger,
         "Tileset contained an unknown projection value: {}",
         projectionString);
-    return;
+    return asyncSystem.createResolvedFuture();
   }
 
   BoundingVolume boundingVolume =
@@ -408,6 +428,8 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
           *tilingScheme,
           maxZoom),
       std::nullopt,
+      std::nullopt,
+      std::nullopt,
       std::nullopt};
 
   std::vector<std::string> extensions =
@@ -430,24 +452,154 @@ void Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     }
   }
 
-  tile.setContext(&context);
-  tile.setBoundingVolume(boundingVolume);
-  tile.setGeometricError(999999999.0);
-  tile.createChildTiles(quadtreeXTiles);
+  const auto availabilityLevelsIt =
+      layerJson.FindMember("metadataAvailability");
 
-  for (uint32_t i = 0; i < quadtreeXTiles; ++i) {
-    Tile& childTile = tile.getChildren()[i];
-    QuadtreeTileID id(0, i, 0);
-
-    childTile.setContext(&context);
-    childTile.setParent(&tile);
-    childTile.setTileID(id);
-    const CesiumGeospatial::GlobeRectangle childGlobeRectangle =
-        unprojectRectangleSimple(projection, tilingScheme->tileToRectangle(id));
-    childTile.setBoundingVolume(
-        createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
-    childTile.setGeometricError(
-        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) *
-        childGlobeRectangle.computeWidth());
+  if (availabilityLevelsIt != layerJson.MemberEnd() &&
+      availabilityLevelsIt->value.IsInt()) {
+    context.implicitContext->availabilityLevels =
+        std::make_optional<uint32_t>(availabilityLevelsIt->value.GetInt());
+  } else {
+    std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+        availableTileRectangles =
+            QuantizedMeshContent::loadAvailabilityRectangles(layerJson, 0);
+    if (availableTileRectangles.size() > 0) {
+      for (const auto& rectangle : availableTileRectangles) {
+        context.implicitContext->rectangleAvailability->addAvailableTileRange(
+            rectangle);
+      }
+    }
   }
+
+  const auto attributionIt = layerJson.FindMember("attribution");
+
+  if (attributionIt != layerJson.MemberEnd() &&
+      attributionIt->value.IsString()) {
+    context.implicitContext->credit = std::make_optional<Credit>(
+        context.pTileset->getExternals().pCreditSystem->createCredit(
+            attributionIt->value.GetString(),
+            context.pTileset->_options.showCreditsOnScreen));
+  }
+
+  std::string parentUrl =
+      JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
+
+  if (!parentUrl.empty()) {
+    std::string resolvedUrl = Uri::resolve(context.baseUrl, parentUrl);
+    // append forward slash if necessary
+    if (resolvedUrl[resolvedUrl.size() - 1] != '/') {
+      resolvedUrl += '/';
+    }
+    resolvedUrl += "layer.json";
+    auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
+    return pAssetAccessor->get(asyncSystem, resolvedUrl, context.requestHeaders)
+        .thenInWorkerThread(
+            [asyncSystem, pLogger, &context, useWaterMask](
+                std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+              const IAssetResponse* pResponse = pRequest->response();
+              if (!pResponse) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Did not receive a valid response for parent layer.json {}",
+                    pRequest->url());
+                return asyncSystem.createResolvedFuture();
+              }
+
+              if (pResponse->statusCode() != 0 &&
+                  (pResponse->statusCode() < 200 ||
+                   pResponse->statusCode() >= 300)) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Received status code {} for parent layer.json {}",
+                    pResponse->statusCode(),
+                    pRequest->url());
+                return asyncSystem.createResolvedFuture();
+              }
+
+              const gsl::span<const std::byte> data = pResponse->data();
+              rapidjson::Document parentLayerJson;
+              parentLayerJson.Parse(
+                  reinterpret_cast<const char*>(data.data()),
+                  data.size());
+
+              if (parentLayerJson.HasParseError()) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Error when parsing layer.json, error code {} at byte "
+                    "offset ",
+                    "{}",
+                    parentLayerJson.GetParseError(),
+                    parentLayerJson.GetErrorOffset());
+                return asyncSystem.createResolvedFuture();
+              }
+
+              context.pUnderlyingContext = std::make_unique<TileContext>();
+              context.pUnderlyingContext->baseUrl = pRequest->url();
+              context.pUnderlyingContext->pTileset = context.pTileset;
+              context.pUnderlyingContext->requestHeaders =
+                  context.requestHeaders;
+              if (context.pTopContext) {
+                context.pUnderlyingContext->pTopContext = context.pTopContext;
+              } else {
+                context.pUnderlyingContext->pTopContext = &context;
+              }
+
+              return Private::workerThreadLoadTileContext(
+                  parentLayerJson,
+                  *context.pUnderlyingContext,
+                  asyncSystem,
+                  pLogger,
+                  useWaterMask);
+            });
+  }
+  return asyncSystem.createResolvedFuture();
+}
+
+Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
+    Tile& tile,
+    const rapidjson::Document& layerJson,
+    TileContext& context,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    bool useWaterMask) {
+  context.requestHeaders.push_back(std::make_pair(
+      "Accept",
+      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
+      "*;q=0.01"));
+  return Private::workerThreadLoadTileContext(
+             layerJson,
+             context,
+             asyncSystem,
+             pLogger,
+             useWaterMask)
+      .thenImmediately([&tile, &context]() {
+        tile.setContext(&context);
+        tile.setBoundingVolume(
+            context.implicitContext->implicitRootBoundingVolume);
+        tile.setGeometricError(999999999.0);
+
+        const auto& tilingScheme =
+            context.implicitContext->quadtreeTilingScheme;
+        auto quadtreeXTiles = tilingScheme->getRootTilesX();
+        const auto& projection = *context.implicitContext->projection;
+        tile.createChildTiles(quadtreeXTiles);
+
+        for (uint32_t i = 0; i < quadtreeXTiles; ++i) {
+          Tile& childTile = tile.getChildren()[i];
+          QuadtreeTileID id(0, i, 0);
+
+          childTile.setContext(&context);
+          childTile.setParent(&tile);
+          childTile.setTileID(id);
+          const CesiumGeospatial::GlobeRectangle childGlobeRectangle =
+              unprojectRectangleSimple(
+                  projection,
+                  tilingScheme->tileToRectangle(id));
+          childTile.setBoundingVolume(
+              createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
+          childTile.setGeometricError(
+              8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) *
+              childGlobeRectangle.computeWidth());
+        }
+      });
 }

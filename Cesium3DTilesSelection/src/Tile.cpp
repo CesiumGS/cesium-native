@@ -566,13 +566,10 @@ void Tile::processLoadedContent() {
         this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
       }
 
-      if (this->getContext()->implicitContext) {
+      if (!this->_pContent->availableTileRectangles.empty() &&
+          this->getContext()->implicitContext) {
         ImplicitTilingContext& context = *this->getContext()->implicitContext;
-        const QuadtreeTileID* pQuadtreeTileID =
-            std::get_if<QuadtreeTileID>(&this->getTileID());
-        if (pQuadtreeTileID && context.quadtreeTilingScheme &&
-            context.rectangleAvailability &&
-            !this->_pContent->availableTileRectangles.empty()) {
+        if (context.rectangleAvailability) {
           for (const QuadtreeTileRectangularRange& range :
                this->_pContent->availableTileRectangles) {
             context.rectangleAvailability->addAvailableTileRange(range);

@@ -95,6 +95,7 @@ void createImplicitChildrenIfNeeded(
     const ImplicitTraversalInfo& implicitInfo);
 
 void createImplicitQuadtreeTile(
+    TileContext* pTileContext,
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,

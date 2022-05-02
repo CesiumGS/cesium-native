@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoundingVolume.h"
+#include "CreditSystem.h"
 
 #include <CesiumGeometry/Availability.h>
 #include <CesiumGeometry/OctreeAvailability.h>
@@ -98,6 +99,19 @@ public:
    * context.
    */
   std::optional<CesiumGeometry::OctreeAvailability> octreeAvailability;
+
+  /**
+   * @brief Availability level from the layer.json.
+   *
+   * If `availabilityLevels` is `n`, then availability information is stored
+   * every `n`th level in the tile tree.
+   */
+  std::optional<uint32_t> availabilityLevels;
+
+  /**
+   * @brief Any attribution associated with this context/layer.
+   */
+  std::optional<Credit> credit;
 };
 
 /**
@@ -215,6 +229,30 @@ public:
    * properties of its parent context.
    */
   ContextInitializerCallback contextInitializerCallback;
+
+  /**
+   * @brief Another tiling context underlying this one, if any.
+   *
+   * If a tile is not available from this tiling context, we check the
+   * underlyingContext to see if it is available from that one instead. This
+   * allows one implicitly-tiled tileset to be layered on top of another one.
+   * For example, custom terrain for a small area layered on top of Cesium World
+   * Terrain. In this scenario, Cesium World Terrain would be the
+   * underlyingContext.
+   *
+   * This property can be viewed as forming a singly-linked list of contexts.
+   * {@link pTopContext} points back to the head of list.
+   */
+  std::unique_ptr<TileContext> pUnderlyingContext;
+
+  /**
+   * @brief Points back to the top context, if this is an underlying context. If
+   * this context _is_ the top context, this property is nullptr.
+   *
+   * {@link pUnderlyingContext} can be viewed as forming a singly-linked list
+   * of contexts. This pointer points back to the head of list.
+   */
+  TileContext* pTopContext = nullptr;
 };
 
 } // namespace Cesium3DTilesSelection

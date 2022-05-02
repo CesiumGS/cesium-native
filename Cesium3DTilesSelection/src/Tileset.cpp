@@ -7,6 +7,7 @@
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "QuantizedMeshContent.h"
 #include "TileUtilities.h"
 #include "TilesetLoadIonAssetEndpoint.h"
 #include "TilesetLoadSubtree.h"
@@ -14,6 +15,7 @@
 #include "TilesetLoadTilesetDotJson.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -317,6 +319,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
           pCreditSystem->addCreditToFrame(credit);
         }
       }
+      if (tile->getContext()->implicitContext &&
+          tile->getContext()->implicitContext->credit) {
+        pCreditSystem->addCreditToFrame(
+            *tile->getContext()->implicitContext->credit);
+      }
     }
   }
 
@@ -372,15 +379,105 @@ void Tileset::loadTilesFromJson(
 
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
 Tileset::requestTileContent(Tile& tile) {
-  std::string url = this->getResolvedContentUrl(tile);
+  std::string url =
+      this->getResolvedContentUrl(*tile.getContext(), tile.getTileID());
   assert(!url.empty());
 
   this->notifyTileStartLoading(&tile);
 
-  return this->getExternals().pAssetAccessor->get(
-      this->getAsyncSystem(),
-      url,
-      tile.getContext()->requestHeaders);
+  Future<std::shared_ptr<IAssetRequest>> tileFuture =
+      this->getExternals().pAssetAccessor->get(
+          this->getAsyncSystem(),
+          url,
+          tile.getContext()->requestHeaders);
+
+  // In addition to loading the main tile, we also need to load the same tile in
+  // any underlying contexts for which this tile is an availability level. This
+  // is necessary because, when we later create this tile's children, we need to
+  // be able to create children that are only available from an underlying
+  // layer, and we can only do that if we know they're available.
+  TileContext* pTileContext = tile.getContext();
+  TileContext* pContext =
+      pTileContext->pTopContext ? pTileContext->pTopContext : pTileContext;
+
+  const QuadtreeTileID* pQuadtreeTileID =
+      std::get_if<QuadtreeTileID>(&tile.getTileID());
+
+  if (pQuadtreeTileID && pContext->implicitContext &&
+      pContext->implicitContext->rectangleAvailability &&
+      pContext->implicitContext->availabilityLevels) {
+    uint32_t level = pQuadtreeTileID->level;
+    std::vector<Future<int>> layerFutures;
+    while (pContext) {
+      if (pContext != pTileContext && pContext->implicitContext &&
+          pContext->implicitContext->availabilityLevels) {
+        uint32_t availabilityLevels =
+            *pContext->implicitContext->availabilityLevels;
+        if ((level % availabilityLevels) == 0) {
+          // This tile has availability data, so load it.
+          layerFutures.emplace_back(this->_requestQuantizedMeshAvailabilityTile(
+              *pQuadtreeTileID,
+              pContext));
+        }
+      }
+
+      pContext = pContext->pUnderlyingContext.get();
+    }
+
+    // If we need to load any tiles for availability, do that and then return
+    // the data for the actual tile.
+    if (!layerFutures.empty()) {
+      return this->getAsyncSystem()
+          .all(std::move(layerFutures))
+          .thenImmediately(
+              [tileFuture = std::move(tileFuture)](std::vector<int>&&) mutable {
+                return std::move(tileFuture);
+              });
+    }
+  }
+
+  return tileFuture;
+}
+
+Future<int> Tileset::_requestQuantizedMeshAvailabilityTile(
+    const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+    TileContext* pAvailabilityContext) {
+  std::string url =
+      getResolvedContentUrl(*pAvailabilityContext, availabilityTileID);
+
+  return this->getExternals()
+      .pAssetAccessor
+      ->get(this->getAsyncSystem(), url, pAvailabilityContext->requestHeaders)
+      .thenInWorkerThread(
+          [pLogger = _externals.pLogger,
+           availabilityTileID](std::shared_ptr<IAssetRequest>&& pRequest)
+              -> std::vector<QuadtreeTileRectangularRange> {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (pResponse) {
+              uint16_t statusCode = pResponse->statusCode();
+
+              if (!(statusCode != 0 &&
+                    (statusCode < 200 || statusCode >= 300))) {
+                return QuantizedMeshContent::loadMetadata(
+                    pLogger,
+                    pResponse->data(),
+                    availabilityTileID);
+              }
+            }
+            return {};
+          })
+      .thenInMainThread(
+          [pAvailabilityContext](
+              std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&&
+                  rectangles) {
+            if (!rectangles.empty()) {
+              for (const QuadtreeTileRectangularRange& range : rectangles) {
+                pAvailabilityContext->implicitContext->rectangleAvailability
+                    ->addAvailableTileRange(range);
+              }
+            }
+            return 0;
+          });
 }
 
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
@@ -1237,7 +1334,9 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
 
-std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
+std::string Tileset::getResolvedContentUrl(
+    const TileContext& context,
+    const TileID& tileID) const {
   struct Operation {
     const TileContext& context;
 
@@ -1302,12 +1401,12 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
     }
   };
 
-  std::string url = std::visit(Operation{*tile.getContext()}, tile.getTileID());
+  std::string url = std::visit(Operation{context}, tileID);
   if (url.empty()) {
     return url;
   }
 
-  return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
+  return CesiumUtility::Uri::resolve(context.baseUrl, url, true);
 }
 
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
