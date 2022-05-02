@@ -17,7 +17,6 @@
 #include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
-#include <rapidjson/document.h>
 
 #include <cstddef>
 #include <stdexcept>
@@ -175,11 +174,11 @@ static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
   return glm::normalize(result);
 }
 
-static void processMetadata(
+static std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+processMetadata(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const QuadtreeTileID& tileID,
-    gsl::span<const char> json,
-    TileContentLoadResult& result);
+    gsl::span<const char> json);
 
 static std::optional<QuantizedMeshView> parseQuantizedMesh(
     const gsl::span<const std::byte>& data,
@@ -839,7 +838,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   // decode metadata
   if (meshView->metadataJsonLength > 0) {
-    processMetadata(pLogger, id, meshView->metadataJsonBuffer, *pResult);
+    pResult->availableTileRectangles =
+        processMetadata(pLogger, id, meshView->metadataJsonBuffer);
   }
 
   // indices buffer for gltf to include tile and skirt indices. Caution of
@@ -1181,43 +1181,21 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   return pResult;
 }
 
-struct TileRange {
-  uint32_t minimumX;
-  uint32_t minimumY;
-  uint32_t maximumX;
-  uint32_t maximumY;
-};
-
-static void processMetadata(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const QuadtreeTileID& tileID,
-    gsl::span<const char> metadataString,
-    TileContentLoadResult& result) {
-  rapidjson::Document metadata;
-  metadata.Parse(
-      reinterpret_cast<const char*>(metadataString.data()),
-      metadataString.size());
-
-  if (metadata.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Error when parsing metadata, error code {} at byte offset {}",
-        metadata.GetParseError(),
-        metadata.GetErrorOffset());
-    return;
-  }
-
+std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+QuantizedMeshContent::loadAvailabilityRectangles(
+    const rapidjson::Document& metadata,
+    uint32_t startingLevel) {
+  std::vector<CesiumGeometry::QuadtreeTileRectangularRange> ret;
   const auto availableIt = metadata.FindMember("available");
   if (availableIt == metadata.MemberEnd() || !availableIt->value.IsArray()) {
-    return;
+    return ret;
   }
 
   const auto& available = availableIt->value;
   if (available.Size() == 0) {
-    return;
+    return ret;
   }
 
-  uint32_t level = tileID.level + 1;
   for (rapidjson::SizeType i = 0; i < available.Size(); ++i) {
     const auto& rangesAtLevelJson = available[i];
     if (!rangesAtLevelJson.IsArray()) {
@@ -1230,17 +1208,60 @@ static void processMetadata(
         continue;
       }
 
-      result.availableTileRectangles.push_back(
-          CesiumGeometry::QuadtreeTileRectangularRange{
-              level,
-              JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
-              JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
-              JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
-              JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)});
+      ret.push_back(CesiumGeometry::QuadtreeTileRectangularRange{
+          startingLevel,
+          JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
+          JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
+          JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
+          JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)});
     }
 
-    ++level;
+    ++startingLevel;
   }
+  return ret;
+}
+
+struct TileRange {
+  uint32_t minimumX;
+  uint32_t minimumY;
+  uint32_t maximumX;
+  uint32_t maximumY;
+};
+
+static std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+processMetadata(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const QuadtreeTileID& tileID,
+    gsl::span<const char> metadataString) {
+  rapidjson::Document metadata;
+  metadata.Parse(
+      reinterpret_cast<const char*>(metadataString.data()),
+      metadataString.size());
+
+  if (metadata.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Error when parsing metadata, error code {} at byte offset {}",
+        metadata.GetParseError(),
+        metadata.GetErrorOffset());
+    return {};
+  }
+
+  return QuantizedMeshContent::loadAvailabilityRectangles(
+      metadata,
+      tileID.level + 1);
+}
+
+/*static*/ std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+QuantizedMeshContent::loadMetadata(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const gsl::span<const std::byte>& data,
+    const QuadtreeTileID& tileID) {
+  std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data, false);
+  if (!meshView) {
+    return {};
+  }
+  return processMetadata(pLogger, tileID, meshView->metadataJsonBuffer);
 }
 
 } // namespace Cesium3DTilesSelection

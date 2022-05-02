@@ -492,7 +492,8 @@ private:
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
-  std::string getResolvedContentUrl(const Tile& tile) const;
+  std::string
+  getResolvedContentUrl(const TileContext& context, const TileID& tileID) const;
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
@@ -610,6 +611,10 @@ private:
   void processSubtreeQueue();
 
   void reportError(TilesetLoadFailureDetails&& errorDetails);
+
+  CesiumAsync::Future<int> _requestQuantizedMeshAvailabilityTile(
+      const CesiumGeometry::QuadtreeTileID& availabilityTileID,
+      TileContext* pAvailabilityContext);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
