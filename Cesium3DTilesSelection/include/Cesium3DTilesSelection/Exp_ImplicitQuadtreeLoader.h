@@ -20,15 +20,14 @@ public:
       const std::string& contentUrlTemplate,
       const std::string& subtreeUrlTemplate,
       uint32_t subtreeLevels,
-      uint32_t maximumLevel,
+      uint32_t availableLevels,
       ImplicitBoundingVolumeType&& volume)
       : _baseUrl{baseUrl},
         _contentUrlTemplate{contentUrlTemplate},
         _subtreeUrlTemplate{subtreeUrlTemplate},
-        _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)} {
-    (void)(subtreeLevels);
-    (void)(maximumLevel);
-  }
+        _subtreeLevels{subtreeLevels},
+        _availableLevels{availableLevels},
+        _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)} {}
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
       TilesetContentLoader& currentLoader,
@@ -40,6 +39,8 @@ private:
   std::string _baseUrl;
   std::string _contentUrlTemplate;
   std::string _subtreeUrlTemplate;
+  uint32_t _subtreeLevels;
+  uint32_t _availableLevels;
   ImplicitBoundingVolume _boundingVolume;
 };
 } // namespace Cesium3DTilesSelection

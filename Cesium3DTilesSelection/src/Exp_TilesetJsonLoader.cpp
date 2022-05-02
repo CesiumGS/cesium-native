@@ -1,6 +1,7 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
+#include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -236,19 +237,19 @@ void parseImplicitTileset(
   auto implicitTiling = implicitExtensionJson.GetObject();
   auto tilingSchemeIt = implicitTiling.FindMember("subdivisionScheme");
   auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
-  auto maximumLevelIt = implicitTiling.FindMember("maximumLevel");
   auto subtreesIt = implicitTiling.FindMember("subtrees");
+  auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
 
   // check that all the required properties above are available
   bool hasTilingSchemeProp = tilingSchemeIt != implicitTiling.MemberEnd() &&
                              tilingSchemeIt->value.IsString();
   bool hasSubtreeLevelsProp = subtreeLevelsIt != implicitTiling.MemberEnd() &&
                               subtreeLevelsIt->value.IsUint();
-  bool hasMaximumLevelProp = maximumLevelIt != implicitTiling.MemberEnd() &&
-                             maximumLevelIt->value.IsUint();
+  bool hasAvailableLevelsProp = availableLevelsIt != implicitTiling.MemberEnd() &&
+                             availableLevelsIt->value.IsUint();
   bool hasSubtreesProp =
       subtreesIt != implicitTiling.MemberEnd() && subtreesIt->value.IsObject();
-  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp || !hasMaximumLevelProp ||
+  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp || !hasAvailableLevelsProp ||
       !hasSubtreesProp) {
     return;
   }
@@ -267,7 +268,7 @@ void parseImplicitTileset(
 
   // create implicit loaders
   uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t maximumLevel = maximumLevelIt->value.GetUint();
+  uint32_t availableLevels = availableLevelsIt->value.GetUint();
   const char* subtreesUri = subtreesUriIt->value.GetString();
   const char* subdivisionScheme = tilingSchemeIt->value.GetString();
 
@@ -287,7 +288,7 @@ void parseImplicitTileset(
           contentUri,
           subtreesUri,
           subtreeLevels,
-          maximumLevel,
+          availableLevels,
           *pRegion);
       pImplicitLoader = pLoader.get();
       currentLoader.addChildLoader(std::move(pLoader));
@@ -297,7 +298,7 @@ void parseImplicitTileset(
           contentUri,
           subtreesUri,
           subtreeLevels,
-          maximumLevel,
+          availableLevels,
           *pBox);
       pImplicitLoader = pLoader.get();
       currentLoader.addChildLoader(std::move(pLoader));
@@ -307,7 +308,7 @@ void parseImplicitTileset(
           contentUri,
           subtreesUri,
           subtreeLevels,
-          maximumLevel,
+          availableLevels,
           *pS2Cell);
       pImplicitLoader = pLoader.get();
       currentLoader.addChildLoader(std::move(pLoader));
@@ -316,6 +317,7 @@ void parseImplicitTileset(
     // create an implicit root to associate with the above implicit loader
     std::vector<Tile> implicitRootTile(1);
     implicitRootTile[0].setParent(&tile);
+    implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
     implicitRootTile[0].setContent(
         std::make_unique<TileContent>(pImplicitLoader));
     tile.createChildTiles(std::move(implicitRootTile));
