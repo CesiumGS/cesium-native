@@ -1,5 +1,15 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+##### Additions :tada:
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause tiles in external tilesets to fail to load.
+
 ### v0.15.0 - 2022-05-02
 
 ##### Additions :tada:
