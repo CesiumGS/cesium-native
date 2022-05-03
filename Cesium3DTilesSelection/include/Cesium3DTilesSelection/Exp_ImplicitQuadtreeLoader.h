@@ -4,7 +4,10 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Availability.h>
 #include <variant>
+#include <vector>
+#include <unordered_set>
 
 namespace Cesium3DTilesSelection {
 class ImplicitQuadtreeLoader : public TilesetContentLoader {
@@ -27,7 +30,9 @@ public:
         _subtreeUrlTemplate{subtreeUrlTemplate},
         _subtreeLevels{subtreeLevels},
         _availableLevels{availableLevels},
-        _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)} {}
+        _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)},
+        _loadedSubtrees(availableLevels / subtreeLevels)
+  {}
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
       TilesetContentLoader& currentLoader,
@@ -42,5 +47,6 @@ private:
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitBoundingVolume _boundingVolume;
+  std::vector<std::unordered_set<uint64_t>> _loadedSubtrees;
 };
 } // namespace Cesium3DTilesSelection
