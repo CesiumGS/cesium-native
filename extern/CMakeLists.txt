@@ -129,3 +129,5 @@ set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
 )
 
+set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
+add_subdirectory(libmorton)

@@ -5,6 +5,7 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/Availability.h>
+#include <cmath>
 #include <variant>
 #include <vector>
 #include <unordered_set>
@@ -31,8 +32,9 @@ public:
         _subtreeLevels{subtreeLevels},
         _availableLevels{availableLevels},
         _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)},
-        _loadedSubtrees(availableLevels / subtreeLevels)
-  {}
+        _loadedSubtrees(static_cast<size_t>(std::ceil(
+            static_cast<float>(availableLevels) /
+            static_cast<float>(subtreeLevels)))) {}
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
       TilesetContentLoader& currentLoader,

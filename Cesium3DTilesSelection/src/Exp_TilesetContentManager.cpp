@@ -238,7 +238,7 @@ void TilesetContentManager::setTileContent(
   }
 
   content.setContentKind(std::move(result.contentKind));
-  content.setTileInitializerCallback(std::move(result.deferredTileInitializer));
+  content.setTileInitializerCallback(std::move(result.tileInitializer));
   content.setRenderResources(pWorkerRenderResources);
 }
 

@@ -52,6 +52,7 @@ target_link_libraries(Cesium3DTilesSelection
     # PRIVATE
         tinyxml2
         uriparser
+        libmorton::libmorton
 )
 
 install(TARGETS Cesium3DTilesSelection
