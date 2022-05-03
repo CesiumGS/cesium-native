@@ -1038,6 +1038,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
   // in that case, load this tile INSTEAD of loading any of the descendants, and
   // tell the up-level we're only waiting on this tile. Keep doing this until we
   // actually manage to render this tile.
+  // Make sure we don't end up waiting on a tile that will _never_ be
+  // renderable.
   const bool wasRenderedLastFrame =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
       TileSelectionState::Result::Rendered;
@@ -1046,7 +1048,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
-          this->_options.loadingDescendantLimit) {
+          this->_options.loadingDescendantLimit &&
+      !tile.isExternalTileset() && !tile.getUnconditionallyRefine()) {
     // Remove all descendants from the load queues.
     this->_loadQueueLow.erase(
         this->_loadQueueLow.begin() +
