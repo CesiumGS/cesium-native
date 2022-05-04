@@ -1,10 +1,6 @@
 # Change Log
 
-### ? - ?
-
-##### Breaking Changes :mega:
-
-##### Additions :tada:
+### v0.15.1 - 2022-05-05
 
 ##### Fixes :wrench:
 
