@@ -28,11 +28,11 @@ void TileOcclusionRendererProxyPool::destroyPool() {
 
   this->_tileToOcclusionProxyMappings.clear();
 
-  TileOcclusionRendererProxy* pCurrent = this->_pFreeProxiesHead;
-  while (pCurrent) {
-    TileOcclusionRendererProxy* pNext = pCurrent->_pNext;
-    this->destroyProxy(pCurrent);
-    pCurrent = pNext;
+  while (this->_pFreeProxiesHead) {
+    TileOcclusionRendererProxy* pNext =
+        this->_pFreeProxiesHead->_pNext;
+    this->destroyProxy(this->_pFreeProxiesHead);
+    this->_pFreeProxiesHead = pNext;
   }
 }
 

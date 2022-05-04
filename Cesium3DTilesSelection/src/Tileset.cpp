@@ -68,7 +68,7 @@ Tileset::Tileset(
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
-      this->_externals.pTileOcclusionProxyPool->initPool(1200);
+      this->_externals.pTileOcclusionProxyPool->initPool(400);
     }
     LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
       this->notifyTileDoneLoading(nullptr);
@@ -110,7 +110,7 @@ Tileset::Tileset(
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
       // TODO: find a reasonable number
-      this->_externals.pTileOcclusionProxyPool->initPool(1200);
+      this->_externals.pTileOcclusionProxyPool->initPool(400);
     }
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
@@ -596,7 +596,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->getExternals().pTileOcclusionProxyPool;
-  if (pOcclusionPool) {
+  if (shouldVisit && pOcclusionPool) {
     const TileOcclusionRendererProxy* pOcclusion =
         pOcclusionPool->fetchOcclusionProxyForTile(
             tile,
@@ -605,7 +605,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         pOcclusion->getLastUpdatedFrame() >=
             frameState.currentFrameNumber - 5) {
       culled = true;
-      shouldVisit = false;
+      if (this->_options.enableOcclusionCulling) {
+        shouldVisit = false;
+      }
     }
   }
 
