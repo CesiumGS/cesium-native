@@ -502,13 +502,6 @@ void Tile::processLoadedContent() {
   const TilesetExternals& externals = this->getTileset()->getExternals();
 
   if (this->getState() == LoadState::ContentLoaded) {
-    if (externals.pPrepareRendererResources) {
-      this->_pRendererResources =
-          externals.pPrepareRendererResources->prepareInMainThread(
-              *this,
-              this->getRendererResources());
-    }
-
     if (this->_pContent) {
       // Apply children from content, but only if we don't already have
       // children.
@@ -573,19 +566,23 @@ void Tile::processLoadedContent() {
         this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
       }
 
-      if (this->getContext()->implicitContext) {
+      if (!this->_pContent->availableTileRectangles.empty() &&
+          this->getContext()->implicitContext) {
         ImplicitTilingContext& context = *this->getContext()->implicitContext;
-        const QuadtreeTileID* pQuadtreeTileID =
-            std::get_if<QuadtreeTileID>(&this->getTileID());
-        if (pQuadtreeTileID && context.quadtreeTilingScheme &&
-            context.rectangleAvailability &&
-            !this->_pContent->availableTileRectangles.empty()) {
+        if (context.rectangleAvailability) {
           for (const QuadtreeTileRectangularRange& range :
                this->_pContent->availableTileRectangles) {
             context.rectangleAvailability->addAvailableTileRange(range);
           }
         }
       }
+    }
+
+    if (externals.pPrepareRendererResources) {
+      this->_pRendererResources =
+          externals.pPrepareRendererResources->prepareInMainThread(
+              *this,
+              this->getRendererResources());
     }
 
     this->setState(LoadState::Done);
@@ -846,7 +843,6 @@ void Tile::update(
     }
   }
 
-  // TODO: if there's no model, we can actually free any existing overlays.
   if (this->getState() == LoadState::Done &&
       this->getTileset()->supportsRasterOverlays() && this->getContent() &&
       this->getContent()->model) {
@@ -904,6 +900,12 @@ void Tile::update(
     if (moreRasterDetailAvailable && this->_children.empty()) {
       createQuadtreeSubdividedChildren(*this);
     }
+  } else if (
+      this->getState() == LoadState::Done && !this->_rasterTiles.empty()) {
+    // We can't hang raster images on a tile without geometry, and their
+    // existence can prevent the tile from being deemed done loading. So clear
+    // them out here.
+    this->_rasterTiles.clear();
   }
 }
 

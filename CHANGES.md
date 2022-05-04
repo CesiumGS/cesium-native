@@ -1,5 +1,33 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+##### Additions :tada:
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause tiles in external tilesets to fail to load.
+
+### v0.15.0 - 2022-05-02
+
+##### Additions :tada:
+
+- Improved the load performance when `TilesetOptions::forbidHoles` is enabled by only loading child tiles when their parent does not meet the necessary screen-space error requirement.
+- Added support for loading availability metadata from quantized-mesh layer.json. Previously, only availability embedded in terrain tiles was used.
+- Added support for quantized-mesh terrain tilesets that specify a parent layer.
+- Added support for metadata from the `3DTILES_batch_table_hierarchy` extension.
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause the same tiles to be continually loaded and unloaded when `TilesetOptions::forbidHoles` was enabled.
+- Fixed a bug that could sometimes cause tilesets to fail to show their full detail when making changes to raster overlays.
+- Fixed a bug that could cause holes even with `TilesetOptions::forbidHoles` enabled, particularly when using external tilesets.
+- Tiles will no longer be selected to render when they have no content and they have a higher "geometric error" than their parent. In previous versions, this situation could briefly lead to holes while the children of such tiles loaded.
+- Fixed a bug where `IPrepareRendererResources::prepareInMainThread` was called on a `Tile` before that `Tile` was updated with loaded content.
+- Fixed a bug where getting bad data from the SQLite request cache could cause a crash. If the SQLite database is corrupt, it will now be deleted and recreated.
+
 ### v0.14.1 - 2022-04-14
 
 ##### Fixes :wrench:
