@@ -29,8 +29,7 @@ void TileOcclusionRendererProxyPool::destroyPool() {
   this->_tileToOcclusionProxyMappings.clear();
 
   while (this->_pFreeProxiesHead) {
-    TileOcclusionRendererProxy* pNext =
-        this->_pFreeProxiesHead->_pNext;
+    TileOcclusionRendererProxy* pNext = this->_pFreeProxiesHead->_pNext;
     this->destroyProxy(this->_pFreeProxiesHead);
     this->_pFreeProxiesHead = pNext;
   }
