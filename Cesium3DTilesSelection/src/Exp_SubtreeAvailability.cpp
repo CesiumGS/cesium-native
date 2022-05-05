@@ -481,13 +481,13 @@ bool SubtreeAvailabitity::isAvailable(
   const AvailabilityView& availabilityView) const noexcept
 {
   const SubtreeConstantAvailability* constantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&_tileAvailability);
+      std::get_if<SubtreeConstantAvailability>(&availabilityView);
   if (constantAvailability) {
     return constantAvailability->constant;
   }
 
   const SubtreeBufferViewAvailability* bufferViewAvailability =
-      std::get_if<SubtreeBufferViewAvailability>(&_tileAvailability);
+      std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
   uint64_t levelOffset = (_childCount ^ relativeTileLevel - 1) / (_childCount - 1);
   uint64_t availabilityBitIndex = levelOffset + relativeTileMortonId;
 
