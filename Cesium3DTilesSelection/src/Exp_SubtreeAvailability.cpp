@@ -93,6 +93,7 @@ AvailabilityView parseAvailabilityView(
 }
 
 std::optional<SubtreeAvailabitity> createSubtreeAvailability(
+    uint32_t childCount,
     const rapidjson::Document& subtreeJson,
     std::vector<std::vector<std::byte>>&& buffers) {
   // make sure all the required fields exist
@@ -164,6 +165,7 @@ std::optional<SubtreeAvailabitity> createSubtreeAvailability(
   }
 
   return SubtreeAvailabitity{
+      childCount,
       tileAvailability,
       childSubtreeAvailability,
       std::move(contentAvailability),
@@ -171,6 +173,7 @@ std::optional<SubtreeAvailabitity> createSubtreeAvailability(
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
+    uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -192,7 +195,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
           !byteLengthIt->value.IsUint()) {
         SPDLOG_LOGGER_ERROR(
             pLogger,
-            "Subtree Buffer requires byteLength property. Skip this invalid buffer.");
+            "Subtree Buffer requires byteLength property. Skip this invalid "
+            "buffer.");
         continue;
       }
 
@@ -219,7 +223,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
     // SubtreeAvailability later
     if (!requestBuffers.empty()) {
       return asyncSystem.all(std::move(requestBuffers))
-          .thenInWorkerThread([resolvedBuffers = std::move(resolvedBuffers),
+          .thenInWorkerThread([childCount,
+                               resolvedBuffers = std::move(resolvedBuffers),
                                subtreeJson = std::move(subtreeJson)](
                                   std::vector<RequestedSubtreeBuffer>&&
                                       completedBuffers) mutable {
@@ -228,16 +233,22 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
                   std::move(requestedBuffer.data);
             }
 
-            return createSubtreeAvailability(subtreeJson, std::move(resolvedBuffers));
+            return createSubtreeAvailability(
+                childCount,
+                subtreeJson,
+                std::move(resolvedBuffers));
           });
     }
   }
 
-  return asyncSystem.createResolvedFuture(
-      createSubtreeAvailability(subtreeJson, std::move(resolvedBuffers)));
+  return asyncSystem.createResolvedFuture(createSubtreeAvailability(
+      childCount,
+      subtreeJson,
+      std::move(resolvedBuffers)));
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
+    uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -260,6 +271,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
   }
 
   return parseJsonSubtree(
+      childCount,
       std::move(asyncSystem),
       std::move(pAssetAccessor),
       std::move(pLogger),
@@ -270,6 +282,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>>
 parseBinarySubtreeRequest(
+    uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -333,6 +346,7 @@ parseBinarySubtreeRequest(
   }
 
   return parseJsonSubtree(
+      childCount,
       std::move(asyncSystem),
       std::move(pAssetAccessor),
       std::move(pLogger),
@@ -342,6 +356,7 @@ parseBinarySubtreeRequest(
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
+    uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -363,6 +378,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
 
   if (isBinarySubtree) {
     return parseBinarySubtreeRequest(
+        childCount,
         std::move(asyncSystem),
         std::move(pAssetAccessor),
         std::move(pLogger),
@@ -370,6 +386,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
         std::move(requestHeaders));
   } else {
     return parseJsonSubtreeRequest(
+        childCount,
         std::move(asyncSystem),
         std::move(pAssetAccessor),
         std::move(pLogger),
@@ -380,49 +397,55 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
 } // namespace
 
 SubtreeAvailabitity::SubtreeAvailabitity(
-  AvailabilityView tileAvailability,
-  AvailabilityView subtreeAvailability,
-  std::vector<AvailabilityView>&& contentAvailability,
-  std::vector<std::vector<std::byte>>&& buffers)
-    : _tileAvailability{tileAvailability},
+    uint32_t childCount,
+    AvailabilityView tileAvailability,
+    AvailabilityView subtreeAvailability,
+    std::vector<AvailabilityView>&& contentAvailability,
+    std::vector<std::vector<std::byte>>&& buffers)
+    : _childCount{childCount},
+      _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
       _contentAvailability{std::move(contentAvailability)},
       _buffers{std::move(buffers)} {}
 
 bool SubtreeAvailabitity::isTileAvailable(
-    uint32_t tileLevel,
-    uint64_t tileMortonId) const noexcept {
-  (void)(tileLevel);
-  (void)(tileMortonId);
-  return false;
+    uint32_t relativeTileLevel,
+    uint64_t relativeTileMortonId) const noexcept {
+  return isAvailable(
+      relativeTileLevel,
+      relativeTileMortonId,
+      _tileAvailability);
 }
 
 bool SubtreeAvailabitity::isContentAvailable(
-    uint32_t tileLevel,
-    uint64_t tileMortonId,
+    uint32_t relativeTileLevel,
+    uint64_t relativeTileMortonId,
     uint64_t contentId) const noexcept {
-  (void)(tileLevel);
-  (void)(tileMortonId);
-  (void)(contentId);
-  return false;
+  return isAvailable(
+      relativeTileLevel,
+      relativeTileMortonId,
+      _contentAvailability[contentId]);
 }
 
 bool SubtreeAvailabitity::isSubtreeAvailable(
-    uint32_t subtreeLevel,
-    uint64_t subtreeMortonId) const noexcept {
-  (void)(subtreeLevel);
-  (void)(subtreeMortonId);
-  return false;
+    uint32_t relativeSubtreeLevel,
+    uint64_t relativeSubtreeMortonId) const noexcept {
+  return isAvailable(
+      relativeSubtreeLevel,
+      relativeSubtreeMortonId,
+      _subtreeAvailability);
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>>
 SubtreeAvailabitity::loadSubtree(
+    uint32_t childCount,
     const TilesetExternals& externals,
     const std::string& subtreeUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   return externals.pAssetAccessor
       ->get(externals.asyncSystem, subtreeUrl, requestHeaders)
-      .thenInWorkerThread([asyncSystem = externals.asyncSystem,
+      .thenInWorkerThread([childCount,
+                           asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
                            pLogger = externals.pLogger,
                            requestHeaders = requestHeaders](
@@ -443,11 +466,35 @@ SubtreeAvailabitity::loadSubtree(
         }
 
         return parseSubtreeRequest(
+            childCount,
             std::move(asyncSystem),
             std::move(pAssetAccessor),
             std::move(pLogger),
             std::move(pCompletedRequest),
             std::move(requestHeaders));
       });
+}
+
+bool SubtreeAvailabitity::isAvailable(
+  uint32_t relativeTileLevel,
+  uint64_t relativeTileMortonId,
+  const AvailabilityView& availabilityView) const noexcept
+{
+  const SubtreeConstantAvailability* constantAvailability =
+      std::get_if<SubtreeConstantAvailability>(&_tileAvailability);
+  if (constantAvailability) {
+    return constantAvailability->constant;
+  }
+
+  const SubtreeBufferViewAvailability* bufferViewAvailability =
+      std::get_if<SubtreeBufferViewAvailability>(&_tileAvailability);
+  uint64_t levelOffset = (_childCount ^ relativeTileLevel - 1) / (_childCount - 1);
+  uint64_t availabilityBitIndex = levelOffset + relativeTileMortonId;
+
+  const uint64_t byteIndex = availabilityBitIndex / 8;
+  const uint64_t bitIndex = availabilityBitIndex % 8;
+  const int bitValue =
+      static_cast<int>(bufferViewAvailability->view[byteIndex] >> bitIndex) & 1;
+  return bitValue == 1;
 }
 } // namespace Cesium3DTilesSelection
