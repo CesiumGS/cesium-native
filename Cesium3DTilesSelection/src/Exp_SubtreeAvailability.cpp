@@ -21,6 +21,12 @@ struct RequestedSubtreeBuffer {
   std::vector<std::byte> data;
 };
 
+struct SubtreeBufferView {
+  size_t bufferIdx;
+  size_t byteOffset;
+  size_t byteLength;
+};
+
 CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -55,9 +61,40 @@ CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
           });
 }
 
+AvailabilityView parseAvailabilityView(
+    const rapidjson::Value& availabilityJson,
+    const std::vector<std::vector<std::byte>>& buffers,
+    const std::vector<SubtreeBufferView>& bufferViews) {
+  auto constantIt = availabilityJson.FindMember("constant");
+  if (constantIt != availabilityJson.MemberEnd() &&
+      constantIt->value.IsUint()) {
+    return SubtreeConstantAvailability{constantIt->value.GetUint() == 1U};
+  }
+
+  auto bitStreamIt = availabilityJson.FindMember("bitstream");
+  if (bitStreamIt != availabilityJson.MemberEnd() &&
+      bitStreamIt->value.IsUint()) {
+    uint32_t bufferViewIdx = bitStreamIt->value.GetUint();
+    if (bufferViewIdx < bufferViews.size()) {
+      const SubtreeBufferView& bufferView = bufferViews[bufferViewIdx];
+
+      if (bufferView.bufferIdx < buffers.size()) {
+        const std::vector<std::byte>& buffer = buffers[bufferView.bufferIdx];
+        if (bufferView.byteOffset + bufferView.byteLength <= buffer.size()) {
+          return SubtreeBufferViewAvailability{gsl::span<const std::byte>(
+              buffer.data() + bufferView.byteOffset,
+              bufferView.byteLength)};
+        }
+      }
+    }
+  }
+
+  return SubtreeConstantAvailability{false};
+}
+
 std::optional<SubtreeAvailabitity> createSubtreeAvailability(
     const rapidjson::Document& subtreeJson,
-    const std::vector<std::vector<std::byte>>& buffers) {
+    std::vector<std::vector<std::byte>>&& buffers) {
   // make sure all the required fields exist
   auto tileAvailabilityIt = subtreeJson.FindMember("tileAvailability");
   if (tileAvailabilityIt == subtreeJson.MemberEnd() ||
@@ -77,6 +114,60 @@ std::optional<SubtreeAvailabitity> createSubtreeAvailability(
       !childSubtreeAvailabilityIt->value.IsObject()) {
     return std::nullopt;
   }
+
+  std::vector<SubtreeBufferView> bufferViews;
+  auto bufferViewIt = subtreeJson.FindMember("bufferViews");
+  if (bufferViewIt != subtreeJson.MemberEnd() &&
+      bufferViewIt->value.IsArray()) {
+    bufferViews.resize(bufferViewIt->value.Size());
+    for (rapidjson::SizeType i = 0; i < bufferViewIt->value.Size(); ++i) {
+      const auto& bufferViewJson = bufferViewIt->value[i];
+      auto bufferIdxIt = bufferViewJson.FindMember("buffer");
+      auto byteOffsetIt = bufferViewJson.FindMember("byteOffset");
+      auto byteLengthIt = bufferViewJson.FindMember("byteLength");
+
+      if (bufferIdxIt == bufferViewJson.MemberEnd() ||
+          !bufferIdxIt->value.IsUint()) {
+        continue;
+      }
+
+      if (byteOffsetIt == bufferViewJson.MemberEnd() ||
+          !byteOffsetIt->value.IsUint()) {
+        continue;
+      }
+
+      if (byteLengthIt == bufferViewJson.MemberEnd() ||
+          !byteLengthIt->value.IsUint()) {
+        continue;
+      }
+
+      bufferViews[i].bufferIdx = bufferIdxIt->value.GetUint();
+      bufferViews[i].byteOffset = byteOffsetIt->value.GetUint();
+      bufferViews[i].byteLength = byteLengthIt->value.GetUint();
+    }
+  }
+
+  AvailabilityView tileAvailability =
+      parseAvailabilityView(tileAvailabilityIt->value, buffers, bufferViews);
+
+  AvailabilityView childSubtreeAvailability = parseAvailabilityView(
+      childSubtreeAvailabilityIt->value,
+      buffers,
+      bufferViews);
+
+  std::vector<AvailabilityView> contentAvailability;
+  contentAvailability.reserve(contentAvailabilityIt->value.Size());
+  for (const auto& contentAvailabilityJson :
+       contentAvailabilityIt->value.GetArray()) {
+    contentAvailability.emplace_back(
+        parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews));
+  }
+
+  return SubtreeAvailabitity{
+      tileAvailability,
+      childSubtreeAvailability,
+      std::move(contentAvailability),
+      std::move(buffers)};
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
@@ -99,6 +190,9 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
       auto byteLengthIt = bufferJson.FindMember("byteLength");
       if (byteLengthIt == bufferJson.MemberEnd() ||
           !byteLengthIt->value.IsUint()) {
+        SPDLOG_LOGGER_ERROR(
+            pLogger,
+            "Subtree Buffer requires byteLength property. Skip this invalid buffer.");
         continue;
       }
 
@@ -134,13 +228,13 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
                   std::move(requestedBuffer.data);
             }
 
-            return createSubtreeAvailability(subtreeJson, resolvedBuffers);
+            return createSubtreeAvailability(subtreeJson, std::move(resolvedBuffers));
           });
     }
   }
 
   return asyncSystem.createResolvedFuture(
-      createSubtreeAvailability(subtreeJson, resolvedBuffers));
+      createSubtreeAvailability(subtreeJson, std::move(resolvedBuffers)));
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
@@ -285,6 +379,16 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
 }
 } // namespace
 
+SubtreeAvailabitity::SubtreeAvailabitity(
+  AvailabilityView tileAvailability,
+  AvailabilityView subtreeAvailability,
+  std::vector<AvailabilityView>&& contentAvailability,
+  std::vector<std::vector<std::byte>>&& buffers)
+    : _tileAvailability{tileAvailability},
+      _subtreeAvailability{subtreeAvailability},
+      _contentAvailability{std::move(contentAvailability)},
+      _buffers{std::move(buffers)} {}
+
 bool SubtreeAvailabitity::isTileAvailable(
     uint32_t tileLevel,
     uint64_t tileMortonId) const noexcept {
@@ -293,7 +397,7 @@ bool SubtreeAvailabitity::isTileAvailable(
   return false;
 }
 
-bool SubtreeAvailabitity::isTileContentAvailable(
+bool SubtreeAvailabitity::isContentAvailable(
     uint32_t tileLevel,
     uint64_t tileMortonId,
     uint64_t contentId) const noexcept {
