@@ -17,9 +17,9 @@ struct SubtreeBufferViewAvailability {
 using AvailabilityView =
     std::variant<SubtreeConstantAvailability, SubtreeBufferViewAvailability>;
 
-class SubtreeAvailabitity {
+class SubtreeAvailability {
 public:
-  SubtreeAvailabitity(
+  SubtreeAvailability(
       uint32_t childCount,
       AvailabilityView tileAvailability,
       AvailabilityView subtreeAvailability,
@@ -39,9 +39,11 @@ public:
       uint32_t relativeSubtreeLevel,
       uint64_t relativeSubtreeMortonId) const noexcept;
 
-  static CesiumAsync::Future<std::optional<SubtreeAvailabitity>> loadSubtree(
+  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
       uint32_t childCount,
-      const TilesetExternals& externals,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& subtreeUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 

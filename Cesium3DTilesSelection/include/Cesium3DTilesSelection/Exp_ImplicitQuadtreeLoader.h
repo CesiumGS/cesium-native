@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
@@ -43,12 +44,18 @@ public:
       override;
 
 private:
+  static std::string resolveUrl(
+      const std::string& baseUrl,
+      const std::string& urlTemplate,
+      const CesiumGeometry::QuadtreeTileID& quadtreeID);
+
   std::string _baseUrl;
   std::string _contentUrlTemplate;
   std::string _subtreeUrlTemplate;
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitBoundingVolume _boundingVolume;
-  std::vector<std::unordered_set<uint64_t>> _loadedSubtrees;
+  std::vector<std::unordered_map<uint64_t, SubtreeAvailability>>
+      _loadedSubtrees;
 };
 } // namespace Cesium3DTilesSelection

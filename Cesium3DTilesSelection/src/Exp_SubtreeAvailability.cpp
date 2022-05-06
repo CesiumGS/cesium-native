@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Uri.h>
 #include <rapidjson/document.h>
 #include <gsl/span>
 #include <optional>
@@ -92,7 +93,7 @@ AvailabilityView parseAvailabilityView(
   return SubtreeConstantAvailability{false};
 }
 
-std::optional<SubtreeAvailabitity> createSubtreeAvailability(
+std::optional<SubtreeAvailability> createSubtreeAvailability(
     uint32_t childCount,
     const rapidjson::Document& subtreeJson,
     std::vector<std::vector<std::byte>>&& buffers) {
@@ -164,7 +165,7 @@ std::optional<SubtreeAvailabitity> createSubtreeAvailability(
         parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews));
   }
 
-  return SubtreeAvailabitity{
+  return SubtreeAvailability{
       childCount,
       tileAvailability,
       childSubtreeAvailability,
@@ -172,12 +173,13 @@ std::optional<SubtreeAvailabitity> createSubtreeAvailability(
       std::move(buffers)};
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
+CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
     uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
+    const std::string& baseUrl,
     rapidjson::Document&& subtreeJson,
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
@@ -205,11 +207,13 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
       auto uriIt = bufferJson.FindMember("uri");
       if (uriIt != bufferJson.MemberEnd()) {
         if (uriIt->value.IsString()) {
+          std::string bufferUrl =
+              CesiumUtility::Uri::resolve(baseUrl, uriIt->value.GetString());
           requestBuffers.emplace_back(requestBuffer(
               pAssetAccessor,
               asyncSystem,
               i,
-              uriIt->value.GetString(),
+              std::move(bufferUrl),
               byteLength,
               requestHeaders));
         }
@@ -247,7 +251,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtree(
       std::move(resolvedBuffers)));
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
+CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
     uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
@@ -266,7 +270,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
         "{}",
         subtreeJson.GetParseError(),
         subtreeJson.GetErrorOffset());
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
         std::nullopt);
   }
 
@@ -276,11 +280,12 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseJsonSubtreeRequest(
       std::move(pAssetAccessor),
       std::move(pLogger),
       std::move(requestHeaders),
+      pCompletedRequest->url(),
       std::move(subtreeJson),
       {});
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailabitity>>
+CesiumAsync::Future<std::optional<SubtreeAvailability>>
 parseBinarySubtreeRequest(
     uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
@@ -297,7 +302,7 @@ parseBinarySubtreeRequest(
         pLogger,
         "The Subtree file is invalid because it is too "
         "small to include a Subtree header.");
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
         std::nullopt);
   }
 
@@ -308,7 +313,7 @@ parseBinarySubtreeRequest(
         pLogger,
         "The Subtree file is invalid because it is too "
         "small to include the jsonByteLength specified in its header.");
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
         std::nullopt);
   }
 
@@ -318,7 +323,7 @@ parseBinarySubtreeRequest(
         pLogger,
         "The Subtree file is invalid because it is too "
         "small to include the binaryByteLength specified in its header.");
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
         std::nullopt);
   }
 
@@ -333,7 +338,7 @@ parseBinarySubtreeRequest(
         "{}",
         subtreeJson.GetParseError(),
         subtreeJson.GetErrorOffset());
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
         std::nullopt);
   }
 
@@ -351,11 +356,12 @@ parseBinarySubtreeRequest(
       std::move(pAssetAccessor),
       std::move(pLogger),
       std::move(requestHeaders),
+      pCompletedRequest->url(),
       std::move(subtreeJson),
       std::move(internalBuffer));
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
+CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
     uint32_t childCount,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
@@ -396,7 +402,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailabitity>> parseSubtreeRequest(
 }
 } // namespace
 
-SubtreeAvailabitity::SubtreeAvailabitity(
+SubtreeAvailability::SubtreeAvailability(
     uint32_t childCount,
     AvailabilityView tileAvailability,
     AvailabilityView subtreeAvailability,
@@ -408,7 +414,7 @@ SubtreeAvailabitity::SubtreeAvailabitity(
       _contentAvailability{std::move(contentAvailability)},
       _buffers{std::move(buffers)} {}
 
-bool SubtreeAvailabitity::isTileAvailable(
+bool SubtreeAvailability::isTileAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId) const noexcept {
   return isAvailable(
@@ -417,7 +423,7 @@ bool SubtreeAvailabitity::isTileAvailable(
       _tileAvailability);
 }
 
-bool SubtreeAvailabitity::isContentAvailable(
+bool SubtreeAvailability::isContentAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     uint64_t contentId) const noexcept {
@@ -427,7 +433,7 @@ bool SubtreeAvailabitity::isContentAvailable(
       _contentAvailability[contentId]);
 }
 
-bool SubtreeAvailabitity::isSubtreeAvailable(
+bool SubtreeAvailability::isSubtreeAvailable(
     uint32_t relativeSubtreeLevel,
     uint64_t relativeSubtreeMortonId) const noexcept {
   return isAvailable(
@@ -436,32 +442,33 @@ bool SubtreeAvailabitity::isSubtreeAvailable(
       _subtreeAvailability);
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailabitity>>
-SubtreeAvailabitity::loadSubtree(
+CesiumAsync::Future<std::optional<SubtreeAvailability>>
+SubtreeAvailability::loadSubtree(
     uint32_t childCount,
-    const TilesetExternals& externals,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& subtreeUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  return externals.pAssetAccessor
-      ->get(externals.asyncSystem, subtreeUrl, requestHeaders)
+  return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
       .thenInWorkerThread([childCount,
-                           asyncSystem = externals.asyncSystem,
-                           pAssetAccessor = externals.pAssetAccessor,
-                           pLogger = externals.pLogger,
+                           asyncSystem = asyncSystem,
+                           pAssetAccessor = pAssetAccessor,
+                           pLogger = pLogger,
                            requestHeaders = requestHeaders](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const auto* pResponse = pCompletedRequest->response();
         if (!pResponse) {
           return asyncSystem
-              .createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+              .createResolvedFuture<std::optional<SubtreeAvailability>>(
                   std::nullopt);
         }
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
           return asyncSystem
-              .createResolvedFuture<std::optional<SubtreeAvailabitity>>(
+              .createResolvedFuture<std::optional<SubtreeAvailability>>(
                   std::nullopt);
         }
 
@@ -475,11 +482,10 @@ SubtreeAvailabitity::loadSubtree(
       });
 }
 
-bool SubtreeAvailabitity::isAvailable(
-  uint32_t relativeTileLevel,
-  uint64_t relativeTileMortonId,
-  const AvailabilityView& availabilityView) const noexcept
-{
+bool SubtreeAvailability::isAvailable(
+    uint32_t relativeTileLevel,
+    uint64_t relativeTileMortonId,
+    const AvailabilityView& availabilityView) const noexcept {
   const SubtreeConstantAvailability* constantAvailability =
       std::get_if<SubtreeConstantAvailability>(&availabilityView);
   if (constantAvailability) {
@@ -488,7 +494,8 @@ bool SubtreeAvailabitity::isAvailable(
 
   const SubtreeBufferViewAvailability* bufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
-  uint64_t levelOffset = (_childCount ^ relativeTileLevel - 1) / (_childCount - 1);
+  uint64_t levelOffset =
+      (_childCount ^ relativeTileLevel - 1) / (_childCount - 1);
   uint64_t availabilityBitIndex = levelOffset + relativeTileMortonId;
 
   const uint64_t byteIndex = availabilityBitIndex / 8;
