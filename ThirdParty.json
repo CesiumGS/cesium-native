@@ -22,7 +22,7 @@
   {
     "name": "cpp-httplib",
     "url": "https://github.com/yhirose/cpp-httplib",
-    "version": "0.10.7",
+    "version": "0.10.3",
     "license": ["MIT"]
   },
   {
