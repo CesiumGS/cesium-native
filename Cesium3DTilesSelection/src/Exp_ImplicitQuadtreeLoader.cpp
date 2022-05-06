@@ -13,9 +13,9 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const CesiumGeometry::QuadtreeTileID& quadtreeID,
     const SubtreeAvailability& subtreeAvailability,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread(
@@ -169,9 +169,9 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
                     asyncSystem,
                     pAssetAccessor,
                     tileUrl,
+                    requestHeaders,
                     quadtreeID,
                     *subtreeAvailability,
-                    requestHeaders,
                     ktx2TranscodeTargets);
               }
 
@@ -189,9 +189,9 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
       loadInfo.asyncSystem,
       loadInfo.pAssetAccessor,
       tileUrl,
+      requestHeaders,
       *pQuadtreeID,
       subtreeIt->second,
-      requestHeaders,
       loadInfo.contentOptions.ktx2TranscodeTargets);
 }
 
