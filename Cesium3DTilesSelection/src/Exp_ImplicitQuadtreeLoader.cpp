@@ -14,9 +14,24 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
     const CesiumGeometry::QuadtreeTileID& quadtreeID,
     const SubtreeAvailability& subtreeAvailability,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
+  uint32_t relativeTileLevel = quadtreeID.level - subtreeID.level;
+  uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
+      quadtreeID.x - subtreeID.x << relativeTileLevel,
+      quadtreeID.y - subtreeID.y << relativeTileLevel);
+
+  // check if tile has empty content
+  if (!subtreeAvailability.isContentAvailable(relativeTileLevel, relativeTileMortonIdx, 0)) {
+    return asyncSystem.createResolvedFuture(TileLoadResult{
+        TileUnknownContent{},
+        TileLoadResultState::Success,
+        nullptr,
+        {}});
+  }
+
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread(
           [ktx2TranscodeTargets](
@@ -78,10 +93,10 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                 {}};
           });
 }
-} // namespace 
+} // namespace
 
 CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
-    TilesetContentLoader& currentLoader,
+    [[maybe_unused]] TilesetContentLoader& currentLoader,
     const TileContentLoadInfo& loadInfo,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   // Ensure CesiumGeometry::QuadtreeTileID only has 32-bit components. There are
@@ -138,9 +153,12 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   // parent loader. The solution isn't implemented at the moment, as implicit
   // tilesets that exceeds 33 levels are expected to be very rare
   uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
-  uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(
-      pQuadtreeID->x >> levelLeft,
-      pQuadtreeID->y >> levelLeft);
+  uint32_t subtreeLevel = _subtreeLevels * subtreeLevelIdx;
+  uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
+  uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
+  CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
+
+  uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
   auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == _loadedSubtrees[subtreeLevelIdx].end()) {
     // the subtree is not loaded, so load it now
@@ -159,6 +177,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
             [asyncSystem = loadInfo.asyncSystem,
              pAssetAccessor = loadInfo.pAssetAccessor,
              tileUrl = std::move(tileUrl),
+             subtreeID,
              quadtreeID = *pQuadtreeID,
              requestHeaders,
              ktx2TranscodeTargets =
@@ -170,6 +189,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
                     pAssetAccessor,
                     tileUrl,
                     requestHeaders,
+                    subtreeID,
                     quadtreeID,
                     *subtreeAvailability,
                     ktx2TranscodeTargets);
@@ -190,6 +210,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
       loadInfo.pAssetAccessor,
       tileUrl,
       requestHeaders,
+      subtreeID,
       *pQuadtreeID,
       subtreeIt->second,
       loadInfo.contentOptions.ktx2TranscodeTargets);
