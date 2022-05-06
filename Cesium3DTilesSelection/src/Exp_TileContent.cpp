@@ -8,6 +8,13 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
       _deferredTileInitializer {},
       _pLoader{pLoader} {}
 
+TileContent::TileContent(TilesetContentLoader* pLoader, TileEmptyContent emptyContent)
+    : _state{TileLoadState::ContentLoaded},
+      _contentKind{emptyContent},
+      _pRenderResources{nullptr},
+      _deferredTileInitializer {},
+      _pLoader{pLoader} {}
+
 TileContent::TileContent(TilesetContentLoader* pLoader, TileExternalContent externalContent)
     : _state{TileLoadState::ContentLoaded},
       _contentKind{externalContent},
@@ -16,6 +23,10 @@ TileContent::TileContent(TilesetContentLoader* pLoader, TileExternalContent exte
       _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
+
+bool TileContent::isEmptyContent() const noexcept {
+  return std::holds_alternative<TileEmptyContent>(_contentKind);
+}
 
 bool TileContent::isExternalContent() const noexcept {
   return std::holds_alternative<TileExternalContent>(_contentKind);

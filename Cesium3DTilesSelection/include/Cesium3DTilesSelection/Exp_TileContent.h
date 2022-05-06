@@ -21,22 +21,31 @@ enum class TileLoadState {
 
 struct TileUnknownContent {};
 
+struct TileEmptyContent {};
+
 struct TileExternalContent {};
 
 struct TileRenderContent {
   std::optional<CesiumGltf::Model> model{};
 };
 
-using TileContentKind =
-    std::variant<TileUnknownContent, TileExternalContent, TileRenderContent>;
+using TileContentKind = std::variant<
+    TileUnknownContent,
+    TileEmptyContent,
+    TileExternalContent,
+    TileRenderContent>;
 
 class TileContent {
 public:
   TileContent(TilesetContentLoader* pLoader);
 
+  TileContent(TilesetContentLoader* pLoader, TileEmptyContent emptyContent);
+
   TileContent(TilesetContentLoader* pLoader, TileExternalContent externalContent);
 
   TileLoadState getState() const noexcept;
+
+  bool isEmptyContent() const noexcept;
 
   bool isExternalContent() const noexcept;
 

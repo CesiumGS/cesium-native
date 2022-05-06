@@ -177,7 +177,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
-  if (pContent->isExternalContent()) {
+  if (pContent->isExternalContent() || pContent->isEmptyContent()) {
     return false;
   }
 

@@ -159,7 +159,9 @@ bool Tile::isExternalContent() const noexcept {
   return false;
 }
 
-bool Tile::isEmptyContent() const noexcept { return _pContent == nullptr; }
+bool Tile::isEmptyContent() const noexcept {
+  return _pContent == nullptr || _pContent->isEmptyContent();
+}
 
 TileLoadState Tile::getState() const noexcept {
   if (_pContent) {

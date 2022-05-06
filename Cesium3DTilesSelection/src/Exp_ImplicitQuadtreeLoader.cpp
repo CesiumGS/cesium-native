@@ -26,7 +26,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
   // check if tile has empty content
   if (!subtreeAvailability.isContentAvailable(relativeTileLevel, relativeTileMortonIdx, 0)) {
     return asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
+        TileEmptyContent{},
         TileLoadResultState::Success,
         nullptr,
         {}});

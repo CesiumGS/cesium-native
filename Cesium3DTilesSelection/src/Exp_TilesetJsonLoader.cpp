@@ -461,6 +461,10 @@ void parseTileJsonRecursively(
       if (contentUri) {
         tile.setContent(std::make_unique<TileContent>(&currentLoader));
         tile.setTileID(contentUri);
+      } else {
+        tile.setContent(
+            std::make_unique<TileContent>(&currentLoader, TileEmptyContent{}));
+        tile.setTileID("");
       }
 
       std::optional<BoundingVolume> contentBoundingVolume =
