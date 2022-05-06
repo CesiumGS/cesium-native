@@ -6,20 +6,6 @@
     "license": ["MIT"]
   },
   {
-    "name": "Catch2",
-    "url": "https://github.com/catchorg/Catch2",
-    "version": "2.13.9",
-    "license": ["Boost Software License 1.0"],
-    "notes": "Only used in the tests."
-  },
-  {
-    "name": "cmake-modules",
-    "url": "https://github.com/bilke/cmake-modules",
-    "version": "d6d1a778e41cb114e5cdf279b8a659fa0ce9a0d4",
-    "license": ["Boost Software License 1.0", "BSD-3-Clause"],
-    "notes": "Only used in the build system."
-  },
-  {
     "name": "cpp-httplib",
     "url": "https://github.com/yhirose/cpp-httplib",
     "version": "0.10.3",
@@ -57,10 +43,9 @@
   },
   {
     "name": "KTX-Software",
-    "url": "https://github.com/KhronosGroup/KTX-Software",
+    "url": "https://github.com/CesiumGS/KTX-Software",
     "version": "94764c270d43d90e4e4cedee6248753296f874b3",
-    "license": ["Apache 2.0"],
-    "notes": "Using Cesium's fork of this library, which has minor differences from the upstream: https://github.com/CesiumGS/KTX-Software/tree/cesium-native"
+    "license": ["Apache 2.0"]
   },
   {
     "name": "modp_b64",
