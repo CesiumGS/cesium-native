@@ -9,11 +9,63 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
+CesiumGeospatial::BoundingRegion subdivideRegion(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::BoundingRegion& region) {
+  const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
+  size_t denominator = 2 << tileID.level;
+  double latSize = (globeRect.getNorth() - globeRect.getSouth()) / denominator;
+  double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
+
+  double childWest = globeRect.getWest() + longSize * tileID.x;
+  double childEast = globeRect.getEast() + longSize * (tileID.x + 1);
+
+  double childSouth = globeRect.getSouth() + latSize * tileID.y;
+  double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
+
+  return CesiumGeospatial::BoundingRegion{
+      CesiumGeospatial::GlobeRectangle(
+          childWest,
+          childSouth,
+          childEast,
+          childNorth),
+      region.getMinimumHeight(),
+      region.getMaximumHeight()};
+}
+
+CesiumGeospatial::S2CellBoundingVolume subdivideS2Volume(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::S2CellBoundingVolume& s2Volume) {
+  return CesiumGeospatial::S2CellBoundingVolume(
+      CesiumGeospatial::S2CellID::fromQuadtreeTileID(
+          s2Volume.getCellID().getFace(),
+          tileID),
+      s2Volume.getMinimumHeight(),
+      s2Volume.getMaximumHeight());
+}
+
+CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeometry::OrientedBoundingBox& obb) {}
+
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::QuadtreeTileID& tileID,
-    const ImplicitQuadtreeBoundingVolume& rootBoundingVolume)
-{
-  
+    const ImplicitQuadtreeBoundingVolume& rootBoundingVolume) {
+  auto pRegion =
+      std::get_if<CesiumGeospatial::BoundingRegion>(&rootBoundingVolume);
+  if (pRegion) {
+    return subdivideRegion(tileID, *pRegion);
+  }
+
+  auto pS2 =
+      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&rootBoundingVolume);
+  if (pS2) {
+    return subdivideS2Volume(tileID, *pS2);
+  }
+
+  auto pOBB =
+      std::get_if<CesiumGeometry::OrientedBoundingBox>(&rootBoundingVolume);
+  return subdivideOrientedBoundingBox(tileID, *pOBB);
 }
 
 void populateSubtree(
