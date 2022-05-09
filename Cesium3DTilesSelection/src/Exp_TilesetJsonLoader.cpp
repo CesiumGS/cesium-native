@@ -317,6 +317,9 @@ void parseImplicitTileset(
     // create an implicit root to associate with the above implicit loader
     std::vector<Tile> implicitRootTile(1);
     implicitRootTile[0].setParent(&tile);
+    implicitRootTile[0].setBoundingVolume(tile.getBoundingVolume());
+    implicitRootTile[0].setGeometricError(tile.getGeometricError());
+    implicitRootTile[0].setRefine(tile.getRefine());
     implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
     implicitRootTile[0].setContent(
         std::make_unique<TileContent>(pImplicitLoader));

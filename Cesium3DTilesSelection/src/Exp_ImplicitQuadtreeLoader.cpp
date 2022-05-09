@@ -9,11 +9,76 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
+BoundingVolume subdivideBoundingVolume(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const ImplicitQuadtreeBoundingVolume& rootBoundingVolume)
+{
+  
+}
+
+void populateSubtree(
+    const SubtreeAvailability& subtreeAvailability,
+    uint32_t subtreeLevels,
+    uint32_t relativeTileLevel,
+    uint64_t relativeTileMortonID,
+    Tile& tile,
+    ImplicitQuadtreeLoader& loader) {
+  if (relativeTileLevel > subtreeLevels) {
+    return;
+  }
+
+  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+
+  std::vector<Tile> children(4);
+  for (uint32_t y = 0; y < 2; ++y) {
+    uint32_t childY = (pQuadtreeID->y << 1) | y;
+    for (uint32_t x = 0; x < 2; ++x) {
+      uint32_t childX = (pQuadtreeID->x << 1) | x;
+      CesiumGeometry::QuadtreeTileID childID{
+          pQuadtreeID->level + 1,
+          childX,
+          childY};
+
+      uint64_t childIndex = y * 2 + x;
+      uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
+
+      Tile& child = children[childIndex];
+      child.setParent(&tile);
+      child.setBoundingVolume(subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+      child.setGeometricError(tile.getGeometricError() * 0.5);
+      child.setRefine(tile.getRefine());
+      child.setTileID(childID);
+
+      if (subtreeAvailability.isContentAvailable(
+              relativeTileLevel + 1,
+              relativeChildMortonID,
+              0)) {
+        child.setContent(std::make_unique<TileContent>(&loader));
+      } else {
+        child.setContent(
+            std::make_unique<TileContent>(&loader, TileEmptyContent{}));
+      }
+
+      populateSubtree(
+          subtreeAvailability,
+          subtreeLevels,
+          subtreeLevels + 1,
+          relativeChildMortonID,
+          child,
+          loader);
+    }
+  }
+}
+
 struct SubtreeContentInitializer {
+public:
   std::optional<SubtreeAvailability> subtreeAvailability;
   ImplicitQuadtreeLoader* pLoader;
 
   void operator()(Tile& tile) {
+    uint32_t subtreeLevels = pLoader->getSubtreeLevels();
+    populateSubtree(*subtreeAvailability, subtreeLevels, 0, 0, tile, *pLoader);
   }
 };
 
@@ -28,8 +93,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
   uint32_t relativeTileLevel = quadtreeID.level - subtreeID.level;
   uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
-      quadtreeID.x - subtreeID.x << relativeTileLevel,
-      quadtreeID.y - subtreeID.y << relativeTileLevel);
+      quadtreeID.x - (subtreeID.x << relativeTileLevel),
+      quadtreeID.y - (subtreeID.y << relativeTileLevel));
 
   // check if tile has empty content
   if (!subtreeAvailability.isContentAvailable(relativeTileLevel, relativeTileMortonIdx, 0)) {
@@ -138,7 +203,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   }
 
   // find the subtree ID
-  size_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
     return loadInfo.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult{
