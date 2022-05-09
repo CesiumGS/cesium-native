@@ -18,7 +18,6 @@
 #include <spdlog/sinks/ringbuffer_sink.h>
 #include <spdlog/spdlog.h>
 
-#include <filesystem>
 #include <set>
 
 using namespace CesiumGltf;
@@ -253,7 +252,7 @@ static void createTestForArrayJson(
 }
 
 static std::unique_ptr<TileContentLoadResult>
-loadB3dm(const std::filesystem::path& filePath) {
+loadB3dm(const std::string& filePath) {
 
   std::unique_ptr<SimpleAssetResponse> pResponse =
       std::make_unique<SimpleAssetResponse>(
@@ -285,8 +284,8 @@ loadB3dm(const std::filesystem::path& filePath) {
 }
 
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
+  std::string testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath += "/BatchTables/batchedWithJson.b3dm";
 
   std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
 
@@ -469,9 +468,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
 }
 
 TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath =
-      testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
+  std::string testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath += "/BatchTables/batchedWithBatchTableBinary.b3dm";
 
   std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
 
@@ -613,9 +611,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
 }
 
 TEST_CASE("Upgrade json nested json metadata to string") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath =
-      testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
+  std::string testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath += "/BatchTables/batchedWithStringAndNestedJson.b3dm";
 
   std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstddef>
-#include <filesystem>
+#include <string>
 #include <vector>
 
-std::vector<std::byte> readFile(const std::filesystem::path& fileName);
+std::vector<std::byte> readFile(const std::string& fileName);

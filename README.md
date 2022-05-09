@@ -9,13 +9,13 @@ Cesium Native is a set of C++ libraries for 3D geospatial, including:
 [![License](https://img.shields.io/:license-Apache_2.0-blue.svg)](https://github.com/CesiumGS/cesium-native/blob/main/LICENSE)
 [![Build Status](https://api.travis-ci.com/CesiumGS/cesium-native.svg?token=z6LPvn37d5E37hGcTgua&branch=main&status=passed)](https://travis-ci.com/CesiumGS/cesium-native)
 
-Currently Cesium Native is used to develop [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal). In the future, we plan for Cesium Native to be a foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
+Currently Cesium Native is used to develop [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal) and [Cesium for O3DE](https://github.com/CesiumGS/cesium-o3de). In the future, we plan for Cesium Native to be a foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
 
 ![Cesium for Unreal Architecture](./doc/unreal-architecture.png)
 *<p align="center">A high-level architecture of Cesium for Unreal, Cesium Native and Unreal Engine streaming content from Cesium ion.</p>*
 
 
-### :card_file_box:Libraries Overview
+### 🗃 Libraries Overview
 
 | Library | Description |
 | -- | -- |
@@ -35,52 +35,14 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 | **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
 
 
-### :green_book:License
+### 📗 License
 
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium Native is free for both commercial and non-commercial use.
 
-## 💻Developers
+## 🚀 Getting Started
 
-### ⭐Prerequisites
+There are a few common ways to use Cesium Native. Click a link below for instructions:
 
-* Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
-* CMake
-
-### :rocket:Getting Started
-
-#### Clone the repo
-
-Check out the repo with:
-
-```bash
-git clone git@github.com:CesiumGS/cesium-native.git --recurse-submodules
-```
-
-If you forget the `--recurse-submodules`, nothing will work because the git submodules will be missing. You should be able to fix it with:
-
-```bash
-git submodule update --init --recursive
-```
-
-#### Compile
-
-You can then build cesium-native on the command-line with CMake:
-
-```bash
-## Windows compilation using Visual Studio
-cmake -B build -S . -G "Visual Studio 15 2017 Win64"
-cmake --build build --config Debug
-cmake --build build --config Release
-
-## Linux compilation
-cmake -B build -S .
-cmake --build build
-```
-
-Or, you can easily build it in Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2017 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
-
-#### Generate Documentation
-
-* Install [Doxygen](https://www.doxygen.nl/).
-* Run: `cmake --build build --target cesium-native-docs`
-* Open `build/doc/html/index.html`
+* [Install with Conan](doc/install-with-conan.md): Start using Cesium Native quickly by using packaged releases from the Conan Package Manager.
+* [Development Workflow](doc/development-workflow.md): Compile Cesium Native yourself, run the tests, and perhaps use your modified version in another application.
+* [Create Conan Packages](doc/creating-conan-packages.md): Create Cesium Native packages in your local Conan cache, to publish to a Conan repository or use in other applications.

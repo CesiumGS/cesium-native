@@ -1,0 +1,10 @@
+---
+description: "3D Tiles deserialization, including 3D Tiles extension support."
+dependencies:
+  - cesium3dtiles
+  - cesiumutility
+  - cesiumjsonreader
+  - ms-gsl
+  - rapidjson
+testDependencies:
+  - catch2

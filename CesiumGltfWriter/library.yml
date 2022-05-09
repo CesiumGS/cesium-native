@@ -1,0 +1,10 @@
+---
+description: "glTF serialization / encoding, including glTF extension support."
+dependencies:
+  - cesiumutility
+  - cesiumgltf
+  - cesiumjsonwriter
+  - ms-gsl
+testDependencies:
+  - catch2
+  - cesiumgltfreader

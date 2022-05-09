@@ -2,6 +2,7 @@
 
 #include <catch2/catch.hpp>
 
+#include <cstddef>
 #include <vector>
 
 TEST_CASE("reintepretCastSpan") {

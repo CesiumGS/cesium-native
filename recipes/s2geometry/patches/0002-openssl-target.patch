@@ -1,0 +1,14 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1610cdd..3d96555 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -204,7 +204,8 @@ add_library(s2
+ #             src/s2/s2testing.cc)
+ target_link_libraries(
+     s2
+-    ${GFLAGS_LIBRARIES} ${GLOG_LIBRARIES} ${OPENSSL_LIBRARIES}
++    openssl::openssl
++    ${GFLAGS_LIBRARIES} ${GLOG_LIBRARIES}
+     ${CMAKE_THREAD_LIBS_INIT})
+
+ # Allow other CMake projects to use this one with:

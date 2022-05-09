@@ -1,63 +1,12 @@
-add_library(Cesium3DTiles "")
-configure_cesium_library(Cesium3DTiles)
+cmake_minimum_required(VERSION 3.15)
+project(Cesium3DTiles CXX)
 
-cesium_glob_files(CESIUM_3DTILES_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
-)
-cesium_glob_files(CESIUM_3DTILES_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
-)
-cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.h
-)
-cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
-)
-cesium_glob_files(CESIUM_3DTILES_TEST_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
-)
+include(cesium)
 
-set_target_properties(Cesium3DTiles
-    PROPERTIES
-        TEST_SOURCES "${CESIUM_3DTILES_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_3DTILES_TEST_HEADERS}"
-)
-
-set_target_properties(Cesium3DTiles
-    PROPERTIES
-    PUBLIC_HEADER "${CESIUM_3DTILES_PUBLIC_HEADERS}"
-)
-
-target_sources(
-    Cesium3DTiles
-    PRIVATE
-        ${CESIUM_3DTILES_SOURCES}
-        ${CESIUM_3DTILES_HEADERS}
+cesium_library(
+  NAME Cesium3DTiles
+  REQUIRES
     PUBLIC
-        ${CESIUM_3DTILES_PUBLIC_HEADERS}
-)
-
-target_include_directories(
-    Cesium3DTiles
-    SYSTEM PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
-        ${CMAKE_CURRENT_LIST_DIR}/generated/include
-    PRIVATE
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
-        ${CMAKE_CURRENT_LIST_DIR}/src
-        ${CMAKE_CURRENT_LIST_DIR}/generated/src
-)
-
-target_link_libraries(Cesium3DTiles
-    PUBLIC
-        CesiumUtility
-        GSL
-)
-
-install(TARGETS Cesium3DTiles
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles
+      Microsoft.GSL::GSL
+      CesiumUtility::CesiumUtility
 )

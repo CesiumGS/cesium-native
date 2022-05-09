@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
+std::vector<std::byte> readFile(const std::string& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   REQUIRE(file);
 

@@ -1,13 +1,15 @@
 language: cpp
 # Default scripts, which may be overridden by some jobs
 before_script:
-  - mkdir -p build
-  - cd build
-  - cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..
+  - ./tools/automate.py conan-export-recipes
+  - ./tools/automate.py generate-library-recipes --editable
+  - ./tools/automate.py editable on
+  - conan install . --build=outdated --build=cascade -pr:h=tools/conan-profiles/$CONAN_PROFILE -pr:b=tools/conan-profiles/$CONAN_PROFILE -s build_type=Debug
 script:
-  - cmake --build . --config Debug
+  - cd build
+  - cmake -DCMAKE_TOOLCHAIN_FILE=build/CesiumUtility/conan/conan_toolchain.cmake ..
+  - cmake --build .
   - ctest -V
-  - cmake --build . --config Debug --target cesium-native-docs
 jobs:
   include:
     - name: Check Source Formatting
@@ -21,29 +23,54 @@ jobs:
         - npm run format -- --dry-run -Werror
     - name: Windows + VS2017
       os: windows
+      env:
+        - CONAN_PROFILE=windows-vs2017
+        - PATH=/c/Python39:/c/Python39/Scripts:$PATH
       install:
         - choco install doxygen.install --version=1.9.2
+        - choco install python --version 3.9.2
+        - python -m pip install --upgrade pip
+        - pip install conan
       before_script:
-        - mkdir -p build
-        - cd build
-        - cmake .. -A x64
+        - py -3 ./tools/automate.py conan-export-recipes
+        - py -3 ./tools/automate.py generate-library-recipes --editable
+        - py -3 ./tools/automate.py editable on
+        - conan install . --build=outdated --build=cascade -pr:h=tools/conan-profiles/$CONAN_PROFILE -pr:b=tools/conan-profiles/$CONAN_PROFILE -s build_type=Debug
+      after_script:
+        - cmake --build . --config Debug --target cesium-native-docs
     - name: Windows + VS2019
       os: windows
+      env:
+        - CONAN_PROFILE=windows-vs2019
+        - PATH=/c/Python39:/c/Python39/Scripts:$PATH
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install --version=1.9.2
+        - choco install python --version 3.9.2
+        - python -m pip install --upgrade pip
+        - pip install conan
+      before_script:
+        - py -3 ./tools/automate.py conan-export-recipes
+        - py -3 ./tools/automate.py generate-library-recipes --editable
+        - py -3 ./tools/automate.py editable on
+        - conan install . --build=outdated --build=cascade -pr:h=tools/conan-profiles/$CONAN_PROFILE -pr:b=tools/conan-profiles/$CONAN_PROFILE -s build_type=Debug
     - name: Linux + GCC
       os: linux
       dist: focal
+      env:
+        - CONAN_PROFILE=linux-gcc9
       install:
         - # As of 2021-08-23, the server listed in the rabbitmq PPA has an expired certificate
         - # and breaks our ability to update. We don't need it, so remove it.
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
         - sudo apt-get install cmake doxygen
+        - pip install conan
     - name: Linux + Clang
       os: linux
       dist: focal
+      env:
+        - CONAN_PROFILE=linux-clang10
       # We're using Clang 10 instead of the default (Clang 7) because of std::variant related failures
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
       install:
@@ -55,14 +82,11 @@ jobs:
         -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
         - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
         - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
-      env:
-        - CC=clang-10
-        - CXX=clang++-10
+        - pip install conan
     - name: macOS
       os: osx
       osx_image: xcode12
-      script:
-        - cmake --build . --config Debug
-        - ctest -V
-        - # Doc build doesn't work on Mac (missing Doxygen). Let's just skip it.
-        - #cmake --build . --config Debug --target cesium-native-docs
+      env:
+        - CONAN_PROFILE=macos-xcode12
+      install:
+        - pip3 install conan

@@ -9,7 +9,7 @@
 
 #include <duthomhas/csprng.hpp>
 #include <httplib.h>
-#include <modp_b64.h>
+#include <libbase64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
@@ -34,12 +34,15 @@ using namespace CesiumUtility;
 
 namespace {
 std::string encodeBase64(const std::vector<uint8_t>& bytes) {
-  const size_t count = modp_b64_encode_len(bytes.size());
+  const size_t count = (bytes.size() + 2) / 3 * 4 + 1;
   std::string result(count, 0);
-  const size_t actualLength = modp_b64_encode(
-      result.data(),
+  size_t actualLength;
+  base64_encode(
       reinterpret_cast<const char*>(bytes.data()),
-      bytes.size());
+      bytes.size(),
+      result.data(),
+      &actualLength,
+      0);
   result.resize(actualLength);
 
   // Convert to a URL-friendly form of Base64 according to the algorithm
@@ -787,16 +790,21 @@ Connection::getIdFromToken(const std::string& token) {
       token.begin() + std::string::difference_type(startPos + 1),
       token.begin() + std::string::difference_type(endPos));
 
-  // Add base64 padding, as required by modp_b64_decode.
+  // Add base64 padding, as required by base64_decode.
   size_t remainder = encoded.size() % 4;
   if (remainder != 0) {
     encoded.resize(encoded.size() + 4 - remainder, '=');
   }
 
-  std::string decoded(modp_b64_decode_len(length), '\0');
-  size_t decodedLength =
-      modp_b64_decode(decoded.data(), encoded.data(), encoded.size());
-  if (decodedLength == 0 || decodedLength == std::string::npos) {
+  std::string decoded(encoded.size() * 3 / 4, '\0');
+  size_t decodedLength;
+  int result = base64_decode(
+      encoded.data(),
+      encoded.size(),
+      decoded.data(),
+      &decodedLength,
+      0);
+  if (result != 1 || decodedLength == std::string::npos) {
     return std::nullopt;
   }
 
