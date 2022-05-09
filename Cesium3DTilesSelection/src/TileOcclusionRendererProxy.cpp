@@ -2,10 +2,6 @@
 
 namespace Cesium3DTilesSelection {
 
-TileOcclusionRendererProxyPool::~TileOcclusionRendererProxyPool() {
-  destroyPool();
-}
-
 void TileOcclusionRendererProxyPool::initPool(int32_t poolSize) {
   this->_tileToOcclusionProxyMappings.reserve(poolSize);
 
@@ -54,8 +50,7 @@ TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(
   }
 
   TileOcclusionRendererProxy* pAssignedProxy = this->_pFreeProxiesHead;
-  this->_pFreeProxiesHead =
-      this->_pFreeProxiesHead ? this->_pFreeProxiesHead->_pNext : nullptr;
+  this->_pFreeProxiesHead = this->_pFreeProxiesHead->_pNext;
   pAssignedProxy->_pNext = nullptr;
   pAssignedProxy->_usedLastFrame = true;
 

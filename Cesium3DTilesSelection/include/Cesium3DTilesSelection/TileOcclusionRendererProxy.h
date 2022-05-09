@@ -46,15 +46,13 @@ protected:
   virtual void update(int32_t currentFrame) = 0;
 
 private:
-  // friend class TileOcclusionRendererProxyPool;
-
   bool _usedLastFrame = false;
-  TileOcclusionRendererProxy* _pNext;
+  TileOcclusionRendererProxy* _pNext = nullptr;
 };
 
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxyPool {
 public:
-  virtual ~TileOcclusionRendererProxyPool();
+  virtual ~TileOcclusionRendererProxyPool(){};
 
   /**
    * @brief Initialize a pool of {@link TileOcclusionRendererProxy}s of the
@@ -107,7 +105,7 @@ protected:
 
 private:
   // Singly linked list representing the free proxies in the pool
-  TileOcclusionRendererProxy* _pFreeProxiesHead;
+  TileOcclusionRendererProxy* _pFreeProxiesHead = nullptr;
   // The currently used proxies in the pool
   std::unordered_map<const Tile*, TileOcclusionRendererProxy*>
       _tileToOcclusionProxyMappings;

@@ -698,9 +698,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         pOcclusionPool->fetchOcclusionProxyForTile(
             tile,
             frameState.currentFrameNumber);
-    if (pOcclusion && pOcclusion->isOccluded() &&
-        pOcclusion->getLastUpdatedFrame() >=
-            frameState.currentFrameNumber - 5) {
+    if (pOcclusion && pOcclusion->isOccluded()) {
       culled = true;
       // if (this->_options.enableOcclusionCulling) {
       //   shouldVisit = false;
