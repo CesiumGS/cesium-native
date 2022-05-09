@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug that could cause tiles in external tilesets to fail to load.
+- Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
 
 ### v0.15.0 - 2022-05-02
 
