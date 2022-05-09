@@ -425,8 +425,8 @@ static bool upsamplePrimitiveForRasterOverlays(
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
     if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
       if (attribute.first.find(
-              "_CESIUMOVERLAY_" +
-              std::to_string(textureCoordinateIndex)) == 0) {
+              "_CESIUMOVERLAY_" + std::to_string(textureCoordinateIndex)) ==
+          0) {
         if (uvAccessorIndex == -1) {
           uvAccessorIndex = attribute.second;
         }

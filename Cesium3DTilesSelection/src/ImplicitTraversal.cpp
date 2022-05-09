@@ -468,11 +468,23 @@ void createImplicitChildrenIfNeeded(
             projections.emplace_back(projection);
             int32_t firstCoordinateIndex = int32_t(projections.size()) - 1;
             CesiumGltf::Model& model = *content.model;
+
+            const BoundingRegion* pParentRegion =
+                std::get_if<BoundingRegion>(&tile.getBoundingVolume());
+            if (!pParentRegion) {
+              const BoundingRegionWithLooseFittingHeights* pParentLooseRegion =
+                  std::get_if<BoundingRegionWithLooseFittingHeights>(
+                      &tile.getBoundingVolume());
+              if (pParentLooseRegion) {
+                pParentRegion = &pParentLooseRegion->getBoundingRegion();
+              }
+            }
+
             GltfContent::createRasterOverlayTextureCoordinates(
                 model,
                 tile.getTransform(),
                 firstCoordinateIndex,
-                std::nullopt,
+                pParentRegion->getRectangle(),
                 {projection});
           }
         }
