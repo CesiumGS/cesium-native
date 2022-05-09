@@ -997,7 +997,10 @@ void Tile::upsampleParent(
     std::vector<Projection>& parentProjections =
         content.overlayDetails->rasterOverlayProjections;
     const Projection& projection = *_pContext->implicitContext->projection;
-    auto it = std::find(parentProjections.begin(), parentProjections.end(), projection);
+    auto it = std::find(
+        parentProjections.begin(),
+        parentProjections.end(),
+        projection);
 
     index = int32_t(it - parentProjections.begin());
   }
@@ -1006,6 +1009,7 @@ void Tile::upsampleParent(
       .runInWorkerThread(
           [&parentModel,
            transform = this->getTransform(),
+           textureCoordinateIndex = index,
            projections = std::move(projections),
            pSubdividedParentID,
            tileBoundingVolume = this->getBoundingVolume(),
@@ -1021,7 +1025,8 @@ void Tile::upsampleParent(
                 std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(
                 parentModel,
-                *pSubdividedParentID);
+                *pSubdividedParentID,
+                textureCoordinateIndex);
 
             // We can't necessarily trust our original bounding volume, so
             // recompute it here. See:
