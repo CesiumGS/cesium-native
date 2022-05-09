@@ -12,12 +12,12 @@
 #include <unordered_set>
 
 namespace Cesium3DTilesSelection {
-class ImplicitQuadtreeLoader : public TilesetContentLoader {
-  using ImplicitBoundingVolume = std::variant<
-      CesiumGeospatial::BoundingRegion,
-      CesiumGeospatial::S2CellBoundingVolume,
-      CesiumGeometry::OrientedBoundingBox>;
+using ImplicitQuadtreeBoundingVolume = std::variant<
+    CesiumGeospatial::BoundingRegion,
+    CesiumGeospatial::S2CellBoundingVolume,
+    CesiumGeometry::OrientedBoundingBox>;
 
+class ImplicitQuadtreeLoader : public TilesetContentLoader {
 public:
   template <typename ImplicitBoundingVolumeType>
   ImplicitQuadtreeLoader(
@@ -43,6 +43,12 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  uint32_t getSubtreeLevels() const noexcept;
+
+  uint32_t getAvailableLevels() const noexcept;
+
+  const ImplicitQuadtreeBoundingVolume& getBoundingVolume() const noexcept;
+
 private:
   static std::string resolveUrl(
       const std::string& baseUrl,
@@ -54,7 +60,7 @@ private:
   std::string _subtreeUrlTemplate;
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
-  ImplicitBoundingVolume _boundingVolume;
+  ImplicitQuadtreeBoundingVolume _boundingVolume;
   std::vector<std::unordered_map<uint64_t, SubtreeAvailability>>
       _loadedSubtrees;
 };

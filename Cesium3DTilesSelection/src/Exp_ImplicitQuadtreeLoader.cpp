@@ -9,6 +9,14 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
+struct SubtreeContentInitializer {
+  std::optional<SubtreeAvailability> subtreeAvailability;
+  ImplicitQuadtreeLoader* pLoader;
+
+  void operator()(Tile& tile) {
+  }
+};
+
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -129,8 +137,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
             {}});
   }
 
-  // check that the subtree for this tile is loaded. If not, we load the
-  // subtree, then load the tile
+  // find the subtree ID
   size_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
     return loadInfo.asyncSystem.createResolvedFuture<TileLoadResult>(
@@ -140,6 +147,12 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
             nullptr,
             {}});
   }
+
+  uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
+  uint32_t subtreeLevel = _subtreeLevels * subtreeLevelIdx;
+  uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
+  uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
+  CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
 
   // the below morton index hash to the subtree assumes that tileID's components
   // x and y never exceed 32-bit. In other words, the max levels this loader can
@@ -152,18 +165,12 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   // loader will serve up to 33 levels with the level 0 being relative to the
   // parent loader. The solution isn't implemented at the moment, as implicit
   // tilesets that exceeds 33 levels are expected to be very rare
-  uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
-  uint32_t subtreeLevel = _subtreeLevels * subtreeLevelIdx;
-  uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
-  uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
-  CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
-
   uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
   auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == _loadedSubtrees[subtreeLevelIdx].end()) {
-    // the subtree is not loaded, so load it now
+    // subtree is not loaded, so load it now.
     std::string subtreeUrl =
-        resolveUrl(_baseUrl, _subtreeUrlTemplate, *pQuadtreeID);
+        resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
     std::string tileUrl =
         resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
     return SubtreeAvailability::loadSubtree(
@@ -204,6 +211,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
             });
   }
 
+  // subtree is available, so check if tile has content or not. If it has, then request it
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
   return requestTileContent(
       loadInfo.asyncSystem,
@@ -214,6 +222,19 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
       *pQuadtreeID,
       subtreeIt->second,
       loadInfo.contentOptions.ktx2TranscodeTargets);
+}
+
+uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {
+  return _subtreeLevels;
+}
+
+uint32_t ImplicitQuadtreeLoader::getAvailableLevels() const noexcept {
+  return _availableLevels;
+}
+
+const ImplicitQuadtreeBoundingVolume&
+ImplicitQuadtreeLoader::getBoundingVolume() const noexcept {
+  return _boundingVolume;
 }
 
 std::string ImplicitQuadtreeLoader::resolveUrl(
@@ -238,4 +259,5 @@ std::string ImplicitQuadtreeLoader::resolveUrl(
 
   return CesiumUtility::Uri::resolve(baseUrl, url);
 }
+
 } // namespace Cesium3DTilesSelection
