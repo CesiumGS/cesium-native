@@ -462,10 +462,8 @@ void createImplicitChildrenIfNeeded(
           std::vector<Projection>& projections =
               content.overlayDetails->rasterOverlayProjections;
           const Projection& projection = *implicitContext.projection;
-          auto it = std::find(
-              projections.begin(),
-              projections.end(),
-              *implicitContext.projection);
+          auto it =
+              std::find(projections.begin(), projections.end(), projection);
           if (it == projections.end()) {
             projections.emplace_back(projection);
             int32_t firstCoordinateIndex = int32_t(projections.size()) - 1;

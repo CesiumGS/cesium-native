@@ -983,6 +983,25 @@ void Tile::upsampleParent(
     void* pRendererResources;
   };
 
+  int32_t index = 0;
+
+  const gsl::span<Tile> children = pParent->getChildren();
+  if (std::get_if<QuadtreeTileID>(&pParent->getTileID()) &&
+      std::any_of(
+          children.begin(),
+          children.end(),
+          [](const Tile& tile) noexcept {
+            return std::get_if<QuadtreeTileID>(&tile.getTileID());
+          })) {
+    TileContentLoadResult& content = *pParent->getContent();
+    std::vector<Projection>& parentProjections =
+        content.overlayDetails->rasterOverlayProjections;
+    const Projection& projection = *_pContext->implicitContext->projection;
+    auto it = std::find(parentProjections.begin(), parentProjections.end(), projection);
+
+    index = int32_t(it - parentProjections.begin());
+  }
+
   pTileset->getAsyncSystem()
       .runInWorkerThread(
           [&parentModel,
