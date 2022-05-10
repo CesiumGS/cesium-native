@@ -52,11 +52,11 @@ CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
 
   size_t denominator = 2 << tileID.level;
   glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
-  glm::dmat3 fullAxes = halfAxes * 2.0;
+  glm::dmat3 subdivideAxes = halfAxes / double(denominator);
 
-  glm::dvec3 xDim = fullAxes[0] / double(denominator);
-  glm::dvec3 yDim = fullAxes[1] / double(denominator);
-  glm::dvec3 zDim = fullAxes[2] / double(denominator);
+  glm::dvec3 xDim = subdivideAxes[0] * 2.0;
+  glm::dvec3 yDim = subdivideAxes[1] * 2.0;
+  glm::dvec3 zDim = subdivideAxes[2] * 2.0;
   glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
   glm::dvec3 childMax =
       min + xDim * double(tileID.x + 1) + yDim * double(tileID.y + 1) + zDim;
@@ -115,7 +115,8 @@ void populateSubtree(
 
       Tile& child = children[childIndex];
       child.setParent(&tile);
-      child.setBoundingVolume(subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+      child.setBoundingVolume(
+          subdivideBoundingVolume(childID, loader.getBoundingVolume()));
       child.setGeometricError(tile.getGeometricError() * 0.5);
       child.setRefine(tile.getRefine());
       child.setTileID(childID);
@@ -152,89 +153,92 @@ public:
   }
 };
 
+bool isTileContentAvailable(
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
+    const CesiumGeometry::QuadtreeTileID& quadtreeID,
+    const SubtreeAvailability& subtreeAvailability) {
+  uint32_t relativeTileLevel = quadtreeID.level - subtreeID.level;
+  uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
+      quadtreeID.x - (subtreeID.x << relativeTileLevel),
+      quadtreeID.y - (subtreeID.y << relativeTileLevel));
+  return subtreeAvailability.isContentAvailable(
+      relativeTileLevel,
+      relativeTileMortonIdx,
+      0);
+}
+
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const CesiumGeometry::QuadtreeTileID& subtreeID,
-    const CesiumGeometry::QuadtreeTileID& quadtreeID,
-    const SubtreeAvailability& subtreeAvailability,
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
-  uint32_t relativeTileLevel = quadtreeID.level - subtreeID.level;
-  uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
-      quadtreeID.x - (subtreeID.x << relativeTileLevel),
-      quadtreeID.y - (subtreeID.y << relativeTileLevel));
-
-  // check if tile has empty content
-  if (!subtreeAvailability.isContentAvailable(relativeTileLevel, relativeTileMortonIdx, 0)) {
-    return asyncSystem.createResolvedFuture(TileLoadResult{
-        TileEmptyContent{},
-        TileLoadResultState::Success,
-        nullptr,
-        {}});
-  }
-
+    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
+    std::optional<SubtreeContentInitializer>&& subtreeInitializer) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread(
-          [ktx2TranscodeTargets](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            if (!pResponse) {
-              return TileLoadResult{
-                  TileUnknownContent{},
-                  TileLoadResultState::Failed,
-                  nullptr,
-                  {}};
-            }
+      .thenInWorkerThread([ktx2TranscodeTargets,
+                           subtreeInitializer = std::move(subtreeInitializer)](
+                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                  pCompletedRequest) mutable {
+        const CesiumAsync::IAssetResponse* pResponse =
+            pCompletedRequest->response();
+        if (!pResponse) {
+          return TileLoadResult{
+              TileUnknownContent{},
+              TileLoadResultState::Failed,
+              nullptr,
+              {}};
+        }
 
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              return TileLoadResult{
-                  TileUnknownContent{},
-                  TileLoadResultState::Failed,
-                  nullptr,
-                  {}};
-            }
+        uint16_t statusCode = pResponse->statusCode();
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          return TileLoadResult{
+              TileUnknownContent{},
+              TileLoadResultState::Failed,
+              nullptr,
+              {}};
+        }
 
-            // find gltf converter
-            const auto& responseData = pResponse->data();
-            auto converter = GltfConverters::getConverterByMagic(responseData);
-            if (!converter) {
-              converter = GltfConverters::getConverterByFileExtension(
-                  pCompletedRequest->url());
-            }
+        // find gltf converter
+        const auto& responseData = pResponse->data();
+        auto converter = GltfConverters::getConverterByMagic(responseData);
+        if (!converter) {
+          converter = GltfConverters::getConverterByFileExtension(
+              pCompletedRequest->url());
+        }
 
-            if (converter) {
-              // Convert to gltf
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
-              GltfConverterResult result = converter(responseData, gltfOptions);
+        if (converter) {
+          // Convert to gltf
+          CesiumGltfReader::GltfReaderOptions gltfOptions;
+          gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
+          GltfConverterResult result = converter(responseData, gltfOptions);
 
-              // Report any errors if there are any
-              if (result.errors) {
-                return TileLoadResult{
-                    TileRenderContent{std::nullopt},
-                    TileLoadResultState::Failed,
-                    std::move(pCompletedRequest),
-                    {}};
-              }
-
-              return TileLoadResult{
-                  TileRenderContent{std::move(result.model)},
-                  TileLoadResultState::Success,
-                  std::move(pCompletedRequest),
-                  {}};
-            }
-
-            // content type is not supported
+          // Report any errors if there are any
+          if (result.errors) {
             return TileLoadResult{
                 TileRenderContent{std::nullopt},
                 TileLoadResultState::Failed,
                 std::move(pCompletedRequest),
                 {}};
-          });
+          }
+
+          std::function<void(Tile&)> tileInitializer;
+          if (subtreeInitializer) {
+            tileInitializer = std::move(*subtreeInitializer);
+          }
+          return TileLoadResult{
+              TileRenderContent{std::move(result.model)},
+              TileLoadResultState::Success,
+              std::move(pCompletedRequest),
+              std::move(tileInitializer)};
+        }
+
+        // content type is not supported
+        return TileLoadResult{
+            TileRenderContent{std::nullopt},
+            TileLoadResultState::Failed,
+            std::move(pCompletedRequest),
+            {}};
+      });
 }
 } // namespace
 
@@ -308,6 +312,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
     std::string tileUrl =
         resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
+    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets =
+        loadInfo.contentOptions.ktx2TranscodeTargets;
+
+    SubtreeContentInitializer subtreeInitializer{std::nullopt, this};
     return SubtreeAvailability::loadSubtree(
                4,
                loadInfo.asyncSystem,
@@ -322,19 +330,37 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
              subtreeID,
              quadtreeID = *pQuadtreeID,
              requestHeaders,
-             ktx2TranscodeTargets =
-                 loadInfo.contentOptions.ktx2TranscodeTargets](
-                std::optional<SubtreeAvailability>&& subtreeAvailability) {
+             ktx2TranscodeTargets,
+             subtreeInitializer = std::move(subtreeInitializer)](
+                std::optional<SubtreeAvailability>&&
+                    subtreeAvailability) mutable {
               if (subtreeAvailability) {
+                bool tileHasContent = isTileContentAvailable(
+                    subtreeID,
+                    quadtreeID,
+                    *subtreeAvailability);
+
+                subtreeInitializer.subtreeAvailability =
+                    std::move(*subtreeAvailability);
+
+                // subtree is available, so check if tile has content or not. If
+                // it has, then request it
+                if (!tileHasContent) {
+                  // check if tile has empty content
+                  return asyncSystem.createResolvedFuture(TileLoadResult{
+                      TileEmptyContent{},
+                      TileLoadResultState::Success,
+                      nullptr,
+                      std::move(subtreeInitializer)});
+                }
+
                 return requestTileContent(
                     asyncSystem,
                     pAssetAccessor,
                     tileUrl,
                     requestHeaders,
-                    subtreeID,
-                    quadtreeID,
-                    *subtreeAvailability,
-                    ktx2TranscodeTargets);
+                    ktx2TranscodeTargets,
+                    std::move(subtreeInitializer));
               }
 
               return asyncSystem.createResolvedFuture<TileLoadResult>(
@@ -346,17 +372,25 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
             });
   }
 
-  // subtree is available, so check if tile has content or not. If it has, then request it
+  // subtree is available, so check if tile has content or not. If it has, then
+  // request it
+  if (!isTileContentAvailable(subtreeID, *pQuadtreeID, subtreeIt->second)) {
+    // check if tile has empty content
+    return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
+        TileEmptyContent{},
+        TileLoadResultState::Success,
+        nullptr,
+        {}});
+  }
+
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
   return requestTileContent(
       loadInfo.asyncSystem,
       loadInfo.pAssetAccessor,
       tileUrl,
       requestHeaders,
-      subtreeID,
-      *pQuadtreeID,
-      subtreeIt->second,
-      loadInfo.contentOptions.ktx2TranscodeTargets);
+      loadInfo.contentOptions.ktx2TranscodeTargets,
+      std::nullopt);
 }
 
 uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {
