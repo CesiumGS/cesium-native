@@ -449,46 +449,6 @@ void createImplicitChildrenIfNeeded(
             children[3],
             neID,
             ne);
-
-        // If number of children is less than four, upsampling is needed. The
-        // child tile will be upsampled from the parent tile. The projection
-        // used to create the upsampled tile must match it's non-upsampled
-        // sibling, i.e., it's implicit context projection. Generate texture
-        // coordinates for this projection now on the parent tile if they
-        // don't exist.
-
-        if (childCount < 4) {
-          TileContentLoadResult& content = *tile.getContent();
-          std::vector<Projection>& projections =
-              content.overlayDetails->rasterOverlayProjections;
-          const Projection& projection = *implicitContext.projection;
-          auto it =
-              std::find(projections.begin(), projections.end(), projection);
-          if (it == projections.end()) {
-            projections.emplace_back(projection);
-            int32_t firstCoordinateIndex = int32_t(projections.size()) - 1;
-            CesiumGltf::Model& model = *content.model;
-
-            const BoundingRegion* pParentRegion =
-                std::get_if<BoundingRegion>(&tile.getBoundingVolume());
-            if (!pParentRegion) {
-              const BoundingRegionWithLooseFittingHeights* pParentLooseRegion =
-                  std::get_if<BoundingRegionWithLooseFittingHeights>(
-                      &tile.getBoundingVolume());
-              if (pParentLooseRegion) {
-                pParentRegion = &pParentLooseRegion->getBoundingRegion();
-              }
-            }
-
-            GltfContent::createRasterOverlayTextureCoordinates(
-                model,
-                tile.getTransform(),
-                firstCoordinateIndex,
-                pParentRegion->getRectangle(),
-                {projection});
-          }
-        }
-
       } else if (implicitContext.quadtreeAvailability) {
 
         tile.createChildTiles(childCount);

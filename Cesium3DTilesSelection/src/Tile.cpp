@@ -1002,7 +1002,22 @@ void Tile::upsampleParent(
         parentProjections.end(),
         projection);
 
-    index = int32_t(it - parentProjections.begin());
+    if (it == parentProjections.end()) {
+      parentProjections.emplace_back(projection);
+      index = int32_t(parentProjections.size()) - 1;
+
+      const BoundingRegion* pParentRegion =
+          std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
+
+      GltfContent::createRasterOverlayTextureCoordinates(
+          parentModel,
+          pParent->getTransform(),
+          index,
+          pParentRegion->getRectangle(),
+          {projection});
+    } else {
+      index = int32_t(it - parentProjections.begin());
+    }
   }
 
   pTileset->getAsyncSystem()
