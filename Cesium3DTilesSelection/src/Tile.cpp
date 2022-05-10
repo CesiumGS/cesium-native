@@ -1014,7 +1014,9 @@ void Tile::upsampleParent(
             parentModel,
             pParent->getTransform(),
             index,
-            pParentRegion->getRectangle(),
+            pParentRegion ? std::make_optional<GlobeRectangle>(
+                                pParentRegion->getRectangle())
+                          : std::nullopt,
             {projection});
       } else {
         index = int32_t(it - parentProjections.begin());
