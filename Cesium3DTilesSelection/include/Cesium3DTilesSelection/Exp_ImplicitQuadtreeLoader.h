@@ -49,6 +49,10 @@ public:
 
   const ImplicitQuadtreeBoundingVolume& getBoundingVolume() const noexcept;
 
+  void addSubtreeAvailability(
+      const CesiumGeometry::QuadtreeTileID& subtreeID,
+      SubtreeAvailability&& subtreeAvailability);
+
 private:
   static std::string resolveUrl(
       const std::string& baseUrl,

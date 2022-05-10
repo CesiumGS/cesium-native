@@ -140,17 +140,47 @@ void populateSubtree(
           loader);
     }
   }
+
+  tile.createChildTiles(std::move(children));
 }
 
 struct SubtreeContentInitializer {
 public:
-  std::optional<SubtreeAvailability> subtreeAvailability;
-  ImplicitQuadtreeLoader* pLoader;
+  SubtreeContentInitializer(
+      ImplicitQuadtreeLoader* pImplicitLoader,
+      const CesiumGeometry::QuadtreeTileID& subtreeID)
+      : subtreeAvailability{std::nullopt},
+        subtreeID{subtreeID},
+        pLoader{pImplicitLoader} {}
 
   void operator()(Tile& tile) {
     uint32_t subtreeLevels = pLoader->getSubtreeLevels();
-    populateSubtree(*subtreeAvailability, subtreeLevels, 0, 0, tile, *pLoader);
+    const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+        std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+
+    if (pQuadtreeID) {
+      // ensure that this tile is a root of a subtree
+      if (pQuadtreeID->level % subtreeLevels == 0) {
+        if (tile.getChildren().empty()) {
+          populateSubtree(
+              *subtreeAvailability,
+              subtreeLevels,
+              0,
+              0,
+              tile,
+              *pLoader);
+        }
+      }
+
+      pLoader->addSubtreeAvailability(
+          subtreeID,
+          std::move(*subtreeAvailability));
+    }
   }
+
+  std::optional<SubtreeAvailability> subtreeAvailability;
+  CesiumGeometry::QuadtreeTileID subtreeID;
+  ImplicitQuadtreeLoader* pLoader;
 };
 
 bool isTileContentAvailable(
@@ -315,7 +345,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets =
         loadInfo.contentOptions.ktx2TranscodeTargets;
 
-    SubtreeContentInitializer subtreeInitializer{std::nullopt, this};
+    SubtreeContentInitializer subtreeInitializer{this, subtreeID};
     return SubtreeAvailability::loadSubtree(
                4,
                loadInfo.asyncSystem,
@@ -406,6 +436,22 @@ ImplicitQuadtreeLoader::getBoundingVolume() const noexcept {
   return _boundingVolume;
 }
 
+void ImplicitQuadtreeLoader::addSubtreeAvailability(
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
+    SubtreeAvailability&& subtreeAvailability) {
+  uint32_t levelIndex = subtreeID.level / _subtreeLevels;
+  if (levelIndex >= _loadedSubtrees.size()) {
+    return;
+  }
+
+  uint64_t subtreeMortonID =
+      libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y);
+
+  _loadedSubtrees[levelIndex].insert_or_assign(
+      subtreeMortonID,
+      std::move(subtreeAvailability));
+}
+
 std::string ImplicitQuadtreeLoader::resolveUrl(
     const std::string& baseUrl,
     const std::string& urlTemplate,
@@ -428,5 +474,4 @@ std::string ImplicitQuadtreeLoader::resolveUrl(
 
   return CesiumUtility::Uri::resolve(baseUrl, url);
 }
-
 } // namespace Cesium3DTilesSelection

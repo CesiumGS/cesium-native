@@ -106,7 +106,8 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
 
   auto contentAvailabilityIt = subtreeJson.FindMember("contentAvailability");
   if (contentAvailabilityIt == subtreeJson.MemberEnd() ||
-      !contentAvailabilityIt->value.IsArray()) {
+      (!contentAvailabilityIt->value.IsArray() &&
+       !contentAvailabilityIt->value.IsObject())) {
     return std::nullopt;
   }
 
@@ -158,11 +159,16 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
       bufferViews);
 
   std::vector<AvailabilityView> contentAvailability;
-  contentAvailability.reserve(contentAvailabilityIt->value.Size());
-  for (const auto& contentAvailabilityJson :
-       contentAvailabilityIt->value.GetArray()) {
-    contentAvailability.emplace_back(
-        parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews));
+  if (contentAvailabilityIt->value.IsArray()) {
+    contentAvailability.reserve(contentAvailabilityIt->value.Size());
+    for (const auto& contentAvailabilityJson :
+         contentAvailabilityIt->value.GetArray()) {
+      contentAvailability.emplace_back(
+          parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews));
+    }
+  } else {
+      contentAvailability.emplace_back(
+          parseAvailabilityView(contentAvailabilityIt->value, buffers, bufferViews));
   }
 
   return SubtreeAvailability{
@@ -372,11 +378,11 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
   gsl::span<const std::byte> data = pResponse->data();
 
   // check if this is binary subtree
-  bool isBinarySubtree = false;
+  bool isBinarySubtree = true;
   if (data.size() >= 4) {
     for (std::size_t i = 0; i < 4; ++i) {
       if (data[i] != static_cast<std::byte>(SUBTREE_MAGIC[i])) {
-        isBinarySubtree = true;
+        isBinarySubtree = false;
         break;
       }
     }
