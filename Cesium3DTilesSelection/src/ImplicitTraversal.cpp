@@ -2,7 +2,6 @@
 #include "Cesium3DTilesSelection/ImplicitTraversal.h"
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContext.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "QuantizedMeshContent.h"

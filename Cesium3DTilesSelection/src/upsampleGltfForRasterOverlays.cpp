@@ -422,12 +422,13 @@ static bool upsamplePrimitiveForRasterOverlays(
 
   std::vector<std::string> toRemove;
 
+  std::string textureCoordinateName =
+      "_CESIUMOVERLAY_" + std::to_string(textureCoordinateIndex);
+
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
     if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
-      if (attribute.first.find(
-              "_CESIUMOVERLAY_" + std::to_string(textureCoordinateIndex)) ==
-          0) {
-        if (uvAccessorIndex == -1) {
+      if (uvAccessorIndex == -1) {
+        if (attribute.first == textureCoordinateName) {
           uvAccessorIndex = attribute.second;
         }
       }

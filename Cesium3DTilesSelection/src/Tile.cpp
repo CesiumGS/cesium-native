@@ -996,27 +996,29 @@ void Tile::upsampleParent(
     TileContentLoadResult& content = *pParent->getContent();
     std::vector<Projection>& parentProjections =
         content.overlayDetails->rasterOverlayProjections;
-    const Projection& projection = *_pContext->implicitContext->projection;
-    auto it = std::find(
-        parentProjections.begin(),
-        parentProjections.end(),
-        projection);
+    if (_pContext->implicitContext->projection.has_value()) {
+      const Projection& projection = *_pContext->implicitContext->projection;
+      auto it = std::find(
+          parentProjections.begin(),
+          parentProjections.end(),
+          projection);
 
-    if (it == parentProjections.end()) {
-      parentProjections.emplace_back(projection);
-      index = int32_t(parentProjections.size()) - 1;
+      if (it == parentProjections.end()) {
+        parentProjections.emplace_back(projection);
+        index = int32_t(parentProjections.size()) - 1;
 
-      const BoundingRegion* pParentRegion =
-          std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
+        const BoundingRegion* pParentRegion =
+            std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
 
-      GltfContent::createRasterOverlayTextureCoordinates(
-          parentModel,
-          pParent->getTransform(),
-          index,
-          pParentRegion->getRectangle(),
-          {projection});
-    } else {
-      index = int32_t(it - parentProjections.begin());
+        GltfContent::createRasterOverlayTextureCoordinates(
+            parentModel,
+            pParent->getTransform(),
+            index,
+            pParentRegion->getRectangle(),
+            {projection});
+      } else {
+        index = int32_t(it - parentProjections.begin());
+      }
     }
   }
 
