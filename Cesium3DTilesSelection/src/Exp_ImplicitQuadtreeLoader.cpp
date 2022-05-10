@@ -46,7 +46,25 @@ CesiumGeospatial::S2CellBoundingVolume subdivideS2Volume(
 
 CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
     const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeometry::OrientedBoundingBox& obb) {}
+    const CesiumGeometry::OrientedBoundingBox& obb) {
+  const glm::dmat3& halfAxes = obb.getHalfAxes();
+  const glm::dvec3& center = obb.getCenter();
+
+  size_t denominator = 2 << tileID.level;
+  glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
+  glm::dmat3 fullAxes = halfAxes * 2.0;
+
+  glm::dvec3 xDim = fullAxes[0] / double(denominator);
+  glm::dvec3 yDim = fullAxes[1] / double(denominator);
+  glm::dvec3 zDim = fullAxes[2] / double(denominator);
+  glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
+  glm::dvec3 childMax =
+      min + xDim * double(tileID.x + 1) + yDim * double(tileID.y + 1) + zDim;
+
+  return CesiumGeometry::OrientedBoundingBox(
+      (childMin + childMax) / 2.0,
+      glm::dmat3{xDim, yDim, zDim} / 2.0);
+}
 
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::QuadtreeTileID& tileID,
