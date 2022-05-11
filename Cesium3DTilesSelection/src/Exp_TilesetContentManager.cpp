@@ -17,6 +17,12 @@ TileLoadResultAndRenderResources postProcessGltf(
     TileLoadResult&& result) {
   TileRenderContent& renderContent =
       std::get<TileRenderContent>(result.contentKind);
+
+  if (result.pCompletedRequest) {
+    renderContent.model->extras["Cesium3DTiles_TileUrl"] =
+        result.pCompletedRequest->url();
+  }
+
   const TilesetContentOptions& tilesetOptions = loadInfo.contentOptions;
   if (tilesetOptions.generateMissingNormalsSmooth) {
     renderContent.model->generateMissingNormalsSmooth();
