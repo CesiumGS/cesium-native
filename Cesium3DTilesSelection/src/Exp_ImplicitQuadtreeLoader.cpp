@@ -95,7 +95,7 @@ void populateSubtree(
     uint64_t relativeTileMortonID,
     Tile& tile,
     ImplicitQuadtreeLoader& loader) {
-  if (relativeTileLevel >= subtreeLevels - 1) {
+  if (relativeTileLevel >= subtreeLevels) {
     return;
   }
 
@@ -115,35 +115,50 @@ void populateSubtree(
 
       uint64_t childIndex = y * 2 + x;
       uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
-
-      if (subtreeAvailability.isTileAvailable(
-              relativeTileLevel + 1,
-              relativeChildMortonID)) {
-        Tile& child = children.emplace_back();
-        child.setParent(&tile);
-        child.setBoundingVolume(
-            subdivideBoundingVolume(childID, loader.getBoundingVolume()));
-        child.setGeometricError(tile.getGeometricError() * 0.5);
-        child.setRefine(tile.getRefine());
-        child.setTileID(childID);
-
-        if (subtreeAvailability.isContentAvailable(
-                relativeTileLevel + 1,
-                relativeChildMortonID,
-                0)) {
+      uint32_t relativeChildLevel = relativeTileLevel + 1;
+      if (relativeChildLevel == subtreeLevels) {
+        if (subtreeAvailability.isSubtreeAvailable(
+                relativeChildLevel,
+                relativeChildMortonID)) {
+          Tile& child = children.emplace_back();
+          child.setParent(&tile);
+          child.setBoundingVolume(
+              subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+          child.setGeometricError(tile.getGeometricError() * 0.5);
+          child.setRefine(tile.getRefine());
+          child.setTileID(childID);
           child.setContent(std::make_unique<TileContent>(&loader));
-        } else {
-          child.setContent(
-              std::make_unique<TileContent>(&loader, TileEmptyContent{}));
         }
+      } else {
+        if (subtreeAvailability.isTileAvailable(
+                relativeChildLevel,
+                relativeChildMortonID)) {
+          Tile& child = children.emplace_back();
+          child.setParent(&tile);
+          child.setBoundingVolume(
+              subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+          child.setGeometricError(tile.getGeometricError() * 0.5);
+          child.setRefine(tile.getRefine());
+          child.setTileID(childID);
 
-        populateSubtree(
-            subtreeAvailability,
-            subtreeLevels,
-            relativeTileLevel + 1,
-            relativeChildMortonID,
-            child,
-            loader);
+          if (subtreeAvailability.isContentAvailable(
+                  relativeChildLevel,
+                  relativeChildMortonID,
+                  0)) {
+            child.setContent(std::make_unique<TileContent>(&loader));
+          } else {
+            child.setContent(
+                std::make_unique<TileContent>(&loader, TileEmptyContent{}));
+          }
+
+          populateSubtree(
+              subtreeAvailability,
+              subtreeLevels,
+              relativeChildLevel,
+              relativeChildMortonID,
+              child,
+              loader);
+        }
       }
     }
   }
