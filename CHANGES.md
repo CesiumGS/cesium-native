@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
+
 ### v0.15.1 - 2022-05-05
 
 ##### Fixes :wrench:
