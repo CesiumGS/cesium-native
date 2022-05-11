@@ -1,11 +1,13 @@
-#include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
+#include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Uri.h>
+
 #include <libmorton/morton.h>
-#include <variant>
+
 #include <type_traits>
+#include <variant>
 
 namespace Cesium3DTilesSelection {
 namespace {

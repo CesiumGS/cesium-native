@@ -1,13 +1,13 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
-#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
+#include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <Cesium3DTilesSelection/TileID.h>
-#include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumGeospatial/S2CellBoundingVolume.h>
-#include <CesiumGeometry/BoundingSphere.h>
-#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
@@ -250,12 +250,13 @@ void parseImplicitTileset(
                              tilingSchemeIt->value.IsString();
   bool hasSubtreeLevelsProp = subtreeLevelsIt != implicitTiling.MemberEnd() &&
                               subtreeLevelsIt->value.IsUint();
-  bool hasAvailableLevelsProp = availableLevelsIt != implicitTiling.MemberEnd() &&
-                             availableLevelsIt->value.IsUint();
+  bool hasAvailableLevelsProp =
+      availableLevelsIt != implicitTiling.MemberEnd() &&
+      availableLevelsIt->value.IsUint();
   bool hasSubtreesProp =
       subtreesIt != implicitTiling.MemberEnd() && subtreesIt->value.IsObject();
-  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp || !hasAvailableLevelsProp ||
-      !hasSubtreesProp) {
+  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp ||
+      !hasAvailableLevelsProp || !hasSubtreesProp) {
     return;
   }
 

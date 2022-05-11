@@ -1,8 +1,10 @@
 #include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
-#include <rapidjson/document.h>
+
 #include <gsl/span>
+#include <rapidjson/document.h>
+
 #include <optional>
 #include <string>
 
@@ -74,7 +76,8 @@ AvailabilityView parseAvailabilityView(
 
   auto bitStreamIt = availabilityJson.FindMember("bitstream");
   if (bitStreamIt == availabilityJson.MemberEnd()) {
-    // old version uses bufferView property instead of bitstream. Same semantic either way
+    // old version uses bufferView property instead of bitstream. Same semantic
+    // either way
     bitStreamIt = availabilityJson.FindMember("bufferView");
   }
   if (bitStreamIt != availabilityJson.MemberEnd() &&
@@ -171,8 +174,10 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
           parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews));
     }
   } else {
-      contentAvailability.emplace_back(
-          parseAvailabilityView(contentAvailabilityIt->value, buffers, bufferViews));
+    contentAvailability.emplace_back(parseAvailabilityView(
+        contentAvailabilityIt->value,
+        buffers,
+        bufferViews));
   }
 
   return SubtreeAvailability{

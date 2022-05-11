@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+
 #include <optional>
 
 namespace Cesium3DTilesSelection {

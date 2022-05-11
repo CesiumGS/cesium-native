@@ -24,7 +24,7 @@ namespace Cesium3DTilesSelection {
 //}
 //
 ///*static*/ std::unique_ptr<TileContentLoadResult>
-///ExternalTilesetContent::load(
+/// ExternalTilesetContent::load(
 //    const std::shared_ptr<spdlog::logger>& pLogger,
 //    const glm::dmat4& tileTransform,
 //    TileRefine tileRefine,

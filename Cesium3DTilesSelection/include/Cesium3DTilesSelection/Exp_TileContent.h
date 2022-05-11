@@ -41,7 +41,9 @@ public:
 
   TileContent(TilesetContentLoader* pLoader, TileEmptyContent emptyContent);
 
-  TileContent(TilesetContentLoader* pLoader, TileExternalContent externalContent);
+  TileContent(
+      TilesetContentLoader* pLoader,
+      TileExternalContent externalContent);
 
   TileLoadState getState() const noexcept;
 

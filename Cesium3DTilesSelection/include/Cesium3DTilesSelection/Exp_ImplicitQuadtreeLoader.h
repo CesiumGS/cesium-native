@@ -1,15 +1,16 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
-#include <CesiumGeometry/OrientedBoundingBox.h>
-#include <CesiumGeometry/Availability.h>
+
 #include <cmath>
+#include <unordered_set>
 #include <variant>
 #include <vector>
-#include <unordered_set>
 
 namespace Cesium3DTilesSelection {
 using ImplicitQuadtreeBoundingVolume = std::variant<
