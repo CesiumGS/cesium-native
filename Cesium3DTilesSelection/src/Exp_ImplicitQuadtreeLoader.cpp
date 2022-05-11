@@ -15,12 +15,12 @@ CesiumGeospatial::BoundingRegion subdivideRegion(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const CesiumGeospatial::BoundingRegion& region) {
   const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
-  size_t denominator = 2 << tileID.level;
+  size_t denominator = size_t(1) << tileID.level;
   double latSize = (globeRect.getNorth() - globeRect.getSouth()) / denominator;
   double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
 
   double childWest = globeRect.getWest() + longSize * tileID.x;
-  double childEast = globeRect.getEast() + longSize * (tileID.x + 1);
+  double childEast = globeRect.getWest() + longSize * (tileID.x + 1);
 
   double childSouth = globeRect.getSouth() + latSize * tileID.y;
   double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
@@ -52,7 +52,7 @@ CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
   const glm::dmat3& halfAxes = obb.getHalfAxes();
   const glm::dvec3& center = obb.getCenter();
 
-  size_t denominator = 2 << tileID.level;
+  size_t denominator = size_t(1) << tileID.level;
   glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
   glm::dmat3 subdivideAxes = halfAxes / double(denominator);
 
