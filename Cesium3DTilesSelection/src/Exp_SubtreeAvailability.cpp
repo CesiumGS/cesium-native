@@ -73,6 +73,10 @@ AvailabilityView parseAvailabilityView(
   }
 
   auto bitStreamIt = availabilityJson.FindMember("bitstream");
+  if (bitStreamIt == availabilityJson.MemberEnd()) {
+    // old version uses bufferView property instead of bitstream. Same semantic either way
+    bitStreamIt = availabilityJson.FindMember("bufferView");
+  }
   if (bitStreamIt != availabilityJson.MemberEnd() &&
       bitStreamIt->value.IsUint()) {
     uint32_t bufferViewIdx = bitStreamIt->value.GetUint();
@@ -193,7 +197,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
   auto bufferIt = subtreeJson.FindMember("buffers");
   if (bufferIt != subtreeJson.MemberEnd() && bufferIt->value.IsArray()) {
     const auto& arrayBufferJsons = bufferIt->value.GetArray();
-    resolvedBuffers.resize(arrayBufferJsons.Size());
+    resolvedBuffers.reserve(arrayBufferJsons.Size());
 
     std::vector<CesiumAsync::Future<RequestedSubtreeBuffer>> requestBuffers;
     for (rapidjson::SizeType i = 0; i < arrayBufferJsons.Size(); ++i) {
@@ -418,7 +422,11 @@ SubtreeAvailability::SubtreeAvailability(
       _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
       _contentAvailability{std::move(contentAvailability)},
-      _buffers{std::move(buffers)} {}
+      _buffers{std::move(buffers)} {
+  assert(
+      (childCount == 4 || childCount == 8) &&
+      "Only support quadtree and octree");
+}
 
 bool SubtreeAvailability::isTileAvailable(
     uint32_t relativeTileLevel,
@@ -501,7 +509,7 @@ bool SubtreeAvailability::isAvailable(
   const SubtreeBufferViewAvailability* bufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
   uint64_t levelOffset =
-      (_childCount ^ relativeTileLevel - 1) / (_childCount - 1);
+      ((1 << ((_childCount >> 2) * relativeTileLevel)) - 1) / (_childCount - 1);
   uint64_t availabilityBitIndex = levelOffset + relativeTileMortonId;
 
   const uint64_t byteIndex = availabilityBitIndex / 8;

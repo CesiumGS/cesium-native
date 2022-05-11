@@ -93,14 +93,15 @@ void populateSubtree(
     uint64_t relativeTileMortonID,
     Tile& tile,
     ImplicitQuadtreeLoader& loader) {
-  if (relativeTileLevel > subtreeLevels) {
+  if (relativeTileLevel >= subtreeLevels - 1) {
     return;
   }
 
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
 
-  std::vector<Tile> children(4);
+  std::vector<Tile> children;
+  children.reserve(4);
   for (uint32_t y = 0; y < 2; ++y) {
     uint32_t childY = (pQuadtreeID->y << 1) | y;
     for (uint32_t x = 0; x < 2; ++x) {
@@ -113,31 +114,35 @@ void populateSubtree(
       uint64_t childIndex = y * 2 + x;
       uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
 
-      Tile& child = children[childIndex];
-      child.setParent(&tile);
-      child.setBoundingVolume(
-          subdivideBoundingVolume(childID, loader.getBoundingVolume()));
-      child.setGeometricError(tile.getGeometricError() * 0.5);
-      child.setRefine(tile.getRefine());
-      child.setTileID(childID);
-
-      if (subtreeAvailability.isContentAvailable(
+      if (subtreeAvailability.isTileAvailable(
               relativeTileLevel + 1,
-              relativeChildMortonID,
-              0)) {
-        child.setContent(std::make_unique<TileContent>(&loader));
-      } else {
-        child.setContent(
-            std::make_unique<TileContent>(&loader, TileEmptyContent{}));
-      }
+              relativeChildMortonID)) {
+        Tile& child = children.emplace_back();
+        child.setParent(&tile);
+        child.setBoundingVolume(
+            subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+        child.setGeometricError(tile.getGeometricError() * 0.5);
+        child.setRefine(tile.getRefine());
+        child.setTileID(childID);
 
-      populateSubtree(
-          subtreeAvailability,
-          subtreeLevels,
-          subtreeLevels + 1,
-          relativeChildMortonID,
-          child,
-          loader);
+        if (subtreeAvailability.isContentAvailable(
+                relativeTileLevel + 1,
+                relativeChildMortonID,
+                0)) {
+          child.setContent(std::make_unique<TileContent>(&loader));
+        } else {
+          child.setContent(
+              std::make_unique<TileContent>(&loader, TileEmptyContent{}));
+        }
+
+        populateSubtree(
+            subtreeAvailability,
+            subtreeLevels,
+            relativeTileLevel + 1,
+            relativeChildMortonID,
+            child,
+            loader);
+      }
     }
   }
 

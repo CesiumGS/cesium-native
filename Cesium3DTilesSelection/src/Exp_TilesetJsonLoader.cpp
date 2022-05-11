@@ -239,6 +239,11 @@ void parseImplicitTileset(
   auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
   auto subtreesIt = implicitTiling.FindMember("subtrees");
   auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
+  if (availableLevelsIt == implicitTiling.MemberEnd()) {
+    // old version of implicit uses maximumLevel instead of availableLevels.
+    // They have the same semantic
+    availableLevelsIt = implicitTiling.FindMember("maximumLevel");
+  }
 
   // check that all the required properties above are available
   bool hasTilingSchemeProp = tilingSchemeIt != implicitTiling.MemberEnd() &&
