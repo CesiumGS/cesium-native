@@ -60,7 +60,7 @@ public:
    *
    * @param poolSize The pool size.
    */
-  void initPool(int32_t poolSize);
+  void initPool(uint32_t poolSize);
 
   /**
    * @brief Destroy the pool.

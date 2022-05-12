@@ -2,11 +2,11 @@
 
 namespace Cesium3DTilesSelection {
 
-void TileOcclusionRendererProxyPool::initPool(int32_t poolSize) {
+void TileOcclusionRendererProxyPool::initPool(uint32_t poolSize) {
   this->_tileToOcclusionProxyMappings.reserve(poolSize);
 
   TileOcclusionRendererProxy* pLastProxy = nullptr;
-  for (int32_t i = 0; i < poolSize; ++i) {
+  for (uint32_t i = 0; i < poolSize; ++i) {
     TileOcclusionRendererProxy* pCurrentProxy = this->createProxy();
     if (pCurrentProxy) {
       pCurrentProxy->_pNext = pLastProxy;
