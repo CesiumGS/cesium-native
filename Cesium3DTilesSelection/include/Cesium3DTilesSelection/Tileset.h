@@ -15,6 +15,7 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
+#include <CesiumUtility/ScopeGuard.h>
 
 #include <rapidjson/fwd.h>
 
@@ -421,6 +422,37 @@ private:
       const std::vector<double>& distances,
       bool culled,
       ViewUpdateResult& result);
+
+  struct CullResult {
+    // whether we should visit this tile
+    bool shouldVisit = true;
+    // whether this tile was culled (Note: we might still want to visit it)
+    bool culled = false;
+  };
+
+  // TODO: abstract these into a composable culling interface.
+  void _frustumCull(
+      const Tile& tile,
+      const FrameState& frameState,
+      bool cullWithChildrenBounds,
+      CullResult& cullResult);
+
+  void _occlusionCull(
+      const Tile& tile,
+      const FrameState& frameState,
+      bool cullWithChildrenBounds,
+      CullResult& cullResult);
+
+  void _fogCull(
+      const FrameState& frameState,
+      const std::vector<double>& distances,
+      CullResult& cullResult);
+
+  CesiumUtility::ScopeGuard<std::function<void()>> _computeDistancesVector(
+      const Tile& tile,
+      const FrameState& frameState,
+      const std::vector<double>*& pResultDistances);
+
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
       const ImplicitTraversalInfo implicitInfo,

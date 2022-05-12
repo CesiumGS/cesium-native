@@ -70,7 +70,7 @@ Tileset::Tileset(
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
-      this->_externals.pTileOcclusionProxyPool->initPool(1000);
+      this->_externals.pTileOcclusionProxyPool->initPool(500);
     }
     LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
       this->notifyTileDoneLoading(nullptr);
@@ -112,7 +112,7 @@ Tileset::Tileset(
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
       // TODO: find a reasonable number
-      this->_externals.pTileOcclusionProxyPool->initPool(1000);
+      this->_externals.pTileOcclusionProxyPool->initPool(500);
     }
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
@@ -629,6 +629,203 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
   return glm::exp(-(fogScalar * fogScalar)) > 0.0;
 }
 
+void Tileset::_frustumCull(
+    const Tile& tile,
+    const FrameState& frameState,
+    bool cullWithChildrenBounds,
+    CullResult& cullResult) {
+
+  if (!cullResult.shouldVisit || cullResult.culled) {
+    return;
+  }
+
+  const std::vector<ViewState>& frustums = frameState.frustums;
+  // Frustum cull using the children's bounds.
+  if (cullWithChildrenBounds) {
+    if (std::any_of(
+            frustums.begin(),
+            frustums.end(),
+            [children = tile.getChildren(),
+             renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
+                const ViewState& frustum) {
+              for (const Tile& child : children) {
+                if (isVisibleFromCamera(
+                        frustum,
+                        child.getBoundingVolume(),
+                        renderTilesUnderCamera)) {
+                  return true;
+                }
+              }
+
+              return false;
+            })) {
+      // At least one child is visible in at least one frustum, so don't cull.
+      return;
+    }
+    // Frustum cull based on the actual tile's bounds.
+  } else if (std::any_of(
+                 frustums.begin(),
+                 frustums.end(),
+                 [&boundingVolume = tile.getBoundingVolume(),
+                  renderTilesUnderCamera =
+                      this->_options.renderTilesUnderCamera](
+                     const ViewState& frustum) {
+                   return isVisibleFromCamera(
+                       frustum,
+                       boundingVolume,
+                       renderTilesUnderCamera);
+                 })) {
+    // The tile is visible in at least one frustum, so don't cull.
+    return;
+  }
+
+  // If we haven't returned yet, this tile is frustum culled.
+  cullResult.culled = true;
+
+  if (this->_options.enableFrustumCulling) {
+    // frustum culling is enabled so we shouldn't visit this off-screen tile
+    cullResult.shouldVisit = false;
+  }
+}
+
+void Tileset::_occlusionCull(
+    const Tile& tile,
+    const FrameState& frameState,
+    bool cullWithChildrenBounds,
+    CullResult& cullResult) {
+
+  if (!cullResult.shouldVisit || cullResult.culled) {
+    return;
+  }
+
+  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
+      this->getExternals().pTileOcclusionProxyPool;
+  if (pOcclusionPool) {
+    if (cullWithChildrenBounds) {
+      bool fallbackAndUseTileBounds = false;
+      for (const Tile& child : tile.getChildren()) {
+        const TileOcclusionRendererProxy* pOcclusion =
+            pOcclusionPool->fetchOcclusionProxyForTile(
+                child,
+                frameState.currentFrameNumber);
+        if (!pOcclusion) {
+          // At least one child does not have an occlusion proxy, so we need
+          // to use the tile's actual bounds to confirm occlusion.
+          fallbackAndUseTileBounds = true;
+
+          // Don't break, since we may still find from another child that we
+          // are definitely _not_ occluded.
+        }
+
+        if (!pOcclusion->isOccluded()) {
+          // The tile is definitely _not_ occluded since a child has confirmed
+          // it is not occluded.
+          cullResult.culled = false;
+          return;
+        }
+      }
+
+      if (!fallbackAndUseTileBounds) {
+        // All children had valid occlusion proxies, and none of them were
+        // reported as visible.
+        cullResult.culled = true;
+        return;
+      }
+    }
+
+    // Use the tile's bounds instead of the children bounds to check for
+    // occlusion. We may be here because one or more children were
+    // external tilesets or "unconditionally refine" tiles. Alternatively,
+    // one or more of the children may not have been able to find valid
+    // occlusion proxies.
+    const TileOcclusionRendererProxy* pOcclusion =
+        pOcclusionPool->fetchOcclusionProxyForTile(
+            tile,
+            frameState.currentFrameNumber);
+    if (pOcclusion && pOcclusion->isOccluded()) {
+      cullResult.culled = true;
+      // if (this->_options.enableOcclusionCulling) {
+      //   shouldVisit = false;
+      // }
+    }
+  }
+}
+
+void Tileset::_fogCull(
+    const FrameState& frameState,
+    const std::vector<double>& distances,
+    CullResult& cullResult) {
+
+  if (!cullResult.shouldVisit || cullResult.culled) {
+    return;
+  }
+
+  const std::vector<ViewState>& frustums = frameState.frustums;
+  const std::vector<double>& fogDensities = frameState.fogDensities;
+
+  bool isFogCulled = true;
+
+  for (size_t i = 0; i < frustums.size(); ++i) {
+    const double distance = distances[i];
+    const double fogDensity = fogDensities[i];
+
+    if (isVisibleInFog(distance, fogDensity)) {
+      isFogCulled = false;
+      break;
+    }
+  }
+
+  if (isFogCulled) {
+    // this tile is occluded by fog so it is a culled tile
+    cullResult.culled = true;
+    if (this->_options.enableFogCulling) {
+      // fog culling is enabled so we shouldn't visit this tile
+      cullResult.shouldVisit = false;
+    }
+  }
+}
+
+CesiumUtility::ScopeGuard<std::function<void()>>
+Tileset::_computeDistancesVector(
+    const Tile& tile,
+    const FrameState& frameState,
+    const std::vector<double>*& pResultDistances) {
+
+  if (this->_nextDistancesVector >= this->_distancesStack.size()) {
+    this->_distancesStack.resize(this->_nextDistancesVector + 1);
+  }
+
+  std::unique_ptr<std::vector<double>>& pDistances =
+      this->_distancesStack[this->_nextDistancesVector];
+  if (!pDistances) {
+    pDistances = std::make_unique<std::vector<double>>();
+  }
+
+  const std::vector<ViewState>& frustums = frameState.frustums;
+  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
+
+  std::vector<double>& distances = *pDistances;
+  distances.resize(frustums.size());
+  ++this->_nextDistancesVector;
+
+  std::transform(
+      frustums.begin(),
+      frustums.end(),
+      distances.begin(),
+      [boundingVolume](const ViewState& frustum) -> double {
+        return glm::sqrt(glm::max(
+            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
+            0.0));
+      });
+
+  pResultDistances = &distances;
+
+  std::function<void()> decrementNextDistancesVector = [this]() {
+    --this->_nextDistancesVector;
+  };
+  return std::move(CesiumUtility::ScopeGuard(decrementNextDistancesVector));
+}
+
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * It is not yet known whether the tile is visible.
 //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true,
@@ -654,111 +851,38 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   this->_markTileVisited(tile);
 
-  // whether we should visit this tile
-  bool shouldVisit = true;
-  // whether this tile was culled (Note: we might still want to visit it)
-  bool culled = false;
+  CullResult cullResult{};
 
-  for (const std::shared_ptr<ITileExcluder>& pExcluder :
-       this->_options.excluders) {
-    if (pExcluder->shouldExclude(tile)) {
-      culled = true;
-      shouldVisit = false;
+  bool cullWithChildrenBounds = !tile.getChildren().empty();
+  for (Tile& child : tile.getChildren()) {
+    if (child.getUnconditionallyRefine()) {
+      cullWithChildrenBounds = false;
       break;
     }
   }
 
-  const std::vector<ViewState>& frustums = frameState.frustums;
-  const std::vector<double>& fogDensities = frameState.fogDensities;
-
-  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-  if (std::none_of(
-          frustums.begin(),
-          frustums.end(),
-          [boundingVolume,
-           renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
-              const ViewState& frustum) {
-            return isVisibleFromCamera(
-                frustum,
-                boundingVolume,
-                renderTilesUnderCamera);
-          })) {
-    // this tile is off-screen so it is a culled tile
-    culled = true;
-    if (this->_options.enableFrustumCulling) {
-      // frustum culling is enabled so we shouldn't visit this off-screen tile
-      shouldVisit = false;
+  // TODO: add cullWithChildrenBounds to the tile excluder interface?
+  for (const std::shared_ptr<ITileExcluder>& pExcluder :
+       this->_options.excluders) {
+    if (pExcluder->shouldExclude(tile)) {
+      cullResult.culled = true;
+      cullResult.shouldVisit = false;
+      break;
     }
   }
 
-  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      this->getExternals().pTileOcclusionProxyPool;
-  if (shouldVisit && pOcclusionPool) {
-    const TileOcclusionRendererProxy* pOcclusion =
-        pOcclusionPool->fetchOcclusionProxyForTile(
-            tile,
-            frameState.currentFrameNumber);
-    if (pOcclusion && pOcclusion->isOccluded()) {
-      culled = true;
-      // if (this->_options.enableOcclusionCulling) {
-      //   shouldVisit = false;
-      // }
-    }
-  }
-
-  if (this->_nextDistancesVector >= this->_distancesStack.size()) {
-    this->_distancesStack.resize(this->_nextDistancesVector + 1);
-  }
-
-  std::unique_ptr<std::vector<double>>& pDistances =
-      this->_distancesStack[this->_nextDistancesVector];
-  if (!pDistances) {
-    pDistances = std::make_unique<std::vector<double>>();
-  }
-
-  std::vector<double>& distances = *pDistances;
-  distances.resize(frustums.size());
-  ++this->_nextDistancesVector;
-
+  const std::vector<double>* pDistances = nullptr;
   // Use a ScopeGuard to ensure the _nextDistancesVector gets decrements when we
   // leave this scope.
-  CesiumUtility::ScopeGuard guard{[this]() { --this->_nextDistancesVector; }};
+  CesiumUtility::ScopeGuard guard =
+      this->_computeDistancesVector(tile, frameState, pDistances);
 
-  std::transform(
-      frustums.begin(),
-      frustums.end(),
-      distances.begin(),
-      [boundingVolume](const ViewState& frustum) -> double {
-        return glm::sqrt(glm::max(
-            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
-            0.0));
-      });
+  // TODO: abstract culling stages into composable interface?
+  this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
+  this->_occlusionCull(tile, frameState, cullWithChildrenBounds, cullResult);
+  this->_fogCull(frameState, *pDistances, cullResult);
 
-  // if we are still considering visiting this tile, check for fog occlusion
-  if (shouldVisit) {
-    bool isFogCulled = true;
-
-    for (size_t i = 0; i < frustums.size(); ++i) {
-      const double distance = distances[i];
-      const double fogDensity = fogDensities[i];
-
-      if (isVisibleInFog(distance, fogDensity)) {
-        isFogCulled = false;
-        break;
-      }
-    }
-
-    if (isFogCulled) {
-      // this tile is occluded by fog so it is a culled tile
-      culled = true;
-      if (this->_options.enableFogCulling) {
-        // fog culling is enabled so we shouldn't visit this tile
-        shouldVisit = false;
-      }
-    }
-  }
-
-  if (!shouldVisit) {
+  if (!cullResult.shouldVisit) {
     markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
     tile.setLastSelectionState(TileSelectionState(
         frameState.currentFrameNumber,
@@ -769,9 +893,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       addTileToLoadQueue(
           this->_loadQueueLow,
           implicitInfo,
-          frustums,
+          frameState.frustums,
           tile,
-          distances);
+          *pDistances);
     }
 
     ++result.tilesCulled;
@@ -785,8 +909,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       depth,
       ancestorMeetsSse,
       tile,
-      distances,
-      culled,
+      *pDistances,
+      cullResult.culled,
       result);
 }
 
