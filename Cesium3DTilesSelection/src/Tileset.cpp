@@ -715,9 +715,7 @@ void Tileset::_occlusionCull(
 
           // Don't break, since we may still find from another child that we
           // are definitely _not_ occluded.
-        }
-
-        if (!pOcclusion->isOccluded()) {
+        } else if (!pOcclusion->isOccluded()) {
           // The tile is definitely _not_ occluded since a child has confirmed
           // it is not occluded.
           cullResult.culled = false;
