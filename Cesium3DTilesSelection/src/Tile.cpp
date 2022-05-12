@@ -43,13 +43,26 @@ Tile::Tile(Tile&& rhs) noexcept
       _contentBoundingVolume(rhs._contentBoundingVolume),
       _lastSelectionState(rhs._lastSelectionState),
       _loadedTilesLinks(),
-      _pContent(std::move(rhs._pContent)) {}
+      _pContent(std::move(rhs._pContent)) {
+  // since children of rhs will have the parent pointed to rhs,
+  // we will reparent them to this tile as rhs will be destroyed after this
+  for (Tile& tile : this->_children) {
+    tile.setParent(this);
+  }
+}
 
 Tile& Tile::operator=(Tile&& rhs) noexcept {
   if (this != &rhs) {
     this->_loadedTilesLinks = rhs._loadedTilesLinks;
+
+    // since children of rhs will have the parent pointed to rhs,
+    // we will reparent them to this tile as rhs will be destroyed after this
     this->_pParent = rhs._pParent;
     this->_children = std::move(rhs._children);
+    for (Tile& tile : this->_children) {
+      tile.setParent(this);
+    }
+
     this->_boundingVolume = rhs._boundingVolume;
     this->_viewerRequestVolume = rhs._viewerRequestVolume;
     this->_geometricError = rhs._geometricError;

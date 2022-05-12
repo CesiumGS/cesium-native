@@ -464,7 +464,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-
   _pTilesetContentManager->updateTileContent(tile);
   this->_markTileVisited(tile);
 
