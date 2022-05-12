@@ -823,7 +823,7 @@ Tileset::_computeDistancesVector(
   std::function<void()> decrementNextDistancesVector = [this]() {
     --this->_nextDistancesVector;
   };
-  return std::move(CesiumUtility::ScopeGuard(decrementNextDistancesVector));
+  return CesiumUtility::ScopeGuard(decrementNextDistancesVector);
 }
 
 // Visits a tile for possible rendering. When we call this function with a tile:
