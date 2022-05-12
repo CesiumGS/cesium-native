@@ -1004,20 +1004,24 @@ void Tile::upsampleParent(
           projection);
 
       if (it == parentProjections.end()) {
-        parentProjections.emplace_back(projection);
-        index = int32_t(parentProjections.size()) - 1;
-
         const BoundingRegion* pParentRegion =
             std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
 
-        GltfContent::createRasterOverlayTextureCoordinates(
-            parentModel,
-            pParent->getTransform(),
-            index,
-            pParentRegion ? std::make_optional<GlobeRectangle>(
-                                pParentRegion->getRectangle())
-                          : std::nullopt,
-            {projection});
+        std::optional<TileContentDetailsForOverlays> overlayDetails =
+            GltfContent::createRasterOverlayTextureCoordinates(
+                parentModel,
+                pParent->getTransform(),
+                int32_t(parentProjections.size()),
+                pParentRegion ? std::make_optional<GlobeRectangle>(
+                                    pParentRegion->getRectangle())
+                              : std::nullopt,
+                {projection});
+        if (overlayDetails) {
+          content.overlayDetails->rasterOverlayRectangles.emplace_back(
+              overlayDetails->rasterOverlayRectangles[0]);
+          parentProjections.emplace_back(projection);
+          index = int32_t(parentProjections.size()) - 1;
+        }
       } else {
         index = int32_t(it - parentProjections.begin());
       }
