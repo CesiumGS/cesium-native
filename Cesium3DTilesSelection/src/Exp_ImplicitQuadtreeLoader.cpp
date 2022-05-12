@@ -3,14 +3,49 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
 #include <libmorton/morton.h>
+#include <spdlog/logger.h>
 
 #include <type_traits>
 #include <variant>
 
 namespace Cesium3DTilesSelection {
 namespace {
+void logErrors(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const std::vector<std::string>& errors) {
+  if (!errors.empty()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Failed to load {}:\n- {}",
+        url,
+        CesiumUtility::joinToString(errors, "\n- "));
+  }
+}
+
+void logWarnings(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const std::vector<std::string>& warnings) {
+  if (!warnings.empty()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Warning when loading {}:\n- {}",
+        url,
+        CesiumUtility::joinToString(warnings, "\n- "));
+  }
+}
+
+void logErrorsAndWarnings(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const ErrorList& errorLists) {
+  logErrors(pLogger, url, errorLists.errors);
+  logWarnings(pLogger, url, errorLists.warnings);
+}
 CesiumGeospatial::BoundingRegion subdivideRegion(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const CesiumGeospatial::BoundingRegion& region) {
@@ -218,6 +253,7 @@ bool isTileContentAvailable(
 }
 
 CesiumAsync::Future<TileLoadResult> requestTileContent(
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
@@ -225,13 +261,19 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
     std::optional<SubtreeContentInitializer>&& subtreeInitializer) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([ktx2TranscodeTargets,
+      .thenInWorkerThread([pLogger,
+                           ktx2TranscodeTargets,
                            subtreeInitializer = std::move(subtreeInitializer)](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
+        const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Did not receive a valid response for tile content {}",
+              tileUrl);
           return TileLoadResult{
               TileUnknownContent{},
               TileLoadResultState::Failed,
@@ -241,6 +283,11 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Received status code {} for tile content {}",
+              statusCode,
+              tileUrl);
           return TileLoadResult{
               TileUnknownContent{},
               TileLoadResultState::Failed,
@@ -263,6 +310,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           GltfConverterResult result = converter(responseData, gltfOptions);
 
           // Report any errors if there are any
+          logErrorsAndWarnings(pLogger, tileUrl, result.errors);
           if (result.errors) {
             return TileLoadResult{
                 TileRenderContent{std::nullopt},
@@ -374,7 +422,8 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
                subtreeUrl,
                requestHeaders)
         .thenInWorkerThread(
-            [asyncSystem = loadInfo.asyncSystem,
+            [pLogger = loadInfo.pLogger,
+             asyncSystem = loadInfo.asyncSystem,
              pAssetAccessor = loadInfo.pAssetAccessor,
              tileUrl = std::move(tileUrl),
              subtreeID,
@@ -405,6 +454,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
                 }
 
                 return requestTileContent(
+                    pLogger,
                     asyncSystem,
                     pAssetAccessor,
                     tileUrl,
@@ -435,6 +485,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
 
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
   return requestTileContent(
+      loadInfo.pLogger,
       loadInfo.asyncSystem,
       loadInfo.pAssetAccessor,
       tileUrl,
