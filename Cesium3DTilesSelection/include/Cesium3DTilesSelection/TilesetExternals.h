@@ -64,7 +64,8 @@ public:
    * If not specified, the traversal will not attempt to leverage occlusion
    * information.
    */
-  std::shared_ptr<TileOcclusionRendererProxyPool> pTileOcclusionProxyPool;
+  std::shared_ptr<TileOcclusionRendererProxyPool> pTileOcclusionProxyPool =
+      nullptr;
 };
 
 } // namespace Cesium3DTilesSelection

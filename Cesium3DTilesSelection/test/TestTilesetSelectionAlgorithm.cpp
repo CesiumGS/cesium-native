@@ -162,7 +162,6 @@ TEST_CASE("Test replace refinement for render") {
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
-      nullptr,
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -559,7 +558,6 @@ TEST_CASE("Test additive refinement") {
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
-      nullptr,
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -716,7 +714,6 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
-      nullptr,
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -809,7 +806,6 @@ TEST_CASE("Test multiple frustums") {
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
-      nullptr,
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -1044,7 +1040,6 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
-      nullptr,
       nullptr};
 
   // create tileset and wait for it to load.
