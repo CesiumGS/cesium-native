@@ -32,7 +32,6 @@ struct ExternalContentInitializer {
         // propagate all the external tiles to be the children of this tile
         std::vector<Tile> children(1);
         children[0] = std::move(*pExternalRoot);
-        children[0].setParent(&tile);
         tile.createChildTiles(std::move(children));
 
         // save the loader of the external tileset in this loader
@@ -322,7 +321,6 @@ void parseImplicitTileset(
 
     // create an implicit root to associate with the above implicit loader
     std::vector<Tile> implicitRootTile(1);
-    implicitRootTile[0].setParent(&tile);
     implicitRootTile[0].setBoundingVolume(tile.getBoundingVolume());
     implicitRootTile[0].setGeometricError(tile.getGeometricError());
     implicitRootTile[0].setRefine(tile.getRefine());
@@ -339,14 +337,11 @@ void parseTileJsonRecursively(
     const rapidjson::Value& tileJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
-    Tile* parentTile,
     Tile& tile,
     TilesetJsonLoader& currentLoader) {
   if (!tileJson.IsObject()) {
     return;
   }
-
-  tile.setParent(parentTile);
 
   // parse tile transform
   const std::optional<glm::dmat4x4> tileTransform =
@@ -496,7 +491,6 @@ void parseTileJsonRecursively(
             childJson,
             transform,
             tile.getRefine(),
-            &tile,
             child,
             currentLoader);
       }
@@ -535,7 +529,6 @@ TilesetContentLoaderResult parseTilesetJson(
         rootJson,
         parentTransform,
         TileRefine::Replace,
-        nullptr,
         *pRootTile,
         *pLoader);
   }

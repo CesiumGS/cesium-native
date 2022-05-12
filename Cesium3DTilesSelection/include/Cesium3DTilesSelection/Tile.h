@@ -101,15 +101,6 @@ public:
   const Tile* getParent() const noexcept { return this->_pParent; }
 
   /**
-   * @brief Set the parent of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param pParent The parent tile .
-   */
-  void setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
-
-  /**
    * @brief Returns a *view* on the children of this tile.
    *
    * The returned span will become invalid when this tile is destroyed.
@@ -383,6 +374,8 @@ public:
   TileLoadState getState() const noexcept;
 
 private:
+  void setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
+
   // Position in bounding-volume hierarchy.
   Tile* _pParent;
   std::vector<Tile> _children;

@@ -81,7 +81,11 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
   if (!this->_children.empty()) {
     throw std::runtime_error("Children already created.");
   }
+
   this->_children = std::move(children);
+  for (Tile& tile : this->_children) {
+    tile.setParent(this);
+  }
 }
 
 double Tile::getNonZeroGeometricError() const noexcept {
