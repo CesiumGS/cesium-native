@@ -1,10 +1,20 @@
 # Change Log
 
-### ? - ?
+### v0.15.2 - 2022-05-13
 
 ##### Fixes :wrench:
 
 - Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
+
+In addition to the above, this release updates the following third-party libraries used by cesium-native:
+- `cpp-httplib` to v0.10.3 ([changes](https://github.com/yhirose/cpp-httplib/compare/c7486ead96dad647b9783941722b5944ac1aaefa...d73395e1dc652465fa9524266cd26ad57365491f))
+- `draco` to v1.5.2 ([changes](https://github.com/google/draco/compare/9bf5d2e4833d445acc85eb95da42d715d3711c6f...bd1e8de7dd0596c2cbe5929cbe1f5d2257cd33db))
+- `earcut` to v2.2.3 ([changes](https://github.com/mapbox/earcut.hpp/compare/6d18edf0ce046023a7cb55e69c4cd9ba90e2c716...b28acde132cdb8e0ef536a96ca7ada8a651f9169))
+- `PicoSHA2` to commit `1677374f23352716fc52183255a40c1b8e1d53eb` ([changes](https://github.com/okdshin/PicoSHA2/compare/b699e6c900be6e00152db5a3d123c1db42ea13d0...1677374f23352716fc52183255a40c1b8e1d53eb))
+- `rapidjson` to commit `fcb23c2dbf561ec0798529be4f66394d3e4996d8` ([changes](https://github.com/Tencent/rapidjson/compare/fd3dc29a5c2852df569e1ea81dbde2c412ac5051...fcb23c2dbf561ec0798529be4f66394d3e4996d8))
+- `spdlog` to v1.10.0 ([changes](https://github.com/gabime/spdlog/compare/cbe9448650176797739dbab13961ef4c07f4290f...76fb40d95455f249bd70824ecfcae7a8f0930fa3))
+- `stb` to commit `af1a5bc352164740c1cc1354942b1c6b72eacb8a` ([changes](https://github.com/nothings/stb/compare/b42009b3b9d4ca35bc703f5310eedc74f584be58...af1a5bc352164740c1cc1354942b1c6b72eacb8a))
+- `uriparser` to v0.9.6 ([changes](https://github.com/uriparser/uriparser/compare/e8a338e0c65fd875a46067d711750e4c13e044e7...24df44b74753017acfaec4b3a30097a8a2ae1ae1))
 
 ### v0.15.1 - 2022-05-05
 
