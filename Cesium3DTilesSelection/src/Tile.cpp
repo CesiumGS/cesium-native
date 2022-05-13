@@ -662,16 +662,26 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
     assert(!details.rasterOverlayRectangles.empty());
 
     // Use the projected center of the tile as the subdivision center.
-    // The tile will be subdivided by (0.5, 0.5) in the _first_ overlay's
-    // texture coordinates (no matter which overlay(s) had more detail), at
-    // least until https://github.com/CesiumGS/cesium-native/issues/385 is
-    // addressed. So pick the center accordingly.
-    glm::dvec2 centerProjected = details.rasterOverlayRectangles[0].getCenter();
-    Cartographic center = unprojectPosition(
-        details.rasterOverlayProjections[0],
-        glm::dvec3(centerProjected, 0.0));
+    // The tile will be subdivided by (0.5, 0.5) in the first overlay's
+    // texture coordinates which overlay had more detail.
 
-    return RegionAndCenter{details.boundingRegion, center};
+    for (size_t i = 0; i < parent.getMappedRasterTiles().size(); ++i) {
+      RasterMappedTo3DTile* pMapped =
+          const_cast<RasterMappedTo3DTile*>(&parent.getMappedRasterTiles()[i]);
+      if (pMapped->update(*const_cast<Tile*>(&parent)) ==
+          RasterOverlayTile::MoreDetailAvailable::Yes) {
+        const Projection& projection = pMapped->getReadyTile()
+                                           ->getOverlay()
+                                           .getTileProvider()
+                                           ->getProjection();
+        glm::dvec2 centerProjected =
+            details.findRectangleForOverlayProjection(projection)->getCenter();
+        Cartographic center =
+            unprojectPosition(projection, glm::dvec3(centerProjected, 0.0));
+
+        return RegionAndCenter{details.boundingRegion, center};
+      }
+    }
   }
 
   // We shouldn't be upsampling from a tile until that tile is loaded.
@@ -847,6 +857,7 @@ void Tile::update(
       this->getTileset()->supportsRasterOverlays() && this->getContent() &&
       this->getContent()->model) {
     bool moreRasterDetailAvailable = false;
+    bool skippedUnknown = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
       RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
@@ -890,6 +901,13 @@ void Tile::update(
 
       const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
+
+      if (moreDetailAvailable ==
+              RasterOverlayTile::MoreDetailAvailable::Unknown &&
+          !moreRasterDetailAvailable) {
+        skippedUnknown = true;
+      }
+
       moreRasterDetailAvailable |=
           moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
     }
@@ -897,7 +915,8 @@ void Tile::update(
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (moreRasterDetailAvailable && this->_children.empty()) {
+    if (!skippedUnknown && moreRasterDetailAvailable &&
+        this->_children.empty()) {
       createQuadtreeSubdividedChildren(*this);
     }
   } else if (
@@ -984,7 +1003,8 @@ void Tile::upsampleParent(
   };
 
   int32_t index = 0;
-
+  std::vector<Projection>& parentProjections =
+      pParentContent->overlayDetails->rasterOverlayProjections;
   const gsl::span<Tile> children = pParent->getChildren();
   if (std::get_if<QuadtreeTileID>(&pParent->getTileID()) &&
       std::any_of(
@@ -993,9 +1013,6 @@ void Tile::upsampleParent(
           [](const Tile& tile) noexcept {
             return std::get_if<QuadtreeTileID>(&tile.getTileID());
           })) {
-    TileContentLoadResult& content = *pParent->getContent();
-    std::vector<Projection>& parentProjections =
-        content.overlayDetails->rasterOverlayProjections;
     if (_pContext->implicitContext->projection.has_value()) {
       const Projection& projection = *_pContext->implicitContext->projection;
       auto it = std::find(
@@ -1017,12 +1034,27 @@ void Tile::upsampleParent(
                               : std::nullopt,
                 {projection});
         if (overlayDetails) {
-          content.overlayDetails->rasterOverlayRectangles.emplace_back(
+          pParentContent->overlayDetails->rasterOverlayRectangles.emplace_back(
               overlayDetails->rasterOverlayRectangles[0]);
           parentProjections.emplace_back(projection);
           index = int32_t(parentProjections.size()) - 1;
         }
       } else {
+        index = int32_t(it - parentProjections.begin());
+      }
+    }
+  } else {
+    for (RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
+      if (mapped.update(*pParent) ==
+          RasterOverlayTile::MoreDetailAvailable::Yes) {
+        const Projection& projection = mapped.getReadyTile()
+                                           ->getOverlay()
+                                           .getTileProvider()
+                                           ->getProjection();
+        auto it = std::find(
+            parentProjections.begin(),
+            parentProjections.end(),
+            projection);
         index = int32_t(it - parentProjections.begin());
       }
     }
