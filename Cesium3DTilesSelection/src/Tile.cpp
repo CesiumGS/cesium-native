@@ -666,22 +666,12 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
     // texture coordinates (no matter which overlay(s) had more detail), at
     // least until https://github.com/CesiumGS/cesium-native/issues/385 is
     // addressed. So pick the center accordingly.
+    glm::dvec2 centerProjected = details.rasterOverlayRectangles[0].getCenter();
+    Cartographic center = unprojectPosition(
+        details.rasterOverlayProjections[0],
+        glm::dvec3(centerProjected, 0.0));
 
-    for (const RasterMappedTo3DTile& mappedRasterTile :
-         parent.getMappedRasterTiles()) {
-      const RasterOverlayTile* readyTile = mappedRasterTile.getReadyTile();
-      if (readyTile && readyTile->isMoreDetailAvailable() ==
-                           RasterOverlayTile::MoreDetailAvailable::Yes) {
-        const Projection& projection =
-            readyTile->getOverlay().getTileProvider()->getProjection();
-        glm::dvec2 centerProjected =
-            details.findRectangleForOverlayProjection(projection)->getCenter();
-        Cartographic center =
-            unprojectPosition(projection, glm::dvec3(centerProjected, 0.0));
-
-        return RegionAndCenter{details.boundingRegion, center};
-      }
-    }
+    return RegionAndCenter{details.boundingRegion, center};
   }
 
   // We shouldn't be upsampling from a tile until that tile is loaded.
@@ -994,8 +984,6 @@ void Tile::upsampleParent(
   };
 
   int32_t index = 0;
-  std::vector<Projection>& parentProjections =
-      pParentContent->overlayDetails->rasterOverlayProjections;
 
   const gsl::span<Tile> children = pParent->getChildren();
   if (std::get_if<QuadtreeTileID>(&pParent->getTileID()) &&
@@ -1005,6 +993,9 @@ void Tile::upsampleParent(
           [](const Tile& tile) noexcept {
             return std::get_if<QuadtreeTileID>(&tile.getTileID());
           })) {
+    TileContentLoadResult& content = *pParent->getContent();
+    std::vector<Projection>& parentProjections =
+        content.overlayDetails->rasterOverlayProjections;
     if (_pContext->implicitContext->projection.has_value()) {
       const Projection& projection = *_pContext->implicitContext->projection;
       auto it = std::find(
@@ -1026,28 +1017,13 @@ void Tile::upsampleParent(
                               : std::nullopt,
                 {projection});
         if (overlayDetails) {
-          pParentContent->overlayDetails->rasterOverlayRectangles.emplace_back(
+          content.overlayDetails->rasterOverlayRectangles.emplace_back(
               overlayDetails->rasterOverlayRectangles[0]);
           parentProjections.emplace_back(projection);
           index = int32_t(parentProjections.size()) - 1;
         }
       } else {
         index = int32_t(it - parentProjections.begin());
-      }
-    } else {
-      for (const RasterMappedTo3DTile& mappedRasterTile :
-           pParent->getMappedRasterTiles()) {
-        const RasterOverlayTile* readyTile = mappedRasterTile.getReadyTile();
-        if (readyTile && readyTile->isMoreDetailAvailable() ==
-                             RasterOverlayTile::MoreDetailAvailable::Yes) {
-          const Projection& projection =
-              readyTile->getOverlay().getTileProvider()->getProjection();
-          auto it = std::find(
-              parentProjections.begin(),
-              parentProjections.end(),
-              projection);
-          index = int32_t(it - parentProjections.begin());
-        }
       }
     }
   }
@@ -1078,9 +1054,8 @@ void Tile::upsampleParent(
             // We can't necessarily trust our original bounding volume, so
             // recompute it here. See:
             // https://github.com/CesiumGS/cesium-native/issues/385
-            // pContent->updatedBoundingVolume =
-            //    GltfContent::computeBoundingRegion(*pContent->model,
-            //    transform);
+            pContent->updatedBoundingVolume =
+                GltfContent::computeBoundingRegion(*pContent->model, transform);
 
             void* pRendererResources = processNewTileContent(
                 pPrepareRendererResources,
