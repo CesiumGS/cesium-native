@@ -173,6 +173,12 @@ RasterMappedTo3DTile::update(Tile& tile) {
   }
 }
 
+bool RasterMappedTo3DTile::isMoreDetailAvailable() const noexcept {
+  return !_pLoadingTile && !_originalFailed && _pReadyTile &&
+         _pReadyTile->isMoreDetailAvailable() ==
+             RasterOverlayTile::MoreDetailAvailable::Yes;
+}
+
 void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   if (this->getState() == AttachmentState::Unattached) {
     return;

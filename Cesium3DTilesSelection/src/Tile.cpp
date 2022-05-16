@@ -665,12 +665,9 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
     // The tile will be subdivided by (0.5, 0.5) in the first overlay's
     // texture coordinates which overlay had more detail.
 
-    for (size_t i = 0; i < parent.getMappedRasterTiles().size(); ++i) {
-      RasterMappedTo3DTile* pMapped =
-          const_cast<RasterMappedTo3DTile*>(&parent.getMappedRasterTiles()[i]);
-      if (pMapped->update(*const_cast<Tile*>(&parent)) ==
-          RasterOverlayTile::MoreDetailAvailable::Yes) {
-        const Projection& projection = pMapped->getReadyTile()
+    for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
+      if (mapped.isMoreDetailAvailable()) {
+        const Projection& projection = mapped.getReadyTile()
                                            ->getOverlay()
                                            .getTileProvider()
                                            ->getProjection();
@@ -1044,9 +1041,8 @@ void Tile::upsampleParent(
       }
     }
   } else {
-    for (RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
-      if (mapped.update(*pParent) ==
-          RasterOverlayTile::MoreDetailAvailable::Yes) {
+    for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
+      if (mapped.isMoreDetailAvailable()) {
         const Projection& projection = mapped.getReadyTile()
                                            ->getOverlay()
                                            .getTileProvider()
