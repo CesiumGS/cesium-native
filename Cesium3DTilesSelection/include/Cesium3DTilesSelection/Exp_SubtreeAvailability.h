@@ -36,9 +36,7 @@ public:
       uint64_t relativeTileMortonId,
       uint64_t contentId) const noexcept;
 
-  bool isSubtreeAvailable(
-      uint32_t relativeSubtreeLevel,
-      uint64_t relativeSubtreeMortonId) const noexcept;
+  bool isSubtreeAvailable(uint64_t relativeSubtreeMortonId) const noexcept;
 
   static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
       uint32_t childCount,

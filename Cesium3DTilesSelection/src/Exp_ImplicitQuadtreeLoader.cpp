@@ -89,18 +89,16 @@ CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
 
   size_t denominator = size_t(1) << tileID.level;
   glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
-  glm::dmat3 subdivideAxes = halfAxes / double(denominator);
 
-  glm::dvec3 xDim = subdivideAxes[0] * 2.0;
-  glm::dvec3 yDim = subdivideAxes[1] * 2.0;
-  glm::dvec3 zDim = subdivideAxes[2] * 2.0;
+  glm::dvec3 xDim = halfAxes[0] * 2.0 / double(denominator);
+  glm::dvec3 yDim = halfAxes[1] * 2.0 / double(denominator);
   glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
   glm::dvec3 childMax =
-      min + xDim * double(tileID.x + 1) + yDim * double(tileID.y + 1) + zDim;
+      min + xDim * double(tileID.x + 1) + yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
 
   return CesiumGeometry::OrientedBoundingBox(
       (childMin + childMax) / 2.0,
-      glm::dmat3{xDim, yDim, zDim} / 2.0);
+      glm::dmat3{xDim / 2.0, yDim / 2.0, halfAxes[2]});
 }
 
 BoundingVolume subdivideBoundingVolume(
@@ -152,9 +150,7 @@ void populateSubtree(
       uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
       uint32_t relativeChildLevel = relativeTileLevel + 1;
       if (relativeChildLevel == subtreeLevels) {
-        if (subtreeAvailability.isSubtreeAvailable(
-                relativeChildLevel,
-                relativeChildMortonID)) {
+        if (subtreeAvailability.isSubtreeAvailable(relativeChildMortonID)) {
           Tile& child = children.emplace_back();
           child.setBoundingVolume(
               subdivideBoundingVolume(childID, loader.getBoundingVolume()));

@@ -453,12 +453,22 @@ bool SubtreeAvailability::isContentAvailable(
 }
 
 bool SubtreeAvailability::isSubtreeAvailable(
-    uint32_t relativeSubtreeLevel,
     uint64_t relativeSubtreeMortonId) const noexcept {
-  return isAvailable(
-      relativeSubtreeLevel,
-      relativeSubtreeMortonId,
-      _subtreeAvailability);
+  const SubtreeConstantAvailability* constantAvailability =
+      std::get_if<SubtreeConstantAvailability>(&_subtreeAvailability);
+  if (constantAvailability) {
+    return constantAvailability->constant;
+  }
+
+  const SubtreeBufferViewAvailability* bufferViewAvailability =
+      std::get_if<SubtreeBufferViewAvailability>(&_subtreeAvailability);
+  uint64_t availabilityBitIndex = relativeSubtreeMortonId;
+
+  const uint64_t byteIndex = availabilityBitIndex / 8;
+  const uint64_t bitIndex = availabilityBitIndex % 8;
+  const int bitValue =
+      static_cast<int>(bufferViewAvailability->view[byteIndex] >> bitIndex) & 1;
+  return bitValue == 1;
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>>
