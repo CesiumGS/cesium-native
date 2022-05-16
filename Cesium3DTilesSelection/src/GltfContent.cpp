@@ -153,6 +153,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
   // at such extreme latitudes.
   BoundingRegionBuilder computedBounds;
   computedBounds.setPoleTolerance(0.001 * bounds.computeHeight());
+  bool boundsUpdated = false;
 
   auto createTextureCoordinatesForPrimitive =
       [&](CesiumGltf::Model& gltf,
@@ -287,6 +288,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           // exclude skirt vertices from bounds
           if (positionIndex >= vertexBegin && positionIndex < vertexEnd) {
             computedBounds.expandToIncludePosition(*cartographic);
+            boundsUpdated = true;
           }
 
           // Generate texture coordinates at this position for each projection
@@ -359,7 +361,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
   return TileContentDetailsForOverlays{
       std::move(projections),
       std::move(rectangles),
-      computedBounds.toRegion()};
+      boundsUpdated ? computedBounds.toRegion()
+                    : GltfContent::computeBoundingRegion(gltf, rootTransform)};
 }
 
 /*static*/ CesiumGeospatial::BoundingRegion GltfContent::computeBoundingRegion(
