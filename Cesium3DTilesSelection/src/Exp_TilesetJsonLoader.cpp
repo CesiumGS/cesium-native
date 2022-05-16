@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
 #include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
+#include <Cesium3DTilesSelection/Exp_ImplicitOctreeLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -223,6 +224,128 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
   return std::nullopt;
 }
 
+void createImplicitQuadtreeLoader(
+    const char* contentUriTemplate,
+    const char* subtreeUriTemplate,
+    uint32_t subtreeLevels,
+    uint32_t availableLevels,
+    Tile& implicitTile,
+    TilesetJsonLoader& currentLoader) {
+  const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
+
+  const CesiumGeospatial::BoundingRegion* pRegion =
+      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
+  const CesiumGeometry::OrientedBoundingBox* pBox =
+      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
+  const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
+      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
+
+  // the implicit loader will be the child loader of this tileset json loader
+  TilesetContentLoader* pImplicitLoader = nullptr;
+  if (pRegion) {
+    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pRegion);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  } else if (pBox) {
+    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pBox);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  } else if (pS2Cell) {
+    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pS2Cell);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  }
+
+  // create an implicit root to associate with the above implicit loader
+  std::vector<Tile> implicitRootTile(1);
+  implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
+  implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
+  implicitRootTile[0].setRefine(implicitTile.getRefine());
+  implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
+  implicitRootTile[0].setContent(
+      std::make_unique<TileContent>(pImplicitLoader));
+  implicitTile.createChildTiles(std::move(implicitRootTile));
+}
+
+void createImplicitOctreeLoader(
+    const char* contentUriTemplate,
+    const char* subtreeUriTemplate,
+    uint32_t subtreeLevels,
+    uint32_t availableLevels,
+    Tile& implicitTile,
+    TilesetJsonLoader& currentLoader) {
+  const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
+
+  const CesiumGeospatial::BoundingRegion* pRegion =
+      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
+  const CesiumGeometry::OrientedBoundingBox* pBox =
+      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
+  const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
+      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
+
+  // the implicit loader will be the child loader of this tileset json loader
+  TilesetContentLoader* pImplicitLoader = nullptr;
+  if (pRegion) {
+    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pRegion);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  } else if (pBox) {
+    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pBox);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  } else if (pS2Cell) {
+    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pS2Cell);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  }
+
+  // create an implicit root to associate with the above implicit loader
+  std::vector<Tile> implicitRootTile(1);
+  implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
+  implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
+  implicitRootTile[0].setRefine(implicitTile.getRefine());
+  implicitRootTile[0].setTileID(CesiumGeometry::OctreeTileID(0, 0, 0, 0));
+  implicitRootTile[0].setContent(
+      std::make_unique<TileContent>(pImplicitLoader));
+  implicitTile.createChildTiles(std::move(implicitRootTile));
+}
+
 void parseImplicitTileset(
     const rapidjson::Value& implicitExtensionJson,
     const char* contentUri,
@@ -266,6 +389,7 @@ void parseImplicitTileset(
     return;
   }
 
+  // Quadtree and Octree does not support bounding sphere subdivision
   const BoundingVolume& boundingVolume = tile.getBoundingVolume();
   if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
     return;
@@ -277,58 +401,22 @@ void parseImplicitTileset(
   const char* subtreesUri = subtreesUriIt->value.GetString();
   const char* subdivisionScheme = tilingSchemeIt->value.GetString();
 
-  const CesiumGeospatial::BoundingRegion* pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
-  const CesiumGeometry::OrientedBoundingBox* pBox =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
-  const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
-      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
-
   if (std::strcmp(subdivisionScheme, "QUADTREE") == 0) {
-    // the implicit loader will be the child loader of this tileset json loader
-    TilesetContentLoader* pImplicitLoader = nullptr;
-    if (pRegion) {
-      auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-          currentLoader.getBaseUrl(),
-          contentUri,
-          subtreesUri,
-          subtreeLevels,
-          availableLevels,
-          *pRegion);
-      pImplicitLoader = pLoader.get();
-      currentLoader.addChildLoader(std::move(pLoader));
-    } else if (pBox) {
-      auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-          currentLoader.getBaseUrl(),
-          contentUri,
-          subtreesUri,
-          subtreeLevels,
-          availableLevels,
-          *pBox);
-      pImplicitLoader = pLoader.get();
-      currentLoader.addChildLoader(std::move(pLoader));
-    } else if (pS2Cell) {
-      auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-          currentLoader.getBaseUrl(),
-          contentUri,
-          subtreesUri,
-          subtreeLevels,
-          availableLevels,
-          *pS2Cell);
-      pImplicitLoader = pLoader.get();
-      currentLoader.addChildLoader(std::move(pLoader));
-    }
-
-    // create an implicit root to associate with the above implicit loader
-    std::vector<Tile> implicitRootTile(1);
-    implicitRootTile[0].setBoundingVolume(tile.getBoundingVolume());
-    implicitRootTile[0].setGeometricError(tile.getGeometricError());
-    implicitRootTile[0].setRefine(tile.getRefine());
-    implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
-    implicitRootTile[0].setContent(
-        std::make_unique<TileContent>(pImplicitLoader));
-    tile.createChildTiles(std::move(implicitRootTile));
+    createImplicitQuadtreeLoader(
+        contentUri,
+        subtreesUri,
+        subtreeLevels,
+        availableLevels,
+        tile,
+        currentLoader);
   } else if (std::strcmp(subdivisionScheme, "OCTREE") == 0) {
+    createImplicitOctreeLoader(
+        contentUri,
+        subtreesUri,
+        subtreeLevels,
+        availableLevels,
+        tile,
+        currentLoader);
   }
 }
 
