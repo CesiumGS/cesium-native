@@ -49,8 +49,8 @@ public:
 
 private:
   std::vector<CesiumGeospatial::CartographicPolygon> _polygons;
+  bool _flipSelection;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
-  bool _flipSelection;
 };
 } // namespace Cesium3DTilesSelection
