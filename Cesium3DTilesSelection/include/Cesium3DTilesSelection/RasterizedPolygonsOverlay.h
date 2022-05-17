@@ -24,6 +24,7 @@ public:
   RasterizedPolygonsOverlay(
       const std::string& name,
       const std::vector<CesiumGeospatial::CartographicPolygon>& polygons,
+      bool flipSelection,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
       const CesiumGeospatial::Projection& projection,
       const RasterOverlayOptions& overlayOptions = {});
@@ -44,9 +45,12 @@ public:
     return this->_polygons;
   }
 
+  bool getFlipSelection() const noexcept { return this->_flipSelection; }
+
 private:
   std::vector<CesiumGeospatial::CartographicPolygon> _polygons;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
+  bool _flipSelection;
 };
 } // namespace Cesium3DTilesSelection

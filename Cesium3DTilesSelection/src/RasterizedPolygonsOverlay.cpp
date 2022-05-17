@@ -10,6 +10,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -22,9 +23,21 @@ void rasterizePolygons(
     LoadedRasterOverlayImage& loaded,
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const glm::dvec2& textureSize,
-    const std::vector<CartographicPolygon>& cartographicPolygons) {
+    const std::vector<CartographicPolygon>& cartographicPolygons,
+    bool flipSelection) {
 
   CesiumGltf::ImageCesium& image = loaded.image.emplace();
+
+  std::byte insideColor;
+  std::byte outsideColor;
+
+  if (flipSelection) {
+    insideColor = static_cast<std::byte>(0);
+    outsideColor = static_cast<std::byte>(0xff);
+  } else {
+    insideColor = static_cast<std::byte>(0xff);
+    outsideColor = static_cast<std::byte>(0);
+  }
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
   if (Cesium3DTilesSelection::CesiumImpl::withinPolygons(
@@ -37,8 +50,7 @@ void rasterizePolygons(
     image.bytesPerChannel = 1;
     image.pixelData.resize(1);
 
-    image.pixelData[0] = static_cast<std::byte>(0xff);
-
+    image.pixelData[0] = insideColor;
     return;
   }
 
@@ -63,6 +75,7 @@ void rasterizePolygons(
     image.bytesPerChannel = 1;
     image.pixelData.resize(1);
 
+    image.pixelData[0] = outsideColor;
     return;
   }
 
@@ -76,6 +89,14 @@ void rasterizePolygons(
   image.channels = 1;
   image.bytesPerChannel = 1;
   image.pixelData.resize(size_t(image.width * image.height));
+
+  // If the outside color is not 0, clear the image with the outside color.
+  if (static_cast<char>(outsideColor) != 0) {
+    std::memset(
+        image.pixelData.data(),
+        (char)outsideColor,
+        image.pixelData.size());
+  }
 
   // TODO: this is naive approach, use line-triangle
   // intersections to rasterize one row at a time
@@ -138,7 +159,7 @@ void rasterizePolygons(
                v_proj_bc_perp >= 0.0) ||
               (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
                v_proj_bc_perp <= 0.0)) {
-            image.pixelData[width * j + i] = static_cast<std::byte>(0xff);
+            image.pixelData[width * j + i] = insideColor;
           }
         }
       }
@@ -179,6 +200,7 @@ class CESIUM3DTILESSELECTION_API RasterizedPolygonsTileProvider final
 
 private:
   std::vector<CartographicPolygon> _polygons;
+  bool _flipSelection;
 
 public:
   RasterizedPolygonsTileProvider(
@@ -189,7 +211,8 @@ public:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
-      const std::vector<CartographicPolygon>& polygons)
+      const std::vector<CartographicPolygon>& polygons,
+      bool flipSelection)
       : RasterOverlayTileProvider(
             owner,
             asyncSystem,
@@ -199,7 +222,8 @@ public:
             pLogger,
             projection,
             computeCoverageRectangle(projection, polygons)),
-        _polygons(polygons) {}
+        _polygons(polygons),
+        _flipSelection(flipSelection) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
@@ -212,6 +236,7 @@ public:
 
     return this->getAsyncSystem().runInWorkerThread(
         [&polygons = this->_polygons,
+         flipSelection = this->_flipSelection,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
          textureSize]() -> LoadedRasterOverlayImage {
@@ -221,7 +246,12 @@ public:
           LoadedRasterOverlayImage result;
           result.rectangle = rectangle;
 
-          rasterizePolygons(result, tileRectangle, textureSize, polygons);
+          rasterizePolygons(
+              result,
+              tileRectangle,
+              textureSize,
+              polygons,
+              flipSelection);
 
           return result;
         });
@@ -231,11 +261,13 @@ public:
 RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     const std::string& name,
     const std::vector<CartographicPolygon>& polygons,
+    bool flipSelection,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const CesiumGeospatial::Projection& projection,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _polygons(polygons),
+      _flipSelection(flipSelection),
       _ellipsoid(ellipsoid),
       _projection(projection) {}
 
@@ -261,7 +293,8 @@ RasterizedPolygonsOverlay::createTileProvider(
               pPrepareRendererResources,
               pLogger,
               this->_projection,
-              this->_polygons));
+              this->_polygons,
+              this->_flipSelection));
 }
 
 } // namespace Cesium3DTilesSelection
