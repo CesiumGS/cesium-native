@@ -101,7 +101,7 @@ isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
 
 static void copyMetadataTables(const Model& parentModel, Model& result);
 
-Model upsampleGltfForRasterOverlays(
+std::optional<Model> upsampleGltfForRasterOverlays(
     const Model& parentModel,
     CesiumGeometry::UpsampledQuadtreeNode childID,
     int32_t textureCoordinateIndex) {
@@ -148,6 +148,8 @@ Model upsampleGltfForRasterOverlays(
     nameIt->second = name;
   }
 
+  bool containsPrimitives = false;
+
   for (Mesh& mesh : result.meshes) {
     for (size_t i = 0; i < mesh.primitives.size(); ++i) {
       MeshPrimitive& primitive = mesh.primitives[i];
@@ -166,10 +168,11 @@ Model upsampleGltfForRasterOverlays(
         mesh.primitives.erase(mesh.primitives.begin() + int64_t(i));
         --i;
       }
+      containsPrimitives |= !mesh.primitives.empty();
     }
   }
 
-  return result;
+  return containsPrimitives ? std::make_optional<Model>(result) : std::nullopt;
 }
 
 static void copyVertexAttributes(
