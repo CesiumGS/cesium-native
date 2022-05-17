@@ -137,16 +137,16 @@ void populateSubtree(
 
   std::vector<Tile> children;
   children.reserve(4);
-  for (uint32_t y = 0; y < 2; ++y) {
+  for (uint16_t y = 0; y < 2; ++y) {
     uint32_t childY = (pQuadtreeID->y << 1) | y;
-    for (uint32_t x = 0; x < 2; ++x) {
+    for (uint16_t x = 0; x < 2; ++x) {
       uint32_t childX = (pQuadtreeID->x << 1) | x;
       CesiumGeometry::QuadtreeTileID childID{
           pQuadtreeID->level + 1,
           childX,
           childY};
 
-      uint64_t childIndex = y * 2 + x;
+      uint32_t childIndex = libmorton::morton2D_32_encode(x, y);
       uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
       uint32_t relativeChildLevel = relativeTileLevel + 1;
       if (relativeChildLevel == subtreeLevels) {

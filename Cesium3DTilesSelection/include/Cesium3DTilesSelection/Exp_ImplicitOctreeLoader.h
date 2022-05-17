@@ -2,11 +2,11 @@
 
 #include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
+#include <CesiumGeometry/OctreeTileID.h>
 
 namespace Cesium3DTilesSelection {
 using ImplicitOctreeBoundingVolume = std::variant<
     CesiumGeospatial::BoundingRegion,
-    CesiumGeospatial::S2CellBoundingVolume,
     CesiumGeometry::OrientedBoundingBox>;
 
 class ImplicitOctreeLoader : public TilesetContentLoader {
@@ -35,7 +35,22 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  uint32_t getSubtreeLevels() const noexcept;
+
+  uint32_t getAvailableLevels() const noexcept;
+
+  const ImplicitOctreeBoundingVolume& getBoundingVolume() const noexcept;
+
+  void addSubtreeAvailability(
+      const CesiumGeometry::OctreeTileID& subtreeID,
+      SubtreeAvailability&& subtreeAvailability);
+
 private:
+  static std::string resolveUrl(
+      const std::string& baseUrl,
+      const std::string& urlTemplate,
+      const CesiumGeometry::OctreeTileID& octreeID);
+
   std::string _baseUrl;
   std::string _contentUrlTemplate;
   std::string _subtreeUrlTemplate;

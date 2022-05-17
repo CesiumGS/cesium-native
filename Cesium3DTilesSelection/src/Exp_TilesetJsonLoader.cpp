@@ -231,7 +231,11 @@ void createImplicitQuadtreeLoader(
     uint32_t availableLevels,
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
+  // Quadtree does not support bounding sphere subdivision
   const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
+  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+    return;
+  }
 
   const CesiumGeospatial::BoundingRegion* pRegion =
       std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
@@ -293,13 +297,19 @@ void createImplicitOctreeLoader(
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
   const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
+  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+    return;
+  }
+
+  if (std::holds_alternative<CesiumGeospatial::S2CellBoundingVolume>(
+          boundingVolume)) {
+    return;
+  }
 
   const CesiumGeospatial::BoundingRegion* pRegion =
       std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
   const CesiumGeometry::OrientedBoundingBox* pBox =
       std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
-  const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
-      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
 
   // the implicit loader will be the child loader of this tileset json loader
   TilesetContentLoader* pImplicitLoader = nullptr;
@@ -321,16 +331,6 @@ void createImplicitOctreeLoader(
         subtreeLevels,
         availableLevels,
         *pBox);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  } else if (pS2Cell) {
-    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pS2Cell);
     pImplicitLoader = pLoader.get();
     currentLoader.addChildLoader(std::move(pLoader));
   }
@@ -386,12 +386,6 @@ void parseImplicitTileset(
   auto subtreesUriIt = subtrees.FindMember("uri");
   if (subtreesUriIt == subtrees.MemberEnd() ||
       !subtreesUriIt->value.IsString()) {
-    return;
-  }
-
-  // Quadtree and Octree does not support bounding sphere subdivision
-  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
     return;
   }
 
