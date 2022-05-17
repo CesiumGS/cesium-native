@@ -1082,9 +1082,8 @@ void Tile::upsampleParent(
             // We can't necessarily trust our original bounding volume, so
             // recompute it here. See:
             // https://github.com/CesiumGS/cesium-native/issues/385
-            // pContent->updatedBoundingVolume =
-            //    GltfContent::computeBoundingRegion(*pContent->model,
-            //    transform);
+            pContent->updatedBoundingVolume =
+                GltfContent::computeBoundingRegion(*pContent->model, transform);
 
             void* pRendererResources = processNewTileContent(
                 pPrepareRendererResources,
