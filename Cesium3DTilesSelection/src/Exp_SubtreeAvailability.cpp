@@ -460,15 +460,10 @@ bool SubtreeAvailability::isSubtreeAvailable(
     return constantAvailability->constant;
   }
 
-  const SubtreeBufferViewAvailability* bufferViewAvailability =
-      std::get_if<SubtreeBufferViewAvailability>(&_subtreeAvailability);
-  uint64_t availabilityBitIndex = relativeSubtreeMortonId;
-
-  const uint64_t byteIndex = availabilityBitIndex / 8;
-  const uint64_t bitIndex = availabilityBitIndex % 8;
-  const int bitValue =
-      static_cast<int>(bufferViewAvailability->view[byteIndex] >> bitIndex) & 1;
-  return bitValue == 1;
+  return isAvailableUsingBufferView(
+      0,
+      relativeSubtreeMortonId,
+      _subtreeAvailability);
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>>
@@ -521,16 +516,30 @@ bool SubtreeAvailability::isAvailable(
     return constantAvailability->constant;
   }
 
+  uint64_t numOfTilesFromRootToParentLevel =
+      ((1 << ((_childCount >> 1) * relativeTileLevel)) - 1) / (_childCount - 1);
+
+  return isAvailableUsingBufferView(
+      numOfTilesFromRootToParentLevel,
+      relativeTileMortonId,
+      availabilityView);
+}
+
+bool SubtreeAvailability::isAvailableUsingBufferView(
+    uint64_t numOfTilesFromRootToParentLevel,
+    uint64_t relativeTileMortonId,
+    const AvailabilityView& availabilityView) const noexcept {
+
+  uint64_t availabilityBitIndex =
+      numOfTilesFromRootToParentLevel + relativeTileMortonId;
+
   const SubtreeBufferViewAvailability* bufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
-  uint64_t levelOffset =
-      ((1 << ((_childCount >> 1) * relativeTileLevel)) - 1) / (_childCount - 1);
-  uint64_t availabilityBitIndex = levelOffset + relativeTileMortonId;
-
   const uint64_t byteIndex = availabilityBitIndex / 8;
   const uint64_t bitIndex = availabilityBitIndex % 8;
   const int bitValue =
       static_cast<int>(bufferViewAvailability->view[byteIndex] >> bitIndex) & 1;
+
   return bitValue == 1;
 }
 } // namespace Cesium3DTilesSelection

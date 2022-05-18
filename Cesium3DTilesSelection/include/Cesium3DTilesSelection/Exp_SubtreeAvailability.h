@@ -52,6 +52,11 @@ private:
       uint64_t relativeTileMortonId,
       const AvailabilityView& availabilityView) const noexcept;
 
+  bool isAvailableUsingBufferView(
+      uint64_t numOfTilesFromRootToParentLevel,
+      uint64_t relativeTileMortonId,
+      const AvailabilityView& availabilityView) const noexcept;
+
   uint32_t _childCount;
   AvailabilityView _tileAvailability;
   AvailabilityView _subtreeAvailability;
