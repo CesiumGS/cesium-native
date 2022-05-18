@@ -411,7 +411,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
 
     SubtreeContentInitializer subtreeInitializer{this, subtreeID};
     return SubtreeAvailability::loadSubtree(
-               4,
+               2,
                loadInfo.asyncSystem,
                loadInfo.pAssetAccessor,
                loadInfo.pLogger,

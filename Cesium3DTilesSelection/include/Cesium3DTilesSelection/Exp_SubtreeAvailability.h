@@ -21,7 +21,7 @@ using AvailabilityView =
 class SubtreeAvailability {
 public:
   SubtreeAvailability(
-      uint32_t childCount,
+      uint32_t powerOf2,
       AvailabilityView tileAvailability,
       AvailabilityView subtreeAvailability,
       std::vector<AvailabilityView>&& contentAvailability,
@@ -39,7 +39,7 @@ public:
   bool isSubtreeAvailable(uint64_t relativeSubtreeMortonId) const noexcept;
 
   static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
-      uint32_t childCount,
+      uint32_t powerOf2,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -58,6 +58,7 @@ private:
       const AvailabilityView& availabilityView) const noexcept;
 
   uint32_t _childCount;
+  uint32_t _powerOf2;
   AvailabilityView _tileAvailability;
   AvailabilityView _subtreeAvailability;
   std::vector<AvailabilityView> _contentAvailability;

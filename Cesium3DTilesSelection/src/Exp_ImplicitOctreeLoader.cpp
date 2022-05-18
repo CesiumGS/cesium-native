@@ -381,7 +381,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
 
     SubtreeContentInitializer subtreeInitializer{this, subtreeID};
     return SubtreeAvailability::loadSubtree(
-               8,
+               3,
                loadInfo.asyncSystem,
                loadInfo.pAssetAccessor,
                loadInfo.pLogger,
