@@ -109,7 +109,7 @@ function(configure_cesium_library targetName)
         )
     endif()
 
-    if (NOT ${targetName} MATCHES "cesium-native-tests")
+    if (NOT ${targetName} MATCHES "-tests")
         string(TOUPPER ${targetName} capitalizedTargetName)
         target_compile_definitions(
             ${targetName}
@@ -186,8 +186,8 @@ install(TARGETS csprng)
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
-# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail. 
-# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered 
+# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail.
+# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered
 # private to cesium-native), so just set the PUBLIC_HEADER to an empty string.
 set_target_properties(ktx_read PROPERTIES PUBLIC_HEADER "")
 install(TARGETS ktx_read)

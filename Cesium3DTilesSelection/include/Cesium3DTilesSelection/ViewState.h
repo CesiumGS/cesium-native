@@ -25,7 +25,7 @@ class CESIUM3DTILESSELECTION_API ViewState final {
   // TODO: Add support for orthographic and off-center perspective frustums
 public:
   /**
-   * @brief Creates a new instance of a view state.
+   * @brief Creates a new instance.
    *
    * @param position The position of the eye point of the camera.
    * @param direction The view direction vector of the camera.
@@ -35,12 +35,8 @@ public:
    * angle of the camera, in radians.
    * @param verticalFieldOfView The vertical field-of-view (opening)
    * angle of the camera, in radians.
-   * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
-   * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
    */
-  static ViewState create(
+  ViewState(
       const glm::dvec3& position,
       const glm::dvec3& direction,
       const glm::dvec3& up,
@@ -49,6 +45,21 @@ public:
       double verticalFieldOfView,
       const CesiumGeospatial::Ellipsoid& ellipsoid =
           CesiumGeospatial::Ellipsoid::WGS84);
+
+  /**
+   * @brief Constructs a default instance.
+   *
+   * The view will have the following properties:
+   *   * `position`: (7378137.0, 0, 0) (A million meters above the WGS84
+   *      ellipsoid surface)
+   *   * `direction`: (-1.0, 0.0, 0.0)
+   *   * `up`: (0.0, 0.0, 1.0)
+   *   * `viewportSize`: (1000, 1000)
+   *   * `horizontalFieldOfView`: 60 degrees (~1.05 radians)
+   *   * `verticalFieldOfView`: 60 degrees (~1.05 radians)
+   *   * `ellipsoid`: `Ellipsoid::WGS84`
+   */
+  ViewState();
 
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
@@ -143,39 +154,17 @@ public:
       const noexcept;
 
 private:
-  /**
-   * @brief Creates a new instance.
-   *
-   * @param position The position of the eye point of the camera.
-   * @param direction The view direction vector of the camera.
-   * @param up The up vector of the camera.
-   * @param viewportSize The size of the viewport, in pixels.
-   * @param horizontalFieldOfView The horizontal field-of-view (opening)
-   * angle of the camera, in radians.
-   * @param verticalFieldOfView The vertical field-of-view (opening)
-   * angle of the camera, in radians.
-   */
-  ViewState(
-      const glm::dvec3& position,
-      const glm::dvec3& direction,
-      const glm::dvec3& up,
-      const glm::dvec2& viewportSize,
-      double horizontalFieldOfView,
-      double verticalFieldOfView,
-      const std::optional<CesiumGeospatial::Cartographic>&
-          positionCartographic);
+  glm::dvec3 _position;
+  glm::dvec3 _direction;
+  glm::dvec3 _up;
+  glm::dvec2 _viewportSize;
+  double _horizontalFieldOfView;
+  double _verticalFieldOfView;
 
-  const glm::dvec3 _position;
-  const glm::dvec3 _direction;
-  const glm::dvec3 _up;
-  const glm::dvec2 _viewportSize;
-  const double _horizontalFieldOfView;
-  const double _verticalFieldOfView;
+  double _sseDenominator;
+  std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const double _sseDenominator;
-  const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
-
-  const CullingVolume _cullingVolume;
+  CullingVolume _cullingVolume;
 };
 
 } // namespace Cesium3DTilesSelection

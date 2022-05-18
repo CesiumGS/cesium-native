@@ -9,24 +9,6 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
-/* static */ ViewState ViewState::create(
-    const glm::dvec3& position,
-    const glm::dvec3& direction,
-    const glm::dvec3& up,
-    const glm::dvec2& viewportSize,
-    double horizontalFieldOfView,
-    double verticalFieldOfView,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  return ViewState(
-      position,
-      direction,
-      up,
-      viewportSize,
-      horizontalFieldOfView,
-      verticalFieldOfView,
-      ellipsoid.cartesianToCartographic(position));
-}
-
 ViewState::ViewState(
     const glm::dvec3& position,
     const glm::dvec3& direction,
@@ -34,7 +16,7 @@ ViewState::ViewState(
     const glm::dvec2& viewportSize,
     double horizontalFieldOfView,
     double verticalFieldOfView,
-    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic)
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position(position),
       _direction(direction),
       _up(up),
@@ -42,13 +24,22 @@ ViewState::ViewState(
       _horizontalFieldOfView(horizontalFieldOfView),
       _verticalFieldOfView(verticalFieldOfView),
       _sseDenominator(2.0 * glm::tan(0.5 * verticalFieldOfView)),
-      _positionCartographic(positionCartographic),
+      _positionCartographic(ellipsoid.cartesianToCartographic(position)),
       _cullingVolume(createCullingVolume(
           position,
           direction,
           up,
           horizontalFieldOfView,
           verticalFieldOfView)) {}
+
+ViewState::ViewState()
+    : ViewState(
+          {7378137.0, 0.0, 0.0},
+          {-1.0, 0.0, 0.0},
+          {0.0, 0.0, 1.0},
+          {1000.0, 1000.0},
+          CesiumUtility::Math::degreesToRadians(60.0),
+          CesiumUtility::Math::degreesToRadians(60.0)) {}
 
 template <class T>
 static bool isBoundingVolumeVisible(
