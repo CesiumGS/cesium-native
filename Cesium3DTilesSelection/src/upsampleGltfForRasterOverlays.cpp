@@ -172,7 +172,8 @@ std::optional<Model> upsampleGltfForRasterOverlays(
     }
   }
 
-  return containsPrimitives ? std::make_optional<Model>(result) : std::nullopt;
+  return containsPrimitives ? std::make_optional<Model>(std::move(result))
+                            : std::nullopt;
 }
 
 static void copyVertexAttributes(
