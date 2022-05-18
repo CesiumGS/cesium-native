@@ -101,7 +101,7 @@ AvailabilityView parseAvailabilityView(
 }
 
 std::optional<SubtreeAvailability> createSubtreeAvailability(
-    uint32_t childCount,
+    uint32_t powerOf2,
     const rapidjson::Document& subtreeJson,
     std::vector<std::vector<std::byte>>&& buffers) {
   // make sure all the required fields exist
@@ -181,7 +181,7 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
   }
 
   return SubtreeAvailability{
-      childCount,
+      powerOf2,
       tileAvailability,
       childSubtreeAvailability,
       std::move(contentAvailability),
@@ -189,7 +189,7 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
-    uint32_t childCount,
+    uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -242,7 +242,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
     // SubtreeAvailability later
     if (!requestBuffers.empty()) {
       return asyncSystem.all(std::move(requestBuffers))
-          .thenInWorkerThread([childCount,
+          .thenInWorkerThread([powerOf2,
                                resolvedBuffers = std::move(resolvedBuffers),
                                subtreeJson = std::move(subtreeJson)](
                                   std::vector<RequestedSubtreeBuffer>&&
@@ -253,7 +253,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
             }
 
             return createSubtreeAvailability(
-                childCount,
+                powerOf2,
                 subtreeJson,
                 std::move(resolvedBuffers));
           });
@@ -261,13 +261,13 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
   }
 
   return asyncSystem.createResolvedFuture(createSubtreeAvailability(
-      childCount,
+      powerOf2,
       subtreeJson,
       std::move(resolvedBuffers)));
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
-    uint32_t childCount,
+    uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -290,7 +290,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
   }
 
   return parseJsonSubtree(
-      childCount,
+      powerOf2,
       std::move(asyncSystem),
       std::move(pAssetAccessor),
       std::move(pLogger),
@@ -302,7 +302,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>>
 parseBinarySubtreeRequest(
-    uint32_t childCount,
+    uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -366,7 +366,7 @@ parseBinarySubtreeRequest(
   }
 
   return parseJsonSubtree(
-      childCount,
+      powerOf2,
       std::move(asyncSystem),
       std::move(pAssetAccessor),
       std::move(pLogger),
@@ -377,7 +377,7 @@ parseBinarySubtreeRequest(
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
-    uint32_t childCount,
+    uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -399,7 +399,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
 
   if (isBinarySubtree) {
     return parseBinarySubtreeRequest(
-        childCount,
+        powerOf2,
         std::move(asyncSystem),
         std::move(pAssetAccessor),
         std::move(pLogger),
@@ -407,7 +407,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
         std::move(requestHeaders));
   } else {
     return parseJsonSubtreeRequest(
-        childCount,
+        powerOf2,
         std::move(asyncSystem),
         std::move(pAssetAccessor),
         std::move(pLogger),
@@ -418,18 +418,19 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
 } // namespace
 
 SubtreeAvailability::SubtreeAvailability(
-    uint32_t childCount,
+    uint32_t powerOf2,
     AvailabilityView tileAvailability,
     AvailabilityView subtreeAvailability,
     std::vector<AvailabilityView>&& contentAvailability,
     std::vector<std::vector<std::byte>>&& buffers)
-    : _childCount{childCount},
+    : _childCount{1U << powerOf2},
+      _powerOf2{powerOf2},
       _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
       _contentAvailability{std::move(contentAvailability)},
       _buffers{std::move(buffers)} {
   assert(
-      (childCount == 4 || childCount == 8) &&
+      (_childCount == 4 || _childCount == 8) &&
       "Only support quadtree and octree");
 }
 
@@ -468,14 +469,14 @@ bool SubtreeAvailability::isSubtreeAvailable(
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>>
 SubtreeAvailability::loadSubtree(
-    uint32_t childCount,
+    uint32_t powerOf2,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& subtreeUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
-      .thenInWorkerThread([childCount,
+      .thenInWorkerThread([powerOf2,
                            asyncSystem = asyncSystem,
                            pAssetAccessor = pAssetAccessor,
                            pLogger = pLogger,
@@ -497,7 +498,7 @@ SubtreeAvailability::loadSubtree(
         }
 
         return parseSubtreeRequest(
-            childCount,
+            powerOf2,
             std::move(asyncSystem),
             std::move(pAssetAccessor),
             std::move(pLogger),
@@ -517,7 +518,7 @@ bool SubtreeAvailability::isAvailable(
   }
 
   uint64_t numOfTilesFromRootToParentLevel =
-      ((1 << ((_childCount >> 1) * relativeTileLevel)) - 1) / (_childCount - 1);
+      ((1 << (_powerOf2 * relativeTileLevel)) - 1) / (_childCount - 1);
 
   return isAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel,
