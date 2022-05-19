@@ -1,0 +1,20 @@
+{
+  "asset": {
+    "version": ""
+  },
+  "geometricError": 50.0,
+  "root": {
+    "boundingVolume": {},
+    "geometricError": 50.0,
+    "extensions": {
+      "3DTILES_implicit_tiling": {
+        "subdivisionScheme": "OCTREE",
+        "subtreeLevels": 5,
+        "availableLevels": 5,
+        "subtrees": {
+          "uri": "subtree/{level}/{x}/{y}/{z}.json"
+        }
+      }
+    }
+  }
+}

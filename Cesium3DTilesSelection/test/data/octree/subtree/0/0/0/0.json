@@ -1,0 +1,28 @@
+{
+  "buffers": [{
+      "uri": "subtree/0/0/0/0.bin",
+      "byteLength": 42130
+    }],
+  "bufferViews": [{
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 4681
+    }, {
+      "buffer": 0,
+      "byteOffset": 4681,
+      "byteLength": 4681
+    }, {
+      "buffer": 0,
+      "byteOffset": 9362,
+      "byteLength": 32768
+    }],
+  "tileAvailability": {
+    "bitstream": 0
+  },
+  "contentAvailability": [{
+      "bitstream": 1
+    }],
+  "childSubtreeAvailability": {
+    "bitstream": 2
+  }
+}
