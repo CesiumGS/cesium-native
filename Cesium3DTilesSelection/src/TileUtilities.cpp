@@ -199,8 +199,23 @@ bool outsidePolygons(
       }
     }
 
-    // Check if the polygon perimeter intersects the bounding globe rectangle
-    // edges.
+    // Check if an arbitrary point on the polygon is in the globe rectangle.
+    if (withinTriangle(
+            vertices[0],
+            rectangleCorners[0],
+            rectangleCorners[1],
+            rectangleCorners[2]) ||
+        withinTriangle(
+            vertices[0],
+            rectangleCorners[0],
+            rectangleCorners[2],
+            rectangleCorners[3])) {
+      return false;
+    }
+
+    // Now we know the rectangle does not fully contain the polygon and the
+    // polygon does not fully contain the rectangle. Now check if the polygon
+    // perimeter intersects the bounding globe rectangle edges.
     for (size_t j = 0; j < vertices.size(); ++j) {
       const glm::dvec2& a = vertices[j];
       const glm::dvec2& b = vertices[(j + 1) % vertices.size()];
