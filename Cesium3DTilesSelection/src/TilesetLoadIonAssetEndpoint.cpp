@@ -110,7 +110,7 @@ Tileset::LoadIonAssetEndpoint::Private::loadAssetEndpoint(
     const std::string& url) {
   auto cacheIt = endpointCache.find(url);
   if (cacheIt != endpointCache.end()) {
-    return tileset.getAsyncSystem().createResolvedFuture().thenInMainThread(
+    return tileset.getAsyncSystem()->createResolvedFuture().thenInMainThread(
         [&tileset, endpoint = cacheIt->second]() {
           return mainThreadLoadTilesetFromAssetEndpoint(tileset, endpoint);
         });
@@ -182,7 +182,7 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
     error.message = fmt::format(
         "No response received for asset request {}",
         error.pRequest->url());
-    return tileset.getAsyncSystem().createResolvedFuture(
+    return tileset.getAsyncSystem()->createResolvedFuture(
         std::make_optional(std::move(error)));
   }
 
@@ -195,7 +195,7 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
         "Received status code {} for asset response {}",
         pResponse->statusCode(),
         error.pRequest->url());
-    return tileset.getAsyncSystem().createResolvedFuture(
+    return tileset.getAsyncSystem()->createResolvedFuture(
         std::make_optional(std::move(error)));
   }
 
@@ -214,7 +214,7 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
         "offset {}",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
-    return tileset.getAsyncSystem().createResolvedFuture(
+    return tileset.getAsyncSystem()->createResolvedFuture(
         std::make_optional(std::move(error)));
   }
 
@@ -258,7 +258,7 @@ Tileset::LoadIonAssetEndpoint::Private::mainThreadHandleResponse(
     error.type = TilesetLoadType::CesiumIon;
     error.message =
         fmt::format("Received unsupported asset response type: {}", type);
-    return tileset.getAsyncSystem().createResolvedFuture(
+    return tileset.getAsyncSystem()->createResolvedFuture(
         std::make_optional(std::move(error)));
   }
   endpoint.type = type;

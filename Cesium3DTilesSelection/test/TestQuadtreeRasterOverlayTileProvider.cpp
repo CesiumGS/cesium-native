@@ -19,7 +19,7 @@ class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -34,7 +34,7 @@ public:
       uint32_t imageHeight) noexcept
       : QuadtreeRasterOverlayTileProvider(
             owner,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             credit,
             pPrepareRendererResources,
@@ -71,7 +71,7 @@ public:
           std::byte(tileID.level));
     }
 
-    return this->getAsyncSystem().createResolvedFuture(std::move(result));
+    return this->getAsyncSystem()->createResolvedFuture(std::move(result));
   }
 };
 
@@ -84,7 +84,7 @@ public:
 
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
   createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -99,7 +99,7 @@ public:
         .createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(
             std::make_unique<TestTileProvider>(
                 *pOwner,
-                asyncSystem,
+                pAsyncSystem,
                 pAssetAccessor,
                 std::nullopt,
                 pPrepareRendererResources,

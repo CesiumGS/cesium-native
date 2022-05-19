@@ -35,14 +35,14 @@ struct Tileset::LoadTilesetDotJson::Private {
   static Future<LoadResult> workerThreadHandleResponse(
       std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
       std::unique_ptr<TileContext>&& pContext,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
   static Future<void> workerThreadLoadTileContext(
       const rapidjson::Document& layerJson,
       TileContext& context,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -50,7 +50,7 @@ struct Tileset::LoadTilesetDotJson::Private {
       Tile& tile,
       const rapidjson::Document& layerJson,
       TileContext& context,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
@@ -102,7 +102,7 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
                  .pAssetAccessor->get(tileset.getAsyncSystem(), url, headers)
                  .thenInWorkerThread(
                      [pLogger = tileset.getExternals().pLogger,
-                      asyncSystem = tileset.getAsyncSystem(),
+                      pAsyncSystem = tileset.getAsyncSystem(),
                       pContext = std::move(pContext),
                       useWaterMask =
                           tileset.getOptions().contentOptions.enableWaterMask](
@@ -110,7 +110,7 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
                        return Private::workerThreadHandleResponse(
                            std::move(pRequest),
                            std::move(pContext),
-                           asyncSystem,
+                           pAsyncSystem,
                            pLogger,
                            useWaterMask);
                      })
@@ -180,7 +180,7 @@ Future<LoadResult>
 Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   const IAssetResponse* pResponse = pRequest->response();
@@ -189,7 +189,7 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         "Did not receive a valid response for tileset {}",
         pRequest->url());
     const Tileset* pTileset = pContext->pTileset;
-    return asyncSystem.createResolvedFuture(LoadResult{
+    return pAsyncSystem->createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
@@ -207,7 +207,7 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         pResponse->statusCode(),
         pRequest->url());
     const Tileset* pTileset = pContext->pTileset;
-    return asyncSystem.createResolvedFuture(LoadResult{
+    return pAsyncSystem->createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
@@ -231,7 +231,7 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         tileset.GetParseError(),
         tileset.GetErrorOffset());
     const Tileset* pTileset = pContext->pTileset;
-    return asyncSystem.createResolvedFuture(LoadResult{
+    return pAsyncSystem->createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
         false,
@@ -278,7 +278,7 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
                *pRootTile,
                tileset,
                *pContext,
-               asyncSystem,
+               pAsyncSystem,
                pLogger,
                useWaterMask)
         .thenImmediately([pRootTile = std::move(pRootTile),
@@ -291,7 +291,7 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
         });
   }
 
-  return asyncSystem.createResolvedFuture(LoadResult{
+  return pAsyncSystem->createResolvedFuture(LoadResult{
       std::move(pContext),
       std::move(pRootTile),
       supportsRasterOverlays,
@@ -349,7 +349,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     const rapidjson::Document& layerJson,
     TileContext& context,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   const auto tilesetVersionIt = layerJson.FindMember("version");
@@ -401,7 +401,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
         pLogger,
         "Tileset contained an unknown projection value: {}",
         projectionString);
-    return asyncSystem.createResolvedFuture();
+    return pAsyncSystem->createResolvedFuture();
   }
 
   BoundingVolume boundingVolume =
@@ -491,9 +491,9 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
     }
     resolvedUrl += "layer.json";
     auto pAssetAccessor = context.pTileset->getExternals().pAssetAccessor;
-    return pAssetAccessor->get(asyncSystem, resolvedUrl, context.requestHeaders)
+    return pAssetAccessor->get(pAsyncSystem, resolvedUrl, context.requestHeaders)
         .thenInWorkerThread(
-            [asyncSystem, pLogger, &context, useWaterMask](
+            [pAsyncSystem, pLogger, &context, useWaterMask](
                 std::shared_ptr<IAssetRequest>&& pRequest) mutable {
               const IAssetResponse* pResponse = pRequest->response();
               if (!pResponse) {
@@ -501,7 +501,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                     pLogger,
                     "Did not receive a valid response for parent layer.json {}",
                     pRequest->url());
-                return asyncSystem.createResolvedFuture();
+                return pAsyncSystem->createResolvedFuture();
               }
 
               if (pResponse->statusCode() != 0 &&
@@ -512,7 +512,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                     "Received status code {} for parent layer.json {}",
                     pResponse->statusCode(),
                     pRequest->url());
-                return asyncSystem.createResolvedFuture();
+                return pAsyncSystem->createResolvedFuture();
               }
 
               const gsl::span<const std::byte> data = pResponse->data();
@@ -529,7 +529,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
                     "{}",
                     parentLayerJson.GetParseError(),
                     parentLayerJson.GetErrorOffset());
-                return asyncSystem.createResolvedFuture();
+                return pAsyncSystem->createResolvedFuture();
               }
 
               context.pUnderlyingContext = std::make_unique<TileContext>();
@@ -546,19 +546,19 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
               return Private::workerThreadLoadTileContext(
                   parentLayerJson,
                   *context.pUnderlyingContext,
-                  asyncSystem,
+                  pAsyncSystem,
                   pLogger,
                   useWaterMask);
             });
   }
-  return asyncSystem.createResolvedFuture();
+  return pAsyncSystem->createResolvedFuture();
 }
 
 Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
     Tile& tile,
     const rapidjson::Document& layerJson,
     TileContext& context,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
   context.requestHeaders.push_back(std::make_pair(
@@ -568,7 +568,7 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTerrainTile(
   return Private::workerThreadLoadTileContext(
              layerJson,
              context,
-             asyncSystem,
+             pAsyncSystem,
              pLogger,
              useWaterMask)
       .thenImmediately([&tile, &context]() {

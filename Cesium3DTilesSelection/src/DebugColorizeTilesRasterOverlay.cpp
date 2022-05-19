@@ -16,14 +16,14 @@ class DebugTileProvider : public RasterOverlayTileProvider {
 public:
   DebugTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger)
       : RasterOverlayTileProvider(
             owner,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             std::nullopt,
             pPrepareRendererResources,
@@ -58,7 +58,7 @@ public:
     color += uint32_t(blue);
     pixels[0] = color;
 
-    return this->getAsyncSystem().createResolvedFuture(std::move(result));
+    return this->getAsyncSystem()->createResolvedFuture(std::move(result));
   }
 };
 
@@ -71,7 +71,7 @@ DebugColorizeTilesRasterOverlay::DebugColorizeTilesRasterOverlay(
 
 CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
 DebugColorizeTilesRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -79,11 +79,11 @@ DebugColorizeTilesRasterOverlay::createTileProvider(
     RasterOverlay* pOwner) {
   pOwner = pOwner ? pOwner : this;
 
-  return asyncSystem.createResolvedFuture(
+  return pAsyncSystem->createResolvedFuture(
       (std::unique_ptr<RasterOverlayTileProvider>)
           std::make_unique<DebugTileProvider>(
               *this,
-              asyncSystem,
+              pAsyncSystem,
               pAssetAccessor,
               pPrepareRendererResources,
               pLogger));

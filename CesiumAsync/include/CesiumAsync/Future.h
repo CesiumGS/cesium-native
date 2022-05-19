@@ -32,7 +32,7 @@ public:
    * @brief Move constructor
    */
   Future(Future<T>&& rhs) noexcept
-      : _pSchedulers(std::move(rhs._pSchedulers)),
+      : _pAsyncSystem(std::move(rhs._pAsyncSystem)),
         _task(std::move(rhs._task)) {}
 
   Future(const Future<T>& rhs) = delete;
@@ -60,7 +60,7 @@ public:
   CesiumImpl::ContinuationFutureType_t<Func, T>
   thenInWorkerThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->workerThread.immediate,
+        this->_pAsyncSystem->_schedulers.workerThread.immediate,
         "waiting for worker thread",
         std::forward<Func>(f));
   }
@@ -86,7 +86,7 @@ public:
   template <typename Func>
   CesiumImpl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->mainThread.immediate,
+        this->_pAsyncSystem->_schedulers.mainThread.immediate,
         "waiting for main thread",
         std::forward<Func>(f));
   }
@@ -110,7 +110,7 @@ public:
   template <typename Func>
   CesiumImpl::ContinuationFutureType_t<Func, T> thenImmediately(Func&& f) && {
     return CesiumImpl::ContinuationFutureType_t<Func, T>(
-        this->_pSchedulers,
+        this->_pAsyncSystem,
         _task.then(
             async::inline_scheduler(),
             CesiumImpl::WithTracing<T>::end(nullptr, std::forward<Func>(f))));
@@ -166,7 +166,7 @@ public:
    */
   template <typename Func> Future<T> catchInMainThread(Func&& f) && {
     return std::move(*this).catchWithScheduler(
-        this->_pSchedulers->mainThread.immediate,
+        this->_pAsyncSystem->_schedulers.mainThread.immediate,
         std::forward<Func>(f));
   }
 
@@ -230,14 +230,14 @@ public:
    * @return The `SharedFuture`.
    */
   SharedFuture<T> share() && {
-    return SharedFuture<T>(this->_pSchedulers, this->_task.share());
+    return SharedFuture<T>(this->_pAsyncSystem, this->_task.share());
   }
 
 private:
   Future(
-      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<const AsyncSystem>& pAsyncSystem,
       async::task<T>&& task) noexcept
-      : _pSchedulers(pSchedulers), _task(std::move(task)) {}
+      : _pAsyncSystem(pAsyncSystem), _task(std::move(task)) {}
 
   template <typename Func, typename Scheduler>
   CesiumImpl::ContinuationFutureType_t<Func, T> thenWithScheduler(
@@ -259,7 +259,7 @@ private:
 #endif
 
     return CesiumImpl::ContinuationFutureType_t<Func, T>(
-        this->_pSchedulers,
+        this->_pAsyncSystem,
         task.then(
             scheduler,
             CesiumImpl::WithTracing<T>::end(
@@ -271,7 +271,7 @@ private:
   CesiumImpl::ContinuationFutureType_t<Func, std::exception>
   catchWithScheduler(Scheduler& scheduler, Func&& f) && {
     return CesiumImpl::ContinuationFutureType_t<Func, std::exception>(
-        this->_pSchedulers,
+        this->_pAsyncSystem,
         this->_task.then(
             async::inline_scheduler(),
             CesiumImpl::CatchFunction<Func, T, Scheduler>{
@@ -279,7 +279,7 @@ private:
                 std::forward<Func>(f)}));
   }
 
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<const AsyncSystem> _pAsyncSystem;
   async::task<T> _task;
 
   friend class AsyncSystem;

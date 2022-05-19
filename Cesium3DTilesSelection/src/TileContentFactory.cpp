@@ -110,8 +110,8 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
       "'{}'.",
       baseContentType,
       magic);
-  return input.asyncSystem
-      .createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
+  return input.pAsyncSystem
+      ->createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 
 /**

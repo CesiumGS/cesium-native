@@ -8,7 +8,7 @@ using namespace Cesium3DTilesSelection;
 using namespace CesiumAsync;
 
 TileContentLoadInput::TileContentLoadInput()
-    : asyncSystem(nullptr),
+    : pAsyncSystem(nullptr),
       pLogger(nullptr),
       pAssetAccessor(nullptr),
       pRequest(nullptr),
@@ -27,7 +27,7 @@ TileContentLoadInput::TileContentLoadInput()
       contentOptions() {}
 
 TileContentLoadInput::TileContentLoadInput(const Tile& tile)
-    : asyncSystem(nullptr),
+    : pAsyncSystem(nullptr),
       pLogger(nullptr),
       pAssetAccessor(nullptr),
       pRequest(nullptr),
@@ -41,12 +41,12 @@ TileContentLoadInput::TileContentLoadInput(const Tile& tile)
 }
 
 TileContentLoadInput::TileContentLoadInput(
-    const AsyncSystem& asyncSystem_,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor_,
     const std::shared_ptr<IAssetRequest>& pRequest_,
     const Tile& tile)
-    : asyncSystem(asyncSystem_),
+    : pAsyncSystem(pAsyncSystem_),
       pLogger(pLogger_),
       pAssetAccessor(pAssetAccessor_),
       pRequest(pRequest_),
@@ -60,7 +60,7 @@ TileContentLoadInput::TileContentLoadInput(
 }
 
 TileContentLoadInput::TileContentLoadInput(
-    const AsyncSystem& asyncSystem_,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor_,
     const std::shared_ptr<IAssetRequest>& pRequest_,
@@ -71,7 +71,7 @@ TileContentLoadInput::TileContentLoadInput(
     double tileGeometricError_,
     const glm::dmat4& tileTransform_,
     const TilesetContentOptions& contentOptions_)
-    : asyncSystem(asyncSystem_),
+    : pAsyncSystem(pAsyncSystem_),
       pLogger(pLogger_),
       pAssetAccessor(pAssetAccessor_),
       pRequest(pRequest_),

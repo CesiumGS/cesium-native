@@ -46,12 +46,12 @@ public:
 
   /** @copydoc IAssetAccessor::get */
   virtual Future<std::shared_ptr<IAssetRequest>>
-  get(const AsyncSystem& asyncSystem,
+  get(const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers) override;
 
   virtual Future<std::shared_ptr<IAssetRequest>> request(
-      const AsyncSystem& asyncSystem,
+      const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers,

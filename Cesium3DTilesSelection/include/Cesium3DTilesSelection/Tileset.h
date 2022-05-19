@@ -116,13 +116,13 @@ public:
    * @brief Returns the {@link CesiumAsync::AsyncSystem} that is used for
    * dispatching asynchronous tasks.
    */
-  CesiumAsync::AsyncSystem& getAsyncSystem() noexcept {
-    return this->_asyncSystem;
+  const std::shared_ptr<CesiumAsync::AsyncSystem>& getAsyncSystem() noexcept {
+    return this->_pAsyncSystem;
   }
 
   /** @copydoc Tileset::getAsyncSystem() */
-  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {
-    return this->_asyncSystem;
+  const std::shared_ptr<CesiumAsync::AsyncSystem>& getAsyncSystem() const noexcept {
+    return this->_pAsyncSystem;
   }
 
   /** @copydoc Tileset::getOptions() */
@@ -497,7 +497,7 @@ private:
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
-  CesiumAsync::AsyncSystem _asyncSystem;
+  std::shared_ptr<CesiumAsync::AsyncSystem> _pAsyncSystem;
 
   // per-tileset credit passed in explicitly by the user through
   // `TilesetOptions`

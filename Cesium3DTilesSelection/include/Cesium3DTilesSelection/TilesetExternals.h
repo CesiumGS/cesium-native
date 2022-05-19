@@ -40,7 +40,7 @@ public:
    * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} from
    * {@link Tileset::updateView}.
    */
-  CesiumAsync::AsyncSystem asyncSystem;
+  std::shared_ptr<CesiumAsync::AsyncSystem> pAsyncSystem;
 
   /**
    * @brief An external {@link CreditSystem} that can be used to manage credit

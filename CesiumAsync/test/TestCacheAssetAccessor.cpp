@@ -88,7 +88,7 @@ public:
       : testRequest{request} {}
 
   virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
-  get(const AsyncSystem& asyncSystem,
+  get(const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::string& /* url */,
       const std::vector<THeader>& /* headers */
       ) override {

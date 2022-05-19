@@ -18,22 +18,22 @@ public:
       : mockCompletedRequests{std::move(mockCompletedRequests)} {}
 
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  get(const CesiumAsync::AsyncSystem& asyncSystem,
+  get(const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::string& url,
       const std::vector<THeader>&) override {
     auto mockRequestIt = mockCompletedRequests.find(url);
     if (mockRequestIt != mockCompletedRequests.end()) {
-      return asyncSystem.createResolvedFuture(
+      return pAsyncSystem->createResolvedFuture(
           std::shared_ptr<CesiumAsync::IAssetRequest>(mockRequestIt->second));
     }
 
-    return asyncSystem.createResolvedFuture(
+    return pAsyncSystem->createResolvedFuture(
         std::shared_ptr<CesiumAsync::IAssetRequest>(nullptr));
   }
 
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   request(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::string& /* verb */,
       const std::string& url,
       const std::vector<THeader>& headers,

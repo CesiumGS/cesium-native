@@ -33,7 +33,7 @@ namespace Cesium3DTilesSelection {
 Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
   return load(
-      input.asyncSystem,
+      input.pAsyncSystem,
       input.pLogger,
       input.pRequest->url(),
       input.pRequest->headers(),
@@ -44,7 +44,7 @@ GltfContent::load(const TileContentLoadInput& input) {
 
 /*static*/
 Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const HttpHeaders& headers,
@@ -78,7 +78,7 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
   }
 
   return CesiumGltfReader::GltfReader::resolveExternalData(
-             asyncSystem,
+             pAsyncSystem,
              url,
              headers,
              pAssetAccessor,

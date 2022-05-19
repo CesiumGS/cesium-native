@@ -95,7 +95,7 @@ std::string createAuthorizationErrorHtml(
 } // namespace
 
 /*static*/ CesiumAsync::Future<Connection> Connection::authorize(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& friendlyApplicationName,
     int64_t clientID,
@@ -233,7 +233,7 @@ std::string createAuthorizationErrorHtml(
 }
 
 Connection::Connection(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& accessToken,
     const std::string& apiUrl)
@@ -821,7 +821,7 @@ Connection::getIdFromToken(const std::string& token) {
 }
 
 /*static*/ CesiumAsync::Future<Connection> Connection::completeTokenExchange(
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t clientID,
     const std::string& ionApiUrl,

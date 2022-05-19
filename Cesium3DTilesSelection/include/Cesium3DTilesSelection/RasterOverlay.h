@@ -188,7 +188,7 @@ public:
    * This method does nothing if the tile provider has already been created or
    * is already in the process of being created.
    *
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to download assets like overlay
    * metadata and tiles.
    * @param pCreditSystem The {@link CreditSystem} to use when creating a
@@ -200,7 +200,7 @@ public:
    */
   CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>
   loadTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -214,7 +214,7 @@ public:
    * The created tile provider will not be returned via {@link getTileProvider}.
    * This method is primarily useful for overlays that aggregate other overlays.
    *
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to download assets like overlay
    * metadata and tiles.
    * @param pCreditSystem The {@link CreditSystem} to use when creating a
@@ -230,7 +230,7 @@ public:
    */
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
   createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -253,7 +253,7 @@ public:
 
 protected:
   void reportError(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlayLoadFailureDetails&& errorDetails);
   std::vector<Credit> _credits;

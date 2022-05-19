@@ -37,7 +37,7 @@ std::unordered_map<std::string, IonRasterOverlay::ExternalAssetEndpoint>
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 IonRasterOverlay::createTileProvider(
     const ExternalAssetEndpoint& endpoint,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -65,7 +65,7 @@ IonRasterOverlay::createTileProvider(
             std::make_pair("Authorization", "Bearer " + endpoint.accessToken)});
   }
   return _pAggregatedOverlay->createTileProvider(
-      asyncSystem,
+      pAsyncSystem,
       pAssetAccessor,
       pCreditSystem,
       pPrepareRendererResources,
@@ -75,7 +75,7 @@ IonRasterOverlay::createTileProvider(
 
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 IonRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -94,7 +94,7 @@ IonRasterOverlay::createTileProvider(
   if (cacheIt != IonRasterOverlay::endpointCache.end()) {
     return createTileProvider(
         cacheIt->second,
-        asyncSystem,
+        pAsyncSystem,
         pAssetAccessor,
         pCreditSystem,
         pPrepareRendererResources,
@@ -102,11 +102,11 @@ IonRasterOverlay::createTileProvider(
         pOwner);
   }
 
-  auto reportError = [this, asyncSystem, pLogger](
+  auto reportError = [this, pAsyncSystem, pLogger](
                          std::shared_ptr<IAssetRequest>&& pRequest,
                          const std::string& message) {
     this->reportError(
-        asyncSystem,
+        pAsyncSystem,
         pLogger,
         RasterOverlayLoadFailureDetails{
             this,
@@ -115,7 +115,7 @@ IonRasterOverlay::createTileProvider(
             message});
   };
 
-  return pAssetAccessor->get(asyncSystem, ionUrl)
+  return pAssetAccessor->get(pAsyncSystem, ionUrl)
       .thenInWorkerThread(
           [name = this->getName(), pLogger, reportError](
               std::shared_ptr<IAssetRequest>&& pRequest)
@@ -209,7 +209,7 @@ IonRasterOverlay::createTileProvider(
             return endpoint;
           })
       .thenInMainThread(
-          [asyncSystem,
+          [pAsyncSystem,
            pOwner,
            pAssetAccessor,
            pCreditSystem,
@@ -221,14 +221,14 @@ IonRasterOverlay::createTileProvider(
               IonRasterOverlay::endpointCache[ionUrl] = *endpoint;
               return createTileProvider(
                   *endpoint,
-                  asyncSystem,
+                  pAsyncSystem,
                   pAssetAccessor,
                   pCreditSystem,
                   pPrepareRendererResources,
                   pLogger,
                   pOwner);
             }
-            return asyncSystem.createResolvedFuture<
+            return pAsyncSystem->createResolvedFuture<
                 std::unique_ptr<RasterOverlayTileProvider>>(nullptr);
           });
 }

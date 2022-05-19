@@ -30,7 +30,7 @@ class WebMapServiceTileProvider final
 public:
   WebMapServiceTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -50,7 +50,7 @@ public:
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
             owner,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             credit,
             pPrepareRendererResources,
@@ -238,7 +238,7 @@ static bool validateCapabilities(
 
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 WebMapServiceRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -265,11 +265,11 @@ WebMapServiceRasterOverlay::createTileProvider(
                                   this->_options.credit.value()))
                             : std::nullopt;
 
-  auto reportError = [this, asyncSystem, pLogger](
+  auto reportError = [this, pAsyncSystem, pLogger](
                          const std::shared_ptr<IAssetRequest>& pRequest,
                          const std::string& message) {
     this->reportError(
-        asyncSystem,
+        pAsyncSystem,
         pLogger,
         RasterOverlayLoadFailureDetails{
             this,
@@ -278,10 +278,10 @@ WebMapServiceRasterOverlay::createTileProvider(
             message});
   };
 
-  return pAssetAccessor->get(asyncSystem, xmlUrlGetcapabilities, this->_headers)
+  return pAssetAccessor->get(pAsyncSystem, xmlUrlGetcapabilities, this->_headers)
       .thenInWorkerThread(
           [pOwner,
-           asyncSystem,
+           pAsyncSystem,
            pAssetAccessor,
            credit,
            pPrepareRendererResources,
@@ -342,7 +342,7 @@ WebMapServiceRasterOverlay::createTileProvider(
 
             return std::make_unique<WebMapServiceTileProvider>(
                 *pOwner,
-                asyncSystem,
+                pAsyncSystem,
                 pAssetAccessor,
                 credit,
                 pPrepareRendererResources,

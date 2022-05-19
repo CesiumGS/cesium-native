@@ -18,7 +18,7 @@ public:
   static CesiumAsync::Future<
       std::unique_ptr<CesiumGeometry::AvailabilitySubtree>>
   load(
-      CesiumAsync::AsyncSystem asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& url,
       const gsl::span<const std::byte>& data,

@@ -47,7 +47,7 @@ public:
    *
    * (Only public to be called from `Batched3DModelContent`)
    *
-   * @param asyncSystem The async system to use for requesting any external
+   * @param pAsyncSystem The async system to use for requesting any external
    * content.
    * @param pLogger Only used for logging
    * @param url The URL, only used for logging
@@ -59,7 +59,7 @@ public:
    * @return The {@link TileContentLoadResult}
    */
   static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& url,
       const CesiumAsync::HttpHeaders& headers,

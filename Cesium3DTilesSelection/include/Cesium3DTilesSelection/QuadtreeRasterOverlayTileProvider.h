@@ -25,7 +25,7 @@ public:
    * @brief Creates a new instance.
    *
    * @param owner The raster overlay that owns this tile provider.
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
    * @param credit The {@link Credit} for this tile provider, if it exists.
@@ -42,7 +42,7 @@ public:
    */
   QuadtreeRasterOverlayTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRendererResources>&

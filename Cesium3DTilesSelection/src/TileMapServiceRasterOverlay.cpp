@@ -25,7 +25,7 @@ class TileMapServiceTileProvider final
 public:
   TileMapServiceTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -43,7 +43,7 @@ public:
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
             owner,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             credit,
             pPrepareRendererResources,
@@ -132,7 +132,7 @@ static std::optional<double> getAttributeDouble(
 
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 TileMapServiceRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -149,11 +149,11 @@ TileMapServiceRasterOverlay::createTileProvider(
                                   pOwner->getOptions().showCreditsOnScreen))
                             : std::nullopt;
 
-  auto reportError = [this, asyncSystem, pLogger](
+  auto reportError = [this, pAsyncSystem, pLogger](
                          const std::shared_ptr<IAssetRequest>& pRequest,
                          const std::string& message) {
     this->reportError(
-        asyncSystem,
+        pAsyncSystem,
         pLogger,
         RasterOverlayLoadFailureDetails{
             this,
@@ -162,10 +162,10 @@ TileMapServiceRasterOverlay::createTileProvider(
             message});
   };
 
-  return pAssetAccessor->get(asyncSystem, xmlUrl, this->_headers)
+  return pAssetAccessor->get(pAsyncSystem, xmlUrl, this->_headers)
       .thenInWorkerThread(
           [pOwner,
-           asyncSystem,
+           pAsyncSystem,
            pAssetAccessor,
            credit,
            pPrepareRendererResources,
@@ -326,7 +326,7 @@ TileMapServiceRasterOverlay::createTileProvider(
 
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
-                asyncSystem,
+                pAsyncSystem,
                 pAssetAccessor,
                 credit,
                 pPrepareRendererResources,

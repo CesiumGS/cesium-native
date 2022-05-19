@@ -311,7 +311,7 @@ GltfReaderResult GltfReader::readGltf(
 
 /*static*/
 Future<GltfReaderResult> GltfReader::resolveExternalData(
-    AsyncSystem asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,
     std::shared_ptr<IAssetAccessor> pAssetAccessor,
@@ -322,7 +322,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
   std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
 
   if (!result.model) {
-    return asyncSystem.createResolvedFuture(std::move(result));
+    return pAsyncSystem->createResolvedFuture(std::move(result));
   }
 
   // Get a rough count of how many external buffers we may have.
@@ -341,7 +341,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
   }
 
   if (uriBuffersCount == 0) {
-    return asyncSystem.createResolvedFuture(std::move(result));
+    return pAsyncSystem->createResolvedFuture(std::move(result));
   }
 
   auto pResult = std::make_unique<GltfReaderResult>(std::move(result));
@@ -362,7 +362,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
+              ->get(pAsyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
               .thenInWorkerThread(
                   [pBuffer =
                        &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
@@ -387,7 +387,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
     if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
+              ->get(pAsyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
               .thenInWorkerThread(
                   [pImage = &image,
                    ktx2TranscodeTargets = options.ktx2TranscodeTargets](
@@ -412,7 +412,7 @@ Future<GltfReaderResult> GltfReader::resolveExternalData(
     }
   }
 
-  return asyncSystem.all(std::move(resolvedBuffers))
+  return pAsyncSystem->all(std::move(resolvedBuffers))
       .thenInWorkerThread(
           [pResult = std::move(pResult)](
               std::vector<ExternalBufferLoadResult>&& loadResults) mutable {

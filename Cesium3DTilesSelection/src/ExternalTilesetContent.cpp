@@ -15,7 +15,7 @@ namespace Cesium3DTilesSelection {
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 ExternalTilesetContent::load(const TileContentLoadInput& input) {
-  return input.asyncSystem.createResolvedFuture(load(
+  return input.pAsyncSystem->createResolvedFuture(load(
       input.pLogger,
       input.tileTransform,
       input.tileRefine,

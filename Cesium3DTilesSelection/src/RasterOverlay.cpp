@@ -13,14 +13,14 @@ class PlaceholderTileProvider : public RasterOverlayTileProvider {
 public:
   PlaceholderTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-      : RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor) {}
+      : RasterOverlayTileProvider(owner, pAsyncSystem, pAssetAccessor) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& /* overlayTile */) override {
     return this->getAsyncSystem()
-        .createResolvedFuture<LoadedRasterOverlayImage>({});
+        ->createResolvedFuture<LoadedRasterOverlayImage>({});
   }
 };
 } // namespace
@@ -70,7 +70,7 @@ RasterOverlay::getTileProvider() const noexcept {
 
 CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>
 RasterOverlay::loadTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -84,12 +84,12 @@ RasterOverlay::loadTileProvider(
 
   this->_pPlaceholder = std::make_unique<PlaceholderTileProvider>(
       *this,
-      asyncSystem,
+      pAsyncSystem,
       pAssetAccessor);
 
   auto future =
       this->createTileProvider(
-              asyncSystem,
+              pAsyncSystem,
               pAssetAccessor,
               pCreditSystem,
               pPrepareRendererResources,
@@ -139,12 +139,12 @@ void RasterOverlay::destroySafely(
 }
 
 void RasterOverlay::reportError(
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     RasterOverlayLoadFailureDetails&& errorDetails) {
   SPDLOG_LOGGER_ERROR(pLogger, errorDetails.message);
   if (this->getOptions().loadErrorCallback) {
-    asyncSystem.runInMainThread(
+    pAsyncSystem->runInMainThread(
         [this, errorDetails = std::move(errorDetails)]() mutable {
           this->getOptions().loadErrorCallback(std::move(errorDetails));
         });

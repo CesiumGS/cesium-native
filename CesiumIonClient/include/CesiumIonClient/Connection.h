@@ -73,7 +73,7 @@ public:
    * OAuth2](https://cesium.com/learn/ion/ion-oauth2/) for a description of the
    * authorization process.
    *
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
    * @param friendlyApplicationName A friendly name for the application
@@ -95,7 +95,7 @@ public:
    * user authorizes the application and the token handshake completes.
    */
   static CesiumAsync::Future<Connection> authorize(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& friendlyApplicationName,
       int64_t clientID,
@@ -108,14 +108,14 @@ public:
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
    *
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
    * @param accessToken The access token
    * @param apiUrl The base URL of the Cesium ion API.
    */
   Connection(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& accessToken,
       const std::string& apiUrl = "https://api.cesium.com");
@@ -123,7 +123,7 @@ public:
   /**
    * @brief Gets the async system used by this connection to do work in threads.
    */
-  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {
+  const std::shared_ptr<CesiumAsync::AsyncSystem>& getAsyncSystem() const noexcept {
     return this->_asyncSystem;
   }
 
@@ -270,7 +270,7 @@ public:
 
 private:
   static CesiumAsync::Future<Connection> completeTokenExchange(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       int64_t clientID,
       const std::string& ionApiUrl,

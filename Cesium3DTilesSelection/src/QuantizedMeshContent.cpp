@@ -688,7 +688,7 @@ static std::vector<std::byte> generateNormals(
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 QuantizedMeshContent::load(const TileContentLoadInput& input) {
-  return input.asyncSystem.createResolvedFuture(load(
+  return input.pAsyncSystem->createResolvedFuture(load(
       input.pLogger,
       input.tileID,
       input.tileBoundingVolume,

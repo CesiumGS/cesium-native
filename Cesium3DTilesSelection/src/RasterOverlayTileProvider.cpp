@@ -26,10 +26,10 @@ namespace Cesium3DTilesSelection {
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
     : _pOwner(&owner),
-      _asyncSystem(asyncSystem),
+      _pAsyncSystem(pAsyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(std::nullopt),
       _pPrepareRendererResources(nullptr),
@@ -47,7 +47,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -55,7 +55,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumGeospatial::Projection& projection,
     const Rectangle& coverageRectangle) noexcept
     : _pOwner(&owner),
-      _asyncSystem(asyncSystem),
+      _pAsyncSystem(pAsyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(credit),
       _pPrepareRendererResources(pPrepareRendererResources),

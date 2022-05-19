@@ -145,7 +145,7 @@ public:
    * @brief Accepts the result of {@link readGltf} and resolves any remaining
    * external buffers and images.
    *
-   * @param asyncSystem The async system to use for resolving external data.
+   * @param pAsyncSystem The async system to use for resolving external data.
    * @param baseUrl The base url that all the external uris are relative to.
    * @param headers The http headers needed to make any external data requests.
    * @param pAssetAccessor The asset accessor to use to request the external
@@ -154,7 +154,7 @@ public:
    * @param result The result of the synchronous readGltf invocation.
    */
   static CesiumAsync::Future<GltfReaderResult> resolveExternalData(
-      CesiumAsync::AsyncSystem asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,

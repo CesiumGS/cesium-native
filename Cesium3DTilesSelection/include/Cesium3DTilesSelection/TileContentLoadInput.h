@@ -41,7 +41,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   /**
    * @brief Creates a new, uninitialized instance for the given tile.
    *
-   * The `asyncSystem`, `pLogger`, `pAssetAccessor` and `pRequest` will have
+   * The `pAsyncSystem`, `pLogger`, `pAssetAccessor` and `pRequest` will have
    * default values, and have to be initialized before this instance is passed
    * to one of the loader functions.
    *
@@ -52,14 +52,14 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   /**
    * @brief Creates a new instance
    *
-   * @param asyncSystem The async system to use for tile content loading.
+   * @param pAsyncSystem The async system to use for tile content loading.
    * @param pLogger The logger that will be used
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pRequest The original tile request and its response.
    * @param tile The {@link Tile} that the content belongs to.
    */
   TileContentLoadInput(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
@@ -68,7 +68,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   /**
    * @brief Creates a new instance.
    *
-   * @param asyncSystem The async system to use for tile content loading.
+   * @param pAsyncSystem The async system to use for tile content loading.
    * @param pLogger The logger that will be used
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pRequest The original tile request and its response.
@@ -80,7 +80,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
    * @param tileTransform The tile transform
    */
   TileContentLoadInput(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
@@ -95,7 +95,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   /**
    * @brief The async system to use for tile content loading.
    */
-  CesiumAsync::AsyncSystem asyncSystem;
+  std::shared_ptr<CesiumAsync::AsyncSystem> pAsyncSystem;
 
   /**
    * @brief The logger that receives details of loading errors and warnings.

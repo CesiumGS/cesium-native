@@ -26,7 +26,7 @@ namespace Cesium3DTilesSelection {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     RasterOverlay& owner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -40,7 +40,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     uint32_t imageHeight) noexcept
     : RasterOverlayTileProvider(
           owner,
-          asyncSystem,
+          pAsyncSystem,
           pAssetAccessor,
           credit,
           pPrepareRendererResources,
@@ -324,7 +324,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
           .thenImmediately([&cachedBytes = this->_cachedBytes,
                             currentLevel = tileID.level,
                             minimumLevel = this->getMinimumLevel(),
-                            asyncSystem = this->getAsyncSystem(),
+                            pAsyncSystem = this->getAsyncSystem(),
                             loadParentTile = std::move(loadParentTile)](
                                LoadedRasterOverlayImage&& loaded) {
             if (loaded.image && loaded.errors.empty() &&
@@ -347,7 +347,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
               }
 #endif
 
-              return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
+              return pAsyncSystem->createResolvedFuture(LoadedQuadtreeImage{
                   std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
                   std::nullopt});
             }
@@ -356,10 +356,10 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             // We can only initiate a new tile request from the main thread,
             // though.
             if (currentLevel > minimumLevel) {
-              return asyncSystem.runInMainThread(loadParentTile);
+              return pAsyncSystem->runInMainThread(loadParentTile);
             } else {
               // No parent available, so return the original failed result.
-              return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
+              return pAsyncSystem->createResolvedFuture(LoadedQuadtreeImage{
                   std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
                   std::nullopt});
             }
@@ -450,7 +450,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           overlayTile.getTargetScreenPixels());
 
   return this->getAsyncSystem()
-      .all(std::move(tiles))
+      ->all(std::move(tiles))
       .thenInWorkerThread([projection = this->getProjection(),
                            rectangle = overlayTile.getRectangle()](
                               std::vector<LoadedQuadtreeImage>&& images) {

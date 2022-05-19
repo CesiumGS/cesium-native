@@ -36,7 +36,7 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
     SubtreeBuffer&& buffer,
     const std::string& url,
     const gsl::span<const std::byte>& binaryData,
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::vector<IAssetAccessor::THeader>& headers,
     const std::shared_ptr<spdlog::logger>& /*pLogger*/) {
@@ -45,7 +45,7 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
     // Using external buffer.
     std::string fullBufferUri =
         CesiumUtility::Uri::resolve(url, *buffer.uri, false);
-    return pAssetAccessor->get(asyncSystem, fullBufferUri, headers)
+    return pAssetAccessor->get(pAsyncSystem, fullBufferUri, headers)
         .thenInWorkerThread([buffer = std::move(buffer)](
                                 std::shared_ptr<IAssetRequest>&& pRequest) {
           const IAssetResponse* pResponse = pRequest->response();
@@ -71,7 +71,7 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
         });
   } else {
     // Using internal buffer.
-    return asyncSystem.createResolvedFuture(
+    return pAsyncSystem->createResolvedFuture(
         std::vector<std::byte>(binaryData.begin(), binaryData.end()));
   }
 }
@@ -79,7 +79,7 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
 /*static*/
 CesiumAsync::Future<std::unique_ptr<AvailabilitySubtree>>
 AvailabilitySubtreeContent::load(
-    AsyncSystem asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const gsl::span<const std::byte>& data,
@@ -123,8 +123,8 @@ AvailabilitySubtreeContent::load(
         "{}",
         document.GetParseError(),
         document.GetErrorOffset());
-    return asyncSystem
-        .createResolvedFuture<std::unique_ptr<AvailabilitySubtree>>(nullptr);
+    return pAsyncSystem
+        ->createResolvedFuture<std::unique_ptr<AvailabilitySubtree>>(nullptr);
   }
 
   AvailabilitySubtree subtreeResult;
@@ -248,7 +248,7 @@ AvailabilitySubtreeContent::load(
             std::move(subtreeBuffer),
             url,
             binaryData,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             tHeaders,
             pLogger));
@@ -256,9 +256,9 @@ AvailabilitySubtreeContent::load(
     }
   }
 
-  return asyncSystem.all(std::move(futureBuffers))
+  return pAsyncSystem->all(std::move(futureBuffers))
       .thenInWorkerThread(
-          [asyncSystem,
+          [pAsyncSystem,
            pSubtreeResult =
                std::make_unique<AvailabilitySubtree>(std::move(subtreeResult))](
               std::vector<std::vector<std::byte>>&& buffers) mutable {

@@ -183,7 +183,7 @@ private:
 public:
   RasterizedPolygonsTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
@@ -192,7 +192,7 @@ public:
       const std::vector<CartographicPolygon>& polygons)
       : RasterOverlayTileProvider(
             owner,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             std::nullopt,
             pPrepareRendererResources,
@@ -210,7 +210,7 @@ public:
         overlayTile.getTargetScreenPixels() / options.maximumScreenSpaceError,
         glm::dvec2(options.maximumTextureSize));
 
-    return this->getAsyncSystem().runInWorkerThread(
+    return this->getAsyncSystem()->runInWorkerThread(
         [&polygons = this->_polygons,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
@@ -243,7 +243,7 @@ RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() {}
 
 CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
 RasterizedPolygonsOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -252,11 +252,11 @@ RasterizedPolygonsOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  return asyncSystem.createResolvedFuture(
+  return pAsyncSystem->createResolvedFuture(
       (std::unique_ptr<RasterOverlayTileProvider>)
           std::make_unique<RasterizedPolygonsTileProvider>(
               *this,
-              asyncSystem,
+              pAsyncSystem,
               pAssetAccessor,
               pPrepareRendererResources,
               pLogger,

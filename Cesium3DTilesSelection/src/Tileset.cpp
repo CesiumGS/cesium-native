@@ -46,7 +46,7 @@ Tileset::Tileset(
     const std::string& url,
     const TilesetOptions& options)
     : _externals(externals),
-      _asyncSystem(externals.asyncSystem),
+      _pAsyncSystem(externals.pAsyncSystem),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -82,7 +82,7 @@ Tileset::Tileset(
     const TilesetOptions& options,
     const std::string& ionAssetEndpointUrl)
     : _externals(externals),
-      _asyncSystem(externals.asyncSystem),
+      _pAsyncSystem(externals.pAsyncSystem),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -121,14 +121,14 @@ Tileset::~Tileset() {
          this->_subtreeLoadsInProgress.load(
              std::memory_order::memory_order_acquire) > 0) {
     this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
+    this->_pAsyncSystem->dispatchMainThreadTasks();
   }
 
   // Wait for all overlays to wrap up their loading, too.
   uint32_t tilesLoading = 1;
   while (tilesLoading > 0) {
     this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
+    this->_pAsyncSystem->dispatchMainThreadTasks();
 
     tilesLoading = 0;
     for (auto& pOverlay : this->_overlays) {
@@ -215,7 +215,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums) {
-  this->_asyncSystem.dispatchMainThreadTasks();
+  this->_pAsyncSystem->dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
   const int32_t currentFrameNumber = previousFrameNumber + 1;
@@ -428,7 +428,7 @@ Tileset::requestTileContent(Tile& tile) {
     // the data for the actual tile.
     if (!layerFutures.empty()) {
       return this->getAsyncSystem()
-          .all(std::move(layerFutures))
+          ->all(std::move(layerFutures))
           .thenImmediately(
               [tileFuture = std::move(tileFuture)](std::vector<int>&&) mutable {
                 return std::move(tileFuture);
@@ -1599,7 +1599,7 @@ void Tileset::processSubtreeQueue() {
 void Tileset::reportError(TilesetLoadFailureDetails&& errorDetails) {
   SPDLOG_LOGGER_ERROR(this->getExternals().pLogger, errorDetails.message);
   if (this->getOptions().loadErrorCallback) {
-    this->getExternals().asyncSystem.runInMainThread(
+    this->getAsyncSystem()->runInMainThread(
         [this, errorDetails = std::move(errorDetails)]() mutable {
           this->getOptions().loadErrorCallback(std::move(errorDetails));
         });

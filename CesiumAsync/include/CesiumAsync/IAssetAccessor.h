@@ -31,13 +31,13 @@ public:
    * @brief Starts a new request for the asset with the given URL.
    * The request proceeds asynchronously without blocking the calling thread.
    *
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param url The URL of the asset.
    * @param headers The headers to include in the request.
    * @return The in-progress asset request.
    */
   virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
-  get(const AsyncSystem& asyncSystem,
+  get(const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers = {}) = 0;
 
@@ -47,7 +47,7 @@ public:
    *
    * The request proceeds asynchronously without blocking the calling thread.
    *
-   * @param asyncSystem The async system used to do work in threads.
+   * @param pAsyncSystem The async system used to do work in threads.
    * @param verb The HTTP verb to use, such as "POST" or "PATCH".
    * @param url The URL of the asset.
    * @param headers The headers to include in the request.
@@ -55,7 +55,7 @@ public:
    * @return The in-progress asset request.
    */
   virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> request(
-      const AsyncSystem& asyncSystem,
+      const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers = std::vector<THeader>(),

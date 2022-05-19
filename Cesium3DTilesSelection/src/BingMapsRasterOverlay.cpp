@@ -89,7 +89,7 @@ class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
       RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       Credit bingCredit,
       const std::vector<CreditAndCoverageAreas>& perTileCredits,
@@ -106,7 +106,7 @@ public:
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
             owner,
-            asyncSystem,
+            pAsyncSystem,
             pAssetAccessor,
             bingCredit,
             pPrepareRendererResources,
@@ -336,7 +336,7 @@ std::vector<CreditAndCoverageAreas> collectCredits(
 
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 BingMapsRasterOverlay::createTileProvider(
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -353,11 +353,11 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  auto reportError = [this, asyncSystem, pLogger](
+  auto reportError = [this, pAsyncSystem, pLogger](
                          const std::shared_ptr<IAssetRequest>& pRequest,
                          const std::string& message) {
     this->reportError(
-        asyncSystem,
+        pAsyncSystem,
         pLogger,
         RasterOverlayLoadFailureDetails{
             this,
@@ -367,7 +367,7 @@ BingMapsRasterOverlay::createTileProvider(
   };
 
   auto handleResponse = [pOwner,
-                         asyncSystem,
+                         pAsyncSystem,
                          pAssetAccessor,
                          pCreditSystem,
                          pPrepareRendererResources,
@@ -438,7 +438,7 @@ BingMapsRasterOverlay::createTileProvider(
 
     return std::make_unique<BingMapsTileProvider>(
         *pOwner,
-        asyncSystem,
+        pAsyncSystem,
         pAssetAccessor,
         bingCredit,
         credits,
@@ -456,11 +456,11 @@ BingMapsRasterOverlay::createTileProvider(
 
   auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
-    return asyncSystem.createResolvedFuture(
+    return pAsyncSystem->createResolvedFuture(
         handleResponse(nullptr, gsl::span<std::byte>(cacheResultIt->second)));
   }
 
-  return pAssetAccessor->get(asyncSystem, metadataUrl)
+  return pAssetAccessor->get(pAsyncSystem, metadataUrl)
       .thenInMainThread(
           [metadataUrl, pLogger, handleResponse, reportError](
               std::shared_ptr<IAssetRequest>&& pRequest)

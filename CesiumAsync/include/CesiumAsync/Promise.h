@@ -59,16 +59,16 @@ public:
    * @return The future.
    */
   Future<T> getFuture() const {
-    return Future<T>(this->_pSchedulers, this->_pEvent->get_task());
+    return Future<T>(this->_pAsyncSystem, this->_pEvent->get_task());
   }
 
 private:
   Promise(
-      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<async::event_task<T>>& pEvent) noexcept
-      : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
+      : _pAsyncSystem(pAsyncSystem), _pEvent(pEvent) {}
 
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<AsyncSystem> _pAsyncSystem;
   std::shared_ptr<async::event_task<T>> _pEvent;
 
   friend class AsyncSystem;
@@ -85,16 +85,16 @@ public:
     this->_pEvent->set_exception(error);
   }
   Future<void> getFuture() const {
-    return Future<void>(this->_pSchedulers, this->_pEvent->get_task());
+    return Future<void>(this->_pAsyncSystem, this->_pEvent->get_task());
   }
 
 private:
   Promise(
-      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<AsyncSystem>& pAsyncSystem,
       const std::shared_ptr<async::event_task<void>>& pEvent) noexcept
-      : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
+      : _pAsyncSystem(pAsyncSystem), _pEvent(pEvent) {}
 
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<AsyncSystem> _pAsyncSystem;
   std::shared_ptr<async::event_task<void>> _pEvent;
 
   friend class AsyncSystem;

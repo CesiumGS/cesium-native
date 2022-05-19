@@ -88,7 +88,7 @@ rapidjson::Document parseFeatureTableJsonData(
 
 Future<std::unique_ptr<TileContentLoadResult>>
 Batched3DModelContent::load(const TileContentLoadInput& input) {
-  const AsyncSystem& asyncSystem = input.asyncSystem;
+  const std::shared_ptr<AsyncSystem>& pAsyncSystem = input.pAsyncSystem;
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const std::shared_ptr<IAssetRequest>& pRequest = input.pRequest;
   const std::string& url = pRequest->url();
@@ -186,7 +186,7 @@ Batched3DModelContent::load(const TileContentLoadInput& input) {
       data.subspan(glbStart, glbEnd - glbStart);
 
   return GltfContent::load(
-             asyncSystem,
+             pAsyncSystem,
              pLogger,
              url,
              headers,

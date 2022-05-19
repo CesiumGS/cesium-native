@@ -105,7 +105,7 @@ TileContentLoadInput derive(
     const TileContentLoadInput& input,
     const gsl::span<const std::byte>& derivedData) {
   return TileContentLoadInput(
-      input.asyncSystem,
+      input.pAsyncSystem,
       input.pLogger,
       input.pAssetAccessor,
       std::make_shared<DerivedInnerRequest>(input.pRequest, derivedData),
@@ -131,7 +131,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
         pLogger,
         "Composite tile {} must be at least 16 bytes.",
         url);
-    return input.asyncSystem.createResolvedFuture(
+    return input.pAsyncSystem->createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -140,7 +140,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Composite tile does not have the expected magic vaue 'cmpt'.");
-    return input.asyncSystem.createResolvedFuture(
+    return input.pAsyncSystem->createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -149,7 +149,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
         pLogger,
         "Unsupported composite tile version {}.",
         pHeader->version);
-    return input.asyncSystem.createResolvedFuture(
+    return input.pAsyncSystem->createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -159,7 +159,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
         "Composite tile byteLength is {} but only {} bytes are available.",
         pHeader->byteLength,
         data.size());
-    return input.asyncSystem.createResolvedFuture(
+    return input.pAsyncSystem->createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -194,7 +194,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
         TileContentFactory::createContent(derive(input, innerData)));
   }
 
-  return input.asyncSystem.all(std::move(innerTiles))
+  return input.pAsyncSystem->all(std::move(innerTiles))
       .thenInWorkerThread(
           [pLogger, tilesLength = pHeader->tilesLength](
               std::vector<std::unique_ptr<TileContentLoadResult>>&&

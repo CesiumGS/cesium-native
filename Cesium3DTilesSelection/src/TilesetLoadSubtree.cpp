@@ -23,7 +23,7 @@ Future<void> Tileset::LoadSubtree::start(
     Tileset& tileset,
     const SubtreeLoadRecord& loadRecord) {
   if (!loadRecord.pTile) {
-    return tileset.getAsyncSystem().createResolvedFuture();
+    return tileset.getAsyncSystem()->createResolvedFuture();
   }
 
   ImplicitTilingContext& implicitContext =
@@ -47,7 +47,7 @@ Future<void> Tileset::LoadSubtree::start(
 
   return Private::requestAvailabilitySubtree(tileset, *loadRecord.pTile)
       .thenInWorkerThread(
-          [asyncSystem = tileset.getAsyncSystem(),
+          [pAsyncSystem = tileset.getAsyncSystem(),
            pLogger = tileset.getExternals().pLogger,
            pAssetAccessor = tileset.getExternals().pAssetAccessor](
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
@@ -57,7 +57,7 @@ Future<void> Tileset::LoadSubtree::start(
               uint16_t statusCode = pResponse->statusCode();
               if (statusCode == 0 || (statusCode >= 200 && statusCode < 300)) {
                 return AvailabilitySubtreeContent::load(
-                    asyncSystem,
+                    pAsyncSystem,
                     pLogger,
                     pRequest->url(),
                     pResponse->data(),
@@ -66,7 +66,7 @@ Future<void> Tileset::LoadSubtree::start(
               }
             }
 
-            return asyncSystem.createResolvedFuture(
+            return pAsyncSystem->createResolvedFuture(
                 std::unique_ptr<AvailabilitySubtree>(nullptr));
           })
       .thenInMainThread(

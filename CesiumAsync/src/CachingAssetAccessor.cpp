@@ -105,7 +105,7 @@ CachingAssetAccessor::CachingAssetAccessor(
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 
 Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::string& url,
     const std::vector<THeader>& headers) {
   const int32_t requestSinceLastPrune = ++this->_requestSinceLastPrune;
@@ -115,7 +115,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
     this->_requestSinceLastPrune = 0;
 
     CESIUM_TRACE_USE_TRACK_SET(this->_pruneSlots);
-    asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {
+    pAsyncSystem->runInThreadPool(this->_cacheThreadPool, [this]() {
       this->_pCacheDatabase->prune();
     });
   }
@@ -124,10 +124,10 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
 
   const ThreadPool& threadPool = this->_cacheThreadPool;
 
-  return asyncSystem
-      .runInThreadPool(
+  return pAsyncSystem
+      ->runInThreadPool(
           this->_cacheThreadPool,
-          [asyncSystem,
+          [pAsyncSystem,
            pAssetAccessor = this->_pAssetAccessor,
            pCacheDatabase = this->_pCacheDatabase,
            pLogger = this->_pLogger,
@@ -138,7 +138,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                 pCacheDatabase->getEntry(url);
             if (!cacheLookup) {
               // No cache item found, request directly from the server
-              return pAssetAccessor->get(asyncSystem, url, headers)
+              return pAssetAccessor->get(pAsyncSystem, url, headers)
                   .thenInThreadPool(
                       threadPool,
                       [pCacheDatabase, pLogger](
@@ -192,7 +192,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                     lastModifiedHeader->second);
               }
 
-              return pAssetAccessor->get(asyncSystem, url, newHeaders)
+              return pAssetAccessor->get(pAsyncSystem, url, newHeaders)
                   .thenInThreadPool(
                       threadPool,
                       [cacheItem = std::move(cacheItem),
@@ -244,7 +244,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
             // it.
             std::shared_ptr<IAssetRequest> pRequest =
                 std::make_shared<CacheAssetRequest>(std::move(cacheItem));
-            return asyncSystem.createResolvedFuture(std::move(pRequest));
+            return pAsyncSystem->createResolvedFuture(std::move(pRequest));
           })
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) noexcept {
         CESIUM_TRACE_END_IN_TRACK("IAssetAccessor::get (cached)");
@@ -253,13 +253,13 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
 }
 
 Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::request(
-    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<AsyncSystem>& pAsyncSystem,
     const std::string& verb,
     const std::string& url,
     const std::vector<THeader>& headers,
     const gsl::span<const std::byte>& contentPayload) {
   return this->_pAssetAccessor
-      ->request(asyncSystem, verb, url, headers, contentPayload);
+      ->request(pAsyncSystem, verb, url, headers, contentPayload);
 }
 
 void CachingAssetAccessor::tick() noexcept { _pAssetAccessor->tick(); }

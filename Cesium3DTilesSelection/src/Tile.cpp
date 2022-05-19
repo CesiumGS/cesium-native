@@ -391,7 +391,7 @@ void Tile::loadContent() {
   tileset.requestTileContent(*this)
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
-           asyncSystem = tileset.getAsyncSystem(),
+           pAsyncSystem = tileset.getAsyncSystem(),
            pLogger = tileset.getExternals().pLogger,
            pAssetAccessor = tileset.getExternals().pAssetAccessor,
            gltfUpAxis,
@@ -411,7 +411,7 @@ void Tile::loadContent() {
                   pRequest->url());
               auto pLoadResult = std::make_unique<TileContentLoadResult>();
               pLoadResult->httpStatusCode = 0;
-              return asyncSystem.createResolvedFuture(LoadResult{
+              return pAsyncSystem->createResolvedFuture(LoadResult{
                   LoadState::FailedTemporarily,
                   std::move(pLoadResult),
                   nullptr});
@@ -427,13 +427,13 @@ void Tile::loadContent() {
                   pRequest->url());
               auto pLoadResult = std::make_unique<TileContentLoadResult>();
               pLoadResult->httpStatusCode = pResponse->statusCode();
-              return asyncSystem.createResolvedFuture(LoadResult{
+              return pAsyncSystem->createResolvedFuture(LoadResult{
                   LoadState::FailedTemporarily,
                   std::move(pLoadResult),
                   nullptr});
             }
 
-            loadInput.asyncSystem = std::move(asyncSystem);
+            loadInput.pAsyncSystem = std::move(pAsyncSystem);
             loadInput.pLogger = std::move(pLogger);
             loadInput.pAssetAccessor = std::move(pAssetAccessor);
             loadInput.pRequest = std::move(pRequest);
@@ -1029,7 +1029,7 @@ void Tile::upsampleParent(
   }
 
   pTileset->getAsyncSystem()
-      .runInWorkerThread(
+      ->runInWorkerThread(
           [&parentModel,
            transform = this->getTransform(),
            textureCoordinateIndex = index,

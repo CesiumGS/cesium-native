@@ -7,16 +7,14 @@
 namespace CesiumAsync {
 AsyncSystem::AsyncSystem(
     const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept
-    : _pSchedulers(
-          std::make_shared<CesiumImpl::AsyncSystemSchedulers>(pTaskProcessor)) {
-}
+    : _schedulers(pTaskProcessor) {}
 
 void AsyncSystem::dispatchMainThreadTasks() {
-  this->_pSchedulers->mainThread.dispatchQueuedContinuations();
+  this->_schedulers.mainThread.dispatchQueuedContinuations();
 }
 
 bool AsyncSystem::dispatchOneMainThreadTask() {
-  return this->_pSchedulers->mainThread.dispatchZeroOrOneContinuation();
+  return this->_schedulers.mainThread.dispatchZeroOrOneContinuation();
 }
 
 ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {

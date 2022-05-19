@@ -32,7 +32,8 @@ class AsyncSystem;
  *   * Make the AsyncSystem a global or static local in order to extend its
  *     lifetime all the way until program termination.
  */
-class CESIUMASYNC_API AsyncSystem final {
+class CESIUMASYNC_API AsyncSystem final
+    : public std::enable_shared_from_this<AsyncSystem> {
 public:
   /**
    * @brief Constructs a new instance.
@@ -65,7 +66,7 @@ public:
     std::shared_ptr<async::event_task<T>> pEvent =
         std::make_shared<async::event_task<T>>();
 
-    Promise<T> promise(this->_pSchedulers, pEvent);
+    Promise<T> promise(this->shared_from_this(), pEvent);
 
     try {
       f(promise);
@@ -73,7 +74,7 @@ public:
       promise.reject(std::current_exception());
     }
 
-    return Future<T>(this->_pSchedulers, pEvent->get_task());
+    return Future<T>(this->shared_from_this(), pEvent->get_task());
   }
 
   /**
@@ -91,7 +92,7 @@ public:
    */
   template <typename T> Promise<T> createPromise() const {
     return Promise<T>(
-        this->_pSchedulers,
+        this->shared_from_this(),
         std::make_shared<async::event_task<T>>());
   }
 
@@ -118,9 +119,9 @@ public:
     CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
     return CesiumImpl::ContinuationFutureType_t<Func, void>(
-        this->_pSchedulers,
+        this->shared_from_this(),
         async::spawn(
-            this->_pSchedulers->workerThread.immediate,
+            this->_schedulers.workerThread.immediate,
             CesiumImpl::WithTracing<void>::end(
                 tracingName,
                 std::forward<Func>(f))));
@@ -148,9 +149,9 @@ public:
     CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
     return CesiumImpl::ContinuationFutureType_t<Func, void>(
-        this->_pSchedulers,
+        this->shared_from_this(),
         async::spawn(
-            this->_pSchedulers->mainThread.immediate,
+            this->_schedulers.mainThread.immediate,
             CesiumImpl::WithTracing<void>::end(
                 tracingName,
                 std::forward<Func>(f))));
@@ -173,7 +174,7 @@ public:
     CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
     return CesiumImpl::ContinuationFutureType_t<Func, void>(
-        this->_pSchedulers,
+        this->shared_from_this(),
         async::spawn(
             threadPool._pScheduler->immediate,
             CesiumImpl::WithTracing<void>::end(
@@ -236,7 +237,7 @@ public:
    */
   template <typename T> Future<T> createResolvedFuture(T&& value) const {
     return Future<T>(
-        this->_pSchedulers,
+        this->shared_from_this(),
         async::make_task<T>(std::forward<T>(value)));
   }
 
@@ -246,7 +247,7 @@ public:
    * @return The future.
    */
   Future<void> createResolvedFuture() const {
-    return Future<void>(this->_pSchedulers, async::make_task());
+    return Future<void>(this->shared_from_this(), async::make_task());
   }
 
   /**
@@ -305,10 +306,12 @@ private:
                   }
                   return results;
                 });
-    return Future<std::vector<T>>(this->_pSchedulers, std::move(task));
+    return Future<std::vector<T>>(this->shared_from_this(), std::move(task));
   }
 
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
+  // mutable because scheduling a continuation is not a mutation of the
+  // AsyncSystem.
+  mutable CesiumImpl::AsyncSystemSchedulers _schedulers;
 
   template <typename T> friend class Future;
 };
