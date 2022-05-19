@@ -25,6 +25,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
+#include <stb_image_resize.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
@@ -620,18 +621,93 @@ ImageReaderResult GltfReader::readImage(
         image.channels);
     if (pImage) {
       CESIUM_TRACE(
-          "copy image " + std::to_string(image.width) + "x" +
+          "copy image / gen mipmaps " + std::to_string(image.width) + "x" +
           std::to_string(image.height) + "x" + std::to_string(image.channels) +
           "x" + std::to_string(image.bytesPerChannel));
-      // std::uint8_t is not implicitly convertible to std::byte, so we must use
-      // reinterpret_cast to (safely) force the conversion.
-      const auto lastByte =
+
+      // Pre-count combined byte size of all mips so we can preallocate
+      int32_t width = image.width;
+      int32_t height = image.height;
+      int32_t totalPixelCount = width * height;
+      size_t mipCount = 1;
+      while (width > 1 || height > 1) {
+        ++mipCount;
+
+        if (width > 1) {
+          width >>= 1;
+        }
+
+        if (height > 1) {
+          height >>= 1;
+        }
+
+        // Total pixels in the final mipmap.
+        totalPixelCount += width * height;
+      }
+
+      // Byte size of the base image.
+      const auto imageByteSize =
           image.width * image.height * image.channels * image.bytesPerChannel;
-      image.pixelData.resize(static_cast<std::size_t>(lastByte));
+
+      image.mipPositions.resize(mipCount);
+      image.mipPositions[0].byteOffset = 0;
+      image.mipPositions[0].byteSize = imageByteSize;
+
+      image.pixelData.resize(static_cast<size_t>(
+          totalPixelCount * image.channels * image.bytesPerChannel));
       std::uint8_t* u8Pointer =
           reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-      std::copy(pImage, pImage + lastByte, u8Pointer);
+      std::copy(pImage, pImage + imageByteSize, u8Pointer);
       stbi_image_free(pImage);
+
+      width = image.width;
+      height = image.height;
+      size_t mipIndex = 0;
+      size_t byteOffset = 0;
+      size_t byteSize = imageByteSize;
+      bool mipCreationFailed = false;
+      while (width > 1 || height > 1) {
+        size_t lastByteOffset = byteOffset;
+        byteOffset += byteSize;
+        ++mipIndex;
+
+        int32_t lastWidth = width;
+        if (width > 1) {
+          width >>= 1;
+        }
+
+        int32_t lastHeight = height;
+        if (height > 1) {
+          height >>= 1;
+        }
+
+        byteSize = width * height * image.channels * image.bytesPerChannel;
+
+        image.mipPositions[mipIndex].byteOffset = byteOffset;
+        image.mipPositions[mipIndex].byteSize = byteSize;
+
+        if (!stbir_resize_uint8(
+                reinterpret_cast<const unsigned char*>(
+                    &image.pixelData[lastByteOffset]),
+                lastWidth,
+                lastHeight,
+                0,
+                reinterpret_cast<unsigned char*>(&image.pixelData[byteOffset]),
+                width,
+                height,
+                0,
+                image.channels)) {
+          mipCreationFailed = true;
+          break;
+        }
+      }
+
+      if (mipCreationFailed) {
+        // Remove any added mipmaps.
+        image.mipPositions.clear();
+        image.pixelData.resize(imageByteSize);
+        result.warnings.emplace_back(stbi_failure_reason());
+      }
     } else {
       result.image.reset();
       result.errors.emplace_back(stbi_failure_reason());
