@@ -279,6 +279,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       static_cast<uint32_t>(this->_loadQueueMedium.size());
   result.tilesLoadingHighPriority =
       static_cast<uint32_t>(this->_loadQueueHigh.size());
+  result.tileLoadsInProgress = this->_loadsInProgress;
+  result.subtreeLoadsInProgress = this->_subtreeLoadsInProgress;
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();

@@ -40,6 +40,8 @@ public:
   uint32_t culledTilesVisited = 0;
   uint32_t tilesCulled = 0;
   uint32_t maxDepthVisited = 0;
+  uint32_t tileLoadsInProgress = 0;
+  uint32_t subtreeLoadsInProgress = 0;
   //! @endcond
 };
 
