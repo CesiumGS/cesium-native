@@ -472,7 +472,8 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
 
   const auto attributionIt = layerJson.FindMember("attribution");
 
-  if (attributionIt != layerJson.MemberEnd() &&
+  if (context.pTileset->getExternals().pCreditSystem &&
+      attributionIt != layerJson.MemberEnd() &&
       attributionIt->value.IsString()) {
     context.implicitContext->credit = std::make_optional<Credit>(
         context.pTileset->getExternals().pCreditSystem->createCredit(
