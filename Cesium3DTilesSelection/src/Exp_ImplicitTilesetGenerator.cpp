@@ -187,7 +187,11 @@ void ImplicitSerializer::serializeOctree(
   Cesium3DTiles::Tileset tileset;
   tileset.geometricError = 50.0;
 
-  tileset.root.boundingVolume.box = {};
+  tileset.root.boundingVolume.box = {
+    1.0, 0.0, 0.0,
+    0.0, 1.0, 0.0,
+    0.0, 0.0, 1.0,
+    2.0, 2.0, 2.0};
   tileset.root.geometricError = 50.0;
   auto &implicit = tileset.root.addExtension<Cesium3DTiles::Extension3dTilesImplicitTiling>();
   implicit.subdivisionScheme =

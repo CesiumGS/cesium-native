@@ -4,7 +4,9 @@
   },
   "geometricError": 50.0,
   "root": {
-    "boundingVolume": {},
+    "boundingVolume": {
+      "box": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
+    },
     "geometricError": 50.0,
     "extensions": {
       "3DTILES_implicit_tiling": {
