@@ -48,6 +48,7 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumGeometry
         CesiumGltf
         CesiumGltfReader
+        CesiumGltfWriter
         CesiumUtility
         spdlog
     # PRIVATE

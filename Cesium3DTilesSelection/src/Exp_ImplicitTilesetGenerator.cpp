@@ -5,9 +5,11 @@
 #include <Cesium3DTiles/Tileset.h>
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTiles/Extension3dTilesImplicitTiling.h>
+#include <CesiumGltfWriter/GltfWriter.h>
 #include <spdlog/fmt/fmt.h>
 #include <libmorton/morton.h>
 #include <fstream>
+#include <cmath>
 
 namespace Cesium3DTilesSelection {
 OctreeSubtree::OctreeSubtree(uint32_t subtreeLevels) {
@@ -138,20 +140,28 @@ Octree::calcSubtreeID(const CesiumGeometry::OctreeTileID& octreeID) {
 
 CesiumGltf::Model StaticMesh::convertToGltf() {
   CesiumGltf::Model model;
+  model.asset.version = "2.0";
 
   CesiumGltf::Material& material = model.materials.emplace_back();
   material.pbrMetallicRoughness = CesiumGltf::MaterialPBRMetallicRoughness{};
 
+  // create position accessor
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
-  buffer.byteLength = int64_t(positions.size() * sizeof(glm::vec3));
+  buffer.byteLength = int64_t(positions.size() * sizeof(glm::vec3)) +
+                      int64_t(indices.size()) * sizeof(uint32_t);
   buffer.cesium.data.resize(buffer.byteLength);
-  std::memcpy(buffer.cesium.data.data(), positions.data(), buffer.byteLength);
+  std::memcpy(buffer.cesium.data.data(), positions.data(), positions.size() * sizeof(glm::vec3));
+  std::memcpy(
+      buffer.cesium.data.data() + positions.size() * sizeof(glm::vec3),
+      indices.data(),
+      indices.size() * sizeof(uint32_t));
 
   CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
   bufferView.byteOffset = 0;
-  bufferView.byteStride = 0;
+  bufferView.byteStride = sizeof(glm::vec3);
   bufferView.byteLength = buffer.byteLength;
+  bufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
   CesiumGltf::Accessor& accessor = model.accessors.emplace_back();
   accessor.bufferView = 0;
@@ -159,18 +169,98 @@ CesiumGltf::Model StaticMesh::convertToGltf() {
   accessor.count = positions.size();
   accessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
   accessor.type = CesiumGltf::Accessor::Type::VEC3;
+  accessor.min = {min.x, min.y, min.z};
+  accessor.max = {max.x, max.y, max.z};
+
+  // create indices accessor
+  CesiumGltf::BufferView& indicesBufferView = model.bufferViews.emplace_back();
+  indicesBufferView.buffer = 0;
+  indicesBufferView.byteOffset = positions.size() * sizeof(glm::vec3);
+  indicesBufferView.byteLength = indices.size() * sizeof(uint32_t);
+  indicesBufferView.target = CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER; 
+
+  CesiumGltf::Accessor& indicesAccessor = model.accessors.emplace_back();
+  indicesAccessor.bufferView = 1;
+  indicesAccessor.byteOffset = 0;
+  indicesAccessor.count = indices.size();
+  indicesAccessor.componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
+  indicesAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
 
   CesiumGltf::Mesh& mesh = model.meshes.emplace_back();
   CesiumGltf::MeshPrimitive& primitive = mesh.primitives.emplace_back();
   primitive.attributes["POSITION"] = 0;
+  primitive.indices = 1;
   primitive.material = 0;
 
+  auto& node = model.nodes.emplace_back();
+  node.mesh = 0;
+
+  auto& scene = model.scenes.emplace_back();
+  scene.nodes.emplace_back(0);
+
+  model.scene = 0;
+
   return model;
+}
+
+StaticMesh SphereGenerator::generate(const glm::vec3& center, float radius) {
+  float theta = 0.0;
+  float beta = 0.0;
+  int totalSegments = 10;
+  float segmentLength = 360.0f / totalSegments;
+
+  glm::vec3 min{std::numeric_limits<float>::max()};
+  glm::vec3 max{std::numeric_limits<float>::min()};
+  std::vector<glm::vec3> positions;
+  positions.reserve(totalSegments * totalSegments);
+  for (int y = 0; y < totalSegments; ++y) {
+    theta += segmentLength;
+    for (int x = 0; x < totalSegments; ++x) {
+      beta += segmentLength;
+      float posX = center.x + radius * std::sin(theta) * std::cos(beta);
+      float posY = center.y + radius * std::sin(theta) * std::sin(beta);
+      float posZ = center.z + radius * std::cos(theta);
+      positions.emplace_back(posX, posY, posZ);
+
+      min.x = glm::min(posX, min.x);
+      min.y = glm::min(posY, min.y);
+      min.z = glm::min(posZ, min.z);
+
+      max.x = glm::max(posX, max.x);
+      max.y = glm::max(posY, max.y);
+      max.z = glm::max(posZ, max.z);
+    }
+  }
+
+  std::vector<uint32_t> indices;
+  indices.reserve((totalSegments - 1) * (totalSegments - 1) * 6);
+  for (int y = 0; y < totalSegments - 1; ++y) {
+    for (int x = 0; x < totalSegments - 1; ++x) {
+      indices.emplace_back(x + 1);
+      indices.emplace_back(x);
+      indices.emplace_back((y + 1) * totalSegments + x);
+
+      indices.emplace_back(x + 1);
+      indices.emplace_back((y + 1) * totalSegments + x);
+      indices.emplace_back((y + 1) * totalSegments + x + 1);
+    }
+  }
+
+  return {std::move(positions), std::move(indices), min, max};
 }
 
 void ImplicitSerializer::serializeOctree(
     const Octree& octree,
     const std::filesystem::path& path) {
+  SphereGenerator generator;
+  auto mesh = generator.generate(glm::vec3(0.0), 3.0);
+  auto model = mesh.convertToGltf();
+
+  CesiumGltfWriter::GltfWriter gltfWriter;
+  auto glb = gltfWriter.writeGlb(model, model.buffers.front().cesium.data);
+  auto glbFile = std::fstream(path / "sphere.glb", std::ios::out | std::ios::binary);
+  glbFile.write((char*)&glb.gltfBytes[0], glb.gltfBytes.size());
+
   const auto& availableSubtrees = octree.getAvailableSubtrees();
   for (size_t i = 0; i < availableSubtrees.size(); ++i) {
     uint32_t subtreeLevel =

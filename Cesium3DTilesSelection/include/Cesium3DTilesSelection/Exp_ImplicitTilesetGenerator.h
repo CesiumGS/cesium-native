@@ -56,8 +56,15 @@ private:
 
 struct StaticMesh {
   std::vector<glm::vec3> positions;
+  std::vector<uint32_t> indices;
+  glm::vec3 min;
+  glm::vec3 max;
 
   CesiumGltf::Model convertToGltf();
+};
+
+struct SphereGenerator {
+  StaticMesh generate(const glm::vec3 &center, float radius);
 };
 
 struct ImplicitSerializer {
