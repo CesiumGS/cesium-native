@@ -6,6 +6,7 @@
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTiles/Extension3dTilesImplicitTiling.h>
 #include <CesiumGltfWriter/GltfWriter.h>
+#include <glm/glm.hpp>
 #include <spdlog/fmt/fmt.h>
 #include <libmorton/morton.h>
 #include <fstream>
@@ -207,19 +208,18 @@ StaticMesh SphereGenerator::generate(const glm::vec3& center, float radius) {
   float theta = 0.0;
   float beta = 0.0;
   int totalSegments = 10;
+  float ySegmentLength = 180.0f / totalSegments;
   float segmentLength = 360.0f / totalSegments;
 
   glm::vec3 min{std::numeric_limits<float>::max()};
   glm::vec3 max{std::numeric_limits<float>::min()};
   std::vector<glm::vec3> positions;
-  positions.reserve(totalSegments * totalSegments);
-  for (int y = 0; y < totalSegments; ++y) {
-    theta += segmentLength;
-    for (int x = 0; x < totalSegments; ++x) {
-      beta += segmentLength;
-      float posX = center.x + radius * std::sin(theta) * std::cos(beta);
-      float posY = center.y + radius * std::sin(theta) * std::sin(beta);
-      float posZ = center.z + radius * std::cos(theta);
+  positions.reserve((totalSegments+1) * (totalSegments+1));
+  for (int y = 0; y < totalSegments + 1; ++y) {
+    for (int x = 0; x < totalSegments + 1; ++x) {
+      float posZ = center.x + radius * std::sin(glm::radians(theta)) * std::cos(glm::radians(beta));
+      float posX = center.y + radius * std::sin(glm::radians(theta)) * std::sin(glm::radians(beta));
+      float posY = center.z + radius * std::cos(glm::radians(theta));
       positions.emplace_back(posX, posY, posZ);
 
       min.x = glm::min(posX, min.x);
@@ -229,20 +229,24 @@ StaticMesh SphereGenerator::generate(const glm::vec3& center, float radius) {
       max.x = glm::max(posX, max.x);
       max.y = glm::max(posY, max.y);
       max.z = glm::max(posZ, max.z);
+
+      beta += segmentLength;
     }
+
+    theta += ySegmentLength;
   }
 
   std::vector<uint32_t> indices;
-  indices.reserve((totalSegments - 1) * (totalSegments - 1) * 6);
-  for (int y = 0; y < totalSegments - 1; ++y) {
-    for (int x = 0; x < totalSegments - 1; ++x) {
-      indices.emplace_back(x + 1);
-      indices.emplace_back(x);
-      indices.emplace_back((y + 1) * totalSegments + x);
+  indices.reserve((totalSegments) * (totalSegments) * 6);
+  for (int y = 0; y < totalSegments; ++y) {
+    for (int x = 0; x < totalSegments; ++x) {
+      indices.emplace_back(y * (totalSegments+1) + x + 1);
+      indices.emplace_back(y * (totalSegments+1) + x);
+      indices.emplace_back((y + 1) * (totalSegments+1) + x);
 
-      indices.emplace_back(x + 1);
-      indices.emplace_back((y + 1) * totalSegments + x);
-      indices.emplace_back((y + 1) * totalSegments + x + 1);
+      indices.emplace_back(y * (totalSegments+1) + x + 1);
+      indices.emplace_back((y + 1) * (totalSegments+1) + x);
+      indices.emplace_back((y + 1) * (totalSegments+1) + x + 1);
     }
   }
 
