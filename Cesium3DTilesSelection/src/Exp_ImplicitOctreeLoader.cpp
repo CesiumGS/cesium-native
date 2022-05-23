@@ -144,6 +144,7 @@ void populateSubtree(
         if (relativeChildLevel == subtreeLevels) {
           if (subtreeAvailability.isSubtreeAvailable(relativeChildMortonID)) {
             Tile& child = children.emplace_back();
+            child.setTransform(tile.getTransform());
             child.setBoundingVolume(
                 subdivideBoundingVolume(childID, loader.getBoundingVolume()));
             child.setGeometricError(tile.getGeometricError() * 0.5);
@@ -156,6 +157,7 @@ void populateSubtree(
                   relativeChildLevel,
                   relativeChildMortonID)) {
             Tile& child = children.emplace_back();
+            child.setTransform(tile.getTransform());
             child.setBoundingVolume(
                 subdivideBoundingVolume(childID, loader.getBoundingVolume()));
             child.setGeometricError(tile.getGeometricError() * 0.5);
