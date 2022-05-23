@@ -166,33 +166,6 @@ void rasterizePolygons(
     }
   }
 }
-
-Rectangle computeCoverageRectangle(
-    const Projection& projection,
-    const std::vector<CartographicPolygon>& polygons) {
-  std::optional<GlobeRectangle> result;
-
-  for (const CartographicPolygon& polygon : polygons) {
-    std::optional<GlobeRectangle> maybeRectangle =
-        polygon.getBoundingRectangle();
-    if (!maybeRectangle) {
-      continue;
-    }
-
-    if (result) {
-      result = result->computeUnion(*maybeRectangle);
-    } else {
-      result = maybeRectangle;
-    }
-  }
-
-  if (result) {
-    return projectRectangleSimple(projection, *result);
-  } else {
-    return Rectangle(0.0, 0.0, 0.0, 0.0);
-  }
-}
-
 } // namespace
 
 class CESIUM3DTILESSELECTION_API RasterizedPolygonsTileProvider final
