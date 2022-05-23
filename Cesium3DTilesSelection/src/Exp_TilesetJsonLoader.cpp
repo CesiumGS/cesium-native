@@ -280,6 +280,7 @@ void createImplicitQuadtreeLoader(
 
   // create an implicit root to associate with the above implicit loader
   std::vector<Tile> implicitRootTile(1);
+  implicitRootTile[0].setTransform(implicitTile.getTransform());
   implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
   implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
   implicitRootTile[0].setRefine(implicitTile.getRefine());
