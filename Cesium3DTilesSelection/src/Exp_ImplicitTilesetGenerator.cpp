@@ -287,6 +287,9 @@ void ImplicitSerializer::serializeOctree(
     0.0, 0.0, 1.0,
     2.0, 2.0, 2.0};
   tileset.root.geometricError = 50.0;
+  tileset.root.content.emplace();
+  tileset.root.content->uri = "glb/{level}_{x}_{y}_{z}.glb";
+  tileset.root.refine = Cesium3DTiles::Tile::Refine::REPLACE;
   auto &implicit = tileset.root.addExtension<Cesium3DTiles::Extension3dTilesImplicitTiling>();
   implicit.subdivisionScheme =
       Cesium3DTiles::Extension3dTilesImplicitTiling::SubdivisionScheme::OCTREE;
@@ -369,5 +372,7 @@ void ImplicitSerializer::serializeSubtree(
   // write subtree
   auto subtreeFile = std::fstream(subtreeFilePath, std::ios::out | std::ios::binary);
   subtreeFile.write((char*)&result.subtreeBytes[0], result.subtreeBytes.size());
+
+  // generate gltf for available tiles
 }
 } // namespace Cesium3DTilesSelection

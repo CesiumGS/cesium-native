@@ -8,6 +8,10 @@
       "box": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0]
     },
     "geometricError": 50.0,
+    "refine": "REPLACE",
+    "content": {
+      "uri": "glb/{level}_{x}_{y}_{z}.glb"
+    },
     "extensions": {
       "3DTILES_implicit_tiling": {
         "subdivisionScheme": "OCTREE",
