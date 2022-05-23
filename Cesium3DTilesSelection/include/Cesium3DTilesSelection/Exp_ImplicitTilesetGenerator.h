@@ -25,6 +25,11 @@ public:
       bool isAvailable,
       std::vector<std::byte>& available);
 
+  bool isTileAvailable(
+      uint32_t relativeTileLevel,
+      uint64_t relativeTileMortonId) const;
+
+  uint32_t _subtreeLevels;
   std::vector<std::byte> _tileAvailable;
   std::vector<std::byte> _contentAvailable;
   std::vector<std::byte> _subtreeAvailable;
@@ -64,7 +69,7 @@ struct StaticMesh {
 };
 
 struct SphereGenerator {
-  StaticMesh generate(const glm::vec3 &center, float radius);
+  StaticMesh generate(const glm::vec3& center, float radius);
 };
 
 struct ImplicitSerializer {
@@ -77,6 +82,11 @@ struct ImplicitSerializer {
       uint32_t x,
       uint32_t y,
       uint32_t z);
-};
 
+  void serializeGltf(
+      const std::filesystem::path &path,
+      const OctreeSubtree& subtree,
+      const CesiumGeometry::OctreeTileID& subtreeID,
+      const CesiumGeometry::OctreeTileID& tileID);
+};
 } // namespace Cesium3DTilesSelection

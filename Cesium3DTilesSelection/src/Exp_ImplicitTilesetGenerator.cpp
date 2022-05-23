@@ -13,7 +13,8 @@
 #include <cmath>
 
 namespace Cesium3DTilesSelection {
-OctreeSubtree::OctreeSubtree(uint32_t subtreeLevels) {
+OctreeSubtree::OctreeSubtree(uint32_t subtreeLevels)
+    : _subtreeLevels{subtreeLevels} {
   uint64_t numOfTiles = ((1 << (3 * (subtreeLevels + 1))) - 1) / (8 - 1);
 
   _tileAvailable.resize(uint64_t(std::ceil(numOfTiles / 8)));
@@ -70,8 +71,27 @@ void OctreeSubtree::markAvailable(
   }
 }
 
+bool OctreeSubtree::isTileAvailable(
+    uint32_t relativeTileLevel,
+    uint64_t relativeTileMortonId) const {
+  uint64_t numOfTilesFromRootToParentLevel =
+      ((1 << (3 * relativeTileLevel)) - 1) / (8 - 1);
+
+  uint64_t availabilityBitIndex =
+      numOfTilesFromRootToParentLevel + relativeTileMortonId;
+
+  const uint64_t byteIndex = availabilityBitIndex / 8;
+  const uint64_t bitIndex = availabilityBitIndex % 8;
+  const int bitValue =
+      static_cast<int>(_tileAvailable[byteIndex] >> bitIndex) & 1;
+
+  return bitValue == 1;
+}
+
 Octree::Octree(uint64_t maxLevels, uint32_t subtreeLevels)
-    : _maxLevels{maxLevels}, _subtreeLevels{subtreeLevels}, _availableSubtrees(maxLevels / subtreeLevels) {}
+    : _maxLevels{maxLevels},
+      _subtreeLevels{subtreeLevels},
+      _availableSubtrees(maxLevels / subtreeLevels) {}
 
 void Octree::markTileContent(const CesiumGeometry::OctreeTileID& octreeID) {
   CesiumGeometry::OctreeTileID subtreeID = calcSubtreeID(octreeID);
@@ -151,7 +171,10 @@ CesiumGltf::Model StaticMesh::convertToGltf() {
   buffer.byteLength = int64_t(positions.size() * sizeof(glm::vec3)) +
                       int64_t(indices.size()) * sizeof(uint32_t);
   buffer.cesium.data.resize(buffer.byteLength);
-  std::memcpy(buffer.cesium.data.data(), positions.data(), positions.size() * sizeof(glm::vec3));
+  std::memcpy(
+      buffer.cesium.data.data(),
+      positions.data(),
+      positions.size() * sizeof(glm::vec3));
   std::memcpy(
       buffer.cesium.data.data() + positions.size() * sizeof(glm::vec3),
       indices.data(),
@@ -178,13 +201,15 @@ CesiumGltf::Model StaticMesh::convertToGltf() {
   indicesBufferView.buffer = 0;
   indicesBufferView.byteOffset = positions.size() * sizeof(glm::vec3);
   indicesBufferView.byteLength = indices.size() * sizeof(uint32_t);
-  indicesBufferView.target = CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER; 
+  indicesBufferView.target =
+      CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   CesiumGltf::Accessor& indicesAccessor = model.accessors.emplace_back();
   indicesAccessor.bufferView = 1;
   indicesAccessor.byteOffset = 0;
   indicesAccessor.count = indices.size();
-  indicesAccessor.componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
+  indicesAccessor.componentType =
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
   indicesAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
 
   CesiumGltf::Mesh& mesh = model.meshes.emplace_back();
@@ -214,11 +239,13 @@ StaticMesh SphereGenerator::generate(const glm::vec3& center, float radius) {
   glm::vec3 min{std::numeric_limits<float>::max()};
   glm::vec3 max{std::numeric_limits<float>::min()};
   std::vector<glm::vec3> positions;
-  positions.reserve((totalSegments+1) * (totalSegments+1));
+  positions.reserve((totalSegments + 1) * (totalSegments + 1));
   for (int y = 0; y < totalSegments + 1; ++y) {
     for (int x = 0; x < totalSegments + 1; ++x) {
-      float posZ = center.x + radius * std::sin(glm::radians(theta)) * std::cos(glm::radians(beta));
-      float posX = center.y + radius * std::sin(glm::radians(theta)) * std::sin(glm::radians(beta));
+      float posZ = center.x + radius * std::sin(glm::radians(theta)) *
+                                  std::cos(glm::radians(beta));
+      float posX = center.y + radius * std::sin(glm::radians(theta)) *
+                                  std::sin(glm::radians(beta));
       float posY = center.z + radius * std::cos(glm::radians(theta));
       positions.emplace_back(posX, posY, posZ);
 
@@ -237,16 +264,16 @@ StaticMesh SphereGenerator::generate(const glm::vec3& center, float radius) {
   }
 
   std::vector<uint32_t> indices;
-  indices.reserve((totalSegments) * (totalSegments) * 6);
+  indices.reserve((totalSegments) * (totalSegments)*6);
   for (int y = 0; y < totalSegments; ++y) {
     for (int x = 0; x < totalSegments; ++x) {
-      indices.emplace_back(y * (totalSegments+1) + x + 1);
-      indices.emplace_back(y * (totalSegments+1) + x);
-      indices.emplace_back((y + 1) * (totalSegments+1) + x);
+      indices.emplace_back(y * (totalSegments + 1) + x + 1);
+      indices.emplace_back(y * (totalSegments + 1) + x);
+      indices.emplace_back((y + 1) * (totalSegments + 1) + x);
 
-      indices.emplace_back(y * (totalSegments+1) + x + 1);
-      indices.emplace_back((y + 1) * (totalSegments+1) + x);
-      indices.emplace_back((y + 1) * (totalSegments+1) + x + 1);
+      indices.emplace_back(y * (totalSegments + 1) + x + 1);
+      indices.emplace_back((y + 1) * (totalSegments + 1) + x);
+      indices.emplace_back((y + 1) * (totalSegments + 1) + x + 1);
     }
   }
 
@@ -262,7 +289,8 @@ void ImplicitSerializer::serializeOctree(
 
   CesiumGltfWriter::GltfWriter gltfWriter;
   auto glb = gltfWriter.writeGlb(model, model.buffers.front().cesium.data);
-  auto glbFile = std::fstream(path / "sphere.glb", std::ios::out | std::ios::binary);
+  auto glbFile =
+      std::fstream(path / "sphere.glb", std::ios::out | std::ios::binary);
   glbFile.write((char*)&glb.gltfBytes[0], glb.gltfBytes.size());
 
   const auto& availableSubtrees = octree.getAvailableSubtrees();
@@ -281,16 +309,15 @@ void ImplicitSerializer::serializeOctree(
   Cesium3DTiles::Tileset tileset;
   tileset.geometricError = 50.0;
 
-  tileset.root.boundingVolume.box = {
-    1.0, 0.0, 0.0,
-    0.0, 1.0, 0.0,
-    0.0, 0.0, 1.0,
-    2.0, 2.0, 2.0};
+  tileset.root.boundingVolume
+      .box = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0};
   tileset.root.geometricError = 50.0;
   tileset.root.content.emplace();
   tileset.root.content->uri = "glb/{level}_{x}_{y}_{z}.glb";
   tileset.root.refine = Cesium3DTiles::Tile::Refine::REPLACE;
-  auto &implicit = tileset.root.addExtension<Cesium3DTiles::Extension3dTilesImplicitTiling>();
+  auto& implicit =
+      tileset.root
+          .addExtension<Cesium3DTiles::Extension3dTilesImplicitTiling>();
   implicit.subdivisionScheme =
       Cesium3DTiles::Extension3dTilesImplicitTiling::SubdivisionScheme::OCTREE;
   implicit.subtreeLevels = octree.getSubtreeLevels();
@@ -299,7 +326,8 @@ void ImplicitSerializer::serializeOctree(
 
   Cesium3DTilesWriter::TilesetWriter writer;
   auto result = writer.writeTileset(tileset, {true});
-  auto tilesetFile = std::fstream(path / "tileset.json", std::ios::out | std::ios::binary);
+  auto tilesetFile =
+      std::fstream(path / "tileset.json", std::ios::out | std::ios::binary);
   tilesetFile.write((char*)&result.tilesetBytes[0], result.tilesetBytes.size());
 }
 
@@ -331,13 +359,14 @@ void ImplicitSerializer::serializeSubtree(
   auto subtreeDirectory = std::filesystem::path(
       fmt::format((path / "{}" / "{}" / "{}").string(), level, x, y));
   std::filesystem::create_directories(subtreeDirectory);
-  auto subtreeFilePath = subtreeDirectory / fmt::format("{}.json", z); 
+  auto subtreeFilePath = subtreeDirectory / fmt::format("{}.json", z);
   auto bufferPath = subtreeDirectory / fmt::format("{}.bin", z);
 
   Cesium3DTiles::Subtree subtree;
 
   Cesium3DTiles::Buffer& buffer = subtree.buffers.emplace_back();
-  buffer.uri = fmt::format(path.stem().string() + "/{}/{}/{}/{}.bin", level, x, y, z);
+  buffer.uri =
+      fmt::format(path.stem().string() + "/{}/{}/{}/{}.bin", level, x, y, z);
   buffer.byteLength = availableBuffer.size();
 
   Cesium3DTiles::BufferView& tileAvailabilityView =
@@ -355,7 +384,8 @@ void ImplicitSerializer::serializeSubtree(
   Cesium3DTiles::BufferView& subtreeAvailabilityView =
       subtree.bufferViews.emplace_back();
   subtreeAvailabilityView.buffer = 0;
-  subtreeAvailabilityView.byteOffset = octreeSubtree._tileAvailable.size() + octreeSubtree._contentAvailable.size();
+  subtreeAvailabilityView.byteOffset = octreeSubtree._tileAvailable.size() +
+                                       octreeSubtree._contentAvailable.size();
   subtreeAvailabilityView.byteLength = octreeSubtree._subtreeAvailable.size();
 
   subtree.tileAvailability.bitstream = 0;
@@ -370,9 +400,63 @@ void ImplicitSerializer::serializeSubtree(
   bufferFile.write((char*)&availableBuffer[0], availableBuffer.size());
 
   // write subtree
-  auto subtreeFile = std::fstream(subtreeFilePath, std::ios::out | std::ios::binary);
+  auto subtreeFile =
+      std::fstream(subtreeFilePath, std::ios::out | std::ios::binary);
   subtreeFile.write((char*)&result.subtreeBytes[0], result.subtreeBytes.size());
 
   // generate gltf for available tiles
+  std::filesystem::create_directories(path.parent_path() / "glb");
+  serializeGltf(
+      path.parent_path() / "glb",
+      octreeSubtree,
+      CesiumGeometry::OctreeTileID(level, x, y, z),
+      CesiumGeometry::OctreeTileID(level, x, y, z));
+}
+
+void ImplicitSerializer::serializeGltf(
+    const std::filesystem::path& path,
+    const OctreeSubtree& subtree,
+    const CesiumGeometry::OctreeTileID& subtreeID,
+    const CesiumGeometry::OctreeTileID& octreeID) {
+  uint32_t relativeTileLevel = octreeID.level - subtreeID.level;
+  if (relativeTileLevel >= subtree._subtreeLevels) {
+    return;
+  }
+
+  uint64_t relativeTileMortonIdx = libmorton::morton3D_64_encode(
+      octreeID.x - (subtreeID.x << relativeTileLevel),
+      octreeID.y - (subtreeID.y << relativeTileLevel),
+      octreeID.z - (subtreeID.z << relativeTileLevel));
+
+  if (subtree.isTileAvailable(relativeTileLevel, relativeTileMortonIdx)) {
+    SphereGenerator generator;
+    auto mesh = generator.generate(glm::vec3(0.0), 3.0);
+    auto model = mesh.convertToGltf();
+
+    CesiumGltfWriter::GltfWriter gltfWriter;
+    auto glb = gltfWriter.writeGlb(model, model.buffers.front().cesium.data);
+    auto glbFile = std::fstream(
+        path / fmt::format(
+                   "{}_{}_{}_{}.glb",
+                   octreeID.level,
+                   octreeID.x,
+                   octreeID.y,
+                   octreeID.z),
+        std::ios::out | std::ios::binary);
+    glbFile.write((char*)&glb.gltfBytes[0], glb.gltfBytes.size());
+  }
+
+  for (uint32_t y = 0; y < 2; ++y) {
+    for (uint32_t x = 0; x < 2; ++x) {
+      for (uint32_t z = 0; z < 2; ++z) {
+        CesiumGeometry::OctreeTileID childID(
+            octreeID.level + 1,
+            octreeID.x + x,
+            octreeID.y + y,
+            octreeID.z + z);
+        serializeGltf(path, subtree, subtreeID, childID);
+      }
+    }
+  }
 }
 } // namespace Cesium3DTilesSelection
