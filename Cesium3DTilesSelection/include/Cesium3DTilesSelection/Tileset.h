@@ -305,7 +305,6 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile to potentially load and render.
-   * @param implicitInfo The implicit traversal information.
    * @param result The current view update result.
    * @param distance The distance to this tile, used to compute the load
    * priority.
@@ -333,7 +332,6 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile that is potentially being refined.
-   * @param implicitInfo The implicit traversal info.
    * @param distance The distance to the tile.
    * @return true Some of the required children are not yet loaded, so this tile
    * _cannot_ yet be refined.

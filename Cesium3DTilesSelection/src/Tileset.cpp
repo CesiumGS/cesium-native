@@ -454,7 +454,6 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     const FrameState& frameState,
-    // ImplicitTraversalInfo implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -561,7 +560,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     if (this->_options.preloadSiblings) {
       addTileToLoadQueue(
           this->_loadQueueLow,
-          // implicitInfo,
           frustums,
           tile,
           distances);
@@ -619,7 +617,6 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     const FrameState& frameState,
     Tile& tile,
-    // const ImplicitTraversalInfo& implicitInfo,
     const std::vector<double>& distances) {
   if (!this->_options.forbidHoles) {
     return false;

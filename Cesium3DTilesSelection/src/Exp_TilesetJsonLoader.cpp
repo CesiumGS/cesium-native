@@ -16,6 +16,8 @@
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
 
+#include <cctype>
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct ExternalContentInitializer {
