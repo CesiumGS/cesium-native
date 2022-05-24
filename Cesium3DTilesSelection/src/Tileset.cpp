@@ -558,11 +558,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
     // Preload this culled sibling if requested.
     if (this->_options.preloadSiblings) {
-      addTileToLoadQueue(
-          this->_loadQueueLow,
-          frustums,
-          tile,
-          distances);
+      addTileToLoadQueue(this->_loadQueueLow, frustums, tile, distances);
     }
 
     ++result.tilesCulled;

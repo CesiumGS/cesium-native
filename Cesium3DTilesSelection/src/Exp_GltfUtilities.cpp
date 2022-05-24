@@ -5,7 +5,8 @@ namespace Cesium3DTilesSelection {
 /*static*/ glm::dmat4x4 GltfUtilities::applyRtcCenter(
     const CesiumGltf::Model& gltf,
     const glm::dmat4x4& rootTransform) {
-  const CesiumGltf::ExtensionCesiumRTC* cesiumRTC = gltf.getExtension<CesiumGltf::ExtensionCesiumRTC>();
+  const CesiumGltf::ExtensionCesiumRTC* cesiumRTC =
+      gltf.getExtension<CesiumGltf::ExtensionCesiumRTC>();
   if (cesiumRTC == nullptr) {
     return rootTransform;
   }

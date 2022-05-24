@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumGltf/Model.h>
+
 #include <glm/glm.hpp>
 
 namespace Cesium3DTilesSelection {
