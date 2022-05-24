@@ -274,9 +274,8 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.culledTilesVisited == 0);
     }
 
-    // 2nd frame. Because children receive failed response, so they can't be
-    // rendered. Root should be rendered instead. Children should have failed
-    // load states
+    // 2nd frame. Because children receive failed response, so they will be
+    // rendered as empty tiles.
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
@@ -289,14 +288,13 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
 
-      REQUIRE(result.tilesVisited == 1);
+      REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
+      REQUIRE(result.tilesLoadingMediumPriority == 1);
       REQUIRE(result.tilesLoadingHighPriority == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -419,8 +417,8 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(!doesTileMeetSSE(zoomOutViewState, *root, tileset));
 
       // The first child of root isn't rendered because it is failed to load
-      // even though it meets sse. Use its child instead since the child is
-      // rendered last frame
+      // even though it meets sse. We will still render it even it's just an
+      // empty hole
       const Tile& ll = root->getChildren().front();
       REQUIRE(ll.getState() == TileLoadState::Failed);
       REQUIRE(doesTileMeetSSE(zoomOutViewState, ll, tileset));
@@ -438,14 +436,14 @@ TEST_CASE("Test replace refinement for render") {
 
       // check result
       REQUIRE(result.tilesToRenderThisFrame.size() == 4);
-      REQUIRE(result.tilesToRenderThisFrame[0] == &ll_ll);
+      REQUIRE(result.tilesToRenderThisFrame[0] == &ll);
       REQUIRE(result.tilesToRenderThisFrame[1] == &root->getChildren()[1]);
       REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
       REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
 
-      REQUIRE(result.tilesVisited == 6);
+      REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
       REQUIRE(result.tilesLoadingMediumPriority == 0);
       REQUIRE(result.tilesLoadingHighPriority == 0);
@@ -745,13 +743,18 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     REQUIRE(result.culledTilesVisited == 0);
   }
 
-  // 2nd frame. Root doesn't meet sse, so load children. But they are
-  // non-renderable, so render root only
+  // 2nd frame. Root doesn't meet sse, so load children. Even one of the
+  // children is failed, render all of them even there is a hole
   {
     ViewUpdateResult result = tileset.updateView({viewState});
 
     REQUIRE(root->isRenderable());
-    for (const Tile& child : root->getChildren()) {
+
+    // first child will have failed empty content, but other children
+    const auto& children = root->getChildren();
+    REQUIRE(children[0].getState() == TileLoadState::Failed);
+    REQUIRE(children[0].isRenderable());
+    for (const Tile& child : children.subspan(1)) {
       REQUIRE(child.getState() == TileLoadState::Done);
       REQUIRE(child.isRenderable());
     }

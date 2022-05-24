@@ -93,8 +93,8 @@ CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
   glm::dvec3 xDim = halfAxes[0] * 2.0 / double(denominator);
   glm::dvec3 yDim = halfAxes[1] * 2.0 / double(denominator);
   glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
-  glm::dvec3 childMax =
-      min + xDim * double(tileID.x + 1) + yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
+  glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
+                        yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
 
   return CesiumGeometry::OrientedBoundingBox(
       (childMin + childMax) / 2.0,

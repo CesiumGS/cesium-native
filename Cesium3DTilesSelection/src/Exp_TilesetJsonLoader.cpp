@@ -1,6 +1,6 @@
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
-#include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
 #include <Cesium3DTilesSelection/Exp_ImplicitOctreeLoader.h>
+#include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -648,8 +648,10 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   const auto& errors = externalTilesetLoader.errors;
   if (errors) {
     logErrors(loadInfo.pLogger, tileUrl, errors.errors);
+
+    // since the json cannot be parsed, we don't know the content of this tile
     return TileLoadResult{
-        TileExternalContent{},
+        TileUnknownContent{},
         TileLoadResultState::Failed,
         std::move(pCompletedRequest),
         {}};

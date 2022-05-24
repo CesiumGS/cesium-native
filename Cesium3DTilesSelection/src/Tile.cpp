@@ -152,7 +152,7 @@ int64_t Tile::computeByteSize() const noexcept {
 
 bool Tile::isRenderable() const noexcept {
   if (getState() >= TileLoadState::ContentLoaded) {
-    if (isEmptyContent() || isRenderContent()) {
+    if (!isExternalContent()) {
       return true;
     }
   }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
+#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
 #include <CesiumGeometry/OctreeTileID.h>
 
 namespace Cesium3DTilesSelection {

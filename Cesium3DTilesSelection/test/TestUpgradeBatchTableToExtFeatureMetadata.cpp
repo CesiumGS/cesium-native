@@ -1,14 +1,13 @@
-#include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
-#include <Cesium3DTilesSelection/Exp_B3dmToGltfConverter.h>
+#include "readFile.h"
 
+#include <Cesium3DTilesSelection/Exp_B3dmToGltfConverter.h>
+#include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/MetadataFeatureTableView.h>
 #include <CesiumGltf/MetadataPropertyView.h>
-
-#include "readFile.h"
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>

@@ -4,6 +4,7 @@
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/joinToString.h>
+
 #include <spdlog/logger.h>
 
 namespace Cesium3DTilesSelection {
@@ -190,7 +191,7 @@ void TilesetContentManager::loadTileContent(
                 pLogger,
                 "An unexpected error occurs when loading tile: {}",
                 e.what());
-      });
+          });
 }
 
 void TilesetContentManager::updateTileContent(Tile& tile) {
