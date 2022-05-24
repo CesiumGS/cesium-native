@@ -47,7 +47,7 @@ CesiumGeospatial::BoundingRegion subdivideRegion(
     const CesiumGeometry::OctreeTileID& tileID,
     const CesiumGeospatial::BoundingRegion& region) {
   const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
-  size_t denominator = size_t(1) << tileID.level;
+  double denominator = static_cast<double>(1 << tileID.level);
   double latSize = (globeRect.getNorth() - globeRect.getSouth()) / denominator;
   double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
   double heightSize =
@@ -79,12 +79,12 @@ CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
   const glm::dmat3& halfAxes = obb.getHalfAxes();
   const glm::dvec3& center = obb.getCenter();
 
-  size_t denominator = size_t(1) << tileID.level;
+  double denominator = static_cast<double>(1 << tileID.level);
   glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
 
-  glm::dvec3 xDim = halfAxes[0] * 2.0 / double(denominator);
-  glm::dvec3 yDim = halfAxes[1] * 2.0 / double(denominator);
-  glm::dvec3 zDim = halfAxes[2] * 2.0 / double(denominator);
+  glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
+  glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
+  glm::dvec3 zDim = halfAxes[2] * 2.0 / denominator;
   glm::dvec3 childMin = min + xDim * double(tileID.x) +
                         yDim * double(tileID.y) + zDim * double(tileID.z);
   glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
