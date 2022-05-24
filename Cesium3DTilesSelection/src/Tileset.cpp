@@ -1,17 +1,12 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 
 #include "Cesium3DTilesSelection/CreditSystem.h"
-#include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "TileUtilities.h"
-#include "TilesetLoadIonAssetEndpoint.h"
-#include "TilesetLoadSubtree.h"
-#include "TilesetLoadTileFromJson.h"
-#include "TilesetLoadTilesetDotJson.h"
 
 #include <Cesium3DTilesSelection/Exp_CesiumIonTilesetLoader.h>
 #include <Cesium3DTilesSelection/Exp_TilesetJsonLoader.h>

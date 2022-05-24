@@ -2,7 +2,6 @@
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "TileUtilities.h"

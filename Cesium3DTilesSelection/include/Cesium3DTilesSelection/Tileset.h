@@ -1,10 +1,8 @@
 #pragma once
 
-#include "ImplicitTraversal.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
-#include "TileContext.h"
 #include "TilesetExternals.h"
 #include "TilesetOptions.h"
 #include "ViewState.h"
