@@ -156,7 +156,7 @@ void TilesetContentManager::loadTileContent(
             notifyTileDoneLoading(tile);
             SPDLOG_LOGGER_ERROR(
                 pLogger,
-                "Unexpected error occur when loading tile: {}",
+                "An unexpected error occurs when loading tile: {}",
                 e.what());
       });
 }
