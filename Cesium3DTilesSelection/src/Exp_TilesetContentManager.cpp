@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/Exp_TilesetContentManager.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/joinToString.h>
 #include <spdlog/logger.h>
 
 namespace Cesium3DTilesSelection {
@@ -75,6 +76,37 @@ CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
                pPrepareRendererResources =
                    std::move(pPrepareRendererResources)](
                   CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
+                if (!gltfResult.errors.empty()) {
+                  if (result.pCompletedRequest) {
+                    SPDLOG_LOGGER_ERROR(
+                        loadInfo.pLogger,
+                        "Failed resolving external glTF buffers from {}:\n- {}",
+                        result.pCompletedRequest->url(),
+                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                  } else {
+                    SPDLOG_LOGGER_ERROR(
+                        loadInfo.pLogger,
+                        "Failed resolving external glTF buffers:\n- {}",
+                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                  }
+                }
+
+                if (!gltfResult.warnings.empty()) {
+                  if (result.pCompletedRequest) {
+                    SPDLOG_LOGGER_WARN(
+                        loadInfo.pLogger,
+                        "Warning when resolving external gltf buffers from "
+                        "{}:\n- {}",
+                        result.pCompletedRequest->url(),
+                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                  } else {
+                    SPDLOG_LOGGER_ERROR(
+                        loadInfo.pLogger,
+                        "Warning resolving external glTF buffers:\n- {}",
+                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                  }
+                }
+
                 TileRenderContent& renderContent =
                     std::get<TileRenderContent>(result.contentKind);
                 renderContent.model = std::move(gltfResult.model);
