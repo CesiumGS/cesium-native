@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/Exp_TilesetContentManager.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <spdlog/logger.h>
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -149,6 +150,14 @@ void TilesetContentManager::loadTileContent(
             pair.pRenderResources);
 
         notifyTileDoneLoading(tile);
+      })
+      .catchInMainThread(
+          [pLogger = _externals.pLogger, &tile, this](std::exception&& e) {
+            notifyTileDoneLoading(tile);
+            SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "Unexpected error occur when loading tile: {}",
+                e.what());
       });
 }
 
