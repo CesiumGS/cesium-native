@@ -146,7 +146,7 @@ void populateSubtree(
           childX,
           childY};
 
-      uint32_t childIndex = libmorton::morton2D_32_encode(x, y);
+      uint32_t childIndex = static_cast<uint32_t>(libmorton::morton2D_32_encode(x, y));
       uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
       uint32_t relativeChildLevel = relativeTileLevel + 1;
       if (relativeChildLevel == subtreeLevels) {
