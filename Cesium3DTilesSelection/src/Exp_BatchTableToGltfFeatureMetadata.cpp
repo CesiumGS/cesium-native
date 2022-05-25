@@ -1305,7 +1305,7 @@ void updateExtensionWithBatchTableHierarchy(
     Model& gltf,
     Class& classDefinition,
     FeatureTable& featureTable,
-    ErrorList &result,
+    ErrorList& result,
     const rapidjson::Value& batchTableHierarchy) {
   // EXT_feature_metadata can't support hierarchy, so we need to flatten it.
   // It also can't support multiple classes with a single set of feature IDs.
