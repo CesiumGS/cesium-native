@@ -294,7 +294,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 1);
+      REQUIRE(result.tilesLoadingMediumPriority == 0);
       REQUIRE(result.tilesLoadingHighPriority == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);

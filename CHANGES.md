@@ -1,26 +1,84 @@
 # Change Log
-### v0.14.0 - YYYY-MM-DD
 
-##### Breaking Changes :mega:
-
-- Added a parameter to `prepareRasterInLoadThread`
+### v0.15.2 - 2022-05-13
 
 ##### Fixes :wrench:
 
-- Fix the issue where CesiumAsync failed to compile when passing lvalue reference to Promise::resolve()
-- Fix upsampling for EXT_feature_metadata feature tables.
-- Fixed a bug that could cause the size of external images to be accounted for incorrectly when tracking the number of bytes loaded for caching purposes.
+- Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
+
+In addition to the above, this release updates the following third-party libraries used by cesium-native:
+- `cpp-httplib` to v0.10.3 ([changes](https://github.com/yhirose/cpp-httplib/compare/c7486ead96dad647b9783941722b5944ac1aaefa...d73395e1dc652465fa9524266cd26ad57365491f))
+- `draco` to v1.5.2 ([changes](https://github.com/google/draco/compare/9bf5d2e4833d445acc85eb95da42d715d3711c6f...bd1e8de7dd0596c2cbe5929cbe1f5d2257cd33db))
+- `earcut` to v2.2.3 ([changes](https://github.com/mapbox/earcut.hpp/compare/6d18edf0ce046023a7cb55e69c4cd9ba90e2c716...b28acde132cdb8e0ef536a96ca7ada8a651f9169))
+- `PicoSHA2` to commit `1677374f23352716fc52183255a40c1b8e1d53eb` ([changes](https://github.com/okdshin/PicoSHA2/compare/b699e6c900be6e00152db5a3d123c1db42ea13d0...1677374f23352716fc52183255a40c1b8e1d53eb))
+- `rapidjson` to commit `fcb23c2dbf561ec0798529be4f66394d3e4996d8` ([changes](https://github.com/Tencent/rapidjson/compare/fd3dc29a5c2852df569e1ea81dbde2c412ac5051...fcb23c2dbf561ec0798529be4f66394d3e4996d8))
+- `spdlog` to v1.10.0 ([changes](https://github.com/gabime/spdlog/compare/cbe9448650176797739dbab13961ef4c07f4290f...76fb40d95455f249bd70824ecfcae7a8f0930fa3))
+- `stb` to commit `af1a5bc352164740c1cc1354942b1c6b72eacb8a` ([changes](https://github.com/nothings/stb/compare/b42009b3b9d4ca35bc703f5310eedc74f584be58...af1a5bc352164740c1cc1354942b1c6b72eacb8a))
+- `uriparser` to v0.9.6 ([changes](https://github.com/uriparser/uriparser/compare/e8a338e0c65fd875a46067d711750e4c13e044e7...24df44b74753017acfaec4b3a30097a8a2ae1ae1))
+
+### v0.15.1 - 2022-05-05
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause tiles in external tilesets to fail to load.
+
+### v0.15.0 - 2022-05-02
 
 ##### Additions :tada:
 
-- Added in-memory cache for Ion asset endpoint responses to avoid repeated requests.
-- Add ScopeGuard utility to automatically execute function when exiting a scope.
-- Add glTF copyright information to the list of tileset credits.
-- Credits are now sorted based on the number of occurrences.
-- Added option to show credits on screen.
-- Expose the swizzle string in feature texture property views.
-- Add a type trait check for if something is a metadata array.
-- Add option to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
+- Improved the load performance when `TilesetOptions::forbidHoles` is enabled by only loading child tiles when their parent does not meet the necessary screen-space error requirement.
+- Added support for loading availability metadata from quantized-mesh layer.json. Previously, only availability embedded in terrain tiles was used.
+- Added support for quantized-mesh terrain tilesets that specify a parent layer.
+- Added support for metadata from the `3DTILES_batch_table_hierarchy` extension.
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause the same tiles to be continually loaded and unloaded when `TilesetOptions::forbidHoles` was enabled.
+- Fixed a bug that could sometimes cause tilesets to fail to show their full detail when making changes to raster overlays.
+- Fixed a bug that could cause holes even with `TilesetOptions::forbidHoles` enabled, particularly when using external tilesets.
+- Tiles will no longer be selected to render when they have no content and they have a higher "geometric error" than their parent. In previous versions, this situation could briefly lead to holes while the children of such tiles loaded.
+- Fixed a bug where `IPrepareRendererResources::prepareInMainThread` was called on a `Tile` before that `Tile` was updated with loaded content.
+- Fixed a bug where getting bad data from the SQLite request cache could cause a crash. If the SQLite database is corrupt, it will now be deleted and recreated.
+
+### v0.14.1 - 2022-04-14
+
+##### Fixes :wrench:
+
+- Fixed a crash caused by using an aggregated overlay of `IonRasterOverlay` after it is freed.
+- Fix a bug introduced in v0.14.0 that caused Tile Map Service (TMS) overlays from Cesium ion to fail to load.
+
+### v0.14.0 - 2022-04-01
+
+##### Breaking Changes :mega:
+
+- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareRasterInLoadThread`.
+- Changed the type of Cesium ion asset IDs from `uint32_t` to `int64_t`.
+- Various changes in the `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` namespaces to match the evolving 3D Tiles Next specifications.
+- Removed `getTextureCoordinateIndex` from `FeatureIDTextureView` and `FeatureTexturePropertyView`. Use `getTextureCoordinateAttributeId` instead.
+
+##### Additions :tada:
+
+- Added `WebMapServiceRasterOverlay` to pull raster overlays from a WMS server.
+- Added support for the following glTF extensions to `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`:
+  - `EXT_instance_features`
+  - `EXT_structural_metadata`
+  - `MAXAR_mesh_variants`
+- Added an in-memory cache for Cesium ion asset endpoint responses in order to avoid repeated requests.
+- Added `ScopeGuard` class to automatically a execute function when exiting a scope.
+- The glTF `copyright` property, if present, is now included in the credits that `Tileset` adds to the `CreditSystem`. If the `copyright` has multiple parts separate by semicolons, these are treated as separate credits.
+- Credits reported by `CreditSystem::getCreditsToShowThisFrame` are now sorted based on the number of occurrences, with the most common credits first.
+- `Tileset` and `RasterOverlay` credits can now be shown on the screen, rather than in a separate credit popup.
+- Added `FeatureTexturePropertyView::getSwizzle` method.
+- Added `IsMetadataArray` template to check if a type is a `MetadataArrayView`.
+- Added a `rendererOptions` property to `RasterOverlayOptions` to pass arbitrary data to `prepareRasterInLoadThread`.
+- Added `Uri::escape`.
+
+##### Fixes :wrench:
+
+- Fixed an issue that could lead to compilation failures when passing an lvalue reference to `Promise::resolve()`.
+- Fixed upsampling for `EXT_feature_metadata` feature tables.
+- Fixed a bug that could cause the size of external images to be accounted for incorrectly when tracking the number of bytes loaded for caching purposes.
+- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was enabled.
 
 ### v0.13.0 - 2022-03-01
 
@@ -43,7 +101,6 @@
 
 - Fixed bug that could cause properties types in a B3DM Batch Table to be deduced incorrectly, leading to a crash when accessing property values.
 - Fixed a bug where implicit tiles were not receiving the root transform and so could sometimes end up in the wrong place.
-- Fixed a bug that prevented tiles from loading when "Forbid Holes" option was true.
 
 ### v0.12.0 - 2022-02-01
 

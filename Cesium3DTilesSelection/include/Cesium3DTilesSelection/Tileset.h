@@ -57,7 +57,7 @@ public:
    */
   Tileset(
       const TilesetExternals& externals,
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       const std::string& ionAccessToken,
       const TilesetOptions& options = TilesetOptions(),
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
@@ -320,25 +320,22 @@ private:
 
   /**
    * @brief Queues load of tiles that are _required_ to be loaded before the
-   * given tile can be refined.
+   * given tile can be refined in "Forbid Holes" mode.
    *
-   * If {@link TilesetOptions::forbidHoles} is false (the default), any tile can
-   * be refined, regardless of whether its children are loaded or not. So in
-   * that case, this method immediately returns `false`.
+   * The queued tiles may include descedents, too, if any children are set to
+   * Unconditionally Refine ({@link Tile::getUnconditionallyRefine}).
    *
-   * When `forbidHoles` is true, however, and some of this tile's children are
-   * not yet renderable, this method returns `true`. It also adds those
-   * not-yet-renderable tiles to the load queue.
+   * This method should only be called if {@link TilesetOptions::forbidHoles} is enabled.
    *
    * @param frameState The state of the current frame.
    * @param tile The tile that is potentially being refined.
    * @param distance The distance to the tile.
-   * @return true Some of the required children are not yet loaded, so this tile
-   * _cannot_ yet be refined.
-   * @return false All of the required children (if there are any) are loaded,
-   * so this tile _can_ be refined.
+   * @return true Some of the required descendents are not yet loaded, so this
+   * tile _cannot_ yet be refined.
+   * @return false All of the required descendents (if there are any) are
+   * loaded, so this tile _can_ be refined.
    */
-  bool _queueLoadOfChildrenRequiredForRefinement(
+  bool _queueLoadOfChildrenRequiredForForbidHoles(
       const FrameState& frameState,
       Tile& tile,
       const std::vector<double>& distances);

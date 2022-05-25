@@ -35,7 +35,8 @@ static bool upsamplePrimitiveForRasterOverlays(
     Model& model,
     Mesh& mesh,
     MeshPrimitive& primitive,
-    CesiumGeometry::UpsampledQuadtreeNode childID);
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex);
 
 struct FloatVertexAttribute {
   const std::vector<std::byte>& buffer;
@@ -102,7 +103,8 @@ static void copyMetadataTables(const Model& parentModel, Model& result);
 
 Model upsampleGltfForRasterOverlays(
     const Model& parentModel,
-    CesiumGeometry::UpsampledQuadtreeNode childID) {
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsampleGltfForRasterOverlays");
   Model result;
 
@@ -155,7 +157,8 @@ Model upsampleGltfForRasterOverlays(
           result,
           mesh,
           primitive,
-          childID);
+          childID,
+          textureCoordinateIndex);
 
       // We're assuming here that nothing references primitives by index, so we
       // can remove them without any drama.
@@ -384,7 +387,8 @@ static bool upsamplePrimitiveForRasterOverlays(
     Model& model,
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
-    CesiumGeometry::UpsampledQuadtreeNode childID) {
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
 
   // Add up the per-vertex size of all attributes and create buffers,
@@ -418,12 +422,16 @@ static bool upsamplePrimitiveForRasterOverlays(
 
   std::vector<std::string> toRemove;
 
+  std::string textureCoordinateName =
+      "_CESIUMOVERLAY_" + std::to_string(textureCoordinateIndex);
+
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
     if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
       if (uvAccessorIndex == -1) {
-        uvAccessorIndex = attribute.second;
+        if (attribute.first == textureCoordinateName) {
+          uvAccessorIndex = attribute.second;
+        }
       }
-
       // Do not include _CESIUMOVERLAY_*, it will be generated later.
       toRemove.push_back(attribute.first);
       continue;
@@ -1138,7 +1146,8 @@ static bool upsamplePrimitiveForRasterOverlays(
     Model& model,
     Mesh& mesh,
     MeshPrimitive& primitive,
-    CesiumGeometry::UpsampledQuadtreeNode childID) {
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex) {
   if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
       primitive.indices < 0 ||
       primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
@@ -1156,7 +1165,8 @@ static bool upsamplePrimitiveForRasterOverlays(
         model,
         mesh,
         primitive,
-        childID);
+        childID,
+        textureCoordinateIndex);
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_INT) {
@@ -1165,7 +1175,8 @@ static bool upsamplePrimitiveForRasterOverlays(
         model,
         mesh,
         primitive,
-        childID);
+        childID,
+        textureCoordinateIndex);
   }
 
   return false;

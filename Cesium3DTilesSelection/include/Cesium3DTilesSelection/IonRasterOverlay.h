@@ -32,7 +32,7 @@ public:
    */
   IonRasterOverlay(
       const std::string& name,
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       const std::string& ionAccessToken,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~IonRasterOverlay() override;
@@ -48,8 +48,9 @@ public:
       RasterOverlay* pOwner) override;
 
 private:
-  uint32_t _ionAssetID;
+  int64_t _ionAssetID;
   std::string _ionAccessToken;
+  std::unique_ptr<RasterOverlay> _pAggregatedOverlay;
 
   struct AssetEndpointAttribution {
     std::string html;

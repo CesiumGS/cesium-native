@@ -12,13 +12,13 @@
 //
 //#include <vector>
 //
-// using namespace Cesium3DTilesSelection;
-// using namespace CesiumGeometry;
-// using namespace CesiumGeospatial;
-// using namespace CesiumGltf;
-// using namespace CesiumUtility;
+//using namespace Cesium3DTilesSelection;
+//using namespace CesiumGeometry;
+//using namespace CesiumGeospatial;
+//using namespace CesiumGltf;
+//using namespace CesiumUtility;
 //
-// struct QuantizedMeshHeader {
+//struct QuantizedMeshHeader {
 //  double centerX;
 //  double centerY;
 //  double centerZ;
@@ -36,7 +36,7 @@
 //  double horizonOcclusionPointZ;
 //};
 //
-// template <typename T> struct MeshData {
+//template <typename T> struct MeshData {
 //  std::vector<uint16_t> u;
 //  std::vector<uint16_t> v;
 //  std::vector<uint16_t> height;
@@ -47,30 +47,30 @@
 //  std::vector<T> northIndices;
 //};
 //
-// struct Extension {
+//struct Extension {
 //  uint8_t extensionID;
 //  std::vector<std::byte> extensionData;
 //};
 //
-// template <typename T> struct QuantizedMesh {
+//template <typename T> struct QuantizedMesh {
 //  QuantizedMeshHeader header;
 //  MeshData<T> vertexData;
 //  std::vector<Extension> extensions;
 //};
 //
-// static uint32_t index2DTo1D(uint32_t x, uint32_t y, uint32_t width) {
+//static uint32_t index2DTo1D(uint32_t x, uint32_t y, uint32_t width) {
 //  return y * width + x;
 //}
 //
-// static uint16_t zigzagEncode(int16_t n) {
+//static uint16_t zigzagEncode(int16_t n) {
 //  return static_cast<uint16_t>((((uint16_t)n << 1) ^ (n >> 15)) & 0xFFFF);
 //}
 //
-// static int32_t zigZagDecode(int32_t value) {
+//static int32_t zigZagDecode(int32_t value) {
 //  return (value >> 1) ^ (-(value & 1));
 //}
 //
-// static void octEncode(glm::vec3 normal, uint8_t& x, uint8_t& y) {
+//static void octEncode(glm::vec3 normal, uint8_t& x, uint8_t& y) {
 //  float inv =
 //      1.0f / (glm::abs(normal.x) + glm::abs(normal.y) + glm::abs(normal.z));
 //  glm::vec2 p;
@@ -88,7 +88,7 @@
 //  }
 //}
 //
-// static double calculateSkirtHeight(
+//static double calculateSkirtHeight(
 //    int tileLevel,
 //    const CesiumGeospatial::Ellipsoid& ellipsoid,
 //    const QuadtreeTilingScheme& tilingScheme) {
@@ -96,30 +96,29 @@
 //  static const uint32_t heightmapWidth = 65;
 //  double levelZeroMaximumGeometricError =
 //      ellipsoid.getMaximumRadius() * CesiumUtility::Math::TwoPi *
-//      terrainHeightmapQuality / (heightmapWidth *
-//      tilingScheme.getRootTilesX());
+//      terrainHeightmapQuality / (heightmapWidth * tilingScheme.getRootTilesX());
 //
 //  double levelMaximumGeometricError =
 //      levelZeroMaximumGeometricError / (1 << tileLevel);
 //  return levelMaximumGeometricError * 5.0;
 //}
 //
-// template <typename T>
-// static std::vector<std::byte>
-// convertQuantizedMeshToBinary(const QuantizedMesh<T>& quantizedMesh) {
+//template <typename T>
+//static std::vector<std::byte>
+//convertQuantizedMeshToBinary(const QuantizedMesh<T>& quantizedMesh) {
 //  // compute the total size of mesh to preallocate
 //  size_t totalSize = sizeof(quantizedMesh.header) +
 //                     sizeof(uint32_t) + // vertex data
 //                     quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +
 //                     quantizedMesh.vertexData.v.size() * sizeof(uint16_t) +
-//                     quantizedMesh.vertexData.height.size() * sizeof(uint16_t)
-//                     + sizeof(uint32_t) + // indices data
+//                     quantizedMesh.vertexData.height.size() * sizeof(uint16_t) +
+//                     sizeof(uint32_t) + // indices data
 //                     quantizedMesh.vertexData.indices.size() * sizeof(T) +
 //                     sizeof(uint32_t) + // west edge
 //                     quantizedMesh.vertexData.westIndices.size() * sizeof(T) +
 //                     sizeof(uint32_t) + // south edge
-//                     quantizedMesh.vertexData.southIndices.size() * sizeof(T)
-//                     + sizeof(uint32_t) + // east edge
+//                     quantizedMesh.vertexData.southIndices.size() * sizeof(T) +
+//                     sizeof(uint32_t) + // east edge
 //                     quantizedMesh.vertexData.eastIndices.size() * sizeof(T) +
 //                     sizeof(uint32_t) + // north edge
 //                     quantizedMesh.vertexData.northIndices.size() * sizeof(T);
@@ -263,15 +262,14 @@
 //    // serialize extension data
 //    offset += length;
 //    length = extension.extensionData.size();
-//    std::memcpy(buffer.data() + offset, extension.extensionData.data(),
-//    length);
+//    std::memcpy(buffer.data() + offset, extension.extensionData.data(), length);
 //  }
 //
 //  return buffer;
 //}
 //
-// template <class T>
-// static QuantizedMesh<T> createGridQuantizedMesh(
+//template <class T>
+//static QuantizedMesh<T> createGridQuantizedMesh(
 //    const BoundingRegion& region,
 //    uint32_t width,
 //    uint32_t height) {
@@ -311,8 +309,7 @@
 //    for (uint32_t x = 0; x < width; ++x) {
 //      // encode u, v, and height buffers
 //      uint16_t u = static_cast<uint16_t>(
-//          (static_cast<double>(x) / static_cast<double>(width - 1)) *
-//          32767.0);
+//          (static_cast<double>(x) / static_cast<double>(width - 1)) * 32767.0);
 //      uint16_t v = static_cast<uint16_t>(
 //          ((static_cast<double>(y) / static_cast<double>(height - 1))) *
 //          32767.0);
@@ -376,8 +373,8 @@
 //  return quantizedMesh;
 //}
 //
-// template <class T, class I>
-// void checkGridMesh(
+//template <class T, class I>
+//void checkGridMesh(
 //    const QuantizedMesh<T>& quantizedMesh,
 //    const AccessorView<I>& indices,
 //    const AccessorView<glm::vec3>& positions,
@@ -422,8 +419,7 @@
 //      double longitude = Math::lerp(west, east, uRatio);
 //      double latitude = Math::lerp(south, north, vRatio);
 //      glm::dvec3 expectPosition =
-//          ellipsoid.cartographicToCartesian(Cartographic(longitude,
-//          latitude));
+//          ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude));
 //
 //      glm::dvec3 position = static_cast<glm::dvec3>(positions[positionIdx]);
 //      position += glm::dvec3(
@@ -442,8 +438,7 @@
 //      // check indices
 //      if (x < verticesWidth - 1 && y < verticesHeight - 1) {
 //        REQUIRE(
-//            indices[idx++] == static_cast<I>(index2DTo1D(x, y,
-//            verticesWidth)));
+//            indices[idx++] == static_cast<I>(index2DTo1D(x, y, verticesWidth)));
 //        REQUIRE(
 //            indices[idx++] ==
 //            static_cast<I>(index2DTo1D(x + 1, y, verticesWidth)));
@@ -499,11 +494,9 @@
 //        quantizedMesh.header.boundingSphereCenterX,
 //        quantizedMesh.header.boundingSphereCenterY,
 //        quantizedMesh.header.boundingSphereCenterZ);
-//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x,
-//    Math::Epsilon3)); REQUIRE(Math::equalsEpsilon(position.y,
-//    expectPosition.y, Math::Epsilon3));
-//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z,
-//    Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
 //  }
 //
 //  currentVertexCount += westIndicesCount;
@@ -521,11 +514,9 @@
 //        quantizedMesh.header.boundingSphereCenterX,
 //        quantizedMesh.header.boundingSphereCenterY,
 //        quantizedMesh.header.boundingSphereCenterZ);
-//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x,
-//    Math::Epsilon3)); REQUIRE(Math::equalsEpsilon(position.y,
-//    expectPosition.y, Math::Epsilon3));
-//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z,
-//    Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
 //  }
 //
 //  currentVertexCount += southIndicesCount;
@@ -543,11 +534,9 @@
 //        quantizedMesh.header.boundingSphereCenterX,
 //        quantizedMesh.header.boundingSphereCenterY,
 //        quantizedMesh.header.boundingSphereCenterZ);
-//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x,
-//    Math::Epsilon3)); REQUIRE(Math::equalsEpsilon(position.y,
-//    expectPosition.y, Math::Epsilon2));
-//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z,
-//    Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon2));
+//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
 //  }
 //
 //  currentVertexCount += eastIndicesCount;
@@ -564,16 +553,14 @@
 //        quantizedMesh.header.boundingSphereCenterX,
 //        quantizedMesh.header.boundingSphereCenterY,
 //        quantizedMesh.header.boundingSphereCenterZ);
-//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x,
-//    Math::Epsilon3)); REQUIRE(Math::equalsEpsilon(position.y,
-//    expectPosition.y, Math::Epsilon3));
-//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z,
-//    Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+//    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
 //  }
 //}
 //
-// template <class T, class I>
-// static void checkGeneratedGridNormal(
+//template <class T, class I>
+//static void checkGeneratedGridNormal(
 //    const QuantizedMesh<T>& quantizedMesh,
 //    const AccessorView<glm::vec3>& normals,
 //    const AccessorView<glm::vec3>& positions,
@@ -612,17 +599,13 @@
 //      // only
 //      REQUIRE(glm::dot(normal, geodeticNormal) >= 0.0);
 //
-//      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x,
-//      Math::Epsilon7)); REQUIRE(Math::equalsEpsilon(normal.y,
-//      expectedNormal.y, Math::Epsilon7));
-//      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z,
-//      Math::Epsilon7));
+//      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+//      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+//      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 //    } else {
-//      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x,
-//      Math::Epsilon7)); REQUIRE(Math::equalsEpsilon(normal.y,
-//      expectedNormal.y, Math::Epsilon7));
-//      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z,
-//      Math::Epsilon7));
+//      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+//      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+//      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 //    }
 //  }
 //
@@ -695,7 +678,7 @@
 //  }
 //}
 //
-// TEST_CASE("Test converting quantized mesh to gltf with skirt") {
+//TEST_CASE("Test converting quantized mesh to gltf with skirt") {
 //  registerAllTileContentTypes();
 //
 //  // mock context
@@ -720,6 +703,8 @@
 //      boundingRegion,
 //      projection,
 //      QuadtreeRectangleAvailability(tilingScheme, 23),
+//      std::nullopt,
+//      std::nullopt,
 //      std::nullopt,
 //      std::nullopt};
 //
@@ -974,8 +959,7 @@
 //        verticesWidth,
 //        verticesHeight);
 //
-//    // add oct-encoded normal extension. This is just a random direction and
-//    not
+//    // add oct-encoded normal extension. This is just a random direction and not
 //    // really normal. We want to make sure the normal is written to the gltf
 //    glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
 //    uint8_t x = 0, y = 0;
@@ -1035,7 +1019,7 @@
 //  }
 //}
 //
-// TEST_CASE("Test converting ill-formed quantized mesh") {
+//TEST_CASE("Test converting ill-formed quantized mesh") {
 //  registerAllTileContentTypes();
 //
 //  // mock context
@@ -1060,6 +1044,8 @@
 //      boundingRegion,
 //      projection,
 //      QuadtreeRectangleAvailability(tilingScheme, 23),
+//      std::nullopt,
+//      std::nullopt,
 //      std::nullopt,
 //      std::nullopt};
 //

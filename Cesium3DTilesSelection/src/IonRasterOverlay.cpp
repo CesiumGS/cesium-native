@@ -22,7 +22,7 @@ namespace Cesium3DTilesSelection {
 
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     const std::string& ionAccessToken,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
@@ -50,22 +50,21 @@ IonRasterOverlay::createTileProvider(
           !attribution.collapsible || this->getOptions().showCreditsOnScreen));
     }
   }
-  std::unique_ptr<RasterOverlay> pAggregatedOverlay = nullptr;
   if (endpoint.externalType == "BING") {
-    pAggregatedOverlay = std::make_unique<BingMapsRasterOverlay>(
+    _pAggregatedOverlay = std::make_unique<BingMapsRasterOverlay>(
         this->getName(),
         endpoint.url,
         endpoint.key,
         endpoint.mapStyle,
         endpoint.culture);
   } else {
-    pAggregatedOverlay = std::make_unique<TileMapServiceRasterOverlay>(
+    _pAggregatedOverlay = std::make_unique<TileMapServiceRasterOverlay>(
         this->getName(),
         endpoint.url,
         std::vector<CesiumAsync::IAssetAccessor::THeader>{
             std::make_pair("Authorization", "Bearer " + endpoint.accessToken)});
   }
-  return pAggregatedOverlay->createTileProvider(
+  return _pAggregatedOverlay->createTileProvider(
       asyncSystem,
       pAssetAccessor,
       pCreditSystem,
@@ -205,7 +204,7 @@ IonRasterOverlay::createTileProvider(
               endpoint.url =
                   JsonHelpers::getStringOrDefault(response, "url", "");
               endpoint.accessToken =
-                  JsonHelpers::getStringOrDefault(response, "accessToken");
+                  JsonHelpers::getStringOrDefault(response, "accessToken", "");
             }
             return endpoint;
           })

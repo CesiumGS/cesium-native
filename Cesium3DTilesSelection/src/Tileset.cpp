@@ -82,7 +82,7 @@ Tileset::Tileset(
 
 Tileset::Tileset(
     const TilesetExternals& externals,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     const std::string& ionAccessToken,
     const TilesetOptions& options,
     const std::string& ionAssetEndpointUrl)
@@ -123,7 +123,7 @@ Tileset::Tileset(
 
     CesiumIonTilesetLoader::createLoader(
         externals,
-        ionAssetID,
+        static_cast<uint32_t>(ionAssetID),
         ionAccessToken,
         ionAssetEndpointUrl,
         authorizationChangeListener,
@@ -610,24 +610,26 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   return traversalDetails;
 }
 
-bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
+bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
     const FrameState& frameState,
     Tile& tile,
     const std::vector<double>& distances) {
-  if (!this->_options.forbidHoles) {
-    return false;
-  }
+  // This method should only be called in "Forbid Holes" mode.
+  assert(this->_options.forbidHoles);
+
+  bool waitingForChildren = false;
+
   // If we're forbidding holes, don't refine if any children are still loading.
   gsl::span<Tile> children = tile.getChildren();
-  bool waitingForChildren = false;
   for (Tile& child : children) {
+    this->_markTileVisited(child);
+
     if (!child.isRenderable() && !child.isExternalContent()) {
       waitingForChildren = true;
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
       _pTilesetContentManager->updateTileContent(child);
-      this->_markTileVisited(child);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -637,8 +639,20 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
           frameState.frustums,
           child,
           distances);
+    } else if (child.getUnconditionallyRefine()) {
+      // This child tile is set to unconditionally refine. That means refining
+      // _to_ it will immediately refine _through_ it. So we need to make sure
+      // its children are renderable, too.
+      // The distances are not correct for the child's children, but once again
+      // we don't care because all tiles must be loaded before we can render any
+      // of them, so their relative priority doesn't matter.
+      waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
+          frameState,
+          child,
+          distances);
     }
   }
+
   return waitingForChildren;
 }
 
@@ -821,6 +835,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
   // in that case, load this tile INSTEAD of loading any of the descendants, and
   // tell the up-level we're only waiting on this tile. Keep doing this until we
   // actually manage to render this tile.
+  // Make sure we don't end up waiting on a tile that will _never_ be
+  // renderable.
   const bool wasRenderedLastFrame =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
       TileSelectionState::Result::Rendered;
@@ -829,7 +845,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
-          this->_options.loadingDescendantLimit) {
+          this->_options.loadingDescendantLimit &&
+      !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
     // Remove all descendants from the load queues.
     this->_loadQueueLow.erase(
         this->_loadQueueLow.begin() +
@@ -894,11 +911,22 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
-  const bool waitingForChildren =
-      _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
 
-  if (!unconditionallyRefine &&
-      (meetsSse || ancestorMeetsSse || waitingForChildren)) {
+  bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
+
+  // In "Forbid Holes" mode, we cannot refine this tile until all its children
+  // are loaded. But don't queue the children for load until we _want_ to
+  // refine this tile.
+  if (wantToRefine && this->_options.forbidHoles) {
+    const bool waitingForChildren =
+        this->_queueLoadOfChildrenRequiredForForbidHoles(
+            frameState,
+            tile,
+            distances);
+    wantToRefine = !waitingForChildren;
+  }
+
+  if (!wantToRefine) {
     // This tile (or an ancestor) is the one we want to render this frame, but
     // we'll do different things depending on the state of this tile and on what
     // we did _last_ frame.
