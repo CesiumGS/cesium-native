@@ -144,20 +144,28 @@ void populateSubtree(
         uint32_t relativeChildLevel = relativeTileLevel + 1;
         if (relativeChildLevel == subtreeLevels) {
           if (subtreeAvailability.isSubtreeAvailable(relativeChildMortonID)) {
-            Tile& child = children.emplace_back();
+            Tile& child = children.emplace_back(&loader);
             child.setTransform(tile.getTransform());
             child.setBoundingVolume(
                 subdivideBoundingVolume(childID, loader.getBoundingVolume()));
             child.setGeometricError(tile.getGeometricError() * 0.5);
             child.setRefine(tile.getRefine());
             child.setTileID(childID);
-            child.setContent(std::make_unique<TileContent>(&loader));
           }
         } else {
           if (subtreeAvailability.isTileAvailable(
                   relativeChildLevel,
                   relativeChildMortonID)) {
-            Tile& child = children.emplace_back();
+            if (subtreeAvailability.isContentAvailable(
+                    relativeChildLevel,
+                    relativeChildMortonID,
+                    0)) {
+              children.emplace_back(&loader);
+            } else {
+              children.emplace_back(&loader, TileEmptyContent{});
+            }
+
+            Tile& child = children.back();
             child.setTransform(tile.getTransform());
             child.setBoundingVolume(
                 subdivideBoundingVolume(childID, loader.getBoundingVolume()));
@@ -165,15 +173,6 @@ void populateSubtree(
             child.setRefine(tile.getRefine());
             child.setTileID(childID);
 
-            if (subtreeAvailability.isContentAvailable(
-                    relativeChildLevel,
-                    relativeChildMortonID,
-                    0)) {
-              child.setContent(std::make_unique<TileContent>(&loader));
-            } else {
-              child.setContent(
-                  std::make_unique<TileContent>(&loader, TileEmptyContent{}));
-            }
 
             populateSubtree(
                 subtreeAvailability,

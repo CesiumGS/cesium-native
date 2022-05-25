@@ -147,13 +147,9 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetContentOptions& contentOptions) {
-  TileContent* pContent = tile.getContent();
-  if (!pContent) {
-    return;
-  }
-
-  if (pContent->getState() != TileLoadState::Unloaded &&
-      pContent->getState() != TileLoadState::FailedTemporarily) {
+  TileContent& content = tile.getContent();
+  if (content.getState() != TileLoadState::Unloaded &&
+      content.getState() != TileLoadState::FailedTemporarily) {
     return;
   }
 
@@ -166,8 +162,8 @@ void TilesetContentManager::loadTileContent(
       contentOptions,
       tile};
 
-  pContent->setState(TileLoadState::ContentLoading);
-  _pLoader->loadTileContent(*pContent->getLoader(), loadInfo, _requestHeaders)
+  content.setState(TileLoadState::ContentLoading);
+  _pLoader->loadTileContent(*content.getLoader(), loadInfo, _requestHeaders)
       .thenInWorkerThread(
           [pPrepareRendererResources = _externals.pPrepareRendererResources,
            loadInfo](TileLoadResult&& result) mutable {
@@ -178,7 +174,7 @@ void TilesetContentManager::loadTileContent(
           })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         TilesetContentManager::setTileContent(
-            *tile.getContent(),
+            tile.getContent(),
             std::move(pair.result),
             pair.pRenderResources);
 
@@ -195,12 +191,9 @@ void TilesetContentManager::loadTileContent(
 }
 
 void TilesetContentManager::updateTileContent(Tile& tile) {
-  const TileContent* pContent = tile.getContent();
-  if (!pContent) {
-    return;
-  }
+  const TileContent& content = tile.getContent();
 
-  TileLoadState state = pContent->getState();
+  TileLoadState state = content.getState();
   switch (state) {
   case TileLoadState::ContentLoaded:
     updateContentLoadedState(tile);
@@ -211,12 +204,8 @@ void TilesetContentManager::updateTileContent(Tile& tile) {
 }
 
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
-  TileContent* pContent = tile.getContent();
-  if (!pContent) {
-    return true;
-  }
-
-  TileLoadState state = pContent->getState();
+  TileContent& content = tile.getContent();
+  TileLoadState state = content.getState();
   if (state == TileLoadState::Unloaded) {
     return true;
   }
@@ -225,7 +214,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
-  if (pContent->isExternalContent() || pContent->isEmptyContent()) {
+  if (content.isExternalContent() || content.isEmptyContent()) {
     return false;
   }
 
@@ -242,9 +231,9 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   }
 
-  pContent->setContentKind(TileUnknownContent{});
-  pContent->setTileInitializerCallback({});
-  pContent->setState(TileLoadState::Unloaded);
+  content.setContentKind(TileUnknownContent{});
+  content.setTileInitializerCallback({});
+  content.setState(TileLoadState::Unloaded);
   return true;
 }
 
@@ -292,49 +281,49 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   // initialize this tile content first
-  TileContent* pContent = tile.getContent();
-  auto& tileInitializer = pContent->getTileInitializerCallback();
+  TileContent& content = tile.getContent();
+  auto& tileInitializer = content.getTileInitializerCallback();
   if (tileInitializer) {
     tileInitializer(tile);
   }
 
   // if tile is external tileset, then it will be refined no matter what
-  if (pContent->isExternalContent()) {
+  if (content.isExternalContent()) {
     tile.setUnconditionallyRefine();
   }
 
   // create render resources in the main thread
-  const TileRenderContent* pRenderContent = pContent->getRenderContent();
+  const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent && pRenderContent->model) {
-    void* pWorkerRenderResources = pContent->getRenderResources();
+    void* pWorkerRenderResources = content.getRenderResources();
     void* pMainThreadRenderResources =
         _externals.pPrepareRendererResources->prepareInMainThread(
             tile,
             pWorkerRenderResources);
-    pContent->setRenderResources(pMainThreadRenderResources);
+    content.setRenderResources(pMainThreadRenderResources);
   }
 
-  pContent->setState(TileLoadState::Done);
+  content.setState(TileLoadState::Done);
 }
 
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
-  TileContent* pContent = tile.getContent();
-  void* pWorkerRenderResources = pContent->getRenderResources();
+  TileContent& content = tile.getContent();
+  void* pWorkerRenderResources = content.getRenderResources();
   _externals.pPrepareRendererResources->free(
       tile,
       pWorkerRenderResources,
       nullptr);
-  pContent->setRenderResources(nullptr);
+  content.setRenderResources(nullptr);
 }
 
 void TilesetContentManager::unloadDoneState(Tile& tile) {
-  TileContent* pContent = tile.getContent();
-  void* pMainThreadRenderResources = pContent->getRenderResources();
+  TileContent& content = tile.getContent();
+  void* pMainThreadRenderResources = content.getRenderResources();
   _externals.pPrepareRendererResources->free(
       tile,
       nullptr,
       pMainThreadRenderResources);
-  pContent->setRenderResources(nullptr);
+  content.setRenderResources(nullptr);
 }
 
 void TilesetContentManager::notifyTileStartLoading(

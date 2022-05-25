@@ -28,13 +28,13 @@ struct ExternalContentInitializer {
   TilesetJsonLoader* tilesetJsonLoader;
 
   void operator()(Tile& tile) {
-    TileContent* pContent = tile.getContent();
-    if (pContent && pContent->isExternalContent()) {
+    TileContent& content = tile.getContent();
+    if (content.isExternalContent()) {
       std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
       if (pExternalRoot) {
         // propagate all the external tiles to be the children of this tile
-        std::vector<Tile> children(1);
-        children[0] = std::move(*pExternalRoot);
+        std::vector<Tile> children;
+        children.emplace_back(std::move(*pExternalRoot));
         tile.createChildTiles(std::move(children));
 
         // save the loader of the external tileset in this loader
@@ -281,14 +281,13 @@ void createImplicitQuadtreeLoader(
   }
 
   // create an implicit root to associate with the above implicit loader
-  std::vector<Tile> implicitRootTile(1);
+  std::vector<Tile> implicitRootTile;
+  implicitRootTile.emplace_back(pImplicitLoader);
   implicitRootTile[0].setTransform(implicitTile.getTransform());
   implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
   implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
   implicitRootTile[0].setRefine(implicitTile.getRefine());
   implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
-  implicitRootTile[0].setContent(
-      std::make_unique<TileContent>(pImplicitLoader));
   implicitTile.createChildTiles(std::move(implicitRootTile));
 }
 
@@ -339,14 +338,13 @@ void createImplicitOctreeLoader(
   }
 
   // create an implicit root to associate with the above implicit loader
-  std::vector<Tile> implicitRootTile(1);
+  std::vector<Tile> implicitRootTile;
+  implicitRootTile.emplace_back(pImplicitLoader);
   implicitRootTile[0].setTransform(implicitTile.getTransform());
   implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
   implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
   implicitRootTile[0].setRefine(implicitTile.getRefine());
   implicitRootTile[0].setTileID(CesiumGeometry::OctreeTileID(0, 0, 0, 0));
-  implicitRootTile[0].setContent(
-      std::make_unique<TileContent>(pImplicitLoader));
   implicitTile.createChildTiles(std::move(implicitRootTile));
 }
 
@@ -355,11 +353,6 @@ void parseImplicitTileset(
     const char* contentUri,
     Tile& tile,
     TilesetJsonLoader& currentLoader) {
-  // mark this implicit tile as external tileset
-  tile.setTileID("");
-  tile.setContent(
-      std::make_unique<TileContent>(&currentLoader, TileExternalContent{}));
-
   auto implicitTiling = implicitExtensionJson.GetObject();
   auto tilingSchemeIt = implicitTiling.FindMember("subdivisionScheme");
   auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
@@ -418,48 +411,47 @@ void parseImplicitTileset(
   }
 }
 
-void parseTileJsonRecursively(
+Tile parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const rapidjson::Value& tileJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
-    Tile& tile,
+    double parentGeometricError,
     TilesetJsonLoader& currentLoader) {
   if (!tileJson.IsObject()) {
-    return;
+    return Tile(&currentLoader);
   }
 
   // parse tile transform
-  const std::optional<glm::dmat4x4> tileTransform =
+  const std::optional<glm::dmat4x4> transform =
       CesiumUtility::JsonHelpers::getTransformProperty(tileJson, "transform");
-  glm::dmat4x4 transform =
-      parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
-  tile.setTransform(transform);
+  glm::dmat4x4 tileTransform =
+      parentTransform * transform.value_or(glm::dmat4x4(1.0));
 
   // parse bounding volume
   std::optional<BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
-    return;
+    return Tile(&currentLoader);
   }
 
-  tile.setBoundingVolume(
-      transformBoundingVolume(transform, boundingVolume.value()));
+  auto tileBoundingVolume =
+      transformBoundingVolume(tileTransform, boundingVolume.value());
 
   // parse viewer request volume
-  std::optional<BoundingVolume> viewerRequestVolume =
+  std::optional<BoundingVolume> tileViewerRequestVolume =
       getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
-  if (viewerRequestVolume) {
-    tile.setViewerRequestVolume(
-        transformBoundingVolume(transform, viewerRequestVolume.value()));
+  if (tileViewerRequestVolume) {
+    tileViewerRequestVolume =
+        transformBoundingVolume(tileTransform, tileViewerRequestVolume.value());
   }
 
   // parse geometric error
   std::optional<double> geometricError =
       CesiumUtility::JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
-    geometricError = tile.getNonZeroGeometricError();
+    geometricError = parentGeometricError * 0.5;
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Tile did not contain a geometricError. "
@@ -467,21 +459,22 @@ void parseTileJsonRecursively(
   }
 
   const glm::dvec3 scale = glm::dvec3(
-      glm::length(transform[0]),
-      glm::length(transform[1]),
-      glm::length(transform[2]));
+      glm::length(tileTransform[0]),
+      glm::length(tileTransform[1]),
+      glm::length(tileTransform[2]));
   const double maxScaleComponent =
       glm::max(scale.x, glm::max(scale.y, scale.z));
-  tile.setGeometricError(geometricError.value() * maxScaleComponent);
+  double tileGeometricError = geometricError.value() * maxScaleComponent;
 
   // parse refinement
+  TileRefine tileRefine = parentRefine;
   const auto refineIt = tileJson.FindMember("refine");
   if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
     std::string refine = refineIt->value.GetString();
     if (refine == "REPLACE") {
-      tile.setRefine(TileRefine::Replace);
+      tileRefine = TileRefine::Replace;
     } else if (refine == "ADD") {
-      tile.setRefine(TileRefine::Add);
+      tileRefine = TileRefine::Add;
     } else {
       std::string refineUpper = refine;
       std::transform(
@@ -497,8 +490,8 @@ void parseTileJsonRecursively(
             "Tile refine value '{}' should be uppercase: '{}'",
             refine,
             refineUpper);
-        tile.setRefine(
-            refineUpper == "REPLACE" ? TileRefine::Replace : TileRefine::Add);
+        tileRefine =
+            refineUpper == "REPLACE" ? TileRefine::Replace : TileRefine::Add;
       } else {
         SPDLOG_LOGGER_WARN(
             pLogger,
@@ -507,7 +500,6 @@ void parseTileJsonRecursively(
       }
     }
   } else {
-    tile.setRefine(parentRefine);
   }
 
   // Parse content member to determine tile content Url.
@@ -537,52 +529,81 @@ void parseTileJsonRecursively(
     hasImplicitContent = implicitExtensionIt != extensions.MemberEnd() &&
                          implicitExtensionIt->value.IsObject();
     if (hasImplicitContent) {
+      // mark this tile as external
+      Tile tile{&currentLoader, TileExternalContent{}};
+      tile.setTileID("");
+      tile.setTransform(tileTransform);
+      tile.setBoundingVolume(tileBoundingVolume);
+      tile.setViewerRequestVolume(tileViewerRequestVolume);
+      tile.setGeometricError(tileGeometricError);
+      tile.setRefine(tileRefine);
+
       parseImplicitTileset(
           implicitExtensionIt->value,
           contentUri,
           tile,
           currentLoader);
+
+      return tile;
     }
   }
 
-  // this is a regular tile
-  if (!hasImplicitContent) {
-    if (hasContentMember) {
-      if (contentUri) {
-        tile.setContent(std::make_unique<TileContent>(&currentLoader));
-        tile.setTileID(contentUri);
-      } else {
-        tile.setContent(
-            std::make_unique<TileContent>(&currentLoader, TileEmptyContent{}));
-        tile.setTileID("");
-      }
-
-      std::optional<BoundingVolume> contentBoundingVolume =
-          getBoundingVolumeProperty(contentIt->value, "boundingVolume");
-      if (contentBoundingVolume) {
-        tile.setContentBoundingVolume(
-            transformBoundingVolume(transform, contentBoundingVolume.value()));
-      }
+  // this is a regular tile, then parse the content bounding volume
+  std::optional<BoundingVolume> tileContentBoundingVolume;
+  if (hasContentMember) {
+    tileContentBoundingVolume =
+        getBoundingVolumeProperty(contentIt->value, "boundingVolume");
+    if (tileContentBoundingVolume) {
+      tileContentBoundingVolume = transformBoundingVolume(
+          tileTransform,
+          tileContentBoundingVolume.value());
     }
+  }
 
-    const auto childrenIt = tileJson.FindMember("children");
-    if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {
-      const auto& childrenJson = childrenIt->value;
-      std::vector<Tile> childTiles(childrenJson.Size());
-      for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
-        const auto& childJson = childrenJson[i];
-        Tile& child = childTiles[i];
-        parseTileJsonRecursively(
-            pLogger,
-            childJson,
-            transform,
-            tile.getRefine(),
-            child,
-            currentLoader);
-      }
+  // parse tile's children
+  std::vector<Tile> childTiles;
+  const auto childrenIt = tileJson.FindMember("children");
+  if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {
+    const auto& childrenJson = childrenIt->value;
+    childTiles.reserve(childrenJson.Size());
+    for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
+      const auto& childJson = childrenJson[i];
+      Tile child = parseTileJsonRecursively(
+          pLogger,
+          childJson,
+          tileTransform,
+          tileRefine,
+          tileGeometricError,
+          currentLoader);
 
-      tile.createChildTiles(std::move(childTiles));
+      childTiles.emplace_back(std::move(child));
     }
+  }
+
+  if (contentUri) {
+    Tile tile{&currentLoader};
+    tile.setTileID(contentUri);
+    tile.setTransform(tileTransform);
+    tile.setBoundingVolume(tileBoundingVolume);
+    tile.setViewerRequestVolume(tileViewerRequestVolume);
+    tile.setGeometricError(tileGeometricError);
+    tile.setRefine(tileRefine);
+    tile.setContentBoundingVolume(tileContentBoundingVolume);
+    tile.createChildTiles(std::move(childTiles));
+
+    return tile;
+  } else {
+    Tile tile{&currentLoader, TileEmptyContent{}};
+    tile.setTileID("");
+    tile.setTransform(tileTransform);
+    tile.setBoundingVolume(tileBoundingVolume);
+    tile.setViewerRequestVolume(tileViewerRequestVolume);
+    tile.setGeometricError(tileGeometricError);
+    tile.setRefine(tileRefine);
+    tile.setContentBoundingVolume(tileContentBoundingVolume);
+    tile.createChildTiles(std::move(childTiles));
+
+    return tile;
   }
 }
 
@@ -604,19 +625,19 @@ TilesetContentLoaderResult parseTilesetJson(
     return result;
   }
 
-  auto pRootTile = std::make_unique<Tile>();
+  std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl);
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
-    parseTileJsonRecursively(
+    pRootTile = std::make_unique<Tile>(parseTileJsonRecursively(
         pLogger,
         rootJson,
         parentTransform,
         TileRefine::Replace,
-        *pRootTile,
-        *pLoader);
+        10000000.0,
+        *pLoader));
   }
 
   return TilesetContentLoaderResult{

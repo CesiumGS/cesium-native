@@ -21,7 +21,7 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class Tileset;
+class TilesetContentLoader;
 
 /**
  * @brief A tile in a {@link Tileset}.
@@ -48,10 +48,13 @@ class Tileset;
  */
 class CESIUM3DTILESSELECTION_API Tile final {
 public:
-  /**
-   * @brief Default constructor for an empty, uninitialized tile.
-   */
-  Tile() noexcept;
+  explicit Tile(TilesetContentLoader* pLoader) noexcept;
+
+  Tile(
+      TilesetContentLoader* pLoader,
+      TileExternalContent externalContent) noexcept;
+
+  Tile(TilesetContentLoader* pLoader, TileEmptyContent emptyContent) noexcept;
 
   /**
    * @brief Default destructor, which clears all resources associated with this
@@ -354,13 +357,9 @@ public:
    */
   int64_t computeByteSize() const noexcept;
 
-  void setContent(std::unique_ptr<TileContent>&& pContent) noexcept {
-    _pContent = std::move(pContent);
-  }
+  const TileContent& getContent() const noexcept { return *_pContent; }
 
-  const TileContent* getContent() const noexcept { return _pContent.get(); }
-
-  TileContent* getContent() noexcept { return _pContent.get(); }
+  TileContent& getContent() noexcept { return *_pContent; }
 
   bool isRenderable() const noexcept;
 
@@ -373,6 +372,14 @@ public:
   TileLoadState getState() const noexcept;
 
 private:
+  struct TileConstructorImpl {};
+  template <
+      typename... TileContentArgs,
+      typename TileContentEnable = std::enable_if_t<
+          std::is_constructible_v<TileContent, TileContentArgs&&...>,
+          int>>
+  Tile(TileConstructorImpl tag, TileContentArgs&&... args);
+
   void setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
   // Position in bounding-volume hierarchy.

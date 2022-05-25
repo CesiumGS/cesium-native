@@ -16,8 +16,21 @@ using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
+Tile::Tile(TilesetContentLoader* pLoader) noexcept
+    : Tile(TileConstructorImpl{}, pLoader) {}
 
-Tile::Tile() noexcept
+Tile::Tile(
+    TilesetContentLoader* pLoader,
+    TileExternalContent externalContent) noexcept
+    : Tile(TileConstructorImpl{}, pLoader, externalContent) {}
+
+Tile::Tile(
+    TilesetContentLoader* pLoader,
+    TileEmptyContent emptyContent) noexcept
+    : Tile(TileConstructorImpl{}, pLoader, emptyContent) {}
+
+template <typename... TileContentArgs, typename TileContentEnable>
+Tile::Tile([[maybe_unused]] TileConstructorImpl tag, TileContentArgs&&... args)
     : _pParent(nullptr),
       _children(),
       _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat3())),
@@ -29,7 +42,8 @@ Tile::Tile() noexcept
       _contentBoundingVolume(),
       _lastSelectionState(),
       _loadedTilesLinks(),
-      _pContent{} {}
+      _pContent{std::make_unique<TileContent>(
+          std::forward<TileContentArgs>(args)...)} {}
 
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
@@ -119,12 +133,8 @@ double Tile::getNonZeroGeometricError() const noexcept {
 int64_t Tile::computeByteSize() const noexcept {
   int64_t bytes = 0;
 
-  const TileContent* pContent = this->getContent();
-  if (!pContent) {
-    return 0;
-  }
-
-  const TileRenderContent* pRenderContent = pContent->getRenderContent();
+  const TileContent& content = this->getContent();
+  const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent && pRenderContent->model) {
     const CesiumGltf::Model& model = pRenderContent->model.value();
 
@@ -161,30 +171,16 @@ bool Tile::isRenderable() const noexcept {
 }
 
 bool Tile::isRenderContent() const noexcept {
-  if (_pContent) {
-    return _pContent->isRenderContent();
-  }
-
-  return false;
+  return _pContent->isRenderContent();
 }
 
 bool Tile::isExternalContent() const noexcept {
-  if (_pContent) {
-    return _pContent->isExternalContent();
-  }
-
-  return false;
+  return _pContent->isExternalContent();
 }
 
 bool Tile::isEmptyContent() const noexcept {
-  return _pContent == nullptr || _pContent->isEmptyContent();
+  return _pContent->isEmptyContent();
 }
 
-TileLoadState Tile::getState() const noexcept {
-  if (_pContent) {
-    return _pContent->getState();
-  }
-
-  return TileLoadState::Done;
-}
+TileLoadState Tile::getState() const noexcept { return _pContent->getState(); }
 } // namespace Cesium3DTilesSelection
