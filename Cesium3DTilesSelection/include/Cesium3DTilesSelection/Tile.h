@@ -6,7 +6,7 @@
 #include "TileRefine.h"
 #include "TileSelectionState.h"
 
-#include <Cesium3DTilesSelection/Exp_TileContent.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumUtility/DoublyLinkedList.h>
 
 #include <glm/common.hpp>

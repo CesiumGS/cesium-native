@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_GltfConverterResult.h>
+#include <Cesium3DTilesSelection/GltfConverterResult.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 

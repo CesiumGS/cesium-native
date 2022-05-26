@@ -1,7 +1,7 @@
-#include "Exp_B3dmToGltfConverter.h"
+#include "B3dmToGltfConverter.h"
 
-#include "Exp_BatchTableToGltfFeatureMetadata.h"
-#include "Exp_BinaryToGltfConverter.h"
+#include "BatchTableToGltfFeatureMetadata.h"
+#include "BinaryToGltfConverter.h"
 
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 

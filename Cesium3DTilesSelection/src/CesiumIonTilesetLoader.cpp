@@ -1,6 +1,6 @@
-#include "Exp_CesiumIonTilesetLoader.h"
+#include "CesiumIonTilesetLoader.h"
 
-#include "Exp_TilesetJsonLoader.h"
+#include "TilesetJsonLoader.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>

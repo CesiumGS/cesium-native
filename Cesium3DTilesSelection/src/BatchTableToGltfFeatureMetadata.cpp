@@ -1,4 +1,4 @@
-#include "Exp_BatchTableToGltfFeatureMetadata.h"
+#include "BatchTableToGltfFeatureMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"

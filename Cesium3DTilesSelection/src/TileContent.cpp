@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/Exp_TileContent.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 
 namespace Cesium3DTilesSelection {
 TileContent::TileContent(TilesetContentLoader* pLoader)

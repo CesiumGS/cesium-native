@@ -1,21 +1,27 @@
 #pragma once
 
-#include "Exp_SubtreeAvailability.h"
-#include "Exp_TilesetContentLoader.h"
+#include "SubtreeAvailability.h"
+#include "TilesetContentLoader.h"
 
-#include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+
+#include <cmath>
+#include <unordered_set>
+#include <variant>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
-using ImplicitOctreeBoundingVolume = std::variant<
+using ImplicitQuadtreeBoundingVolume = std::variant<
     CesiumGeospatial::BoundingRegion,
+    CesiumGeospatial::S2CellBoundingVolume,
     CesiumGeometry::OrientedBoundingBox>;
 
-class ImplicitOctreeLoader : public TilesetContentLoader {
+class ImplicitQuadtreeLoader : public TilesetContentLoader {
 public:
   template <typename ImplicitBoundingVolumeType>
-  ImplicitOctreeLoader(
+  ImplicitQuadtreeLoader(
       const std::string& baseUrl,
       const std::string& contentUrlTemplate,
       const std::string& subtreeUrlTemplate,
@@ -45,24 +51,24 @@ public:
 
   uint32_t getAvailableLevels() const noexcept;
 
-  const ImplicitOctreeBoundingVolume& getBoundingVolume() const noexcept;
+  const ImplicitQuadtreeBoundingVolume& getBoundingVolume() const noexcept;
 
   void addSubtreeAvailability(
-      const CesiumGeometry::OctreeTileID& subtreeID,
+      const CesiumGeometry::QuadtreeTileID& subtreeID,
       SubtreeAvailability&& subtreeAvailability);
 
 private:
   static std::string resolveUrl(
       const std::string& baseUrl,
       const std::string& urlTemplate,
-      const CesiumGeometry::OctreeTileID& octreeID);
+      const CesiumGeometry::QuadtreeTileID& quadtreeID);
 
   std::string _baseUrl;
   std::string _contentUrlTemplate;
   std::string _subtreeUrlTemplate;
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
-  ImplicitOctreeBoundingVolume _boundingVolume;
+  ImplicitQuadtreeBoundingVolume _boundingVolume;
   std::vector<std::unordered_map<uint64_t, SubtreeAvailability>>
       _loadedSubtrees;
 };

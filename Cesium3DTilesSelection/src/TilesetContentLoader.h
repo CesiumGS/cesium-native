@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_TileContent.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>

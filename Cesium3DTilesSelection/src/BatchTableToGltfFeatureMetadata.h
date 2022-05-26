@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_ErrorList.h>
+#include <Cesium3DTilesSelection/ErrorList.h>
 #include <CesiumGltf/Model.h>
 
 #include <gsl/span>

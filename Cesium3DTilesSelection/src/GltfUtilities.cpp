@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/Exp_GltfUtilities.h>
+#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 
 namespace Cesium3DTilesSelection {

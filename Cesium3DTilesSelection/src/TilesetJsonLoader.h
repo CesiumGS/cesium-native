@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Exp_TilesetContentLoader.h"
-#include "Exp_TilesetContentLoaderResult.h"
+#include "TilesetContentLoader.h"
+#include "TilesetContentLoaderResult.h"
 
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/Future.h>

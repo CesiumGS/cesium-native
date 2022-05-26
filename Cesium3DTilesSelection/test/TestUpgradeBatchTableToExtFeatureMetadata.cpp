@@ -1,5 +1,5 @@
-#include "Exp_B3dmToGltfConverter.h"
-#include "Exp_BatchTableToGltfFeatureMetadata.h"
+#include "B3dmToGltfConverter.h"
+#include "BatchTableToGltfFeatureMetadata.h"
 #include "readFile.h"
 
 #include <CesiumAsync/AsyncSystem.h>

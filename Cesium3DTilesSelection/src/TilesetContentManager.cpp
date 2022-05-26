@@ -1,6 +1,6 @@
-#include "Exp_TilesetContentManager.h"
+#include "TilesetContentManager.h"
 
-#include "Exp_TilesetContentLoader.h"
+#include "TilesetContentLoader.h"
 
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumGltfReader/GltfReader.h>
