@@ -30,16 +30,16 @@ Tile::Tile(
     : Tile(TileConstructorImpl{}, pLoader, emptyContent) {}
 
 template <typename... TileContentArgs, typename TileContentEnable>
-Tile::Tile([[maybe_unused]] TileConstructorImpl tag, TileContentArgs&&... args)
+Tile::Tile(TileConstructorImpl, TileContentArgs&&... args)
     : _pParent(nullptr),
       _children(),
+      _id(""s),
       _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat3())),
       _viewerRequestVolume(),
+      _contentBoundingVolume(),
       _geometricError(0.0),
       _refine(TileRefine::Replace),
       _transform(1.0),
-      _id(""s),
-      _contentBoundingVolume(),
       _lastSelectionState(),
       _loadedTilesLinks(),
       _pContent{std::make_unique<TileContent>(
@@ -48,13 +48,13 @@ Tile::Tile([[maybe_unused]] TileConstructorImpl tag, TileContentArgs&&... args)
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
       _children(std::move(rhs._children)),
+      _id(std::move(rhs._id)),
       _boundingVolume(rhs._boundingVolume),
       _viewerRequestVolume(rhs._viewerRequestVolume),
+      _contentBoundingVolume(rhs._contentBoundingVolume),
       _geometricError(rhs._geometricError),
       _refine(rhs._refine),
       _transform(rhs._transform),
-      _id(std::move(rhs._id)),
-      _contentBoundingVolume(rhs._contentBoundingVolume),
       _lastSelectionState(rhs._lastSelectionState),
       _loadedTilesLinks(),
       _pContent(std::move(rhs._pContent)) {
@@ -77,13 +77,13 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
       tile.setParent(this);
     }
 
+    this->_id = std::move(rhs._id);
     this->_boundingVolume = rhs._boundingVolume;
     this->_viewerRequestVolume = rhs._viewerRequestVolume;
+    this->_contentBoundingVolume = rhs._contentBoundingVolume;
     this->_geometricError = rhs._geometricError;
     this->_refine = rhs._refine;
     this->_transform = rhs._transform;
-    this->_id = std::move(rhs._id);
-    this->_contentBoundingVolume = rhs._contentBoundingVolume;
     this->_lastSelectionState = rhs._lastSelectionState;
     this->_pContent = std::move(rhs._pContent);
   }
