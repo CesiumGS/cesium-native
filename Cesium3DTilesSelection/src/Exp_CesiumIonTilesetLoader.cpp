@@ -252,17 +252,20 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
       _headerChangeListener{std::move(headerChangeListener)} {}
 
 CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
-    TilesetContentLoader& currentLoader,
-    const TileContentLoadInfo& loadInfo,
+    Tile& tile,
+    const TilesetContentOptions& contentOptions,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   if (_refreshTokenState == TokenRefreshState::Loading) {
-    return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
+    return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::RetryLater,
         nullptr,
         {}});
   } else if (_refreshTokenState == TokenRefreshState::Failed) {
-    return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
+    return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
         nullptr,
@@ -273,16 +276,20 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
   // with the old key might complete after the key has been updated,
   // and there's nothing here clever enough to avoid refreshing the
   // key _again_ in that instance.
-  auto refreshTokenInMainThread = [this,
-                                   pLogger = loadInfo.pLogger,
-                                   pAssetAccessor = loadInfo.pAssetAccessor,
-                                   asyncSystem = loadInfo.asyncSystem]() {
-    this->refreshTokenInMainThread(pLogger, pAssetAccessor, asyncSystem);
-  };
+  auto refreshTokenInMainThread =
+      [this, pLogger, pAssetAccessor, asyncSystem]() {
+        this->refreshTokenInMainThread(pLogger, pAssetAccessor, asyncSystem);
+      };
 
   return _pAggregatedLoader
-      ->loadTileContent(currentLoader, loadInfo, requestHeaders)
-      .thenImmediately([asyncSystem = loadInfo.asyncSystem,
+      ->loadTileContent(
+          tile,
+          contentOptions,
+          asyncSystem,
+          pAssetAccessor,
+          pLogger,
+          requestHeaders)
+      .thenImmediately([asyncSystem,
                         refreshTokenInMainThread =
                             std::move(refreshTokenInMainThread)](
                            TileLoadResult&& result) mutable {

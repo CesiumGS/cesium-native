@@ -16,8 +16,11 @@ public:
   TilesetJsonLoader(const std::string& baseUrl);
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
-      TilesetContentLoader& currentLoader,
-      const TileContentLoadInfo& loadInfo,
+      Tile& tile,
+      const TilesetContentOptions& contentOptions,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 

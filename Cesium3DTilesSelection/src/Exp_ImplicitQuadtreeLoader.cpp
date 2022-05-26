@@ -146,7 +146,8 @@ void populateSubtree(
           childX,
           childY};
 
-      uint32_t childIndex = static_cast<uint32_t>(libmorton::morton2D_32_encode(x, y));
+      uint32_t childIndex =
+          static_cast<uint32_t>(libmorton::morton2D_32_encode(x, y));
       uint64_t relativeChildMortonID = relativeTileMortonID << 2 | childIndex;
       uint32_t relativeChildLevel = relativeTileLevel + 1;
       if (relativeChildLevel == subtreeLevels) {
@@ -337,8 +338,11 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 } // namespace
 
 CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
-    [[maybe_unused]] TilesetContentLoader& currentLoader,
-    const TileContentLoadInfo& loadInfo,
+    Tile& tile,
+    const TilesetContentOptions& contentOptions,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   // Ensure CesiumGeometry::QuadtreeTileID only has 32-bit components. There are
   // solutions below if the ID has more than 32-bit components.
@@ -360,25 +364,23 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
 
   // make sure the tile is a quadtree tile
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&loadInfo.tileID);
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
-    return loadInfo.asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult{
-            TileUnknownContent{},
-            TileLoadResultState::Failed,
-            nullptr,
-            {}});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
+        TileUnknownContent{},
+        TileLoadResultState::Failed,
+        nullptr,
+        {}});
   }
 
   // find the subtree ID
   uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
-    return loadInfo.asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult{
-            TileUnknownContent{},
-            TileLoadResultState::Failed,
-            nullptr,
-            {}});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
+        TileUnknownContent{},
+        TileLoadResultState::Failed,
+        nullptr,
+        {}});
   }
 
   uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
@@ -407,20 +409,20 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
     std::string tileUrl =
         resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets =
-        loadInfo.contentOptions.ktx2TranscodeTargets;
+        contentOptions.ktx2TranscodeTargets;
 
     SubtreeContentInitializer subtreeInitializer{this, subtreeID};
     return SubtreeAvailability::loadSubtree(
                2,
-               loadInfo.asyncSystem,
-               loadInfo.pAssetAccessor,
-               loadInfo.pLogger,
+               asyncSystem,
+               pAssetAccessor,
+               pLogger,
                subtreeUrl,
                requestHeaders)
         .thenInWorkerThread(
-            [pLogger = loadInfo.pLogger,
-             asyncSystem = loadInfo.asyncSystem,
-             pAssetAccessor = loadInfo.pAssetAccessor,
+            [pLogger,
+             asyncSystem,
+             pAssetAccessor,
              tileUrl = std::move(tileUrl),
              subtreeID,
              quadtreeID = *pQuadtreeID,
@@ -472,7 +474,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   // request it
   if (!isTileContentAvailable(subtreeID, *pQuadtreeID, subtreeIt->second)) {
     // check if tile has empty content
-    return loadInfo.asyncSystem.createResolvedFuture(TileLoadResult{
+    return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
         TileLoadResultState::Success,
         nullptr,
@@ -481,12 +483,12 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
 
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
   return requestTileContent(
-      loadInfo.pLogger,
-      loadInfo.asyncSystem,
-      loadInfo.pAssetAccessor,
+      pLogger,
+      asyncSystem,
+      pAssetAccessor,
       tileUrl,
       requestHeaders,
-      loadInfo.contentOptions.ktx2TranscodeTargets,
+      contentOptions.ktx2TranscodeTargets,
       std::nullopt);
 }
 

@@ -650,7 +650,8 @@ TilesetContentLoaderResult parseTilesetJson(
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
-    const TileContentLoadInfo& loadInfo,
+    const glm::dmat4& tileTransform,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer) {
   // create external tileset
@@ -661,16 +662,13 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
-  TilesetContentLoaderResult externalTilesetLoader = parseTilesetJson(
-      loadInfo.pLogger,
-      tileUrl,
-      responseData,
-      loadInfo.tileTransform);
+  TilesetContentLoaderResult externalTilesetLoader =
+      parseTilesetJson(pLogger, tileUrl, responseData, tileTransform);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
   if (errors) {
-    logErrors(loadInfo.pLogger, tileUrl, errors.errors);
+    logErrors(pLogger, tileUrl, errors.errors);
 
     // since the json cannot be parsed, we don't know the content of this tile
     return TileLoadResult{
@@ -735,21 +733,26 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
 }
 
 CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
-    TilesetContentLoader& currentLoader,
-    const TileContentLoadInfo& loadInfo,
+    Tile& tile,
+    const TilesetContentOptions& contentOptions,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   // check if this tile belongs to a child loader
-  if (&currentLoader != this) {
-    return currentLoader.loadTileContent(
-        currentLoader,
-        loadInfo,
+  auto currentLoader = tile.getContent().getLoader();
+  if (currentLoader != this) {
+    return currentLoader->loadTileContent(
+        tile,
+        contentOptions,
+        asyncSystem,
+        pAssetAccessor,
+        pLogger,
         requestHeaders);
   }
 
-  const CesiumAsync::AsyncSystem& asyncSystem = loadInfo.asyncSystem;
-
   // this loader only handles Url ID
-  const std::string* url = std::get_if<std::string>(&loadInfo.tileID);
+  const std::string* url = std::get_if<std::string>(&tile.getTileID());
   if (!url) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
@@ -758,15 +761,16 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
         {}});
   }
 
-  ExternalContentInitializer externalContentInitializer{nullptr, this};
+  const glm::dmat4& tileTransform = tile.getTransform();
 
-  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor =
-      loadInfo.pAssetAccessor;
+  ExternalContentInitializer externalContentInitializer{nullptr, this};
 
   std::string resolvedUrl = CesiumUtility::Uri::resolve(_baseUrl, *url, true);
   return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
       .thenInWorkerThread(
-          [loadInfo,
+          [pLogger,
+           contentOptions,
+           tileTransform,
            externalContentInitializer = std::move(externalContentInitializer)](
               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                   pCompletedRequest) mutable {
@@ -774,7 +778,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
               SPDLOG_LOGGER_ERROR(
-                  loadInfo.pLogger,
+                  pLogger,
                   "Did not receive a valid response for tile content {}",
                   tileUrl);
               return TileLoadResult{
@@ -787,7 +791,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
               SPDLOG_LOGGER_ERROR(
-                  loadInfo.pLogger,
+                  pLogger,
                   "Received status code {} for tile content {}",
                   statusCode,
                   tileUrl);
@@ -809,11 +813,11 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               // Convert to gltf
               CesiumGltfReader::GltfReaderOptions gltfOptions;
               gltfOptions.ktx2TranscodeTargets =
-                  loadInfo.contentOptions.ktx2TranscodeTargets;
+                  contentOptions.ktx2TranscodeTargets;
               GltfConverterResult result = converter(responseData, gltfOptions);
 
               // Report any errors if there are any
-              logErrorsAndWarnings(loadInfo.pLogger, tileUrl, result.errors);
+              logErrorsAndWarnings(pLogger, tileUrl, result.errors);
               if (result.errors) {
                 return TileLoadResult{
                     TileRenderContent{std::nullopt},
@@ -830,7 +834,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
             } else {
               // not a renderable content, then it must be external tileset
               return parseExternalTilesetInWorkerThread(
-                  loadInfo,
+                  tileTransform,
+                  pLogger,
                   std::move(pCompletedRequest),
                   std::move(externalContentInitializer));
             }
