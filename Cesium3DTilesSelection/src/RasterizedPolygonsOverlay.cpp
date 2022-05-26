@@ -10,7 +10,6 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <cstring>
 #include <memory>
 #include <string>
 
@@ -48,9 +47,7 @@ void rasterizePolygons(
     image.height = 1;
     image.channels = 1;
     image.bytesPerChannel = 1;
-    image.pixelData.resize(1);
-
-    image.pixelData[0] = insideColor;
+    image.pixelData.resize(1, insideColor);
     return;
   }
 
@@ -73,9 +70,7 @@ void rasterizePolygons(
     image.height = 1;
     image.channels = 1;
     image.bytesPerChannel = 1;
-    image.pixelData.resize(1);
-
-    image.pixelData[0] = outsideColor;
+    image.pixelData.resize(1, outsideColor);
     return;
   }
 
@@ -88,15 +83,7 @@ void rasterizePolygons(
   image.height = int32_t(glm::round(textureSize.y));
   image.channels = 1;
   image.bytesPerChannel = 1;
-  image.pixelData.resize(size_t(image.width * image.height));
-
-  // If the outside color is not 0, clear the image with the outside color.
-  if (static_cast<char>(outsideColor) != 0) {
-    std::memset(
-        image.pixelData.data(),
-        (char)outsideColor,
-        image.pixelData.size());
-  }
+  image.pixelData.resize(size_t(image.width * image.height), outsideColor);
 
   // TODO: this is naive approach, use line-triangle
   // intersections to rasterize one row at a time
