@@ -1010,6 +1010,13 @@ void Tile::upsampleParent(
           [](const Tile& tile) noexcept {
             return std::get_if<QuadtreeTileID>(&tile.getTileID());
           })) {
+    // We will only get here for quantized-mesh tiles where some (but not all)
+    // tiles are present in the data and the rest need to be upsampled. And in
+    // that scenario, we need to use the implicit context's projection for
+    // subdivision, no matter what the status of the overlays.
+    //
+    // For a more typical upsampling, driven by raster overlays, all child tiles
+    // will have a `UpsampledQuadtreeNode` tile ID.
     if (_pContext->implicitContext->projection.has_value()) {
       const Projection& projection = *_pContext->implicitContext->projection;
       auto it = std::find(
