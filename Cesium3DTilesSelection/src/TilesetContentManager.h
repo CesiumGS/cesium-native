@@ -2,8 +2,8 @@
 
 #include "TilesetContentLoader.h"
 
-#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
