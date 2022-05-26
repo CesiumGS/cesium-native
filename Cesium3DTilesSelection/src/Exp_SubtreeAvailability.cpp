@@ -57,9 +57,11 @@ CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
               return RequestedSubtreeBuffer{bufferIdx, {}};
             }
 
+            using vector_diff_type =
+                typename std::vector<std::byte>::difference_type;
             std::vector<std::byte> buffer(
                 data.begin(),
-                data.begin() + bufferLength);
+                data.begin() + static_cast<vector_diff_type>(bufferLength));
             return RequestedSubtreeBuffer{bufferIdx, std::move(buffer)};
           });
 }
@@ -360,8 +362,10 @@ parseBinarySubtreeRequest(
   // get the internal buffer if there is any
   std::vector<std::byte> internalBuffer;
   if (header->binaryByteLength > 0) {
-    auto begin = data.begin() + headerLength + header->jsonByteLength;
-    auto end = begin + header->binaryByteLength;
+    using vector_diff_type = typename std::vector<std::byte>::difference_type;
+    auto begin = data.begin() + static_cast<vector_diff_type>(headerLength) +
+                 static_cast<vector_diff_type>(header->jsonByteLength);
+    auto end = begin + static_cast<vector_diff_type>(header->binaryByteLength);
     internalBuffer.insert(internalBuffer.end(), begin, end);
   }
 
@@ -518,7 +522,7 @@ bool SubtreeAvailability::isAvailable(
   }
 
   uint64_t numOfTilesFromRootToParentLevel =
-      ((1 << (_powerOf2 * relativeTileLevel)) - 1) / (_childCount - 1);
+      ((1U << (_powerOf2 * relativeTileLevel)) - 1U) / (_childCount - 1U);
 
   return isAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel,
