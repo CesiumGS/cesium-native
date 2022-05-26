@@ -28,8 +28,7 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>&
-          requestHeaders)
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
