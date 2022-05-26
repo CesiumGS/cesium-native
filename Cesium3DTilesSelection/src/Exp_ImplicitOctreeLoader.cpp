@@ -1,5 +1,7 @@
+#include "Exp_ImplicitOctreeLoader.h"
+
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
-#include <Cesium3DTilesSelection/Exp_ImplicitOctreeLoader.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>

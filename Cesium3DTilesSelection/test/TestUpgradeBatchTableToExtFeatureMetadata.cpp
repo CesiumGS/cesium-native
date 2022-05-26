@@ -1,7 +1,7 @@
+#include "Exp_B3dmToGltfConverter.h"
+#include "Exp_BatchTableToGltfFeatureMetadata.h"
 #include "readFile.h"
 
-#include <Cesium3DTilesSelection/Exp_B3dmToGltfConverter.h>
-#include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>

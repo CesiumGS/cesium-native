@@ -1,9 +1,9 @@
-#include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
+#include "Exp_B3dmToGltfConverter.h"
+#include "Exp_BinaryToGltfConverter.h"
+#include "Exp_CmptToGltfConverter.h"
 
-#include <Cesium3DTilesSelection/Exp_B3dmToGltfConverter.h>
-#include <Cesium3DTilesSelection/Exp_BinaryToGltfConverter.h>
-#include <Cesium3DTilesSelection/Exp_CmptToGltfConverter.h>
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
+#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 
 namespace Cesium3DTilesSelection {
 

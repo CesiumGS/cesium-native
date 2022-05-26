@@ -1,6 +1,7 @@
-#include <Cesium3DTilesSelection/Exp_TileContentLoadInfo.h>
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/Exp_TilesetContentManager.h>
+#include "Exp_TilesetContentManager.h"
+
+#include "Exp_TilesetContentLoader.h"
+
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/joinToString.h>

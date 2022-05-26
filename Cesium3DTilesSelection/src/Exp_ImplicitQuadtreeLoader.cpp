@@ -1,5 +1,7 @@
+#include "Exp_ImplicitQuadtreeLoader.h"
+
 #include <Cesium3DTilesSelection/Exp_GltfConverters.h>
-#include <Cesium3DTilesSelection/Exp_ImplicitQuadtreeLoader.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Uri.h>

@@ -1,7 +1,8 @@
+#include "Exp_BatchTableToGltfFeatureMetadata.h"
+
 #include "BatchTableHierarchyPropertyValues.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
-#include <Cesium3DTilesSelection/Exp_BatchTableToGltfFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/Model.h>

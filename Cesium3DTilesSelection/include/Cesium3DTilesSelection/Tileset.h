@@ -8,7 +8,6 @@
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
-#include <Cesium3DTilesSelection/Exp_TilesetContentManager.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
@@ -24,6 +23,7 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
+class TilesetContentManager;
 
 /**
  * @brief A <a

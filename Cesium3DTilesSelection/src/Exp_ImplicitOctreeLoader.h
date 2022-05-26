@@ -1,8 +1,11 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Exp_SubtreeAvailability.h>
-#include <Cesium3DTilesSelection/Exp_TilesetContentLoader.h>
+#include "Exp_SubtreeAvailability.h"
+#include "Exp_TilesetContentLoader.h"
+
 #include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 
 namespace Cesium3DTilesSelection {
 using ImplicitOctreeBoundingVolume = std::variant<
