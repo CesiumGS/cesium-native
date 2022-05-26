@@ -187,18 +187,6 @@ bool outsidePolygons(
     const std::vector<glm::dvec2>& vertices = selection.getVertices();
     const std::vector<uint32_t>& indices = selection.getIndices();
 
-    // First check if an arbitrary point on the bounding globe rectangle is
-    // inside the polygon.
-    for (size_t j = 2; j < indices.size(); j += 3) {
-      if (withinTriangle(
-              rectangleCorners[0],
-              vertices[indices[j - 2]],
-              vertices[indices[j - 1]],
-              vertices[indices[j]])) {
-        return false;
-      }
-    }
-
     // Check if an arbitrary point on the polygon is in the globe rectangle.
     if (withinTriangle(
             vertices[0],
@@ -211,6 +199,18 @@ bool outsidePolygons(
             rectangleCorners[2],
             rectangleCorners[3])) {
       return false;
+    }
+
+    // Check if an arbitrary point on the bounding globe rectangle is
+    // inside the polygon.
+    for (size_t j = 2; j < indices.size(); j += 3) {
+      if (withinTriangle(
+              rectangleCorners[0],
+              vertices[indices[j - 2]],
+              vertices[indices[j - 1]],
+              vertices[indices[j]])) {
+        return false;
+      }
     }
 
     // Now we know the rectangle does not fully contain the polygon and the
