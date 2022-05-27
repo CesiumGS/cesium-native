@@ -1,5 +1,12 @@
 # Change Log
 
+### v0.16.0 - ????
+
+##### Additions :tada:
+
+- Added option to the `RasterizedPolygonsOverlay` to invert the selection, so everything outside the polygons gets rasterized instead of inside.
+- The `RasterizedPolygonsTileExcluder` excludes tiles outside the selection instead of inside when given an inverted `RasterizedPolygonsOverlay`.
+
 ### v0.15.2 - 2022-05-13
 
 ##### Fixes :wrench:
