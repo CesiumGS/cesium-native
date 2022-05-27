@@ -6,6 +6,7 @@
 
 - Added option to the `RasterizedPolygonsOverlay` to invert the selection, so everything outside the polygons gets rasterized instead of inside.
 - The `RasterizedPolygonsTileExcluder` excludes tiles outside the selection instead of inside when given an inverted `RasterizedPolygonsOverlay`.
+- Ensure that tiles are upsampled using the first raster overlay in the list with more detail.
 
 ### v0.15.2 - 2022-05-13
 
