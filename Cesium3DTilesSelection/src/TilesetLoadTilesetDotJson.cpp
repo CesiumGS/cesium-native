@@ -357,12 +357,6 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
       tilesetVersionIt->value.IsString()) {
     context.version = tilesetVersionIt->value.GetString();
   }
-  std::optional<std::vector<double>> optionalBounds =
-      JsonHelpers::getDoubles(layerJson, -1, "bounds");
-  std::vector<double> bounds;
-  if (optionalBounds) {
-    bounds = optionalBounds.value();
-  }
 
   std::string projectionString =
       JsonHelpers::getStringOrDefault(layerJson, "projection", "EPSG:4326");
@@ -372,28 +366,20 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
   CesiumGeometry::Rectangle quadtreeRectangleProjected(0.0, 0.0, 0.0, 0.0);
   uint32_t quadtreeXTiles;
 
+  // Consistent with CesiumJS behavior, we ignore the "bounds" property.
+  // Some non-Cesium terrain tilers seem to provide incorrect bounds.
+  // See https://community.cesium.com/t/cesium-terrain-for-unreal/17940/18
+
   if (projectionString == "EPSG:4326") {
     CesiumGeospatial::GeographicProjection geographic;
     projection = geographic;
-    quadtreeRectangleGlobe =
-        bounds.size() >= 4 ? CesiumGeospatial::GlobeRectangle::fromDegrees(
-                                 bounds[0],
-                                 bounds[1],
-                                 bounds[2],
-                                 bounds[3])
-                           : GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+    quadtreeRectangleGlobe = GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
     quadtreeRectangleProjected = geographic.project(quadtreeRectangleGlobe);
     quadtreeXTiles = 2;
   } else if (projectionString == "EPSG:3857") {
     CesiumGeospatial::WebMercatorProjection webMercator;
     projection = webMercator;
-    quadtreeRectangleGlobe =
-        bounds.size() >= 4 ? CesiumGeospatial::GlobeRectangle::fromDegrees(
-                                 bounds[0],
-                                 bounds[1],
-                                 bounds[2],
-                                 bounds[3])
-                           : WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+    quadtreeRectangleGlobe = WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
     quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
     quadtreeXTiles = 1;
   } else {
