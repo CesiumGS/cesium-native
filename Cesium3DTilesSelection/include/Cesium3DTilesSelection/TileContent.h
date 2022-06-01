@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumGltf/Model.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumGltf/Model.h>
 
 #include <functional>
 #include <optional>
@@ -67,7 +67,7 @@ private:
 
   void setContentKind(const TileContentKind& contentKind);
 
-  void setProjection(const CesiumGeospatial::Projection &projection);
+  void setProjection(const CesiumGeospatial::Projection& projection);
 
   void setState(TileLoadState state) noexcept;
 
