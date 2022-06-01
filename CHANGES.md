@@ -1,6 +1,6 @@
 # Change Log
 
-### v0.16.0 - ????
+### v0.16.0 - 2022-06-01
 
 ##### Additions :tada:
 
@@ -9,7 +9,7 @@
 
 ##### Fixes :wrench:
 
-- For consistency with CesiumJS and compatibility with third-party terrain tilers widely used in the community, the `bounds` property the `layer.json` file of a quantized-mesh terrain tileset is now ignored, and the terrain is assumed to cover the entire globe.
+- For consistency with CesiumJS and compatibility with third-party terrain tilers widely used in the community, the `bounds` property of the `layer.json` file of a quantized-mesh terrain tileset is now ignored, and the terrain is assumed to cover the entire globe.
 
 ### v0.15.2 - 2022-05-13
 
