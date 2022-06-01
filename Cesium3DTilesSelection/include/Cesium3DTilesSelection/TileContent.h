@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumGltf/Model.h>
+#include <CesiumGeospatial/Projection.h>
 
 #include <functional>
 #include <optional>
@@ -55,6 +56,8 @@ public:
 
   const TileRenderContent* getRenderContent() const noexcept;
 
+  const CesiumGeospatial::Projection* getProjection() const noexcept;
+
   TilesetContentLoader* getLoader() noexcept;
 
   void* getRenderResources() const noexcept;
@@ -63,6 +66,8 @@ private:
   void setContentKind(TileContentKind&& contentKind);
 
   void setContentKind(const TileContentKind& contentKind);
+
+  void setProjection(const CesiumGeospatial::Projection &projection);
 
   void setState(TileLoadState state) noexcept;
 
@@ -75,7 +80,8 @@ private:
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
-  std::function<void(Tile&)> _deferredTileInitializer;
+  std::optional<CesiumGeospatial::Projection> _projection;
+  std::function<void(Tile&)> _tileInitializer;
   TilesetContentLoader* _pLoader;
 
   friend class TilesetContentManager;

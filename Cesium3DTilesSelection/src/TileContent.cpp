@@ -5,7 +5,7 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
     : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
-      _deferredTileInitializer{},
+      _tileInitializer{},
       _pLoader{pLoader} {}
 
 TileContent::TileContent(
@@ -14,7 +14,7 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{emptyContent},
       _pRenderResources{nullptr},
-      _deferredTileInitializer{},
+      _tileInitializer{},
       _pLoader{pLoader} {}
 
 TileContent::TileContent(
@@ -23,7 +23,7 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{externalContent},
       _pRenderResources{nullptr},
-      _deferredTileInitializer{},
+      _tileInitializer{},
       _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
@@ -44,6 +44,11 @@ const TileRenderContent* TileContent::getRenderContent() const noexcept {
   return std::get_if<TileRenderContent>(&_contentKind);
 }
 
+const CesiumGeospatial::Projection*
+TileContent::getProjection() const noexcept {
+  return _projection ? &*_projection : nullptr;
+}
+
 TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }
 
 void TileContent::setContentKind(TileContentKind&& contentKind) {
@@ -52,6 +57,11 @@ void TileContent::setContentKind(TileContentKind&& contentKind) {
 
 void TileContent::setContentKind(const TileContentKind& contentKind) {
   _contentKind = contentKind;
+}
+
+void TileContent::setProjection(
+    const CesiumGeospatial::Projection& projection) {
+  _projection = projection;
 }
 
 void TileContent::setState(TileLoadState state) noexcept { _state = state; }
@@ -66,10 +76,10 @@ void* TileContent::getRenderResources() const noexcept {
 
 void TileContent::setTileInitializerCallback(
     std::function<void(Tile&)> callback) {
-  _deferredTileInitializer = std::move(callback);
+  _tileInitializer = std::move(callback);
 }
 
 std::function<void(Tile&)>& TileContent::getTileInitializerCallback() {
-  return _deferredTileInitializer;
+  return _tileInitializer;
 }
 } // namespace Cesium3DTilesSelection

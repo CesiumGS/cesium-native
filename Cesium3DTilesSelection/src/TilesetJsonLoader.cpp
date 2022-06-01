@@ -677,7 +677,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
         TileUnknownContent{},
         TileLoadResultState::Failed,
         std::move(pCompletedRequest),
-        {}};
+        {},
+        std::nullopt};
   }
 
   externalContentInitializer.pExternalTilesetLoaders =
@@ -689,7 +690,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       TileExternalContent{},
       TileLoadResultState::Success,
       std::move(pCompletedRequest),
-      std::move(externalContentInitializer)};
+      std::move(externalContentInitializer),
+      std::nullopt};
 }
 } // namespace
 
@@ -760,7 +762,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
         TileUnknownContent{},
         TileLoadResultState::Failed,
         0,
-        {}});
+        {},
+        std::nullopt});
   }
 
   const glm::dmat4& tileTransform = tile.getTransform();
@@ -787,7 +790,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   TileUnknownContent{},
                   TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
-                  {}};
+                  {},
+                  std::nullopt};
             }
 
             uint16_t statusCode = pResponse->statusCode();
@@ -801,7 +805,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   TileUnknownContent{},
                   TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
-                  {}};
+                  {},
+                  std::nullopt};
             }
 
             // find gltf converter
@@ -825,14 +830,16 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                     TileRenderContent{std::nullopt},
                     TileLoadResultState::Failed,
                     std::move(pCompletedRequest),
-                    {}};
+                    {},
+                    std::nullopt};
               }
 
               return TileLoadResult{
                   TileRenderContent{std::move(result.model)},
                   TileLoadResultState::Success,
                   std::move(pCompletedRequest),
-                  {}};
+                  {},
+                  std::nullopt};
             } else {
               // not a renderable content, then it must be external tileset
               return parseExternalTilesetInWorkerThread(

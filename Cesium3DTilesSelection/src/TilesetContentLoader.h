@@ -22,6 +22,7 @@ struct TileLoadResult {
   TileLoadResultState state;
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
   std::function<void(Tile&)> tileInitializer;
+  std::optional<CesiumGeospatial::Projection> tileProjection;
 };
 
 class TilesetContentLoader {
