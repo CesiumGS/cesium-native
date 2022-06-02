@@ -295,6 +295,9 @@ void TilesetContentManager::setTileContent(
   content.setContentKind(std::move(result.contentKind));
   content.setTileInitializerCallback(std::move(result.tileInitializer));
   content.setRenderResources(pWorkerRenderResources);
+  if (result.tileProjection) {
+    content.setProjection(*result.tileProjection);
+  }
 }
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
