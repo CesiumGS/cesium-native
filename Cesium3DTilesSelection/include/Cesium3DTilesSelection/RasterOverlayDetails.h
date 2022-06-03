@@ -1,8 +1,9 @@
 #pragma once
 
-#include <CesiumGeospatial/Projection.h>
-#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Projection.h>
+
 #include <vector>
 
 namespace Cesium3DTilesSelection {

@@ -1,13 +1,13 @@
+#include "TileUtilities.h"
+
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
-#include "TileUtilities.h"
-
-#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -47,8 +47,7 @@ namespace Cesium3DTilesSelection {
 RasterMappedTo3DTile::RasterMappedTo3DTile(
     const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
     int32_t textureCoordinateIndex)
-    : 
-      _pLoadingTile(pRasterTile),
+    : _pLoadingTile(pRasterTile),
       _pReadyTile(nullptr),
       _textureCoordinateID(textureCoordinateIndex),
       _translation(0.0, 0.0),
@@ -56,8 +55,9 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _state(AttachmentState::Unattached),
       _originalFailed(false) {}
 
-RasterOverlayTile::MoreDetailAvailable
-RasterMappedTo3DTile::update(IPrepareRendererResources& prepareRendererResources, Tile& tile) {
+RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
+    IPrepareRendererResources& prepareRendererResources,
+    Tile& tile) {
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
                    this->_pReadyTile->isMoreDetailAvailable() !=
@@ -177,7 +177,9 @@ bool RasterMappedTo3DTile::isMoreDetailAvailable() const noexcept {
              RasterOverlayTile::MoreDetailAvailable::Yes;
 }
 
-void RasterMappedTo3DTile::detachFromTile(IPrepareRendererResources& prepareRendererResources, Tile& tile) noexcept {
+void RasterMappedTo3DTile::detachFromTile(
+    IPrepareRendererResources& prepareRendererResources,
+    Tile& tile) noexcept {
   if (this->getState() == AttachmentState::Unattached) {
     return;
   }
@@ -293,9 +295,8 @@ RasterMappedTo3DTile* addRealTile(
   if (!pTile) {
     return nullptr;
   } else {
-    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pTile,
-        textureCoordinateIndex));
+    return &tile.getMappedRasterTiles().emplace_back(
+        RasterMappedTo3DTile(pTile, textureCoordinateIndex));
   }
 }
 
@@ -309,9 +310,8 @@ RasterMappedTo3DTile* addRealTile(
   RasterOverlayTileProvider* pProvider = overlay.getTileProvider();
   if (pProvider->isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
-    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        getPlaceholderTile(overlay),
-        -1));
+    return &tile.getMappedRasterTiles().emplace_back(
+        RasterMappedTo3DTile(getPlaceholderTile(overlay), -1));
   }
 
   // We can get a more accurate estimate of the real-world size of the projected

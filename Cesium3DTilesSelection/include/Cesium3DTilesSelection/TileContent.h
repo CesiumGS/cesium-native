@@ -74,9 +74,10 @@ private:
 
   void setProjection(const CesiumGeospatial::Projection& projection);
 
-  void setRasterOverlayDetails(const RasterOverlayDetails &rasterOverlayDetails);
+  void
+  setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
 
-  void setRasterOverlayDetails(RasterOverlayDetails &&rasterOverlayDetails);
+  void setRasterOverlayDetails(RasterOverlayDetails&& rasterOverlayDetails);
 
   void setState(TileLoadState state) noexcept;
 

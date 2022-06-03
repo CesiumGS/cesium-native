@@ -4,8 +4,10 @@ namespace Cesium3DTilesSelection {
 const CesiumGeometry::Rectangle*
 RasterOverlayDetails::findRectangleForOverlayProjection(
     const CesiumGeospatial::Projection& projection) const {
-  const std::vector<CesiumGeospatial::Projection>& projections = this->rasterOverlayProjections;
-  const std::vector<CesiumGeometry::Rectangle>& rectangles = this->rasterOverlayRectangles;
+  const std::vector<CesiumGeospatial::Projection>& projections =
+      this->rasterOverlayProjections;
+  const std::vector<CesiumGeometry::Rectangle>& rectangles =
+      this->rasterOverlayRectangles;
 
   assert(projections.size() == rectangles.size());
 
