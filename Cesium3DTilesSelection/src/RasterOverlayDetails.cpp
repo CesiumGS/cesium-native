@@ -1,5 +1,7 @@
 #include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 
+#include <algorithm>
+
 namespace Cesium3DTilesSelection {
 const CesiumGeometry::Rectangle*
 RasterOverlayDetails::findRectangleForOverlayProjection(
