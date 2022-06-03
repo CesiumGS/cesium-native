@@ -31,9 +31,12 @@ public:
       bool showCreditsOnScreen);
 
   struct Layer {
+    std::string baseUrl;
+    std::string version;
     std::vector<std::string> tileTemplateUrls;
     CesiumGeometry::QuadtreeRectangleAvailability availability;
     int32_t availabilityLevels;
+    std::string creditString;
     std::optional<Credit> credit;
   };
 

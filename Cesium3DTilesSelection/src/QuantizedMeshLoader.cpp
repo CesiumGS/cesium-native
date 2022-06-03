@@ -1,4 +1,4 @@
-#include "QuantizedMeshContent.h"
+#include "QuantizedMeshLoader.h"
 
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
@@ -680,14 +680,14 @@ static std::vector<std::byte> generateNormals(
   return normalsBuffer;
 }
 
-/*static*/ QuantizedMeshLoadResult QuantizedMeshContent::load(
+/*static*/ QuantizedMeshLoadResult QuantizedMeshLoader::load(
     const TileID& tileID,
     const BoundingVolume& tileBoundingVolume,
     const std::string& url,
     const gsl::span<const std::byte>& data,
     bool enableWaterMask) {
 
-  CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshContent::load");
+  CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshLoader::load");
 
   const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
@@ -1158,7 +1158,7 @@ static std::vector<std::byte> generateNormals(
   return result;
 }
 
-QuantizedMeshMetadataResult QuantizedMeshContent::loadAvailabilityRectangles(
+QuantizedMeshMetadataResult QuantizedMeshLoader::loadAvailabilityRectangles(
     const rapidjson::Document& metadata,
     uint32_t startingLevel) {
   QuantizedMeshMetadataResult ret;
@@ -1223,12 +1223,12 @@ static QuantizedMeshMetadataResult processMetadata(
     return result;
   }
 
-  return QuantizedMeshContent::loadAvailabilityRectangles(
+  return QuantizedMeshLoader::loadAvailabilityRectangles(
       metadata,
       tileID.level + 1);
 }
 
-/*static*/ QuantizedMeshMetadataResult QuantizedMeshContent::loadMetadata(
+/*static*/ QuantizedMeshMetadataResult QuantizedMeshLoader::loadMetadata(
     const gsl::span<const std::byte>& data,
     const QuadtreeTileID& tileID) {
   std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data, false);

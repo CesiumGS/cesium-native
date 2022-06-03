@@ -50,20 +50,18 @@ struct QuantizedMeshMetadataResult {
 };
 
 /**
- * @brief Creates a {@link TileContentLoadResult} from `quantized-mesh-1.0`
- * data.
+ * @brief Loads `quantized-mesh-1.0` terrain data.
  */
-class CESIUM3DTILESSELECTION_API QuantizedMeshContent final {
+class CESIUM3DTILESSELECTION_API QuantizedMeshLoader final {
 public:
   /**
    * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
    *
-   * @param pLogger Only used for logging
    * @param tileID The tile ID
    * @param tileBoundingVoume The tile bounding volume
    * @param url The URL
    * @param data The actual input data
-   * @return The {@link TileContentLoadResult}
+   * @return The {@link QuantizedMeshLoadResult}
    */
   static QuantizedMeshLoadResult load(
       const TileID& tileID,
