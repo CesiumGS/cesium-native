@@ -1,12 +1,13 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "Library.h"
-#include "TileID.h"
-#include "TileRefine.h"
-#include "TileSelectionState.h"
-
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TileSelectionState.h>
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Library.h>
+
 #include <CesiumUtility/DoublyLinkedList.h>
 
 #include <glm/common.hpp>
@@ -361,6 +362,15 @@ public:
 
   TileContent& getContent() noexcept { return *_pContent; }
 
+  std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept {
+    return this->_rasterTiles;
+  }
+
+  const std::vector<RasterMappedTo3DTile>&
+  getMappedRasterTiles() const noexcept {
+    return this->_rasterTiles;
+  }
+
   bool isRenderable() const noexcept;
 
   bool isRenderContent() const noexcept;
@@ -402,6 +412,9 @@ private:
   // tile content
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
   std::unique_ptr<TileContent> _pContent;
+
+  // mapped raster overlay
+  std::vector<RasterMappedTo3DTile> _rasterTiles;
 
 public:
   /**

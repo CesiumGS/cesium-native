@@ -5,6 +5,8 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
     : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
+      _projection{std::nullopt},
+      _rasterOverlayDetails{std::nullopt},
       _tileInitializer{},
       _pLoader{pLoader} {}
 
@@ -14,6 +16,8 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{emptyContent},
       _pRenderResources{nullptr},
+      _projection{std::nullopt},
+      _rasterOverlayDetails{std::nullopt},
       _tileInitializer{},
       _pLoader{pLoader} {}
 
@@ -23,6 +27,8 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{externalContent},
       _pRenderResources{nullptr},
+      _projection{std::nullopt},
+      _rasterOverlayDetails{std::nullopt},
       _tileInitializer{},
       _pLoader{pLoader} {}
 
@@ -49,6 +55,23 @@ TileContent::getProjection() const noexcept {
   return _projection ? &*_projection : nullptr;
 }
 
+const RasterOverlayDetails*
+TileContent::getRasterOverlayDetails() const noexcept {
+  if (_rasterOverlayDetails) {
+    return &*_rasterOverlayDetails;
+  }
+
+  return nullptr;
+}
+
+RasterOverlayDetails* TileContent::getRasterOverlayDetails() noexcept {
+  if (_rasterOverlayDetails) {
+    return &*_rasterOverlayDetails;
+  }
+
+  return nullptr;
+}
+
 TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }
 
 void TileContent::setContentKind(TileContentKind&& contentKind) {
@@ -62,6 +85,16 @@ void TileContent::setContentKind(const TileContentKind& contentKind) {
 void TileContent::setProjection(
     const CesiumGeospatial::Projection& projection) {
   _projection = projection;
+}
+
+void TileContent::setRasterOverlayDetails(
+    const RasterOverlayDetails& rasterOverlayDetails) {
+  _rasterOverlayDetails = rasterOverlayDetails;
+}
+
+void TileContent::setRasterOverlayDetails(
+    RasterOverlayDetails&& rasterOverlayDetails) {
+  _rasterOverlayDetails = std::move(rasterOverlayDetails);
 }
 
 void TileContent::setState(TileLoadState state) noexcept { _state = state; }

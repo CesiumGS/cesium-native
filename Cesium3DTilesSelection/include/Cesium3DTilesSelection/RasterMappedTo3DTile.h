@@ -1,6 +1,7 @@
 #pragma once
 
-#include "RasterOverlayTile.h"
+#include <Cesium3DTilesSelection/RasterOverlayTile.h>
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
@@ -155,12 +156,17 @@ public:
    * @param tile The owner tile.
    * @return The {@link MoreDetailAvailable} state.
    */
-  RasterOverlayTile::MoreDetailAvailable update(Tile& tile);
+  RasterOverlayTile::MoreDetailAvailable
+  update(IPrepareRendererResources& prepareRendererResources, Tile& tile);
+
+  bool isMoreDetailAvailable() const noexcept;
 
   /**
    * @brief Detach the raster from the given tile.
    */
-  void detachFromTile(Tile& tile) noexcept;
+  void detachFromTile(
+      IPrepareRendererResources& prepareRendererResources,
+      Tile& tile) noexcept;
 
   /**
    * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
@@ -199,6 +205,7 @@ public:
    * the raster overlay.
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
+      double maximumScreenSpaceError,
       RasterOverlay& overlay,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections);
