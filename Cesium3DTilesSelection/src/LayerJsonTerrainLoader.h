@@ -55,6 +55,14 @@ public:
       override;
 
 private:
+  bool
+  tileIsAvailableInAnyLayer(const CesiumGeometry::QuadtreeTileID& tileID) const;
+  void createChildTile(
+      const Tile& parent,
+      std::vector<Tile>& children,
+      const CesiumGeometry::QuadtreeTileID& childID,
+      bool isAvailable);
+
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;
   std::vector<Layer> _layers;
