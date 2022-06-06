@@ -350,7 +350,7 @@ void TilesetContentManager::notifyTileStartLoading(
 }
 
 void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
-  assert(_tilesLoadOnProgress > 0 && "There are no tiles currently on the fly");
+  assert(_tilesLoadOnProgress > 0 && "There are no tile loads currently in flight");
   --_tilesLoadOnProgress;
   _tilesDataUsed += tile.computeByteSize();
 }
