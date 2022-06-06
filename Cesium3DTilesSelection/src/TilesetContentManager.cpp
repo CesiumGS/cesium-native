@@ -7,6 +7,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <spdlog/logger.h>
+#include <chrono>
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -273,6 +274,17 @@ int64_t TilesetContentManager::getTilesDataUsed() const noexcept {
   return _tilesDataUsed;
 }
 
+void TilesetContentManager::report() {
+  if (_externalTiles > 0 || _renderLoading > 0) {
+    spdlog::info("external tiles: {} total: {} ms", _externalTiles, _externalLoading);
+    spdlog::info("render tiles: {} total: {} ms", _renderTiles, _renderLoading);
+    _externalTiles = 0;
+    _externalLoading = 0.0;
+    _renderTiles = 0;
+    _renderLoading = 0.0;
+  }
+}
+
 void TilesetContentManager::setTileContent(
     TileContent& content,
     TileLoadResult&& result,
@@ -302,8 +314,15 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   auto& tileInitializer = content.getTileInitializerCallback();
   if (tileInitializer) {
+    ++_externalTiles;
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     tileInitializer(tile);
     content.setTileInitializerCallback({});
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    _externalLoading +=
+        std::chrono::duration<double, std::milli>(end - begin).count();
   }
 
   // if tile is external tileset, then it will be refined no matter what
@@ -314,12 +333,19 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   // create render resources in the main thread
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent && pRenderContent->model) {
+    ++_renderTiles;
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     void* pWorkerRenderResources = content.getRenderResources();
     void* pMainThreadRenderResources =
         _externals.pPrepareRendererResources->prepareInMainThread(
             tile,
             pWorkerRenderResources);
     content.setRenderResources(pMainThreadRenderResources);
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    _renderLoading +=
+        std::chrono::duration<double, std::milli>(end - begin).count();
   }
 
   content.setState(TileLoadState::Done);

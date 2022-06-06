@@ -36,6 +36,8 @@ public:
 
   int64_t getTilesDataUsed() const noexcept;
 
+  void report();
+
 private:
   static void setTileContent(
       TileContent& content,
@@ -59,5 +61,9 @@ private:
   std::unique_ptr<TilesetContentLoader> _pLoader;
   int32_t _tilesLoadOnProgress;
   int64_t _tilesDataUsed;
+  int64_t _externalTiles{0};
+  int64_t _renderTiles{0};
+  double _externalLoading{0.0};
+  double _renderLoading{0.0};
 };
 } // namespace Cesium3DTilesSelection

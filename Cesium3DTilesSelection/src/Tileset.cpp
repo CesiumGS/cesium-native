@@ -315,6 +315,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
 
   this->_previousFrameNumber = currentFrameNumber;
 
+  _pTilesetContentManager->report();
+
   return result;
 }
 
