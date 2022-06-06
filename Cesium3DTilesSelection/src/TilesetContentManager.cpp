@@ -303,6 +303,7 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   auto& tileInitializer = content.getTileInitializerCallback();
   if (tileInitializer) {
     tileInitializer(tile);
+    content.setTileInitializerCallback({});
   }
 
   // if tile is external tileset, then it will be refined no matter what
@@ -350,7 +351,9 @@ void TilesetContentManager::notifyTileStartLoading(
 }
 
 void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
-  assert(_tilesLoadOnProgress > 0 && "There are no tile loads currently in flight");
+  assert(
+      _tilesLoadOnProgress > 0 &&
+      "There are no tile loads currently in flight");
   --_tilesLoadOnProgress;
   _tilesDataUsed += tile.computeByteSize();
 }
