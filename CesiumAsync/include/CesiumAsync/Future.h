@@ -44,7 +44,6 @@ public:
   Future(const Future<T>& rhs) = delete;
   Future<T>& operator=(const Future<T>& rhs) = delete;
 
-
   /**
    * @brief Registers a continuation function to be invoked in a worker thread
    * when this Future resolves, and invalidates this Future.
