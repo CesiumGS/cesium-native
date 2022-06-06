@@ -112,7 +112,7 @@ Future<LoadLayersResult> loadLayersRecursive(
   const auto availabilityLevelsIt =
       layerJson.FindMember("metadataAvailability");
 
-  QuadtreeRectangleAvailability availability(tilingScheme, maxZoom);
+  QuadtreeRectangleAvailability availability(tilingScheme, uint32_t(maxZoom));
 
   int32_t availabilityLevels = -1;
 
@@ -132,7 +132,6 @@ Future<LoadLayersResult> loadLayersRecursive(
   const auto attributionIt = layerJson.FindMember("attribution");
 
   std::string creditString;
-  std::optional<Credit> maybeCredit;
   if (attributionIt != layerJson.MemberEnd() &&
       attributionIt->value.IsString()) {
     creditString = attributionIt->value.GetString();
@@ -491,7 +490,7 @@ Future<TileLoadResult> requestTileContent(
   // If this tile has availability data, we need to add it to the layer in the
   // main thread.
   if (layer.availabilityLevels > 0 &&
-      tileID.level % layer.availabilityLevels == 0) {
+      int32_t(tileID.level) % layer.availabilityLevels == 0) {
     futureQuantizedMesh =
         std::move(futureQuantizedMesh)
             .thenInMainThread(
@@ -617,7 +616,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
 
   while (it != this->_layers.end()) {
     if (it->availabilityLevels >= 1 &&
-        (pQuadtreeTileID->level % it->availabilityLevels) == 0 &&
+        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0 &&
         it->availability.isTileAvailable(*pQuadtreeTileID)) {
       availabilityRequests.emplace_back(loadTileAvailability(
           pLogger,
