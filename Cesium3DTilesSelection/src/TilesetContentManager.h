@@ -44,6 +44,8 @@ private:
 
   void updateContentLoadedState(Tile& tile);
 
+  void updateDoneState(Tile& tile);
+
   void unloadContentLoadedState(Tile& tile);
 
   void unloadDoneState(Tile& tile);
