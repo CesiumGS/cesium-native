@@ -70,7 +70,8 @@ Tileset::Tileset(
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
-      this->_externals.pTileOcclusionProxyPool->initPool(500);
+      this->_externals.pTileOcclusionProxyPool->initPool(
+          options.occlusionPoolSize);
     }
     LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
       this->notifyTileDoneLoading(nullptr);
@@ -112,7 +113,8 @@ Tileset::Tileset(
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
       // TODO: find a reasonable number
-      this->_externals.pTileOcclusionProxyPool->initPool(500);
+      this->_externals.pTileOcclusionProxyPool->initPool(
+          options.occlusionPoolSize);
     }
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
@@ -239,6 +241,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;
   result.tilesCulled = 0;
+  result.tilesOccluded = 0;
   result.maxDepthVisited = 0;
 
   Tile* pRootTile = this->getRootTile();
@@ -688,67 +691,6 @@ void Tileset::_frustumCull(
   }
 }
 
-void Tileset::_occlusionCull(
-    const Tile& tile,
-    const FrameState& frameState,
-    bool cullWithChildrenBounds,
-    CullResult& cullResult) {
-
-  if (!cullResult.shouldVisit || cullResult.culled) {
-    return;
-  }
-
-  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      this->getExternals().pTileOcclusionProxyPool;
-  if (pOcclusionPool) {
-    if (cullWithChildrenBounds) {
-      bool fallbackAndUseTileBounds = false;
-      for (const Tile& child : tile.getChildren()) {
-        const TileOcclusionRendererProxy* pOcclusion =
-            pOcclusionPool->fetchOcclusionProxyForTile(
-                child,
-                frameState.currentFrameNumber);
-        if (!pOcclusion) {
-          // At least one child does not have an occlusion proxy, so we need
-          // to use the tile's actual bounds to confirm occlusion.
-          fallbackAndUseTileBounds = true;
-
-          // Don't break, since we may still find from another child that we
-          // are definitely _not_ occluded.
-        } else if (!pOcclusion->isOccluded()) {
-          // The tile is definitely _not_ occluded since a child has confirmed
-          // it is not occluded.
-          cullResult.culled = false;
-          return;
-        }
-      }
-
-      if (!fallbackAndUseTileBounds) {
-        // All children had valid occlusion proxies, and none of them were
-        // reported as visible.
-        cullResult.culled = true;
-        return;
-      }
-    }
-
-    // Use the tile's bounds instead of the children bounds to check for
-    // occlusion. We may be here because one or more children were
-    // external tilesets or "unconditionally refine" tiles. Alternatively,
-    // one or more of the children may not have been able to find valid
-    // occlusion proxies.
-    const TileOcclusionRendererProxy* pOcclusion =
-        pOcclusionPool->fetchOcclusionProxyForTile(
-            tile,
-            frameState.currentFrameNumber);
-    if (pOcclusion && pOcclusion->isOccluded()) {
-      cullResult.culled = true;
-      // if (this->_options.enableOcclusionCulling) {
-      //   shouldVisit = false;
-      // }
-    }
-  }
-}
-
 void Tileset::_fogCull(
     const FrameState& frameState,
     const std::vector<double>& distances,
@@ -877,7 +819,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   // TODO: abstract culling stages into composable interface?
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
-  this->_occlusionCull(tile, frameState, cullWithChildrenBounds, cullResult);
   this->_fogCull(frameState, *pDistances, cullResult);
 
   if (!cullResult.shouldVisit) {
@@ -1240,6 +1181,71 @@ bool Tileset::_kickDescendantsAndRenderTile(
   return queuedForLoad;
 }
 
+Tileset::OcclusionInfo
+Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
+  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
+      this->getExternals().pTileOcclusionProxyPool;
+  if (pOcclusionPool) {
+    // First check if this tile's bounding volume has occlusion info and is
+    // known to be occluded.
+    const TileOcclusionRendererProxy* pOcclusion =
+        pOcclusionPool->fetchOcclusionProxyForTile(
+            tile,
+            frameState.currentFrameNumber);
+    if (!pOcclusion) {
+      // This indicates we ran out of occlusion proxies. We don't want to wait
+      // on occlusion info here since it might not ever arrive, so treat this
+      // tile as if it is _known_ to be unoccluded.
+      return OcclusionInfo{true, false};
+    } else if (pOcclusion->getLastUpdatedFrame() == -1000) {
+      // We have an occlusion proxy, but it does not have valid occlusion
+      // info yet, wait for it.
+      return OcclusionInfo{false, false};
+    } else if (pOcclusion->isOccluded()) {
+      return OcclusionInfo{true, true};
+    }
+
+    // The tile's bounding volume is known to be unoccluded, but check the
+    // union of the children bounding volumes since it is tighter fitting.
+
+    // If any children are to be unconditionally refined, we can't rely on
+    // their bounding volumes. We also don't want to recurse indefinitely to
+    // find a valid descendant bounding volumes union.
+    for (const Tile& child : tile.getChildren()) {
+      if (child.getUnconditionallyRefine()) {
+        return OcclusionInfo{true, false};
+      }
+    }
+
+    // Check the occlusion state of all the children.
+    for (const Tile& child : tile.getChildren()) {
+      pOcclusion = pOcclusionPool->fetchOcclusionProxyForTile(
+          child,
+          frameState.currentFrameNumber);
+      if (!pOcclusion) {
+        // We ran out of occlusion proxies, treat this as if it is _known_ to
+        // be unoccluded so we don't wait for it.
+        return OcclusionInfo{true, false};
+      } else if (pOcclusion->getLastUpdatedFrame() == -1000) {
+        // We have an occlusion proxy, but it does not have valid occlusion
+        // info yet, wait for it.
+        return OcclusionInfo{false, false};
+      } else if (!pOcclusion->isOccluded()) {
+        // We have valid occlusion info and we know this child is unoccluded.
+        return OcclusionInfo{true, false};
+      }
+    }
+
+    // If we know the occlusion state of all children, and none are unoccluded,
+    // we can treat this tile as occluded.
+    return OcclusionInfo{true, true};
+  }
+
+  // We don't have an occlusion pool to query occlusion with, treat everything
+  // as unoccluded.
+  return OcclusionInfo{true, false};
+}
+
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * The tile has previously been determined to be visible.
 //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true,
@@ -1272,6 +1278,27 @@ Tileset::TraversalDetails Tileset::_visitTile(
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
+
+  // If occlusion culling is enabled, we may not want to refine for two
+  // reasons:
+  // - The tile is known to be occluded, so don't refine further.
+  // - The tile was not previously refined and the occlusion state for this
+  //   tile is not known yet, but will be known in the next several frames. If
+  //   delayRefinementForOcclusion is enabled, we will wait until the tile has
+  //   valid occlusion info to decide to refine. This might save us from
+  //   kicking off descendant loads that we later find to be unnecessary.
+  if (wantToRefine && !unconditionallyRefine &&
+      this->_options.enableOcclusionCulling) {
+    OcclusionInfo occlusion = this->_checkOcclusion(tile, frameState);
+    if (occlusion.isOccluded || (tile.getLastSelectionState().getOriginalResult(
+                                     frameState.lastFrameNumber) !=
+                                     TileSelectionState::Result::Refined &&
+                                 this->_options.delayRefinementForOcclusion &&
+                                 !occlusion.isOcclusionAvailable)) {
+      ++result.tilesOccluded;
+      wantToRefine = false;
+    }
+  }
 
   // In "Forbid Holes" mode, we cannot refine this tile until all its children
   // are loaded. But don't queue the children for load until we _want_ to

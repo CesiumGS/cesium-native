@@ -149,6 +149,23 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   bool enableOcclusionCulling = true;
 
   /**
+   * @brief Wait to refine until the occlusion state of a tile is known.
+   *
+   * Only applicable when enableOcclusionInfo is true. Enabling this option may
+   * cause a small delay between when a tile is needed according to the SSE and
+   * when the tile load is kicked off. On the other hand, this delay could
+   * allow the occlusion system to avoid loading a tile entirely if it is
+   * found to be unnecessary a few frames later.
+   */
+  bool delayRefinementForOcclusion = true;
+
+  /**
+   * @brief The number of occlusion bounding volume proxies to reserve for
+   * determining the occlusion state of traversed tiles.
+   */
+  uint32_t occlusionPoolSize = 500;
+
+  /**
    * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
    */
   bool enableFogCulling = true;
