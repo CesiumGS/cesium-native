@@ -58,7 +58,7 @@ std::string createExtensionsQueryParameter(
 BoundingVolume createDefaultLooseEarthBoundingVolume(
     const CesiumGeospatial::GlobeRectangle& globeRectangle) {
   return BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(globeRectangle, -1000.0, -9000.0));
+      BoundingRegion(globeRectangle, -1000.0, 9000.0));
 }
 
 struct LoadLayersResult {
@@ -492,31 +492,31 @@ Future<TileLoadResult> requestTileContent(
   // main thread.
   if (layer.availabilityLevels > 0 &&
       tileID.level % layer.availabilityLevels == 0) {
-    return std::move(futureQuantizedMesh)
-        .thenInMainThread(
-            [&layer](QuantizedMeshLoadResult&& loadResult) mutable {
-              for (auto& range : loadResult.availableTileRectangles) {
-                layer.availability.addAvailableTileRange(range);
-              }
-              return TileLoadResult{
-                  TileRenderContent{std::move(loadResult.model)},
-                  loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                                : TileLoadResultState::Success,
-                  nullptr,
-                  nullptr};
-            });
-  } else {
-    return std::move(futureQuantizedMesh)
-        .thenImmediately([](QuantizedMeshLoadResult&& loadResult) {
-          // TODO: why does TileLoadRequest need an IAssetRequest?
-          return TileLoadResult{
-              TileRenderContent{std::move(loadResult.model)},
-              loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                            : TileLoadResultState::Success,
-              nullptr,
-              nullptr};
-        });
+    futureQuantizedMesh =
+        std::move(futureQuantizedMesh)
+            .thenInMainThread(
+                [&layer](QuantizedMeshLoadResult&& loadResult) mutable {
+                  for (auto& range : loadResult.availableTileRectangles) {
+                    layer.availability.addAvailableTileRange(range);
+                  }
+                  return std::move(loadResult);
+                });
   }
+
+  return std::move(futureQuantizedMesh)
+      .thenImmediately([](QuantizedMeshLoadResult&& loadResult) {
+        // TODO: why does TileLoadRequest need an IAssetRequest?
+        return TileLoadResult{
+            TileRenderContent{std::move(loadResult.model)},
+            loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                          : TileLoadResultState::Success,
+            nullptr,
+            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
+              if (boundingVolume) {
+                tile.setBoundingVolume(*boundingVolume);
+              }
+            }};
+      });
 }
 
 Future<int> loadTileAvailability(
