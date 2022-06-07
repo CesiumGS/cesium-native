@@ -271,8 +271,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           return TileLoadResult{
               TileUnknownContent{},
               TileLoadResultState::Failed,
-              nullptr,
-              {}};
+              nullptr};
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -285,8 +284,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           return TileLoadResult{
               TileUnknownContent{},
               TileLoadResultState::Failed,
-              nullptr,
-              {}};
+              nullptr};
         }
 
         // find gltf converter
@@ -309,8 +307,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
             return TileLoadResult{
                 TileRenderContent{std::nullopt},
                 TileLoadResultState::Failed,
-                std::move(pCompletedRequest),
-                {}};
+                std::move(pCompletedRequest)};
           }
 
           std::function<void(Tile&)> tileInitializer;
@@ -328,8 +325,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
         return TileLoadResult{
             TileRenderContent{std::nullopt},
             TileLoadResultState::Failed,
-            std::move(pCompletedRequest),
-            {}};
+            std::move(pCompletedRequest)};
       });
 }
 } // namespace
@@ -348,8 +344,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        nullptr,
-        {}});
+        nullptr});
   }
 
   // find the subtree ID
@@ -358,8 +353,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        nullptr,
-        {}});
+        nullptr});
   }
 
   uint64_t levelLeft = pOctreeID->level % _subtreeLevels;
@@ -438,8 +432,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
                   TileLoadResult{
                       TileUnknownContent{},
                       TileLoadResultState::Failed,
-                      nullptr,
-                      {}});
+                      nullptr});
             });
   }
 
@@ -450,8 +443,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
         TileLoadResultState::Success,
-        nullptr,
-        {}});
+        nullptr});
   }
 
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pOctreeID);

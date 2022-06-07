@@ -21,7 +21,7 @@ struct TileLoadResult {
   TileContentKind contentKind;
   TileLoadResultState state;
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
-  std::function<void(Tile&)> tileInitializer;
+  std::function<void(Tile&)> tileInitializer; // TODO: remove
 };
 
 class TilesetContentLoader {

@@ -676,8 +676,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     return TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        std::move(pCompletedRequest),
-        {}};
+        std::move(pCompletedRequest)};
   }
 
   externalContentInitializer.pExternalTilesetLoaders =
@@ -686,10 +685,9 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 
   // mark this tile has external content
   return TileLoadResult{
-      TileExternalContent{},
+      TileExternalContent{std::move(externalContentInitializer)},
       TileLoadResultState::Success,
-      std::move(pCompletedRequest),
-      std::move(externalContentInitializer)};
+      std::move(pCompletedRequest)};
 }
 } // namespace
 
@@ -756,11 +754,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
   // this loader only handles Url ID
   const std::string* url = std::get_if<std::string>(&tile.getTileID());
   if (!url) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        TileLoadResultState::Failed,
-        0,
-        {}});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult{TileUnknownContent{}, TileLoadResultState::Failed, 0});
   }
 
   const glm::dmat4& tileTransform = tile.getTransform();
@@ -786,8 +781,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               return TileLoadResult{
                   TileUnknownContent{},
                   TileLoadResultState::Failed,
-                  std::move(pCompletedRequest),
-                  {}};
+                  std::move(pCompletedRequest)};
             }
 
             uint16_t statusCode = pResponse->statusCode();
@@ -800,8 +794,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               return TileLoadResult{
                   TileUnknownContent{},
                   TileLoadResultState::Failed,
-                  std::move(pCompletedRequest),
-                  {}};
+                  std::move(pCompletedRequest)};
             }
 
             // find gltf converter
@@ -824,15 +817,13 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                 return TileLoadResult{
                     TileRenderContent{std::nullopt},
                     TileLoadResultState::Failed,
-                    std::move(pCompletedRequest),
-                    {}};
+                    std::move(pCompletedRequest)};
               }
 
               return TileLoadResult{
                   TileRenderContent{std::move(result.model)},
                   TileLoadResultState::Success,
-                  std::move(pCompletedRequest),
-                  {}};
+                  std::move(pCompletedRequest)};
             } else {
               // not a renderable content, then it must be external tileset
               return parseExternalTilesetInWorkerThread(

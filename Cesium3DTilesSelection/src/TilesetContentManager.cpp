@@ -250,7 +250,6 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   content.setContentKind(TileUnknownContent{});
-  content.setTileInitializerCallback({});
   content.setState(TileLoadState::Unloaded);
   return true;
 }
@@ -293,33 +292,30 @@ void TilesetContentManager::setTileContent(
   }
 
   content.setContentKind(std::move(result.contentKind));
-  content.setTileInitializerCallback(std::move(result.tileInitializer));
   content.setRenderResources(pWorkerRenderResources);
 }
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
-  auto& tileInitializer = content.getTileInitializerCallback();
-  if (tileInitializer) {
-    tileInitializer(tile);
-    content.setTileInitializerCallback({});
-  }
-
-  // if tile is external tileset, then it will be refined no matter what
   if (content.isExternalContent()) {
-    tile.setUnconditionallyRefine();
-  }
+    auto externalContent = content.getExternalContent();
+    externalContent->createSubtree(tile);
+    externalContent->createSubtree = {};
 
-  // create render resources in the main thread
-  const TileRenderContent* pRenderContent = content.getRenderContent();
-  if (pRenderContent && pRenderContent->model) {
-    void* pWorkerRenderResources = content.getRenderResources();
-    void* pMainThreadRenderResources =
-        _externals.pPrepareRendererResources->prepareInMainThread(
-            tile,
-            pWorkerRenderResources);
-    content.setRenderResources(pMainThreadRenderResources);
+    // if tile is external tileset, then it will be refined no matter what
+    tile.setUnconditionallyRefine();
+  } else if (content.isRenderContent()) {
+    // create render resources in the main thread
+    const TileRenderContent* pRenderContent = content.getRenderContent();
+    if (pRenderContent->model) {
+      void* pWorkerRenderResources = content.getRenderResources();
+      void* pMainThreadRenderResources =
+          _externals.pPrepareRendererResources->prepareInMainThread(
+              tile,
+              pWorkerRenderResources);
+      content.setRenderResources(pMainThreadRenderResources);
+    }
   }
 
   content.setState(TileLoadState::Done);
