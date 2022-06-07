@@ -209,7 +209,7 @@ void TilesetContentManager::loadTileContent(
 }
 
 void TilesetContentManager::updateTileContent(Tile& tile) {
-  const TileContent& content = tile.getContent();
+  TileContent& content = tile.getContent();
 
   TileLoadState state = content.getState();
   switch (state) {
@@ -218,6 +218,10 @@ void TilesetContentManager::updateTileContent(Tile& tile) {
     break;
   default:
     break;
+  }
+
+  if (content.shouldContentContinueUpdated()) {
+    content.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
   }
 }
 
@@ -300,8 +304,10 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   if (content.isExternalContent()) {
     auto externalContent = content.getExternalContent();
-    externalContent->createSubtree(tile);
-    externalContent->createSubtree = {};
+    if (externalContent->createSubtree) {
+      externalContent->createSubtree(tile);
+      externalContent->createSubtree = {};
+    }
 
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();

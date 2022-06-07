@@ -49,6 +49,8 @@ public:
 
   TileLoadState getState() const noexcept;
 
+  bool shouldContentContinueUpdated() const noexcept;
+
   bool isEmptyContent() const noexcept;
 
   bool isExternalContent() const noexcept;
@@ -74,10 +76,14 @@ private:
 
   void setRenderResources(void* pRenderResources) noexcept;
 
+  void
+  setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
+
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
   TilesetContentLoader* _pLoader;
+  bool _shouldContentContinueUpdated;
 
   friend class TilesetContentManager;
 };

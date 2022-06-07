@@ -21,7 +21,6 @@ struct TileLoadResult {
   TileContentKind contentKind;
   TileLoadResultState state;
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
-  std::function<void(Tile&)> tileInitializer; // TODO: remove
 };
 
 class TilesetContentLoader {
@@ -36,5 +35,7 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>&
           requestHeaders) = 0;
+
+  virtual bool updateTileContent(Tile& tile) = 0;
 };
 } // namespace Cesium3DTilesSelection
