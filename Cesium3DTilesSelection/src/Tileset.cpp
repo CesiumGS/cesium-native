@@ -1290,12 +1290,15 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if (wantToRefine && !unconditionallyRefine &&
       this->_options.enableOcclusionCulling) {
     OcclusionInfo occlusion = this->_checkOcclusion(tile, frameState);
-    if (occlusion.isOccluded || (tile.getLastSelectionState().getOriginalResult(
-                                     frameState.lastFrameNumber) !=
-                                     TileSelectionState::Result::Refined &&
-                                 this->_options.delayRefinementForOcclusion &&
-                                 !occlusion.isOcclusionAvailable)) {
+    if (occlusion.isOccluded) {
       ++result.tilesOccluded;
+      wantToRefine = false;
+    } else if (
+        !occlusion.isOcclusionAvailable &&
+        this->_options.delayRefinementForOcclusion &&
+        tile.getLastSelectionState().getOriginalResult(
+            frameState.lastFrameNumber) !=
+            TileSelectionState::Result::Refined) {
       wantToRefine = false;
     }
   }
