@@ -1275,7 +1275,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
-  const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
+  bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
 
@@ -1287,12 +1287,30 @@ Tileset::TraversalDetails Tileset::_visitTile(
   //   delayRefinementForOcclusion is enabled, we will wait until the tile has
   //   valid occlusion info to decide to refine. This might save us from
   //   kicking off descendant loads that we later find to be unnecessary.
-  if (wantToRefine && !unconditionallyRefine &&
-      this->_options.enableOcclusionCulling) {
+  bool tileLastRefined =
+      tile.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
+      TileSelectionState::Result::Refined;
+  bool childLastRefined = false;
+  for (const Tile& child : tile.getChildren()) {
+    if (child.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
+        TileSelectionState::Result::Refined) {
+      childLastRefined = true;
+      break;
+    }
+  }
+
+  // If this tile and a child were both refined last frame, this tile does not
+  // need occlusion results.
+  bool shouldCheckOcclusion = this->_options.enableOcclusionCulling &&
+                              wantToRefine && !unconditionallyRefine &&
+                              (!tileLastRefined || !childLastRefined);
+
+  if (shouldCheckOcclusion) {
     OcclusionInfo occlusion = this->_checkOcclusion(tile, frameState);
     if (occlusion.isOccluded) {
       ++result.tilesOccluded;
       wantToRefine = false;
+      meetsSse = true;
     } else if (
         !occlusion.isOcclusionAvailable &&
         this->_options.delayRefinementForOcclusion &&
@@ -1300,6 +1318,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
             frameState.lastFrameNumber) !=
             TileSelectionState::Result::Refined) {
       wantToRefine = false;
+      meetsSse = true;
     }
   }
 
