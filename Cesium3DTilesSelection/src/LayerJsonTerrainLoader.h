@@ -57,6 +57,9 @@ public:
 private:
   bool
   tileIsAvailableInAnyLayer(const CesiumGeometry::QuadtreeTileID& tileID) const;
+
+  void createTileChildren(Tile& tile);
+
   void createChildTile(
       const Tile& parent,
       std::vector<Tile>& children,
@@ -66,6 +69,8 @@ private:
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;
   std::vector<Layer> _layers;
+
+  struct TileChildrenCreatorInMainThread;
 };
 
 } // namespace Cesium3DTilesSelection

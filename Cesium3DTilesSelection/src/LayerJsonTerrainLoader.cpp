@@ -16,6 +16,22 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace {
+struct LayerUpdaterInMainThread {
+  LayerUpdaterInMainThread(LayerJsonTerrainLoader::Layer* pLayer)
+      : pLayer{pLayer} {}
+
+  int operator()() {
+    for (const QuadtreeTileRectangularRange& range : availableTileRectangles) {
+      pLayer->availability.addAvailableTileRange(range);
+    }
+
+    return 0;
+  }
+
+  LayerJsonTerrainLoader::Layer* pLayer;
+  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+      availableTileRectangles{};
+};
 
 /**
  * @brief Creates the query parameter string for the extensions in the given
@@ -303,6 +319,16 @@ Future<LoadLayersResult> loadLayerJson(
 
 } // namespace
 
+struct LayerJsonTerrainLoader::TileChildrenCreatorInMainThread {
+  TileChildrenCreatorInMainThread(Tile* pTile, LayerJsonTerrainLoader* pLoader)
+      : pTile{pTile}, pLoader{pLoader} {}
+
+  void operator()(std::vector<int>&&) { pLoader->createTileChildren(*pTile); }
+
+  Tile* pTile;
+  LayerJsonTerrainLoader* pLoader;
+};
+
 /*static*/ CesiumAsync::Future<TilesetContentLoaderResult>
 LayerJsonTerrainLoader::createLoader(
     const TilesetExternals& externals,
@@ -444,78 +470,46 @@ std::string resolveTileUrl(
           }));
 }
 
-Future<TileLoadResult> requestTileContent(
+Future<QuantizedMeshLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const QuadtreeTileID& tileID,
     const BoundingVolume& boundingVolume,
-    LayerJsonTerrainLoader::Layer& layer,
+    const LayerJsonTerrainLoader::Layer& layer,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     bool enableWaterMask) {
   std::string url = resolveTileUrl(tileID, layer);
+  return pAssetAccessor->get(asyncSystem, url, requestHeaders)
+      .thenInWorkerThread(
+          [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
+              std::shared_ptr<IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url()));
+              return result;
+            }
 
-  Future<QuantizedMeshLoadResult> futureQuantizedMesh =
-      pAssetAccessor->get(asyncSystem, url, requestHeaders)
-          .thenInWorkerThread(
-              [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
-                  std::shared_ptr<IAssetRequest>&& pRequest) {
-                const IAssetResponse* pResponse = pRequest->response();
-                if (!pResponse) {
-                  QuantizedMeshLoadResult result;
-                  result.errors.emplace_error(fmt::format(
-                      "Did not receive a valid response for tile content {}",
-                      pRequest->url()));
-                  return result;
-                }
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
+              QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Received status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url()));
+            }
 
-                if (pResponse->statusCode() != 0 &&
-                    (pResponse->statusCode() < 200 ||
-                     pResponse->statusCode() >= 300)) {
-                  QuantizedMeshLoadResult result;
-                  result.errors.emplace_error(fmt::format(
-                      "Received status code {} for tile content {}",
-                      pResponse->statusCode(),
-                      pRequest->url()));
-                }
-
-                return QuantizedMeshLoader::load(
-                    tileID,
-                    boundingVolume,
-                    pRequest->url(),
-                    pResponse->data(),
-                    enableWaterMask);
-              });
-
-  // If this tile has availability data, we need to add it to the layer in the
-  // main thread.
-  if (layer.availabilityLevels > 0 &&
-      int32_t(tileID.level) % layer.availabilityLevels == 0) {
-    futureQuantizedMesh =
-        std::move(futureQuantizedMesh)
-            .thenInMainThread(
-                [&layer](QuantizedMeshLoadResult&& loadResult) mutable {
-                  for (auto& range : loadResult.availableTileRectangles) {
-                    layer.availability.addAvailableTileRange(range);
-                  }
-                  return std::move(loadResult);
-                });
-  }
-
-  return std::move(futureQuantizedMesh)
-      .thenImmediately([](QuantizedMeshLoadResult&& loadResult) {
-        // TODO: why does TileLoadRequest need an IAssetRequest?
-        return TileLoadResult{
-            TileRenderContent{std::move(loadResult.model)},
-            loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                          : TileLoadResultState::Success,
-            nullptr,
-            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-              if (boundingVolume) {
-                tile.setBoundingVolume(*boundingVolume);
-              }
-            }};
-      });
+            return QuantizedMeshLoader::load(
+                tileID,
+                boundingVolume,
+                pRequest->url(),
+                pResponse->data(),
+                enableWaterMask);
+          });
 }
 
 Future<int> loadTileAvailability(
@@ -593,17 +587,6 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
         {}});
   }
 
-  // Start the actual content request.
-  Future<TileLoadResult> futureContent = requestTileContent(
-      pLogger,
-      asyncSystem,
-      pAssetAccessor,
-      *pQuadtreeTileID,
-      tile.getBoundingVolume(),
-      *firstAvailableIt,
-      requestHeaders,
-      contentOptions.enableWaterMask);
-
   // Also load the same tile in any underlying layers for which this tile
   // is an availability level. This is necessary because, when we later
   // create this tile's children, we need to be able to create children
@@ -626,52 +609,77 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
           *it,
           requestHeaders));
     }
+
+    ++it;
   }
 
-  Future<TileLoadResult> futureResult =
-      availabilityRequests.empty()
-          ? std::move(futureContent)
-          : asyncSystem.all(std::move(availabilityRequests))
-                .thenImmediately([futureContent = std::move(futureContent)](
-                                     std::vector<int>&&) mutable {
-                  return std::move(futureContent);
-                });
+  // Start the actual content request.
+  auto& currentLayer = *firstAvailableIt;
+  Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
+      pLogger,
+      asyncSystem,
+      pAssetAccessor,
+      *pQuadtreeTileID,
+      tile.getBoundingVolume(),
+      currentLayer,
+      requestHeaders,
+      contentOptions.enableWaterMask);
 
-  return std::move(futureResult)
-      .thenInMainThread(
-          [this, &tile, pQuadtreeTileID](TileLoadResult&& result) {
-            // Now that all our availability is sorted out, create this tile's
-            // children.
-            // TODO: in most cases, we can create this tile's children before
-            // this tile is loaded, and it would be much more efficient to take
-            // advantage of that when we can.
-            const QuadtreeTileID swID(
-                pQuadtreeTileID->level + 1,
-                pQuadtreeTileID->x * 2,
-                pQuadtreeTileID->y * 2);
-            const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-            const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-            const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+  // If this tile has availability data, we need to add it to the layer in the
+  // main thread.
+  if (currentLayer.availabilityLevels > 0 &&
+      int32_t(pQuadtreeTileID->level) % currentLayer.availabilityLevels == 0) {
+    LayerUpdaterInMainThread layerUpdater{&currentLayer};
+    TileChildrenCreatorInMainThread childrenCreator{&tile, this};
+    return std::move(futureQuantizedMesh)
+        .thenImmediately(
+            [asyncSystem,
+             availabilityRequests = std::move(availabilityRequests),
+             layerUpdater = std::move(layerUpdater),
+             childrenCreator](QuantizedMeshLoadResult&& loadResult) mutable {
+              layerUpdater.availableTileRectangles =
+                  std::move(loadResult.availableTileRectangles);
+              availabilityRequests.push_back(
+                  asyncSystem.runInMainThread(layerUpdater));
+              asyncSystem.all(std::move(availabilityRequests))
+                  .thenInMainThread(childrenCreator);
 
-            // If _any_ child is available, we create _all_ children
-            bool sw = this->tileIsAvailableInAnyLayer(swID);
-            bool se = this->tileIsAvailableInAnyLayer(seID);
-            bool nw = this->tileIsAvailableInAnyLayer(nwID);
-            bool ne = this->tileIsAvailableInAnyLayer(neID);
-            if (sw || se || nw || ne) {
-              std::vector<Tile> children;
-              children.reserve(4);
+              return TileLoadResult{
+                  TileRenderContent{std::move(loadResult.model)},
+                  loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                                : TileLoadResultState::Success,
+                  nullptr,
+                  [boundingVolume =
+                       loadResult.updatedBoundingVolume](Tile& tile) {
+                    if (boundingVolume) {
+                      tile.setBoundingVolume(*boundingVolume);
+                    }
+                  }};
+            });
+  }
 
-              createChildTile(tile, children, swID, sw);
-              createChildTile(tile, children, seID, se);
-              createChildTile(tile, children, nwID, nw);
-              createChildTile(tile, children, neID, ne);
+  if (!availabilityRequests.empty()) {
+    asyncSystem.all(std::move(availabilityRequests))
+        .thenInMainThread([this, &tile](std::vector<int>&&) {
+          this->createTileChildren(tile);
+        });
+  } else {
+    this->createTileChildren(tile);
+  }
 
-              tile.createChildTiles(std::move(children));
-            }
-
-            return std::move(result);
-          });
+  return std::move(futureQuantizedMesh)
+      .thenImmediately([](QuantizedMeshLoadResult&& loadResult) mutable {
+        return TileLoadResult{
+            TileRenderContent{std::move(loadResult.model)},
+            loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                          : TileLoadResultState::Success,
+            nullptr,
+            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
+              if (boundingVolume) {
+                tile.setBoundingVolume(*boundingVolume);
+              }
+            }};
+      });
 }
 
 bool LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
@@ -682,6 +690,42 @@ bool LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
     }
   }
   return false;
+}
+
+void LayerJsonTerrainLoader::createTileChildren(Tile& tile) {
+  if (!tile.getChildren().empty()) {
+    return;
+  }
+
+  const QuadtreeTileID* pQuadtreeTileID =
+      std::get_if<QuadtreeTileID>(&tile.getTileID());
+
+  // Now that all our availability is sorted out, create this tile's
+  // children.
+  const QuadtreeTileID swID(
+      pQuadtreeTileID->level + 1,
+      pQuadtreeTileID->x * 2,
+      pQuadtreeTileID->y * 2);
+  const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+  const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+  const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+
+  // If _any_ child is available, we create _all_ children
+  bool sw = this->tileIsAvailableInAnyLayer(swID);
+  bool se = this->tileIsAvailableInAnyLayer(seID);
+  bool nw = this->tileIsAvailableInAnyLayer(nwID);
+  bool ne = this->tileIsAvailableInAnyLayer(neID);
+  if (sw || se || nw || ne) {
+    std::vector<Tile> children;
+    children.reserve(4);
+
+    createChildTile(tile, children, swID, sw);
+    createChildTile(tile, children, seID, se);
+    createChildTile(tile, children, nwID, nw);
+    createChildTile(tile, children, neID, ne);
+
+    tile.createChildTiles(std::move(children));
+  }
 }
 
 void LayerJsonTerrainLoader::createChildTile(
