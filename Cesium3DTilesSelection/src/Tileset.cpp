@@ -1197,7 +1197,7 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
       // on occlusion info here since it might not ever arrive, so treat this
       // tile as if it is _known_ to be unoccluded.
       return OcclusionInfo{true, false};
-    } else if (pOcclusion->getLastUpdatedFrame() == -1000) {
+    } else if (!pOcclusion->isOcclusionAvailable()) {
       // We have an occlusion proxy, but it does not have valid occlusion
       // info yet, wait for it.
       return OcclusionInfo{false, false};
@@ -1239,8 +1239,7 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
     // Check if any of the proxies are known to be unoccluded
     for (const TileOcclusionRendererProxy* pChildProxy :
          this->_childOcclusionProxies) {
-      if (pChildProxy->getLastUpdatedFrame() != -1000 &&
-          !pChildProxy->isOccluded()) {
+      if (pChildProxy->isOcclusionAvailable() && !pChildProxy->isOccluded()) {
         return OcclusionInfo{true, false};
       }
     }
@@ -1248,7 +1247,7 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
     // Check if any of the proxies are waiting for valid occlusion info.
     for (const TileOcclusionRendererProxy* pChildProxy :
          this->_childOcclusionProxies) {
-      if (pChildProxy->getLastUpdatedFrame() == -1000) {
+      if (!pChildProxy->isOcclusionAvailable()) {
         // We have an occlusion proxy, but it does not have valid occlusion
         // info yet, wait for it.
         return OcclusionInfo{false, false};

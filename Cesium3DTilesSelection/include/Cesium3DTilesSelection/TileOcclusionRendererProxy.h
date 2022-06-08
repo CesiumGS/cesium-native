@@ -19,12 +19,19 @@ public:
   virtual bool isOccluded() const = 0;
 
   /**
-   * @brief Get the last frame where a definitive occlusion state was
-   * determined.
+   * @brief Whether the tile has valid occlusion info available. If this is
+   * false, the traversal may decide to wait for the occlusion result to become
+   * available in future frames.
    *
-   * @return The frame number.
+   * Client implementation note: Do not return false if the occlusion for this
+   * tile will _never_ become available, otherwise the tile may not refine
+   * while waiting for occlusion. In such a case return true here and return
+   * false for isOccluded, so the traversal treats the tile as if it is _known_
+   * to be unoccluded.
+   *
+   * @return Whether this tile has valid occlusion info available.
    */
-  virtual int32_t getLastUpdatedFrame() const = 0;
+  virtual bool isOcclusionAvailable() const = 0;
 
 protected:
   friend class TileOcclusionRendererProxyPool;
@@ -37,13 +44,6 @@ protected:
    * is back in the pool.
    */
   virtual void reset(const Tile* pTile) = 0;
-
-  /**
-   * @brief Update the tile occlusion proxy.
-   *
-   * @param currentFrame The current frame number.
-   */
-  virtual void update(int32_t currentFrame) = 0;
 
 private:
   bool _usedLastFrame = false;
