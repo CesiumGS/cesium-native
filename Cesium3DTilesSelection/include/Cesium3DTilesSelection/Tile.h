@@ -54,6 +54,10 @@ struct TileContentLoadResult;
  */
 class CESIUM3DTILESSELECTION_API Tile final {
 public:
+  int32_t lastWaitFrame = -1;
+  int32_t waitCount = -1;
+  bool marked = false;
+
   /**
    * The current state of this tile in the loading process.
    */

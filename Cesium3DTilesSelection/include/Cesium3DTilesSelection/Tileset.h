@@ -288,6 +288,10 @@ public:
   }
 
 private:
+  double waitCountAvg = 0.0;
+  double waitCountMax = 0.0;
+  double tilesCounted = 0.0;
+
   /**
    * @brief The result of traversing one branch of the tile hierarchy.
    *

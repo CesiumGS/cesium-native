@@ -283,6 +283,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
         false,
         *pRootTile,
         result);
+
+    if (frameState.currentFrameNumber % 60 == 0) {
+      SPDLOG_LOGGER_WARN(_externals.pLogger, "Occlusion Refinement Stats, Wait Avg: {} frames, Max Wait: {}", waitCountAvg, waitCountMax);
+      waitCountAvg = waitCountMax = tilesCounted = 0.0;
+    }
   } else {
     result = ViewUpdateResult();
   }
@@ -1325,6 +1330,18 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   if (shouldCheckOcclusion) {
     OcclusionInfo occlusion = this->_checkOcclusion(tile, frameState);
+    if (occlusion.isOcclusionAvailable && tile.waitCount != -1 && tile.lastWaitFrame != -1) {
+      double tmp = (double)(tile.waitCount);
+      if (tmp > waitCountMax) {
+        waitCountMax = tmp;
+      }
+
+      waitCountAvg = (waitCountAvg * tilesCounted + tmp) / (tilesCounted + 1.0);
+      tilesCounted += 1.0;
+
+      tile.waitCount = -1;
+      tile.lastWaitFrame = -1;
+    }
     if (occlusion.isOccluded) {
       ++result.tilesOccluded;
       wantToRefine = false;
@@ -1337,6 +1354,12 @@ Tileset::TraversalDetails Tileset::_visitTile(
             TileSelectionState::Result::Refined) {
       wantToRefine = false;
       meetsSse = true;
+      if (tile.lastWaitFrame != frameState.lastFrameNumber) {
+        tile.waitCount = 0;
+      }
+
+      ++tile.waitCount;
+      tile.lastWaitFrame = frameState.currentFrameNumber;
     }
   }
 
