@@ -622,6 +622,10 @@ private:
   std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
   size_t _nextDistancesVector;
 
+  // Holds the occlusion proxies of the children of a tile. Store them in this
+  // scratch variable so that it can allocate only when growing bigger.
+  std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
+
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
   static double addTileToLoadQueue(

@@ -1217,22 +1217,41 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
       }
     }
 
-    // Check the occlusion state of all the children.
+    this->_childOcclusionProxies.clear();
+    this->_childOcclusionProxies.reserve(tile.getChildren().size());
     for (const Tile& child : tile.getChildren()) {
-      pOcclusion = pOcclusionPool->fetchOcclusionProxyForTile(
-          child,
-          frameState.currentFrameNumber);
-      if (!pOcclusion) {
+      const TileOcclusionRendererProxy* pChildProxy =
+          pOcclusionPool->fetchOcclusionProxyForTile(
+              child,
+              frameState.currentFrameNumber);
+
+      if (!pChildProxy) {
         // We ran out of occlusion proxies, treat this as if it is _known_ to
         // be unoccluded so we don't wait for it.
         return OcclusionInfo{true, false};
-      } else if (pOcclusion->getLastUpdatedFrame() == -1000) {
+      }
+
+      this->_childOcclusionProxies.push_back(pChildProxy);
+    }
+
+    // TODO: get rid of this arbitrary -1000 number.
+
+    // Check if any of the proxies are known to be unoccluded
+    for (const TileOcclusionRendererProxy* pChildProxy :
+         this->_childOcclusionProxies) {
+      if (pChildProxy->getLastUpdatedFrame() != -1000 &&
+          !pChildProxy->isOccluded()) {
+        return OcclusionInfo{true, false};
+      }
+    }
+
+    // Check if any of the proxies are waiting for valid occlusion info.
+    for (const TileOcclusionRendererProxy* pChildProxy :
+         this->_childOcclusionProxies) {
+      if (pChildProxy->getLastUpdatedFrame() == -1000) {
         // We have an occlusion proxy, but it does not have valid occlusion
         // info yet, wait for it.
         return OcclusionInfo{false, false};
-      } else if (!pOcclusion->isOccluded()) {
-        // We have valid occlusion info and we know this child is unoccluded.
-        return OcclusionInfo{true, false};
       }
     }
 
