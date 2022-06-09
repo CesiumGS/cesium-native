@@ -481,16 +481,18 @@ void Tile::loadContent() {
           })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
-        //this->_pRendererResources = loadResult.pRendererResources;
-        
+        // this->_pRendererResources = loadResult.pRendererResources;
+
         if (!this->getTileset()->getExternals().pPrepareRendererResources) {
           throw std::runtime_error("Renderer resource preparer is null!");
         }
 
         this->_pRendererResources =
-            this->getTileset()->getExternals().pPrepareRendererResources->prepareInMainThread(
-                *this,
-                loadResult.pRendererResources);
+            this->getTileset()
+                ->getExternals()
+                .pPrepareRendererResources->prepareInMainThread(
+                    *this,
+                    loadResult.pRendererResources);
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
@@ -1118,16 +1120,18 @@ void Tile::upsampleParent(
           })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
-        //this->_pRendererResources = loadResult.pRendererResources;
-        
+        // this->_pRendererResources = loadResult.pRendererResources;
+
         if (!this->getTileset()->getExternals().pPrepareRendererResources) {
           throw std::runtime_error("Renderer resource preparer is null!");
         }
 
         this->_pRendererResources =
-            this->getTileset()->getExternals().pPrepareRendererResources->prepareInMainThread(
-                *this,
-                loadResult.pRendererResources);
+            this->getTileset()
+                ->getExternals()
+                .pPrepareRendererResources->prepareInMainThread(
+                    *this,
+                    loadResult.pRendererResources);
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })

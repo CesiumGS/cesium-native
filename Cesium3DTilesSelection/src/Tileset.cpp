@@ -215,7 +215,8 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums) {
-  this->_asyncSystem.dispatchMainThreadTasks();
+  // this->_asyncSystem.dispatchMainThreadTasks();
+  this->_asyncSystem.dispatchOneMainThreadTask();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
   const int32_t currentFrameNumber = previousFrameNumber + 1;
