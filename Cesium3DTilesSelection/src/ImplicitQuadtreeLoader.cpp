@@ -191,6 +191,24 @@ void populateSubtree(
   tile.createChildTiles(std::move(children));
 }
 
+struct SubtreeContentInitializer {
+public:
+  SubtreeContentInitializer(
+      ImplicitQuadtreeLoader* pImplicitLoader,
+      const CesiumGeometry::QuadtreeTileID& subtreeID)
+      : subtreeAvailability{std::nullopt},
+        subtreeID{subtreeID},
+        pLoader{pImplicitLoader} {}
+
+  void operator()() {
+    pLoader->addSubtreeAvailability(subtreeID, std::move(*subtreeAvailability));
+  }
+
+  std::optional<SubtreeAvailability> subtreeAvailability;
+  CesiumGeometry::QuadtreeTileID subtreeID;
+  ImplicitQuadtreeLoader* pLoader;
+};
+
 bool isTileContentAvailable(
     const CesiumGeometry::QuadtreeTileID& subtreeID,
     const CesiumGeometry::QuadtreeTileID& quadtreeID,
@@ -348,27 +366,70 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
     // subtree is not loaded, so load it now.
     std::string subtreeUrl =
         resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
-    SubtreeAvailability::loadSubtree(
-        2,
-        asyncSystem,
-        pAssetAccessor,
-        pLogger,
-        subtreeUrl,
-        requestHeaders)
-        .thenInWorkerThread(
-            [this, subtreeID](std::optional<SubtreeAvailability>&&
-                                  subtreeAvailability) mutable {
-              if (subtreeAvailability) {
-                this->addSubtreeAvailability(
-                    subtreeID,
-                    std::move(*subtreeAvailability));
-              }
-            });
+    std::string tileUrl =
+        resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
+    const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets =
+        contentOptions.ktx2TranscodeTargets;
 
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        TileLoadResultState::RetryLater,
-        nullptr});
+    SubtreeContentInitializer subtreeInitializer{this, subtreeID};
+
+    return SubtreeAvailability::loadSubtree(
+               2,
+               asyncSystem,
+               pAssetAccessor,
+               pLogger,
+               subtreeUrl,
+               requestHeaders)
+        .thenInWorkerThread(
+            [pLogger,
+             asyncSystem,
+             pAssetAccessor,
+             tileUrl = std::move(tileUrl),
+             subtreeID,
+             quadtreeID = *pQuadtreeID,
+             requestHeaders,
+             ktx2TranscodeTargets,
+             subtreeInitializer = std::move(subtreeInitializer)](
+                std::optional<SubtreeAvailability>&&
+                    subtreeAvailability) mutable {
+              if (subtreeAvailability) {
+                bool tileHasContent = isTileContentAvailable(
+                    subtreeID,
+                    quadtreeID,
+                    *subtreeAvailability);
+
+                // send subtree back to the loader.
+                // CAUTION: do not use the subtree availability after this point
+                // as it is moved off to the main thread alread
+                subtreeInitializer.subtreeAvailability =
+                    std::move(subtreeAvailability);
+                asyncSystem.runInMainThread(std::move(subtreeInitializer));
+
+                // subtree is available, so check if tile has content or not. If
+                // it has, then request it
+                if (!tileHasContent) {
+                  // check if tile has empty content
+                  return asyncSystem.createResolvedFuture(TileLoadResult{
+                      TileEmptyContent{},
+                      TileLoadResultState::Success,
+                      nullptr});
+                }
+
+                return requestTileContent(
+                    pLogger,
+                    asyncSystem,
+                    pAssetAccessor,
+                    tileUrl,
+                    requestHeaders,
+                    ktx2TranscodeTargets);
+              }
+
+              return asyncSystem.createResolvedFuture<TileLoadResult>(
+                  TileLoadResult{
+                      TileUnknownContent{},
+                      TileLoadResultState::Failed,
+                      nullptr});
+            });
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
