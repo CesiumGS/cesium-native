@@ -319,28 +319,27 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
     // subtree is not loaded, so load it now.
     std::string subtreeUrl =
         resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
-    SubtreeAvailability::loadSubtree(
-        3,
-        asyncSystem,
-        pAssetAccessor,
-        pLogger,
-        subtreeUrl,
-        requestHeaders)
-        .thenInWorkerThread(
-            [this, subtreeID](std::optional<SubtreeAvailability>&&
-                                  subtreeAvailability) mutable {
-              if (subtreeAvailability) {
-                this->addSubtreeAvailability(
-                    subtreeID,
-                    std::move(*subtreeAvailability));
-              }
-            });
+    return SubtreeAvailability::loadSubtree(
+               3,
+               asyncSystem,
+               pAssetAccessor,
+               pLogger,
+               subtreeUrl,
+               requestHeaders)
+        .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
+                                                subtreeAvailability) mutable {
+          if (subtreeAvailability) {
+            this->addSubtreeAvailability(
+                subtreeID,
+                std::move(*subtreeAvailability));
+          }
 
-    // tell client to retry later
-    return asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        TileLoadResultState::RetryLater,
-        nullptr});
+          // tell client to retry later
+          return TileLoadResult{
+              TileUnknownContent{},
+              TileLoadResultState::RetryLater,
+              nullptr};
+        });
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
