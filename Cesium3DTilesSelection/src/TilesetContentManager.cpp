@@ -297,18 +297,13 @@ void TilesetContentManager::setTileContent(
 
   content.setContentKind(std::move(result.contentKind));
   content.setRenderResources(pWorkerRenderResources);
+  content.setTileInitializerCallback(std::move(result.tileInitializer));
 }
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
   if (content.isExternalContent()) {
-    auto externalContent = content.getExternalContent();
-    if (externalContent->createSubtree) {
-      externalContent->createSubtree(tile);
-      externalContent->createSubtree = {};
-    }
-
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();
   } else if (content.isRenderContent()) {
@@ -322,6 +317,13 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
               pWorkerRenderResources);
       content.setRenderResources(pMainThreadRenderResources);
     }
+  }
+
+  // call the initializer 
+  auto& tileInitializer = content.getTileInitializerCallback();
+  if (tileInitializer) {
+    tileInitializer(tile);
+    content.setTileInitializerCallback({});
   }
 
   content.setState(TileLoadState::Done);

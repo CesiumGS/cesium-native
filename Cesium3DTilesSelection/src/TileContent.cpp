@@ -6,6 +6,7 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
       _pLoader{pLoader},
+      _tileInitializer{},
       _shouldContentContinueUpdated{true} {}
 
 TileContent::TileContent(
@@ -15,6 +16,7 @@ TileContent::TileContent(
       _contentKind{emptyContent},
       _pRenderResources{nullptr},
       _pLoader{pLoader},
+      _tileInitializer{},
       _shouldContentContinueUpdated{true} {}
 
 TileContent::TileContent(
@@ -24,6 +26,7 @@ TileContent::TileContent(
       _contentKind{externalContent},
       _pRenderResources{nullptr},
       _pLoader{pLoader},
+      _tileInitializer{},
       _shouldContentContinueUpdated{true} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
@@ -70,6 +73,15 @@ void TileContent::setState(TileLoadState state) noexcept { _state = state; }
 
 void TileContent::setRenderResources(void* pRenderResources) noexcept {
   _pRenderResources = pRenderResources;
+}
+
+void TileContent::setTileInitializerCallback(
+    std::function<void(Tile&)> callback) {
+  _tileInitializer = std::move(callback);
+}
+
+std::function<void(Tile&)>& TileContent::getTileInitializerCallback() {
+  return _tileInitializer;
 }
 
 void TileContent::setContentShouldContinueUpdated(

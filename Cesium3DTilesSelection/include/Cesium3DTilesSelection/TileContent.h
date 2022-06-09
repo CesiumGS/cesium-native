@@ -23,9 +23,7 @@ struct TileUnknownContent {};
 
 struct TileEmptyContent {};
 
-struct TileExternalContent {
-  std::function<void(Tile&)> createSubtree;
-};
+struct TileExternalContent {};
 
 struct TileRenderContent {
   std::optional<CesiumGltf::Model> model{};
@@ -76,6 +74,10 @@ private:
 
   void setRenderResources(void* pRenderResources) noexcept;
 
+  void setTileInitializerCallback(std::function<void(Tile&)> callback);
+
+  std::function<void(Tile&)>& getTileInitializerCallback();
+
   void
   setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
 
@@ -83,6 +85,7 @@ private:
   TileContentKind _contentKind;
   void* _pRenderResources;
   TilesetContentLoader* _pLoader;
+  std::function<void(Tile&)> _tileInitializer;
   bool _shouldContentContinueUpdated;
 
   friend class TilesetContentManager;
