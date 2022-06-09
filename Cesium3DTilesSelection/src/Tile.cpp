@@ -479,9 +479,18 @@ void Tile::loadContent() {
                       pRendererResources};
                 });
           })
-      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
+      .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
-        this->_pRendererResources = loadResult.pRendererResources;
+        //this->_pRendererResources = loadResult.pRendererResources;
+        
+        if (!this->getTileset()->getExternals().pPrepareRendererResources) {
+          throw std::runtime_error("Renderer resource preparer is null!");
+        }
+
+        this->_pRendererResources =
+            this->getTileset()->getExternals().pPrepareRendererResources->prepareInMainThread(
+                *this,
+                loadResult.pRendererResources);
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
@@ -578,12 +587,12 @@ void Tile::processLoadedContent() {
       }
     }
 
-    if (externals.pPrepareRendererResources) {
+    /*if (externals.pPrepareRendererResources) {
       this->_pRendererResources =
           externals.pPrepareRendererResources->prepareInMainThread(
               *this,
               this->getRendererResources());
-    }
+    }*/
 
     this->setState(LoadState::Done);
   }
@@ -613,6 +622,11 @@ bool Tile::unloadContent() noexcept {
 
     const TilesetExternals& externals = this->getTileset()->getExternals();
     if (externals.pPrepareRendererResources) {
+      externals.pPrepareRendererResources->free(
+          *this,
+          nullptr,
+          this->_pRendererResources);
+      /*
       if (this->getState() == LoadState::ContentLoaded) {
         externals.pPrepareRendererResources->free(
             *this,
@@ -623,7 +637,7 @@ bool Tile::unloadContent() noexcept {
             *this,
             nullptr,
             this->_pRendererResources);
-      }
+      }*/
     }
 
     this->setState(LoadState::Unloaded);
@@ -1102,9 +1116,18 @@ void Tile::upsampleParent(
                 std::move(pContent),
                 pRendererResources};
           })
-      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
+      .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
-        this->_pRendererResources = loadResult.pRendererResources;
+        //this->_pRendererResources = loadResult.pRendererResources;
+        
+        if (!this->getTileset()->getExternals().pPrepareRendererResources) {
+          throw std::runtime_error("Renderer resource preparer is null!");
+        }
+
+        this->_pRendererResources =
+            this->getTileset()->getExternals().pPrepareRendererResources->prepareInMainThread(
+                *this,
+                loadResult.pRendererResources);
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
