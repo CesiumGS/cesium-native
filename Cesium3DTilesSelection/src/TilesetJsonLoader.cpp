@@ -759,7 +759,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        0,
+        nullptr,
         {}});
   }
 
@@ -842,6 +842,15 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   std::move(externalContentInitializer));
             }
           });
+}
+
+bool TilesetJsonLoader::updateTileContent(Tile& tile) {
+  auto pLoader = tile.getContent().getLoader();
+  if (pLoader != this) {
+    return pLoader->updateTileContent(tile);
+  }
+
+  return false;
 }
 
 const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
