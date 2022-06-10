@@ -22,6 +22,12 @@ namespace Cesium3DTilesSelection {
  * quantized-mesh format.
  */
 class LayerJsonTerrainLoader : public TilesetContentLoader {
+  enum class AvailableState {
+    Available,
+    NotAvailable,
+    Unknown
+  };
+
 public:
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
       const TilesetExternals& externals,
@@ -35,6 +41,7 @@ public:
     std::string version;
     std::vector<std::string> tileTemplateUrls;
     CesiumGeometry::QuadtreeRectangleAvailability availability;
+    CesiumGeometry::QuadtreeRectangleAvailability loadedAvailability;
     int32_t availabilityLevels;
     std::string creditString;
     std::optional<Credit> credit;
@@ -54,11 +61,14 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  bool updateTileContent(Tile& tile) override;
+
 private:
-  bool
+  AvailableState
   tileIsAvailableInAnyLayer(const CesiumGeometry::QuadtreeTileID& tileID) const;
 
-  void createTileChildren(Tile& tile);
+  AvailableState
+  tileIsAvailableInLayer(const CesiumGeometry::QuadtreeTileID& tileID, const Layer &layer) const;
 
   void createChildTile(
       const Tile& parent,
@@ -69,8 +79,6 @@ private:
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;
   std::vector<Layer> _layers;
-
-  struct TileChildrenCreatorInMainThread;
 };
 
 } // namespace Cesium3DTilesSelection
