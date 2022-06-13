@@ -16,35 +16,22 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace {
-void addRectangleAvailabilityToLayer(
-    LayerJsonTerrainLoader::Layer& layer,
-    const QuadtreeTileID& subtreeID,
-    const std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&
-        rectangleAvailabilities) {
-  for (const QuadtreeTileRectangularRange& range : rectangleAvailabilities) {
-    layer.availability.addAvailableTileRange(range);
+struct LayerUpdaterInMainThread {
+  LayerUpdaterInMainThread(LayerJsonTerrainLoader::Layer* pLayer)
+      : pLayer{pLayer} {}
+
+  int operator()() {
+    for (const QuadtreeTileRectangularRange& range : availableTileRectangles) {
+      pLayer->availability.addAvailableTileRange(range);
+    }
+
+    return 0;
   }
 
-  std::uint32_t level = subtreeID.level;
-  std::uint32_t minX = subtreeID.x;
-  std::uint32_t minY = subtreeID.y;
-  std::uint32_t maxX = minX;
-  std::uint32_t maxY = minY;
-  for (std::int32_t i = 0; i < layer.availabilityLevels; ++i) {
-    ++level;
-    minX *= 2;
-    minY *= 2;
-    maxX = maxX * 2 + 1;
-    maxY = maxY * 2 + 1;
-
-    layer.loadedAvailability.addAvailableTileRange(QuadtreeTileRectangularRange{
-        level,
-        minX,
-        minY,
-        maxX,
-        maxY});
-  }
-}
+  LayerJsonTerrainLoader::Layer* pLayer;
+  std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
+      availableTileRectangles{};
+};
 
 /**
  * @brief Creates the query parameter string for the extensions in the given
@@ -142,7 +129,6 @@ Future<LoadLayersResult> loadLayersRecursive(
       layerJson.FindMember("metadataAvailability");
 
   QuadtreeRectangleAvailability availability(tilingScheme, uint32_t(maxZoom));
-  QuadtreeRectangleAvailability loadedAvailability(tilingScheme, uint32_t(maxZoom));
 
   int32_t availabilityLevels = -1;
 
@@ -154,25 +140,8 @@ Future<LoadLayersResult> loadLayersRecursive(
         QuantizedMeshLoader::loadAvailabilityRectangles(layerJson, 0);
     loadLayersResult.errors.merge(metadata.errors);
 
-    std::uint32_t maxLevel = 0;
     for (const auto& rectangle : metadata.availability) {
       availability.addAvailableTileRange(rectangle);
-      maxLevel = std::max(maxLevel, rectangle.level);
-    }
-
-    std::uint32_t level = 0;
-    std::uint32_t minX = 0;
-    std::uint32_t minY = 0;
-    std::uint32_t maxX = 0;
-    std::uint32_t maxY = 0;
-    for (std::uint32_t i = 0; i < maxLevel; ++i) {
-      ++level;
-      minX *= 2;
-      minY *= 2;
-      maxX = maxX * 2 + 1;
-      maxY = maxY * 2 + 1;
-      loadedAvailability.addAvailableTileRange(
-          QuadtreeTileRectangularRange{level, minX, minY, maxX, maxY});
     }
   }
 
@@ -189,7 +158,6 @@ Future<LoadLayersResult> loadLayersRecursive(
       std::move(version),
       std::move(urls),
       std::move(availability),
-      std::move(loadedAvailability),
       availabilityLevels,
       creditString,
       std::nullopt});
@@ -348,7 +316,18 @@ Future<LoadLayersResult> loadLayerJson(
       showCreditsOnScreen,
       std::move(loadLayersResult));
 }
+
 } // namespace
+
+struct LayerJsonTerrainLoader::TileChildrenCreatorInMainThread {
+  TileChildrenCreatorInMainThread(Tile* pTile, LayerJsonTerrainLoader* pLoader)
+      : pTile{pTile}, pLoader{pLoader} {}
+
+  void operator()(std::vector<int>&&) { pLoader->createTileChildren(*pTile); }
+
+  Tile* pTile;
+  LayerJsonTerrainLoader* pLoader;
+};
 
 /*static*/ CesiumAsync::Future<TilesetContentLoaderResult>
 LayerJsonTerrainLoader::createLoader(
@@ -559,11 +538,15 @@ Future<int> loadTileAvailability(
             pRequest->url());
         return QuantizedMeshMetadataResult();
       })
-      .thenInMainThread([&layer, tileID](QuantizedMeshMetadataResult&& metadata) {
-        addRectangleAvailabilityToLayer(layer, tileID, metadata.availability);
+      .thenInMainThread([&layer](QuantizedMeshMetadataResult&& metadata) {
+        for (const QuadtreeTileRectangularRange& range :
+             metadata.availability) {
+          layer.availability.addAvailableTileRange(range);
+        }
         return 0;
       });
 }
+
 } // namespace
 
 Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
@@ -617,8 +600,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
   while (it != this->_layers.end()) {
     if (it->availabilityLevels >= 1 &&
         (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0 &&
-        tileIsAvailableInLayer(*pQuadtreeTileID, *it) ==
-            AvailableState::Unknown) {
+        it->availability.isTileAvailable(*pQuadtreeTileID)) {
       availabilityRequests.emplace_back(loadTileAvailability(
           pLogger,
           asyncSystem,
@@ -645,31 +627,44 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
 
   // If this tile has availability data, we need to add it to the layer in the
   // main thread.
-  if (!availabilityRequests.empty()) {
-    auto currentLayerIdx = firstAvailableIt - _layers.begin();
-    return asyncSystem.all(std::move(availabilityRequests))
-        .thenImmediately([futureQuantizedMesh = std::move(futureQuantizedMesh)](
-                             std::vector<int>&&) mutable {
-          return std::move(futureQuantizedMesh);
-        })
-        .thenInMainThread([this, currentLayerIdx, tileID = *pQuadtreeTileID](
-                              QuantizedMeshLoadResult&& loadResult) {
-          addRectangleAvailabilityToLayer(
-              this->_layers[currentLayerIdx],
-              tileID,
-              loadResult.availableTileRectangles);
+  if (currentLayer.availabilityLevels > 0 &&
+      int32_t(pQuadtreeTileID->level) % currentLayer.availabilityLevels == 0) {
+    LayerUpdaterInMainThread layerUpdater{&currentLayer};
+    TileChildrenCreatorInMainThread childrenCreator{&tile, this};
+    return std::move(futureQuantizedMesh)
+        .thenImmediately(
+            [asyncSystem,
+             availabilityRequests = std::move(availabilityRequests),
+             layerUpdater = std::move(layerUpdater),
+             childrenCreator](QuantizedMeshLoadResult&& loadResult) mutable {
+              layerUpdater.availableTileRectangles =
+                  std::move(loadResult.availableTileRectangles);
+              availabilityRequests.push_back(
+                  asyncSystem.runInMainThread(layerUpdater));
+              asyncSystem.all(std::move(availabilityRequests))
+                  .thenInMainThread(childrenCreator);
 
-          return TileLoadResult{
-              TileRenderContent{std::move(loadResult.model)},
-              loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                            : TileLoadResultState::Success,
-              nullptr,
-              [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-                if (boundingVolume) {
-                  tile.setBoundingVolume(*boundingVolume);
-                }
-              }};
+              return TileLoadResult{
+                  TileRenderContent{std::move(loadResult.model)},
+                  loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                                : TileLoadResultState::Success,
+                  nullptr,
+                  [boundingVolume =
+                       loadResult.updatedBoundingVolume](Tile& tile) {
+                    if (boundingVolume) {
+                      tile.setBoundingVolume(*boundingVolume);
+                    }
+                  }};
+            });
+  }
+
+  if (!availabilityRequests.empty()) {
+    asyncSystem.all(std::move(availabilityRequests))
+        .thenInMainThread([this, &tile](std::vector<int>&&) {
+          this->createTileChildren(tile);
         });
+  } else {
+    this->createTileChildren(tile);
   }
 
   return std::move(futureQuantizedMesh)
@@ -687,90 +682,50 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
       });
 }
 
-bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
-  if (tile.getChildren().empty()) {
-    const QuadtreeTileID* pQuadtreeTileID =
-        std::get_if<QuadtreeTileID>(&tile.getTileID());
-
-    // Now that all our availability is sorted out, create this tile's
-    // children.
-    const QuadtreeTileID swID(
-        pQuadtreeTileID->level + 1,
-        pQuadtreeTileID->x * 2,
-        pQuadtreeTileID->y * 2);
-    const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-
-    // If _any_ child is available, we create _all_ children
-    bool isAnyChildUnknown = false;
-
-    auto swState = this->tileIsAvailableInAnyLayer(swID);
-    bool sw = swState == AvailableState::Available;
-    isAnyChildUnknown |= swState == AvailableState::Unknown;
-
-    auto seState = this->tileIsAvailableInAnyLayer(seID);
-    bool se = seState == AvailableState::Available;
-    isAnyChildUnknown |= seState == AvailableState::Unknown;
-
-    auto nwState = this->tileIsAvailableInAnyLayer(nwID);
-    bool nw = nwState == AvailableState::Available;
-    isAnyChildUnknown |= nwState == AvailableState::Unknown;
-
-    auto neState = this->tileIsAvailableInAnyLayer(neID);
-    bool ne = neState == AvailableState::Available;
-    isAnyChildUnknown |= neState == AvailableState::Unknown;
-
-    if (!isAnyChildUnknown) {
-      if (sw || se || nw || ne) {
-        std::vector<Tile> children;
-        children.reserve(4);
-
-        createChildTile(tile, children, swID, sw);
-        createChildTile(tile, children, seID, se);
-        createChildTile(tile, children, nwID, nw);
-        createChildTile(tile, children, neID, ne);
-
-        tile.createChildTiles(std::move(children));
-      }
-
-      return false;
-    }
-  }
-
-  return true;
-}
-
-LayerJsonTerrainLoader::AvailableState LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
+bool LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
     const QuadtreeTileID& tileID) const {
-  bool anyAvailable = false;
   for (const Layer& layer : this->_layers) {
-    auto availableState = tileIsAvailableInLayer(tileID, layer);
-    if (availableState == AvailableState::Unknown) {
-      return AvailableState::Unknown;
+    if (layer.availability.isTileAvailable(tileID)) {
+      return true;
     }
-
-    anyAvailable |= (availableState == AvailableState::Available);
   }
-
-  if (anyAvailable) {
-    return AvailableState::Available;
-  }
-
-  return AvailableState::NotAvailable;
+  return false;
 }
 
-LayerJsonTerrainLoader::AvailableState
-LayerJsonTerrainLoader::tileIsAvailableInLayer(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const Layer& layer) const {
-  if (layer.availability.isTileAvailable(tileID)) {
-    return AvailableState::Available;
-  } else if (layer.loadedAvailability.isTileAvailable(tileID)) {
-    return AvailableState::NotAvailable;
+void LayerJsonTerrainLoader::createTileChildren(Tile& tile) {
+  if (!tile.getChildren().empty()) {
+    return;
   }
 
-  return AvailableState::Unknown;
+  const QuadtreeTileID* pQuadtreeTileID =
+      std::get_if<QuadtreeTileID>(&tile.getTileID());
+
+  // Now that all our availability is sorted out, create this tile's
+  // children.
+  const QuadtreeTileID swID(
+      pQuadtreeTileID->level + 1,
+      pQuadtreeTileID->x * 2,
+      pQuadtreeTileID->y * 2);
+  const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+  const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+  const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+
+  // If _any_ child is available, we create _all_ children
+  bool sw = this->tileIsAvailableInAnyLayer(swID);
+  bool se = this->tileIsAvailableInAnyLayer(seID);
+  bool nw = this->tileIsAvailableInAnyLayer(nwID);
+  bool ne = this->tileIsAvailableInAnyLayer(neID);
+  if (sw || se || nw || ne) {
+    std::vector<Tile> children;
+    children.reserve(4);
+
+    createChildTile(tile, children, swID, sw);
+    createChildTile(tile, children, seID, se);
+    createChildTile(tile, children, nwID, nw);
+    createChildTile(tile, children, neID, ne);
+
+    tile.createChildTiles(std::move(children));
+  }
 }
 
 void LayerJsonTerrainLoader::createChildTile(
