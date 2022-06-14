@@ -14,6 +14,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_set>
+#include <optional>
 
 namespace Cesium3DTilesSelection {
 
@@ -33,15 +35,24 @@ public:
       bool showCreditsOnScreen);
 
   struct Layer {
+    Layer(
+        const std::string& baseUrl,
+        std::string&& version,
+        std::vector<std::string>&& tileTemplateUrls,
+        CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability,
+        uint32_t maxZooms,
+        int32_t availabilityLevels,
+        std::string&& creditString,
+        std::optional<Credit> credit);
+
     std::string baseUrl;
     std::string version;
     std::vector<std::string> tileTemplateUrls;
-    CesiumGeometry::QuadtreeRectangleAvailability availability;
-    CesiumGeometry::QuadtreeRectangleAvailability loadedAvailability;
+    CesiumGeometry::QuadtreeRectangleAvailability contentAvailability;
+    std::vector<std::unordered_set<uint64_t>> loadedSubtrees;
     int32_t availabilityLevels;
     std::string creditString;
     std::optional<Credit> credit;
-    bool initLoadedAvailability;
   };
 
   LayerJsonTerrainLoader(
