@@ -12,10 +12,10 @@
 #include <CesiumGeospatial/Projection.h>
 
 #include <memory>
-#include <string>
-#include <vector>
-#include <unordered_set>
 #include <optional>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 

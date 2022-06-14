@@ -466,15 +466,15 @@ LayerJsonTerrainLoader::createLoader(
       });
 }
 
- LayerJsonTerrainLoader::Layer::Layer(
-      const std::string& baseUrl_,
-      std::string&& version_,
-      std::vector<std::string>&& tileTemplateUrls_,
-      CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability_,
-      uint32_t maxZooms_,
-      int32_t availabilityLevels_,
-      std::string&& creditString_,
-      std::optional<Credit> credit_)
+LayerJsonTerrainLoader::Layer::Layer(
+    const std::string& baseUrl_,
+    std::string&& version_,
+    std::vector<std::string>&& tileTemplateUrls_,
+    CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability_,
+    uint32_t maxZooms_,
+    int32_t availabilityLevels_,
+    std::string&& creditString_,
+    std::optional<Credit> credit_)
     : baseUrl{baseUrl_},
       version{std::move(version_)},
       tileTemplateUrls{std::move(tileTemplateUrls_)},
@@ -482,8 +482,7 @@ LayerJsonTerrainLoader::createLoader(
       loadedSubtrees(maxSubtreeInLayer(maxZooms_, availabilityLevels_)),
       availabilityLevels{availabilityLevels_},
       creditString{std::move(creditString_)},
-      credit{credit_}
- {}
+      credit{credit_} {}
 
 LayerJsonTerrainLoader::LayerJsonTerrainLoader(
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
