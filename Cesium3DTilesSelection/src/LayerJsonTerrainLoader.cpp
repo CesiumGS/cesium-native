@@ -701,9 +701,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
                       });
 
     return std::move(finalFuture)
-        .thenInMainThread([this,
-                           &currentLayer,
-                           &tile,
+        .thenInMainThread([&currentLayer,
                            tileID = *pQuadtreeTileID,
                            shouldCurrLayerLoadAvailability](
                               QuantizedMeshLoadResult&& loadResult) {
