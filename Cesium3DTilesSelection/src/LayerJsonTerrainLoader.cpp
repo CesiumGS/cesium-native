@@ -25,24 +25,21 @@ void addRectangleAvailabilityToLayer(
     layer.availability.addAvailableTileRange(range);
   }
 
+  layer.initLoadedAvailability = true;
   std::uint32_t level = subtreeID.level;
   std::uint32_t minX = subtreeID.x;
   std::uint32_t minY = subtreeID.y;
   std::uint32_t maxX = minX;
   std::uint32_t maxY = minY;
   for (std::int32_t i = 0; i < layer.availabilityLevels; ++i) {
+    layer.loadedAvailability.addAvailableTileRange(
+        QuadtreeTileRectangularRange{level, minX, minY, maxX, maxY});
+
     ++level;
     minX *= 2;
     minY *= 2;
     maxX = maxX * 2 + 1;
     maxY = maxY * 2 + 1;
-
-    layer.loadedAvailability.addAvailableTileRange(QuadtreeTileRectangularRange{
-        level,
-        minX,
-        minY,
-        maxX,
-        maxY});
   }
 }
 
@@ -142,7 +139,9 @@ Future<LoadLayersResult> loadLayersRecursive(
       layerJson.FindMember("metadataAvailability");
 
   QuadtreeRectangleAvailability availability(tilingScheme, uint32_t(maxZoom));
-  QuadtreeRectangleAvailability loadedAvailability(tilingScheme, uint32_t(maxZoom));
+  QuadtreeRectangleAvailability loadedAvailability(
+      tilingScheme,
+      uint32_t(maxZoom));
 
   int32_t availabilityLevels = -1;
 
@@ -192,7 +191,8 @@ Future<LoadLayersResult> loadLayersRecursive(
       std::move(loadedAvailability),
       availabilityLevels,
       creditString,
-      std::nullopt});
+      std::nullopt,
+      false});
 
   std::string parentUrl =
       JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
@@ -559,7 +559,8 @@ Future<int> loadTileAvailability(
             pRequest->url());
         return QuantizedMeshMetadataResult();
       })
-      .thenInMainThread([&layer, tileID](QuantizedMeshMetadataResult&& metadata) {
+      .thenInMainThread([&layer,
+                         tileID](QuantizedMeshMetadataResult&& metadata) {
         addRectangleAvailabilityToLayer(layer, tileID, metadata.availability);
         return 0;
       });
@@ -583,7 +584,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        0,
+        nullptr,
         {}});
   }
 
@@ -600,7 +601,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        0,
+        nullptr,
         {}});
   }
 
@@ -616,16 +617,17 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
 
   while (it != this->_layers.end()) {
     if (it->availabilityLevels >= 1 &&
-        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0 &&
-        tileIsAvailableInLayer(*pQuadtreeTileID, *it) ==
-            AvailableState::Unknown) {
-      availabilityRequests.emplace_back(loadTileAvailability(
-          pLogger,
-          asyncSystem,
-          pAssetAccessor,
-          *pQuadtreeTileID,
-          *it,
-          requestHeaders));
+        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0) {
+      if (!it->initLoadedAvailability ||
+          !it->loadedAvailability.isTileAvailable(*pQuadtreeTileID)) {
+        availabilityRequests.emplace_back(loadTileAvailability(
+            pLogger,
+            asyncSystem,
+            pAssetAccessor,
+            *pQuadtreeTileID,
+            *it,
+            requestHeaders));
+      }
     }
 
     ++it;
@@ -643,21 +645,43 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
       requestHeaders,
       contentOptions.enableWaterMask);
 
+  // determine if this tile is at the availability level of the current layer
+  // and if we need to add the availability rectangles to the current layer. We
+  // only add the rectangles if those are not not loaded
+  bool shouldCurrLayerLoadAvailability = false;
+  if (firstAvailableIt->availabilityLevels > 0 &&
+      int32_t(pQuadtreeTileID->level) % currentLayer.availabilityLevels == 0) {
+    shouldCurrLayerLoadAvailability =
+        !currentLayer.initLoadedAvailability ||
+        !currentLayer.loadedAvailability.isTileAvailable(*pQuadtreeTileID);
+  }
+
   // If this tile has availability data, we need to add it to the layer in the
   // main thread.
-  if (!availabilityRequests.empty()) {
-    auto currentLayerIdx = firstAvailableIt - _layers.begin();
-    return asyncSystem.all(std::move(availabilityRequests))
-        .thenImmediately([futureQuantizedMesh = std::move(futureQuantizedMesh)](
-                             std::vector<int>&&) mutable {
-          return std::move(futureQuantizedMesh);
-        })
-        .thenInMainThread([this, currentLayerIdx, tileID = *pQuadtreeTileID](
+  if (!availabilityRequests.empty() || shouldCurrLayerLoadAvailability) {
+    auto finalFuture =
+        availabilityRequests.empty()
+            ? std::move(futureQuantizedMesh)
+            : asyncSystem.all(std::move(availabilityRequests))
+                  .thenImmediately(
+                      [futureQuantizedMesh = std::move(futureQuantizedMesh)](
+                          std::vector<int>&&) mutable {
+                        return std::move(futureQuantizedMesh);
+                      });
+
+    return std::move(finalFuture)
+        .thenInMainThread([this,
+                           &currentLayer,
+                           &tile,
+                           tileID = *pQuadtreeTileID,
+                           shouldCurrLayerLoadAvailability](
                               QuantizedMeshLoadResult&& loadResult) {
-          addRectangleAvailabilityToLayer(
-              this->_layers[currentLayerIdx],
-              tileID,
-              loadResult.availableTileRectangles);
+          if (shouldCurrLayerLoadAvailability) {
+            addRectangleAvailabilityToLayer(
+                currentLayer,
+                tileID,
+                loadResult.availableTileRectangles);
+          }
 
           return TileLoadResult{
               TileRenderContent{std::move(loadResult.model)},
@@ -688,6 +712,36 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
 }
 
 bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
+  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+  if (pQuadtreeID) {
+    if (tile.getChildren().empty()) {
+      bool isTileAtAvailabilityLevel = false;
+      for (const auto& layer : _layers) {
+        if (layer.availabilityLevels > 0 &&
+            int32_t(pQuadtreeID->level % layer.availabilityLevels) == 0) {
+          isTileAtAvailabilityLevel = true;
+          break;
+        }
+      }
+
+      if (isTileAtAvailabilityLevel &&
+          tile.getState() <= TileLoadState::ContentLoading) {
+        return true;
+      }
+
+      createTileChildren(tile);
+      return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+void LayerJsonTerrainLoader::createTileChildren(Tile& tile) {
+
   if (tile.getChildren().empty()) {
     const QuadtreeTileID* pQuadtreeTileID =
         std::get_if<QuadtreeTileID>(&tile.getTileID());
@@ -703,67 +757,45 @@ bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
     const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
     // If _any_ child is available, we create _all_ children
-    bool isAnyChildUnknown = false;
+    bool sw = this->tileIsAvailableInAnyLayer(swID);
+    bool se = this->tileIsAvailableInAnyLayer(seID);
+    bool nw = this->tileIsAvailableInAnyLayer(nwID);
+    bool ne = this->tileIsAvailableInAnyLayer(neID);
 
-    auto swState = this->tileIsAvailableInAnyLayer(swID);
-    bool sw = swState == AvailableState::Available;
-    isAnyChildUnknown |= swState == AvailableState::Unknown;
+    if (sw || se || nw || ne) {
+      std::vector<Tile> children;
+      children.reserve(4);
 
-    auto seState = this->tileIsAvailableInAnyLayer(seID);
-    bool se = seState == AvailableState::Available;
-    isAnyChildUnknown |= seState == AvailableState::Unknown;
+      createChildTile(tile, children, swID, sw);
+      createChildTile(tile, children, seID, se);
+      createChildTile(tile, children, nwID, nw);
+      createChildTile(tile, children, neID, ne);
 
-    auto nwState = this->tileIsAvailableInAnyLayer(nwID);
-    bool nw = nwState == AvailableState::Available;
-    isAnyChildUnknown |= nwState == AvailableState::Unknown;
-
-    auto neState = this->tileIsAvailableInAnyLayer(neID);
-    bool ne = neState == AvailableState::Available;
-    isAnyChildUnknown |= neState == AvailableState::Unknown;
-
-    if (!isAnyChildUnknown) {
-      if (sw || se || nw || ne) {
-        std::vector<Tile> children;
-        children.reserve(4);
-
-        createChildTile(tile, children, swID, sw);
-        createChildTile(tile, children, seID, se);
-        createChildTile(tile, children, nwID, nw);
-        createChildTile(tile, children, neID, ne);
-
-        tile.createChildTiles(std::move(children));
-      }
-
-      return false;
+      tile.createChildTiles(std::move(children));
     }
   }
-
-  return true;
 }
 
-LayerJsonTerrainLoader::AvailableState LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
+bool LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
     const QuadtreeTileID& tileID) const {
-  bool anyAvailable = false;
   for (const Layer& layer : this->_layers) {
     auto availableState = tileIsAvailableInLayer(tileID, layer);
-    if (availableState == AvailableState::Unknown) {
-      return AvailableState::Unknown;
+    if (availableState == AvailableState::Available) {
+      return true;
     }
-
-    anyAvailable |= (availableState == AvailableState::Available);
   }
 
-  if (anyAvailable) {
-    return AvailableState::Available;
-  }
-
-  return AvailableState::NotAvailable;
+  return false;
 }
 
 LayerJsonTerrainLoader::AvailableState
 LayerJsonTerrainLoader::tileIsAvailableInLayer(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const Layer& layer) const {
+  if (!layer.initLoadedAvailability) {
+    return AvailableState::Unknown;
+  }
+
   if (layer.availability.isTileAvailable(tileID)) {
     return AvailableState::Available;
   } else if (layer.loadedAvailability.isTileAvailable(tileID)) {

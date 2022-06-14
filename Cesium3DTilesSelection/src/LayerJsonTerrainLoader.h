@@ -22,11 +22,7 @@ namespace Cesium3DTilesSelection {
  * quantized-mesh format.
  */
 class LayerJsonTerrainLoader : public TilesetContentLoader {
-  enum class AvailableState {
-    Available,
-    NotAvailable,
-    Unknown
-  };
+  enum class AvailableState { Available, NotAvailable, Unknown };
 
 public:
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
@@ -45,6 +41,7 @@ public:
     int32_t availabilityLevels;
     std::string creditString;
     std::optional<Credit> credit;
+    bool initLoadedAvailability;
   };
 
   LayerJsonTerrainLoader(
@@ -64,11 +61,14 @@ public:
   bool updateTileContent(Tile& tile) override;
 
 private:
-  AvailableState
+  void createTileChildren(Tile& tile);
+
+  bool
   tileIsAvailableInAnyLayer(const CesiumGeometry::QuadtreeTileID& tileID) const;
 
-  AvailableState
-  tileIsAvailableInLayer(const CesiumGeometry::QuadtreeTileID& tileID, const Layer &layer) const;
+  AvailableState tileIsAvailableInLayer(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const Layer& layer) const;
 
   void createChildTile(
       const Tile& parent,
