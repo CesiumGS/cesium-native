@@ -31,7 +31,7 @@ void subtreeHash(
     const LayerJsonTerrainLoader::Layer& layer,
     uint32_t& subtreeLevelIdx,
     uint64_t& subtreeMortonIdx) {
-  subtreeLevelIdx = subtreeID.level / layer.availabilityLevels;
+  subtreeLevelIdx = subtreeID.level / uint32_t(layer.availabilityLevels);
   subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y);
 }
 
