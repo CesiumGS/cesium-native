@@ -747,10 +747,15 @@ bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (pQuadtreeID) {
     if (tile.getChildren().empty()) {
+      // For the tile that is in the middle of subtree, it is safe to create the
+      // children. However for tile that is at the availability level, we have
+      // to wait for the tile to be finished loading, since there are multiple
+      // subtrees in the background layers being on the flight as well. Once the
+      // tile finishes loading, all the subtrees are resolved
       bool isTileAtAvailabilityLevel = false;
       for (const auto& layer : _layers) {
         if (layer.availabilityLevels > 0 &&
-            int32_t(pQuadtreeID->level % layer.availabilityLevels) == 0) {
+            int32_t(pQuadtreeID->level) % layer.availabilityLevels == 0) {
           isTileAtAvailabilityLevel = true;
           break;
         }
@@ -842,9 +847,11 @@ LayerJsonTerrainLoader::tileIsAvailableInLayer(
     }
 
     // calc the subtree ID this tile belongs to and determine it's loaded
-    uint32_t subtreeLevelIdx = tileID.level / layer.availabilityLevels;
-    uint64_t levelLeft = tileID.level % layer.availabilityLevels;
-    uint32_t subtreeLevel = subtreeLevelIdx * layer.availabilityLevels;
+    uint32_t subtreeLevelIdx =
+        tileID.level / uint32_t(layer.availabilityLevels);
+    uint64_t levelLeft = tileID.level % uint32_t(layer.availabilityLevels);
+    uint32_t subtreeLevel =
+        subtreeLevelIdx * uint32_t(layer.availabilityLevels);
     uint32_t subtreeX = tileID.x >> levelLeft;
     uint32_t subtreeY = tileID.y >> levelLeft;
     CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
