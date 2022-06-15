@@ -37,5 +37,7 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>&
           requestHeaders) = 0;
+
+  virtual bool updateTileContent(Tile& tile) = 0;
 };
 } // namespace Cesium3DTilesSelection

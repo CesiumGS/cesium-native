@@ -175,14 +175,6 @@ void populateSubtree(
             child.setGeometricError(tile.getGeometricError() * 0.5);
             child.setRefine(tile.getRefine());
             child.setTileID(childID);
-
-            populateSubtree(
-                subtreeAvailability,
-                subtreeLevels,
-                relativeChildLevel,
-                relativeChildMortonID,
-                child,
-                loader);
           }
         }
       }
@@ -191,45 +183,6 @@ void populateSubtree(
 
   tile.createChildTiles(std::move(children));
 }
-
-struct SubtreeContentInitializer {
-public:
-  SubtreeContentInitializer(
-      ImplicitOctreeLoader* pImplicitLoader,
-      const CesiumGeometry::OctreeTileID& subtreeID)
-      : subtreeAvailability{std::nullopt},
-        subtreeID{subtreeID},
-        pLoader{pImplicitLoader} {}
-
-  void operator()(Tile& tile) {
-    uint32_t subtreeLevels = pLoader->getSubtreeLevels();
-    const CesiumGeometry::OctreeTileID* pOctreeID =
-        std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
-
-    if (pOctreeID) {
-      // ensure that this tile is a root of a subtree
-      if (pOctreeID->level % subtreeLevels == 0) {
-        if (tile.getChildren().empty()) {
-          populateSubtree(
-              *subtreeAvailability,
-              subtreeLevels,
-              0,
-              0,
-              tile,
-              *pLoader);
-        }
-      }
-
-      pLoader->addSubtreeAvailability(
-          subtreeID,
-          std::move(*subtreeAvailability));
-    }
-  }
-
-  std::optional<SubtreeAvailability> subtreeAvailability;
-  CesiumGeometry::OctreeTileID subtreeID;
-  ImplicitOctreeLoader* pLoader;
-};
 
 bool isTileContentAvailable(
     const CesiumGeometry::OctreeTileID& subtreeID,
@@ -252,12 +205,9 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
-    std::optional<SubtreeContentInitializer>&& subtreeInitializer) {
+    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([pLogger,
-                           ktx2TranscodeTargets,
-                           subtreeInitializer = std::move(subtreeInitializer)](
+      .thenInWorkerThread([pLogger, ktx2TranscodeTargets](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -316,16 +266,11 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                 std::nullopt};
           }
 
-          std::function<void(Tile&)> tileInitializer;
-          if (subtreeInitializer) {
-            tileInitializer = std::move(*subtreeInitializer);
-          }
           return TileLoadResult{
               TileRenderContent{std::move(result.model)},
               TileLoadResultState::Success,
               std::move(pCompletedRequest),
-              std::move(tileInitializer),
-              std::nullopt};
+              {}};
         }
 
         // content type is not supported
@@ -387,11 +332,6 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
     // subtree is not loaded, so load it now.
     std::string subtreeUrl =
         resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
-    std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pOctreeID);
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets =
-        contentOptions.ktx2TranscodeTargets;
-
-    SubtreeContentInitializer subtreeInitializer{this, subtreeID};
     return SubtreeAvailability::loadSubtree(
                3,
                asyncSystem,
@@ -399,57 +339,21 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
                pLogger,
                subtreeUrl,
                requestHeaders)
-        .thenInWorkerThread(
-            [pLogger,
-             asyncSystem,
-             pAssetAccessor,
-             tileUrl = std::move(tileUrl),
-             subtreeID,
-             octreeID = *pOctreeID,
-             requestHeaders,
-             ktx2TranscodeTargets,
-             subtreeInitializer = std::move(subtreeInitializer)](
-                std::optional<SubtreeAvailability>&&
-                    subtreeAvailability) mutable {
-              if (subtreeAvailability) {
-                bool tileHasContent = isTileContentAvailable(
-                    subtreeID,
-                    octreeID,
-                    *subtreeAvailability);
+        .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
+                                                subtreeAvailability) mutable {
+          if (subtreeAvailability) {
+            this->addSubtreeAvailability(
+                subtreeID,
+                std::move(*subtreeAvailability));
+          }
 
-                subtreeInitializer.subtreeAvailability =
-                    std::move(*subtreeAvailability);
-
-                // subtree is available, so check if tile has content or not. If
-                // it has, then request it
-                if (!tileHasContent) {
-                  // check if tile has empty content
-                  return asyncSystem.createResolvedFuture(TileLoadResult{
-                      TileEmptyContent{},
-                      TileLoadResultState::Success,
-                      nullptr,
-                      std::move(subtreeInitializer),
-                      std::nullopt});
-                }
-
-                return requestTileContent(
-                    pLogger,
-                    asyncSystem,
-                    pAssetAccessor,
-                    tileUrl,
-                    requestHeaders,
-                    ktx2TranscodeTargets,
-                    std::move(subtreeInitializer));
-              }
-
-              return asyncSystem.createResolvedFuture<TileLoadResult>(
-                  TileLoadResult{
-                      TileUnknownContent{},
-                      TileLoadResultState::Failed,
-                      nullptr,
-                      {},
-                      std::nullopt});
-            });
+          // tell client to retry later
+          return TileLoadResult{
+              TileUnknownContent{},
+              TileLoadResultState::RetryLater,
+              nullptr,
+              {}};
+        });
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
@@ -471,8 +375,47 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
       pAssetAccessor,
       tileUrl,
       requestHeaders,
-      contentOptions.ktx2TranscodeTargets,
-      std::nullopt);
+      contentOptions.ktx2TranscodeTargets);
+}
+
+bool ImplicitOctreeLoader::updateTileContent(Tile& tile) {
+  if (tile.getChildren().empty()) {
+    const CesiumGeometry::OctreeTileID* pOctreeID =
+        std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
+    assert(pOctreeID != nullptr && "This loader only serves quadtree tile");
+
+    // find the subtree ID
+    uint32_t subtreeLevelIdx = pOctreeID->level / _subtreeLevels;
+    if (subtreeLevelIdx >= _loadedSubtrees.size()) {
+      return false;
+    }
+
+    uint64_t levelLeft = pOctreeID->level % _subtreeLevels;
+    uint32_t subtreeX = pOctreeID->x >> levelLeft;
+    uint32_t subtreeY = pOctreeID->y >> levelLeft;
+    uint32_t subtreeZ = pOctreeID->z >> levelLeft;
+
+    uint64_t subtreeMortonIdx =
+        libmorton::morton3D_64_encode(subtreeX, subtreeY, subtreeZ);
+    auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+    if (subtreeIt != _loadedSubtrees[subtreeLevelIdx].end()) {
+      uint64_t relativeTileMortonIdx = libmorton::morton3D_64_encode(
+          pOctreeID->x - (subtreeX << levelLeft),
+          pOctreeID->y - (subtreeY << levelLeft),
+          pOctreeID->z - (subtreeZ << levelLeft));
+      populateSubtree(
+          subtreeIt->second,
+          _subtreeLevels,
+          static_cast<std::uint32_t>(levelLeft),
+          relativeTileMortonIdx,
+          tile,
+          *this);
+
+      return false;
+    }
+  }
+
+  return true;
 }
 
 uint32_t ImplicitOctreeLoader::getSubtreeLevels() const noexcept {

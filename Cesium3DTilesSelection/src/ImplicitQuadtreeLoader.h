@@ -47,6 +47,8 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  bool updateTileContent(Tile& tile) override;
+
   uint32_t getSubtreeLevels() const noexcept;
 
   uint32_t getAvailableLevels() const noexcept;

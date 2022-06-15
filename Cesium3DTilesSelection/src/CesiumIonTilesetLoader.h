@@ -32,8 +32,11 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  bool updateTileContent(Tile& tile) override;
+
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
       const TilesetExternals& externals,
+      const TilesetContentOptions& contentOptions,
       uint32_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl,
