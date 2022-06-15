@@ -617,8 +617,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
         TileUnknownContent{},
         TileLoadResultState::Failed,
         nullptr,
-        {},
-        std::nullopt});
+        {}});
   }
 
   // Always request the tile from the first layer in which this tile ID is
@@ -636,8 +635,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
         TileUnknownContent{},
         TileLoadResultState::Failed,
         nullptr,
-        {},
-        std::nullopt});
+        {}});
   }
 
   // Also load the same tile in any underlying layers for which this tile
@@ -723,8 +721,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
                 if (boundingVolume) {
                   tile.setBoundingVolume(*boundingVolume);
                 }
-              },
-              std::nullopt};
+              }};
         });
   }
 
@@ -739,8 +736,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
               if (boundingVolume) {
                 tile.setBoundingVolume(*boundingVolume);
               }
-            },
-            std::nullopt};
+            }};
       });
 }
 

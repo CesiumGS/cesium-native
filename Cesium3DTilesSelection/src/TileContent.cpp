@@ -5,7 +5,6 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
     : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
-      _projection{std::nullopt},
       _rasterOverlayDetails{std::nullopt},
       _tileInitializer{},
       _pLoader{pLoader},
@@ -17,7 +16,6 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{emptyContent},
       _pRenderResources{nullptr},
-      _projection{std::nullopt},
       _rasterOverlayDetails{std::nullopt},
       _tileInitializer{},
       _pLoader{pLoader},
@@ -29,7 +27,6 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{externalContent},
       _pRenderResources{nullptr},
-      _projection{std::nullopt},
       _rasterOverlayDetails{std::nullopt},
       _tileInitializer{},
       _pLoader{pLoader},
@@ -65,11 +62,6 @@ const TileRenderContent* TileContent::getRenderContent() const noexcept {
   return std::get_if<TileRenderContent>(&_contentKind);
 }
 
-const CesiumGeospatial::Projection*
-TileContent::getProjection() const noexcept {
-  return _projection ? &*_projection : nullptr;
-}
-
 const RasterOverlayDetails*
 TileContent::getRasterOverlayDetails() const noexcept {
   if (_rasterOverlayDetails) {
@@ -95,11 +87,6 @@ void TileContent::setContentKind(TileContentKind&& contentKind) {
 
 void TileContent::setContentKind(const TileContentKind& contentKind) {
   _contentKind = contentKind;
-}
-
-void TileContent::setProjection(
-    const CesiumGeospatial::Projection& projection) {
-  _projection = projection;
 }
 
 void TileContent::setRasterOverlayDetails(

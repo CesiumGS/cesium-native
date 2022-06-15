@@ -459,7 +459,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-  _pTilesetContentManager->updateTileContent(tile);
+  _pTilesetContentManager->updateTileContent(tile, _options);
   this->_markTileVisited(tile);
 
   // whether we should visit this tile
@@ -630,7 +630,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      _pTilesetContentManager->updateTileContent(child);
+      _pTilesetContentManager->updateTileContent(child, _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1170,9 +1170,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    _pTilesetContentManager->loadTileContent(
-        *record.pTile,
-        _options.contentOptions);
+    _pTilesetContentManager->loadTileContent(*record.pTile, _options);
     if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
         maximumLoadsInProgress) {
       break;

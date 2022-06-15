@@ -156,7 +156,7 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 
 void TilesetContentManager::loadTileContent(
     Tile& tile,
-    const TilesetContentOptions& contentOptions) {
+    const TilesetOptions& tilesetOptions) {
   TileContent& content = tile.getContent();
   if (content.getState() != TileLoadState::Unloaded &&
       content.getState() != TileLoadState::FailedTemporarily) {
@@ -171,7 +171,7 @@ void TilesetContentManager::loadTileContent(
   _pLoader
       ->loadTileContent(
           tile,
-          contentOptions,
+          tilesetOptions.contentOptions,
           _externals.asyncSystem,
           _externals.pAssetAccessor,
           _externals.pLogger,
@@ -181,7 +181,7 @@ void TilesetContentManager::loadTileContent(
            asyncSystem = _externals.asyncSystem,
            pAssetAccessor = _externals.pAssetAccessor,
            pLogger = _externals.pLogger,
-           contentOptions,
+           contentOptions = tilesetOptions.contentOptions,
            tileTransform](TileLoadResult&& result) mutable {
             // the reason we run immediate continuation, instead of in the
             // worker thread, is that the loader may run the task in the main
@@ -237,7 +237,7 @@ void TilesetContentManager::loadTileContent(
           });
 }
 
-void TilesetContentManager::updateTileContent(Tile& tile) {
+void TilesetContentManager::updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions) {
   TileContent& content = tile.getContent();
 
   TileLoadState state = content.getState();
@@ -246,7 +246,7 @@ void TilesetContentManager::updateTileContent(Tile& tile) {
     updateContentLoadedState(tile);
     break;
   case TileLoadState::Done:
-    updateDoneState(tile);
+    updateDoneState(tile, tilesetOptions);
     break;
   default:
     break;
@@ -330,9 +330,6 @@ void TilesetContentManager::setTileContent(
   content.setContentKind(std::move(result.contentKind));
   content.setRenderResources(pWorkerRenderResources);
   content.setTileInitializerCallback(std::move(result.tileInitializer));
-  if (result.tileProjection) {
-    content.setProjection(*result.tileProjection);
-  }
 }
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
@@ -364,74 +361,81 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   content.setState(TileLoadState::Done);
 }
 
-void TilesetContentManager::updateDoneState(Tile& tile) {
+void TilesetContentManager::updateDoneState(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) {
   if (tile.getContent().shouldContentContinueUpdated()) {
     return;
   }
 
   // update raster overlay
   const TileContent& content = tile.getContent();
+  const TileRenderContent* pRenderContent = content.getRenderContent();
+  if (pRenderContent && pRenderContent->model) {
+    bool moreRasterDetailAvailable = false;
+    bool skippedUnknown = false;
+    std::vector<RasterMappedTo3DTile>& rasterTiles =
+        tile.getMappedRasterTiles();
+    for (size_t i = 0; i < rasterTiles.size(); ++i) {
+      RasterMappedTo3DTile& mappedRasterTile = rasterTiles[i];
 
-  bool moreRasterDetailAvailable = false;
-  bool skippedUnknown = false;
-  std::vector<RasterMappedTo3DTile> rasterTiles;
-  for (size_t i = 0; i < rasterTiles.size(); ++i) {
-    RasterMappedTo3DTile& mappedRasterTile = rasterTiles[i];
+      RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
+      if (pLoadingTile && pLoadingTile->getState() ==
+                              RasterOverlayTile::LoadState::Placeholder) {
+        RasterOverlayTileProvider* pProvider =
+            pLoadingTile->getOverlay().getTileProvider();
 
-    RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-    if (pLoadingTile &&
-        pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
-      RasterOverlayTileProvider* pProvider =
-          pLoadingTile->getOverlay().getTileProvider();
+        // Try to replace this placeholder with real tiles.
+        if (pProvider && !pProvider->isPlaceholder()) {
+          // Remove the existing placeholder mapping
+          rasterTiles.erase(
+              rasterTiles.begin() +
+              static_cast<std::vector<RasterMappedTo3DTile>::difference_type>(
+                  i));
+          --i;
 
-      // Try to replace this placeholder with real tiles.
-      if (pProvider && !pProvider->isPlaceholder()) {
-        // Remove the existing placeholder mapping
-        rasterTiles.erase(
-            rasterTiles.begin() +
-            static_cast<std::vector<RasterMappedTo3DTile>::difference_type>(i));
-        --i;
+          // Add a new mapping.
+          std::vector<CesiumGeospatial::Projection> missingProjections;
+          RasterMappedTo3DTile::mapOverlayToTile(
+              tilesetOptions.maximumScreenSpaceError,
+              pProvider->getOwner(),
+              tile,
+              missingProjections);
 
-        // Add a new mapping.
-        std::vector<CesiumGeospatial::Projection> missingProjections;
-        RasterMappedTo3DTile::mapOverlayToTile(
-            pProvider->getOwner(),
-            tile,
-            missingProjections);
-
-        if (!missingProjections.empty()) {
-          // The mesh doesn't have the right texture coordinates for this
-          // overlay's projection, so we need to kick it back to the unloaded
-          // state to fix that.
-          // In the future, we could add the ability to add the required
-          // texture coordinates without starting over from scratch.
-          unloadTileContent(tile);
-          return;
+          if (!missingProjections.empty()) {
+            // The mesh doesn't have the right texture coordinates for this
+            // overlay's projection, so we need to kick it back to the unloaded
+            // state to fix that.
+            // In the future, we could add the ability to add the required
+            // texture coordinates without starting over from scratch.
+            unloadTileContent(tile);
+            return;
+          }
         }
+
+        continue;
       }
 
-      continue;
+      const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
+          mappedRasterTile.update(*_externals.pPrepareRendererResources, tile);
+
+      if (moreDetailAvailable ==
+              RasterOverlayTile::MoreDetailAvailable::Unknown &&
+          !moreRasterDetailAvailable) {
+        skippedUnknown = true;
+      }
+
+      moreRasterDetailAvailable |=
+          moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
     }
 
-    const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
-        mappedRasterTile.update(*_externals.pPrepareRendererResources, tile);
-
-    if (moreDetailAvailable ==
-            RasterOverlayTile::MoreDetailAvailable::Unknown &&
-        !moreRasterDetailAvailable) {
-      skippedUnknown = true;
+    // If this tile still has no children after it's done loading, but it does
+    // have raster tiles that are not the most detailed available, create fake
+    // children to hang more detailed rasters on by subdividing this tile.
+    if (!skippedUnknown && moreRasterDetailAvailable &&
+        tile.getChildren().empty()) {
+       //createQuadtreeSubdividedChildren(tile);
     }
-
-    moreRasterDetailAvailable |=
-        moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
-  }
-
-  // If this tile still has no children after it's done loading, but it does
-  // have raster tiles that are not the most detailed available, create fake
-  // children to hang more detailed rasters on by subdividing this tile.
-  if (!skippedUnknown && moreRasterDetailAvailable &&
-      tile.getChildren().empty()) {
-    createQuadtreeSubdividedChildren(tile);
   }
 }
 

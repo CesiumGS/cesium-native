@@ -222,8 +222,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               TileUnknownContent{},
               TileLoadResultState::Failed,
               nullptr,
-              {},
-              std::nullopt};
+              {}};
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -237,8 +236,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               TileUnknownContent{},
               TileLoadResultState::Failed,
               nullptr,
-              {},
-              std::nullopt};
+              {}};
         }
 
         // find gltf converter
@@ -262,8 +260,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                 TileRenderContent{std::nullopt},
                 TileLoadResultState::Failed,
                 std::move(pCompletedRequest),
-                {},
-                std::nullopt};
+                {}};
           }
 
           return TileLoadResult{
@@ -278,8 +275,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
             TileRenderContent{std::nullopt},
             TileLoadResultState::Failed,
             std::move(pCompletedRequest),
-            {},
-            std::nullopt};
+            {}};
       });
 }
 } // namespace
@@ -299,8 +295,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
         TileUnknownContent{},
         TileLoadResultState::Failed,
         nullptr,
-        {},
-        std::nullopt});
+        {}});
   }
 
   // find the subtree ID
@@ -310,8 +305,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
         TileUnknownContent{},
         TileLoadResultState::Failed,
         nullptr,
-        {},
-        std::nullopt});
+        {}});
   }
 
   uint64_t levelLeft = pOctreeID->level % _subtreeLevels;
@@ -364,8 +358,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
         TileEmptyContent{},
         TileLoadResultState::Success,
         nullptr,
-        {},
-        std::nullopt});
+        {}});
   }
 
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pOctreeID);

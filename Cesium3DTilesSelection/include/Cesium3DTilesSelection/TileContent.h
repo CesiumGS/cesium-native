@@ -63,8 +63,6 @@ public:
 
   const TileRenderContent* getRenderContent() const noexcept;
 
-  const CesiumGeospatial::Projection* getProjection() const noexcept;
-
   const RasterOverlayDetails* getRasterOverlayDetails() const noexcept;
 
   RasterOverlayDetails* getRasterOverlayDetails() noexcept;
@@ -77,8 +75,6 @@ private:
   void setContentKind(TileContentKind&& contentKind);
 
   void setContentKind(const TileContentKind& contentKind);
-
-  void setProjection(const CesiumGeospatial::Projection& projection);
 
   void
   setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
@@ -99,7 +95,6 @@ private:
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
-  std::optional<CesiumGeospatial::Projection> _projection;
   std::optional<RasterOverlayDetails> _rasterOverlayDetails;
   std::function<void(Tile&)> _tileInitializer;
   TilesetContentLoader* _pLoader;

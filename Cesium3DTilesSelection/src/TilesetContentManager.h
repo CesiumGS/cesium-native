@@ -20,9 +20,9 @@ public:
 
   ~TilesetContentManager() noexcept;
 
-  void loadTileContent(Tile& tile, const TilesetContentOptions& contentOptions);
+  void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void updateTileContent(Tile& tile);
+  void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
 
@@ -44,7 +44,7 @@ private:
 
   void updateContentLoadedState(Tile& tile);
 
-  void updateDoneState(Tile& tile);
+  void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void unloadContentLoadedState(Tile& tile);
 
