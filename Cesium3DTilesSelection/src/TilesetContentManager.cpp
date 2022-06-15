@@ -18,6 +18,183 @@ struct TileLoadResultAndRenderResources {
   void* pRenderResources{nullptr};
 };
 
+struct RegionAndCenter {
+  CesiumGeospatial::BoundingRegion region;
+  CesiumGeospatial::Cartographic center;
+};
+
+std::optional<RegionAndCenter>
+getTileBoundingRegionForUpsampling(const Tile& parent) {
+  // To create subdivided children, we need to know a bounding region for each.
+  // If the parent is already loaded and we have Web Mercator or Geographic
+  // textures coordinates, we're set. If it's not, but it has a bounding region,
+  // we're still set. Otherwise, we can't upsample (yet?).
+
+  // Get an accurate bounding region from the content first.
+  const TileContent& parentContent = parent.getContent();
+  const RasterOverlayDetails* pOverlayDetails =
+      parentContent.getRasterOverlayDetails();
+  if (pOverlayDetails) {
+    const RasterOverlayDetails& details = *pOverlayDetails;
+
+    // If we don't have any overlay projections/rectangles, why are we
+    // upsampling?
+    assert(!details.rasterOverlayProjections.empty());
+    assert(!details.rasterOverlayRectangles.empty());
+
+    // Use the projected center of the tile as the subdivision center.
+    // The tile will be subdivided by (0.5, 0.5) in the first overlay's
+    // texture coordinates which overlay had more detail.
+    for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
+      if (mapped.isMoreDetailAvailable()) {
+        const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
+                                                             ->getOverlay()
+                                                             .getTileProvider()
+                                                             ->getProjection();
+        glm::dvec2 centerProjected =
+            details.findRectangleForOverlayProjection(projection)->getCenter();
+        CesiumGeospatial::Cartographic center =
+            CesiumGeospatial::unprojectPosition(
+                projection,
+                glm::dvec3(centerProjected, 0.0));
+
+        return RegionAndCenter{details.boundingRegion, center};
+      }
+    }
+  }
+
+  // We shouldn't be upsampling from a tile until that tile is loaded.
+  // If it has no content after loading, we can't upsample from it.
+  return std::nullopt;
+}
+
+void createQuadtreeSubdividedChildren(Tile& parent) {
+  std::optional<RegionAndCenter> maybeRegionAndCenter =
+      getTileBoundingRegionForUpsampling(parent);
+  if (!maybeRegionAndCenter) {
+    return;
+  }
+
+  // The quadtree tile ID doesn't actually matter, because we're not going to
+  // use the standard tile bounds for the ID. But having a tile ID that reflects
+  // the level and _approximate_ location is helpful for debugging.
+  const CesiumGeometry::QuadtreeTileID* pRealParentTileID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&parent.getTileID());
+  if (!pRealParentTileID) {
+    const CesiumGeometry::UpsampledQuadtreeNode* pUpsampledID =
+        std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&parent.getTileID());
+    if (pUpsampledID) {
+      pRealParentTileID = &pUpsampledID->tileID;
+    }
+  }
+
+  CesiumGeometry::QuadtreeTileID parentTileID =
+      pRealParentTileID ? *pRealParentTileID
+                        : CesiumGeometry::QuadtreeTileID(0, 0, 0);
+
+  // QuadtreeTileID can't handle higher than level 30 because the x and y
+  // coordinates (uint32_t) will overflow. So just start over at level 0.
+  if (parentTileID.level >= 30U) {
+    parentTileID = CesiumGeometry::QuadtreeTileID(0, 0, 0);
+  }
+
+  // The parent tile must not have a zero geometric error, even if it's a leaf
+  // tile. Otherwise we'd never refine it.
+  parent.setGeometricError(parent.getNonZeroGeometricError());
+
+  // The parent must use REPLACE refinement.
+  parent.setRefine(TileRefine::Replace);
+
+  // add 4 children for parent
+  std::vector<Tile> children;
+  children.reserve(4);
+  for (std::size_t i = 0; i < 4; ++i) {
+    children.emplace_back(parent.getContent().getLoader());
+  }
+  parent.createChildTiles(std::move(children));
+
+  // populate children metadata
+  gsl::span<Tile> childrenView = parent.getChildren();
+  Tile& sw = childrenView[0];
+  Tile& se = childrenView[1];
+  Tile& nw = childrenView[2];
+  Tile& ne = childrenView[3];
+
+  // set children geometric error
+  const double geometricError = parent.getGeometricError() * 0.5;
+  sw.setGeometricError(geometricError);
+  se.setGeometricError(geometricError);
+  nw.setGeometricError(geometricError);
+  ne.setGeometricError(geometricError);
+
+  // set children tile ID
+  const CesiumGeometry::QuadtreeTileID swID(
+      parentTileID.level + 1,
+      parentTileID.x * 2,
+      parentTileID.y * 2);
+  const CesiumGeometry::QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+  const CesiumGeometry::QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+  const CesiumGeometry::QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+
+  sw.setTileID(CesiumGeometry::UpsampledQuadtreeNode{swID});
+  se.setTileID(CesiumGeometry::UpsampledQuadtreeNode{seID});
+  nw.setTileID(CesiumGeometry::UpsampledQuadtreeNode{nwID});
+  ne.setTileID(CesiumGeometry::UpsampledQuadtreeNode{neID});
+
+  // set children bounding volume
+  const double minimumHeight = maybeRegionAndCenter->region.getMinimumHeight();
+  const double maximumHeight = maybeRegionAndCenter->region.getMaximumHeight();
+
+  const CesiumGeospatial::GlobeRectangle& parentRectangle =
+      maybeRegionAndCenter->region.getRectangle();
+  const CesiumGeospatial::Cartographic& center = maybeRegionAndCenter->center;
+  sw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
+      CesiumGeospatial::BoundingRegion(
+          CesiumGeospatial::GlobeRectangle(
+              parentRectangle.getWest(),
+              parentRectangle.getSouth(),
+              center.longitude,
+              center.latitude),
+          minimumHeight,
+          maximumHeight)));
+
+  se.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
+      CesiumGeospatial::BoundingRegion(
+          CesiumGeospatial::GlobeRectangle(
+              center.longitude,
+              parentRectangle.getSouth(),
+              parentRectangle.getEast(),
+              center.latitude),
+          minimumHeight,
+          maximumHeight)));
+
+  nw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
+      CesiumGeospatial::BoundingRegion(
+          CesiumGeospatial::GlobeRectangle(
+              parentRectangle.getWest(),
+              center.latitude,
+              center.longitude,
+              parentRectangle.getNorth()),
+          minimumHeight,
+          maximumHeight)));
+
+  ne.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
+      CesiumGeospatial::BoundingRegion(
+          CesiumGeospatial::GlobeRectangle(
+              center.longitude,
+              center.latitude,
+              parentRectangle.getEast(),
+              parentRectangle.getNorth()),
+          minimumHeight,
+          maximumHeight)));
+
+  // set children transforms
+  sw.setTransform(parent.getTransform());
+  se.setTransform(parent.getTransform());
+  nw.setTransform(parent.getTransform());
+  ne.setTransform(parent.getTransform());
+}
+
 TileLoadResultAndRenderResources postProcessGltf(
     TileLoadResult&& result,
     const glm::dmat4& tileTransform,
@@ -237,7 +414,9 @@ void TilesetContentManager::loadTileContent(
           });
 }
 
-void TilesetContentManager::updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions) {
+void TilesetContentManager::updateTileContent(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) {
   TileContent& content = tile.getContent();
 
   TileLoadState state = content.getState();
@@ -434,7 +613,7 @@ void TilesetContentManager::updateDoneState(
     // children to hang more detailed rasters on by subdividing this tile.
     if (!skippedUnknown && moreRasterDetailAvailable &&
         tile.getChildren().empty()) {
-       //createQuadtreeSubdividedChildren(tile);
+      createQuadtreeSubdividedChildren(tile);
     }
   }
 }
