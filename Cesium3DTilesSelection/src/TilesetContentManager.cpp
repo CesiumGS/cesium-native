@@ -2,10 +2,10 @@
 
 #include "TilesetContentLoader.h"
 
-#include <Cesium3DTilesSelection/RasterOverlay.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/RasterOverlay.h>
+#include <Cesium3DTilesSelection/RasterOverlayTile.h>
+#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -314,10 +314,12 @@ CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
-    std::unique_ptr<TilesetContentLoader> pLoader)
+    std::unique_ptr<TilesetContentLoader>&& pLoader,
+    RasterOverlayCollection& overlayCollection)
     : _externals{externals},
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
+      _pOverlayCollection{&overlayCollection},
       _tilesLoadOnProgress{0},
       _tilesDataUsed{0} {}
 
@@ -328,6 +330,18 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   while (_tilesLoadOnProgress > 0) {
     _externals.pAssetAccessor->tick();
     _externals.asyncSystem.dispatchMainThreadTasks();
+  }
+
+  // Wait for all overlays to wrap up their loading, too.
+  uint32_t tilesLoading = 1;
+  while (tilesLoading > 0) {
+    _externals.pAssetAccessor->tick();
+    _externals.asyncSystem.dispatchMainThreadTasks();
+
+    tilesLoading = 0;
+    for (const auto& pOverlay : *_pOverlayCollection) {
+      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
+    }
   }
 }
 
@@ -483,8 +497,16 @@ int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
   return _tilesLoadOnProgress;
 }
 
-int64_t TilesetContentManager::getTilesDataUsed() const noexcept {
-  return _tilesDataUsed;
+int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
+  int64_t bytes = _tilesDataUsed;
+  for (const auto& pOverlay : *_pOverlayCollection) {
+    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
+    if (pProvider) {
+      bytes += pProvider->getTileDataBytes();
+    }
+  }
+
+  return bytes;
 }
 
 void TilesetContentManager::setTileContent(

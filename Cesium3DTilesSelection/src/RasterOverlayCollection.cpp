@@ -12,7 +12,7 @@ namespace Cesium3DTilesSelection {
 RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept
     : _pTileset(&tileset) {}
 
-RasterOverlayCollection::~RasterOverlayCollection() {
+RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (!this->_overlays.empty()) {
     for (int64_t i = static_cast<int64_t>(this->_overlays.size() - 1); i >= 0;
          --i) {

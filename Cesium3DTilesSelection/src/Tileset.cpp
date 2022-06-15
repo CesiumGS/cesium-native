@@ -74,7 +74,8 @@ Tileset::Tileset(
                 std::make_unique<TilesetContentManager>(
                     _externals,
                     std::move(result.requestHeaders),
-                    std::move(result.pLoader));
+                    std::move(result.pLoader),
+                    this->getOverlays());
           }
         });
   }
@@ -143,25 +144,14 @@ Tileset::Tileset(
                 std::make_unique<TilesetContentManager>(
                     _externals,
                     std::move(result.requestHeaders),
-                    std::move(result.pLoader));
+                    std::move(result.pLoader),
+                    this->getOverlays());
           }
         });
   }
 }
 
-Tileset::~Tileset() {
-  // Wait for all overlays to wrap up their loading, too.
-  uint32_t tilesLoading = 1;
-  while (tilesLoading > 0) {
-    this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
-
-    tilesLoading = 0;
-    for (auto& pOverlay : this->_overlays) {
-      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
-    }
-  }
-}
+Tileset::~Tileset() noexcept {}
 
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
@@ -330,16 +320,7 @@ void Tileset::forEachLoadedTile(
 }
 
 int64_t Tileset::getTotalDataBytes() const noexcept {
-  int64_t bytes = this->_pTilesetContentManager->getTilesDataUsed();
-
-  for (auto& pOverlay : this->_overlays) {
-    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
-    if (pProvider) {
-      bytes += pProvider->getTileDataBytes();
-    }
-  }
-
-  return bytes;
+  return this->_pTilesetContentManager->getTotalDataUsed();
 }
 
 static void markTileNonRendered(

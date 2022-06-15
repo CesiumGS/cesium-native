@@ -67,7 +67,7 @@ public:
    * This may block the calling thread while waiting for pending asynchronous
    * tile loads to terminate.
    */
-  ~Tileset();
+  ~Tileset() noexcept;
 
   const std::vector<Credit> getTilesetCredits() const noexcept {
     return this->_tilesetCredits;
