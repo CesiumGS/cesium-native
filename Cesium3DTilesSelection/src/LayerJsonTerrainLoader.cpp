@@ -615,6 +615,9 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     // This loader only handles QuadtreeTileIDs.
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -633,6 +636,9 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     // No layer has this tile available.
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -714,14 +720,13 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
 
           return TileLoadResult{
               TileRenderContent{std::move(loadResult.model)},
+              std::nullopt,
+              loadResult.updatedBoundingVolume,
+              std::nullopt,
               loadResult.errors.hasErrors() ? TileLoadResultState::Failed
                                             : TileLoadResultState::Success,
               nullptr,
-              [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-                if (boundingVolume) {
-                  tile.setBoundingVolume(*boundingVolume);
-                }
-              }};
+              {}};
         });
   }
 
@@ -729,14 +734,13 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
       .thenImmediately([](QuantizedMeshLoadResult&& loadResult) mutable {
         return TileLoadResult{
             TileRenderContent{std::move(loadResult.model)},
+            std::nullopt,
+            loadResult.updatedBoundingVolume,
+            std::nullopt,
             loadResult.errors.hasErrors() ? TileLoadResultState::Failed
                                           : TileLoadResultState::Success,
             nullptr,
-            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-              if (boundingVolume) {
-                tile.setBoundingVolume(*boundingVolume);
-              }
-            }};
+            {}};
       });
 }
 

@@ -2,6 +2,7 @@
 
 #include "TilesetContentLoader.h"
 
+#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterOverlay.h>
 #include <Cesium3DTilesSelection/RasterOverlayTile.h>
@@ -195,10 +196,78 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   ne.setTransform(parent.getTransform());
 }
 
-TileLoadResultAndRenderResources postProcessGltf(
+std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
+    Tile& tile,
+    RasterOverlayCollection& overlays,
+    const TilesetOptions& tilesetOptions) {
+  // when tile fails temporarily, it may still have mapped raster tiles, so
+  // clear it here
+  tile.getMappedRasterTiles().clear();
+
+  std::vector<CesiumGeospatial::Projection> projections;
+  for (auto& pOverlay : overlays) {
+    RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
+        tilesetOptions.maximumScreenSpaceError,
+        *pOverlay,
+        tile,
+        projections);
+    if (pMapped) {
+      // Try to load now, but if the mapped raster tile is a placeholder this
+      // won't do anything.
+      pMapped->loadThrottled();
+    }
+  }
+
+  return projections;
+}
+
+const BoundingVolume& getEffectiveBoundingVolume(
+    const BoundingVolume& tileBoundingVolume,
+    const std::optional<BoundingVolume>& updatedTileBoundingVolume,
+    [[maybe_unused]] const std::optional<BoundingVolume>&
+        updatedTileContentBoundingVolume) {
+  // If we have an updated tile bounding volume, use it.
+  if (updatedTileBoundingVolume) {
+    return *updatedTileBoundingVolume;
+  }
+
+  // If we _only_ have an updated _content_ bounding volume, that's a developer
+  // error.
+  assert(!updatedTileContentBoundingVolume);
+
+  return tileBoundingVolume;
+}
+
+const BoundingVolume& getEffectiveContentBoundingVolume(
+    const BoundingVolume& tileBoundingVolume,
+    const std::optional<BoundingVolume>& tileContentBoundingVolume,
+    const std::optional<BoundingVolume>& updatedTileBoundingVolume,
+    const std::optional<BoundingVolume>& updatedTileContentBoundingVolume) {
+  // If we have an updated tile content bounding volume, use it.
+  if (updatedTileContentBoundingVolume) {
+    return *updatedTileContentBoundingVolume;
+  }
+
+  // Next best thing is an updated tile non-content bounding volume.
+  if (updatedTileBoundingVolume) {
+    return *updatedTileBoundingVolume;
+  }
+
+  // Then a content bounding volume attached to the tile.
+  if (tileContentBoundingVolume) {
+    return *tileContentBoundingVolume;
+  }
+
+  // And finally the regular tile bounding volume.
+  return tileBoundingVolume;
+}
+
+TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     TileLoadResult&& result,
+    std::vector<CesiumGeospatial::Projection>&& projections,
     const glm::dmat4& tileTransform,
     const TilesetContentOptions& contentOptions,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<IPrepareRendererResources>&
         pPrepareRendererResources) {
   TileRenderContent& renderContent =
@@ -209,6 +278,81 @@ TileLoadResultAndRenderResources postProcessGltf(
         result.pCompletedRequest->url();
   }
 
+  const BoundingVolume& contentBoundingVolume =
+      getEffectiveContentBoundingVolume(
+          tileBoundingVolume,
+          tileContentBoundingVolume,
+          result.updatedBoundingVolume,
+          result.updatedContentBoundingVolume);
+
+  // If we have projections, generate texture coordinates for all of them. Also
+  // remember the min and max height so that we can use them for upsampling.
+  const CesiumGeospatial::BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(contentBoundingVolume);
+  result.overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
+      *renderContent.model,
+      tileTransform,
+      0,
+      pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
+      std::move(projections));
+
+  if (pRegion && result.overlayDetails) {
+    // If the original bounding region was wrong, report it.
+    const CesiumGeospatial::GlobeRectangle& original = pRegion->getRectangle();
+    const CesiumGeospatial::GlobeRectangle& computed =
+        result.overlayDetails->boundingRegion.getRectangle();
+    if ((!CesiumUtility::Math::equalsEpsilon(
+             computed.getWest(),
+             original.getWest(),
+             0.01) &&
+         computed.getWest() < original.getWest()) ||
+        (!CesiumUtility::Math::equalsEpsilon(
+             computed.getSouth(),
+             original.getSouth(),
+             0.01) &&
+         computed.getSouth() < original.getSouth()) ||
+        (!CesiumUtility::Math::equalsEpsilon(
+             computed.getEast(),
+             original.getEast(),
+             0.01) &&
+         computed.getEast() > original.getEast()) ||
+        (!CesiumUtility::Math::equalsEpsilon(
+             computed.getNorth(),
+             original.getNorth(),
+             0.01) &&
+         computed.getNorth() > original.getNorth())) {
+
+      auto it = renderContent.model->extras.find("Cesium3DTiles_TileUrl");
+      std::string url = it != renderContent.model->extras.end()
+                            ? it->second.getStringOrDefault("Unknown Tile URL")
+                            : "Unknown Tile URL";
+      SPDLOG_LOGGER_WARN(
+          pLogger,
+          "Tile has a bounding volume that does not include all of its "
+          "content, so culling and raster overlays may be incorrect: {}",
+          url);
+    }
+  }
+
+  // If our tile bounding region has loose fitting heights, find the real ones.
+  const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
+      tileBoundingVolume,
+      result.updatedBoundingVolume,
+      result.updatedContentBoundingVolume);
+  if (std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
+          &boundingVolume) != nullptr) {
+    if (result.overlayDetails) {
+      // We already computed the bounding region for overlays, so use it.
+      result.updatedBoundingVolume = result.overlayDetails->boundingRegion;
+    } else {
+      // We need to compute an accurate bounding region
+      result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
+          *renderContent.model,
+          tileTransform);
+    }
+  }
+
+  // generate missing smooth normal
   if (contentOptions.generateMissingNormalsSmooth) {
     renderContent.model->generateMissingNormalsSmooth();
   }
@@ -220,8 +364,10 @@ TileLoadResultAndRenderResources postProcessGltf(
   return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
 
-CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
+CesiumAsync::Future<TileLoadResultAndRenderResources>
+postProcessContentInWorkerThread(
     TileLoadResult&& result,
+    std::vector<CesiumGeospatial::Projection>&& projections,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
@@ -266,6 +412,7 @@ CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
            tileTransform,
            contentOptions,
            result = std::move(result),
+           projections = std::move(projections),
            pPrepareRendererResources = std::move(pPrepareRendererResources)](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
@@ -302,10 +449,12 @@ CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
             TileRenderContent& renderContent =
                 std::get<TileRenderContent>(result.contentKind);
             renderContent.model = std::move(gltfResult.model);
-            return postProcessGltf(
+            return postProcessGltfInWorkerThread(
                 std::move(result),
+                std::move(projections),
                 tileTransform,
                 contentOptions,
+                pLogger,
                 pPrepareRendererResources);
           });
 }
@@ -351,13 +500,22 @@ void TilesetContentManager::loadTileContent(
   TileContent& content = tile.getContent();
   if (content.getState() != TileLoadState::Unloaded &&
       content.getState() != TileLoadState::FailedTemporarily) {
+    // No need to load geometry, but give previously-throttled
+    // raster overlay tiles a chance to load.
+    for (RasterMappedTo3DTile& rasterTile : tile.getMappedRasterTiles()) {
+      rasterTile.loadThrottled();
+    }
+
     return;
   }
 
+  // map raster overlay to tile
+  std::vector<CesiumGeospatial::Projection> projections =
+      mapOverlaysToTile(tile, *_pOverlayCollection, tilesetOptions);
+
+  // begin loading tile
   notifyTileStartLoading(tile);
-
   const glm::dmat4& tileTransform = tile.getTransform();
-
   content.setState(TileLoadState::ContentLoading);
   _pLoader
       ->loadTileContent(
@@ -373,6 +531,7 @@ void TilesetContentManager::loadTileContent(
            pAssetAccessor = _externals.pAssetAccessor,
            pLogger = _externals.pLogger,
            contentOptions = tilesetOptions.contentOptions,
+           projections = std::move(projections),
            tileTransform](TileLoadResult&& result) mutable {
             // the reason we run immediate continuation, instead of in the
             // worker thread, is that the loader may run the task in the main
@@ -387,6 +546,7 @@ void TilesetContentManager::loadTileContent(
               if (pRenderContent && pRenderContent->model) {
                 return asyncSystem.runInWorkerThread(
                     [result = std::move(result),
+                     projections = std::move(projections),
                      asyncSystem,
                      pAssetAccessor = std::move(pAssetAccessor),
                      pLogger = std::move(pLogger),
@@ -394,8 +554,9 @@ void TilesetContentManager::loadTileContent(
                          std::move(pPrepareRendererResources),
                      contentOptions,
                      tileTransform]() mutable {
-                      return postProcessContent(
+                      return postProcessContentInWorkerThread(
                           std::move(result),
+                          std::move(projections),
                           std::move(asyncSystem),
                           std::move(pAssetAccessor),
                           std::move(pLogger),
@@ -412,7 +573,7 @@ void TilesetContentManager::loadTileContent(
           })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         TilesetContentManager::setTileContent(
-            tile.getContent(),
+            tile,
             std::move(pair.result),
             pair.pRenderResources);
 
@@ -478,6 +639,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   }
 
+  tile.getMappedRasterTiles().clear();
   content.setContentKind(TileUnknownContent{});
   content.setState(TileLoadState::Unloaded);
   return true;
@@ -510,9 +672,20 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
 }
 
 void TilesetContentManager::setTileContent(
-    TileContent& content,
+    Tile& tile,
     TileLoadResult&& result,
     void* pWorkerRenderResources) {
+  // update bounding volume
+  if (result.updatedBoundingVolume) {
+    tile.setBoundingVolume(*result.updatedBoundingVolume);
+  }
+
+  if (result.updatedContentBoundingVolume) {
+    tile.setContentBoundingVolume(*result.updatedContentBoundingVolume);
+  }
+
+  // set content
+  auto& content = tile.getContent();
   switch (result.state) {
   case TileLoadResultState::Success:
     content.setState(TileLoadState::ContentLoaded);
@@ -529,6 +702,10 @@ void TilesetContentManager::setTileContent(
   }
 
   content.setContentKind(std::move(result.contentKind));
+  if (result.overlayDetails) {
+    content.setRasterOverlayDetails(std::move(*result.overlayDetails));
+  }
+
   content.setRenderResources(pWorkerRenderResources);
   content.setTileInitializerCallback(std::move(result.tileInitializer));
 }

@@ -1111,7 +1111,8 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
     const std::vector<double>& distances) {
   double highestLoadPriority = std::numeric_limits<double>::max();
 
-  if (tile.getState() == TileLoadState::Unloaded) {
+  if (tile.getState() == TileLoadState::Unloaded ||
+      tile.getState() == TileLoadState::FailedTemporarily) {
 
     const glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());

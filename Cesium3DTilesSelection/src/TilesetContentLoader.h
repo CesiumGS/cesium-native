@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -10,6 +12,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -19,6 +22,9 @@ enum class TileLoadResultState { Success, Failed, RetryLater };
 
 struct TileLoadResult {
   TileContentKind contentKind;
+  std::optional<RasterOverlayDetails> overlayDetails;
+  std::optional<BoundingVolume> updatedBoundingVolume;
+  std::optional<BoundingVolume> updatedContentBoundingVolume;
   TileLoadResultState state;
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
   std::function<void(Tile&)> tileInitializer;

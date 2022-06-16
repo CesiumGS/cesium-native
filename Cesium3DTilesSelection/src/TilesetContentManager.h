@@ -40,7 +40,7 @@ public:
 
 private:
   static void setTileContent(
-      TileContent& content,
+      Tile& tile,
       TileLoadResult&& result,
       void* pWorkerRenderResources);
 
