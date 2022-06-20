@@ -1546,6 +1546,8 @@ void Tileset::processQueue(
     uint32_t maximumLoadsInProgress) {
   if (loadsInProgress >= maximumLoadsInProgress) {
     return;
+  } else if (this->_tileDataBytes > this->getOptions().maximumBytes) {
+    return;
   }
 
   std::sort(queue.begin(), queue.end());

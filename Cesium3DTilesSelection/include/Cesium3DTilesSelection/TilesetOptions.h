@@ -180,6 +180,8 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    */
   int64_t maximumCachedBytes = 512 * 1024 * 1024;
 
+  int64_t maximumBytes = std::numeric_limits<int64_t>::max();
+
   /**
    * @brief A table that maps the camera height above the ellipsoid to a fog
    * density. Tiles that are in full fog are culled. The density of the fog
