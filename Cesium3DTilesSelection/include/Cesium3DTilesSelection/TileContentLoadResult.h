@@ -127,6 +127,11 @@ struct TileContentLoadResult {
    * If this tile does not have any overlays, this field will be std::nullopt.
    */
   std::optional<TileContentDetailsForOverlays> overlayDetails;
+
+  /**
+   * @brief The percentage of dither fade this tile currently has. 
+   */
+  float ditherFadePercentage = 0.0f;
 };
 
 } // namespace Cesium3DTilesSelection

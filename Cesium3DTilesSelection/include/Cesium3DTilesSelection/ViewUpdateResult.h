@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <vector>
+#include <unordered_set>
 
 namespace Cesium3DTilesSelection {
 class Tile;
@@ -19,6 +20,10 @@ class Tile;
  */
 class CESIUM3DTILESSELECTION_API ViewUpdateResult final {
 public:
+
+  // TODO: change render terminology to fit fading??
+  // For example, a fading out tile is still being "rendered" technically
+
   /**
    * @brief The tiles that are contained in the render list of the current
    * frame.
@@ -30,6 +35,10 @@ public:
    * current frame
    */
   std::vector<Tile*> tilesToNoLongerRenderThisFrame;
+
+  std::unordered_set<Tile*> tilesFadingOut;
+
+  std::vector<Tile*> tilesToHideThisFrame;
 
   //! @cond Doxygen_Suppress
   uint32_t tilesLoadingLowPriority = 0;

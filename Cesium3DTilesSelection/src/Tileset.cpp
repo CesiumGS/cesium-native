@@ -191,10 +191,11 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   std::vector<Tile*> tilesRenderedPrevFrame =
       this->_updateResult.tilesToRenderThisFrame;
 
-  this->updateView(frustums);
+  // TODO: fix the fading for offline case
+  this->updateView(frustums, 0.0f);
   while (this->_loadsInProgress > 0 || this->_subtreeLoadsInProgress > 0) {
     this->_externals.pAssetAccessor->tick();
-    this->updateView(frustums);
+    this->updateView(frustums, 0.0f);
   }
 
   std::unordered_set<Tile*> uniqueTilesToRenderedThisFrame(
@@ -214,7 +215,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 }
 
 const ViewUpdateResult&
-Tileset::updateView(const std::vector<ViewState>& frustums) {
+Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_asyncSystem.dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
@@ -225,6 +226,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   result.tilesToRenderThisFrame.clear();
   // result.newTilesToRenderThisFrame.clear();
   result.tilesToNoLongerRenderThisFrame.clear();
+  result.tilesToHideThisFrame.clear();
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;
   result.tilesCulled = 0;
@@ -269,6 +271,52 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
         false,
         *pRootTile,
         result);
+
+    const float ditherFadeTime = 1.0f;
+
+    // Update fade out
+    // result.tilesFadingOut.insert(
+    //    result.tilesToNoLongerRenderThisFrame.begin(),
+    //    result.tilesToNoLongerRenderThisFrame.end());
+    for (Tile* pTile : result.tilesToNoLongerRenderThisFrame) {
+      if (pTile->getContent()) {
+        pTile->getContent()->ditherFadePercentage = 2.0f;
+        result.tilesFadingOut.insert(pTile);
+      }
+    }
+
+    for (auto tileIt = result.tilesFadingOut.begin();
+        tileIt != result.tilesFadingOut.end();) {
+      if (!(*tileIt)->getContent()) {
+        result.tilesFadingOut.erase(tileIt++);
+        continue;
+      }
+      
+      (*tileIt)->getContent()->ditherFadePercentage -= 
+          ditherFadeTime * deltaTime;
+      if ((*tileIt)->getContent()->ditherFadePercentage <= 0.0f) {
+        (*tileIt)->getContent()->ditherFadePercentage = 0.0f;
+        // TODO: remove this comment
+        // How will unreal know to set tile to invisible (culled) here?
+        // Can't check for dither percentage 0.0 (could be a tile that is fading in)
+        // solution: should use tilesToHideThisFrame
+        result.tilesToHideThisFrame.push_back(*tileIt);
+        result.tilesFadingOut.erase(tileIt++);
+      } else {
+        ++tileIt;
+      }
+    }
+
+    // Update fade in
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      if (pTile->getContent()) {
+        pTile->getContent()->ditherFadePercentage = 
+            glm::min(
+              pTile->getContent()->ditherFadePercentage +
+                ditherFadeTime * deltaTime,
+              1.0f);
+      }
+    }
   } else {
     result = ViewUpdateResult();
   }
@@ -1320,6 +1368,18 @@ void Tileset::_unloadCachedTiles() noexcept {
       // The root tile marks the beginning of the tiles that were used
       // for rendering last frame.
       break;
+    }
+
+    // Still fading out, can't unload this tile.
+    if (pTile->getContent() && pTile->getContent()->ditherFadePercentage > 0.0f) {
+      pTile = this->_loadedTiles.next(*pTile);
+      continue;
+    }
+
+    if (this->_updateResult.tilesFadingOut.find(pTile) != 
+          this->_updateResult.tilesFadingOut.end()) {
+      pTile = this->_loadedTiles.next(*pTile);
+      continue;
     }
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
