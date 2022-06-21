@@ -193,7 +193,7 @@ TEST_CASE("Test upsample tile without skirts") {
       CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
   SECTION("Upsample bottom left child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerLeft);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -263,7 +263,7 @@ TEST_CASE("Test upsample tile without skirts") {
   }
 
   SECTION("Upsample upper left child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, upperLeft);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperLeft);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -333,7 +333,7 @@ TEST_CASE("Test upsample tile without skirts") {
   }
 
   SECTION("Upsample upper right child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, upperRight);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperRight);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -403,7 +403,7 @@ TEST_CASE("Test upsample tile without skirts") {
   }
 
   SECTION("Upsample bottom right child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerRight);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerRight);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -488,7 +488,7 @@ TEST_CASE("Test upsample tile without skirts") {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
     SECTION("Check bottom left skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerLeft);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -589,7 +589,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Check upper left skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, upperLeft);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperLeft);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -714,7 +714,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Check upper right skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, upperRight);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperRight);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -815,7 +815,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Check bottom right skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerRight);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerRight);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();

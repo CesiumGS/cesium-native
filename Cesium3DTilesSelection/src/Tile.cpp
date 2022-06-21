@@ -662,16 +662,23 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
     assert(!details.rasterOverlayRectangles.empty());
 
     // Use the projected center of the tile as the subdivision center.
-    // The tile will be subdivided by (0.5, 0.5) in the _first_ overlay's
-    // texture coordinates (no matter which overlay(s) had more detail), at
-    // least until https://github.com/CesiumGS/cesium-native/issues/385 is
-    // addressed. So pick the center accordingly.
-    glm::dvec2 centerProjected = details.rasterOverlayRectangles[0].getCenter();
-    Cartographic center = unprojectPosition(
-        details.rasterOverlayProjections[0],
-        glm::dvec3(centerProjected, 0.0));
+    // The tile will be subdivided by (0.5, 0.5) in the first overlay's
+    // texture coordinates which overlay had more detail.
 
-    return RegionAndCenter{details.boundingRegion, center};
+    for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
+      if (mapped.isMoreDetailAvailable()) {
+        const Projection& projection = mapped.getReadyTile()
+                                           ->getOverlay()
+                                           .getTileProvider()
+                                           ->getProjection();
+        glm::dvec2 centerProjected =
+            details.findRectangleForOverlayProjection(projection)->getCenter();
+        Cartographic center =
+            unprojectPosition(projection, glm::dvec3(centerProjected, 0.0));
+
+        return RegionAndCenter{details.boundingRegion, center};
+      }
+    }
   }
 
   // We shouldn't be upsampling from a tile until that tile is loaded.
@@ -847,6 +854,7 @@ void Tile::update(
       this->getTileset()->supportsRasterOverlays() && this->getContent() &&
       this->getContent()->model) {
     bool moreRasterDetailAvailable = false;
+    bool skippedUnknown = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
       RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
@@ -890,6 +898,13 @@ void Tile::update(
 
       const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
+
+      if (moreDetailAvailable ==
+              RasterOverlayTile::MoreDetailAvailable::Unknown &&
+          !moreRasterDetailAvailable) {
+        skippedUnknown = true;
+      }
+
       moreRasterDetailAvailable |=
           moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
     }
@@ -897,7 +912,8 @@ void Tile::update(
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (moreRasterDetailAvailable && this->_children.empty()) {
+    if (!skippedUnknown && moreRasterDetailAvailable &&
+        this->_children.empty()) {
       createQuadtreeSubdividedChildren(*this);
     }
   } else if (
@@ -983,10 +999,75 @@ void Tile::upsampleParent(
     void* pRendererResources;
   };
 
+  int32_t index = 0;
+  std::vector<Projection>& parentProjections =
+      pParentContent->overlayDetails->rasterOverlayProjections;
+  const gsl::span<Tile> children = pParent->getChildren();
+  if (std::get_if<QuadtreeTileID>(&pParent->getTileID()) &&
+      std::any_of(
+          children.begin(),
+          children.end(),
+          [](const Tile& tile) noexcept {
+            return std::get_if<QuadtreeTileID>(&tile.getTileID());
+          })) {
+    // We will only get here for quantized-mesh tiles where some (but not all)
+    // tiles are present in the data and the rest need to be upsampled. And in
+    // that scenario, we need to use the implicit context's projection for
+    // subdivision, no matter what the status of the overlays.
+    //
+    // For a more typical upsampling, driven by raster overlays, all child tiles
+    // will have a `UpsampledQuadtreeNode` tile ID.
+    if (_pContext->implicitContext->projection.has_value()) {
+      const Projection& projection = *_pContext->implicitContext->projection;
+      auto it = std::find(
+          parentProjections.begin(),
+          parentProjections.end(),
+          projection);
+
+      if (it == parentProjections.end()) {
+        const BoundingRegion* pParentRegion =
+            std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
+
+        std::optional<TileContentDetailsForOverlays> overlayDetails =
+            GltfContent::createRasterOverlayTextureCoordinates(
+                parentModel,
+                pParent->getTransform(),
+                int32_t(parentProjections.size()),
+                pParentRegion ? std::make_optional<GlobeRectangle>(
+                                    pParentRegion->getRectangle())
+                              : std::nullopt,
+                {projection});
+        if (overlayDetails) {
+          pParentContent->overlayDetails->rasterOverlayRectangles.emplace_back(
+              overlayDetails->rasterOverlayRectangles[0]);
+          parentProjections.emplace_back(projection);
+          index = int32_t(parentProjections.size()) - 1;
+        }
+      } else {
+        index = int32_t(it - parentProjections.begin());
+      }
+    }
+  } else {
+    for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
+      if (mapped.isMoreDetailAvailable()) {
+        const Projection& projection = mapped.getReadyTile()
+                                           ->getOverlay()
+                                           .getTileProvider()
+                                           ->getProjection();
+        auto it = std::find(
+            parentProjections.begin(),
+            parentProjections.end(),
+            projection);
+        index = int32_t(it - parentProjections.begin());
+      }
+    }
+  }
+
   pTileset->getAsyncSystem()
       .runInWorkerThread(
           [&parentModel,
            transform = this->getTransform(),
+           textureCoordinateIndex = index,
            projections = std::move(projections),
            pSubdividedParentID,
            tileBoundingVolume = this->getBoundingVolume(),
@@ -1002,13 +1083,8 @@ void Tile::upsampleParent(
                 std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(
                 parentModel,
-                *pSubdividedParentID);
-
-            // We can't necessarily trust our original bounding volume, so
-            // recompute it here. See:
-            // https://github.com/CesiumGS/cesium-native/issues/385
-            pContent->updatedBoundingVolume =
-                GltfContent::computeBoundingRegion(*pContent->model, transform);
+                *pSubdividedParentID,
+                textureCoordinateIndex);
 
             void* pRendererResources = processNewTileContent(
                 pPrepareRendererResources,
