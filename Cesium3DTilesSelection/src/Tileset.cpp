@@ -242,6 +242,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   result.culledTilesVisited = 0;
   result.tilesCulled = 0;
   result.tilesOccluded = 0;
+  result.tilesWaitingForOcclusionResults = 0;
   result.maxDepthVisited = 0;
 
   Tile* pRootTile = this->getRootTile();
@@ -1335,6 +1336,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         tile.getLastSelectionState().getOriginalResult(
             frameState.lastFrameNumber) !=
             TileSelectionState::Result::Refined) {
+      ++result.tilesWaitingForOcclusionResults;
       wantToRefine = false;
       meetsSse = true;
     }

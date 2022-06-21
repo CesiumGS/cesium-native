@@ -40,6 +40,7 @@ public:
   uint32_t culledTilesVisited = 0;
   uint32_t tilesCulled = 0;
   uint32_t tilesOccluded = 0;
+  uint32_t tilesWaitingForOcclusionResults = 0;
   uint32_t maxDepthVisited = 0;
   //! @endcond
 };
