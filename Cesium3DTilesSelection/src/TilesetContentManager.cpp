@@ -1,7 +1,7 @@
 #include "TilesetContentManager.h"
 
-#include "TilesetContentLoader.h"
 #include "TileContentLoadInfo.h"
+#include "TilesetContentLoader.h"
 
 #include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
@@ -24,6 +24,18 @@ struct RegionAndCenter {
   CesiumGeospatial::BoundingRegion region;
   CesiumGeospatial::Cartographic center;
 };
+
+bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
+  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    const RasterOverlayTile* pLoading = mapped.getLoadingTile();
+    if (pLoading &&
+        pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 std::optional<RegionAndCenter>
 getTileBoundingRegionForUpsampling(const Tile& parent) {
@@ -652,6 +664,14 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   }
 
   return bytes;
+}
+
+bool TilesetContentManager::doesTileNeedLoading(
+    const Tile& tile) const noexcept {
+  auto state = tile.getState();
+  return state == TileLoadState::Unloaded ||
+         state == TileLoadState::FailedTemporarily ||
+         anyRasterOverlaysNeedLoading(tile);
 }
 
 void TilesetContentManager::setTileContent(

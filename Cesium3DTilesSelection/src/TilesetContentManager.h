@@ -38,6 +38,8 @@ public:
 
   int64_t getTotalDataUsed() const noexcept;
 
+  bool doesTileNeedLoading(const Tile& tile) const noexcept;
+
 private:
   static void setTileContent(
       Tile& tile,

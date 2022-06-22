@@ -408,7 +408,7 @@ private:
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
-  static double addTileToLoadQueue(
+  double addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
       const std::vector<ViewState>& frustums,
       Tile& tile,

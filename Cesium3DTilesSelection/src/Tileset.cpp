@@ -1104,15 +1104,14 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
 // addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
 // (or at least, this function could delegate to such a call...)
 
-/*static*/ double Tileset::addTileToLoadQueue(
+double Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
     const std::vector<ViewState>& frustums,
     Tile& tile,
     const std::vector<double>& distances) {
   double highestLoadPriority = std::numeric_limits<double>::max();
 
-  if (tile.getState() == TileLoadState::Unloaded ||
-      tile.getState() == TileLoadState::FailedTemporarily) {
+  if (_pTilesetContentManager->doesTileNeedLoading(tile)) {
 
     const glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());
