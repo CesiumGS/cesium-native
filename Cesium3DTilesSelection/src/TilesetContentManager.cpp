@@ -1,6 +1,7 @@
 #include "TilesetContentManager.h"
 
 #include "TilesetContentLoader.h"
+#include "TileContentLoadInfo.h"
 
 #include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
@@ -265,11 +266,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
 TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    const glm::dmat4& tileTransform,
-    const TilesetContentOptions& contentOptions,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::shared_ptr<IPrepareRendererResources>&
-        pPrepareRendererResources) {
+    const TileContentLoadInfo& tileLoadInfo) {
   TileRenderContent& renderContent =
       std::get<TileRenderContent>(result.contentKind);
 
@@ -280,8 +277,8 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
 
   const BoundingVolume& contentBoundingVolume =
       getEffectiveContentBoundingVolume(
-          tileBoundingVolume,
-          tileContentBoundingVolume,
+          tileLoadInfo.tileBoundingVolume,
+          tileLoadInfo.tileContentBoundingVolume,
           result.updatedBoundingVolume,
           result.updatedContentBoundingVolume);
 
@@ -291,7 +288,7 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
       getBoundingRegionFromBoundingVolume(contentBoundingVolume);
   result.overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
       *renderContent.model,
-      tileTransform,
+      tileLoadInfo.tileTransform,
       0,
       pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
       std::move(projections));
@@ -327,7 +324,7 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
                             ? it->second.getStringOrDefault("Unknown Tile URL")
                             : "Unknown Tile URL";
       SPDLOG_LOGGER_WARN(
-          pLogger,
+          tileLoadInfo.pLogger,
           "Tile has a bounding volume that does not include all of its "
           "content, so culling and raster overlays may be incorrect: {}",
           url);
@@ -336,7 +333,7 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
 
   // If our tile bounding region has loose fitting heights, find the real ones.
   const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
-      tileBoundingVolume,
+      tileLoadInfo.tileBoundingVolume,
       result.updatedBoundingVolume,
       result.updatedContentBoundingVolume);
   if (std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
@@ -348,18 +345,19 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
           *renderContent.model,
-          tileTransform);
+          tileLoadInfo.tileTransform);
     }
   }
 
   // generate missing smooth normal
-  if (contentOptions.generateMissingNormalsSmooth) {
+  if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
     renderContent.model->generateMissingNormalsSmooth();
   }
 
-  void* pRenderResources = pPrepareRendererResources->prepareInLoadThread(
-      *renderContent.model,
-      tileTransform);
+  void* pRenderResources =
+      tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+          *renderContent.model,
+          tileLoadInfo.tileTransform);
 
   return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
@@ -368,12 +366,7 @@ CesiumAsync::Future<TileLoadResultAndRenderResources>
 postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
-    std::shared_ptr<spdlog::logger>&& pLogger,
-    std::shared_ptr<IPrepareRendererResources>&& pPrepareRendererResources,
-    const TilesetContentOptions& contentOptions,
-    const glm::dmat4& tileTransform) {
+    TileContentLoadInfo&& tileLoadInfo) {
   assert(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
@@ -398,8 +391,11 @@ postProcessContentInWorkerThread(
   }
 
   CesiumGltfReader::GltfReaderOptions gltfOptions;
-  gltfOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
+  gltfOptions.ktx2TranscodeTargets =
+      tileLoadInfo.contentOptions.ktx2TranscodeTargets;
 
+  auto asyncSystem = tileLoadInfo.asyncSystem;
+  auto pAssetAccessor = tileLoadInfo.pAssetAccessor;
   return CesiumGltfReader::GltfReader::resolveExternalData(
              asyncSystem,
              baseUrl,
@@ -408,23 +404,20 @@ postProcessContentInWorkerThread(
              gltfOptions,
              std::move(gltfResult))
       .thenInWorkerThread(
-          [pLogger,
-           tileTransform,
-           contentOptions,
-           result = std::move(result),
+          [result = std::move(result),
            projections = std::move(projections),
-           pPrepareRendererResources = std::move(pPrepareRendererResources)](
+           tileLoadInfo = std::move(tileLoadInfo)](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
               if (result.pCompletedRequest) {
                 SPDLOG_LOGGER_ERROR(
-                    pLogger,
+                    tileLoadInfo.pLogger,
                     "Failed resolving external glTF buffers from {}:\n- {}",
                     result.pCompletedRequest->url(),
                     CesiumUtility::joinToString(gltfResult.errors, "\n- "));
               } else {
                 SPDLOG_LOGGER_ERROR(
-                    pLogger,
+                    tileLoadInfo.pLogger,
                     "Failed resolving external glTF buffers:\n- {}",
                     CesiumUtility::joinToString(gltfResult.errors, "\n- "));
               }
@@ -433,14 +426,14 @@ postProcessContentInWorkerThread(
             if (!gltfResult.warnings.empty()) {
               if (result.pCompletedRequest) {
                 SPDLOG_LOGGER_WARN(
-                    pLogger,
+                    tileLoadInfo.pLogger,
                     "Warning when resolving external gltf buffers from "
                     "{}:\n- {}",
                     result.pCompletedRequest->url(),
                     CesiumUtility::joinToString(gltfResult.errors, "\n- "));
               } else {
                 SPDLOG_LOGGER_ERROR(
-                    pLogger,
+                    tileLoadInfo.pLogger,
                     "Warning resolving external glTF buffers:\n- {}",
                     CesiumUtility::joinToString(gltfResult.errors, "\n- "));
               }
@@ -452,10 +445,7 @@ postProcessContentInWorkerThread(
             return postProcessGltfInWorkerThread(
                 std::move(result),
                 std::move(projections),
-                tileTransform,
-                contentOptions,
-                pLogger,
-                pPrepareRendererResources);
+                tileLoadInfo);
           });
 }
 } // namespace
@@ -515,8 +505,16 @@ void TilesetContentManager::loadTileContent(
 
   // begin loading tile
   notifyTileStartLoading(tile);
-  const glm::dmat4& tileTransform = tile.getTransform();
   content.setState(TileLoadState::ContentLoading);
+
+  TileContentLoadInfo tileLoadInfo{
+      _externals.asyncSystem,
+      _externals.pAssetAccessor,
+      _externals.pPrepareRendererResources,
+      _externals.pLogger,
+      tilesetOptions.contentOptions,
+      tile};
+
   _pLoader
       ->loadTileContent(
           tile,
@@ -525,52 +523,37 @@ void TilesetContentManager::loadTileContent(
           _externals.pAssetAccessor,
           _externals.pLogger,
           _requestHeaders)
-      .thenImmediately(
-          [pPrepareRendererResources = _externals.pPrepareRendererResources,
-           asyncSystem = _externals.asyncSystem,
-           pAssetAccessor = _externals.pAssetAccessor,
-           pLogger = _externals.pLogger,
-           contentOptions = tilesetOptions.contentOptions,
-           projections = std::move(projections),
-           tileTransform](TileLoadResult&& result) mutable {
-            // the reason we run immediate continuation, instead of in the
-            // worker thread, is that the loader may run the task in the main
-            // thread. And most often than not, those main thread task is very
-            // light weight. So when those tasks return, there is no need to
-            // spawn another worker thread if the result of the task isn't
-            // related to render content. We only ever spawn a new task in the
-            // worker thread if the content is a render content
-            if (result.state == TileLoadResultState::Success) {
-              auto pRenderContent =
-                  std::get_if<TileRenderContent>(&result.contentKind);
-              if (pRenderContent && pRenderContent->model) {
-                return asyncSystem.runInWorkerThread(
-                    [result = std::move(result),
-                     projections = std::move(projections),
-                     asyncSystem,
-                     pAssetAccessor = std::move(pAssetAccessor),
-                     pLogger = std::move(pLogger),
-                     pPrepareRendererResources =
-                         std::move(pPrepareRendererResources),
-                     contentOptions,
-                     tileTransform]() mutable {
-                      return postProcessContentInWorkerThread(
-                          std::move(result),
-                          std::move(projections),
-                          std::move(asyncSystem),
-                          std::move(pAssetAccessor),
-                          std::move(pLogger),
-                          std::move(pPrepareRendererResources),
-                          contentOptions,
-                          tileTransform);
-                    });
-              }
-            }
+      .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
+                        projections = std::move(projections)](
+                           TileLoadResult&& result) mutable {
+        // the reason we run immediate continuation, instead of in the
+        // worker thread, is that the loader may run the task in the main
+        // thread. And most often than not, those main thread task is very
+        // light weight. So when those tasks return, there is no need to
+        // spawn another worker thread if the result of the task isn't
+        // related to render content. We only ever spawn a new task in the
+        // worker thread if the content is a render content
+        if (result.state == TileLoadResultState::Success) {
+          auto pRenderContent =
+              std::get_if<TileRenderContent>(&result.contentKind);
+          if (pRenderContent && pRenderContent->model) {
+            auto asyncSystem = tileLoadInfo.asyncSystem;
+            return asyncSystem.runInWorkerThread(
+                [result = std::move(result),
+                 projections = std::move(projections),
+                 tileLoadInfo = std::move(tileLoadInfo)]() mutable {
+                  return postProcessContentInWorkerThread(
+                      std::move(result),
+                      std::move(projections),
+                      std::move(tileLoadInfo));
+                });
+          }
+        }
 
-            return asyncSystem
-                .createResolvedFuture<TileLoadResultAndRenderResources>(
-                    {std::move(result), nullptr});
-          })
+        return tileLoadInfo.asyncSystem
+            .createResolvedFuture<TileLoadResultAndRenderResources>(
+                {std::move(result), nullptr});
+      })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         TilesetContentManager::setTileContent(
             tile,
