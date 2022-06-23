@@ -345,7 +345,7 @@ void TilesetContentManager::updateContentLoadedState(Tile& tile) {
     }
   }
 
-  // call the initializer 
+  // call the initializer
   auto& tileInitializer = content.getTileInitializerCallback();
   if (tileInitializer) {
     tileInitializer(tile);

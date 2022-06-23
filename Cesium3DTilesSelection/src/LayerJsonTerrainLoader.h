@@ -12,7 +12,9 @@
 #include <CesiumGeospatial/Projection.h>
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -22,6 +24,8 @@ namespace Cesium3DTilesSelection {
  * quantized-mesh format.
  */
 class LayerJsonTerrainLoader : public TilesetContentLoader {
+  enum class AvailableState { Available, NotAvailable, Unknown };
+
 public:
   static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
       const TilesetExternals& externals,
@@ -31,10 +35,21 @@ public:
       bool showCreditsOnScreen);
 
   struct Layer {
+    Layer(
+        const std::string& baseUrl,
+        std::string&& version,
+        std::vector<std::string>&& tileTemplateUrls,
+        CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability,
+        uint32_t maxZooms,
+        int32_t availabilityLevels,
+        std::string&& creditString,
+        std::optional<Credit> credit);
+
     std::string baseUrl;
     std::string version;
     std::vector<std::string> tileTemplateUrls;
-    CesiumGeometry::QuadtreeRectangleAvailability availability;
+    CesiumGeometry::QuadtreeRectangleAvailability contentAvailability;
+    std::vector<std::unordered_set<uint64_t>> loadedSubtrees;
     int32_t availabilityLevels;
     std::string creditString;
     std::optional<Credit> credit;
@@ -54,9 +69,18 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  bool updateTileContent(Tile& tile) override;
+
 private:
+  void createTileChildren(Tile& tile);
+
   bool
   tileIsAvailableInAnyLayer(const CesiumGeometry::QuadtreeTileID& tileID) const;
+
+  AvailableState tileIsAvailableInLayer(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const Layer& layer) const;
+
   void createChildTile(
       const Tile& parent,
       std::vector<Tile>& children,

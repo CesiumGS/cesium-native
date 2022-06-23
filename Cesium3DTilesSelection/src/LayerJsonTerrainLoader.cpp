@@ -7,6 +7,7 @@
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 
+#include <libmorton/morton.h>
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
@@ -16,6 +17,66 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace {
+size_t maxSubtreeInLayer(uint32_t maxZooms, int32_t availabilityLevels) {
+  if (availabilityLevels > 0) {
+    return static_cast<size_t>(std::ceil(
+        static_cast<float>(maxZooms) / static_cast<float>(availabilityLevels)));
+  }
+
+  return 0;
+}
+
+void subtreeHash(
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
+    const LayerJsonTerrainLoader::Layer& layer,
+    uint32_t& subtreeLevelIdx,
+    uint64_t& subtreeMortonIdx) {
+  subtreeLevelIdx = subtreeID.level / uint32_t(layer.availabilityLevels);
+  subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y);
+}
+
+bool isSubtreeLoadedInLayer(
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
+    const LayerJsonTerrainLoader::Layer& layer) {
+  assert(
+      layer.availabilityLevels > 0 &&
+      "Layer needs to support availabilityLevels");
+
+  uint32_t subtreeLevelIdx;
+  uint64_t subtreeMortonIdx;
+  subtreeHash(subtreeID, layer, subtreeLevelIdx, subtreeMortonIdx);
+
+  // it doesn't have the subtree exceeds max zooms, so just treat it
+  // as loaded
+  if (subtreeLevelIdx >= layer.loadedSubtrees.size()) {
+    return true;
+  }
+
+  return layer.loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx) !=
+         layer.loadedSubtrees[subtreeLevelIdx].end();
+}
+
+void addRectangleAvailabilityToLayer(
+    LayerJsonTerrainLoader::Layer& layer,
+    const QuadtreeTileID& subtreeID,
+    const std::vector<CesiumGeometry::QuadtreeTileRectangularRange>&
+        rectangleAvailabilities) {
+  for (const QuadtreeTileRectangularRange& range : rectangleAvailabilities) {
+    layer.contentAvailability.addAvailableTileRange(range);
+  }
+
+  uint32_t subtreeLevelIdx;
+  uint64_t subtreeMortonIdx;
+  subtreeHash(subtreeID, layer, subtreeLevelIdx, subtreeMortonIdx);
+
+  // it doesn't have the subtree exceeds max zooms, so just treat it
+  // as loaded
+  if (subtreeLevelIdx >= layer.loadedSubtrees.size()) {
+    return;
+  }
+
+  layer.loadedSubtrees[subtreeLevelIdx].insert(subtreeMortonIdx);
+}
 
 /**
  * @brief Creates the query parameter string for the extensions in the given
@@ -142,8 +203,9 @@ Future<LoadLayersResult> loadLayersRecursive(
       std::move(version),
       std::move(urls),
       std::move(availability),
+      static_cast<uint32_t>(maxZoom),
       availabilityLevels,
-      creditString,
+      std::move(creditString),
       std::nullopt});
 
   std::string parentUrl =
@@ -300,7 +362,6 @@ Future<LoadLayersResult> loadLayerJson(
       showCreditsOnScreen,
       std::move(loadLayersResult));
 }
-
 } // namespace
 
 /*static*/ CesiumAsync::Future<TilesetContentLoaderResult>
@@ -405,6 +466,24 @@ LayerJsonTerrainLoader::createLoader(
       });
 }
 
+LayerJsonTerrainLoader::Layer::Layer(
+    const std::string& baseUrl_,
+    std::string&& version_,
+    std::vector<std::string>&& tileTemplateUrls_,
+    CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability_,
+    uint32_t maxZooms_,
+    int32_t availabilityLevels_,
+    std::string&& creditString_,
+    std::optional<Credit> credit_)
+    : baseUrl{baseUrl_},
+      version{std::move(version_)},
+      tileTemplateUrls{std::move(tileTemplateUrls_)},
+      contentAvailability{std::move(contentAvailability_)},
+      loadedSubtrees(maxSubtreeInLayer(maxZooms_, availabilityLevels_)),
+      availabilityLevels{availabilityLevels_},
+      creditString{std::move(creditString_)},
+      credit{credit_} {}
+
 LayerJsonTerrainLoader::LayerJsonTerrainLoader(
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
     const CesiumGeospatial::Projection& projection,
@@ -444,78 +523,46 @@ std::string resolveTileUrl(
           }));
 }
 
-Future<TileLoadResult> requestTileContent(
+Future<QuantizedMeshLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const QuadtreeTileID& tileID,
     const BoundingVolume& boundingVolume,
-    LayerJsonTerrainLoader::Layer& layer,
+    const LayerJsonTerrainLoader::Layer& layer,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     bool enableWaterMask) {
   std::string url = resolveTileUrl(tileID, layer);
+  return pAssetAccessor->get(asyncSystem, url, requestHeaders)
+      .thenInWorkerThread(
+          [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
+              std::shared_ptr<IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url()));
+              return result;
+            }
 
-  Future<QuantizedMeshLoadResult> futureQuantizedMesh =
-      pAssetAccessor->get(asyncSystem, url, requestHeaders)
-          .thenInWorkerThread(
-              [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
-                  std::shared_ptr<IAssetRequest>&& pRequest) {
-                const IAssetResponse* pResponse = pRequest->response();
-                if (!pResponse) {
-                  QuantizedMeshLoadResult result;
-                  result.errors.emplace_error(fmt::format(
-                      "Did not receive a valid response for tile content {}",
-                      pRequest->url()));
-                  return result;
-                }
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
+              QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Received status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url()));
+            }
 
-                if (pResponse->statusCode() != 0 &&
-                    (pResponse->statusCode() < 200 ||
-                     pResponse->statusCode() >= 300)) {
-                  QuantizedMeshLoadResult result;
-                  result.errors.emplace_error(fmt::format(
-                      "Received status code {} for tile content {}",
-                      pResponse->statusCode(),
-                      pRequest->url()));
-                }
-
-                return QuantizedMeshLoader::load(
-                    tileID,
-                    boundingVolume,
-                    pRequest->url(),
-                    pResponse->data(),
-                    enableWaterMask);
-              });
-
-  // If this tile has availability data, we need to add it to the layer in the
-  // main thread.
-  if (layer.availabilityLevels > 0 &&
-      int32_t(tileID.level) % layer.availabilityLevels == 0) {
-    futureQuantizedMesh =
-        std::move(futureQuantizedMesh)
-            .thenInMainThread(
-                [&layer](QuantizedMeshLoadResult&& loadResult) mutable {
-                  for (auto& range : loadResult.availableTileRectangles) {
-                    layer.availability.addAvailableTileRange(range);
-                  }
-                  return std::move(loadResult);
-                });
-  }
-
-  return std::move(futureQuantizedMesh)
-      .thenImmediately([](QuantizedMeshLoadResult&& loadResult) {
-        // TODO: why does TileLoadRequest need an IAssetRequest?
-        return TileLoadResult{
-            TileRenderContent{std::move(loadResult.model)},
-            loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                          : TileLoadResultState::Success,
-            nullptr,
-            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-              if (boundingVolume) {
-                tile.setBoundingVolume(*boundingVolume);
-              }
-            }};
-      });
+            return QuantizedMeshLoader::load(
+                tileID,
+                boundingVolume,
+                pRequest->url(),
+                pResponse->data(),
+                enableWaterMask);
+          });
 }
 
 Future<int> loadTileAvailability(
@@ -544,15 +591,12 @@ Future<int> loadTileAvailability(
             pRequest->url());
         return QuantizedMeshMetadataResult();
       })
-      .thenInMainThread([&layer](QuantizedMeshMetadataResult&& metadata) {
-        for (const QuadtreeTileRectangularRange& range :
-             metadata.availability) {
-          layer.availability.addAvailableTileRange(range);
-        }
+      .thenInMainThread([&layer,
+                         tileID](QuantizedMeshMetadataResult&& metadata) {
+        addRectangleAvailabilityToLayer(layer, tileID, metadata.availability);
         return 0;
       });
 }
-
 } // namespace
 
 Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
@@ -572,7 +616,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        0,
+        nullptr,
         {}});
   }
 
@@ -580,7 +624,8 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
   // available.
   auto firstAvailableIt = this->_layers.begin();
   while (firstAvailableIt != this->_layers.end() &&
-         !firstAvailableIt->availability.isTileAvailable(*pQuadtreeTileID)) {
+         !firstAvailableIt->contentAvailability.isTileAvailable(
+             *pQuadtreeTileID)) {
     ++firstAvailableIt;
   }
 
@@ -589,20 +634,9 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        0,
+        nullptr,
         {}});
   }
-
-  // Start the actual content request.
-  Future<TileLoadResult> futureContent = requestTileContent(
-      pLogger,
-      asyncSystem,
-      pAssetAccessor,
-      *pQuadtreeTileID,
-      tile.getBoundingVolume(),
-      *firstAvailableIt,
-      requestHeaders,
-      contentOptions.enableWaterMask);
 
   // Also load the same tile in any underlying layers for which this tile
   // is an availability level. This is necessary because, when we later
@@ -616,72 +650,215 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
 
   while (it != this->_layers.end()) {
     if (it->availabilityLevels >= 1 &&
-        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0 &&
-        it->availability.isTileAvailable(*pQuadtreeTileID)) {
-      availabilityRequests.emplace_back(loadTileAvailability(
-          pLogger,
-          asyncSystem,
-          pAssetAccessor,
-          *pQuadtreeTileID,
-          *it,
-          requestHeaders));
+        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0) {
+      if (!isSubtreeLoadedInLayer(*pQuadtreeTileID, *it)) {
+        availabilityRequests.emplace_back(loadTileAvailability(
+            pLogger,
+            asyncSystem,
+            pAssetAccessor,
+            *pQuadtreeTileID,
+            *it,
+            requestHeaders));
+      }
     }
+
+    ++it;
   }
 
-  Future<TileLoadResult> futureResult =
-      availabilityRequests.empty()
-          ? std::move(futureContent)
-          : asyncSystem.all(std::move(availabilityRequests))
-                .thenImmediately([futureContent = std::move(futureContent)](
-                                     std::vector<int>&&) mutable {
-                  return std::move(futureContent);
-                });
+  // Start the actual content request.
+  auto& currentLayer = *firstAvailableIt;
+  Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
+      pLogger,
+      asyncSystem,
+      pAssetAccessor,
+      *pQuadtreeTileID,
+      tile.getBoundingVolume(),
+      currentLayer,
+      requestHeaders,
+      contentOptions.enableWaterMask);
 
-  return std::move(futureResult)
-      .thenInMainThread(
-          [this, &tile, pQuadtreeTileID](TileLoadResult&& result) {
-            // Now that all our availability is sorted out, create this tile's
-            // children.
-            // TODO: in most cases, we can create this tile's children before
-            // this tile is loaded, and it would be much more efficient to take
-            // advantage of that when we can.
-            const QuadtreeTileID swID(
-                pQuadtreeTileID->level + 1,
-                pQuadtreeTileID->x * 2,
-                pQuadtreeTileID->y * 2);
-            const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-            const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-            const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+  // determine if this tile is at the availability level of the current layer
+  // and if we need to add the availability rectangles to the current layer. We
+  // only add the rectangles if those are not not loaded
+  bool shouldCurrLayerLoadAvailability = false;
+  if (firstAvailableIt->availabilityLevels >= 1 &&
+      int32_t(pQuadtreeTileID->level) % currentLayer.availabilityLevels == 0) {
+    shouldCurrLayerLoadAvailability =
+        !isSubtreeLoadedInLayer(*pQuadtreeTileID, currentLayer);
+  }
 
-            // If _any_ child is available, we create _all_ children
-            bool sw = this->tileIsAvailableInAnyLayer(swID);
-            bool se = this->tileIsAvailableInAnyLayer(seID);
-            bool nw = this->tileIsAvailableInAnyLayer(nwID);
-            bool ne = this->tileIsAvailableInAnyLayer(neID);
-            if (sw || se || nw || ne) {
-              std::vector<Tile> children;
-              children.reserve(4);
+  // If this tile has availability data, we need to add it to the layer in the
+  // main thread.
+  if (!availabilityRequests.empty() || shouldCurrLayerLoadAvailability) {
+    auto finalFuture =
+        availabilityRequests.empty()
+            ? std::move(futureQuantizedMesh)
+            : asyncSystem.all(std::move(availabilityRequests))
+                  .thenImmediately(
+                      [futureQuantizedMesh = std::move(futureQuantizedMesh)](
+                          std::vector<int>&&) mutable {
+                        return std::move(futureQuantizedMesh);
+                      });
 
-              createChildTile(tile, children, swID, sw);
-              createChildTile(tile, children, seID, se);
-              createChildTile(tile, children, nwID, nw);
-              createChildTile(tile, children, neID, ne);
+    return std::move(finalFuture)
+        .thenInMainThread([&currentLayer,
+                           tileID = *pQuadtreeTileID,
+                           shouldCurrLayerLoadAvailability](
+                              QuantizedMeshLoadResult&& loadResult) {
+          if (shouldCurrLayerLoadAvailability) {
+            addRectangleAvailabilityToLayer(
+                currentLayer,
+                tileID,
+                loadResult.availableTileRectangles);
+          }
 
-              tile.createChildTiles(std::move(children));
-            }
+          return TileLoadResult{
+              TileRenderContent{std::move(loadResult.model)},
+              loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                            : TileLoadResultState::Success,
+              nullptr,
+              [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
+                if (boundingVolume) {
+                  tile.setBoundingVolume(*boundingVolume);
+                }
+              }};
+        });
+  }
 
-            return std::move(result);
-          });
+  return std::move(futureQuantizedMesh)
+      .thenImmediately([](QuantizedMeshLoadResult&& loadResult) mutable {
+        return TileLoadResult{
+            TileRenderContent{std::move(loadResult.model)},
+            loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                          : TileLoadResultState::Success,
+            nullptr,
+            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
+              if (boundingVolume) {
+                tile.setBoundingVolume(*boundingVolume);
+              }
+            }};
+      });
+}
+
+bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
+  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+  if (pQuadtreeID) {
+    if (tile.getChildren().empty()) {
+      // For the tile that is in the middle of subtree, it is safe to create the
+      // children. However for tile that is at the availability level, we have
+      // to wait for the tile to be finished loading, since there are multiple
+      // subtrees in the background layers being on the flight as well. Once the
+      // tile finishes loading, all the subtrees are resolved
+      bool isTileAtAvailabilityLevel = false;
+      for (const auto& layer : _layers) {
+        if (layer.availabilityLevels > 0 &&
+            int32_t(pQuadtreeID->level) % layer.availabilityLevels == 0) {
+          isTileAtAvailabilityLevel = true;
+          break;
+        }
+      }
+
+      if (isTileAtAvailabilityLevel &&
+          tile.getState() <= TileLoadState::ContentLoading) {
+        return true;
+      }
+
+      createTileChildren(tile);
+      return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+void LayerJsonTerrainLoader::createTileChildren(Tile& tile) {
+
+  if (tile.getChildren().empty()) {
+    const QuadtreeTileID* pQuadtreeTileID =
+        std::get_if<QuadtreeTileID>(&tile.getTileID());
+
+    // Now that all our availability is sorted out, create this tile's
+    // children.
+    const QuadtreeTileID swID(
+        pQuadtreeTileID->level + 1,
+        pQuadtreeTileID->x * 2,
+        pQuadtreeTileID->y * 2);
+    const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+    const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+    const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+
+    // If _any_ child is available, we create _all_ children
+    bool sw = this->tileIsAvailableInAnyLayer(swID);
+    bool se = this->tileIsAvailableInAnyLayer(seID);
+    bool nw = this->tileIsAvailableInAnyLayer(nwID);
+    bool ne = this->tileIsAvailableInAnyLayer(neID);
+
+    if (sw || se || nw || ne) {
+      std::vector<Tile> children;
+      children.reserve(4);
+
+      createChildTile(tile, children, swID, sw);
+      createChildTile(tile, children, seID, se);
+      createChildTile(tile, children, nwID, nw);
+      createChildTile(tile, children, neID, ne);
+
+      tile.createChildTiles(std::move(children));
+    }
+  }
 }
 
 bool LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(
     const QuadtreeTileID& tileID) const {
   for (const Layer& layer : this->_layers) {
-    if (layer.availability.isTileAvailable(tileID)) {
+    auto availableState = tileIsAvailableInLayer(tileID, layer);
+    if (availableState == AvailableState::Available) {
       return true;
     }
   }
+
   return false;
+}
+
+LayerJsonTerrainLoader::AvailableState
+LayerJsonTerrainLoader::tileIsAvailableInLayer(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const Layer& layer) const {
+  if (layer.contentAvailability.isTileAvailable(tileID)) {
+    return AvailableState::Available;
+  } else {
+    // this layer doesn't use subtree at all and list
+    // all availability rectanges in the layer.json. So
+    // this tile is not available
+    if (layer.availabilityLevels <= 0) {
+      return AvailableState::NotAvailable;
+    }
+
+    // this tile ID is also a subtree ID. So no need to calc
+    // subtree ID
+    if (int32_t(tileID.level) % layer.availabilityLevels == 0) {
+      if (isSubtreeLoadedInLayer(tileID, layer)) {
+        return AvailableState::NotAvailable;
+      }
+    }
+
+    // calc the subtree ID this tile belongs to and determine it's loaded
+    uint32_t subtreeLevelIdx =
+        tileID.level / uint32_t(layer.availabilityLevels);
+    uint64_t levelLeft = tileID.level % uint32_t(layer.availabilityLevels);
+    uint32_t subtreeLevel =
+        subtreeLevelIdx * uint32_t(layer.availabilityLevels);
+    uint32_t subtreeX = tileID.x >> levelLeft;
+    uint32_t subtreeY = tileID.y >> levelLeft;
+    CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
+    if (isSubtreeLoadedInLayer(subtreeID, layer)) {
+      return AvailableState::NotAvailable;
+    }
+  }
+
+  return AvailableState::Unknown;
 }
 
 void LayerJsonTerrainLoader::createChildTile(
