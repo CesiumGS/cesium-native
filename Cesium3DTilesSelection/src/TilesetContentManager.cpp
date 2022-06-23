@@ -48,87 +48,86 @@ CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
     std::shared_ptr<IPrepareRendererResources>&& pPrepareRendererResources,
     const TilesetContentOptions& contentOptions,
     const glm::dmat4& tileTransform) {
-  void* pRenderResources = nullptr;
-  if (result.state == TileLoadResultState::Success) {
-    TileRenderContent* pRenderContent =
-        std::get_if<TileRenderContent>(&result.contentKind);
-    if (pRenderContent && pRenderContent->model) {
-      // Download any external image or buffer urls in the gltf if there are any
-      CesiumGltfReader::GltfReaderResult gltfResult{
-          std::move(*pRenderContent->model),
-          {},
-          {}};
+  assert(
+      result.state == TileLoadResultState::Success &&
+      "This function requires result to be success");
 
-      CesiumAsync::HttpHeaders requestHeaders;
-      std::string baseUrl;
-      if (result.pCompletedRequest) {
-        requestHeaders = result.pCompletedRequest->headers();
-        baseUrl = result.pCompletedRequest->url();
-      }
+  TileRenderContent* pRenderContent =
+      std::get_if<TileRenderContent>(&result.contentKind);
+  assert(
+      (pRenderContent && pRenderContent->model != std::nullopt) &&
+      "This function only processes render content");
 
-      CesiumGltfReader::GltfReaderOptions gltfOptions;
-      gltfOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
+  // Download any external image or buffer urls in the gltf if there are any
+  CesiumGltfReader::GltfReaderResult gltfResult{
+      std::move(*pRenderContent->model),
+      {},
+      {}};
 
-      return CesiumGltfReader::GltfReader::resolveExternalData(
-                 asyncSystem,
-                 baseUrl,
-                 requestHeaders,
-                 pAssetAccessor,
-                 gltfOptions,
-                 std::move(gltfResult))
-          .thenInWorkerThread(
-              [pLogger,
-               tileTransform,
-               contentOptions,
-               result = std::move(result),
-               pPrepareRendererResources =
-                   std::move(pPrepareRendererResources)](
-                  CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
-                if (!gltfResult.errors.empty()) {
-                  if (result.pCompletedRequest) {
-                    SPDLOG_LOGGER_ERROR(
-                        pLogger,
-                        "Failed resolving external glTF buffers from {}:\n- {}",
-                        result.pCompletedRequest->url(),
-                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-                  } else {
-                    SPDLOG_LOGGER_ERROR(
-                        pLogger,
-                        "Failed resolving external glTF buffers:\n- {}",
-                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-                  }
-                }
-
-                if (!gltfResult.warnings.empty()) {
-                  if (result.pCompletedRequest) {
-                    SPDLOG_LOGGER_WARN(
-                        pLogger,
-                        "Warning when resolving external gltf buffers from "
-                        "{}:\n- {}",
-                        result.pCompletedRequest->url(),
-                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-                  } else {
-                    SPDLOG_LOGGER_ERROR(
-                        pLogger,
-                        "Warning resolving external glTF buffers:\n- {}",
-                        CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-                  }
-                }
-
-                TileRenderContent& renderContent =
-                    std::get<TileRenderContent>(result.contentKind);
-                renderContent.model = std::move(gltfResult.model);
-                return postProcessGltf(
-                    std::move(result),
-                    tileTransform,
-                    contentOptions,
-                    pPrepareRendererResources);
-              });
-    }
+  CesiumAsync::HttpHeaders requestHeaders;
+  std::string baseUrl;
+  if (result.pCompletedRequest) {
+    requestHeaders = result.pCompletedRequest->headers();
+    baseUrl = result.pCompletedRequest->url();
   }
 
-  return asyncSystem.createResolvedFuture(
-      TileLoadResultAndRenderResources{std::move(result), pRenderResources});
+  CesiumGltfReader::GltfReaderOptions gltfOptions;
+  gltfOptions.ktx2TranscodeTargets = contentOptions.ktx2TranscodeTargets;
+
+  return CesiumGltfReader::GltfReader::resolveExternalData(
+             asyncSystem,
+             baseUrl,
+             requestHeaders,
+             pAssetAccessor,
+             gltfOptions,
+             std::move(gltfResult))
+      .thenInWorkerThread(
+          [pLogger,
+           tileTransform,
+           contentOptions,
+           result = std::move(result),
+           pPrepareRendererResources = std::move(pPrepareRendererResources)](
+              CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
+            if (!gltfResult.errors.empty()) {
+              if (result.pCompletedRequest) {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Failed resolving external glTF buffers from {}:\n- {}",
+                    result.pCompletedRequest->url(),
+                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+              } else {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Failed resolving external glTF buffers:\n- {}",
+                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+              }
+            }
+
+            if (!gltfResult.warnings.empty()) {
+              if (result.pCompletedRequest) {
+                SPDLOG_LOGGER_WARN(
+                    pLogger,
+                    "Warning when resolving external gltf buffers from "
+                    "{}:\n- {}",
+                    result.pCompletedRequest->url(),
+                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+              } else {
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "Warning resolving external glTF buffers:\n- {}",
+                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+              }
+            }
+
+            TileRenderContent& renderContent =
+                std::get<TileRenderContent>(result.contentKind);
+            renderContent.model = std::move(gltfResult.model);
+            return postProcessGltf(
+                std::move(result),
+                tileTransform,
+                contentOptions,
+                pPrepareRendererResources);
+          });
 }
 } // namespace
 
@@ -174,21 +173,48 @@ void TilesetContentManager::loadTileContent(
           _externals.pAssetAccessor,
           _externals.pLogger,
           _requestHeaders)
-      .thenInWorkerThread(
+      .thenImmediately(
           [pPrepareRendererResources = _externals.pPrepareRendererResources,
            asyncSystem = _externals.asyncSystem,
            pAssetAccessor = _externals.pAssetAccessor,
            pLogger = _externals.pLogger,
            contentOptions,
            tileTransform](TileLoadResult&& result) mutable {
-            return postProcessContent(
-                std::move(result),
-                std::move(asyncSystem),
-                std::move(pAssetAccessor),
-                std::move(pLogger),
-                std::move(pPrepareRendererResources),
-                contentOptions,
-                tileTransform);
+            // the reason we run immediate continuation, instead of in the
+            // worker thread, is that the loader may run the task in the main
+            // thread. And most often than not, those main thread task is very
+            // light weight. So when those tasks return, there is no need to
+            // spawn another worker thread if the result of the task isn't
+            // related to render content. We only ever spawn a new task in the
+            // worker thread if the content is a render content
+            if (result.state == TileLoadResultState::Success) {
+              auto pRenderContent =
+                  std::get_if<TileRenderContent>(&result.contentKind);
+              if (pRenderContent && pRenderContent->model) {
+                return asyncSystem.runInWorkerThread(
+                    [result = std::move(result),
+                     asyncSystem,
+                     pAssetAccessor = std::move(pAssetAccessor),
+                     pLogger = std::move(pLogger),
+                     pPrepareRendererResources =
+                         std::move(pPrepareRendererResources),
+                     contentOptions,
+                     tileTransform]() mutable {
+                      return postProcessContent(
+                          std::move(result),
+                          std::move(asyncSystem),
+                          std::move(pAssetAccessor),
+                          std::move(pLogger),
+                          std::move(pPrepareRendererResources),
+                          contentOptions,
+                          tileTransform);
+                    });
+              }
+            }
+
+            return asyncSystem
+                .createResolvedFuture<TileLoadResultAndRenderResources>(
+                    {std::move(result), nullptr});
           })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         TilesetContentManager::setTileContent(
@@ -209,7 +235,7 @@ void TilesetContentManager::loadTileContent(
 }
 
 void TilesetContentManager::updateTileContent(Tile& tile) {
-  const TileContent& content = tile.getContent();
+  TileContent& content = tile.getContent();
 
   TileLoadState state = content.getState();
   switch (state) {
@@ -218,6 +244,10 @@ void TilesetContentManager::updateTileContent(Tile& tile) {
     break;
   default:
     break;
+  }
+
+  if (content.shouldContentContinueUpdated()) {
+    content.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
   }
 }
 
@@ -250,7 +280,6 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   content.setContentKind(TileUnknownContent{});
-  content.setTileInitializerCallback({});
   content.setState(TileLoadState::Unloaded);
   return true;
 }
@@ -293,33 +322,34 @@ void TilesetContentManager::setTileContent(
   }
 
   content.setContentKind(std::move(result.contentKind));
-  content.setTileInitializerCallback(std::move(result.tileInitializer));
   content.setRenderResources(pWorkerRenderResources);
+  content.setTileInitializerCallback(std::move(result.tileInitializer));
 }
 
 void TilesetContentManager::updateContentLoadedState(Tile& tile) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
+  if (content.isExternalContent()) {
+    // if tile is external tileset, then it will be refined no matter what
+    tile.setUnconditionallyRefine();
+  } else if (content.isRenderContent()) {
+    // create render resources in the main thread
+    const TileRenderContent* pRenderContent = content.getRenderContent();
+    if (pRenderContent->model) {
+      void* pWorkerRenderResources = content.getRenderResources();
+      void* pMainThreadRenderResources =
+          _externals.pPrepareRendererResources->prepareInMainThread(
+              tile,
+              pWorkerRenderResources);
+      content.setRenderResources(pMainThreadRenderResources);
+    }
+  }
+
+  // call the initializer 
   auto& tileInitializer = content.getTileInitializerCallback();
   if (tileInitializer) {
     tileInitializer(tile);
     content.setTileInitializerCallback({});
-  }
-
-  // if tile is external tileset, then it will be refined no matter what
-  if (content.isExternalContent()) {
-    tile.setUnconditionallyRefine();
-  }
-
-  // create render resources in the main thread
-  const TileRenderContent* pRenderContent = content.getRenderContent();
-  if (pRenderContent && pRenderContent->model) {
-    void* pWorkerRenderResources = content.getRenderResources();
-    void* pMainThreadRenderResources =
-        _externals.pPrepareRendererResources->prepareInMainThread(
-            tile,
-            pWorkerRenderResources);
-    content.setRenderResources(pMainThreadRenderResources);
   }
 
   content.setState(TileLoadState::Done);
