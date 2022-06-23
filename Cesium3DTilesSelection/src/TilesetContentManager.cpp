@@ -82,7 +82,7 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   return std::nullopt;
 }
 
-void createQuadtreeSubdividedChildren(Tile& parent) {
+void createQuadtreeSubdividedChildren(Tile& parent, RasterOverlayUpsampler &upsampler) {
   std::optional<RegionAndCenter> maybeRegionAndCenter =
       getTileBoundingRegionForUpsampling(parent);
   if (!maybeRegionAndCenter) {
@@ -123,7 +123,7 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   std::vector<Tile> children;
   children.reserve(4);
   for (std::size_t i = 0; i < 4; ++i) {
-    children.emplace_back(parent.getContent().getLoader());
+    children.emplace_back(&upsampler);
   }
   parent.createChildTiles(std::move(children));
 
@@ -651,7 +651,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
   // don't unload tile if any of its children are upsampled tile and
   // currently loading. Loader can safely capture the parent tile to upsample
-  // the current tile as the manager guarentee that the parent tile will be
+  // the current tile as the manager guarantee that the parent tile will be
   // alive
   for (const Tile& child : tile.getChildren()) {
     if (child.getState() == TileLoadState::ContentLoading &&
@@ -855,7 +855,7 @@ void TilesetContentManager::updateDoneState(
     // children to hang more detailed rasters on by subdividing this tile.
     if (!skippedUnknown && moreRasterDetailAvailable &&
         tile.getChildren().empty()) {
-      createQuadtreeSubdividedChildren(tile);
+      createQuadtreeSubdividedChildren(tile, _upsampler);
     }
   }
 }

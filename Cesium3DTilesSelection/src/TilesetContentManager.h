@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RasterOverlayUpsampler.h"
 #include "TilesetContentLoader.h"
 
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -63,6 +64,7 @@ private:
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
+  RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection* _pOverlayCollection;
   int32_t _tilesLoadOnProgress;
   int64_t _tilesDataUsed;
