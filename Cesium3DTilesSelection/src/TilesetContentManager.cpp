@@ -511,6 +511,33 @@ void TilesetContentManager::loadTileContent(
     return;
   }
 
+  // Below are the guarantees the loader can assume about upsampled tile. If any
+  // of those guarantees are wrong, it's a bug:
+  // - Any tile that is marked as upsampled tile, we will guarantee that the
+  // parent is always loaded. It lets the loader takes care of upsampling only
+  // without requesting the parent tile. If a loader tries to upsample tile, but
+  // the parent is not loaded, it is a bug.
+  // - This manager will also guarantee that the parent tile will be alive until
+  // the upsampled tile content returns to the main thread. So the loader can
+  // capture the parent geometry by reference in the worker thread to upsample
+  // the current tile. Warning: it's not thread-safe to modify the parent
+  // geometry in the worker thread at the same time though
+  const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
+      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID());
+  if (pUpsampleID) {
+    // We can't upsample this tile until its parent tile is done loading.
+    Tile* pParentTile = tile.getParent();
+    if (pParentTile) {
+      if (pParentTile->getState() != TileLoadState::Done) {
+        loadTileContent(*pParentTile, tilesetOptions);
+        return;
+      }
+    } else {
+      // we cannot upsample this tile if it doesn't have parent
+      return;
+    }
+  }
+
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
       mapOverlaysToTile(tile, *_pOverlayCollection, tilesetOptions);
@@ -617,8 +644,21 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
+  // don't unload external or empty tile
   if (content.isExternalContent() || content.isEmptyContent()) {
     return false;
+  }
+
+  // don't unload tile if any of its children are upsampled tile and
+  // currently loading. Loader can safely capture the parent tile to upsample
+  // the current tile as the manager guarentee that the parent tile will be
+  // alive
+  for (const Tile& child : tile.getChildren()) {
+    if (child.getState() == TileLoadState::ContentLoading &&
+        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
+            child.getTileID())) {
+      return false;
+    }
   }
 
   notifyTileUnloading(tile);

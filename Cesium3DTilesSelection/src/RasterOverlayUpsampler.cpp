@@ -1,154 +1,111 @@
 #include "RasterOverlayUpsampler.h"
+
+#include "upsampleGltfForRasterOverlays.h"
+
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/RasterOverlay.h>
+#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Projection.h>
+
+#include <cassert>
+#include <variant>
 
 namespace Cesium3DTilesSelection {
 CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
     Tile& tile,
-    const TilesetContentOptions& contentOptions,
+    [[maybe_unused]] const TilesetContentOptions& contentOptions,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+    [[maybe_unused]] const std::shared_ptr<CesiumAsync::IAssetAccessor>&
+        pAssetAccessor,
+    [[maybe_unused]] const std::shared_ptr<spdlog::logger>& pLogger,
+    [[maybe_unused]] const std::vector<CesiumAsync::IAssetAccessor::THeader>&
+        requestHeaders) {
   Tile* pParent = tile.getParent();
-  const UpsampledQuadtreeNode* pSubdividedParentID =
-      std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
-
-  assert(pParent != nullptr);
-  assert(pParent->getState() == LoadState::Done);
-  assert(pSubdividedParentID != nullptr);
-
-  TileContentLoadResult* pParentContent = pParent->getContent();
-  if (!pParentContent || !pParentContent->model) {
-    this->setState(LoadState::ContentLoaded);
-    return;
+  if (pParent == nullptr) {
+    return asyncSystem.createResolvedFuture(TileLoadResult{
+        TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        TileLoadResultState::Failed,
+        nullptr,
+        {}});
   }
 
-  CesiumGltf::Model& parentModel = pParentContent->model.value();
+  const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
+      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID());
+  if (pTileID == nullptr) {
+    // this tile is not marked to be upsampled, so just fail it
+    return asyncSystem.createResolvedFuture(TileLoadResult{
+        TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        TileLoadResultState::Failed,
+        nullptr,
+        {}});
+  }
 
-  Tileset* pTileset = this->getTileset();
-  pTileset->notifyTileStartLoading(this);
+  // The tile content manager guarantees that the parent tile is already loaded
+  // before upsampled tile is loaded. If that's not the case, it's a bug
+  assert(
+      pParent->getState() == TileLoadState::Done &&
+      "Parent must be loaded before upsampling");
 
-  struct LoadResult {
-    LoadState state;
-    std::unique_ptr<TileContentLoadResult> pContent;
-    void* pRendererResources;
-  };
+  const TileContent& parentContent = pParent->getContent();
+  const TileRenderContent* pParentRenderContent =
+      parentContent.getRenderContent();
+  if (!pParentRenderContent || !pParentRenderContent->model) {
+    // parent doesn't have mesh, so it's not possible to upsample
+    return asyncSystem.createResolvedFuture(TileLoadResult{
+        TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        TileLoadResultState::Failed,
+        nullptr,
+        {}});
+  }
 
   int32_t index = 0;
-  std::vector<Projection>& parentProjections =
-      pParentContent->overlayDetails->rasterOverlayProjections;
-  const gsl::span<Tile> children = pParent->getChildren();
-  if (std::get_if<QuadtreeTileID>(&pParent->getTileID()) &&
-      std::any_of(
-          children.begin(),
-          children.end(),
-          [](const Tile& tile) noexcept {
-            return std::get_if<QuadtreeTileID>(&tile.getTileID());
-          })) {
-    // We will only get here for quantized-mesh tiles where some (but not all)
-    // tiles are present in the data and the rest need to be upsampled. And in
-    // that scenario, we need to use the implicit context's projection for
-    // subdivision, no matter what the status of the overlays.
-    //
-    // For a more typical upsampling, driven by raster overlays, all child tiles
-    // will have a `UpsampledQuadtreeNode` tile ID.
-    if (_pContext->implicitContext->projection.has_value()) {
-      const Projection& projection = *_pContext->implicitContext->projection;
+  const std::vector<CesiumGeospatial::Projection>& parentProjections =
+      parentContent.getRasterOverlayDetails()->rasterOverlayProjections;
+  for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
+    if (mapped.isMoreDetailAvailable()) {
+      const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
+                                                           ->getOverlay()
+                                                           .getTileProvider()
+                                                           ->getProjection();
       auto it = std::find(
           parentProjections.begin(),
           parentProjections.end(),
           projection);
-
-      if (it == parentProjections.end()) {
-        const BoundingRegion* pParentRegion =
-            std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
-
-        std::optional<TileContentDetailsForOverlays> overlayDetails =
-            GltfContent::createRasterOverlayTextureCoordinates(
-                parentModel,
-                pParent->getTransform(),
-                int32_t(parentProjections.size()),
-                pParentRegion ? std::make_optional<GlobeRectangle>(
-                                    pParentRegion->getRectangle())
-                              : std::nullopt,
-                {projection});
-        if (overlayDetails) {
-          pParentContent->overlayDetails->rasterOverlayRectangles.emplace_back(
-              overlayDetails->rasterOverlayRectangles[0]);
-          parentProjections.emplace_back(projection);
-          index = int32_t(parentProjections.size()) - 1;
-        }
-      } else {
-        index = int32_t(it - parentProjections.begin());
-      }
-    }
-  } else {
-    for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
-      if (mapped.isMoreDetailAvailable()) {
-        const Projection& projection = mapped.getReadyTile()
-                                           ->getOverlay()
-                                           .getTileProvider()
-                                           ->getProjection();
-        auto it = std::find(
-            parentProjections.begin(),
-            parentProjections.end(),
-            projection);
-        index = int32_t(it - parentProjections.begin());
-      }
+      index = int32_t(it - parentProjections.begin());
+      break;
     }
   }
 
-  pTileset->getAsyncSystem()
-      .runInWorkerThread(
-          [&parentModel,
-           transform = this->getTransform(),
-           textureCoordinateIndex = index,
-           projections = std::move(projections),
-           pSubdividedParentID,
-           tileBoundingVolume = this->getBoundingVolume(),
-           tileContentBoundingVolume = this->getContentBoundingVolume(),
-           gltfUpAxis = pTileset->getGltfUpAxis(),
-           generateMissingNormalsSmooth =
-               pTileset->getOptions()
-                   .contentOptions.generateMissingNormalsSmooth,
-           pLogger = pTileset->getExternals().pLogger,
-           pPrepareRendererResources =
-               pTileset->getExternals().pPrepareRendererResources]() mutable {
-            std::unique_ptr<TileContentLoadResult> pContent =
-                std::make_unique<TileContentLoadResult>();
-            pContent->model = upsampleGltfForRasterOverlays(
-                parentModel,
-                *pSubdividedParentID,
-                textureCoordinateIndex);
+  const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
+  return asyncSystem.runInWorkerThread([&parentModel,
+                                        transform = tile.getTransform(),
+                                        textureCoordinateIndex = index,
+                                        TileID = *pTileID]() mutable {
+    auto model = upsampleGltfForRasterOverlays(
+        parentModel,
+        TileID,
+        textureCoordinateIndex);
 
-            void* pRendererResources = processNewTileContent(
-                pPrepareRendererResources,
-                pLogger,
-                *pContent,
-                generateMissingNormalsSmooth,
-                gltfUpAxis,
-                transform,
-                tileContentBoundingVolume,
-                tileBoundingVolume,
-                std::move(projections));
-
-            return LoadResult{
-                LoadState::ContentLoaded,
-                std::move(pContent),
-                pRendererResources};
-          })
-      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
-        this->_pContent = std::move(loadResult.pContent);
-        this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this);
-        this->setState(loadResult.state);
-      })
-      .catchInMainThread([this](const std::exception& /*e*/) noexcept {
-        this->_pContent.reset();
-        this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(this);
-        this->setState(LoadState::Failed);
-      });
+    return TileLoadResult{
+        TileRenderContent{std::move(model)},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        TileLoadResultState::Success,
+        nullptr,
+        {}};
+  });
 }
 
 bool RasterOverlayUpsampler::updateTileContent([[maybe_unused]] Tile& tile) {
