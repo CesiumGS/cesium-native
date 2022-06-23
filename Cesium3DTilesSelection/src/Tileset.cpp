@@ -123,6 +123,7 @@ Tileset::Tileset(
 
     CesiumIonTilesetLoader::createLoader(
         externals,
+        options.contentOptions,
         static_cast<uint32_t>(ionAssetID),
         ionAccessToken,
         ionAssetEndpointUrl,
