@@ -82,7 +82,9 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   return std::nullopt;
 }
 
-void createQuadtreeSubdividedChildren(Tile& parent, RasterOverlayUpsampler &upsampler) {
+void createQuadtreeSubdividedChildren(
+    Tile& parent,
+    RasterOverlayUpsampler& upsampler) {
   std::optional<RegionAndCenter> maybeRegionAndCenter =
       getTileBoundingRegionForUpsampling(parent);
   if (!maybeRegionAndCenter) {
