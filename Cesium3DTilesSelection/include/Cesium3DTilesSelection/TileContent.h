@@ -47,11 +47,17 @@ public:
 
   TileLoadState getState() const noexcept;
 
+  bool shouldContentContinueUpdated() const noexcept;
+
   bool isEmptyContent() const noexcept;
 
   bool isExternalContent() const noexcept;
 
   bool isRenderContent() const noexcept;
+
+  const TileExternalContent* getExternalContent() const noexcept;
+
+  TileExternalContent* getExternalContent() noexcept;
 
   const TileRenderContent* getRenderContent() const noexcept;
 
@@ -72,11 +78,15 @@ private:
 
   std::function<void(Tile&)>& getTileInitializerCallback();
 
+  void
+  setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
+
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
-  std::function<void(Tile&)> _deferredTileInitializer;
   TilesetContentLoader* _pLoader;
+  std::function<void(Tile&)> _tileInitializer;
+  bool _shouldContentContinueUpdated;
 
   friend class TilesetContentManager;
 };

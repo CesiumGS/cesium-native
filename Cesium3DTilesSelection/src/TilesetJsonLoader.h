@@ -25,6 +25,8 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
       override;
 
+  bool updateTileContent(Tile& tile) override;
+
   const std::string& getBaseUrl() const noexcept;
 
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);

@@ -346,14 +346,12 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::RetryLater,
-        nullptr,
-        {}});
+        nullptr});
   } else if (_refreshTokenState == TokenRefreshState::Failed) {
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         TileLoadResultState::Failed,
-        nullptr,
-        {}});
+        nullptr});
   }
 
   // TODO: the way this is structured, requests already in progress
@@ -438,6 +436,11 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
 
             _refreshTokenState = TokenRefreshState::Failed;
           });
+}
+
+bool CesiumIonTilesetLoader::updateTileContent(Tile& tile) {
+  auto pLoader = tile.getContent().getLoader();
+  return pLoader->updateTileContent(tile);
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult>
