@@ -87,6 +87,9 @@ private:
       const CesiumGeometry::QuadtreeTileID& childID,
       bool isAvailable);
 
+  CesiumAsync::Future<TileLoadResult>
+  upsampleParentTile(Tile& tile, const CesiumAsync::AsyncSystem& asyncSystem);
+
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;
   std::vector<Layer> _layers;
