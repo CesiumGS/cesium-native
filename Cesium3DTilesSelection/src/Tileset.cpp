@@ -1204,6 +1204,9 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
       return OcclusionInfo{false, false};
     } else if (pOcclusion->isOccluded()) {
       return OcclusionInfo{true, true};
+    } else if (tile.getChildren().size() == 0) {
+      // This is a leaf tile, so we can't use children bounding volumes.
+      return OcclusionInfo{true, false};
     }
 
     // The tile's bounding volume is known to be unoccluded, but check the
