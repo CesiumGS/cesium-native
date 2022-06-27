@@ -5,6 +5,7 @@
 #include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
+#include "Cesium3DTilesSelection/TileOcclusionRendererProxy.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "QuantizedMeshContent.h"
@@ -1182,7 +1183,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
   return queuedForLoad;
 }
 
-Tileset::OcclusionInfo
+TileOcclusionState
 Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->getExternals().pTileOcclusionProxyPool;
@@ -1197,17 +1198,24 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
       // This indicates we ran out of occlusion proxies. We don't want to wait
       // on occlusion info here since it might not ever arrive, so treat this
       // tile as if it is _known_ to be unoccluded.
-      return OcclusionInfo{true, false};
-    } else if (!pOcclusion->isOcclusionAvailable()) {
-      // We have an occlusion proxy, but it does not have valid occlusion
-      // info yet, wait for it.
-      return OcclusionInfo{false, false};
-    } else if (pOcclusion->isOccluded()) {
-      return OcclusionInfo{true, true};
-    } else if (tile.getChildren().size() == 0) {
-      // This is a leaf tile, so we can't use children bounding volumes.
-      return OcclusionInfo{true, false};
-    }
+      return TileOcclusionState::NotOccluded;
+    } else
+      switch (
+          static_cast<TileOcclusionState>(pOcclusion->getOcclusionState())) {
+      case TileOcclusionState::OcclusionUnavailable:
+        // We have an occlusion proxy, but it does not have valid occlusion
+        // info yet, wait for it.
+        return TileOcclusionState::OcclusionUnavailable;
+        break;
+      case TileOcclusionState::Occluded:
+        return TileOcclusionState::Occluded;
+        break;
+      case TileOcclusionState::NotOccluded:
+        if (tile.getChildren().size() == 0) {
+          // This is a leaf tile, so we can't use children bounding volumes.
+          return TileOcclusionState::NotOccluded;
+        }
+      }
 
     // The tile's bounding volume is known to be unoccluded, but check the
     // union of the children bounding volumes since it is tighter fitting.
@@ -1217,7 +1225,7 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
     // find a valid descendant bounding volumes union.
     for (const Tile& child : tile.getChildren()) {
       if (child.getUnconditionallyRefine()) {
-        return OcclusionInfo{true, false};
+        return TileOcclusionState::NotOccluded;
       }
     }
 
@@ -1232,40 +1240,39 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
       if (!pChildProxy) {
         // We ran out of occlusion proxies, treat this as if it is _known_ to
         // be unoccluded so we don't wait for it.
-        return OcclusionInfo{true, false};
+        return TileOcclusionState::NotOccluded;
       }
 
       this->_childOcclusionProxies.push_back(pChildProxy);
     }
 
-    // TODO: get rid of this arbitrary -1000 number.
-
     // Check if any of the proxies are known to be unoccluded
     for (const TileOcclusionRendererProxy* pChildProxy :
          this->_childOcclusionProxies) {
-      if (pChildProxy->isOcclusionAvailable() && !pChildProxy->isOccluded()) {
-        return OcclusionInfo{true, false};
+      if (pChildProxy->getOcclusionState() == TileOcclusionState::NotOccluded) {
+        return TileOcclusionState::NotOccluded;
       }
     }
 
     // Check if any of the proxies are waiting for valid occlusion info.
     for (const TileOcclusionRendererProxy* pChildProxy :
          this->_childOcclusionProxies) {
-      if (!pChildProxy->isOcclusionAvailable()) {
+      if (pChildProxy->getOcclusionState() ==
+          TileOcclusionState::OcclusionUnavailable) {
         // We have an occlusion proxy, but it does not have valid occlusion
         // info yet, wait for it.
-        return OcclusionInfo{false, false};
+        return TileOcclusionState::OcclusionUnavailable;
       }
     }
 
     // If we know the occlusion state of all children, and none are unoccluded,
     // we can treat this tile as occluded.
-    return OcclusionInfo{true, true};
+    return TileOcclusionState::Occluded;
   }
 
   // We don't have an occlusion pool to query occlusion with, treat everything
   // as unoccluded.
-  return OcclusionInfo{true, false};
+  return TileOcclusionState::NotOccluded;
 }
 
 // Visits a tile for possible rendering. When we call this function with a tile:
@@ -1328,13 +1335,13 @@ Tileset::TraversalDetails Tileset::_visitTile(
                               (!tileLastRefined || !childLastRefined);
 
   if (shouldCheckOcclusion) {
-    OcclusionInfo occlusion = this->_checkOcclusion(tile, frameState);
-    if (occlusion.isOccluded) {
+    TileOcclusionState occlusion = this->_checkOcclusion(tile, frameState);
+    if (occlusion == TileOcclusionState::Occluded) {
       ++result.tilesOccluded;
       wantToRefine = false;
       meetsSse = true;
     } else if (
-        !occlusion.isOcclusionAvailable &&
+        occlusion == TileOcclusionState::OcclusionUnavailable &&
         this->_options.delayRefinementForOcclusion &&
         tile.getLastSelectionState().getOriginalResult(
             frameState.lastFrameNumber) !=

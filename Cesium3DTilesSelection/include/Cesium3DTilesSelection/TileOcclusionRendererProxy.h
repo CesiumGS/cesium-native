@@ -7,31 +7,53 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * @brief The occlusion state of a tile as reported by the renderer proxy.
+ */
 namespace Cesium3DTilesSelection {
+enum class CESIUM3DTILESSELECTION_API TileOcclusionState {
+  /**
+   * @brief The renderer does not yet know if the tile's bounding volume is
+   * occluded or not.
+   *
+   * This can be due to the typical occlusion delay caused by buffered
+   * rendering or otherwise be due to postponed occlusion queries. We can
+   * choose to wait for the occlusion information to become available before
+   * commiting to load the tile. This might prevent unneeded tile loads at the
+   * cost of a small delay.
+   */
+  OcclusionUnavailable,
 
+  /**
+   * @brief The tile's bounding volume is known by the renderer to be visible.
+   */
+  NotOccluded,
+
+  /**
+   * @brief The tile's bounding volume is known by the renderer to be occluded.
+   */
+  Occluded
+};
+
+/**
+ * @brief An interface for client renderers to use to represent tile bounding
+ * volumes that should be occlusion tested.
+ */
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxy {
 public:
   /**
-   * @brief Whether the tile's bounding volume is currently occluded.
+   * @brief Get the occlusion state for this tile. If this is
+   * OcclusionUnavailable, the traversal may decide to wait for the occlusion
+   * result to become available in future frames.
    *
-   * @return The occlusion state.
+   * Client implementation note: Do not return OcclusionUnavailable if the
+   * occlusion for this tile will _never_ become available, otherwise the tile
+   * may not refine while waiting for occlusion. In such a case return
+   * NotOccluded so the traversal can assume it is _known_ to be visible.
+   *
+   * @return The occlusion state of this tile.
    */
-  virtual bool isOccluded() const = 0;
-
-  /**
-   * @brief Whether the tile has valid occlusion info available. If this is
-   * false, the traversal may decide to wait for the occlusion result to become
-   * available in future frames.
-   *
-   * Client implementation note: Do not return false if the occlusion for this
-   * tile will _never_ become available, otherwise the tile may not refine
-   * while waiting for occlusion. In such a case return true here and return
-   * false for isOccluded, so the traversal treats the tile as if it is _known_
-   * to be unoccluded.
-   *
-   * @return Whether this tile has valid occlusion info available.
-   */
-  virtual bool isOcclusionAvailable() const = 0;
+  virtual TileOcclusionState getOcclusionState() const = 0;
 
 protected:
   friend class TileOcclusionRendererProxyPool;
@@ -50,6 +72,11 @@ private:
   TileOcclusionRendererProxy* _pNext = nullptr;
 };
 
+/**
+ * @brief A pool of {@link TileOcclusionRendererProxy} objects. Allows quick
+ * remapping of tiles to occlusion renderer proxies so new proxies do not have
+ * to be created for each new tile requesting occlusion results.
+ */
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxyPool {
 public:
   virtual ~TileOcclusionRendererProxyPool(){};

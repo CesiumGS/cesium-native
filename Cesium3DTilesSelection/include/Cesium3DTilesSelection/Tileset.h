@@ -385,11 +385,6 @@ private:
     int32_t currentFrameNumber;
   };
 
-  struct OcclusionInfo {
-    bool isOcclusionAvailable = false;
-    bool isOccluded = false;
-  };
-
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
       const ImplicitTraversalInfo& implicitInfo,
@@ -417,7 +412,8 @@ private:
       size_t loadIndexHigh,
       bool queuedForLoad,
       const std::vector<double>& distances);
-  OcclusionInfo _checkOcclusion(const Tile& tile, const FrameState& frameState);
+  TileOcclusionState
+  _checkOcclusion(const Tile& tile, const FrameState& frameState);
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
