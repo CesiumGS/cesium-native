@@ -613,7 +613,8 @@ TilesetContentLoaderResult parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& tilesetJsonBinary,
-    const glm::dmat4& parentTransform) {
+    const glm::dmat4& parentTransform,
+    TileRefine parentRefine) {
   rapidjson::Document tilesetJson;
   tilesetJson.Parse(
       reinterpret_cast<const char*>(tilesetJsonBinary.data()),
@@ -637,7 +638,7 @@ TilesetContentLoaderResult parseTilesetJson(
         pLogger,
         rootJson,
         parentTransform,
-        TileRefine::Replace,
+        parentRefine,
         10000000.0,
         *pLoader));
   }
@@ -653,6 +654,7 @@ TilesetContentLoaderResult parseTilesetJson(
 
 TileLoadResult parseExternalTilesetInWorkerThread(
     const glm::dmat4& tileTransform,
+    TileRefine tileRefine,
     const std::shared_ptr<spdlog::logger>& pLogger,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer) {
@@ -664,8 +666,12 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
-  TilesetContentLoaderResult externalTilesetLoader =
-      parseTilesetJson(pLogger, tileUrl, responseData, tileTransform);
+  TilesetContentLoaderResult externalTilesetLoader = parseTilesetJson(
+      pLogger,
+      tileUrl,
+      responseData,
+      tileTransform,
+      tileRefine);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
@@ -730,7 +736,8 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
             pLogger,
             pCompletedRequest->url(),
             pResponse->data(),
-            glm::dmat4(1.0));
+            glm::dmat4(1.0),
+            TileRefine::Replace);
       });
 }
 
@@ -764,6 +771,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
   }
 
   const glm::dmat4& tileTransform = tile.getTransform();
+  TileRefine tileRefine = tile.getRefine();
 
   ExternalContentInitializer externalContentInitializer{nullptr, this};
 
@@ -773,6 +781,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
           [pLogger,
            contentOptions,
            tileTransform,
+           tileRefine,
            externalContentInitializer = std::move(externalContentInitializer)](
               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                   pCompletedRequest) mutable {
@@ -837,6 +846,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               // not a renderable content, then it must be external tileset
               return parseExternalTilesetInWorkerThread(
                   tileTransform,
+                  tileRefine,
                   pLogger,
                   std::move(pCompletedRequest),
                   std::move(externalContentInitializer));
