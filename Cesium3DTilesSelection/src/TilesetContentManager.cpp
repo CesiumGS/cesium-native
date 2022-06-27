@@ -277,6 +277,23 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
   return tileBoundingVolume;
 }
 
+void mergeRasterOverlayDetails(
+    RasterOverlayDetails& result,
+    const RasterOverlayDetails& other) {
+  result.rasterOverlayRectangles.insert(
+      result.rasterOverlayRectangles.end(),
+      other.rasterOverlayRectangles.begin(),
+      other.rasterOverlayRectangles.end());
+
+  result.rasterOverlayProjections.insert(
+      result.rasterOverlayProjections.end(),
+      other.rasterOverlayProjections.begin(),
+      other.rasterOverlayProjections.end());
+
+  result.boundingRegion =
+      result.boundingRegion.computeUnion(other.boundingRegion);
+}
+
 void calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
@@ -298,12 +315,51 @@ void calcRasterOverlayDetailsInWorkerThread(
   const CesiumGeospatial::BoundingRegion* pRegion =
       getBoundingRegionFromBoundingVolume(contentBoundingVolume);
 
-  result.overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
-      *renderContent.model,
-      tileLoadInfo.tileTransform,
-      0,
-      pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
-      std::move(projections));
+  if (result.overlayDetails) {
+    // Loader already calculated raster overlay UV for some projections.
+    // We need to only calculate UVs for any remaining projections and merge
+    // those overlay details together.
+
+    // Remove any projections that are already calculated by the loader
+    auto remove_it = std::remove_if(
+        projections.begin(),
+        projections.end(),
+        [&](const auto& proj) {
+          auto dup_it = std::find(
+              result.overlayDetails->rasterOverlayProjections.begin(),
+              result.overlayDetails->rasterOverlayProjections.end(),
+              proj);
+          return dup_it !=
+                 result.overlayDetails->rasterOverlayProjections.end();
+        });
+
+    projections.erase(remove_it, projections.end());
+
+    // calculate the raster overlay details for remaining projections
+    auto remainOverlayDetails =
+        GltfUtilities::createRasterOverlayTextureCoordinates(
+            *renderContent.model,
+            tileLoadInfo.tileTransform,
+            static_cast<std::uint32_t>(
+                result.overlayDetails->rasterOverlayProjections.size()),
+            pRegion ? std::make_optional(pRegion->getRectangle())
+                    : std::nullopt,
+            std::move(projections));
+
+    // merge those overlay details together
+    if (remainOverlayDetails) {
+      mergeRasterOverlayDetails(*result.overlayDetails, *remainOverlayDetails);
+    }
+  } else {
+    result.overlayDetails =
+        GltfUtilities::createRasterOverlayTextureCoordinates(
+            *renderContent.model,
+            tileLoadInfo.tileTransform,
+            0,
+            pRegion ? std::make_optional(pRegion->getRectangle())
+                    : std::nullopt,
+            std::move(projections));
+  }
 
   if (pRegion && result.overlayDetails) {
     // If the original bounding region was wrong, report it.
