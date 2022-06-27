@@ -980,6 +980,10 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
       parentProjections.begin(),
       parentProjections.end(),
       _projection);
+  assert(
+      it != parentProjections.end() &&
+      "Cannot find projection of parent tile. This should not happen as "
+      "parent's projection UV is already computed by this loader");
   index = int32_t(it - parentProjections.begin());
 
   const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();

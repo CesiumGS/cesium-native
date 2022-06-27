@@ -277,18 +277,15 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
   return tileBoundingVolume;
 }
 
-TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
-    TileLoadResult&& result,
+void calcRasterOverlayDetailsInWorkerThread(
+    TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
   TileRenderContent& renderContent =
       std::get<TileRenderContent>(result.contentKind);
 
-  if (result.pCompletedRequest) {
-    renderContent.model->extras["Cesium3DTiles_TileUrl"] =
-        result.pCompletedRequest->url();
-  }
-
+  // we will use the fittest bounding volume to calculate raster overlay details
+  // below
   const BoundingVolume& contentBoundingVolume =
       getEffectiveContentBoundingVolume(
           tileLoadInfo.tileBoundingVolume,
@@ -300,6 +297,7 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   // remember the min and max height so that we can use them for upsampling.
   const CesiumGeospatial::BoundingRegion* pRegion =
       getBoundingRegionFromBoundingVolume(contentBoundingVolume);
+
   result.overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
       *renderContent.model,
       tileLoadInfo.tileTransform,
@@ -344,8 +342,14 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
           url);
     }
   }
+}
 
-  // If our tile bounding region has loose fitting heights, find the real ones.
+void calcFittestBoundingRegionForLooseTile(
+    TileLoadResult& result,
+    const TileContentLoadInfo& tileLoadInfo) {
+  TileRenderContent& renderContent =
+      std::get<TileRenderContent>(result.contentKind);
+
   const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
       tileLoadInfo.tileBoundingVolume,
       result.updatedBoundingVolume,
@@ -362,12 +366,35 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
           tileLoadInfo.tileTransform);
     }
   }
+}
+
+TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
+    TileLoadResult&& result,
+    std::vector<CesiumGeospatial::Projection>&& projections,
+    const TileContentLoadInfo& tileLoadInfo) {
+  TileRenderContent& renderContent =
+      std::get<TileRenderContent>(result.contentKind);
+
+  if (result.pCompletedRequest) {
+    renderContent.model->extras["Cesium3DTiles_TileUrl"] =
+        result.pCompletedRequest->url();
+  }
+
+  // calculate raster overlay details
+  calcRasterOverlayDetailsInWorkerThread(
+      result,
+      std::move(projections),
+      tileLoadInfo);
+
+  // If our tile bounding region has loose fitting heights, find the real ones.
+  calcFittestBoundingRegionForLooseTile(result, tileLoadInfo);
 
   // generate missing smooth normal
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
     renderContent.model->generateMissingNormalsSmooth();
   }
 
+  // create render resources
   void* pRenderResources =
       tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
           *renderContent.model,
