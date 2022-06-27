@@ -1,11 +1,10 @@
 #include "LayerJsonTerrainLoader.h"
 
-#include <Cesium3DTilesSelection/GltfUtilities.h>
-
 #include "QuantizedMeshLoader.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include "upsampleGltfForRasterOverlays.h"
 
+#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
