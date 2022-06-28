@@ -57,7 +57,8 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
   const TileContent& parentContent = pParent->getContent();
   const TileRenderContent* pParentRenderContent =
       parentContent.getRenderContent();
-  if (!pParentRenderContent || !pParentRenderContent->model) {
+  if (!pParentRenderContent || !pParentRenderContent->model ||
+      !parentContent.getRasterOverlayDetails()) {
     // parent doesn't have mesh, so it's not possible to upsample
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},

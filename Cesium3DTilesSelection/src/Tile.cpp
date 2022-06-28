@@ -170,7 +170,7 @@ bool Tile::isRenderable() const noexcept {
             return rasterTile.getReadyTile() != nullptr;
           });
     }
-  } 
+  }
 
   return false;
 }
