@@ -165,7 +165,7 @@ bool Tile::isRenderable() const noexcept {
     if (!isExternalContent()) {
       return true;
     }
-  } 
+  }
 
   return false;
 }
