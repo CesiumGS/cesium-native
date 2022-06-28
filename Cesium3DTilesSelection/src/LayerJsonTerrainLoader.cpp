@@ -997,12 +997,22 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
         parentModel,
         tileID,
         textureCoordinateIndex);
+    if (!model) {
+      return TileLoadResult{
+          TileRenderContent{std::nullopt},
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          TileLoadResultState::Failed,
+          nullptr,
+          {}};
+    }
 
     const auto pRegion =
         std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
 
     auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
-        model,
+        *model,
         tileTransform,
         0,
         pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,

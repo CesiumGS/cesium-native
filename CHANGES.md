@@ -1,5 +1,17 @@
 # Change Log
 
+### v0.16.0 - 2022-06-01
+
+##### Additions :tada:
+
+- Added option to the `RasterizedPolygonsOverlay` to invert the selection, so everything outside the polygons gets rasterized instead of inside.
+- The `RasterizedPolygonsTileExcluder` excludes tiles outside the selection instead of inside when given an inverted `RasterizedPolygonsOverlay`.
+- Tiles are now upsampled using the projection of the first raster overlay in the list with more detail.
+
+##### Fixes :wrench:
+
+- For consistency with CesiumJS and compatibility with third-party terrain tilers widely used in the community, the `bounds` property of the `layer.json` file of a quantized-mesh terrain tileset is now ignored, and the terrain is assumed to cover the entire globe.
+
 ### v0.15.2 - 2022-05-13
 
 ##### Fixes :wrench:
