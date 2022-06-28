@@ -157,6 +157,8 @@ public:
    */
   RasterOverlayTile::MoreDetailAvailable update(Tile& tile);
 
+  bool isMoreDetailAvailable() const noexcept;
+
   /**
    * @brief Detach the raster from the given tile.
    */
