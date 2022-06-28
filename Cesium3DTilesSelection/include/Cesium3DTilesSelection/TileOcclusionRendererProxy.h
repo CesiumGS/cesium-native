@@ -79,7 +79,7 @@ private:
  */
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxyPool {
 public:
-  virtual ~TileOcclusionRendererProxyPool(){};
+  virtual ~TileOcclusionRendererProxyPool();
 
   /**
    * @brief Initialize a pool of {@link TileOcclusionRendererProxy}s of the

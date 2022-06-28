@@ -64,7 +64,9 @@ Tileset::Tileset(
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
-      _gltfUpAxis(CesiumGeometry::Axis::Y) {
+      _gltfUpAxis(CesiumGeometry::Axis::Y),
+      _distances(),
+      _childOcclusionProxies() {
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
@@ -104,12 +106,13 @@ Tileset::Tileset(
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
-      _gltfUpAxis(CesiumGeometry::Axis::Y) {
+      _gltfUpAxis(CesiumGeometry::Axis::Y),
+      _distances(),
+      _childOcclusionProxies() {
   if (ionAssetID > 0) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
     if (this->_externals.pTileOcclusionProxyPool) {
-      // TODO: find a reasonable number
       this->_externals.pTileOcclusionProxyPool->initPool(
           options.occlusionPoolSize);
     }

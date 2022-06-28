@@ -2,6 +2,10 @@
 
 namespace Cesium3DTilesSelection {
 
+TileOcclusionRendererProxyPool::~TileOcclusionRendererProxyPool() {
+  this->destroyPool();
+}
+
 void TileOcclusionRendererProxyPool::initPool(uint32_t poolSize) {
   this->_tileToOcclusionProxyMappings.reserve(poolSize);
 
