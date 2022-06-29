@@ -58,7 +58,7 @@ namespace Cesium3DTilesSelection {
 
 /*static*/ std::optional<RasterOverlayDetails>
 GltfUtilities::createRasterOverlayTextureCoordinates(
-    CesiumGltf::Model& gltf,
+    CesiumGltf::Model& model,
     const glm::dmat4& modelToEcefTransform,
     int32_t firstTextureCoordinateID,
     const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
@@ -71,7 +71,7 @@ GltfUtilities::createRasterOverlayTextureCoordinates(
   CesiumGeospatial::GlobeRectangle bounds =
       globeRectangle
           ? *globeRectangle
-          : computeBoundingRegion(gltf, modelToEcefTransform).getRectangle();
+          : computeBoundingRegion(model, modelToEcefTransform).getRectangle();
 
   // Currently, a Longitude/Latitude Rectangle maps perfectly to all possible
   // projection types, because the only possible projection types are
@@ -84,11 +84,13 @@ GltfUtilities::createRasterOverlayTextureCoordinates(
   }
 
   glm::dmat4 rootTransform = modelToEcefTransform;
-  rootTransform = applyRtcCenter(gltf, rootTransform);
-  rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
+  rootTransform = applyRtcCenter(model, rootTransform);
+  rootTransform = applyGltfUpAxisTransform(model, rootTransform);
 
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
-  positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
+  positionAccessorsToTextureCoordinateAccessor.resize(
+      model.accessors.size(),
+      0);
 
   // When computing the tile's bounds, ignore tiles that are less than 1/1000th
   // of a tile width from the North or South pole. Longitudes cannot be trusted
@@ -301,7 +303,7 @@ GltfUtilities::createRasterOverlayTextureCoordinates(
         }
       };
 
-  gltf.forEachPrimitiveInScene(-1, createTextureCoordinatesForPrimitive);
+  model.forEachPrimitiveInScene(-1, createTextureCoordinatesForPrimitive);
 
   return RasterOverlayDetails{
       std::move(projections),

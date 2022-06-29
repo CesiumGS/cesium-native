@@ -542,43 +542,37 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const QuadtreeTileID& tileID,
     const BoundingVolume& boundingVolume,
-    const glm::dmat4& tileTransform,
-    const CesiumGeospatial::Projection& projection,
     const LayerJsonTerrainLoader::Layer& layer,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     bool enableWaterMask) {
   std::string url = resolveTileUrl(tileID, layer);
   return pAssetAccessor->get(asyncSystem, url, requestHeaders)
-      .thenInWorkerThread([asyncSystem,
-                           pLogger,
-                           tileID,
-                           boundingVolume,
-                           tileTransform,
-                           projection,
-                           enableWaterMask](
-                              std::shared_ptr<IAssetRequest>&& pRequest) {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          QuantizedMeshLoadResult result;
-          result.errors.emplace_error(fmt::format(
-              "Did not receive a valid response for tile content {}",
-              pRequest->url()));
-          return result;
-        }
+      .thenInWorkerThread(
+          [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
+              std::shared_ptr<IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url()));
+              return result;
+            }
 
-        if (pResponse->statusCode() != 0 &&
-            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
-          QuantizedMeshLoadResult result;
-          return result;
-        }
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
+              QuantizedMeshLoadResult result;
+              return result;
+            }
 
-        return QuantizedMeshLoader::load(
-            tileID,
-            boundingVolume,
-            pRequest->url(),
-            pResponse->data(),
-            enableWaterMask);
-      });
+            return QuantizedMeshLoader::load(
+                tileID,
+                boundingVolume,
+                pRequest->url(),
+                pResponse->data(),
+                enableWaterMask);
+          });
 }
 
 Future<int> loadTileAvailability(
@@ -701,8 +695,6 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
       pAssetAccessor,
       *pQuadtreeTileID,
       tile.getBoundingVolume(),
-      tile.getTransform(),
-      _projection,
       currentLayer,
       requestHeaders,
       contentOptions.enableWaterMask);
