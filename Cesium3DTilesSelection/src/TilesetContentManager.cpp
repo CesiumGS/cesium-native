@@ -718,6 +718,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   tile.getMappedRasterTiles().clear();
+  content.setRasterOverlayDetails(RasterOverlayDetails{});
   content.setContentKind(TileUnknownContent{});
   content.setState(TileLoadState::Unloaded);
   return true;
@@ -834,7 +835,7 @@ void TilesetContentManager::updateDoneState(
   }
 
   // update raster overlay
-  const TileContent& content = tile.getContent();
+  TileContent& content = tile.getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent && pRenderContent->model) {
     bool moreRasterDetailAvailable = false;
@@ -901,6 +902,12 @@ void TilesetContentManager::updateDoneState(
         tile.getChildren().empty()) {
       createQuadtreeSubdividedChildren(tile, _upsampler);
     }
+  } else {
+    // We can't hang raster images on a tile without geometry, and their
+    // existence can prevent the tile from being deemed done loading. So clear
+    // them out here.
+    tile.getMappedRasterTiles().clear();
+    content.setRasterOverlayDetails(RasterOverlayDetails{});
   }
 }
 
