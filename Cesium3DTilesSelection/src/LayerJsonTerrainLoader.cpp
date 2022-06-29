@@ -956,6 +956,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             {_projection});
 
     if (overlayDetails) {
+      index = int32_t(parentProjections.size());
       parentContent.getRasterOverlayDetails().merge(std::move(*overlayDetails));
     }
   }
