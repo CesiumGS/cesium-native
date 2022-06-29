@@ -968,9 +968,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
   return asyncSystem.runInWorkerThread(
       [&parentModel,
-       tileTransform = tile.getTransform(),
        boundingVolume = tile.getBoundingVolume(),
-       projection = _projection,
        textureCoordinateIndex = index,
        tileID = *pUpsampledTileID]() mutable {
         auto model = upsampleGltfForRasterOverlays(

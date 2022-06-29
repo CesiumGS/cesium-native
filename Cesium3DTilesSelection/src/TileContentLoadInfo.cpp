@@ -11,8 +11,8 @@ TileContentLoadInfo::TileContentLoadInfo(
     const Tile& tile)
     : asyncSystem(asyncSystem_),
       pAssetAccessor(pAssetAccessor_),
-      pPrepareRendererResources{pPrepareRendererResources_},
       pLogger(pLogger_),
+      pPrepareRendererResources{pPrepareRendererResources_},
       tileID(tile.getTileID()),
       tileBoundingVolume(tile.getBoundingVolume()),
       tileContentBoundingVolume(tile.getContentBoundingVolume()),
