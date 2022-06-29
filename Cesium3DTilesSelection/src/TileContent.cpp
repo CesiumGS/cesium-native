@@ -5,7 +5,7 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
     : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
-      _rasterOverlayDetails{std::nullopt},
+      _rasterOverlayDetails{},
       _tileInitializer{},
       _pLoader{pLoader},
       _shouldContentContinueUpdated{true} {}
@@ -16,7 +16,7 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{emptyContent},
       _pRenderResources{nullptr},
-      _rasterOverlayDetails{std::nullopt},
+      _rasterOverlayDetails{},
       _tileInitializer{},
       _pLoader{pLoader},
       _shouldContentContinueUpdated{true} {}
@@ -27,7 +27,7 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{externalContent},
       _pRenderResources{nullptr},
-      _rasterOverlayDetails{std::nullopt},
+      _rasterOverlayDetails{},
       _tileInitializer{},
       _pLoader{pLoader},
       _shouldContentContinueUpdated{true} {}
@@ -62,21 +62,17 @@ const TileRenderContent* TileContent::getRenderContent() const noexcept {
   return std::get_if<TileRenderContent>(&_contentKind);
 }
 
-const RasterOverlayDetails*
-TileContent::getRasterOverlayDetails() const noexcept {
-  if (_rasterOverlayDetails) {
-    return &*_rasterOverlayDetails;
-  }
-
-  return nullptr;
+TileRenderContent* TileContent::getRenderContent() noexcept {
+  return std::get_if<TileRenderContent>(&_contentKind);
 }
 
-RasterOverlayDetails* TileContent::getRasterOverlayDetails() noexcept {
-  if (_rasterOverlayDetails) {
-    return &*_rasterOverlayDetails;
-  }
+const RasterOverlayDetails&
+TileContent::getRasterOverlayDetails() const noexcept {
+  return _rasterOverlayDetails;
+}
 
-  return nullptr;
+RasterOverlayDetails& TileContent::getRasterOverlayDetails() noexcept {
+  return _rasterOverlayDetails;
 }
 
 TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }

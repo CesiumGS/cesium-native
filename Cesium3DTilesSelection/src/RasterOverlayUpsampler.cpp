@@ -28,7 +28,6 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -40,7 +39,6 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
     // this tile is not marked to be upsampled, so just fail it
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
-        std::nullopt,
         std::nullopt,
         std::nullopt,
         TileLoadResultState::Failed,
@@ -57,12 +55,10 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
   const TileContent& parentContent = pParent->getContent();
   const TileRenderContent* pParentRenderContent =
       parentContent.getRenderContent();
-  if (!pParentRenderContent || !pParentRenderContent->model ||
-      !parentContent.getRasterOverlayDetails()) {
+  if (!pParentRenderContent || !pParentRenderContent->model) {
     // parent doesn't have mesh, so it's not possible to upsample
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
-        std::nullopt,
         std::nullopt,
         std::nullopt,
         TileLoadResultState::Failed,
@@ -72,7 +68,7 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
 
   int32_t index = 0;
   const std::vector<CesiumGeospatial::Projection>& parentProjections =
-      parentContent.getRasterOverlayDetails()->rasterOverlayProjections;
+      parentContent.getRasterOverlayDetails().rasterOverlayProjections;
   for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
     if (mapped.isMoreDetailAvailable()) {
       const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
@@ -100,7 +96,6 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
 
     return TileLoadResult{
         TileRenderContent{std::move(model)},
-        std::nullopt,
         std::nullopt,
         std::nullopt,
         TileLoadResultState::Success,

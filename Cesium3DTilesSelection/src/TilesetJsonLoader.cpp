@@ -683,7 +683,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        std::nullopt,
         TileLoadResultState::Failed,
         std::move(pCompletedRequest),
         {}};
@@ -696,7 +695,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // mark this tile has external content
   return TileLoadResult{
       TileExternalContent{},
-      std::nullopt,
       std::nullopt,
       std::nullopt,
       TileLoadResultState::Success,
@@ -773,7 +771,6 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -805,7 +802,6 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   TileUnknownContent{},
                   std::nullopt,
                   std::nullopt,
-                  std::nullopt,
                   TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
                   {}};
@@ -820,7 +816,6 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
-                  std::nullopt,
                   std::nullopt,
                   std::nullopt,
                   TileLoadResultState::Failed,
@@ -849,7 +844,6 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                     TileRenderContent{std::nullopt},
                     std::nullopt,
                     std::nullopt,
-                    std::nullopt,
                     TileLoadResultState::Failed,
                     std::move(pCompletedRequest),
                     {}};
@@ -857,7 +851,6 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
 
               return TileLoadResult{
                   TileRenderContent{std::move(result.model)},
-                  std::nullopt,
                   std::nullopt,
                   std::nullopt,
                   TileLoadResultState::Success,

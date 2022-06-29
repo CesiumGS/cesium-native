@@ -63,9 +63,11 @@ public:
 
   const TileRenderContent* getRenderContent() const noexcept;
 
-  const RasterOverlayDetails* getRasterOverlayDetails() const noexcept;
+  TileRenderContent* getRenderContent() noexcept;
 
-  RasterOverlayDetails* getRasterOverlayDetails() noexcept;
+  const RasterOverlayDetails& getRasterOverlayDetails() const noexcept;
+
+  RasterOverlayDetails& getRasterOverlayDetails() noexcept;
 
   TilesetContentLoader* getLoader() noexcept;
 
@@ -95,7 +97,7 @@ private:
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
-  std::optional<RasterOverlayDetails> _rasterOverlayDetails;
+  RasterOverlayDetails _rasterOverlayDetails;
   std::function<void(Tile&)> _tileInitializer;
   TilesetContentLoader* _pLoader;
   bool _shouldContentContinueUpdated;

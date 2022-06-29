@@ -1,8 +1,23 @@
 #include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 
 #include <algorithm>
+#include <limits>
 
 namespace Cesium3DTilesSelection {
+RasterOverlayDetails::RasterOverlayDetails()
+    : boundingRegion{
+          CesiumGeospatial::GlobeRectangle::EMPTY,
+          std::numeric_limits<double>::max(),
+          std::numeric_limits<double>::lowest()} {}
+
+RasterOverlayDetails::RasterOverlayDetails(
+    std::vector<CesiumGeospatial::Projection>&& rasterOverlayProjections_,
+    std::vector<CesiumGeometry::Rectangle>&& rasterOverlayRectangles_,
+    const CesiumGeospatial::BoundingRegion& boundingRegion_)
+    : rasterOverlayProjections{std::move(rasterOverlayProjections_)},
+      rasterOverlayRectangles{std::move(rasterOverlayRectangles_)},
+      boundingRegion{boundingRegion_} {}
+
 const CesiumGeometry::Rectangle*
 RasterOverlayDetails::findRectangleForOverlayProjection(
     const CesiumGeospatial::Projection& projection) const {
@@ -22,5 +37,19 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   }
 
   return nullptr;
+}
+
+void RasterOverlayDetails::merge(RasterOverlayDetails&& other) {
+  rasterOverlayProjections.insert(
+      rasterOverlayProjections.end(),
+      other.rasterOverlayProjections.begin(),
+      other.rasterOverlayProjections.end());
+
+  rasterOverlayRectangles.insert(
+      rasterOverlayRectangles.end(),
+      other.rasterOverlayRectangles.begin(),
+      other.rasterOverlayRectangles.end());
+
+  boundingRegion.computeUnion(other.boundingRegion);
 }
 } // namespace Cesium3DTilesSelection

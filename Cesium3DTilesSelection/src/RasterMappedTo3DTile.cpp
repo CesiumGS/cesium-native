@@ -329,16 +329,14 @@ RasterMappedTo3DTile* addRealTile(
   // If the tile is loaded, use the precise rectangle computed from the content.
   const TileContent& content = tile.getContent();
   if (content.getState() >= TileLoadState::ContentLoaded) {
-    const RasterOverlayDetails* pOverlayDetails =
+    const RasterOverlayDetails& overlayDetails =
         content.getRasterOverlayDetails();
     const Rectangle* pRectangle =
-        pOverlayDetails
-            ? pOverlayDetails->findRectangleForOverlayProjection(projection)
-            : nullptr;
+        overlayDetails.findRectangleForOverlayProjection(projection);
     if (pRectangle) {
       // We have a rectangle and texture coordinates for this projection.
       int32_t index =
-          int32_t(pRectangle - &pOverlayDetails->rasterOverlayRectangles[0]);
+          int32_t(pRectangle - &overlayDetails.rasterOverlayRectangles[0]);
       const glm::dvec2 screenPixels = computeDesiredScreenPixels(
           tile,
           projection,
@@ -352,9 +350,7 @@ RasterMappedTo3DTile* addRealTile(
       // tile was loaded before we knew we needed this projection. We'll need to
       // reload the tile (later).
       int32_t existingIndex =
-          pOverlayDetails
-              ? int32_t(pOverlayDetails->rasterOverlayProjections.size())
-              : 0;
+          int32_t(overlayDetails.rasterOverlayProjections.size());
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
       return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
@@ -393,22 +389,22 @@ RasterMappedTo3DTile* addRealTile(
 }
 
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
-  const RasterOverlayDetails* pOverlayDetails =
-      tile.getContent().getRasterOverlayDetails();
-  if (!this->_pReadyTile || !pOverlayDetails) {
+  if (!this->_pReadyTile) {
     // This shouldn't happen
     assert(false);
     return;
   }
 
+  const RasterOverlayDetails& overlayDetails =
+      tile.getContent().getRasterOverlayDetails();
   const RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
 
   const Projection& projection = tileProvider.getProjection();
   const std::vector<Projection>& projections =
-      pOverlayDetails->rasterOverlayProjections;
+      overlayDetails.rasterOverlayProjections;
   const std::vector<Rectangle>& rectangles =
-      pOverlayDetails->rasterOverlayRectangles;
+      overlayDetails.rasterOverlayRectangles;
 
   auto projectionIt =
       std::find(projections.begin(), projections.end(), projection);

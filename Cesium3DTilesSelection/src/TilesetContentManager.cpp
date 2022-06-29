@@ -17,6 +17,7 @@ namespace Cesium3DTilesSelection {
 namespace {
 struct TileLoadResultAndRenderResources {
   TileLoadResult result;
+  std::optional<RasterOverlayDetails> rasterOverlayDetails;
   void* pRenderResources{nullptr};
 };
 
@@ -46,34 +47,30 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
 
   // Get an accurate bounding region from the content first.
   const TileContent& parentContent = parent.getContent();
-  const RasterOverlayDetails* pOverlayDetails =
-      parentContent.getRasterOverlayDetails();
-  if (pOverlayDetails) {
-    const RasterOverlayDetails& details = *pOverlayDetails;
+  const RasterOverlayDetails& details = parentContent.getRasterOverlayDetails();
 
-    // If we don't have any overlay projections/rectangles, why are we
-    // upsampling?
-    assert(!details.rasterOverlayProjections.empty());
-    assert(!details.rasterOverlayRectangles.empty());
+  // If we don't have any overlay projections/rectangles, why are we
+  // upsampling?
+  assert(!details.rasterOverlayProjections.empty());
+  assert(!details.rasterOverlayRectangles.empty());
 
-    // Use the projected center of the tile as the subdivision center.
-    // The tile will be subdivided by (0.5, 0.5) in the first overlay's
-    // texture coordinates which overlay had more detail.
-    for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
-      if (mapped.isMoreDetailAvailable()) {
-        const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
-                                                             ->getOverlay()
-                                                             .getTileProvider()
-                                                             ->getProjection();
-        glm::dvec2 centerProjected =
-            details.findRectangleForOverlayProjection(projection)->getCenter();
-        CesiumGeospatial::Cartographic center =
-            CesiumGeospatial::unprojectPosition(
-                projection,
-                glm::dvec3(centerProjected, 0.0));
+  // Use the projected center of the tile as the subdivision center.
+  // The tile will be subdivided by (0.5, 0.5) in the first overlay's
+  // texture coordinates which overlay had more detail.
+  for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
+    if (mapped.isMoreDetailAvailable()) {
+      const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
+                                                           ->getOverlay()
+                                                           .getTileProvider()
+                                                           ->getProjection();
+      glm::dvec2 centerProjected =
+          details.findRectangleForOverlayProjection(projection)->getCenter();
+      CesiumGeospatial::Cartographic center =
+          CesiumGeospatial::unprojectPosition(
+              projection,
+              glm::dvec3(centerProjected, 0.0));
 
-        return RegionAndCenter{details.boundingRegion, center};
-      }
+      return RegionAndCenter{details.boundingRegion, center};
     }
   }
 
@@ -277,24 +274,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
   return tileBoundingVolume;
 }
 
-void mergeRasterOverlayDetails(
-    RasterOverlayDetails& result,
-    const RasterOverlayDetails& other) {
-  result.rasterOverlayRectangles.insert(
-      result.rasterOverlayRectangles.end(),
-      other.rasterOverlayRectangles.begin(),
-      other.rasterOverlayRectangles.end());
-
-  result.rasterOverlayProjections.insert(
-      result.rasterOverlayProjections.end(),
-      other.rasterOverlayProjections.begin(),
-      other.rasterOverlayProjections.end());
-
-  result.boundingRegion =
-      result.boundingRegion.computeUnion(other.boundingRegion);
-}
-
-void calcRasterOverlayDetailsInWorkerThread(
+std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
@@ -315,57 +295,18 @@ void calcRasterOverlayDetailsInWorkerThread(
   const CesiumGeospatial::BoundingRegion* pRegion =
       getBoundingRegionFromBoundingVolume(contentBoundingVolume);
 
-  if (result.overlayDetails) {
-    // Loader already calculated raster overlay UV for some projections.
-    // We need to only calculate UVs for any remaining projections and merge
-    // those overlay details together.
+  auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
+      *renderContent.model,
+      tileLoadInfo.tileTransform,
+      0,
+      pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
+      std::move(projections));
 
-    // Remove any projections that are already calculated by the loader
-    auto remove_it = std::remove_if(
-        projections.begin(),
-        projections.end(),
-        [&](const auto& proj) {
-          auto dup_it = std::find(
-              result.overlayDetails->rasterOverlayProjections.begin(),
-              result.overlayDetails->rasterOverlayProjections.end(),
-              proj);
-          return dup_it !=
-                 result.overlayDetails->rasterOverlayProjections.end();
-        });
-
-    projections.erase(remove_it, projections.end());
-
-    // calculate the raster overlay details for remaining projections
-    auto remainOverlayDetails =
-        GltfUtilities::createRasterOverlayTextureCoordinates(
-            *renderContent.model,
-            tileLoadInfo.tileTransform,
-            static_cast<std::uint32_t>(
-                result.overlayDetails->rasterOverlayProjections.size()),
-            pRegion ? std::make_optional(pRegion->getRectangle())
-                    : std::nullopt,
-            std::move(projections));
-
-    // merge those overlay details together
-    if (remainOverlayDetails) {
-      mergeRasterOverlayDetails(*result.overlayDetails, *remainOverlayDetails);
-    }
-  } else {
-    result.overlayDetails =
-        GltfUtilities::createRasterOverlayTextureCoordinates(
-            *renderContent.model,
-            tileLoadInfo.tileTransform,
-            0,
-            pRegion ? std::make_optional(pRegion->getRectangle())
-                    : std::nullopt,
-            std::move(projections));
-  }
-
-  if (pRegion && result.overlayDetails) {
+  if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.
     const CesiumGeospatial::GlobeRectangle& original = pRegion->getRectangle();
     const CesiumGeospatial::GlobeRectangle& computed =
-        result.overlayDetails->boundingRegion.getRectangle();
+        overlayDetails->boundingRegion.getRectangle();
     if ((!CesiumUtility::Math::equalsEpsilon(
              computed.getWest(),
              original.getWest(),
@@ -398,10 +339,13 @@ void calcRasterOverlayDetailsInWorkerThread(
           url);
     }
   }
+
+  return overlayDetails;
 }
 
 void calcFittestBoundingRegionForLooseTile(
     TileLoadResult& result,
+    const std::optional<RasterOverlayDetails>& rasterOverlayDetails,
     const TileContentLoadInfo& tileLoadInfo) {
   TileRenderContent& renderContent =
       std::get<TileRenderContent>(result.contentKind);
@@ -412,9 +356,9 @@ void calcFittestBoundingRegionForLooseTile(
       result.updatedContentBoundingVolume);
   if (std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
           &boundingVolume) != nullptr) {
-    if (result.overlayDetails) {
+    if (rasterOverlayDetails) {
       // We already computed the bounding region for overlays, so use it.
-      result.updatedBoundingVolume = result.overlayDetails->boundingRegion;
+      result.updatedBoundingVolume = rasterOverlayDetails->boundingRegion;
     } else {
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
@@ -437,13 +381,16 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   }
 
   // calculate raster overlay details
-  calcRasterOverlayDetailsInWorkerThread(
+  auto rasterOverlayDetails = calcRasterOverlayDetailsInWorkerThread(
       result,
       std::move(projections),
       tileLoadInfo);
 
   // If our tile bounding region has loose fitting heights, find the real ones.
-  calcFittestBoundingRegionForLooseTile(result, tileLoadInfo);
+  calcFittestBoundingRegionForLooseTile(
+      result,
+      rasterOverlayDetails,
+      tileLoadInfo);
 
   // generate missing smooth normal
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
@@ -456,7 +403,10 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
           *renderContent.model,
           tileLoadInfo.tileTransform);
 
-  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
+  return TileLoadResultAndRenderResources{
+      std::move(result),
+      std::move(rasterOverlayDetails),
+      pRenderResources};
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
@@ -683,12 +633,13 @@ void TilesetContentManager::loadTileContent(
 
         return tileLoadInfo.asyncSystem
             .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), nullptr});
+                {std::move(result), std::nullopt, nullptr});
       })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         TilesetContentManager::setTileContent(
             tile,
             std::move(pair.result),
+            std::move(pair.rasterOverlayDetails),
             pair.pRenderResources);
 
         notifyTileDoneLoading(tile);
@@ -809,6 +760,7 @@ bool TilesetContentManager::doesTileNeedLoading(
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
+    std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
     void* pWorkerRenderResources) {
   // update bounding volume
   if (result.updatedBoundingVolume) {
@@ -837,8 +789,8 @@ void TilesetContentManager::setTileContent(
   }
 
   content.setContentKind(std::move(result.contentKind));
-  if (result.overlayDetails) {
-    content.setRasterOverlayDetails(std::move(*result.overlayDetails));
+  if (rasterOverlayDetails) {
+    content.setRasterOverlayDetails(std::move(*rasterOverlayDetails));
   }
 
   content.setRenderResources(pWorkerRenderResources);

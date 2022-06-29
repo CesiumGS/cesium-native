@@ -22,7 +22,6 @@ enum class TileLoadResultState { Success, Failed, RetryLater };
 
 struct TileLoadResult {
   TileContentKind contentKind;
-  std::optional<RasterOverlayDetails> overlayDetails;
   std::optional<BoundingVolume> updatedBoundingVolume;
   std::optional<BoundingVolume> updatedContentBoundingVolume;
   TileLoadResultState state;
