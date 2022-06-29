@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DynamicSSE.h"
 #include "ImplicitTraversal.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
@@ -590,6 +591,8 @@ private:
   // selection.
   std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
   size_t _nextDistancesVector;
+
+  DynamicSSE _scaler;
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 

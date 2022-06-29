@@ -329,6 +329,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
 
   this->_previousFrameNumber = currentFrameNumber;
 
+  this->_scaler.updateScale(
+      this->_tileDataBytes > this->getOptions().maximumBytes,
+      frustums[0]);
+
   return result;
 }
 
@@ -878,7 +882,8 @@ bool Tileset::_meetsSse(
 
   return culled ? !this->_options.enforceCulledScreenSpaceError ||
                       largestSse < this->_options.culledScreenSpaceError
-                : largestSse < this->_options.maximumScreenSpaceError;
+                : largestSse < this->_options.maximumScreenSpaceError *
+                                   this->_scaler.getScale();
 }
 
 /**
