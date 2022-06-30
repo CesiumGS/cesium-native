@@ -282,6 +282,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     for (Tile* pTile : result.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           pTile->getMappedRasterTiles();
+      // raster overlay tile credits
       for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
         const RasterOverlayTile* pRasterOverlayTile =
             mappedRasterTile.getReadyTile();
@@ -290,6 +291,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
             pCreditSystem->addCreditToFrame(credit);
           }
         }
+      }
+
+      // content credits like gltf copyrights
+      for (const Credit& credit : pTile->getContent().getCredits()) {
+        pCreditSystem->addCreditToFrame(credit);
       }
     }
   }

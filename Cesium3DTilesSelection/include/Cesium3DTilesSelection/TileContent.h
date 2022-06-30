@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
@@ -69,6 +70,10 @@ public:
 
   RasterOverlayDetails& getRasterOverlayDetails() noexcept;
 
+  const std::vector<Credit>& getCredits() const noexcept;
+
+  std::vector<Credit>& getCredits() noexcept;
+
   TilesetContentLoader* getLoader() noexcept;
 
   void* getRenderResources() const noexcept;
@@ -94,13 +99,16 @@ private:
   void
   setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
 
+  void setCredits(std::vector<Credit>&& credits);
+
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
   RasterOverlayDetails _rasterOverlayDetails;
   std::function<void(Tile&)> _tileInitializer;
-  TilesetContentLoader* _pLoader;
   bool _shouldContentContinueUpdated;
+  std::vector<Credit> _credits;
+  TilesetContentLoader* _pLoader;
 
   friend class TilesetContentManager;
 };

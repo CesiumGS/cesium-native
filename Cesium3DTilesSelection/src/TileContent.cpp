@@ -7,8 +7,8 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
       _tileInitializer{},
-      _pLoader{pLoader},
-      _shouldContentContinueUpdated{true} {}
+      _shouldContentContinueUpdated{true},
+      _pLoader{pLoader} {}
 
 TileContent::TileContent(
     TilesetContentLoader* pLoader,
@@ -18,8 +18,8 @@ TileContent::TileContent(
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
       _tileInitializer{},
-      _pLoader{pLoader},
-      _shouldContentContinueUpdated{true} {}
+      _shouldContentContinueUpdated{true},
+      _pLoader{pLoader} {}
 
 TileContent::TileContent(
     TilesetContentLoader* pLoader,
@@ -29,8 +29,8 @@ TileContent::TileContent(
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
       _tileInitializer{},
-      _pLoader{pLoader},
-      _shouldContentContinueUpdated{true} {}
+      _shouldContentContinueUpdated{true},
+      _pLoader{pLoader} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
 
@@ -75,6 +75,12 @@ RasterOverlayDetails& TileContent::getRasterOverlayDetails() noexcept {
   return _rasterOverlayDetails;
 }
 
+const std::vector<Credit>& TileContent::getCredits() const noexcept {
+  return _credits;
+}
+
+std::vector<Credit>& TileContent::getCredits() noexcept { return _credits; }
+
 TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }
 
 void TileContent::setContentKind(TileContentKind&& contentKind) {
@@ -113,6 +119,10 @@ std::function<void(Tile&)>& TileContent::getTileInitializerCallback() {
 void TileContent::setContentShouldContinueUpdated(
     bool shouldContentContinueUpdated) noexcept {
   _shouldContentContinueUpdated = shouldContentContinueUpdated;
+}
+
+void TileContent::setCredits(std::vector<Credit>&& credits) {
+  _credits = std::move(credits);
 }
 
 void* TileContent::getRenderResources() const noexcept {

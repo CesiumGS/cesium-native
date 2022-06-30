@@ -636,7 +636,7 @@ void TilesetContentManager::loadTileContent(
                 {std::move(result), std::nullopt, nullptr});
       })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
-        TilesetContentManager::setTileContent(
+        setTileContent(
             tile,
             std::move(pair.result),
             std::move(pair.rasterOverlayDetails),
@@ -662,7 +662,7 @@ void TilesetContentManager::updateTileContent(
   TileLoadState state = content.getState();
   switch (state) {
   case TileLoadState::ContentLoaded:
-    updateContentLoadedState(tile);
+    updateContentLoadedState(tile, tilesetOptions);
     break;
   case TileLoadState::Done:
     updateDoneState(tile, tilesetOptions);
@@ -718,6 +718,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   tile.getMappedRasterTiles().clear();
+  content.setCredits({});
   content.setRasterOverlayDetails(RasterOverlayDetails{});
   content.setContentKind(TileUnknownContent{});
   content.setState(TileLoadState::Unloaded);
@@ -793,21 +794,28 @@ void TilesetContentManager::setTileContent(
   if (rasterOverlayDetails) {
     content.setRasterOverlayDetails(std::move(*rasterOverlayDetails));
   }
-
   content.setRenderResources(pWorkerRenderResources);
   content.setTileInitializerCallback(std::move(result.tileInitializer));
 }
 
-void TilesetContentManager::updateContentLoadedState(Tile& tile) {
+void TilesetContentManager::updateContentLoadedState(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
   if (content.isExternalContent()) {
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();
   } else if (content.isRenderContent()) {
-    // create render resources in the main thread
     const TileRenderContent* pRenderContent = content.getRenderContent();
     if (pRenderContent->model) {
+      // add copyright
+      content.setCredits(GltfUtilities::parseGltfCopyright(
+          *_externals.pCreditSystem,
+          *pRenderContent->model,
+          tilesetOptions.showCreditsOnScreen));
+
+      // create render resources in the main thread
       void* pWorkerRenderResources = content.getRenderResources();
       void* pMainThreadRenderResources =
           _externals.pPrepareRendererResources->prepareInMainThread(
