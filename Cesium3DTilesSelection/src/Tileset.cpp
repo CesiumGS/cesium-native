@@ -279,6 +279,19 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     }
 
     // per-tile credits
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+          pTile->getMappedRasterTiles();
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile.getReadyTile();
+        if (pRasterOverlayTile != nullptr) {
+          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
+            pCreditSystem->addCreditToFrame(credit);
+          }
+        }
+      }
+    }
   }
 
   this->_previousFrameNumber = currentFrameNumber;
@@ -1099,7 +1112,6 @@ void Tileset::_propagateTilesetContentLoaderResult(
         std::move(result.requestHeaders),
         std::move(result.pLoader),
         this->getOverlays());
-
   }
 }
 

@@ -473,7 +473,7 @@ LayerJsonTerrainLoader::createLoader(
         // add credits
         std::vector<LoaderCreditResult> credits;
         credits.reserve(loadLayersResult.layerCredits.size());
-        for (auto &credit : loadLayersResult.layerCredits) {
+        for (auto& credit : loadLayersResult.layerCredits) {
           credits.emplace_back(LoaderCreditResult{std::move(credit), true});
         }
 
