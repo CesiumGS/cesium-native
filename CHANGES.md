@@ -11,6 +11,7 @@
 ##### Fixes :wrench:
 
 - For consistency with CesiumJS and compatibility with third-party terrain tilers widely used in the community, the `bounds` property of the `layer.json` file of a quantized-mesh terrain tileset is now ignored, and the terrain is assumed to cover the entire globe.
+- Fixed crash when parsing an empty copyright string in the glTF model.
 
 ### v0.15.2 - 2022-05-13
 
