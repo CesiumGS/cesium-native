@@ -955,15 +955,9 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
 
   // Cannot find raster overlay UVs that has this projection, so we can't
   // upsample right now
-  if (index == -1) {
-    return asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        TileLoadResultState::Failed,
-        nullptr,
-        {}});
-  }
+  assert(
+      index != -1 && "Cannot find raster overlay UVs that has this projection. "
+                     "Should not happen");
 
   const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
   return asyncSystem.runInWorkerThread(
