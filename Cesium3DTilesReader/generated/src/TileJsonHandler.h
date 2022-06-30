@@ -4,6 +4,8 @@
 
 #include "BoundingVolumeJsonHandler.h"
 #include "ContentJsonHandler.h"
+#include "ImplicitTilingJsonHandler.h"
+#include "MetadataEntityJsonHandler.h"
 
 #include <Cesium3DTiles/Tile.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
@@ -42,6 +44,10 @@ private:
       ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
           _transform;
   ContentJsonHandler _content;
+  CesiumJsonReader::ArrayJsonHandler<Cesium3DTiles::Content, ContentJsonHandler>
+      _contents;
+  MetadataEntityJsonHandler _metadata;
+  ImplicitTilingJsonHandler _implicitTiling;
   CesiumJsonReader::ArrayJsonHandler<Cesium3DTiles::Tile, TileJsonHandler>
       _children;
 };

@@ -3,7 +3,11 @@
 #pragma once
 
 #include "AssetJsonHandler.h"
+#include "GroupMetadataJsonHandler.h"
+#include "MetadataEntityJsonHandler.h"
 #include "PropertiesJsonHandler.h"
+#include "SchemaJsonHandler.h"
+#include "StatisticsJsonHandler.h"
 #include "TileJsonHandler.h"
 
 #include <Cesium3DTiles/Tileset.h>
@@ -41,6 +45,13 @@ private:
   CesiumJsonReader::
       DictionaryJsonHandler<Cesium3DTiles::Properties, PropertiesJsonHandler>
           _properties;
+  SchemaJsonHandler _schema;
+  CesiumJsonReader::StringJsonHandler _schemaUri;
+  StatisticsJsonHandler _statistics;
+  CesiumJsonReader::
+      ArrayJsonHandler<Cesium3DTiles::GroupMetadata, GroupMetadataJsonHandler>
+          _groups;
+  MetadataEntityJsonHandler _metadata;
   CesiumJsonReader::DoubleJsonHandler _geometricError;
   TileJsonHandler _root;
   CesiumJsonReader::
