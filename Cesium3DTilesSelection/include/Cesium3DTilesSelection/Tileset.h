@@ -24,6 +24,7 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
+struct TilesetContentLoaderResult;
 
 /**
  * @brief A <a
@@ -348,6 +349,9 @@ private:
   void _processLoadQueue();
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
+
+  void
+  _propagateTilesetContentLoaderResult(TilesetContentLoaderResult&& result);
 
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
