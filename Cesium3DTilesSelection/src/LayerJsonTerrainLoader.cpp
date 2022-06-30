@@ -140,6 +140,7 @@ struct LoadLayersResult {
   std::optional<Projection> projection;
   std::optional<BoundingVolume> boundingVolume;
   std::vector<LayerJsonTerrainLoader::Layer> layers;
+  std::vector<std::string> layerCredits;
   ErrorList errors;
 };
 
@@ -217,9 +218,9 @@ Future<LoadLayersResult> loadLayersRecursive(
       std::move(urls),
       std::move(availability),
       static_cast<uint32_t>(maxZoom),
-      availabilityLevels,
-      std::move(creditString),
-      std::nullopt});
+      availabilityLevels});
+
+  loadLayersResult.layerCredits.emplace_back(std::move(creditString));
 
   std::string parentUrl =
       JsonHelpers::getStringOrDefault(layerJson, "parentUrl", "");
@@ -362,7 +363,7 @@ Future<LoadLayersResult> loadLayerJson(
       1);
 
   LoadLayersResult
-      loadLayersResult{tilingScheme, projection, boundingVolume, {}, {}};
+      loadLayersResult{tilingScheme, projection, boundingVolume, {}, {}, {}};
 
   return loadLayersRecursive(
       asyncSystem,
@@ -469,11 +470,18 @@ LayerJsonTerrainLoader::createLoader(
 
         pRootTile->createChildTiles(std::move(childTiles));
 
+        // add credits
+        std::vector<LoaderCreditResult> credits;
+        credits.reserve(loadLayersResult.layerCredits.size());
+        for (auto &credit : loadLayersResult.layerCredits) {
+          credits.emplace_back(LoaderCreditResult{std::move(credit), true});
+        }
+
         return TilesetContentLoaderResult{
             std::move(pLoader),
             std::move(pRootTile),
             CesiumGeometry::Axis::Y,
-            std::vector<LoaderCreditResult>{},
+            std::move(credits),
             std::vector<IAssetAccessor::THeader>{},
             std::move(loadLayersResult.errors)};
       });
@@ -485,17 +493,13 @@ LayerJsonTerrainLoader::Layer::Layer(
     std::vector<std::string>&& tileTemplateUrls_,
     CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability_,
     uint32_t maxZooms_,
-    int32_t availabilityLevels_,
-    std::string&& creditString_,
-    std::optional<Credit> credit_)
+    int32_t availabilityLevels_)
     : baseUrl{baseUrl_},
       version{std::move(version_)},
       tileTemplateUrls{std::move(tileTemplateUrls_)},
       contentAvailability{std::move(contentAvailability_)},
       loadedSubtrees(maxSubtreeInLayer(maxZooms_, availabilityLevels_)),
-      availabilityLevels{availabilityLevels_},
-      creditString{std::move(creditString_)},
-      credit{credit_} {}
+      availabilityLevels{availabilityLevels_} {}
 
 LayerJsonTerrainLoader::LayerJsonTerrainLoader(
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
