@@ -1,5 +1,10 @@
 # Change Log
 
+### v0.17.0 - 2022-07-01
+
+##### Fixes :wrench:
+- Fixed crash when parsing an empty copyright string in the glTF model.
+
 ### v0.16.0 - 2022-06-01
 
 ##### Additions :tada:
