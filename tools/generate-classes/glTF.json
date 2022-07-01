@@ -159,6 +159,15 @@
     "Schema in EXT_structural_metadata": {
       "overrideName": "ExtensionExtStructuralMetadataSchema"
     },
+    "Any Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "Numeric Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "No Data Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
     "KHR_draco_mesh_compression extension": {
       "overrideName": "ExtensionKhrDracoMeshCompression"
     },
