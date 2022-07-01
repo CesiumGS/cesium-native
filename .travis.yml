@@ -51,7 +51,7 @@ jobs:
         - # and breaks our ability to update. We don't need it, so remove it.
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
-        - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
+        - sudo apt-get install clang-10 cmake doxygen
       env:
         - CC=clang-10
         - CXX=clang++-10
