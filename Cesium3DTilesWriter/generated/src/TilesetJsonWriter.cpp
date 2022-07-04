@@ -1071,6 +1071,11 @@ void writeJson(
     writeJson(obj.enumType, jsonWriter, context);
   }
 
+  if (obj.componentType.has_value()) {
+    jsonWriter.Key("componentType");
+    writeJson(obj.componentType, jsonWriter, context);
+  }
+
   if (obj.componentCount.has_value()) {
     jsonWriter.Key("componentCount");
     writeJson(obj.componentCount, jsonWriter, context);

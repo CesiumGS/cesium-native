@@ -1475,6 +1475,7 @@ Extension3dTilesMetadataClassPropertyLegacyJsonHandler::
       _description(),
       _type(),
       _enumType(),
+      _componentType(),
       _componentCount(),
       _normalized(),
       _max(),
@@ -1516,6 +1517,8 @@ Extension3dTilesMetadataClassPropertyLegacyJsonHandler::
     return property("type", this->_type, o.type);
   if ("enumType"s == str)
     return property("enumType", this->_enumType, o.enumType);
+  if ("componentType"s == str)
+    return property("componentType", this->_componentType, o.componentType);
   if ("componentCount"s == str)
     return property("componentCount", this->_componentCount, o.componentCount);
   if ("normalized"s == str)

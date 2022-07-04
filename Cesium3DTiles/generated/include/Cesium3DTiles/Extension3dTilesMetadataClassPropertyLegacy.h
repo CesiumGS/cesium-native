@@ -57,6 +57,39 @@ struct CESIUM3DTILES_API Extension3dTilesMetadataClassPropertyLegacy final
   };
 
   /**
+   * @brief Known values for When `type` is `ARRAY` this indicates the type of
+   * each component of the array. If `ENUM` is used, then `enumType` must also
+   * be specified.
+   */
+  struct ComponentType {
+    inline static const std::string INT8 = "INT8";
+
+    inline static const std::string UINT8 = "UINT8";
+
+    inline static const std::string INT16 = "INT16";
+
+    inline static const std::string UINT16 = "UINT16";
+
+    inline static const std::string INT32 = "INT32";
+
+    inline static const std::string UINT32 = "UINT32";
+
+    inline static const std::string INT64 = "INT64";
+
+    inline static const std::string UINT64 = "UINT64";
+
+    inline static const std::string FLOAT32 = "FLOAT32";
+
+    inline static const std::string FLOAT64 = "FLOAT64";
+
+    inline static const std::string BOOLEAN = "BOOLEAN";
+
+    inline static const std::string STRING = "STRING";
+
+    inline static const std::string ENUM = "ENUM";
+  };
+
+  /**
    * @brief The name of the property, e.g. for display purposes.
    */
   std::optional<std::string> name;
@@ -82,6 +115,15 @@ struct CESIUM3DTILES_API Extension3dTilesMetadataClassPropertyLegacy final
    * specified when `type` or `componentType` is `ENUM`.
    */
   std::optional<std::string> enumType;
+
+  /**
+   * @brief When `type` is `ARRAY` this indicates the type of each component of
+   * the array. If `ENUM` is used, then `enumType` must also be specified.
+   *
+   * Known values are defined in {@link ComponentType}.
+   *
+   */
+  std::optional<std::string> componentType;
 
   /**
    * @brief The number of components per element for `ARRAY` elements.
