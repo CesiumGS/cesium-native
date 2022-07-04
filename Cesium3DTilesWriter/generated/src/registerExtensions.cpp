@@ -6,8 +6,13 @@
 #include "TilesetJsonWriter.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/Content.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/Extension3dTilesContentGltfLegacy.h>
+#include <Cesium3DTiles/ExtensionContent3dTilesMetadataLegacy.h>
+#include <Cesium3DTiles/ExtensionTile3dTilesMetadataLegacy.h>
+#include <Cesium3DTiles/ExtensionTileset3dTilesMetadataLegacy.h>
+#include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
@@ -21,5 +26,14 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       Cesium3DTiles::Tileset,
       Extension3dTilesContentGltfLegacyJsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Tileset,
+      ExtensionTileset3dTilesMetadataLegacyJsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Content,
+      ExtensionContent3dTilesMetadataLegacyJsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Tile,
+      ExtensionTile3dTilesMetadataLegacyJsonWriter>();
 }
 } // namespace Cesium3DTilesWriter

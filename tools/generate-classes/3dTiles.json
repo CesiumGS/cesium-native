@@ -21,6 +21,45 @@
     },
     "3DTILES_content_gltf extension": {
       "overrideName": "Extension3dTilesContentGltfLegacy"
+    },
+    "3DTILES_metadata 3D Tiles extension legacy": {
+      "overrideName": "ExtensionTileset3dTilesMetadataLegacy"
+    },
+    "3DTILES_metadata tile extension legacy": {
+      "overrideName": "ExtensionTile3dTilesMetadataLegacy"
+    },
+    "3DTILES_metadata tile content extension legacy": {
+      "overrideName": "ExtensionContent3dTilesMetadataLegacy"
+    },
+    "Tileset Metadata in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataTilesetMetadataLegacy"
+    },
+    "Statistics in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataStatisticsLegacy"
+    },
+    "Class Statistics in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataClassStatisticsLegacy"
+    },
+    "Property Statistics in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataPropertyStatisticsLegacy"
+    },
+    "Schema in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataSchemaLegacy"
+    },
+    "Group Metadata in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataGroupMetadataLegacy"
+    },
+    "Enum Value in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataEnumValueLegacy"
+    },
+    "Enum in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataEnumLegacy"
+    },
+    "Class in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataClassLegacy"
+    },
+    "Class Property in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataClassPropertyLegacy"
     }
   },
   "extensions": [
@@ -31,6 +70,18 @@
     {
       "extensionName": "3DTILES_content_gltf",
       "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/content.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/tile.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/tileset.3DTILES_metadata.schema.json"
     }
   ]
 }
