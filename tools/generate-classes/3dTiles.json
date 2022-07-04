@@ -18,12 +18,19 @@
     },
     "Metadata Entity": {
       "isBaseClass": true
+    },
+    "3DTILES_content_gltf extension": {
+      "overrideName": "Extension3dTilesContentGltfLegacy"
     }
   },
   "extensions": [
     {
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_content_gltf",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
     }
   ]
 }

@@ -7,6 +7,8 @@
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/Extension3dTilesContentGltfLegacy.h>
+#include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 namespace Cesium3DTilesWriter {
@@ -16,5 +18,8 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       Cesium3DTiles::BoundingVolume,
       Extension3dTilesBoundingVolumeS2JsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Tileset,
+      Extension3dTilesContentGltfLegacyJsonWriter>();
 }
 } // namespace Cesium3DTilesWriter
