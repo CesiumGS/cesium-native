@@ -33,13 +33,19 @@ class SchemaCache {
     this.contextStack = [];
   }
 
-  load(name) {
+  load(name, preferredBasePath) {
     // First search relative to the current context.
     // If not found, search the schema paths.
-    const searchPaths = [
-      this.resolveRelativePath(name),
-      ...this.schemaPaths.map((path) => this.resolvePath(path, name)),
-    ];
+    const searchPaths = [this.resolveRelativePath(name)];
+
+    if (preferredBasePath) {
+      searchPaths.push(this.resolvePath(preferredBasePath, name));
+    }
+
+    searchPaths.push(
+      ...this.schemaPaths.map((path) => this.resolvePath(path, name))
+    );
+
     return this.loadFromSearchPaths(name, searchPaths);
   }
 

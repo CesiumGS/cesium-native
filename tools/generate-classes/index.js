@@ -79,8 +79,8 @@ const schemaCache = new SchemaCache(schemaBasePaths, argv.extensions);
 
 let schemas = [];
 for (const schemaPath of argv.schemas) {
-  const { schemaName, _ } = splitSchemaPath(schemaPath);
-  const schema = schemaCache.load(schemaName);
+  const { schemaName, schemaBasePath } = splitSchemaPath(schemaPath);
+  const schema = schemaCache.load(schemaName, schemaBasePath);
   schemas.push(schema);
 }
 const rootSchema = schemas[0];

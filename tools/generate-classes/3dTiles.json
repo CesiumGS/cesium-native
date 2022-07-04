@@ -60,6 +60,30 @@
     },
     "Class Property in 3DTILES_metadata legacy": {
       "overrideName": "Extension3dTilesMetadataClassPropertyLegacy"
+    },
+    "3DTILES_implicit_tiling tile extension legacy": {
+      "overrideName": "Extension3dTilesImplicitTilingLegacy"
+    },
+    "Subtrees in 3DTILES_implicit_tiling legacy": {
+      "overrideName": "Extension3dTilesImplicitTilingSubtreesLegacy"
+    },
+    "Subtree in 3DTILES_implicit_tiling legacy": {
+      "overrideName": "Extension3dTilesImplicitTilingSubtreeLegacy"
+    },
+    "Buffer View in 3DTILES_implicit_tiling legacy": {
+      "overrideName": "Extension3dTilesImplicitTilingBufferViewLegacy"
+    },
+    "Buffer in 3DTILES_implicit_tiling legacy": {
+      "overrideName": "Extension3dTilesImplicitTilingBufferLegacy"
+    },
+    "Availability in 3DTILES_implicit_tiling legacy": {
+      "overrideName": "Extension3dTilesImplicitTilingAvailabilityLegacy"
+    },
+    "3DTILES_metadata extension for 3DTILES_implicit_tiling subtree legacy": {
+      "overrideName": "ExtensionSubtree3dTilesMetadataLegacy"
+    },
+    "Subtree Property in 3DTILES_metadata legacy": {
+      "overrideName": "Extension3dTilesMetadataSubtreePropertyLegacy"
     }
   },
   "extensions": [
@@ -82,6 +106,14 @@
     {
       "extensionName": "3DTILES_metadata",
       "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/tileset.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_metadata",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/3DTILES_implicit_tiling/subtree.3DTILES_metadata.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_implicit_tiling",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
     }
   ]
 }

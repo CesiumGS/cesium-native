@@ -5,12 +5,15 @@
 
 #include "Extension3dTilesBoundingVolumeS2JsonHandler.h"
 #include "Extension3dTilesContentGltfLegacyJsonHandler.h"
+#include "Extension3dTilesImplicitTilingLegacyJsonHandler.h"
 #include "ExtensionContent3dTilesMetadataLegacyJsonHandler.h"
+#include "ExtensionSubtree3dTilesMetadataLegacyJsonHandler.h"
 #include "ExtensionTile3dTilesMetadataLegacyJsonHandler.h"
 #include "ExtensionTileset3dTilesMetadataLegacyJsonHandler.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Content.h>
+#include <Cesium3DTiles/Subtree.h>
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
@@ -34,5 +37,11 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       Cesium3DTiles::Tile,
       ExtensionTile3dTilesMetadataLegacyJsonHandler>();
+  context.registerExtension<
+      Cesium3DTiles::Tile,
+      Extension3dTilesImplicitTilingLegacyJsonHandler>();
+  context.registerExtension<
+      Cesium3DTiles::Subtree,
+      ExtensionSubtree3dTilesMetadataLegacyJsonHandler>();
 }
 } // namespace Cesium3DTilesReader

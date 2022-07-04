@@ -16,6 +16,12 @@
 #include <Cesium3DTiles/EnumValue.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/Extension3dTilesContentGltfLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingAvailabilityLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingBufferLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingBufferViewLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingSubtreeLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingSubtreesLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMetadataClassLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMetadataClassPropertyLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMetadataClassStatisticsLegacy.h>
@@ -25,8 +31,10 @@
 #include <Cesium3DTiles/Extension3dTilesMetadataPropertyStatisticsLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMetadataSchemaLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMetadataStatisticsLegacy.h>
+#include <Cesium3DTiles/Extension3dTilesMetadataSubtreePropertyLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMetadataTilesetMetadataLegacy.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesMetadataLegacy.h>
+#include <Cesium3DTiles/ExtensionSubtree3dTilesMetadataLegacy.h>
 #include <Cesium3DTiles/ExtensionTile3dTilesMetadataLegacy.h>
 #include <Cesium3DTiles/ExtensionTileset3dTilesMetadataLegacy.h>
 #include <Cesium3DTiles/GroupMetadata.h>
@@ -78,6 +86,26 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
+    const Cesium3DTiles::ExtensionSubtree3dTilesMetadataLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingSubtreesLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesMetadataSubtreePropertyLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
     const Cesium3DTiles::Extension3dTilesMetadataTilesetMetadataLegacy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
@@ -124,6 +152,26 @@ void writeJson(
 
 void writeJson(
     const Cesium3DTiles::Extension3dTilesMetadataClassPropertyLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingAvailabilityLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingBufferViewLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingBufferLegacy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -509,6 +557,95 @@ void writeJson(
 }
 
 void writeJson(
+    const Cesium3DTiles::ExtensionSubtree3dTilesMetadataLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.classProperty.has_value()) {
+    jsonWriter.Key("class");
+    writeJson(obj.classProperty, jsonWriter, context);
+  }
+
+  if (!obj.properties.empty()) {
+    jsonWriter.Key("properties");
+    writeJson(obj.properties, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("subdivisionScheme");
+  writeJson(obj.subdivisionScheme, jsonWriter, context);
+
+  jsonWriter.Key("subtreeLevels");
+  writeJson(obj.subtreeLevels, jsonWriter, context);
+
+  jsonWriter.Key("maximumLevel");
+  writeJson(obj.maximumLevel, jsonWriter, context);
+
+  jsonWriter.Key("subtrees");
+  writeJson(obj.subtrees, jsonWriter, context);
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingSubtreesLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("uri");
+  writeJson(obj.uri, jsonWriter, context);
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesMetadataSubtreePropertyLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("bufferView");
+  writeJson(obj.bufferView, jsonWriter, context);
+
+  if (obj.offsetType !=
+      Cesium3DTiles::Extension3dTilesMetadataSubtreePropertyLegacy::OffsetType::
+          UINT32) {
+    jsonWriter.Key("offsetType");
+    writeJson(obj.offsetType, jsonWriter, context);
+  }
+
+  if (obj.arrayOffsetBufferView.has_value()) {
+    jsonWriter.Key("arrayOffsetBufferView");
+    writeJson(obj.arrayOffsetBufferView, jsonWriter, context);
+  }
+
+  if (obj.stringOffsetBufferView.has_value()) {
+    jsonWriter.Key("stringOffsetBufferView");
+    writeJson(obj.stringOffsetBufferView, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
     const Cesium3DTiles::Extension3dTilesMetadataTilesetMetadataLegacy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -831,6 +968,113 @@ void writeJson(
   if (obj.semantic.has_value()) {
     jsonWriter.Key("semantic");
     writeJson(obj.semantic, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.buffers.empty()) {
+    jsonWriter.Key("buffers");
+    writeJson(obj.buffers, jsonWriter, context);
+  }
+
+  if (!obj.bufferViews.empty()) {
+    jsonWriter.Key("bufferViews");
+    writeJson(obj.bufferViews, jsonWriter, context);
+  }
+
+  jsonWriter.Key("tileAvailability");
+  writeJson(obj.tileAvailability, jsonWriter, context);
+
+  jsonWriter.Key("childSubtreeAvailability");
+  writeJson(obj.childSubtreeAvailability, jsonWriter, context);
+
+  if (obj.contentAvailability.has_value()) {
+    jsonWriter.Key("contentAvailability");
+    writeJson(obj.contentAvailability, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingAvailabilityLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.bufferView.has_value()) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
+
+  if (obj.availableCount.has_value()) {
+    jsonWriter.Key("availableCount");
+    writeJson(obj.availableCount, jsonWriter, context);
+  }
+
+  if (obj.constant.has_value()) {
+    jsonWriter.Key("constant");
+    writeJson(obj.constant, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingBufferViewLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("buffer");
+  writeJson(obj.buffer, jsonWriter, context);
+
+  jsonWriter.Key("byteOffset");
+  writeJson(obj.byteOffset, jsonWriter, context);
+
+  jsonWriter.Key("byteLength");
+  writeJson(obj.byteLength, jsonWriter, context);
+
+  if (obj.name.has_value()) {
+    jsonWriter.Key("name");
+    writeJson(obj.name, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingBufferLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.uri.has_value()) {
+    jsonWriter.Key("uri");
+    writeJson(obj.uri, jsonWriter, context);
+  }
+
+  jsonWriter.Key("byteLength");
+  writeJson(obj.byteLength, jsonWriter, context);
+
+  if (obj.name.has_value()) {
+    jsonWriter.Key("name");
+    writeJson(obj.name, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -1649,6 +1893,34 @@ void ExtensionTileset3dTilesMetadataLegacyJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
+void ExtensionSubtree3dTilesMetadataLegacyJsonWriter::write(
+    const Cesium3DTiles::ExtensionSubtree3dTilesMetadataLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingSubtreesLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingSubtreesLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesMetadataSubtreePropertyLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesMetadataSubtreePropertyLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
 void Extension3dTilesMetadataTilesetMetadataLegacyJsonWriter::write(
     const Cesium3DTiles::Extension3dTilesMetadataTilesetMetadataLegacy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -1714,6 +1986,34 @@ void Extension3dTilesMetadataClassLegacyJsonWriter::write(
 
 void Extension3dTilesMetadataClassPropertyLegacyJsonWriter::write(
     const Cesium3DTiles::Extension3dTilesMetadataClassPropertyLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingSubtreeLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingAvailabilityLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingAvailabilityLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingBufferViewLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingBufferViewLegacy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingBufferLegacyJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesImplicitTilingBufferLegacy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
