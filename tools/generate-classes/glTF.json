@@ -179,9 +179,7 @@
     {
       "extensionName": "CESIUM_RTC",
       "schema": "../1.0/Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
-      "attachTo": [
-        "glTF"
-      ]
+      "attachTo": "glTF"
     },
     {
       "extensionName": "CESIUM_tile_edges",
@@ -206,9 +204,7 @@
     {
       "extensionName": "EXT_mesh_gpu_instancing",
       "schema": "Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json",
-      "attachTo": [
-        "node"
-      ]
+      "attachTo": "node"
     },
     {
       "extensionName": "EXT_meshopt_compression",
@@ -233,16 +229,12 @@
     {
       "extensionName": "KHR_materials_unlit",
       "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
-      "attachTo": [
-        "material"
-      ]
+      "attachTo": "material"
     },
     {
       "extensionName": "KHR_texture_basisu",
       "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
-      "attachTo": [
-        "texture"
-      ]
+      "attachTo": "texture"
     },
     {
       "extensionName": "MAXAR_mesh_variants",

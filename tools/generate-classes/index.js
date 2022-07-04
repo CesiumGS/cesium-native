@@ -152,44 +152,43 @@ for (const extension of config.extensions) {
 
   schemas.push(...generate(options, extensionSchema, writers));
 
-  var objectsToExtend = [];
-  if (extension.attachTo !== undefined) {
-    objectsToExtend = objectsToExtend.concat(extension.attachTo);
-  } else {
-    const attachTo = getObjectToExtend(
+  let objectToExtend = extension.attachTo;
+  if (objectToExtend == undefined) {
+    objectToExtend = getObjectToExtend(
       extension.schema,
       extension.extensionName,
       extensionClassName
     );
-    if (attachTo !== undefined) {
-      objectsToExtend.push(attachTo);
-    }
   }
-  if (objectsToExtend.length === 0) {
+  if (objectToExtend === undefined) {
     console.warn(
       `Could not find object to extend for extension class ${extensionClassName}`
     );
     continue;
   }
 
-  for (const objectToExtend of objectsToExtend) {
-    const objectToExtendSchema = schemaCache.load(
-      `${objectToExtend}.schema.json`
-    );
-    if (!objectToExtendSchema) {
-      console.warn(`Could not load schema for ${objectToExtend}.`);
-      continue;
-    }
+  const { schemaName, schemaBasePath } = splitSchemaPath(objectToExtend);
 
-    if (!options.extensions[objectToExtendSchema.title]) {
-      options.extensions[objectToExtendSchema.title] = [];
-    }
-
-    options.extensions[objectToExtendSchema.title].push({
-      name: extension.extensionName,
-      className: extensionClassName,
-    });
+  let objectToExtendSchema;
+  if (schemaBasePath === "") {
+    objectToExtendSchema = schemaCache.load(`${objectToExtend}.schema.json`);
+  } else {
+    objectToExtendSchema = schemaCache.load(schemaName, schemaBasePath);
   }
+
+  if (!objectToExtendSchema) {
+    console.warn(`Could not load schema for ${objectToExtend}.`);
+    continue;
+  }
+
+  if (!options.extensions[objectToExtendSchema.title]) {
+    options.extensions[objectToExtendSchema.title] = [];
+  }
+
+  options.extensions[objectToExtendSchema.title].push({
+    name: extension.extensionName,
+    className: extensionClassName,
+  });
 }
 
 function processSchemas() {

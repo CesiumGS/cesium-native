@@ -6,14 +6,16 @@
 #include "Extension3dTilesBoundingVolumeS2JsonHandler.h"
 #include "Extension3dTilesContentGltfLegacyJsonHandler.h"
 #include "Extension3dTilesImplicitTilingLegacyJsonHandler.h"
+#include "Extension3dTilesMultipleContentsLegacyJsonHandler.h"
 #include "ExtensionContent3dTilesMetadataLegacyJsonHandler.h"
 #include "ExtensionSubtree3dTilesMetadataLegacyJsonHandler.h"
+#include "ExtensionSubtree3dTilesMultipleContentsLegacyJsonHandler.h"
 #include "ExtensionTile3dTilesMetadataLegacyJsonHandler.h"
 #include "ExtensionTileset3dTilesMetadataLegacyJsonHandler.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Content.h>
-#include <Cesium3DTiles/Subtree.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTilingSubtreeLegacy.h>
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
@@ -41,7 +43,13 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       Cesium3DTiles::Tile,
       Extension3dTilesImplicitTilingLegacyJsonHandler>();
   context.registerExtension<
-      Cesium3DTiles::Subtree,
+      Cesium3DTiles::Tile,
+      Extension3dTilesMultipleContentsLegacyJsonHandler>();
+  context.registerExtension<
+      Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy,
       ExtensionSubtree3dTilesMetadataLegacyJsonHandler>();
+  context.registerExtension<
+      Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy,
+      ExtensionSubtree3dTilesMultipleContentsLegacyJsonHandler>();
 }
 } // namespace Cesium3DTilesReader

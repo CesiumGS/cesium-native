@@ -19,7 +19,7 @@
     "Metadata Entity": {
       "isBaseClass": true
     },
-    "3DTILES_content_gltf extension": {
+    "3DTILES_content_gltf extension legacy": {
       "overrideName": "Extension3dTilesContentGltfLegacy"
     },
     "3DTILES_metadata 3D Tiles extension legacy": {
@@ -84,6 +84,12 @@
     },
     "Subtree Property in 3DTILES_metadata legacy": {
       "overrideName": "Extension3dTilesMetadataSubtreePropertyLegacy"
+    },
+    "3DTILES_multiple_contents tile extension legacy": {
+      "overrideName": "Extension3dTilesMultipleContentsLegacy"
+    },
+    "3DTILES_multiple_contents extension for 3DTILES_implicit_tiling subtree legacy": {
+      "overrideName": "ExtensionSubtree3dTilesMultipleContentsLegacy"
     }
   },
   "extensions": [
@@ -109,11 +115,21 @@
     },
     {
       "extensionName": "3DTILES_metadata",
-      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/3DTILES_implicit_tiling/subtree.3DTILES_metadata.schema.json"
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_metadata/schema/3DTILES_implicit_tiling/subtree.3DTILES_metadata.schema.json",
+      "attachTo": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_implicit_tiling/schema/subtree/subtree.schema.json"
     },
     {
       "extensionName": "3DTILES_implicit_tiling",
       "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_multiple_contents",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_multiple_contents",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json",
+      "attachTo": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_implicit_tiling/schema/subtree/subtree.schema.json"
     }
   ]
 }
