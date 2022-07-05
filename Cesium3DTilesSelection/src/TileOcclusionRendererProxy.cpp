@@ -6,8 +6,8 @@ TileOcclusionRendererProxyPool::TileOcclusionRendererProxyPool(
     int32_t maximumPoolSize)
     : _pFreeProxiesHead(nullptr),
       _currentSize(0),
-      _maxSize(maximumPoolSize),
-      _tileToOcclusionProxyMappings(maximumPoolSize) {}
+      _maxSize(maximumPoolSize < 0 ? 0 : maximumPoolSize),
+      _tileToOcclusionProxyMappings(size_t(this->_maxSize)) {}
 
 TileOcclusionRendererProxyPool::~TileOcclusionRendererProxyPool() {
   this->destroyPool();
