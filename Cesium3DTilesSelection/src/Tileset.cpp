@@ -70,10 +70,6 @@ Tileset::Tileset(
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
-    if (this->_externals.pTileOcclusionProxyPool) {
-      this->_externals.pTileOcclusionProxyPool->initPool(
-          options.occlusionPoolSize);
-    }
     LoadTilesetDotJson::start(*this, url).thenInMainThread([this]() {
       this->notifyTileDoneLoading(nullptr);
     });
@@ -112,10 +108,6 @@ Tileset::Tileset(
   if (ionAssetID > 0) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
-    if (this->_externals.pTileOcclusionProxyPool) {
-      this->_externals.pTileOcclusionProxyPool->initPool(
-          options.occlusionPoolSize);
-    }
     LoadIonAssetEndpoint::start(*this).thenInMainThread(
         [this]() { this->notifyTileDoneLoading(nullptr); });
   }

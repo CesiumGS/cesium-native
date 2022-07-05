@@ -79,15 +79,9 @@ private:
  */
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxyPool {
 public:
-  virtual ~TileOcclusionRendererProxyPool();
+  TileOcclusionRendererProxyPool(int32_t maximumPoolSize);
 
-  /**
-   * @brief Initialize a pool of {@link TileOcclusionRendererProxy}s of the
-   * given size.
-   *
-   * @param poolSize The pool size.
-   */
-  void initPool(uint32_t poolSize);
+  virtual ~TileOcclusionRendererProxyPool();
 
   /**
    * @brief Destroy the pool.
@@ -132,7 +126,9 @@ protected:
 
 private:
   // Singly linked list representing the free proxies in the pool
-  TileOcclusionRendererProxy* _pFreeProxiesHead = nullptr;
+  TileOcclusionRendererProxy* _pFreeProxiesHead;
+  int32_t _currentSize;
+  int32_t _maxSize;
   // The currently used proxies in the pool
   std::unordered_map<const Tile*, TileOcclusionRendererProxy*>
       _tileToOcclusionProxyMappings;
