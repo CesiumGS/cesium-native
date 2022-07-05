@@ -6,8 +6,8 @@
 #include "Cesium3DTiles/Buffer.h"
 #include "Cesium3DTiles/BufferView.h"
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/MetadataEntity.h"
 #include "Cesium3DTiles/PropertyTable.h"
-#include "Cesium3DTiles/SubtreeMetadata.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
@@ -49,8 +49,8 @@ struct CESIUM3DTILES_API Subtree final
    * 1)/(N - 1)` where N is 4 for subdivision scheme `QUADTREE` and 8 for
    * `OCTREE`. Availability may be stored in a buffer view or as a constant
    * value that applies to all tiles. If a non-root tile's availability is 1 its
-   * parent tile's availability must also be 1. `tileAvailability.constant: 0`
-   * is disallowed, as subtrees must have at least one tile.
+   * parent tile's availability shall also be 1. `tileAvailability.constant: 0`
+   * is disallowed, as subtrees shall have at least one tile.
    */
   Cesium3DTiles::Availability tileAvailability;
 
@@ -87,9 +87,9 @@ struct CESIUM3DTILES_API Subtree final
   /**
    * @brief An array of indexes to property tables containing content metadata.
    * If the tile has a single content this array will have one element; if the
-   * tile has multiple contents - as supported by EXT_multiple_contents and 3D
-   * Tiles 1.1 - this array will have multiple elements. Content metadata only
-   * exists for available contents and is tightly packed by increasing tile
+   * tile has multiple contents - as supported by 3DTILES_multiple_contents and
+   * 3D Tiles 1.1 - this array will have multiple elements. Content metadata
+   * only exists for available contents and is tightly packed by increasing tile
    * index. To access individual content metadata, implementations may create a
    * mapping from tile indices to content metadata indices.
    */
@@ -98,6 +98,6 @@ struct CESIUM3DTILES_API Subtree final
   /**
    * @brief Subtree metadata encoded in JSON.
    */
-  std::optional<Cesium3DTiles::SubtreeMetadata> subtreeMetadata;
+  std::optional<Cesium3DTiles::MetadataEntity> subtreeMetadata;
 };
 } // namespace Cesium3DTiles
