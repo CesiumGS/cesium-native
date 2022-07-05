@@ -13,7 +13,7 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief A class property.
+ * @brief A single property of a metadata class.
  */
 struct CESIUM3DTILES_API ClassProperty final
     : public CesiumUtility::ExtensibleObject {
@@ -112,7 +112,7 @@ struct CESIUM3DTILES_API ClassProperty final
 
   /**
    * @brief The number of array elements. May only be defined when `array` is
-   * true.
+   * `true`.
    */
   std::optional<int64_t> count;
 
@@ -121,8 +121,8 @@ struct CESIUM3DTILES_API ClassProperty final
    * `SCALAR`, `VECN`, and `MATN` types with integer component types. For
    * unsigned integer component types, values are normalized between
    * `[0.0, 1.0]`. For signed integer component types, values are normalized
-   * between `[-1.0, 1.0]`. For all other component types, this property must be
-   * false.
+   * between `[-1.0, 1.0]`. For all other component types, this property shall
+   * be false.
    */
   bool normalized = false;
 
@@ -157,11 +157,11 @@ struct CESIUM3DTILES_API ClassProperty final
   std::optional<CesiumUtility::JsonValue> min;
 
   /**
-   * @brief If required, the property must be present in every entity conforming
-   * to the class. If not required, individual entities may include `noData`
-   * values, or the entire property may be omitted. As a result, `noData` has no
-   * effect on a required property. Client implementations may use required
-   * properties to make performance optimizations.
+   * @brief If required, the property shall be present in every entity
+   * conforming to the class. If not required, individual entities may include
+   * `noData` values, or the entire property may be omitted. As a result,
+   * `noData` has no effect on a required property. Client implementations may
+   * use required properties to make performance optimizations.
    */
   bool required = false;
 
@@ -169,7 +169,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * @brief A `noData` value represents missing data — also known as a sentinel
    * value — wherever it appears. `BOOLEAN` properties may not specify `noData`
    * values. This is given as the plain property value, without the transforms
-   * from the `normalized`, `offset`, and `scale` properties. Must not be
+   * from the `normalized`, `offset`, and `scale` properties. Shall not be
    * defined if `required` is true.
    */
   std::optional<CesiumUtility::JsonValue> noData;
@@ -177,8 +177,8 @@ struct CESIUM3DTILES_API ClassProperty final
   /**
    * @brief A default value to use when encountering a `noData` value or an
    * omitted property. The value is given in its final form, taking the effect
-   * of `normalized`, `offset`, and `scale` properties into account. Must not be
-   * defined if `required` is true.
+   * of `normalized`, `offset`, and `scale` properties into account. Shall not
+   * be defined if `required` is true.
    */
   std::optional<CesiumUtility::JsonValue> defaultProperty;
 
