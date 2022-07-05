@@ -691,11 +691,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
-  GeographicProjection projection(ellipsoid);
-  BoundingRegion boundingRegion(
-      unprojectRectangleSimple(projection, rectangle),
-      -1000.0,
-      9000.0);
 
   SECTION("Check quantized mesh that has uint16_t indices") {
     // mock quantized mesh
@@ -995,11 +990,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
-  GeographicProjection projection(ellipsoid);
-  BoundingRegion boundingRegion(
-      unprojectRectangleSimple(projection, rectangle),
-      -1000.0,
-      9000.0);
 
   // mock quantized mesh
   uint32_t verticesWidth = 3;
