@@ -1,9 +1,12 @@
 #include "SubtreeAvailability.h"
+
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <libmorton/morton.h>
+
 #include <catch2/catch.hpp>
-#include <vector>
+#include <libmorton/morton.h>
+
 #include <cstddef>
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 
