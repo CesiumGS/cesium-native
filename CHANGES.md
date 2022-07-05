@@ -1,5 +1,24 @@
 # Change Log
 
+### v0.18.0 - 2022-08-01
+
+##### Breaking Changes :mega:
+
+- Removed support for 3D Tiles Next extensions in `TilesetWriter` and `TilesetReader` that have been promoted to core in 3D Tiles 1.1
+  - [3DTILES_multiple_contents](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_multiple_contents)
+  - [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling)
+  - [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata)
+  - [3DTILES_content_gltf](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_content_gltf)
+
+##### Additions :tada:
+
+- Added support for [3D Tiles 1.1](https://github.com/CesiumGS/3d-tiles/pull/666) in `TilesetWriter` and `TilesetReader`.
+
+### v0.17.0 - 2022-07-01
+
+##### Fixes :wrench:
+- Fixed crash when parsing an empty copyright string in the glTF model.
+
 ### v0.16.0 - 2022-06-01
 
 ##### Additions :tada:
