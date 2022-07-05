@@ -2,23 +2,15 @@
 
 namespace Cesium3DTilesSelection {
 
+TileOcclusionRendererProxyPool::TileOcclusionRendererProxyPool(
+    int32_t maximumPoolSize)
+    : _pFreeProxiesHead(nullptr),
+      _currentSize(0),
+      _maxSize(maximumPoolSize),
+      _tileToOcclusionProxyMappings(maximumPoolSize) {}
+
 TileOcclusionRendererProxyPool::~TileOcclusionRendererProxyPool() {
   this->destroyPool();
-}
-
-void TileOcclusionRendererProxyPool::initPool(uint32_t poolSize) {
-  this->_tileToOcclusionProxyMappings.reserve(poolSize);
-
-  TileOcclusionRendererProxy* pLastProxy = nullptr;
-  for (uint32_t i = 0; i < poolSize; ++i) {
-    TileOcclusionRendererProxy* pCurrentProxy = this->createProxy();
-    if (pCurrentProxy) {
-      pCurrentProxy->_pNext = pLastProxy;
-      pLastProxy = pCurrentProxy;
-    }
-  }
-
-  this->_pFreeProxiesHead = pLastProxy;
 }
 
 void TileOcclusionRendererProxyPool::destroyPool() {
@@ -33,6 +25,8 @@ void TileOcclusionRendererProxyPool::destroyPool() {
     this->destroyProxy(this->_pFreeProxiesHead);
     this->_pFreeProxiesHead = pNext;
   }
+
+  this->_currentSize = 0;
 }
 
 const TileOcclusionRendererProxy*
@@ -47,7 +41,15 @@ TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(
     return pProxy;
   }
 
+  if (!this->_pFreeProxiesHead && this->_currentSize < this->_maxSize) {
+    this->_pFreeProxiesHead = this->createProxy();
+    if (this->_pFreeProxiesHead) {
+      ++this->_currentSize;
+    }
+  }
+
   if (!this->_pFreeProxiesHead) {
+    // Pool is full or createProxy returned nullptr
     return nullptr;
   }
 
