@@ -79,8 +79,17 @@ private:
  */
 class CESIUM3DTILESSELECTION_API TileOcclusionRendererProxyPool {
 public:
+  /**
+   * @brief Constructs a new instance.
+   *
+   * @param maximumPoolSize The maximum number of
+   * {@link TileOcclusionRendererProxy} instances that may exist in this pool.
+   */
   TileOcclusionRendererProxyPool(int32_t maximumPoolSize);
 
+  /**
+   * @brief Destroys this pool.
+   */
   virtual ~TileOcclusionRendererProxyPool();
 
   /**

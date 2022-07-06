@@ -160,12 +160,6 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   bool delayRefinementForOcclusion = true;
 
   /**
-   * @brief The number of occlusion bounding volume proxies to reserve for
-   * determining the occlusion state of traversed tiles.
-   */
-  uint32_t occlusionPoolSize = 500;
-
-  /**
    * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
    */
   bool enableFogCulling = true;
