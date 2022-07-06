@@ -376,11 +376,26 @@ TEST_CASE("Test parsing subtree format") {
       CesiumGeometry::QuadtreeTileID{3, 1, 0},
   };
 
+  std::vector<CesiumGeometry::QuadtreeTileID> unavailableTileIDs{
+      CesiumGeometry::QuadtreeTileID{1, 0, 1},
+      CesiumGeometry::QuadtreeTileID{1, 1, 1},
+      CesiumGeometry::QuadtreeTileID{2, 2, 3},
+      CesiumGeometry::QuadtreeTileID{2, 3, 1},
+      CesiumGeometry::QuadtreeTileID{2, 1, 0},
+      CesiumGeometry::QuadtreeTileID{3, 2, 0},
+  };
+
   std::vector<CesiumGeometry::QuadtreeTileID> availableSubtreeIDs{
       CesiumGeometry::QuadtreeTileID{5, 31, 31},
       CesiumGeometry::QuadtreeTileID{5, 30, 28},
       CesiumGeometry::QuadtreeTileID{5, 20, 10},
       CesiumGeometry::QuadtreeTileID{5, 11, 1}};
+
+  std::vector<CesiumGeometry::QuadtreeTileID> unavailableSubtreeIDs{
+      CesiumGeometry::QuadtreeTileID{5, 31, 30},
+      CesiumGeometry::QuadtreeTileID{5, 31, 28},
+      CesiumGeometry::QuadtreeTileID{5, 21, 11},
+      CesiumGeometry::QuadtreeTileID{5, 11, 12}};
 
   auto subtreeBuffers = createSubtreeBuffers(
       maxSubtreeLevels,
@@ -448,6 +463,28 @@ TEST_CASE("Test parsing subtree format") {
 
     auto parsedSubtree = subtreeFuture.wait();
     CHECK(parsedSubtree != std::nullopt);
+
+    for (const auto& tileID : availableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& tileID : unavailableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& subtreeID : availableSubtreeIDs) {
+      CHECK(parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+
+    for (const auto& subtreeID : unavailableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
   }
 
   SECTION("Parse json subtree") {}
