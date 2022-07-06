@@ -268,7 +268,9 @@ TEST_CASE("Test SubtreeAvailability methods") {
         CesiumGeometry::QuadtreeTileID{3, 0, 4},
 
         // illegal ID, so it shouldn't crash
-        CesiumGeometry::QuadtreeTileID{3, 16, 14},
+        CesiumGeometry::QuadtreeTileID{0, 1, 1},
+        CesiumGeometry::QuadtreeTileID{2, 12, 1},
+        CesiumGeometry::QuadtreeTileID{12, 16, 14},
     };
 
     // create available subtree

@@ -516,6 +516,11 @@ bool SubtreeAvailability::isAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     const AvailabilityView& availabilityView) const noexcept {
+  uint64_t numOfTilesInLevel = uint64_t(1) << (_powerOf2 * relativeTileLevel);
+  if (relativeTileMortonId >= numOfTilesInLevel) {
+    return false;
+  }
+
   const SubtreeConstantAvailability* constantAvailability =
       std::get_if<SubtreeConstantAvailability>(&availabilityView);
   if (constantAvailability) {
@@ -523,7 +528,7 @@ bool SubtreeAvailability::isAvailable(
   }
 
   uint64_t numOfTilesFromRootToParentLevel =
-      ((1U << (_powerOf2 * relativeTileLevel)) - 1U) / (_childCount - 1U);
+      (numOfTilesInLevel - 1U) / (_childCount - 1U);
 
   return isAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel,
