@@ -4,7 +4,9 @@
 
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Content.h"
+#include "Cesium3DTiles/ImplicitTiling.h"
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/MetadataEntity.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
@@ -36,7 +38,7 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
   Cesium3DTiles::BoundingVolume boundingVolume;
 
   /**
-   * @brief Optional bounding volume that defines the volume the viewer must be
+   * @brief Optional bounding volume that defines the volume the viewer shall be
    * inside of before the tile's content will be requested and before the tile
    * will be refined based on geometricError.
    */
@@ -76,9 +78,26 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
 
   /**
    * @brief Metadata about the tile's content and a link to the content. When
-   * this is omitted the tile is just used for culling.
+   * this is omitted the tile is just used for culling. When this is defined,
+   * then `contents` shall be undefined.
    */
   std::optional<Cesium3DTiles::Content> content;
+
+  /**
+   * @brief An array of contents. When this is defined, then `content` shall be
+   * undefined.
+   */
+  std::vector<Cesium3DTiles::Content> contents;
+
+  /**
+   * @brief A metadata entity that is associated with this tile.
+   */
+  std::optional<Cesium3DTiles::MetadataEntity> metadata;
+
+  /**
+   * @brief An object that describes the implicit subdivision of this tile.
+   */
+  std::optional<Cesium3DTiles::ImplicitTiling> implicitTiling;
 
   /**
    * @brief An array of objects that define child tiles. Each child tile content

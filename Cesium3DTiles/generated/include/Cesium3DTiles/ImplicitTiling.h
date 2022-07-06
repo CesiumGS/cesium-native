@@ -11,15 +11,13 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief This extension allows a tile to be implicitly subdivided. Tile and
+ * @brief This object allows a tile to be implicitly subdivided. Tile and
  * content availability and metadata is stored in subtrees which are referenced
  * externally.
  */
-struct CESIUM3DTILES_API Extension3dTilesImplicitTiling final
+struct CESIUM3DTILES_API ImplicitTiling final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "Extension3dTilesImplicitTiling";
-  static inline constexpr const char* ExtensionName = "3DTILES_implicit_tiling";
+  static inline constexpr const char* TypeName = "ImplicitTiling";
 
   /**
    * @brief Known values for A string describing the subdivision scheme used
