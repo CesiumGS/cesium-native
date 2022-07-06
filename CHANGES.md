@@ -13,6 +13,7 @@
 ##### Additions :tada:
 
 - Added support for [3D Tiles 1.1](https://github.com/CesiumGS/3d-tiles/pull/666) in `TilesetWriter` and `TilesetReader`.
+- Added a `TileOcclusionRendererProxyPool` to `TilesetExternals`. If a renderer implements and provides this interface, the tile occlusion information is used to avoid refining parent tiles that are completely occluded, reducing the number of tiles loaded.
 
 ### v0.17.0 - 2022-07-01
 
