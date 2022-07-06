@@ -2,8 +2,8 @@
 
 #include "Cesium3DTilesReader/Library.h"
 
-#include <Cesium3DTiles/Extension3dTilesImplicitTilingSubtreeLegacy.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
+#include <Cesium3DTiles/Extension3dTilesMetadataSchemaLegacy.h>
+#include <CesiumJsonReader/ExtensionReaderContext.h> 
 
 #include <gsl/span>
 
@@ -17,14 +17,14 @@
 namespace Cesium3DTilesReader {
 
 /**
- * @brief The result of reading a subtree with
- * {@link SubtreeReaderLegacy::readSubtree}.
+ * @brief The result of reading a schema with
+ * {@link SchemaReaderLegacy::readSchema}.
  */
-struct CESIUM3DTILESREADER_API SubtreeReaderResultLegacy {
+struct CESIUM3DTILESREADER_API SchemaReaderResultLegacy {
   /**
-   * @brief The read subtree, or std::nullopt if the subtree could not be read.
+   * @brief The read schema, or std::nullopt if the schema could not be read.
    */
-  std::optional<Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy> subtree;
+  std::optional<Cesium3DTiles::Extension3dTilesMetadataSchemaLegacy> schema;
 
   /**
    * @brief Errors, if any, that occurred during the load process.
@@ -38,35 +38,34 @@ struct CESIUM3DTILESREADER_API SubtreeReaderResultLegacy {
 };
 
 /**
- * @brief Reads subtrees.
+ * @brief Reads schemas.
  */
-class CESIUM3DTILESREADER_API SubtreeReaderLegacy {
+class CESIUM3DTILESREADER_API SchemaReaderLegacy {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  SubtreeReaderLegacy();
+  SchemaReaderLegacy();
 
   /**
    * @brief Gets the context used to control how extensions are loaded from a
-   * subtree.
+   * schema.
    */
   CesiumJsonReader::ExtensionReaderContext& getExtensions();
 
   /**
    * @brief Gets the context used to control how extensions are loaded from a
-   * subtree.
+   * schema.
    */
   const CesiumJsonReader::ExtensionReaderContext& getExtensions() const;
 
   /**
-   * @brief Reads a subtree.
+   * @brief Reads a schema.
    *
-   * @param data The buffer from which to read the subtree.
-   * @param options Options for how to read the subtree.
-   * @return The result of reading the subtree.
+   * @param data The buffer from which to read the schema.
+   * @return The result of reading the schame.
    */
-  SubtreeReaderResultLegacy readSubtree(const gsl::span<const std::byte>& data) const;
+  SchemaReaderResultLegacy readSchema(const gsl::span<const std::byte>& data) const;
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;
