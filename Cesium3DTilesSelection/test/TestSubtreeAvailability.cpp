@@ -654,5 +654,35 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeBuffers),
               std::move(subtreeJson)) == std::nullopt);
     }
+
+    SECTION("Buffer view does not have required buffer field") {
+      auto bufferViewIt = subtreeJson.FindMember("bufferViews");
+      auto bufferViewObj = bufferViewIt->value.GetArray().Begin();
+      bufferViewObj->RemoveMember("buffer");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Buffer view does not have required byteOffset field") {
+      auto bufferViewIt = subtreeJson.FindMember("bufferViews");
+      auto bufferViewObj = bufferViewIt->value.GetArray().Begin();
+      bufferViewObj->RemoveMember("byteOffset");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Buffer view does not have required byteLength field") {
+      auto bufferViewIt = subtreeJson.FindMember("bufferViews");
+      auto bufferViewObj = bufferViewIt->value.GetArray().Begin();
+      bufferViewObj->RemoveMember("byteLength");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
   }
 }

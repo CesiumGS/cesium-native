@@ -141,17 +141,17 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
 
       if (bufferIdxIt == bufferViewJson.MemberEnd() ||
           !bufferIdxIt->value.IsUint()) {
-        continue;
+        return std::nullopt;
       }
 
       if (byteOffsetIt == bufferViewJson.MemberEnd() ||
           !byteOffsetIt->value.IsUint()) {
-        continue;
+        return std::nullopt;
       }
 
       if (byteLengthIt == bufferViewJson.MemberEnd() ||
           !byteLengthIt->value.IsUint()) {
-        continue;
+        return std::nullopt;
       }
 
       bufferViews[i].bufferIdx = bufferIdxIt->value.GetUint();
