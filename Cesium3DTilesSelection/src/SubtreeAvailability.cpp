@@ -67,7 +67,7 @@ CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
           });
 }
 
-AvailabilityView parseAvailabilityView(
+std::optional<AvailabilityView> parseAvailabilityView(
     const rapidjson::Value& availabilityJson,
     const std::vector<std::vector<std::byte>>& buffers,
     const std::vector<SubtreeBufferView>& bufferViews) {
@@ -100,7 +100,7 @@ AvailabilityView parseAvailabilityView(
     }
   }
 
-  return SubtreeConstantAvailability{false};
+  return std::nullopt;
 }
 
 std::optional<SubtreeAvailability> createSubtreeAvailability(
@@ -160,33 +160,49 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
     }
   }
 
-  AvailabilityView tileAvailability =
+  auto tileAvailability =
       parseAvailabilityView(tileAvailabilityIt->value, buffers, bufferViews);
+  if (!tileAvailability) {
+    return std::nullopt;
+  }
 
-  AvailabilityView childSubtreeAvailability = parseAvailabilityView(
+  auto childSubtreeAvailability = parseAvailabilityView(
       childSubtreeAvailabilityIt->value,
       buffers,
       bufferViews);
+  if (!childSubtreeAvailability) {
+    return std::nullopt;
+  }
 
   std::vector<AvailabilityView> contentAvailability;
   if (contentAvailabilityIt->value.IsArray()) {
     contentAvailability.reserve(contentAvailabilityIt->value.Size());
     for (const auto& contentAvailabilityJson :
          contentAvailabilityIt->value.GetArray()) {
-      contentAvailability.emplace_back(
-          parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews));
+      auto availability =
+          parseAvailabilityView(contentAvailabilityJson, buffers, bufferViews);
+      if (!availability) {
+        return std::nullopt;
+      }
+
+      contentAvailability.emplace_back(*availability);
     }
   } else {
-    contentAvailability.emplace_back(parseAvailabilityView(
+    auto availability = parseAvailabilityView(
         contentAvailabilityIt->value,
         buffers,
-        bufferViews));
+        bufferViews);
+    if (!availability) {
+      return std::nullopt;
+    }
+
+    contentAvailability.emplace_back(*availability);
   }
 
   return SubtreeAvailability{
       powerOf2,
-      tileAvailability,
-      childSubtreeAvailability,
+      *tileAvailability,
+      *childSubtreeAvailability,
       std::move(contentAvailability),
       std::move(buffers)};
 }
@@ -215,26 +231,34 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
           !byteLengthIt->value.IsUint()) {
         SPDLOG_LOGGER_ERROR(
             pLogger,
-            "Subtree Buffer requires byteLength property. Skip this invalid "
-            "buffer.");
-        continue;
+            "Subtree Buffer requires byteLength property.");
+        return asyncSystem
+            .createResolvedFuture<std::optional<SubtreeAvailability>>(
+                std::nullopt);
       }
 
       size_t byteLength = byteLengthIt->value.GetUint();
 
       auto uriIt = bufferJson.FindMember("uri");
       if (uriIt != bufferJson.MemberEnd()) {
-        if (uriIt->value.IsString()) {
-          std::string bufferUrl =
-              CesiumUtility::Uri::resolve(baseUrl, uriIt->value.GetString());
-          requestBuffers.emplace_back(requestBuffer(
-              pAssetAccessor,
-              asyncSystem,
-              i,
-              std::move(bufferUrl),
-              byteLength,
-              requestHeaders));
+        if (!uriIt->value.IsString()) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Subtree Buffer has uri field but it's not string.");
+          return asyncSystem
+              .createResolvedFuture<std::optional<SubtreeAvailability>>(
+                  std::nullopt);
         }
+
+        std::string bufferUrl =
+            CesiumUtility::Uri::resolve(baseUrl, uriIt->value.GetString());
+        requestBuffers.emplace_back(requestBuffer(
+            pAssetAccessor,
+            asyncSystem,
+            i,
+            std::move(bufferUrl),
+            byteLength,
+            requestHeaders));
       } else if (
           !internalBuffer.empty() && internalBuffer.size() >= byteLength) {
         resolvedBuffers[i] = std::move(internalBuffer);

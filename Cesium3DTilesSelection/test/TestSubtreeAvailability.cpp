@@ -229,6 +229,62 @@ rapidjson::Document createSubtreeJson(
 
   return subtreeJson;
 }
+
+std::optional<SubtreeAvailability> mockLoadSubtreeJson(
+    SubtreeBuffers&& subtreeBuffers,
+    rapidjson::Document&& subtreeJson) {
+  rapidjson::StringBuffer subtreeJsonBuffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
+  subtreeJson.Accept(writer);
+  std::vector<std::byte> buffer(subtreeJsonBuffer.GetSize());
+  std::memcpy(
+      buffer.data(),
+      subtreeJsonBuffer.GetString(),
+      subtreeJsonBuffer.GetSize());
+
+  // mock the request
+  auto pMockSubtreeResponse = std::make_unique<SimpleAssetResponse>(
+      uint16_t(200),
+      "test",
+      CesiumAsync::HttpHeaders{},
+      std::move(buffer));
+  auto pMockSubtreeRequest = std::make_unique<SimpleAssetRequest>(
+      "GET",
+      "test",
+      CesiumAsync::HttpHeaders{},
+      std::move(pMockSubtreeResponse));
+
+  auto pMockBufferResponse = std::make_unique<SimpleAssetResponse>(
+      uint16_t(200),
+      "buffer",
+      CesiumAsync::HttpHeaders{},
+      std::move(subtreeBuffers.buffers));
+  auto pMockBufferRequest = std::make_unique<SimpleAssetRequest>(
+      "GET",
+      "buffer",
+      CesiumAsync::HttpHeaders{},
+      std::move(pMockBufferResponse));
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
+      {"test", std::move(pMockSubtreeRequest)},
+      {"buffer", std::move(pMockBufferRequest)}};
+  auto pMockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
+
+  // mock async system
+  auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
+  CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
+
+  auto subtreeFuture = SubtreeAvailability::loadSubtree(
+      2,
+      asyncSystem,
+      pMockAssetAccessor,
+      spdlog::default_logger(),
+      "test",
+      {});
+
+  return subtreeFuture.wait();
+}
 } // namespace
 
 TEST_CASE("Test SubtreeAvailability methods") {
@@ -506,57 +562,10 @@ TEST_CASE("Test parsing subtree format") {
 
   SECTION("Parse json subtree") {
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
-    rapidjson::StringBuffer subtreeJsonBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
-    subtreeJson.Accept(writer);
-    std::vector<std::byte> buffer(subtreeJsonBuffer.GetSize());
-    std::memcpy(
-        buffer.data(),
-        subtreeJsonBuffer.GetString(),
-        subtreeJsonBuffer.GetSize());
 
-    // mock the request
-    auto pMockSubtreeResponse = std::make_unique<SimpleAssetResponse>(
-        uint16_t(200),
-        "test",
-        CesiumAsync::HttpHeaders{},
-        std::move(buffer));
-    auto pMockSubtreeRequest = std::make_unique<SimpleAssetRequest>(
-        "GET",
-        "test",
-        CesiumAsync::HttpHeaders{},
-        std::move(pMockSubtreeResponse));
+    auto parsedSubtree =
+        mockLoadSubtreeJson(std::move(subtreeBuffers), std::move(subtreeJson));
 
-    auto pMockBufferResponse = std::make_unique<SimpleAssetResponse>(
-        uint16_t(200),
-        "buffer",
-        CesiumAsync::HttpHeaders{},
-        std::move(subtreeBuffers.buffers));
-    auto pMockBufferRequest = std::make_unique<SimpleAssetRequest>(
-        "GET",
-        "buffer",
-        CesiumAsync::HttpHeaders{},
-        std::move(pMockBufferResponse));
-
-    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
-        {"test", std::move(pMockSubtreeRequest)},
-        {"buffer", std::move(pMockBufferRequest)}};
-    auto pMockAssetAccessor =
-        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
-
-    // mock async system
-    auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
-    CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
-
-    auto subtreeFuture = SubtreeAvailability::loadSubtree(
-        2,
-        asyncSystem,
-        pMockAssetAccessor,
-        spdlog::default_logger(),
-        "test",
-        {});
-
-    auto parsedSubtree = subtreeFuture.wait();
     CHECK(parsedSubtree != std::nullopt);
 
     for (const auto& tileID : availableTileIDs) {
@@ -579,6 +588,71 @@ TEST_CASE("Test parsing subtree format") {
     for (const auto& subtreeID : unavailableSubtreeIDs) {
       CHECK(!parsedSubtree->isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+  }
+
+  SECTION("Subtree json has ill form format") {
+    auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
+
+    SECTION("Subtree json has no tileAvailability field") {
+      subtreeJson.RemoveMember("tileAvailability");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Subtree json has no contentAvailability field") {
+      subtreeJson.RemoveMember("contentAvailability");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Subtree json has no childSubtreeAvailability field") {
+      subtreeJson.RemoveMember("childSubtreeAvailability");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Subtree json has no buffers though availability points to buffer view") {
+      subtreeJson.RemoveMember("buffers");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Buffer does not have byteLength field") {
+      auto bufferIt = subtreeJson.FindMember("buffers");
+      auto bufferObj = bufferIt->value.GetArray().Begin();
+      bufferObj->RemoveMember("byteLength");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Buffer does not have string uri field") {
+      auto bufferIt = subtreeJson.FindMember("buffers");
+      auto bufferObj = bufferIt->value.GetArray().Begin();
+      bufferObj->RemoveMember("uri");
+      bufferObj->AddMember("uri", 12, subtreeJson.GetAllocator());
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
+    }
+
+    SECTION("Subtree json has no buffer views though availability points to buffer view") {
+      subtreeJson.RemoveMember("bufferViews");
+      CHECK(
+          mockLoadSubtreeJson(
+              std::move(subtreeBuffers),
+              std::move(subtreeJson)) == std::nullopt);
     }
   }
 }
