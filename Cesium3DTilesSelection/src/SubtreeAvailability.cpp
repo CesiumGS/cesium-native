@@ -541,7 +541,12 @@ bool SubtreeAvailability::isAvailableUsingBufferView(
 
   const SubtreeBufferViewAvailability* bufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
+
   const uint64_t byteIndex = availabilityBitIndex / 8;
+  if (byteIndex >= bufferViewAvailability->view.size()) {
+    return false;
+  }
+
   const uint64_t bitIndex = availabilityBitIndex % 8;
   const int bitValue =
       static_cast<int>(bufferViewAvailability->view[byteIndex] >> bitIndex) & 1;

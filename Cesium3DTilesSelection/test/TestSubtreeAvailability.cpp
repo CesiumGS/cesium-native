@@ -1,6 +1,6 @@
-#include "SubtreeAvailability.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleTaskProcessor.h"
+#include "SubtreeAvailability.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -265,7 +265,11 @@ TEST_CASE("Test SubtreeAvailability methods") {
         CesiumGeometry::QuadtreeTileID{1, 0, 0},
         CesiumGeometry::QuadtreeTileID{2, 0, 2},
         CesiumGeometry::QuadtreeTileID{2, 3, 0},
-        CesiumGeometry::QuadtreeTileID{3, 0, 4}};
+        CesiumGeometry::QuadtreeTileID{3, 0, 4},
+
+        // illegal ID, so it shouldn't crash
+        CesiumGeometry::QuadtreeTileID{3, 16, 14},
+    };
 
     // create available subtree
     std::vector<CesiumGeometry::QuadtreeTileID> availableSubtreeIDs{
