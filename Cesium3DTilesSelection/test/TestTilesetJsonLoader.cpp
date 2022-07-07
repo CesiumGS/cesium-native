@@ -171,7 +171,26 @@ TEST_CASE("Test creating tileset json loader") {
     }
   }
 
-  SECTION("Tileset json with ill format") {}
+  SECTION("Tileset has tile with no bounding volume field") {
+    auto tilesetData = readFile(
+        testDataPath / "ErrorTilesets" / "NoBoundingVolumeTileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->getChildren().empty());
+  }
+
+  SECTION("Tileset has tile with no geometric error field") {
+  }
+
+  SECTION("Tileset has tile with no capitalized Refinement field") {}
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {

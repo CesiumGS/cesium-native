@@ -413,7 +413,7 @@ void parseImplicitTileset(
   }
 }
 
-Tile parseTileJsonRecursively(
+std::optional<Tile> parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const rapidjson::Value& tileJson,
     const glm::dmat4& parentTransform,
@@ -421,7 +421,7 @@ Tile parseTileJsonRecursively(
     double parentGeometricError,
     TilesetJsonLoader& currentLoader) {
   if (!tileJson.IsObject()) {
-    return Tile(&currentLoader);
+    return std::nullopt;
   }
 
   // parse tile transform
@@ -435,7 +435,7 @@ Tile parseTileJsonRecursively(
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
-    return Tile(&currentLoader);
+    return std::nullopt;
   }
 
   auto tileBoundingVolume =
@@ -570,7 +570,7 @@ Tile parseTileJsonRecursively(
     childTiles.reserve(childrenJson.Size());
     for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
       const auto& childJson = childrenJson[i];
-      Tile child = parseTileJsonRecursively(
+      auto maybeChild = parseTileJsonRecursively(
           pLogger,
           childJson,
           tileTransform,
@@ -578,7 +578,9 @@ Tile parseTileJsonRecursively(
           tileGeometricError,
           currentLoader);
 
-      childTiles.emplace_back(std::move(child));
+      if (maybeChild) {
+        childTiles.emplace_back(std::move(*maybeChild));
+      }
     }
   }
 
@@ -634,13 +636,17 @@ TilesetContentLoaderResult parseTilesetJson(
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
-    pRootTile = std::make_unique<Tile>(parseTileJsonRecursively(
+    auto maybeRootTile = parseTileJsonRecursively(
         pLogger,
         rootJson,
         parentTransform,
         parentRefine,
         10000000.0,
-        *pLoader));
+        *pLoader);
+
+    if (maybeRootTile) {
+      pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
+    }
   }
 
   return TilesetContentLoaderResult{
