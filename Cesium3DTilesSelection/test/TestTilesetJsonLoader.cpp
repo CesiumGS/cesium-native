@@ -124,7 +124,7 @@ TEST_CASE("Test creating tileset json loader") {
   }
 
   SECTION("Create valid tileset json with ADD refinement") {
-    auto tilesetData = readFile(testDataPath / "AddTileset" / "tileset.json");
+    auto tilesetData = readFile(testDataPath / "AddTileset" / "tileset2.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -139,10 +139,10 @@ TEST_CASE("Test creating tileset json loader") {
     auto pRootTile = loaderResult.pRootTile.get();
     CHECK(pRootTile != nullptr);
     CHECK(pRootTile->getParent() == nullptr);
-    CHECK(pRootTile->getChildren().size() == 0);
+    CHECK(pRootTile->getChildren().size() == 4);
     CHECK(pRootTile->getGeometricError() == 70.0);
     CHECK(pRootTile->getRefine() == TileRefine::Add);
-    CHECK(std::get<std::string>(pRootTile->getTileID()) == "tileset2.json");
+    CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
 
     const auto& boundingVolume = pRootTile->getBoundingVolume();
     const auto* pRegion =
@@ -154,6 +154,21 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(pRegion->getRectangle().getEast() == Approx(-1.3196390408203893));
     CHECK(pRegion->getRectangle().getSouth() == Approx(0.6988424218));
     CHECK(pRegion->getRectangle().getNorth() == Approx(0.6989055782));
+
+    // check children
+    std::array<std::string, 4> expectedUrl{
+        {"tileset3/tileset3.json", "lr.b3dm", "ur.b3dm", "ul.b3dm"}};
+    auto expectedUrlIt = expectedUrl.begin();
+    for (const Tile& child : pRootTile->getChildren()) {
+      CHECK(child.getParent() == pRootTile);
+      CHECK(child.getChildren().size() == 0);
+      CHECK(child.getGeometricError() == 0.0);
+      CHECK(child.getRefine() == TileRefine::Add);
+      CHECK(std::get<std::string>(child.getTileID()) == *expectedUrlIt);
+      CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+          child.getBoundingVolume()));
+      ++expectedUrlIt;
+    }
   }
 
   SECTION("Tileset json with ill format") {}
