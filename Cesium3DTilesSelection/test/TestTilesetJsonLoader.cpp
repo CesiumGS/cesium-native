@@ -187,8 +187,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile->getChildren().empty());
   }
 
-  SECTION("Tileset has tile with no geometric error field") {
-  }
+  SECTION("Tileset has tile with no geometric error field") {}
 
   SECTION("Tileset has tile with no capitalized Refinement field") {}
 }
