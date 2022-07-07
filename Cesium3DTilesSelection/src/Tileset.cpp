@@ -390,6 +390,11 @@ void Tileset::loadTilesFromJson(
       pLogger);
 }
 
+bool Tileset::getLoadingStatus() { 
+  bool loaded = this->_loadsInProgress > 0 && this->_subtreeLoadsInProgress > 0;
+  return loaded;
+}
+
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
 Tileset::requestTileContent(Tile& tile) {
   std::string url =

@@ -193,6 +193,8 @@ public:
    */
   void notifyTileUnloading(Tile* pTile) noexcept;
 
+  bool getLoadingStatus();
+
   /**
    * @brief Loads a tile tree from a tileset.json file.
    *
