@@ -153,6 +153,7 @@ public:
     return this->_overlays;
   }
 
+
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
    * loading and ready to be rendered before returning the function. This method
@@ -193,7 +194,7 @@ public:
    */
   void notifyTileUnloading(Tile* pTile) noexcept;
 
-  bool getLoadingStatus();
+  const uint32_t getTilesetLoadingStatus() noexcept;
 
   /**
    * @brief Loads a tile tree from a tileset.json file.

@@ -372,6 +372,12 @@ void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
   }
 }
 
+const uint32_t Tileset::getTilesetLoadingStatus() noexcept { 
+  // bool loaded = this->_loadsInProgress == 0 && this->_subtreeLoadsInProgress > 0;
+  const uint32_t isLoading = this->_loadsInProgress + this->_subtreeLoadsInProgress;
+  return isLoading;
+}
+
 void Tileset::loadTilesFromJson(
     Tile& rootTile,
     std::vector<std::unique_ptr<TileContext>>& newContexts,
@@ -390,10 +396,6 @@ void Tileset::loadTilesFromJson(
       pLogger);
 }
 
-bool Tileset::getLoadingStatus() { 
-  bool loaded = this->_loadsInProgress > 0 && this->_subtreeLoadsInProgress > 0;
-  return loaded;
-}
 
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
 Tileset::requestTileContent(Tile& tile) {
