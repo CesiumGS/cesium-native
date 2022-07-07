@@ -1,20 +1,23 @@
-#include "TilesetJsonLoader.h"
-#include "readFile.h"
 #include "SimpleAssetAccessor.h"
-#include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
+#include "SimplePrepareRendererResource.h"
+#include "SimpleTaskProcessor.h"
+#include "TilesetJsonLoader.h"
+#include "readFile.h"
+
 #include <catch2/catch.hpp>
-#include <string>
-#include <memory>
+
 #include <cstddef>
+#include <memory>
+#include <string>
 
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 
 namespace {
-TilesetExternals createMockTilesetExternals(std::vector<std::byte>&& tilesetContent) {
+TilesetExternals
+createMockTilesetExternals(std::vector<std::byte>&& tilesetContent) {
   auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
       static_cast<uint16_t>(200),
       "doesn't matter",
@@ -24,7 +27,7 @@ TilesetExternals createMockTilesetExternals(std::vector<std::byte>&& tilesetCont
       "GET",
       "tileset.json",
       CesiumAsync::HttpHeaders{},
-      std::move(pMockCompletedResponse)); 
+      std::move(pMockCompletedResponse));
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
