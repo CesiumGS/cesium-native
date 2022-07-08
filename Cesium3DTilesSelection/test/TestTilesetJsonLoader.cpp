@@ -286,9 +286,15 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->isExternalContent());
     CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+    CHECK(loaderResult.pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
 
     const Tile& child = loaderResult.pRootTile->getChildren().front();
     CHECK(child.getContent().getLoader() != loaderResult.pLoader.get());
+    CHECK(
+        child.getGeometricError() ==
+        loaderResult.pRootTile->getGeometricError());
+    CHECK(child.getRefine() == loaderResult.pRootTile->getRefine());
+    CHECK(child.getTransform() == loaderResult.pRootTile->getTransform());
     CHECK(
         std::get<CesiumGeometry::QuadtreeTileID>(child.getTileID()) ==
         CesiumGeometry::QuadtreeTileID(0, 0, 0));
@@ -308,9 +314,15 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->isExternalContent());
     CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+    CHECK(loaderResult.pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
 
     const Tile& child = loaderResult.pRootTile->getChildren().front();
     CHECK(child.getContent().getLoader() != loaderResult.pLoader.get());
+    CHECK(
+        child.getGeometricError() ==
+        loaderResult.pRootTile->getGeometricError());
+    CHECK(child.getRefine() == loaderResult.pRootTile->getRefine());
+    CHECK(child.getTransform() == loaderResult.pRootTile->getTransform());
     CHECK(
         std::get<CesiumGeometry::OctreeTileID>(child.getTileID()) ==
         CesiumGeometry::OctreeTileID(0, 0, 0, 0));
