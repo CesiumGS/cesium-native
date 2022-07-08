@@ -173,7 +173,8 @@ TEST_CASE("Test creating tileset json loader") {
 
   SECTION("Tileset has tile with no bounding volume field") {
     auto tilesetData = readFile(
-        testDataPath / "ErrorTilesets" / "NoBoundingVolumeTileset.json");
+        testDataPath / "MultipleKindsOfTilesets" /
+        "NoBoundingVolumeTileset.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -189,7 +190,8 @@ TEST_CASE("Test creating tileset json loader") {
 
   SECTION("Tileset has tile with no geometric error field") {
     auto tilesetData = readFile(
-        testDataPath / "ErrorTilesets" / "NoGeometricErrorTileset.json");
+        testDataPath / "MultipleKindsOfTilesets" /
+        "NoGeometricErrorTileset.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -209,7 +211,8 @@ TEST_CASE("Test creating tileset json loader") {
 
   SECTION("Tileset has tile with no capitalized Refinement field") {
     auto tilesetData = readFile(
-        testDataPath / "ErrorTilesets" / "NoCapitalizedRefineTileset.json");
+        testDataPath / "MultipleKindsOfTilesets" /
+        "NoCapitalizedRefineTileset.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -231,7 +234,8 @@ TEST_CASE("Test creating tileset json loader") {
 
   SECTION("Scale geometric error along with tile transform") {
     auto tilesetData = readFile(
-        testDataPath / "ErrorTilesets" / "ScaleGeometricErrorTileset.json");
+        testDataPath / "MultipleKindsOfTilesets" /
+        "ScaleGeometricErrorTileset.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -250,8 +254,8 @@ TEST_CASE("Test creating tileset json loader") {
   }
 
   SECTION("Tileset with empty tile") {
-    auto tilesetData =
-        readFile(testDataPath / "ErrorTilesets" / "EmptyTileTileset.json");
+    auto tilesetData = readFile(
+        testDataPath / "MultipleKindsOfTilesets" / "EmptyTileTileset.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -268,9 +272,49 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(child.isEmptyContent());
   }
 
-  SECTION("Tileset with quadtree implicit tile") {}
+  SECTION("Tileset with quadtree implicit tile") {
+    auto tilesetData = readFile(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "QuadtreeImplicitTileset.json");
 
-  SECTION("Tileset with octree implicit tile") {}
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->isExternalContent());
+    CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+
+    const Tile& child = loaderResult.pRootTile->getChildren().front();
+    CHECK(child.getContent().getLoader() != loaderResult.pLoader.get());
+    CHECK(
+        std::get<CesiumGeometry::QuadtreeTileID>(child.getTileID()) ==
+        CesiumGeometry::QuadtreeTileID(0, 0, 0));
+  }
+
+  SECTION("Tileset with octree implicit tile") {
+    auto tilesetData = readFile(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "OctreeImplicitTileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->isExternalContent());
+    CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+
+    const Tile& child = loaderResult.pRootTile->getChildren().front();
+    CHECK(child.getContent().getLoader() != loaderResult.pLoader.get());
+    CHECK(
+        std::get<CesiumGeometry::OctreeTileID>(child.getTileID()) ==
+        CesiumGeometry::OctreeTileID(0, 0, 0, 0));
+  }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
