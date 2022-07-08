@@ -286,7 +286,8 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->isExternalContent());
     CHECK(loaderResult.pRootTile->getChildren().size() == 1);
-    CHECK(loaderResult.pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
+    CHECK(
+        loaderResult.pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
 
     const Tile& child = loaderResult.pRootTile->getChildren().front();
     CHECK(child.getContent().getLoader() != loaderResult.pLoader.get());
@@ -314,7 +315,8 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->isExternalContent());
     CHECK(loaderResult.pRootTile->getChildren().size() == 1);
-    CHECK(loaderResult.pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
+    CHECK(
+        loaderResult.pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
 
     const Tile& child = loaderResult.pRootTile->getChildren().front();
     CHECK(child.getContent().getLoader() != loaderResult.pLoader.get());
