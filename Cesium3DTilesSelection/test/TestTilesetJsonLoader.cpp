@@ -248,6 +248,33 @@ TEST_CASE("Test creating tileset json loader") {
       CHECK(child.getGeometricError() == Approx(15.0));
     }
   }
+
+  SECTION("Tileset with empty tile") {
+    auto tilesetData = readFile(
+        testDataPath / "ErrorTilesets" / "EmptyTileTileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
+    CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+
+    const Tile& child = loaderResult.pRootTile->getChildren().front();
+    CHECK(child.isEmptyContent());
+  }
+
+  SECTION("Tileset with quadtree implicit tile") {
+
+  }
+
+  SECTION("Tileset with octree implicit tile") {
+
+  }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
