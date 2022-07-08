@@ -250,8 +250,8 @@ TEST_CASE("Test creating tileset json loader") {
   }
 
   SECTION("Tileset with empty tile") {
-    auto tilesetData = readFile(
-        testDataPath / "ErrorTilesets" / "EmptyTileTileset.json");
+    auto tilesetData =
+        readFile(testDataPath / "ErrorTilesets" / "EmptyTileTileset.json");
 
     auto loaderResult = TilesetJsonLoader::createLoader(
                             createMockTilesetExternals(std::move(tilesetData)),
@@ -268,13 +268,9 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(child.isEmptyContent());
   }
 
-  SECTION("Tileset with quadtree implicit tile") {
+  SECTION("Tileset with quadtree implicit tile") {}
 
-  }
-
-  SECTION("Tileset with octree implicit tile") {
-
-  }
+  SECTION("Tileset with octree implicit tile") {}
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
