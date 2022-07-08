@@ -187,9 +187,67 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile->getChildren().empty());
   }
 
-  SECTION("Tileset has tile with no geometric error field") {}
+  SECTION("Tileset has tile with no geometric error field") {
+    auto tilesetData = readFile(
+        testDataPath / "ErrorTilesets" / "NoGeometricErrorTileset.json");
 
-  SECTION("Tileset has tile with no capitalized Refinement field") {}
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
+    CHECK(loaderResult.pRootTile->getChildren().size() == 4);
+    for (const Tile& child : loaderResult.pRootTile->getChildren()) {
+      CHECK(child.getGeometricError() == Approx(35.0));
+    }
+  }
+
+  SECTION("Tileset has tile with no capitalized Refinement field") {
+    auto tilesetData = readFile(
+        testDataPath / "ErrorTilesets" / "NoCapitalizedRefineTileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
+    CHECK(loaderResult.pRootTile->getRefine() == TileRefine::Add);
+    CHECK(loaderResult.pRootTile->getChildren().size() == 4);
+    for (const Tile& child : loaderResult.pRootTile->getChildren()) {
+      CHECK(child.getGeometricError() == Approx(5.0));
+      CHECK(child.getRefine() == TileRefine::Replace);
+    }
+  }
+
+  SECTION("Scale geometric error along with tile transform") {
+    auto tilesetData = readFile(
+        testDataPath / "ErrorTilesets" / "ScaleGeometricErrorTileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+
+    CHECK(!loaderResult.errors.hasErrors());
+    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->getGeometricError() == Approx(210.0));
+    CHECK(loaderResult.pRootTile->getChildren().size() == 4);
+    for (const Tile& child : loaderResult.pRootTile->getChildren()) {
+      CHECK(child.getGeometricError() == Approx(15.0));
+    }
+  }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {

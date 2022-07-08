@@ -6,6 +6,24 @@
   "extras": {
     "name": "Sample Tileset"
   },
+  "properties": {
+    "id": {
+      "minimum": 0,
+      "maximum": 9
+    },
+    "Longitude": {
+      "minimum": -1.3197192952275933,
+      "maximum": -1.319644104024109
+    },
+    "Latitude": {
+      "minimum": 0.698848878034009,
+      "maximum": 0.6989046192460953
+    },
+    "Height": {
+      "minimum": 6.161747192963958,
+      "maximum": 85.41026367992163
+    }
+  },
   "geometricError": 240,
   "root": {
     "boundingVolume": {
@@ -19,7 +37,11 @@
       ]
     },
     "geometricError": 70,
-    "refine": "aDD",
+    "refine": "ADD",
+    "transform": [2, 0, 0, 0, 
+                  0, 1, 0, 0, 
+                  0, 0, 3, 0, 
+                  0, 0, 0, 1],
     "content": {
       "uri": "parent.b3dm",
       "boundingVolume": {
@@ -45,7 +67,6 @@
             20
           ]
         },
-        "refine": "rEpLaCe",
         "geometricError": 5,
         "content": {
           "uri": "ll.b3dm"
@@ -62,7 +83,6 @@
             20
           ]
         },
-        "refine": "rEpLaCe",
         "geometricError": 5,
         "content": {
           "uri": "lr.b3dm"
@@ -82,7 +102,6 @@
             20
           ]
         },
-        "refine": "rEpLaCe",
         "geometricError": 5,
         "content": {
           "uri": "ur.b3dm"
@@ -99,7 +118,6 @@
             20
           ]
         },
-        "refine": "rEpLaCe",
         "geometricError": 5,
         "content": {
           "uri": "ul.b3dm"
