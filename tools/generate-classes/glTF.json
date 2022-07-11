@@ -198,7 +198,8 @@
     },
     {
       "extensionName": "EXT_feature_metadata",
-      "schema": "Vendor/EXT_feature_metadata/schema/EXT_mesh_gpu_instancing/EXT_feature_metadata.schema.json"
+      "schema": "Vendor/EXT_feature_metadata/schema/EXT_mesh_gpu_instancing/EXT_feature_metadata.schema.json",
+      "attachTo": "https://raw.githubusercontent.com/CesiumGS/glTF/3d-tiles-next/extensions/2.0/Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json"
     },
     {
       "extensionName": "EXT_instance_features",
