@@ -5,6 +5,7 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
+#include "CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -585,6 +586,23 @@ void Tile::processLoadedContent() {
           externals.pPrepareRendererResources->prepareInMainThread(
               *this,
               this->getRendererResources());
+    }
+
+    if (this->_pContent && this->_pContent->model) {
+      bool containsMetadata = false;
+      for (const CesiumGltf::Mesh& mesh : this->_pContent->model->meshes) {
+        for (const CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
+          if (primitive.getExtension<
+                  CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata>()) {
+            containsMetadata = true;
+            goto Exit;
+          }
+        }
+      }
+    Exit:
+      if (!containsMetadata) {
+        this->_pContent->model = std::make_optional<CesiumGltf::Model>();
+      }
     }
 
     this->setState(LoadState::Done);
