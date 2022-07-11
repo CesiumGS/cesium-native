@@ -16,6 +16,8 @@ using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 
 namespace {
+std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+
 TilesetExternals
 createMockTilesetExternals(std::vector<std::byte>&& tilesetContent) {
   auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -50,10 +52,44 @@ createMockTilesetExternals(std::vector<std::byte>&& tilesetContent) {
       std::move(asyncSystem),
       std::move(pMockCreditSystem)};
 }
+
+TileLoadResult loadTileContent(
+    const std::filesystem::path& tilePath,
+    TilesetContentLoader& loader,
+    Tile& tile) {
+  auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+      static_cast<uint16_t>(200),
+      "doesn't matter",
+      CesiumAsync::HttpHeaders{},
+      readFile(tilePath));
+  auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
+      "GET",
+      "tileset.json",
+      CesiumAsync::HttpHeaders{},
+      std::move(pMockCompletedResponse));
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  mockCompletedRequests.insert(
+      {tilePath.filename().string(), std::move(pMockCompletedRequest)});
+
+  std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+
+  AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  return loader
+      .loadTileContent(
+          tile,
+          {},
+          asyncSystem,
+          pMockAssetAccessor,
+          spdlog::default_logger(),
+          {})
+      .wait();
+}
 } // namespace
 
 TEST_CASE("Test creating tileset json loader") {
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
 
   SECTION("Create valid tileset json with REPLACE refinement") {
     auto tilesetData =
@@ -334,7 +370,58 @@ TEST_CASE("Test creating tileset json loader") {
 TEST_CASE("Test loading individual tile of tileset json") {
   SECTION("Load tile that has render content") {}
 
-  SECTION("Load tile that has external content") {}
+  SECTION("Load tile that has external content") {
+    auto tilesetData = readFile(testDataPath / "AddTileset" / "tileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+
+    CHECK(loaderResult.pRootTile);
+    CHECK(
+        std::get<std::string>(loaderResult.pRootTile->getTileID()) ==
+        "tileset2.json");
+
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "AddTileset" / "tileset2.json",
+        *loaderResult.pLoader,
+        *loaderResult.pRootTile);
+    CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
+    CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
+    CHECK(std::holds_alternative<TileExternalContent>(
+        tileLoadResult.contentKind));
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    CHECK(tileLoadResult.tileInitializer);
+
+    // check tile is really an external tile
+    loaderResult.pRootTile->getContent().setContentKind(
+        tileLoadResult.contentKind);
+    tileLoadResult.tileInitializer(*loaderResult.pRootTile);
+    const auto& children = loaderResult.pRootTile->getChildren();
+    CHECK(children.size() == 1);
+
+    const Tile& parentB3dmTile = children[0];
+    CHECK(std::get<std::string>(parentB3dmTile.getTileID()) == "parent.b3dm");
+    CHECK(parentB3dmTile.getGeometricError() == Approx(70.0));
+
+    std::vector<std::string> expectedChildUrls{
+        "tileset3/tileset3.json",
+        "lr.b3dm",
+        "ur.b3dm",
+        "ul.b3dm"};
+    const auto& parentB3dmChildren = parentB3dmTile.getChildren();
+    for (std::size_t i = 0; i < parentB3dmChildren.size(); ++i) {
+      const Tile& child = parentB3dmChildren[i];
+      CHECK(std::get<std::string>(child.getTileID()) == expectedChildUrls[i]);
+      CHECK(child.getGeometricError() == Approx(0.0));
+      CHECK(child.getRefine() == TileRefine::Add);
+      CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+          child.getBoundingVolume()));
+    }
+  }
 
   SECTION("Load tile that has external content with implicit extensions") {}
 

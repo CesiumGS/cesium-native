@@ -50,6 +50,10 @@ public:
 
   TileLoadState getState() const noexcept;
 
+  void setContentKind(TileContentKind&& contentKind);
+
+  void setContentKind(const TileContentKind& contentKind);
+
   bool shouldContentContinueUpdated() const noexcept;
 
   bool isEmptyContent() const noexcept;
@@ -79,10 +83,6 @@ public:
   void* getRenderResources() const noexcept;
 
 private:
-  void setContentKind(TileContentKind&& contentKind);
-
-  void setContentKind(const TileContentKind& contentKind);
-
   void
   setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
 
