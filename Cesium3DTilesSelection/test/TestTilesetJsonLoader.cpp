@@ -368,7 +368,35 @@ TEST_CASE("Test creating tileset json loader") {
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
-  SECTION("Load tile that has render content") {}
+  SECTION("Load tile that has render content") {
+    auto tilesetData =
+        readFile(testDataPath / "ReplaceTileset" / "tileset.json");
+
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+    CHECK(loaderResult.pRootTile);
+
+    const auto& tileID =
+        std::get<std::string>(loaderResult.pRootTile->getTileID());
+    CHECK(tileID == "parent.b3dm");
+
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "ReplaceTileset" / tileID,
+        *loaderResult.pLoader,
+        *loaderResult.pRootTile);
+    CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
+    CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    CHECK(!tileLoadResult.tileInitializer);
+
+    const auto& renderContent =
+        std::get<TileRenderContent>(tileLoadResult.contentKind);
+    CHECK(renderContent.model);
+  }
 
   SECTION("Load tile that has external content") {
     auto tilesetData = readFile(testDataPath / "AddTileset" / "tileset.json");
@@ -380,13 +408,14 @@ TEST_CASE("Test loading individual tile of tileset json") {
                             .wait();
 
     CHECK(loaderResult.pRootTile);
-    CHECK(
-        std::get<std::string>(loaderResult.pRootTile->getTileID()) ==
-        "tileset2.json");
+
+    const auto& tileID =
+        std::get<std::string>(loaderResult.pRootTile->getTileID());
+    CHECK(tileID == "tileset2.json");
 
     // check tile content
     auto tileLoadResult = loadTileContent(
-        testDataPath / "AddTileset" / "tileset2.json",
+        testDataPath / "AddTileset" / tileID,
         *loaderResult.pLoader,
         *loaderResult.pRootTile);
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
