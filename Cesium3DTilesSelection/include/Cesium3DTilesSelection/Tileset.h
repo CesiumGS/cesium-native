@@ -193,7 +193,7 @@ public:
    */
   void notifyTileUnloading(Tile* pTile) noexcept;
 
-  const size_t getTilesetLoadingStatus() noexcept;
+  const uint32_t computeLoadProgress() noexcept;
 
   /**
    * @brief Loads a tile tree from a tileset.json file.
@@ -588,6 +588,7 @@ private:
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
+  std::atomic<uint32_t> _loadedTilesCount;
 
   RasterOverlayCollection _overlays;
 
