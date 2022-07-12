@@ -5,6 +5,7 @@
 #include "SimpleTaskProcessor.h"
 #include "TilesetJsonLoader.h"
 #include "readFile.h"
+#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 
 #include <catch2/catch.hpp>
 
@@ -106,6 +107,7 @@ TileLoadResult loadTileContent(
 } // namespace
 
 TEST_CASE("Test creating tileset json loader") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
 
   SECTION("Create valid tileset json with REPLACE refinement") {
     auto loaderResult =
@@ -364,6 +366,8 @@ TEST_CASE("Test creating tileset json loader") {
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
   SECTION("Load tile that has render content") {
     auto loaderResult = createLoader(testDataPath / "ReplaceTileset" / "tileset.json");
     CHECK(loaderResult.pRootTile);
