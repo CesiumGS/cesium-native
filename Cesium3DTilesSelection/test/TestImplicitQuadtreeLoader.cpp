@@ -25,12 +25,12 @@ TEST_CASE("Test implicit quadtree loader") {
   CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
   ImplicitQuadtreeLoader loader{
-    "tileset.json",
-    "content/{level}.{x}.{y}.b3dm",
-    "subtrees/{level}.{x}.{y}.json",
-    5,
-    5,
-    OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
+      "tileset.json",
+      "content/{level}.{x}.{y}.b3dm",
+      "subtrees/{level}.{x}.{y}.json",
+      5,
+      5,
+      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
 
   SECTION("Load tile that does not have quadtree ID") {
     Tile tile(&loader);
@@ -101,13 +101,14 @@ TEST_CASE("Test implicit quadtree loader") {
         CesiumAsync::HttpHeaders{},
         readFile(testDataPath / "BatchTables" / "batchedWithJson.b3dm"));
 
-  auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
-      "GET",
-      "doesn't matter",
-      CesiumAsync::HttpHeaders{},
-      std::move(pMockCompletedResponse));
+    auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
+        "GET",
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockCompletedResponse));
 
-    pMockedAssetAccessor->mockCompletedRequests.insert({"content/2.1.1.b3dm", std::move(pMockCompletedRequest)});
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"content/2.1.1.b3dm", std::move(pMockCompletedRequest)});
 
     // check that this tile has render content
     Tile tile(&loader);
@@ -132,5 +133,50 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
+  }
+
+  SECTION("load unknown content") {
+    // add subtree with all available tiles
+    loader.addSubtreeAvailability(
+        QuadtreeTileID{0, 0, 0},
+        SubtreeAvailability{
+            2,
+            SubtreeConstantAvailability{true},
+            SubtreeConstantAvailability{false},
+            {SubtreeConstantAvailability{true}},
+            {}});
+
+    // mock tile content b3dm
+    auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::vector<std::byte>(20));
+
+    auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
+        "GET",
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockCompletedResponse));
+
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"content/2.1.1.b3dm", std::move(pMockCompletedRequest)});
+
+    // check that this tile has render content
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID{2, 1, 1});
+
+    auto tileLoadResultFuture = loader.loadTileContent(
+        tile,
+        {},
+        asyncSystem,
+        pMockedAssetAccessor,
+        spdlog::default_logger(),
+        {});
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto tileLoadResult = tileLoadResultFuture.wait();
+    CHECK(tileLoadResult.state == TileLoadResultState::Failed);
   }
 }
