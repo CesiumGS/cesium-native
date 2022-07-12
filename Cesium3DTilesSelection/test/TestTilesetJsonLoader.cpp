@@ -212,6 +212,39 @@ TEST_CASE("Test creating tileset json loader") {
     }
   }
 
+  SECTION("Tileset has tile with sphere bounding volume") {
+    auto loaderResult = createLoader(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "SphereBoundingVolumeTileset.json");
+
+    CHECK(loaderResult.pRootTile);
+
+    const Tile& rootTile = *loaderResult.pRootTile;
+    const CesiumGeometry::BoundingSphere& sphere =
+        std::get<CesiumGeometry::BoundingSphere>(
+            rootTile.getBoundingVolume());
+    CHECK(sphere.getCenter() == glm::dvec3(0.0, 0.0, 10.0));
+    CHECK(sphere.getRadius() == 141.4214);
+  }
+
+  SECTION("Tileset has tile with box bounding volume") {
+    auto loaderResult = createLoader(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "BoxBoundingVolumeTileset.json");
+
+    CHECK(loaderResult.pRootTile);
+
+    const Tile& rootTile = *loaderResult.pRootTile;
+    const CesiumGeometry::OrientedBoundingBox& box =
+        std::get<CesiumGeometry::OrientedBoundingBox>(
+            rootTile.getBoundingVolume());
+    const glm::dmat3& halfAxis = box.getHalfAxes();
+    CHECK(halfAxis[0] == glm::dvec3(100.0, 0.0, 0.0));
+    CHECK(halfAxis[1] == glm::dvec3(0.0, 100.0, 0.0));
+    CHECK(halfAxis[2] == glm::dvec3(0.0, 0.0, 10.0));
+    CHECK(box.getCenter() == glm::dvec3(0.0, 0.0, 10.0));
+  }
+
   SECTION("Tileset has tile with no bounding volume field") {
     auto loaderResult = createLoader(
         testDataPath / "MultipleKindsOfTilesets" /
