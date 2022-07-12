@@ -77,15 +77,18 @@ TileLoadResult loadTileContent(
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
 
   AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
-  return loader
-      .loadTileContent(
-          tile,
-          {},
-          asyncSystem,
-          pMockAssetAccessor,
-          spdlog::default_logger(),
-          {})
-      .wait();
+
+  auto tileLoadResultFuture = loader.loadTileContent(
+      tile,
+      {},
+      asyncSystem,
+      pMockAssetAccessor,
+      spdlog::default_logger(),
+      {});
+
+  asyncSystem.dispatchMainThreadTasks();
+
+  return tileLoadResultFuture.wait();
 }
 } // namespace
 
@@ -452,7 +455,102 @@ TEST_CASE("Test loading individual tile of tileset json") {
     }
   }
 
-  SECTION("Load tile that has external content with implicit extensions") {}
+  SECTION("Load tile that has external content with implicit extensions") {
+    auto tilesetData =
+        readFile(testDataPath / "ImplicitTileset" / "tileset.json");
 
-  SECTION("Load tile that has unknown content") {}
+    auto loaderResult = TilesetJsonLoader::createLoader(
+                            createMockTilesetExternals(std::move(tilesetData)),
+                            "tileset.json",
+                            {})
+                            .wait();
+
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->isExternalContent());
+    CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto& implicitTile = loaderResult.pRootTile->getChildren().front();
+    const auto& tileID =
+        std::get<CesiumGeometry::QuadtreeTileID>(implicitTile.getTileID());
+    CHECK(tileID == CesiumGeometry::QuadtreeTileID(0, 0, 0));
+
+    // mock subtree content response
+    auto subtreePath =
+        testDataPath / "ImplicitTileset" / "subtrees" / "0.0.0.json";
+
+    auto pMockSubtreeResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        readFile(subtreePath));
+    auto pMockSubtreeRequest = std::make_shared<SimpleAssetRequest>(
+        "GET",
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockSubtreeResponse));
+
+    // mock tile content response
+    auto tilePath =
+        testDataPath / "ImplicitTileset" / "content" / "0" / "0" / "0.b3dm";
+
+    auto pMockTileResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        readFile(tilePath));
+    auto pMockTileRequest = std::make_shared<SimpleAssetRequest>(
+        "GET",
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockTileResponse));
+
+    // create mock asset accessor
+    std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+        mockCompletedRequests{
+            {"subtrees/0.0.0.json", std::move(pMockSubtreeRequest)},
+            {"content/0/0/0.b3dm", std::move(pMockTileRequest)}};
+
+    std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+
+    AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
+    {
+      // loader will tell to retry later since it needs subtree
+      auto implicitContentResultFuture = loaderResult.pLoader->loadTileContent(
+          implicitTile,
+          {},
+          asyncSystem,
+          pMockAssetAccessor,
+          spdlog::default_logger(),
+          {});
+
+      asyncSystem.dispatchMainThreadTasks();
+
+      auto implicitContentResult = implicitContentResultFuture.wait();
+      CHECK(implicitContentResult.state == TileLoadResultState::RetryLater);
+    }
+
+    {
+      // loader will be able to load the tile the second time around
+      auto implicitContentResultFuture = loaderResult.pLoader->loadTileContent(
+          implicitTile,
+          {},
+          asyncSystem,
+          pMockAssetAccessor,
+          spdlog::default_logger(),
+          {});
+
+      asyncSystem.dispatchMainThreadTasks();
+
+      auto implicitContentResult = implicitContentResultFuture.wait();
+      const auto& renderContent =
+          std::get<TileRenderContent>(implicitContentResult.contentKind);
+      CHECK(renderContent.model);
+      CHECK(!implicitContentResult.updatedBoundingVolume);
+      CHECK(!implicitContentResult.updatedContentBoundingVolume);
+      CHECK(implicitContentResult.state == TileLoadResultState::Success);
+      CHECK(!implicitContentResult.tileInitializer);
+    }
+  }
 }

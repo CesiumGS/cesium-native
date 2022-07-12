@@ -283,6 +283,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       "test",
       {});
 
+  asyncSystem.dispatchMainThreadTasks();
   return subtreeFuture.wait();
 }
 } // namespace
@@ -534,6 +535,7 @@ TEST_CASE("Test parsing subtree format") {
         "test",
         {});
 
+    asyncSystem.dispatchMainThreadTasks();
     auto parsedSubtree = subtreeFuture.wait();
     CHECK(parsedSubtree != std::nullopt);
 
