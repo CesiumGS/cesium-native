@@ -13,6 +13,8 @@
 
 #include <spdlog/logger.h>
 
+#include <chrono>
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct TileLoadResultAndRenderResources {
@@ -518,6 +520,10 @@ TilesetContentManager::~TilesetContentManager() noexcept {
     _externals.asyncSystem.dispatchMainThreadTasks();
   }
 
+  if (_externals.pTileOcclusionProxyPool) {
+    _externals.pTileOcclusionProxyPool->destroyPool();
+  }
+
   // Wait for all overlays to wrap up their loading, too.
   uint32_t tilesLoading = 1;
   while (tilesLoading > 0) {
@@ -656,13 +662,17 @@ void TilesetContentManager::loadTileContent(
 
 void TilesetContentManager::updateTileContent(
     Tile& tile,
+    double priority,
     const TilesetOptions& tilesetOptions) {
   TileContent& content = tile.getContent();
 
   TileLoadState state = content.getState();
   switch (state) {
   case TileLoadState::ContentLoaded:
-    updateContentLoadedState(tile, tilesetOptions);
+    updateContentLoadedState(tile, priority, tilesetOptions);
+    break;
+  case TileLoadState::CreatingResources:
+    updateCreatingResourcesState(tile, priority);
     break;
   case TileLoadState::Done:
     updateDoneState(tile, tilesetOptions);
@@ -708,6 +718,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
   switch (state) {
   case TileLoadState::ContentLoaded:
+  case TileLoadState::CreatingResources:
     unloadContentLoadedState(tile);
     break;
   case TileLoadState::Done:
@@ -759,6 +770,53 @@ bool TilesetContentManager::doesTileNeedLoading(
          anyRasterOverlaysNeedLoading(tile);
 }
 
+void TilesetContentManager::tickResourceCreation(double /*timeBudget*/) {
+  std::sort(_resourceCreationQueue.begin(), _resourceCreationQueue.end());
+  // TODO: actually use the budget
+
+  // for (ResourceCreationTask& task : _resourceCreationQueue) {
+  //   createRenderResources(*task.pTile);
+  // }
+
+  static std::vector<double> times(30);
+  static size_t index = 0;
+
+  std::chrono::time_point<std::chrono::system_clock> start =
+      std::chrono::system_clock::now();
+  if (_resourceCreationQueue.size() && index == 0) {
+    createRenderResources(*_resourceCreationQueue.front().pTile);
+  }
+  std::chrono::time_point<std::chrono::system_clock> end =
+      std::chrono::system_clock::now();
+  times[index] =
+      std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+          end - start)
+          .count();
+
+  index = (index + 1) % 30;
+
+  double max = 0.0;
+  double sum = 0.0;
+  for (size_t i = 0; i < 30; ++i) {
+    if (times[i] > max) {
+      max = times[i];
+    }
+
+    sum += times[i];
+  }
+  double avg = sum / 30.0;
+
+  if (index == 0) {
+    SPDLOG_LOGGER_WARN(
+        _externals.pLogger,
+        "Resource Creation Avg: {}ms, Max: {}ms",
+        avg,
+        max);
+  }
+
+  _resourceCreationQueue.clear();
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
@@ -800,6 +858,7 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
+    double priority,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
@@ -814,16 +873,10 @@ void TilesetContentManager::updateContentLoadedState(
           *_externals.pCreditSystem,
           *pRenderContent->model,
           tilesetOptions.showCreditsOnScreen));
-
-      // create render resources in the main thread
-      void* pWorkerRenderResources = content.getRenderResources();
-      void* pMainThreadRenderResources =
-          _externals.pPrepareRendererResources->prepareInMainThread(
-              tile,
-              pWorkerRenderResources);
-      content.setRenderResources(pMainThreadRenderResources);
     }
   }
+
+  // TODO: Should the initializer be called after resource creation instead?
 
   // call the initializer
   auto& tileInitializer = content.getTileInitializerCallback();
@@ -832,6 +885,31 @@ void TilesetContentManager::updateContentLoadedState(
     content.setTileInitializerCallback({});
   }
 
+  if (content.isRenderContent() && content.getRenderContent()->model) {
+    content.setState(TileLoadState::CreatingResources);
+    updateCreatingResourcesState(tile, priority);
+  } else {
+    content.setState(TileLoadState::Done);
+  }
+}
+
+void TilesetContentManager::updateCreatingResourcesState(
+    Tile& tile,
+    double priority) {
+  _resourceCreationQueue.push_back(ResourceCreationTask{&tile, priority});
+}
+
+void TilesetContentManager::createRenderResources(Tile& tile) {
+  // create render resources in the main thread
+  TileContent& content = tile.getContent();
+
+  void* pWorkerRenderResources = content.getRenderResources();
+  void* pMainThreadRenderResources =
+      _externals.pPrepareRendererResources->prepareInMainThread(
+          tile,
+          pWorkerRenderResources);
+
+  content.setRenderResources(pMainThreadRenderResources);
   content.setState(TileLoadState::Done);
 }
 

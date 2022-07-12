@@ -18,8 +18,9 @@ enum class TileLoadState {
   Unloaded = 0,
   ContentLoading = 1,
   ContentLoaded = 2,
-  Done = 3,
-  Failed = 4,
+  CreatingResources = 3,
+  Done = 4,
+  Failed = 5,
 };
 
 struct TileUnknownContent {};

@@ -269,6 +269,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
+  _pTilesetContentManager->tickResourceCreation(1.0);
+
   this->_unloadCachedTiles();
   this->_processLoadQueue();
 
@@ -620,7 +622,12 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     Tile& tile,
     ViewUpdateResult& result) {
 
-  _pTilesetContentManager->updateTileContent(tile, _options);
+  std::vector<double>& distances = this->_distances;
+  computeDistances(tile, frameState.frustums, distances);
+  double tilePriority =
+      computeTilePriority(tile, frameState.frustums, distances);
+
+  _pTilesetContentManager->updateTileContent(tile, tilePriority, _options);
   this->_markTileVisited(tile);
 
   CullResult cullResult{};
@@ -642,11 +649,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       break;
     }
   }
-
-  std::vector<double>& distances = this->_distances;
-  computeDistances(tile, frameState.frustums, distances);
-  double tilePriority =
-      computeTilePriority(tile, frameState.frustums, distances);
 
   // TODO: abstract culling stages into composable interface?
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
@@ -734,7 +736,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      _pTilesetContentManager->updateTileContent(child, _options);
+      _pTilesetContentManager->updateTileContent(child, tilePriority, _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1328,12 +1330,6 @@ void Tileset::_propagateTilesetContentLoaderResult(
         this->getOverlays());
   }
 }
-
-// TODO The viewState is only needed to
-// compute the priority from the distance. So maybe this function should
-// receive a priority directly and be called with
-// addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
-// (or at least, this function could delegate to such a call...)
 
 void Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,

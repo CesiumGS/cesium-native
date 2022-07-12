@@ -25,7 +25,10 @@ public:
 
   void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
+  void updateTileContent(
+      Tile& tile,
+      double priority,
+      const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
 
@@ -41,6 +44,8 @@ public:
 
   bool doesTileNeedLoading(const Tile& tile) const noexcept;
 
+  void tickResourceCreation(double timeBudget);
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -48,10 +53,16 @@ private:
       std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
       void* pWorkerRenderResources);
 
-  void
-  updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
+  void updateContentLoadedState(
+      Tile& tile,
+      double priority,
+      const TilesetOptions& tilesetOptions);
+
+  void updateCreatingResourcesState(Tile& tile, double priority);
 
   void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
+
+  void createRenderResources(Tile& tile);
 
   void unloadContentLoadedState(Tile& tile);
 
@@ -70,5 +81,22 @@ private:
   RasterOverlayCollection* _pOverlayCollection;
   int32_t _tilesLoadOnProgress;
   int64_t _tilesDataUsed;
+
+  struct ResourceCreationTask {
+    Tile* pTile;
+
+    /**
+     * @brief The relative priority of creating the resources for this tile.
+     *
+     * Lower priority values load sooner.
+     */
+    double priority;
+
+    bool operator<(const ResourceCreationTask& rhs) const noexcept {
+      return this->priority < rhs.priority;
+    }
+  };
+
+  std::vector<ResourceCreationTask> _resourceCreationQueue;
 };
 } // namespace Cesium3DTilesSelection
