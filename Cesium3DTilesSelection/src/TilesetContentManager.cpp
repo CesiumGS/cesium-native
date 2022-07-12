@@ -783,7 +783,7 @@ void TilesetContentManager::tickResourceCreation(double /*timeBudget*/) {
 
   std::chrono::time_point<std::chrono::system_clock> start =
       std::chrono::system_clock::now();
-  if (_resourceCreationQueue.size() && index == 0) {
+  if (_resourceCreationQueue.size()) {
     createRenderResources(*_resourceCreationQueue.front().pTile);
   }
   std::chrono::time_point<std::chrono::system_clock> end =
