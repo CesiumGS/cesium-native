@@ -6,11 +6,15 @@
 #include "SimpleAssetResponse.h"
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumUtility/Math.h>
 #include <catch2/catch.hpp>
 #include <filesystem>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -319,7 +323,131 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
   }
 
   SECTION("Subdivide bounding region tile") {
+    BoundingRegion loaderBoundingVolume{
+        GlobeRectangle{
+            -Math::OnePi,
+            -Math::PiOverTwo,
+            Math::OnePi,
+            Math::PiOverTwo},
+        0.0,
+        100.0};
+    ImplicitQuadtreeLoader loader{
+        "tileset.json",
+        "content/{level}.{x}.{y}.b3dm",
+        "subtrees/{level}.{x}.{y}.json",
+        5,
+        5,
+        loaderBoundingVolume};
 
+    // add subtree with all available tiles
+    loader.addSubtreeAvailability(
+        QuadtreeTileID{0, 0, 0},
+        SubtreeAvailability{
+            2,
+            SubtreeConstantAvailability{true},
+            SubtreeConstantAvailability{false},
+            {SubtreeConstantAvailability{true}},
+            {}});
+
+    // check subdivide root tile first
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(loaderBoundingVolume);
+    CHECK(!loader.updateTileContent(tile));
+
+    {
+      auto tileChildren = tile.getChildren();
+      CHECK(tileChildren.size() == 4);
+
+      const auto& tile_1_0_0 = tileChildren[0];
+      const auto& region_1_0_0 =
+          std::get<BoundingRegion>(tile_1_0_0.getBoundingVolume());
+      CHECK(region_1_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
+      CHECK(region_1_0_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_0_0.getRectangle().getEast() == Approx(0.0));
+      CHECK(region_1_0_0.getRectangle().getNorth() == Approx(0.0));
+      CHECK(region_1_0_0.getMinimumHeight() == Approx(0.0));
+      CHECK(region_1_0_0.getMaximumHeight() == Approx(100.0));
+
+      const auto& tile_1_1_0 = tileChildren[1];
+      const auto& region_1_1_0 =
+          std::get<BoundingRegion>(tile_1_1_0.getBoundingVolume());
+      CHECK(region_1_1_0.getRectangle().getWest() == Approx(0.0));
+      CHECK(region_1_1_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_1_0.getRectangle().getEast() == Approx(Math::OnePi));
+      CHECK(region_1_1_0.getRectangle().getNorth() == Approx(0.0));
+      CHECK(region_1_1_0.getMinimumHeight() == Approx(0.0));
+      CHECK(region_1_1_0.getMaximumHeight() == Approx(100.0));
+
+      const auto& tile_1_0_1 = tileChildren[2];
+      const auto& region_1_0_1 =
+          std::get<BoundingRegion>(tile_1_0_1.getBoundingVolume());
+      CHECK(region_1_0_1.getRectangle().getWest() == Approx(-Math::OnePi));
+      CHECK(region_1_0_1.getRectangle().getSouth() == Approx(0.0));
+      CHECK(region_1_0_1.getRectangle().getEast() == Approx(0.0));
+      CHECK(region_1_0_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+      CHECK(region_1_0_1.getMinimumHeight() == Approx(0.0));
+      CHECK(region_1_0_1.getMaximumHeight() == Approx(100.0));
+
+      const auto& tile_1_1_1 = tileChildren[3];
+      const auto& region_1_1_1 =
+          std::get<BoundingRegion>(tile_1_1_1.getBoundingVolume());
+      CHECK(region_1_1_1.getRectangle().getWest() == Approx(0.0));
+      CHECK(region_1_1_1.getRectangle().getSouth() == Approx(0.0));
+      CHECK(region_1_1_1.getRectangle().getEast() == Approx(Math::OnePi));
+      CHECK(region_1_1_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+      CHECK(region_1_1_1.getMinimumHeight() == Approx(0.0));
+      CHECK(region_1_1_1.getMaximumHeight() == Approx(100.0));
+    }
+
+    // check subdivide one of the root children
+    auto& tile_1_1_0 = tile.getChildren()[1];
+    CHECK(!loader.updateTileContent(tile_1_1_0));
+
+    {
+      auto tileChildren = tile_1_1_0.getChildren();
+      CHECK(tileChildren.size() == 4);
+
+      const auto& tile_2_2_0 = tileChildren[0];
+      const auto& region_2_2_0 =
+          std::get<BoundingRegion>(tile_2_2_0.getBoundingVolume());
+      CHECK(region_2_2_0.getRectangle().getWest() == Approx(0.0));
+      CHECK(region_2_2_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
+      CHECK(region_2_2_0.getRectangle().getEast() == Approx(Math::PiOverTwo));
+      CHECK(region_2_2_0.getRectangle().getNorth() == Approx(-Math::OnePi / 4.0));
+      CHECK(region_2_2_0.getMinimumHeight() == Approx(0.0));
+      CHECK(region_2_2_0.getMaximumHeight() == Approx(100.0));
+
+      const auto& tile_2_3_0 = tileChildren[1];
+      const auto& region_2_3_0 =
+          std::get<BoundingRegion>(tile_2_3_0.getBoundingVolume());
+      CHECK(region_2_3_0.getRectangle().getWest() == Approx(Math::PiOverTwo));
+      CHECK(region_2_3_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
+      CHECK(region_2_3_0.getRectangle().getEast() == Approx(Math::OnePi));
+      CHECK(region_2_3_0.getRectangle().getNorth() == Approx(-Math::OnePi / 4.0));
+      CHECK(region_2_3_0.getMinimumHeight() == Approx(0.0));
+      CHECK(region_2_3_0.getMaximumHeight() == Approx(100.0));
+
+      const auto& tile_2_2_1 = tileChildren[2];
+      const auto& region_2_2_1 =
+          std::get<BoundingRegion>(tile_2_2_1.getBoundingVolume());
+      CHECK(region_2_2_1.getRectangle().getWest() == Approx(0.0));
+      CHECK(region_2_2_1.getRectangle().getSouth() == Approx(-Math::OnePi / 4.0));
+      CHECK(region_2_2_1.getRectangle().getEast() == Approx(Math::OnePi / 2.0));
+      CHECK(region_2_2_1.getRectangle().getNorth() == Approx(0.0));
+      CHECK(region_2_2_1.getMinimumHeight() == Approx(0.0));
+      CHECK(region_2_2_1.getMaximumHeight() == Approx(100.0));
+
+      const auto& tile_2_3_1 = tileChildren[3];
+      const auto& region_2_3_1 =
+          std::get<BoundingRegion>(tile_2_3_1.getBoundingVolume());
+      CHECK(region_2_3_1.getRectangle().getWest() == Approx(Math::PiOverTwo));
+      CHECK(region_2_3_1.getRectangle().getSouth() == Approx(-Math::OnePi / 4.0));
+      CHECK(region_2_3_1.getRectangle().getEast() == Approx(Math::OnePi));
+      CHECK(region_2_3_1.getRectangle().getNorth() == Approx(0.0));
+      CHECK(region_2_3_1.getMinimumHeight() == Approx(0.0));
+      CHECK(region_2_3_1.getMaximumHeight() == Approx(100.0));
+    }
   }
 
   SECTION("Subdivide S2 volume tile") {
