@@ -5,6 +5,7 @@
 #include "SimpleTaskProcessor.h"
 #include "TilesetJsonLoader.h"
 #include "readFile.h"
+
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 
 #include <catch2/catch.hpp>
@@ -19,8 +20,7 @@ using namespace Cesium3DTilesSelection;
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
 
-TilesetExternals
-createMockTilesetExternals(const std::string& tilesetPath) {
+TilesetExternals createMockTilesetExternals(const std::string& tilesetPath) {
   auto tilesetContent = readFile(tilesetPath);
   auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
       static_cast<uint16_t>(200),
@@ -36,8 +36,7 @@ createMockTilesetExternals(const std::string& tilesetPath) {
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
-  mockCompletedRequests.insert(
-      {tilesetPath, std::move(pMockCompletedRequest)});
+  mockCompletedRequests.insert({tilesetPath, std::move(pMockCompletedRequest)});
 
   std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
@@ -223,8 +222,7 @@ TEST_CASE("Test creating tileset json loader") {
 
     const Tile& rootTile = *loaderResult.pRootTile;
     const CesiumGeometry::BoundingSphere& sphere =
-        std::get<CesiumGeometry::BoundingSphere>(
-            rootTile.getBoundingVolume());
+        std::get<CesiumGeometry::BoundingSphere>(rootTile.getBoundingVolume());
     CHECK(sphere.getCenter() == glm::dvec3(0.0, 0.0, 10.0));
     CHECK(sphere.getRadius() == 141.4214);
   }
@@ -369,7 +367,8 @@ TEST_CASE("Test loading individual tile of tileset json") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
   SECTION("Load tile that has render content") {
-    auto loaderResult = createLoader(testDataPath / "ReplaceTileset" / "tileset.json");
+    auto loaderResult =
+        createLoader(testDataPath / "ReplaceTileset" / "tileset.json");
     CHECK(loaderResult.pRootTile);
 
     const auto& tileID =
@@ -392,8 +391,8 @@ TEST_CASE("Test loading individual tile of tileset json") {
   }
 
   SECTION("Load tile that has external content") {
-    auto loaderResult = createLoader(
-        testDataPath / "AddTileset" / "tileset.json");
+    auto loaderResult =
+        createLoader(testDataPath / "AddTileset" / "tileset.json");
 
     CHECK(loaderResult.pRootTile);
 
