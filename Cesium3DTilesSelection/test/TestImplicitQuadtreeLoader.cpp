@@ -180,3 +180,149 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Failed);
   }
 }
+
+TEST_CASE("Test tile subdivision for implicit quadtree loader") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
+  SECTION("Subdivide bounding box tile") {
+    OrientedBoundingBox loaderBoundingVolume{glm::dvec3(0.0), glm::dmat3(20.0)};
+    ImplicitQuadtreeLoader loader{
+        "tileset.json",
+        "content/{level}.{x}.{y}.b3dm",
+        "subtrees/{level}.{x}.{y}.json",
+        5,
+        5,
+        loaderBoundingVolume};
+
+    // add subtree with all available tiles
+    loader.addSubtreeAvailability(
+        QuadtreeTileID{0, 0, 0},
+        SubtreeAvailability{
+            2,
+            SubtreeConstantAvailability{true},
+            SubtreeConstantAvailability{false},
+            {SubtreeConstantAvailability{true}},
+            {}});
+
+    // check subdivide root tile first
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(loaderBoundingVolume);
+    CHECK(!loader.updateTileContent(tile));
+
+    {
+      auto tileChildren = tile.getChildren();
+      CHECK(tileChildren.size() == 4);
+
+      const auto& tile_1_0_0 = tileChildren[0];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_0_0.getTileID()) ==
+          QuadtreeTileID(1, 0, 0));
+      const auto& box_1_0_0 =
+          std::get<OrientedBoundingBox>(tile_1_0_0.getBoundingVolume());
+      CHECK(box_1_0_0.getCenter() == glm::dvec3(-10.0, -10.0, 0.0));
+      CHECK(box_1_0_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+
+      const auto& tile_1_1_0 = tileChildren[1];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_1_0.getTileID()) ==
+          QuadtreeTileID(1, 1, 0));
+      const auto& box_1_1_0 =
+          std::get<OrientedBoundingBox>(tile_1_1_0.getBoundingVolume());
+      CHECK(box_1_1_0.getCenter() == glm::dvec3(10.0, -10.0, 0.0));
+      CHECK(box_1_1_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+
+      const auto& tile_1_0_1 = tileChildren[2];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_0_1.getTileID()) ==
+          QuadtreeTileID(1, 0, 1));
+      const auto& box_1_0_1 =
+          std::get<OrientedBoundingBox>(tile_1_0_1.getBoundingVolume());
+      CHECK(box_1_0_1.getCenter() == glm::dvec3(-10.0, 10.0, 0.0));
+      CHECK(box_1_0_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+
+      const auto& tile_1_1_1 = tileChildren[3];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_1_1.getTileID()) ==
+          QuadtreeTileID(1, 1, 1));
+      const auto& box_1_1_1 =
+          std::get<OrientedBoundingBox>(tile_1_1_1.getBoundingVolume());
+      CHECK(box_1_1_1.getCenter() == glm::dvec3(10.0, 10.0, 0.0));
+      CHECK(box_1_1_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+    }
+
+    // check subdivide one of the root children
+    auto& tile_1_1_0 = tile.getChildren()[1];
+    CHECK(!loader.updateTileContent(tile_1_1_0));
+
+    {
+      auto tileChildren = tile_1_1_0.getChildren();
+      CHECK(tileChildren.size() == 4);
+
+      const auto& tile_2_2_0 = tileChildren[0];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_2_2_0.getTileID()) ==
+          QuadtreeTileID(2, 2, 0));
+      const auto& box_2_2_0 =
+          std::get<OrientedBoundingBox>(tile_2_2_0.getBoundingVolume());
+      CHECK(box_2_2_0.getCenter() == glm::dvec3(5.0, -15.0, 0.0));
+      CHECK(box_2_2_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_2_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_2_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+
+      const auto& tile_2_3_0 = tileChildren[1];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_2_3_0.getTileID()) ==
+          QuadtreeTileID(2, 3, 0));
+      const auto& box_2_3_0 =
+          std::get<OrientedBoundingBox>(tile_2_3_0.getBoundingVolume());
+      CHECK(box_2_3_0.getCenter() == glm::dvec3(15.0, -15.0, 0.0));
+      CHECK(box_2_3_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_3_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_3_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+
+      const auto& tile_2_2_1 = tileChildren[2];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_2_2_1.getTileID()) ==
+          QuadtreeTileID(2, 2, 1));
+      const auto& box_2_2_1 =
+          std::get<OrientedBoundingBox>(tile_2_2_1.getBoundingVolume());
+      CHECK(box_2_2_1.getCenter() == glm::dvec3(5.0, -5.0, 0.0));
+      CHECK(box_2_2_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_2_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_2_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+
+      const auto& tile_2_3_1 = tileChildren[3];
+      CHECK(
+          std::get<QuadtreeTileID>(tile_2_3_1.getTileID()) ==
+          QuadtreeTileID(2, 3, 1));
+      const auto& box_2_3_1 =
+          std::get<OrientedBoundingBox>(tile_2_3_1.getBoundingVolume());
+      CHECK(box_2_3_1.getCenter() == glm::dvec3(15.0, -5.0, 0.0));
+      CHECK(box_2_3_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_3_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_3_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 20.0));
+    }
+  }
+
+  SECTION("Subdivide bounding region tile") {
+
+  }
+
+  SECTION("Subdivide S2 volume tile") {
+
+  }
+}
