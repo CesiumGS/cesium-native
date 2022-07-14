@@ -187,7 +187,6 @@ TEST_CASE("Test implicit octree loader") {
 
     auto tileLoadResult = tileLoadResultFuture.wait();
     CHECK(tileLoadResult.state == TileLoadResultState::Failed);
-
   }
 }
 
