@@ -7,7 +7,9 @@
 
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
