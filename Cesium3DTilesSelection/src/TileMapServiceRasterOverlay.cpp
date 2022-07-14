@@ -20,6 +20,11 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
 
+struct TileSet {
+  std::string href;
+  uint32_t order;
+};
+
 class TileMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
@@ -40,7 +45,8 @@ public:
       uint32_t width,
       uint32_t height,
       uint32_t minimumLevel,
-      uint32_t maximumLevel)
+      uint32_t maximumLevel,
+      const std::vector<TileSet>& tileSets)
       : QuadtreeRasterOverlayTileProvider(
             owner,
             asyncSystem,
@@ -57,29 +63,51 @@ public:
             height),
         _url(url),
         _headers(headers),
-        _fileExtension(fileExtension) {}
+        _fileExtension(fileExtension) {
+    for (const TileSet& tileSet : tileSets) {
+      _tileSets[tileSet.order] = tileSet;
+    }
+  }
 
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
-    std::string url = CesiumUtility::Uri::resolve(
-        this->_url,
-        std::to_string(tileID.level) + "/" + std::to_string(tileID.x) + "/" +
-            std::to_string(tileID.y) + this->_fileExtension,
-        true);
 
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
+
+    auto findIt = _tileSets.find(tileID.level);
+    if (findIt != _tileSets.end()) {
+      std::string url = CesiumUtility::Uri::resolve(
+          this->_url,
+          findIt->second.href + "/" + std::to_string(tileID.x) + "/" +
+              std::to_string(tileID.y) + this->_fileExtension,
+          true);
+      return this->loadTileImageFromUrl(
+          url,
+          this->_headers,
+          std::move(options));
+    } else {
+      std::string message = "Failed to load image from TMS.";
+      return this->getAsyncSystem()
+          .createResolvedFuture<LoadedRasterOverlayImage>(
+              {std::nullopt,
+               options.rectangle,
+               {},
+               {message},
+               {},
+               options.moreDetailAvailable});
+    }
   }
 
 private:
   std::string _url;
   std::vector<IAssetAccessor::THeader> _headers;
   std::string _fileExtension;
+  std::unordered_map<uint32_t, TileSet> _tileSets;
 };
 
 TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
@@ -218,6 +246,8 @@ TileMapServiceRasterOverlay::createTileProvider(
             uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
             uint32_t maximumLevel = 0;
 
+            std::vector<TileSet> tileSets;
+
             tinyxml2::XMLElement* pTilesets =
                 pRoot->FirstChildElement("TileSets");
             if (pTilesets) {
@@ -228,6 +258,11 @@ TileMapServiceRasterOverlay::createTileProvider(
                     getAttributeUint32(pTileset, "order").value_or(0);
                 minimumLevel = glm::min(minimumLevel, level);
                 maximumLevel = glm::max(maximumLevel, level);
+
+                TileSet& tileSet = tileSets.emplace_back();
+                tileSet.href = getAttributeString(pTileset, "href")
+                                   .value_or(std::to_string(level));
+                tileSet.order = level;
 
                 pTileset = pTileset->NextSiblingElement("TileSet");
               }
@@ -340,7 +375,8 @@ TileMapServiceRasterOverlay::createTileProvider(
                 tileWidth,
                 tileHeight,
                 minimumLevel,
-                maximumLevel);
+                maximumLevel,
+                tileSets);
           });
 }
 
