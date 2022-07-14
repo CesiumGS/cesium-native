@@ -190,3 +190,231 @@ TEST_CASE("Test implicit octree loader") {
 
   }
 }
+
+TEST_CASE("Test tile subdivision for implicit octree loader") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
+  SECTION("Subdivide oriented bounding box") {
+    OrientedBoundingBox loaderBoundingVolume{glm::dvec3(0.0), glm::dmat3(20.0)};
+    ImplicitOctreeLoader loader{
+        "tileset.json",
+        "content/{level}.{x}.{y}.{z}.b3dm",
+        "subtrees/{level}.{x}.{y}.{z}.json",
+        5,
+        5,
+        loaderBoundingVolume};
+
+    // add subtree with all available tiles
+    loader.addSubtreeAvailability(
+        OctreeTileID{0, 0, 0, 0},
+        SubtreeAvailability{
+            3,
+            SubtreeConstantAvailability{true},
+            SubtreeConstantAvailability{false},
+            {SubtreeConstantAvailability{true}},
+            {}});
+
+    // check subdivide root tile first
+    Tile tile(&loader);
+    tile.setTileID(OctreeTileID(0, 0, 0, 0));
+    tile.setBoundingVolume(loaderBoundingVolume);
+    CHECK(!loader.updateTileContent(tile));
+
+    {
+      auto tileChildren = tile.getChildren();
+      CHECK(tileChildren.size() == 8);
+
+      const auto& tile_1_0_0_0 = tileChildren[0];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_0_0_0.getTileID()) ==
+          OctreeTileID(1, 0, 0, 0));
+      const auto& box_1_0_0_0 =
+          std::get<OrientedBoundingBox>(tile_1_0_0_0.getBoundingVolume());
+      CHECK(box_1_0_0_0.getCenter() == glm::dvec3(-10.0, -10.0, -10.0));
+      CHECK(box_1_0_0_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_0_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_0_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_1_0_0 = tileChildren[1];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_1_0_0.getTileID()) ==
+          OctreeTileID(1, 1, 0, 0));
+      const auto& box_1_1_0_0 =
+          std::get<OrientedBoundingBox>(tile_1_1_0_0.getBoundingVolume());
+      CHECK(box_1_1_0_0.getCenter() == glm::dvec3(10.0, -10.0, -10.0));
+      CHECK(box_1_1_0_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_1_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_1_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_0_0_1 = tileChildren[2];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_0_0_1.getTileID()) ==
+          OctreeTileID(1, 0, 0, 1));
+      const auto& box_1_0_0_1 =
+          std::get<OrientedBoundingBox>(tile_1_0_0_1.getBoundingVolume());
+      CHECK(box_1_0_0_1.getCenter() == glm::dvec3(-10.0, -10.0, 10.0));
+      CHECK(box_1_0_0_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_0_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_0_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_1_0_1 = tileChildren[3];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_1_0_1.getTileID()) ==
+          OctreeTileID(1, 1, 0, 1));
+      const auto& box_1_1_0_1 =
+          std::get<OrientedBoundingBox>(tile_1_1_0_1.getBoundingVolume());
+      CHECK(box_1_1_0_1.getCenter() == glm::dvec3(10.0, -10.0, 10.0));
+      CHECK(box_1_1_0_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_1_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_1_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_0_1_0 = tileChildren[4];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_0_1_0.getTileID()) ==
+          OctreeTileID(1, 0, 1, 0));
+      const auto& box_1_0_1_0 =
+          std::get<OrientedBoundingBox>(tile_1_0_1_0.getBoundingVolume());
+      CHECK(box_1_0_1_0.getCenter() == glm::dvec3(-10.0, 10.0, -10.0));
+      CHECK(box_1_0_1_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_0_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_0_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_1_1_0 = tileChildren[5];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_1_1_0.getTileID()) ==
+          OctreeTileID(1, 1, 1, 0));
+      const auto& box_1_1_1_0 =
+          std::get<OrientedBoundingBox>(tile_1_1_1_0.getBoundingVolume());
+      CHECK(box_1_1_1_0.getCenter() == glm::dvec3(10.0, 10.0, -10.0));
+      CHECK(box_1_1_1_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_1_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_1_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_0_1_1 = tileChildren[6];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_0_1_1.getTileID()) ==
+          OctreeTileID(1, 0, 1, 1));
+      const auto& box_1_0_1_1 =
+          std::get<OrientedBoundingBox>(tile_1_0_1_1.getBoundingVolume());
+      CHECK(box_1_0_1_1.getCenter() == glm::dvec3(-10.0, 10.0, 10.0));
+      CHECK(box_1_0_1_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_0_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_0_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      const auto& tile_1_1_1_1 = tileChildren[7];
+      CHECK(
+          std::get<OctreeTileID>(tile_1_1_1_1.getTileID()) ==
+          OctreeTileID(1, 1, 1, 1));
+      const auto& box_1_1_1_1 =
+          std::get<OrientedBoundingBox>(tile_1_1_1_1.getBoundingVolume());
+      CHECK(box_1_1_1_1.getCenter() == glm::dvec3(10.0, 10.0, 10.0));
+      CHECK(box_1_1_1_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
+      CHECK(box_1_1_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
+      CHECK(box_1_1_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+    }
+
+    // check subdivide one of the root children
+    auto& tile_1_1_0_0 = tile.getChildren()[1];
+    CHECK(!loader.updateTileContent(tile_1_1_0_0));
+
+    {
+      auto tileChildren = tile_1_1_0_0.getChildren();
+      CHECK(tileChildren.size() == 8);
+
+      const auto& tile_2_2_0_0 = tileChildren[0];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_2_0_0.getTileID()) ==
+          OctreeTileID(2, 2, 0, 0));
+      const auto& box_2_2_0_0 =
+          std::get<OrientedBoundingBox>(tile_2_2_0_0.getBoundingVolume());
+      CHECK(box_2_2_0_0.getCenter() == glm::dvec3(5.0, -15.0, -15.0));
+      CHECK(box_2_2_0_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_2_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_2_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_3_0_0 = tileChildren[1];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_3_0_0.getTileID()) ==
+          OctreeTileID(2, 3, 0, 0));
+      const auto& box_2_3_0_0 =
+          std::get<OrientedBoundingBox>(tile_2_3_0_0.getBoundingVolume());
+      CHECK(box_2_3_0_0.getCenter() == glm::dvec3(15.0, -15.0, -15.0));
+      CHECK(box_2_3_0_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_3_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_3_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_2_0_1 = tileChildren[2];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_2_0_1.getTileID()) ==
+          OctreeTileID(2, 2, 0, 1));
+      const auto& box_2_2_0_1 =
+          std::get<OrientedBoundingBox>(tile_2_2_0_1.getBoundingVolume());
+      CHECK(box_2_2_0_1.getCenter() == glm::dvec3(5.0, -15.0, -5.0));
+      CHECK(box_2_2_0_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_2_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_2_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_3_0_1 = tileChildren[3];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_3_0_1.getTileID()) ==
+          OctreeTileID(2, 3, 0, 1));
+      const auto& box_2_3_0_1 =
+          std::get<OrientedBoundingBox>(tile_2_3_0_1.getBoundingVolume());
+      CHECK(box_2_3_0_1.getCenter() == glm::dvec3(15.0, -15.0, -5.0));
+      CHECK(box_2_3_0_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_3_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_3_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_2_1_0 = tileChildren[4];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_2_1_0.getTileID()) ==
+          OctreeTileID(2, 2, 1, 0));
+      const auto& box_2_2_1_0 =
+          std::get<OrientedBoundingBox>(tile_2_2_1_0.getBoundingVolume());
+      CHECK(box_2_2_1_0.getCenter() == glm::dvec3(5.0, -5.0, -15.0));
+      CHECK(box_2_2_1_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_2_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_2_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_3_1_0 = tileChildren[5];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_3_1_0.getTileID()) ==
+          OctreeTileID(2, 3, 1, 0));
+      const auto& box_2_3_1_0 =
+          std::get<OrientedBoundingBox>(tile_2_3_1_0.getBoundingVolume());
+      CHECK(box_2_3_1_0.getCenter() == glm::dvec3(15.0, -5.0, -15.0));
+      CHECK(box_2_3_1_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_3_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_3_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_2_1_1 = tileChildren[6];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_2_1_1.getTileID()) ==
+          OctreeTileID(2, 2, 1, 1));
+      const auto& box_2_2_1_1 =
+          std::get<OrientedBoundingBox>(tile_2_2_1_1.getBoundingVolume());
+      CHECK(box_2_2_1_1.getCenter() == glm::dvec3(5.0, -5.0, -5.0));
+      CHECK(box_2_2_1_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_2_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_2_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+
+      const auto& tile_2_3_1_1 = tileChildren[7];
+      CHECK(
+          std::get<OctreeTileID>(tile_2_3_1_1.getTileID()) ==
+          OctreeTileID(2, 3, 1, 1));
+      const auto& box_2_3_1_1 =
+          std::get<OrientedBoundingBox>(tile_2_3_1_1.getBoundingVolume());
+      CHECK(box_2_3_1_1.getCenter() == glm::dvec3(15.0, -5.0, -5.0));
+      CHECK(box_2_3_1_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
+      CHECK(box_2_3_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
+      CHECK(box_2_3_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
+    }
+  }
+
+  SECTION("Subdivide bounding region") {}
+}
