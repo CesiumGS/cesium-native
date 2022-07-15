@@ -193,7 +193,7 @@ public:
    */
   void notifyTileUnloading(Tile* pTile) noexcept;
 
-  const uint32_t computeLoadProgress() noexcept;
+  uint32_t computeLoadProgress() noexcept;
 
   /**
    * @brief Loads a tile tree from a tileset.json file.
