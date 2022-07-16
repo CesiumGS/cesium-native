@@ -29,6 +29,9 @@ struct ExtensionModelMaxarMeshVariants;
 struct ExtensionNodeMaxarMeshVariants;
 struct ExtensionKhrTextureTransform;
 struct ExtensionTextureWebp;
+struct ExtensionExtPrimitiveVoxels;
+struct Padding;
+struct Bounds;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionExtStructuralMetadataPropertyAttribute;
@@ -298,6 +301,35 @@ struct ExtensionTextureWebpJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionTextureWebp& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionExtPrimitiveVoxelsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtPrimitiveVoxels;
+
+  static inline constexpr const char* ExtensionName = "EXT_primitive_voxels";
+
+  static void write(
+      const CesiumGltf::ExtensionExtPrimitiveVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PaddingJsonWriter {
+  using ValueType = CesiumGltf::Padding;
+
+  static void write(
+      const CesiumGltf::Padding& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BoundsJsonWriter {
+  using ValueType = CesiumGltf::Bounds;
+
+  static void write(
+      const CesiumGltf::Bounds& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
