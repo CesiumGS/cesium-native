@@ -158,6 +158,47 @@ static std::optional<double> getAttributeDouble(
   return std::nullopt;
 }
 
+Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& url,
+    const std::vector<IAssetAccessor::THeader>& headers,
+    std::string& errorMessage) {
+  return pAssetAccessor->get(asyncSystem, url, headers)
+      .thenInWorkerThread(
+          [asyncSystem, pAssetAccessor, url, headers, &errorMessage](
+              const std::shared_ptr<IAssetRequest>& pRequest)
+              -> std::unique_ptr<tinyxml2::XMLDocument> {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              errorMessage = "No response received from Tile Map Service.";
+              return nullptr;
+            }
+
+            const gsl::span<const std::byte> data = pResponse->data();
+
+            std::unique_ptr<tinyxml2::XMLDocument> pDoc =
+                std::make_unique<tinyxml2::XMLDocument>(
+                    new tinyxml2::XMLDocument());
+            const tinyxml2::XMLError error = pDoc->Parse(
+                reinterpret_cast<const char*>(data.data()),
+                data.size_bytes());
+            if (error != tinyxml2::XMLError::XML_SUCCESS) {
+              return getXmlDocument(
+                         asyncSystem,
+                         pAssetAccessor,
+                         CesiumUtility::Uri::resolve(
+                             url,
+                             "tilemapresource.xml"),
+                         headers,
+                         errorMessage)
+                  .wait();
+            } else {
+              return pDoc;
+            }
+          });
+}
+
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 TileMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -166,8 +207,7 @@ TileMapServiceRasterOverlay::createTileProvider(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     RasterOverlay* pOwner) {
-  std::string xmlUrl =
-      CesiumUtility::Uri::resolve(this->_url, "tilemapresource.xml");
+  std::string xmlUrl = this->_url;
 
   pOwner = pOwner ? pOwner : this;
 
@@ -189,8 +229,13 @@ TileMapServiceRasterOverlay::createTileProvider(
             pRequest,
             message});
   };
-
-  return pAssetAccessor->get(asyncSystem, xmlUrl, this->_headers)
+  std::string errorMessage;
+  return getXmlDocument(
+             asyncSystem,
+             pAssetAccessor,
+             xmlUrl,
+             _headers,
+             errorMessage)
       .thenInWorkerThread(
           [pOwner,
            asyncSystem,
@@ -201,33 +246,14 @@ TileMapServiceRasterOverlay::createTileProvider(
            options = this->_options,
            url = this->_url,
            headers = this->_headers,
-           reportError](const std::shared_ptr<IAssetRequest>& pRequest)
+           reportError](std::unique_ptr<tinyxml2::XMLDocument> pDoc)
               -> std::unique_ptr<RasterOverlayTileProvider> {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              reportError(
-                  pRequest,
-                  "No response received from Tile Map Service.");
-              return nullptr;
-            }
-
-            const gsl::span<const std::byte> data = pResponse->data();
-
-            tinyxml2::XMLDocument doc;
-            const tinyxml2::XMLError error = doc.Parse(
-                reinterpret_cast<const char*>(data.data()),
-                data.size_bytes());
-            if (error != tinyxml2::XMLError::XML_SUCCESS) {
-              reportError(pRequest, "Could not parse tile map service XML.");
-              return nullptr;
-            }
-
-            tinyxml2::XMLElement* pRoot = doc.RootElement();
+            tinyxml2::XMLElement* pRoot = pDoc->RootElement();
             if (!pRoot) {
-              reportError(
-                  pRequest,
-                  "Tile map service XML document does not have a root "
-                  "element.");
+              // reportError(
+              //     pRequest,
+              //     "Tile map service XML document does not have a root "
+              //     "element.");
               return nullptr;
             }
 
@@ -309,6 +335,23 @@ TileMapServiceRasterOverlay::createTileProvider(
 
                 // The geodetic profile is always in degrees.
                 isRectangleInDegrees = true;
+              } else {
+                tinyxml2::XMLElement* srs = pRoot->FirstChildElement("SRS");
+                if (srs) {
+                  std::string srsText = srs->GetText();
+                  if (srsText.find("3857") != std::string::npos) {
+                    projection = CesiumGeospatial::WebMercatorProjection();
+                    tilingSchemeRectangle = CesiumGeospatial::
+                        WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+                    isRectangleInDegrees = true;
+                  } else if (srsText.find("4326") != std::string::npos) {
+                    projection = CesiumGeospatial::GeographicProjection();
+                    tilingSchemeRectangle = CesiumGeospatial::
+                        GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+                    rootTilesX = 2;
+                    isRectangleInDegrees = true;
+                  }
+                }
               }
             }
 
