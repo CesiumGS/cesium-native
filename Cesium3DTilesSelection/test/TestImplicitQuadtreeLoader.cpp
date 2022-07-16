@@ -460,6 +460,67 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
   }
 
   SECTION("Subdivide S2 volume tile") {
-    // TODO
+    S2CellID rootID = S2CellID::fromToken("1");
+    CHECK(rootID.getFace() == 0);
+
+    S2CellBoundingVolume loaderBoundingVolume{rootID, 0, 1000.0};
+
+    ImplicitQuadtreeLoader loader{
+        "tileset.json",
+        "content/{level}.{x}.{y}.b3dm",
+        "subtrees/{level}.{x}.{y}.json",
+        5,
+        5,
+        loaderBoundingVolume};
+
+    // add subtree with all available tiles
+    loader.addSubtreeAvailability(
+        QuadtreeTileID{0, 0, 0},
+        SubtreeAvailability{
+            2,
+            SubtreeConstantAvailability{true},
+            SubtreeConstantAvailability{false},
+            {SubtreeConstantAvailability{true}},
+            {}});
+
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(loaderBoundingVolume);
+    CHECK(!loader.updateTileContent(tile));
+
+    const auto& tileChildren = tile.getChildren();
+    CHECK(tileChildren.size() == 4);
+
+    const auto& tile_1_0_0 = tileChildren[0];
+    CHECK(
+        std::get<QuadtreeTileID>(tile_1_0_0.getTileID()) ==
+        QuadtreeTileID(1, 0, 0));
+    const auto& box_1_0_0 =
+        std::get<S2CellBoundingVolume>(tile_1_0_0.getBoundingVolume());
+    CHECK(box_1_0_0.getCellID().toToken() == "04");
+
+    const auto& tile_1_1_0 = tileChildren[1];
+    CHECK(
+        std::get<QuadtreeTileID>(tile_1_1_0.getTileID()) ==
+        QuadtreeTileID(1, 1, 0));
+    const auto& box_1_1_0 =
+        std::get<S2CellBoundingVolume>(tile_1_1_0.getBoundingVolume());
+    CHECK(box_1_1_0.getCellID().toToken() == "1c");
+
+    const auto& tile_1_0_1 = tileChildren[2];
+    CHECK(
+        std::get<QuadtreeTileID>(tile_1_0_1.getTileID()) ==
+        QuadtreeTileID(1, 0, 1));
+    const auto& box_1_0_1 =
+        std::get<S2CellBoundingVolume>(tile_1_0_1.getBoundingVolume());
+    CHECK(box_1_0_1.getCellID().toToken() == "0c");
+
+    const auto& tile_1_1_1 = tileChildren[3];
+    CHECK(
+        std::get<QuadtreeTileID>(tile_1_1_1.getTileID()) ==
+        QuadtreeTileID(1, 1, 1));
+    const auto& box_1_1_1 =
+        std::get<S2CellBoundingVolume>(tile_1_1_1.getBoundingVolume());
+    CHECK(box_1_1_1.getCellID().toToken() == "14");
   }
 }
