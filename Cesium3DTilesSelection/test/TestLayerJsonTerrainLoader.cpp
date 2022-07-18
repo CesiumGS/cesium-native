@@ -123,4 +123,28 @@ TEST_CASE("Test layer json terrain loader") {
     CHECK(region_0_1_0.getMinimumHeight() == -1000.0);
     CHECK(region_0_1_0.getMaximumHeight() == 9000.0);
   }
+
+  SECTION("Load error layer json with empty tiles array") {
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "EmptyTilesArray.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(!loaderResult.pLoader);
+    CHECK(!loaderResult.pRootTile);
+    CHECK(loaderResult.errors.errors.size() == 1);
+    CHECK(
+        loaderResult.errors.errors[0] ==
+        "Layer Json does not specify any tile URL templates");
+  }
 }

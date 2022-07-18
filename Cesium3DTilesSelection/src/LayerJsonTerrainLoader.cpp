@@ -162,6 +162,12 @@ Future<LoadLayersResult> loadLayersRecursive(
   }
 
   std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
+  if (urls.empty()) {
+    loadLayersResult.errors.emplace_error(
+        "Layer Json does not specify any tile URL templates");
+    return asyncSystem.createResolvedFuture(std::move(loadLayersResult));
+  }
+
   int32_t maxZoom = JsonHelpers::getInt32OrDefault(layerJson, "maxzoom", 30);
 
   std::vector<std::string> extensions =
@@ -426,6 +432,12 @@ LayerJsonTerrainLoader::createLoader(
                 showCreditsOnScreen);
           })
       .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
+        if (loadLayersResult.errors) {
+          TilesetContentLoaderResult result;
+          result.errors = std::move(loadLayersResult.errors);
+          return result;
+        }
+
         if (!loadLayersResult.tilingScheme || !loadLayersResult.projection ||
             !loadLayersResult.boundingVolume) {
           TilesetContentLoaderResult result;
