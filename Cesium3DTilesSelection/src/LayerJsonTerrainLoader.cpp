@@ -963,6 +963,9 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
       index != -1 && "Cannot find raster overlay UVs that has this projection. "
                      "Should not happen");
 
+  // it's totally safe to capture the const ref parent model in the worker thread.
+  // The tileset content manager will guarantee that the parent tile will not be
+  // unloaded when upsampled tile is on the fly.
   const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
   return asyncSystem.runInWorkerThread(
       [&parentModel,
