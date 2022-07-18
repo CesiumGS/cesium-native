@@ -101,7 +101,7 @@ TEST_CASE("Test layer json terrain loader") {
             tile_0_0_0.getBoundingVolume());
     const auto& region_0_0_0 = looseRegion_0_0_0.getBoundingRegion();
     CHECK(std::get<QuadtreeTileID>(tile_0_0_0.getTileID()) == QuadtreeTileID(0, 0, 0));
-    //CHECK(tile_0_0_0.getGeometricError() == 0.0);
+    CHECK(tile_0_0_0.getGeometricError() == Approx(616538.71824));
     CHECK(region_0_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_0_0_0.getRectangle().getEast() == Approx(0.0));
     CHECK(region_0_0_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
@@ -115,7 +115,7 @@ TEST_CASE("Test layer json terrain loader") {
             tile_0_1_0.getBoundingVolume());
     const auto& region_0_1_0 = looseRegion_0_1_0.getBoundingRegion();
     CHECK(std::get<QuadtreeTileID>(tile_0_1_0.getTileID()) == QuadtreeTileID(0, 1, 0));
-    //CHECK(tile_0_1_0.getGeometricError() == 0.0);
+    CHECK(tile_0_1_0.getGeometricError() == Approx(616538.71824));
     CHECK(region_0_1_0.getRectangle().getWest() == Approx(0.0));
     CHECK(region_0_1_0.getRectangle().getEast() == Approx(Math::OnePi));
     CHECK(region_0_1_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
