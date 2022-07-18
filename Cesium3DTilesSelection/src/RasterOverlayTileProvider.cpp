@@ -144,8 +144,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   options.moreDetailAvailable};
             }
 
-            if (pResponse->statusCode() != 0 && pResponse->statusCode() < 200 ||
-                pResponse->statusCode() >= 300) {
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
               std::string message = "Image response code " +
                                     std::to_string(pResponse->statusCode()) +
                                     " for " + pRequest->url();

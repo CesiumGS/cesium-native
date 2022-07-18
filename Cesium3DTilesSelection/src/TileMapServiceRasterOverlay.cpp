@@ -221,6 +221,9 @@ TileMapServiceRasterOverlay::createTileProvider(
     const std::shared_ptr<spdlog::logger>& pLogger,
     RasterOverlay* pOwner) {
   std::string xmlUrl = this->_url;
+  if (xmlUrl[xmlUrl.size() - 1] != '/') {
+    xmlUrl += "/";
+  }
 
   pOwner = pOwner ? pOwner : this;
 
@@ -242,7 +245,6 @@ TileMapServiceRasterOverlay::createTileProvider(
             pRequest,
             message});
   };
-  std::string errorMessage;
   return getXmlDocument(
              asyncSystem,
              pAssetAccessor,
@@ -347,12 +349,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 tinyxml2::XMLElement* srs = pRoot->FirstChildElement("SRS");
                 if (srs) {
                   std::string srsText = srs->GetText();
-                  if (srsText.find("3857") != std::string::npos) {
-                    projection = CesiumGeospatial::WebMercatorProjection();
-                    tilingSchemeRectangle = CesiumGeospatial::
-                        WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
-                    isRectangleInDegrees = true;
-                  } else if (srsText.find("4326") != std::string::npos) {
+                  if (srsText.find("4326") != std::string::npos) {
                     projection = CesiumGeospatial::GeographicProjection();
                     tilingSchemeRectangle = CesiumGeospatial::
                         GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
