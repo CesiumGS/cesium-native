@@ -352,6 +352,11 @@ TileMapServiceRasterOverlay::createTileProvider(
                         GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
                     rootTilesX = 2;
                     isRectangleInDegrees = true;
+                  } else if (srsText.find("900913") != std::string::npos) {
+                    projection = CesiumGeospatial::WebMercatorProjection();
+                    tilingSchemeRectangle = CesiumGeospatial::
+                        WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+                    isRectangleInDegrees = true;
                   }
                 }
               }
