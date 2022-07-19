@@ -1,15 +1,18 @@
 #include "LayerJsonTerrainLoader.h"
-#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
-#include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumUtility/Math.h>
-#include "SimplePrepareRendererResource.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
+#include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
 #include "readFile.h"
+
+#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumUtility/Math.h>
+
 #include <catch2/catch.hpp>
+
 #include <filesystem>
 
 using namespace Cesium3DTilesSelection;
@@ -78,8 +81,9 @@ TEST_CASE("Test layer json terrain loader") {
 
     // check root tile
     const Tile& rootTile = *loaderResult.pRootTile;
-    const auto& rootLooseRegion = std::get<BoundingRegionWithLooseFittingHeights>(
-        rootTile.getBoundingVolume());
+    const auto& rootLooseRegion =
+        std::get<BoundingRegionWithLooseFittingHeights>(
+            rootTile.getBoundingVolume());
     const auto& rootRegion = rootLooseRegion.getBoundingRegion();
     CHECK(rootTile.isEmptyContent());
     CHECK(rootTile.getUnconditionallyRefine());
@@ -100,7 +104,9 @@ TEST_CASE("Test layer json terrain loader") {
         std::get<BoundingRegionWithLooseFittingHeights>(
             tile_0_0_0.getBoundingVolume());
     const auto& region_0_0_0 = looseRegion_0_0_0.getBoundingRegion();
-    CHECK(std::get<QuadtreeTileID>(tile_0_0_0.getTileID()) == QuadtreeTileID(0, 0, 0));
+    CHECK(
+        std::get<QuadtreeTileID>(tile_0_0_0.getTileID()) ==
+        QuadtreeTileID(0, 0, 0));
     CHECK(tile_0_0_0.getGeometricError() == Approx(616538.71824));
     CHECK(region_0_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_0_0_0.getRectangle().getEast() == Approx(0.0));
@@ -114,7 +120,9 @@ TEST_CASE("Test layer json terrain loader") {
         std::get<BoundingRegionWithLooseFittingHeights>(
             tile_0_1_0.getBoundingVolume());
     const auto& region_0_1_0 = looseRegion_0_1_0.getBoundingRegion();
-    CHECK(std::get<QuadtreeTileID>(tile_0_1_0.getTileID()) == QuadtreeTileID(0, 1, 0));
+    CHECK(
+        std::get<QuadtreeTileID>(tile_0_1_0.getTileID()) ==
+        QuadtreeTileID(0, 1, 0));
     CHECK(tile_0_1_0.getGeometricError() == Approx(616538.71824));
     CHECK(region_0_1_0.getRectangle().getWest() == Approx(0.0));
     CHECK(region_0_1_0.getRectangle().getEast() == Approx(Math::OnePi));
@@ -146,5 +154,49 @@ TEST_CASE("Test layer json terrain loader") {
     CHECK(
         loaderResult.errors.errors[0] ==
         "Layer Json does not specify any tile URL templates");
+  }
+
+  SECTION("Load error layer json with no tiles field") {
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "NoTiles.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(!loaderResult.pLoader);
+    CHECK(!loaderResult.pRootTile);
+    CHECK(loaderResult.errors.errors.size() == 1);
+    CHECK(
+        loaderResult.errors.errors[0] ==
+        "Layer Json does not specify any tile URL templates");
+  }
+
+  SECTION("Load layer json with metadataAvailability field") {
+    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
+                         "MetadataAvailability.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
   }
 }

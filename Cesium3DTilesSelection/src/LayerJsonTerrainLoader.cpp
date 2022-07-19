@@ -384,7 +384,8 @@ Future<LoadLayersResult> loadLayerJson(
 }
 } // namespace
 
-/*static*/ CesiumAsync::Future<TilesetContentLoaderResult>
+/*static*/ CesiumAsync::Future<
+    TilesetContentLoaderResult<LayerJsonTerrainLoader>>
 LayerJsonTerrainLoader::createLoader(
     const TilesetExternals& externals,
     const TilesetContentOptions& contentOptions,
@@ -433,14 +434,14 @@ LayerJsonTerrainLoader::createLoader(
           })
       .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
         if (loadLayersResult.errors) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
           result.errors = std::move(loadLayersResult.errors);
           return result;
         }
 
         if (!loadLayersResult.tilingScheme || !loadLayersResult.projection ||
             !loadLayersResult.boundingVolume) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
           result.errors.emplace_error(
               "Could not deduce tiling scheme, projection, or bounding volume "
               "from layer.json.");
@@ -489,7 +490,7 @@ LayerJsonTerrainLoader::createLoader(
           credits.emplace_back(LoaderCreditResult{std::move(credit), true});
         }
 
-        return TilesetContentLoaderResult{
+        return TilesetContentLoaderResult<LayerJsonTerrainLoader>{
             std::move(pLoader),
             std::move(pRootTile),
             CesiumGeometry::Axis::Y,
@@ -975,9 +976,9 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
       index != -1 && "Cannot find raster overlay UVs that has this projection. "
                      "Should not happen");
 
-  // it's totally safe to capture the const ref parent model in the worker thread.
-  // The tileset content manager will guarantee that the parent tile will not be
-  // unloaded when upsampled tile is on the fly.
+  // it's totally safe to capture the const ref parent model in the worker
+  // thread. The tileset content manager will guarantee that the parent tile
+  // will not be unloaded when upsampled tile is on the fly.
   const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
   return asyncSystem.runInWorkerThread(
       [&parentModel,

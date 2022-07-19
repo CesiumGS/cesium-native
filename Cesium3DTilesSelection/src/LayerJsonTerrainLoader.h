@@ -27,7 +27,8 @@ class LayerJsonTerrainLoader : public TilesetContentLoader {
   enum class AvailableState { Available, NotAvailable, Unknown };
 
 public:
-  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+  static CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
+  createLoader(
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,

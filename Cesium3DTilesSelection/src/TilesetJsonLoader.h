@@ -31,7 +31,8 @@ public:
 
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
-  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+  static CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
+  createLoader(
       const TilesetExternals& externals,
       const std::string& tilesetJsonUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);

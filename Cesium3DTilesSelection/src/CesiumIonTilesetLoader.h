@@ -34,7 +34,8 @@ public:
 
   bool updateTileContent(Tile& tile) override;
 
-  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+  static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+  createLoader(
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       uint32_t ionAssetID,

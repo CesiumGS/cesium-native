@@ -60,9 +60,10 @@ Tileset::Tileset(
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     TilesetJsonLoader::createLoader(externals, url, {})
-        .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          this->_propagateTilesetContentLoaderResult(std::move(result));
-        });
+        .thenInMainThread(
+            [this](TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
+              this->_propagateTilesetContentLoaderResult(std::move(result));
+            });
   }
 }
 
@@ -115,9 +116,11 @@ Tileset::Tileset(
         ionAssetEndpointUrl,
         authorizationChangeListener,
         options.showCreditsOnScreen)
-        .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          this->_propagateTilesetContentLoaderResult(std::move(result));
-        });
+        .thenInMainThread(
+            [this](
+                TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+              this->_propagateTilesetContentLoaderResult(std::move(result));
+            });
   }
 }
 
@@ -1094,8 +1097,9 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
 
+template <class TilesetContentLoaderType>
 void Tileset::_propagateTilesetContentLoaderResult(
-    TilesetContentLoaderResult&& result) {
+    TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
   if (result.errors) {
     this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
         this,

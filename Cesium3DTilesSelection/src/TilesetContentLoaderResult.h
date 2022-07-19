@@ -1,7 +1,5 @@
 #pragma once
 
-#include "TilesetContentLoader.h"
-
 #include <Cesium3DTilesSelection/ErrorList.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -17,8 +15,8 @@ struct LoaderCreditResult {
   bool showOnScreen;
 };
 
-struct TilesetContentLoaderResult {
-  std::unique_ptr<TilesetContentLoader> pLoader;
+template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
+  std::unique_ptr<TilesetContentLoaderType> pLoader;
 
   std::unique_ptr<Tile> pRootTile;
 

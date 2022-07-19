@@ -55,7 +55,7 @@ TilesetExternals createMockTilesetExternals(const std::string& tilesetPath) {
       std::move(pMockCreditSystem)};
 }
 
-TilesetContentLoaderResult
+TilesetContentLoaderResult<TilesetJsonLoader>
 createLoader(const std::filesystem::path& tilesetPath) {
   std::string tilesetPathStr = tilesetPath.string();
   auto externals = createMockTilesetExternals(tilesetPathStr);

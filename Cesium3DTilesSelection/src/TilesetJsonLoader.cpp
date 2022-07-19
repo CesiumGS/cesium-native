@@ -26,7 +26,8 @@ struct ExternalContentInitializer {
   // Have to use shared_ptr here to make this functor copyable. Otherwise,
   // std::function won't work with move-only type as it's a type-erasured
   // container. Unfortunately, std::move_only_function is scheduled for C++23.
-  std::shared_ptr<TilesetContentLoaderResult> pExternalTilesetLoaders;
+  std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
+      pExternalTilesetLoaders;
   TilesetJsonLoader* tilesetJsonLoader;
 
   void operator()(Tile& tile) {
@@ -611,7 +612,7 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 }
 
-TilesetContentLoaderResult parseTilesetJson(
+TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& tilesetJsonBinary,
@@ -622,7 +623,7 @@ TilesetContentLoaderResult parseTilesetJson(
       reinterpret_cast<const char*>(tilesetJsonBinary.data()),
       tilesetJsonBinary.size());
   if (tilesetJson.HasParseError()) {
-    TilesetContentLoaderResult result;
+    TilesetContentLoaderResult<TilesetJsonLoader> result;
     result.errors.emplace_error(fmt::format(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tilesetJson.GetParseError(),
@@ -649,7 +650,7 @@ TilesetContentLoaderResult parseTilesetJson(
     }
   }
 
-  return TilesetContentLoaderResult{
+  return {
       std::move(pLoader),
       std::move(pRootTile),
       gltfUpAxis,
@@ -672,12 +673,13 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
-  TilesetContentLoaderResult externalTilesetLoader = parseTilesetJson(
-      pLogger,
-      tileUrl,
-      responseData,
-      tileTransform,
-      tileRefine);
+  TilesetContentLoaderResult<TilesetJsonLoader> externalTilesetLoader =
+      parseTilesetJson(
+          pLogger,
+          tileUrl,
+          responseData,
+          tileTransform,
+          tileRefine);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
@@ -695,7 +697,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   }
 
   externalContentInitializer.pExternalTilesetLoaders =
-      std::make_shared<TilesetContentLoaderResult>(
+      std::make_shared<TilesetContentLoaderResult<TilesetJsonLoader>>(
           std::move(externalTilesetLoader));
 
   // mark this tile has external content
@@ -712,7 +714,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 TilesetJsonLoader::TilesetJsonLoader(const std::string& baseUrl)
     : _baseUrl{baseUrl} {}
 
-CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
+CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
+TilesetJsonLoader::createLoader(
     const TilesetExternals& externals,
     const std::string& tilesetJsonUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
@@ -725,7 +728,7 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
             pCompletedRequest->response();
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<TilesetJsonLoader> result;
           result.errors.emplace_error(fmt::format(
               "Did not receive a valid response for tile content {}",
               tileUrl));
@@ -734,7 +737,7 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<TilesetJsonLoader> result;
           result.errors.emplace_error(fmt::format(
               "Received status code {} for tile content {}",
               statusCode,
