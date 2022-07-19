@@ -343,8 +343,8 @@ TEST_CASE("Test layer json terrain loader") {
   }
 
   SECTION("Load layer json with attribution") {
-    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
-                         "WithAttribution.tile.json";
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "WithAttribution.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -367,8 +367,8 @@ TEST_CASE("Test layer json terrain loader") {
   }
 
   SECTION("Load layer json with watermask") {
-    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
-                         "WaterMask.tile.json";
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "WaterMask.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -390,6 +390,9 @@ TEST_CASE("Test layer json terrain loader") {
     const auto& layers = loaderResult.pLoader->getLayers();
     CHECK(layers.size() == 1);
     CHECK(layers[0].tileTemplateUrls.size() == 1);
-    CHECK(layers[0].tileTemplateUrls[0] == "{z}/{x}/{y}.terrain?v={version}&extensions=octvertexnormals-watermask");
+    CHECK(
+        layers[0].tileTemplateUrls[0] ==
+        "{z}/{x}/"
+        "{y}.terrain?v={version}&extensions=octvertexnormals-watermask");
   }
 }
