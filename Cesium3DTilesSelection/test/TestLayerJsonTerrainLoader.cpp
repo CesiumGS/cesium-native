@@ -33,7 +33,7 @@ createMockAssetRequest(const std::filesystem::path& requestContentPath) {
       readFile(requestContentPath));
   auto pMockRequest = std::make_shared<SimpleAssetRequest>(
       "GET",
-      "doesn't matter",
+      requestContentPath.filename().string(),
       CesiumAsync::HttpHeaders{},
       std::move(pMockResponse));
 
@@ -215,5 +215,154 @@ TEST_CASE("Test layer json terrain loader") {
     auto loaderResult = loaderFuture.wait();
     CHECK(loaderResult.pLoader);
     CHECK(loaderResult.pRootTile);
+    CHECK(!loaderResult.errors);
+
+    CHECK(std::holds_alternative<GeographicProjection>(
+        loaderResult.pLoader->getProjection()));
+
+    const auto& layers = loaderResult.pLoader->getLayers();
+    CHECK(layers.size() == 1);
+    CHECK(layers[0].version == "1.33.0");
+    CHECK(
+        layers[0].tileTemplateUrls.front() ==
+        "{z}/{x}/{y}.terrain?v={version}&extensions=octvertexnormals-metadata");
+    CHECK(layers[0].loadedSubtrees.size() == 2);
+    CHECK(layers[0].availabilityLevels == 10);
+  }
+
+  SECTION("Load layer json with OctVertexNormals extension") {
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "OctVertexNormals.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
+    CHECK(!loaderResult.errors);
+
+    CHECK(std::holds_alternative<GeographicProjection>(
+        loaderResult.pLoader->getProjection()));
+
+    const auto& layers = loaderResult.pLoader->getLayers();
+    CHECK(layers.size() == 1);
+    CHECK(layers[0].version == "1.0.0");
+    CHECK(
+        layers[0].tileTemplateUrls.front() ==
+        "{z}/{x}/{y}.terrain?v={version}&extensions=octvertexnormals");
+    CHECK(layers[0].loadedSubtrees.empty());
+    CHECK(layers[0].availabilityLevels == -1);
+
+    CHECK(
+        layers[0].contentAvailability.isTileAvailable(QuadtreeTileID(0, 0, 0)));
+    CHECK(
+        layers[0].contentAvailability.isTileAvailable(QuadtreeTileID(0, 1, 0)));
+    CHECK(
+        layers[0].contentAvailability.isTileAvailable(QuadtreeTileID(1, 1, 0)));
+    CHECK(
+        layers[0].contentAvailability.isTileAvailable(QuadtreeTileID(1, 3, 1)));
+  }
+
+  SECTION("Load multiple layers") {
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "ParentUrl.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto parentJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "Parent.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"./Parent/layer.json", createMockAssetRequest(parentJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
+    CHECK(!loaderResult.errors);
+
+    const auto& layers = loaderResult.pLoader->getLayers();
+    CHECK(layers.size() == 2);
+
+    CHECK(layers[0].baseUrl == "ParentUrl.tile.json");
+    CHECK(layers[0].version == "1.0.0");
+    CHECK(layers[0].tileTemplateUrls.size() == 1);
+    CHECK(
+        layers[0].tileTemplateUrls.front() ==
+        "{z}/{x}/{y}.terrain?v={version}");
+
+    CHECK(layers[1].baseUrl == "Parent.tile.json");
+    CHECK(layers[1].version == "1.1.0");
+    CHECK(layers[1].tileTemplateUrls.size() == 1);
+    CHECK(
+        layers[1].tileTemplateUrls.front() ==
+        "{z}/{x}/{y}.terrain?v={version}");
+  }
+
+  SECTION("Load layer json with partial availability") {
+    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
+                         "PartialAvailability.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
+
+    const auto& layers = loaderResult.pLoader->getLayers();
+    CHECK(layers.size() == 1);
+    CHECK(
+        layers[0].contentAvailability.isTileAvailable(QuadtreeTileID(2, 1, 0)));
+    CHECK(!layers[0].contentAvailability.isTileAvailable(
+        QuadtreeTileID(2, 0, 0)));
+  }
+
+  SECTION("Load layer json with attribution") {
+    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
+                         "WithAttribution.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        {},
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.credits.size() == 1);
+    CHECK(
+        loaderResult.credits.front().creditText ==
+        "This amazing data is courtesy The Amazing Data Source!");
   }
 }
