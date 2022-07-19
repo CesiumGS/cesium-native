@@ -221,9 +221,6 @@ TileMapServiceRasterOverlay::createTileProvider(
     const std::shared_ptr<spdlog::logger>& pLogger,
     RasterOverlay* pOwner) {
   std::string xmlUrl = this->_url;
-  if (xmlUrl[xmlUrl.size() - 1] != '/') {
-    xmlUrl += "/";
-  }
 
   pOwner = pOwner ? pOwner : this;
 
