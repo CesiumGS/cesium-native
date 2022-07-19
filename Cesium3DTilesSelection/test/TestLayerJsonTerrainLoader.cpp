@@ -79,6 +79,23 @@ TEST_CASE("Test layer json terrain loader") {
     CHECK(loaderResult.pLoader);
     CHECK(loaderResult.pRootTile);
 
+    // check tiling scheme
+    const auto& tilingScheme = loaderResult.pLoader->getTilingScheme();
+    CHECK(tilingScheme.getRootTilesX() == 2);
+    CHECK(tilingScheme.getRootTilesY() == 1);
+
+    // check projection
+    const auto& projection = loaderResult.pLoader->getProjection();
+    CHECK(std::holds_alternative<GeographicProjection>(projection));
+
+    // check layer
+    const auto& layers = loaderResult.pLoader->getLayers();
+    CHECK(layers.size() == 1);
+    CHECK(layers[0].version == "1.0.0");
+    CHECK(layers[0].tileTemplateUrls.size() == 1);
+    CHECK(layers[0].tileTemplateUrls[0] == "{z}/{x}/{y}.terrain?v={version}");
+    CHECK(layers[0].availabilityLevels == -1);
+
     // check root tile
     const Tile& rootTile = *loaderResult.pRootTile;
     const auto& rootLooseRegion =

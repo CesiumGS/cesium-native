@@ -795,6 +795,21 @@ bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
   return false;
 }
 
+const CesiumGeometry::QuadtreeTilingScheme&
+LayerJsonTerrainLoader::getTilingScheme() const noexcept {
+  return _tilingScheme;
+}
+
+const CesiumGeospatial::Projection&
+LayerJsonTerrainLoader::getProjection() const noexcept {
+  return _projection;
+}
+
+const std::vector<LayerJsonTerrainLoader::Layer>&
+LayerJsonTerrainLoader::getLayers() const noexcept {
+  return _layers;
+}
+
 void LayerJsonTerrainLoader::createTileChildren(Tile& tile) {
 
   if (tile.getChildren().empty()) {

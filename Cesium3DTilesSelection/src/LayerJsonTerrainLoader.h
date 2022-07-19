@@ -68,6 +68,12 @@ public:
 
   bool updateTileContent(Tile& tile) override;
 
+  const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept;
+
+  const CesiumGeospatial::Projection& getProjection() const noexcept;
+
+  const std::vector<Layer>& getLayers() const noexcept;
+
 private:
   void createTileChildren(Tile& tile);
 
