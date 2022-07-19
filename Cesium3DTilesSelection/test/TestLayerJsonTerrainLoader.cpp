@@ -365,4 +365,31 @@ TEST_CASE("Test layer json terrain loader") {
         loaderResult.credits.front().creditText ==
         "This amazing data is courtesy The Amazing Data Source!");
   }
+
+  SECTION("Load layer json with watermask") {
+    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
+                         "WaterMask.tile.json";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json", createMockAssetRequest(layerJsonPath)});
+
+    TilesetContentOptions options;
+    options.enableWaterMask = true;
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        externals,
+        options,
+        "layer.json",
+        {},
+        true);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
+
+    const auto& layers = loaderResult.pLoader->getLayers();
+    CHECK(layers.size() == 1);
+    CHECK(layers[0].tileTemplateUrls.size() == 1);
+    CHECK(layers[0].tileTemplateUrls[0] == "{z}/{x}/{y}.terrain?v={version}&extensions=octvertexnormals-watermask");
+  }
 }
