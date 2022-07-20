@@ -5,8 +5,8 @@
 ### v0.18.0 - 2022-08-01
 
 ##### Fixes :wrench:
-- Support the "local" profile for TMS that when it uses geographic or mercator SRS.
-- Enable loading TMS URLs that do not have a "xmlresource.xml" file, such as from GeoServer.
+- Support the "local" profile when the SRS is mercator or geodetic.
+- Enable loading TMS URLs that do not have an "xmlresource.xml" file, such as from GeoServer.
 
 ##### Breaking Changes :mega:
 
