@@ -200,6 +200,23 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
                   .wait();
             } else {
               tinyxml2::XMLElement* pRoot = pDoc->RootElement();
+
+              tinyxml2::XMLElement* pTilesets =
+                  pRoot->FirstChildElement("TileSets");
+
+              if (!pTilesets &&
+                  url.find("tilemapresource.xml") == std::string::npos) {
+                return getXmlDocument(
+                           asyncSystem,
+                           pAssetAccessor,
+                           CesiumUtility::Uri::resolve(
+                               url,
+                               "tilemapresource.xml"),
+                           headers,
+                           reportError)
+                    .wait();
+              }
+
               if (!pRoot) {
                 reportError(
                     pRequest,
