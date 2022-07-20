@@ -223,22 +223,25 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
                   }
                 }
               }
-
-              if (hasError) {
-                if (!isResourceFile) {
-                  return getXmlDocument(
-                             asyncSystem,
-                             pAssetAccessor,
-                             CesiumUtility::Uri::resolve(
-                                 url,
-                                 "tilemapresource.xml"),
-                             headers,
-                             reportError)
-                      .wait();
-                } else {
-                  reportError(pRequest, message);
-                  return nullptr;
+            }
+            if (hasError) {
+              if (!isResourceFile) {
+                std::string baseUrl = url;
+                if (baseUrl[baseUrl.size() - 1] != '/') {
+                  baseUrl += '/';
                 }
+                return getXmlDocument(
+                           asyncSystem,
+                           pAssetAccessor,
+                           CesiumUtility::Uri::resolve(
+                               baseUrl,
+                               "tilemapresource.xml"),
+                           headers,
+                           reportError)
+                    .wait();
+              } else {
+                reportError(pRequest, message);
+                return nullptr;
               }
             }
             return pDoc;
@@ -444,6 +447,16 @@ TileMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 1);
 
+            std::string baseUrl = url;
+
+            std::string substring = baseUrl.substr(baseUrl.size() - 4, 4);
+
+            if (substring != ".xml") {
+              if (baseUrl[baseUrl.size() - 1] != '/') {
+                baseUrl += "/";
+              }
+            }
+
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
                 asyncSystem,
@@ -454,7 +467,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 projection,
                 tilingScheme,
                 coverageRectangle,
-                url,
+                baseUrl,
                 headers,
                 !fileExtension.empty() ? "." + fileExtension : fileExtension,
                 tileWidth,
