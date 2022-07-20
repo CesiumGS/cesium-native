@@ -187,45 +187,61 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
             const tinyxml2::XMLError error = pDoc->Parse(
                 reinterpret_cast<const char*>(data.data()),
                 data.size_bytes());
-            if (error != tinyxml2::XMLError::XML_SUCCESS &&
-                url.find("tilemapresource.xml") == std::string::npos) {
-              return getXmlDocument(
-                         asyncSystem,
-                         pAssetAccessor,
-                         CesiumUtility::Uri::resolve(
-                             url,
-                             "tilemapresource.xml"),
-                         headers,
-                         reportError)
-                  .wait();
+
+            bool isResourceFile =
+                url.find("tilemapresource.xml") != std::string::npos;
+
+            bool hasError = false;
+
+            std::string message =
+                "Unable to parse Tile map service XML document.";
+
+            if (error != tinyxml2::XMLError::XML_SUCCESS) {
+              hasError = true;
             } else {
+
               tinyxml2::XMLElement* pRoot = pDoc->RootElement();
-
-              tinyxml2::XMLElement* pTilesets =
-                  pRoot->FirstChildElement("TileSets");
-
-              if (!pTilesets &&
-                  url.find("tilemapresource.xml") == std::string::npos) {
-                return getXmlDocument(
-                           asyncSystem,
-                           pAssetAccessor,
-                           CesiumUtility::Uri::resolve(
-                               url,
-                               "tilemapresource.xml"),
-                           headers,
-                           reportError)
-                    .wait();
-              }
-
               if (!pRoot) {
-                reportError(
-                    pRequest,
-                    "Tile map service XML document does not have a root "
-                    "element.");
-                return nullptr;
+                hasError = true;
+                message = "Tile map service XML document does not have a root "
+                          "element.";
+              } else {
+                tinyxml2::XMLElement* pTilesets =
+                    pRoot->FirstChildElement("TileSets");
+
+                if (!pTilesets) {
+                  hasError = true;
+                }
+                tinyxml2::XMLElement* srs = pRoot->FirstChildElement("SRS");
+                if (srs) {
+                  std::string srsText = srs->GetText();
+                  if (srsText.find("4326") == std::string::npos &&
+                      srsText.find("3857") == std::string::npos &&
+                      srsText.find("900913") == std::string::npos) {
+                    hasError = true;
+                    message = srsText + " is not supported.";
+                  }
+                }
               }
-              return pDoc;
+
+              if (hasError) {
+                if (!isResourceFile) {
+                  return getXmlDocument(
+                             asyncSystem,
+                             pAssetAccessor,
+                             CesiumUtility::Uri::resolve(
+                                 url,
+                                 "tilemapresource.xml"),
+                             headers,
+                             reportError)
+                      .wait();
+                } else {
+                  reportError(pRequest, message);
+                  return nullptr;
+                }
+              }
             }
+            return pDoc;
           });
 }
 
@@ -369,7 +385,9 @@ TileMapServiceRasterOverlay::createTileProvider(
                         GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
                     rootTilesX = 2;
                     isRectangleInDegrees = true;
-                  } else if (srsText.find("900913") != std::string::npos) {
+                  } else if (
+                      srsText.find("3857") != std::string::npos ||
+                      srsText.find("900913") != std::string::npos) {
                     projection = CesiumGeospatial::WebMercatorProjection();
                     tilingSchemeRectangle = CesiumGeospatial::
                         WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
