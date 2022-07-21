@@ -41,7 +41,7 @@ createMockAssetRequest(const std::filesystem::path& requestContentPath) {
 }
 } // namespace
 
-TEST_CASE("Test layer json terrain loader") {
+TEST_CASE("Test create layer json terrain loader") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -394,5 +394,243 @@ TEST_CASE("Test layer json terrain loader") {
         layers[0].tileTemplateUrls[0] ==
         "{z}/{x}/"
         "{y}.terrain?v={version}&extensions=octvertexnormals-watermask");
+  }
+}
+
+TEST_CASE("Test load layer json tile content") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
+  GeographicProjection projection;
+  auto quadtreeRectangleProjected = projection.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE);
+
+  QuadtreeTilingScheme tilingScheme{quadtreeRectangleProjected, 2, 1};
+
+  const uint32_t maxZoom = 10;
+
+  CesiumGeometry::QuadtreeRectangleAvailability contentAvailability{
+      tilingScheme,
+      maxZoom};
+
+
+  SECTION("Load tile when layer have availabilityLevels field") {
+    // create loader
+    std::vector<LayerJsonTerrainLoader::Layer> layers;
+    layers.emplace_back(
+        "layer.json",
+        "1.0.0",
+        std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        std::move(contentAvailability),
+        maxZoom,
+        10);
+
+    LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
+
+    // mock tile content request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"0.0.0/1.0.0.terrain",
+         createMockAssetRequest(
+             testDataPath / "CesiumTerrainTileJson" / "tile.metadataavailability.terrain")});
+
+    // try to request tile
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
+        {GeographicProjection::MAXIMUM_GLOBE_RECTANGLE, -1000.0, 9000.0}});
+
+    // check tile availability before loading
+    const auto& loaderLayers = loader.getLayers();
+    const auto& layer = loaderLayers[0];
+    CHECK(layer.contentAvailability.isTileAvailable(QuadtreeTileID(0, 0, 0)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(1, 0, 1)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(8, 177, 177)));
+
+    auto tileLoadResultFuture = loader.loadTileContent(
+        tile,
+        {},
+        asyncSystem,
+        pMockedAssetAccessor,
+        spdlog::default_logger(),
+        {});
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    // check the load result
+    auto tileLoadResult = tileLoadResultFuture.wait();
+    const auto& renderContent =
+        std::get<TileRenderContent>(tileLoadResult.contentKind);
+    CHECK(renderContent.model);
+    CHECK(tileLoadResult.updatedBoundingVolume);
+    CHECK(!tileLoadResult.updatedContentBoundingVolume);
+    CHECK(!tileLoadResult.tileInitializer);
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+
+    // check that the layer receive new rectangle availability
+    CHECK(layer.contentAvailability.isTileAvailable(QuadtreeTileID(0, 0, 0)));
+    CHECK(layer.contentAvailability.isTileAvailable(QuadtreeTileID(1, 0, 1)));
+    CHECK(layer.contentAvailability.isTileAvailable(QuadtreeTileID(8, 177, 177)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(9, 0, 0)));
+  }
+
+  SECTION("Load tile when layer have no availabilityLevels field") {
+    // create loader
+    std::vector<LayerJsonTerrainLoader::Layer> layers;
+    layers.emplace_back(
+        "layer.json",
+        "1.0.0",
+        std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        std::move(contentAvailability),
+        maxZoom,
+        -1);
+
+    LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
+
+    // mock tile content request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"0.0.0/1.0.0.terrain",
+         createMockAssetRequest(
+             testDataPath / "CesiumTerrainTileJson" / "tile.metadataavailability.terrain")});
+
+    // check tile availability before loading
+    const auto& loaderLayers = loader.getLayers();
+    const auto& layer = loaderLayers[0];
+    CHECK(layer.contentAvailability.isTileAvailable(QuadtreeTileID(0, 0, 0)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(1, 0, 1)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(8, 177, 177)));
+
+    // try to request tile
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
+        {GeographicProjection::MAXIMUM_GLOBE_RECTANGLE, -1000.0, 9000.0}});
+
+    auto tileLoadResultFuture = loader.loadTileContent(
+        tile,
+        {},
+        asyncSystem,
+        pMockedAssetAccessor,
+        spdlog::default_logger(),
+        {});
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    // check the load result
+    auto tileLoadResult = tileLoadResultFuture.wait();
+    const auto& renderContent =
+        std::get<TileRenderContent>(tileLoadResult.contentKind);
+    CHECK(renderContent.model);
+    CHECK(tileLoadResult.updatedBoundingVolume);
+    CHECK(!tileLoadResult.updatedContentBoundingVolume);
+    CHECK(!tileLoadResult.tileInitializer);
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+
+    // layer won't add the availability range even the tile content contains them
+    CHECK(layer.contentAvailability.isTileAvailable(QuadtreeTileID(0, 0, 0)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(1, 0, 1)));
+    CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(8, 177, 177)));
+  }
+
+  SECTION("Load tile with multiple layers. Ensure layer is chosen correctly to load tile") {
+    // create loader
+    std::vector<LayerJsonTerrainLoader::Layer> layers;
+
+    CesiumGeometry::QuadtreeRectangleAvailability layer0ContentAvailability{
+        tilingScheme,
+        maxZoom};
+    layer0ContentAvailability.addAvailableTileRange({0, 0, 0, 1, 0});
+    layer0ContentAvailability.addAvailableTileRange({1, 0, 0, 1, 0});
+    layer0ContentAvailability.addAvailableTileRange({2, 0, 0, 1, 1});
+    layer0ContentAvailability.addAvailableTileRange({2, 2, 0, 2, 0});
+    layers.emplace_back(
+        "layer.json",
+        "1.0.0",
+        std::vector<std::string>{"{level}.{x}.{y}/{version}_layer0.terrain"},
+        std::move(layer0ContentAvailability),
+        maxZoom,
+        -1);
+
+    CesiumGeometry::QuadtreeRectangleAvailability layer1ContentAvailability{
+        tilingScheme,
+        maxZoom};
+    layer1ContentAvailability.addAvailableTileRange({0, 0, 0, 1, 0});
+    layer1ContentAvailability.addAvailableTileRange({1, 0, 0, 1, 1});
+    layer1ContentAvailability.addAvailableTileRange({2, 0, 0, 3, 3});
+    layers.emplace_back(
+        "layer.json",
+        "1.0.0",
+        std::vector<std::string>{"{level}.{x}.{y}/{version}_layer1.terrain"},
+        std::move(layer1ContentAvailability),
+        maxZoom,
+        -1);
+
+    LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
+
+    // mock tile content request
+    auto pMockRequest = createMockAssetRequest(
+        testDataPath / "CesiumTerrainTileJson" /
+        "tile.terrain"); 
+
+    // load tile from the first layer
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"0.0.0/1.0.0_layer0.terrain", pMockRequest});
+    {
+      Tile tile(&loader);
+      tile.setTileID(QuadtreeTileID(0, 0, 0));
+      tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
+          {GeographicProjection::MAXIMUM_GLOBE_RECTANGLE, -1000.0, 9000.0}});
+
+      auto tileLoadResultFuture = loader.loadTileContent(
+          tile,
+          {},
+          asyncSystem,
+          pMockedAssetAccessor,
+          spdlog::default_logger(),
+          {});
+
+      asyncSystem.dispatchMainThreadTasks();
+
+      auto tileLoadResult = tileLoadResultFuture.wait();
+      const auto& renderContent =
+          std::get<TileRenderContent>(tileLoadResult.contentKind);
+      CHECK(renderContent.model);
+      CHECK(tileLoadResult.updatedBoundingVolume);
+      CHECK(!tileLoadResult.updatedContentBoundingVolume);
+      CHECK(!tileLoadResult.tileInitializer);
+      CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    }
+
+    // load tile from the second layer
+    pMockedAssetAccessor->mockCompletedRequests.clear();
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"2.3.3/1.0.0_layer1.terrain", pMockRequest});
+    {
+      Tile tile(&loader);
+      tile.setTileID(QuadtreeTileID(2, 3, 3));
+      tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
+          {GeographicProjection::MAXIMUM_GLOBE_RECTANGLE, -1000.0, 9000.0}});
+
+      auto tileLoadResultFuture = loader.loadTileContent(
+          tile,
+          {},
+          asyncSystem,
+          pMockedAssetAccessor,
+          spdlog::default_logger(),
+          {});
+
+      asyncSystem.dispatchMainThreadTasks();
+
+      auto tileLoadResult = tileLoadResultFuture.wait();
+      const auto& renderContent =
+          std::get<TileRenderContent>(tileLoadResult.contentKind);
+      CHECK(renderContent.model);
+      CHECK(tileLoadResult.updatedBoundingVolume);
+      CHECK(!tileLoadResult.updatedContentBoundingVolume);
+      CHECK(!tileLoadResult.tileInitializer);
+      CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    }
   }
 }

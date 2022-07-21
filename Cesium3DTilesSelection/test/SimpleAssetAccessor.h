@@ -6,6 +6,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 
+#include <catch2/catch.hpp>
 #include <cstddef>
 #include <map>
 #include <memory>
@@ -26,6 +27,8 @@ public:
       return asyncSystem.createResolvedFuture(
           std::shared_ptr<CesiumAsync::IAssetRequest>(mockRequestIt->second));
     }
+
+    FAIL("Cannot find request for url " << url);
 
     return asyncSystem.createResolvedFuture(
         std::shared_ptr<CesiumAsync::IAssetRequest>(nullptr));
