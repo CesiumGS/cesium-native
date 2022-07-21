@@ -7,6 +7,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 
 #include <catch2/catch.hpp>
+
 #include <cstddef>
 #include <map>
 #include <memory>
