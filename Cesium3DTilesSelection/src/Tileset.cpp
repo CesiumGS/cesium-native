@@ -357,6 +357,7 @@ void Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
 void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
   assert(this->_loadsInProgress > 0);
   --this->_loadsInProgress;
+  ++this->_loadedTilesCount;
 
   if (pTile) {
     this->_tileDataBytes += pTile->computeByteSize();
@@ -369,7 +370,20 @@ void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
 void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
   if (pTile) {
     this->_tileDataBytes -= pTile->computeByteSize();
+    --this->_loadedTilesCount;
   }
+}
+
+uint32_t Tileset::computeLoadProgress() noexcept {
+  uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
+                                this->_loadQueueMedium.size() +
+                                this->_loadQueueHigh.size());
+  // we ignore _subtreeLoadsInProgress for now
+  uint32_t inProgressSum = (this->_loadsInProgress + queueSizeSum);
+  uint32_t totalNum = this->_loadedTilesCount + inProgressSum;
+  float_t percentage = static_cast<float>(this->_loadedTilesCount) /
+                       static_cast<float>(totalNum);
+  return (uint32_t)(percentage * 100);
 }
 
 void Tileset::loadTilesFromJson(
