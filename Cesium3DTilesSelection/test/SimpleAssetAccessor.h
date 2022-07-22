@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 
+namespace Cesium3DTilesSelection {
 class SimpleAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
   SimpleAssetAccessor(
@@ -50,3 +51,4 @@ public:
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
 };
+} // namespace Cesium3DTilesSelection

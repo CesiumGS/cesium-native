@@ -340,6 +340,13 @@ public:
     this->_contentBoundingVolume = value;
   }
 
+  /**
+   * @brief Returns the {@link TileSelectionState} of this tile.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @return The last selection state
+   */
   TileSelectionState& getLastSelectionState() noexcept {
     return this->_lastSelectionState;
   }
@@ -441,7 +448,7 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   friend class TilesetContentManager;
-  friend class TestMockTilesetContentManager;
+  friend class MockTilesetContentManagerTestFixture;
 
 public:
   /**

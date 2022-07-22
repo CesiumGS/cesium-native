@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/Tile.h"
 
+namespace Cesium3DTilesSelection {
 class SimplePrepareRendererResource
     : public Cesium3DTilesSelection::IPrepareRendererResources {
 public:
@@ -87,3 +88,4 @@ public:
       const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
       void* /*pMainThreadRendererResources*/) noexcept override {}
 };
+} // namespace Cesium3DTilesSelection

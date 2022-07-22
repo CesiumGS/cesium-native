@@ -6,6 +6,7 @@
 
 #include <memory>
 
+namespace Cesium3DTilesSelection {
 class SimpleAssetRequest : public CesiumAsync::IAssetRequest {
 public:
   SimpleAssetRequest(
@@ -37,3 +38,4 @@ public:
   CesiumAsync::HttpHeaders requestHeaders;
   std::unique_ptr<SimpleAssetResponse> pResponse;
 };
+} // namespace Cesium3DTilesSelection
