@@ -762,7 +762,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   // check if this tile belongs to a child loader
-  auto currentLoader = tile.getContent().getLoader();
+  auto currentLoader = tile.getLoader();
   if (currentLoader != this) {
     return currentLoader->loadTileContent(
         tile,
@@ -878,7 +878,7 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
 }
 
 bool TilesetJsonLoader::updateTileContent(Tile& tile) {
-  auto pLoader = tile.getContent().getLoader();
+  auto pLoader = tile.getLoader();
   if (pLoader != this) {
     return pLoader->updateTileContent(tile);
   }

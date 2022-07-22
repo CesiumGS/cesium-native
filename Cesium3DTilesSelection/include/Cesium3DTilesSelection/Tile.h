@@ -23,6 +23,15 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
+enum class TileLoadState {
+  FailedTemporarily = -1,
+  Unloaded = 0,
+  ContentLoading = 1,
+  ContentLoaded = 2,
+  Done = 3,
+  Failed = 4,
+};
+
 /**
  * @brief A tile in a {@link Tileset}.
  *
@@ -357,10 +366,6 @@ public:
    */
   int64_t computeByteSize() const noexcept;
 
-  const TileContent& getContent() const noexcept { return *_pContent; }
-
-  TileContent& getContent() noexcept { return *_pContent; }
-
   std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept {
     return this->_rasterTiles;
   }
@@ -370,6 +375,10 @@ public:
     return this->_rasterTiles;
   }
 
+  const TileContent& getContent() const noexcept { return *_pContent; }
+
+  TileContent& getContent() noexcept { return *_pContent; }
+
   bool isRenderable() const noexcept;
 
   bool isRenderContent() const noexcept;
@@ -378,7 +387,11 @@ public:
 
   bool isEmptyContent() const noexcept;
 
+  TilesetContentLoader* getLoader() const noexcept;
+
   TileLoadState getState() const noexcept;
+
+  bool shouldContentContinueUpdated() const noexcept;
 
 private:
   struct TileConstructorImpl {};
@@ -387,9 +400,18 @@ private:
       typename TileContentEnable = std::enable_if_t<
           std::is_constructible_v<TileContent, TileContentArgs&&...>,
           int>>
-  Tile(TileConstructorImpl tag, TileContentArgs&&... args);
+  Tile(
+      TileConstructorImpl tag,
+      TileLoadState loadState,
+      TilesetContentLoader* pLoader,
+      TileContentArgs&&... args);
 
-  void setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
+  void setParent(Tile* pParent) noexcept;
+
+  void setState(TileLoadState state) noexcept;
+
+  void
+  setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
 
   // Position in bounding-volume hierarchy.
   Tile* _pParent;
@@ -411,9 +433,15 @@ private:
   // tile content
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
   std::unique_ptr<TileContent> _pContent;
+  TilesetContentLoader* _pLoader;
+  TileLoadState _loadState;
+  bool _shouldContentContinueUpdated;
 
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
+
+  friend class TilesetContentManager;
+  friend class TestMockTilesetContentManager;
 
 public:
   /**

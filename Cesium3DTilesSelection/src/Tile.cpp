@@ -17,20 +17,32 @@ using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
 Tile::Tile(TilesetContentLoader* pLoader) noexcept
-    : Tile(TileConstructorImpl{}, pLoader) {}
+    : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader) {}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
     TileExternalContent externalContent) noexcept
-    : Tile(TileConstructorImpl{}, pLoader, externalContent) {}
+    : Tile(
+          TileConstructorImpl{},
+          TileLoadState::ContentLoaded,
+          pLoader,
+          externalContent) {}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
     TileEmptyContent emptyContent) noexcept
-    : Tile(TileConstructorImpl{}, pLoader, emptyContent) {}
+    : Tile(
+          TileConstructorImpl{},
+          TileLoadState::ContentLoaded,
+          pLoader,
+          emptyContent) {}
 
 template <typename... TileContentArgs, typename TileContentEnable>
-Tile::Tile(TileConstructorImpl, TileContentArgs&&... args)
+Tile::Tile(
+    TileConstructorImpl,
+    TileLoadState loadState,
+    TilesetContentLoader* pLoader,
+    TileContentArgs&&... args)
     : _pParent(nullptr),
       _children(),
       _id(""s),
@@ -43,7 +55,10 @@ Tile::Tile(TileConstructorImpl, TileContentArgs&&... args)
       _lastSelectionState(),
       _loadedTilesLinks(),
       _pContent{std::make_unique<TileContent>(
-          std::forward<TileContentArgs>(args)...)} {}
+          std::forward<TileContentArgs>(args)...)},
+      _pLoader{pLoader},
+      _loadState{loadState},
+      _shouldContentContinueUpdated{true} {}
 
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
@@ -57,7 +72,10 @@ Tile::Tile(Tile&& rhs) noexcept
       _transform(rhs._transform),
       _lastSelectionState(rhs._lastSelectionState),
       _loadedTilesLinks(),
-      _pContent(std::move(rhs._pContent)) {
+      _pContent(std::move(rhs._pContent)),
+      _pLoader{rhs._pLoader},
+      _loadState{rhs._loadState},
+      _shouldContentContinueUpdated{rhs._shouldContentContinueUpdated} {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -86,6 +104,9 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_transform = rhs._transform;
     this->_lastSelectionState = rhs._lastSelectionState;
     this->_pContent = std::move(rhs._pContent);
+    this->_pLoader = rhs._pLoader;
+    this->_loadState = rhs._loadState;
+    this->_shouldContentContinueUpdated = rhs._shouldContentContinueUpdated;
   }
 
   return *this;
@@ -187,5 +208,20 @@ bool Tile::isEmptyContent() const noexcept {
   return _pContent->isEmptyContent();
 }
 
-TileLoadState Tile::getState() const noexcept { return _pContent->getState(); }
+TilesetContentLoader* Tile::getLoader() const noexcept { return _pLoader; }
+
+TileLoadState Tile::getState() const noexcept { return _loadState; }
+
+bool Tile::shouldContentContinueUpdated() const noexcept {
+  return this->_shouldContentContinueUpdated;
+}
+
+void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
+
+void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
+
+void Tile::setContentShouldContinueUpdated(
+    bool shouldContentContinueUpdated) noexcept {
+  this->_shouldContentContinueUpdated = shouldContentContinueUpdated;
+}
 } // namespace Cesium3DTilesSelection

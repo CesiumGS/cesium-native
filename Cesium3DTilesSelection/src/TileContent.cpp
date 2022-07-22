@@ -1,41 +1,30 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 
 namespace Cesium3DTilesSelection {
-TileContent::TileContent(TilesetContentLoader* pLoader)
-    : _state{TileLoadState::Unloaded},
-      _contentKind{TileUnknownContent{}},
+TileContent::TileContent()
+    : _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
-      _tileInitializer{},
-      _shouldContentContinueUpdated{true},
-      _pLoader{pLoader} {}
+      _tileInitializer{} {}
 
-TileContent::TileContent(
-    TilesetContentLoader* pLoader,
-    TileEmptyContent emptyContent)
-    : _state{TileLoadState::ContentLoaded},
-      _contentKind{emptyContent},
+TileContent::TileContent(TileEmptyContent emptyContent)
+    : _contentKind{emptyContent},
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
-      _tileInitializer{},
-      _shouldContentContinueUpdated{true},
-      _pLoader{pLoader} {}
+      _tileInitializer{} {}
 
-TileContent::TileContent(
-    TilesetContentLoader* pLoader,
-    TileExternalContent externalContent)
-    : _state{TileLoadState::ContentLoaded},
-      _contentKind{externalContent},
+TileContent::TileContent(TileExternalContent externalContent)
+    : _contentKind{externalContent},
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
-      _tileInitializer{},
-      _shouldContentContinueUpdated{true},
-      _pLoader{pLoader} {}
+      _tileInitializer{} {}
 
-TileLoadState TileContent::getState() const noexcept { return _state; }
+void TileContent::setContentKind(TileContentKind&& contentKind) {
+  _contentKind = std::move(contentKind);
+}
 
-bool TileContent::shouldContentContinueUpdated() const noexcept {
-  return _shouldContentContinueUpdated;
+void TileContent::setContentKind(const TileContentKind& contentKind) {
+  _contentKind = contentKind;
 }
 
 bool TileContent::isEmptyContent() const noexcept {
@@ -48,14 +37,6 @@ bool TileContent::isExternalContent() const noexcept {
 
 bool TileContent::isRenderContent() const noexcept {
   return std::holds_alternative<TileRenderContent>(_contentKind);
-}
-
-const TileExternalContent* TileContent::getExternalContent() const noexcept {
-  return std::get_if<TileExternalContent>(&_contentKind);
-}
-
-TileExternalContent* TileContent::getExternalContent() noexcept {
-  return std::get_if<TileExternalContent>(&_contentKind);
 }
 
 const TileRenderContent* TileContent::getRenderContent() const noexcept {
@@ -75,24 +56,6 @@ RasterOverlayDetails& TileContent::getRasterOverlayDetails() noexcept {
   return _rasterOverlayDetails;
 }
 
-const std::vector<Credit>& TileContent::getCredits() const noexcept {
-  return _credits;
-}
-
-std::vector<Credit>& TileContent::getCredits() noexcept { return _credits; }
-
-TilesetContentLoader* TileContent::getLoader() const noexcept {
-  return _pLoader;
-}
-
-void TileContent::setContentKind(TileContentKind&& contentKind) {
-  _contentKind = std::move(contentKind);
-}
-
-void TileContent::setContentKind(const TileContentKind& contentKind) {
-  _contentKind = contentKind;
-}
-
 void TileContent::setRasterOverlayDetails(
     const RasterOverlayDetails& rasterOverlayDetails) {
   _rasterOverlayDetails = rasterOverlayDetails;
@@ -103,10 +66,23 @@ void TileContent::setRasterOverlayDetails(
   _rasterOverlayDetails = std::move(rasterOverlayDetails);
 }
 
-void TileContent::setState(TileLoadState state) noexcept { _state = state; }
+const std::vector<Credit>& TileContent::getCredits() const noexcept {
+  return _credits;
+}
 
-void TileContent::setRenderResources(void* pRenderResources) noexcept {
-  _pRenderResources = pRenderResources;
+std::vector<Credit>& TileContent::getCredits() noexcept { return _credits; }
+
+void TileContent::setCredits(std::vector<Credit>&& credits) {
+  _credits = std::move(credits);
+}
+
+void TileContent::setCredits(const std::vector<Credit>& credits) {
+  _credits = credits;
+}
+
+const std::function<void(Tile&)>&
+TileContent::getTileInitializerCallback() const noexcept {
+  return _tileInitializer;
 }
 
 void TileContent::setTileInitializerCallback(
@@ -114,20 +90,11 @@ void TileContent::setTileInitializerCallback(
   _tileInitializer = std::move(callback);
 }
 
-std::function<void(Tile&)>& TileContent::getTileInitializerCallback() {
-  return _tileInitializer;
-}
-
-void TileContent::setContentShouldContinueUpdated(
-    bool shouldContentContinueUpdated) noexcept {
-  _shouldContentContinueUpdated = shouldContentContinueUpdated;
-}
-
-void TileContent::setCredits(std::vector<Credit>&& credits) {
-  _credits = std::move(credits);
-}
-
 void* TileContent::getRenderResources() const noexcept {
   return _pRenderResources;
+}
+
+void TileContent::setRenderResources(void* pRenderResources) noexcept {
+  _pRenderResources = pRenderResources;
 }
 } // namespace Cesium3DTilesSelection

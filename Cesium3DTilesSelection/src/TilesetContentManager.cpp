@@ -534,9 +534,8 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  TileContent& content = tile.getContent();
-  if (content.getState() != TileLoadState::Unloaded &&
-      content.getState() != TileLoadState::FailedTemporarily) {
+  if (tile.getState() != TileLoadState::Unloaded &&
+      tile.getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : tile.getMappedRasterTiles()) {
@@ -579,7 +578,7 @@ void TilesetContentManager::loadTileContent(
 
   // begin loading tile
   notifyTileStartLoading(tile);
-  content.setState(TileLoadState::ContentLoading);
+  tile.setState(TileLoadState::ContentLoading);
 
   TileContentLoadInfo tileLoadInfo{
       _externals.asyncSystem,
@@ -590,7 +589,7 @@ void TilesetContentManager::loadTileContent(
       tile};
 
   TilesetContentLoader* pLoader;
-  if (content.getLoader() == &_upsampler) {
+  if (tile.getLoader() == &_upsampler) {
     pLoader = &_upsampler;
   } else {
     pLoader = _pLoader.get();
@@ -657,9 +656,7 @@ void TilesetContentManager::loadTileContent(
 void TilesetContentManager::updateTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  TileContent& content = tile.getContent();
-
-  TileLoadState state = content.getState();
+  TileLoadState state = tile.getState();
   switch (state) {
   case TileLoadState::ContentLoaded:
     updateContentLoadedState(tile, tilesetOptions);
@@ -671,14 +668,13 @@ void TilesetContentManager::updateTileContent(
     break;
   }
 
-  if (content.shouldContentContinueUpdated()) {
-    content.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
+  if (tile.shouldContentContinueUpdated()) {
+    tile.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
   }
 }
 
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
-  TileContent& content = tile.getContent();
-  TileLoadState state = content.getState();
+  TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
     return true;
   }
@@ -686,6 +682,8 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   if (state == TileLoadState::ContentLoading) {
     return false;
   }
+
+  TileContent& content = tile.getContent();
 
   // don't unload external or empty tile
   if (content.isExternalContent() || content.isEmptyContent()) {
@@ -717,11 +715,12 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   }
 
-  tile.getMappedRasterTiles().clear();
   content.setCredits({});
   content.setRasterOverlayDetails(RasterOverlayDetails{});
   content.setContentKind(TileUnknownContent{});
-  content.setState(TileLoadState::Unloaded);
+
+  tile.getMappedRasterTiles().clear();
+  tile.setState(TileLoadState::Unloaded);
   return true;
 }
 
@@ -774,22 +773,22 @@ void TilesetContentManager::setTileContent(
   }
 
   // set content
-  auto& content = tile.getContent();
   switch (result.state) {
   case TileLoadResultState::Success:
-    content.setState(TileLoadState::ContentLoaded);
+    tile.setState(TileLoadState::ContentLoaded);
     break;
   case TileLoadResultState::Failed:
-    content.setState(TileLoadState::Failed);
+    tile.setState(TileLoadState::Failed);
     break;
   case TileLoadResultState::RetryLater:
-    content.setState(TileLoadState::FailedTemporarily);
+    tile.setState(TileLoadState::FailedTemporarily);
     break;
   default:
     assert(false && "Cannot handle an unknown TileLoadResultState");
     break;
   }
 
+  auto& content = tile.getContent();
   content.setContentKind(std::move(result.contentKind));
   if (rasterOverlayDetails) {
     content.setRasterOverlayDetails(std::move(*rasterOverlayDetails));
@@ -832,13 +831,13 @@ void TilesetContentManager::updateContentLoadedState(
     content.setTileInitializerCallback({});
   }
 
-  content.setState(TileLoadState::Done);
+  tile.setState(TileLoadState::Done);
 }
 
 void TilesetContentManager::updateDoneState(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  if (tile.getContent().shouldContentContinueUpdated()) {
+  if (tile.shouldContentContinueUpdated()) {
     return;
   }
 

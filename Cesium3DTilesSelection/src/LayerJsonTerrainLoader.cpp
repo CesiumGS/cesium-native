@@ -634,7 +634,7 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::vector<IAssetAccessor::THeader>& requestHeaders) {
   // This type of loader should never have child loaders.
-  assert(tile.getContent().getLoader() == this);
+  assert(tile.getLoader() == this);
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());

@@ -328,7 +328,7 @@ RasterMappedTo3DTile* addRealTile(
 
   // If the tile is loaded, use the precise rectangle computed from the content.
   const TileContent& content = tile.getContent();
-  if (content.getState() >= TileLoadState::ContentLoaded) {
+  if (tile.getState() >= TileLoadState::ContentLoaded) {
     const RasterOverlayDetails& overlayDetails =
         content.getRasterOverlayDetails();
     const Rectangle* pRectangle =

@@ -10,17 +10,7 @@
 #include <variant>
 
 namespace Cesium3DTilesSelection {
-class TilesetContentLoader;
 class Tile;
-
-enum class TileLoadState {
-  FailedTemporarily = -1,
-  Unloaded = 0,
-  ContentLoading = 1,
-  ContentLoaded = 2,
-  Done = 3,
-  Failed = 4,
-};
 
 struct TileUnknownContent {};
 
@@ -40,31 +30,21 @@ using TileContentKind = std::variant<
 
 class TileContent {
 public:
-  TileContent(TilesetContentLoader* pLoader);
+  TileContent();
 
-  TileContent(TilesetContentLoader* pLoader, TileEmptyContent emptyContent);
+  TileContent(TileEmptyContent emptyContent);
 
-  TileContent(
-      TilesetContentLoader* pLoader,
-      TileExternalContent externalContent);
-
-  TileLoadState getState() const noexcept;
+  TileContent(TileExternalContent externalContent);
 
   void setContentKind(TileContentKind&& contentKind);
 
   void setContentKind(const TileContentKind& contentKind);
-
-  bool shouldContentContinueUpdated() const noexcept;
 
   bool isEmptyContent() const noexcept;
 
   bool isExternalContent() const noexcept;
 
   bool isRenderContent() const noexcept;
-
-  const TileExternalContent* getExternalContent() const noexcept;
-
-  TileExternalContent* getExternalContent() noexcept;
 
   const TileRenderContent* getRenderContent() const noexcept;
 
@@ -74,42 +54,32 @@ public:
 
   RasterOverlayDetails& getRasterOverlayDetails() noexcept;
 
-  const std::vector<Credit>& getCredits() const noexcept;
-
-  std::vector<Credit>& getCredits() noexcept;
-
-  TilesetContentLoader* getLoader() const noexcept;
-
-  void* getRenderResources() const noexcept;
-
-private:
   void
   setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
 
   void setRasterOverlayDetails(RasterOverlayDetails&& rasterOverlayDetails);
 
-  void setState(TileLoadState state) noexcept;
+  const std::vector<Credit>& getCredits() const noexcept;
 
-  void setRenderResources(void* pRenderResources) noexcept;
-
-  void setTileInitializerCallback(std::function<void(Tile&)> callback);
-
-  std::function<void(Tile&)>& getTileInitializerCallback();
-
-  void
-  setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
+  std::vector<Credit>& getCredits() noexcept;
 
   void setCredits(std::vector<Credit>&& credits);
 
-  TileLoadState _state;
+  void setCredits(const std::vector<Credit>& credits);
+
+  const std::function<void(Tile&)>& getTileInitializerCallback() const noexcept;
+
+  void setTileInitializerCallback(std::function<void(Tile&)> callback);
+
+  void* getRenderResources() const noexcept;
+
+  void setRenderResources(void* pRenderResources) noexcept;
+
+private:
   TileContentKind _contentKind;
   void* _pRenderResources;
   RasterOverlayDetails _rasterOverlayDetails;
   std::function<void(Tile&)> _tileInitializer;
-  bool _shouldContentContinueUpdated;
   std::vector<Credit> _credits;
-  TilesetContentLoader* _pLoader;
-
-  friend class TilesetContentManager;
 };
 } // namespace Cesium3DTilesSelection

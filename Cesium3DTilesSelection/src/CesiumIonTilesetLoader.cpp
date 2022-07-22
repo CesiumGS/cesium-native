@@ -445,7 +445,7 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
 }
 
 bool CesiumIonTilesetLoader::updateTileContent(Tile& tile) {
-  auto pLoader = tile.getContent().getLoader();
+  auto pLoader = tile.getLoader();
   return pLoader->updateTileContent(tile);
 }
 
