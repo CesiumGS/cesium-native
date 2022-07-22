@@ -23,12 +23,45 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
+/**
+ * The current state of this tile in the loading process.
+ */
 enum class TileLoadState {
+  /**
+   * @brief Something went wrong while loading this tile, but it may be a
+   * temporary problem.
+   */
   FailedTemporarily = -1,
+
+  /**
+   * @brief The tile is not yet loaded at all, beyond the metadata in
+   * tileset.json.
+   */
   Unloaded = 0,
+
+  /**
+   * @brief The tile content is currently being loaded.
+   *
+   * Note that while a tile is in this state, its {@link Tile::getContent},
+   * and {@link Tile::getState}, methods may be called from the load thread,
+   * and the state may change due to the internal loading process.
+   */
   ContentLoading = 1,
+
+  /**
+   * @brief The tile content has finished loading.
+   */
   ContentLoaded = 2,
+
+  /**
+   * @brief The tile is completely done loading.
+   */
   Done = 3,
+
+  /**
+   * @brief Something went wrong while loading this tile and it will not be
+   * retried.
+   */
   Failed = 4,
 };
 
@@ -373,31 +406,60 @@ public:
    */
   int64_t computeByteSize() const noexcept;
 
+  /**
+   * @brief Returns the raster overlay tiles that have been mapped to this tile.
+   */
   std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept {
     return this->_rasterTiles;
   }
 
+  /** @copydoc Tile::getMappedRasterTiles() */
   const std::vector<RasterMappedTo3DTile>&
   getMappedRasterTiles() const noexcept {
     return this->_rasterTiles;
   }
 
+  /**
+   * @brief get the content of the tile.
+   */
   const TileContent& getContent() const noexcept { return *_pContent; }
 
+  /** @copydoc Tile::getContent() */
   TileContent& getContent() noexcept { return *_pContent; }
 
+  /**
+   * @brief Determines if this tile is currently renderable.
+   */
   bool isRenderable() const noexcept;
 
+  /**
+   * @brief Determines if this tile has mesh content.
+   */
   bool isRenderContent() const noexcept;
 
+  /**
+   * @brief Determines if this tile has external tileset content.
+   */
   bool isExternalContent() const noexcept;
 
+  /**
+   * @brief Determines if this tile has empty content.
+   */
   bool isEmptyContent() const noexcept;
 
+  /**
+   * @brief get the loader that is used to load the tile content.
+   */
   TilesetContentLoader* getLoader() const noexcept;
 
+  /**
+   * @brief Returns the {@link TileLoadState} of this tile.
+   */
   TileLoadState getState() const noexcept;
 
+  /**
+   * @brief Determines if this tile need to be updated by its loader.
+   */
   bool shouldContentContinueUpdated() const noexcept;
 
 private:
