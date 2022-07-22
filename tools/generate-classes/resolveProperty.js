@@ -497,7 +497,7 @@ function resolveEnum(
   if (!enumType) {
     return undefined;
   }
-  const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
+  const enumRuntimeType = enumType === "string" ? "std::string" : "int64_t";
 
   const enumName = toPascalCase(propertyName);
   const enumDefaultValue = createEnumDefault(enumName, propertyDetails, enums);
@@ -632,7 +632,7 @@ function createEnum(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return `static constexpr int32_t ${createEnumIdentifier(
+    return `static constexpr int64_t ${createEnumIdentifier(
       enumDetails
     )} = ${enumValue}`;
   } else {

@@ -32,7 +32,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * @return The number of bytes for the component type. Returns 0 if
    * {@link Accessor::componentType} is not a valid enumeration value.
    */
-  static int8_t computeByteSizeOfComponent(int32_t componentType) noexcept;
+  static int8_t computeByteSizeOfComponent(int64_t componentType) noexcept;
 
   /**
    * @brief Computes the number of components for this accessor.

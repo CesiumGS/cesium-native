@@ -20,9 +20,9 @@ struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
    * to use with this buffer view.
    */
   struct Target {
-    static constexpr int32_t ARRAY_BUFFER = 34962;
+    static constexpr int64_t ARRAY_BUFFER = 34962;
 
-    static constexpr int32_t ELEMENT_ARRAY_BUFFER = 34963;
+    static constexpr int64_t ELEMENT_ARRAY_BUFFER = 34963;
   };
 
   /**
@@ -56,6 +56,6 @@ struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
    * Known values are defined in {@link Target}.
    *
    */
-  std::optional<int32_t> target;
+  std::optional<int64_t> target;
 };
 } // namespace CesiumGltf

@@ -31,7 +31,7 @@ Accessor::computeNumberOfComponents(const std::string& type) noexcept {
 }
 
 /*static*/ int8_t
-Accessor::computeByteSizeOfComponent(int32_t componentType) noexcept {
+Accessor::computeByteSizeOfComponent(int64_t componentType) noexcept {
   switch (componentType) {
   case CesiumGltf::Accessor::ComponentType::BYTE:
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:

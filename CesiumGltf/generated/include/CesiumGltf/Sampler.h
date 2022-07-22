@@ -18,48 +18,48 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for Magnification filter.
    */
   struct MagFilter {
-    static constexpr int32_t NEAREST = 9728;
+    static constexpr int64_t NEAREST = 9728;
 
-    static constexpr int32_t LINEAR = 9729;
+    static constexpr int64_t LINEAR = 9729;
   };
 
   /**
    * @brief Known values for Minification filter.
    */
   struct MinFilter {
-    static constexpr int32_t NEAREST = 9728;
+    static constexpr int64_t NEAREST = 9728;
 
-    static constexpr int32_t LINEAR = 9729;
+    static constexpr int64_t LINEAR = 9729;
 
-    static constexpr int32_t NEAREST_MIPMAP_NEAREST = 9984;
+    static constexpr int64_t NEAREST_MIPMAP_NEAREST = 9984;
 
-    static constexpr int32_t LINEAR_MIPMAP_NEAREST = 9985;
+    static constexpr int64_t LINEAR_MIPMAP_NEAREST = 9985;
 
-    static constexpr int32_t NEAREST_MIPMAP_LINEAR = 9986;
+    static constexpr int64_t NEAREST_MIPMAP_LINEAR = 9986;
 
-    static constexpr int32_t LINEAR_MIPMAP_LINEAR = 9987;
+    static constexpr int64_t LINEAR_MIPMAP_LINEAR = 9987;
   };
 
   /**
    * @brief Known values for S (U) wrapping mode.
    */
   struct WrapS {
-    static constexpr int32_t CLAMP_TO_EDGE = 33071;
+    static constexpr int64_t CLAMP_TO_EDGE = 33071;
 
-    static constexpr int32_t MIRRORED_REPEAT = 33648;
+    static constexpr int64_t MIRRORED_REPEAT = 33648;
 
-    static constexpr int32_t REPEAT = 10497;
+    static constexpr int64_t REPEAT = 10497;
   };
 
   /**
    * @brief Known values for T (V) wrapping mode.
    */
   struct WrapT {
-    static constexpr int32_t CLAMP_TO_EDGE = 33071;
+    static constexpr int64_t CLAMP_TO_EDGE = 33071;
 
-    static constexpr int32_t MIRRORED_REPEAT = 33648;
+    static constexpr int64_t MIRRORED_REPEAT = 33648;
 
-    static constexpr int32_t REPEAT = 10497;
+    static constexpr int64_t REPEAT = 10497;
   };
 
   /**
@@ -68,7 +68,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * Known values are defined in {@link MagFilter}.
    *
    */
-  std::optional<int32_t> magFilter;
+  std::optional<int64_t> magFilter;
 
   /**
    * @brief Minification filter.
@@ -76,7 +76,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * Known values are defined in {@link MinFilter}.
    *
    */
-  std::optional<int32_t> minFilter;
+  std::optional<int64_t> minFilter;
 
   /**
    * @brief S (U) wrapping mode.
@@ -86,7 +86,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    *
    * All valid values correspond to WebGL enums.
    */
-  int32_t wrapS = WrapS::REPEAT;
+  int64_t wrapS = WrapS::REPEAT;
 
   /**
    * @brief T (V) wrapping mode.
@@ -94,6 +94,6 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * Known values are defined in {@link WrapT}.
    *
    */
-  int32_t wrapT = WrapT::REPEAT;
+  int64_t wrapT = WrapT::REPEAT;
 };
 } // namespace CesiumGltf

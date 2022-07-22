@@ -30,9 +30,9 @@ protected:
 
 private:
   CesiumGltf::Sampler* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _magFilter;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _minFilter;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _wrapS;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _wrapT;
 };
 } // namespace CesiumGltfReader

@@ -21,17 +21,17 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    * @brief Known values for The datatype of the accessor's components.
    */
   struct ComponentType {
-    static constexpr int32_t BYTE = 5120;
+    static constexpr int64_t BYTE = 5120;
 
-    static constexpr int32_t UNSIGNED_BYTE = 5121;
+    static constexpr int64_t UNSIGNED_BYTE = 5121;
 
-    static constexpr int32_t SHORT = 5122;
+    static constexpr int64_t SHORT = 5122;
 
-    static constexpr int32_t UNSIGNED_SHORT = 5123;
+    static constexpr int64_t UNSIGNED_SHORT = 5123;
 
-    static constexpr int32_t UNSIGNED_INT = 5125;
+    static constexpr int64_t UNSIGNED_INT = 5125;
 
-    static constexpr int32_t FLOAT = 5126;
+    static constexpr int64_t FLOAT = 5126;
   };
 
   /**
@@ -80,7 +80,7 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    * UNSIGNED_INT type **MUST NOT** be used for any accessor that is not
    * referenced by `mesh.primitive.indices`.
    */
-  int32_t componentType = ComponentType::BYTE;
+  int64_t componentType = ComponentType::BYTE;
 
   /**
    * @brief Specifies whether integer data values are normalized before usage.

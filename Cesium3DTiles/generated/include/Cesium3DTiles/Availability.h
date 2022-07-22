@@ -22,9 +22,9 @@ struct CESIUM3DTILES_API Availability final
    * available (1) or all are unavailable (0).
    */
   struct Constant {
-    static constexpr int32_t UNAVAILABLE = 0;
+    static constexpr int64_t UNAVAILABLE = 0;
 
-    static constexpr int32_t AVAILABLE = 1;
+    static constexpr int64_t AVAILABLE = 1;
   };
 
   /**
@@ -48,6 +48,6 @@ struct CESIUM3DTILES_API Availability final
    * Known values are defined in {@link Constant}.
    *
    */
-  std::optional<int32_t> constant;
+  std::optional<int64_t> constant;
 };
 } // namespace Cesium3DTiles

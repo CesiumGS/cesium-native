@@ -22,19 +22,19 @@ struct CESIUMGLTF_API MeshPrimitive final
    * @brief Known values for The topology type of primitives to render.
    */
   struct Mode {
-    static constexpr int32_t POINTS = 0;
+    static constexpr int64_t POINTS = 0;
 
-    static constexpr int32_t LINES = 1;
+    static constexpr int64_t LINES = 1;
 
-    static constexpr int32_t LINE_LOOP = 2;
+    static constexpr int64_t LINE_LOOP = 2;
 
-    static constexpr int32_t LINE_STRIP = 3;
+    static constexpr int64_t LINE_STRIP = 3;
 
-    static constexpr int32_t TRIANGLES = 4;
+    static constexpr int64_t TRIANGLES = 4;
 
-    static constexpr int32_t TRIANGLE_STRIP = 5;
+    static constexpr int64_t TRIANGLE_STRIP = 5;
 
-    static constexpr int32_t TRIANGLE_FAN = 6;
+    static constexpr int64_t TRIANGLE_FAN = 6;
   };
 
   /**
@@ -64,7 +64,7 @@ struct CESIUMGLTF_API MeshPrimitive final
    * Known values are defined in {@link Mode}.
    *
    */
-  int32_t mode = Mode::TRIANGLES;
+  int64_t mode = Mode::TRIANGLES;
 
   /**
    * @brief An array of morph targets.

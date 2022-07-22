@@ -22,11 +22,11 @@ struct CESIUMGLTF_API AccessorSparseIndices final
    * @brief Known values for The indices data type.
    */
   struct ComponentType {
-    static constexpr int32_t UNSIGNED_BYTE = 5121;
+    static constexpr int64_t UNSIGNED_BYTE = 5121;
 
-    static constexpr int32_t UNSIGNED_SHORT = 5123;
+    static constexpr int64_t UNSIGNED_SHORT = 5123;
 
-    static constexpr int32_t UNSIGNED_INT = 5125;
+    static constexpr int64_t UNSIGNED_INT = 5125;
   };
 
   /**
@@ -48,6 +48,6 @@ struct CESIUMGLTF_API AccessorSparseIndices final
    * Known values are defined in {@link ComponentType}.
    *
    */
-  int32_t componentType = ComponentType::UNSIGNED_BYTE;
+  int64_t componentType = ComponentType::UNSIGNED_BYTE;
 };
 } // namespace CesiumGltf

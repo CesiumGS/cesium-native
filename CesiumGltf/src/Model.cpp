@@ -430,7 +430,7 @@ void addTriangleNormalToVertexNormals(
 
 template <typename TIndex, typename GetIndex>
 bool accumulateNormals(
-    int32_t meshPrimitiveMode,
+    int64_t meshPrimitiveMode,
     const gsl::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     int64_t numIndices,
