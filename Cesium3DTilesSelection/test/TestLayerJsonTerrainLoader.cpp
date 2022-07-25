@@ -715,3 +715,154 @@ TEST_CASE("Test load layer json tile content") {
     }
   }
 }
+
+TEST_CASE("Test creating tile children for layer json") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
+  GeographicProjection projection;
+  auto quadtreeRectangleProjected =
+      projection.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE);
+
+  QuadtreeTilingScheme tilingScheme{quadtreeRectangleProjected, 2, 1};
+
+  const uint32_t maxZoom = 10;
+
+  // create loader
+  std::vector<LayerJsonTerrainLoader::Layer> layers;
+
+  CesiumGeometry::QuadtreeRectangleAvailability layer0ContentAvailability{
+      tilingScheme,
+      maxZoom};
+  layer0ContentAvailability.addAvailableTileRange({0, 0, 0, 1, 0});
+  layer0ContentAvailability.addAvailableTileRange({1, 0, 0, 1, 0});
+  layer0ContentAvailability.addAvailableTileRange({2, 0, 0, 1, 1});
+  layer0ContentAvailability.addAvailableTileRange({2, 2, 0, 2, 0});
+  layers.emplace_back(
+      "layer.json",
+      "1.0.0",
+      std::vector<std::string>{"{level}.{x}.{y}/{version}_layer0.terrain"},
+      std::move(layer0ContentAvailability),
+      maxZoom,
+      10);
+  layers.back().loadedSubtrees[0].insert(0);
+
+  CesiumGeometry::QuadtreeRectangleAvailability layer1ContentAvailability{
+      tilingScheme,
+      maxZoom};
+  layer1ContentAvailability.addAvailableTileRange({0, 0, 0, 1, 0});
+  layer1ContentAvailability.addAvailableTileRange({1, 0, 0, 1, 1});
+  layer1ContentAvailability.addAvailableTileRange({2, 0, 0, 1, 3});
+  layers.emplace_back(
+      "layer.json",
+      "1.0.0",
+      std::vector<std::string>{"{level}.{x}.{y}/{version}_layer1.terrain"},
+      std::move(layer1ContentAvailability),
+      maxZoom,
+      10);
+  layers.back().loadedSubtrees[0].insert(0);
+
+  LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
+
+  SECTION("Create children for tile that is at the root of subtree") {
+  }
+
+  SECTION("Create children for tile that is in the middle of subtree") {
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(1, 0, 1));
+    tile.setBoundingVolume(BoundingRegion(
+        GlobeRectangle(-Math::OnePi, 0, -Math::PiOverTwo, Math::PiOverTwo),
+        -1000.0,
+        9000.0));
+    loader.updateTileContent(tile);
+
+    const auto& tileChildren = tile.getChildren();
+    CHECK(tileChildren.size() == 4);
+
+    const auto& tile_2_0_2 = tileChildren[0];
+    const auto& looseRegion_2_0_2 =
+        std::get<BoundingRegionWithLooseFittingHeights>(
+            tile_2_0_2.getBoundingVolume());
+    const auto& region_2_0_2 = looseRegion_2_0_2.getBoundingRegion();
+    CHECK(
+        std::get<QuadtreeTileID>(tile_2_0_2.getTileID()) ==
+        QuadtreeTileID(2, 0, 2));
+    CHECK(region_2_0_2.getRectangle().getWest() == Approx(-Math::OnePi));
+    CHECK(region_2_0_2.getRectangle().getSouth() == 0.0);
+    CHECK(region_2_0_2.getRectangle().getEast() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(region_2_0_2.getRectangle().getNorth() == Approx(Math::OnePi / 4.0));
+
+    const auto& tile_2_1_2 = tileChildren[1];
+    const auto& looseRegion_2_1_2 =
+        std::get<BoundingRegionWithLooseFittingHeights>(
+            tile_2_1_2.getBoundingVolume());
+    const auto& region_2_1_2 = looseRegion_2_1_2.getBoundingRegion();
+    CHECK(
+        std::get<QuadtreeTileID>(tile_2_1_2.getTileID()) ==
+        QuadtreeTileID(2, 1, 2));
+    CHECK(region_2_1_2.getRectangle().getWest() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(region_2_1_2.getRectangle().getSouth() == 0.0);
+    CHECK(region_2_1_2.getRectangle().getEast() == Approx(-Math::PiOverTwo));
+    CHECK(region_2_1_2.getRectangle().getNorth() == Approx(Math::OnePi / 4.0));
+
+    const auto& tile_2_0_3 = tileChildren[2];
+    const auto& looseRegion_2_0_3 =
+        std::get<BoundingRegionWithLooseFittingHeights>(
+            tile_2_0_3.getBoundingVolume());
+    const auto& region_2_0_3 = looseRegion_2_0_3.getBoundingRegion();
+    CHECK(
+        std::get<QuadtreeTileID>(tile_2_0_3.getTileID()) ==
+        QuadtreeTileID(2, 0, 3));
+    CHECK(region_2_0_3.getRectangle().getWest() == Approx(-Math::OnePi));
+    CHECK(region_2_0_3.getRectangle().getSouth() == Approx(Math::OnePi / 4.0));
+    CHECK(region_2_0_3.getRectangle().getEast() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(region_2_0_3.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+
+    const auto& tile_2_1_3 = tileChildren[3];
+    const auto& looseRegion_2_1_3 =
+        std::get<BoundingRegionWithLooseFittingHeights>(
+            tile_2_1_3.getBoundingVolume());
+    const auto& region_2_1_3 = looseRegion_2_1_3.getBoundingRegion();
+    CHECK(
+        std::get<QuadtreeTileID>(tile_2_1_3.getTileID()) ==
+        QuadtreeTileID(2, 1, 3));
+    CHECK(region_2_1_3.getRectangle().getWest() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(region_2_1_3.getRectangle().getSouth() == Approx(Math::OnePi / 4.0));
+    CHECK(region_2_1_3.getRectangle().getEast() == Approx(-Math::PiOverTwo));
+    CHECK(region_2_1_3.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+  }
+
+  SECTION("Create upsample children for tile") {
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(1, 1, 0));
+    tile.setBoundingVolume(BoundingRegion(
+        GlobeRectangle(-Math::PiOverTwo, -Math::PiOverTwo, 0, 0),
+        -1000.0,
+        9000.0));
+    loader.updateTileContent(tile);
+
+    const auto& tileChildren = tile.getChildren();
+    CHECK(tileChildren.size() == 4);
+
+    const auto& tile_2_2_0 = tileChildren[0];
+    CHECK(
+        std::get<QuadtreeTileID>(tile_2_2_0.getTileID()) ==
+        QuadtreeTileID(2, 2, 0));
+
+    const auto& tile_2_3_0 = tileChildren[1];
+    const auto& upsampleID_2_3_0 = std::get<UpsampledQuadtreeNode>(tile_2_3_0.getTileID());
+    CHECK(upsampleID_2_3_0.tileID == QuadtreeTileID(2, 3, 0));
+
+    const auto& tile_2_2_1 = tileChildren[2];
+    const auto& upsampleID_2_2_1 = std::get<UpsampledQuadtreeNode>(tile_2_2_1.getTileID());
+    CHECK(upsampleID_2_2_1.tileID == QuadtreeTileID(2, 2, 1));
+
+    const auto& tile_2_3_1 = tileChildren[3];
+    const auto& upsampleID_2_3_1 = std::get<UpsampledQuadtreeNode>(tile_2_3_1.getTileID());
+    CHECK(upsampleID_2_3_1.tileID == QuadtreeTileID(2, 3, 1));
+  }
+}

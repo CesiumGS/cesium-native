@@ -212,13 +212,13 @@ TilesetContentLoader* Tile::getLoader() const noexcept { return _pLoader; }
 
 TileLoadState Tile::getState() const noexcept { return _loadState; }
 
-bool Tile::shouldContentContinueUpdated() const noexcept {
-  return this->_shouldContentContinueUpdated;
-}
-
 void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
 void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
+
+bool Tile::shouldContentContinueUpdated() const noexcept {
+  return this->_shouldContentContinueUpdated;
+}
 
 void Tile::setContentShouldContinueUpdated(
     bool shouldContentContinueUpdated) noexcept {

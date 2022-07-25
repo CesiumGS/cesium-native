@@ -457,10 +457,6 @@ public:
    */
   TileLoadState getState() const noexcept;
 
-  /**
-   * @brief Determines if this tile need to be updated by its loader.
-   */
-  bool shouldContentContinueUpdated() const noexcept;
 
 private:
   struct TileConstructorImpl {};
@@ -478,6 +474,8 @@ private:
   void setParent(Tile* pParent) noexcept;
 
   void setState(TileLoadState state) noexcept;
+
+  bool shouldContentContinueUpdated() const noexcept;
 
   void
   setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
