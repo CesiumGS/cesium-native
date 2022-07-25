@@ -460,10 +460,13 @@ Future<void> Tileset::LoadTilesetDotJson::Private::workerThreadLoadTileContext(
 
   if (attributionIt != layerJson.MemberEnd() &&
       attributionIt->value.IsString()) {
-    context.implicitContext->credit = std::make_optional<Credit>(
-        context.pTileset->getExternals().pCreditSystem->createCredit(
-            attributionIt->value.GetString(),
-            context.pTileset->_options.showCreditsOnScreen));
+    std::string attribution = attributionIt->value.GetString();
+    if (attribution.size() > 0) {
+      context.implicitContext->credit = std::make_optional<Credit>(
+          context.pTileset->getExternals().pCreditSystem->createCredit(
+              attribution,
+              context.pTileset->_options.showCreditsOnScreen));
+    }
   }
 
   std::string parentUrl =
