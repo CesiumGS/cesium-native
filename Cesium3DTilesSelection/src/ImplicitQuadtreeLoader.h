@@ -1,8 +1,8 @@
 #pragma once
 
 #include "SubtreeAvailability.h"
-#include "TilesetContentLoader.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>

@@ -37,6 +37,30 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+Tileset::Tileset(
+    const TilesetExternals& externals,
+    std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+    const TilesetOptions& options)
+    : _externals(externals),
+      _asyncSystem(externals.asyncSystem),
+      _userCredit(
+          (options.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
+              : std::nullopt),
+      _options(options),
+      _pRootTile(),
+      _previousFrameNumber(0),
+      _overlays(*this),
+      _gltfUpAxis(CesiumGeometry::Axis::Y),
+      _distancesStack(),
+      _nextDistancesVector(0),
+      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+          _externals,
+          std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+          std::move(pCustomLoader),
+          _overlays)} {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,

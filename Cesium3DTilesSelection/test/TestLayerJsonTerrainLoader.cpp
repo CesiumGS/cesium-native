@@ -877,7 +877,9 @@ TEST_CASE("Test creating tile children for layer json") {
         QuadtreeTileID(2, 0, 2));
     CHECK(region_2_0_2.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_2_0_2.getRectangle().getSouth() == 0.0);
-    CHECK(region_2_0_2.getRectangle().getEast() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(
+        region_2_0_2.getRectangle().getEast() ==
+        Approx(-Math::OnePi * 3.0 / 4));
     CHECK(region_2_0_2.getRectangle().getNorth() == Approx(Math::OnePi / 4.0));
 
     const auto& tile_2_1_2 = tileChildren[1];
@@ -888,7 +890,9 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(
         std::get<QuadtreeTileID>(tile_2_1_2.getTileID()) ==
         QuadtreeTileID(2, 1, 2));
-    CHECK(region_2_1_2.getRectangle().getWest() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(
+        region_2_1_2.getRectangle().getWest() ==
+        Approx(-Math::OnePi * 3.0 / 4));
     CHECK(region_2_1_2.getRectangle().getSouth() == 0.0);
     CHECK(region_2_1_2.getRectangle().getEast() == Approx(-Math::PiOverTwo));
     CHECK(region_2_1_2.getRectangle().getNorth() == Approx(Math::OnePi / 4.0));
@@ -903,7 +907,9 @@ TEST_CASE("Test creating tile children for layer json") {
         QuadtreeTileID(2, 0, 3));
     CHECK(region_2_0_3.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_2_0_3.getRectangle().getSouth() == Approx(Math::OnePi / 4.0));
-    CHECK(region_2_0_3.getRectangle().getEast() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(
+        region_2_0_3.getRectangle().getEast() ==
+        Approx(-Math::OnePi * 3.0 / 4));
     CHECK(region_2_0_3.getRectangle().getNorth() == Approx(Math::PiOverTwo));
 
     const auto& tile_2_1_3 = tileChildren[3];
@@ -914,7 +920,9 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(
         std::get<QuadtreeTileID>(tile_2_1_3.getTileID()) ==
         QuadtreeTileID(2, 1, 3));
-    CHECK(region_2_1_3.getRectangle().getWest() == Approx(-Math::OnePi * 3.0 / 4));
+    CHECK(
+        region_2_1_3.getRectangle().getWest() ==
+        Approx(-Math::OnePi * 3.0 / 4));
     CHECK(region_2_1_3.getRectangle().getSouth() == Approx(Math::OnePi / 4.0));
     CHECK(region_2_1_3.getRectangle().getEast() == Approx(-Math::PiOverTwo));
     CHECK(region_2_1_3.getRectangle().getNorth() == Approx(Math::PiOverTwo));
@@ -938,15 +946,18 @@ TEST_CASE("Test creating tile children for layer json") {
         QuadtreeTileID(2, 2, 0));
 
     const auto& tile_2_3_0 = tileChildren[1];
-    const auto& upsampleID_2_3_0 = std::get<UpsampledQuadtreeNode>(tile_2_3_0.getTileID());
+    const auto& upsampleID_2_3_0 =
+        std::get<UpsampledQuadtreeNode>(tile_2_3_0.getTileID());
     CHECK(upsampleID_2_3_0.tileID == QuadtreeTileID(2, 3, 0));
 
     const auto& tile_2_2_1 = tileChildren[2];
-    const auto& upsampleID_2_2_1 = std::get<UpsampledQuadtreeNode>(tile_2_2_1.getTileID());
+    const auto& upsampleID_2_2_1 =
+        std::get<UpsampledQuadtreeNode>(tile_2_2_1.getTileID());
     CHECK(upsampleID_2_2_1.tileID == QuadtreeTileID(2, 2, 1));
 
     const auto& tile_2_3_1 = tileChildren[3];
-    const auto& upsampleID_2_3_1 = std::get<UpsampledQuadtreeNode>(tile_2_3_1.getTileID());
+    const auto& upsampleID_2_3_1 =
+        std::get<UpsampledQuadtreeNode>(tile_2_3_1.getTileID());
     CHECK(upsampleID_2_3_1.tileID == QuadtreeTileID(2, 3, 1));
   }
 }

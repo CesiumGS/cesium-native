@@ -8,6 +8,7 @@
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
@@ -35,6 +36,18 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult;
  */
 class CESIUM3DTILESSELECTION_API Tileset final {
 public:
+  /**
+   * @brief Constructs a new instance with a given custom tileset loader.
+   * @param externals The external interfaces to use.
+   * @param pCustomLoader The custom loader used to load the tileset and tile
+   * content.
+   * @param options Additional options for the tileset.
+   */
+  Tileset(
+      const TilesetExternals& externals,
+      std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+      const TilesetOptions& options = TilesetOptions());
+
   /**
    * @brief Constructs a new instance with a given `tileset.json` URL.
    * @param externals The external interfaces to use.

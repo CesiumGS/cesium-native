@@ -457,7 +457,6 @@ public:
    */
   TileLoadState getState() const noexcept;
 
-
 private:
   struct TileConstructorImpl {};
   template <

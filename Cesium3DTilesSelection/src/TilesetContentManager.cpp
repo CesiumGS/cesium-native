@@ -1,7 +1,6 @@
 #include "TilesetContentManager.h"
 
 #include "TileContentLoadInfo.h"
-#include "TilesetContentLoader.h"
 
 #include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
