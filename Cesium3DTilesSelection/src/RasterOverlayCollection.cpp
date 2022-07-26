@@ -8,9 +8,22 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
+namespace {
+template <class Function>
+void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
+  Tile* pCurrent = list.head();
+  while (pCurrent) {
+    Tile* pNext = list.next(pCurrent);
+    callback(*pCurrent);
+    pCurrent = pNext;
+  }
+}
+} // namespace
 
-RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept
-    : _pTileset(&tileset) {}
+RasterOverlayCollection::RasterOverlayCollection(
+    Tile::LoadedLinkedList& loadedTiles,
+    const TilesetExternals& externals) noexcept
+    : _pLoadedTiles(&loadedTiles), _externals{externals} {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (!this->_overlays.empty()) {
@@ -28,14 +41,14 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   this->_overlays.push_back(std::move(pOverlay));
 
   pOverlayRaw->loadTileProvider(
-      this->_pTileset->getAsyncSystem(),
-      this->_pTileset->getExternals().pAssetAccessor,
-      this->_pTileset->getExternals().pCreditSystem,
-      this->_pTileset->getExternals().pPrepareRendererResources,
-      this->_pTileset->getExternals().pLogger);
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pCreditSystem,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger);
 
   // Add this overlay to existing geometry tiles.
-  this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
+  forEachTile(*this->_pLoadedTiles, [pOverlayRaw](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     if (tile.getState() != TileLoadState::Unloaded) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
@@ -57,8 +70,9 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
       };
 
   auto pPrepareRenderResources =
-      _pTileset->getExternals().pPrepareRendererResources.get();
-  this->_pTileset->forEachLoadedTile(
+      this->_externals.pPrepareRendererResources.get();
+  forEachTile(
+      *this->_pLoadedTiles,
       [&removeCondition, pPrepareRenderResources](Tile& tile) {
         std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 

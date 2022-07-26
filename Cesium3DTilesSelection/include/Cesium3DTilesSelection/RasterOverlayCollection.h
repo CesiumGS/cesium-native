@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlay.h"
-#include "RasterOverlayTileProvider.h"
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/RasterOverlay.h>
+#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 
 #include <gsl/span>
 
@@ -10,8 +12,6 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-
-class Tileset;
 
 /**
  * @brief A collection of {@link RasterOverlay} instances that are associated
@@ -29,9 +29,14 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param tileset The tileset to which this instance belongs
+   * @param loadedTiles The list of loaded tiles. The collection does not own
+   * this list, so the list needs to be kept alive as long as the collection's
+   * lifetime
+   * @param externals A collection of loading system to load a raster overlay
    */
-  RasterOverlayCollection(Tileset& tileset) noexcept;
+  RasterOverlayCollection(
+      Tile::LoadedLinkedList& loadedTiles,
+      const TilesetExternals& externals) noexcept;
 
   ~RasterOverlayCollection() noexcept;
 
@@ -84,7 +89,8 @@ public:
   size_t size() const noexcept { return this->_overlays.size(); }
 
 private:
-  Tileset* _pTileset;
+  Tile::LoadedLinkedList* _pLoadedTiles;
+  TilesetExternals _externals;
   std::vector<std::unique_ptr<RasterOverlay>> _overlays;
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot");
 };
