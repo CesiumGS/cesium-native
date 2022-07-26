@@ -63,7 +63,6 @@ Tileset::Tileset(
       _subtreeLoadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distances(),
       _childOcclusionProxies() {
@@ -101,7 +100,6 @@ Tileset::Tileset(
       _subtreeLoadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distances(),
       _childOcclusionProxies() {
@@ -240,11 +238,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
     return result;
-  }
-
-  if (!this->supportsRasterOverlays() && this->_overlays.size() > 0) {
-    this->_externals.pLogger->warn(
-        "Only quantized-mesh terrain tilesets currently support overlays.");
   }
 
   this->_loadQueueHigh.clear();
