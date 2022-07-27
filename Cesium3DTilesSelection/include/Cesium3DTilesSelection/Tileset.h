@@ -266,16 +266,6 @@ public:
   int64_t getTotalDataBytes() const noexcept;
 
   /**
-   * @brief Determines if this tileset supports raster overlays.
-   *
-   * Currently, raster overlays can only be draped over quantized-mesh terrain
-   * tilesets.
-   */
-  bool supportsRasterOverlays() const noexcept {
-    return this->_supportsRasterOverlays;
-  }
-
-  /**
    * @brief Returns the value indicating the glTF up-axis.
    *
    * This function is not supposed to be called by clients.
@@ -593,8 +583,6 @@ private:
   RasterOverlayCollection _overlays;
 
   int64_t _tileDataBytes;
-
-  bool _supportsRasterOverlays;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.

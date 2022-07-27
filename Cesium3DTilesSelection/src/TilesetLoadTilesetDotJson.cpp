@@ -25,7 +25,6 @@ namespace {
 struct LoadResult {
   std::unique_ptr<TileContext> pContext;
   std::unique_ptr<Tile> pRootTile;
-  bool supportsRasterOverlays;
   std::optional<TilesetLoadFailureDetails> failure;
 };
 
@@ -117,8 +116,6 @@ CesiumAsync::Future<void> Tileset::LoadTilesetDotJson::start(
                  .thenInMainThread(
                      [&tileset](LoadResult&& loadResult)
                          -> std::optional<TilesetLoadFailureDetails> {
-                       tileset._supportsRasterOverlays =
-                           loadResult.supportsRasterOverlays;
                        tileset.addContext(std::move(loadResult.pContext));
                        tileset._pRootTile = std::move(loadResult.pRootTile);
                        return loadResult.failure;
@@ -192,7 +189,6 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
-        false,
         TilesetLoadFailureDetails{
             pTileset,
             TilesetLoadType::TilesetJson,
@@ -210,7 +206,6 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
-        false,
         TilesetLoadFailureDetails{
             pTileset,
             TilesetLoadType::TilesetJson,
@@ -234,7 +229,6 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
     return asyncSystem.createResolvedFuture(LoadResult{
         std::move(pContext),
         nullptr,
-        false,
         TilesetLoadFailureDetails{
             pTileset,
             TilesetLoadType::TilesetJson,
@@ -249,8 +243,6 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
 
   const auto rootIt = tileset.FindMember("root");
   const auto formatIt = tileset.FindMember("format");
-
-  bool supportsRasterOverlays = false;
 
   if (rootIt != tileset.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -269,8 +261,6 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
       pContext->pTileset->addContext(std::move(pNewContext));
     }
 
-    supportsRasterOverlays = true;
-
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
@@ -286,16 +276,12 @@ Tileset::LoadTilesetDotJson::Private::workerThreadHandleResponse(
           return LoadResult{
               std::move(pContext),
               std::move(pRootTile),
-              true,
               std::nullopt};
         });
   }
 
-  return asyncSystem.createResolvedFuture(LoadResult{
-      std::move(pContext),
-      std::move(pRootTile),
-      supportsRasterOverlays,
-      std::nullopt});
+  return asyncSystem.createResolvedFuture(
+      LoadResult{std::move(pContext), std::move(pRootTile), std::nullopt});
 }
 
 namespace {

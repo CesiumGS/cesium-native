@@ -852,8 +852,7 @@ void Tile::update(
     }
   }
 
-  if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays() && this->getContent() &&
+  if (this->getState() == LoadState::Done && this->getContent() &&
       this->getContent()->model) {
     bool moreRasterDetailAvailable = false;
     bool skippedUnknown = false;
