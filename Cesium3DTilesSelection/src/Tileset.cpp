@@ -367,7 +367,7 @@ void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
   }
 }
 
-uint32_t Tileset::computeLoadProgress() noexcept {
+float_t Tileset::computeLoadProgress() noexcept {
   uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
                                 this->_loadQueueMedium.size() +
                                 this->_loadQueueHigh.size());
@@ -376,7 +376,7 @@ uint32_t Tileset::computeLoadProgress() noexcept {
   uint32_t totalNum = this->_loadedTilesCount + inProgressSum;
   float_t percentage = static_cast<float>(this->_loadedTilesCount) /
                        static_cast<float>(totalNum);
-  return (uint32_t)(percentage * 100);
+  return (percentage * 100.f);
 }
 
 void Tileset::loadTilesFromJson(
