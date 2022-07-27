@@ -228,9 +228,10 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               TileUnknownContent{},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Failed,
+              std::nullopt,
               nullptr,
-              {}};
+              {},
+              TileLoadResultState::Failed};
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -244,9 +245,10 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               TileUnknownContent{},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Failed,
+              std::nullopt,
               nullptr,
-              {}};
+              {},
+              TileLoadResultState::Failed};
         }
 
         // find gltf converter
@@ -270,18 +272,20 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                 TileRenderContent{std::nullopt},
                 std::nullopt,
                 std::nullopt,
-                TileLoadResultState::Failed,
+                std::nullopt,
                 std::move(pCompletedRequest),
-                {}};
+                {},
+                TileLoadResultState::Failed};
           }
 
           return TileLoadResult{
               TileRenderContent{std::move(result.model)},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Success,
+              std::nullopt,
               std::move(pCompletedRequest),
-              {}};
+              {},
+              TileLoadResultState::Success};
         }
 
         // content type is not supported
@@ -289,15 +293,16 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
             TileRenderContent{std::nullopt},
             std::nullopt,
             std::nullopt,
-            TileLoadResultState::Failed,
+            std::nullopt,
             std::move(pCompletedRequest),
-            {}};
+            {},
+            TileLoadResultState::Failed};
       });
 }
 } // namespace
 
 CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
-    Tile& tile,
+    const Tile& tile,
     const TilesetContentOptions& contentOptions,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -329,9 +334,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   // find the subtree ID
@@ -341,9 +347,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
@@ -389,9 +396,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
               TileUnknownContent{},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::RetryLater,
+              std::nullopt,
               nullptr,
-              {}};
+              {},
+              TileLoadResultState::RetryLater};
         });
   }
 
@@ -403,9 +411,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         TileEmptyContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Success,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Success});
   }
 
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);

@@ -24,9 +24,10 @@ struct TileLoadResult {
   TileContentKind contentKind;
   std::optional<BoundingVolume> updatedBoundingVolume;
   std::optional<BoundingVolume> updatedContentBoundingVolume;
-  TileLoadResultState state;
+  std::optional<RasterOverlayDetails> rasterOverlayDetails;
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
   std::function<void(Tile&)> tileInitializer;
+  TileLoadResultState state;
 };
 
 class TilesetContentLoader {
@@ -34,7 +35,7 @@ public:
   virtual ~TilesetContentLoader() = default;
 
   virtual CesiumAsync::Future<TileLoadResult> loadTileContent(
-      Tile& tile,
+      const Tile& tile,
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,

@@ -74,7 +74,7 @@ public:
 
   std::vector<Credit>& getCredits() noexcept;
 
-  TilesetContentLoader* getLoader() noexcept;
+  TilesetContentLoader* getLoader() const noexcept;
 
   void* getRenderResources() const noexcept;
 

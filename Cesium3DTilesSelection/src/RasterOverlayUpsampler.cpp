@@ -14,7 +14,7 @@
 
 namespace Cesium3DTilesSelection {
 CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
-    Tile& tile,
+    const Tile& tile,
     [[maybe_unused]] const TilesetContentOptions& contentOptions,
     const CesiumAsync::AsyncSystem& asyncSystem,
     [[maybe_unused]] const std::shared_ptr<CesiumAsync::IAssetAccessor>&
@@ -22,15 +22,16 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
     [[maybe_unused]] const std::shared_ptr<spdlog::logger>& pLogger,
     [[maybe_unused]] const std::vector<CesiumAsync::IAssetAccessor::THeader>&
         requestHeaders) {
-  Tile* pParent = tile.getParent();
+  const Tile* pParent = tile.getParent();
   if (pParent == nullptr) {
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
@@ -41,9 +42,10 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   // The tile content manager guarantees that the parent tile is already loaded
@@ -61,9 +63,10 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   int32_t index = 0;
@@ -98,9 +101,10 @@ CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::loadTileContent(
         TileRenderContent{std::move(model)},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Success,
+        std::nullopt,
         nullptr,
-        {}};
+        {},
+        TileLoadResultState::Success};
   });
 }
 

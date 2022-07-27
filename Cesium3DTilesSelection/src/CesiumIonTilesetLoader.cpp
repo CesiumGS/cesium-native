@@ -336,7 +336,7 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
       _headerChangeListener{std::move(headerChangeListener)} {}
 
 CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
-    Tile& tile,
+    const Tile& tile,
     const TilesetContentOptions& contentOptions,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -347,17 +347,19 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::RetryLater,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::RetryLater});
   } else if (_refreshTokenState == TokenRefreshState::Failed) {
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   // TODO: the way this is structured, requests already in progress

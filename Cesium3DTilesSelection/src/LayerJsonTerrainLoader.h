@@ -57,7 +57,7 @@ public:
       std::vector<Layer>&& layers);
 
   CesiumAsync::Future<TileLoadResult> loadTileContent(
-      Tile& tile,
+      const Tile& tile,
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -68,6 +68,8 @@ public:
   bool updateTileContent(Tile& tile) override;
 
 private:
+  bool doesTileHasUpsampledChild(const Tile& til) const;
+
   void createTileChildren(Tile& tile);
 
   bool
@@ -83,8 +85,9 @@ private:
       const CesiumGeometry::QuadtreeTileID& childID,
       bool isAvailable);
 
-  CesiumAsync::Future<TileLoadResult>
-  upsampleParentTile(Tile& tile, const CesiumAsync::AsyncSystem& asyncSystem);
+  CesiumAsync::Future<TileLoadResult> upsampleParentTile(
+      const Tile& tile,
+      const CesiumAsync::AsyncSystem& asyncSystem);
 
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;
