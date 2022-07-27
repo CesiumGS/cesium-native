@@ -295,13 +295,15 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 }
 } // namespace
 
-CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::loadTileContent(
-    const Tile& tile,
-    const TilesetContentOptions& contentOptions,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+CesiumAsync::Future<TileLoadResult>
+ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
+  const auto& tile = loadInput.tile;
+  const auto& asyncSystem = loadInput.asyncSystem;
+  const auto& pAssetAccessor = loadInput.pAssetAccessor;
+  const auto& pLogger = loadInput.pLogger;
+  const auto& requestHeaders = loadInput.requestHeaders;
+  const auto& contentOptions = loadInput.contentOptions;
+
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
       std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());

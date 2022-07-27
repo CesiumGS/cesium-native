@@ -617,14 +617,15 @@ void TilesetContentManager::loadTileContent(
     pLoader = _pLoader.get();
   }
 
-  pLoader
-      ->loadTileContent(
-          tile,
-          tilesetOptions.contentOptions,
-          _externals.asyncSystem,
-          _externals.pAssetAccessor,
-          _externals.pLogger,
-          _requestHeaders)
+  TileLoadInput loadInput{
+      tile,
+      tilesetOptions.contentOptions,
+      _externals.asyncSystem,
+      _externals.pAssetAccessor,
+      _externals.pLogger,
+      _requestHeaders};
+
+  pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections)](
                            TileLoadResult&& result) mutable {

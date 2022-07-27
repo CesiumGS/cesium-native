@@ -647,13 +647,15 @@ Future<int> loadTileAvailability(
 }
 } // namespace
 
-Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
-    const Tile& tile,
-    const TilesetContentOptions& contentOptions,
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<IAssetAccessor::THeader>& requestHeaders) {
+Future<TileLoadResult>
+LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
+  const auto& tile = loadInput.tile;
+  const auto& asyncSystem = loadInput.asyncSystem;
+  const auto& pAssetAccessor = loadInput.pAssetAccessor;
+  const auto& pLogger = loadInput.pLogger;
+  const auto& requestHeaders = loadInput.requestHeaders;
+  const auto& contentOptions = loadInput.contentOptions;
+
   // This type of loader should never have child loaders.
   assert(tile.getContent().getLoader() == this);
 

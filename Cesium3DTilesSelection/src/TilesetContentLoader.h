@@ -20,6 +20,23 @@ class Tile;
 
 enum class TileLoadResultState { Success, Failed, RetryLater };
 
+struct TileLoadInput {
+  TileLoadInput(
+      const Tile& tile,
+      const TilesetContentOptions& contentOptions,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+
+  const Tile& tile;
+  const TilesetContentOptions& contentOptions;
+  const CesiumAsync::AsyncSystem& asyncSystem;
+  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor;
+  const std::shared_ptr<spdlog::logger>& pLogger;
+  const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+};
+
 struct TileLoadResult {
   TileContentKind contentKind;
   std::optional<BoundingVolume> updatedBoundingVolume;
@@ -34,14 +51,8 @@ class TilesetContentLoader {
 public:
   virtual ~TilesetContentLoader() = default;
 
-  virtual CesiumAsync::Future<TileLoadResult> loadTileContent(
-      const Tile& tile,
-      const TilesetContentOptions& contentOptions,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>&
-          requestHeaders) = 0;
+  virtual CesiumAsync::Future<TileLoadResult>
+  loadTileContent(const TileLoadInput& input) = 0;
 
   virtual bool updateTileContent(Tile& tile) = 0;
 };

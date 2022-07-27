@@ -301,13 +301,15 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 }
 } // namespace
 
-CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
-    const Tile& tile,
-    const TilesetContentOptions& contentOptions,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+CesiumAsync::Future<TileLoadResult>
+ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
+  const auto& tile = loadInput.tile;
+  const auto& asyncSystem = loadInput.asyncSystem;
+  const auto& pAssetAccessor = loadInput.pAssetAccessor;
+  const auto& pLogger = loadInput.pLogger;
+  const auto& requestHeaders = loadInput.requestHeaders;
+  const auto& contentOptions = loadInput.contentOptions;
+
   // Ensure CesiumGeometry::QuadtreeTileID only has 32-bit components. There are
   // solutions below if the ID has more than 32-bit components.
   static_assert(

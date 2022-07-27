@@ -56,14 +56,8 @@ public:
       const CesiumGeospatial::Projection& projection,
       std::vector<Layer>&& layers);
 
-  CesiumAsync::Future<TileLoadResult> loadTileContent(
-      const Tile& tile,
-      const TilesetContentOptions& contentOptions,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
-      override;
+  CesiumAsync::Future<TileLoadResult>
+  loadTileContent(const TileLoadInput& loadInput) override;
 
   bool updateTileContent(Tile& tile) override;
 
