@@ -374,7 +374,7 @@ float Tileset::computeLoadProgress() noexcept {
   // we ignore _subtreeLoadsInProgress for now
   uint32_t inProgressSum = (this->_loadsInProgress + queueSizeSum);
   uint32_t totalNum = this->_loadedTilesCount + inProgressSum;
-  float_t percentage = static_cast<float>(this->_loadedTilesCount) /
+  float percentage = static_cast<float>(this->_loadedTilesCount) /
                        static_cast<float>(totalNum);
   return (percentage * 100.f);
 }
