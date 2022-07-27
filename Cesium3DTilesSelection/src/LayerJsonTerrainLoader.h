@@ -59,12 +59,12 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  bool updateTileContent(Tile& tile) override;
+  TileChildrenResult createTileChildren(const Tile& tile) override;
 
 private:
   bool doesTileHasUpsampledChild(const Tile& til) const;
 
-  void createTileChildren(Tile& tile);
+  std::vector<Tile> createTileChildrenImpl(const Tile& tile);
 
   bool
   tileIsAvailableInAnyLayer(const CesiumGeometry::QuadtreeTileID& tileID) const;

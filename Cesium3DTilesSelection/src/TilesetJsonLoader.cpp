@@ -871,13 +871,13 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
           });
 }
 
-bool TilesetJsonLoader::updateTileContent(Tile& tile) {
+TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {
   auto pLoader = tile.getContent().getLoader();
   if (pLoader != this) {
-    return pLoader->updateTileContent(tile);
+    return pLoader->createTileChildren(tile);
   }
 
-  return false;
+  return {{}, TileLoadResultState::Success};
 }
 
 const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {

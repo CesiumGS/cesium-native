@@ -388,6 +388,12 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
+TileChildrenResult
+CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
+  auto pLoader = tile.getContent().getLoader();
+  return pLoader->createTileChildren(tile);
+}
+
 void CesiumIonTilesetLoader::refreshTokenInMainThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -435,11 +441,6 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
 
             _refreshTokenState = TokenRefreshState::Failed;
           });
-}
-
-bool CesiumIonTilesetLoader::updateTileContent(Tile& tile) {
-  auto pLoader = tile.getContent().getLoader();
-  return pLoader->updateTileContent(tile);
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult>

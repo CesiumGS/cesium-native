@@ -689,8 +689,15 @@ void TilesetContentManager::updateTileContent(
     break;
   }
 
-  if (content.shouldContentContinueUpdated()) {
-    content.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
+  if (content.shouldContentContinueUpdated() && tile.getChildren().empty()) {
+    TileChildrenResult childrenResult = _pLoader->createTileChildren(tile);
+    if (childrenResult.state == TileLoadResultState::Success) {
+      tile.createChildTiles(std::move(childrenResult.children));
+    }
+
+    bool shouldTileContinueUpdated =
+        childrenResult.state == TileLoadResultState::RetryLater;
+    content.setContentShouldContinueUpdated(shouldTileContinueUpdated);
   }
 }
 

@@ -832,38 +832,34 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-bool LayerJsonTerrainLoader::updateTileContent(Tile& tile) {
+TileChildrenResult
+LayerJsonTerrainLoader::createTileChildren(const Tile& tile) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (pQuadtreeID) {
-    if (tile.getChildren().empty()) {
-      // For the tile that is in the middle of subtree, it is safe to create the
-      // children. However for tile that is at the availability level, we have
-      // to wait for the tile to be finished loading, since there are multiple
-      // subtrees in the background layers being on the flight as well. Once the
-      // tile finishes loading, all the subtrees are resolved
-      bool isTileAtAvailabilityLevel = false;
-      for (const auto& layer : _layers) {
-        if (layer.availabilityLevels > 0 &&
-            int32_t(pQuadtreeID->level) % layer.availabilityLevels == 0) {
-          isTileAtAvailabilityLevel = true;
-          break;
-        }
+    // For the tile that is in the middle of subtree, it is safe to create the
+    // children. However for tile that is at the availability level, we have
+    // to wait for the tile to be finished loading, since there are multiple
+    // subtrees in the background layers being on the flight as well. Once the
+    // tile finishes loading, all the subtrees are resolved
+    bool isTileAtAvailabilityLevel = false;
+    for (const auto& layer : _layers) {
+      if (layer.availabilityLevels > 0 &&
+          int32_t(pQuadtreeID->level) % layer.availabilityLevels == 0) {
+        isTileAtAvailabilityLevel = true;
+        break;
       }
-
-      if (isTileAtAvailabilityLevel &&
-          tile.getState() <= TileLoadState::ContentLoading) {
-        return true;
-      }
-
-      createTileChildren(tile);
-      return false;
     }
 
-    return true;
+    if (isTileAtAvailabilityLevel &&
+        tile.getState() <= TileLoadState::ContentLoading) {
+      return {{}, TileLoadResultState::RetryLater};
+    }
+
+    return {createTileChildrenImpl(tile), TileLoadResultState::Success};
   }
 
-  return false;
+  return {{}, TileLoadResultState::Failed};
 }
 
 bool LayerJsonTerrainLoader::doesTileHasUpsampledChild(const Tile& tile) const {
@@ -897,40 +893,39 @@ bool LayerJsonTerrainLoader::doesTileHasUpsampledChild(const Tile& tile) const {
   }
 }
 
-void LayerJsonTerrainLoader::createTileChildren(Tile& tile) {
+std::vector<Tile>
+LayerJsonTerrainLoader::createTileChildrenImpl(const Tile& tile) {
+  const QuadtreeTileID* pQuadtreeTileID =
+      std::get_if<QuadtreeTileID>(&tile.getTileID());
 
-  if (tile.getChildren().empty()) {
-    const QuadtreeTileID* pQuadtreeTileID =
-        std::get_if<QuadtreeTileID>(&tile.getTileID());
+  // Now that all our availability is sorted out, create this tile's
+  // children.
+  const QuadtreeTileID swID(
+      pQuadtreeTileID->level + 1,
+      pQuadtreeTileID->x * 2,
+      pQuadtreeTileID->y * 2);
+  const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+  const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+  const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
-    // Now that all our availability is sorted out, create this tile's
-    // children.
-    const QuadtreeTileID swID(
-        pQuadtreeTileID->level + 1,
-        pQuadtreeTileID->x * 2,
-        pQuadtreeTileID->y * 2);
-    const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+  // If _any_ child is available, we create _all_ children
+  bool sw = this->tileIsAvailableInAnyLayer(swID);
+  bool se = this->tileIsAvailableInAnyLayer(seID);
+  bool nw = this->tileIsAvailableInAnyLayer(nwID);
+  bool ne = this->tileIsAvailableInAnyLayer(neID);
 
-    // If _any_ child is available, we create _all_ children
-    bool sw = this->tileIsAvailableInAnyLayer(swID);
-    bool se = this->tileIsAvailableInAnyLayer(seID);
-    bool nw = this->tileIsAvailableInAnyLayer(nwID);
-    bool ne = this->tileIsAvailableInAnyLayer(neID);
+  if (sw || se || nw || ne) {
+    std::vector<Tile> children;
+    children.reserve(4);
 
-    if (sw || se || nw || ne) {
-      std::vector<Tile> children;
-      children.reserve(4);
-
-      createChildTile(tile, children, swID, sw);
-      createChildTile(tile, children, seID, se);
-      createChildTile(tile, children, nwID, nw);
-      createChildTile(tile, children, neID, ne);
-
-      tile.createChildTiles(std::move(children));
-    }
+    createChildTile(tile, children, swID, sw);
+    createChildTile(tile, children, seID, se);
+    createChildTile(tile, children, nwID, nw);
+    createChildTile(tile, children, neID, ne);
+    return children;
   }
+
+  return {};
 }
 
 bool LayerJsonTerrainLoader::tileIsAvailableInAnyLayer(

@@ -47,6 +47,11 @@ struct TileLoadResult {
   TileLoadResultState state;
 };
 
+struct TileChildrenResult {
+  std::vector<Tile> children;
+  TileLoadResultState state;
+};
+
 class TilesetContentLoader {
 public:
   virtual ~TilesetContentLoader() = default;
@@ -54,6 +59,6 @@ public:
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
 
-  virtual bool updateTileContent(Tile& tile) = 0;
+  virtual TileChildrenResult createTileChildren(const Tile& tile) = 0;
 };
 } // namespace Cesium3DTilesSelection
