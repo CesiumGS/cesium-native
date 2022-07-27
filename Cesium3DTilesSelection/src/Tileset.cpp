@@ -367,7 +367,7 @@ void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
   }
 }
 
-float_t Tileset::computeLoadProgress() noexcept {
+float Tileset::computeLoadProgress() noexcept {
   uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
                                 this->_loadQueueMedium.size() +
                                 this->_loadQueueHigh.size());
