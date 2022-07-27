@@ -316,6 +316,8 @@ void calcRasterOverlayDetailsInWorkerThread(
     }
   }
 
+  // generate the overlay details from the rest of projections and merge it with
+  // the existing one
   auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
       *renderContent.model,
       tileLoadInfo.tileTransform,
