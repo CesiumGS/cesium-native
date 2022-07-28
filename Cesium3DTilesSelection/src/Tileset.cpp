@@ -52,7 +52,7 @@ Tileset::Tileset(
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _overlays(*this),
+      _overlays(_loadedTiles, externals),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0),
@@ -77,7 +77,7 @@ Tileset::Tileset(
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _overlays(*this),
+      _overlays(_loadedTiles, externals),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
@@ -108,7 +108,7 @@ Tileset::Tileset(
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _overlays(*this),
+      _overlays(_loadedTiles, externals),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {

@@ -45,13 +45,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID("This is a test tile");
 
-    auto tileLoadResultFuture = loader.loadTileContent(
+    TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         pMockedAssetAccessor,
         spdlog::default_logger(),
-        {});
+        {}};
+
+    auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -74,13 +76,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 1});
 
-    auto tileLoadResultFuture = loader.loadTileContent(
+    TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         pMockedAssetAccessor,
         spdlog::default_logger(),
-        {});
+        {}};
+
+    auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -123,13 +127,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{3, 1, 0, 1});
 
-    auto tileLoadResultFuture = loader.loadTileContent(
+    TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         pMockedAssetAccessor,
         spdlog::default_logger(),
-        {});
+        {}};
+
+    auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -175,13 +181,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 0});
 
-    auto tileLoadResultFuture = loader.loadTileContent(
+    TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         pMockedAssetAccessor,
         spdlog::default_logger(),
-        {});
+        {}};
+
+    auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -222,10 +230,12 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID(0, 0, 0, 0));
     tile.setBoundingVolume(loaderBoundingVolume);
-    CHECK(!loader.updateTileContent(tile));
 
     {
-      auto tileChildren = tile.getChildren();
+      auto tileChildrenResult = loader.createTileChildren(tile);
+      CHECK(tileChildrenResult.state == TileLoadResultState::Success);
+
+      const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
       const auto& tile_1_0_0_0 = tileChildren[0];
@@ -315,14 +325,18 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_1_1_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
       CHECK(box_1_1_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_1_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
+
+      tile.createChildTiles(std::move(tileChildrenResult.children));
     }
 
     // check subdivide one of the root children
-    auto& tile_1_1_0_0 = tile.getChildren()[1];
-    CHECK(!loader.updateTileContent(tile_1_1_0_0));
-
     {
-      auto tileChildren = tile_1_1_0_0.getChildren();
+      auto& tile_1_1_0_0 = tile.getChildren()[1];
+
+      auto tileChildrenResult = loader.createTileChildren(tile_1_1_0_0);
+      CHECK(tileChildrenResult.state == TileLoadResultState::Success);
+
+      const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
       const auto& tile_2_2_0_0 = tileChildren[0];
@@ -447,10 +461,12 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID(0, 0, 0, 0));
     tile.setBoundingVolume(loaderBoundingVolume);
-    CHECK(!loader.updateTileContent(tile));
 
     {
-      auto tileChildren = tile.getChildren();
+      auto tileChildrenResult = loader.createTileChildren(tile);
+      CHECK(tileChildrenResult.state == TileLoadResultState::Success);
+
+      const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
       const auto& tile_1_0_0_0 = tileChildren[0];
@@ -540,14 +556,17 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
           region_1_1_1_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
       CHECK(region_1_1_1_1.getMinimumHeight() == Approx(50.0));
       CHECK(region_1_1_1_1.getMaximumHeight() == Approx(100.0));
+
+      tile.createChildTiles(std::move(tileChildrenResult.children));
     }
 
     // check subdivide one of the root children
-    auto& tile_1_1_0_0 = tile.getChildren()[1];
-    CHECK(!loader.updateTileContent(tile_1_1_0_0));
-
     {
-      auto tileChildren = tile_1_1_0_0.getChildren();
+      auto& tile_1_1_0_0 = tile.getChildren()[1];
+      auto tileChildrenResult = loader.createTileChildren(tile_1_1_0_0);
+      CHECK(tileChildrenResult.state == TileLoadResultState::Success);
+
+      const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
       const auto& tile_2_2_0_0 = tileChildren[0];

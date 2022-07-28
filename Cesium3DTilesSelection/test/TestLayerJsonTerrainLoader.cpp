@@ -53,13 +53,15 @@ Future<TileLoadResult> loadTile(
        -1000.0,
        9000.0}});
 
-  auto tileLoadResultFuture = loader.loadTileContent(
+  TileLoadInput loadInput{
       tile,
       {},
       asyncSystem,
       pAssetAccessor,
       spdlog::default_logger(),
-      {});
+      {}};
+
+  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
   asyncSystem.dispatchMainThreadTasks();
 
@@ -779,80 +781,92 @@ TEST_CASE("Test creating tile children for layer json") {
         -1000.0,
         9000.0));
 
-    MockTilesetContentManagerTestFixture::setTileLoadState(
-        tile,
-        TileLoadState::FailedTemporarily);
-    CHECK(loader.updateTileContent(tile));
+    {
+      MockTilesetContentManagerTestFixture::setTileLoadState(
+          tile,
+          TileLoadState::FailedTemporarily);
+      auto tileChildrenResult = loader.createTileChildren(tile);
+      CHECK(tileChildrenResult.state == TileLoadResultState::RetryLater);
+    }
 
-    MockTilesetContentManagerTestFixture::setTileLoadState(
-        tile,
-        TileLoadState::Unloaded);
-    CHECK(loader.updateTileContent(tile));
+    {
+      MockTilesetContentManagerTestFixture::setTileLoadState(
+          tile,
+          TileLoadState::Unloaded);
+      auto tileChildrenResult = loader.createTileChildren(tile);
+      CHECK(tileChildrenResult.state == TileLoadResultState::RetryLater);
+    }
 
-    MockTilesetContentManagerTestFixture::setTileLoadState(
-        tile,
-        TileLoadState::ContentLoading);
-    CHECK(loader.updateTileContent(tile));
+    {
+      MockTilesetContentManagerTestFixture::setTileLoadState(
+          tile,
+          TileLoadState::ContentLoading);
+      auto tileChildrenResult = loader.createTileChildren(tile);
+      CHECK(tileChildrenResult.state == TileLoadResultState::RetryLater);
+    }
 
-    MockTilesetContentManagerTestFixture::setTileLoadState(
-        tile,
-        TileLoadState::ContentLoaded);
-    CHECK(!loader.updateTileContent(tile));
+    {
+      MockTilesetContentManagerTestFixture::setTileLoadState(
+          tile,
+          TileLoadState::ContentLoaded);
+      auto tileChildrenResult = loader.createTileChildren(tile);
+      CHECK(tileChildrenResult.state == TileLoadResultState::Success);
 
-    const auto& tileChildren = tile.getChildren();
-    CHECK(tileChildren.size() == 4);
+      const auto& tileChildren = tileChildrenResult.children;
+      CHECK(tileChildren.size() == 4);
 
-    const auto& tile_1_0_0 = tileChildren[0];
-    const auto& looseRegion_1_0_0 =
-        std::get<BoundingRegionWithLooseFittingHeights>(
-            tile_1_0_0.getBoundingVolume());
-    const auto& region_1_0_0 = looseRegion_1_0_0.getBoundingRegion();
-    CHECK(
-        std::get<QuadtreeTileID>(tile_1_0_0.getTileID()) ==
-        QuadtreeTileID(1, 0, 0));
-    CHECK(region_1_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
-    CHECK(region_1_0_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
-    CHECK(region_1_0_0.getRectangle().getEast() == Approx(-Math::PiOverTwo));
-    CHECK(region_1_0_0.getRectangle().getNorth() == 0.0);
+      const auto& tile_1_0_0 = tileChildren[0];
+      const auto& looseRegion_1_0_0 =
+          std::get<BoundingRegionWithLooseFittingHeights>(
+              tile_1_0_0.getBoundingVolume());
+      const auto& region_1_0_0 = looseRegion_1_0_0.getBoundingRegion();
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_0_0.getTileID()) ==
+          QuadtreeTileID(1, 0, 0));
+      CHECK(region_1_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
+      CHECK(region_1_0_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_0_0.getRectangle().getEast() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_0_0.getRectangle().getNorth() == 0.0);
 
-    const auto& tile_1_1_0 = tileChildren[1];
-    const auto& looseRegion_1_1_0 =
-        std::get<BoundingRegionWithLooseFittingHeights>(
-            tile_1_1_0.getBoundingVolume());
-    const auto& region_1_1_0 = looseRegion_1_1_0.getBoundingRegion();
-    CHECK(
-        std::get<QuadtreeTileID>(tile_1_1_0.getTileID()) ==
-        QuadtreeTileID(1, 1, 0));
-    CHECK(region_1_1_0.getRectangle().getWest() == Approx(-Math::PiOverTwo));
-    CHECK(region_1_1_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
-    CHECK(region_1_1_0.getRectangle().getEast() == 0.0);
-    CHECK(region_1_1_0.getRectangle().getNorth() == 0.0);
+      const auto& tile_1_1_0 = tileChildren[1];
+      const auto& looseRegion_1_1_0 =
+          std::get<BoundingRegionWithLooseFittingHeights>(
+              tile_1_1_0.getBoundingVolume());
+      const auto& region_1_1_0 = looseRegion_1_1_0.getBoundingRegion();
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_1_0.getTileID()) ==
+          QuadtreeTileID(1, 1, 0));
+      CHECK(region_1_1_0.getRectangle().getWest() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_1_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_1_0.getRectangle().getEast() == 0.0);
+      CHECK(region_1_1_0.getRectangle().getNorth() == 0.0);
 
-    const auto& tile_1_0_1 = tileChildren[2];
-    const auto& looseRegion_1_0_1 =
-        std::get<BoundingRegionWithLooseFittingHeights>(
-            tile_1_0_1.getBoundingVolume());
-    const auto& region_1_0_1 = looseRegion_1_0_1.getBoundingRegion();
-    CHECK(
-        std::get<QuadtreeTileID>(tile_1_0_1.getTileID()) ==
-        QuadtreeTileID(1, 0, 1));
-    CHECK(region_1_0_1.getRectangle().getWest() == Approx(-Math::OnePi));
-    CHECK(region_1_0_1.getRectangle().getSouth() == 0.0);
-    CHECK(region_1_0_1.getRectangle().getEast() == Approx(-Math::PiOverTwo));
-    CHECK(region_1_0_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+      const auto& tile_1_0_1 = tileChildren[2];
+      const auto& looseRegion_1_0_1 =
+          std::get<BoundingRegionWithLooseFittingHeights>(
+              tile_1_0_1.getBoundingVolume());
+      const auto& region_1_0_1 = looseRegion_1_0_1.getBoundingRegion();
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_0_1.getTileID()) ==
+          QuadtreeTileID(1, 0, 1));
+      CHECK(region_1_0_1.getRectangle().getWest() == Approx(-Math::OnePi));
+      CHECK(region_1_0_1.getRectangle().getSouth() == 0.0);
+      CHECK(region_1_0_1.getRectangle().getEast() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_0_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
 
-    const auto& tile_1_1_1 = tileChildren[3];
-    const auto& looseRegion_1_1_1 =
-        std::get<BoundingRegionWithLooseFittingHeights>(
-            tile_1_1_1.getBoundingVolume());
-    const auto& region_1_1_1 = looseRegion_1_1_1.getBoundingRegion();
-    CHECK(
-        std::get<QuadtreeTileID>(tile_1_1_1.getTileID()) ==
-        QuadtreeTileID(1, 1, 1));
-    CHECK(region_1_1_1.getRectangle().getWest() == Approx(-Math::PiOverTwo));
-    CHECK(region_1_1_1.getRectangle().getSouth() == 0.0);
-    CHECK(region_1_1_1.getRectangle().getEast() == 0.0);
-    CHECK(region_1_1_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+      const auto& tile_1_1_1 = tileChildren[3];
+      const auto& looseRegion_1_1_1 =
+          std::get<BoundingRegionWithLooseFittingHeights>(
+              tile_1_1_1.getBoundingVolume());
+      const auto& region_1_1_1 = looseRegion_1_1_1.getBoundingRegion();
+      CHECK(
+          std::get<QuadtreeTileID>(tile_1_1_1.getTileID()) ==
+          QuadtreeTileID(1, 1, 1));
+      CHECK(region_1_1_1.getRectangle().getWest() == Approx(-Math::PiOverTwo));
+      CHECK(region_1_1_1.getRectangle().getSouth() == 0.0);
+      CHECK(region_1_1_1.getRectangle().getEast() == 0.0);
+      CHECK(region_1_1_1.getRectangle().getNorth() == Approx(Math::PiOverTwo));
+    }
   }
 
   SECTION("Create children for tile that is in the middle of subtree") {
@@ -862,9 +876,10 @@ TEST_CASE("Test creating tile children for layer json") {
         GlobeRectangle(-Math::OnePi, 0, -Math::PiOverTwo, Math::PiOverTwo),
         -1000.0,
         9000.0));
-    CHECK(!loader.updateTileContent(tile));
+    auto tileChildrenResult = loader.createTileChildren(tile);
+    CHECK(tileChildrenResult.state == TileLoadResultState::Success);
 
-    const auto& tileChildren = tile.getChildren();
+    const auto& tileChildren = tileChildrenResult.children;
     CHECK(tileChildren.size() == 4);
 
     const auto& tile_2_0_2 = tileChildren[0];
@@ -935,9 +950,10 @@ TEST_CASE("Test creating tile children for layer json") {
         GlobeRectangle(-Math::PiOverTwo, -Math::PiOverTwo, 0, 0),
         -1000.0,
         9000.0));
-    CHECK(!loader.updateTileContent(tile));
+    auto tileChildrenResult = loader.createTileChildren(tile);
+    CHECK(tileChildrenResult.state == TileLoadResultState::Success);
 
-    const auto& tileChildren = tile.getChildren();
+    const auto& tileChildren = tileChildrenResult.children;
     CHECK(tileChildren.size() == 4);
 
     const auto& tile_2_2_0 = tileChildren[0];

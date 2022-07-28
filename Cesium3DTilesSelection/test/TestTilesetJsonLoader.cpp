@@ -91,13 +91,15 @@ TileLoadResult loadTileContent(
 
   AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
-  auto tileLoadResultFuture = loader.loadTileContent(
+  TileLoadInput loadInput{
       tile,
       {},
       asyncSystem,
       pMockAssetAccessor,
       spdlog::default_logger(),
-      {});
+      {}};
+
+  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
   asyncSystem.dispatchMainThreadTasks();
 
@@ -495,13 +497,14 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will tell to retry later since it needs subtree
-      auto implicitContentResultFuture = loaderResult.pLoader->loadTileContent(
+      TileLoadInput loadInput{
           implicitTile,
           {},
           asyncSystem,
           pMockAssetAccessor,
           spdlog::default_logger(),
-          {});
+          {}};
+      auto implicitContentResultFuture = loaderResult.pLoader->loadTileContent(loadInput);
 
       asyncSystem.dispatchMainThreadTasks();
 
@@ -511,13 +514,15 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will be able to load the tile the second time around
-      auto implicitContentResultFuture = loaderResult.pLoader->loadTileContent(
+      TileLoadInput loadInput{
           implicitTile,
           {},
           asyncSystem,
           pMockAssetAccessor,
           spdlog::default_logger(),
-          {});
+          {}};
+      auto implicitContentResultFuture =
+          loaderResult.pLoader->loadTileContent(loadInput);
 
       asyncSystem.dispatchMainThreadTasks();
 

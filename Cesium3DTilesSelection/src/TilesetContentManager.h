@@ -45,7 +45,6 @@ private:
   static void setTileContent(
       Tile& tile,
       TileLoadResult&& result,
-      std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
       void* pWorkerRenderResources);
 
   void
