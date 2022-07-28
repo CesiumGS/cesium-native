@@ -886,7 +886,7 @@ TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {
     return pLoader->createTileChildren(tile);
   }
 
-  return {{}, TileLoadResultState::Success};
+  return {{}, TileLoadResultState::Failed};
 }
 
 const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {

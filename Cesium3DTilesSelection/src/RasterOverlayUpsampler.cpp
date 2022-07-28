@@ -105,6 +105,6 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 
 TileChildrenResult
 RasterOverlayUpsampler::createTileChildren([[maybe_unused]] const Tile& tile) {
-  return {{}, TileLoadResultState::Success};
+  return {{}, TileLoadResultState::Failed};
 }
 } // namespace Cesium3DTilesSelection
