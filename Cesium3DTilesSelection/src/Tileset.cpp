@@ -638,33 +638,45 @@ void Tileset::_frustumCull(
     bool cullWithChildrenBounds,
     CullResult& cullResult) {
 
+  _childrenFrustumChecks.clear();
+
   if (!cullResult.shouldVisit || cullResult.culled) {
     return;
   }
 
   const std::vector<ViewState>& frustums = frameState.frustums;
+  gsl::span<const Tile> children = tile.getChildren();
   // Frustum cull using the children's bounds.
   if (cullWithChildrenBounds) {
-    if (std::any_of(
-            frustums.begin(),
-            frustums.end(),
-            [children = tile.getChildren(),
-             renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
-                const ViewState& frustum) {
-              for (const Tile& child : children) {
-                if (isVisibleFromCamera(
-                        frustum,
-                        child.getBoundingVolume(),
-                        renderTilesUnderCamera)) {
-                  return true;
-                }
-              }
+    // Cache the children frustum checks so only visible children get occlusion
+    // tested.
+    _childrenFrustumChecks.resize(tile.getChildren().size());
+    std::transform(
+        children.begin(),
+        children.end(),
+        _childrenFrustumChecks.begin(),
+        [&frustums,
+         renderTilesUnderCamera =
+             this->_options.renderTilesUnderCamera](const Tile& child) -> bool {
+          for (const ViewState& frustum : frustums) {
+            if (isVisibleFromCamera(
+                    frustum,
+                    child.getBoundingVolume(),
+                    renderTilesUnderCamera)) {
+              return true;
+            }
+          }
 
-              return false;
-            })) {
-      // At least one child is visible in at least one frustum, so don't cull.
+          return false;
+        });
+
+    if (std::any_of(
+            _childrenFrustumChecks.begin(),
+            _childrenFrustumChecks.end(),
+            [](bool isVisible) { return isVisible; })) {
       return;
     }
+
     // Frustum cull based on the actual tile's bounds.
   } else if (std::any_of(
                  frustums.begin(),
@@ -766,7 +778,7 @@ void computeDistances(
       frustums.begin(),
       frustums.end(),
       distances.begin(),
-      [boundingVolume](const ViewState& frustum) -> double {
+      [&boundingVolume](const ViewState& frustum) -> double {
         return glm::sqrt(glm::max(
             frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
             0.0));
@@ -1208,8 +1220,11 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
         return TileOcclusionState::Occluded;
         break;
       case TileOcclusionState::NotOccluded:
-        if (tile.getChildren().size() == 0) {
-          // This is a leaf tile, so we can't use children bounding volumes.
+        if (_childrenFrustumChecks.size() == 0) {
+          // We can't use the children BVs to check for occlusion, if we
+          // weren't able to conduct frustum checks on them previously.
+          // E.g., They may be out of the frustum and not have valid occlusion
+          // results or the children may simply not exist.
           return TileOcclusionState::NotOccluded;
         }
       }
@@ -1220,15 +1235,25 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
     // If any children are to be unconditionally refined, we can't rely on
     // their bounding volumes. We also don't want to recurse indefinitely to
     // find a valid descendant bounding volumes union.
+    uint32_t childIndex = 0;
     for (const Tile& child : tile.getChildren()) {
+      if (!_childrenFrustumChecks[childIndex++]) {
+        continue;
+      }
+
       if (child.getUnconditionallyRefine()) {
         return TileOcclusionState::NotOccluded;
       }
     }
 
+    childIndex = 0;
     this->_childOcclusionProxies.clear();
     this->_childOcclusionProxies.reserve(tile.getChildren().size());
     for (const Tile& child : tile.getChildren()) {
+      if (!_childrenFrustumChecks[childIndex++]) {
+        continue;
+      }
+
       const TileOcclusionRendererProxy* pChildProxy =
           pOcclusionPool->fetchOcclusionProxyForTile(
               child,

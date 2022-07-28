@@ -601,6 +601,11 @@ private:
   // selection.
   std::vector<double> _distances;
 
+  // Caches frustum check results of children for the currently traversed tile.
+  // Allows for occlusion culling to reuse frustum results - occlusion queries
+  // only have to be issued for tiles that are within the frustum.
+  std::vector<bool> _childrenFrustumChecks;
+
   // Holds the occlusion proxies of the children of a tile. Store them in this
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
