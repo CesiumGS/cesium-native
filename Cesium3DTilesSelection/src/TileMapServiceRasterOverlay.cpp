@@ -20,10 +20,12 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
 
-struct tmsTileset {
+namespace {
+struct TileMapServiceTileset {
   std::string url;
   uint32_t level;
 };
+} // namespace
 
 class TileMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
@@ -46,7 +48,7 @@ public:
       uint32_t height,
       uint32_t minimumLevel,
       uint32_t maximumLevel,
-      const std::vector<tmsTileset>& tileSets)
+      const std::vector<TileMapServiceTileset>& tileSets)
       : QuadtreeRasterOverlayTileProvider(
             owner,
             asyncSystem,
@@ -63,11 +65,8 @@ public:
             height),
         _url(url),
         _headers(headers),
-        _fileExtension(fileExtension) {
-    for (const tmsTileset& tileSet : tileSets) {
-      _tileSets[tileSet.level] = tileSet;
-    }
-  }
+        _fileExtension(fileExtension),
+        _tileSets(tileSets) {}
 
   virtual ~TileMapServiceTileProvider() {}
 
@@ -79,11 +78,13 @@ protected:
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
 
-    auto findIt = _tileSets.find(tileID.level);
-    if (findIt != _tileSets.end()) {
+    uint32_t level = tileID.level - this->getMinimumLevel();
+
+    if (level < _tileSets.size()) {
+      const TileMapServiceTileset& tileset = _tileSets[level];
       std::string url = CesiumUtility::Uri::resolve(
           this->_url,
-          findIt->second.url + "/" + std::to_string(tileID.x) + "/" +
+          tileset.url + "/" + std::to_string(tileID.x) + "/" +
               std::to_string(tileID.y) + this->_fileExtension,
           true);
       return this->loadTileImageFromUrl(
@@ -107,7 +108,7 @@ private:
   std::string _url;
   std::vector<IAssetAccessor::THeader> _headers;
   std::string _fileExtension;
-  std::unordered_map<uint32_t, tmsTileset> _tileSets;
+  std::vector<TileMapServiceTileset> _tileSets;
 };
 
 TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
@@ -294,7 +295,7 @@ TileMapServiceRasterOverlay::createTileProvider(
            options = this->_options,
            url = this->_url,
            headers = this->_headers,
-           reportError](std::unique_ptr<tinyxml2::XMLDocument> pDoc)
+           reportError](std::unique_ptr<tinyxml2::XMLDocument>&& pDoc)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             if (!pDoc) {
               return nullptr;
@@ -315,7 +316,7 @@ TileMapServiceRasterOverlay::createTileProvider(
             uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
             uint32_t maximumLevel = 0;
 
-            std::vector<tmsTileset> tileSets;
+            std::vector<TileMapServiceTileset> tileSets;
 
             tinyxml2::XMLElement* pTilesets =
                 pRoot->FirstChildElement("TileSets");
@@ -328,7 +329,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 minimumLevel = glm::min(minimumLevel, level);
                 maximumLevel = glm::max(maximumLevel, level);
 
-                tmsTileset& tileSet = tileSets.emplace_back();
+                TileMapServiceTileset& tileSet = tileSets.emplace_back();
                 tileSet.url = getAttributeString(pTileset, "href")
                                   .value_or(std::to_string(level));
                 tileSet.level = level;
