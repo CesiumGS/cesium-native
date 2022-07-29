@@ -92,13 +92,12 @@ protected:
           this->_headers,
           std::move(options));
     } else {
-      std::string message = "Failed to load image from TMS.";
       return this->getAsyncSystem()
           .createResolvedFuture<LoadedRasterOverlayImage>(
               {std::nullopt,
                options.rectangle,
                {},
-               {message},
+               {"Failed to load image from TMS."},
                {},
                options.moreDetailAvailable});
     }
@@ -159,17 +158,20 @@ static std::optional<double> getAttributeDouble(
   return std::nullopt;
 }
 
+template <typename TReportError>
 Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
-    std::function<void(
-        const std::shared_ptr<CesiumAsync::IAssetRequest>,
-        const std::string&)> reportError) {
+    TReportError&& reportError) {
   return pAssetAccessor->get(asyncSystem, url, headers)
       .thenInWorkerThread(
-          [asyncSystem, pAssetAccessor, url, headers, reportError](
+          [asyncSystem,
+           pAssetAccessor,
+           url,
+           headers,
+           reportError = std::move(reportError)](
               const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<tinyxml2::XMLDocument> {
             const IAssetResponse* pResponse = pRequest->response();
@@ -189,29 +191,28 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
                 reinterpret_cast<const char*>(data.data()),
                 data.size_bytes());
 
-            bool isResourceFile =
-                url.find("tilemapresource.xml") != std::string::npos;
-
             bool hasError = false;
-
-            std::string message =
-                "Unable to parse Tile map service XML document.";
+            std::string errorMessage;
 
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
               hasError = true;
+              errorMessage = "Unable to parse Tile map service XML document.";
             } else {
 
               tinyxml2::XMLElement* pRoot = pDoc->RootElement();
               if (!pRoot) {
                 hasError = true;
-                message = "Tile map service XML document does not have a root "
-                          "element.";
+                errorMessage =
+                    "Tile map service XML document does not have a root "
+                    "element.";
               } else {
                 tinyxml2::XMLElement* pTilesets =
                     pRoot->FirstChildElement("TileSets");
 
                 if (!pTilesets) {
                   hasError = true;
+                  errorMessage = "Tile map service XML document does not have "
+                                 "any tilesets.";
                 }
                 tinyxml2::XMLElement* srs = pRoot->FirstChildElement("SRS");
                 if (srs) {
@@ -219,16 +220,20 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
                   if (srsText.find("4326") == std::string::npos &&
                       srsText.find("3857") == std::string::npos &&
                       srsText.find("900913") == std::string::npos) {
-                    hasError = true;
-                    message = srsText + " is not supported.";
+                    reportError(pRequest, srsText + " is not supported.");
+                    return nullptr;
                   }
+                } else {
+                  hasError = true;
+                  errorMessage =
+                      "Tile map service XML document does not have an SRS.";
                 }
               }
             }
             if (hasError) {
-              if (!isResourceFile) {
+              if (url.find("tilemapresource.xml") == std::string::npos) {
                 std::string baseUrl = url;
-                if (baseUrl[baseUrl.size() - 1] != '/') {
+                if (baseUrl.size() > 0 && baseUrl[baseUrl.size() - 1] != '/') {
                   baseUrl += '/';
                 }
                 return getXmlDocument(
@@ -241,7 +246,7 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
                            reportError)
                     .wait();
               } else {
-                reportError(pRequest, message);
+                reportError(pRequest, errorMessage);
                 return nullptr;
               }
             }
@@ -294,8 +299,8 @@ TileMapServiceRasterOverlay::createTileProvider(
            pLogger,
            options = this->_options,
            url = this->_url,
-           headers = this->_headers,
-           reportError](std::unique_ptr<tinyxml2::XMLDocument>&& pDoc)
+           headers =
+               this->_headers](std::unique_ptr<tinyxml2::XMLDocument>&& pDoc)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             if (!pDoc) {
               return nullptr;
@@ -324,16 +329,13 @@ TileMapServiceRasterOverlay::createTileProvider(
               tinyxml2::XMLElement* pTileset =
                   pTilesets->FirstChildElement("TileSet");
               while (pTileset) {
-                const uint32_t level =
-                    getAttributeUint32(pTileset, "order").value_or(0);
-                minimumLevel = glm::min(minimumLevel, level);
-                maximumLevel = glm::max(maximumLevel, level);
-
                 TileMapServiceTileset& tileSet = tileSets.emplace_back();
+                tileSet.level =
+                    getAttributeUint32(pTileset, "order").value_or(0);
+                minimumLevel = glm::min(minimumLevel, tileSet.level);
+                maximumLevel = glm::max(maximumLevel, tileSet.level);
                 tileSet.url = getAttributeString(pTileset, "href")
-                                  .value_or(std::to_string(level));
-                tileSet.level = level;
-
+                                  .value_or(std::to_string(tileSet.level));
                 pTileset = pTileset->NextSiblingElement("TileSet");
               }
             }
@@ -450,11 +452,11 @@ TileMapServiceRasterOverlay::createTileProvider(
 
             std::string baseUrl = url;
 
-            std::string substring = baseUrl.substr(baseUrl.size() - 4, 4);
-
-            if (substring != ".xml") {
-              if (baseUrl[baseUrl.size() - 1] != '/') {
-                baseUrl += "/";
+            if (!(baseUrl.size() < 4)) {
+              if (baseUrl.substr(baseUrl.size() - 4, 4) != ".xml") {
+                if (baseUrl[baseUrl.size() - 1] != '/') {
+                  baseUrl += "/";
+                }
               }
             }
 
