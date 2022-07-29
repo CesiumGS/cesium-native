@@ -529,27 +529,7 @@ TilesetContentManager::TilesetContentManager(
       _tilesLoadOnProgress{0},
       _tilesDataUsed{0} {}
 
-TilesetContentManager::~TilesetContentManager() noexcept {
-  // Wait for all asynchronous loading to terminate.
-  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
-  // being decremented correctly when an async load ends.
-  while (_tilesLoadOnProgress > 0) {
-    _externals.pAssetAccessor->tick();
-    _externals.asyncSystem.dispatchMainThreadTasks();
-  }
-
-  // Wait for all overlays to wrap up their loading, too.
-  uint32_t tilesLoading = 1;
-  while (tilesLoading > 0) {
-    _externals.pAssetAccessor->tick();
-    _externals.asyncSystem.dispatchMainThreadTasks();
-
-    tilesLoading = 0;
-    for (const auto& pOverlay : *_pOverlayCollection) {
-      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
-    }
-  }
-}
+TilesetContentManager::~TilesetContentManager() noexcept { waitIdle(); }
 
 void TilesetContentManager::loadTileContent(
     Tile& tile,
@@ -746,6 +726,28 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   tile.getMappedRasterTiles().clear();
   tile.setState(TileLoadState::Unloaded);
   return true;
+}
+
+void TilesetContentManager::waitIdle() {
+  // Wait for all asynchronous loading to terminate.
+  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
+  // being decremented correctly when an async load ends.
+  while (_tilesLoadOnProgress > 0) {
+    _externals.pAssetAccessor->tick();
+    _externals.asyncSystem.dispatchMainThreadTasks();
+  }
+
+  // Wait for all overlays to wrap up their loading, too.
+  uint32_t tilesLoading = 1;
+  while (tilesLoading > 0) {
+    _externals.pAssetAccessor->tick();
+    _externals.asyncSystem.dispatchMainThreadTasks();
+
+    tilesLoading = 0;
+    for (const auto& pOverlay : *_pOverlayCollection) {
+      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
+    }
+  }
 }
 
 const std::vector<CesiumAsync::IAssetAccessor::THeader>&

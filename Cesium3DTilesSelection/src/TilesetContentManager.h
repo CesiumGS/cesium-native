@@ -29,6 +29,8 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
+  void waitIdle();
+
   const std::vector<CesiumAsync::IAssetAccessor::THeader>&
   getRequestHeaders() const noexcept;
 

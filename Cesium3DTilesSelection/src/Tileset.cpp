@@ -37,6 +37,17 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+namespace {
+void unloadTileRecursively(
+    Tile& tile,
+    TilesetContentManager& tilesetContentManager) {
+  tilesetContentManager.unloadTileContent(tile);
+  for (Tile& child : tile.getChildren()) {
+    unloadTileRecursively(child, tilesetContentManager);
+  }
+}
+} // namespace
+
 Tileset::Tileset(
     const TilesetExternals& externals,
     std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
@@ -148,7 +159,14 @@ Tileset::Tileset(
   }
 }
 
-Tileset::~Tileset() noexcept {}
+Tileset::~Tileset() noexcept {
+  if (_pTilesetContentManager) {
+    _pTilesetContentManager->waitIdle();
+    if (_pRootTile) {
+      unloadTileRecursively(*_pRootTile, *_pTilesetContentManager);
+    }
+  }
+}
 
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {

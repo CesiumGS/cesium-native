@@ -3,29 +3,42 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/Tile.h"
+#include <atomic>
 
 namespace Cesium3DTilesSelection {
 class SimplePrepareRendererResource
     : public Cesium3DTilesSelection::IPrepareRendererResources {
 public:
-  struct LoadThreadResult {};
+  std::atomic<size_t> totalAllocation{};
 
-  struct MainThreadResult {};
+  struct AllocationResult {
+    AllocationResult(std::atomic<size_t>& allocCount_) : allocCount{allocCount_} {
+      ++allocCount;
+    }
 
-  struct LoadThreadRasterResult {};
+    ~AllocationResult() noexcept { --allocCount; }
 
-  struct MainThreadRasterResult {};
+    std::atomic<size_t>& allocCount;
+  };
+
+  ~SimplePrepareRendererResource() noexcept { CHECK(totalAllocation == 0); }
 
   virtual void* prepareInLoadThread(
       const CesiumGltf::Model& /*model*/,
       const glm::dmat4& /*transform*/) override {
-    return new LoadThreadResult{};
+    return new AllocationResult{totalAllocation};
   }
 
   virtual void* prepareInMainThread(
       Cesium3DTilesSelection::Tile& /*tile*/,
-      void* /*pLoadThreadResult*/) override {
-    return new MainThreadResult{};
+      void* pLoadThreadResult) override {
+    if (pLoadThreadResult) {
+      AllocationResult* loadThreadResult =
+          reinterpret_cast<AllocationResult*>(pLoadThreadResult);
+      delete loadThreadResult;
+    }
+
+    return new AllocationResult{totalAllocation};
   }
 
   virtual void free(
@@ -33,14 +46,14 @@ public:
       void* pLoadThreadResult,
       void* pMainThreadResult) noexcept override {
     if (pMainThreadResult) {
-      MainThreadResult* mainThreadResult =
-          reinterpret_cast<MainThreadResult*>(pMainThreadResult);
+      AllocationResult* mainThreadResult =
+          reinterpret_cast<AllocationResult*>(pMainThreadResult);
       delete mainThreadResult;
     }
 
     if (pLoadThreadResult) {
-      LoadThreadResult* loadThreadResult =
-          reinterpret_cast<LoadThreadResult*>(pLoadThreadResult);
+      AllocationResult* loadThreadResult =
+          reinterpret_cast<AllocationResult*>(pLoadThreadResult);
       delete loadThreadResult;
     }
   }
@@ -48,13 +61,19 @@ public:
   virtual void* prepareRasterInLoadThread(
       const CesiumGltf::ImageCesium& /*image*/,
       const std::any& /*rendererOptions*/) override {
-    return new LoadThreadRasterResult{};
+    return new AllocationResult{totalAllocation};
   }
 
   virtual void* prepareRasterInMainThread(
       const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
-      void* /*pLoadThreadResult*/) override {
-    return new MainThreadRasterResult{};
+      void* pLoadThreadResult) override {
+    if (pLoadThreadResult) {
+      AllocationResult* loadThreadResult =
+          reinterpret_cast<AllocationResult*>(pLoadThreadResult);
+      delete loadThreadResult;
+    }
+
+    return new AllocationResult{totalAllocation};
   }
 
   virtual void freeRaster(
@@ -62,14 +81,14 @@ public:
       void* pLoadThreadResult,
       void* pMainThreadResult) noexcept override {
     if (pMainThreadResult) {
-      MainThreadRasterResult* mainThreadResult =
-          reinterpret_cast<MainThreadRasterResult*>(pMainThreadResult);
+      AllocationResult* mainThreadResult =
+          reinterpret_cast<AllocationResult*>(pMainThreadResult);
       delete mainThreadResult;
     }
 
     if (pLoadThreadResult) {
-      LoadThreadRasterResult* loadThreadResult =
-          reinterpret_cast<LoadThreadRasterResult*>(pLoadThreadResult);
+      AllocationResult* loadThreadResult =
+          reinterpret_cast<AllocationResult*>(pLoadThreadResult);
       delete loadThreadResult;
     }
   }
