@@ -63,7 +63,6 @@ Tileset::Tileset(
       _subtreeLoadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distances(),
       _childOcclusionProxies() {
@@ -101,7 +100,6 @@ Tileset::Tileset(
       _subtreeLoadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distances(),
       _childOcclusionProxies() {
@@ -242,11 +240,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     return result;
   }
 
-  if (!this->supportsRasterOverlays() && this->_overlays.size() > 0) {
-    this->_externals.pLogger->warn(
-        "Only quantized-mesh terrain tilesets currently support overlays.");
-  }
-
   this->_loadQueueHigh.clear();
   this->_loadQueueMedium.clear();
   this->_loadQueueLow.clear();
@@ -357,6 +350,7 @@ void Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
 void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
   assert(this->_loadsInProgress > 0);
   --this->_loadsInProgress;
+  ++this->_loadedTilesCount;
 
   if (pTile) {
     this->_tileDataBytes += pTile->computeByteSize();
@@ -369,7 +363,20 @@ void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
 void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
   if (pTile) {
     this->_tileDataBytes -= pTile->computeByteSize();
+    --this->_loadedTilesCount;
   }
+}
+
+float Tileset::computeLoadProgress() noexcept {
+  uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
+                                this->_loadQueueMedium.size() +
+                                this->_loadQueueHigh.size());
+  // we ignore _subtreeLoadsInProgress for now
+  uint32_t inProgressSum = (this->_loadsInProgress + queueSizeSum);
+  uint32_t totalNum = this->_loadedTilesCount + inProgressSum;
+  float percentage = static_cast<float>(this->_loadedTilesCount) /
+                     static_cast<float>(totalNum);
+  return (percentage * 100.f);
 }
 
 void Tileset::loadTilesFromJson(

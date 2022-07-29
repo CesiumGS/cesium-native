@@ -193,6 +193,8 @@ public:
    */
   void notifyTileUnloading(Tile* pTile) noexcept;
 
+  float computeLoadProgress() noexcept;
+
   /**
    * @brief Loads a tile tree from a tileset.json file.
    *
@@ -262,16 +264,6 @@ public:
    * are currently loaded.
    */
   int64_t getTotalDataBytes() const noexcept;
-
-  /**
-   * @brief Determines if this tileset supports raster overlays.
-   *
-   * Currently, raster overlays can only be draped over quantized-mesh terrain
-   * tilesets.
-   */
-  bool supportsRasterOverlays() const noexcept {
-    return this->_supportsRasterOverlays;
-  }
 
   /**
    * @brief Returns the value indicating the glTF up-axis.
@@ -586,12 +578,11 @@ private:
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
+  std::atomic<uint32_t> _loadedTilesCount;
 
   RasterOverlayCollection _overlays;
 
   int64_t _tileDataBytes;
-
-  bool _supportsRasterOverlays;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.

@@ -15,6 +15,7 @@
   - [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling)
   - [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata)
   - [3DTILES_content_gltf](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_content_gltf)
+- Romoved the API `Tileset::getSupportsRasterOverlays` since the boolean `supportsRasterOverlays` is no longer relevant and is always true as all tilesets now support raster overlays. 
 
 ##### Additions :tada:
 
