@@ -504,7 +504,8 @@ TEST_CASE("Test loading individual tile of tileset json") {
           pMockAssetAccessor,
           spdlog::default_logger(),
           {}};
-      auto implicitContentResultFuture = loaderResult.pLoader->loadTileContent(loadInput);
+      auto implicitContentResultFuture =
+          loaderResult.pLoader->loadTileContent(loadInput);
 
       asyncSystem.dispatchMainThreadTasks();
 

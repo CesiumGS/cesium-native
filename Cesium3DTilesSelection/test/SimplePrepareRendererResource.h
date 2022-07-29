@@ -3,6 +3,7 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/Tile.h"
+
 #include <atomic>
 
 namespace Cesium3DTilesSelection {
@@ -12,7 +13,8 @@ public:
   std::atomic<size_t> totalAllocation{};
 
   struct AllocationResult {
-    AllocationResult(std::atomic<size_t>& allocCount_) : allocCount{allocCount_} {
+    AllocationResult(std::atomic<size_t>& allocCount_)
+        : allocCount{allocCount_} {
       ++allocCount;
     }
 

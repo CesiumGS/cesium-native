@@ -1,13 +1,14 @@
-#include "TilesetContentManager.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
+#include "TilesetContentManager.h"
 #include "readFile.h"
+
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
-#include <Cesium3DTilesSelection/Tile.h>
 
 #include <catch2/catch.hpp>
 
@@ -18,7 +19,8 @@ class SimpleTilesetContentLoader : public TilesetContentLoader {
 public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) {
-    return input.asyncSystem.createResolvedFuture(std::move(mockLoadTileContent));
+    return input.asyncSystem.createResolvedFuture(
+        std::move(mockLoadTileContent));
   }
 
   TileChildrenResult createTileChildren([[maybe_unused]] const Tile& tile) {
