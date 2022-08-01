@@ -1,7 +1,5 @@
 # Change Log
 
-### ? - ?
-
 ### v0.18.0 - 2022-08-01
 
 ##### Breaking Changes :mega:
