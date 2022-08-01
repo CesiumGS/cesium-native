@@ -1,6 +1,12 @@
 # Change Log
 
+### ? - ? 
+
 ### v0.18.0 - 2022-08-01
+
+##### Fixes :wrench:
+- Enable loading Tile Map Service (TMS) URLs that do not have a file named "tilemapresource.xml", such as from GeoServer.
+- Add support for Tile Map Service documents that use the "local" profile when the SRS is mercator or geodetic.
 
 ##### Breaking Changes :mega:
 
