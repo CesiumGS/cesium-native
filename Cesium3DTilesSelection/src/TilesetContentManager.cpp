@@ -722,6 +722,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   content.setCredits({});
   content.setRasterOverlayDetails(RasterOverlayDetails{});
   content.setContentKind(TileUnknownContent{});
+  content.setTileInitializerCallback({});
 
   tile.getMappedRasterTiles().clear();
   tile.setState(TileLoadState::Unloaded);
@@ -738,14 +739,14 @@ void TilesetContentManager::waitIdle() {
   }
 
   // Wait for all overlays to wrap up their loading, too.
-  uint32_t tilesLoading = 1;
-  while (tilesLoading > 0) {
+  uint32_t rasterOverlayTilesLoading = 1;
+  while (rasterOverlayTilesLoading > 0) {
     _externals.pAssetAccessor->tick();
     _externals.asyncSystem.dispatchMainThreadTasks();
 
-    tilesLoading = 0;
+    rasterOverlayTilesLoading = 0;
     for (const auto& pOverlay : *_pOverlayCollection) {
-      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
+      rasterOverlayTilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
     }
   }
 }
