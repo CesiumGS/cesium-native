@@ -86,7 +86,7 @@ TEST_CASE("Test tile state machine") {
     manager.loadTileContent(tile, options);
 
     SECTION("Load tile from ContentLoading -> Done") {
-      // ensure that tile move from ContentLoading to ContentLoaded
+      // Unloaded -> ContentLoading
       // check the state of the tile before main thread get called
       CHECK(manager.getNumOfTilesLoading() == 1);
       CHECK(tile.getState() == TileLoadState::ContentLoading);
@@ -97,6 +97,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().getTileInitializerCallback());
       CHECK(!initializerCall);
 
+      // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
       asyncSystem.dispatchMainThreadTasks();
       CHECK(manager.getNumOfTilesLoading() == 0);
@@ -106,6 +107,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(tile.getContent().getTileInitializerCallback());
       CHECK(!initializerCall);
 
+      // ContentLoaded -> Done
       // update tile content to move from ContentLoaded -> Done
       manager.updateTileContent(tile, options);
       CHECK(tile.getState() == TileLoadState::Done);
@@ -116,7 +118,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().getTileInitializerCallback());
       CHECK(initializerCall);
 
-      // unload tile to move from Done -> Unload
+      // Done -> Unloaded
       manager.unloadTileContent(tile);
       CHECK(tile.getState() == TileLoadState::Unloaded);
       CHECK(!tile.getContent().isRenderContent());
@@ -183,8 +185,121 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
     manager.loadTileContent(tile, options);
 
-    SECTION("Load tile from Unloaded -> FailedTemporarily") {
+    // Unloaded -> ContentLoading
+    CHECK(manager.getNumOfTilesLoading() == 1);
+    CHECK(tile.getState() == TileLoadState::ContentLoading);
+    CHECK(tile.getChildren().empty());
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
 
-    }
+    // ContentLoading -> FailedTemporarily
+    asyncSystem.dispatchMainThreadTasks();
+    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(tile.getChildren().empty());
+    CHECK(tile.getState() == TileLoadState::FailedTemporarily);
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
+    CHECK(!initializerCall);
+
+    // FailedTemporarily -> FailedTemporarily
+    // tile is failed temporarily but the loader can still add children to it
+    manager.updateTileContent(tile, options);
+    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(tile.getChildren().size() == 1);
+    CHECK(tile.getChildren().front().isEmptyContent());
+    CHECK(tile.getState() == TileLoadState::FailedTemporarily);
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
+    CHECK(!initializerCall);
+
+    // FailedTemporarily -> ContentLoading
+    manager.loadTileContent(tile, options);
+    CHECK(manager.getNumOfTilesLoading() == 1);
+    CHECK(tile.getState() == TileLoadState::ContentLoading);
+  }
+
+  SECTION("Loader requests failed") {
+    // create mock loader
+    bool initializerCall = false;
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->mockLoadTileContent = {
+        TileRenderContent{CesiumGltf::Model()},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        [&](Tile&) { initializerCall = true; },
+        TileLoadResultState::Failed};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren.children.emplace_back(
+        pMockedLoader.get(),
+        TileEmptyContent());
+
+    // create tile
+    Tile tile(pMockedLoader.get());
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
+
+    // test manager loading
+    TilesetOptions options{};
+    options.contentOptions.generateMissingNormalsSmooth = true;
+    manager.loadTileContent(tile, options);
+
+    // Unloaded -> ContentLoading
+    CHECK(manager.getNumOfTilesLoading() == 1);
+    CHECK(tile.getState() == TileLoadState::ContentLoading);
+    CHECK(tile.getChildren().empty());
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
+
+    // ContentLoading -> Failed
+    asyncSystem.dispatchMainThreadTasks();
+    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(tile.getChildren().empty());
+    CHECK(tile.getState() == TileLoadState::Failed);
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
+    CHECK(!initializerCall);
+
+    // Failed -> Failed
+    // tile is failed but the loader can still add children to it
+    manager.updateTileContent(tile, options);
+    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(tile.getChildren().size() == 1);
+    CHECK(tile.getChildren().front().isEmptyContent());
+    CHECK(tile.getState() == TileLoadState::Failed);
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
+    CHECK(!initializerCall);
+
+    // cannot transition from Failed -> ContentLoading
+    manager.loadTileContent(tile, options);
+    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(tile.getState() == TileLoadState::Failed);
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().isExternalContent());
+    CHECK(!tile.getContent().isEmptyContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
+
+    // Failed -> Unloaded
+    manager.unloadTileContent(tile);
+    CHECK(tile.getState() == TileLoadState::Unloaded);
+    CHECK(!tile.getContent().isRenderContent());
+    CHECK(!tile.getContent().isExternalContent());
+    CHECK(!tile.getContent().isEmptyContent());
+    CHECK(!tile.getContent().getTileInitializerCallback());
+    CHECK(!tile.getContent().getRenderResources());
   }
 }

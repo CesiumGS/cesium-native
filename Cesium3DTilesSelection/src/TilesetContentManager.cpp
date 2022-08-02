@@ -746,7 +746,8 @@ void TilesetContentManager::waitIdle() {
 
     rasterOverlayTilesLoading = 0;
     for (const auto& pOverlay : *_pOverlayCollection) {
-      rasterOverlayTilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
+      rasterOverlayTilesLoading +=
+          pOverlay->getTileProvider()->getNumberOfTilesLoading();
     }
   }
 }
@@ -789,29 +790,23 @@ void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
     void* pWorkerRenderResources) {
-  // update bounding volume
+  if (result.state == TileLoadResultState::Failed) {
+    tile.setState(TileLoadState::Failed);
+    return;
+  }
+
+  if (result.state == TileLoadResultState::RetryLater) {
+    tile.setState(TileLoadState::FailedTemporarily);
+    return;
+  }
+
+  // update tile if the result state is success
   if (result.updatedBoundingVolume) {
     tile.setBoundingVolume(*result.updatedBoundingVolume);
   }
 
   if (result.updatedContentBoundingVolume) {
     tile.setContentBoundingVolume(*result.updatedContentBoundingVolume);
-  }
-
-  // set content
-  switch (result.state) {
-  case TileLoadResultState::Success:
-    tile.setState(TileLoadState::ContentLoaded);
-    break;
-  case TileLoadResultState::Failed:
-    tile.setState(TileLoadState::Failed);
-    break;
-  case TileLoadResultState::RetryLater:
-    tile.setState(TileLoadState::FailedTemporarily);
-    break;
-  default:
-    assert(false && "Cannot handle an unknown TileLoadResultState");
-    break;
   }
 
   auto& content = tile.getContent();
@@ -821,6 +816,8 @@ void TilesetContentManager::setTileContent(
   }
   content.setRenderResources(pWorkerRenderResources);
   content.setTileInitializerCallback(std::move(result.tileInitializer));
+
+  tile.setState(TileLoadState::ContentLoaded);
 }
 
 void TilesetContentManager::updateContentLoadedState(
