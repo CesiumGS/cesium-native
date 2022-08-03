@@ -15,12 +15,15 @@
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
 
+#include <filesystem>
 #include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 
 namespace {
+std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+
 class SimpleTilesetContentLoader : public TilesetContentLoader {
 public:
   CesiumAsync::Future<TileLoadResult>
@@ -36,6 +39,23 @@ public:
   TileLoadResult mockLoadTileContent;
   TileChildrenResult mockCreateTileChildren;
 };
+
+std::shared_ptr<SimpleAssetRequest>
+createMockRequest(const std::filesystem::path& path) {
+  auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+      static_cast<uint16_t>(200),
+      "doesn't matter",
+      CesiumAsync::HttpHeaders{},
+      readFile(path));
+
+  auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
+      "GET",
+      "doesn't matter",
+      CesiumAsync::HttpHeaders{},
+      std::move(pMockCompletedResponse));
+
+  return pMockCompletedRequest;
+}
 } // namespace
 
 TEST_CASE("Test tile state machine") {
@@ -105,7 +125,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
-      asyncSystem.dispatchMainThreadTasks();
+      manager.waitIdle();
       CHECK(manager.getNumOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -143,7 +163,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().getRenderResources());
       CHECK(!tile.getContent().getTileInitializerCallback());
 
-      asyncSystem.dispatchMainThreadTasks();
+      manager.waitIdle();
       CHECK(manager.getNumOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -200,7 +220,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderResources());
 
     // ContentLoading -> FailedTemporarily
-    asyncSystem.dispatchMainThreadTasks();
+    manager.waitIdle();
     CHECK(manager.getNumOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -268,7 +288,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderResources());
 
     // ContentLoading -> Failed
-    asyncSystem.dispatchMainThreadTasks();
+    manager.waitIdle();
     CHECK(manager.getNumOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -361,7 +381,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::ContentLoading);
 
     // parent moves from ContentLoading -> ContentLoaded
-    asyncSystem.dispatchMainThreadTasks();
+    manager.waitIdle();
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
     CHECK(tile.isRenderContent());
     CHECK(tile.getContent().getTileInitializerCallback());
@@ -403,7 +423,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.isRenderContent());
 
     // upsampled tile: ContentLoading -> ContentLoaded
-    asyncSystem.dispatchMainThreadTasks();
+    manager.waitIdle();
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoaded);
     CHECK(upsampledTile.isRenderContent());
     CHECK(upsampledTile.getContent().getTileInitializerCallback());
@@ -445,9 +465,71 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
 
   SECTION("Resolve external buffers") {
+    // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
-    std::vector<std::byte> gltfBoxFile = readFile("Box.gltf");
-    auto model = gltfReader.readGltf(gltfBoxFile);
+    std::vector<std::byte> gltfBoxFile =
+        readFile(testDataPath / "gltf" / "box" / "Box.gltf");
+    auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
+
+    // check that this model has external buffer and it's not loaded
+    {
+      CHECK(modelReadResult.errors.empty());
+      CHECK(modelReadResult.warnings.empty());
+      const auto& buffers = modelReadResult.model->buffers;
+      CHECK(buffers.size() == 1);
+
+      const auto& buffer = buffers.front();
+      CHECK(buffer.uri == "Box0.bin");
+      CHECK(buffer.byteLength == 648);
+      CHECK(buffer.cesium.data.size() == 0);
+    }
+
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->mockLoadTileContent = {
+        TileRenderContent{std::move(modelReadResult.model)},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        {},
+        TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+
+    // add external buffer to the completed request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"Box0.bin",
+         createMockRequest(testDataPath / "gltf" / "box" / "Box0.bin")});
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
+
+    // test the gltf model
+    Tile tile(pMockedLoader.get());
+    manager.loadTileContent(tile, {});
+    manager.waitIdle();
+
+    // check the buffer is already loaded
+    {
+      CHECK(tile.getState() == TileLoadState::ContentLoaded);
+      CHECK(tile.isRenderContent());
+
+      const auto& renderContent = tile.getContent().getRenderContent();
+      CHECK(renderContent->model);
+
+      const auto& buffers = renderContent->model->buffers;
+      CHECK(buffers.size() == 1);
+
+      const auto& buffer = buffers.front();
+      CHECK(buffer.uri == std::nullopt);
+      CHECK(buffer.cesium.data.size() == 648);
+    }
+
+    // unload the tile content
+    manager.unloadTileContent(tile);
   }
 
   SECTION("Ensure the loader generate smooth normal when the mesh doesn't have "
