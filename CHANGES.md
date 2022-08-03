@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug in `SqliteCache` where the last access time of resources was not updated correctly, sometimes causing more recently used resources to be evicted from the cache before less recently used ones.
+
 ### v0.18.0 - 2022-08-01
 
 ##### Breaking Changes :mega:
