@@ -828,6 +828,36 @@ void TilesetContentManager::updateContentLoadedState(
   if (content.isExternalContent()) {
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();
+  } else if (content.isEmptyContent()) {
+    // There are two possible ways to handle a tile with no content:
+    //
+    // 1. Treat it as a placeholder used for more efficient culling, but
+    //    never render it. Refining to this tile is equivalent to refining
+    //    to its children.
+    // 2. Treat it as an indication that nothing need be rendered in this
+    //    area at this level-of-detail. In other words, "render" it as a
+    //    hole. To have this behavior, the tile should _not_ have content at
+    //    all.
+    //
+    // We distinguish whether the tileset creator wanted (1) or (2) by
+    // comparing this tile's geometricError to the geometricError of its
+    // parent tile. If this tile's error is greater than or equal to its
+    // parent, treat it as (1). If it's less, treat it as (2).
+    //
+    // For a tile with no parent there's no difference between the
+    // behaviors.
+    double myGeometricError = tile.getNonZeroGeometricError();
+    const Tile* pAncestor = tile.getParent();
+    while (pAncestor && pAncestor->getUnconditionallyRefine()) {
+      pAncestor = pAncestor->getParent();
+    }
+
+    double parentGeometricError = pAncestor
+                                      ? pAncestor->getNonZeroGeometricError()
+                                      : myGeometricError * 2.0;
+    if (myGeometricError >= parentGeometricError) {
+      tile.setUnconditionallyRefine();
+    }
   } else if (content.isRenderContent()) {
     const TileRenderContent* pRenderContent = content.getRenderContent();
     if (pRenderContent->model) {

@@ -9,11 +9,12 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
-#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
+
 #include <vector>
 
 using namespace Cesium3DTilesSelection;
@@ -449,11 +450,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     auto model = gltfReader.readGltf(gltfBoxFile);
   }
 
-  SECTION("Ensure the loader generate smooth normal when the mesh doesn't have normal") {
+  SECTION("Ensure the loader generate smooth normal when the mesh doesn't have "
+          "normal") {}
 
-  }
-
-  SECTION("Generate raster overlay projections") {
-
-  }
+  SECTION("Generate raster overlay projections") {}
 }
