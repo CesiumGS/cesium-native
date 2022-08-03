@@ -9,9 +9,12 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <catch2/catch.hpp>
+#include <glm/glm.hpp>
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -416,5 +419,41 @@ TEST_CASE("Test tile state machine") {
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
     CHECK(!upsampledTile.isRenderContent());
     CHECK(!upsampledTile.getContent().getRenderResources());
+  }
+}
+
+TEST_CASE("Test the tileset content manager's post processing for gltf") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  // create mock tileset externals
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+  auto pMockedPrepareRendererResources =
+      std::make_shared<SimplePrepareRendererResource>();
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  auto pMockedCreditSystem = std::make_shared<CreditSystem>();
+
+  TilesetExternals externals{
+      pMockedAssetAccessor,
+      pMockedPrepareRendererResources,
+      asyncSystem,
+      pMockedCreditSystem};
+
+  // create mock raster overlay collection
+  Tile::LoadedLinkedList loadedTiles;
+  RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
+
+  SECTION("Resolve external buffers") {
+    CesiumGltfReader::GltfReader gltfReader;
+    std::vector<std::byte> gltfBoxFile = readFile("Box.gltf");
+    auto model = gltfReader.readGltf(gltfBoxFile);
+  }
+
+  SECTION("Ensure the loader generate smooth normal when the mesh doesn't have normal") {
+
+  }
+
+  SECTION("Generate raster overlay projections") {
+
   }
 }
