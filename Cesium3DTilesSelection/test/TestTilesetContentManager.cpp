@@ -533,7 +533,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   }
 
   SECTION("Ensure the loader generate smooth normal when the mesh doesn't have "
-          "normal") {}
+          "normal") {
+
+  }
 
   SECTION("Generate raster overlay projections") {}
 }

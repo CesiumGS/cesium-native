@@ -665,7 +665,7 @@ void TilesetContentManager::updateTileContent(
     break;
   }
 
-  if (tile.shouldContentContinueUpdated() && tile.getChildren().empty()) {
+  if (tile.shouldContentContinueUpdated()) {
     TileChildrenResult childrenResult = _pLoader->createTileChildren(tile);
     if (childrenResult.state == TileLoadResultState::Success) {
       tile.createChildTiles(std::move(childrenResult.children));
