@@ -6,8 +6,9 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <cstdint>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -30,6 +31,6 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
    * "SCALE" the values are FLOAT_VEC3's specifying scaling factors along the x,
    * y, and z axes.
    */
-  std::unordered_map<std::string, int32_t> attributes;
+  phmap::flat_hash_map<std::string, int32_t> attributes;
 };
 } // namespace CesiumGltf

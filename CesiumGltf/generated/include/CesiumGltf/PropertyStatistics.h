@@ -7,8 +7,9 @@
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -87,6 +88,6 @@ struct CESIUMGLTF_API PropertyStatistics final
    * `type` or `componentType` is `ENUM`. For fixed-length arrays, this is an
    * array with `componentCount` number of elements.
    */
-  std::unordered_map<std::string, CesiumUtility::JsonValue> occurrences;
+  phmap::flat_hash_map<std::string, CesiumUtility::JsonValue> occurrences;
 };
 } // namespace CesiumGltf

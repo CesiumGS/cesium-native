@@ -9,9 +9,12 @@
 #include <gsl/span>
 #include <rapidjson/reader.h>
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
+using namespace std::chrono;
 
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
@@ -31,6 +34,74 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   return buffer;
 }
 } // namespace
+
+namespace fs = std::filesystem;
+
+TEST_CASE("Read GLTF samples") {
+  std::string path("C:/dev-base/glTF-Sample-Models/2.0/");
+  std::string ext(".gltf");
+
+  std::vector<CesiumGltf::Model> models;
+
+  std::vector<std::vector<std::byte>> files;
+
+  for (auto& p : fs::recursive_directory_iterator(path)) {
+    if (p.path().extension() == ext) {
+      std::string filename = p.path().string();
+      files.push_back(readFile(filename));
+    }
+  }
+
+  // for (int i = 0; i < 10; i++) {
+  for (const auto& bytes : files) {
+    GltfReader reader;
+    GltfReaderResult result = reader.readGltf(
+        gsl::span(reinterpret_cast<const std::byte*>(&bytes[0]), bytes.size()));
+    if (result.model) {
+      models.emplace_back(std::move(*result.model));
+    }
+  }
+  // }
+
+  auto start = high_resolution_clock::now();
+
+  std::vector<CesiumGltf::Model> modelCopies = models;
+  for (int i = 0; i < 40; i++) {
+    modelCopies.insert(modelCopies.end(), models.begin(), models.end());
+  }
+
+  auto stop = high_resolution_clock::now();
+
+  auto duration = duration_cast<seconds>(stop - start);
+
+  std::cout << duration.count() << std::endl;
+}
+
+// TEST_CASE("Test speed improvement") {
+//    auto bytes = readFile(
+//        "c:\\users\\josep\\downloads\\translucent\\2cylinderengine.gltf");
+//
+//    GltfReader reader;
+//    GltfReaderResult result = reader.readGltf(
+//        gsl::span(reinterpret_cast<const std::byte*>(&bytes[0]),
+//        bytes.size()));
+//
+//    Model& model = result.model.value();
+//
+//    std::vector<Model> copies;
+//
+//
+//   auto start = high_resolution_clock::now();
+//    for (int i = 0; i < 5000; i++) {
+//     copies.push_back(model);
+//   }
+//
+//    auto stop = high_resolution_clock::now();
+//
+//    auto duration = duration_cast<seconds>(stop - start);
+//
+//    std::cout << duration.count() << std::endl;
+// }
 
 TEST_CASE("CesiumGltfReader::GltfReader") {
   using namespace std::string_literals;

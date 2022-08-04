@@ -7,10 +7,11 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -39,6 +40,7 @@ struct CESIUMGLTF_API FeatureTable final
    * property values are stored. Optional properties may be excluded from this
    * dictionary.
    */
-  std::unordered_map<std::string, CesiumGltf::FeatureTableProperty> properties;
+  phmap::flat_hash_map<std::string, CesiumGltf::FeatureTableProperty>
+      properties;
 };
 } // namespace CesiumGltf

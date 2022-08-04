@@ -493,7 +493,7 @@ function formatWriterPropertyImpl(property) {
   const isId = property.requiredId !== undefined;
   const isRequiredEnum = property.requiredEnum === true;
   const isVector = type.startsWith("std::vector");
-  const isMap = type.startsWith("std::unordered_map");
+  const isMap = type.startsWith("phmap::flat_hash_map");
   const isOptional = type.startsWith("std::optional");
 
   // Somewhat opinionated but it's helpful to see byteOffset: 0 in accessors and bufferViews
