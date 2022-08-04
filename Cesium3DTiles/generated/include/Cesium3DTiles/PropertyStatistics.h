@@ -7,8 +7,9 @@
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
-#include <unordered_map>
 
 namespace Cesium3DTiles {
 /**
@@ -80,6 +81,6 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * `type` is `ENUM`. For fixed-length arrays, this is an array of
    * component-wise occurrences.
    */
-  std::unordered_map<std::string, CesiumUtility::JsonValue> occurrences;
+  phmap::flat_hash_map<std::string, CesiumUtility::JsonValue> occurrences;
 };
 } // namespace Cesium3DTiles

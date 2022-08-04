@@ -7,7 +7,7 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <unordered_map>
+#include <parallel_hashmap/phmap.h>
 
 namespace Cesium3DTiles {
 /**
@@ -22,6 +22,6 @@ struct CESIUM3DTILES_API Statistics final
    * `classes` dictionary and each value is an object containing statistics
    * about entities that conform to the class.
    */
-  std::unordered_map<std::string, Cesium3DTiles::ClassStatistics> classes;
+  phmap::flat_hash_map<std::string, Cesium3DTiles::ClassStatistics> classes;
 };
 } // namespace Cesium3DTiles

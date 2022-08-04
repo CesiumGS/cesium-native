@@ -7,9 +7,10 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace Cesium3DTiles {
 /**
@@ -33,6 +34,6 @@ struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
    * object defining the property. Property IDs shall be alphanumeric
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
-  std::unordered_map<std::string, Cesium3DTiles::ClassProperty> properties;
+  phmap::flat_hash_map<std::string, Cesium3DTiles::ClassProperty> properties;
 };
 } // namespace Cesium3DTiles
