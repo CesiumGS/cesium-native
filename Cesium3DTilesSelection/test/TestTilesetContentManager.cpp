@@ -11,6 +11,7 @@
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltf/AccessorView.h>
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
@@ -534,7 +535,59 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
   SECTION("Ensure the loader generate smooth normal when the mesh doesn't have "
           "normal") {
+    CesiumGltfReader::GltfReader gltfReader;
+    std::vector<std::byte> gltfBoxFile =
+        readFile(testDataPath / "gltf" / "embedded_box" / "Box.glb");
+    auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
 
+    // retrieve expected accessor index and remove normal attribute
+    CesiumGltf::Mesh& prevMesh = modelReadResult.model->meshes.front();
+    CesiumGltf::MeshPrimitive& prevPrimitive = prevMesh.primitives.front();
+    prevPrimitive.attributes.erase("NORMAL");
+
+    // create mock loader
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->mockLoadTileContent = {
+        TileRenderContent{std::move(modelReadResult.model)},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        {},
+        TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
+
+    // test the gltf model
+    Tile tile(pMockedLoader.get());
+    TilesetOptions options;
+    options.contentOptions.generateMissingNormalsSmooth = true;
+    manager.loadTileContent(tile, options);
+    manager.waitIdle();
+
+    // check that normal is generated
+    CHECK(tile.getState() == TileLoadState::ContentLoaded);
+    const auto& renderContent = tile.getContent().getRenderContent();
+    CHECK(renderContent->model->meshes.size() == 1);
+    const CesiumGltf::Mesh& mesh = renderContent->model->meshes.front();
+    CHECK(mesh.primitives.size() == 1);
+    const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
+    CHECK(primitive.attributes.find("NORMAL") != primitive.attributes.end());
+
+    CesiumGltf::AccessorView<glm::vec3> normalView{
+        *renderContent->model,
+        primitive.attributes.at("NORMAL")};
+    CHECK(normalView.size() == 8);
+    CHECK(normalView.status() == CesiumGltf::AccessorViewStatus::Valid);
+
+    // unload tile
+    manager.unloadTileContent(tile);
   }
 
   SECTION("Generate raster overlay projections") {}
