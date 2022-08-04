@@ -55,6 +55,7 @@ target_link_libraries(CesiumGltf
     PUBLIC
         CesiumUtility
         GSL
+	phmap
 )
 
 install(TARGETS CesiumGltf

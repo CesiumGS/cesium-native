@@ -56,6 +56,7 @@ target_link_libraries(Cesium3DTilesWriter
         Cesium3DTiles
         CesiumJsonWriter
         GSL
+	phmap
 )
 
 install(TARGETS Cesium3DTilesWriter

@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <gsl/narrow>
+#include <parallel_hashmap/phmap.h>
 
 #include <cmath>
 #include <cstdint>
@@ -69,7 +70,7 @@ public:
   /**
    * @brief The type to represent an `Object` JSON value.
    */
-  using Object = std::map<std::string, JsonValue>;
+  using Object = phmap::flat_hash_map<std::string, JsonValue>;
 
   /**
    * @brief The type to represent an `Array` JSON value.
@@ -168,12 +169,13 @@ public:
   /**
    * @brief Creates an `Object` JSON value with the given properties.
    */
-  JsonValue(const std::map<std::string, JsonValue>& v) : value(v) {}
+  JsonValue(const phmap::flat_hash_map<std::string, JsonValue>& v) : value(v) {}
 
   /**
    * @brief Creates an `Object` JSON value with the given properties.
    */
-  JsonValue(std::map<std::string, JsonValue>&& v) : value(std::move(v)) {}
+  JsonValue(phmap::flat_hash_map<std::string, JsonValue>&& v)
+      : value(std::move(v)) {}
 
   /**
    * @brief Creates an `Array` JSON value with the given elements.
@@ -194,8 +196,8 @@ public:
   /**
    * @brief Creates an JSON value from the given initializer list.
    */
-  JsonValue(std::initializer_list<std::pair<const std::string, JsonValue>> v)
-      : value(std::map<std::string, JsonValue>(v)) {}
+  // JsonValue(std::initializer_list<std::pair<const std::string, JsonValue>> v)
+  //    : value(phmap::flat_hash_map<std::string, JsonValue>(v)) {}
 
   [[nodiscard]] const JsonValue*
   getValuePtrForKey(const std::string& key) const;

@@ -3,8 +3,9 @@
 #include "JsonValue.h"
 #include "Library.h"
 
+#include <parallel_hashmap/phmap.h>
+
 #include <any>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -84,7 +85,7 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * type. Use {@link getGenericExtension} to get unknown extensions as a
    * generic {@link CesiumUtility::JsonValue}.
    */
-  std::unordered_map<std::string, std::any> extensions;
+  phmap::flat_hash_map<std::string, std::any> extensions;
 
   /**
    * @brief Application-specific data.

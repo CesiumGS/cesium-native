@@ -4,8 +4,9 @@
 #include "Library.h"
 #include "ObjectJsonHandler.h"
 
+#include <parallel_hashmap/phmap.h>
+
 #include <map>
-#include <unordered_map>
 
 namespace CesiumJsonReader {
 template <typename T, typename THandler>
@@ -17,14 +18,9 @@ public:
 
   void reset(
       IJsonHandler* pParent,
-      std::unordered_map<std::string, T>* pDictionary) {
+      phmap::flat_hash_map<std::string, T>* pDictionary) {
     ObjectJsonHandler::reset(pParent);
     this->_pDictionary1 = pDictionary;
-  }
-
-  void reset(IJsonHandler* pParent, std::map<std::string, T>* pDictionary) {
-    ObjectJsonHandler::reset(pParent);
-    this->_pDictionary2 = pDictionary;
   }
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
@@ -42,8 +38,8 @@ public:
   }
 
 private:
-  std::unordered_map<std::string, T>* _pDictionary1 = nullptr;
-  std::map<std::string, T>* _pDictionary2 = nullptr;
+  phmap::flat_hash_map<std::string, T>* _pDictionary1 = nullptr;
+  phmap::flat_hash_map<std::string, T>* _pDictionary2 = nullptr;
   THandler _item;
 };
 } // namespace CesiumJsonReader
