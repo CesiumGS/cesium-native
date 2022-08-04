@@ -983,7 +983,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
   registerAllTileContentTypes();
 
   // mock context
-  Ellipsoid ellipsoid = Ellipsoid::WGS84;
   CesiumGeometry::Rectangle rectangle(
       glm::radians(-180.0),
       glm::radians(-90.0),

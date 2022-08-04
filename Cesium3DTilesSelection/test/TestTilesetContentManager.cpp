@@ -6,12 +6,13 @@
 #include "TilesetContentManager.h"
 #include "readFile.h"
 
+#include <Cesium3DTilesSelection/DebugColorizeTilesRasterOverlay.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
@@ -359,7 +360,7 @@ TEST_CASE("Test tile state machine") {
     tile.setTileID(QuadtreeTileID(0, 0, 0));
 
     // create upsampled children. We put it in the scope since upsampledTile
-    // will be moved to the parent afterward, and we don't let the tests below
+    // will be moved to the parent afterward, and we don't want the tests below
     // to use it accidentally
     {
       std::vector<Tile> children;
