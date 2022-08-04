@@ -543,6 +543,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // retrieve expected accessor index and remove normal attribute
     CesiumGltf::Mesh& prevMesh = modelReadResult.model->meshes.front();
     CesiumGltf::MeshPrimitive& prevPrimitive = prevMesh.primitives.front();
+    int32_t expectedAccessor = prevPrimitive.attributes.at("NORMAL");
     prevPrimitive.attributes.erase("NORMAL");
 
     // create mock loader
@@ -584,7 +585,19 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         *renderContent->model,
         primitive.attributes.at("NORMAL")};
     CHECK(normalView.size() == 8);
-    CHECK(normalView.status() == CesiumGltf::AccessorViewStatus::Valid);
+
+    CesiumGltf::AccessorView<glm::vec3> expectedNormalView{
+        *renderContent->model,
+        expectedAccessor};
+    CHECK(expectedNormalView.size() == 8);
+
+    for (int64_t i = 0; i < expectedNormalView.size(); ++i) {
+      const glm::vec3& expectedNorm = expectedNormalView[i];
+      const glm::vec3& norm = normalView[i];
+      CHECK(expectedNorm.x == Approx(norm.x).epsilon(1e-4));
+      CHECK(expectedNorm.y == Approx(norm.y).epsilon(1e-4));
+      CHECK(expectedNorm.z == Approx(norm.z).epsilon(1e-4));
+    }
 
     // unload tile
     manager.unloadTileContent(tile);
