@@ -755,54 +755,144 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::move(pMockedLoader),
         rasterOverlayCollection};
 
-    // test the gltf model
-    manager.loadTileContent(tile, {});
-    manager.waitIdle();
+    SECTION("Generate raster overlay details when tile has loose region") {
+      // test the gltf model
+      manager.loadTileContent(tile, {});
+      manager.waitIdle();
 
-    CHECK(tile.getState() == TileLoadState::ContentLoaded);
-    const TileContent& tileContent = tile.getContent();
-    const RasterOverlayDetails& rasterOverlayDetails =
-        tileContent.getRasterOverlayDetails();
+      CHECK(tile.getState() == TileLoadState::ContentLoaded);
+      const TileContent& tileContent = tile.getContent();
+      const RasterOverlayDetails& rasterOverlayDetails =
+          tileContent.getRasterOverlayDetails();
 
-    // ensure the raster overlay details has geographic projection
-    GeographicProjection geographicProjection{};
-    auto existingProjectionIt = std::find(
-        rasterOverlayDetails.rasterOverlayProjections.begin(),
-        rasterOverlayDetails.rasterOverlayProjections.end(),
-        Projection{geographicProjection});
-    CHECK(
-        existingProjectionIt !=
-        rasterOverlayDetails.rasterOverlayProjections.end());
+      // ensure the raster overlay details has geographic projection
+      GeographicProjection geographicProjection{};
+      auto existingProjectionIt = std::find(
+          rasterOverlayDetails.rasterOverlayProjections.begin(),
+          rasterOverlayDetails.rasterOverlayProjections.end(),
+          Projection{geographicProjection});
+      CHECK(
+          existingProjectionIt !=
+          rasterOverlayDetails.rasterOverlayProjections.end());
 
-    // check the rectangle
-    const auto& projectionRectangle =
-        rasterOverlayDetails.rasterOverlayRectangles.front();
-    auto globeRectangle = geographicProjection.unproject(projectionRectangle);
-    CHECK(globeRectangle.getWest() == Approx(beginCarto.longitude));
-    CHECK(globeRectangle.getSouth() == Approx(beginCarto.latitude));
-    CHECK(globeRectangle.getEast() == Approx(beginCarto.longitude + 9 * 0.01));
-    CHECK(globeRectangle.getNorth() == Approx(beginCarto.latitude + 9 * 0.01));
+      // check the rectangle
+      const auto& projectionRectangle =
+          rasterOverlayDetails.rasterOverlayRectangles.front();
+      auto globeRectangle = geographicProjection.unproject(projectionRectangle);
+      CHECK(globeRectangle.getWest() == Approx(beginCarto.longitude));
+      CHECK(globeRectangle.getSouth() == Approx(beginCarto.latitude));
+      CHECK(
+          globeRectangle.getEast() == Approx(beginCarto.longitude + 9 * 0.01));
+      CHECK(
+          globeRectangle.getNorth() == Approx(beginCarto.latitude + 9 * 0.01));
 
-    // check the UVs
-    const auto& renderContent = tileContent.getRenderContent();
-    const auto& mesh = renderContent->model->meshes.front();
-    const auto& meshPrimitive = mesh.primitives.front();
-    CesiumGltf::AccessorView<glm::vec2> uv{
-        *renderContent->model,
-        meshPrimitive.attributes.at("_CESIUMOVERLAY_0")};
-    CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
-    int64_t uvIdx = 0;
-    for (int y = 0; y < 10; ++y) {
-      for (int x = 0; x < 10; ++x) {
-        CHECK(CesiumUtility::Math::equalsEpsilon(
-            uv[uvIdx].x,
-            x * 0.01 / globeRectangle.computeWidth(),
-            CesiumUtility::Math::Epsilon7));
-        CHECK(CesiumUtility::Math::equalsEpsilon(
-            uv[uvIdx].y,
-            y * 0.01 / globeRectangle.computeHeight(),
-            CesiumUtility::Math::Epsilon7));
-        ++uvIdx;
+      // check the UVs
+      const auto& renderContent = tileContent.getRenderContent();
+      const auto& mesh = renderContent->model->meshes.front();
+      const auto& meshPrimitive = mesh.primitives.front();
+      CesiumGltf::AccessorView<glm::vec2> uv{
+          *renderContent->model,
+          meshPrimitive.attributes.at("_CESIUMOVERLAY_0")};
+      CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
+      int64_t uvIdx = 0;
+      for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 10; ++x) {
+          CHECK(CesiumUtility::Math::equalsEpsilon(
+              uv[uvIdx].x,
+              x * 0.01 / globeRectangle.computeWidth(),
+              CesiumUtility::Math::Epsilon7));
+          CHECK(CesiumUtility::Math::equalsEpsilon(
+              uv[uvIdx].y,
+              y * 0.01 / globeRectangle.computeHeight(),
+              CesiumUtility::Math::Epsilon7));
+          ++uvIdx;
+        }
+      }
+    }
+
+    SECTION("Generate raster overlay details when tile has loose region") {
+      auto originalLooseRegion =
+          BoundingRegionWithLooseFittingHeights{BoundingRegion{
+              GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
+              -1000.0,
+              9000.0}};
+      tile.setBoundingVolume(originalLooseRegion);
+
+      manager.loadTileContent(tile, {});
+      manager.waitIdle();
+
+      CHECK(tile.getState() == TileLoadState::ContentLoaded);
+      const TileContent& tileContent = tile.getContent();
+      const RasterOverlayDetails& rasterOverlayDetails =
+          tileContent.getRasterOverlayDetails();
+
+      // ensure the raster overlay details has geographic projection
+      GeographicProjection geographicProjection{};
+      auto existingProjectionIt = std::find(
+          rasterOverlayDetails.rasterOverlayProjections.begin(),
+          rasterOverlayDetails.rasterOverlayProjections.end(),
+          Projection{geographicProjection});
+      CHECK(
+          existingProjectionIt !=
+          rasterOverlayDetails.rasterOverlayProjections.end());
+
+      // check the rectangle
+      const auto& projectionRectangle =
+          rasterOverlayDetails.rasterOverlayRectangles.front();
+      auto globeRectangle = geographicProjection.unproject(projectionRectangle);
+      CHECK(globeRectangle.getWest() == Approx(-CesiumUtility::Math::OnePi));
+      CHECK(
+          globeRectangle.getSouth() == Approx(-CesiumUtility::Math::PiOverTwo));
+      CHECK(globeRectangle.getEast() == Approx(CesiumUtility::Math::OnePi));
+      CHECK(
+          globeRectangle.getNorth() == Approx(CesiumUtility::Math::PiOverTwo));
+
+      // check the tile whole region which will be more fitted
+      const BoundingRegion& tileRegion =
+          std::get<BoundingRegion>(tile.getBoundingVolume());
+      CHECK(
+          tileRegion.getRectangle().getWest() == Approx(beginCarto.longitude));
+      CHECK(
+          tileRegion.getRectangle().getSouth() == Approx(beginCarto.latitude));
+      CHECK(
+          tileRegion.getRectangle().getEast() ==
+          Approx(beginCarto.longitude + 9 * 0.01));
+      CHECK(
+          tileRegion.getRectangle().getNorth() ==
+          Approx(beginCarto.latitude + 9 * 0.01));
+
+      // check the UVs
+      const auto& renderContent = tileContent.getRenderContent();
+      const auto& mesh = renderContent->model->meshes.front();
+      const auto& meshPrimitive = mesh.primitives.front();
+      CesiumGltf::AccessorView<glm::vec2> uv{
+          *renderContent->model,
+          meshPrimitive.attributes.at("_CESIUMOVERLAY_0")};
+      CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
+
+      const auto& looseRectangle =
+          originalLooseRegion.getBoundingRegion().getRectangle();
+      int64_t uvIdx = 0;
+      for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 10; ++x) {
+          double expectedX = (beginCarto.longitude + x * 0.01 -
+                              (-CesiumUtility::Math::OnePi)) /
+                             looseRectangle.computeWidth();
+
+          double expectedY = (beginCarto.latitude + y * 0.01 -
+                              (-CesiumUtility::Math::PiOverTwo)) /
+                             looseRectangle.computeHeight();
+
+          CHECK(CesiumUtility::Math::equalsEpsilon(
+              uv[uvIdx].x,
+              expectedX,
+              CesiumUtility::Math::Epsilon7));
+          CHECK(CesiumUtility::Math::equalsEpsilon(
+              uv[uvIdx].y,
+              expectedY,
+              CesiumUtility::Math::Epsilon7));
+          ++uvIdx;
+        }
       }
     }
 
