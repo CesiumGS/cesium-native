@@ -124,7 +124,6 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
               std::move(tilesetJsonResult.pLoader),
               std::move(headerChangeListener));
           result.pRootTile = std::move(tilesetJsonResult.pRootTile);
-          result.gltfUpAxis = tilesetJsonResult.gltfUpAxis;
           result.credits = std::move(tilesetJsonResult.credits);
           result.requestHeaders = std::move(requestHeaders);
         }
@@ -195,7 +194,6 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
               std::move(tilesetJsonResult.pLoader),
               std::move(headerChangeListener));
           result.pRootTile = std::move(tilesetJsonResult.pRootTile);
-          result.gltfUpAxis = tilesetJsonResult.gltfUpAxis;
           result.credits = std::move(tilesetJsonResult.credits);
           result.requestHeaders = std::move(requestHeaders);
         }
@@ -392,6 +390,12 @@ TileChildrenResult
 CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
   auto pLoader = tile.getLoader();
   return pLoader->createTileChildren(tile);
+}
+
+CesiumGeometry::Axis
+CesiumIonTilesetLoader::getTileUpAxis(const Tile& tile) const noexcept {
+  const auto pLoader = tile.getLoader();
+  return pLoader->getTileUpAxis(tile);
 }
 
 void CesiumIonTilesetLoader::refreshTokenInMainThread(

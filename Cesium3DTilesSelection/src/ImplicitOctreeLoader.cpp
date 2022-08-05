@@ -438,6 +438,11 @@ TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {
   return {{}, TileLoadResultState::RetryLater};
 }
 
+CesiumGeometry::Axis
+ImplicitOctreeLoader::getTileUpAxis(const Tile&) const noexcept {
+  return CesiumGeometry::Axis::Y;
+}
+
 uint32_t ImplicitOctreeLoader::getSubtreeLevels() const noexcept {
   return _subtreeLevels;
 }

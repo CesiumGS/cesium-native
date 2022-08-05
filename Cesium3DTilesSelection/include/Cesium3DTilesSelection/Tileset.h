@@ -187,19 +187,6 @@ public:
    */
   int64_t getTotalDataBytes() const noexcept;
 
-  /**
-   * @brief Returns the value indicating the glTF up-axis.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * The value indicates the axis, via 0=X, 1=Y, 2=Z.
-   *
-   * @return The value representing the axis
-   */
-  CesiumGeometry::Axis getGltfUpAxis() const noexcept {
-    return this->_gltfUpAxis;
-  }
-
 private:
   /**
    * @brief The result of traversing one branch of the tile hierarchy.
@@ -405,18 +392,6 @@ private:
   Tile::LoadedLinkedList _loadedTiles;
 
   RasterOverlayCollection _overlays;
-
-  /**
-   * @brief The axis that was declared as the "up-axis" for glTF content.
-   *
-   * The glTF specification mandates that the Y-axis is the "up"-axis, so the
-   * default value is {@link Axis::Y}. Older tilesets may contain a string
-   * property in the "assets" dictionary, named "gltfUpAxis", indicating a
-   * different up-axis. Although the "gltfUpAxis" property is no longer part of
-   * the 3D tiles specification, it is still considered for backward
-   * compatibility.
-   */
-  CesiumGeometry::Axis _gltfUpAxis;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.

@@ -633,7 +633,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
 
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
-  auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl);
+  auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -653,7 +653,6 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   return {
       std::move(pLoader),
       std::move(pRootTile),
-      gltfUpAxis,
       std::vector<LoaderCreditResult>{},
       std::vector<CesiumAsync::IAssetAccessor::THeader>{},
       ErrorList{}};
@@ -713,8 +712,10 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 }
 } // namespace
 
-TilesetJsonLoader::TilesetJsonLoader(const std::string& baseUrl)
-    : _baseUrl{baseUrl} {}
+TilesetJsonLoader::TilesetJsonLoader(
+    const std::string& baseUrl,
+    CesiumGeometry::Axis upAxis)
+    : _baseUrl{baseUrl}, _upAxis{upAxis} {}
 
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
@@ -887,6 +888,16 @@ TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {
   }
 
   return {{}, TileLoadResultState::Failed};
+}
+
+CesiumGeometry::Axis
+TilesetJsonLoader::getTileUpAxis(const Tile& tile) const noexcept {
+  const auto pLoader = tile.getLoader();
+  if (pLoader != this) {
+    return pLoader->getTileUpAxis(tile);
+  }
+
+  return _upAxis;
 }
 
 const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {

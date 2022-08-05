@@ -1,5 +1,7 @@
 #include "TileContentLoadInfo.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+
 namespace Cesium3DTilesSelection {
 TileContentLoadInfo::TileContentLoadInfo(
     const CesiumAsync::AsyncSystem& asyncSystem_,
@@ -19,5 +21,6 @@ TileContentLoadInfo::TileContentLoadInfo(
       tileRefine(tile.getRefine()),
       tileGeometricError(tile.getGeometricError()),
       tileTransform(tile.getTransform()),
+      upAxis(tile.getLoader()->getTileUpAxis(tile)),
       contentOptions(contentOptions_) {}
 } // namespace Cesium3DTilesSelection

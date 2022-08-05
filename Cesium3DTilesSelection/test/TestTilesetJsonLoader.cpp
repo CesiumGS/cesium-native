@@ -115,7 +115,6 @@ TEST_CASE("Test creating tileset json loader") {
         createLoader(testDataPath / "ReplaceTileset" / "tileset.json");
 
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
 
     // check root tile
     auto pRootTile = loaderResult.pRootTile.get();
@@ -170,6 +169,11 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(std::get<std::string>(children[3].getTileID()) == "ul.b3dm");
     CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
         children[3].getBoundingVolume()));
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Create valid tileset json with ADD refinement") {
@@ -177,7 +181,6 @@ TEST_CASE("Test creating tileset json loader") {
         createLoader(testDataPath / "AddTileset" / "tileset2.json");
 
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
 
     // check root tile
     auto pRootTile = loaderResult.pRootTile.get();
@@ -213,6 +216,11 @@ TEST_CASE("Test creating tileset json loader") {
           child.getBoundingVolume()));
       ++expectedUrlIt;
     }
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Tileset has tile with sphere bounding volume") {
@@ -227,6 +235,11 @@ TEST_CASE("Test creating tileset json loader") {
         std::get<CesiumGeometry::BoundingSphere>(rootTile.getBoundingVolume());
     CHECK(sphere.getCenter() == glm::dvec3(0.0, 0.0, 10.0));
     CHECK(sphere.getRadius() == 141.4214);
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(rootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Tileset has tile with box bounding volume") {
@@ -253,9 +266,13 @@ TEST_CASE("Test creating tileset json loader") {
         "NoBoundingVolumeTileset.json");
 
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->getChildren().empty());
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*loaderResult.pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Tileset has tile with no geometric error field") {
@@ -264,13 +281,17 @@ TEST_CASE("Test creating tileset json loader") {
         "NoGeometricErrorTileset.json");
 
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
     CHECK(loaderResult.pRootTile->getChildren().size() == 4);
     for (const Tile& child : loaderResult.pRootTile->getChildren()) {
       CHECK(child.getGeometricError() == Approx(35.0));
     }
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*loaderResult.pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Tileset has tile with no capitalized Refinement field") {
@@ -279,7 +300,6 @@ TEST_CASE("Test creating tileset json loader") {
         "NoCapitalizedRefineTileset.json");
 
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
     CHECK(loaderResult.pRootTile->getRefine() == TileRefine::Add);
@@ -288,6 +308,11 @@ TEST_CASE("Test creating tileset json loader") {
       CHECK(child.getGeometricError() == Approx(5.0));
       CHECK(child.getRefine() == TileRefine::Replace);
     }
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*loaderResult.pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Scale geometric error along with tile transform") {
@@ -296,26 +321,34 @@ TEST_CASE("Test creating tileset json loader") {
         "ScaleGeometricErrorTileset.json");
 
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->getGeometricError() == Approx(210.0));
     CHECK(loaderResult.pRootTile->getChildren().size() == 4);
     for (const Tile& child : loaderResult.pRootTile->getChildren()) {
       CHECK(child.getGeometricError() == Approx(15.0));
     }
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*loaderResult.pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Tileset with empty tile") {
     auto loaderResult = createLoader(
         testDataPath / "MultipleKindsOfTilesets" / "EmptyTileTileset.json");
     CHECK(!loaderResult.errors.hasErrors());
-    CHECK(loaderResult.gltfUpAxis == CesiumGeometry::Axis::Y);
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
     CHECK(loaderResult.pRootTile->getChildren().size() == 1);
 
     const Tile& child = loaderResult.pRootTile->getChildren().front();
     CHECK(child.isEmptyContent());
+
+    // check loader up axis
+    CHECK(
+        loaderResult.pLoader->getTileUpAxis(*loaderResult.pRootTile) ==
+        CesiumGeometry::Axis::Y);
   }
 
   SECTION("Tileset with quadtree implicit tile") {

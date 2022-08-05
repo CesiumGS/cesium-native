@@ -20,8 +20,6 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
 
   std::unique_ptr<Tile> pRootTile;
 
-  CesiumGeometry::Axis gltfUpAxis{CesiumGeometry::Axis::Y};
-
   std::vector<LoaderCreditResult> credits;
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;

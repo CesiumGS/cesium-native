@@ -11,6 +11,7 @@
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltfReader/GltfReader.h>
 
@@ -21,6 +22,7 @@
 #include <vector>
 
 using namespace Cesium3DTilesSelection;
+using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 
 namespace {
@@ -38,8 +40,13 @@ public:
     return std::move(mockCreateTileChildren);
   }
 
+  CesiumGeometry::Axis getTileUpAxis(const Tile&) const noexcept override {
+    return upAxis;
+  }
+
   TileLoadResult mockLoadTileContent;
   TileChildrenResult mockCreateTileChildren;
+  CesiumGeometry::Axis upAxis{CesiumGeometry::Axis::Y};
 };
 
 std::shared_ptr<SimpleAssetRequest>
@@ -57,6 +64,115 @@ createMockRequest(const std::filesystem::path& path) {
       std::move(pMockCompletedResponse));
 
   return pMockCompletedRequest;
+}
+
+CesiumGltf::Model createGlobeGrid(
+    const Cartographic& beginPoint,
+    uint32_t width,
+    uint32_t height,
+    double dimension) {
+  const auto& ellipsoid = Ellipsoid::WGS84;
+  std::vector<uint32_t> indices;
+  glm::dvec3 min = ellipsoid.cartographicToCartesian(beginPoint);
+  glm::dvec3 max = min;
+
+  std::vector<glm::dvec3> positions;
+  indices.reserve(6 * (width - 1) * (height - 1));
+  positions.reserve(width * height);
+  for (uint32_t y = 0; y < height; ++y) {
+    for (uint32_t x = 0; x < width; ++x) {
+      double longitude = beginPoint.longitude + x * dimension;
+      double latitude = beginPoint.latitude + y * dimension;
+      Cartographic currPoint{longitude, latitude, beginPoint.height};
+      positions.emplace_back(ellipsoid.cartographicToCartesian(currPoint));
+      min = glm::min(positions.back(), min);
+      max = glm::max(positions.back(), max);
+      if (y != height - 1 && x != width - 1) {
+        indices.emplace_back(y * width + x);
+        indices.emplace_back(y * width + x + 1);
+        indices.emplace_back((y + 1) * width + x);
+
+        indices.emplace_back(y * width + x + 1);
+        indices.emplace_back((y + 1) * width + x + 1);
+        indices.emplace_back((y + 1) * width + x);
+      }
+    }
+  }
+
+  glm::dvec3 center = (min + max) / 2.0;
+  std::vector<glm::vec3> relToCenterPositions;
+  relToCenterPositions.reserve(positions.size());
+  for (const auto& position : positions) {
+    relToCenterPositions.emplace_back(
+        static_cast<glm::vec3>(position - center));
+  }
+
+  CesiumGltf::Model model;
+
+  CesiumGltf::Mesh& mesh = model.meshes.emplace_back();
+  CesiumGltf::MeshPrimitive& meshPrimitive = mesh.primitives.emplace_back();
+
+  {
+    CesiumGltf::Buffer& positionBuffer = model.buffers.emplace_back();
+    positionBuffer.byteLength = relToCenterPositions.size() * sizeof(glm::vec3);
+    positionBuffer.cesium.data.resize(positionBuffer.byteLength);
+    std::memcpy(
+        positionBuffer.cesium.data.data(),
+        relToCenterPositions.data(),
+        positionBuffer.byteLength);
+
+    CesiumGltf::BufferView& positionBufferView =
+        model.bufferViews.emplace_back();
+    positionBufferView.buffer = int32_t(model.buffers.size() - 1);
+    positionBufferView.byteOffset = 0;
+    positionBufferView.byteLength = positionBuffer.byteLength;
+    positionBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+    CesiumGltf::Accessor& positionAccessor = model.accessors.emplace_back();
+    positionAccessor.bufferView = int32_t(model.bufferViews.size() - 1);
+    positionAccessor.byteOffset = 0;
+    positionAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+    positionAccessor.count = int64_t(relToCenterPositions.size());
+    positionAccessor.type = CesiumGltf::Accessor::Type::VEC3;
+
+    meshPrimitive.attributes["POSITION"] = int32_t(model.accessors.size() - 1);
+  }
+
+  {
+    CesiumGltf::Buffer& indicesBuffer = model.buffers.emplace_back();
+    indicesBuffer.byteLength = indices.size() * sizeof(uint32_t);
+    indicesBuffer.cesium.data.resize(indicesBuffer.byteLength);
+    std::memcpy(
+        indicesBuffer.cesium.data.data(),
+        indices.data(),
+        indicesBuffer.byteLength);
+
+    CesiumGltf::BufferView& indicesBufferView =
+        model.bufferViews.emplace_back();
+    indicesBufferView.buffer = int32_t(model.buffers.size() - 1);
+    indicesBufferView.byteOffset = 0;
+    indicesBufferView.byteLength = indicesBuffer.byteLength;
+    indicesBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+    CesiumGltf::Accessor& indicesAccessor = model.accessors.emplace_back();
+    indicesAccessor.bufferView = int32_t(model.bufferViews.size() - 1);
+    indicesAccessor.byteOffset = 0;
+    indicesAccessor.componentType =
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
+    indicesAccessor.count = int64_t(indices.size());
+    indicesAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
+
+    meshPrimitive.indices = int32_t(model.accessors.size() - 1);
+  }
+
+  CesiumGltf::Node& node = model.nodes.emplace_back();
+  node.translation = {center.x, center.y, center.z};
+  node.mesh = int32_t(model.meshes.size() - 1);
+
+  CesiumGltf::Scene& scene = model.scenes.emplace_back();
+  scene.nodes.emplace_back(int32_t(model.nodes.size() - 1));
+
+  return model;
 }
 } // namespace
 
@@ -604,5 +720,41 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     manager.unloadTileContent(tile);
   }
 
-  SECTION("Generate raster overlay projections") {}
+  SECTION("Generate raster overlay projections") {
+    // add raster overlay
+    rasterOverlayCollection.add(
+        std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
+    asyncSystem.dispatchMainThreadTasks();
+
+    // create mock loader
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->mockLoadTileContent = {
+        TileRenderContent{createGlobeGrid(
+            Cartographic{glm::radians(32.0), glm::radians(48.0), 100.0},
+            10,
+            10,
+            0.01)},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        {},
+        TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
+
+    // test the gltf model
+    Tile tile(pMockedLoader.get());
+    manager.loadTileContent(tile, {});
+    manager.waitIdle();
+
+    // unload the tile
+    manager.unloadTileContent(tile);
+  }
 }

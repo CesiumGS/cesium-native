@@ -7,6 +7,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
 
 #include <spdlog/logger.h>
 
@@ -60,5 +61,8 @@ public:
   loadTileContent(const TileLoadInput& input) = 0;
 
   virtual TileChildrenResult createTileChildren(const Tile& tile) = 0;
+
+  virtual CesiumGeometry::Axis
+  getTileUpAxis(const Tile& tile) const noexcept = 0;
 };
 } // namespace Cesium3DTilesSelection

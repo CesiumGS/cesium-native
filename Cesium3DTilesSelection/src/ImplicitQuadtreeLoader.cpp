@@ -465,6 +465,11 @@ ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
   return {{}, TileLoadResultState::RetryLater};
 }
 
+CesiumGeometry::Axis
+ImplicitQuadtreeLoader::getTileUpAxis(const Tile&) const noexcept {
+  return CesiumGeometry::Axis::Y;
+}
+
 uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {
   return _subtreeLevels;
 }

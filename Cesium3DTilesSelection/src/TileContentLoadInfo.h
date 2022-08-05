@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -45,6 +46,8 @@ struct TileContentLoadInfo {
   double tileGeometricError;
 
   glm::dmat4 tileTransform;
+
+  CesiumGeometry::Axis upAxis;
 
   TilesetContentOptions contentOptions;
 };

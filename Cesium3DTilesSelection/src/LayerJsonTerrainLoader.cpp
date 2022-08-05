@@ -527,7 +527,6 @@ LayerJsonTerrainLoader::createLoader(
         return TilesetContentLoaderResult<LayerJsonTerrainLoader>{
             std::move(pLoader),
             std::move(pRootTile),
-            CesiumGeometry::Axis::Y,
             std::move(credits),
             std::vector<IAssetAccessor::THeader>{},
             std::move(loadLayersResult.errors)};
@@ -873,6 +872,11 @@ LayerJsonTerrainLoader::createTileChildren(const Tile& tile) {
   }
 
   return {{}, TileLoadResultState::Failed};
+}
+
+CesiumGeometry::Axis
+LayerJsonTerrainLoader::getTileUpAxis(const Tile&) const noexcept {
+  return CesiumGeometry::Axis::Y;
 }
 
 const CesiumGeometry::QuadtreeTilingScheme&

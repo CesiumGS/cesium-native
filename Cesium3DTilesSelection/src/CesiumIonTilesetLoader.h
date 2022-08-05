@@ -28,6 +28,8 @@ public:
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
+  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
+
   static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
   createLoader(
       const TilesetExternals& externals,

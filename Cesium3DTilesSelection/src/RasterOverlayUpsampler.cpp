@@ -107,4 +107,9 @@ TileChildrenResult
 RasterOverlayUpsampler::createTileChildren([[maybe_unused]] const Tile& tile) {
   return {{}, TileLoadResultState::Failed};
 }
+
+CesiumGeometry::Axis
+RasterOverlayUpsampler::getTileUpAxis(const Tile&) const noexcept {
+  return CesiumGeometry::Axis::Y;
+}
 } // namespace Cesium3DTilesSelection

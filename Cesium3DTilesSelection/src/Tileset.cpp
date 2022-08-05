@@ -64,7 +64,6 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(_loadedTiles, externals),
-      _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0),
       _pTilesetContentManager{std::make_unique<TilesetContentManager>(
@@ -89,7 +88,6 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(_loadedTiles, externals),
-      _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
   if (!url.empty()) {
@@ -120,7 +118,6 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(_loadedTiles, externals),
-      _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
   if (ionAssetID > 0) {
@@ -1150,7 +1147,6 @@ void Tileset::_propagateTilesetContentLoaderResult(
         CesiumUtility::joinToString(result.errors.errors, "\n- ")});
   } else {
     this->_pRootTile = std::move(result.pRootTile);
-    this->_gltfUpAxis = result.gltfUpAxis;
 
     this->_tilesetCredits.reserve(result.credits.size());
     for (const auto& creditResult : result.credits) {
