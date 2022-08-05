@@ -14,6 +14,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
@@ -733,12 +734,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
+    Cartographic beginCarto{glm::radians(32.0), glm::radians(48.0), 100.0};
     pMockedLoader->mockLoadTileContent = {
-        TileRenderContent{createGlobeGrid(
-            Cartographic{glm::radians(32.0), glm::radians(48.0), 100.0},
-            10,
-            10,
-            0.01)},
+        TileRenderContent{createGlobeGrid(beginCarto, 10, 10, 0.01)},
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -760,6 +758,53 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // test the gltf model
     manager.loadTileContent(tile, {});
     manager.waitIdle();
+
+    CHECK(tile.getState() == TileLoadState::ContentLoaded);
+    const TileContent& tileContent = tile.getContent();
+    const RasterOverlayDetails& rasterOverlayDetails =
+        tileContent.getRasterOverlayDetails();
+
+    // ensure the raster overlay details has geographic projection
+    GeographicProjection geographicProjection{};
+    auto existingProjectionIt = std::find(
+        rasterOverlayDetails.rasterOverlayProjections.begin(),
+        rasterOverlayDetails.rasterOverlayProjections.end(),
+        Projection{geographicProjection});
+    CHECK(
+        existingProjectionIt !=
+        rasterOverlayDetails.rasterOverlayProjections.end());
+
+    // check the rectangle
+    const auto& projectionRectangle =
+        rasterOverlayDetails.rasterOverlayRectangles.front();
+    auto globeRectangle = geographicProjection.unproject(projectionRectangle);
+    CHECK(globeRectangle.getWest() == Approx(beginCarto.longitude));
+    CHECK(globeRectangle.getSouth() == Approx(beginCarto.latitude));
+    CHECK(globeRectangle.getEast() == Approx(beginCarto.longitude + 9 * 0.01));
+    CHECK(globeRectangle.getNorth() == Approx(beginCarto.latitude + 9 * 0.01));
+
+    // check the UVs
+    const auto& renderContent = tileContent.getRenderContent();
+    const auto& mesh = renderContent->model->meshes.front();
+    const auto& meshPrimitive = mesh.primitives.front();
+    CesiumGltf::AccessorView<glm::vec2> uv{
+        *renderContent->model,
+        meshPrimitive.attributes.at("_CESIUMOVERLAY_0")};
+    CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
+    int64_t uvIdx = 0;
+    for (int y = 0; y < 10; ++y) {
+      for (int x = 0; x < 10; ++x) {
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            uv[uvIdx].x,
+            x * 0.01 / globeRectangle.computeWidth(),
+            CesiumUtility::Math::Epsilon7));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            uv[uvIdx].y,
+            y * 0.01 / globeRectangle.computeHeight(),
+            CesiumUtility::Math::Epsilon7));
+        ++uvIdx;
+      }
+    }
 
     // unload the tile
     manager.unloadTileContent(tile);
