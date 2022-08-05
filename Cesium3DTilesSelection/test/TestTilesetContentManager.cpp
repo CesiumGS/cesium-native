@@ -464,13 +464,6 @@ TEST_CASE("Test tile state machine") {
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
-    // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(pMockedLoader),
-        rasterOverlayCollection};
-
     // create tile
     Tile tile(pMockedLoaderRaw);
     tile.setTileID(QuadtreeTileID(0, 0, 0));
@@ -485,6 +478,13 @@ TEST_CASE("Test tile state machine") {
       upsampledTile.setTileID(UpsampledQuadtreeNode{QuadtreeTileID(1, 1, 1)});
       tile.createChildTiles(std::move(children));
     }
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
 
     Tile& upsampledTile = tile.getChildren().back();
 
@@ -618,6 +618,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         {"Box0.bin",
          createMockRequest(testDataPath / "gltf" / "box" / "Box0.bin")});
 
+    // create tile
+    Tile tile(pMockedLoader.get());
+
     // create manager
     TilesetContentManager manager{
         externals,
@@ -626,7 +629,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         rasterOverlayCollection};
 
     // test the gltf model
-    Tile tile(pMockedLoader.get());
     manager.loadTileContent(tile, {});
     manager.waitIdle();
 
@@ -675,6 +677,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
+    // create tile
+    Tile tile(pMockedLoader.get());
+
     // create manager
     TilesetContentManager manager{
         externals,
@@ -683,7 +688,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         rasterOverlayCollection};
 
     // test the gltf model
-    Tile tile(pMockedLoader.get());
     TilesetOptions options;
     options.contentOptions.generateMissingNormalsSmooth = true;
     manager.loadTileContent(tile, options);
@@ -728,6 +732,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
     pMockedLoader->mockLoadTileContent = {
         TileRenderContent{createGlobeGrid(
             Cartographic{glm::radians(32.0), glm::radians(48.0), 100.0},
@@ -742,6 +747,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
+    // create tile
+    Tile tile(pMockedLoader.get());
+
     // create manager
     TilesetContentManager manager{
         externals,
@@ -750,7 +758,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         rasterOverlayCollection};
 
     // test the gltf model
-    Tile tile(pMockedLoader.get());
     manager.loadTileContent(tile, {});
     manager.waitIdle();
 
