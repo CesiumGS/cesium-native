@@ -3,7 +3,7 @@
 #include "IJsonHandler.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #include <experimental/any>
 #else
 #include <any>

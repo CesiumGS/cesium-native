@@ -34,7 +34,7 @@ Extension3dTilesBoundingVolumeS2JsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 void Extension3dTilesBoundingVolumeS2JsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,

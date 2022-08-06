@@ -2,7 +2,7 @@
 
 #include "CesiumJsonWriter/JsonWriter.h"
 #include "CesiumJsonWriter/Library.h"
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #include <experimental/any>
 #else
 #include <any>
@@ -65,7 +65,7 @@ public:
 
     auto it =
         this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
     it->second.insert_or_assign(
         TExtended::TypeName,
         [](const std::experimental::any& obj,
@@ -125,7 +125,7 @@ public:
    */
   void
   setExtensionState(const std::string& extensionName, ExtensionState newState);
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
   ExtensionHandler<std::experimental::any> createExtensionHandler(
       const std::string_view& extensionName,
       const std::string& extendedObjectType) const;
@@ -135,7 +135,7 @@ public:
       const std::string& extendedObjectType) const;
 #endif
 private:
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
   using ObjectTypeToHandler =
       std::unordered_map<std::string, ExtensionHandler<std::experimental::any>>;
 #else

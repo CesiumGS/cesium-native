@@ -14,7 +14,7 @@ public:
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override {
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
     std::experimental::any& value =
         o.extensions
             .emplace(
