@@ -2,8 +2,11 @@
 
 #include "CesiumJsonWriter/JsonWriter.h"
 #include "CesiumJsonWriter/Library.h"
-
+#if __GNUC__
+#include <experimental/any>
+#else
 #include <any>
+#endif
 #include <functional>
 #include <map>
 #include <string>
@@ -62,6 +65,18 @@ public:
 
     auto it =
         this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
+#if __GNUC__
+    it->second.insert_or_assign(
+        TExtended::TypeName,
+        [](const std::experimental::any& obj,
+           JsonWriter& jsonWriter,
+           const ExtensionWriterContext& context) {
+          return TExtensionHandler::write(
+              std::experimental::any_cast<const TExtension&>(obj),
+              jsonWriter,
+              context);
+        });
+#else
     it->second.insert_or_assign(
         TExtended::TypeName,
         [](const std::any& obj,
@@ -72,6 +87,7 @@ public:
               jsonWriter,
               context);
         });
+#endif
   }
 
   /**
@@ -109,14 +125,23 @@ public:
    */
   void
   setExtensionState(const std::string& extensionName, ExtensionState newState);
-
+#if __GNUC__
+  ExtensionHandler<std::experimental::any> createExtensionHandler(
+      const std::string_view& extensionName,
+      const std::string& extendedObjectType) const;
+#else
   ExtensionHandler<std::any> createExtensionHandler(
       const std::string_view& extensionName,
       const std::string& extendedObjectType) const;
-
+#endif
 private:
+#if __GNUC__
+  using ObjectTypeToHandler =
+      std::unordered_map<std::string, ExtensionHandler<std::experimental::any>>;
+#else
   using ObjectTypeToHandler =
       std::unordered_map<std::string, ExtensionHandler<std::any>>;
+#endif
   using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;

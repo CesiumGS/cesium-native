@@ -6,8 +6,6 @@
 #include <parallel_hashmap/phmap.h>
 #if __GNUC__
 #include <experimental/any>
-
-#include <utility>
 #else
 #include <any>
 #endif
@@ -82,7 +80,7 @@ struct CESIUMUTILITY_API ExtensibleObject {
   template <typename T> T& addExtension() {
 #if __GNUC__
     std::experimental::any& extension =
-        extensions.try_emplace(T::ExtensionName, std::experimental::any())
+        extensions.try_emplace(T::ExtensionName, std::experimental::any(T()))
             .first->second;
     return std::experimental::any_cast<T&>(extension);
 #else

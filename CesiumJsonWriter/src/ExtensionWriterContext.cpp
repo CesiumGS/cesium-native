@@ -7,6 +7,15 @@
 
 namespace CesiumJsonWriter {
 namespace {
+#if __GNUC__
+void objWriter(
+    const std::experimental::any& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& /* context */) {
+  writeJsonValue(
+      std::experimental::any_cast<const CesiumUtility::JsonValue&>(obj),
+      jsonWriter);
+#else
 void objWriter(
     const std::any& obj,
     JsonWriter& jsonWriter,
@@ -14,10 +23,15 @@ void objWriter(
   writeJsonValue(
       std::any_cast<const CesiumUtility::JsonValue&>(obj),
       jsonWriter);
+#endif
 }
 } // namespace
 
+#if __GNUC__
+ExtensionWriterContext::ExtensionHandler<std::experimental::any>
+#else
 ExtensionWriterContext::ExtensionHandler<std::any>
+#endif
 ExtensionWriterContext::createExtensionHandler(
     const std::string_view& extensionName,
     const std::string& extendedObjectType) const {
