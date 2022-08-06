@@ -32,12 +32,13 @@ std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
 class SimpleTilesetContentLoader : public TilesetContentLoader {
 public:
   CesiumAsync::Future<TileLoadResult>
-  loadTileContent(const TileLoadInput& input) {
+  loadTileContent(const TileLoadInput& input) override {
     return input.asyncSystem.createResolvedFuture(
         std::move(mockLoadTileContent));
   }
 
-  TileChildrenResult createTileChildren([[maybe_unused]] const Tile& tile) {
+  TileChildrenResult
+  createTileChildren([[maybe_unused]] const Tile& tile) override {
     return std::move(mockCreateTileChildren);
   }
 
@@ -755,7 +756,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::move(pMockedLoader),
         rasterOverlayCollection};
 
-    SECTION("Generate raster overlay details when tile has loose region") {
+    SECTION(
+        "Generate raster overlay details when tile don't have loose region") {
       // test the gltf model
       manager.loadTileContent(tile, {});
       manager.waitIdle();
