@@ -726,6 +726,44 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     manager.unloadTileContent(tile);
   }
 
+  SECTION("Embed gltf up axis to extra") {
+    // create mock loader
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
+    pMockedLoader->mockLoadTileContent = {
+        TileRenderContent{CesiumGltf::Model{}},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        {},
+        TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+
+    // create tile
+    Tile tile(pMockedLoader.get());
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
+
+    manager.loadTileContent(tile, {});
+    manager.waitIdle();
+
+    const auto& renderContent = tile.getContent().getRenderContent();
+    CHECK(renderContent);
+    CHECK(renderContent->model);
+
+    auto gltfUpAxisIt = renderContent->model->extras.find("gltfUpAxis");
+    CHECK(gltfUpAxisIt != renderContent->model->extras.end());
+    CHECK(gltfUpAxisIt->second.getInt64() == 2);
+
+    manager.unloadTileContent(tile);
+  }
+
   SECTION("Generate raster overlay projections") {
     // add raster overlay
     rasterOverlayCollection.add(
