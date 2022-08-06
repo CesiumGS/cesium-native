@@ -281,6 +281,16 @@ function generate(options, schema, writers) {
         }
 
         ${thisConfig.extensionName ? `
+	#if __GNUC__
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) {
+          std::experimental::any& value =
+              o.extensions.emplace(extensionName, ${namespace}::${name}())
+                  .first->second;
+          this->reset(
+              pParentHandler,
+              &std::experimental::any_cast<${namespace}::${name}&>(value));
+        }
+	#else
         void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) {
           std::any& value =
               o.extensions.emplace(extensionName, ${namespace}::${name}())
@@ -288,7 +298,8 @@ function generate(options, schema, writers) {
           this->reset(
               pParentHandler,
               &std::any_cast<${namespace}::${name}&>(value));
-        }
+	}
+	#endif
         ` : ""}
 
         CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${namespace}::${name}& o) {

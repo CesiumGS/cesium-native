@@ -34,6 +34,23 @@ Extension3dTilesBoundingVolumeS2JsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void Extension3dTilesBoundingVolumeS2JsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              Cesium3DTiles::Extension3dTilesBoundingVolumeS2())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          Cesium3DTiles::Extension3dTilesBoundingVolumeS2&>(value));
+}
+#else
 void Extension3dTilesBoundingVolumeS2JsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -47,6 +64,7 @@ void Extension3dTilesBoundingVolumeS2JsonHandler::reset(
       pParentHandler,
       &std::any_cast<Cesium3DTiles::Extension3dTilesBoundingVolumeS2&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* Extension3dTilesBoundingVolumeS2JsonHandler::
     readObjectKeyExtension3dTilesBoundingVolumeS2(

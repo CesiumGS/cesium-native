@@ -4,8 +4,13 @@
 #include "Library.h"
 
 #include <parallel_hashmap/phmap.h>
+#if __GNUC__
+#include <experimental/any>
 
+#include <utility>
+#else
 #include <any>
+#endif
 #include <utility>
 #include <vector>
 
@@ -37,8 +42,11 @@ struct CESIUMUTILITY_API ExtensibleObject {
     if (it == this->extensions.end()) {
       return nullptr;
     }
-
+#if __GNUC__
+    return std::experimental::any_cast<T>(&it->second);
+#else
     return std::any_cast<T>(&it->second);
+#endif
   }
 
   /** @copydoc ExtensibleObject::getExtension */
@@ -72,10 +80,17 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * @return The added extension.
    */
   template <typename T> T& addExtension() {
+#if __GNUC__
+    std::experimental::any& extension =
+        extensions.try_emplace(T::ExtensionName, std::experimental::any())
+            .first->second;
+    return std::experimental::any_cast<T&>(extension);
+#else
     std::any& extension =
         extensions.try_emplace(T::ExtensionName, std::make_any<T>())
             .first->second;
     return std::any_cast<T&>(extension);
+#endif
   }
 
   /**
@@ -85,8 +100,11 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * type. Use {@link getGenericExtension} to get unknown extensions as a
    * generic {@link CesiumUtility::JsonValue}.
    */
+#if __GNUC__
+  phmap::flat_hash_map<std::string, std::experimental::any> extensions;
+#else
   phmap::flat_hash_map<std::string, std::any> extensions;
-
+#endif
   /**
    * @brief Application-specific data.
    *

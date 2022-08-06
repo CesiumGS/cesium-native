@@ -14,7 +14,11 @@ const JsonValue* ExtensibleObject::getGenericExtension(
     return nullptr;
   }
 
+#if __GNUC__
+  const JsonValue* pValue = std::experimental::any_cast<JsonValue>(&it->second);
+#else
   const JsonValue* pValue = std::any_cast<JsonValue>(&it->second);
+#endif
   return pValue;
 }
 } // namespace CesiumUtility

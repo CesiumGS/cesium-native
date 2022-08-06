@@ -29,6 +29,19 @@ ExtensionCesiumRTCJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionCesiumRTCJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions.emplace(extensionName, CesiumGltf::ExtensionCesiumRTC())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionCesiumRTC&>(value));
+}
+#else
 void ExtensionCesiumRTCJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -40,6 +53,7 @@ void ExtensionCesiumRTCJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionCesiumRTC&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionCesiumRTCJsonHandler::readObjectKeyExtensionCesiumRTC(
@@ -91,6 +105,21 @@ ExtensionCesiumTileEdgesJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionCesiumTileEdgesJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionCesiumTileEdges())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionCesiumTileEdges&>(
+          value));
+}
+#else
 void ExtensionCesiumTileEdgesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -103,6 +132,7 @@ void ExtensionCesiumTileEdgesJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionCesiumTileEdges&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionCesiumTileEdgesJsonHandler::readObjectKeyExtensionCesiumTileEdges(
@@ -162,6 +192,23 @@ ExtensionModelExtFeatureMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionModelExtFeatureMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionModelExtFeatureMetadata())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionModelExtFeatureMetadata&>(value));
+}
+#else
 void ExtensionModelExtFeatureMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -175,6 +222,7 @@ void ExtensionModelExtFeatureMetadataJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionModelExtFeatureMetadata&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionModelExtFeatureMetadataJsonHandler::
     readObjectKeyExtensionModelExtFeatureMetadata(
@@ -237,6 +285,23 @@ ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata&>(value));
+}
+#else
 void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -252,6 +317,7 @@ void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(
       &std::any_cast<CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata&>(
           value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::
@@ -315,6 +381,21 @@ ExtensionExtInstanceFeaturesJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionExtInstanceFeaturesJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionExtInstanceFeatures())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionExtInstanceFeatures&>(
+          value));
+}
+#else
 void ExtensionExtInstanceFeaturesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -327,6 +408,7 @@ void ExtensionExtInstanceFeaturesJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionExtInstanceFeatures&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionExtInstanceFeaturesJsonHandler::
     readObjectKeyExtensionExtInstanceFeatures(
@@ -375,6 +457,21 @@ ExtensionExtMeshFeaturesJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionExtMeshFeaturesJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionExtMeshFeatures())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionExtMeshFeatures&>(
+          value));
+}
+#else
 void ExtensionExtMeshFeaturesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -387,6 +484,7 @@ void ExtensionExtMeshFeaturesJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionExtMeshFeatures&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionExtMeshFeaturesJsonHandler::readObjectKeyExtensionExtMeshFeatures(
@@ -435,6 +533,21 @@ ExtensionExtMeshGpuInstancingJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionExtMeshGpuInstancingJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionExtMeshGpuInstancing())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionExtMeshGpuInstancing&>(
+          value));
+}
+#else
 void ExtensionExtMeshGpuInstancingJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -447,6 +560,7 @@ void ExtensionExtMeshGpuInstancingJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionExtMeshGpuInstancing&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionExtMeshGpuInstancingJsonHandler::
     readObjectKeyExtensionExtMeshGpuInstancing(
@@ -495,6 +609,23 @@ ExtensionBufferExtMeshoptCompressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionBufferExtMeshoptCompressionJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionBufferExtMeshoptCompression())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionBufferExtMeshoptCompression&>(value));
+}
+#else
 void ExtensionBufferExtMeshoptCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -508,6 +639,7 @@ void ExtensionBufferExtMeshoptCompressionJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionBufferExtMeshoptCompression&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionBufferExtMeshoptCompressionJsonHandler::
@@ -564,6 +696,23 @@ ExtensionBufferViewExtMeshoptCompressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionBufferViewExtMeshoptCompressionJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionBufferViewExtMeshoptCompression())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionBufferViewExtMeshoptCompression&>(value));
+}
+#else
 void ExtensionBufferViewExtMeshoptCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -579,6 +728,7 @@ void ExtensionBufferViewExtMeshoptCompressionJsonHandler::reset(
       &std::any_cast<CesiumGltf::ExtensionBufferViewExtMeshoptCompression&>(
           value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionBufferViewExtMeshoptCompressionJsonHandler::
@@ -645,6 +795,23 @@ ExtensionModelExtStructuralMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionModelExtStructuralMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionModelExtStructuralMetadata())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionModelExtStructuralMetadata&>(value));
+}
+#else
 void ExtensionModelExtStructuralMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -658,6 +825,7 @@ void ExtensionModelExtStructuralMetadataJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionModelExtStructuralMetadata&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionModelExtStructuralMetadataJsonHandler::
     readObjectKeyExtensionModelExtStructuralMetadata(
@@ -722,6 +890,23 @@ ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata&>(value));
+}
+#else
 void ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -737,6 +922,7 @@ void ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::reset(
       &std::any_cast<CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata&>(
           value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::
@@ -796,6 +982,23 @@ ExtensionKhrDracoMeshCompressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionKhrDracoMeshCompression())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionKhrDracoMeshCompression&>(value));
+}
+#else
 void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -809,6 +1012,7 @@ void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionKhrDracoMeshCompression&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionKhrDracoMeshCompressionJsonHandler::
     readObjectKeyExtensionKhrDracoMeshCompression(
@@ -858,6 +1062,21 @@ ExtensionKhrMaterialsUnlitJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionKhrMaterialsUnlitJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionKhrMaterialsUnlit())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionKhrMaterialsUnlit&>(
+          value));
+}
+#else
 void ExtensionKhrMaterialsUnlitJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -870,6 +1089,7 @@ void ExtensionKhrMaterialsUnlitJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionKhrMaterialsUnlit&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionKhrMaterialsUnlitJsonHandler::readObjectKeyExtensionKhrMaterialsUnlit(
@@ -916,6 +1136,21 @@ ExtensionKhrTextureBasisuJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionKhrTextureBasisuJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionKhrTextureBasisu())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionKhrTextureBasisu&>(
+          value));
+}
+#else
 void ExtensionKhrTextureBasisuJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -928,6 +1163,7 @@ void ExtensionKhrTextureBasisuJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionKhrTextureBasisu&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler*
 ExtensionKhrTextureBasisuJsonHandler::readObjectKeyExtensionKhrTextureBasisu(
@@ -978,6 +1214,21 @@ ExtensionModelMaxarMeshVariantsJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionModelMaxarMeshVariantsJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionModelMaxarMeshVariants())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<
+          CesiumGltf::ExtensionModelMaxarMeshVariants&>(value));
+}
+#else
 void ExtensionModelMaxarMeshVariantsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -990,6 +1241,7 @@ void ExtensionModelMaxarMeshVariantsJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionModelMaxarMeshVariants&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionModelMaxarMeshVariantsJsonHandler::
     readObjectKeyExtensionModelMaxarMeshVariants(
@@ -1041,6 +1293,21 @@ ExtensionNodeMaxarMeshVariantsJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+#if __GNUC__
+void ExtensionNodeMaxarMeshVariantsJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::experimental::any& value =
+      o.extensions
+          .emplace(extensionName, CesiumGltf::ExtensionNodeMaxarMeshVariants())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::experimental::any_cast<CesiumGltf::ExtensionNodeMaxarMeshVariants&>(
+          value));
+}
+#else
 void ExtensionNodeMaxarMeshVariantsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -1053,6 +1320,7 @@ void ExtensionNodeMaxarMeshVariantsJsonHandler::reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionNodeMaxarMeshVariants&>(value));
 }
+#endif
 
 CesiumJsonReader::IJsonHandler* ExtensionNodeMaxarMeshVariantsJsonHandler::
     readObjectKeyExtensionNodeMaxarMeshVariants(
