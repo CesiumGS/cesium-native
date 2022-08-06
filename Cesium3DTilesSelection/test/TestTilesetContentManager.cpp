@@ -896,6 +896,39 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       }
     }
 
+    SECTION("Automatically calculate fit bounding region when tile has loose "
+            "region") {
+      auto pRemovedOverlay = rasterOverlayCollection.begin()->get();
+      rasterOverlayCollection.remove(pRemovedOverlay);
+      CHECK(rasterOverlayCollection.size() == 0);
+
+      auto originalLooseRegion =
+          BoundingRegionWithLooseFittingHeights{BoundingRegion{
+              GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
+              -1000.0,
+              9000.0}};
+      tile.setBoundingVolume(originalLooseRegion);
+
+      manager.loadTileContent(tile, {});
+      manager.waitIdle();
+
+      CHECK(tile.getState() == TileLoadState::ContentLoaded);
+
+      // check the tile whole region which will be more fitted
+      const BoundingRegion& tileRegion =
+          std::get<BoundingRegion>(tile.getBoundingVolume());
+      CHECK(
+          tileRegion.getRectangle().getWest() == Approx(beginCarto.longitude));
+      CHECK(
+          tileRegion.getRectangle().getSouth() == Approx(beginCarto.latitude));
+      CHECK(
+          tileRegion.getRectangle().getEast() ==
+          Approx(beginCarto.longitude + 9 * 0.01));
+      CHECK(
+          tileRegion.getRectangle().getNorth() ==
+          Approx(beginCarto.latitude + 9 * 0.01));
+    }
+
     // unload the tile
     manager.unloadTileContent(tile);
   }
