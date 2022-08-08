@@ -37,7 +37,7 @@ void markTileAvailableForQuadtree(
   // This function assumes that subtree tile ID is (0, 0, 0).
   // TileID must be within the subtree
   uint64_t numOfTilesFromRootToParentLevel =
-      ((1 << (2 * tileID.level)) - 1) / 3;
+      static_cast<uint64_t>(((1 << (2 * tileID.level)) - 1) / 3);
   uint64_t availabilityBitIndex =
       numOfTilesFromRootToParentLevel +
       libmorton::morton2D_64_encode(tileID.x, tileID.y);

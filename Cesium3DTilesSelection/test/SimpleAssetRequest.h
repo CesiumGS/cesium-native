@@ -10,14 +10,14 @@ namespace Cesium3DTilesSelection {
 class SimpleAssetRequest : public CesiumAsync::IAssetRequest {
 public:
   SimpleAssetRequest(
-      const std::string& method,
-      const std::string& url,
-      const CesiumAsync::HttpHeaders& headers,
-      std::unique_ptr<SimpleAssetResponse> pResponse)
-      : requestMethod{method},
-        requestUrl{url},
-        requestHeaders{headers},
-        pResponse{std::move(pResponse)} {}
+      const std::string& method_,
+      const std::string& url_,
+      const CesiumAsync::HttpHeaders& headers_,
+      std::unique_ptr<SimpleAssetResponse> pResponse_)
+      : requestMethod{method_},
+        requestUrl{url_},
+        requestHeaders{headers_},
+        pResponse{std::move(pResponse_)} {}
 
   virtual const std::string& method() const override {
     return this->requestMethod;
