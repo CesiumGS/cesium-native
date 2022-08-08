@@ -4,45 +4,18 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumUtility/joinToString.h>
 
 #include <libmorton/morton.h>
 #include <spdlog/logger.h>
 
 namespace Cesium3DTilesSelection {
 namespace {
-void logErrors(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& errors) {
-  if (!errors.empty()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Failed to load {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(errors, "\n- "));
-  }
-}
-
-void logWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& warnings) {
-  if (!warnings.empty()) {
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "Warning when loading {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(warnings, "\n- "));
-  }
-}
-
 void logErrorsAndWarnings(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const ErrorList& errorLists) {
-  logErrors(pLogger, url, errorLists.errors);
-  logWarnings(pLogger, url, errorLists.warnings);
+  errorLists.logError(pLogger, fmt::format("Failed to load {}", url));
+  errorLists.logWarning(pLogger, fmt::format("Warning when loading {}", url));
 }
 
 CesiumGeospatial::BoundingRegion subdivideRegion(

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <CesiumUtility/joinToString.h>
+
+#include <spdlog/spdlog.h>
+
 #include <string>
 #include <vector>
 
@@ -18,6 +22,32 @@ struct ErrorList {
   }
 
   bool hasErrors() const noexcept;
+
+  template <typename PromptStr>
+  void logError(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      PromptStr&& prompt) const noexcept {
+    if (!errors.empty()) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "{}:\n- {}",
+          std::forward<PromptStr>(prompt),
+          CesiumUtility::joinToString(errors, "\n- "));
+    }
+  }
+
+  template <typename PromptStr>
+  void logWarning(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      PromptStr&& prompt) const noexcept {
+    if (!warnings.empty()) {
+      SPDLOG_LOGGER_WARN(
+          pLogger,
+          "{}:\n- {}",
+          std::forward<PromptStr>(prompt),
+          CesiumUtility::joinToString(warnings, "\n- "));
+    }
+  }
 
   explicit operator bool() const noexcept;
 

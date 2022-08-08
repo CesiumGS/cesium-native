@@ -1140,11 +1140,22 @@ template <class TilesetContentLoaderType>
 void Tileset::_propagateTilesetContentLoaderResult(
     TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
   if (result.errors) {
-    this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
-        this,
-        TilesetLoadType::TilesetJson,
-        nullptr,
-        CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    const auto& tilesetOptions = this->getOptions();
+    if (tilesetOptions.loadErrorCallback) {
+      tilesetOptions.loadErrorCallback(TilesetLoadFailureDetails{
+          this,
+          TilesetLoadType::TilesetJson,
+          nullptr,
+          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    } else {
+      result.errors.logError(
+          this->_externals.pLogger,
+          "Errors when loading tileset");
+
+      result.errors.logWarning(
+          this->_externals.pLogger,
+          "Warning when loading tileset");
+    }
   } else {
     this->_pRootTile = std::move(result.pRootTile);
 
