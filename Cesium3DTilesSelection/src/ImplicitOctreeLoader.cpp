@@ -261,9 +261,9 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 
           // Report any errors if there are any
           logErrorsAndWarnings(pLogger, tileUrl, result.errors);
-          if (result.errors) {
+          if (result.errors || !result.model) {
             return TileLoadResult{
-                TileRenderContent{std::nullopt},
+                TileUnknownContent{},
                 std::nullopt,
                 std::nullopt,
                 std::nullopt,
@@ -273,7 +273,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           }
 
           return TileLoadResult{
-              TileRenderContent{std::move(result.model)},
+              TileRenderContent{std::move(*result.model)},
               std::nullopt,
               std::nullopt,
               std::nullopt,
@@ -284,7 +284,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 
         // content type is not supported
         return TileLoadResult{
-            TileRenderContent{std::nullopt},
+            TileUnknownContent{},
             std::nullopt,
             std::nullopt,
             std::nullopt,

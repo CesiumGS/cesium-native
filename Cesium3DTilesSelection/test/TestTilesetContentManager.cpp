@@ -599,6 +599,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     {
       CHECK(modelReadResult.errors.empty());
       CHECK(modelReadResult.warnings.empty());
+      CHECK(modelReadResult.model);
       const auto& buffers = modelReadResult.model->buffers;
       CHECK(buffers.size() == 1);
 
@@ -610,7 +611,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
-        TileRenderContent{std::move(modelReadResult.model)},
+        TileRenderContent{std::move(*modelReadResult.model)},
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -644,9 +645,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       CHECK(tile.isRenderContent());
 
       const auto& renderContent = tile.getContent().getRenderContent();
-      CHECK(renderContent->model);
-
-      const auto& buffers = renderContent->model->buffers;
+      const auto& buffers = renderContent->model.buffers;
       CHECK(buffers.size() == 1);
 
       const auto& buffer = buffers.front();
@@ -664,6 +663,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     std::vector<std::byte> gltfBoxFile =
         readFile(testDataPath / "gltf" / "embedded_box" / "Box.glb");
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
+    CHECK(modelReadResult.errors.empty());
+    CHECK(modelReadResult.model);
 
     // retrieve expected accessor index and remove normal attribute
     CesiumGltf::Mesh& prevMesh = modelReadResult.model->meshes.front();
@@ -674,7 +675,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
-        TileRenderContent{std::move(modelReadResult.model)},
+        TileRenderContent{std::move(*modelReadResult.model)},
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -702,19 +703,19 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // check that normal is generated
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
     const auto& renderContent = tile.getContent().getRenderContent();
-    CHECK(renderContent->model->meshes.size() == 1);
-    const CesiumGltf::Mesh& mesh = renderContent->model->meshes.front();
+    CHECK(renderContent->model.meshes.size() == 1);
+    const CesiumGltf::Mesh& mesh = renderContent->model.meshes.front();
     CHECK(mesh.primitives.size() == 1);
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
     CHECK(primitive.attributes.find("NORMAL") != primitive.attributes.end());
 
     CesiumGltf::AccessorView<glm::vec3> normalView{
-        *renderContent->model,
+        renderContent->model,
         primitive.attributes.at("NORMAL")};
     CHECK(normalView.size() == 8);
 
     CesiumGltf::AccessorView<glm::vec3> expectedNormalView{
-        *renderContent->model,
+        renderContent->model,
         expectedAccessor};
     CHECK(expectedNormalView.size() == 8);
 
@@ -759,10 +760,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
-    CHECK(renderContent->model);
 
-    auto gltfUpAxisIt = renderContent->model->extras.find("gltfUpAxis");
-    CHECK(gltfUpAxisIt != renderContent->model->extras.end());
+    auto gltfUpAxisIt = renderContent->model.extras.find("gltfUpAxis");
+    CHECK(gltfUpAxisIt != renderContent->model.extras.end());
     CHECK(gltfUpAxisIt->second.getInt64() == 2);
 
     manager.unloadTileContent(tile);
@@ -832,10 +832,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       // check the UVs
       const auto& renderContent = tileContent.getRenderContent();
-      const auto& mesh = renderContent->model->meshes.front();
+      const auto& mesh = renderContent->model.meshes.front();
       const auto& meshPrimitive = mesh.primitives.front();
       CesiumGltf::AccessorView<glm::vec2> uv{
-          *renderContent->model,
+          renderContent->model,
           meshPrimitive.attributes.at("_CESIUMOVERLAY_0")};
       CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
       int64_t uvIdx = 0;
@@ -907,10 +907,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       // check the UVs
       const auto& renderContent = tileContent.getRenderContent();
-      const auto& mesh = renderContent->model->meshes.front();
+      const auto& mesh = renderContent->model.meshes.front();
       const auto& meshPrimitive = mesh.primitives.front();
       CesiumGltf::AccessorView<glm::vec2> uv{
-          *renderContent->model,
+          renderContent->model,
           meshPrimitive.attributes.at("_CESIUMOVERLAY_0")};
       CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
 

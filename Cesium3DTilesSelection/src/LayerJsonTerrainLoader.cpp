@@ -20,16 +20,25 @@ using namespace CesiumUtility;
 
 namespace {
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
+  if (loadResult.errors || !loadResult.model) {
+    return TileLoadResult{
+        TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        {},
+        TileLoadResultState::Failed};
+  }
+
   return TileLoadResult{
-      TileRenderContent{std::move(loadResult.model)},
+      TileRenderContent{std::move(*loadResult.model)},
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
       nullptr,
       {},
-      loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                    : TileLoadResultState::Success,
-  };
+      TileLoadResultState::Success};
 }
 
 size_t maxSubtreeInLayer(uint32_t maxZooms, int32_t availabilityLevels) {
@@ -110,12 +119,12 @@ void generateRasterOverlayUVs(
     pParentRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
   }
 
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
-  if (renderContent.model) {
+  TileRenderContent* renderContent =
+      std::get_if<TileRenderContent>(&result.contentKind);
+  if (renderContent) {
     result.rasterOverlayDetails =
         GltfUtilities::createRasterOverlayTextureCoordinates(
-            *renderContent.model,
+            renderContent->model,
             tileTransform,
             0,
             pParentRegion ? std::make_optional<GlobeRectangle>(
@@ -1058,7 +1067,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   const TileContent& parentContent = pParent->getContent();
   const TileRenderContent* pParentRenderContent =
       parentContent.getRenderContent();
-  if (!pParentRenderContent || !pParentRenderContent->model) {
+  if (!pParentRenderContent) {
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
@@ -1092,7 +1101,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   // it's totally safe to capture the const ref parent model in the worker
   // thread. The tileset content manager will guarantee that the parent tile
   // will not be unloaded when upsampled tile is on the fly.
-  const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
+  const CesiumGltf::Model& parentModel = pParentRenderContent->model;
   return asyncSystem.runInWorkerThread(
       [&parentModel,
        boundingVolume = tile.getBoundingVolume(),
@@ -1104,7 +1113,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             textureCoordinateIndex);
         if (!model) {
           return TileLoadResult{
-              TileRenderContent{std::nullopt},
+              TileUnknownContent{},
               std::nullopt,
               std::nullopt,
               std::nullopt,
@@ -1114,7 +1123,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
         }
 
         return TileLoadResult{
-            TileRenderContent{std::move(model)},
+            TileRenderContent{std::move(*model)},
             std::nullopt,
             std::nullopt,
             std::nullopt,

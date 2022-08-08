@@ -415,14 +415,12 @@ TEST_CASE("Test loading individual tile of tileset json") {
         testDataPath / "ReplaceTileset" / tileID,
         *loaderResult.pLoader,
         *loaderResult.pRootTile);
+    CHECK(
+        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
     CHECK(!tileLoadResult.tileInitializer);
-
-    const auto& renderContent =
-        std::get<TileRenderContent>(tileLoadResult.contentKind);
-    CHECK(renderContent.model);
   }
 
   SECTION("Load tile that has external content") {
@@ -561,9 +559,8 @@ TEST_CASE("Test loading individual tile of tileset json") {
       asyncSystem.dispatchMainThreadTasks();
 
       auto implicitContentResult = implicitContentResultFuture.wait();
-      const auto& renderContent =
-          std::get<TileRenderContent>(implicitContentResult.contentKind);
-      CHECK(renderContent.model);
+      CHECK(std::holds_alternative<TileRenderContent>(
+          implicitContentResult.contentKind));
       CHECK(!implicitContentResult.updatedBoundingVolume);
       CHECK(!implicitContentResult.updatedContentBoundingVolume);
       CHECK(implicitContentResult.state == TileLoadResultState::Success);

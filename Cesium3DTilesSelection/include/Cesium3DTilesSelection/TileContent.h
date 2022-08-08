@@ -19,7 +19,7 @@ struct TileEmptyContent {};
 struct TileExternalContent {};
 
 struct TileRenderContent {
-  std::optional<CesiumGltf::Model> model{};
+  CesiumGltf::Model model{};
 };
 
 using TileContentKind = std::variant<

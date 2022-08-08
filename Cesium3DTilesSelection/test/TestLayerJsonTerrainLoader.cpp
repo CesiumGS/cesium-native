@@ -480,9 +480,8 @@ TEST_CASE("Test load layer json tile content") {
         asyncSystem,
         pMockedAssetAccessor);
     auto tileLoadResult = tileLoadResultFuture.wait();
-    const auto& renderContent =
-        std::get<TileRenderContent>(tileLoadResult.contentKind);
-    CHECK(renderContent.model);
+    CHECK(
+        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -533,9 +532,8 @@ TEST_CASE("Test load layer json tile content") {
 
     // check the load result
     auto tileLoadResult = tileLoadResultFuture.wait();
-    const auto& renderContent =
-        std::get<TileRenderContent>(tileLoadResult.contentKind);
-    CHECK(renderContent.model);
+    CHECK(
+        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -600,9 +598,8 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      const auto& renderContent =
-          std::get<TileRenderContent>(tileLoadResult.contentKind);
-      CHECK(renderContent.model);
+      CHECK(std::holds_alternative<TileRenderContent>(
+          tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -621,9 +618,8 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      const auto& renderContent =
-          std::get<TileRenderContent>(tileLoadResult.contentKind);
-      CHECK(renderContent.model);
+      CHECK(std::holds_alternative<TileRenderContent>(
+          tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -679,9 +675,8 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      const auto& renderContent =
-          std::get<TileRenderContent>(tileLoadResult.contentKind);
-      CHECK(renderContent.model);
+      CHECK(std::holds_alternative<TileRenderContent>(
+          tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -710,9 +705,8 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      const auto& renderContent =
-          std::get<TileRenderContent>(tileLoadResult.contentKind);
-      CHECK(renderContent.model);
+      CHECK(std::holds_alternative<TileRenderContent>(
+          tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);

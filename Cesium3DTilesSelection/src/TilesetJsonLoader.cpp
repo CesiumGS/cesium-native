@@ -852,7 +852,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               logErrorsAndWarnings(pLogger, tileUrl, result.errors);
               if (result.errors) {
                 return TileLoadResult{
-                    TileRenderContent{std::nullopt},
+                    TileUnknownContent{},
                     std::nullopt,
                     std::nullopt,
                     std::nullopt,
@@ -862,7 +862,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               }
 
               return TileLoadResult{
-                  TileRenderContent{std::move(result.model)},
+                  TileRenderContent{std::move(*result.model)},
                   std::nullopt,
                   std::nullopt,
                   std::nullopt,

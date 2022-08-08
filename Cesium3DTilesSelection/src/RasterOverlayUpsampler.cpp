@@ -51,7 +51,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   const TileContent& parentContent = pParent->getContent();
   const TileRenderContent* pParentRenderContent =
       parentContent.getRenderContent();
-  if (!pParentRenderContent || !pParentRenderContent->model) {
+  if (!pParentRenderContent) {
     // parent doesn't have mesh, so it's not possible to upsample
     return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
@@ -81,7 +81,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
     }
   }
 
-  const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
+  const CesiumGltf::Model& parentModel = pParentRenderContent->model;
   return loadInput.asyncSystem.runInWorkerThread(
       [&parentModel,
        transform = loadInput.tile.getTransform(),
@@ -91,9 +91,19 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             parentModel,
             TileID,
             textureCoordinateIndex);
+        if (!model) {
+          return TileLoadResult{
+              TileUnknownContent{},
+              std::nullopt,
+              std::nullopt,
+              std::nullopt,
+              nullptr,
+              {},
+              TileLoadResultState::Failed};
+        }
 
         return TileLoadResult{
-            TileRenderContent{std::move(model)},
+            TileRenderContent{std::move(*model)},
             std::nullopt,
             std::nullopt,
             std::nullopt,

@@ -140,10 +140,8 @@ TEST_CASE("Test implicit octree loader") {
     asyncSystem.dispatchMainThreadTasks();
 
     auto tileLoadResult = tileLoadResultFuture.wait();
-    const auto& renderContent =
-        std::get<TileRenderContent>(tileLoadResult.contentKind);
-    CHECK(renderContent.model);
-
+    CHECK(
+        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
     CHECK(!tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
