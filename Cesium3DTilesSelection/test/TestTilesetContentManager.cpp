@@ -116,12 +116,14 @@ CesiumGltf::Model createGlobeGrid(
 
   {
     CesiumGltf::Buffer& positionBuffer = model.buffers.emplace_back();
-    positionBuffer.byteLength = relToCenterPositions.size() * sizeof(glm::vec3);
-    positionBuffer.cesium.data.resize(positionBuffer.byteLength);
+    positionBuffer.byteLength =
+        static_cast<int64_t>(relToCenterPositions.size() * sizeof(glm::vec3));
+    positionBuffer.cesium.data.resize(
+        static_cast<size_t>(positionBuffer.byteLength));
     std::memcpy(
         positionBuffer.cesium.data.data(),
         relToCenterPositions.data(),
-        positionBuffer.byteLength);
+        static_cast<size_t>(positionBuffer.byteLength));
 
     CesiumGltf::BufferView& positionBufferView =
         model.bufferViews.emplace_back();
@@ -142,12 +144,14 @@ CesiumGltf::Model createGlobeGrid(
 
   {
     CesiumGltf::Buffer& indicesBuffer = model.buffers.emplace_back();
-    indicesBuffer.byteLength = indices.size() * sizeof(uint32_t);
-    indicesBuffer.cesium.data.resize(indicesBuffer.byteLength);
+    indicesBuffer.byteLength =
+        static_cast<size_t>(indices.size() * sizeof(uint32_t));
+    indicesBuffer.cesium.data.resize(
+        static_cast<size_t>(indicesBuffer.byteLength));
     std::memcpy(
         indicesBuffer.cesium.data.data(),
         indices.data(),
-        indicesBuffer.byteLength);
+        static_cast<size_t>(indicesBuffer.byteLength));
 
     CesiumGltf::BufferView& indicesBufferView =
         model.bufferViews.emplace_back();
