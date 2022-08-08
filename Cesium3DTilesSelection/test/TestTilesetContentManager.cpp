@@ -145,7 +145,7 @@ CesiumGltf::Model createGlobeGrid(
   {
     CesiumGltf::Buffer& indicesBuffer = model.buffers.emplace_back();
     indicesBuffer.byteLength =
-        static_cast<size_t>(indices.size() * sizeof(uint32_t));
+        static_cast<int64_t>(indices.size() * sizeof(uint32_t));
     indicesBuffer.cesium.data.resize(
         static_cast<size_t>(indicesBuffer.byteLength));
     std::memcpy(
