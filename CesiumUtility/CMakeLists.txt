@@ -50,7 +50,7 @@ target_link_libraries_system(
 target_link_libraries(CesiumUtility
     PUBLIC
         GSL
-	phmap
+        phmap
 )
 
 install(TARGETS CesiumUtility
