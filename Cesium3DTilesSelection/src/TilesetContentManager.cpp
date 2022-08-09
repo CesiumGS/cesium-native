@@ -590,34 +590,34 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      mapOverlaysToTile(tile, *_pOverlayCollection, tilesetOptions);
+      mapOverlaysToTile(tile, *this->_pOverlayCollection, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(tile);
   tile.setState(TileLoadState::ContentLoading);
 
   TileContentLoadInfo tileLoadInfo{
-      _externals.asyncSystem,
-      _externals.pAssetAccessor,
-      _externals.pPrepareRendererResources,
-      _externals.pLogger,
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger,
       tilesetOptions.contentOptions,
       tile};
 
   TilesetContentLoader* pLoader;
-  if (tile.getLoader() == &_upsampler) {
-    pLoader = &_upsampler;
+  if (tile.getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
   } else {
-    pLoader = _pLoader.get();
+    pLoader = this->_pLoader.get();
   }
 
   TileLoadInput loadInput{
       tile,
       tilesetOptions.contentOptions,
-      _externals.asyncSystem,
-      _externals.pAssetAccessor,
-      _externals.pLogger,
-      _requestHeaders};
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pLogger,
+      this->_requestHeaders};
 
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
@@ -656,14 +656,14 @@ void TilesetContentManager::loadTileContent(
 
         notifyTileDoneLoading(tile);
       })
-      .catchInMainThread(
-          [pLogger = _externals.pLogger, &tile, this](std::exception&& e) {
-            notifyTileDoneLoading(tile);
-            SPDLOG_LOGGER_ERROR(
-                pLogger,
-                "An unexpected error occurs when loading tile: {}",
-                e.what());
-          });
+      .catchInMainThread([pLogger = this->_externals.pLogger, &tile, this](
+                             std::exception&& e) {
+        notifyTileDoneLoading(tile);
+        SPDLOG_LOGGER_ERROR(
+            pLogger,
+            "An unexpected error occurs when loading tile: {}",
+            e.what());
+      });
 }
 
 void TilesetContentManager::updateTileContent(
@@ -682,7 +682,8 @@ void TilesetContentManager::updateTileContent(
   }
 
   if (tile.shouldContentContinueUpdated()) {
-    TileChildrenResult childrenResult = _pLoader->createTileChildren(tile);
+    TileChildrenResult childrenResult =
+        this->_pLoader->createTileChildren(tile);
     if (childrenResult.state == TileLoadResultState::Success) {
       tile.createChildTiles(std::move(childrenResult.children));
     }
@@ -749,19 +750,19 @@ void TilesetContentManager::waitIdle() {
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
   // being decremented correctly when an async load ends.
-  while (_tilesLoadOnProgress > 0) {
-    _externals.pAssetAccessor->tick();
-    _externals.asyncSystem.dispatchMainThreadTasks();
+  while (this->_tilesLoadOnProgress > 0) {
+    this->_externals.pAssetAccessor->tick();
+    this->_externals.asyncSystem.dispatchMainThreadTasks();
   }
 
   // Wait for all overlays to wrap up their loading, too.
   uint32_t rasterOverlayTilesLoading = 1;
   while (rasterOverlayTilesLoading > 0) {
-    _externals.pAssetAccessor->tick();
-    _externals.asyncSystem.dispatchMainThreadTasks();
+    this->_externals.pAssetAccessor->tick();
+    this->_externals.asyncSystem.dispatchMainThreadTasks();
 
     rasterOverlayTilesLoading = 0;
-    for (const auto& pOverlay : *_pOverlayCollection) {
+    for (const auto& pOverlay : *this->_pOverlayCollection) {
       rasterOverlayTilesLoading +=
           pOverlay->getTileProvider()->getNumberOfTilesLoading();
     }
@@ -770,21 +771,21 @@ void TilesetContentManager::waitIdle() {
 
 const std::vector<CesiumAsync::IAssetAccessor::THeader>&
 TilesetContentManager::getRequestHeaders() const noexcept {
-  return _requestHeaders;
+  return this->_requestHeaders;
 }
 
 std::vector<CesiumAsync::IAssetAccessor::THeader>&
 TilesetContentManager::getRequestHeaders() noexcept {
-  return _requestHeaders;
+  return this->_requestHeaders;
 }
 
 int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
-  return _tilesLoadOnProgress;
+  return this->_tilesLoadOnProgress;
 }
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
-  int64_t bytes = _tilesDataUsed;
-  for (const auto& pOverlay : *_pOverlayCollection) {
+  int64_t bytes = this->_tilesDataUsed;
+  for (const auto& pOverlay : *this->_pOverlayCollection) {
     const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
     if (pProvider) {
       bytes += pProvider->getTileDataBytes();
@@ -878,14 +879,14 @@ void TilesetContentManager::updateContentLoadedState(
     const TileRenderContent* pRenderContent = content.getRenderContent();
     // add copyright
     content.setCredits(GltfUtilities::parseGltfCopyright(
-        *_externals.pCreditSystem,
+        *this->_externals.pCreditSystem,
         pRenderContent->model,
         tilesetOptions.showCreditsOnScreen));
 
     // create render resources in the main thread
     void* pWorkerRenderResources = content.getRenderResources();
     void* pMainThreadRenderResources =
-        _externals.pPrepareRendererResources->prepareInMainThread(
+        this->_externals.pPrepareRendererResources->prepareInMainThread(
             tile,
             pWorkerRenderResources);
     content.setRenderResources(pMainThreadRenderResources);
@@ -957,7 +958,9 @@ void TilesetContentManager::updateDoneState(
       }
 
       const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
-          mappedRasterTile.update(*_externals.pPrepareRendererResources, tile);
+          mappedRasterTile.update(
+              *this->_externals.pPrepareRendererResources,
+              tile);
 
       if (moreDetailAvailable ==
               RasterOverlayTile::MoreDetailAvailable::Unknown &&
@@ -974,7 +977,7 @@ void TilesetContentManager::updateDoneState(
     // children to hang more detailed rasters on by subdividing this tile.
     if (!skippedUnknown && moreRasterDetailAvailable &&
         tile.getChildren().empty()) {
-      createQuadtreeSubdividedChildren(tile, _upsampler);
+      createQuadtreeSubdividedChildren(tile, this->_upsampler);
     }
   } else {
     // We can't hang raster images on a tile without geometry, and their
@@ -988,7 +991,7 @@ void TilesetContentManager::updateDoneState(
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   void* pWorkerRenderResources = content.getRenderResources();
-  _externals.pPrepareRendererResources->free(
+  this->_externals.pPrepareRendererResources->free(
       tile,
       pWorkerRenderResources,
       nullptr);
@@ -998,7 +1001,7 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
 void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
   void* pMainThreadRenderResources = content.getRenderResources();
-  _externals.pPrepareRendererResources->free(
+  this->_externals.pPrepareRendererResources->free(
       tile,
       nullptr,
       pMainThreadRenderResources);
@@ -1007,18 +1010,18 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
 
 void TilesetContentManager::notifyTileStartLoading(
     [[maybe_unused]] Tile& tile) noexcept {
-  ++_tilesLoadOnProgress;
+  ++this->_tilesLoadOnProgress;
 }
 
 void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
   assert(
-      _tilesLoadOnProgress > 0 &&
+      this->_tilesLoadOnProgress > 0 &&
       "There are no tile loads currently in flight");
-  --_tilesLoadOnProgress;
-  _tilesDataUsed += tile.computeByteSize();
+  --this->_tilesLoadOnProgress;
+  this->_tilesDataUsed += tile.computeByteSize();
 }
 
 void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {
-  _tilesDataUsed -= tile.computeByteSize();
+  this->_tilesDataUsed -= tile.computeByteSize();
 }
 } // namespace Cesium3DTilesSelection

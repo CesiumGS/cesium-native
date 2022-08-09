@@ -831,7 +831,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   bool tileHasUpsampledChild = doesTileHasUpsampledChild(tile);
   return std::move(futureQuantizedMesh)
       .thenImmediately([tileHasUpsampledChild,
-                        projection = _projection,
+                        projection = this->_projection,
                         tileTransform = tile.getTransform(),
                         tileBoundingVolume = tile.getBoundingVolume()](
                            QuantizedMeshLoadResult&& loadResult) mutable {
@@ -864,7 +864,7 @@ LayerJsonTerrainLoader::createTileChildren(const Tile& tile) {
     // subtrees in the background layers being on the flight as well. Once the
     // tile finishes loading, all the subtrees are resolved
     bool isTileAtAvailabilityLevel = false;
-    for (const auto& layer : _layers) {
+    for (const auto& layer : this->_layers) {
       if (layer.availabilityLevels > 0 &&
           int32_t(pQuadtreeID->level) % layer.availabilityLevels == 0) {
         isTileAtAvailabilityLevel = true;
@@ -890,17 +890,17 @@ LayerJsonTerrainLoader::getTileUpAxis(const Tile&) const noexcept {
 
 const CesiumGeometry::QuadtreeTilingScheme&
 LayerJsonTerrainLoader::getTilingScheme() const noexcept {
-  return _tilingScheme;
+  return this->_tilingScheme;
 }
 
 const CesiumGeospatial::Projection&
 LayerJsonTerrainLoader::getProjection() const noexcept {
-  return _projection;
+  return this->_projection;
 }
 
 const std::vector<LayerJsonTerrainLoader::Layer>&
 LayerJsonTerrainLoader::getLayers() const noexcept {
-  return _layers;
+  return this->_layers;
 }
 
 bool LayerJsonTerrainLoader::doesTileHasUpsampledChild(const Tile& tile) const {
@@ -1087,7 +1087,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   auto it = std::find(
       parentProjections.begin(),
       parentProjections.end(),
-      _projection);
+      this->_projection);
 
   // Cannot find raster overlay UVs that has this projection, so we can't
   // upsample right now

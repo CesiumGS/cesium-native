@@ -335,7 +335,7 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
 
 CesiumAsync::Future<TileLoadResult>
 CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
-  if (_refreshTokenState == TokenRefreshState::Loading) {
+  if (this->_refreshTokenState == TokenRefreshState::Loading) {
     return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
@@ -344,7 +344,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
         nullptr,
         {},
         TileLoadResultState::RetryLater});
-  } else if (_refreshTokenState == TokenRefreshState::Failed) {
+  } else if (this->_refreshTokenState == TokenRefreshState::Failed) {
     return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
@@ -368,7 +368,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
         this->refreshTokenInMainThread(pLogger, pAssetAccessor, asyncSystem);
       };
 
-  return _pAggregatedLoader->loadTileContent(loadInput).thenImmediately(
+  return this->_pAggregatedLoader->loadTileContent(loadInput).thenImmediately(
       [asyncSystem,
        refreshTokenInMainThread = std::move(refreshTokenInMainThread)](
           TileLoadResult&& result) mutable {
@@ -402,16 +402,16 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const CesiumAsync::AsyncSystem& asyncSystem) {
-  if (_refreshTokenState == TokenRefreshState::Loading) {
+  if (this->_refreshTokenState == TokenRefreshState::Loading) {
     return;
   }
 
-  _refreshTokenState = TokenRefreshState::Loading;
+  this->_refreshTokenState = TokenRefreshState::Loading;
 
   std::string url = createEndpointResource(
-      _ionAssetID,
-      _ionAccessToken,
-      _ionAssetEndpointUrl);
+      this->_ionAssetID,
+      this->_ionAccessToken,
+      this->_ionAssetEndpointUrl);
   pAssetAccessor->get(asyncSystem, url)
       .thenInMainThread(
           [this,
@@ -420,7 +420,7 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
                 pIonRequest->response();
 
             if (!pIonResponse) {
-              _refreshTokenState = TokenRefreshState::Failed;
+              this->_refreshTokenState = TokenRefreshState::Failed;
               return;
             }
 
@@ -428,7 +428,7 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
             if (statusCode >= 200 && statusCode < 300) {
               auto accessToken = getNewAccessToken(pIonResponse, pLogger);
               if (accessToken) {
-                _headerChangeListener(
+                this->_headerChangeListener(
                     "Authorization",
                     "Bearer " + *accessToken);
 
@@ -438,12 +438,12 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
                   cacheIt->second.accessToken = accessToken.value();
                 }
 
-                _refreshTokenState = TokenRefreshState::Done;
+                this->_refreshTokenState = TokenRefreshState::Done;
                 return;
               }
             }
 
-            _refreshTokenState = TokenRefreshState::Failed;
+            this->_refreshTokenState = TokenRefreshState::Failed;
           });
 }
 

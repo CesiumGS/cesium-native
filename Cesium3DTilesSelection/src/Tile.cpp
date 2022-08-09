@@ -197,20 +197,22 @@ bool Tile::isRenderable() const noexcept {
 }
 
 bool Tile::isRenderContent() const noexcept {
-  return _pContent->isRenderContent();
+  return this->_pContent->isRenderContent();
 }
 
 bool Tile::isExternalContent() const noexcept {
-  return _pContent->isExternalContent();
+  return this->_pContent->isExternalContent();
 }
 
 bool Tile::isEmptyContent() const noexcept {
-  return _pContent->isEmptyContent();
+  return this->_pContent->isEmptyContent();
 }
 
-TilesetContentLoader* Tile::getLoader() const noexcept { return _pLoader; }
+TilesetContentLoader* Tile::getLoader() const noexcept {
+  return this->_pLoader;
+}
 
-TileLoadState Tile::getState() const noexcept { return _loadState; }
+TileLoadState Tile::getState() const noexcept { return this->_loadState; }
 
 void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 

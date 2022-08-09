@@ -790,7 +790,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& pLogger = loadInput.pLogger;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
-  std::string resolvedUrl = CesiumUtility::Uri::resolve(_baseUrl, *url, true);
+  std::string resolvedUrl =
+      CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
   return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
       .thenInWorkerThread(
           [pLogger,
@@ -897,15 +898,15 @@ TilesetJsonLoader::getTileUpAxis(const Tile& tile) const noexcept {
     return pLoader->getTileUpAxis(tile);
   }
 
-  return _upAxis;
+  return this->_upAxis;
 }
 
 const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
-  return _baseUrl;
+  return this->_baseUrl;
 }
 
 void TilesetJsonLoader::addChildLoader(
     std::unique_ptr<TilesetContentLoader> pLoader) {
-  _children.emplace_back(std::move(pLoader));
+  this->_children.emplace_back(std::move(pLoader));
 }
 } // namespace Cesium3DTilesSelection

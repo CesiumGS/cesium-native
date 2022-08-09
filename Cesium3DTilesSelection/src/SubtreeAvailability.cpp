@@ -459,7 +459,7 @@ SubtreeAvailability::SubtreeAvailability(
       _contentAvailability{std::move(contentAvailability)},
       _buffers{std::move(buffers)} {
   assert(
-      (_childCount == 4 || _childCount == 8) &&
+      (this->_childCount == 4 || this->_childCount == 8) &&
       "Only support quadtree and octree");
 }
 
@@ -469,7 +469,7 @@ bool SubtreeAvailability::isTileAvailable(
   return isAvailable(
       relativeTileLevel,
       relativeTileMortonId,
-      _tileAvailability);
+      this->_tileAvailability);
 }
 
 bool SubtreeAvailability::isContentAvailable(
@@ -479,13 +479,13 @@ bool SubtreeAvailability::isContentAvailable(
   return isAvailable(
       relativeTileLevel,
       relativeTileMortonId,
-      _contentAvailability[contentId]);
+      this->_contentAvailability[contentId]);
 }
 
 bool SubtreeAvailability::isSubtreeAvailable(
     uint64_t relativeSubtreeMortonId) const noexcept {
   const SubtreeConstantAvailability* constantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&_subtreeAvailability);
+      std::get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
   if (constantAvailability) {
     return constantAvailability->constant;
   }
@@ -493,7 +493,7 @@ bool SubtreeAvailability::isSubtreeAvailable(
   return isAvailableUsingBufferView(
       0,
       relativeSubtreeMortonId,
-      _subtreeAvailability);
+      this->_subtreeAvailability);
 }
 
 CesiumAsync::Future<std::optional<SubtreeAvailability>>
@@ -540,7 +540,8 @@ bool SubtreeAvailability::isAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     const AvailabilityView& availabilityView) const noexcept {
-  uint64_t numOfTilesInLevel = uint64_t(1) << (_powerOf2 * relativeTileLevel);
+  uint64_t numOfTilesInLevel = uint64_t(1)
+                               << (this->_powerOf2 * relativeTileLevel);
   if (relativeTileMortonId >= numOfTilesInLevel) {
     return false;
   }
@@ -552,7 +553,7 @@ bool SubtreeAvailability::isAvailable(
   }
 
   uint64_t numOfTilesFromRootToParentLevel =
-      (numOfTilesInLevel - 1U) / (_childCount - 1U);
+      (numOfTilesInLevel - 1U) / (this->_childCount - 1U);
 
   return isAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel,

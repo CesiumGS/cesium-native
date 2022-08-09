@@ -297,7 +297,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   // find the subtree ID
-  uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
@@ -309,8 +309,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResultState::Failed});
   }
 
-  uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
-  uint32_t subtreeLevel = _subtreeLevels * subtreeLevelIdx;
+  uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
+  uint32_t subtreeLevel = this->_subtreeLevels * subtreeLevelIdx;
   uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
   uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
   CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
@@ -327,11 +327,12 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   // parent loader. The solution isn't implemented at the moment, as implicit
   // tilesets that exceeds 33 levels are expected to be very rare
   uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
-  auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
-  if (subtreeIt == _loadedSubtrees[subtreeLevelIdx].end()) {
+  auto subtreeIt =
+      this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+  if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
     // subtree is not loaded, so load it now.
     std::string subtreeUrl =
-        resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
+        resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
     return SubtreeAvailability::loadSubtree(
                2,
                asyncSystem,
@@ -373,7 +374,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResultState::Success});
   }
 
-  std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
+  std::string tileUrl =
+      resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
   return requestTileContent(
       pLogger,
       asyncSystem,
@@ -390,24 +392,25 @@ ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
   assert(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
 
   // find the subtree ID
-  uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
-  if (subtreeLevelIdx >= _loadedSubtrees.size()) {
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
+  if (subtreeLevelIdx >= this->_loadedSubtrees.size()) {
     return {{}, TileLoadResultState::Failed};
   }
 
-  uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
+  uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
   uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
   uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
 
   uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
-  auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
-  if (subtreeIt != _loadedSubtrees[subtreeLevelIdx].end()) {
+  auto subtreeIt =
+      this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+  if (subtreeIt != this->_loadedSubtrees[subtreeLevelIdx].end()) {
     uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
         pQuadtreeID->x - (subtreeX << levelLeft),
         pQuadtreeID->y - (subtreeY << levelLeft));
     auto children = populateSubtree(
         subtreeIt->second,
-        _subtreeLevels,
+        this->_subtreeLevels,
         static_cast<std::uint32_t>(levelLeft),
         relativeTileMortonIdx,
         tile,
@@ -425,30 +428,30 @@ ImplicitQuadtreeLoader::getTileUpAxis(const Tile&) const noexcept {
 }
 
 uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {
-  return _subtreeLevels;
+  return this->_subtreeLevels;
 }
 
 uint32_t ImplicitQuadtreeLoader::getAvailableLevels() const noexcept {
-  return _availableLevels;
+  return this->_availableLevels;
 }
 
 const ImplicitQuadtreeBoundingVolume&
 ImplicitQuadtreeLoader::getBoundingVolume() const noexcept {
-  return _boundingVolume;
+  return this->_boundingVolume;
 }
 
 void ImplicitQuadtreeLoader::addSubtreeAvailability(
     const CesiumGeometry::QuadtreeTileID& subtreeID,
     SubtreeAvailability&& subtreeAvailability) {
-  uint32_t levelIndex = subtreeID.level / _subtreeLevels;
-  if (levelIndex >= _loadedSubtrees.size()) {
+  uint32_t levelIndex = subtreeID.level / this->_subtreeLevels;
+  if (levelIndex >= this->_loadedSubtrees.size()) {
     return;
   }
 
   uint64_t subtreeMortonID =
       libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y);
 
-  _loadedSubtrees[levelIndex].insert_or_assign(
+  this->_loadedSubtrees[levelIndex].insert_or_assign(
       subtreeMortonID,
       std::move(subtreeAvailability));
 }

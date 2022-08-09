@@ -157,10 +157,10 @@ Tileset::Tileset(
 }
 
 Tileset::~Tileset() noexcept {
-  if (_pTilesetContentManager) {
-    _pTilesetContentManager->waitIdle();
+  if (this->_pTilesetContentManager) {
+    this->_pTilesetContentManager->waitIdle();
     if (_pRootTile) {
-      unloadTileRecursively(*_pRootTile, *_pTilesetContentManager);
+      unloadTileRecursively(*_pRootTile, *this->_pTilesetContentManager);
     }
   }
 }
@@ -478,7 +478,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-  _pTilesetContentManager->updateTileContent(tile, _options);
+  this->_pTilesetContentManager->updateTileContent(tile, _options);
   this->_markTileVisited(tile);
 
   // whether we should visit this tile
@@ -649,7 +649,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      _pTilesetContentManager->updateTileContent(child, _options);
+      this->_pTilesetContentManager->updateTileContent(child, _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1123,7 +1123,8 @@ void Tileset::_unloadCachedTiles() noexcept {
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
-    const bool removed = _pTilesetContentManager->unloadTileContent(*pTile);
+    const bool removed =
+        this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
     }
@@ -1187,7 +1188,7 @@ double Tileset::addTileToLoadQueue(
     const std::vector<double>& distances) {
   double highestLoadPriority = std::numeric_limits<double>::max();
 
-  if (_pTilesetContentManager->doesTileNeedLoading(tile)) {
+  if (this->_pTilesetContentManager->doesTileNeedLoading(tile)) {
 
     const glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());
@@ -1227,7 +1228,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    _pTilesetContentManager->loadTileContent(*record.pTile, _options);
+    this->_pTilesetContentManager->loadTileContent(*record.pTile, _options);
     if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
         maximumLoadsInProgress) {
       break;
