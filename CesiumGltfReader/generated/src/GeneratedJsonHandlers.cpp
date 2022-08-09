@@ -29,7 +29,7 @@ ExtensionCesiumRTCJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionCesiumRTCJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -105,7 +105,7 @@ ExtensionCesiumTileEdgesJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionCesiumTileEdgesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -192,7 +192,7 @@ ExtensionModelExtFeatureMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionModelExtFeatureMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -285,7 +285,7 @@ ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -381,7 +381,7 @@ ExtensionExtInstanceFeaturesJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionExtInstanceFeaturesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -457,7 +457,7 @@ ExtensionExtMeshFeaturesJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionExtMeshFeaturesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -533,7 +533,7 @@ ExtensionExtMeshGpuInstancingJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionExtMeshGpuInstancingJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -609,7 +609,7 @@ ExtensionBufferExtMeshoptCompressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionBufferExtMeshoptCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -696,7 +696,7 @@ ExtensionBufferViewExtMeshoptCompressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionBufferViewExtMeshoptCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -795,7 +795,7 @@ ExtensionModelExtStructuralMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionModelExtStructuralMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -890,7 +890,7 @@ ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -982,7 +982,7 @@ ExtensionKhrDracoMeshCompressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -1062,7 +1062,7 @@ ExtensionKhrMaterialsUnlitJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionKhrMaterialsUnlitJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -1136,7 +1136,7 @@ ExtensionKhrTextureBasisuJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionKhrTextureBasisuJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -1214,7 +1214,7 @@ ExtensionModelMaxarMeshVariantsJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionModelMaxarMeshVariantsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,
@@ -1293,7 +1293,7 @@ ExtensionNodeMaxarMeshVariantsJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void ExtensionNodeMaxarMeshVariantsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumUtility::ExtensibleObject& o,

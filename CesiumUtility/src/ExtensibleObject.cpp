@@ -14,7 +14,7 @@ const JsonValue* ExtensibleObject::getGenericExtension(
     return nullptr;
   }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
   const JsonValue* pValue = std::experimental::any_cast<JsonValue>(&it->second);
 #else
   const JsonValue* pValue = std::any_cast<JsonValue>(&it->second);

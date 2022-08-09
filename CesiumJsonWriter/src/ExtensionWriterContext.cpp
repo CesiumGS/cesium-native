@@ -7,7 +7,7 @@
 
 namespace CesiumJsonWriter {
 namespace {
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 void objWriter(
     const std::experimental::any& obj,
     JsonWriter& jsonWriter,
@@ -27,7 +27,7 @@ void objWriter(
 }
 } // namespace
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
 ExtensionWriterContext::ExtensionHandler<std::experimental::any>
 #else
 ExtensionWriterContext::ExtensionHandler<std::any>
