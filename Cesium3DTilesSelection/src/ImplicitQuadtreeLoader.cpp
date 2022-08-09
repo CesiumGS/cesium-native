@@ -16,79 +16,66 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
-CesiumGeospatial::BoundingRegion subdivideRegion(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeospatial::BoundingRegion& region) {
-  const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
-  double denominator = static_cast<double>(1 << tileID.level);
-  double latSize = (globeRect.getNorth() - globeRect.getSouth()) / denominator;
-  double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
+struct BoundingVolumeSubdivision {
+  BoundingVolume operator()(const CesiumGeospatial::BoundingRegion& region) {
+    const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
+    double denominator = static_cast<double>(1 << tileID.level);
+    double latSize =
+        (globeRect.getNorth() - globeRect.getSouth()) / denominator;
+    double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
 
-  double childWest = globeRect.getWest() + longSize * tileID.x;
-  double childEast = globeRect.getWest() + longSize * (tileID.x + 1);
+    double childWest = globeRect.getWest() + longSize * tileID.x;
+    double childEast = globeRect.getWest() + longSize * (tileID.x + 1);
 
-  double childSouth = globeRect.getSouth() + latSize * tileID.y;
-  double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
+    double childSouth = globeRect.getSouth() + latSize * tileID.y;
+    double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
 
-  return CesiumGeospatial::BoundingRegion{
-      CesiumGeospatial::GlobeRectangle(
-          childWest,
-          childSouth,
-          childEast,
-          childNorth),
-      region.getMinimumHeight(),
-      region.getMaximumHeight()};
-}
+    return CesiumGeospatial::BoundingRegion{
+        CesiumGeospatial::GlobeRectangle(
+            childWest,
+            childSouth,
+            childEast,
+            childNorth),
+        region.getMinimumHeight(),
+        region.getMaximumHeight()};
+  }
 
-CesiumGeospatial::S2CellBoundingVolume subdivideS2Volume(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeospatial::S2CellBoundingVolume& s2Volume) {
-  return CesiumGeospatial::S2CellBoundingVolume(
-      CesiumGeospatial::S2CellID::fromQuadtreeTileID(
-          s2Volume.getCellID().getFace(),
-          tileID),
-      s2Volume.getMinimumHeight(),
-      s2Volume.getMaximumHeight());
-}
+  BoundingVolume
+  operator()(const CesiumGeospatial::S2CellBoundingVolume& s2Volume) {
+    return CesiumGeospatial::S2CellBoundingVolume(
+        CesiumGeospatial::S2CellID::fromQuadtreeTileID(
+            s2Volume.getCellID().getFace(),
+            tileID),
+        s2Volume.getMinimumHeight(),
+        s2Volume.getMaximumHeight());
+  }
 
-CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeometry::OrientedBoundingBox& obb) {
-  const glm::dmat3& halfAxes = obb.getHalfAxes();
-  const glm::dvec3& center = obb.getCenter();
+  BoundingVolume operator()(const CesiumGeometry::OrientedBoundingBox& obb) {
+    const glm::dmat3& halfAxes = obb.getHalfAxes();
+    const glm::dvec3& center = obb.getCenter();
 
-  double denominator = static_cast<double>(1 << tileID.level);
-  glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
+    double denominator = static_cast<double>(1 << tileID.level);
+    glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
 
-  glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
-  glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
-  glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
-  glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
-                        yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
+    glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
+    glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
+    glm::dvec3 childMin =
+        min + xDim * double(tileID.x) + yDim * double(tileID.y);
+    glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
+                          yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
 
-  return CesiumGeometry::OrientedBoundingBox(
-      (childMin + childMax) / 2.0,
-      glm::dmat3{xDim / 2.0, yDim / 2.0, halfAxes[2]});
-}
+    return CesiumGeometry::OrientedBoundingBox(
+        (childMin + childMax) / 2.0,
+        glm::dmat3{xDim / 2.0, yDim / 2.0, halfAxes[2]});
+  }
+
+  const CesiumGeometry::QuadtreeTileID& tileID;
+};
 
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const ImplicitQuadtreeBoundingVolume& rootBoundingVolume) {
-  auto pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&rootBoundingVolume);
-  if (pRegion) {
-    return subdivideRegion(tileID, *pRegion);
-  }
-
-  auto pS2 =
-      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&rootBoundingVolume);
-  if (pS2) {
-    return subdivideS2Volume(tileID, *pS2);
-  }
-
-  auto pOBB =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&rootBoundingVolume);
-  return subdivideOrientedBoundingBox(tileID, *pOBB);
+  return std::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
 }
 
 std::vector<Tile> populateSubtree(
