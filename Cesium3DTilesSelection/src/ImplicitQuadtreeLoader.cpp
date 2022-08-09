@@ -102,17 +102,17 @@ std::vector<Tile> populateSubtree(
     return {};
   }
 
-  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+  const CesiumGeometry::QuadtreeTileID& quadtreeID =
+      std::get<CesiumGeometry::QuadtreeTileID>(tile.getTileID());
 
   std::vector<Tile> children;
   children.reserve(4);
   for (uint16_t y = 0; y < 2; ++y) {
-    uint32_t childY = (pQuadtreeID->y << 1) | y;
+    uint32_t childY = (quadtreeID.y << 1) | y;
     for (uint16_t x = 0; x < 2; ++x) {
-      uint32_t childX = (pQuadtreeID->x << 1) | x;
+      uint32_t childX = (quadtreeID.x << 1) | x;
       CesiumGeometry::QuadtreeTileID childID{
-          pQuadtreeID->level + 1,
+          quadtreeID.level + 1,
           childX,
           childY};
 

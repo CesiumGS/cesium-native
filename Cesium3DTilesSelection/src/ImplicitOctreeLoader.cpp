@@ -90,20 +90,20 @@ std::vector<Tile> populateSubtree(
     return {};
   }
 
-  const CesiumGeometry::OctreeTileID* pOctreeID =
-      std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
+  const CesiumGeometry::OctreeTileID& octreeID =
+      std::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
 
   std::vector<Tile> children;
   children.reserve(8);
   for (uint16_t y = 0; y < 2; ++y) {
-    uint32_t childY = (pOctreeID->y << 1) | y;
+    uint32_t childY = (octreeID.y << 1) | y;
     for (uint16_t z = 0; z < 2; ++z) {
-      uint32_t childZ = (pOctreeID->z << 1) | z;
+      uint32_t childZ = (octreeID.z << 1) | z;
       for (uint16_t x = 0; x < 2; ++x) {
-        uint32_t childX = (pOctreeID->x << 1) | x;
+        uint32_t childX = (octreeID.x << 1) | x;
 
         CesiumGeometry::OctreeTileID childID{
-            pOctreeID->level + 1,
+            octreeID.level + 1,
             childX,
             childY,
             childZ};
