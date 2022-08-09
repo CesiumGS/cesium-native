@@ -1,5 +1,7 @@
 #include "ImplicitOctreeLoader.h"
 
+#include "LogTileLoadResult.h"
+
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -10,14 +12,6 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
-void logErrorsAndWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const ErrorList& errorLists) {
-  errorLists.logError(pLogger, fmt::format("Failed to load {}", url));
-  errorLists.logWarning(pLogger, fmt::format("Warning when loading {}", url));
-}
-
 CesiumGeospatial::BoundingRegion subdivideRegion(
     const CesiumGeometry::OctreeTileID& tileID,
     const CesiumGeospatial::BoundingRegion& region) {
@@ -233,7 +227,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           GltfConverterResult result = converter(responseData, gltfOptions);
 
           // Report any errors if there are any
-          logErrorsAndWarnings(pLogger, tileUrl, result.errors);
+          logTileLoadResult(pLogger, tileUrl, result.errors);
           if (result.errors || !result.model) {
             return TileLoadResult{
                 TileUnknownContent{},
