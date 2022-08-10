@@ -67,7 +67,7 @@ public:
    * This may block the calling thread while waiting for pending asynchronous
    * tile loads to terminate.
    */
-  ~Tileset();
+  ~Tileset() noexcept;
 
   const std::vector<Credit> getTilesetCredits() const noexcept {
     return this->_tilesetCredits;
@@ -408,7 +408,7 @@ private:
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
-  static double addTileToLoadQueue(
+  double addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
       const std::vector<ViewState>& frustums,
       Tile& tile,

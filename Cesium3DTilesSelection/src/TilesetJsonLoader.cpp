@@ -681,6 +681,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     // since the json cannot be parsed, we don't know the content of this tile
     return TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         std::move(pCompletedRequest),
         {}};
@@ -693,6 +695,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // mark this tile has external content
   return TileLoadResult{
       TileExternalContent{},
+      std::nullopt,
+      std::nullopt,
       TileLoadResultState::Success,
       std::move(pCompletedRequest),
       std::move(externalContentInitializer)};
@@ -765,6 +769,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
   if (!url) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -794,6 +800,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
+                  std::nullopt,
+                  std::nullopt,
                   TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
                   {}};
@@ -808,6 +816,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
                   tileUrl);
               return TileLoadResult{
                   TileUnknownContent{},
+                  std::nullopt,
+                  std::nullopt,
                   TileLoadResultState::Failed,
                   std::move(pCompletedRequest),
                   {}};
@@ -832,6 +842,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
               if (result.errors) {
                 return TileLoadResult{
                     TileRenderContent{std::nullopt},
+                    std::nullopt,
+                    std::nullopt,
                     TileLoadResultState::Failed,
                     std::move(pCompletedRequest),
                     {}};
@@ -839,6 +851,8 @@ CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::loadTileContent(
 
               return TileLoadResult{
                   TileRenderContent{std::move(result.model)},
+                  std::nullopt,
+                  std::nullopt,
                   TileLoadResultState::Success,
                   std::move(pCompletedRequest),
                   {}};

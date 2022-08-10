@@ -33,7 +33,7 @@ public:
    */
   RasterOverlayCollection(Tileset& tileset) noexcept;
 
-  ~RasterOverlayCollection();
+  ~RasterOverlayCollection() noexcept;
 
   /**
    * @brief Adds the given {@link RasterOverlay} to this collection.

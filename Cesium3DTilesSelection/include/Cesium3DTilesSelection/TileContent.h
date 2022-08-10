@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/RasterOverlayDetails.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 
 #include <functional>
@@ -61,6 +63,12 @@ public:
 
   const TileRenderContent* getRenderContent() const noexcept;
 
+  TileRenderContent* getRenderContent() noexcept;
+
+  const RasterOverlayDetails& getRasterOverlayDetails() const noexcept;
+
+  RasterOverlayDetails& getRasterOverlayDetails() noexcept;
+
   TilesetContentLoader* getLoader() noexcept;
 
   void* getRenderResources() const noexcept;
@@ -69,6 +77,11 @@ private:
   void setContentKind(TileContentKind&& contentKind);
 
   void setContentKind(const TileContentKind& contentKind);
+
+  void
+  setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
+
+  void setRasterOverlayDetails(RasterOverlayDetails&& rasterOverlayDetails);
 
   void setState(TileLoadState state) noexcept;
 
@@ -84,8 +97,9 @@ private:
   TileLoadState _state;
   TileContentKind _contentKind;
   void* _pRenderResources;
-  TilesetContentLoader* _pLoader;
+  RasterOverlayDetails _rasterOverlayDetails;
   std::function<void(Tile&)> _tileInitializer;
+  TilesetContentLoader* _pLoader;
   bool _shouldContentContinueUpdated;
 
   friend class TilesetContentManager;

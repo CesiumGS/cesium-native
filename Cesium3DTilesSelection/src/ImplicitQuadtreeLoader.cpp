@@ -226,6 +226,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               tileUrl);
           return TileLoadResult{
               TileUnknownContent{},
+              std::nullopt,
+              std::nullopt,
               TileLoadResultState::Failed,
               nullptr,
               {}};
@@ -240,6 +242,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               tileUrl);
           return TileLoadResult{
               TileUnknownContent{},
+              std::nullopt,
+              std::nullopt,
               TileLoadResultState::Failed,
               nullptr,
               {}};
@@ -264,6 +268,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           if (result.errors) {
             return TileLoadResult{
                 TileRenderContent{std::nullopt},
+                std::nullopt,
+                std::nullopt,
                 TileLoadResultState::Failed,
                 std::move(pCompletedRequest),
                 {}};
@@ -271,6 +277,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 
           return TileLoadResult{
               TileRenderContent{std::move(result.model)},
+              std::nullopt,
+              std::nullopt,
               TileLoadResultState::Success,
               std::move(pCompletedRequest),
               {}};
@@ -279,6 +287,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
         // content type is not supported
         return TileLoadResult{
             TileRenderContent{std::nullopt},
+            std::nullopt,
+            std::nullopt,
             TileLoadResultState::Failed,
             std::move(pCompletedRequest),
             {}};
@@ -317,6 +327,8 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   if (!pQuadtreeID) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -327,6 +339,8 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -373,6 +387,8 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
           // tell client to retry later
           return TileLoadResult{
               TileUnknownContent{},
+              std::nullopt,
+              std::nullopt,
               TileLoadResultState::RetryLater,
               nullptr,
               {}};
@@ -385,6 +401,8 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Success,
         nullptr,
         {}});

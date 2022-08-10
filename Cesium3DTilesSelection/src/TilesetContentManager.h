@@ -1,7 +1,9 @@
 #pragma once
 
+#include "RasterOverlayUpsampler.h"
 #include "TilesetContentLoader.h"
 
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
@@ -16,13 +18,14 @@ public:
   TilesetContentManager(
       const TilesetExternals& externals,
       std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
-      std::unique_ptr<TilesetContentLoader> pLoader);
+      std::unique_ptr<TilesetContentLoader>&& pLoader,
+      RasterOverlayCollection& overlayCollection);
 
   ~TilesetContentManager() noexcept;
 
-  void loadTileContent(Tile& tile, const TilesetContentOptions& contentOptions);
+  void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void updateTileContent(Tile& tile);
+  void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
 
@@ -34,15 +37,20 @@ public:
 
   int32_t getNumOfTilesLoading() const noexcept;
 
-  int64_t getTilesDataUsed() const noexcept;
+  int64_t getTotalDataUsed() const noexcept;
+
+  bool doesTileNeedLoading(const Tile& tile) const noexcept;
 
 private:
   static void setTileContent(
-      TileContent& content,
+      Tile& tile,
       TileLoadResult&& result,
+      std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
       void* pWorkerRenderResources);
 
   void updateContentLoadedState(Tile& tile);
+
+  void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void unloadContentLoadedState(Tile& tile);
 
@@ -57,6 +65,8 @@ private:
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
+  RasterOverlayUpsampler _upsampler;
+  RasterOverlayCollection* _pOverlayCollection;
   int32_t _tilesLoadOnProgress;
   int64_t _tilesDataUsed;
 };

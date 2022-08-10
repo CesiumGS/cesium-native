@@ -74,7 +74,8 @@ Tileset::Tileset(
                 std::make_unique<TilesetContentManager>(
                     _externals,
                     std::move(result.requestHeaders),
-                    std::move(result.pLoader));
+                    std::move(result.pLoader),
+                    this->getOverlays());
           }
         });
   }
@@ -143,25 +144,14 @@ Tileset::Tileset(
                 std::make_unique<TilesetContentManager>(
                     _externals,
                     std::move(result.requestHeaders),
-                    std::move(result.pLoader));
+                    std::move(result.pLoader),
+                    this->getOverlays());
           }
         });
   }
 }
 
-Tileset::~Tileset() {
-  // Wait for all overlays to wrap up their loading, too.
-  uint32_t tilesLoading = 1;
-  while (tilesLoading > 0) {
-    this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
-
-    tilesLoading = 0;
-    for (auto& pOverlay : this->_overlays) {
-      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
-    }
-  }
-}
+Tileset::~Tileset() noexcept {}
 
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
@@ -330,16 +320,7 @@ void Tileset::forEachLoadedTile(
 }
 
 int64_t Tileset::getTotalDataBytes() const noexcept {
-  int64_t bytes = this->_pTilesetContentManager->getTilesDataUsed();
-
-  for (auto& pOverlay : this->_overlays) {
-    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
-    if (pProvider) {
-      bytes += pProvider->getTileDataBytes();
-    }
-  }
-
-  return bytes;
+  return this->_pTilesetContentManager->getTotalDataUsed();
 }
 
 static void markTileNonRendered(
@@ -459,7 +440,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-  _pTilesetContentManager->updateTileContent(tile);
+  _pTilesetContentManager->updateTileContent(tile, _options);
   this->_markTileVisited(tile);
 
   // whether we should visit this tile
@@ -630,7 +611,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      _pTilesetContentManager->updateTileContent(child);
+      _pTilesetContentManager->updateTileContent(child, _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1123,14 +1104,14 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
 // addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
 // (or at least, this function could delegate to such a call...)
 
-/*static*/ double Tileset::addTileToLoadQueue(
+double Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
     const std::vector<ViewState>& frustums,
     Tile& tile,
     const std::vector<double>& distances) {
   double highestLoadPriority = std::numeric_limits<double>::max();
 
-  if (tile.getState() == TileLoadState::Unloaded) {
+  if (_pTilesetContentManager->doesTileNeedLoading(tile)) {
 
     const glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());
@@ -1170,9 +1151,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    _pTilesetContentManager->loadTileContent(
-        *record.pTile,
-        _options.contentOptions);
+    _pTilesetContentManager->loadTileContent(*record.pTile, _options);
     if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
         maximumLoadsInProgress) {
       break;

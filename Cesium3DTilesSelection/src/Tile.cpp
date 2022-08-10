@@ -163,7 +163,12 @@ int64_t Tile::computeByteSize() const noexcept {
 bool Tile::isRenderable() const noexcept {
   if (getState() >= TileLoadState::ContentLoaded) {
     if (!isExternalContent()) {
-      return true;
+      return std::all_of(
+          this->_rasterTiles.begin(),
+          this->_rasterTiles.end(),
+          [](const RasterMappedTo3DTile& rasterTile) noexcept {
+            return rasterTile.getReadyTile() != nullptr;
+          });
     }
   }
 

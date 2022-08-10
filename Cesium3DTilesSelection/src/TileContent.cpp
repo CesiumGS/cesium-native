@@ -5,8 +5,9 @@ TileContent::TileContent(TilesetContentLoader* pLoader)
     : _state{TileLoadState::Unloaded},
       _contentKind{TileUnknownContent{}},
       _pRenderResources{nullptr},
-      _pLoader{pLoader},
+      _rasterOverlayDetails{},
       _tileInitializer{},
+      _pLoader{pLoader},
       _shouldContentContinueUpdated{true} {}
 
 TileContent::TileContent(
@@ -15,8 +16,9 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{emptyContent},
       _pRenderResources{nullptr},
-      _pLoader{pLoader},
+      _rasterOverlayDetails{},
       _tileInitializer{},
+      _pLoader{pLoader},
       _shouldContentContinueUpdated{true} {}
 
 TileContent::TileContent(
@@ -25,8 +27,9 @@ TileContent::TileContent(
     : _state{TileLoadState::ContentLoaded},
       _contentKind{externalContent},
       _pRenderResources{nullptr},
-      _pLoader{pLoader},
+      _rasterOverlayDetails{},
       _tileInitializer{},
+      _pLoader{pLoader},
       _shouldContentContinueUpdated{true} {}
 
 TileLoadState TileContent::getState() const noexcept { return _state; }
@@ -59,6 +62,19 @@ const TileRenderContent* TileContent::getRenderContent() const noexcept {
   return std::get_if<TileRenderContent>(&_contentKind);
 }
 
+TileRenderContent* TileContent::getRenderContent() noexcept {
+  return std::get_if<TileRenderContent>(&_contentKind);
+}
+
+const RasterOverlayDetails&
+TileContent::getRasterOverlayDetails() const noexcept {
+  return _rasterOverlayDetails;
+}
+
+RasterOverlayDetails& TileContent::getRasterOverlayDetails() noexcept {
+  return _rasterOverlayDetails;
+}
+
 TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }
 
 void TileContent::setContentKind(TileContentKind&& contentKind) {
@@ -67,6 +83,16 @@ void TileContent::setContentKind(TileContentKind&& contentKind) {
 
 void TileContent::setContentKind(const TileContentKind& contentKind) {
   _contentKind = contentKind;
+}
+
+void TileContent::setRasterOverlayDetails(
+    const RasterOverlayDetails& rasterOverlayDetails) {
+  _rasterOverlayDetails = rasterOverlayDetails;
+}
+
+void TileContent::setRasterOverlayDetails(
+    RasterOverlayDetails&& rasterOverlayDetails) {
+  _rasterOverlayDetails = std::move(rasterOverlayDetails);
 }
 
 void TileContent::setState(TileLoadState state) noexcept { _state = state; }

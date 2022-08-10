@@ -2,7 +2,9 @@
 
 #include "QuantizedMeshLoader.h"
 #include "calcQuadtreeMaxGeometricError.h"
+#include "upsampleGltfForRasterOverlays.h"
 
+#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
@@ -17,6 +19,17 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace {
+TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
+  return TileLoadResult{
+      TileRenderContent{std::move(loadResult.model)},
+      loadResult.updatedBoundingVolume,
+      std::nullopt,
+      loadResult.errors.hasErrors() ? TileLoadResultState::Failed
+                                    : TileLoadResultState::Success,
+      nullptr,
+      {}};
+}
+
 size_t maxSubtreeInLayer(uint32_t maxZooms, int32_t availabilityLevels) {
   if (availabilityLevels > 0) {
     return static_cast<size_t>(std::ceil(
@@ -550,10 +563,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
               QuantizedMeshLoadResult result;
-              result.errors.emplace_error(fmt::format(
-                  "Received status code {} for tile content {}",
-                  pResponse->statusCode(),
-                  pRequest->url()));
+              return result;
             }
 
             return QuantizedMeshLoader::load(
@@ -612,12 +622,22 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeTileID) {
-    // This loader only handles QuadtreeTileIDs.
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        TileLoadResultState::Failed,
-        nullptr,
-        {}});
+    // check if we need to upsample this tile
+    const UpsampledQuadtreeNode* pUpsampleTileID =
+        std::get_if<UpsampledQuadtreeNode>(&tile.getTileID());
+    if (!pUpsampleTileID) {
+      // This loader only handles QuadtreeTileIDs and UpsampledQuadtreeNode.
+      return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
+          TileUnknownContent{},
+          std::nullopt,
+          std::nullopt,
+          TileLoadResultState::Failed,
+          nullptr,
+          {}});
+    }
+
+    // now do upsampling
+    return upsampleParentTile(tile, asyncSystem);
   }
 
   // Always request the tile from the first layer in which this tile ID is
@@ -633,6 +653,8 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
     // No layer has this tile available.
     return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
         TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
         TileLoadResultState::Failed,
         nullptr,
         {}});
@@ -712,31 +734,13 @@ Future<TileLoadResult> LayerJsonTerrainLoader::loadTileContent(
                 loadResult.availableTileRectangles);
           }
 
-          return TileLoadResult{
-              TileRenderContent{std::move(loadResult.model)},
-              loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                            : TileLoadResultState::Success,
-              nullptr,
-              [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-                if (boundingVolume) {
-                  tile.setBoundingVolume(*boundingVolume);
-                }
-              }};
+          return convertToTileLoadResult(std::move(loadResult));
         });
   }
 
   return std::move(futureQuantizedMesh)
       .thenImmediately([](QuantizedMeshLoadResult&& loadResult) mutable {
-        return TileLoadResult{
-            TileRenderContent{std::move(loadResult.model)},
-            loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                          : TileLoadResultState::Success,
-            nullptr,
-            [boundingVolume = loadResult.updatedBoundingVolume](Tile& tile) {
-              if (boundingVolume) {
-                tile.setBoundingVolume(*boundingVolume);
-              }
-            }};
+        return convertToTileLoadResult(std::move(loadResult));
       });
 }
 
@@ -899,4 +903,88 @@ void LayerJsonTerrainLoader::createChildTile(
           this->_tilingScheme.tileToRectangle(childID));
   child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
       BoundingRegion(childGlobeRectangle, minHeight, maxHeight)));
+}
+
+CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
+    Tile& tile,
+    const CesiumAsync::AsyncSystem& asyncSystem) {
+  Tile* pParent = tile.getParent();
+  TileContent& parentContent = pParent->getContent();
+  TileRenderContent* pParentRenderContent = parentContent.getRenderContent();
+  if (!pParentRenderContent || !pParentRenderContent->model) {
+    return asyncSystem.createResolvedFuture(TileLoadResult{
+        TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        TileLoadResultState::Failed,
+        nullptr,
+        {}});
+  }
+
+  const UpsampledQuadtreeNode* pUpsampledTileID =
+      std::get_if<UpsampledQuadtreeNode>(&tile.getTileID());
+
+  int32_t index = -1;
+  const std::vector<CesiumGeospatial::Projection>& parentProjections =
+      parentContent.getRasterOverlayDetails().rasterOverlayProjections;
+  auto it = std::find(
+      parentProjections.begin(),
+      parentProjections.end(),
+      _projection);
+  if (it != parentProjections.end()) {
+    index = int32_t(it - parentProjections.begin());
+  } else {
+    const BoundingRegion* pParentRegion =
+        std::get_if<BoundingRegion>(&pParent->getBoundingVolume());
+
+    std::optional<RasterOverlayDetails> overlayDetails =
+        GltfUtilities::createRasterOverlayTextureCoordinates(
+            *pParentRenderContent->model,
+            pParent->getTransform(),
+            int32_t(parentProjections.size()),
+            pParentRegion ? std::make_optional<GlobeRectangle>(
+                                pParentRegion->getRectangle())
+                          : std::nullopt,
+            {_projection});
+
+    if (overlayDetails) {
+      index = int32_t(parentProjections.size());
+      parentContent.getRasterOverlayDetails().merge(std::move(*overlayDetails));
+    }
+  }
+
+  // Cannot find raster overlay UVs that has this projection, so we can't
+  // upsample right now
+  assert(
+      index != -1 && "Cannot find raster overlay UVs that has this projection. "
+                     "Should not happen");
+
+  const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
+  return asyncSystem.runInWorkerThread(
+      [&parentModel,
+       boundingVolume = tile.getBoundingVolume(),
+       textureCoordinateIndex = index,
+       tileID = *pUpsampledTileID]() mutable {
+        auto model = upsampleGltfForRasterOverlays(
+            parentModel,
+            tileID,
+            textureCoordinateIndex);
+        if (!model) {
+          return TileLoadResult{
+              TileRenderContent{std::nullopt},
+              std::nullopt,
+              std::nullopt,
+              TileLoadResultState::Failed,
+              nullptr,
+              {}};
+        }
+
+        return TileLoadResult{
+            TileRenderContent{std::move(model)},
+            std::nullopt,
+            std::nullopt,
+            TileLoadResultState::Success,
+            nullptr,
+            {}};
+      });
 }
