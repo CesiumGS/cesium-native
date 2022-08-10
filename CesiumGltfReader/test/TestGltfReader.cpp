@@ -12,7 +12,6 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include <type_traits>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
@@ -32,10 +31,6 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   return buffer;
 }
 } // namespace
-
-TEST_CASE("CesiumGltf::Model move constructor is noexcept") {
-  CHECK(std::is_nothrow_move_constructible<CesiumGltf::Model>::value);
-}
 
 TEST_CASE("CesiumGltfReader::GltfReader") {
   using namespace std::string_literals;

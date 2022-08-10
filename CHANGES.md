@@ -1,5 +1,12 @@
 # Change Log
 
+
+### ? - ?
+
+##### Additions :tada:
+
+- Replaced std::unordered\_map with [Parallel Hashmap](https://github.com/greg7mdp/parallel-hashmap) for better performance.
+
 ### v0.18.1 - 2022-08-04
 
 ##### Fixes :wrench:
