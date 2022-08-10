@@ -13,9 +13,10 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace Cesium3DTiles {
@@ -34,7 +35,7 @@ struct CESIUM3DTILES_API Tileset final
   /**
    * @brief A dictionary object of metadata about per-feature properties.
    */
-  std::unordered_map<std::string, Cesium3DTiles::Properties> properties;
+  phmap::flat_hash_map<std::string, Cesium3DTiles::Properties> properties;
 
   /**
    * @brief An object defining the structure of metadata classes and enums. When

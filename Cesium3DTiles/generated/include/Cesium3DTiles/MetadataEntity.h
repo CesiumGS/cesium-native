@@ -7,8 +7,9 @@
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <string>
-#include <unordered_map>
 
 namespace Cesium3DTiles {
 /**
@@ -35,6 +36,6 @@ struct CESIUM3DTILES_API MetadataEntity
    * values matching the `componentType`. Required properties shall be included
    * in this dictionary.
    */
-  std::unordered_map<std::string, CesiumUtility::JsonValue> properties;
+  phmap::flat_hash_map<std::string, CesiumUtility::JsonValue> properties;
 };
 } // namespace Cesium3DTiles

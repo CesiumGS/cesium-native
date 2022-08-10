@@ -8,9 +8,10 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace Cesium3DTiles {
 /**
@@ -45,13 +46,13 @@ struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
    * object defining the class. Class IDs shall be alphanumeric identifiers
    * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
-  std::unordered_map<std::string, Cesium3DTiles::Class> classes;
+  phmap::flat_hash_map<std::string, Cesium3DTiles::Class> classes;
 
   /**
    * @brief A dictionary, where each key is an enum ID and each value is an
    * object defining the values for the enum. Enum IDs shall be alphanumeric
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
-  std::unordered_map<std::string, Cesium3DTiles::Enum> enums;
+  phmap::flat_hash_map<std::string, Cesium3DTiles::Enum> enums;
 };
 } // namespace Cesium3DTiles

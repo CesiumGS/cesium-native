@@ -7,10 +7,11 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace Cesium3DTiles {
 /**
@@ -43,7 +44,7 @@ struct CESIUM3DTILES_API PropertyTable final
    * property values are stored. Required properties shall be included in this
    * dictionary.
    */
-  std::unordered_map<std::string, Cesium3DTiles::PropertyTableProperty>
+  phmap::flat_hash_map<std::string, Cesium3DTiles::PropertyTableProperty>
       properties;
 };
 } // namespace Cesium3DTiles

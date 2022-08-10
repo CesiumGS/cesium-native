@@ -11,6 +11,8 @@
 #include "ImageCesium.h"
 #include "Model.h"
 
+#include <unordered_map>
+
 namespace CesiumGltf {
 
 /**

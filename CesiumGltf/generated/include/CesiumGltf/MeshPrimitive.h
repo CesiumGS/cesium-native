@@ -6,8 +6,9 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <cstdint>
-#include <unordered_map>
 #include <vector>
 
 namespace CesiumGltf {
@@ -42,7 +43,7 @@ struct CESIUMGLTF_API MeshPrimitive final
    * semantic and each value is the index of the accessor containing attribute's
    * data.
    */
-  std::unordered_map<std::string, int32_t> attributes;
+  phmap::flat_hash_map<std::string, int32_t> attributes;
 
   /**
    * @brief The index of the accessor that contains the vertex indices.
@@ -69,6 +70,6 @@ struct CESIUMGLTF_API MeshPrimitive final
   /**
    * @brief An array of morph targets.
    */
-  std::vector<std::unordered_map<std::string, int32_t>> targets;
+  std::vector<phmap::flat_hash_map<std::string, int32_t>> targets;
 };
 } // namespace CesiumGltf

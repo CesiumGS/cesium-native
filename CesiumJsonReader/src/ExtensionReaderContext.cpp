@@ -14,6 +14,17 @@ public:
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override {
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
+    std::experimental::any& value =
+        o.extensions
+            .emplace(
+                extensionName,
+                CesiumUtility::JsonValue(CesiumUtility::JsonValue::Object()))
+            .first->second;
+    JsonObjectJsonHandler::reset(
+        pParentHandler,
+        &std::experimental::any_cast<CesiumUtility::JsonValue&>(value));
+#else
     std::any& value =
         o.extensions
             .emplace(
@@ -23,6 +34,7 @@ public:
     JsonObjectJsonHandler::reset(
         pParentHandler,
         &std::any_cast<CesiumUtility::JsonValue&>(value));
+#endif
   }
 
   virtual IJsonHandler* readNull() override {

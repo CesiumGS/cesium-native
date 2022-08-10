@@ -15,6 +15,10 @@ endif()
 
 add_subdirectory(KTX-Software)
 
+option(PHMAP_BUILD_TESTS "" off)
+option(PHMAP_BUILD_EXAMPLES "" off)
+add_subdirectory(parallel-hashmap)
+
 option(URIPARSER_BUILD_TESTS "" off)
 option(URIPARSER_BUILD_DOCS "" off)
 option(URIPARSER_ENABLE_INSTALL "" on)

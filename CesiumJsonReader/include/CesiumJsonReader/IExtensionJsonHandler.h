@@ -3,8 +3,11 @@
 #include "IJsonHandler.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
-
+#if defined(__GNUC__) && __GNUC__ <= 10 && !defined(__clang__)
+#include <experimental/any>
+#else
 #include <any>
+#endif
 #include <string_view>
 
 namespace CesiumJsonReader {

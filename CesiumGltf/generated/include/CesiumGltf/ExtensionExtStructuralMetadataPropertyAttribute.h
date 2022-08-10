@@ -7,9 +7,10 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -38,7 +39,7 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyAttribute final
    * property values are stored. Required properties must be included in this
    * dictionary.
    */
-  std::unordered_map<
+  phmap::flat_hash_map<
       std::string,
       CesiumGltf::ExtensionExtStructuralMetadataPropertyAttributeProperty>
       properties;

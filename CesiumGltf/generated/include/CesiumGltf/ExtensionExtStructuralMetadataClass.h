@@ -7,9 +7,10 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -35,7 +36,7 @@ struct CESIUMGLTF_API ExtensionExtStructuralMetadataClass final
    * object defining the property. Property IDs must be alphanumeric identifiers
    * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
-  std::unordered_map<
+  phmap::flat_hash_map<
       std::string,
       CesiumGltf::ExtensionExtStructuralMetadataClassProperty>
       properties;

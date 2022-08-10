@@ -7,9 +7,10 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <parallel_hashmap/phmap.h>
+
 #include <cstdint>
 #include <optional>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -29,6 +30,6 @@ struct CESIUMGLTF_API ClassStatistics final
    * class' `properties` dictionary and each value is an object containing
    * statistics about property values.
    */
-  std::unordered_map<std::string, CesiumGltf::PropertyStatistics> properties;
+  phmap::flat_hash_map<std::string, CesiumGltf::PropertyStatistics> properties;
 };
 } // namespace CesiumGltf

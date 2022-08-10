@@ -155,11 +155,11 @@ static void createTestForScalarJson(
   std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const phmap::flat_hash_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
   const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const phmap::flat_hash_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
@@ -232,11 +232,11 @@ static void createTestForArrayJson(
   std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const phmap::flat_hash_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
   const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const phmap::flat_hash_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
@@ -485,11 +485,11 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const phmap::flat_hash_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
   const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const phmap::flat_hash_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
@@ -629,11 +629,11 @@ TEST_CASE("Upgrade json nested json metadata to string") {
   std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const phmap::flat_hash_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
   const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const phmap::flat_hash_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
@@ -719,11 +719,11 @@ TEST_CASE("Upgrade bool json to boolean binary") {
   std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  const phmap::flat_hash_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
   const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
+  const phmap::flat_hash_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 

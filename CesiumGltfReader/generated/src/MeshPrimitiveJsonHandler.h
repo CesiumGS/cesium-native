@@ -40,7 +40,7 @@ private:
   CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _mode;
   CesiumJsonReader::ArrayJsonHandler<
-      std::unordered_map<std::string, int32_t>,
+      phmap::flat_hash_map<std::string, int32_t>,
       CesiumJsonReader::DictionaryJsonHandler<
           int32_t,
           CesiumJsonReader::IntegerJsonHandler<int32_t>>>
