@@ -124,15 +124,15 @@ BoundingVolume subdivideBoundingVolume(
   return subdivideOrientedBoundingBox(tileID, *pOBB);
 }
 
-void populateSubtree(
+std::vector<Tile> populateSubtree(
     const SubtreeAvailability& subtreeAvailability,
     uint32_t subtreeLevels,
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonID,
-    Tile& tile,
+    const Tile& tile,
     ImplicitQuadtreeLoader& loader) {
   if (relativeTileLevel >= subtreeLevels) {
-    return;
+    return {};
   }
 
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
@@ -188,7 +188,7 @@ void populateSubtree(
     }
   }
 
-  tile.createChildTiles(std::move(children));
+  return children;
 }
 
 bool isTileContentAvailable(
@@ -228,9 +228,10 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               TileUnknownContent{},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Failed,
+              std::nullopt,
               nullptr,
-              {}};
+              {},
+              TileLoadResultState::Failed};
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -244,9 +245,10 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               TileUnknownContent{},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Failed,
+              std::nullopt,
               nullptr,
-              {}};
+              {},
+              TileLoadResultState::Failed};
         }
 
         // find gltf converter
@@ -270,18 +272,20 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                 TileRenderContent{std::nullopt},
                 std::nullopt,
                 std::nullopt,
-                TileLoadResultState::Failed,
+                std::nullopt,
                 std::move(pCompletedRequest),
-                {}};
+                {},
+                TileLoadResultState::Failed};
           }
 
           return TileLoadResult{
               TileRenderContent{std::move(result.model)},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Success,
+              std::nullopt,
               std::move(pCompletedRequest),
-              {}};
+              {},
+              TileLoadResultState::Success};
         }
 
         // content type is not supported
@@ -289,20 +293,23 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
             TileRenderContent{std::nullopt},
             std::nullopt,
             std::nullopt,
-            TileLoadResultState::Failed,
+            std::nullopt,
             std::move(pCompletedRequest),
-            {}};
+            {},
+            TileLoadResultState::Failed};
       });
 }
 } // namespace
 
-CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
-    Tile& tile,
-    const TilesetContentOptions& contentOptions,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+CesiumAsync::Future<TileLoadResult>
+ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
+  const auto& tile = loadInput.tile;
+  const auto& asyncSystem = loadInput.asyncSystem;
+  const auto& pAssetAccessor = loadInput.pAssetAccessor;
+  const auto& pLogger = loadInput.pLogger;
+  const auto& requestHeaders = loadInput.requestHeaders;
+  const auto& contentOptions = loadInput.contentOptions;
+
   // Ensure CesiumGeometry::QuadtreeTileID only has 32-bit components. There are
   // solutions below if the ID has more than 32-bit components.
   static_assert(
@@ -329,9 +336,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   // find the subtree ID
@@ -341,9 +349,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
 
   uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
@@ -389,9 +398,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
               TileUnknownContent{},
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::RetryLater,
+              std::nullopt,
               nullptr,
-              {}};
+              {},
+              TileLoadResultState::RetryLater};
         });
   }
 
@@ -403,9 +413,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
         TileEmptyContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Success,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Success});
   }
 
   std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
@@ -418,42 +429,40 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
       contentOptions.ktx2TranscodeTargets);
 }
 
-bool ImplicitQuadtreeLoader::updateTileContent(Tile& tile) {
-  if (tile.getChildren().empty()) {
-    const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-        std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
-    assert(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
+TileChildrenResult
+ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
+  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+  assert(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
 
-    // find the subtree ID
-    uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
-    if (subtreeLevelIdx >= _loadedSubtrees.size()) {
-      return false;
-    }
-
-    uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
-    uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
-    uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
-
-    uint64_t subtreeMortonIdx =
-        libmorton::morton2D_64_encode(subtreeX, subtreeY);
-    auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
-    if (subtreeIt != _loadedSubtrees[subtreeLevelIdx].end()) {
-      uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
-          pQuadtreeID->x - (subtreeX << levelLeft),
-          pQuadtreeID->y - (subtreeY << levelLeft));
-      populateSubtree(
-          subtreeIt->second,
-          _subtreeLevels,
-          static_cast<std::uint32_t>(levelLeft),
-          relativeTileMortonIdx,
-          tile,
-          *this);
-
-      return false;
-    }
+  // find the subtree ID
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
+  if (subtreeLevelIdx >= _loadedSubtrees.size()) {
+    return {{}, TileLoadResultState::Failed};
   }
 
-  return true;
+  uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
+  uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
+  uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
+
+  uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
+  auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+  if (subtreeIt != _loadedSubtrees[subtreeLevelIdx].end()) {
+    uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
+        pQuadtreeID->x - (subtreeX << levelLeft),
+        pQuadtreeID->y - (subtreeY << levelLeft));
+    auto children = populateSubtree(
+        subtreeIt->second,
+        _subtreeLevels,
+        static_cast<std::uint32_t>(levelLeft),
+        relativeTileMortonIdx,
+        tile,
+        *this);
+
+    return {std::move(children), TileLoadResultState::Success};
+  }
+
+  return {{}, TileLoadResultState::RetryLater};
 }
 
 uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {

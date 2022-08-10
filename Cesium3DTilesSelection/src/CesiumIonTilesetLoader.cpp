@@ -335,30 +335,31 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
       _pAggregatedLoader{std::move(pAggregatedLoader)},
       _headerChangeListener{std::move(headerChangeListener)} {}
 
-CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
-    Tile& tile,
-    const TilesetContentOptions& contentOptions,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+CesiumAsync::Future<TileLoadResult>
+CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (_refreshTokenState == TokenRefreshState::Loading) {
-    return asyncSystem.createResolvedFuture(TileLoadResult{
+    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::RetryLater,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::RetryLater});
   } else if (_refreshTokenState == TokenRefreshState::Failed) {
-    return asyncSystem.createResolvedFuture(TileLoadResult{
+    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Failed,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Failed});
   }
+
+  const auto& asyncSystem = loadInput.asyncSystem;
+  const auto& pAssetAccessor = loadInput.pAssetAccessor;
+  const auto& pLogger = loadInput.pLogger;
 
   // TODO: the way this is structured, requests already in progress
   // with the old key might complete after the key has been updated,
@@ -369,18 +370,10 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
         this->refreshTokenInMainThread(pLogger, pAssetAccessor, asyncSystem);
       };
 
-  return _pAggregatedLoader
-      ->loadTileContent(
-          tile,
-          contentOptions,
-          asyncSystem,
-          pAssetAccessor,
-          pLogger,
-          requestHeaders)
-      .thenImmediately([asyncSystem,
-                        refreshTokenInMainThread =
-                            std::move(refreshTokenInMainThread)](
-                           TileLoadResult&& result) mutable {
+  return _pAggregatedLoader->loadTileContent(loadInput).thenImmediately(
+      [asyncSystem,
+       refreshTokenInMainThread = std::move(refreshTokenInMainThread)](
+          TileLoadResult&& result) mutable {
         // check to see if we need to refresh token
         if (result.pCompletedRequest) {
           auto response = result.pCompletedRequest->response();
@@ -393,6 +386,12 @@ CesiumAsync::Future<TileLoadResult> CesiumIonTilesetLoader::loadTileContent(
 
         return std::move(result);
       });
+}
+
+TileChildrenResult
+CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
+  auto pLoader = tile.getContent().getLoader();
+  return pLoader->createTileChildren(tile);
 }
 
 void CesiumIonTilesetLoader::refreshTokenInMainThread(
@@ -442,11 +441,6 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
 
             _refreshTokenState = TokenRefreshState::Failed;
           });
-}
-
-bool CesiumIonTilesetLoader::updateTileContent(Tile& tile) {
-  auto pLoader = tile.getContent().getLoader();
-  return pLoader->updateTileContent(tile);
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult>

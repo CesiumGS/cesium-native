@@ -17,7 +17,6 @@ namespace Cesium3DTilesSelection {
 namespace {
 struct TileLoadResultAndRenderResources {
   TileLoadResult result;
-  std::optional<RasterOverlayDetails> rasterOverlayDetails;
   void* pRenderResources{nullptr};
 };
 
@@ -274,7 +273,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
   return tileBoundingVolume;
 }
 
-std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
+void calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
@@ -295,12 +294,42 @@ std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
   const CesiumGeospatial::BoundingRegion* pRegion =
       getBoundingRegionFromBoundingVolume(contentBoundingVolume);
 
+  // remove any projections that are already used to generated UV
+  int32_t firstRasterOverlayTexCoord = 0;
+  if (result.rasterOverlayDetails) {
+    const auto& existingProjections =
+        result.rasterOverlayDetails->rasterOverlayProjections;
+    firstRasterOverlayTexCoord =
+        static_cast<int32_t>(existingProjections.size());
+    for (size_t i = 0; i < projections.size(); ++i) {
+      for (const auto& existingProjection : existingProjections) {
+        if (projections[i] == existingProjection) {
+          if (i != projections.size() - 1) {
+            std::swap(projections[i], projections.back());
+          }
+
+          projections.pop_back();
+          --i;
+          break;
+        }
+      }
+    }
+  }
+
+  // generate the overlay details from the rest of projections and merge it with
+  // the existing one
   auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
       *renderContent.model,
       tileLoadInfo.tileTransform,
-      0,
+      firstRasterOverlayTexCoord,
       pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
       std::move(projections));
+
+  if (result.rasterOverlayDetails && overlayDetails) {
+    result.rasterOverlayDetails->merge(std::move(*overlayDetails));
+  } else if (overlayDetails) {
+    result.rasterOverlayDetails = std::move(*overlayDetails);
+  }
 
   if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.
@@ -339,13 +368,10 @@ std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
           url);
     }
   }
-
-  return overlayDetails;
 }
 
 void calcFittestBoundingRegionForLooseTile(
     TileLoadResult& result,
-    const std::optional<RasterOverlayDetails>& rasterOverlayDetails,
     const TileContentLoadInfo& tileLoadInfo) {
   TileRenderContent& renderContent =
       std::get<TileRenderContent>(result.contentKind);
@@ -356,9 +382,10 @@ void calcFittestBoundingRegionForLooseTile(
       result.updatedContentBoundingVolume);
   if (std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
           &boundingVolume) != nullptr) {
-    if (rasterOverlayDetails) {
+    if (result.rasterOverlayDetails) {
       // We already computed the bounding region for overlays, so use it.
-      result.updatedBoundingVolume = rasterOverlayDetails->boundingRegion;
+      result.updatedBoundingVolume =
+          result.rasterOverlayDetails->boundingRegion;
     } else {
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
@@ -381,16 +408,13 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   }
 
   // calculate raster overlay details
-  auto rasterOverlayDetails = calcRasterOverlayDetailsInWorkerThread(
+  calcRasterOverlayDetailsInWorkerThread(
       result,
       std::move(projections),
       tileLoadInfo);
 
   // If our tile bounding region has loose fitting heights, find the real ones.
-  calcFittestBoundingRegionForLooseTile(
-      result,
-      rasterOverlayDetails,
-      tileLoadInfo);
+  calcFittestBoundingRegionForLooseTile(result, tileLoadInfo);
 
   // generate missing smooth normal
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
@@ -403,10 +427,7 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
           *renderContent.model,
           tileLoadInfo.tileTransform);
 
-  return TileLoadResultAndRenderResources{
-      std::move(result),
-      std::move(rasterOverlayDetails),
-      pRenderResources};
+  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
@@ -596,14 +617,15 @@ void TilesetContentManager::loadTileContent(
     pLoader = _pLoader.get();
   }
 
-  pLoader
-      ->loadTileContent(
-          tile,
-          tilesetOptions.contentOptions,
-          _externals.asyncSystem,
-          _externals.pAssetAccessor,
-          _externals.pLogger,
-          _requestHeaders)
+  TileLoadInput loadInput{
+      tile,
+      tilesetOptions.contentOptions,
+      _externals.asyncSystem,
+      _externals.pAssetAccessor,
+      _externals.pLogger,
+      _requestHeaders};
+
+  pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections)](
                            TileLoadResult&& result) mutable {
@@ -633,14 +655,10 @@ void TilesetContentManager::loadTileContent(
 
         return tileLoadInfo.asyncSystem
             .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), std::nullopt, nullptr});
+                {std::move(result), nullptr});
       })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
-        setTileContent(
-            tile,
-            std::move(pair.result),
-            std::move(pair.rasterOverlayDetails),
-            pair.pRenderResources);
+        setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
         notifyTileDoneLoading(tile);
       })
@@ -671,8 +689,15 @@ void TilesetContentManager::updateTileContent(
     break;
   }
 
-  if (content.shouldContentContinueUpdated()) {
-    content.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
+  if (content.shouldContentContinueUpdated() && tile.getChildren().empty()) {
+    TileChildrenResult childrenResult = _pLoader->createTileChildren(tile);
+    if (childrenResult.state == TileLoadResultState::Success) {
+      tile.createChildTiles(std::move(childrenResult.children));
+    }
+
+    bool shouldTileContinueUpdated =
+        childrenResult.state == TileLoadResultState::RetryLater;
+    content.setContentShouldContinueUpdated(shouldTileContinueUpdated);
   }
 }
 
@@ -762,7 +787,6 @@ bool TilesetContentManager::doesTileNeedLoading(
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
-    std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
     void* pWorkerRenderResources) {
   // update bounding volume
   if (result.updatedBoundingVolume) {
@@ -791,8 +815,8 @@ void TilesetContentManager::setTileContent(
   }
 
   content.setContentKind(std::move(result.contentKind));
-  if (rasterOverlayDetails) {
-    content.setRasterOverlayDetails(std::move(*rasterOverlayDetails));
+  if (result.rasterOverlayDetails) {
+    content.setRasterOverlayDetails(std::move(*result.rasterOverlayDetails));
   }
   content.setRenderResources(pWorkerRenderResources);
   content.setTileInitializerCallback(std::move(result.tileInitializer));

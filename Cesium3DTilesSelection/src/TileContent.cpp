@@ -81,7 +81,9 @@ const std::vector<Credit>& TileContent::getCredits() const noexcept {
 
 std::vector<Credit>& TileContent::getCredits() noexcept { return _credits; }
 
-TilesetContentLoader* TileContent::getLoader() noexcept { return _pLoader; }
+TilesetContentLoader* TileContent::getLoader() const noexcept {
+  return _pLoader;
+}
 
 void TileContent::setContentKind(TileContentKind&& contentKind) {
   _contentKind = std::move(contentKind);

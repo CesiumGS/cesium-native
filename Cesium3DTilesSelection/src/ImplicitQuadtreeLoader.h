@@ -38,16 +38,10 @@ public:
             static_cast<float>(availableLevels) /
             static_cast<float>(subtreeLevels)))) {}
 
-  CesiumAsync::Future<TileLoadResult> loadTileContent(
-      Tile& tile,
-      const TilesetContentOptions& contentOptions,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
-      override;
+  CesiumAsync::Future<TileLoadResult>
+  loadTileContent(const TileLoadInput& loadInput) override;
 
-  bool updateTileContent(Tile& tile) override;
+  TileChildrenResult createTileChildren(const Tile& tile) override;
 
   uint32_t getSubtreeLevels() const noexcept;
 
