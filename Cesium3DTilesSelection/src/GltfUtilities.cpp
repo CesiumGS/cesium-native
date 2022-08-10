@@ -384,4 +384,31 @@ GltfUtilities::computeBoundingRegion(
 
   return computedBounds.toRegion();
 }
+
+std::vector<Credit> GltfUtilities::parseGltfCopyright(
+    CreditSystem& creditSystem,
+    const CesiumGltf::Model& gltf,
+    bool showOnScreen) {
+  std::vector<Credit> result;
+  if (gltf.asset.copyright) {
+    const std::string& copyright = *gltf.asset.copyright;
+    if (copyright.size() > 0) {
+      size_t start = 0;
+      size_t end;
+      size_t ltrim;
+      size_t rtrim;
+      do {
+        ltrim = copyright.find_first_not_of(" \t", start);
+        end = copyright.find(';', ltrim);
+        rtrim = copyright.find_last_not_of(" \t", end - 1);
+        result.push_back(creditSystem.createCredit(
+            copyright.substr(ltrim, rtrim - ltrim + 1),
+            showOnScreen));
+        start = end + 1;
+      } while (end != std::string::npos);
+    }
+  }
+
+  return result;
+}
 } // namespace Cesium3DTilesSelection

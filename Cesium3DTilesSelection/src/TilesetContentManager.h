@@ -48,7 +48,8 @@ private:
       std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
       void* pWorkerRenderResources);
 
-  void updateContentLoadedState(Tile& tile);
+  void
+  updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
 

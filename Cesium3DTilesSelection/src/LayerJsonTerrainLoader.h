@@ -41,9 +41,7 @@ public:
         std::vector<std::string>&& tileTemplateUrls,
         CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability,
         uint32_t maxZooms,
-        int32_t availabilityLevels,
-        std::string&& creditString,
-        std::optional<Credit> credit);
+        int32_t availabilityLevels);
 
     std::string baseUrl;
     std::string version;
@@ -51,8 +49,6 @@ public:
     CesiumGeometry::QuadtreeRectangleAvailability contentAvailability;
     std::vector<std::unordered_set<uint64_t>> loadedSubtrees;
     int32_t availabilityLevels;
-    std::string creditString;
-    std::optional<Credit> credit;
   };
 
   LayerJsonTerrainLoader(

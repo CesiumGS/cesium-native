@@ -1,11 +1,14 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/Model.h>
 
 #include <glm/glm.hpp>
+
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 struct GltfUtilities {
@@ -28,5 +31,10 @@ struct GltfUtilities {
   static CesiumGeospatial::BoundingRegion computeBoundingRegion(
       const CesiumGltf::Model& gltf,
       const glm::dmat4& transform);
+
+  static std::vector<Credit> parseGltfCopyright(
+      CreditSystem& creditSystems,
+      const CesiumGltf::Model& gltf,
+      bool showOnScreen);
 };
 } // namespace Cesium3DTilesSelection

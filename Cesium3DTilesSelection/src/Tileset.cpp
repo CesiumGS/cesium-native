@@ -61,22 +61,7 @@ Tileset::Tileset(
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     TilesetJsonLoader::createLoader(externals, url, {})
         .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          if (result.errors) {
-            this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
-                this,
-                TilesetLoadType::TilesetJson,
-                nullptr,
-                CesiumUtility::joinToString(result.errors.errors, "\n- ")});
-          } else {
-            this->_pRootTile = std::move(result.pRootTile);
-            this->_gltfUpAxis = result.gltfUpAxis;
-            this->_pTilesetContentManager =
-                std::make_unique<TilesetContentManager>(
-                    _externals,
-                    std::move(result.requestHeaders),
-                    std::move(result.pLoader),
-                    this->getOverlays());
-          }
+          this->_propagateTilesetContentLoaderResult(std::move(result));
         });
   }
 }
@@ -131,22 +116,7 @@ Tileset::Tileset(
         authorizationChangeListener,
         options.showCreditsOnScreen)
         .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          if (result.errors) {
-            this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
-                this,
-                TilesetLoadType::CesiumIon,
-                nullptr,
-                CesiumUtility::joinToString(result.errors.errors, "\n- ")});
-          } else {
-            this->_pRootTile = std::move(result.pRootTile);
-            this->_gltfUpAxis = result.gltfUpAxis;
-            this->_pTilesetContentManager =
-                std::make_unique<TilesetContentManager>(
-                    _externals,
-                    std::move(result.requestHeaders),
-                    std::move(result.pLoader),
-                    this->getOverlays());
-          }
+          this->_propagateTilesetContentLoaderResult(std::move(result));
         });
   }
 }
@@ -294,12 +264,38 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       pCreditSystem->addCreditToFrame(this->_userCredit.value());
     }
 
+    // tileset credit
+    for (const Credit& credit : this->_tilesetCredits) {
+      pCreditSystem->addCreditToFrame(credit);
+    }
+
     // per-raster overlay credit
     for (auto& pOverlay : this->_overlays) {
       const std::optional<Credit>& overlayCredit =
           pOverlay->getTileProvider()->getCredit();
       if (overlayCredit) {
         pCreditSystem->addCreditToFrame(overlayCredit.value());
+      }
+    }
+
+    // per-tile credits
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+          pTile->getMappedRasterTiles();
+      // raster overlay tile credits
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile.getReadyTile();
+        if (pRasterOverlayTile != nullptr) {
+          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
+            pCreditSystem->addCreditToFrame(credit);
+          }
+        }
+      }
+
+      // content credits like gltf copyrights
+      for (const Credit& credit : pTile->getContent().getCredits()) {
+        pCreditSystem->addCreditToFrame(credit);
       }
     }
   }
@@ -1096,6 +1092,33 @@ void Tileset::_unloadCachedTiles() noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
+}
+
+void Tileset::_propagateTilesetContentLoaderResult(
+    TilesetContentLoaderResult&& result) {
+  if (result.errors) {
+    this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
+        this,
+        TilesetLoadType::TilesetJson,
+        nullptr,
+        CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+  } else {
+    this->_pRootTile = std::move(result.pRootTile);
+    this->_gltfUpAxis = result.gltfUpAxis;
+
+    this->_tilesetCredits.reserve(result.credits.size());
+    for (const auto& creditResult : result.credits) {
+      this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
+          creditResult.creditText,
+          creditResult.showOnScreen));
+    }
+
+    this->_pTilesetContentManager = std::make_unique<TilesetContentManager>(
+        _externals,
+        std::move(result.requestHeaders),
+        std::move(result.pLoader),
+        this->getOverlays());
+  }
 }
 
 // TODO The viewState is only needed to
