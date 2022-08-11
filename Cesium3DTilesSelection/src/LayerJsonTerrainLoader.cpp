@@ -32,7 +32,7 @@ TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
   }
 
   return TileLoadResult{
-      TileRenderContent{std::move(*loadResult.model)},
+      std::move(*loadResult.model),
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
@@ -119,12 +119,12 @@ void generateRasterOverlayUVs(
     pParentRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
   }
 
-  TileRenderContent* renderContent =
-      std::get_if<TileRenderContent>(&result.contentKind);
-  if (renderContent) {
+  CesiumGltf::Model* pModel =
+      std::get_if<CesiumGltf::Model>(&result.contentKind);
+  if (pModel) {
     result.rasterOverlayDetails =
         GltfUtilities::createRasterOverlayTextureCoordinates(
-            renderContent->model,
+            *pModel,
             tileTransform,
             0,
             pParentRegion ? std::make_optional<GlobeRectangle>(
@@ -1083,7 +1083,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
 
   int32_t index = -1;
   const std::vector<CesiumGeospatial::Projection>& parentProjections =
-      parentContent.getRasterOverlayDetails().rasterOverlayProjections;
+      pParentRenderContent->getRasterOverlayDetails().rasterOverlayProjections;
   auto it = std::find(
       parentProjections.begin(),
       parentProjections.end(),
@@ -1101,7 +1101,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   // it's totally safe to capture the const ref parent model in the worker
   // thread. The tileset content manager will guarantee that the parent tile
   // will not be unloaded when upsampled tile is on the fly.
-  const CesiumGltf::Model& parentModel = pParentRenderContent->model;
+  const CesiumGltf::Model& parentModel = pParentRenderContent->getModel();
   return asyncSystem.runInWorkerThread(
       [&parentModel,
        boundingVolume = tile.getBoundingVolume(),
@@ -1123,7 +1123,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
         }
 
         return TileLoadResult{
-            TileRenderContent{std::move(*model)},
+            std::move(*model),
             std::nullopt,
             std::nullopt,
             std::nullopt,

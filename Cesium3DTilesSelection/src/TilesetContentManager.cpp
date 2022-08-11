@@ -24,6 +24,34 @@ struct RegionAndCenter {
   CesiumGeospatial::Cartographic center;
 };
 
+struct ContentKindSetter {
+  void operator()(TileUnknownContent content) {
+    tileContent.setContentKind(content);
+  }
+
+  void operator()(TileEmptyContent content) {
+    tileContent.setContentKind(content);
+  }
+
+  void operator()(TileExternalContent content) {
+    tileContent.setContentKind(content);
+  }
+
+  void operator()(CesiumGltf::Model& model) {
+    auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
+    pRenderContent->setRenderResources(pRenderResources);
+    if (rasterOverlayDetails) {
+      pRenderContent->setRasterOverlayDetails(std::move(*rasterOverlayDetails));
+    }
+
+    tileContent.setContentKind(std::move(pRenderContent));
+  }
+
+  TileContent& tileContent;
+  std::optional<RasterOverlayDetails> rasterOverlayDetails;
+  void* pRenderResources;
+};
+
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
@@ -45,7 +73,11 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
 
   // Get an accurate bounding region from the content first.
   const TileContent& parentContent = parent.getContent();
-  const RasterOverlayDetails& details = parentContent.getRasterOverlayDetails();
+  const TileRenderContent* pRenderContent = parentContent.getRenderContent();
+  assert(pRenderContent && "This function only deal with render content");
+
+  const RasterOverlayDetails& details =
+      pRenderContent->getRasterOverlayDetails();
 
   // If we don't have any overlay projections/rectangles, why are we
   // upsampling?
@@ -276,8 +308,7 @@ void calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   // we will use the fittest bounding volume to calculate raster overlay details
   // below
@@ -318,7 +349,7 @@ void calcRasterOverlayDetailsInWorkerThread(
   // generate the overlay details from the rest of projections and merge it with
   // the existing one
   auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
-      renderContent.model,
+      model,
       tileLoadInfo.tileTransform,
       firstRasterOverlayTexCoord,
       pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
@@ -356,8 +387,8 @@ void calcRasterOverlayDetailsInWorkerThread(
              0.01) &&
          computed.getNorth() > original.getNorth())) {
 
-      auto it = renderContent.model.extras.find("Cesium3DTiles_TileUrl");
-      std::string url = it != renderContent.model.extras.end()
+      auto it = model.extras.find("Cesium3DTiles_TileUrl");
+      std::string url = it != model.extras.end()
                             ? it->second.getStringOrDefault("Unknown Tile URL")
                             : "Unknown Tile URL";
       SPDLOG_LOGGER_WARN(
@@ -372,8 +403,7 @@ void calcRasterOverlayDetailsInWorkerThread(
 void calcFittestBoundingRegionForLooseTile(
     TileLoadResult& result,
     const TileContentLoadInfo& tileLoadInfo) {
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
       tileLoadInfo.tileBoundingVolume,
@@ -388,7 +418,7 @@ void calcFittestBoundingRegionForLooseTile(
     } else {
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
-          renderContent.model,
+          model,
           tileLoadInfo.tileTransform);
     }
   }
@@ -398,16 +428,14 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
-    renderContent.model.extras["Cesium3DTiles_TileUrl"] =
-        result.pCompletedRequest->url();
+    model.extras["Cesium3DTiles_TileUrl"] = result.pCompletedRequest->url();
   }
 
   // have to pass the up axis to extra for backward compatibility
-  renderContent.model.extras["gltfUpAxis"] =
+  model.extras["gltfUpAxis"] =
       static_cast<std::underlying_type_t<CesiumGeometry::Axis>>(
           tileLoadInfo.upAxis);
 
@@ -422,13 +450,13 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
 
   // generate missing smooth normal
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
-    renderContent.model.generateMissingNormalsSmooth();
+    model.generateMissingNormalsSmooth();
   }
 
   // create render resources
   void* pRenderResources =
       tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-          renderContent.model,
+          model,
           tileLoadInfo.tileTransform);
 
   return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
@@ -443,15 +471,10 @@ postProcessContentInWorkerThread(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
-  TileRenderContent* pRenderContent =
-      std::get_if<TileRenderContent>(&result.contentKind);
-  assert(pRenderContent && "This function only processes render content");
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   // Download any external image or buffer urls in the gltf if there are any
-  CesiumGltfReader::GltfReaderResult gltfResult{
-      std::move(pRenderContent->model),
-      {},
-      {}};
+  CesiumGltfReader::GltfReaderResult gltfResult{std::move(model), {}, {}};
 
   CesiumAsync::HttpHeaders requestHeaders;
   std::string baseUrl;
@@ -522,9 +545,7 @@ postProcessContentInWorkerThread(
                   nullptr};
             }
 
-            TileRenderContent& renderContent =
-                std::get<TileRenderContent>(result.contentKind);
-            renderContent.model = std::move(*gltfResult.model);
+            result.contentKind = std::move(*gltfResult.model);
             return postProcessGltfInWorkerThread(
                 std::move(result),
                 std::move(projections),
@@ -631,9 +652,7 @@ void TilesetContentManager::loadTileContent(
         // related to render content. We only ever spawn a new task in the
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::Success) {
-          auto pRenderContent =
-              std::get_if<TileRenderContent>(&result.contentKind);
-          if (pRenderContent) {
+          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
             auto asyncSystem = tileLoadInfo.asyncSystem;
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
@@ -736,11 +755,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   }
 
-  content.setCredits({});
-  content.setRasterOverlayDetails(RasterOverlayDetails{});
   content.setContentKind(TileUnknownContent{});
-  content.setTileInitializerCallback({});
-
   tile.getMappedRasterTiles().clear();
   tile.setState(TileLoadState::Unloaded);
   return true;
@@ -827,12 +842,16 @@ void TilesetContentManager::setTileContent(
   }
 
   auto& content = tile.getContent();
-  content.setContentKind(std::move(result.contentKind));
-  if (result.rasterOverlayDetails) {
-    content.setRasterOverlayDetails(std::move(*result.rasterOverlayDetails));
+  std::visit(
+      ContentKindSetter{
+          content,
+          std::move(result.rasterOverlayDetails),
+          pWorkerRenderResources},
+      result.contentKind);
+
+  if (result.tileInitializer) {
+    result.tileInitializer(tile);
   }
-  content.setRenderResources(pWorkerRenderResources);
-  content.setTileInitializerCallback(std::move(result.tileInitializer));
 
   tile.setState(TileLoadState::ContentLoaded);
 }
@@ -876,27 +895,20 @@ void TilesetContentManager::updateContentLoadedState(
       tile.setUnconditionallyRefine();
     }
   } else if (content.isRenderContent()) {
-    const TileRenderContent* pRenderContent = content.getRenderContent();
+    TileRenderContent* pRenderContent = content.getRenderContent();
     // add copyright
-    content.setCredits(GltfUtilities::parseGltfCopyright(
+    pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
         *this->_externals.pCreditSystem,
-        pRenderContent->model,
+        pRenderContent->getModel(),
         tilesetOptions.showCreditsOnScreen));
 
     // create render resources in the main thread
-    void* pWorkerRenderResources = content.getRenderResources();
+    void* pWorkerRenderResources = pRenderContent->getRenderResources();
     void* pMainThreadRenderResources =
         this->_externals.pPrepareRendererResources->prepareInMainThread(
             tile,
             pWorkerRenderResources);
-    content.setRenderResources(pMainThreadRenderResources);
-  }
-
-  // call the initializer
-  auto& tileInitializer = content.getTileInitializerCallback();
-  if (tileInitializer) {
-    tileInitializer(tile);
-    content.setTileInitializerCallback({});
+    pRenderContent->setRenderResources(pMainThreadRenderResources);
   }
 
   tile.setState(TileLoadState::Done);
@@ -984,28 +996,33 @@ void TilesetContentManager::updateDoneState(
     // existence can prevent the tile from being deemed done loading. So clear
     // them out here.
     tile.getMappedRasterTiles().clear();
-    content.setRasterOverlayDetails(RasterOverlayDetails{});
   }
 }
 
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
-  void* pWorkerRenderResources = content.getRenderResources();
+  TileRenderContent* pRenderContent = content.getRenderContent();
+  assert(pRenderContent && "Tile must have render content to be unloaded");
+
+  void* pWorkerRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(
       tile,
       pWorkerRenderResources,
       nullptr);
-  content.setRenderResources(nullptr);
+  pRenderContent->setRenderResources(nullptr);
 }
 
 void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
-  void* pMainThreadRenderResources = content.getRenderResources();
+  TileRenderContent* pRenderContent = content.getRenderContent();
+  assert(pRenderContent && "Tile must have render content to be unloaded");
+
+  void* pMainThreadRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(
       tile,
       nullptr,
       pMainThreadRenderResources);
-  content.setRenderResources(nullptr);
+  pRenderContent->setRenderResources(nullptr);
 }
 
 void TilesetContentManager::notifyTileStartLoading(

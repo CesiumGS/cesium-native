@@ -422,10 +422,10 @@ public:
   /**
    * @brief get the content of the tile.
    */
-  const TileContent& getContent() const noexcept { return *_pContent; }
+  const TileContent& getContent() const noexcept { return _content; }
 
   /** @copydoc Tile::getContent() */
-  TileContent& getContent() noexcept { return *_pContent; }
+  TileContent& getContent() noexcept { return _content; }
 
   /**
    * @brief Determines if this tile is currently renderable.
@@ -498,7 +498,7 @@ private:
 
   // tile content
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
-  std::unique_ptr<TileContent> _pContent;
+  TileContent _content;
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
   bool _shouldContentContinueUpdated;

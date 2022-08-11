@@ -233,7 +233,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           }
 
           return TileLoadResult{
-              TileRenderContent{std::move(*result.model)},
+              std::move(*result.model),
               std::nullopt,
               std::nullopt,
               std::nullopt,

@@ -54,8 +54,7 @@ Tile::Tile(
       _transform(1.0),
       _lastSelectionState(),
       _loadedTilesLinks(),
-      _pContent{std::make_unique<TileContent>(
-          std::forward<TileContentArgs>(args)...)},
+      _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
       _loadState{loadState},
       _shouldContentContinueUpdated{true} {}
@@ -72,7 +71,7 @@ Tile::Tile(Tile&& rhs) noexcept
       _transform(rhs._transform),
       _lastSelectionState(rhs._lastSelectionState),
       _loadedTilesLinks(),
-      _pContent(std::move(rhs._pContent)),
+      _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
       _shouldContentContinueUpdated{rhs._shouldContentContinueUpdated} {
@@ -103,7 +102,7 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_refine = rhs._refine;
     this->_transform = rhs._transform;
     this->_lastSelectionState = rhs._lastSelectionState;
-    this->_pContent = std::move(rhs._pContent);
+    this->_content = std::move(rhs._content);
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
     this->_shouldContentContinueUpdated = rhs._shouldContentContinueUpdated;
@@ -157,7 +156,7 @@ int64_t Tile::computeByteSize() const noexcept {
   const TileContent& content = this->getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
-    const CesiumGltf::Model& model = pRenderContent->model;
+    const CesiumGltf::Model& model = pRenderContent->getModel();
 
     // Add up the glTF buffers
     for (const CesiumGltf::Buffer& buffer : model.buffers) {
@@ -197,15 +196,15 @@ bool Tile::isRenderable() const noexcept {
 }
 
 bool Tile::isRenderContent() const noexcept {
-  return this->_pContent->isRenderContent();
+  return this->_content.isRenderContent();
 }
 
 bool Tile::isExternalContent() const noexcept {
-  return this->_pContent->isExternalContent();
+  return this->_content.isExternalContent();
 }
 
 bool Tile::isEmptyContent() const noexcept {
-  return this->_pContent->isEmptyContent();
+  return this->_content.isEmptyContent();
 }
 
 TilesetContentLoader* Tile::getLoader() const noexcept {

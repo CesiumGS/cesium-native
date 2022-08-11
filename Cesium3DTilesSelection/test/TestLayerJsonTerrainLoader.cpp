@@ -481,7 +481,7 @@ TEST_CASE("Test load layer json tile content") {
         pMockedAssetAccessor);
     auto tileLoadResult = tileLoadResultFuture.wait();
     CHECK(
-        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
+        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -533,7 +533,7 @@ TEST_CASE("Test load layer json tile content") {
     // check the load result
     auto tileLoadResult = tileLoadResultFuture.wait();
     CHECK(
-        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
+        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -598,7 +598,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<TileRenderContent>(
+      CHECK(std::holds_alternative<CesiumGltf::Model>(
           tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
@@ -618,7 +618,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<TileRenderContent>(
+      CHECK(std::holds_alternative<CesiumGltf::Model>(
           tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
@@ -675,7 +675,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<TileRenderContent>(
+      CHECK(std::holds_alternative<CesiumGltf::Model>(
           tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
@@ -705,7 +705,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<TileRenderContent>(
+      CHECK(std::holds_alternative<CesiumGltf::Model>(
           tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);

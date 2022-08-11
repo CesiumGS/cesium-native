@@ -336,8 +336,12 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       }
 
       // content credits like gltf copyrights
-      for (const Credit& credit : pTile->getContent().getCredits()) {
-        pCreditSystem->addCreditToFrame(credit);
+      const TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        for (const Credit& credit : pRenderContent->getCredits()) {
+          pCreditSystem->addCreditToFrame(credit);
+        }
       }
     }
   }

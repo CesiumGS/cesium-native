@@ -5,50 +5,26 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 
-#include <functional>
-#include <optional>
 #include <variant>
 
 namespace Cesium3DTilesSelection {
-class Tile;
-
 struct TileUnknownContent {};
 
 struct TileEmptyContent {};
 
 struct TileExternalContent {};
 
-struct TileRenderContent {
-  CesiumGltf::Model model{};
-};
-
-using TileContentKind = std::variant<
-    TileUnknownContent,
-    TileEmptyContent,
-    TileExternalContent,
-    TileRenderContent>;
-
-class TileContent {
+class TileRenderContent {
 public:
-  TileContent();
+  TileRenderContent(CesiumGltf::Model&& model);
 
-  TileContent(TileEmptyContent emptyContent);
+  const CesiumGltf::Model& getModel() const noexcept;
 
-  TileContent(TileExternalContent externalContent);
+  CesiumGltf::Model& getModel() noexcept;
 
-  void setContentKind(TileContentKind&& contentKind);
+  void setModel(const CesiumGltf::Model& model);
 
-  void setContentKind(const TileContentKind& contentKind);
-
-  bool isEmptyContent() const noexcept;
-
-  bool isExternalContent() const noexcept;
-
-  bool isRenderContent() const noexcept;
-
-  const TileRenderContent* getRenderContent() const noexcept;
-
-  TileRenderContent* getRenderContent() noexcept;
+  void setModel(CesiumGltf::Model&& model);
 
   const RasterOverlayDetails& getRasterOverlayDetails() const noexcept;
 
@@ -67,19 +43,52 @@ public:
 
   void setCredits(const std::vector<Credit>& credits);
 
-  const std::function<void(Tile&)>& getTileInitializerCallback() const noexcept;
-
-  void setTileInitializerCallback(std::function<void(Tile&)> callback);
-
   void* getRenderResources() const noexcept;
 
   void setRenderResources(void* pRenderResources) noexcept;
 
 private:
-  TileContentKind _contentKind;
+  CesiumGltf::Model _model;
   void* _pRenderResources;
   RasterOverlayDetails _rasterOverlayDetails;
-  std::function<void(Tile&)> _tileInitializer;
   std::vector<Credit> _credits;
+};
+
+class TileContent {
+  using TileContentKindImpl = std::variant<
+      TileUnknownContent,
+      TileEmptyContent,
+      TileExternalContent,
+      std::unique_ptr<TileRenderContent>>;
+
+public:
+  TileContent();
+
+  TileContent(TileEmptyContent content);
+
+  TileContent(TileExternalContent content);
+
+  void setContentKind(TileUnknownContent content);
+
+  void setContentKind(TileEmptyContent content);
+
+  void setContentKind(TileExternalContent content);
+
+  void setContentKind(std::unique_ptr<TileRenderContent> content);
+
+  bool isUnknownContent() const noexcept;
+
+  bool isEmptyContent() const noexcept;
+
+  bool isExternalContent() const noexcept;
+
+  bool isRenderContent() const noexcept;
+
+  const TileRenderContent* getRenderContent() const noexcept;
+
+  TileRenderContent* getRenderContent() noexcept;
+
+private:
+  TileContentKindImpl _contentKind;
 };
 } // namespace Cesium3DTilesSelection

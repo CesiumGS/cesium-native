@@ -328,9 +328,10 @@ RasterMappedTo3DTile* addRealTile(
 
   // If the tile is loaded, use the precise rectangle computed from the content.
   const TileContent& content = tile.getContent();
-  if (tile.getState() >= TileLoadState::ContentLoaded) {
+  const TileRenderContent* pRenderContent = content.getRenderContent();
+  if (pRenderContent) {
     const RasterOverlayDetails& overlayDetails =
-        content.getRasterOverlayDetails();
+        pRenderContent->getRasterOverlayDetails();
     const Rectangle* pRectangle =
         overlayDetails.findRectangleForOverlayProjection(projection);
     if (pRectangle) {
@@ -395,8 +396,14 @@ void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
     return;
   }
 
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  if (!pRenderContent) {
+    return;
+  }
+
   const RasterOverlayDetails& overlayDetails =
-      tile.getContent().getRasterOverlayDetails();
+      pRenderContent->getRasterOverlayDetails();
   const RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
 

@@ -141,7 +141,7 @@ TEST_CASE("Test implicit octree loader") {
 
     auto tileLoadResult = tileLoadResultFuture.wait();
     CHECK(
-        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
+        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(!tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);

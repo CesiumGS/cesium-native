@@ -416,7 +416,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
         *loaderResult.pLoader,
         *loaderResult.pRootTile);
     CHECK(
-        std::holds_alternative<TileRenderContent>(tileLoadResult.contentKind));
+        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
@@ -447,7 +447,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     // check tile is really an external tile
     loaderResult.pRootTile->getContent().setContentKind(
-        tileLoadResult.contentKind);
+        std::get<TileExternalContent>(tileLoadResult.contentKind));
     tileLoadResult.tileInitializer(*loaderResult.pRootTile);
     const auto& children = loaderResult.pRootTile->getChildren();
     CHECK(children.size() == 1);
@@ -559,7 +559,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
       asyncSystem.dispatchMainThreadTasks();
 
       auto implicitContentResult = implicitContentResultFuture.wait();
-      CHECK(std::holds_alternative<TileRenderContent>(
+      CHECK(std::holds_alternative<CesiumGltf::Model>(
           implicitContentResult.contentKind));
       CHECK(!implicitContentResult.updatedBoundingVolume);
       CHECK(!implicitContentResult.updatedContentBoundingVolume);

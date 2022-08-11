@@ -1,30 +1,92 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 
 namespace Cesium3DTilesSelection {
-TileContent::TileContent()
-    : _contentKind{TileUnknownContent{}},
+TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
+    : _model{std::move(model)},
       _pRenderResources{nullptr},
-      _rasterOverlayDetails{},
-      _tileInitializer{} {}
+      _rasterOverlayDetails{} {}
 
-TileContent::TileContent(TileEmptyContent emptyContent)
-    : _contentKind{emptyContent},
-      _pRenderResources{nullptr},
-      _rasterOverlayDetails{},
-      _tileInitializer{} {}
-
-TileContent::TileContent(TileExternalContent externalContent)
-    : _contentKind{externalContent},
-      _pRenderResources{nullptr},
-      _rasterOverlayDetails{},
-      _tileInitializer{} {}
-
-void TileContent::setContentKind(TileContentKind&& contentKind) {
-  this->_contentKind = std::move(contentKind);
+const CesiumGltf::Model& TileRenderContent::getModel() const noexcept {
+  return _model;
 }
 
-void TileContent::setContentKind(const TileContentKind& contentKind) {
-  this->_contentKind = contentKind;
+CesiumGltf::Model& TileRenderContent::getModel() noexcept { return _model; }
+
+void TileRenderContent::setModel(const CesiumGltf::Model& model) {
+  _model = model;
+}
+
+void TileRenderContent::setModel(CesiumGltf::Model&& model) {
+  _model = std::move(model);
+}
+
+const RasterOverlayDetails&
+TileRenderContent::getRasterOverlayDetails() const noexcept {
+  return this->_rasterOverlayDetails;
+}
+
+RasterOverlayDetails& TileRenderContent::getRasterOverlayDetails() noexcept {
+  return this->_rasterOverlayDetails;
+}
+
+void TileRenderContent::setRasterOverlayDetails(
+    const RasterOverlayDetails& rasterOverlayDetails) {
+  this->_rasterOverlayDetails = rasterOverlayDetails;
+}
+
+void TileRenderContent::setRasterOverlayDetails(
+    RasterOverlayDetails&& rasterOverlayDetails) {
+  this->_rasterOverlayDetails = std::move(rasterOverlayDetails);
+}
+
+const std::vector<Credit>& TileRenderContent::getCredits() const noexcept {
+  return this->_credits;
+}
+
+std::vector<Credit>& TileRenderContent::getCredits() noexcept {
+  return this->_credits;
+}
+
+void TileRenderContent::setCredits(std::vector<Credit>&& credits) {
+  this->_credits = std::move(credits);
+}
+
+void TileRenderContent::setCredits(const std::vector<Credit>& credits) {
+  this->_credits = credits;
+}
+
+void* TileRenderContent::getRenderResources() const noexcept {
+  return this->_pRenderResources;
+}
+
+void TileRenderContent::setRenderResources(void* pRenderResources) noexcept {
+  this->_pRenderResources = pRenderResources;
+}
+
+TileContent::TileContent() : _contentKind{TileUnknownContent{}} {}
+
+TileContent::TileContent(TileEmptyContent content) : _contentKind{content} {}
+
+TileContent::TileContent(TileExternalContent content) : _contentKind{content} {}
+
+void TileContent::setContentKind(TileUnknownContent content) {
+  _contentKind = content;
+}
+
+void TileContent::setContentKind(TileEmptyContent content) {
+  _contentKind = content;
+}
+
+void TileContent::setContentKind(TileExternalContent content) {
+  _contentKind = content;
+}
+
+void TileContent::setContentKind(std::unique_ptr<TileRenderContent> content) {
+  _contentKind = std::move(content);
+}
+
+bool TileContent::isUnknownContent() const noexcept {
+  return std::holds_alternative<TileUnknownContent>(this->_contentKind);
 }
 
 bool TileContent::isEmptyContent() const noexcept {
@@ -36,67 +98,27 @@ bool TileContent::isExternalContent() const noexcept {
 }
 
 bool TileContent::isRenderContent() const noexcept {
-  return std::holds_alternative<TileRenderContent>(this->_contentKind);
+  return std::holds_alternative<std::unique_ptr<TileRenderContent>>(
+      this->_contentKind);
 }
 
 const TileRenderContent* TileContent::getRenderContent() const noexcept {
-  return std::get_if<TileRenderContent>(&this->_contentKind);
+  const std::unique_ptr<TileRenderContent>* pRenderContent =
+      std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
+  if (pRenderContent) {
+    return pRenderContent->get();
+  }
+
+  return nullptr;
 }
 
 TileRenderContent* TileContent::getRenderContent() noexcept {
-  return std::get_if<TileRenderContent>(&this->_contentKind);
-}
+  std::unique_ptr<TileRenderContent>* pRenderContent =
+      std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
+  if (pRenderContent) {
+    return pRenderContent->get();
+  }
 
-const RasterOverlayDetails&
-TileContent::getRasterOverlayDetails() const noexcept {
-  return this->_rasterOverlayDetails;
-}
-
-RasterOverlayDetails& TileContent::getRasterOverlayDetails() noexcept {
-  return this->_rasterOverlayDetails;
-}
-
-void TileContent::setRasterOverlayDetails(
-    const RasterOverlayDetails& rasterOverlayDetails) {
-  this->_rasterOverlayDetails = rasterOverlayDetails;
-}
-
-void TileContent::setRasterOverlayDetails(
-    RasterOverlayDetails&& rasterOverlayDetails) {
-  this->_rasterOverlayDetails = std::move(rasterOverlayDetails);
-}
-
-const std::vector<Credit>& TileContent::getCredits() const noexcept {
-  return this->_credits;
-}
-
-std::vector<Credit>& TileContent::getCredits() noexcept {
-  return this->_credits;
-}
-
-void TileContent::setCredits(std::vector<Credit>&& credits) {
-  this->_credits = std::move(credits);
-}
-
-void TileContent::setCredits(const std::vector<Credit>& credits) {
-  this->_credits = credits;
-}
-
-const std::function<void(Tile&)>&
-TileContent::getTileInitializerCallback() const noexcept {
-  return this->_tileInitializer;
-}
-
-void TileContent::setTileInitializerCallback(
-    std::function<void(Tile&)> callback) {
-  this->_tileInitializer = std::move(callback);
-}
-
-void* TileContent::getRenderResources() const noexcept {
-  return this->_pRenderResources;
-}
-
-void TileContent::setRenderResources(void* pRenderResources) noexcept {
-  this->_pRenderResources = pRenderResources;
+  return nullptr;
 }
 } // namespace Cesium3DTilesSelection
