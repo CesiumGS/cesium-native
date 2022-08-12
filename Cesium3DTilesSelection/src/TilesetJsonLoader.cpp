@@ -2,6 +2,7 @@
 
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
+#include "LogTileLoadResult.h"
 
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -47,40 +48,6 @@ struct ExternalContentInitializer {
     }
   }
 };
-
-void logErrors(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& errors) {
-  if (!errors.empty()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Failed to load {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(errors, "\n- "));
-  }
-}
-
-void logWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& warnings) {
-  if (!warnings.empty()) {
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "Warning when loading {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(warnings, "\n- "));
-  }
-}
-
-void logErrorsAndWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const ErrorList& errorLists) {
-  logErrors(pLogger, url, errorLists.errors);
-  logWarnings(pLogger, url, errorLists.warnings);
-}
 
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
@@ -683,7 +650,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
   if (errors) {
-    logErrors(pLogger, tileUrl, errors.errors);
+    logTileLoadResult(pLogger, tileUrl, errors);
 
     // since the json cannot be parsed, we don't know the content of this tile
     return TileLoadResult{
@@ -850,7 +817,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               GltfConverterResult result = converter(responseData, gltfOptions);
 
               // Report any errors if there are any
-              logErrorsAndWarnings(pLogger, tileUrl, result.errors);
+              logTileLoadResult(pLogger, tileUrl, result.errors);
               if (result.errors) {
                 return TileLoadResult{
                     TileUnknownContent{},
