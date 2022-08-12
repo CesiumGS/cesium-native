@@ -5,8 +5,8 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 
-#include <variant>
 #include <memory>
+#include <variant>
 
 namespace Cesium3DTilesSelection {
 struct TileUnknownContent {};
