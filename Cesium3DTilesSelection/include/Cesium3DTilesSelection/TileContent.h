@@ -6,6 +6,7 @@
 #include <CesiumGltf/Model.h>
 
 #include <variant>
+#include <memory>
 
 namespace Cesium3DTilesSelection {
 struct TileUnknownContent {};
