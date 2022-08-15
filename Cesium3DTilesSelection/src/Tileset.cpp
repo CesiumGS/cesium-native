@@ -8,7 +8,6 @@
 #include <Cesium3DTilesSelection/RasterOverlayTile.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/Tileset.h>
-#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -95,7 +94,9 @@ Tileset::Tileset(
     TilesetJsonLoader::createLoader(externals, url, {})
         .thenInMainThread(
             [this](TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
-              this->_propagateTilesetContentLoaderResult(std::move(result));
+              this->_propagateTilesetContentLoaderResult(
+                  TilesetLoadType::TilesetJson,
+                  std::move(result));
             });
   }
 }
@@ -151,7 +152,9 @@ Tileset::Tileset(
         .thenInMainThread(
             [this](
                 TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
-              this->_propagateTilesetContentLoaderResult(std::move(result));
+              this->_propagateTilesetContentLoaderResult(
+                  TilesetLoadType::CesiumIon,
+                  std::move(result));
             });
   }
 }
@@ -1143,13 +1146,14 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
 
 template <class TilesetContentLoaderType>
 void Tileset::_propagateTilesetContentLoaderResult(
+    TilesetLoadType type,
     TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
   if (result.errors) {
     const auto& tilesetOptions = this->getOptions();
     if (tilesetOptions.loadErrorCallback) {
       tilesetOptions.loadErrorCallback(TilesetLoadFailureDetails{
           this,
-          TilesetLoadType::TilesetJson,
+          type,
           nullptr,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
     } else {

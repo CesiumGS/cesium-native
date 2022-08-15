@@ -9,6 +9,7 @@
 #include "ViewUpdateResult.h"
 
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
@@ -353,6 +354,7 @@ private:
 
   template <class TilesetContentLoaderType>
   void _propagateTilesetContentLoaderResult(
+      TilesetLoadType type,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
   TilesetExternals _externals;
