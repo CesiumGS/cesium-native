@@ -37,7 +37,7 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
-  void operator()(CesiumGltf::Model& model) {
+  void operator()(CesiumGltf::Model&& model) {
     auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
     pRenderContent->setRenderResources(pRenderResources);
     if (rasterOverlayDetails) {
@@ -847,7 +847,7 @@ void TilesetContentManager::setTileContent(
           content,
           std::move(result.rasterOverlayDetails),
           pWorkerRenderResources},
-      result.contentKind);
+      std::move(result.contentKind));
 
   if (result.tileInitializer) {
     result.tileInitializer(tile);
