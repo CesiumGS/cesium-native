@@ -71,7 +71,7 @@ public:
   const std::vector<Layer>& getLayers() const noexcept;
 
 private:
-  bool doesTileHasUpsampledChild(const Tile& til) const;
+  bool tileHasUpsampledChild(const Tile& tile) const;
 
   std::vector<Tile> createTileChildrenImpl(const Tile& tile);
 
