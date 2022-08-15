@@ -622,6 +622,10 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
               QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Receive status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url()));
               return result;
             }
 
