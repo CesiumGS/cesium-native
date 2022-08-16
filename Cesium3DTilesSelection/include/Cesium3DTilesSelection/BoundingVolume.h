@@ -10,6 +10,7 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <variant>
+#include <optional>
 
 namespace Cesium3DTilesSelection {
 
