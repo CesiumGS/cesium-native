@@ -7,6 +7,7 @@
 #include "readFile.h"
 
 #include <Cesium3DTilesSelection/DebugColorizeTilesRasterOverlay.h>
+#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
@@ -970,6 +971,81 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     // unload the tile
+    manager.unloadTileContent(tile);
+  }
+
+  SECTION("Don't generate raster overlay for existing projection") {
+    // create gltf grid
+    Cartographic beginCarto{glm::radians(32.0), glm::radians(48.0), 100.0};
+    CesiumGltf::Model model = createGlobeGrid(beginCarto, 10, 10, 0.01);
+    model.extras["gltfUpAxis"] =
+        static_cast<std::underlying_type_t<CesiumGeometry::Axis>>(
+            CesiumGeometry::Axis::Z);
+
+    // mock raster overlay detail
+    GeographicProjection projection;
+    RasterOverlayDetails rasterOverlayDetails;
+    rasterOverlayDetails.rasterOverlayProjections.emplace_back(projection);
+    rasterOverlayDetails.rasterOverlayRectangles.emplace_back(
+        projection.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE));
+    rasterOverlayDetails.boundingRegion = BoundingRegion{
+        GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
+        -1000.0,
+        9000.0};
+
+    // add raster overlay
+    rasterOverlayCollection.add(
+        std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
+    asyncSystem.dispatchMainThreadTasks();
+
+    // create mock loader
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
+    pMockedLoader->mockLoadTileContent = {
+        std::move(model),
+        std::nullopt,
+        std::nullopt,
+        std::move(rasterOverlayDetails),
+        nullptr,
+        {},
+        TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+
+    // create tile
+    Tile tile(pMockedLoader.get());
+
+    // create manager
+    TilesetContentManager manager{
+        externals,
+        {},
+        std::move(pMockedLoader),
+        rasterOverlayCollection};
+
+    manager.loadTileContent(tile, {});
+    manager.waitIdle();
+
+    const auto& renderContent = tile.getContent().getRenderContent();
+    CHECK(renderContent);
+
+    // Check that manager doesn't generate raster overlay for duplicate
+    // projection. Because the mock rasterOverlayDetails uses the same
+    // projection as rasterOverlayCollection, the manager should not generate
+    // any extra UVs attribute in the post process. Because we never generate
+    // _CESIUMOVERLAY_0 to begin with, so this test only successes when no
+    // _CESIUMOVERLAY_0 is found. Otherwise, the manager did generates UV using
+    // the duplicated projection
+    const CesiumGltf::Model& tileModel = renderContent->getModel();
+    CHECK(!tileModel.meshes.empty());
+    for (const CesiumGltf::Mesh& tileMesh : tileModel.meshes) {
+      CHECK(!tileMesh.primitives.empty());
+      for (const CesiumGltf::MeshPrimitive& tilePrimitive :
+           tileMesh.primitives) {
+        CHECK(
+            tilePrimitive.attributes.find("_CESIUMOVERLAY_0") ==
+            tilePrimitive.attributes.end());
+      }
+    }
+
     manager.unloadTileContent(tile);
   }
 }

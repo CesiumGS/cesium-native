@@ -622,6 +622,10 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
               QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Receive status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url()));
               return result;
             }
 
@@ -807,8 +811,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
           // thread based on the projection of the loader since the upsampler
           // needs this UV to do the upsampling
           auto finalResult = convertToTileLoadResult(std::move(loadResult));
-          bool tileHasUpsampledChild = doesTileHasUpsampledChild(tile);
-          if (tileHasUpsampledChild &&
+          bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
+          if (doesTileHaveUpsampledChild &&
               finalResult.state == TileLoadResultState::Success) {
             return asyncSystem.runInWorkerThread(
                 [finalResult = std::move(finalResult),
@@ -828,9 +832,9 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         });
   }
 
-  bool tileHasUpsampledChild = doesTileHasUpsampledChild(tile);
+  bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
   return std::move(futureQuantizedMesh)
-      .thenImmediately([tileHasUpsampledChild,
+      .thenImmediately([doesTileHaveUpsampledChild,
                         projection = this->_projection,
                         tileTransform = tile.getTransform(),
                         tileBoundingVolume = tile.getBoundingVolume()](
@@ -840,7 +844,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         // on the projection of the loader since the upsampler needs this UV
         // to do the upsampling
         auto result = convertToTileLoadResult(std::move(loadResult));
-        if (tileHasUpsampledChild &&
+        if (doesTileHaveUpsampledChild &&
             result.state == TileLoadResultState::Success) {
           generateRasterOverlayUVs(
               tileBoundingVolume,
@@ -903,7 +907,7 @@ LayerJsonTerrainLoader::getLayers() const noexcept {
   return this->_layers;
 }
 
-bool LayerJsonTerrainLoader::doesTileHasUpsampledChild(const Tile& tile) const {
+bool LayerJsonTerrainLoader::tileHasUpsampledChild(const Tile& tile) const {
   const auto& tileChildren = tile.getChildren();
   if (tileChildren.empty()) {
     const QuadtreeTileID* pQuadtreeTileID =

@@ -37,7 +37,7 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
-  void operator()(CesiumGltf::Model& model) {
+  void operator()(CesiumGltf::Model&& model) {
     auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
     pRenderContent->setRenderResources(pRenderResources);
     if (rasterOverlayDetails) {
@@ -327,23 +327,20 @@ void calcRasterOverlayDetailsInWorkerThread(
   // remove any projections that are already used to generated UV
   int32_t firstRasterOverlayTexCoord = 0;
   if (result.rasterOverlayDetails) {
-    const auto& existingProjections =
+    const std::vector<CesiumGeospatial::Projection>& existingProjections =
         result.rasterOverlayDetails->rasterOverlayProjections;
     firstRasterOverlayTexCoord =
         static_cast<int32_t>(existingProjections.size());
-    for (size_t i = 0; i < projections.size(); ++i) {
-      for (const auto& existingProjection : existingProjections) {
-        if (projections[i] == existingProjection) {
-          if (i != projections.size() - 1) {
-            std::swap(projections[i], projections.back());
-          }
-
-          projections.pop_back();
-          --i;
-          break;
-        }
-      }
-    }
+    auto removedProjectionIt = std::remove_if(
+        projections.begin(),
+        projections.end(),
+        [&](const CesiumGeospatial::Projection& proj) {
+          return std::find(
+                     existingProjections.begin(),
+                     existingProjections.end(),
+                     proj) != existingProjections.end();
+        });
+    projections.erase(removedProjectionIt, projections.end());
   }
 
   // generate the overlay details from the rest of projections and merge it with
@@ -847,7 +844,7 @@ void TilesetContentManager::setTileContent(
           content,
           std::move(result.rasterOverlayDetails),
           pWorkerRenderResources},
-      result.contentKind);
+      std::move(result.contentKind));
 
   if (result.tileInitializer) {
     result.tileInitializer(tile);
