@@ -561,6 +561,7 @@ TilesetContentManager::TilesetContentManager(
       _pLoader{std::move(pLoader)},
       _pOverlayCollection{&overlayCollection},
       _tilesLoadOnProgress{0},
+      _loadedTilesCount{0},
       _tilesDataUsed{0} {}
 
 TilesetContentManager::~TilesetContentManager() noexcept { waitIdle(); }

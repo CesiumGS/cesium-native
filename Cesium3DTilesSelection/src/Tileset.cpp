@@ -363,16 +363,17 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
 }
 
 float Tileset::computeLoadProgress() noexcept {
-  uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
-                                this->_loadQueueMedium.size() +
-                                this->_loadQueueHigh.size());
-  uint32_t inProgressSum =
-      (this->_pTilesetContentManager->getNumOfTilesLoading() + queueSizeSum);
-  uint32_t totalNum =
-      this->_pTilesetContentManager->getNumOfTilesLoaded() + inProgressSum;
+  uint32_t queueSizeSum = static_cast<uint32_t>(
+      this->_loadQueueLow.size() + this->_loadQueueMedium.size() +
+      this->_loadQueueHigh.size());
+  uint32_t numOfTilesLoading = static_cast<uint32_t>(
+      this->_pTilesetContentManager->getNumOfTilesLoading());
+  uint32_t numOfTilesLoaded = static_cast<uint32_t>(
+      this->_pTilesetContentManager->getNumOfTilesLoaded());
+  uint32_t inProgressSum = numOfTilesLoading + queueSizeSum;
+  uint32_t totalNum = numOfTilesLoaded + inProgressSum;
   float percentage =
-      static_cast<float>(this->_pTilesetContentManager->getNumOfTilesLoaded()) /
-      static_cast<float>(totalNum);
+      static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
   return (percentage * 100.f);
 }
 
