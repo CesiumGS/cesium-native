@@ -9,8 +9,8 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
-#include <variant>
 #include <optional>
+#include <variant>
 
 namespace Cesium3DTilesSelection {
 
