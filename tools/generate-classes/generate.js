@@ -29,16 +29,21 @@ function generate(options, schema, writers) {
 
   schemaCache.pushContext(schema);
 
-  let base = "CesiumUtility::ExtensibleObject";
   let baseSchema;
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
     baseSchema = schemaCache.load(schema.allOf[0].$ref);
+  } else if (schema.$ref) {
+    baseSchema = schemaCache.load(schema.$ref);
+  }
+
+  let base = "CesiumUtility::ExtensibleObject";
+  if (baseSchema !== undefined) {
     base = getNameFromTitle(config, baseSchema.title);
   }
 
   const required = schema.required || [];
 
-  const properties = Object.keys(schema.properties)
+  const properties = Object.keys(schema.properties || {})
     .map((key) =>
       resolveProperty(
         schemaCache,

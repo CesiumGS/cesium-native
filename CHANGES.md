@@ -1,5 +1,30 @@
 # Change Log
 
+### v0.18.1 - 2022-08-04
+
+##### Fixes :wrench:
+
+- Fixed a bug in `SqliteCache` where the last access time of resources was not updated correctly, sometimes causing more recently used resources to be evicted from the cache before less recently used ones.
+
+### v0.18.0 - 2022-08-01
+
+##### Breaking Changes :mega:
+
+- Removed support for 3D Tiles Next extensions in `TilesetWriter` and `TilesetReader` that have been promoted to core in 3D Tiles 1.1
+  - [3DTILES_multiple_contents](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_multiple_contents)
+  - [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling)
+  - [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata)
+  - [3DTILES_content_gltf](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_content_gltf)
+- Removed the `getSupportsRasterOverlays` from `Tileset` because the property is no longer relevant now that all tilesets support raster overlays.
+
+##### Additions :tada:
+
+- Added support for [3D Tiles 1.1](https://github.com/CesiumGS/3d-tiles/pull/666) in `TilesetWriter` and `TilesetReader`.
+- Added a `TileOcclusionRendererProxyPool` to `TilesetExternals`. If a renderer implements and provides this interface, the tile occlusion information is used to avoid refining parent tiles that are completely occluded, reducing the number of tiles loaded.
+- `Tileset` can now estimate the percentage of the tiles for the current view that have been loaded by calling the `computeLoadProgress` method.
+- Enabled loading Tile Map Service (TMS) URLs that do not have a file named "tilemapresource.xml", such as from GeoServer.
+- Added support for Tile Map Service documents that use the "local" profile when the SRS is mercator or geodetic.
+
 ### v0.17.0 - 2022-07-01
 
 ##### Fixes :wrench:

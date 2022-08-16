@@ -795,6 +795,10 @@ int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
   return this->_tilesLoadOnProgress;
 }
 
+int32_t TilesetContentManager::getNumOfTilesLoaded() const noexcept {
+  return this->_loadedTilesCount;
+}
+
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
   for (const auto& pOverlay : *this->_pOverlayCollection) {
@@ -1032,10 +1036,12 @@ void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
       this->_tilesLoadOnProgress > 0 &&
       "There are no tile loads currently in flight");
   --this->_tilesLoadOnProgress;
+  ++this->_loadedTilesCount;
   this->_tilesDataUsed += tile.computeByteSize();
 }
 
 void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {
   this->_tilesDataUsed -= tile.computeByteSize();
+  --this->_loadedTilesCount;
 }
 } // namespace Cesium3DTilesSelection

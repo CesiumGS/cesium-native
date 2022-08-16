@@ -4,9 +4,11 @@
 
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/MetadataEntity.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 
@@ -31,5 +33,16 @@ struct CESIUM3DTILES_API Content final
    * relative to the referring tileset JSON file.
    */
   std::string uri;
+
+  /**
+   * @brief Metadata that is associated with this content.
+   */
+  std::optional<Cesium3DTiles::MetadataEntity> metadata;
+
+  /**
+   * @brief The group this content belongs to. The value is an index into the
+   * array of `groups` that is defined for the containing tileset.
+   */
+  std::optional<int64_t> group;
 };
 } // namespace Cesium3DTiles

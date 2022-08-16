@@ -39,6 +39,8 @@ public:
 
   int32_t getNumOfTilesLoading() const noexcept;
 
+  int32_t getNumOfTilesLoaded() const noexcept;
+
   int64_t getTotalDataUsed() const noexcept;
 
   bool doesTileNeedLoading(const Tile& tile) const noexcept;
@@ -70,6 +72,7 @@ private:
   RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection* _pOverlayCollection;
   int32_t _tilesLoadOnProgress;
+  int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
 };
 } // namespace Cesium3DTilesSelection

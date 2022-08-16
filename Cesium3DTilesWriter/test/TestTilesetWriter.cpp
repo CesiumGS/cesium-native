@@ -1,6 +1,6 @@
 #include "Cesium3DTilesWriter/TilesetWriter.h"
 
-#include <Cesium3DTiles/Extension3dTilesContentGltf.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
 
 #include <catch2/catch.hpp>
@@ -139,7 +139,7 @@ TEST_CASE("Writes tileset JSON with extras") {
   check(string, string);
 }
 
-TEST_CASE("Writes tileset JSON with 3DTILES_content_gltf extension") {
+TEST_CASE("Writes tileset JSON with 3DTILES_bounding_volume_S2 extension") {
   std::string string = R"(
     {
       "asset": {
@@ -148,7 +148,13 @@ TEST_CASE("Writes tileset JSON with 3DTILES_content_gltf extension") {
       "geometricError": 45.0,
       "root": {
         "boundingVolume": {
-          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+          "extensions": {
+            "3DTILES_bounding_volume_S2": {
+              "token": "3",
+              "minimumHeight": 0,
+              "maximumHeight": 1000000
+            }
+          }
         },
         "geometricError": 15.0,
         "refine": "ADD",
@@ -157,22 +163,11 @@ TEST_CASE("Writes tileset JSON with 3DTILES_content_gltf extension") {
         }
       },
       "extensionsUsed": [
-        "3DTILES_content_gltf"
+        "3DTILES_bounding_volume_S2"
       ],
       "extensionsRequired": [
-        "3DTILES_content_gltf"
-      ],
-      "extensions": {
-        "3DTILES_content_gltf": {
-          "extensionsUsed": [
-            "KHR_draco_mesh_compression",
-            "KHR_materials_unlit"
-          ],
-          "extensionsRequired": [
-            "KHR_draco_mesh_compression"
-          ]
-        }
-      }
+        "3DTILES_bounding_volume_S2"
+      ]
     }
   )";
 
