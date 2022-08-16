@@ -1,8 +1,8 @@
 #pragma once
 
 #include "SubtreeAvailability.h"
-#include "TilesetContentLoader.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -36,6 +36,8 @@ public:
   loadTileContent(const TileLoadInput& loadInput) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
+
+  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
 
   uint32_t getSubtreeLevels() const noexcept;
 

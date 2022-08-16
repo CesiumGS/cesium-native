@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TilesetContentLoader.h"
 #include "TilesetContentLoaderResult.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 
 #include <functional>
@@ -28,7 +28,10 @@ public:
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
-  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
+
+  static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+  createLoader(
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       uint32_t ionAssetID,

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "TilesetContentLoader.h"
 #include "TilesetContentLoaderResult.h"
 
 #include <Cesium3DTilesSelection/CreditSystem.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -27,7 +27,8 @@ class LayerJsonTerrainLoader : public TilesetContentLoader {
   enum class AvailableState { Available, NotAvailable, Unknown };
 
 public:
-  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+  static CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
+  createLoader(
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
@@ -61,8 +62,16 @@ public:
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
+  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
+
+  const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept;
+
+  const CesiumGeospatial::Projection& getProjection() const noexcept;
+
+  const std::vector<Layer>& getLayers() const noexcept;
+
 private:
-  bool doesTileHasUpsampledChild(const Tile& til) const;
+  bool tileHasUpsampledChild(const Tile& tile) const;
 
   std::vector<Tile> createTileChildrenImpl(const Tile& tile);
 

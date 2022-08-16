@@ -7,6 +7,8 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGltf/Model.h>
 
 #include <spdlog/logger.h>
 
@@ -19,6 +21,12 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 enum class TileLoadResultState { Success, Failed, RetryLater };
+
+using TileContentKind = std::variant<
+    TileUnknownContent,
+    TileEmptyContent,
+    TileExternalContent,
+    CesiumGltf::Model>;
 
 struct TileLoadInput {
   TileLoadInput(
@@ -60,5 +68,8 @@ public:
   loadTileContent(const TileLoadInput& input) = 0;
 
   virtual TileChildrenResult createTileChildren(const Tile& tile) = 0;
+
+  virtual CesiumGeometry::Axis
+  getTileUpAxis(const Tile& tile) const noexcept = 0;
 };
 } // namespace Cesium3DTilesSelection

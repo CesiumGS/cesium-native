@@ -1,133 +1,124 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 
 namespace Cesium3DTilesSelection {
-TileContent::TileContent(TilesetContentLoader* pLoader)
-    : _state{TileLoadState::Unloaded},
-      _contentKind{TileUnknownContent{}},
+TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
+    : _model{std::move(model)},
       _pRenderResources{nullptr},
-      _rasterOverlayDetails{},
-      _tileInitializer{},
-      _shouldContentContinueUpdated{true},
-      _pLoader{pLoader} {}
+      _rasterOverlayDetails{} {}
 
-TileContent::TileContent(
-    TilesetContentLoader* pLoader,
-    TileEmptyContent emptyContent)
-    : _state{TileLoadState::ContentLoaded},
-      _contentKind{emptyContent},
-      _pRenderResources{nullptr},
-      _rasterOverlayDetails{},
-      _tileInitializer{},
-      _shouldContentContinueUpdated{true},
-      _pLoader{pLoader} {}
-
-TileContent::TileContent(
-    TilesetContentLoader* pLoader,
-    TileExternalContent externalContent)
-    : _state{TileLoadState::ContentLoaded},
-      _contentKind{externalContent},
-      _pRenderResources{nullptr},
-      _rasterOverlayDetails{},
-      _tileInitializer{},
-      _shouldContentContinueUpdated{true},
-      _pLoader{pLoader} {}
-
-TileLoadState TileContent::getState() const noexcept { return _state; }
-
-bool TileContent::shouldContentContinueUpdated() const noexcept {
-  return _shouldContentContinueUpdated;
+const CesiumGltf::Model& TileRenderContent::getModel() const noexcept {
+  return _model;
 }
 
-bool TileContent::isEmptyContent() const noexcept {
-  return std::holds_alternative<TileEmptyContent>(_contentKind);
+CesiumGltf::Model& TileRenderContent::getModel() noexcept { return _model; }
+
+void TileRenderContent::setModel(const CesiumGltf::Model& model) {
+  _model = model;
 }
 
-bool TileContent::isExternalContent() const noexcept {
-  return std::holds_alternative<TileExternalContent>(_contentKind);
-}
-
-bool TileContent::isRenderContent() const noexcept {
-  return std::holds_alternative<TileRenderContent>(_contentKind);
-}
-
-const TileExternalContent* TileContent::getExternalContent() const noexcept {
-  return std::get_if<TileExternalContent>(&_contentKind);
-}
-
-TileExternalContent* TileContent::getExternalContent() noexcept {
-  return std::get_if<TileExternalContent>(&_contentKind);
-}
-
-const TileRenderContent* TileContent::getRenderContent() const noexcept {
-  return std::get_if<TileRenderContent>(&_contentKind);
-}
-
-TileRenderContent* TileContent::getRenderContent() noexcept {
-  return std::get_if<TileRenderContent>(&_contentKind);
+void TileRenderContent::setModel(CesiumGltf::Model&& model) {
+  _model = std::move(model);
 }
 
 const RasterOverlayDetails&
-TileContent::getRasterOverlayDetails() const noexcept {
-  return _rasterOverlayDetails;
+TileRenderContent::getRasterOverlayDetails() const noexcept {
+  return this->_rasterOverlayDetails;
 }
 
-RasterOverlayDetails& TileContent::getRasterOverlayDetails() noexcept {
-  return _rasterOverlayDetails;
+RasterOverlayDetails& TileRenderContent::getRasterOverlayDetails() noexcept {
+  return this->_rasterOverlayDetails;
 }
 
-const std::vector<Credit>& TileContent::getCredits() const noexcept {
-  return _credits;
-}
-
-std::vector<Credit>& TileContent::getCredits() noexcept { return _credits; }
-
-TilesetContentLoader* TileContent::getLoader() const noexcept {
-  return _pLoader;
-}
-
-void TileContent::setContentKind(TileContentKind&& contentKind) {
-  _contentKind = std::move(contentKind);
-}
-
-void TileContent::setContentKind(const TileContentKind& contentKind) {
-  _contentKind = contentKind;
-}
-
-void TileContent::setRasterOverlayDetails(
+void TileRenderContent::setRasterOverlayDetails(
     const RasterOverlayDetails& rasterOverlayDetails) {
-  _rasterOverlayDetails = rasterOverlayDetails;
+  this->_rasterOverlayDetails = rasterOverlayDetails;
 }
 
-void TileContent::setRasterOverlayDetails(
+void TileRenderContent::setRasterOverlayDetails(
     RasterOverlayDetails&& rasterOverlayDetails) {
-  _rasterOverlayDetails = std::move(rasterOverlayDetails);
+  this->_rasterOverlayDetails = std::move(rasterOverlayDetails);
 }
 
-void TileContent::setState(TileLoadState state) noexcept { _state = state; }
-
-void TileContent::setRenderResources(void* pRenderResources) noexcept {
-  _pRenderResources = pRenderResources;
+const std::vector<Credit>& TileRenderContent::getCredits() const noexcept {
+  return this->_credits;
 }
 
-void TileContent::setTileInitializerCallback(
-    std::function<void(Tile&)> callback) {
-  _tileInitializer = std::move(callback);
+std::vector<Credit>& TileRenderContent::getCredits() noexcept {
+  return this->_credits;
 }
 
-std::function<void(Tile&)>& TileContent::getTileInitializerCallback() {
-  return _tileInitializer;
+void TileRenderContent::setCredits(std::vector<Credit>&& credits) {
+  this->_credits = std::move(credits);
 }
 
-void TileContent::setContentShouldContinueUpdated(
-    bool shouldContentContinueUpdated) noexcept {
-  _shouldContentContinueUpdated = shouldContentContinueUpdated;
+void TileRenderContent::setCredits(const std::vector<Credit>& credits) {
+  this->_credits = credits;
 }
 
-void TileContent::setCredits(std::vector<Credit>&& credits) {
-  _credits = std::move(credits);
+void* TileRenderContent::getRenderResources() const noexcept {
+  return this->_pRenderResources;
 }
 
-void* TileContent::getRenderResources() const noexcept {
-  return _pRenderResources;
+void TileRenderContent::setRenderResources(void* pRenderResources) noexcept {
+  this->_pRenderResources = pRenderResources;
+}
+
+TileContent::TileContent() : _contentKind{TileUnknownContent{}} {}
+
+TileContent::TileContent(TileEmptyContent content) : _contentKind{content} {}
+
+TileContent::TileContent(TileExternalContent content) : _contentKind{content} {}
+
+void TileContent::setContentKind(TileUnknownContent content) {
+  _contentKind = content;
+}
+
+void TileContent::setContentKind(TileEmptyContent content) {
+  _contentKind = content;
+}
+
+void TileContent::setContentKind(TileExternalContent content) {
+  _contentKind = content;
+}
+
+void TileContent::setContentKind(std::unique_ptr<TileRenderContent> content) {
+  _contentKind = std::move(content);
+}
+
+bool TileContent::isUnknownContent() const noexcept {
+  return std::holds_alternative<TileUnknownContent>(this->_contentKind);
+}
+
+bool TileContent::isEmptyContent() const noexcept {
+  return std::holds_alternative<TileEmptyContent>(this->_contentKind);
+}
+
+bool TileContent::isExternalContent() const noexcept {
+  return std::holds_alternative<TileExternalContent>(this->_contentKind);
+}
+
+bool TileContent::isRenderContent() const noexcept {
+  return std::holds_alternative<std::unique_ptr<TileRenderContent>>(
+      this->_contentKind);
+}
+
+const TileRenderContent* TileContent::getRenderContent() const noexcept {
+  const std::unique_ptr<TileRenderContent>* pRenderContent =
+      std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
+  if (pRenderContent) {
+    return pRenderContent->get();
+  }
+
+  return nullptr;
+}
+
+TileRenderContent* TileContent::getRenderContent() noexcept {
+  std::unique_ptr<TileRenderContent>* pRenderContent =
+      std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
+  if (pRenderContent) {
+    return pRenderContent->get();
+  }
+
+  return nullptr;
 }
 } // namespace Cesium3DTilesSelection

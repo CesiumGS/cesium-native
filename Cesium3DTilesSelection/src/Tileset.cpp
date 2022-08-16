@@ -8,7 +8,6 @@
 #include <Cesium3DTilesSelection/RasterOverlayTile.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/Tileset.h>
-#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -37,6 +36,40 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+namespace {
+void unloadTileRecursively(
+    Tile& tile,
+    TilesetContentManager& tilesetContentManager) {
+  tilesetContentManager.unloadTileContent(tile);
+  for (Tile& child : tile.getChildren()) {
+    unloadTileRecursively(child, tilesetContentManager);
+  }
+}
+} // namespace
+
+Tileset::Tileset(
+    const TilesetExternals& externals,
+    std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+    const TilesetOptions& options)
+    : _externals(externals),
+      _asyncSystem(externals.asyncSystem),
+      _userCredit(
+          (options.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    options.credit.value(),
+                    options.showCreditsOnScreen))
+              : std::nullopt),
+      _options(options),
+      _pRootTile(),
+      _previousFrameNumber(0),
+      _overlays(_loadedTiles, externals),
+      _distancesStack(),
+      _nextDistancesVector(0),
+      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+          _externals,
+          std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+          std::move(pCustomLoader),
+          _overlays)} {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -54,15 +87,17 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(_loadedTiles, externals),
-      _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     TilesetJsonLoader::createLoader(externals, url, {})
-        .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          this->_propagateTilesetContentLoaderResult(std::move(result));
-        });
+        .thenInMainThread(
+            [this](TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
+              this->_propagateTilesetContentLoaderResult(
+                  TilesetLoadType::TilesetJson,
+                  std::move(result));
+            });
   }
 }
 
@@ -84,7 +119,6 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _overlays(_loadedTiles, externals),
-      _gltfUpAxis(CesiumGeometry::Axis::Y),
       _distancesStack(),
       _nextDistancesVector(0) {
   if (ionAssetID > 0) {
@@ -115,13 +149,24 @@ Tileset::Tileset(
         ionAssetEndpointUrl,
         authorizationChangeListener,
         options.showCreditsOnScreen)
-        .thenInMainThread([this](TilesetContentLoaderResult&& result) {
-          this->_propagateTilesetContentLoaderResult(std::move(result));
-        });
+        .thenInMainThread(
+            [this](
+                TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+              this->_propagateTilesetContentLoaderResult(
+                  TilesetLoadType::CesiumIon,
+                  std::move(result));
+            });
   }
 }
 
-Tileset::~Tileset() noexcept {}
+Tileset::~Tileset() noexcept {
+  if (this->_pTilesetContentManager) {
+    this->_pTilesetContentManager->waitIdle();
+    if (_pRootTile) {
+      unloadTileRecursively(*_pRootTile, *this->_pTilesetContentManager);
+    }
+  }
+}
 
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
@@ -294,8 +339,12 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       }
 
       // content credits like gltf copyrights
-      for (const Credit& credit : pTile->getContent().getCredits()) {
-        pCreditSystem->addCreditToFrame(credit);
+      const TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        for (const Credit& credit : pRenderContent->getCredits()) {
+          pCreditSystem->addCreditToFrame(credit);
+        }
       }
     }
   }
@@ -436,7 +485,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-  _pTilesetContentManager->updateTileContent(tile, _options);
+  this->_pTilesetContentManager->updateTileContent(tile, _options);
   this->_markTileVisited(tile);
 
   // whether we should visit this tile
@@ -607,7 +656,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      _pTilesetContentManager->updateTileContent(child, _options);
+      this->_pTilesetContentManager->updateTileContent(child, _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1081,7 +1130,8 @@ void Tileset::_unloadCachedTiles() noexcept {
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
-    const bool removed = _pTilesetContentManager->unloadTileContent(*pTile);
+    const bool removed =
+        this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
     }
@@ -1094,17 +1144,29 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
 
+template <class TilesetContentLoaderType>
 void Tileset::_propagateTilesetContentLoaderResult(
-    TilesetContentLoaderResult&& result) {
+    TilesetLoadType type,
+    TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
   if (result.errors) {
-    this->getOptions().loadErrorCallback(TilesetLoadFailureDetails{
-        this,
-        TilesetLoadType::TilesetJson,
-        nullptr,
-        CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    const auto& tilesetOptions = this->getOptions();
+    if (tilesetOptions.loadErrorCallback) {
+      tilesetOptions.loadErrorCallback(TilesetLoadFailureDetails{
+          this,
+          type,
+          nullptr,
+          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    } else {
+      result.errors.logError(
+          this->_externals.pLogger,
+          "Errors when loading tileset");
+
+      result.errors.logWarning(
+          this->_externals.pLogger,
+          "Warning when loading tileset");
+    }
   } else {
     this->_pRootTile = std::move(result.pRootTile);
-    this->_gltfUpAxis = result.gltfUpAxis;
 
     this->_tilesetCredits.reserve(result.credits.size());
     for (const auto& creditResult : result.credits) {
@@ -1134,7 +1196,7 @@ double Tileset::addTileToLoadQueue(
     const std::vector<double>& distances) {
   double highestLoadPriority = std::numeric_limits<double>::max();
 
-  if (_pTilesetContentManager->doesTileNeedLoading(tile)) {
+  if (this->_pTilesetContentManager->doesTileNeedLoading(tile)) {
 
     const glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());
@@ -1174,7 +1236,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    _pTilesetContentManager->loadTileContent(*record.pTile, _options);
+    this->_pTilesetContentManager->loadTileContent(*record.pTile, _options);
     if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
         maximumLoadsInProgress) {
       break;

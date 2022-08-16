@@ -8,6 +8,8 @@
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
@@ -24,7 +26,8 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
-struct TilesetContentLoaderResult;
+
+template <class TilesetContentLoaderType> struct TilesetContentLoaderResult;
 
 /**
  * @brief A <a
@@ -34,6 +37,18 @@ struct TilesetContentLoaderResult;
  */
 class CESIUM3DTILESSELECTION_API Tileset final {
 public:
+  /**
+   * @brief Constructs a new instance with a given custom tileset loader.
+   * @param externals The external interfaces to use.
+   * @param pCustomLoader The custom loader used to load the tileset and tile
+   * content.
+   * @param options Additional options for the tileset.
+   */
+  Tileset(
+      const TilesetExternals& externals,
+      std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+      const TilesetOptions& options = TilesetOptions());
+
   /**
    * @brief Constructs a new instance with a given `tileset.json` URL.
    * @param externals The external interfaces to use.
@@ -172,19 +187,6 @@ public:
    * are currently loaded.
    */
   int64_t getTotalDataBytes() const noexcept;
-
-  /**
-   * @brief Returns the value indicating the glTF up-axis.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * The value indicates the axis, via 0=X, 1=Y, 2=Z.
-   *
-   * @return The value representing the axis
-   */
-  CesiumGeometry::Axis getGltfUpAxis() const noexcept {
-    return this->_gltfUpAxis;
-  }
 
 private:
   /**
@@ -350,8 +352,10 @@ private:
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
-  void
-  _propagateTilesetContentLoaderResult(TilesetContentLoaderResult&& result);
+  template <class TilesetContentLoaderType>
+  void _propagateTilesetContentLoaderResult(
+      TilesetLoadType type,
+      TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
@@ -390,18 +394,6 @@ private:
   Tile::LoadedLinkedList _loadedTiles;
 
   RasterOverlayCollection _overlays;
-
-  /**
-   * @brief The axis that was declared as the "up-axis" for glTF content.
-   *
-   * The glTF specification mandates that the Y-axis is the "up"-axis, so the
-   * default value is {@link Axis::Y}. Older tilesets may contain a string
-   * property in the "assets" dictionary, named "gltfUpAxis", indicating a
-   * different up-axis. Although the "gltfUpAxis" property is no longer part of
-   * the 3D tiles specification, it is still considered for backward
-   * compatibility.
-   */
-  CesiumGeometry::Axis _gltfUpAxis;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.

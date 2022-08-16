@@ -2,6 +2,7 @@
 
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
+#include "LogTileLoadResult.h"
 
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -26,7 +27,8 @@ struct ExternalContentInitializer {
   // Have to use shared_ptr here to make this functor copyable. Otherwise,
   // std::function won't work with move-only type as it's a type-erasured
   // container. Unfortunately, std::move_only_function is scheduled for C++23.
-  std::shared_ptr<TilesetContentLoaderResult> pExternalTilesetLoaders;
+  std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
+      pExternalTilesetLoaders;
   TilesetJsonLoader* tilesetJsonLoader;
 
   void operator()(Tile& tile) {
@@ -46,40 +48,6 @@ struct ExternalContentInitializer {
     }
   }
 };
-
-void logErrors(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& errors) {
-  if (!errors.empty()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Failed to load {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(errors, "\n- "));
-  }
-}
-
-void logWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& warnings) {
-  if (!warnings.empty()) {
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "Warning when loading {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(warnings, "\n- "));
-  }
-}
-
-void logErrorsAndWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const ErrorList& errorLists) {
-  logErrors(pLogger, url, errorLists.errors);
-  logWarnings(pLogger, url, errorLists.warnings);
-}
 
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
@@ -413,7 +381,7 @@ void parseImplicitTileset(
   }
 }
 
-Tile parseTileJsonRecursively(
+std::optional<Tile> parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const rapidjson::Value& tileJson,
     const glm::dmat4& parentTransform,
@@ -421,7 +389,7 @@ Tile parseTileJsonRecursively(
     double parentGeometricError,
     TilesetJsonLoader& currentLoader) {
   if (!tileJson.IsObject()) {
-    return Tile(&currentLoader);
+    return std::nullopt;
   }
 
   // parse tile transform
@@ -435,7 +403,7 @@ Tile parseTileJsonRecursively(
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
-    return Tile(&currentLoader);
+    return std::nullopt;
   }
 
   auto tileBoundingVolume =
@@ -570,7 +538,7 @@ Tile parseTileJsonRecursively(
     childTiles.reserve(childrenJson.Size());
     for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
       const auto& childJson = childrenJson[i];
-      Tile child = parseTileJsonRecursively(
+      auto maybeChild = parseTileJsonRecursively(
           pLogger,
           childJson,
           tileTransform,
@@ -578,7 +546,9 @@ Tile parseTileJsonRecursively(
           tileGeometricError,
           currentLoader);
 
-      childTiles.emplace_back(std::move(child));
+      if (maybeChild) {
+        childTiles.emplace_back(std::move(*maybeChild));
+      }
     }
   }
 
@@ -609,7 +579,7 @@ Tile parseTileJsonRecursively(
   }
 }
 
-TilesetContentLoaderResult parseTilesetJson(
+TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& tilesetJsonBinary,
@@ -620,7 +590,7 @@ TilesetContentLoaderResult parseTilesetJson(
       reinterpret_cast<const char*>(tilesetJsonBinary.data()),
       tilesetJsonBinary.size());
   if (tilesetJson.HasParseError()) {
-    TilesetContentLoaderResult result;
+    TilesetContentLoaderResult<TilesetJsonLoader> result;
     result.errors.emplace_error(fmt::format(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tilesetJson.GetParseError(),
@@ -630,23 +600,26 @@ TilesetContentLoaderResult parseTilesetJson(
 
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
-  auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl);
+  auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
-    pRootTile = std::make_unique<Tile>(parseTileJsonRecursively(
+    auto maybeRootTile = parseTileJsonRecursively(
         pLogger,
         rootJson,
         parentTransform,
         parentRefine,
         10000000.0,
-        *pLoader));
+        *pLoader);
+
+    if (maybeRootTile) {
+      pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
+    }
   }
 
-  return TilesetContentLoaderResult{
+  return {
       std::move(pLoader),
       std::move(pRootTile),
-      gltfUpAxis,
       std::vector<LoaderCreditResult>{},
       std::vector<CesiumAsync::IAssetAccessor::THeader>{},
       ErrorList{}};
@@ -666,17 +639,18 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
-  TilesetContentLoaderResult externalTilesetLoader = parseTilesetJson(
-      pLogger,
-      tileUrl,
-      responseData,
-      tileTransform,
-      tileRefine);
+  TilesetContentLoaderResult<TilesetJsonLoader> externalTilesetLoader =
+      parseTilesetJson(
+          pLogger,
+          tileUrl,
+          responseData,
+          tileTransform,
+          tileRefine);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
   if (errors) {
-    logErrors(pLogger, tileUrl, errors.errors);
+    logTileLoadResult(pLogger, tileUrl, errors);
 
     // since the json cannot be parsed, we don't know the content of this tile
     return TileLoadResult{
@@ -690,7 +664,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   }
 
   externalContentInitializer.pExternalTilesetLoaders =
-      std::make_shared<TilesetContentLoaderResult>(
+      std::make_shared<TilesetContentLoaderResult<TilesetJsonLoader>>(
           std::move(externalTilesetLoader));
 
   // mark this tile has external content
@@ -705,10 +679,13 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 }
 } // namespace
 
-TilesetJsonLoader::TilesetJsonLoader(const std::string& baseUrl)
-    : _baseUrl{baseUrl} {}
+TilesetJsonLoader::TilesetJsonLoader(
+    const std::string& baseUrl,
+    CesiumGeometry::Axis upAxis)
+    : _baseUrl{baseUrl}, _upAxis{upAxis} {}
 
-CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
+CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
+TilesetJsonLoader::createLoader(
     const TilesetExternals& externals,
     const std::string& tilesetJsonUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
@@ -721,7 +698,7 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
             pCompletedRequest->response();
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<TilesetJsonLoader> result;
           result.errors.emplace_error(fmt::format(
               "Did not receive a valid response for tile content {}",
               tileUrl));
@@ -730,7 +707,7 @@ CesiumAsync::Future<TilesetContentLoaderResult> TilesetJsonLoader::createLoader(
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<TilesetJsonLoader> result;
           result.errors.emplace_error(fmt::format(
               "Received status code {} for tile content {}",
               statusCode,
@@ -751,7 +728,7 @@ CesiumAsync::Future<TileLoadResult>
 TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const Tile& tile = loadInput.tile;
   // check if this tile belongs to a child loader
-  auto currentLoader = tile.getContent().getLoader();
+  auto currentLoader = tile.getLoader();
   if (currentLoader != this) {
     return currentLoader->loadTileContent(loadInput);
   }
@@ -780,7 +757,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& pLogger = loadInput.pLogger;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
-  std::string resolvedUrl = CesiumUtility::Uri::resolve(_baseUrl, *url, true);
+  std::string resolvedUrl =
+      CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
   return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
       .thenInWorkerThread(
           [pLogger,
@@ -839,10 +817,10 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               GltfConverterResult result = converter(responseData, gltfOptions);
 
               // Report any errors if there are any
-              logErrorsAndWarnings(pLogger, tileUrl, result.errors);
+              logTileLoadResult(pLogger, tileUrl, result.errors);
               if (result.errors) {
                 return TileLoadResult{
-                    TileRenderContent{std::nullopt},
+                    TileUnknownContent{},
                     std::nullopt,
                     std::nullopt,
                     std::nullopt,
@@ -852,7 +830,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               }
 
               return TileLoadResult{
-                  TileRenderContent{std::move(result.model)},
+                  std::move(*result.model),
                   std::nullopt,
                   std::nullopt,
                   std::nullopt,
@@ -872,7 +850,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {
-  auto pLoader = tile.getContent().getLoader();
+  auto pLoader = tile.getLoader();
   if (pLoader != this) {
     return pLoader->createTileChildren(tile);
   }
@@ -880,12 +858,22 @@ TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {
   return {{}, TileLoadResultState::Failed};
 }
 
+CesiumGeometry::Axis
+TilesetJsonLoader::getTileUpAxis(const Tile& tile) const noexcept {
+  const auto pLoader = tile.getLoader();
+  if (pLoader != this) {
+    return pLoader->getTileUpAxis(tile);
+  }
+
+  return this->_upAxis;
+}
+
 const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
-  return _baseUrl;
+  return this->_baseUrl;
 }
 
 void TilesetJsonLoader::addChildLoader(
     std::unique_ptr<TilesetContentLoader> pLoader) {
-  _children.emplace_back(std::move(pLoader));
+  this->_children.emplace_back(std::move(pLoader));
 }
 } // namespace Cesium3DTilesSelection

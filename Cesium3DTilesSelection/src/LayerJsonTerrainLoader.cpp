@@ -20,16 +20,25 @@ using namespace CesiumUtility;
 
 namespace {
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
+  if (loadResult.errors || !loadResult.model) {
+    return TileLoadResult{
+        TileUnknownContent{},
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        {},
+        TileLoadResultState::Failed};
+  }
+
   return TileLoadResult{
-      TileRenderContent{std::move(loadResult.model)},
+      std::move(*loadResult.model),
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
       nullptr,
       {},
-      loadResult.errors.hasErrors() ? TileLoadResultState::Failed
-                                    : TileLoadResultState::Success,
-  };
+      TileLoadResultState::Success};
 }
 
 size_t maxSubtreeInLayer(uint32_t maxZooms, int32_t availabilityLevels) {
@@ -110,12 +119,12 @@ void generateRasterOverlayUVs(
     pParentRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
   }
 
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
-  if (renderContent.model) {
+  CesiumGltf::Model* pModel =
+      std::get_if<CesiumGltf::Model>(&result.contentKind);
+  if (pModel) {
     result.rasterOverlayDetails =
         GltfUtilities::createRasterOverlayTextureCoordinates(
-            *renderContent.model,
+            *pModel,
             tileTransform,
             0,
             pParentRegion ? std::make_optional<GlobeRectangle>(
@@ -196,6 +205,12 @@ Future<LoadLayersResult> loadLayersRecursive(
   }
 
   std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
+  if (urls.empty()) {
+    loadLayersResult.errors.emplace_error(
+        "Layer Json does not specify any tile URL templates");
+    return asyncSystem.createResolvedFuture(std::move(loadLayersResult));
+  }
+
   int32_t maxZoom = JsonHelpers::getInt32OrDefault(layerJson, "maxzoom", 30);
 
   std::vector<std::string> extensions =
@@ -412,7 +427,8 @@ Future<LoadLayersResult> loadLayerJson(
 }
 } // namespace
 
-/*static*/ CesiumAsync::Future<TilesetContentLoaderResult>
+/*static*/ CesiumAsync::Future<
+    TilesetContentLoaderResult<LayerJsonTerrainLoader>>
 LayerJsonTerrainLoader::createLoader(
     const TilesetExternals& externals,
     const TilesetContentOptions& contentOptions,
@@ -460,9 +476,15 @@ LayerJsonTerrainLoader::createLoader(
                 showCreditsOnScreen);
           })
       .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
+        if (loadLayersResult.errors) {
+          TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
+          result.errors = std::move(loadLayersResult.errors);
+          return result;
+        }
+
         if (!loadLayersResult.tilingScheme || !loadLayersResult.projection ||
             !loadLayersResult.boundingVolume) {
-          TilesetContentLoaderResult result;
+          TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
           result.errors.emplace_error(
               "Could not deduce tiling scheme, projection, or bounding volume "
               "from layer.json.");
@@ -511,10 +533,9 @@ LayerJsonTerrainLoader::createLoader(
           credits.emplace_back(LoaderCreditResult{std::move(credit), true});
         }
 
-        return TilesetContentLoaderResult{
+        return TilesetContentLoaderResult<LayerJsonTerrainLoader>{
             std::move(pLoader),
             std::move(pRootTile),
-            CesiumGeometry::Axis::Y,
             std::move(credits),
             std::vector<IAssetAccessor::THeader>{},
             std::move(loadLayersResult.errors)};
@@ -601,6 +622,10 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
               QuantizedMeshLoadResult result;
+              result.errors.emplace_error(fmt::format(
+                  "Receive status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url()));
               return result;
             }
 
@@ -657,7 +682,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& contentOptions = loadInput.contentOptions;
 
   // This type of loader should never have child loaders.
-  assert(tile.getContent().getLoader() == this);
+  assert(tile.getLoader() == this);
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
@@ -786,8 +811,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
           // thread based on the projection of the loader since the upsampler
           // needs this UV to do the upsampling
           auto finalResult = convertToTileLoadResult(std::move(loadResult));
-          bool tileHasUpsampledChild = doesTileHasUpsampledChild(tile);
-          if (tileHasUpsampledChild &&
+          bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
+          if (doesTileHaveUpsampledChild &&
               finalResult.state == TileLoadResultState::Success) {
             return asyncSystem.runInWorkerThread(
                 [finalResult = std::move(finalResult),
@@ -807,10 +832,10 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         });
   }
 
-  bool tileHasUpsampledChild = doesTileHasUpsampledChild(tile);
+  bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
   return std::move(futureQuantizedMesh)
-      .thenImmediately([tileHasUpsampledChild,
-                        projection = _projection,
+      .thenImmediately([doesTileHaveUpsampledChild,
+                        projection = this->_projection,
                         tileTransform = tile.getTransform(),
                         tileBoundingVolume = tile.getBoundingVolume()](
                            QuantizedMeshLoadResult&& loadResult) mutable {
@@ -819,7 +844,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         // on the projection of the loader since the upsampler needs this UV
         // to do the upsampling
         auto result = convertToTileLoadResult(std::move(loadResult));
-        if (tileHasUpsampledChild &&
+        if (doesTileHaveUpsampledChild &&
             result.state == TileLoadResultState::Success) {
           generateRasterOverlayUVs(
               tileBoundingVolume,
@@ -843,7 +868,7 @@ LayerJsonTerrainLoader::createTileChildren(const Tile& tile) {
     // subtrees in the background layers being on the flight as well. Once the
     // tile finishes loading, all the subtrees are resolved
     bool isTileAtAvailabilityLevel = false;
-    for (const auto& layer : _layers) {
+    for (const auto& layer : this->_layers) {
       if (layer.availabilityLevels > 0 &&
           int32_t(pQuadtreeID->level) % layer.availabilityLevels == 0) {
         isTileAtAvailabilityLevel = true;
@@ -862,7 +887,27 @@ LayerJsonTerrainLoader::createTileChildren(const Tile& tile) {
   return {{}, TileLoadResultState::Failed};
 }
 
-bool LayerJsonTerrainLoader::doesTileHasUpsampledChild(const Tile& tile) const {
+CesiumGeometry::Axis
+LayerJsonTerrainLoader::getTileUpAxis(const Tile&) const noexcept {
+  return CesiumGeometry::Axis::Y;
+}
+
+const CesiumGeometry::QuadtreeTilingScheme&
+LayerJsonTerrainLoader::getTilingScheme() const noexcept {
+  return this->_tilingScheme;
+}
+
+const CesiumGeospatial::Projection&
+LayerJsonTerrainLoader::getProjection() const noexcept {
+  return this->_projection;
+}
+
+const std::vector<LayerJsonTerrainLoader::Layer>&
+LayerJsonTerrainLoader::getLayers() const noexcept {
+  return this->_layers;
+}
+
+bool LayerJsonTerrainLoader::tileHasUpsampledChild(const Tile& tile) const {
   const auto& tileChildren = tile.getChildren();
   if (tileChildren.empty()) {
     const QuadtreeTileID* pQuadtreeTileID =
@@ -1026,7 +1071,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   const TileContent& parentContent = pParent->getContent();
   const TileRenderContent* pParentRenderContent =
       parentContent.getRenderContent();
-  if (!pParentRenderContent || !pParentRenderContent->model) {
+  if (!pParentRenderContent) {
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileUnknownContent{},
         std::nullopt,
@@ -1042,11 +1087,11 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
 
   int32_t index = -1;
   const std::vector<CesiumGeospatial::Projection>& parentProjections =
-      parentContent.getRasterOverlayDetails().rasterOverlayProjections;
+      pParentRenderContent->getRasterOverlayDetails().rasterOverlayProjections;
   auto it = std::find(
       parentProjections.begin(),
       parentProjections.end(),
-      _projection);
+      this->_projection);
 
   // Cannot find raster overlay UVs that has this projection, so we can't
   // upsample right now
@@ -1057,7 +1102,10 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
 
   index = int32_t(it - parentProjections.begin());
 
-  const CesiumGltf::Model& parentModel = pParentRenderContent->model.value();
+  // it's totally safe to capture the const ref parent model in the worker
+  // thread. The tileset content manager will guarantee that the parent tile
+  // will not be unloaded when upsampled tile is on the fly.
+  const CesiumGltf::Model& parentModel = pParentRenderContent->getModel();
   return asyncSystem.runInWorkerThread(
       [&parentModel,
        boundingVolume = tile.getBoundingVolume(),
@@ -1069,7 +1117,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             textureCoordinateIndex);
         if (!model) {
           return TileLoadResult{
-              TileRenderContent{std::nullopt},
+              TileUnknownContent{},
               std::nullopt,
               std::nullopt,
               std::nullopt,
@@ -1079,7 +1127,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
         }
 
         return TileLoadResult{
-            TileRenderContent{std::move(model)},
+            std::move(*model),
             std::nullopt,
             std::nullopt,
             std::nullopt,

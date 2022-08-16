@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RasterOverlayUpsampler.h"
-#include "TilesetContentLoader.h"
 
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -28,6 +28,8 @@ public:
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
+
+  void waitIdle();
 
   const std::vector<CesiumAsync::IAssetAccessor::THeader>&
   getRequestHeaders() const noexcept;
