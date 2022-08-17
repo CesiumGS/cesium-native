@@ -22,8 +22,6 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 
-template <class TilesetContentLoaderType> struct TilesetContentLoaderResult;
-
 /**
  * @brief A <a
  * href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D
@@ -37,11 +35,13 @@ public:
    * @param externals The external interfaces to use.
    * @param pCustomLoader The custom loader used to load the tileset and tile
    * content.
+   * @param pRootTile The root tile that is associated with the custom loader
    * @param options Additional options for the tileset.
    */
   Tileset(
       const TilesetExternals& externals,
       std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+      std::unique_ptr<Tile>&& pRootTile,
       const TilesetOptions& options = TilesetOptions());
 
   /**
@@ -80,9 +80,10 @@ public:
    */
   ~Tileset() noexcept;
 
-  const std::vector<Credit> getTilesetCredits() const noexcept {
-    return this->_tilesetCredits;
-  }
+  /**
+   * @brief Get tileset credits.
+   */
+  const std::vector<Credit>& getTilesetCredits() const noexcept;
 
   /**
    * @brief Gets the {@link TilesetExternals} that summarize the external
@@ -124,20 +125,18 @@ public:
    *
    * This may be `nullptr` if there is currently no root tile.
    */
-  Tile* getRootTile() noexcept { return this->_pRootTile.get(); }
+  Tile* getRootTile() noexcept;
 
   /** @copydoc Tileset::getRootTile() */
-  const Tile* getRootTile() const noexcept { return this->_pRootTile.get(); }
+  const Tile* getRootTile() const noexcept;
 
   /**
    * @brief Returns the {@link RasterOverlayCollection} of this tileset.
    */
-  RasterOverlayCollection& getOverlays() noexcept { return this->_overlays; }
+  RasterOverlayCollection& getOverlays() noexcept;
 
   /** @copydoc Tileset::getOverlays() */
-  const RasterOverlayCollection& getOverlays() const noexcept {
-    return this->_overlays;
-  }
+  const RasterOverlayCollection& getOverlays() const noexcept;
 
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
@@ -365,23 +364,10 @@ private:
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
-  template <class TilesetContentLoaderType>
-  void _propagateTilesetContentLoaderResult(
-      TilesetLoadType type,
-      TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
-
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 
-  // per-tileset credit passed in explicitly by the user through
-  // `TilesetOptions`
-  std::optional<Credit> _userCredit;
-  //  credits provided with the tileset from Cesium Ion
-  std::vector<Credit> _tilesetCredits;
-
   TilesetOptions _options;
-
-  std::unique_ptr<Tile> _pRootTile;
 
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
@@ -406,8 +392,6 @@ private:
   std::vector<LoadRecord> _loadQueueLow;
   Tile::LoadedLinkedList _loadedTiles;
 
-  RasterOverlayCollection _overlays;
-
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.
   std::vector<double> _distances;
@@ -417,8 +401,6 @@ private:
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
   std::unique_ptr<TilesetContentManager> _pTilesetContentManager;
-
-  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
   void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,

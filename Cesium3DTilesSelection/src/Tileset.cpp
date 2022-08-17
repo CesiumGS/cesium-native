@@ -1,7 +1,5 @@
-#include "CesiumIonTilesetLoader.h"
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
-#include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
@@ -32,40 +30,24 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
-namespace {
-void unloadTileRecursively(
-    Tile& tile,
-    TilesetContentManager& tilesetContentManager) {
-  tilesetContentManager.unloadTileContent(tile);
-  for (Tile& child : tile.getChildren()) {
-    unloadTileRecursively(child, tilesetContentManager);
-  }
-}
-} // namespace
-
 Tileset::Tileset(
     const TilesetExternals& externals,
     std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+    std::unique_ptr<Tile>&& pRootTile,
     const TilesetOptions& options)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
-      _userCredit(
-          (options.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value(),
-                    options.showCreditsOnScreen))
-              : std::nullopt),
       _options(options),
-      _pRootTile(),
       _previousFrameNumber(0),
-      _overlays(_loadedTiles, externals),
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{std::make_unique<TilesetContentManager>(
           _externals,
+          _options,
+          RasterOverlayCollection{_loadedTiles, externals},
           std::vector<CesiumAsync::IAssetAccessor::THeader>{},
           std::move(pCustomLoader),
-          _overlays)} {}
+          std::move(pRootTile))} {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -73,29 +55,15 @@ Tileset::Tileset(
     const TilesetOptions& options)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
-      _userCredit(
-          (options.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value(),
-                    options.showCreditsOnScreen))
-              : std::nullopt),
       _options(options),
-      _pRootTile(),
       _previousFrameNumber(0),
-      _overlays(_loadedTiles, externals),
       _distances(),
-      _childOcclusionProxies() {
-  if (!url.empty()) {
-    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    TilesetJsonLoader::createLoader(externals, url, {})
-        .thenInMainThread(
-            [this](TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
-              this->_propagateTilesetContentLoaderResult(
-                  TilesetLoadType::TilesetJson,
-                  std::move(result));
-            });
-  }
-}
+      _childOcclusionProxies(),
+      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+          _externals,
+          _options,
+          RasterOverlayCollection{_loadedTiles, externals},
+          url)} {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -105,67 +73,42 @@ Tileset::Tileset(
     const std::string& ionAssetEndpointUrl)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
-      _userCredit(
-          (options.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value(),
-                    options.showCreditsOnScreen))
-              : std::nullopt),
       _options(options),
-      _pRootTile(),
       _previousFrameNumber(0),
-      _overlays(_loadedTiles, externals),
       _distances(),
-      _childOcclusionProxies() {
-  if (ionAssetID > 0) {
-    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    auto authorizationChangeListener = [this](
-                                           const std::string& header,
-                                           const std::string& headerValue) {
-      if (this->_pTilesetContentManager) {
-        auto& requestHeaders =
-            this->_pTilesetContentManager->getRequestHeaders();
-        auto authIt = std::find_if(
-            requestHeaders.begin(),
-            requestHeaders.end(),
-            [&header](auto& headerPair) { return headerPair.first == header; });
-        if (authIt != requestHeaders.end()) {
-          authIt->second = headerValue;
-        } else {
-          requestHeaders.emplace_back(header, headerValue);
-        }
-      }
-    };
+      _childOcclusionProxies(),
+      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+          _externals,
+          _options,
+          RasterOverlayCollection{_loadedTiles, externals},
+          ionAssetID,
+          ionAccessToken,
+          ionAssetEndpointUrl)} {}
 
-    CesiumIonTilesetLoader::createLoader(
-        externals,
-        options.contentOptions,
-        static_cast<uint32_t>(ionAssetID),
-        ionAccessToken,
-        ionAssetEndpointUrl,
-        authorizationChangeListener,
-        options.showCreditsOnScreen)
-        .thenInMainThread(
-            [this](
-                TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
-              this->_propagateTilesetContentLoaderResult(
-                  TilesetLoadType::CesiumIon,
-                  std::move(result));
-            });
+Tileset::~Tileset() noexcept {
+  if (this->_externals.pTileOcclusionProxyPool) {
+    this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
 }
 
-Tileset::~Tileset() noexcept {
-  if (this->_pTilesetContentManager) {
-    this->_pTilesetContentManager->waitIdle();
-    if (_pRootTile) {
-      unloadTileRecursively(*_pRootTile, *this->_pTilesetContentManager);
-    }
+const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
+  return this->_pTilesetContentManager->getTilesetCredits();
+}
 
-    if (this->_externals.pTileOcclusionProxyPool) {
-      this->_externals.pTileOcclusionProxyPool->destroyPool();
-    }
-  }
+Tile* Tileset::getRootTile() noexcept {
+  return this->_pTilesetContentManager->getRootTile();
+}
+
+const Tile* Tileset::getRootTile() const noexcept {
+  return this->_pTilesetContentManager->getRootTile();
+}
+
+RasterOverlayCollection& Tileset::getOverlays() noexcept {
+  return this->_pTilesetContentManager->getRasterOverlayCollection();
+}
+
+const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
+  return this->_pTilesetContentManager->getRasterOverlayCollection();
 }
 
 static bool
@@ -313,17 +256,20 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       this->_externals.pCreditSystem;
   if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
     // per-tileset user-specified credit
-    if (this->_userCredit) {
-      pCreditSystem->addCreditToFrame(this->_userCredit.value());
+    const Credit* pUserCredit = this->_pTilesetContentManager->getUserCredit();
+    if (pUserCredit) {
+      pCreditSystem->addCreditToFrame(*pUserCredit);
     }
 
     // tileset credit
-    for (const Credit& credit : this->_tilesetCredits) {
+    for (const Credit& credit : this->getTilesetCredits()) {
       pCreditSystem->addCreditToFrame(credit);
     }
 
     // per-raster overlay credit
-    for (auto& pOverlay : this->_overlays) {
+    const RasterOverlayCollection& overlayCollection =
+        this->_pTilesetContentManager->getRasterOverlayCollection();
+    for (auto& pOverlay : overlayCollection) {
       const std::optional<Credit>& overlayCredit =
           pOverlay->getTileProvider()->getCredit();
       if (overlayCredit) {
@@ -1331,10 +1277,11 @@ void Tileset::_processLoadQueue() {
 void Tileset::_unloadCachedTiles() noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
+  const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
   while (this->getTotalDataBytes() > maxBytes) {
-    if (pTile == nullptr || pTile == this->_pRootTile.get()) {
+    if (pTile == nullptr || pTile == pRootTile) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
       // for rendering last frame.
@@ -1355,45 +1302,6 @@ void Tileset::_unloadCachedTiles() noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
-}
-
-template <class TilesetContentLoaderType>
-void Tileset::_propagateTilesetContentLoaderResult(
-    TilesetLoadType type,
-    TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
-  if (result.errors) {
-    const auto& tilesetOptions = this->getOptions();
-    if (tilesetOptions.loadErrorCallback) {
-      tilesetOptions.loadErrorCallback(TilesetLoadFailureDetails{
-          this,
-          type,
-          nullptr,
-          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
-    } else {
-      result.errors.logError(
-          this->_externals.pLogger,
-          "Errors when loading tileset");
-
-      result.errors.logWarning(
-          this->_externals.pLogger,
-          "Warning when loading tileset");
-    }
-  } else {
-    this->_pRootTile = std::move(result.pRootTile);
-
-    this->_tilesetCredits.reserve(result.credits.size());
-    for (const auto& creditResult : result.credits) {
-      this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
-          creditResult.creditText,
-          creditResult.showOnScreen));
-    }
-
-    this->_pTilesetContentManager = std::make_unique<TilesetContentManager>(
-        _externals,
-        std::move(result.requestHeaders),
-        std::move(result.pLoader),
-        this->getOverlays());
-  }
 }
 
 // TODO The viewState is only needed to
@@ -1422,7 +1330,6 @@ void Tileset::processQueue(
   std::sort(queue.begin(), queue.end());
 
   for (LoadRecord& record : queue) {
-    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->_pTilesetContentManager->loadTileContent(*record.pTile, _options);
     if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
         maximumLoadsInProgress) {

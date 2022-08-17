@@ -1,6 +1,8 @@
 #include "TilesetContentManager.h"
 
+#include "CesiumIonTilesetLoader.h"
 #include "TileContentLoadInfo.h"
+#include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
@@ -51,6 +53,15 @@ struct ContentKindSetter {
   std::optional<RasterOverlayDetails> rasterOverlayDetails;
   void* pRenderResources;
 };
+
+void unloadTileRecursively(
+    Tile& tile,
+    TilesetContentManager& tilesetContentManager) {
+  tilesetContentManager.unloadTileContent(tile);
+  for (Tile& child : tile.getChildren()) {
+    unloadTileRecursively(child, tilesetContentManager);
+  }
+}
 
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
@@ -553,18 +564,123 @@ postProcessContentInWorkerThread(
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
-    RasterOverlayCollection& overlayCollection)
+    std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
-      _pOverlayCollection{&overlayCollection},
+      _pRootTile{std::move(pRootTile)},
+      _userCredit(
+          (tilesetOptions.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    tilesetOptions.credit.value(),
+                    tilesetOptions.showCreditsOnScreen))
+              : std::nullopt),
+      _tilesetCredits{},
+      _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0} {}
 
-TilesetContentManager::~TilesetContentManager() noexcept { waitIdle(); }
+TilesetContentManager::TilesetContentManager(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
+    const std::string& url)
+    : _externals{externals},
+      _requestHeaders{},
+      _pLoader{},
+      _pRootTile{},
+      _userCredit(
+          (tilesetOptions.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    tilesetOptions.credit.value(),
+                    tilesetOptions.showCreditsOnScreen))
+              : std::nullopt),
+      _tilesetCredits{},
+      _overlayCollection{std::move(overlayCollection)},
+      _tilesLoadOnProgress{0},
+      _loadedTilesCount{0},
+      _tilesDataUsed{0} {
+  if (!url.empty()) {
+    TilesetJsonLoader::createLoader(externals, url, {})
+        .thenInMainThread(
+            [this, errorCallback = tilesetOptions.loadErrorCallback](
+                TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
+              this->propagateTilesetContentLoaderResult(
+                  TilesetLoadType::TilesetJson,
+                  errorCallback,
+                  std::move(result));
+            });
+  }
+}
+
+TilesetContentManager::TilesetContentManager(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl)
+    : _externals{externals},
+      _requestHeaders{},
+      _pLoader{},
+      _pRootTile{},
+      _userCredit(
+          (tilesetOptions.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    tilesetOptions.credit.value(),
+                    tilesetOptions.showCreditsOnScreen))
+              : std::nullopt),
+      _tilesetCredits{},
+      _overlayCollection{std::move(overlayCollection)},
+      _tilesLoadOnProgress{0},
+      _loadedTilesCount{0},
+      _tilesDataUsed{0} {
+  if (ionAssetID > 0) {
+    auto authorizationChangeListener = [this](
+                                           const std::string& header,
+                                           const std::string& headerValue) {
+      auto& requestHeaders = this->_requestHeaders;
+      auto authIt = std::find_if(
+          requestHeaders.begin(),
+          requestHeaders.end(),
+          [&header](auto& headerPair) { return headerPair.first == header; });
+      if (authIt != requestHeaders.end()) {
+        authIt->second = headerValue;
+      } else {
+        requestHeaders.emplace_back(header, headerValue);
+      }
+    };
+
+    CesiumIonTilesetLoader::createLoader(
+        externals,
+        tilesetOptions.contentOptions,
+        static_cast<uint32_t>(ionAssetID),
+        ionAccessToken,
+        ionAssetEndpointUrl,
+        authorizationChangeListener,
+        tilesetOptions.showCreditsOnScreen)
+        .thenInMainThread(
+            [this, errorCallback = tilesetOptions.loadErrorCallback](
+                TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+              this->propagateTilesetContentLoaderResult(
+                  TilesetLoadType::CesiumIon,
+                  errorCallback,
+                  std::move(result));
+            });
+  }
+}
+
+TilesetContentManager::~TilesetContentManager() noexcept {
+  waitIdle();
+  if (_pRootTile) {
+    unloadTileRecursively(*_pRootTile, *this);
+  }
+}
 
 void TilesetContentManager::loadTileContent(
     Tile& tile,
@@ -609,7 +725,7 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      mapOverlaysToTile(tile, *this->_pOverlayCollection, tilesetOptions);
+      mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(tile);
@@ -775,11 +891,19 @@ void TilesetContentManager::waitIdle() {
     this->_externals.asyncSystem.dispatchMainThreadTasks();
 
     rasterOverlayTilesLoading = 0;
-    for (const auto& pOverlay : *this->_pOverlayCollection) {
+    for (const auto& pOverlay : this->_overlayCollection) {
       rasterOverlayTilesLoading +=
           pOverlay->getTileProvider()->getNumberOfTilesLoading();
     }
   }
+}
+
+const Tile* TilesetContentManager::getRootTile() const noexcept {
+  return this->_pRootTile.get();
+}
+
+Tile* TilesetContentManager::getRootTile() noexcept {
+  return this->_pRootTile.get();
 }
 
 const std::vector<CesiumAsync::IAssetAccessor::THeader>&
@@ -792,6 +916,29 @@ TilesetContentManager::getRequestHeaders() noexcept {
   return this->_requestHeaders;
 }
 
+const RasterOverlayCollection&
+TilesetContentManager::getRasterOverlayCollection() const noexcept {
+  return this->_overlayCollection;
+}
+
+RasterOverlayCollection&
+TilesetContentManager::getRasterOverlayCollection() noexcept {
+  return this->_overlayCollection;
+}
+
+const Credit* TilesetContentManager::getUserCredit() const noexcept {
+  if (this->_userCredit) {
+    return &*this->_userCredit;
+  }
+
+  return nullptr;
+}
+
+const std::vector<Credit>&
+TilesetContentManager::getTilesetCredits() const noexcept {
+  return this->_tilesetCredits;
+}
+
 int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
   return this->_tilesLoadOnProgress;
 }
@@ -802,7 +949,7 @@ int32_t TilesetContentManager::getNumOfTilesLoaded() const noexcept {
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
-  for (const auto& pOverlay : *this->_pOverlayCollection) {
+  for (const auto& pOverlay : this->_overlayCollection) {
     const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
     if (pProvider) {
       bytes += pProvider->getTileDataBytes();
@@ -1044,5 +1191,41 @@ void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
 void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {
   this->_tilesDataUsed -= tile.computeByteSize();
   --this->_loadedTilesCount;
+}
+
+template <class TilesetContentLoaderType>
+void TilesetContentManager::propagateTilesetContentLoaderResult(
+    TilesetLoadType type,
+    const std::function<void(const TilesetLoadFailureDetails&)>&
+        loadErrorCallback,
+    TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
+  if (result.errors) {
+    if (loadErrorCallback) {
+      loadErrorCallback(TilesetLoadFailureDetails{
+          nullptr,
+          type,
+          nullptr,
+          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    } else {
+      result.errors.logError(
+          this->_externals.pLogger,
+          "Errors when loading tileset");
+
+      result.errors.logWarning(
+          this->_externals.pLogger,
+          "Warning when loading tileset");
+    }
+  } else {
+    this->_tilesetCredits.reserve(result.credits.size());
+    for (const auto& creditResult : result.credits) {
+      this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
+          creditResult.creditText,
+          creditResult.showOnScreen));
+    }
+
+    this->_requestHeaders = std::move(result.requestHeaders);
+    this->_pLoader = std::move(result.pLoader);
+    this->_pRootTile = std::move(result.pRootTile);
+  }
 }
 } // namespace Cesium3DTilesSelection
