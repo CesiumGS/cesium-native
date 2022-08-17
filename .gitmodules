@@ -50,3 +50,6 @@
 	path = extern/KTX-Software
 	url = https://github.com/CesiumGS/KTX-Software.git
 	branch = cesium-native
+[submodule "extern/libwebp"]
+	path = extern/libwebp
+	url = https://github.com/webmproject/libwebp
