@@ -200,10 +200,6 @@ TEST_CASE("Test tile state machine") {
       asyncSystem,
       pMockedCreditSystem};
 
-  // create mock raster overlay collection
-  Tile::LoadedLinkedList loadedTiles;
-  RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
-
   SECTION("Load content successfully") {
     // create mock loader
     bool initializerCall = false;
@@ -222,18 +218,23 @@ TEST_CASE("Test tile state machine") {
         TileEmptyContent());
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(pMockedLoader),
-        rasterOverlayCollection};
-
-    // test manager loading
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
+
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager{
+        externals,
+        options,
+        RasterOverlayCollection{loadedTiles, externals},
+        {},
+        std::move(pMockedLoader),
+        std::move(pRootTile)};
+
+    // test manager loading
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, options);
 
     SECTION("Load tile from ContentLoading -> Done") {
@@ -319,18 +320,23 @@ TEST_CASE("Test tile state machine") {
         TileEmptyContent());
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(pMockedLoader),
-        rasterOverlayCollection};
-
-    // test manager loading
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
+
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager{
+        externals,
+        options,
+        RasterOverlayCollection{loadedTiles, externals},
+        {},
+        std::move(pMockedLoader),
+        std::move(pRootTile)};
+
+    // test manager loading
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, options);
 
     // Unloaded -> ContentLoading
@@ -387,18 +393,23 @@ TEST_CASE("Test tile state machine") {
         TileEmptyContent());
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(pMockedLoader),
-        rasterOverlayCollection};
-
-    // test manager loading
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
+
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager{
+        externals,
+        options,
+        RasterOverlayCollection{loadedTiles, externals},
+        {},
+        std::move(pMockedLoader),
+        std::move(pRootTile)};
+
+    // test manager loading
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, options);
 
     // Unloaded -> ContentLoading
@@ -469,8 +480,8 @@ TEST_CASE("Test tile state machine") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
-    Tile tile(pMockedLoaderRaw);
-    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    auto pRootTile = std::make_unique<Tile>(pMockedLoaderRaw);
+    pRootTile->setTileID(QuadtreeTileID(0, 0, 0));
 
     // create upsampled children. We put it in the scope since upsampledTile
     // will be moved to the parent afterward, and we don't want the tests below
@@ -480,21 +491,26 @@ TEST_CASE("Test tile state machine") {
       children.emplace_back(pMockedLoaderRaw);
       Tile& upsampledTile = children.back();
       upsampledTile.setTileID(UpsampledQuadtreeNode{QuadtreeTileID(1, 1, 1)});
-      tile.createChildTiles(std::move(children));
+      pRootTile->createChildTiles(std::move(children));
     }
 
     // create manager
+    TilesetOptions options{};
+    options.contentOptions.generateMissingNormalsSmooth = true;
+
+    Tile::LoadedLinkedList loadedTiles;
     TilesetContentManager manager{
         externals,
+        options,
+        RasterOverlayCollection{loadedTiles, externals},
         {},
         std::move(pMockedLoader),
-        rasterOverlayCollection};
+        std::move(pRootTile)};
 
+    Tile& tile = *manager.getRootTile();
     Tile& upsampledTile = tile.getChildren().back();
 
     // test manager loading upsample tile
-    TilesetOptions options{};
-    options.contentOptions.generateMissingNormalsSmooth = true;
     manager.loadTileContent(upsampledTile, options);
 
     // since parent is not yet loaded, it will load the parent first.
@@ -579,10 +595,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       asyncSystem,
       pMockedCreditSystem};
 
-  // create mock raster overlay collection
-  Tile::LoadedLinkedList loadedTiles;
-  RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
-
   SECTION("Resolve external buffers") {
     // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
@@ -621,16 +633,20 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
          createMockRequest(testDataPath / "gltf" / "box" / "Box0.bin")});
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
+    Tile::LoadedLinkedList loadedTiles;
     TilesetContentManager manager{
         externals,
         {},
+        RasterOverlayCollection{loadedTiles, externals},
+        {},
         std::move(pMockedLoader),
-        rasterOverlayCollection};
+        std::move(pRootTile)};
 
     // test the gltf model
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, {});
     manager.waitIdle();
 
@@ -680,18 +696,23 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(pMockedLoader),
-        rasterOverlayCollection};
-
-    // test the gltf model
     TilesetOptions options;
     options.contentOptions.generateMissingNormalsSmooth = true;
+
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager{
+        externals,
+        options,
+        RasterOverlayCollection{loadedTiles, externals},
+        {},
+        std::move(pMockedLoader),
+        std::move(pRootTile)};
+
+    // test the gltf model
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, options);
     manager.waitIdle();
 
@@ -741,15 +762,19 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
+    Tile::LoadedLinkedList loadedTiles;
     TilesetContentManager manager{
         externals,
         {},
+        RasterOverlayCollection{loadedTiles, externals},
+        {},
         std::move(pMockedLoader),
-        rasterOverlayCollection};
+        std::move(pRootTile)};
 
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, {});
     manager.waitIdle();
 
@@ -765,6 +790,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
   SECTION("Generate raster overlay projections") {
     // add raster overlay
+    Tile::LoadedLinkedList loadedTiles;
+    RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
     rasterOverlayCollection.add(
         std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
     asyncSystem.dispatchMainThreadTasks();
@@ -784,18 +811,21 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
     TilesetContentManager manager{
         externals,
         {},
+        std::move(rasterOverlayCollection),
+        {},
         std::move(pMockedLoader),
-        rasterOverlayCollection};
+        std::move(pRootTile)};
 
     SECTION(
         "Generate raster overlay details when tile don't have loose region") {
       // test the gltf model
+      Tile& tile = *manager.getRootTile();
       manager.loadTileContent(tile, {});
       manager.waitIdle();
 
@@ -851,6 +881,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     SECTION("Generate raster overlay details when tile has loose region") {
+      Tile& tile = *manager.getRootTile();
       auto originalLooseRegion =
           BoundingRegionWithLooseFittingHeights{BoundingRegion{
               GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
@@ -939,10 +970,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     SECTION("Automatically calculate fit bounding region when tile has loose "
             "region") {
-      auto pRemovedOverlay = rasterOverlayCollection.begin()->get();
-      rasterOverlayCollection.remove(pRemovedOverlay);
-      CHECK(rasterOverlayCollection.size() == 0);
+      auto pRemovedOverlay =
+          manager.getRasterOverlayCollection().begin()->get();
+      manager.getRasterOverlayCollection().remove(pRemovedOverlay);
+      CHECK(manager.getRasterOverlayCollection().size() == 0);
 
+      Tile& tile = *manager.getRootTile();
       auto originalLooseRegion =
           BoundingRegionWithLooseFittingHeights{BoundingRegion{
               GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
@@ -969,9 +1002,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           tileRegion.getRectangle().getNorth() ==
           Approx(beginCarto.latitude + 9 * 0.01));
     }
-
-    // unload the tile
-    manager.unloadTileContent(tile);
   }
 
   SECTION("Don't generate raster overlay for existing projection") {
@@ -994,6 +1024,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         9000.0};
 
     // add raster overlay
+    Tile::LoadedLinkedList loadedTiles;
+    RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
     rasterOverlayCollection.add(
         std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
     asyncSystem.dispatchMainThreadTasks();
@@ -1012,15 +1044,18 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
-    Tile tile(pMockedLoader.get());
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
     TilesetContentManager manager{
         externals,
         {},
+        std::move(rasterOverlayCollection),
+        {},
         std::move(pMockedLoader),
-        rasterOverlayCollection};
+        std::move(pRootTile)};
 
+    Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, {});
     manager.waitIdle();
 

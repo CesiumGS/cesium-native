@@ -39,6 +39,36 @@ public:
       Tile::LoadedLinkedList& loadedTiles,
       const TilesetExternals& externals) noexcept;
 
+  /**
+   * @brief Deleted Copy constructor.
+   *
+   * @param rhs The other instance.
+   */
+  RasterOverlayCollection(const RasterOverlayCollection& rhs) = delete;
+
+  /**
+   * @brief Move constructor.
+   *
+   * @param rhs The other instance.
+   */
+  RasterOverlayCollection(RasterOverlayCollection&& rhs) noexcept = default;
+
+  /**
+   * @brief Deleted copy assignment.
+   *
+   * @param rhs The other instance.
+   */
+  RasterOverlayCollection&
+  operator=(const RasterOverlayCollection& rhs) = delete;
+
+  /**
+   * @brief Move assignment.
+   *
+   * @param rhs The other instance.
+   */
+  RasterOverlayCollection&
+  operator=(RasterOverlayCollection&& rhs) noexcept = default;
+
   ~RasterOverlayCollection() noexcept;
 
   /**
