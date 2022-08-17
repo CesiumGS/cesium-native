@@ -129,9 +129,14 @@ struct TileContentLoadResult {
   std::optional<TileContentDetailsForOverlays> overlayDetails;
 
   /**
-   * @brief The percentage of dither fade this tile currently has. 
+   * @brief How faded this tile should be rendered during an LOD transition.
+   * Tile fades can be used to make LOD transitions appear less abrupt and
+   * jarring.
+   *
+   * It is up to client implementations how to render the fade percentage, but
+   * dithered fading is recommended.
    */
-  float ditherFadePercentage = 0.0f;
+  float lodTransitionFadePercentage = 0.0f;
 };
 
 } // namespace Cesium3DTilesSelection

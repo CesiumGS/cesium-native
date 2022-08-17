@@ -2,8 +2,8 @@
 
 #include "Library.h"
 
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 class Tile;
@@ -20,7 +20,6 @@ class Tile;
  */
 class CESIUM3DTILESSELECTION_API ViewUpdateResult final {
 public:
-
   // TODO: change render terminology to fit fading??
   // For example, a fading out tile is still being "rendered" technically
 

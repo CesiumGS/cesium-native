@@ -230,6 +230,28 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   std::function<void(const TilesetLoadFailureDetails&)> loadErrorCallback;
 
   /**
+   * @brief Whether to keep tiles loaded during a transition period when
+   * switching to a different LOD tile.
+   *
+   * For each tile, TileContentLoadResult::lodTransitionFadePercentage will
+   * indicate to the client how faded to render the tile throughout the
+   * transition. Tile fades can be used to mask LOD transitions and make them
+   * appear less abrupt and jarring.
+   */
+  bool enableLodTransitionPeriod = true;
+
+  /**
+   * @brief The speed of the fading when transitioning between tiles of
+   * different LODs, in fade percentage per second.
+   *
+   * When a tile refines or unrefines to a higher or lower LOD tile, a fade
+   * can optionally be applied to smooth the transition. This speed determines
+   * the percentage of fading in / out that happens in a second. The old tile
+   * doesn't start fading out until the new tile fully fades in.
+   */
+  float lodTransitionFadeSpeed = 1.0f;
+
+  /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
    * and construction of Gltf models.
    */

@@ -174,7 +174,8 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums, float deltaTime);
+  const ViewUpdateResult&
+  updateView(const std::vector<ViewState>& frustums, float deltaTime);
 
   /**
    * @brief Notifies the tileset that the given tile has started loading.

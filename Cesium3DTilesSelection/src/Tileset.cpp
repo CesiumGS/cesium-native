@@ -271,35 +271,30 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
         false,
         *pRootTile,
         result);
+  } else {
+    result = ViewUpdateResult();
+  }
 
-    const float ditherFadeTime = 1.0f;
-
+  if (_options.enableLodTransitionPeriod) {
     // Update fade out
-    // result.tilesFadingOut.insert(
-    //    result.tilesToNoLongerRenderThisFrame.begin(),
-    //    result.tilesToNoLongerRenderThisFrame.end());
     for (Tile* pTile : result.tilesToNoLongerRenderThisFrame) {
       if (pTile->getContent()) {
-        pTile->getContent()->ditherFadePercentage = 2.0f;
+        pTile->getContent()->lodTransitionFadePercentage = 2.0f;
         result.tilesFadingOut.insert(pTile);
       }
     }
 
     for (auto tileIt = result.tilesFadingOut.begin();
-        tileIt != result.tilesFadingOut.end();) {
+         tileIt != result.tilesFadingOut.end();) {
       if (!(*tileIt)->getContent()) {
         result.tilesFadingOut.erase(tileIt++);
         continue;
       }
-      
-      (*tileIt)->getContent()->ditherFadePercentage -= 
-          ditherFadeTime * deltaTime;
-      if ((*tileIt)->getContent()->ditherFadePercentage <= 0.0f) {
-        (*tileIt)->getContent()->ditherFadePercentage = 0.0f;
-        // TODO: remove this comment
-        // How will unreal know to set tile to invisible (culled) here?
-        // Can't check for dither percentage 0.0 (could be a tile that is fading in)
-        // solution: should use tilesToHideThisFrame
+
+      (*tileIt)->getContent()->lodTransitionFadePercentage -=
+          this->_options.lodTransitionFadeSpeed * deltaTime;
+      if ((*tileIt)->getContent()->lodTransitionFadePercentage <= 0.0f) {
+        (*tileIt)->getContent()->lodTransitionFadePercentage = 0.0f;
         result.tilesToHideThisFrame.push_back(*tileIt);
         result.tilesFadingOut.erase(tileIt++);
       } else {
@@ -310,15 +305,34 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     // Update fade in
     for (Tile* pTile : result.tilesToRenderThisFrame) {
       if (pTile->getContent()) {
-        pTile->getContent()->ditherFadePercentage = 
-            glm::min(
-              pTile->getContent()->ditherFadePercentage +
-                ditherFadeTime * deltaTime,
-              1.0f);
+        pTile->getContent()->lodTransitionFadePercentage = glm::min(
+            pTile->getContent()->lodTransitionFadePercentage +
+                this->_options.lodTransitionFadeSpeed * deltaTime,
+            1.0f);
       }
     }
   } else {
-    result = ViewUpdateResult();
+    // If there are any tiles fading out, hide them right away.
+    if (!result.tilesFadingOut.empty()) {
+      for (Tile* pTile : result.tilesFadingOut) {
+        if (pTile->getContent()) {
+          pTile->getContent()->lodTransitionFadePercentage = 0.0f;
+        }
+      }
+
+      result.tilesToHideThisFrame.insert(
+          result.tilesToHideThisFrame.end(),
+          result.tilesFadingOut.begin(),
+          result.tilesFadingOut.end());
+    }
+
+    // If there are any tiles still fading in, set them to fully visible right
+    // away.
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      if (pTile->getContent()) {
+        pTile->getContent()->lodTransitionFadePercentage = 1.0f;
+      }
+    }
   }
 
   result.tilesLoadingLowPriority =
@@ -817,6 +831,24 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     const std::vector<double>& distances,
     ViewUpdateResult& result) {
 
+  if (_options.enableLodTransitionPeriod && tile.getContent()) {
+    // If this tile or any ancestors were culled last frame, don't fade it in
+    // gradually. Set it to fully visible right away.
+    const Tile* pTile = &tile;
+    while (pTile) {
+      TileSelectionState::Result selectionResult =
+          pTile->getLastSelectionState().getResult(frameState.lastFrameNumber);
+      if (selectionResult == TileSelectionState::Result::Rendered) {
+        break;
+      } else if (selectionResult == TileSelectionState::Result::Culled) {
+        tile.getContent()->lodTransitionFadePercentage = 1.0f;
+        break;
+      }
+
+      pTile = pTile->getParent();
+    }
+  }
+
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
 
@@ -965,6 +997,24 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
     Tile& tile,
     ViewUpdateResult& result) {
 
+  // If this tile or any ancestors were culled last frame, don't fade it in
+  // gradually. Set it to fully visible right away.
+  if (_options.enableLodTransitionPeriod && tile.getContent()) {
+    const Tile* pTile = &tile;
+    while (pTile) {
+      TileSelectionState::Result selectionResult =
+          pTile->getLastSelectionState().getResult(frameState.lastFrameNumber);
+      if (selectionResult == TileSelectionState::Result::Rendered) {
+        break;
+      } else if (selectionResult == TileSelectionState::Result::Culled) {
+        tile.getContent()->lodTransitionFadePercentage = 1.0f;
+        break;
+      }
+
+      pTile = pTile->getParent();
+    }
+  }
+
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
 
@@ -1062,6 +1112,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
            !pWorkTile->getLastSelectionState().wasKicked(
                frameState.currentFrameNumber) &&
            pWorkTile != &tile) {
+      if (_options.enableLodTransitionPeriod && pWorkTile->getContent()) {
+        pWorkTile->getContent()->lodTransitionFadePercentage = 0.0f;
+      }
       pWorkTile->getLastSelectionState().kick();
       pWorkTile = pWorkTile->getParent();
     }
@@ -1076,6 +1129,24 @@ bool Tileset::_kickDescendantsAndRenderTile(
 
   if (tile.getRefine() != Cesium3DTilesSelection::TileRefine::Add) {
     renderList.push_back(&tile);
+  }
+
+  // If this tile or any ancestors were culled last frame, don't fade it in
+  // gradually. Set it to fully visible right away.
+  if (_options.enableLodTransitionPeriod && tile.getContent()) {
+    const Tile* pTile = &tile;
+    while (pTile) {
+      TileSelectionState::Result selectionResult =
+          pTile->getLastSelectionState().getResult(frameState.lastFrameNumber);
+      if (selectionResult == TileSelectionState::Result::Rendered) {
+        break;
+      } else if (selectionResult == TileSelectionState::Result::Culled) {
+        tile.getContent()->lodTransitionFadePercentage = 1.0f;
+        break;
+      }
+
+      pTile = pTile->getParent();
+    }
   }
 
   tile.setLastSelectionState(TileSelectionState(
@@ -1371,13 +1442,14 @@ void Tileset::_unloadCachedTiles() noexcept {
     }
 
     // Still fading out, can't unload this tile.
-    if (pTile->getContent() && pTile->getContent()->ditherFadePercentage > 0.0f) {
+    if (pTile->getContent() &&
+        pTile->getContent()->lodTransitionFadePercentage > 0.0f) {
       pTile = this->_loadedTiles.next(*pTile);
       continue;
     }
 
-    if (this->_updateResult.tilesFadingOut.find(pTile) != 
-          this->_updateResult.tilesFadingOut.end()) {
+    if (this->_updateResult.tilesFadingOut.find(pTile) !=
+        this->_updateResult.tilesFadingOut.end()) {
       pTile = this->_loadedTiles.next(*pTile);
       continue;
     }
