@@ -13,8 +13,10 @@
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
+#include <imageio/image_dec.h>
 #include <ktx.h>
 #include <rapidjson/reader.h>
+#include <webp/decode.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -601,6 +603,45 @@ ImageReaderResult GltfReader::readImage(
     result.image.reset();
     result.errors.emplace_back("KTX2 loading failed");
 
+    return result;
+  }
+
+  WebPBitstreamFeatures features;
+  if (WebPGetFeatures(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          &features) == VP8_STATUS_OK) {
+    image.width = features.width;
+    image.height = features.height;
+    image.channels = features.has_alpha ? 4 : 3;
+
+    uint8_t* pImage = NULL;
+    if (features.has_alpha) {
+      pImage = WebPDecodeRGBA(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          &image.width,
+          &image.height);
+    } else {
+      pImage = WebPDecodeRGB(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          &image.width,
+          &image.height);
+    }
+    if (pImage) {
+      image.bytesPerChannel = 1;
+      const auto lastByte =
+          image.width * image.height * image.channels * image.bytesPerChannel;
+      image.pixelData.resize(static_cast<std::size_t>(lastByte));
+      std::uint8_t* u8Pointer =
+          reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+      std::copy(pImage, pImage + lastByte, u8Pointer);
+      WebPFree(pImage);
+    } else {
+      result.image.reset();
+      result.errors.emplace_back("Unable to decode WebP");
+    }
     return result;
   }
 
