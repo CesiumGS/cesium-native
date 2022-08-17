@@ -606,15 +606,25 @@ TilesetContentManager::TilesetContentManager(
       _loadedTilesCount{0},
       _tilesDataUsed{0} {
   if (!url.empty()) {
+    this->notifyTileStartLoading(nullptr);
+
     TilesetJsonLoader::createLoader(externals, url, {})
         .thenInMainThread(
             [this, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
+              this->notifyTileDoneLoading(result.pRootTile.get());
               this->propagateTilesetContentLoaderResult(
                   TilesetLoadType::TilesetJson,
                   errorCallback,
                   std::move(result));
-            });
+            })
+        .catchInMainThread([this](std::exception&& e) {
+          notifyTileDoneLoading(nullptr);
+          SPDLOG_LOGGER_ERROR(
+              this->_externals.pLogger,
+              "An unexpected error occurs when loading tile: {}",
+              e.what());
+        });
   }
 }
 
@@ -656,6 +666,8 @@ TilesetContentManager::TilesetContentManager(
       }
     };
 
+    this->notifyTileStartLoading(nullptr);
+
     CesiumIonTilesetLoader::createLoader(
         externals,
         tilesetOptions.contentOptions,
@@ -667,11 +679,19 @@ TilesetContentManager::TilesetContentManager(
         .thenInMainThread(
             [this, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+              this->notifyTileDoneLoading(result.pRootTile.get());
               this->propagateTilesetContentLoaderResult(
                   TilesetLoadType::CesiumIon,
                   errorCallback,
                   std::move(result));
-            });
+            })
+        .catchInMainThread([this](std::exception&& e) {
+          notifyTileDoneLoading(nullptr);
+          SPDLOG_LOGGER_ERROR(
+              this->_externals.pLogger,
+              "An unexpected error occurs when loading tile: {}",
+              e.what());
+        });
   }
 }
 
@@ -728,7 +748,7 @@ void TilesetContentManager::loadTileContent(
       mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
 
   // begin loading tile
-  notifyTileStartLoading(tile);
+  notifyTileStartLoading(&tile);
   tile.setState(TileLoadState::ContentLoading);
 
   TileContentLoadInfo tileLoadInfo{
@@ -787,11 +807,11 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
-        notifyTileDoneLoading(tile);
+        notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, this](
                              std::exception&& e) {
-        notifyTileDoneLoading(tile);
+        notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
             "An unexpected error occurs when loading tile: {}",
@@ -856,7 +876,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     }
   }
 
-  notifyTileUnloading(tile);
+  notifyTileUnloading(&tile);
 
   switch (state) {
   case TileLoadState::ContentLoaded:
@@ -1175,21 +1195,27 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
 }
 
 void TilesetContentManager::notifyTileStartLoading(
-    [[maybe_unused]] Tile& tile) noexcept {
+    [[maybe_unused]] const Tile* pTile) noexcept {
   ++this->_tilesLoadOnProgress;
 }
 
-void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
+void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
   assert(
       this->_tilesLoadOnProgress > 0 &&
       "There are no tile loads currently in flight");
   --this->_tilesLoadOnProgress;
   ++this->_loadedTilesCount;
-  this->_tilesDataUsed += tile.computeByteSize();
+
+  if (pTile) {
+    this->_tilesDataUsed += pTile->computeByteSize();
+  }
 }
 
-void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {
-  this->_tilesDataUsed -= tile.computeByteSize();
+void TilesetContentManager::notifyTileUnloading(const Tile* pTile) noexcept {
+  if (pTile) {
+    this->_tilesDataUsed -= pTile->computeByteSize();
+  }
+
   --this->_loadedTilesCount;
 }
 

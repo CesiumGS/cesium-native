@@ -91,11 +91,11 @@ private:
 
   void unloadDoneState(Tile& tile);
 
-  void notifyTileStartLoading(Tile& tile) noexcept;
+  void notifyTileStartLoading(const Tile* pTile) noexcept;
 
-  void notifyTileDoneLoading(Tile& tile) noexcept;
+  void notifyTileDoneLoading(const Tile* pTile) noexcept;
 
-  void notifyTileUnloading(Tile& tile) noexcept;
+  void notifyTileUnloading(const Tile* pTile) noexcept;
 
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
