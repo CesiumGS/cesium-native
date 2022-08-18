@@ -13,7 +13,6 @@
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
-#include <imageio/image_dec.h>
 #include <ktx.h>
 #include <rapidjson/reader.h>
 #include <webp/decode.h>
@@ -441,6 +440,15 @@ bool isKtx(const gsl::span<const std::byte>& data) {
   return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
 }
 
+bool isWebP(const gsl::span<const std::byte>& data) {
+  if (data.size() < 12) {
+    return false;
+  }
+  const uint32_t magic1 = *reinterpret_cast<const uint32_t*>(data.data());
+  const uint32_t magic2 = *reinterpret_cast<const uint32_t*>(data.data() + 8);
+  return magic1 == 0x46464952 && magic2 == 0x50424557;
+}
+
 /*static*/
 ImageReaderResult GltfReader::readImage(
     const gsl::span<const std::byte>& data,
@@ -604,45 +612,45 @@ ImageReaderResult GltfReader::readImage(
     result.errors.emplace_back("KTX2 loading failed");
 
     return result;
-  }
+  } else if (isWebP(data)) {
+    WebPBitstreamFeatures features;
+    if (WebPGetFeatures(
+            reinterpret_cast<const uint8_t*>(data.data()),
+            data.size(),
+            &features) == VP8_STATUS_OK) {
+      image.width = features.width;
+      image.height = features.height;
+      image.channels = features.has_alpha ? 4 : 3;
 
-  WebPBitstreamFeatures features;
-  if (WebPGetFeatures(
-          reinterpret_cast<const uint8_t*>(data.data()),
-          data.size(),
-          &features) == VP8_STATUS_OK) {
-    image.width = features.width;
-    image.height = features.height;
-    image.channels = features.has_alpha ? 4 : 3;
-
-    uint8_t* pImage = NULL;
-    if (features.has_alpha) {
-      pImage = WebPDecodeRGBA(
-          reinterpret_cast<const uint8_t*>(data.data()),
-          data.size(),
-          &image.width,
-          &image.height);
-    } else {
-      pImage = WebPDecodeRGB(
-          reinterpret_cast<const uint8_t*>(data.data()),
-          data.size(),
-          &image.width,
-          &image.height);
+      uint8_t* pImage = NULL;
+      if (features.has_alpha) {
+        pImage = WebPDecodeRGBA(
+            reinterpret_cast<const uint8_t*>(data.data()),
+            data.size(),
+            &image.width,
+            &image.height);
+      } else {
+        pImage = WebPDecodeRGB(
+            reinterpret_cast<const uint8_t*>(data.data()),
+            data.size(),
+            &image.width,
+            &image.height);
+      }
+      if (pImage) {
+        image.bytesPerChannel = 1;
+        const auto lastByte =
+            image.width * image.height * image.channels * image.bytesPerChannel;
+        image.pixelData.resize(static_cast<std::size_t>(lastByte));
+        std::uint8_t* u8Pointer =
+            reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+        std::copy(pImage, pImage + lastByte, u8Pointer);
+        WebPFree(pImage);
+      } else {
+        result.image.reset();
+        result.errors.emplace_back("Unable to decode WebP");
+      }
+      return result;
     }
-    if (pImage) {
-      image.bytesPerChannel = 1;
-      const auto lastByte =
-          image.width * image.height * image.channels * image.bytesPerChannel;
-      image.pixelData.resize(static_cast<std::size_t>(lastByte));
-      std::uint8_t* u8Pointer =
-          reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-      std::copy(pImage, pImage + lastByte, u8Pointer);
-      WebPFree(pImage);
-    } else {
-      result.image.reset();
-      result.errors.emplace_back("Unable to decode WebP");
-    }
-    return result;
   }
 
   {
