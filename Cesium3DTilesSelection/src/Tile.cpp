@@ -57,7 +57,7 @@ Tile::Tile(
       _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
       _loadState{loadState},
-      _shouldContentContinueUpdated{true} {}
+      _shouldContentContinueUpdating{true} {}
 
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
@@ -74,7 +74,7 @@ Tile::Tile(Tile&& rhs) noexcept
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
-      _shouldContentContinueUpdated{rhs._shouldContentContinueUpdated} {
+      _shouldContentContinueUpdating{rhs._shouldContentContinueUpdating} {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -105,7 +105,7 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_content = std::move(rhs._content);
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
-    this->_shouldContentContinueUpdated = rhs._shouldContentContinueUpdated;
+    this->_shouldContentContinueUpdating = rhs._shouldContentContinueUpdating;
   }
 
   return *this;
@@ -217,12 +217,12 @@ void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
 void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
 
-bool Tile::shouldContentContinueUpdated() const noexcept {
-  return this->_shouldContentContinueUpdated;
+bool Tile::shouldContentContinueUpdating() const noexcept {
+  return this->_shouldContentContinueUpdating;
 }
 
-void Tile::setContentShouldContinueUpdated(
-    bool shouldContentContinueUpdated) noexcept {
-  this->_shouldContentContinueUpdated = shouldContentContinueUpdated;
+void Tile::setContentShouldContinueUpdating(
+    bool shouldContentContinueUpdating) noexcept {
+  this->_shouldContentContinueUpdating = shouldContentContinueUpdating;
 }
 } // namespace Cesium3DTilesSelection

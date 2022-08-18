@@ -834,7 +834,7 @@ void TilesetContentManager::updateTileContent(
     break;
   }
 
-  if (tile.shouldContentContinueUpdated()) {
+  if (tile.shouldContentContinueUpdating()) {
     TileChildrenResult childrenResult =
         this->_pLoader->createTileChildren(tile);
     if (childrenResult.state == TileLoadResultState::Success) {
@@ -843,7 +843,7 @@ void TilesetContentManager::updateTileContent(
 
     bool shouldTileContinueUpdated =
         childrenResult.state == TileLoadResultState::RetryLater;
-    tile.setContentShouldContinueUpdated(shouldTileContinueUpdated);
+    tile.setContentShouldContinueUpdating(shouldTileContinueUpdated);
   }
 }
 
@@ -1086,7 +1086,7 @@ void TilesetContentManager::updateContentLoadedState(
 void TilesetContentManager::updateDoneState(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  if (tile.shouldContentContinueUpdated()) {
+  if (tile.shouldContentContinueUpdating()) {
     return;
   }
 

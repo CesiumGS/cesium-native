@@ -495,10 +495,10 @@ private:
 
   void setState(TileLoadState state) noexcept;
 
-  bool shouldContentContinueUpdated() const noexcept;
+  bool shouldContentContinueUpdating() const noexcept;
 
   void
-  setContentShouldContinueUpdated(bool shouldContentContinueUpdated) noexcept;
+  setContentShouldContinueUpdating(bool shouldContentContinueUpdating) noexcept;
 
   // Position in bounding-volume hierarchy.
   Tile* _pParent;
@@ -522,7 +522,7 @@ private:
   TileContent _content;
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
-  bool _shouldContentContinueUpdated;
+  bool _shouldContentContinueUpdating;
 
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
