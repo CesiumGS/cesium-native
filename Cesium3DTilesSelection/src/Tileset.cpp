@@ -116,25 +116,24 @@ Tileset::~Tileset() {
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _loadsInProgress not
   // being decremented correctly when an async load ends.
-  while (this->_loadsInProgress.load(std::memory_order::memory_order_acquire) >
-             0 ||
-         this->_subtreeLoadsInProgress.load(
-             std::memory_order::memory_order_acquire) > 0) {
-    this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
+  while (!this->canBeDestroyedWithoutBlocking()) {
   }
+}
 
-  // Wait for all overlays to wrap up their loading, too.
-  uint32_t tilesLoading = 1;
-  while (tilesLoading > 0) {
-    this->_externals.pAssetAccessor->tick();
-    this->_asyncSystem.dispatchMainThreadTasks();
+bool Tileset::canBeDestroyedWithoutBlocking() {
+  // Attempt to move the async operations toward completion.
+  this->_externals.pAssetAccessor->tick();
+  this->_asyncSystem.dispatchMainThreadTasks();
 
-    tilesLoading = 0;
-    for (auto& pOverlay : this->_overlays) {
-      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
-    }
-  }
+  bool noTileLoads =
+      this->_loadsInProgress.load(std::memory_order::memory_order_acquire) == 0;
+  bool noOverlayLoads = std::all_of(
+      this->_overlays.begin(),
+      this->_overlays.end(),
+      [](const auto& pOverlay) {
+        return pOverlay->getTileProvider()->getNumberOfTilesLoading() == 0;
+      });
+  return noTileLoads && noOverlayLoads;
 }
 
 static bool
