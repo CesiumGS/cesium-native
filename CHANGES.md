@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for loading WebP images inside glTFs and raster overlays.
+
 ### v0.18.1 - 2022-08-04
 
 ##### Fixes :wrench:
