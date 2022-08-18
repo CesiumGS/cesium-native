@@ -75,7 +75,7 @@ public:
 
   void setContentKind(TileExternalContent content);
 
-  void setContentKind(std::unique_ptr<TileRenderContent> content);
+  void setContentKind(std::unique_ptr<TileRenderContent>&& content);
 
   bool isUnknownContent() const noexcept;
 

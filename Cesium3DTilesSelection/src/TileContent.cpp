@@ -81,7 +81,7 @@ void TileContent::setContentKind(TileExternalContent content) {
   _contentKind = content;
 }
 
-void TileContent::setContentKind(std::unique_ptr<TileRenderContent> content) {
+void TileContent::setContentKind(std::unique_ptr<TileRenderContent>&& content) {
   _contentKind = std::move(content);
 }
 
