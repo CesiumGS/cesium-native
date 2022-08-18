@@ -90,12 +90,33 @@ enum class TileLoadState {
  */
 class CESIUM3DTILESSELECTION_API Tile final {
 public:
+  /**
+   * @brief Construct a tile with unknown content and a loader that is used to
+   * load the content of this tile. Tile has Unloaded status when initializing
+   * with this constructor.
+   *
+   * @param pLoader The {@link TilesetContentLoader} that is used to load the tile.
+   */
   explicit Tile(TilesetContentLoader* pLoader) noexcept;
 
+  /**
+   * @brief Construct a tile with an external content and a loader that is
+   * associated with this tile. Tile has ContentLoaded status when initializing
+   * with this constructor.
+   *
+   * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   */
   Tile(
       TilesetContentLoader* pLoader,
       TileExternalContent externalContent) noexcept;
 
+  /**
+   * @brief Construct a tile with an empty content and a loader that is
+   * associated with this tile. Tile has ContentLoaded status when initializing
+   * with this constructor.
+   *
+   * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   */
   Tile(TilesetContentLoader* pLoader, TileEmptyContent emptyContent) noexcept;
 
   /**
