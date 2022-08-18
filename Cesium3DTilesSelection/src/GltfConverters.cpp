@@ -3,29 +3,29 @@
 #include <spdlog/spdlog.h>
 
 namespace Cesium3DTilesSelection {
-std::unordered_map<std::string, GltfConverters::ConverterFun>
+std::unordered_map<std::string, GltfConverters::ConverterFunction>
     GltfConverters::_loadersByMagic;
 
-std::unordered_map<std::string, GltfConverters::ConverterFun>
+std::unordered_map<std::string, GltfConverters::ConverterFunction>
     GltfConverters::_loadersByFileExtension;
 
 void GltfConverters::registerMagic(
     const std::string& magic,
-    ConverterFun converter) {
+    ConverterFunction converter) {
   SPDLOG_INFO("Registering magic header {}", magic);
   _loadersByMagic[magic] = converter;
 }
 
 void GltfConverters::registerFileExtension(
     const std::string& fileExtension,
-    ConverterFun converter) {
+    ConverterFunction converter) {
   SPDLOG_INFO("Registering file extension {}", fileExtension);
 
   std::string lowerCaseFileExtension = toLowerCase(fileExtension);
   _loadersByFileExtension[lowerCaseFileExtension] = converter;
 }
 
-GltfConverters::ConverterFun
+GltfConverters::ConverterFunction
 GltfConverters::getConverterByFileExtension(const std::string& filePath) {
   std::string extension = getFileExtension(filePath);
   auto itExtension = _loadersByFileExtension.find(extension);
@@ -36,7 +36,7 @@ GltfConverters::getConverterByFileExtension(const std::string& filePath) {
   return nullptr;
 }
 
-GltfConverters::ConverterFun
+GltfConverters::ConverterFunction
 GltfConverters::getConverterByMagic(const gsl::span<const std::byte>& content) {
   if (content.size() >= 4) {
     std::string magic(reinterpret_cast<const char*>(content.data()), 4);

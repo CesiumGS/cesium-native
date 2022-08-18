@@ -16,7 +16,7 @@ public:
    * @brief A function pointer that can create a {@link GltfConverterResult} from a
    * tile binary content.
    */
-  using ConverterFun = GltfConverterResult (*)(
+  using ConverterFunction = GltfConverterResult (*)(
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options);
 
@@ -32,7 +32,8 @@ public:
    * @param converter The converter that will be used to create the tile gltf
    * content.
    */
-  static void registerMagic(const std::string& magic, ConverterFun converter);
+  static void
+  registerMagic(const std::string& magic, ConverterFunction converter);
 
   /**
    * @brief Register the given function for the given file extension.
@@ -49,7 +50,7 @@ public:
    */
   static void registerFileExtension(
       const std::string& fileExtension,
-      ConverterFun converter);
+      ConverterFunction converter);
 
   /**
    * @brief Retrieve the converter function that is already registered for the
@@ -58,7 +59,8 @@ public:
    *
    * @param filePath The file path that contains the file extension.
    */
-  static ConverterFun getConverterByFileExtension(const std::string& filePath);
+  static ConverterFunction
+  getConverterByFileExtension(const std::string& filePath);
 
   /**
    * @brief Retrieve the converter function that is registered for the given
@@ -71,14 +73,14 @@ public:
    *
    * @param content The binary tile content that contains the magic header.
    */
-  static ConverterFun
+  static ConverterFunction
   getConverterByMagic(const gsl::span<const std::byte>& content);
 
   /**
    * @brief Creates the {@link GltfConverterResult} from the given
    * binary content.
    *
-   * This will look up the {@link ConverterFun} that can be used to
+   * This will look up the {@link ConverterFunction} that can be used to
    * process the given input data, based on all loaders that
    * have been registered with {@link GltfConverters::registerMagic}
    * or {@link GltfConverters::registerFileExtension}.
@@ -108,7 +110,7 @@ public:
    * @brief Creates the {@link GltfConverterResult} from the given
    * binary content.
    *
-   * This will look up the {@link ConverterFun} that can be used to
+   * This will look up the {@link ConverterFunction} that can be used to
    * process the given input data, based on all loaders that
    * have been registered with {@link GltfConverters::registerMagic}.
    *
@@ -132,7 +134,8 @@ private:
 
   static std::string getFileExtension(const std::string_view& filePath);
 
-  static std::unordered_map<std::string, ConverterFun> _loadersByMagic;
-  static std::unordered_map<std::string, ConverterFun> _loadersByFileExtension;
+  static std::unordered_map<std::string, ConverterFunction> _loadersByMagic;
+  static std::unordered_map<std::string, ConverterFunction>
+      _loadersByFileExtension;
 };
 } // namespace Cesium3DTilesSelection
