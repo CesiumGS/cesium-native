@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Library.h"
+
 #include <Cesium3DTilesSelection/ErrorList.h>
 #include <CesiumGltf/Model.h>
 
@@ -13,7 +15,7 @@ namespace Cesium3DTilesSelection {
  * {@link GltfConverters}, when the response to a network request for
  * loading the tile content was received.
  */
-struct GltfConverterResult {
+struct CESIUM3DTILESSELECTION_API GltfConverterResult {
   /**
    * @brief The gltf model converted from a binary content. This is empty if
    * there are errors during the conversion
