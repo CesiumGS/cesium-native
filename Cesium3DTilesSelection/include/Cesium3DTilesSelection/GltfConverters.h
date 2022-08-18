@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Library.h"
+
 #include <Cesium3DTilesSelection/GltfConverterResult.h>
 #include <CesiumGltfReader/GltfReader.h>
 
@@ -10,7 +12,21 @@
 #include <string_view>
 
 namespace Cesium3DTilesSelection {
-class GltfConverters {
+/**
+ * @brief Creates {@link GltfConverterResult} objects from a
+ * a binary content.
+ *
+ * The class offers a lookup functionality for registering
+ * {@link ConverterFunction} instances that can create
+ * {@link GltfConverterResult} instances from a binary content.
+ *
+ * The loaders are registered based on the magic header or the file extension
+ * of the input data. The binary data is usually received as a response to a
+ * network request, and the first four bytes of the raw data form the magic
+ * header. Based on this header or the file extension of the network response,
+ * the loader that will be used for processing the input can be looked up.
+ */
+class CESIUM3DTILESSELECTION_API GltfConverters {
 public:
   /**
    * @brief A function pointer that can create a {@link GltfConverterResult} from a
