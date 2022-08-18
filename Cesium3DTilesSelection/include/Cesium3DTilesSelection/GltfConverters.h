@@ -74,6 +74,7 @@ public:
    * returned
    *
    * @param filePath The file path that contains the file extension.
+   * @return The {@link ConverterFunction} that is registered with the file extension.
    */
   static ConverterFunction
   getConverterByFileExtension(const std::string& filePath);
@@ -88,6 +89,7 @@ public:
    * {@link GltfConverterResult} from the input data.
    *
    * @param content The binary tile content that contains the magic header.
+   * @return The {@link ConverterFunction} that is registered with the magic header.
    */
   static ConverterFunction
   getConverterByMagic(const gsl::span<const std::byte>& content);
@@ -116,6 +118,7 @@ public:
    * @param content The tile binary content that may contains the magic header
    * to look up the converter and is used to convert to gltf model.
    * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to read a glTF.
+   * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
   static GltfConverterResult convert(
       const std::string& filePath,
@@ -140,6 +143,7 @@ public:
    * @param content The tile binary content that may contains the magic header
    * to look up the converter and is used to convert to gltf model.
    * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to read a glTF.
+   * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
   static GltfConverterResult convert(
       const gsl::span<const std::byte>& content,
