@@ -7,9 +7,9 @@ void MockTilesetContentManagerTestFixture::setTileLoadState(
   tile.setState(loadState);
 }
 
-void MockTilesetContentManagerTestFixture::setTileShouldContinueUpdated(
+void MockTilesetContentManagerTestFixture::setTileShouldContinueUpdating(
     Cesium3DTilesSelection::Tile& tile,
-    bool shouldContinueUpdated) {
-  tile.setContentShouldContinueUpdating(shouldContinueUpdated);
+    bool shouldContinueUpdating) {
+  tile.setContentShouldContinueUpdating(shouldContinueUpdating);
 }
 } // namespace Cesium3DTilesSelection

@@ -9,8 +9,8 @@ public:
       Cesium3DTilesSelection::Tile& tile,
       Cesium3DTilesSelection::TileLoadState loadState);
 
-  static void setTileShouldContinueUpdated(
+  static void setTileShouldContinueUpdating(
       Cesium3DTilesSelection::Tile& tile,
-      bool shouldContinueToBeUpdated);
+      bool shouldContinueToBeUpdating);
 };
 } // namespace Cesium3DTilesSelection
