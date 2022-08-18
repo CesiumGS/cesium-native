@@ -613,33 +613,22 @@ ImageReaderResult GltfReader::readImage(
 
     return result;
   } else if (isWebP(data)) {
-    WebPBitstreamFeatures features;
-    if (WebPGetFeatures(
+    if (WebPGetInfo(
             reinterpret_cast<const uint8_t*>(data.data()),
             data.size(),
-            &features) == VP8_STATUS_OK) {
-      image.width = features.width;
-      image.height = features.height;
-      image.channels = features.has_alpha ? 4 : 3;
+            &image.width,
+            &image.height)) {
+      image.channels = 4;
       image.bytesPerChannel = 1;
       uint8_t* pImage = NULL;
       const auto bufferSize = image.width * image.height * image.channels;
       image.pixelData.resize(static_cast<std::size_t>(bufferSize));
-      if (features.has_alpha) {
-        pImage = WebPDecodeRGBAInto(
-            reinterpret_cast<const uint8_t*>(data.data()),
-            data.size(),
-            reinterpret_cast<uint8_t*>(image.pixelData.data()),
-            image.pixelData.size(),
-            image.width * image.channels);
-      } else {
-        pImage = WebPDecodeRGBInto(
-            reinterpret_cast<const uint8_t*>(data.data()),
-            data.size(),
-            reinterpret_cast<uint8_t*>(image.pixelData.data()),
-            image.pixelData.size(),
-            image.width * image.channels);
-      }
+      pImage = WebPDecodeRGBAInto(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          reinterpret_cast<uint8_t*>(image.pixelData.data()),
+          image.pixelData.size(),
+          image.width * image.channels);
       if (!pImage) {
         result.image.reset();
         result.errors.emplace_back("Unable to decode WebP");
