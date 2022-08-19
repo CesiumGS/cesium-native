@@ -112,14 +112,14 @@ Tileset::Tileset(
 }
 
 Tileset::~Tileset() {
-  if (this->_externals.pTileOcclusionProxyPool) {
-    this->_externals.pTileOcclusionProxyPool->destroyPool();
-  }
-
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _loadsInProgress not
   // being decremented correctly when an async load ends.
   while (!this->canBeDestroyedWithoutBlocking()) {
+  }
+
+  if (this->_externals.pTileOcclusionProxyPool) {
+    this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
 }
 
