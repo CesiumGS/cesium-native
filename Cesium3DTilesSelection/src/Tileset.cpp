@@ -5,6 +5,7 @@
 #include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
+#include "Cesium3DTilesSelection/TileOcclusionRendererProxy.h"
 #include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "QuantizedMeshContent.h"
@@ -62,10 +63,9 @@ Tileset::Tileset(
       _subtreeLoadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
-      _distancesStack(),
-      _nextDistancesVector(0) {
+      _distances(),
+      _childOcclusionProxies() {
   if (!url.empty()) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
@@ -100,10 +100,9 @@ Tileset::Tileset(
       _subtreeLoadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y),
-      _distancesStack(),
-      _nextDistancesVector(0) {
+      _distances(),
+      _childOcclusionProxies() {
   if (ionAssetID > 0) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     this->notifyTileStartLoading(nullptr);
@@ -113,6 +112,10 @@ Tileset::Tileset(
 }
 
 Tileset::~Tileset() {
+  if (this->_externals.pTileOcclusionProxyPool) {
+    this->_externals.pTileOcclusionProxyPool->destroyPool();
+  }
+
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _loadsInProgress not
   // being decremented correctly when an async load ends.
@@ -227,16 +230,13 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;
   result.tilesCulled = 0;
+  result.tilesOccluded = 0;
+  result.tilesWaitingForOcclusionResults = 0;
   result.maxDepthVisited = 0;
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
     return result;
-  }
-
-  if (!this->supportsRasterOverlays() && this->_overlays.size() > 0) {
-    this->_externals.pLogger->warn(
-        "Only quantized-mesh terrain tilesets currently support overlays.");
   }
 
   this->_loadQueueHigh.clear();
@@ -278,6 +278,12 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
       static_cast<uint32_t>(this->_loadQueueMedium.size());
   result.tilesLoadingHighPriority =
       static_cast<uint32_t>(this->_loadQueueHigh.size());
+
+  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
+      this->getExternals().pTileOcclusionProxyPool;
+  if (pOcclusionPool) {
+    pOcclusionPool->pruneOcclusionProxyMappings();
+  }
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();
@@ -343,6 +349,7 @@ void Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
 void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
   assert(this->_loadsInProgress > 0);
   --this->_loadsInProgress;
+  ++this->_loadedTilesCount;
 
   if (pTile) {
     this->_tileDataBytes += pTile->computeByteSize();
@@ -355,7 +362,20 @@ void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
 void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
   if (pTile) {
     this->_tileDataBytes -= pTile->computeByteSize();
+    --this->_loadedTilesCount;
   }
+}
+
+float Tileset::computeLoadProgress() noexcept {
+  uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
+                                this->_loadQueueMedium.size() +
+                                this->_loadQueueHigh.size());
+  // we ignore _subtreeLoadsInProgress for now
+  uint32_t inProgressSum = (this->_loadsInProgress + queueSizeSum);
+  uint32_t totalNum = this->_loadedTilesCount + inProgressSum;
+  float percentage = static_cast<float>(this->_loadedTilesCount) /
+                     static_cast<float>(totalNum);
+  return (percentage * 100.f);
 }
 
 void Tileset::loadTilesFromJson(
@@ -611,6 +631,172 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
   return glm::exp(-(fogScalar * fogScalar)) > 0.0;
 }
 
+void Tileset::_frustumCull(
+    const Tile& tile,
+    const FrameState& frameState,
+    bool cullWithChildrenBounds,
+    CullResult& cullResult) {
+
+  if (!cullResult.shouldVisit || cullResult.culled) {
+    return;
+  }
+
+  const std::vector<ViewState>& frustums = frameState.frustums;
+  // Frustum cull using the children's bounds.
+  if (cullWithChildrenBounds) {
+    if (std::any_of(
+            frustums.begin(),
+            frustums.end(),
+            [children = tile.getChildren(),
+             renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
+                const ViewState& frustum) {
+              for (const Tile& child : children) {
+                if (isVisibleFromCamera(
+                        frustum,
+                        child.getBoundingVolume(),
+                        renderTilesUnderCamera)) {
+                  return true;
+                }
+              }
+
+              return false;
+            })) {
+      // At least one child is visible in at least one frustum, so don't cull.
+      return;
+    }
+    // Frustum cull based on the actual tile's bounds.
+  } else if (std::any_of(
+                 frustums.begin(),
+                 frustums.end(),
+                 [&boundingVolume = tile.getBoundingVolume(),
+                  renderTilesUnderCamera =
+                      this->_options.renderTilesUnderCamera](
+                     const ViewState& frustum) {
+                   return isVisibleFromCamera(
+                       frustum,
+                       boundingVolume,
+                       renderTilesUnderCamera);
+                 })) {
+    // The tile is visible in at least one frustum, so don't cull.
+    return;
+  }
+
+  // If we haven't returned yet, this tile is frustum culled.
+  cullResult.culled = true;
+
+  if (this->_options.enableFrustumCulling) {
+    // frustum culling is enabled so we shouldn't visit this off-screen tile
+    cullResult.shouldVisit = false;
+  }
+}
+
+void Tileset::_fogCull(
+    const FrameState& frameState,
+    const std::vector<double>& distances,
+    CullResult& cullResult) {
+
+  if (!cullResult.shouldVisit || cullResult.culled) {
+    return;
+  }
+
+  const std::vector<ViewState>& frustums = frameState.frustums;
+  const std::vector<double>& fogDensities = frameState.fogDensities;
+
+  bool isFogCulled = true;
+
+  for (size_t i = 0; i < frustums.size(); ++i) {
+    const double distance = distances[i];
+    const double fogDensity = fogDensities[i];
+
+    if (isVisibleInFog(distance, fogDensity)) {
+      isFogCulled = false;
+      break;
+    }
+  }
+
+  if (isFogCulled) {
+    // this tile is occluded by fog so it is a culled tile
+    cullResult.culled = true;
+    if (this->_options.enableFogCulling) {
+      // fog culling is enabled so we shouldn't visit this tile
+      cullResult.shouldVisit = false;
+    }
+  }
+}
+
+static double computeTilePriority(
+    const Tile& tile,
+    const std::vector<ViewState>& frustums,
+    const std::vector<double>& distances) {
+  double highestLoadPriority = std::numeric_limits<double>::max();
+  const glm::dvec3 boundingVolumeCenter =
+      getBoundingVolumeCenter(tile.getBoundingVolume());
+
+  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+    const ViewState& frustum = frustums[i];
+    const double distance = distances[i];
+
+    glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
+    const double magnitude = glm::length(tileDirection);
+
+    if (magnitude >= CesiumUtility::Math::Epsilon5) {
+      tileDirection /= magnitude;
+      const double loadPriority =
+          (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
+      if (loadPriority < highestLoadPriority) {
+        highestLoadPriority = loadPriority;
+      }
+    }
+  }
+
+  return highestLoadPriority;
+}
+
+void computeDistances(
+    const Tile& tile,
+    const std::vector<ViewState>& frustums,
+    std::vector<double>& distances) {
+  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
+
+  distances.clear();
+  distances.resize(frustums.size());
+
+  std::transform(
+      frustums.begin(),
+      frustums.end(),
+      distances.begin(),
+      [boundingVolume](const ViewState& frustum) -> double {
+        return glm::sqrt(glm::max(
+            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
+            0.0));
+      });
+}
+
+bool Tileset::_meetsSse(
+    const std::vector<ViewState>& frustums,
+    const Tile& tile,
+    const std::vector<double>& distances,
+    bool culled) const noexcept {
+
+  double largestSse = 0.0;
+
+  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+    const ViewState& frustum = frustums[i];
+    const double distance = distances[i];
+
+    // Does this tile meet the screen-space error?
+    const double sse =
+        frustum.computeScreenSpaceError(tile.getGeometricError(), distance);
+    if (sse > largestSse) {
+      largestSse = sse;
+    }
+  }
+
+  return culled ? !this->_options.enforceCulledScreenSpaceError ||
+                      largestSse < this->_options.culledScreenSpaceError
+                : largestSse < this->_options.maximumScreenSpaceError;
+}
+
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * It is not yet known whether the tile is visible.
 //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true,
@@ -636,96 +822,36 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   this->_markTileVisited(tile);
 
-  // whether we should visit this tile
-  bool shouldVisit = true;
-  // whether this tile was culled (Note: we might still want to visit it)
-  bool culled = false;
+  CullResult cullResult{};
 
-  for (const std::shared_ptr<ITileExcluder>& pExcluder :
-       this->_options.excluders) {
-    if (pExcluder->shouldExclude(tile)) {
-      culled = true;
-      shouldVisit = false;
+  bool cullWithChildrenBounds = !tile.getChildren().empty();
+  for (Tile& child : tile.getChildren()) {
+    if (child.getUnconditionallyRefine()) {
+      cullWithChildrenBounds = false;
       break;
     }
   }
 
-  const std::vector<ViewState>& frustums = frameState.frustums;
-  const std::vector<double>& fogDensities = frameState.fogDensities;
-
-  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-  if (std::none_of(
-          frustums.begin(),
-          frustums.end(),
-          [boundingVolume,
-           renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
-              const ViewState& frustum) {
-            return isVisibleFromCamera(
-                frustum,
-                boundingVolume,
-                renderTilesUnderCamera);
-          })) {
-    // this tile is off-screen so it is a culled tile
-    culled = true;
-    if (this->_options.enableFrustumCulling) {
-      // frustum culling is enabled so we shouldn't visit this off-screen tile
-      shouldVisit = false;
+  // TODO: add cullWithChildrenBounds to the tile excluder interface?
+  for (const std::shared_ptr<ITileExcluder>& pExcluder :
+       this->_options.excluders) {
+    if (pExcluder->shouldExclude(tile)) {
+      cullResult.culled = true;
+      cullResult.shouldVisit = false;
+      break;
     }
   }
 
-  if (this->_nextDistancesVector >= this->_distancesStack.size()) {
-    this->_distancesStack.resize(this->_nextDistancesVector + 1);
-  }
+  std::vector<double>& distances = this->_distances;
+  computeDistances(tile, frameState.frustums, distances);
+  double tilePriority =
+      computeTilePriority(tile, frameState.frustums, distances);
 
-  std::unique_ptr<std::vector<double>>& pDistances =
-      this->_distancesStack[this->_nextDistancesVector];
-  if (!pDistances) {
-    pDistances = std::make_unique<std::vector<double>>();
-  }
+  // TODO: abstract culling stages into composable interface?
+  this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
+  this->_fogCull(frameState, distances, cullResult);
 
-  std::vector<double>& distances = *pDistances;
-  distances.resize(frustums.size());
-  ++this->_nextDistancesVector;
-
-  // Use a ScopeGuard to ensure the _nextDistancesVector gets decrements when we
-  // leave this scope.
-  CesiumUtility::ScopeGuard guard{[this]() { --this->_nextDistancesVector; }};
-
-  std::transform(
-      frustums.begin(),
-      frustums.end(),
-      distances.begin(),
-      [boundingVolume](const ViewState& frustum) -> double {
-        return glm::sqrt(glm::max(
-            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
-            0.0));
-      });
-
-  // if we are still considering visiting this tile, check for fog occlusion
-  if (shouldVisit) {
-    bool isFogCulled = true;
-
-    for (size_t i = 0; i < frustums.size(); ++i) {
-      const double distance = distances[i];
-      const double fogDensity = fogDensities[i];
-
-      if (isVisibleInFog(distance, fogDensity)) {
-        isFogCulled = false;
-        break;
-      }
-    }
-
-    if (isFogCulled) {
-      // this tile is occluded by fog so it is a culled tile
-      culled = true;
-      if (this->_options.enableFogCulling) {
-        // fog culling is enabled so we shouldn't visit this tile
-        shouldVisit = false;
-      }
-    }
-  }
-
-  if (!shouldVisit) {
+  if (!cullResult.shouldVisit) {
     markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
     tile.setLastSelectionState(TileSelectionState(
         frameState.currentFrameNumber,
@@ -733,12 +859,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
     // Preload this culled sibling if requested.
     if (this->_options.preloadSiblings) {
-      addTileToLoadQueue(
-          this->_loadQueueLow,
-          implicitInfo,
-          frustums,
-          tile,
-          distances);
+      addTileToLoadQueue(this->_loadQueueLow, implicitInfo, tile, tilePriority);
     }
 
     ++result.tilesCulled;
@@ -746,14 +867,21 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     return TraversalDetails();
   }
 
+  if (cullResult.culled) {
+    ++result.culledTilesVisited;
+  }
+
+  bool meetsSse =
+      this->_meetsSse(frameState.frustums, tile, distances, cullResult.culled);
+
   return this->_visitTile(
       frameState,
       implicitInfo,
       depth,
+      meetsSse,
       ancestorMeetsSse,
       tile,
-      distances,
-      culled,
+      tilePriority,
       result);
 }
 
@@ -765,7 +893,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     const FrameState& frameState,
     const ImplicitTraversalInfo& implicitInfo,
     Tile& tile,
-    const std::vector<double>& distances,
+    double tilePriority,
     ViewUpdateResult& result) {
 
   const TileSelectionState lastFrameSelectionState =
@@ -776,15 +904,10 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  double loadPriority = addTileToLoadQueue(
-      this->_loadQueueMedium,
-      implicitInfo,
-      frameState.frustums,
-      tile,
-      distances);
+  addTileToLoadQueue(this->_loadQueueMedium, implicitInfo, tile, tilePriority);
 
   if (implicitInfo.shouldQueueSubtreeLoad) {
-    this->addSubtreeToLoadQueue(tile, implicitInfo, loadPriority);
+    this->addSubtreeToLoadQueue(tile, implicitInfo, tilePriority);
   }
 
   TraversalDetails traversalDetails;
@@ -801,7 +924,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
     const FrameState& frameState,
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo,
-    const std::vector<double>& distances) {
+    double tilePriority) {
   // This method should only be called in "Forbid Holes" mode.
   assert(this->_options.forbidHoles);
 
@@ -833,9 +956,8 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
       addTileToLoadQueue(
           this->_loadQueueMedium,
           childInfo,
-          frameState.frustums,
           child,
-          distances);
+          tilePriority);
     } else if (child.getUnconditionallyRefine()) {
       // This child tile is set to unconditionally refine. That means refining
       // _to_ it will immediately refine _through_ it. So we need to make sure
@@ -848,36 +970,11 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
           frameState,
           child,
           childInfo,
-          distances);
+          tilePriority);
     }
   }
 
   return waitingForChildren;
-}
-
-bool Tileset::_meetsSse(
-    const std::vector<ViewState>& frustums,
-    const Tile& tile,
-    const std::vector<double>& distances,
-    bool culled) const noexcept {
-
-  double largestSse = 0.0;
-
-  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
-    const ViewState& frustum = frustums[i];
-    const double distance = distances[i];
-
-    // Does this tile meet the screen-space error?
-    const double sse =
-        frustum.computeScreenSpaceError(tile.getGeometricError(), distance);
-    if (sse > largestSse) {
-      largestSse = sse;
-    }
-  }
-
-  return culled ? !this->_options.enforceCulledScreenSpaceError ||
-                      largestSse < this->_options.culledScreenSpaceError
-                : largestSse < this->_options.maximumScreenSpaceError;
 }
 
 /**
@@ -965,11 +1062,10 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
-    const FrameState& frameState,
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo,
     ViewUpdateResult& result,
-    const std::vector<double>& distances) {
+    double tilePriority) {
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
@@ -977,9 +1073,8 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
     addTileToLoadQueue(
         this->_loadQueueMedium,
         implicitInfo,
-        frameState.frustums,
         tile,
-        distances);
+        tilePriority);
     return true;
   }
 
@@ -999,7 +1094,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     size_t loadIndexMedium,
     size_t loadIndexHigh,
     bool queuedForLoad,
-    const std::vector<double>& distances) {
+    double tilePriority) {
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
 
@@ -1070,9 +1165,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
       addTileToLoadQueue(
           this->_loadQueueMedium,
           implicitInfo,
-          frameState.frustums,
           tile,
-          distances);
+          tilePriority);
     }
 
     traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -1085,6 +1179,98 @@ bool Tileset::_kickDescendantsAndRenderTile(
   return queuedForLoad;
 }
 
+TileOcclusionState
+Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
+  const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
+      this->getExternals().pTileOcclusionProxyPool;
+  if (pOcclusionPool) {
+    // First check if this tile's bounding volume has occlusion info and is
+    // known to be occluded.
+    const TileOcclusionRendererProxy* pOcclusion =
+        pOcclusionPool->fetchOcclusionProxyForTile(
+            tile,
+            frameState.currentFrameNumber);
+    if (!pOcclusion) {
+      // This indicates we ran out of occlusion proxies. We don't want to wait
+      // on occlusion info here since it might not ever arrive, so treat this
+      // tile as if it is _known_ to be unoccluded.
+      return TileOcclusionState::NotOccluded;
+    } else
+      switch (
+          static_cast<TileOcclusionState>(pOcclusion->getOcclusionState())) {
+      case TileOcclusionState::OcclusionUnavailable:
+        // We have an occlusion proxy, but it does not have valid occlusion
+        // info yet, wait for it.
+        return TileOcclusionState::OcclusionUnavailable;
+        break;
+      case TileOcclusionState::Occluded:
+        return TileOcclusionState::Occluded;
+        break;
+      case TileOcclusionState::NotOccluded:
+        if (tile.getChildren().size() == 0) {
+          // This is a leaf tile, so we can't use children bounding volumes.
+          return TileOcclusionState::NotOccluded;
+        }
+      }
+
+    // The tile's bounding volume is known to be unoccluded, but check the
+    // union of the children bounding volumes since it is tighter fitting.
+
+    // If any children are to be unconditionally refined, we can't rely on
+    // their bounding volumes. We also don't want to recurse indefinitely to
+    // find a valid descendant bounding volumes union.
+    for (const Tile& child : tile.getChildren()) {
+      if (child.getUnconditionallyRefine()) {
+        return TileOcclusionState::NotOccluded;
+      }
+    }
+
+    this->_childOcclusionProxies.clear();
+    this->_childOcclusionProxies.reserve(tile.getChildren().size());
+    for (const Tile& child : tile.getChildren()) {
+      const TileOcclusionRendererProxy* pChildProxy =
+          pOcclusionPool->fetchOcclusionProxyForTile(
+              child,
+              frameState.currentFrameNumber);
+
+      if (!pChildProxy) {
+        // We ran out of occlusion proxies, treat this as if it is _known_ to
+        // be unoccluded so we don't wait for it.
+        return TileOcclusionState::NotOccluded;
+      }
+
+      this->_childOcclusionProxies.push_back(pChildProxy);
+    }
+
+    // Check if any of the proxies are known to be unoccluded
+    for (const TileOcclusionRendererProxy* pChildProxy :
+         this->_childOcclusionProxies) {
+      if (pChildProxy->getOcclusionState() == TileOcclusionState::NotOccluded) {
+        return TileOcclusionState::NotOccluded;
+      }
+    }
+
+    // Check if any of the proxies are waiting for valid occlusion info.
+    for (const TileOcclusionRendererProxy* pChildProxy :
+         this->_childOcclusionProxies) {
+      if (pChildProxy->getOcclusionState() ==
+          TileOcclusionState::OcclusionUnavailable) {
+        // We have an occlusion proxy, but it does not have valid occlusion
+        // info yet, wait for it.
+        return TileOcclusionState::OcclusionUnavailable;
+      }
+    }
+
+    // If we know the occlusion state of all children, and none are unoccluded,
+    // we can treat this tile as occluded.
+    return TileOcclusionState::Occluded;
+  }
+
+  // We don't have an occlusion pool to query occlusion with, treat everything
+  // as unoccluded.
+  return TileOcclusionState::NotOccluded;
+}
+
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * The tile has previously been determined to be visible.
 //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true,
@@ -1095,28 +1281,67 @@ Tileset::TraversalDetails Tileset::_visitTile(
     const FrameState& frameState,
     const ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
+    bool meetsSse,
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
                            // children!
     Tile& tile,
-    const std::vector<double>& distances,
-    bool culled,
+    double tilePriority,
     ViewUpdateResult& result) {
   ++result.tilesVisited;
   result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
-  if (culled) {
-    ++result.culledTilesVisited;
-  }
-
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    return _renderLeaf(frameState, implicitInfo, tile, distances, result);
+    return _renderLeaf(frameState, implicitInfo, tile, tilePriority, result);
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
-  const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
+
+  // If occlusion culling is enabled, we may not want to refine for two
+  // reasons:
+  // - The tile is known to be occluded, so don't refine further.
+  // - The tile was not previously refined and the occlusion state for this
+  //   tile is not known yet, but will be known in the next several frames. If
+  //   delayRefinementForOcclusion is enabled, we will wait until the tile has
+  //   valid occlusion info to decide to refine. This might save us from
+  //   kicking off descendant loads that we later find to be unnecessary.
+  bool tileLastRefined =
+      tile.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
+      TileSelectionState::Result::Refined;
+  bool childLastRefined = false;
+  for (const Tile& child : tile.getChildren()) {
+    if (child.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
+        TileSelectionState::Result::Refined) {
+      childLastRefined = true;
+      break;
+    }
+  }
+
+  // If this tile and a child were both refined last frame, this tile does not
+  // need occlusion results.
+  bool shouldCheckOcclusion = this->_options.enableOcclusionCulling &&
+                              wantToRefine && !unconditionallyRefine &&
+                              (!tileLastRefined || !childLastRefined);
+
+  if (shouldCheckOcclusion) {
+    TileOcclusionState occlusion = this->_checkOcclusion(tile, frameState);
+    if (occlusion == TileOcclusionState::Occluded) {
+      ++result.tilesOccluded;
+      wantToRefine = false;
+      meetsSse = true;
+    } else if (
+        occlusion == TileOcclusionState::OcclusionUnavailable &&
+        this->_options.delayRefinementForOcclusion &&
+        tile.getLastSelectionState().getOriginalResult(
+            frameState.lastFrameNumber) !=
+            TileSelectionState::Result::Refined) {
+      ++result.tilesWaitingForOcclusionResults;
+      wantToRefine = false;
+      meetsSse = true;
+    }
+  }
 
   // In "Forbid Holes" mode, we cannot refine this tile until all its children
   // are loaded. But don't queue the children for load until we _want_ to
@@ -1127,7 +1352,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
             frameState,
             tile,
             implicitInfo,
-            distances);
+            tilePriority);
     wantToRefine = !waitingForChildren;
   }
 
@@ -1144,7 +1369,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     //
     // Note that even if we decide to render a tile here, it may later get
     // "kicked" in favor of an ancestor.
-    const TileSelectionState lastFrameSelectionState =
+    const TileSelectionState& lastFrameSelectionState =
         tile.getLastSelectionState();
     const bool renderThisTile = shouldRenderThisTile(
         tile,
@@ -1156,9 +1381,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
         addTileToLoadQueue(
             this->_loadQueueMedium,
             implicitInfo,
-            frameState.frustums,
             tile,
-            distances);
+            tilePriority);
       }
       return _renderInnerTile(frameState, tile, result);
     }
@@ -1180,20 +1404,18 @@ Tileset::TraversalDetails Tileset::_visitTile(
       addTileToLoadQueue(
           this->_loadQueueHigh,
           implicitInfo,
-          frameState.frustums,
           tile,
-          distances);
+          tilePriority);
     }
   }
 
   // Refine!
 
   bool queuedForLoad = _loadAndRenderAdditiveRefinedTile(
-      frameState,
       tile,
       implicitInfo,
       result,
-      distances);
+      tilePriority);
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
@@ -1240,7 +1462,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         loadIndexMedium,
         loadIndexHigh,
         queuedForLoad,
-        distances);
+        tilePriority);
   } else {
     if (tile.getRefine() != TileRefine::Add) {
       markTileNonRendered(frameState.lastFrameNumber, tile, result);
@@ -1251,12 +1473,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   }
 
   if (this->_options.preloadAncestors && !queuedForLoad) {
-    addTileToLoadQueue(
-        this->_loadQueueLow,
-        implicitInfo,
-        frameState.frustums,
-        tile,
-        distances);
+    addTileToLoadQueue(this->_loadQueueLow, implicitInfo, tile, tilePriority);
   }
 
   return traversalDetails;
@@ -1429,37 +1646,13 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 // addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
 // (or at least, this function could delegate to such a call...)
 
-/*static*/ double Tileset::addTileToLoadQueue(
+/*static*/ void Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
     const ImplicitTraversalInfo& implicitInfo,
-    const std::vector<ViewState>& frustums,
     Tile& tile,
-    const std::vector<double>& distances) {
-  double highestLoadPriority = std::numeric_limits<double>::max();
-
+    double tilePriority) {
   if (tile.getState() == Tile::LoadState::Unloaded ||
       anyRasterOverlaysNeedLoading(tile)) {
-
-    const glm::dvec3 boundingVolumeCenter =
-        getBoundingVolumeCenter(tile.getBoundingVolume());
-
-    for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
-      const ViewState& frustum = frustums[i];
-      const double distance = distances[i];
-
-      glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
-      const double magnitude = glm::length(tileDirection);
-
-      if (magnitude >= CesiumUtility::Math::Epsilon5) {
-        tileDirection /= magnitude;
-        const double loadPriority =
-            (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
-        if (loadPriority < highestLoadPriority) {
-          highestLoadPriority = loadPriority;
-        }
-      }
-    }
-
     // Check if the tile has any content
     const std::string* pStringID = std::get_if<std::string>(&tile.getTileID());
     const bool emptyContentUri = pStringID && pStringID->empty();
@@ -1532,11 +1725,9 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
         }
       }
     } else if (shouldLoad) {
-      loadQueue.push_back({&tile, highestLoadPriority});
+      loadQueue.push_back({&tile, tilePriority});
     }
   }
-
-  return highestLoadPriority;
 }
 
 void Tileset::processQueue(

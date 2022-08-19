@@ -3,12 +3,17 @@
 #pragma once
 
 #include "Cesium3DTiles/Asset.h"
+#include "Cesium3DTiles/GroupMetadata.h"
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/MetadataEntity.h"
 #include "Cesium3DTiles/Properties.h"
+#include "Cesium3DTiles/Schema.h"
+#include "Cesium3DTiles/Statistics.h"
 #include "Cesium3DTiles/Tile.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -30,6 +35,35 @@ struct CESIUM3DTILES_API Tileset final
    * @brief A dictionary object of metadata about per-feature properties.
    */
   std::unordered_map<std::string, Cesium3DTiles::Properties> properties;
+
+  /**
+   * @brief An object defining the structure of metadata classes and enums. When
+   * this is defined, then `schemaUri` shall be undefined.
+   */
+  std::optional<Cesium3DTiles::Schema> schema;
+
+  /**
+   * @brief The URI (or IRI) of the external schema file. When this is defined,
+   * then `schema` shall be undefined.
+   */
+  std::optional<std::string> schemaUri;
+
+  /**
+   * @brief An object containing statistics about metadata entities.
+   */
+  std::optional<Cesium3DTiles::Statistics> statistics;
+
+  /**
+   * @brief An array of groups that tile content may belong to. Each element of
+   * this array is a metadata entity that describes the group. The tile content
+   * `group` property is an index into this array.
+   */
+  std::vector<Cesium3DTiles::GroupMetadata> groups;
+
+  /**
+   * @brief A metadata entity that is associated with this tileset.
+   */
+  std::optional<Cesium3DTiles::MetadataEntity> metadata;
 
   /**
    * @brief The error, in meters, introduced if this tileset is not rendered. At

@@ -12,7 +12,9 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief An array of binary property values.
+ * @brief An array of binary property values. This represents one column of a
+ * property table, and contains one value of a certain property for each
+ * metadata entity.
  */
 struct CESIUM3DTILES_API PropertyTableProperty final
     : public CesiumUtility::ExtensibleObject {
@@ -50,39 +52,40 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * `type` is `BOOLEAN` values are packed into a bitstream. When `type` is
    * `STRING` values are stored as byte sequences and decoded as UTF-8 strings.
    * When `type` is `SCALAR`, `VECN`, or `MATN` the values are stored as the
-   * provided `componentType` and the buffer view `byteOffset` must be aligned
+   * provided `componentType` and the buffer view `byteOffset` shall be aligned
    * to a multiple of the `componentType` size. When `type` is `ENUM` values are
-   * stored as the enum's `valueType` and the buffer view `byteOffset` must be
+   * stored as the enum's `valueType` and the buffer view `byteOffset` shall be
    * aligned to a multiple of the `valueType` size. Each enum value in the array
-   * must match one of the allowed values in the enum definition. `arrayOffsets`
-   * is required for variable-length arrays and `stringOffsets` is required for
-   * strings (for variable-length arrays of strings, both are required).
+   * shall match one of the allowed values in the enum definition.
+   * `arrayOffsets` is required for variable-length arrays and `stringOffsets`
+   * is required for strings (for variable-length arrays of strings, both are
+   * required).
    */
   int64_t values = int64_t();
 
   /**
    * @brief The index of the buffer view containing offsets for variable-length
-   * arrays. The number of offsets is equal to the number of available tiles
-   * plus one. The offsets represent the start positions of each array, with the
-   * last offset representing the position after the last array. The array
-   * length is computed using the difference between the subsequent offset and
-   * the current offset. If `type` is `STRING` the offsets index into the string
-   * offsets array (stored in `stringOffsets`), otherwise they index into the
-   * property array (stored in `values`). The data type of these offsets is
-   * determined by `arrayOffsetType`. The buffer view `byteOffset` must be
-   * aligned to a multiple of the `arrayOffsetType` size.
+   * arrays. The number of offsets is equal to the property table `count` plus
+   * one. The offsets represent the start positions of each array, with the last
+   * offset representing the position after the last array. The array length is
+   * computed using the difference between the subsequent offset and the current
+   * offset. If `type` is `STRING` the offsets index into the string offsets
+   * array (stored in `stringOffsets`), otherwise they index into the property
+   * array (stored in `values`). The data type of these offsets is determined by
+   * `arrayOffsetType`. The buffer view `byteOffset` shall be aligned to a
+   * multiple of the `arrayOffsetType` size.
    */
   std::optional<int64_t> arrayOffsets;
 
   /**
    * @brief The index of the buffer view containing offsets for strings. The
    * number of offsets is equal to the number of string elements plus one. The
-   * offsets represent the byte offsets of each string in the main `bufferView`,
-   * with the last offset representing the byte offset after the last string.
-   * The string byte length is computed using the difference between the
-   * subsequent offset and the current offset. The data type of these offsets is
-   * determined by `stringOffsetType`. The buffer view `byteOffset` must be
-   * aligned to a multiple of the `stringOffsetType` size.
+   * offsets represent the byte offsets of each string in the property array
+   * (stored in `values`), with the last offset representing the byte offset
+   * after the last string. The string byte length is computed using the
+   * difference between the subsequent offset and the current offset. The data
+   * type of these offsets is determined by `stringOffsetType`. The buffer view
+   * `byteOffset` shall be aligned to a multiple of the `stringOffsetType` size.
    */
   std::optional<int64_t> stringOffsets;
 

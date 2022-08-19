@@ -27,8 +27,8 @@ struct CESIUM3DTILES_API PropertyTable final
   std::optional<std::string> name;
 
   /**
-   * @brief The class that property values conform to. The value must be a class
-   * ID declared in the `classes` dictionary.
+   * @brief The class that property values conform to. The value shall be a
+   * class ID declared in the `classes` dictionary.
    */
   std::string classProperty;
 
@@ -40,7 +40,7 @@ struct CESIUM3DTILES_API PropertyTable final
   /**
    * @brief A dictionary, where each key corresponds to a property ID in the
    * class' `properties` dictionary and each value is an object describing where
-   * property values are stored. Required properties must be included in this
+   * property values are stored. Required properties shall be included in this
    * dictionary.
    */
   std::unordered_map<std::string, Cesium3DTiles::PropertyTableProperty>

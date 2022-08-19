@@ -545,20 +545,22 @@ void Tile::processLoadedContent() {
       }
       // else if it has a model, try to get the copyright
       else if (this->_pContent->model->asset.copyright) {
-        const auto& copyright = *this->_pContent->model->asset.copyright;
-        size_t start = 0;
-        size_t end;
-        size_t ltrim;
-        size_t rtrim;
-        do {
-          ltrim = copyright.find_first_not_of(" \t", start);
-          end = copyright.find(';', ltrim);
-          rtrim = copyright.find_last_not_of(" \t", end - 1);
-          perTileCredits.push_back(externals.pCreditSystem->createCredit(
-              copyright.substr(ltrim, rtrim - ltrim + 1),
-              this->getTileset()->getOptions().showCreditsOnScreen));
-          start = end + 1;
-        } while (end != std::string::npos);
+        const std::string& copyright = *this->_pContent->model->asset.copyright;
+        if (copyright.size() > 0) {
+          size_t start = 0;
+          size_t end;
+          size_t ltrim;
+          size_t rtrim;
+          do {
+            ltrim = copyright.find_first_not_of(" \t", start);
+            end = copyright.find(';', ltrim);
+            rtrim = copyright.find_last_not_of(" \t", end - 1);
+            perTileCredits.push_back(externals.pCreditSystem->createCredit(
+                copyright.substr(ltrim, rtrim - ltrim + 1),
+                this->getTileset()->getOptions().showCreditsOnScreen));
+            start = end + 1;
+          } while (end != std::string::npos);
+        }
       }
 
       // A new and improved bounding volume.
@@ -850,8 +852,7 @@ void Tile::update(
     }
   }
 
-  if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays() && this->getContent() &&
+  if (this->getState() == LoadState::Done && this->getContent() &&
       this->getContent()->model) {
     bool moreRasterDetailAvailable = false;
     bool skippedUnknown = false;
