@@ -3,9 +3,8 @@
 #include "Library.h"
 #include "RasterOverlay.h"
 #include "RasterOverlayTileProvider.h"
-
-#include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include "Tile.h"
+#include "TilesetExternals.h"
 
 #include <gsl/span>
 
