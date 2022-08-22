@@ -17,7 +17,7 @@ public:
       void(const std::string& header, const std::string& headerValue)>;
 
   CesiumIonTilesetLoader(
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       std::string&& ionAccessToken,
       std::string&& ionAssetEndpointUrl,
       std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
@@ -34,7 +34,7 @@ public:
   createLoader(
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl,
       const AuthorizationHeaderChangeListener& headerChangeListener,
@@ -47,7 +47,7 @@ private:
       const CesiumAsync::AsyncSystem& asyncSystem);
 
   TokenRefreshState _refreshTokenState;
-  uint32_t _ionAssetID;
+  int64_t _ionAssetID;
   std::string _ionAccessToken;
   std::string _ionAssetEndpointUrl;
   std::unique_ptr<TilesetContentLoader> _pAggregatedLoader;

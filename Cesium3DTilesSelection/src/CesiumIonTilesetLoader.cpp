@@ -29,7 +29,7 @@ struct AssetEndpoint {
 std::unordered_map<std::string, AssetEndpoint> endpointCache;
 
 std::string createEndpointResource(
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl) {
   std::string ionUrl = fmt::format(
@@ -72,7 +72,7 @@ CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
 mainThreadLoadTilesetJsonFromAssetEndpoint(
     const TilesetExternals& externals,
     const AssetEndpoint& endpoint,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     std::string ionAccessToken,
     std::string ionAssetEndpointUrl,
     CesiumIonTilesetLoader::AuthorizationHeaderChangeListener
@@ -137,7 +137,7 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
     const TilesetExternals& externals,
     const TilesetContentOptions& contentOptions,
     const AssetEndpoint& endpoint,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     std::string ionAccessToken,
     std::string ionAssetEndpointUrl,
     CesiumIonTilesetLoader::AuthorizationHeaderChangeListener
@@ -206,7 +206,7 @@ CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
 mainThreadHandleEndpointResponse(
     const TilesetExternals& externals,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     std::string&& ionAccessToken,
     std::string&& ionAssetEndpointUrl,
     const TilesetContentOptions& contentOptions,
@@ -319,7 +319,7 @@ mainThreadHandleEndpointResponse(
 } // namespace
 
 CesiumIonTilesetLoader::CesiumIonTilesetLoader(
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     std::string&& ionAccessToken,
     std::string&& ionAssetEndpointUrl,
     std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
@@ -451,7 +451,7 @@ CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
 CesiumIonTilesetLoader::createLoader(
     const TilesetExternals& externals,
     const TilesetContentOptions& contentOptions,
-    uint32_t ionAssetID,
+    int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl,
     const AuthorizationHeaderChangeListener& headerChangeListener,
