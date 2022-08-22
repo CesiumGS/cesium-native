@@ -27,54 +27,57 @@ void GltfConverters::registerFileExtension(
 
 GltfConverters::ConverterFunction
 GltfConverters::getConverterByFileExtension(const std::string& filePath) {
-  std::string extension = getFileExtension(filePath);
-  auto itExtension = _loadersByFileExtension.find(extension);
-  if (itExtension != _loadersByFileExtension.end()) {
-    return itExtension->second;
-  }
-
-  return nullptr;
+  std::string extension;
+  return getConverterByFileExtension(filePath, extension);
 }
 
 GltfConverters::ConverterFunction
 GltfConverters::getConverterByMagic(const gsl::span<const std::byte>& content) {
-  if (content.size() >= 4) {
-    std::string magic(reinterpret_cast<const char*>(content.data()), 4);
-    auto converterIter = _loadersByMagic.find(magic);
-    if (converterIter != _loadersByMagic.end()) {
-      return converterIter->second;
-    }
-  }
-
-  return nullptr;
+  std::string magic;
+  return getConverterByMagic(content, magic);
 }
 
 GltfConverterResult GltfConverters::convert(
     const std::string& filePath,
     const gsl::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  auto converterFun = getConverterByMagic(content);
+  std::string magic;
+  auto converterFun = getConverterByMagic(content, magic);
   if (converterFun) {
     return converterFun(content, options);
   }
 
-  converterFun = getConverterByFileExtension(filePath);
+  std::string fileExtension;
+  converterFun = getConverterByFileExtension(filePath, fileExtension);
   if (converterFun) {
     return converterFun(content, options);
   }
 
-  return GltfConverterResult{};
+  ErrorList errors;
+  errors.emplaceError(fmt::format(
+      "No loader registered for tile with content type '{}' and magic value "
+      "'{}'",
+      fileExtension,
+      magic));
+
+  return GltfConverterResult{std::nullopt, std::move(errors)};
 }
 
 GltfConverterResult GltfConverters::convert(
     const gsl::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  auto converter = getConverterByMagic(content);
+  std::string magic;
+  auto converter = getConverterByMagic(content, magic);
   if (converter) {
     return converter(content, options);
   }
 
-  return GltfConverterResult{};
+  ErrorList errors;
+  errors.emplaceError(fmt::format(
+      "No loader registered for tile with magic value '{}'",
+      magic));
+
+  return GltfConverterResult{std::nullopt, std::move(errors)};
 }
 
 std::string GltfConverters::toLowerCase(const std::string_view& str) {
@@ -98,5 +101,31 @@ std::string GltfConverters::getFileExtension(const std::string_view& filePath) {
   }
 
   return "";
+}
+
+GltfConverters::ConverterFunction GltfConverters::getConverterByFileExtension(
+    const std::string& filePath,
+    std::string& extension) {
+  extension = getFileExtension(filePath);
+  auto itExtension = _loadersByFileExtension.find(extension);
+  if (itExtension != _loadersByFileExtension.end()) {
+    return itExtension->second;
+  }
+
+  return nullptr;
+}
+
+GltfConverters::ConverterFunction GltfConverters::getConverterByMagic(
+    const gsl::span<const std::byte>& content,
+    std::string& magic) {
+  if (content.size() >= 4) {
+    magic = std::string(reinterpret_cast<const char*>(content.data()), 4);
+    auto converterIter = _loadersByMagic.find(magic);
+    if (converterIter != _loadersByMagic.end()) {
+      return converterIter->second;
+    }
+  }
+
+  return nullptr;
 }
 } // namespace Cesium3DTilesSelection

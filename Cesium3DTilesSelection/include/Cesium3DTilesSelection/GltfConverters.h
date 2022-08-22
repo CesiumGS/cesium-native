@@ -154,6 +154,14 @@ private:
 
   static std::string getFileExtension(const std::string_view& filePath);
 
+  static ConverterFunction getConverterByFileExtension(
+      const std::string& filePath,
+      std::string& fileExtension);
+
+  static ConverterFunction getConverterByMagic(
+      const gsl::span<const std::byte>& content,
+      std::string& magic);
+
   static std::unordered_map<std::string, ConverterFunction> _loadersByMagic;
   static std::unordered_map<std::string, ConverterFunction>
       _loadersByFileExtension;
