@@ -4,11 +4,13 @@
 
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <cmath>
-#include <unordered_set>
+#include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
