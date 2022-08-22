@@ -959,11 +959,11 @@ TilesetContentManager::getTilesetCredits() const noexcept {
   return this->_tilesetCredits;
 }
 
-int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
+int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {
   return this->_tilesLoadOnProgress;
 }
 
-int32_t TilesetContentManager::getNumOfTilesLoaded() const noexcept {
+int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
   return this->_loadedTilesCount;
 }
 
@@ -979,8 +979,7 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   return bytes;
 }
 
-bool TilesetContentManager::doesTileNeedLoading(
-    const Tile& tile) const noexcept {
+bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
   auto state = tile.getState();
   return state == TileLoadState::Unloaded ||
          state == TileLoadState::FailedTemporarily ||

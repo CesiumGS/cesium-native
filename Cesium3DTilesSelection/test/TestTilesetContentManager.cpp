@@ -240,7 +240,7 @@ TEST_CASE("Test tile state machine") {
     SECTION("Load tile from ContentLoading -> Done") {
       // Unloaded -> ContentLoading
       // check the state of the tile before main thread get called
-      CHECK(manager.getNumOfTilesLoading() == 1);
+      CHECK(manager.getNumberOfTilesLoading() == 1);
       CHECK(tile.getState() == TileLoadState::ContentLoading);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -252,7 +252,7 @@ TEST_CASE("Test tile state machine") {
       // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
       manager.waitUntilIdle();
-      CHECK(manager.getNumOfTilesLoading() == 0);
+      CHECK(manager.getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
       CHECK(tile.getContent().getRenderContent()->getRenderResources());
@@ -279,7 +279,7 @@ TEST_CASE("Test tile state machine") {
     SECTION("Try to unload tile when it's still loading") {
       // unload tile to move from Done -> Unload
       manager.unloadTileContent(tile);
-      CHECK(manager.getNumOfTilesLoading() == 1);
+      CHECK(manager.getNumberOfTilesLoading() == 1);
       CHECK(tile.getState() == TileLoadState::ContentLoading);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -288,13 +288,13 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().getRenderContent());
 
       manager.waitUntilIdle();
-      CHECK(manager.getNumOfTilesLoading() == 0);
+      CHECK(manager.getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
       CHECK(tile.getContent().getRenderContent()->getRenderResources());
 
       manager.unloadTileContent(tile);
-      CHECK(manager.getNumOfTilesLoading() == 0);
+      CHECK(manager.getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::Unloaded);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -340,7 +340,7 @@ TEST_CASE("Test tile state machine") {
     manager.loadTileContent(tile, options);
 
     // Unloaded -> ContentLoading
-    CHECK(manager.getNumOfTilesLoading() == 1);
+    CHECK(manager.getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getContent().isUnknownContent());
@@ -349,7 +349,7 @@ TEST_CASE("Test tile state machine") {
 
     // ContentLoading -> FailedTemporarily
     manager.waitUntilIdle();
-    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
     CHECK(tile.getContent().isUnknownContent());
@@ -360,7 +360,7 @@ TEST_CASE("Test tile state machine") {
     // FailedTemporarily -> FailedTemporarily
     // tile is failed temporarily but the loader can still add children to it
     manager.updateTileContent(tile, options);
-    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -371,7 +371,7 @@ TEST_CASE("Test tile state machine") {
 
     // FailedTemporarily -> ContentLoading
     manager.loadTileContent(tile, options);
-    CHECK(manager.getNumOfTilesLoading() == 1);
+    CHECK(manager.getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
   }
 
@@ -413,7 +413,7 @@ TEST_CASE("Test tile state machine") {
     manager.loadTileContent(tile, options);
 
     // Unloaded -> ContentLoading
-    CHECK(manager.getNumOfTilesLoading() == 1);
+    CHECK(manager.getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getContent().isUnknownContent());
@@ -422,7 +422,7 @@ TEST_CASE("Test tile state machine") {
 
     // ContentLoading -> Failed
     manager.waitUntilIdle();
-    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
     CHECK(tile.getContent().isUnknownContent());
@@ -433,7 +433,7 @@ TEST_CASE("Test tile state machine") {
     // Failed -> Failed
     // tile is failed but the loader can still add children to it
     manager.updateTileContent(tile, options);
-    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -444,7 +444,7 @@ TEST_CASE("Test tile state machine") {
 
     // cannot transition from Failed -> ContentLoading
     manager.loadTileContent(tile, options);
-    CHECK(manager.getNumOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getState() == TileLoadState::Failed);
     CHECK(tile.getContent().isUnknownContent());
     CHECK(!tile.getContent().isRenderContent());

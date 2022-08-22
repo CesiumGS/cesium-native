@@ -68,13 +68,13 @@ public:
 
   const std::vector<Credit>& getTilesetCredits() const noexcept;
 
-  int32_t getNumOfTilesLoading() const noexcept;
+  int32_t getNumberOfTilesLoading() const noexcept;
 
-  int32_t getNumOfTilesLoaded() const noexcept;
+  int32_t getNumberOfTilesLoaded() const noexcept;
 
   int64_t getTotalDataUsed() const noexcept;
 
-  bool doesTileNeedLoading(const Tile& tile) const noexcept;
+  bool tileNeedsLoading(const Tile& tile) const noexcept;
 
 private:
   static void setTileContent(

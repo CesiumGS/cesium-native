@@ -166,7 +166,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
       this->_updateResult.tilesToRenderThisFrame;
 
   this->updateView(frustums);
-  while (this->_pTilesetContentManager->getNumOfTilesLoading() > 0) {
+  while (this->_pTilesetContentManager->getNumberOfTilesLoading() > 0) {
     this->_externals.pAssetAccessor->tick();
     this->updateView(frustums);
   }
@@ -313,9 +313,9 @@ float Tileset::computeLoadProgress() noexcept {
       this->_loadQueueLow.size() + this->_loadQueueMedium.size() +
       this->_loadQueueHigh.size());
   uint32_t numOfTilesLoading = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumOfTilesLoading());
+      this->_pTilesetContentManager->getNumberOfTilesLoading());
   uint32_t numOfTilesLoaded = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumOfTilesLoaded());
+      this->_pTilesetContentManager->getNumberOfTilesLoaded());
   uint32_t inProgressSum = numOfTilesLoading + queueSizeSum;
   uint32_t totalNum = numOfTilesLoaded + inProgressSum;
   float percentage =
@@ -1314,7 +1314,7 @@ void Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
     Tile& tile,
     double tilePriority) {
-  if (this->_pTilesetContentManager->doesTileNeedLoading(tile)) {
+  if (this->_pTilesetContentManager->tileNeedsLoading(tile)) {
     loadQueue.push_back({&tile, tilePriority});
   }
 }
@@ -1322,7 +1322,7 @@ void Tileset::addTileToLoadQueue(
 void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
     int32_t maximumLoadsInProgress) {
-  if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
+  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
       maximumLoadsInProgress) {
     return;
   }
@@ -1331,7 +1331,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     this->_pTilesetContentManager->loadTileContent(*record.pTile, _options);
-    if (this->_pTilesetContentManager->getNumOfTilesLoading() >=
+    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
         maximumLoadsInProgress) {
       break;
     }
