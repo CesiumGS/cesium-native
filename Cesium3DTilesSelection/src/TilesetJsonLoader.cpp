@@ -591,7 +591,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       tilesetJsonBinary.size());
   if (tilesetJson.HasParseError()) {
     TilesetContentLoaderResult<TilesetJsonLoader> result;
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tilesetJson.GetParseError(),
         tilesetJson.GetErrorOffset()));
@@ -699,7 +699,7 @@ TilesetJsonLoader::createLoader(
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
           TilesetContentLoaderResult<TilesetJsonLoader> result;
-          result.errors.emplace_error(fmt::format(
+          result.errors.emplaceError(fmt::format(
               "Did not receive a valid response for tile content {}",
               tileUrl));
           return result;
@@ -708,7 +708,7 @@ TilesetJsonLoader::createLoader(
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
           TilesetContentLoaderResult<TilesetJsonLoader> result;
-          result.errors.emplace_error(fmt::format(
+          result.errors.emplaceError(fmt::format(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl));

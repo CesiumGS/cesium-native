@@ -206,7 +206,7 @@ Future<LoadLayersResult> loadLayersRecursive(
 
   std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
   if (urls.empty()) {
-    loadLayersResult.errors.emplace_error(
+    loadLayersResult.errors.emplaceError(
         "Layer Json does not specify any tile URL templates");
     return asyncSystem.createResolvedFuture(std::move(loadLayersResult));
   }
@@ -299,7 +299,7 @@ Future<LoadLayersResult> loadLayersRecursive(
                   pCompletedRequest->response();
               const std::string& tileUrl = pCompletedRequest->url();
               if (!pResponse) {
-                loadLayersResult.errors.emplace_warning(fmt::format(
+                loadLayersResult.errors.emplaceWarning(fmt::format(
                     "Did not receive a valid response for parent layer {}",
                     pCompletedRequest->url()));
                 return asyncSystem.createResolvedFuture(
@@ -308,7 +308,7 @@ Future<LoadLayersResult> loadLayersRecursive(
 
               uint16_t statusCode = pResponse->statusCode();
               if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-                loadLayersResult.errors.emplace_warning(fmt::format(
+                loadLayersResult.errors.emplaceWarning(fmt::format(
                     "Received status code {} for parent layer {}",
                     statusCode,
                     tileUrl));
@@ -323,7 +323,7 @@ Future<LoadLayersResult> loadLayersRecursive(
                   reinterpret_cast<const char*>(layerJsonBinary.data()),
                   layerJsonBinary.size());
               if (layerJson.HasParseError()) {
-                loadLayersResult.errors.emplace_warning(fmt::format(
+                loadLayersResult.errors.emplaceWarning(fmt::format(
                     "Error when parsing layer.json, error code {} at byte "
                     "offset {}",
                     layerJson.GetParseError(),
@@ -362,7 +362,7 @@ Future<LoadLayersResult> loadLayerJson(
       layerJsonBinary.size());
   if (layerJson.HasParseError()) {
     LoadLayersResult result;
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Error when parsing layer.json, error code {} at byte offset {}",
         layerJson.GetParseError(),
         layerJson.GetErrorOffset()));
@@ -397,7 +397,7 @@ Future<LoadLayersResult> loadLayerJson(
     quadtreeXTiles = 1;
   } else {
     LoadLayersResult result;
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Tileset layer.json contained an unknown projection value: {}",
         projectionString));
     return asyncSystem.createResolvedFuture(std::move(result));
@@ -450,7 +450,7 @@ LayerJsonTerrainLoader::createLoader(
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
               LoadLayersResult result;
-              result.errors.emplace_error(fmt::format(
+              result.errors.emplaceError(fmt::format(
                   "Did not receive a valid response for tile content {}",
                   tileUrl));
               return asyncSystem.createResolvedFuture(std::move(result));
@@ -459,7 +459,7 @@ LayerJsonTerrainLoader::createLoader(
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
               LoadLayersResult result;
-              result.errors.emplace_error(fmt::format(
+              result.errors.emplaceError(fmt::format(
                   "Received status code {} for tile content {}",
                   statusCode,
                   tileUrl));
@@ -485,7 +485,7 @@ LayerJsonTerrainLoader::createLoader(
         if (!loadLayersResult.tilingScheme || !loadLayersResult.projection ||
             !loadLayersResult.boundingVolume) {
           TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
-          result.errors.emplace_error(
+          result.errors.emplaceError(
               "Could not deduce tiling scheme, projection, or bounding volume "
               "from layer.json.");
           return result;
@@ -612,7 +612,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               QuantizedMeshLoadResult result;
-              result.errors.emplace_error(fmt::format(
+              result.errors.emplaceError(fmt::format(
                   "Did not receive a valid response for tile content {}",
                   pRequest->url()));
               return result;
@@ -622,7 +622,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
               QuantizedMeshLoadResult result;
-              result.errors.emplace_error(fmt::format(
+              result.errors.emplaceError(fmt::format(
                   "Receive status code {} for tile content {}",
                   pResponse->statusCode(),
                   pRequest->url()));

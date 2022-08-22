@@ -13,11 +13,11 @@ struct ErrorList {
 
   void merge(ErrorList&& errorList);
 
-  template <typename ErrorStr> void emplace_error(ErrorStr&& error) {
+  template <typename ErrorStr> void emplaceError(ErrorStr&& error) {
     errors.emplace_back(std::forward<ErrorStr>(error));
   }
 
-  template <typename WarningStr> void emplace_warning(WarningStr&& warning) {
+  template <typename WarningStr> void emplaceWarning(WarningStr&& warning) {
     warnings.emplace_back(std::forward<WarningStr>(warning));
   }
 

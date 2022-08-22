@@ -217,7 +217,7 @@ mainThreadHandleEndpointResponse(
   const std::string& requestUrl = pRequest->url();
   if (!pResponse) {
     TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-    result.errors.emplace_error(
+    result.errors.emplaceError(
         fmt::format("No response received for asset request {}", requestUrl));
     return externals.asyncSystem.createResolvedFuture(std::move(result));
   }
@@ -225,7 +225,7 @@ mainThreadHandleEndpointResponse(
   uint16_t statusCode = pResponse->statusCode();
   if (statusCode < 200 || statusCode >= 300) {
     TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Received status code {} for asset response {}",
         statusCode,
         requestUrl));
@@ -239,7 +239,7 @@ mainThreadHandleEndpointResponse(
 
   if (ionResponse.HasParseError()) {
     TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Error when parsing Cesium ion response JSON, error code {} at byte "
         "offset {}",
         ionResponse.GetParseError(),
@@ -312,7 +312,7 @@ mainThreadHandleEndpointResponse(
   }
 
   TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-  result.errors.emplace_error(
+  result.errors.emplaceError(
       fmt::format("Received unsupported asset response type: {}", type));
   return externals.asyncSystem.createResolvedFuture(std::move(result));
 }
@@ -483,7 +483,7 @@ CesiumIonTilesetLoader::createLoader(
     }
 
     TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Received unsupported asset response type: {}",
         endpoint.type));
     return externals.asyncSystem.createResolvedFuture(std::move(result));

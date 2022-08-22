@@ -696,7 +696,7 @@ static std::vector<std::byte> generateNormals(
   std::optional<QuantizedMeshView> meshView =
       parseQuantizedMesh(data, enableWaterMask);
   if (!meshView) {
-    result.errors.emplace_error("Unable to parse quantized-mesh-1.0 tile.");
+    result.errors.emplaceError("Unable to parse quantized-mesh-1.0 tile.");
     return result;
   }
 
@@ -711,7 +711,7 @@ static std::vector<std::byte> generateNormals(
   }
 
   if (!pRegion) {
-    result.errors.emplace_error(
+    result.errors.emplaceError(
         "Unable to create quantized-mesh-1.0 tile because the tile's bounding "
         "volume is not a bounding region.");
     return result;
@@ -1216,7 +1216,7 @@ static QuantizedMeshMetadataResult processMetadata(
   QuantizedMeshMetadataResult result;
 
   if (metadata.HasParseError()) {
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Error when parsing metadata, error code {} at byte offset {}",
         metadata.GetParseError(),
         metadata.GetErrorOffset()));

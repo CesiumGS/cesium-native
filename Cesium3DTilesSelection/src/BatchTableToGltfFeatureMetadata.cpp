@@ -1228,7 +1228,7 @@ void updateExtensionWithBinaryProperty(
   const auto& byteOffsetIt = propertyValue.FindMember("byteOffset");
   if (byteOffsetIt == propertyValue.MemberEnd() ||
       !byteOffsetIt->value.IsInt64()) {
-    result.emplace_warning(fmt::format(
+    result.emplaceWarning(fmt::format(
         "Skip convert {}. The binary property doesn't have required "
         "byteOffset.",
         propertyName));
@@ -1238,7 +1238,7 @@ void updateExtensionWithBinaryProperty(
   const auto& componentTypeIt = propertyValue.FindMember("componentType");
   if (componentTypeIt == propertyValue.MemberEnd() ||
       !componentTypeIt->value.IsString()) {
-    result.emplace_warning(fmt::format(
+    result.emplaceWarning(fmt::format(
         "Skip convert {}. The binary property doesn't have required "
         "componentType.",
         propertyName));
@@ -1247,7 +1247,7 @@ void updateExtensionWithBinaryProperty(
 
   const auto& typeIt = propertyValue.FindMember("type");
   if (typeIt == propertyValue.MemberEnd() || !typeIt->value.IsString()) {
-    result.emplace_warning(fmt::format(
+    result.emplaceWarning(fmt::format(
         "Skip convert {}. The binary property doesn't have required type.",
         propertyName));
     return;
@@ -1314,7 +1314,7 @@ void updateExtensionWithBatchTableHierarchy(
   // definition.
   auto classesIt = batchTableHierarchy.FindMember("classes");
   if (classesIt == batchTableHierarchy.MemberEnd()) {
-    result.emplace_warning(
+    result.emplaceWarning(
         "3DTILES_batch_table_hierarchy does not contain required \"classes\" "
         "property.");
     return;
@@ -1325,7 +1325,7 @@ void updateExtensionWithBatchTableHierarchy(
       parentCountsIt->value.IsArray()) {
     for (const auto& element : parentCountsIt->value.GetArray()) {
       if (!element.IsInt64() || element.GetInt64() != 1LL) {
-        result.emplace_warning(
+        result.emplaceWarning(
             "3DTILES_batch_table_hierarchy with a \"parentCounts\" property is "
             "not currently supported. All instances must have at most one "
             "parent.");
@@ -1345,7 +1345,7 @@ void updateExtensionWithBatchTableHierarchy(
          propertyIt != instancesIt->value.MemberEnd();
          ++propertyIt) {
       if (propertyIt->value.IsObject()) {
-        result.emplace_warning(fmt::format(
+        result.emplaceWarning(fmt::format(
             "Property {} uses binary values. Only JSON-based "
             "3DTILES_batch_table_hierarchy properties are currently supported.",
             propertyIt->name.GetString()));
@@ -1401,7 +1401,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convert(
   const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
   if (batchLengthIt == featureTableJson.MemberEnd() ||
       !batchLengthIt->value.IsInt64()) {
-    result.emplace_warning(
+    result.emplaceWarning(
         "The B3DM has a batch table, but it is being ignored because there is "
         "no BATCH_LENGTH semantic in the feature table or it is not an "
         "integer.");
