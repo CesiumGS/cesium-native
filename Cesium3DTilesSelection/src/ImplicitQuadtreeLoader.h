@@ -45,8 +45,6 @@ public:
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
-  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
-
   uint32_t getSubtreeLevels() const noexcept;
 
   uint32_t getAvailableLevels() const noexcept;

@@ -14,4 +14,30 @@ TileLoadInput::TileLoadInput(
       pAssetAccessor{pAssetAccessor_},
       pLogger{pLogger_},
       requestHeaders{requestHeaders_} {}
+
+TileLoadResult TileLoadResult::createFailedResult(
+    std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
+  return TileLoadResult{
+      TileUnknownContent{},
+      CesiumGeometry::Axis::Y,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      std::move(pCompletedRequest),
+      {},
+      TileLoadResultState::Failed};
+}
+
+TileLoadResult TileLoadResult::createRetryLaterResult(
+    std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
+  return TileLoadResult{
+      TileUnknownContent{},
+      CesiumGeometry::Axis::Y,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      std::move(pCompletedRequest),
+      {},
+      TileLoadResultState::RetryLater};
+}
 } // namespace Cesium3DTilesSelection

@@ -17,14 +17,8 @@ CesiumAsync::Future<TileLoadResult>
 RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   const Tile* pParent = loadInput.tile.getParent();
   if (pParent == nullptr) {
-    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return loadInput.asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
@@ -32,14 +26,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
           &loadInput.tile.getTileID());
   if (pTileID == nullptr) {
     // this tile is not marked to be upsampled, so just fail it
-    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return loadInput.asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   // The tile content manager guarantees that the parent tile is already loaded
@@ -53,14 +41,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
       parentContent.getRenderContent();
   if (!pParentRenderContent) {
     // parent doesn't have mesh, so it's not possible to upsample
-    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return loadInput.asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   int32_t index = 0;
@@ -92,18 +74,12 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             TileID,
             textureCoordinateIndex);
         if (!model) {
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              nullptr,
-              {},
-              TileLoadResultState::Failed};
+          return TileLoadResult::createFailedResult(nullptr);
         }
 
         return TileLoadResult{
             std::move(*model),
+            CesiumGeometry::Axis::Y,
             std::nullopt,
             std::nullopt,
             std::nullopt,
@@ -116,10 +92,5 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 TileChildrenResult
 RasterOverlayUpsampler::createTileChildren([[maybe_unused]] const Tile& tile) {
   return {{}, TileLoadResultState::Failed};
-}
-
-CesiumGeometry::Axis
-RasterOverlayUpsampler::getTileUpAxis(const Tile&) const noexcept {
-  return CesiumGeometry::Axis::Y;
 }
 } // namespace Cesium3DTilesSelection

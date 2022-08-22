@@ -21,6 +21,5 @@ TileContentLoadInfo::TileContentLoadInfo(
       tileRefine(tile.getRefine()),
       tileGeometricError(tile.getGeometricError()),
       tileTransform(tile.getTransform()),
-      upAxis(tile.getLoader()->getTileUpAxis(tile)),
       contentOptions(contentOptions_) {}
 } // namespace Cesium3DTilesSelection

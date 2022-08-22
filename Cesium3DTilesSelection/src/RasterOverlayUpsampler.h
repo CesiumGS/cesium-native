@@ -9,7 +9,5 @@ public:
   loadTileContent(const TileLoadInput& loadInput) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
-
-  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
 };
 } // namespace Cesium3DTilesSelection

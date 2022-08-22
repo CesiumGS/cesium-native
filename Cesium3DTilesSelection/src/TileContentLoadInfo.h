@@ -47,8 +47,6 @@ struct TileContentLoadInfo {
 
   glm::dmat4 tileTransform;
 
-  CesiumGeometry::Axis upAxis;
-
   TilesetContentOptions contentOptions;
 };
 } // namespace Cesium3DTilesSelection

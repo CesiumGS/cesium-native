@@ -178,14 +178,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               pLogger,
               "Did not receive a valid response for tile content {}",
               tileUrl);
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              nullptr,
-              {},
-              TileLoadResultState::Failed};
+          return TileLoadResult::createFailedResult(
+              std::move(pCompletedRequest));
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -195,14 +189,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl);
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              nullptr,
-              {},
-              TileLoadResultState::Failed};
+          return TileLoadResult::createFailedResult(
+              std::move(pCompletedRequest));
         }
 
         // find gltf converter
@@ -222,18 +210,13 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           // Report any errors if there are any
           logTileLoadResult(pLogger, tileUrl, result.errors);
           if (result.errors || !result.model) {
-            return TileLoadResult{
-                TileUnknownContent{},
-                std::nullopt,
-                std::nullopt,
-                std::nullopt,
-                std::move(pCompletedRequest),
-                {},
-                TileLoadResultState::Failed};
+            return TileLoadResult::createFailedResult(
+                std::move(pCompletedRequest));
           }
 
           return TileLoadResult{
               std::move(*result.model),
+              CesiumGeometry::Axis::Y,
               std::nullopt,
               std::nullopt,
               std::nullopt,
@@ -243,14 +226,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
         }
 
         // content type is not supported
-        return TileLoadResult{
-            TileUnknownContent{},
-            std::nullopt,
-            std::nullopt,
-            std::nullopt,
-            std::move(pCompletedRequest),
-            {},
-            TileLoadResultState::Failed};
+        return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
       });
 }
 } // namespace
@@ -286,27 +262,15 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   // find the subtree ID
   uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
@@ -349,14 +313,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
           }
 
           // tell client to retry later
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              nullptr,
-              {},
-              TileLoadResultState::RetryLater};
+          return TileLoadResult::createRetryLaterResult(nullptr);
         });
   }
 
@@ -366,6 +323,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -420,11 +378,6 @@ ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
   }
 
   return {{}, TileLoadResultState::RetryLater};
-}
-
-CesiumGeometry::Axis
-ImplicitQuadtreeLoader::getTileUpAxis(const Tile&) const noexcept {
-  return CesiumGeometry::Axis::Y;
 }
 
 uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {

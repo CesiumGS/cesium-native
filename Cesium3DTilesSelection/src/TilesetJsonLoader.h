@@ -21,9 +21,9 @@ public:
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
-  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
-
   const std::string& getBaseUrl() const noexcept;
+
+  CesiumGeometry::Axis getUpAxis() const noexcept;
 
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 

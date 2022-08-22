@@ -136,6 +136,11 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   TileContentKind contentKind;
 
   /**
+   * @brief The up axis of glTF content.
+   */
+  CesiumGeometry::Axis glTFUpAxis;
+
+  /**
    * @brief A tile can potentially store a more fit bounding volume along with
    * its content. If this field is set, the tile's bounding volume will be
    * updated after the loading is finished.
@@ -174,6 +179,22 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * applied to a tile when the loading is finished
    */
   TileLoadResultState state;
+
+  /**
+   * @brief Create a result with Failed state
+   *
+   * @param pCompletedRequest The failed request
+   */
+  static TileLoadResult createFailedResult(
+      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
+
+  /**
+   * @brief Create a result with RetryLater state
+   *
+   * @param pCompletedRequest The failed request
+   */
+  static TileLoadResult createRetryLaterResult(
+      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
 };
 
 /**
@@ -233,8 +254,5 @@ public:
    * @return The {@link TileChildrenResult} that stores the tile's children
    */
   virtual TileChildrenResult createTileChildren(const Tile& tile) = 0;
-
-  virtual CesiumGeometry::Axis
-  getTileUpAxis(const Tile& tile) const noexcept = 0;
 };
 } // namespace Cesium3DTilesSelection
