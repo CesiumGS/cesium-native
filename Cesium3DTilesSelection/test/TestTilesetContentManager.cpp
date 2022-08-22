@@ -251,7 +251,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
-      manager.waitIdle();
+      manager.waitUntilIdle();
       CHECK(manager.getNumOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -287,7 +287,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().isEmptyContent());
       CHECK(!tile.getContent().getRenderContent());
 
-      manager.waitIdle();
+      manager.waitUntilIdle();
       CHECK(manager.getNumOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -348,7 +348,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> FailedTemporarily
-    manager.waitIdle();
+    manager.waitUntilIdle();
     CHECK(manager.getNumOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -421,7 +421,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> Failed
-    manager.waitIdle();
+    manager.waitUntilIdle();
     CHECK(manager.getNumOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -519,7 +519,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::ContentLoading);
 
     // parent moves from ContentLoading -> ContentLoaded
-    manager.waitIdle();
+    manager.waitUntilIdle();
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
     CHECK(tile.isRenderContent());
     CHECK(initializerCall);
@@ -559,7 +559,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.isRenderContent());
 
     // upsampled tile: ContentLoading -> ContentLoaded
-    manager.waitIdle();
+    manager.waitUntilIdle();
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoaded);
     CHECK(upsampledTile.isRenderContent());
 
@@ -648,7 +648,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // test the gltf model
     Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, {});
-    manager.waitIdle();
+    manager.waitUntilIdle();
 
     // check the buffer is already loaded
     {
@@ -714,7 +714,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // test the gltf model
     Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, options);
-    manager.waitIdle();
+    manager.waitUntilIdle();
 
     // check that normal is generated
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -776,7 +776,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, {});
-    manager.waitIdle();
+    manager.waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -827,7 +827,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       // test the gltf model
       Tile& tile = *manager.getRootTile();
       manager.loadTileContent(tile, {});
-      manager.waitIdle();
+      manager.waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -890,7 +890,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       manager.loadTileContent(tile, {});
-      manager.waitIdle();
+      manager.waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -984,7 +984,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       manager.loadTileContent(tile, {});
-      manager.waitIdle();
+      manager.waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
 
@@ -1057,7 +1057,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     Tile& tile = *manager.getRootTile();
     manager.loadTileContent(tile, {});
-    manager.waitIdle();
+    manager.waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);

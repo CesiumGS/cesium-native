@@ -696,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  waitIdle();
+  waitUntilIdle();
   if (_pRootTile) {
     unloadTileRecursively(*_pRootTile, *this);
   }
@@ -895,7 +895,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   return true;
 }
 
-void TilesetContentManager::waitIdle() {
+void TilesetContentManager::waitUntilIdle() {
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
   // being decremented correctly when an async load ends.

@@ -48,7 +48,7 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
-  void waitIdle();
+  void waitUntilIdle();
 
   const Tile* getRootTile() const noexcept;
 
