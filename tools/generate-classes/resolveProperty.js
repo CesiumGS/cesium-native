@@ -103,7 +103,7 @@ function resolveProperty(
     const schema = {
       ...propertyDetails,
       title: name,
-      sourcePath: parentSchema.sourcePath
+      sourcePath: parentSchema.sourcePath,
     };
     const type = getNameFromTitle(config, schema.title);
     return {
@@ -166,7 +166,7 @@ function resolveProperty(
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
         requiredId: isRequired,
       };
-    } else if (itemSchema.type !== "object") {
+    } else if (itemSchema.type !== undefined && itemSchema.type !== "object") {
       return resolveProperty(
         schemaCache,
         config,
@@ -181,21 +181,30 @@ function resolveProperty(
       );
     } else {
       const type = getNameFromTitle(config, itemSchema.title);
-      return {
-        ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
-        type: makeOptional
-          ? `std::optional<${NameFormatters.getName(type, namespace)}>`
-          : `${NameFormatters.getName(type, namespace)}`,
-        headers: [
-          NameFormatters.getIncludeFromName(type, namespace),
-          ...(makeOptional ? ["<optional>"] : []),
-        ],
-        readerType: NameFormatters.getReaderName(type, readerNamespace),
-        readerHeaders: [
-          NameFormatters.getReaderIncludeFromName(type, readerNamespace),
-        ],
-        schemas: [itemSchema],
-      };
+      if (type === "CesiumUtility::JsonValue") {
+        return makeJsonValueProperty(
+          propertyName,
+          cppSafeName,
+          propertyDetails,
+          makeOptional
+        );
+      } else {
+        return {
+          ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
+          type: makeOptional
+            ? `std::optional<${NameFormatters.getName(type, namespace)}>`
+            : `${NameFormatters.getName(type, namespace)}`,
+          headers: [
+            NameFormatters.getIncludeFromName(type, namespace),
+            ...(makeOptional ? ["<optional>"] : []),
+          ],
+          readerType: NameFormatters.getReaderName(type, readerNamespace),
+          readerHeaders: [
+            NameFormatters.getReaderIncludeFromName(type, readerNamespace),
+          ],
+          schemas: [itemSchema],
+        };
+      }
     }
   } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
     const nested = resolveProperty(
@@ -219,20 +228,34 @@ function resolveProperty(
         .fullDoc,
     };
   } else {
-    console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
-    return {
-      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
-      type: makeOptional
-        ? `std::optional<CesiumUtility::JsonValue>`
-        : `CesiumUtility::JsonValue`,
-      headers: [
-        `<CesiumUtility/JsonValue.h>`,
-        ...(makeOptional ? ["<optional>"] : []),
-      ],
-      readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
-      readerHeaders: [`<CesiumJsonReader/JsonObjectJsonHandler.h>`],
-    };
+    return makeJsonValueProperty(
+      propertyName,
+      cppSafeName,
+      propertyDetails,
+      makeOptional
+    );
   }
+}
+
+function makeJsonValueProperty(
+  propertyName,
+  cppSafeName,
+  propertyDetails,
+  makeOptional
+) {
+  console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
+  return {
+    ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
+    type: makeOptional
+      ? `std::optional<CesiumUtility::JsonValue>`
+      : `CesiumUtility::JsonValue`,
+    headers: [
+      `<CesiumUtility/JsonValue.h>`,
+      ...(makeOptional ? ["<optional>"] : []),
+    ],
+    readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
+    readerHeaders: [`<CesiumJsonReader/JsonObjectJsonHandler.h>`],
+  };
 }
 
 function toPascalCase(name) {
@@ -712,7 +735,7 @@ function makeNameIntoValidEnumIdentifier(name) {
 }
 
 function createAnonymousPropertyTypeTitle(parentName, propertyName) {
-  const propertyWithoutItems = toPascalCase(propertyName.replace(".items",  ""));
+  const propertyWithoutItems = toPascalCase(propertyName.replace(".items", ""));
   let result = parentName;
   if (!result.endsWith(propertyWithoutItems)) {
     result += " " + propertyWithoutItems;

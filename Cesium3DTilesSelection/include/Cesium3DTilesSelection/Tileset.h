@@ -194,6 +194,8 @@ public:
    */
   void notifyTileUnloading(Tile* pTile) noexcept;
 
+  float computeLoadProgress() noexcept;
+
   /**
    * @brief Loads a tile tree from a tileset.json file.
    *
@@ -263,16 +265,6 @@ public:
    * are currently loaded.
    */
   int64_t getTotalDataBytes() const noexcept;
-
-  /**
-   * @brief Determines if this tileset supports raster overlays.
-   *
-   * Currently, raster overlays can only be draped over quantized-mesh terrain
-   * tilesets.
-   */
-  bool supportsRasterOverlays() const noexcept {
-    return this->_supportsRasterOverlays;
-  }
 
   /**
    * @brief Returns the value indicating the glTF up-axis.
@@ -389,7 +381,7 @@ private:
       const FrameState& frameState,
       const ImplicitTraversalInfo& implicitInfo,
       Tile& tile,
-      const std::vector<double>& distances,
+      double tilePriority,
       ViewUpdateResult& result);
   TraversalDetails _renderInnerTile(
       const FrameState& frameState,
@@ -411,17 +403,43 @@ private:
       size_t loadIndexMedium,
       size_t loadIndexHigh,
       bool queuedForLoad,
-      const std::vector<double>& distances);
+      double tilePriority);
+  TileOcclusionState
+  _checkOcclusion(const Tile& tile, const FrameState& frameState);
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
       const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
+      bool meetsSse,
       bool ancestorMeetsSse,
       Tile& tile,
-      const std::vector<double>& distances,
-      bool culled,
+      double tilePriority,
       ViewUpdateResult& result);
+
+  struct CullResult {
+    // whether we should visit this tile
+    bool shouldVisit = true;
+    // whether this tile was culled (Note: we might still want to visit it)
+    bool culled = false;
+  };
+
+  // TODO: abstract these into a composable culling interface.
+  void _frustumCull(
+      const Tile& tile,
+      const FrameState& frameState,
+      bool cullWithChildrenBounds,
+      CullResult& cullResult);
+  void _fogCull(
+      const FrameState& frameState,
+      const std::vector<double>& distances,
+      CullResult& cullResult);
+  bool _meetsSse(
+      const std::vector<ViewState>& frustums,
+      const Tile& tile,
+      const std::vector<double>& distances,
+      bool culled) const noexcept;
+
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
       const ImplicitTraversalInfo implicitInfo,
@@ -443,22 +461,20 @@ private:
    *
    * For replacement-refined tiles, this method does nothing and returns false.
    *
-   * @param frameState The state of the current frame.
    * @param tile The tile to potentially load and render.
    * @param implicitInfo The implicit traversal information.
    * @param result The current view update result.
-   * @param distance The distance to this tile, used to compute the load
+   * @param tilePriority The load priority of this tile.
    * priority.
    * @return true The additive-refined tile was queued for load and added to the
    * render list.
    * @return false The non-additive-refined tile was ignored.
    */
   bool _loadAndRenderAdditiveRefinedTile(
-      const FrameState& frameState,
       Tile& tile,
       const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
-      const std::vector<double>& distances);
+      double tilePriority);
 
   /**
    * @brief Queues load of tiles that are _required_ to be loaded before the
@@ -472,7 +488,7 @@ private:
    * @param frameState The state of the current frame.
    * @param tile The tile that is potentially being refined.
    * @param implicitInfo The implicit traversal info.
-   * @param distance The distance to the tile.
+   * @param tilePriority The load priority of this tile.
    * @return true Some of the required descendents are not yet loaded, so this
    * tile _cannot_ yet be refined.
    * @return false All of the required descendents (if there are any) are
@@ -482,12 +498,7 @@ private:
       const FrameState& frameState,
       Tile& tile,
       const ImplicitTraversalInfo& implicitInfo,
-      const std::vector<double>& distances);
-  bool _meetsSse(
-      const std::vector<ViewState>& frustums,
-      const Tile& tile,
-      const std::vector<double>& distances,
-      bool culled) const noexcept;
+      double tilePriority);
 
   void _processLoadQueue();
   void _unloadCachedTiles() noexcept;
@@ -568,12 +579,11 @@ private:
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
+  std::atomic<uint32_t> _loadedTilesCount;
 
   RasterOverlayCollection _overlays;
 
   int64_t _tileDataBytes;
-
-  bool _supportsRasterOverlays;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.
@@ -587,19 +597,22 @@ private:
    */
   CesiumGeometry::Axis _gltfUpAxis;
 
-  // Holds computed distances, to avoid allocating them on the heap during tile
+  // Holds computed distances from view frustums. Store them in this scratch
+  // variable so that it can allocate only when growing bigger.
   // selection.
-  std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
-  size_t _nextDistancesVector;
+  std::vector<double> _distances;
+
+  // Holds the occlusion proxies of the children of a tile. Store them in this
+  // scratch variable so that it can allocate only when growing bigger.
+  std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
-  static double addTileToLoadQueue(
+  static void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
       const ImplicitTraversalInfo& implicitInfo,
-      const std::vector<ViewState>& frustums,
       Tile& tile,
-      const std::vector<double>& distances);
+      double tilePriority);
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       const std::atomic<uint32_t>& loadsInProgress,
