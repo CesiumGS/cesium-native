@@ -461,9 +461,9 @@ void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
 }
 
 float Tileset::computeLoadProgress() noexcept {
-  uint32_t queueSizeSum = (uint32_t)(this->_loadQueueLow.size() +
-                                this->_loadQueueMedium.size() +
-                                this->_loadQueueHigh.size());
+  uint32_t queueSizeSum = (uint32_t)(
+      this->_loadQueueLow.size() + this->_loadQueueMedium.size() +
+      this->_loadQueueHigh.size());
   // we ignore _subtreeLoadsInProgress for now
   uint32_t inProgressSum = (this->_loadsInProgress + queueSizeSum);
   uint32_t totalNum = this->_loadedTilesCount + inProgressSum;
@@ -1202,9 +1202,6 @@ bool Tileset::_kickDescendantsAndRenderTile(
            !pWorkTile->getLastSelectionState().wasKicked(
                frameState.currentFrameNumber) &&
            pWorkTile != &tile) {
-      if (_options.enableLodTransitionPeriod && pWorkTile->getContent() /*&& (_options.forbidHoles || !_options.enableFrustumCulling)*/) {
-        pWorkTile->getContent()->lodTransitionFadePercentage = 0.0f;
-      }
       pWorkTile->getLastSelectionState().kick();
       pWorkTile = pWorkTile->getParent();
     }
@@ -1396,6 +1393,11 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
 
+  const TileSelectionState& lastFrameSelectionState =
+      tile.getLastSelectionState();
+  const TileSelectionState::Result lastFrameSelectionResult =
+      lastFrameSelectionState.getResult(frameState.lastFrameNumber);
+
   // If occlusion culling is enabled, we may not want to refine for two
   // reasons:
   // - The tile is known to be occluded, so don't refine further.
@@ -1405,8 +1407,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   //   valid occlusion info to decide to refine. This might save us from
   //   kicking off descendant loads that we later find to be unnecessary.
   bool tileLastRefined =
-      tile.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Refined;
+      lastFrameSelectionResult == TileSelectionState::Result::Refined;
   bool childLastRefined = false;
   for (const Tile& child : tile.getChildren()) {
     if (child.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
@@ -1466,8 +1467,6 @@ Tileset::TraversalDetails Tileset::_visitTile(
     //
     // Note that even if we decide to render a tile here, it may later get
     // "kicked" in favor of an ancestor.
-    const TileSelectionState& lastFrameSelectionState =
-        tile.getLastSelectionState();
     const bool renderThisTile = shouldRenderThisTile(
         tile,
         lastFrameSelectionState,
@@ -1543,8 +1542,11 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // At least one descendant tile was added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
-  if (!traversalDetails.allAreRenderable &&
-      !traversalDetails.anyWereRenderedLastFrame) {
+  if ((!traversalDetails.allAreRenderable &&
+       !traversalDetails.anyWereRenderedLastFrame) ||
+      (lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
+       tile.getContent() &&
+       tile.getContent()->lodTransitionFadePercentage < 1.0f)) {
     // Some of our descendants aren't ready to render yet, and none were
     // rendered last frame, so kick them all out of the render list and render
     // this tile instead. Continue to load them though!
