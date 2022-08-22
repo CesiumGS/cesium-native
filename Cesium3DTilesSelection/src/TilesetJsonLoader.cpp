@@ -2,7 +2,7 @@
 
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
-#include "LogTileLoadResult.h"
+#include "logTileLoadResult.h"
 
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>

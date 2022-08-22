@@ -1,4 +1,4 @@
-#include "LogTileLoadResult.h"
+#include "logTileLoadResult.h"
 
 namespace Cesium3DTilesSelection {
 void logTileLoadResult(

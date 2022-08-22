@@ -1,6 +1,6 @@
 #include "ImplicitOctreeLoader.h"
 
-#include "LogTileLoadResult.h"
+#include "logTileLoadResult.h"
 
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/Tile.h>
