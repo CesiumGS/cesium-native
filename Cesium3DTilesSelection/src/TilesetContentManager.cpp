@@ -1241,7 +1241,8 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
           "Warnings when loading tileset");
     }
   } else {
-    this->_tilesetCredits.reserve(result.credits.size());
+    this->_tilesetCredits.reserve(
+        this->_tilesetCredits.size() + result.credits.size());
     for (const auto& creditResult : result.credits) {
       this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
           creditResult.creditText,
