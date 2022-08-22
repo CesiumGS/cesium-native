@@ -364,7 +364,7 @@ void calcRasterOverlayDetailsInWorkerThread(
       std::move(projections));
 
   if (result.rasterOverlayDetails && overlayDetails) {
-    result.rasterOverlayDetails->merge(std::move(*overlayDetails));
+    result.rasterOverlayDetails->merge(*overlayDetails);
   } else if (overlayDetails) {
     result.rasterOverlayDetails = std::move(*overlayDetails);
   }

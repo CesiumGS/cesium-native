@@ -53,7 +53,7 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayDetails {
    * @param other The other instance of RasterOverlayDetails that will be merged
    * with this.
    */
-  void merge(RasterOverlayDetails&& other);
+  void merge(const RasterOverlayDetails& other);
 
   /**
    * @brief The raster overlay projections for which texture coordinates have
