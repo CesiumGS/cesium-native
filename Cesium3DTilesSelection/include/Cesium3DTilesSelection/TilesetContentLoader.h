@@ -170,8 +170,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
 
   /**
    * @brief The result of loading a tile. Note that if the state is Failed or
-   * RetryLater,
-   * __none__ of the fields above (including {@link TileLoadResult::tileInitializer}) will be
+   * RetryLater, __none__ of the fields above (including {@link TileLoadResult::tileInitializer}) will be
    * applied to a tile when the loading is finished
    */
   TileLoadResultState state;
