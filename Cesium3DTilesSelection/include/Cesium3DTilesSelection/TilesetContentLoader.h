@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Library.h"
+
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -71,7 +73,7 @@ using TileContentKind = std::variant<
 /**
  * @brief Store the parameters that are needed to load a tile
  */
-struct TileLoadInput {
+struct CESIUM3DTILESSELECTION_API TileLoadInput {
   /**
    * @brief Creates a new instance
    *
@@ -127,7 +129,7 @@ struct TileLoadInput {
  * @brief Store the result of loading a tile content after
  * invoking {@link TilesetContentLoader::loadTileContent}
  */
-struct TileLoadResult {
+struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief The content type of the tile.
    */
@@ -179,7 +181,7 @@ struct TileLoadResult {
  * @brief Store the result of creating tile's children after
  * invoking {@link TilesetContentLoader::createTileChildren}
  */
-struct TileChildrenResult {
+struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   /**
    * @brief The children of this tile.
    */
@@ -201,7 +203,7 @@ struct TileChildrenResult {
 /**
  * @brief The loader interface to load the tile content
  */
-class TilesetContentLoader {
+class CESIUM3DTILESSELECTION_API TilesetContentLoader {
 public:
   /**
    * @brief Default virtual destructor
