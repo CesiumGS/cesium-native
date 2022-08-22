@@ -1239,7 +1239,7 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
 
       result.errors.logWarning(
           this->_externals.pLogger,
-          "Warning when loading tileset");
+          "Warnings when loading tileset");
     }
   } else {
     this->_tilesetCredits.reserve(result.credits.size());
