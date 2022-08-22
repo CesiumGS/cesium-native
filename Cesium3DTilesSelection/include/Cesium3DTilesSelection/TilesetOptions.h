@@ -241,15 +241,15 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   bool enableLodTransitionPeriod = true;
 
   /**
-   * @brief The speed of the fading when transitioning between tiles of
-   * different LODs, in fade percentage per second.
+   * @brief How long it should take to transition between tiles of different
+   * LODs, in seconds.
    *
    * When a tile refines or unrefines to a higher or lower LOD tile, a fade
-   * can optionally be applied to smooth the transition. This speed determines
-   * the percentage of fading in / out that happens in a second. The old tile
+   * can optionally be applied to smooth the transition. This value determines
+   * how many seconds the whole transition should take. Note that the old tile
    * doesn't start fading out until the new tile fully fades in.
    */
-  float lodTransitionFadeSpeed = 1.0f;
+  float lodTransitionLength = 1.0f;
 
   /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
