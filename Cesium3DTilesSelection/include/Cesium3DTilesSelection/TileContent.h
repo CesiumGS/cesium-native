@@ -1,9 +1,9 @@
 #pragma once
 
+#include "CreditSystem.h"
 #include "Library.h"
+#include "RasterOverlayDetails.h"
 
-#include <Cesium3DTilesSelection/CreditSystem.h>
-#include <Cesium3DTilesSelection/RasterOverlayDetails.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 
