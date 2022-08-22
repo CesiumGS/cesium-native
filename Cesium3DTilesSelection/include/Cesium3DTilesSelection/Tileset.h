@@ -3,13 +3,13 @@
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
+#include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
+#include "TilesetLoadFailureDetails.h"
 #include "TilesetOptions.h"
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <CesiumAsync/AsyncSystem.h>
 
 #include <rapidjson/fwd.h>
