@@ -130,13 +130,15 @@ bool Tileset::canBeDestroyedWithoutBlocking() {
 
   bool noTileLoads =
       this->_loadsInProgress.load(std::memory_order::memory_order_acquire) == 0;
+  bool noSubtreeLoads = this->_subtreeLoadsInProgress.load(
+                            std::memory_order::memory_order_acquire) == 0;
   bool noOverlayLoads = std::all_of(
       this->_overlays.begin(),
       this->_overlays.end(),
       [](const auto& pOverlay) {
         return pOverlay->getTileProvider()->getNumberOfTilesLoading() == 0;
       });
-  return noTileLoads && noOverlayLoads;
+  return noTileLoads && noSubtreeLoads && noOverlayLoads;
 }
 
 static bool
