@@ -62,8 +62,6 @@ public:
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
-  CesiumGeometry::Axis getTileUpAxis(const Tile& tile) const noexcept override;
-
   const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept;
 
   const CesiumGeospatial::Projection& getProjection() const noexcept;

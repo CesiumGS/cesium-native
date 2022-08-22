@@ -43,13 +43,8 @@ public:
     return std::move(mockCreateTileChildren);
   }
 
-  CesiumGeometry::Axis getTileUpAxis(const Tile&) const noexcept override {
-    return upAxis;
-  }
-
   TileLoadResult mockLoadTileContent;
   TileChildrenResult mockCreateTileChildren;
-  CesiumGeometry::Axis upAxis{CesiumGeometry::Axis::Y};
 };
 
 std::shared_ptr<SimpleAssetRequest>
@@ -206,6 +201,7 @@ TEST_CASE("Test tile state machine") {
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -308,6 +304,7 @@ TEST_CASE("Test tile state machine") {
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -381,6 +378,7 @@ TEST_CASE("Test tile state machine") {
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -471,6 +469,7 @@ TEST_CASE("Test tile state machine") {
 
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -541,6 +540,7 @@ TEST_CASE("Test tile state machine") {
     initializerCall = false;
     pMockedLoaderRaw->mockLoadTileContent = {
         CesiumGltf::Model(),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -619,6 +619,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
         std::move(*modelReadResult.model),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -687,6 +688,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
         std::move(*modelReadResult.model),
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -750,9 +752,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   SECTION("Embed gltf up axis to extra") {
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
-    pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model{},
+        CesiumGeometry::Axis::Z,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -798,10 +800,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
-    pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
     Cartographic beginCarto{glm::radians(32.0), glm::radians(48.0), 100.0};
     pMockedLoader->mockLoadTileContent = {
         createGlobeGrid(beginCarto, 10, 10, 0.01),
+        CesiumGeometry::Axis::Z,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -1032,9 +1034,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
-    pMockedLoader->upAxis = CesiumGeometry::Axis::Z;
     pMockedLoader->mockLoadTileContent = {
         std::move(model),
+        CesiumGeometry::Axis::Z,
         std::nullopt,
         std::nullopt,
         std::move(rasterOverlayDetails),

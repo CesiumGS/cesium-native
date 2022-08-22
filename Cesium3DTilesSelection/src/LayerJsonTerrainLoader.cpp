@@ -21,18 +21,12 @@ using namespace CesiumUtility;
 namespace {
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
   if (loadResult.errors || !loadResult.model) {
-    return TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed};
+    return TileLoadResult::createFailedResult(nullptr);
   }
 
   return TileLoadResult{
       std::move(*loadResult.model),
+      CesiumGeometry::Axis::Y,
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
@@ -692,14 +686,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::get_if<UpsampledQuadtreeNode>(&tile.getTileID());
     if (!pUpsampleTileID) {
       // This loader only handles QuadtreeTileIDs and UpsampledQuadtreeNode.
-      return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-          TileUnknownContent{},
-          std::nullopt,
-          std::nullopt,
-          std::nullopt,
-          nullptr,
-          {},
-          TileLoadResultState::Failed});
+      return asyncSystem.createResolvedFuture(
+          TileLoadResult::createFailedResult(nullptr));
     }
 
     // now do upsampling
@@ -717,15 +705,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   if (firstAvailableIt == this->_layers.end()) {
     // No layer has this tile available.
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed,
-    });
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   // Also load the same tile in any underlying layers for which this tile
@@ -885,11 +866,6 @@ LayerJsonTerrainLoader::createTileChildren(const Tile& tile) {
   }
 
   return {{}, TileLoadResultState::Failed};
-}
-
-CesiumGeometry::Axis
-LayerJsonTerrainLoader::getTileUpAxis(const Tile&) const noexcept {
-  return CesiumGeometry::Axis::Y;
 }
 
 const CesiumGeometry::QuadtreeTilingScheme&
@@ -1072,14 +1048,8 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   const TileRenderContent* pParentRenderContent =
       parentContent.getRenderContent();
   if (!pParentRenderContent) {
-    return asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   const UpsampledQuadtreeNode* pUpsampledTileID =
@@ -1116,18 +1086,12 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             tileID,
             textureCoordinateIndex);
         if (!model) {
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              nullptr,
-              {},
-              TileLoadResultState::Failed};
+          return TileLoadResult::createFailedResult(nullptr);
         }
 
         return TileLoadResult{
             std::move(*model),
+            CesiumGeometry::Axis::Y,
             std::nullopt,
             std::nullopt,
             std::nullopt,

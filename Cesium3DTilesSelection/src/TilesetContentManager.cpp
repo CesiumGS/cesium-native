@@ -445,7 +445,7 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   // have to pass the up axis to extra for backward compatibility
   model.extras["gltfUpAxis"] =
       static_cast<std::underlying_type_t<CesiumGeometry::Axis>>(
-          tileLoadInfo.upAxis);
+          result.glTFUpAxis);
 
   // calculate raster overlay details
   calcRasterOverlayDetailsInWorkerThread(
@@ -542,14 +542,7 @@ postProcessContentInWorkerThread(
 
             if (!gltfResult.model) {
               return TileLoadResultAndRenderResources{
-                  TileLoadResult{
-                      TileUnknownContent{},
-                      std::nullopt,
-                      std::nullopt,
-                      std::nullopt,
-                      nullptr,
-                      {},
-                      TileLoadResultState::Failed},
+                  TileLoadResult::createFailedResult(nullptr),
                   nullptr};
             }
 

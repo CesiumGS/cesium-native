@@ -336,23 +336,11 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
 CesiumAsync::Future<TileLoadResult>
 CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (this->_refreshTokenState == TokenRefreshState::Loading) {
-    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::RetryLater});
+    return loadInput.asyncSystem.createResolvedFuture(
+        TileLoadResult::createRetryLaterResult(nullptr));
   } else if (this->_refreshTokenState == TokenRefreshState::Failed) {
-    return loadInput.asyncSystem.createResolvedFuture(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        nullptr,
-        {},
-        TileLoadResultState::Failed});
+    return loadInput.asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   const auto& asyncSystem = loadInput.asyncSystem;
@@ -390,12 +378,6 @@ TileChildrenResult
 CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
   auto pLoader = tile.getLoader();
   return pLoader->createTileChildren(tile);
-}
-
-CesiumGeometry::Axis
-CesiumIonTilesetLoader::getTileUpAxis(const Tile& tile) const noexcept {
-  const auto pLoader = tile.getLoader();
-  return pLoader->getTileUpAxis(tile);
 }
 
 void CesiumIonTilesetLoader::refreshTokenInMainThread(
