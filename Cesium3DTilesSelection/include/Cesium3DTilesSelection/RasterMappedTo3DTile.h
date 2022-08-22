@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IPrepareRendererResources.h"
 #include "RasterOverlayTile.h"
 
 #include <CesiumGeometry/Rectangle.h>
@@ -152,17 +153,25 @@ public:
    * will return whether there is a more detailed version of the
    * raster data available.
    *
+   * @param prepareRendererResources The IPrepareRendererResources used to
+   * create render resources for raster overlay
    * @param tile The owner tile.
    * @return The {@link MoreDetailAvailable} state.
    */
-  RasterOverlayTile::MoreDetailAvailable update(Tile& tile);
+  RasterOverlayTile::MoreDetailAvailable
+  update(IPrepareRendererResources& prepareRendererResources, Tile& tile);
 
   bool isMoreDetailAvailable() const noexcept;
 
   /**
    * @brief Detach the raster from the given tile.
+   * @param prepareRendererResources The IPrepareRendererResources used to
+   * detach raster overlay from the tile geometry
+   * @param tile The owner tile.
    */
-  void detachFromTile(Tile& tile) noexcept;
+  void detachFromTile(
+      IPrepareRendererResources& prepareRendererResources,
+      Tile& tile) noexcept;
 
   /**
    * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
@@ -189,6 +198,8 @@ public:
    * become invalid as soon as another item is added to or removed from this
    * collection.
    *
+   * @param maximumScreenSpaceError The maximum screen space error that is used
+   * for the current tile
    * @param overlay The overlay to map to the tile.
    * @param tile The tile to which to map the overlay.
    * @param missingProjections The list of projections for which there are not
@@ -201,6 +212,7 @@ public:
    * the raster overlay.
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
+      double maximumScreenSpaceError,
       RasterOverlay& overlay,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections);
