@@ -1078,6 +1078,18 @@ void TilesetContentManager::updateContentLoadedState(
 void TilesetContentManager::updateDoneState(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  // The reason for this method to terminate early when
+  // Tile::shouldContentContinueUpdating() returns true is that: When a tile has
+  // Tile::shouldContentContinueUpdating() to be true, it means the tile's
+  // children need to be created by the
+  // TilesetContentLoader::createTileChildren() which is invoked in the
+  // TilesetContentManager::updateTileContent() method. In the
+  // updateDoneState(), RasterOverlayTiles that are mapped to the tile will
+  // begin updating. If there are more RasterOverlayTiles with higher LOD and
+  // the current tile is a leaf, more upsample children will be created for that
+  // tile. So to accurately determine if a tile is a leaf, it needs the tile to
+  // have no children and Tile::shouldContentContinueUpdating() to return false
+  // which means the loader has no more children for this tile.
   if (tile.shouldContentContinueUpdating()) {
     return;
   }
