@@ -269,6 +269,17 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   float lodTransitionLength = 2.0f;
 
   /**
+   * @brief Whether to kick descendants while a tile is still fading in.
+   *
+   * This does not delay loading of descendants, but it keeps them off the
+   * render list while the tile is fading in. If this is false, the tile
+   * currently fading in will pop in to full opacity if descendants are
+   * rendered (this counteracts the benefits of LOD transition blending).
+   *
+   */
+  bool kickDescendantsWhileFadingIn = true;
+
+  /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
    * and construction of Gltf models.
    */

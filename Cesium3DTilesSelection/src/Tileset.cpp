@@ -1317,6 +1317,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if ((!traversalDetails.allAreRenderable &&
        !traversalDetails.anyWereRenderedLastFrame) ||
       (_options.enableLodTransitionPeriod &&
+       _options.kickDescendantsWhileFadingIn &&
        lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
        tile.getContent().isRenderContent() &&
        tile.getContent().getRenderContent()->getLodTransitionFadePercentage() <
