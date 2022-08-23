@@ -254,7 +254,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * transition. Tile fades can be used to mask LOD transitions and make them
    * appear less abrupt and jarring.
    */
-  bool enableLodTransitionPeriod = true;
+  bool enableLodTransitionPeriod = false;
 
   /**
    * @brief How long it should take to transition between tiles of different
