@@ -219,6 +219,12 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
+  // Fixup TilesetOptions to ensure lod transitions works correctly.
+  _options.enableFrustumCulling =
+      _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
+  _options.enableFogCulling =
+      _options.enableFogCulling && !_options.enableLodTransitionPeriod;
+
   this->_asyncSystem.dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
