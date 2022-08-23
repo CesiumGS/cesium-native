@@ -48,6 +48,12 @@
     "license": ["Apache 2.0"]
   },
   {
+    "name": "libmorton",
+    "url": "https://github.com/Forceflow/libmorton",
+    "version": "0.2.10",
+    "license": ["MIT"]
+  },
+  {
     "name": "modp_b64",
     "url": "https://github.com/chromium/chromium/tree/15996b5d2322b634f4197447b10289bddc2b0b32/third_party/modp_b64",
     "version": "15996b5d2322b634f4197447b10289bddc2b0b32",

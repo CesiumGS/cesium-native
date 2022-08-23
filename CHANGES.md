@@ -2,6 +2,42 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+- Quantized mesh and implicit octree and quadtree can now skip level of details when traversing.
+- `Tileset` can be constructed with `TilesetContentLoader` and a root `Tile` for loading and rendering different 3D Tile-like format or creating procedural tileset.
+- `RasterOverlayCollection` no longer depends on `Tileset`. It now only uses `TilesetExternals` and `Tile::LoadedLinkList`.
+- Removed `TileContext` struct which is replaced by `TilesetContentLoader` interface to load a tile content.
+- Removed `TileContentFactory` which is replaced by `GltfConverters` to register different glTF converters to convert different tile format to glTF.
+- Removed `TileContentLoadInput` which is replaced by `TileLoadInput` and `TilesetContentLoader`.
+- Removed `TileContentLoadResult` which is replaced by `TileContent` to get different content types of a tile.
+- Removed `TileContentLoader` which is replaced by `TilesetContentLoader` and `GltfConverters`.
+- Removed `ImplicitTraversal` which is replaced by `TilesetContentLoader` and `GltfConverters`.
+- Removed the following APIs for `Cesium3DTilesSelection::Tileset` class:
+  - `getUrl()` that was used to get the URL that was used to construct the tileset.
+  - `getIonAssetID()` that was used to get the ion asset ID of the tileset.
+  - `getIonAssetToken()` that was used to get the ion token of the tileset.
+  - `notifyTileStartLoading` that was used to notify a given tile has started loading.
+  - `notifyTileDoneLoading()` that was used to notify a given tile has finished loading.
+  - `notifyTileUnloading()` that was used to notify a given tile is about to be unloaded.
+  - `loadTilesFromJson()` that was used to load a tile from a tileset.json file.
+  - `requestTileContent()` that was used to load the content of a tile.
+  - `requestAvailabilitySubtree()` that was used to the availability subtree for the given tile.
+  - `addContext()` that was used to add `TileContext` to the tileset.
+  - `getGltfUpAxis()` that was used to return the value indicating the glTF up-axis.
+- Removed the following APIs for `Cesium3DTilesSelection::Tile` class:
+  - `getTileset()` that was used to get the `Tileset` the tile belongs to.
+  - `getContext()` that was used to get the `TileContext` of the tile.
+  - `setContext()` that was used to set the `TileContext` for the tile.
+  - `getContent()` that was used to return `TileContentLoadResult`.
+  - `setEmptyContent()` that was used to indicate to the traversal that this tile points to an external or implicit tileset.
+  - `getRendererResources()` that was used to return the render resources of a tile.
+  - `setState()` that was used to set the loading state of a tile.
+  - `loadContent()` that was used to load the content of a tile.
+  - `processLoadedContent()` that was used to finalize the tile from the loaded content.
+  - `unloadContent()` that was used to unload the content of a tile.
+  - `update()` that was used to update a tile each frame.
+  - `markPermanentlyFailed()` that was used to mark a tile as permanently failing to load.
+
 ##### Fixes :wrench:
 
 - Make sure that the Raster Overlay that is passed to the `loadErrorCallback` is the same type as the one the user created.
