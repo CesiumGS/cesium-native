@@ -163,11 +163,9 @@ TEST_CASE("Test replace refinement for render") {
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
-  TilesetOptions options;
-  options.enableLodTransitionPeriod = false;
 
   // create tileset and call updateView() to give it a chance to load
-  Tileset tileset(tilesetExternals, "tileset.json", options);
+  Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
   // check the tiles status
@@ -561,11 +559,9 @@ TEST_CASE("Test additive refinement") {
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
-  TilesetOptions options;
-  options.enableLodTransitionPeriod = false;
 
   // create tileset and call updateView() to give it a chance to load
-  Tileset tileset(tilesetExternals, "tileset.json", options);
+  Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
   // root is external tileset. Since its content is loading, we won't know if it
@@ -719,11 +715,9 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
-  TilesetOptions options;
-  options.enableLodTransitionPeriod = false;
 
   // create tileset and call updateView() to give it a chance to load
-  Tileset tileset(tilesetExternals, "tileset.json", options);
+  Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
   ViewState viewState = zoomToTileset(tileset);
 
@@ -813,11 +807,9 @@ TEST_CASE("Test multiple frustums") {
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
-  TilesetOptions options;
-  options.enableLodTransitionPeriod = false;
 
   // create tileset and call updateView() to give it a chance to load
-  Tileset tileset(tilesetExternals, "tileset.json", options);
+  Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
   // check the tiles status
@@ -1049,11 +1041,9 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
-  TilesetOptions options;
-  options.enableLodTransitionPeriod = false;
 
   // create tileset and wait for it to load.
-  Tileset tileset(tilesetExternals, "tileset.json", options);
+  Tileset tileset(tilesetExternals, "tileset.json");
   while (!tileset.getRootTile()) {
     tilesetExternals.asyncSystem.dispatchMainThreadTasks();
   }
