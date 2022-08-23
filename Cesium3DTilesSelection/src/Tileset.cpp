@@ -238,7 +238,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     // Add newly removed tiles to the fade-out list
     for (Tile* pTile : result.tilesToNoLongerRenderThisFrame) {
       if (pTile->getContent().isRenderContent()) {
-        pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(2.0f);
+        pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(
+            2.0f);
         result.tilesFadingOut.insert(pTile);
       }
     }
@@ -254,7 +255,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
         continue;
       }
 
-      TileRenderContent* pRenderContent = (*tileIt)->getContent().getRenderContent();
+      TileRenderContent* pRenderContent =
+          (*tileIt)->getContent().getRenderContent();
 
       // Remove tile from fade-out list if it is back on the render list.
       TileSelectionState::Result selectionResult =
@@ -267,9 +269,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
         continue;
       }
 
-      float newPercentage =
-          pRenderContent->getLodTransitionFadePercentage() -
-          deltaTransitionPercentage;
+      float newPercentage = pRenderContent->getLodTransitionFadePercentage() -
+                            deltaTransitionPercentage;
       if (newPercentage <= 0.0f) {
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         result.tilesToHideThisFrame.push_back(*tileIt);
@@ -283,7 +284,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     // Update fade in
     for (Tile* pTile : result.tilesToRenderThisFrame) {
       if (pTile->getContent().isRenderContent()) {
-        TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
+        TileRenderContent* pRenderContent =
+            pTile->getContent().getRenderContent();
         pRenderContent->setLodTransitionFadePercentage(glm::min(
             pRenderContent->getLodTransitionFadePercentage() +
                 deltaTransitionPercentage,
@@ -295,7 +297,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     if (!result.tilesFadingOut.empty()) {
       for (Tile* pTile : result.tilesFadingOut) {
         if (pTile->getContent().isRenderContent()) {
-          pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(0.0f);
+          pTile->getContent()
+              .getRenderContent()
+              ->setLodTransitionFadePercentage(0.0f);
         }
       }
 
@@ -309,7 +313,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
     for (Tile* pTile : result.tilesToNoLongerRenderThisFrame) {
       if (pTile->getContent().isRenderContent()) {
-        pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(0.0f);
+        pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(
+            0.0f);
       }
     }
 
@@ -322,7 +327,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     // away.
     for (Tile* pTile : result.tilesToRenderThisFrame) {
       if (pTile->getContent().isRenderContent()) {
-        pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(1.0f);
+        pTile->getContent().getRenderContent()->setLodTransitionFadePercentage(
+            1.0f);
       }
     }
   }
@@ -1301,7 +1307,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
       (_options.enableLodTransitionPeriod &&
        lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
        tile.getContent().isRenderContent() &&
-       tile.getContent().getRenderContent()->getLodTransitionFadePercentage() < 1.0f)) {
+       tile.getContent().getRenderContent()->getLodTransitionFadePercentage() <
+           1.0f)) {
     // Some of our descendants aren't ready to render yet, and none were
     // rendered last frame, so kick them all out of the render list and render
     // this tile instead. Continue to load them though!
@@ -1387,8 +1394,11 @@ void Tileset::_unloadCachedTiles() noexcept {
     }
 
     // Still fading out, can't unload this tile.
-    if (_options.enableLodTransitionPeriod && pTile->getContent().isRenderContent() &&
-        pTile->getContent().getRenderContent()->getLodTransitionFadePercentage() > 0.0f) {
+    if (_options.enableLodTransitionPeriod &&
+        pTile->getContent().isRenderContent() &&
+        pTile->getContent()
+                .getRenderContent()
+                ->getLodTransitionFadePercentage() > 0.0f) {
       pTile = this->_loadedTiles.next(*pTile);
       continue;
     }

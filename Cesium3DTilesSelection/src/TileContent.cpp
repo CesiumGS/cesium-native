@@ -65,11 +65,12 @@ void TileRenderContent::setRenderResources(void* pRenderResources) noexcept {
   this->_pRenderResources = pRenderResources;
 }
 
-bool TileRenderContent::getLodTransitionFadePercentage() const noexcept { 
-  return _lodTransitionFadePercentage; 
+float TileRenderContent::getLodTransitionFadePercentage() const noexcept {
+  return _lodTransitionFadePercentage;
 }
 
-void TileRenderContent::setLodTransitionFadePercentage(bool percentage) noexcept {
+void TileRenderContent::setLodTransitionFadePercentage(
+    float percentage) noexcept {
   this->_lodTransitionFadePercentage = percentage;
 }
 
