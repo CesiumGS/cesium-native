@@ -99,6 +99,18 @@ Tile* Tileset::getRootTile() noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
 
+const Tile* Tileset::getRootTile() const noexcept {
+  return this->_pTilesetContentManager->getRootTile();
+}
+
+RasterOverlayCollection& Tileset::getOverlays() noexcept {
+  return this->_pTilesetContentManager->getRasterOverlayCollection();
+}
+
+const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
+  return this->_pTilesetContentManager->getRasterOverlayCollection();
+}
+
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
   return fogDensity.cameraHeight < height;
