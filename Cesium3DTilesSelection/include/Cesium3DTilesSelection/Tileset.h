@@ -175,7 +175,7 @@ public:
    * destroyed, whichever comes first.
    */
   const ViewUpdateResult&
-  updateView(const std::vector<ViewState>& frustums, float deltaTime);
+  updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
    * @brief Notifies the tileset that the given tile has started loading.
