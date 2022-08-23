@@ -281,7 +281,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  if (_options.enableLodTransitionPeriod/* && (_options.forbidHoles || !_options.enableFrustumCulling)*/) {
+  if (_options.enableLodTransitionPeriod) {
     // We fade the old tile from 2.0 --> 0.0 while the new tile fades from
     // 0.0 --> 1.0. The old tile doesn't appear faded until it is < 1.0.
 
@@ -1550,7 +1550,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // The traversalDetails tell us what happened while visiting the children.
   if ((!traversalDetails.allAreRenderable &&
        !traversalDetails.anyWereRenderedLastFrame) ||
-      (lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
+      (_options.enableLodTransitionPeriod &&
+       lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
        tile.getContent() &&
        tile.getContent()->lodTransitionFadePercentage < 1.0f)) {
     // Some of our descendants aren't ready to render yet, and none were
