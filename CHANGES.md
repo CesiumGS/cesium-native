@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Make sure that the Raster Overlay that is passed to the `loadErrorCallback` is the same type as the one the user created.
+
 ### v0.18.1 - 2022-08-04
 
 ##### Fixes :wrench:
