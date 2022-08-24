@@ -601,7 +601,10 @@ TilesetContentManager::TilesetContentManager(
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
-    TilesetJsonLoader::createLoader(externals, url, {})
+    TilesetJsonLoader::createLoader(
+        externals,
+        url,
+        std::vector<CesiumAsync::IAssetAccessor::THeader>{})
         .thenInMainThread(
             [this, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
