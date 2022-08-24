@@ -567,15 +567,16 @@ LayerJsonTerrainLoader::createLoader(
 
 CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
 Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
-    const TilesetExternals& externals,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const TilesetContentOptions& contentOptions,
     const std::string& layerJsonUrl,
     const rapidjson::Document& layerJson,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     bool showCreditsOnScreen) {
   return loadLayerJson(
-             externals.asyncSystem,
-             externals.pAssetAccessor,
+             asyncSystem,
+             pAssetAccessor,
              layerJsonUrl,
              requestHeaders,
              layerJson,

@@ -734,11 +734,11 @@ TilesetJsonLoader::createLoader(
 }
 
 TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
-    const TilesetExternals& externals,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
     const rapidjson::Document& tilesetJson) {
   return parseTilesetJson(
-      externals.pLogger,
+      pLogger,
       tilesetJsonUrl,
       tilesetJson,
       glm::dmat4(1.0),

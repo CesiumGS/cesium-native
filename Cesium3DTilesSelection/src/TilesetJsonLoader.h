@@ -36,7 +36,7 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   static TilesetContentLoaderResult<TilesetJsonLoader> createLoader(
-      const TilesetExternals& externals,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& tilesetJsonUrl,
       const rapidjson::Document& tilesetJson);
 

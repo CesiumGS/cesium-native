@@ -6,8 +6,8 @@
 #include <CesiumGeometry/Axis.h>
 
 #include <memory>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 struct LoaderCreditResult {
