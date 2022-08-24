@@ -695,8 +695,6 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   }
 }
 
-bool TilesetContentManager::canBeDestroyedWithoutBlocking() const {}
-
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
