@@ -582,22 +582,9 @@ std::optional<Tile> parseTileJsonRecursively(
 TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
-    const gsl::span<const std::byte>& tilesetJsonBinary,
+    const rapidjson::Document& tilesetJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine) {
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(
-      reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-      tilesetJsonBinary.size());
-  if (tilesetJson.HasParseError()) {
-    TilesetContentLoaderResult<TilesetJsonLoader> result;
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset()));
-    return result;
-  }
-
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
@@ -623,6 +610,33 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::vector<LoaderCreditResult>{},
       std::vector<CesiumAsync::IAssetAccessor::THeader>{},
       ErrorList{}};
+}
+
+TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& baseUrl,
+    const gsl::span<const std::byte>& tilesetJsonBinary,
+    const glm::dmat4& parentTransform,
+    TileRefine parentRefine) {
+  rapidjson::Document tilesetJson;
+  tilesetJson.Parse(
+      reinterpret_cast<const char*>(tilesetJsonBinary.data()),
+      tilesetJsonBinary.size());
+  if (tilesetJson.HasParseError()) {
+    TilesetContentLoaderResult<TilesetJsonLoader> result;
+    result.errors.emplaceError(fmt::format(
+        "Error when parsing tileset JSON, error code {} at byte offset {}",
+        tilesetJson.GetParseError(),
+        tilesetJson.GetErrorOffset()));
+    return result;
+  }
+
+  return parseTilesetJson(
+      pLogger,
+      baseUrl,
+      tilesetJson,
+      parentTransform,
+      parentRefine);
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
@@ -717,6 +731,18 @@ TilesetJsonLoader::createLoader(
             glm::dmat4(1.0),
             TileRefine::Replace);
       });
+}
+
+TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
+    const TilesetExternals& externals,
+    const std::string& tilesetJsonUrl,
+    const rapidjson::Document& tilesetJson) {
+  return parseTilesetJson(
+      externals.pLogger,
+      tilesetJsonUrl,
+      tilesetJson,
+      glm::dmat4(1.0),
+      TileRefine::Replace);
 }
 
 CesiumAsync::Future<TileLoadResult>

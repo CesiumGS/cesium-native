@@ -11,6 +11,8 @@
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeospatial/Projection.h>
 
+#include <rapidjson/fwd.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -32,6 +34,15 @@ public:
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      bool showCreditsOnScreen);
+
+  static CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
+  createLoader(
+      const TilesetExternals& externals,
+      const TilesetContentOptions& contentOptions,
+      const std::string& layerJsonUrl,
+      const rapidjson::Document& layerJson,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       bool showCreditsOnScreen);
 
