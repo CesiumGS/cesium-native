@@ -34,6 +34,7 @@ target_include_directories(
     SYSTEM PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
+        ${CESIUM_NATIVE_LIBMORTON_INCUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
@@ -52,6 +53,7 @@ target_link_libraries(Cesium3DTilesSelection
     # PRIVATE
         tinyxml2
         uriparser
+        libmorton
 )
 
 install(TARGETS Cesium3DTilesSelection

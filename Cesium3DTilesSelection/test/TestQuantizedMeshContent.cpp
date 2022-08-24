@@ -1,9 +1,11 @@
 #include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "QuantizedMeshContent.h"
+#include "QuantizedMeshLoader.h"
 
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumUtility/Math.h>
 
@@ -689,24 +691,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
-  GeographicProjection projection(ellipsoid);
-  BoundingRegion boundingRegion(
-      unprojectRectangleSimple(projection, rectangle),
-      -1000.0,
-      9000.0);
-  TileContext context{};
-  context.implicitContext = ImplicitTilingContext{
-      std::vector<std::string>{},
-      std::nullopt,
-      tilingScheme,
-      std::nullopt,
-      boundingRegion,
-      projection,
-      QuadtreeRectangleAvailability(tilingScheme, 23),
-      std::nullopt,
-      std::nullopt,
-      std::nullopt,
-      std::nullopt};
 
   SECTION("Check quantized mesh that has uint16_t indices") {
     // mock quantized mesh
@@ -734,19 +718,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    QuantizedMeshLoadResult loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf is the grid
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -811,19 +789,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf is the grid
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -888,19 +860,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf is the grid
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -959,8 +925,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         verticesWidth,
         verticesHeight);
 
-    // add oct-encoded normal extension. This is just a random direction and not
-    // really normal. We want to make sure the normal is written to the gltf
+    // add oct-encoded normal extension. This is just a random direction and
+    // not really normal. We want to make sure the normal is written to the gltf
     glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
     uint8_t x = 0, y = 0;
     octEncode(normal, x, y);
@@ -982,19 +948,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf has normals
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -1023,31 +983,12 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
   registerAllTileContentTypes();
 
   // mock context
-  Ellipsoid ellipsoid = Ellipsoid::WGS84;
   CesiumGeometry::Rectangle rectangle(
       glm::radians(-180.0),
       glm::radians(-90.0),
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
-  GeographicProjection projection(ellipsoid);
-  BoundingRegion boundingRegion(
-      unprojectRectangleSimple(projection, rectangle),
-      -1000.0,
-      9000.0);
-  TileContext context{};
-  context.implicitContext = ImplicitTilingContext{
-      std::vector<std::string>{},
-      std::nullopt,
-      tilingScheme,
-      std::nullopt,
-      boundingRegion,
-      projection,
-      QuadtreeRectangleAvailability(tilingScheme, 23),
-      std::nullopt,
-      std::nullopt,
-      std::nullopt,
-      std::nullopt};
 
   // mock quantized mesh
   uint32_t verticesWidth = 3;
@@ -1090,16 +1031,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-
-    REQUIRE(loadResult->model == std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed vertex data") {
@@ -1132,16 +1066,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed indices") {
@@ -1201,16 +1129,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed west edge indices") {
@@ -1287,16 +1209,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed south edge indices") {
@@ -1389,16 +1305,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed east edge indices") {
@@ -1507,16 +1417,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed north edge indices") {
@@ -1641,15 +1545,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 }
