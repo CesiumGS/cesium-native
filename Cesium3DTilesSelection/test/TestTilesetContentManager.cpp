@@ -178,6 +178,111 @@ CesiumGltf::Model createGlobeGrid(
 }
 } // namespace
 
+TEST_CASE("Test the manager can be initialized with correct loaders") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  // create mock tileset externals
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+  auto pMockedPrepareRendererResources =
+      std::make_shared<SimplePrepareRendererResource>();
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  auto pMockedCreditSystem = std::make_shared<CreditSystem>();
+
+  TilesetExternals externals{
+      pMockedAssetAccessor,
+      pMockedPrepareRendererResources,
+      asyncSystem,
+      pMockedCreditSystem};
+
+  SECTION("Initialize manager with tileset.json url") {
+    // create mock request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"tileset.json",
+         createMockRequest(testDataPath / "Tileset" / "tileset.json")});
+
+    // construct manager with tileset.json format
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager(
+        externals,
+        {},
+        RasterOverlayCollection{loadedTiles, externals},
+        "tileset.json");
+    CHECK(manager.getNumberOfTilesLoading() == 1);
+
+    manager.waitUntilIdle();
+    CHECK(manager.getNumberOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoaded() == 1);
+
+    // check root
+    const Tile* pRootTile = manager.getRootTile();
+    CHECK(pRootTile);
+    CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
+    CHECK(pRootTile->getGeometricError() == 70.0);
+    CHECK(pRootTile->getRefine() == TileRefine::Add);
+  }
+
+  SECTION("Initialize manager with layer.json url") {
+    // create mock request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json",
+         createMockRequest(
+             testDataPath / "CesiumTerrainTileJson" /
+             "QuantizedMesh.tile.json")});
+
+    // construct manager with tileset.json format
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager(
+        externals,
+        {},
+        RasterOverlayCollection{loadedTiles, externals},
+        "layer.json");
+    CHECK(manager.getNumberOfTilesLoading() == 1);
+
+    manager.waitUntilIdle();
+    CHECK(manager.getNumberOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoaded() == 1);
+
+    // check root
+    const Tile* pRootTile = manager.getRootTile();
+    CHECK(pRootTile);
+    CHECK(pRootTile->getRefine() == TileRefine::Replace);
+
+    const gsl::span<const Tile> children = pRootTile->getChildren();
+    CHECK(
+        std::get<QuadtreeTileID>(children[0].getTileID()) ==
+        QuadtreeTileID(0, 0, 0));
+    CHECK(
+        std::get<QuadtreeTileID>(children[1].getTileID()) ==
+        QuadtreeTileID(0, 1, 0));
+  }
+
+  SECTION("Initialize manager with wrong format") {
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"layer.json",
+         createMockRequest(
+             testDataPath / "CesiumTerrainTileJson" /
+             "WithAttribution.tile.json")});
+
+    // construct manager with tileset.json format
+    Tile::LoadedLinkedList loadedTiles;
+    TilesetContentManager manager(
+        externals,
+        {},
+        RasterOverlayCollection{loadedTiles, externals},
+        "layer.json");
+    CHECK(manager.getNumberOfTilesLoading() == 1);
+
+    manager.waitUntilIdle();
+    CHECK(manager.getNumberOfTilesLoading() == 0);
+    CHECK(manager.getNumberOfTilesLoaded() == 1);
+
+    // check root
+    const Tile* pRootTile = manager.getRootTile();
+    CHECK(!pRootTile);
+  }
+}
+
 TEST_CASE("Test tile state machine") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
