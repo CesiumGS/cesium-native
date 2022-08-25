@@ -43,9 +43,9 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
-      const rapidjson::Document& layerJson,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      bool showCreditsOnScreen);
+      bool showCreditsOnScreen,
+      const rapidjson::Document& layerJson);
 
   struct Layer {
     Layer(

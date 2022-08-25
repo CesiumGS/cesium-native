@@ -615,6 +615,7 @@ TilesetContentManager::TilesetContentManager(
              showCreditsOnScreen = tilesetOptions.showCreditsOnScreen](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
+              // Check if request is successful
               const CesiumAsync::IAssetResponse* pResponse =
                   pCompletedRequest->response();
               const std::string& url = pCompletedRequest->url();
@@ -636,6 +637,7 @@ TilesetContentManager::TilesetContentManager(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
+              // Parse Json response
               gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
               rapidjson::Document tilesetJson;
               tilesetJson.Parse(
@@ -651,6 +653,8 @@ TilesetContentManager::TilesetContentManager(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
+              // Check if the json is a tileset.json format or layer.json format
+              // and create corresponding loader
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
                 TilesetContentLoaderResult<TilesetContentLoader> result =
@@ -674,9 +678,9 @@ TilesetContentManager::TilesetContentManager(
                              pAssetAccessor,
                              contentOptions,
                              url,
-                             tilesetJson,
                              flatHeaders,
-                             showCreditsOnScreen)
+                             showCreditsOnScreen,
+                             tilesetJson)
                       .thenImmediately(
                           [](TilesetContentLoaderResult<TilesetContentLoader>&&
                                  result) { return std::move(result); });
