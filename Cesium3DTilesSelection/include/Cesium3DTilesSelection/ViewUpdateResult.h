@@ -20,23 +20,41 @@ class Tile;
  */
 class CESIUM3DTILESSELECTION_API ViewUpdateResult final {
 public:
-  // TODO: change render terminology to fit fading??
-  // For example, a fading out tile is still being "rendered" technically
+  /**
+   * @brief The tiles that were selected by the tileset traversal this frame.
+   * These tiles should be rendered by the client.
+   */
+  std::vector<Tile*> tilesSelectedThisFrame;
 
   /**
-   * @brief The tiles that are contained in the render list of the current
-   * frame.
+   * @brief The tiles that were no longer selected by the tileset traversal
+   * this frame. These tiles may still need to be rendered during a fade out
+   * period if {@link TilesetOptions::enableLodTransitionPeriod} is true.
+   *
+   * If a tile is in this list, there is another LOD that is ready to take its
+   * place. So clients may choose to disable non-rendering behavior such as
+   * physics colliders for the tiles in this list, since they may conflict with
+   * the replacement tiles. If LOD transition periods are not enabled, tiles
+   * from this list no longer need to be rendered.
    */
-  std::vector<Tile*> tilesToRenderThisFrame;
+  std::vector<Tile*> tilesNoLongerSelectedThisFrame;
 
   /**
-   * @brief The tiles that have been removed from the render list for the
-   * current frame
+   * @brief These tiles were not selected this frame, but should continue being
+   * rendered by the client while fading out.
+   *
+   * This list is only relevant when
+   * {@link TilesetOptions::enableLodTransitionPeriod} is true.
    */
-  std::vector<Tile*> tilesToNoLongerRenderThisFrame;
-
   std::unordered_set<Tile*> tilesFadingOut;
 
+  /**
+   * @brief These tiles are ready to be completely hidden by the client. Tiles
+   * on this list have already completed any necessary fading.
+   *
+   * When {@link TilesetOptions::enableLodTransitionPeriod} is false, this list
+   * should be the same as {@link tilesNoLongerSelectedThisFrame}.
+   */
   std::vector<Tile*> tilesToHideThisFrame;
 
   //! @cond Doxygen_Suppress

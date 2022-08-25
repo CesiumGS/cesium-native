@@ -203,10 +203,10 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesSelectedThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 1);
       REQUIRE(result.tilesLoadingMediumPriority == 0);
@@ -263,10 +263,10 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesSelectedThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 1);
       REQUIRE(result.tilesLoadingMediumPriority == 4);
@@ -288,9 +288,9 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 4);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -338,10 +338,10 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(doesTileMeetSSE(zoomInViewState, ll_ll, tileset));
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesSelectedThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.tilesLoadingLowPriority == 1);
@@ -379,14 +379,14 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
-      REQUIRE(result.tilesToRenderThisFrame[0] == &ll_ll);
-      REQUIRE(result.tilesToRenderThisFrame[1] == &root->getChildren()[1]);
-      REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
-      REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 4);
+      REQUIRE(result.tilesSelectedThisFrame[0] == &ll_ll);
+      REQUIRE(result.tilesSelectedThisFrame[1] == &root->getChildren()[1]);
+      REQUIRE(result.tilesSelectedThisFrame[2] == &root->getChildren()[2]);
+      REQUIRE(result.tilesSelectedThisFrame[3] == &root->getChildren()[3]);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.front() == root);
 
       REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -435,13 +435,13 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
-      REQUIRE(result.tilesToRenderThisFrame[0] == &ll);
-      REQUIRE(result.tilesToRenderThisFrame[1] == &root->getChildren()[1]);
-      REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
-      REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 4);
+      REQUIRE(result.tilesSelectedThisFrame[0] == &ll);
+      REQUIRE(result.tilesSelectedThisFrame[1] == &root->getChildren()[1]);
+      REQUIRE(result.tilesSelectedThisFrame[2] == &root->getChildren()[2]);
+      REQUIRE(result.tilesSelectedThisFrame[3] == &root->getChildren()[3]);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -470,10 +470,10 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesSelectedThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -495,17 +495,17 @@ TEST_CASE("Test replace refinement for render") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 4);
       for (const auto& child : root->getChildren()) {
         REQUIRE(
             std::find(
-                result.tilesToRenderThisFrame.begin(),
-                result.tilesToRenderThisFrame.end(),
-                &child) != result.tilesToRenderThisFrame.end());
+                result.tilesSelectedThisFrame.begin(),
+                result.tilesSelectedThisFrame.end(),
+                &child) != result.tilesSelectedThisFrame.end());
       }
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.front() == root);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -593,10 +593,10 @@ TEST_CASE("Test additive refinement") {
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesSelectedThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -642,11 +642,11 @@ TEST_CASE("Test additive refinement") {
         }
       }
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 2);
-      REQUIRE(result.tilesToRenderThisFrame[0] == root);
-      REQUIRE(result.tilesToRenderThisFrame[1] == &parentB3DM);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 2);
+      REQUIRE(result.tilesSelectedThisFrame[0] == root);
+      REQUIRE(result.tilesSelectedThisFrame[1] == &parentB3DM);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -660,9 +660,9 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 7);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 7);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -733,8 +733,8 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       CHECK(child.getState() == TileLoadState::ContentLoading);
     }
 
-    REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-    REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+    REQUIRE(result.tilesSelectedThisFrame.size() == 1);
+    REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
     REQUIRE(result.tilesVisited == 4);
     REQUIRE(result.tilesLoadingLowPriority == 0);
     REQUIRE(result.tilesLoadingMediumPriority == 3);
@@ -759,8 +759,8 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       REQUIRE(child.isRenderable());
     }
 
-    REQUIRE(result.tilesToRenderThisFrame.size() == 4);
-    REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+    REQUIRE(result.tilesSelectedThisFrame.size() == 4);
+    REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 0);
     REQUIRE(result.tilesVisited == 4);
     REQUIRE(result.tilesLoadingLowPriority == 0);
     REQUIRE(result.tilesLoadingMediumPriority == 0);
@@ -854,9 +854,9 @@ TEST_CASE("Test multiple frustums") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 1);
       REQUIRE(result.tilesLoadingMediumPriority == 4);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesSelectedThisFrame.front() == root);
     }
 
     // frame 2
@@ -874,10 +874,10 @@ TEST_CASE("Test multiple frustums") {
       }
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 4);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.size() == 1);
+      REQUIRE(result.tilesNoLongerSelectedThisFrame.front() == root);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingMediumPriority == 0);
@@ -927,18 +927,18 @@ TEST_CASE("Test multiple frustums") {
       // check result
       // The grand child and the second child are the only ones rendered.
       // The third and fourth children of the root are culled.
-      REQUIRE(result.tilesToRenderThisFrame.size() == 2);
+      REQUIRE(result.tilesSelectedThisFrame.size() == 2);
       REQUIRE(result.tilesVisited == 4);
       REQUIRE(
           std::find(
-              result.tilesToRenderThisFrame.begin(),
-              result.tilesToRenderThisFrame.end(),
-              &grandChild) != result.tilesToRenderThisFrame.end());
+              result.tilesSelectedThisFrame.begin(),
+              result.tilesSelectedThisFrame.end(),
+              &grandChild) != result.tilesSelectedThisFrame.end());
       REQUIRE(
           std::find(
-              result.tilesToRenderThisFrame.begin(),
-              result.tilesToRenderThisFrame.end(),
-              &secondChild) != result.tilesToRenderThisFrame.end());
+              result.tilesSelectedThisFrame.begin(),
+              result.tilesSelectedThisFrame.end(),
+              &secondChild) != result.tilesSelectedThisFrame.end());
       REQUIRE(result.tilesCulled == 2);
     }
   }
