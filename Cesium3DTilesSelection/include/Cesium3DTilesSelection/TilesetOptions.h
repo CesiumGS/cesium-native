@@ -266,7 +266,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * how many seconds the whole transition should take. Note that the old tile
    * doesn't start fading out until the new tile fully fades in.
    */
-  float lodTransitionLength = 2.0f;
+  float lodTransitionLength = 1.0f;
 
   /**
    * @brief Whether to kick descendants while a tile is still fading in.
