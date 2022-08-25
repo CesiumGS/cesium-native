@@ -2,6 +2,9 @@
 
 ### ? - ?
 
+##### Additions :tada:
+- Add new options supporting tile LOD transition periods in `TilesetOptions`. Clients can retrieve a tile's transition percentage from `TileRenderContent::lodTransitionPercentage`.
+
 ##### Breaking Changes :mega:
 - Quantized mesh and implicit octree and quadtree can now skip level of details when traversing.
 - `Tileset` can be constructed with `TilesetContentLoader` and a root `Tile` for loading and rendering different 3D Tile-like format or creating procedural tileset.
@@ -37,6 +40,7 @@
   - `unloadContent()` that was used to unload the content of a tile.
   - `update()` that was used to update a tile each frame.
   - `markPermanentlyFailed()` that was used to mark a tile as permanently failing to load.
+  - Changed the semantics and naming of members in the `ViewUpdateResult` struct to support LOD transition periods.
 
 ##### Fixes :wrench:
 
