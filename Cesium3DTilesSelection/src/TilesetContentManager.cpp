@@ -367,12 +367,6 @@ void calcRasterOverlayDetailsInWorkerThread(
       pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
       std::move(projections));
 
-  if (result.rasterOverlayDetails && overlayDetails) {
-    result.rasterOverlayDetails->merge(*overlayDetails);
-  } else if (overlayDetails) {
-    result.rasterOverlayDetails = std::move(*overlayDetails);
-  }
-
   if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.
     const CesiumGeospatial::GlobeRectangle& original = pRegion->getRectangle();
@@ -409,6 +403,12 @@ void calcRasterOverlayDetailsInWorkerThread(
           "content, so culling and raster overlays may be incorrect: {}",
           url);
     }
+  }
+
+  if (result.rasterOverlayDetails && overlayDetails) {
+    result.rasterOverlayDetails->merge(*overlayDetails);
+  } else if (overlayDetails) {
+    result.rasterOverlayDetails = std::move(*overlayDetails);
   }
 }
 
