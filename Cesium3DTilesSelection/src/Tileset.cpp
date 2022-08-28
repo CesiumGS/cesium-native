@@ -165,21 +165,10 @@ void Tileset::_updateLodTransitions(
     float deltaTime,
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
-    // We fade the old tile from 2.0 --> 0.0 while the new tile fades from
-    // 0.0 --> 1.0. The old tile doesn't appear faded until it is < 1.0.
-
-    // Add newly removed tiles to the fade-out list
-    for (Tile* pTile : result.tilesNoLongerSelectedThisFrame) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
-      if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(2.0f);
-        result.tilesFadingOut.insert(pTile);
-      }
-    }
-
+    // We fade the old tile from 1.0 --> 0.0 while the new tile fades from
+    // 0.0 --> 1.0.
     float deltaTransitionPercentage =
-        2.0f * deltaTime / this->_options.lodTransitionLength;
+        deltaTime / this->_options.lodTransitionLength;
 
     // Update fade out
     for (auto tileIt = result.tilesFadingOut.begin();
@@ -187,10 +176,7 @@ void Tileset::_updateLodTransitions(
       TileRenderContent* pRenderContent =
           (*tileIt)->getContent().getRenderContent();
 
-      if (!pRenderContent) {
-        tileIt = result.tilesFadingOut.erase(tileIt);
-        continue;
-      }
+      assert(pRenderContent != nullptr);
 
       // Remove tile from fade-out list if it is back on the render list.
       TileSelectionState::Result selectionResult =
@@ -203,12 +189,19 @@ void Tileset::_updateLodTransitions(
         continue;
       }
 
-      float newPercentage = pRenderContent->getLodTransitionFadePercentage() -
-                            deltaTransitionPercentage;
+      float currentPercentage =
+          pRenderContent->getLodTransitionFadePercentage();
+      if (currentPercentage <= 0.0f) {
+        // Remove this tile from the fading out list if it is already at 0%.
+        // The client will already have had a chance to stop rendering the tile
+        // last frame.
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
+
+      float newPercentage = currentPercentage - deltaTransitionPercentage;
       if (newPercentage <= 0.0f) {
         pRenderContent->setLodTransitionFadePercentage(0.0f);
-        result.tilesToHideThisFrame.push_back(*tileIt);
-        tileIt = result.tilesFadingOut.erase(tileIt);
       } else {
         pRenderContent->setLodTransitionFadePercentage(newPercentage);
         ++tileIt;
@@ -216,7 +209,7 @@ void Tileset::_updateLodTransitions(
     }
 
     // Update fade in
-    for (Tile* pTile : result.tilesSelectedThisFrame) {
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
@@ -229,39 +222,16 @@ void Tileset::_updateLodTransitions(
     }
   } else {
     // If there are any tiles fading out, hide them right away.
-    if (!result.tilesFadingOut.empty()) {
-      for (Tile* pTile : result.tilesFadingOut) {
-        TileRenderContent* pRenderContent =
-            pTile->getContent().getRenderContent();
-        if (pRenderContent) {
-          pRenderContent->setLodTransitionFadePercentage(0.0f);
-        }
-      }
-
-      result.tilesToHideThisFrame.insert(
-          result.tilesToHideThisFrame.end(),
-          result.tilesFadingOut.begin(),
-          result.tilesFadingOut.end());
-
-      result.tilesFadingOut.clear();
-    }
-
-    for (Tile* pTile : result.tilesNoLongerSelectedThisFrame) {
+    for (Tile* pTile : result.tilesFadingOut) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
-      if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
-      }
+      assert(pRenderContent != nullptr);
+      pRenderContent->setLodTransitionFadePercentage(0.0f);
     }
-
-    result.tilesToHideThisFrame.insert(
-        result.tilesToHideThisFrame.end(),
-        result.tilesNoLongerSelectedThisFrame.begin(),
-        result.tilesNoLongerSelectedThisFrame.end());
 
     // If there are any tiles still fading in, set them to fully visible right
     // away.
-    for (Tile* pTile : result.tilesSelectedThisFrame) {
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
@@ -274,7 +244,7 @@ void Tileset::_updateLodTransitions(
 const ViewUpdateResult&
 Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   std::vector<Tile*> tilesSelectedPrevFrame =
-      this->_updateResult.tilesSelectedThisFrame;
+      this->_updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
@@ -284,19 +254,22 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
     this->updateView(frustums, 0.0f);
   }
 
-  std::unordered_set<Tile*> uniqueTilesSelectedThisFrame(
-      this->_updateResult.tilesSelectedThisFrame.begin(),
-      this->_updateResult.tilesSelectedThisFrame.end());
-  std::vector<Tile*> tilesNoLongerSelectedThisFrame;
+  this->_updateResult.tilesFadingOut.clear();
+
+  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame(
+      this->_updateResult.tilesToRenderThisFrame.begin(),
+      this->_updateResult.tilesToRenderThisFrame.end());
   for (Tile* tile : tilesSelectedPrevFrame) {
-    if (uniqueTilesSelectedThisFrame.find(tile) ==
-        uniqueTilesSelectedThisFrame.end()) {
-      tilesNoLongerSelectedThisFrame.emplace_back(tile);
+    if (uniqueTilesToRenderThisFrame.find(tile) ==
+        uniqueTilesToRenderThisFrame.end()) {
+      TileRenderContent* pRenderContent = tile->getContent().getRenderContent();
+      if (pRenderContent) {
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
+        this->_updateResult.tilesFadingOut.insert(tile);
+      }
     }
   }
 
-  this->_updateResult.tilesNoLongerSelectedThisFrame =
-      std::move(tilesNoLongerSelectedThisFrame);
   return this->_updateResult;
 }
 
@@ -314,15 +287,17 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   const int32_t currentFrameNumber = previousFrameNumber + 1;
 
   ViewUpdateResult& result = this->_updateResult;
-  result.tilesSelectedThisFrame.clear();
-  result.tilesNoLongerSelectedThisFrame.clear();
-  result.tilesToHideThisFrame.clear();
+  result.tilesToRenderThisFrame.clear();
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;
   result.tilesCulled = 0;
   result.tilesOccluded = 0;
   result.tilesWaitingForOcclusionResults = 0;
   result.maxDepthVisited = 0;
+
+  if (!_options.enableLodTransitionPeriod) {
+    result.tilesFadingOut.clear();
+  }
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
@@ -376,7 +351,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       this->_externals.pCreditSystem;
-  if (pCreditSystem && !result.tilesSelectedThisFrame.empty()) {
+  if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
     // per-tileset user-specified credit
     const Credit* pUserCredit = this->_pTilesetContentManager->getUserCredit();
     if (pUserCredit) {
@@ -400,7 +375,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     }
 
     // per-tile credits
-    for (Tile* pTile : result.tilesSelectedThisFrame) {
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           pTile->getMappedRasterTiles();
       // raster overlay tile credits
@@ -464,7 +439,11 @@ static void markTileNonRendered(
     Tile& tile,
     ViewUpdateResult& result) {
   if (lastResult == TileSelectionState::Result::Rendered) {
-    result.tilesNoLongerSelectedThisFrame.push_back(&tile);
+    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
+    if (pRenderContent) {
+      pRenderContent->setLodTransitionFadePercentage(1.0f);
+      result.tilesFadingOut.insert(&tile);
+    }
   }
 }
 
@@ -823,7 +802,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   tile.setLastSelectionState(TileSelectionState(
       frameState.currentFrameNumber,
       TileSelectionState::Result::Rendered));
-  result.tilesSelectedThisFrame.push_back(&tile);
+  result.tilesToRenderThisFrame.push_back(&tile);
 
   addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
 
@@ -922,7 +901,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
   tile.setLastSelectionState(TileSelectionState(
       frameState.currentFrameNumber,
       TileSelectionState::Result::Rendered));
-  result.tilesSelectedThisFrame.push_back(&tile);
+  result.tilesToRenderThisFrame.push_back(&tile);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
@@ -970,7 +949,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    result.tilesSelectedThisFrame.push_back(&tile);
+    result.tilesToRenderThisFrame.push_back(&tile);
     addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
     return true;
   }
@@ -994,7 +973,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
 
-  std::vector<Tile*>& renderList = result.tilesSelectedThisFrame;
+  std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
 
   // Mark the rendered descendants and their ancestors - up to this tile - as
   // kicked.
@@ -1299,7 +1278,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
       _loadAndRenderAdditiveRefinedTile(tile, result, tilePriority);
 
   const size_t firstRenderedDescendantIndex =
-      result.tilesSelectedThisFrame.size();
+      result.tilesToRenderThisFrame.size();
   const size_t loadIndexLow = this->_loadQueueLow.size();
   const size_t loadIndexMedium = this->_loadQueueMedium.size();
   const size_t loadIndexHigh = this->_loadQueueHigh.size();
@@ -1312,7 +1291,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
       result);
 
   const bool descendantTilesAdded =
-      firstRenderedDescendantIndex != result.tilesSelectedThisFrame.size();
+      firstRenderedDescendantIndex != result.tilesToRenderThisFrame.size();
   if (!descendantTilesAdded) {
     // No descendant tiles were added to the render list by the function above,
     // meaning they were all culled even though this tile was deemed visible.

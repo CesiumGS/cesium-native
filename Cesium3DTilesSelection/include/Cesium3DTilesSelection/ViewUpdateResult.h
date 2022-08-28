@@ -23,39 +23,20 @@ public:
   /**
    * @brief The tiles that were selected by the tileset traversal this frame.
    * These tiles should be rendered by the client.
-   */
-  std::vector<Tile*> tilesSelectedThisFrame;
-
-  /**
-   * @brief The tiles that were no longer selected by the tileset traversal
-   * this frame. These tiles may still need to be rendered during a fade out
-   * period if {@link TilesetOptions::enableLodTransitionPeriod} is true.
    *
-   * If a tile is in this list, there is another LOD that is ready to take its
-   * place. So clients may choose to disable non-rendering behavior such as
-   * physics colliders for the tiles in this list, since they may conflict with
-   * the replacement tiles. If LOD transition periods are not enabled, tiles
-   * from this list no longer need to be rendered.
-   */
-  std::vector<Tile*> tilesNoLongerSelectedThisFrame;
-
-  /**
-   * @brief These tiles were not selected this frame, but should continue being
-   * rendered by the client while fading out.
-   *
-   * This list is only relevant when
+   * Tiles in this list may be fading in if
    * {@link TilesetOptions::enableLodTransitionPeriod} is true.
    */
-  std::unordered_set<Tile*> tilesFadingOut;
+  std::vector<Tile*> tilesToRenderThisFrame;
 
   /**
-   * @brief These tiles are ready to be completely hidden by the client. Tiles
-   * on this list have already completed any necessary fading.
+   * @brief Tiles on this list are no longer selected for rendering.
    *
-   * When {@link TilesetOptions::enableLodTransitionPeriod} is false, this list
-   * should be the same as {@link tilesNoLongerSelectedThisFrame}.
+   * If {@link TilesetOptions::enableLodTransitionPeriod} is true they may be
+   * fading out. If a tile's {TileRenderContent::lodTransitionPercentage} is 0
+   * or lod transitions are disabled, the tile should be hidden right away.
    */
-  std::vector<Tile*> tilesToHideThisFrame;
+  std::unordered_set<Tile*> tilesFadingOut;
 
   //! @cond Doxygen_Suppress
   uint32_t tilesLoadingLowPriority = 0;
