@@ -3,7 +3,7 @@
 #include "Cesium3DTilesReader/Library.h"
 
 #include <Cesium3DTiles/Extension3dTilesMetadataSchemaLegacy.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h> 
+#include <CesiumJsonReader/ExtensionReaderContext.h>
 
 #include <gsl/span>
 
@@ -65,7 +65,8 @@ public:
    * @param data The buffer from which to read the schema.
    * @return The result of reading the schame.
    */
-  SchemaReaderResultLegacy readSchema(const gsl::span<const std::byte>& data) const;
+  SchemaReaderResultLegacy
+  readSchema(const gsl::span<const std::byte>& data) const;
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;

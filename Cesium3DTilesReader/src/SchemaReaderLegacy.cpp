@@ -17,8 +17,9 @@ SchemaReaderResultLegacy readSchemaJson(
   CESIUM_TRACE("Cesium3DTilesReader::SchemaReaderLegacy::readSchemaJson");
 
   Extension3dTilesMetadataSchemaLegacyJsonHandler schemaHandler(context);
-  CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Extension3dTilesMetadataSchemaLegacy> jsonResult =
-      CesiumJsonReader::JsonReader::readJson(data, schemaHandler);
+  CesiumJsonReader::ReadJsonResult<
+      Cesium3DTiles::Extension3dTilesMetadataSchemaLegacy>
+      jsonResult = CesiumJsonReader::JsonReader::readJson(data, schemaHandler);
 
   return SchemaReaderResultLegacy{
       std::move(jsonResult.value),

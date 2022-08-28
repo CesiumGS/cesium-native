@@ -24,7 +24,8 @@ struct CESIUM3DTILESREADER_API SubtreeReaderResultLegacy {
   /**
    * @brief The read subtree, or std::nullopt if the subtree could not be read.
    */
-  std::optional<Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy> subtree;
+  std::optional<Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy>
+      subtree;
 
   /**
    * @brief Errors, if any, that occurred during the load process.
@@ -66,7 +67,8 @@ public:
    * @param options Options for how to read the subtree.
    * @return The result of reading the subtree.
    */
-  SubtreeReaderResultLegacy readSubtree(const gsl::span<const std::byte>& data) const;
+  SubtreeReaderResultLegacy
+  readSubtree(const gsl::span<const std::byte>& data) const;
 
 private:
   CesiumJsonReader::ExtensionReaderContext _context;

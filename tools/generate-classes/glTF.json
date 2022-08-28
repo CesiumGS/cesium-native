@@ -173,6 +173,9 @@
     },
     "KHR_texture_transform textureInfo extension": {
       "overrideName": "ExtensionKhrTextureTransform"
+    },
+    "EXT_feature_metadata extension for EXT_mesh_gpu_instancing": {
+      "overrideName": "ExtensionExtMeshGpuInstancingExtFeatureMetadata"
     }
   },
   "extensions": [
@@ -192,6 +195,10 @@
     {
       "extensionName": "EXT_feature_metadata",
       "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
+    },
+    {
+      "extensionName": "EXT_feature_metadata",
+      "schema": "Vendor/EXT_feature_metadata/schema/EXT_mesh_gpu_instancing/EXT_feature_metadata.schema.json"
     },
     {
       "extensionName": "EXT_instance_features",

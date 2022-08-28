@@ -1,5 +1,4 @@
 #include "Cesium3DTilesReader/SubtreeReaderLegacy.h"
-
 #include "Extension3dTilesImplicitTilingSubtreeLegacyJsonHandler.h"
 #include "registerExtensions.h"
 
@@ -14,11 +13,14 @@ SubtreeReaderResultLegacy readSubtreeJson(
     const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  CESIUM_TRACE("Cesium3DTilesReader::SubtreeReaderResultLegacy::readSubtreeJson");
+  CESIUM_TRACE(
+      "Cesium3DTilesReader::SubtreeReaderResultLegacy::readSubtreeJson");
 
-  Extension3dTilesImplicitTilingSubtreeLegacyJsonHandler subtreeHandler(context);
-  CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy> jsonResult =
-      CesiumJsonReader::JsonReader::readJson(data, subtreeHandler);
+  Extension3dTilesImplicitTilingSubtreeLegacyJsonHandler subtreeHandler(
+      context);
+  CesiumJsonReader::ReadJsonResult<
+      Cesium3DTiles::Extension3dTilesImplicitTilingSubtreeLegacy>
+      jsonResult = CesiumJsonReader::JsonReader::readJson(data, subtreeHandler);
 
   return SubtreeReaderResultLegacy{
       std::move(jsonResult.value),
@@ -28,7 +30,9 @@ SubtreeReaderResultLegacy readSubtreeJson(
 
 } // namespace
 
-SubtreeReaderLegacy::SubtreeReaderLegacy() { registerExtensions(this->_context); }
+SubtreeReaderLegacy::SubtreeReaderLegacy() {
+  registerExtensions(this->_context);
+}
 
 CesiumJsonReader::ExtensionReaderContext& SubtreeReaderLegacy::getExtensions() {
   return this->_context;
