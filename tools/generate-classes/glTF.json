@@ -255,16 +255,12 @@
     {
       "extensionName": "KHR_texture_transform",
       "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
-      "attachTo": [
-        "textureInfo"
-      ]
+      "attachTo": "textureInfo"
     },
     {
       "extensionName": "EXT_texture_webp",
       "schema": "Vendor/EXT_texture_webp/schema/glTF.EXT_texture_webp.schema.json",
-      "attachTo": [
-        "texture"
-      ]
+      "attachTo": "texture"
     }
   ]
 }
