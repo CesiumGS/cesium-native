@@ -17,6 +17,7 @@
 #include <cstddef>
 
 using namespace CesiumAsync;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
@@ -31,7 +32,7 @@ class TileMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   TileMapServiceTileProvider(
-      RasterOverlay& owner,
+      const RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -254,14 +255,14 @@ Future<std::unique_ptr<tinyxml2::XMLDocument>> getXmlDocument(
           });
 }
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<IntrusivePointer<RasterOverlayTileProvider>>
 TileMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
   std::string xmlUrl = this->_url;
 
   pOwner = pOwner ? pOwner : this;
@@ -301,7 +302,7 @@ TileMapServiceRasterOverlay::createTileProvider(
            url = this->_url,
            headers =
                this->_headers](std::unique_ptr<tinyxml2::XMLDocument>&& pDoc)
-              -> std::unique_ptr<RasterOverlayTileProvider> {
+              -> IntrusivePointer<RasterOverlayTileProvider> {
             if (!pDoc) {
               return nullptr;
             }
@@ -460,7 +461,7 @@ TileMapServiceRasterOverlay::createTileProvider(
               }
             }
 
-            return std::make_unique<TileMapServiceTileProvider>(
+            return new TileMapServiceTileProvider(
                 *pOwner,
                 asyncSystem,
                 pAssetAccessor,

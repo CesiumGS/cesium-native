@@ -117,7 +117,8 @@ public:
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~TileMapServiceRasterOverlay() override;
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+  virtual CesiumAsync::Future<
+      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
   createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -125,7 +126,7 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override;
+      const RasterOverlay* pOwner) const override;
 
 private:
   std::string _url;

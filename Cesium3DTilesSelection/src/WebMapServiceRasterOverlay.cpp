@@ -29,7 +29,7 @@ class WebMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   WebMapServiceTileProvider(
-      RasterOverlay& owner,
+      const RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -236,14 +236,14 @@ static bool validateCapabilities(
   return true;
 }
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<IntrusivePointer<RasterOverlayTileProvider>>
 WebMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
@@ -290,7 +290,7 @@ WebMapServiceRasterOverlay::createTileProvider(
            url = this->_baseUrl,
            headers = this->_headers,
            reportError](const std::shared_ptr<IAssetRequest>& pRequest)
-              -> std::unique_ptr<RasterOverlayTileProvider> {
+              -> IntrusivePointer<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               reportError(
@@ -340,7 +340,7 @@ WebMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 rootTilesY);
 
-            return std::make_unique<WebMapServiceTileProvider>(
+            return new WebMapServiceTileProvider(
                 *pOwner,
                 asyncSystem,
                 pAssetAccessor,

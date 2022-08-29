@@ -34,7 +34,7 @@ IonRasterOverlay::~IonRasterOverlay() {}
 std::unordered_map<std::string, IonRasterOverlay::ExternalAssetEndpoint>
     IonRasterOverlay::endpointCache;
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<IntrusivePointer<RasterOverlayTileProvider>>
 IonRasterOverlay::createTileProvider(
     const ExternalAssetEndpoint& endpoint,
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -42,29 +42,33 @@ IonRasterOverlay::createTileProvider(
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
-  if (pCreditSystem) {
-    for (const auto& attribution : endpoint.attributions) {
-      _credits.push_back(pCreditSystem->createCredit(
-          attribution.html,
-          !attribution.collapsible || this->getOptions().showCreditsOnScreen));
-    }
-  }
+    const RasterOverlay* pOwner) const {
+  IntrusivePointer<RasterOverlay> pOverlay = nullptr;
   if (endpoint.externalType == "BING") {
-    _pAggregatedOverlay = std::make_unique<BingMapsRasterOverlay>(
+    pOverlay = new BingMapsRasterOverlay(
         this->getName(),
         endpoint.url,
         endpoint.key,
         endpoint.mapStyle,
         endpoint.culture);
   } else {
-    _pAggregatedOverlay = std::make_unique<TileMapServiceRasterOverlay>(
+    pOverlay = new TileMapServiceRasterOverlay(
         this->getName(),
         endpoint.url,
         std::vector<CesiumAsync::IAssetAccessor::THeader>{
             std::make_pair("Authorization", "Bearer " + endpoint.accessToken)});
   }
-  return _pAggregatedOverlay->createTileProvider(
+
+  if (pCreditSystem) {
+    std::vector<Credit>& credits = pOverlay->getCredits();
+    for (const auto& attribution : endpoint.attributions) {
+      credits.emplace_back(pCreditSystem->createCredit(
+          attribution.html,
+          !attribution.collapsible || this->getOptions().showCreditsOnScreen));
+    }
+  }
+
+  return pOverlay->createTileProvider(
       asyncSystem,
       pAssetAccessor,
       pCreditSystem,
@@ -73,14 +77,14 @@ IonRasterOverlay::createTileProvider(
       pOwner);
 }
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 IonRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
   std::string ionUrl = "https://api.cesium.com/v1/assets/" +
                        std::to_string(this->_ionAssetID) + "/endpoint";
   ionUrl = CesiumUtility::Uri::addQuery(
@@ -229,7 +233,8 @@ IonRasterOverlay::createTileProvider(
                   pOwner);
             }
             return asyncSystem.createResolvedFuture<
-                std::unique_ptr<RasterOverlayTileProvider>>(nullptr);
+                CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>(
+                nullptr);
           });
 }
 } // namespace Cesium3DTilesSelection

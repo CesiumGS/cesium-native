@@ -25,10 +25,10 @@ namespace Cesium3DTilesSelection {
     RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
-    RasterOverlay& owner,
+    const RasterOverlay& owner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-    : _pOwner(&owner),
+    : _pOwner(const_cast<RasterOverlay*>(&owner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(std::nullopt),
@@ -47,7 +47,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 }
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
-    RasterOverlay& owner,
+    const RasterOverlay& owner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
@@ -55,7 +55,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const Rectangle& coverageRectangle) noexcept
-    : _pOwner(&owner),
+    : _pOwner(const_cast<RasterOverlay*>(&owner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(credit),
@@ -118,11 +118,11 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
   return true;
 }
 
-void RasterOverlayTileProvider::addReference() noexcept {
+void RasterOverlayTileProvider::addReference() const noexcept {
   ++this->_referenceCount;
 }
 
-void RasterOverlayTileProvider::releaseReference() noexcept {
+void RasterOverlayTileProvider::releaseReference() const noexcept {
   assert(this->_referenceCount > 0);
   --this->_referenceCount;
   if (this->_referenceCount == 0) {

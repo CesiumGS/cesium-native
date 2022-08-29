@@ -41,7 +41,7 @@ public:
    * @param imageHeight The image height.
    */
   QuadtreeRasterOverlayTileProvider(
-      RasterOverlay& owner,
+      const RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,

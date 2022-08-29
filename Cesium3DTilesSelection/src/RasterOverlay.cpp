@@ -28,13 +28,23 @@ public:
 RasterOverlay::RasterOverlay(
     const std::string& name,
     const RasterOverlayOptions& options)
-    : _name(name), _pPlaceholder(), _options(options), _referenceCount(0) {}
+    : _name(name), _options(options), _referenceCount(0) {}
 
 RasterOverlay::~RasterOverlay() noexcept { assert(this->_referenceCount == 0); }
 
-void RasterOverlay::addReference() noexcept { ++this->_referenceCount; }
+CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
+RasterOverlay::createPlaceholder(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const {
+  return new PlaceholderTileProvider(
+      const_cast<RasterOverlay&>(*this),
+      asyncSystem,
+      pAssetAccessor);
+}
 
-void RasterOverlay::releaseReference() noexcept {
+void RasterOverlay::addReference() const noexcept { ++this->_referenceCount; }
+
+void RasterOverlay::releaseReference() const noexcept {
   assert(this->_referenceCount > 0);
   --this->_referenceCount;
   if (this->_referenceCount == 0) {
@@ -45,7 +55,7 @@ void RasterOverlay::releaseReference() noexcept {
 void RasterOverlay::reportError(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlayLoadFailureDetails&& errorDetails) {
+    RasterOverlayLoadFailureDetails&& errorDetails) const {
   SPDLOG_LOGGER_ERROR(pLogger, errorDetails.message);
   if (this->getOptions().loadErrorCallback) {
     asyncSystem.runInMainThread(

@@ -37,7 +37,8 @@ public:
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~IonRasterOverlay() override;
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+  virtual CesiumAsync::Future<
+      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
   createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -45,12 +46,11 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override;
+      const RasterOverlay* pOwner) const override;
 
 private:
   int64_t _ionAssetID;
   std::string _ionAccessToken;
-  std::unique_ptr<RasterOverlay> _pAggregatedOverlay;
 
   struct AssetEndpointAttribution {
     std::string html;
@@ -69,7 +69,8 @@ private:
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;
 
-  CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+  CesiumAsync::Future<
+      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
   createTileProvider(
       const ExternalAssetEndpoint& endpoint,
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -78,7 +79,7 @@ private:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner);
+      const RasterOverlay* pOwner) const;
 };
 
 } // namespace Cesium3DTilesSelection

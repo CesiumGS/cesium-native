@@ -129,7 +129,7 @@ public:
    * this raster overlay.
    */
   RasterOverlayTileProvider(
-      RasterOverlay& owner,
+      const RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>&
           pAssetAccessor) noexcept;
@@ -151,7 +151,7 @@ public:
    * this overlay, expressed in projected coordinates.
    */
   RasterOverlayTileProvider(
-      RasterOverlay& owner,
+      const RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -336,16 +336,22 @@ public:
    * @brief Adds a counted reference to this object. Use
    * {@link CesiumUtility::IntrusivePointer} instead of calling this method
    * directly.
+   *
+   * This method is _not_ thread safe. Do not call it or use an
+   * `IntrusivePointer` from multiple threads simultaneously.
    */
-  void addReference() noexcept;
+  void addReference() const noexcept;
 
   /**
    * @brief Removes a counted reference from this object. When the last
    * reference is removed, this method will delete this instance. Use
    * {@link CesiumUtility::IntrusivePointer} instead of calling this method
    * directly.
+   *
+   * This method is _not_ thread safe. Do not call it or use an
+   * `IntrusivePointer` from multiple threads simultaneously.
    */
-  void releaseReference() noexcept;
+  void releaseReference() const noexcept;
 
 protected:
   /**
@@ -409,7 +415,7 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
-  int32_t _referenceCount;
+  mutable int32_t _referenceCount;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");

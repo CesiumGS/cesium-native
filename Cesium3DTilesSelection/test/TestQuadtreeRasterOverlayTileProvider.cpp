@@ -18,7 +18,7 @@ namespace {
 class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
-      RasterOverlay& owner,
+      const RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -82,7 +82,7 @@ public:
       const RasterOverlayOptions& options = RasterOverlayOptions())
       : RasterOverlay(name, options) {}
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+  virtual CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>>
   createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -90,14 +90,14 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override {
+      const RasterOverlay* pOwner) const override {
     if (!pOwner) {
       pOwner = this;
     }
 
     return asyncSystem
-        .createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(
-            std::make_unique<TestTileProvider>(
+        .createResolvedFuture<IntrusivePointer<RasterOverlayTileProvider>>(
+            new TestTileProvider(
                 *pOwner,
                 asyncSystem,
                 pAssetAccessor,
@@ -143,8 +143,8 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
           spdlog::default_logger(),
           nullptr)
       .thenInMainThread(
-          [&pProvider](std::unique_ptr<RasterOverlayTileProvider>&& pCreated) {
-            pProvider = pCreated.release();
+          [&pProvider](IntrusivePointer<RasterOverlayTileProvider>&& pCreated) {
+            pProvider = pCreated;
           });
 
   asyncSystem.dispatchMainThreadTasks();

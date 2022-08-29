@@ -8,6 +8,12 @@ namespace CesiumUtility {
  * @brief A smart pointer that calls `addReference` and `releaseReference` on
  * the controlled object.
  *
+ * Please note that the thread-safety of this type is entirely dependent on the
+ * implementation of `addReference` and `releaseReference`. If these methods are
+ * not thread safe on a particular type - which is common for objects that are
+ * not meant to be used from multiple threads simultaneously - then using an
+ * `IntrusivePointer` from multiple threads is also unsafe.
+ *
  * @tparam T The type of object controlled.
  */
 template <class T> class IntrusivePointer final {

@@ -25,7 +25,7 @@ constexpr double pixelTolerance = 0.01;
 namespace Cesium3DTilesSelection {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
-    RasterOverlay& owner,
+    const RasterOverlay& owner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,

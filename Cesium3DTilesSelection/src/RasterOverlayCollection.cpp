@@ -55,11 +55,17 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   IntrusivePointer<RasterOverlay> pOverlayRaw =
       pList->overlays.emplace_back(pOverlay.release());
-  pList->tileProviders.emplace_back(pOverlayRaw->getPlaceholder());
+
+  IntrusivePointer<RasterOverlayTileProvider> pPlaceholder =
+      pOverlayRaw->createPlaceholder(
+          this->_externals.asyncSystem,
+          this->_externals.pAssetAccessor);
+
+  pList->tileProviders.emplace_back(pPlaceholder);
 
   CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
 
-  CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> future =
+  CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>> future =
       pOverlayRaw->createTileProvider(
           this->_externals.asyncSystem,
           this->_externals.pAssetAccessor,
@@ -73,7 +79,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   std::move(future)
       .thenInMainThread(
           [pOverlayRaw,
-           pList](std::unique_ptr<RasterOverlayTileProvider>&& pProvider) {
+           pList](IntrusivePointer<RasterOverlayTileProvider>&& pProvider) {
             // Find the overlay's current location in the list.
             // It's possible it has been removed completely.
             auto it = std::find(
@@ -82,7 +88,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
                 pOverlayRaw);
             if (it != pList->overlays.end()) {
               std::int64_t index = it - pList->overlays.begin();
-              pList->tileProviders[index] = pProvider.release();
+              pList->tileProviders[index] = pProvider;
             }
             CESIUM_TRACE_END_IN_TRACK("createTileProvider");
           })
@@ -96,11 +102,11 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
           });
 
   // Add this overlay to existing geometry tiles.
-  forEachTile(*this->_pLoadedTiles, [pOverlayRaw](Tile& tile) {
+  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     if (tile.getState() != TileLoadState::Unloaded) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
-          pOverlayRaw->getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0)),
+          pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
           -1));
     }
   });

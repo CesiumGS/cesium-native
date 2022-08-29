@@ -120,11 +120,20 @@ public:
   size_t size() const noexcept;
 
 private:
+  // We store the list of overlays and tile providers in this separate class
+  // so that we can separate its lifetime from the lifetime of the
+  // RasterOverlayCollection. We need to do this because the async operations
+  // that create tile providers from overlays need to have somewhere to write
+  // the result. And we can't extend the lifetime of the entire
+  // RasterOverlayCollection until the async operations complete because the
+  // RasterOverlayCollection has a pointer to the tile LoadedLinkedList, which
+  // is owned externally and may become invalid before the async operations
+  // complete.
   struct OverlayList {
-    std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>> overlays;
+    std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>> overlays{};
     std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
-        tileProviders;
-    int32_t _referenceCount;
+        tileProviders{};
+    int32_t _referenceCount{0};
 
     void addReference() noexcept;
     void releaseReference() noexcept;
