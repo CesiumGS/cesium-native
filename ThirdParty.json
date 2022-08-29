@@ -48,6 +48,12 @@
     "license": ["Apache 2.0"]
   },
   {
+    "name": "libwebp",
+    "url": "https://github.com/webmproject/libwebp",
+    "version": "1.2.4",
+    "license": ["BSD-3-Clause"]
+  },
+  {
     "name": "modp_b64",
     "url": "https://github.com/chromium/chromium/tree/15996b5d2322b634f4197447b10289bddc2b0b32/third_party/modp_b64",
     "version": "15996b5d2322b634f4197447b10289bddc2b0b32",
