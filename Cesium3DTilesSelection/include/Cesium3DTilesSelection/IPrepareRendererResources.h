@@ -114,7 +114,7 @@ public:
    *
    * @param rasterTile The raster tile to prepare.
    * @param pLoadThreadResult The value returned from
-   * {@link prepareInLoadThread}.
+   * {@link prepareRasterInLoadThread}.
    * @returns Arbitrary data representing the result of the load process. Note
    * that the value returned by {@link prepareRasterInLoadThread} will _not_ be
    * automatically preserved and passed to {@link free}. If you need to free

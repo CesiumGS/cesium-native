@@ -11,6 +11,7 @@
 #include "ViewUpdateResult.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <rapidjson/fwd.h>
 
@@ -417,7 +418,8 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  std::unique_ptr<TilesetContentManager> _pTilesetContentManager;
+  CesiumUtility::IntrusivePointer<TilesetContentManager>
+      _pTilesetContentManager;
 
   void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,

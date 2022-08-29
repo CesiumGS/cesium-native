@@ -41,7 +41,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+      _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
@@ -59,7 +59,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+      _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
@@ -77,7 +77,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+      _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
@@ -274,9 +274,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     // per-raster overlay credit
     const RasterOverlayCollection& overlayCollection =
         this->_pTilesetContentManager->getRasterOverlayCollection();
-    for (auto& pOverlay : overlayCollection) {
-      const std::optional<Credit>& overlayCredit =
-          pOverlay->getTileProvider()->getCredit();
+    for (auto& pTileProvider : overlayCollection.getTileProviders()) {
+      const std::optional<Credit>& overlayCredit = pTileProvider->getCredit();
       if (overlayCredit) {
         pCreditSystem->addCreditToFrame(overlayCredit.value());
       }

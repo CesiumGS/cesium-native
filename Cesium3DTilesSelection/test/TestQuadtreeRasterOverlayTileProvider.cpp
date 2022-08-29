@@ -130,18 +130,25 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
 
   AsyncSystem asyncSystem(pTaskProcessor);
-  TestRasterOverlay overlay("Test");
+  IntrusivePointer<TestRasterOverlay> pOverlay = new TestRasterOverlay("Test");
 
-  overlay.loadTileProvider(
-      asyncSystem,
-      pAssetAccessor,
-      nullptr,
-      nullptr,
-      spdlog::default_logger());
+  IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
+
+  pOverlay
+      ->createTileProvider(
+          asyncSystem,
+          pAssetAccessor,
+          nullptr,
+          nullptr,
+          spdlog::default_logger(),
+          nullptr)
+      .thenInMainThread(
+          [&pProvider](std::unique_ptr<RasterOverlayTileProvider>&& pCreated) {
+            pProvider = pCreated.release();
+          });
 
   asyncSystem.dispatchMainThreadTasks();
 
-  RasterOverlayTileProvider* pProvider = overlay.getTileProvider();
   REQUIRE(pProvider);
   REQUIRE(!pProvider->isPlaceholder());
 
@@ -172,7 +179,8 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   SECTION("uses a mix of levels when a tile returns an error") {
     glm::dvec2 center(0.1, 0.2);
 
-    TestTileProvider* pTestProvider = static_cast<TestTileProvider*>(pProvider);
+    TestTileProvider* pTestProvider =
+        static_cast<TestTileProvider*>(pProvider.get());
 
     // Select a rectangle that spans four tiles at tile level 8.
     const uint32_t expectedLevel = 8;

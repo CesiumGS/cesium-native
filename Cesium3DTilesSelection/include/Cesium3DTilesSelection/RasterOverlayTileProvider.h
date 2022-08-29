@@ -162,7 +162,7 @@ public:
       const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
   /** @brief Default destructor. */
-  virtual ~RasterOverlayTileProvider() {}
+  virtual ~RasterOverlayTileProvider() noexcept;
 
   /**
    * @brief Returns whether this is a placeholder.
@@ -332,6 +332,21 @@ public:
    */
   bool loadTileThrottled(RasterOverlayTile& tile);
 
+  /**
+   * @brief Adds a counted reference to this object. Use
+   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * directly.
+   */
+  void addReference() noexcept;
+
+  /**
+   * @brief Removes a counted reference from this object. When the last
+   * reference is removed, this method will delete this instance. Use
+   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * directly.
+   */
+  void releaseReference() noexcept;
+
 protected:
   /**
    * @brief Loads the image for a tile.
@@ -382,7 +397,7 @@ private:
   void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
 
 private:
-  RasterOverlay* _pOwner;
+  CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
   std::optional<Credit> _credit;
@@ -390,10 +405,11 @@ private:
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
   CesiumGeometry::Rectangle _coverageRectangle;
-  std::unique_ptr<RasterOverlayTile> _pPlaceholder;
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
+  int32_t _referenceCount;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");

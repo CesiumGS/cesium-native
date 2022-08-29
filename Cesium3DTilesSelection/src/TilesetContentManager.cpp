@@ -13,6 +13,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
@@ -104,10 +105,8 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // texture coordinates which overlay had more detail.
   for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
     if (mapped.isMoreDetailAvailable()) {
-      const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
-                                                           ->getOverlay()
-                                                           .getTileProvider()
-                                                           ->getProjection();
+      const CesiumGeospatial::Projection& projection =
+          mapped.getReadyTile()->getTileProvider().getProjection();
       glm::dvec2 centerProjected =
           details.findRectangleForOverlayProjection(projection)->getCenter();
       CesiumGeospatial::Cartographic center =
@@ -262,10 +261,10 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
-  for (auto& pOverlay : overlays) {
+  for (auto& pTileProvider : overlays.getTileProviders()) {
     RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
         tilesetOptions.maximumScreenSpaceError,
-        *pOverlay,
+        *pTileProvider,
         tile,
         projections);
     if (pMapped) {
@@ -580,7 +579,8 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {}
+      _tilesDataUsed{0},
+      _referenceCount{0} {}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -601,7 +601,8 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {
+      _tilesDataUsed{0},
+      _referenceCount{0} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -731,7 +732,8 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {
+      _tilesDataUsed{0},
+      _referenceCount{0} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -781,6 +783,16 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   waitUntilIdle();
   if (_pRootTile) {
     unloadTileRecursively(*_pRootTile, *this);
+  }
+}
+
+void TilesetContentManager::addReference() noexcept { ++this->_referenceCount; }
+
+void TilesetContentManager::releaseReference() noexcept {
+  assert(this->_referenceCount > 0);
+  const int32_t referenceCount = --this->_referenceCount;
+  if (referenceCount == 0) {
+    delete this;
   }
 }
 
@@ -856,6 +868,9 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pLogger,
       this->_requestHeaders};
 
+  // Keep the manager alive while the load is in progress.
+  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections)](
@@ -886,14 +901,14 @@ void TilesetContentManager::loadTileContent(
             .createResolvedFuture<TileLoadResultAndRenderResources>(
                 {std::move(result), nullptr});
       })
-      .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
+      .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
-        notifyTileDoneLoading(&tile);
+        thiz->notifyTileDoneLoading(&tile);
       })
-      .catchInMainThread([pLogger = this->_externals.pLogger, &tile, this](
+      .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
-        notifyTileDoneLoading(&tile);
+        thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
             "An unexpected error occurs when loading tile: {}",
@@ -979,11 +994,12 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
 bool TilesetContentManager::isIdle() const {
   bool noTileLoads = this->_tilesLoadOnProgress == 0;
+  const auto& tileProviders = this->_overlayCollection.getTileProviders();
   bool noOverlayLoads = std::all_of(
-      this->_overlayCollection.begin(),
-      this->_overlayCollection.end(),
-      [](const auto& pOverlay) {
-        return pOverlay->getTileProvider()->getNumberOfTilesLoading() == 0;
+      tileProviders.begin(),
+      tileProviders.end(),
+      [](const auto& pTileProvider) {
+        return pTileProvider->getNumberOfTilesLoading() == 0;
       });
   return noTileLoads && noOverlayLoads;
 }
@@ -1050,11 +1066,9 @@ int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
-  for (const auto& pOverlay : this->_overlayCollection) {
-    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
-    if (pProvider) {
-      bytes += pProvider->getTileDataBytes();
-    }
+  for (const auto& pTileProvider :
+       this->_overlayCollection.getTileProviders()) {
+    bytes += pTileProvider->getTileDataBytes();
   }
 
   return bytes;
@@ -1196,11 +1210,10 @@ void TilesetContentManager::updateDoneState(
       RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
       if (pLoadingTile && pLoadingTile->getState() ==
                               RasterOverlayTile::LoadState::Placeholder) {
-        RasterOverlayTileProvider* pProvider =
-            pLoadingTile->getOverlay().getTileProvider();
+        RasterOverlayTileProvider& provider = pLoadingTile->getTileProvider();
 
         // Try to replace this placeholder with real tiles.
-        if (pProvider && !pProvider->isPlaceholder()) {
+        if (!provider.isPlaceholder()) {
           // Remove the existing placeholder mapping
           rasterTiles.erase(
               rasterTiles.begin() +
@@ -1212,7 +1225,7 @@ void TilesetContentManager::updateDoneState(
           std::vector<CesiumGeospatial::Projection> missingProjections;
           RasterMappedTo3DTile::mapOverlayToTile(
               tilesetOptions.maximumScreenSpaceError,
-              pProvider->getOwner(),
+              provider,
               tile,
               missingProjections);
 

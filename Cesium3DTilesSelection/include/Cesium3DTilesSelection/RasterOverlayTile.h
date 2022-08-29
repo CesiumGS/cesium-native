@@ -4,6 +4,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <vector>
 
@@ -89,9 +90,9 @@ public:
    * The {@link getState} of this instance will always be
    * {@link LoadState::Placeholder}.
    *
-   * @param overlay The {@link RasterOverlay}.
+   * @param tileProvider The {@link RasterOverlayTileProvider}.
    */
-  RasterOverlayTile(RasterOverlay& overlay) noexcept;
+  RasterOverlayTile(RasterOverlayTileProvider& tileProvider) noexcept;
 
   /**
    * @brief Creates a new instance.
@@ -106,13 +107,13 @@ public:
    * {@link LoadState `Loaded`}.
    * Otherwise, the state will become {@link LoadState `Failed`}.
    *
-   * @param overlay The {@link RasterOverlay}.
+   * @param tileProvider The {@link RasterOverlayTileProvider}.
    * @param targetGeometricError The geometric error to target for this tile.
    * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
    * the rectangle covered by this tile in the overlay's projection.
    */
   RasterOverlayTile(
-      RasterOverlay& overlay,
+      RasterOverlayTileProvider& tileProvider,
       const glm::dvec2& targetScreenPixels,
       const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
@@ -120,14 +121,18 @@ public:
   ~RasterOverlayTile();
 
   /**
-   * @brief Returns the {@link RasterOverlay} of this instance.
+   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
    */
-  RasterOverlay& getOverlay() noexcept { return *this->_pOverlay; }
+  RasterOverlayTileProvider& getTileProvider() noexcept {
+    return *this->_pTileProvider;
+  }
 
   /**
-   * @brief Returns the {@link RasterOverlay} of this instance.
+   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
    */
-  const RasterOverlay& getOverlay() const noexcept { return *this->_pOverlay; }
+  const RasterOverlayTileProvider& getTileProvider() const noexcept {
+    return *this->_pTileProvider;
+  }
 
   /**
    * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
@@ -220,21 +225,21 @@ public:
   /**
    * @brief Returns the current reference count of this instance.
    */
-  uint32_t getReferenceCount() const noexcept { return this->_references; }
+  int32_t getReferenceCount() const noexcept { return this->_references; }
 
 private:
   friend class RasterOverlayTileProvider;
 
   void setState(LoadState newState) noexcept;
 
-  RasterOverlay* _pOverlay;
+  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> _pTileProvider;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;
   LoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
-  uint32_t _references;
+  int32_t _references;
   MoreDetailAvailable _moreDetailAvailable;
 };
 } // namespace Cesium3DTilesSelection

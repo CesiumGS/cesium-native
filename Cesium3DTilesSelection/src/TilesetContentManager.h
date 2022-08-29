@@ -42,6 +42,9 @@ public:
 
   ~TilesetContentManager() noexcept;
 
+  void addReference() noexcept;
+  void releaseReference() noexcept;
+
   void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
@@ -133,5 +136,6 @@ private:
   int32_t _tilesLoadOnProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+  int32_t _referenceCount;
 };
 } // namespace Cesium3DTilesSelection

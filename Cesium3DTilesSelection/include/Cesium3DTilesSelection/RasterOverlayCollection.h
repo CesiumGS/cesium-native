@@ -6,6 +6,8 @@
 #include "Tile.h"
 #include "TilesetExternals.h"
 
+#include <CesiumUtility/IntrusivePointer.h>
+
 #include <gsl/span>
 
 #include <memory>
@@ -83,45 +85,54 @@ public:
   void remove(RasterOverlay* pOverlay) noexcept;
 
   /**
-   * @brief An iterator for {@link RasterOverlay} instances.
+   * @brief Gets the overlays in this collection.
    */
-  typedef std::vector<std::unique_ptr<RasterOverlay>>::iterator iterator;
+  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>&
+  getOverlays() const;
+
+  /**
+   * @brief Gets the tile providers in this collection. Each tile provider
+   * corresponds with the overlay at the same position in the collection
+   * returned by {@link getOverlays}.
+   */
+  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
+  getTileProviders() const;
 
   /**
    * @brief A constant iterator for {@link RasterOverlay} instances.
    */
-  typedef std::vector<std::unique_ptr<RasterOverlay>>::const_iterator
-      const_iterator;
+  typedef std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>::
+      const_iterator const_iterator;
 
   /**
    * @brief Returns an iterator at the beginning of this collection.
    */
-  const_iterator begin() const noexcept { return this->_overlays.begin(); }
+  const_iterator begin() const noexcept;
 
   /**
    * @brief Returns an iterator at the end of this collection.
    */
-  const_iterator end() const noexcept { return this->_overlays.end(); }
-
-  /**
-   * @brief Returns an iterator at the beginning of this collection.
-   */
-  iterator begin() noexcept { return this->_overlays.begin(); }
-
-  /**
-   * @brief Returns an iterator at the end of this collection.
-   */
-  iterator end() noexcept { return this->_overlays.end(); }
+  const_iterator end() const noexcept;
 
   /**
    * @brief Gets the number of overlays in the collection.
    */
-  size_t size() const noexcept { return this->_overlays.size(); }
+  size_t size() const noexcept;
 
 private:
+  struct OverlayList {
+    std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>> overlays;
+    std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
+        tileProviders;
+    int32_t _referenceCount;
+
+    void addReference() noexcept;
+    void releaseReference() noexcept;
+  };
+
   Tile::LoadedLinkedList* _pLoadedTiles;
   TilesetExternals _externals;
-  std::vector<std::unique_ptr<RasterOverlay>> _overlays;
+  CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot");
 };
 

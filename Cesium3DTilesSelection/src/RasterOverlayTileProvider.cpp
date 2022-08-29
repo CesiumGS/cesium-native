@@ -37,10 +37,11 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _projection(CesiumGeospatial::GeographicProjection()),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
                              computeMaximumProjectedRectangle()),
-      _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
+      _pPlaceholder(new RasterOverlayTile(*this)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {
+      _throttledTilesCurrentlyLoading(0),
+      _referenceCount(0) {
   // Placeholders should never be removed.
   this->_pPlaceholder->addReference();
 }
@@ -65,7 +66,12 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {}
+      _throttledTilesCurrentlyLoading(0),
+      _referenceCount(0) {}
+
+RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
+  assert(this->_referenceCount == 0);
+}
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(
@@ -79,21 +85,14 @@ RasterOverlayTileProvider::getTile(
     return nullptr;
   }
 
-  return {
-      new RasterOverlayTile(this->getOwner(), targetScreenPixels, rectangle)};
+  return new RasterOverlayTile(*this, targetScreenPixels, rectangle);
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   assert(pTile->getReferenceCount() == 0);
 
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
-
-  RasterOverlay& overlay = pTile->getOverlay();
   delete pTile;
-
-  if (overlay.isBeingDestroyed()) {
-    overlay.destroySafely(nullptr);
-  }
 }
 
 void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
@@ -117,6 +116,18 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
 
   this->doLoad(tile, true);
   return true;
+}
+
+void RasterOverlayTileProvider::addReference() noexcept {
+  ++this->_referenceCount;
+}
+
+void RasterOverlayTileProvider::releaseReference() noexcept {
+  assert(this->_referenceCount > 0);
+  --this->_referenceCount;
+  if (this->_referenceCount == 0) {
+    delete this;
+  }
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
