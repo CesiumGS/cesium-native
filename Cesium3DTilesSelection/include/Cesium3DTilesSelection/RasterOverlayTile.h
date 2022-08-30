@@ -139,6 +139,16 @@ public:
   }
 
   /**
+   * @brief Returns the {@link RasterOverlay} that created this instance.
+   */
+  RasterOverlay& getOverlay() noexcept;
+
+  /**
+   * @brief Returns the {@link RasterOverlay} that created this instance.
+   */
+  const RasterOverlay& getOverlay() const noexcept;
+
+  /**
    * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
    * of this tile in the raster overlay's projected coordinates.
    */

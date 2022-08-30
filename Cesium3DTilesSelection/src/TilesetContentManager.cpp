@@ -780,10 +780,8 @@ TilesetContentManager::TilesetContentManager(
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  waitUntilIdle();
-  if (_pRootTile) {
-    unloadTileRecursively(*_pRootTile, *this);
-  }
+  this->waitUntilIdle();
+  this->unloadAll();
 }
 
 void TilesetContentManager::addReference() noexcept { ++this->_referenceCount; }
@@ -990,6 +988,14 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   tile.getMappedRasterTiles().clear();
   tile.setState(TileLoadState::Unloaded);
   return true;
+}
+
+void TilesetContentManager::unloadAll() {
+  // TODO: use the linked-list of loaded tiles instead of walking the entire
+  // tile tree.
+  if (this->_pRootTile) {
+    unloadTileRecursively(*this->_pRootTile, *this);
+  }
 }
 
 bool TilesetContentManager::isIdle() const {
@@ -1210,10 +1216,12 @@ void TilesetContentManager::updateDoneState(
       RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
       if (pLoadingTile && pLoadingTile->getState() ==
                               RasterOverlayTile::LoadState::Placeholder) {
-        RasterOverlayTileProvider& provider = pLoadingTile->getTileProvider();
+        RasterOverlayTileProvider* pProvider =
+            this->_overlayCollection.findTileProviderForOverlay(
+                pLoadingTile->getOverlay());
 
         // Try to replace this placeholder with real tiles.
-        if (!provider.isPlaceholder()) {
+        if (pProvider && !pProvider->isPlaceholder()) {
           // Remove the existing placeholder mapping
           rasterTiles.erase(
               rasterTiles.begin() +
@@ -1225,7 +1233,7 @@ void TilesetContentManager::updateDoneState(
           std::vector<CesiumGeospatial::Projection> missingProjections;
           RasterMappedTo3DTile::mapOverlayToTile(
               tilesetOptions.maximumScreenSpaceError,
-              provider,
+              *pProvider,
               tile,
               missingProjections);
 

@@ -52,6 +52,14 @@ public:
   bool unloadTileContent(Tile& tile);
 
   /**
+   * @brief Unload every tile that is safe to unload.
+   *
+   * Tiles that are currently loading asynchronously will not be unloaded. If
+   * {@link isIdle} returns true, all tiles will be unloaded.
+   */
+  void unloadAll();
+
+  /**
    * @brief Determines if this content manager is idle, meaning that no content
    * requests are currently in progress.
    *

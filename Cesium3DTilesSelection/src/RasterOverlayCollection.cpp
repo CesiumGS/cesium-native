@@ -62,6 +62,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
           this->_externals.pAssetAccessor);
 
   pList->tileProviders.emplace_back(pPlaceholder);
+  pList->placeholders.emplace_back(pPlaceholder);
 
   CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
 
@@ -73,6 +74,16 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
           this->_externals.pPrepareRendererResources,
           this->_externals.pLogger,
           nullptr);
+
+  // Add a placeholder for this overlay to existing geometry tiles.
+  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
+    // The tile rectangle and geometric error don't matter for a placeholder.
+    if (tile.getState() != TileLoadState::Unloaded) {
+      tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
+          pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
+          -1));
+    }
+  });
 
   // This continuation, by capturing pList, keeps the OverlayList from being
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
@@ -100,16 +111,6 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
                 e.what());
             CESIUM_TRACE_END_IN_TRACK("createTileProvider");
           });
-
-  // Add this overlay to existing geometry tiles.
-  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
-    // The tile rectangle and geometric error don't matter for a placeholder.
-    if (tile.getState() != TileLoadState::Unloaded) {
-      tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
-          pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
-          -1));
-    }
-  });
 }
 
 void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
@@ -180,9 +181,33 @@ RasterOverlayCollection::getTileProviders() const {
   return this->_pOverlays->tileProviders;
 }
 
-/**
- * @brief Returns an iterator at the beginning of this collection.
- */
+RasterOverlayTileProvider* RasterOverlayCollection::findTileProviderForOverlay(
+    RasterOverlay& overlay) noexcept {
+  // Call the const version
+  const RasterOverlayTileProvider* pResult = this->findTileProviderForOverlay(
+      const_cast<const RasterOverlay&>(overlay));
+  return const_cast<RasterOverlayTileProvider*>(pResult);
+}
+
+const RasterOverlayTileProvider*
+RasterOverlayCollection::findTileProviderForOverlay(
+    const RasterOverlay& overlay) const noexcept {
+  if (!this->_pOverlays)
+    return nullptr;
+
+  const auto& overlays = this->_pOverlays->overlays;
+  const auto& tileProviders = this->_pOverlays->tileProviders;
+
+  assert(overlays.size() == tileProviders.size());
+
+  for (size_t i = 0; i < overlays.size() && i < tileProviders.size(); ++i) {
+    if (overlays[i].get() == &overlay)
+      return tileProviders[i].get();
+  }
+
+  return nullptr;
+}
+
 RasterOverlayCollection::const_iterator
 RasterOverlayCollection::begin() const noexcept {
   if (!this->_pOverlays)
@@ -191,9 +216,6 @@ RasterOverlayCollection::begin() const noexcept {
   return this->_pOverlays->overlays.begin();
 }
 
-/**
- * @brief Returns an iterator at the end of this collection.
- */
 RasterOverlayCollection::const_iterator
 RasterOverlayCollection::end() const noexcept {
   if (!this->_pOverlays)
@@ -202,9 +224,6 @@ RasterOverlayCollection::end() const noexcept {
   return this->_pOverlays->overlays.end();
 }
 
-/**
- * @brief Gets the number of overlays in the collection.
- */
 size_t RasterOverlayCollection::size() const noexcept {
   if (!this->_pOverlays)
     return 0;

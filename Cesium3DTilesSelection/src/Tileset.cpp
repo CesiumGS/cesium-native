@@ -86,6 +86,7 @@ Tileset::Tileset(
           ionAssetEndpointUrl)} {}
 
 Tileset::~Tileset() noexcept {
+  this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
   }

@@ -61,6 +61,17 @@ RasterOverlayTile::~RasterOverlayTile() {
   }
 }
 
+RasterOverlay& RasterOverlayTile::getOverlay() noexcept {
+  return this->_pTileProvider->getOwner();
+}
+
+/**
+ * @brief Returns the {@link RasterOverlay} that created this instance.
+ */
+const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
+  return this->_pTileProvider->getOwner();
+}
+
 void RasterOverlayTile::loadInMainThread() {
   if (this->getState() != RasterOverlayTile::LoadState::Loaded) {
     return;

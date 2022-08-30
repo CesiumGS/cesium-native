@@ -70,6 +70,13 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   assert(this->_referenceCount == 0);
+
+  // Explicitly release the placeholder first, because RasterOverlayTiles must
+  // be destroyed before the tile provider that created them.
+  if (this->_pPlaceholder) {
+    assert(this->_pPlaceholder->getReferenceCount() == 1);
+    this->_pPlaceholder = nullptr;
+  }
 }
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
