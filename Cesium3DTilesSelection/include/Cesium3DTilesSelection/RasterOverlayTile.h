@@ -90,7 +90,9 @@ public:
    * The {@link getState} of this instance will always be
    * {@link LoadState::Placeholder}.
    *
-   * @param tileProvider The {@link RasterOverlayTileProvider}.
+   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the tile
+   * provider is destroyed before the tile, undefined behavior may result.
    */
   RasterOverlayTile(RasterOverlayTileProvider& tileProvider) noexcept;
 
@@ -107,7 +109,9 @@ public:
    * {@link LoadState `Loaded`}.
    * Otherwise, the state will become {@link LoadState `Failed`}.
    *
-   * @param tileProvider The {@link RasterOverlayTileProvider}.
+   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the tile
+   * provider is destroyed before the tile, undefined behavior may result.
    * @param targetGeometricError The geometric error to target for this tile.
    * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
    * the rectangle covered by this tile in the overlay's projection.
@@ -232,7 +236,7 @@ private:
 
   void setState(LoadState newState) noexcept;
 
-  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> _pTileProvider;
+  RasterOverlayTileProvider* _pTileProvider;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;

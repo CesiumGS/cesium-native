@@ -88,7 +88,7 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
-      const RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       Credit bingCredit,
@@ -105,7 +105,7 @@ public:
       uint32_t maximumLevel,
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             bingCredit,
@@ -437,7 +437,7 @@ BingMapsRasterOverlay::createTileProvider(
         pCreditSystem->createCredit(BING_LOGO_HTML, showCredits);
 
     return new BingMapsTileProvider(
-        *pOwner,
+        pOwner,
         asyncSystem,
         pAssetAccessor,
         bingCredit,

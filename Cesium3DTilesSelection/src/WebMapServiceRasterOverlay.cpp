@@ -29,7 +29,7 @@ class WebMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   WebMapServiceTileProvider(
-      const RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -49,7 +49,7 @@ public:
       uint32_t minimumLevel,
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             credit,
@@ -341,7 +341,7 @@ WebMapServiceRasterOverlay::createTileProvider(
                 rootTilesY);
 
             return new WebMapServiceTileProvider(
-                *pOwner,
+                pOwner,
                 asyncSystem,
                 pAssetAccessor,
                 credit,

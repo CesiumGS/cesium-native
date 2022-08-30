@@ -32,7 +32,7 @@ class TileMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   TileMapServiceTileProvider(
-      const RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -51,7 +51,7 @@ public:
       uint32_t maximumLevel,
       const std::vector<TileMapServiceTileset>& tileSets)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             credit,
@@ -462,7 +462,7 @@ TileMapServiceRasterOverlay::createTileProvider(
             }
 
             return new TileMapServiceTileProvider(
-                *pOwner,
+                pOwner,
                 asyncSystem,
                 pAssetAccessor,
                 credit,

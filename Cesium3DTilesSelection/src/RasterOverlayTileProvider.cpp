@@ -25,10 +25,10 @@ namespace Cesium3DTilesSelection {
     RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
-    const RasterOverlay& owner,
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-    : _pOwner(const_cast<RasterOverlay*>(&owner)),
+    : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(std::nullopt),
@@ -37,17 +37,16 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _projection(CesiumGeospatial::GeographicProjection()),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
                              computeMaximumProjectedRectangle()),
-      _pPlaceholder(new RasterOverlayTile(*this)),
+      _pPlaceholder(),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
       _referenceCount(0) {
-  // Placeholders should never be removed.
-  this->_pPlaceholder->addReference();
+  this->_pPlaceholder = new RasterOverlayTile(*this);
 }
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
-    const RasterOverlay& owner,
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
@@ -55,7 +54,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const Rectangle& coverageRectangle) noexcept
-    : _pOwner(const_cast<RasterOverlay*>(&owner)),
+    : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(credit),
@@ -78,7 +77,7 @@ RasterOverlayTileProvider::getTile(
     const CesiumGeometry::Rectangle& rectangle,
     const glm::dvec2& targetScreenPixels) {
   if (this->_pPlaceholder) {
-    return this->_pPlaceholder.get();
+    return this->_pPlaceholder;
   }
 
   if (!rectangle.overlaps(this->_coverageRectangle)) {

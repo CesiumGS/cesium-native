@@ -115,6 +115,8 @@ struct LoadTileImageFromUrlOptions {
 /**
  * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
  *
+ * Instances of this class must be allocated on the heap, and their lifetimes
+ * must be managed with {@link CesiumUtility::IntrusivePointer}.
  */
 class CESIUM3DTILESSELECTION_API RasterOverlayTileProvider {
 public:
@@ -123,13 +125,13 @@ public:
    *
    * @see RasterOverlayTileProvider::isPlaceholder
    *
-   * @param owner The raster overlay that owns this tile provider.
+   * @param pOwner The raster overlay that created this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
    */
   RasterOverlayTileProvider(
-      const RasterOverlay& owner,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>&
           pAssetAccessor) noexcept;
@@ -137,7 +139,7 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param owner The raster overlay that owns this tile provider.
+   * @param pOwner The raster overlay that created this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
@@ -151,7 +153,7 @@ public:
    * this overlay, expressed in projected coordinates.
    */
   RasterOverlayTileProvider(
-      const RasterOverlay& owner,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,

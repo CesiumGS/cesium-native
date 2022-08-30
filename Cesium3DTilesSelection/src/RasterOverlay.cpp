@@ -7,15 +7,16 @@
 
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumUtility;
 
 namespace {
 class PlaceholderTileProvider : public RasterOverlayTileProvider {
 public:
   PlaceholderTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-      : RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor) {}
+      : RasterOverlayTileProvider(pOwner, asyncSystem, pAssetAccessor) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& /* overlayTile */) override {
@@ -36,10 +37,7 @@ CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
 RasterOverlay::createPlaceholder(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const {
-  return new PlaceholderTileProvider(
-      const_cast<RasterOverlay&>(*this),
-      asyncSystem,
-      pAssetAccessor);
+  return new PlaceholderTileProvider(this, asyncSystem, pAssetAccessor);
 }
 
 void RasterOverlay::addReference() const noexcept { ++this->_referenceCount; }

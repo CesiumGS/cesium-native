@@ -165,7 +165,7 @@ private:
 
 public:
   RasterizedPolygonsTileProvider(
-      const RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -175,7 +175,7 @@ public:
       const std::vector<CartographicPolygon>& polygons,
       bool invertSelection)
       : RasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             std::nullopt,
@@ -255,7 +255,7 @@ RasterizedPolygonsOverlay::createTileProvider(
   return asyncSystem.createResolvedFuture(
       IntrusivePointer<RasterOverlayTileProvider>(
           new RasterizedPolygonsTileProvider(
-              *this,
+              this,
               asyncSystem,
               pAssetAccessor,
               pPrepareRendererResources,

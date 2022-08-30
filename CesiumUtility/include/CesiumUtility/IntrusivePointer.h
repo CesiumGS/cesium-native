@@ -190,4 +190,11 @@ private:
   T* _p;
   template <typename U> friend class IntrusivePointer;
 };
+
+template <typename T, typename U>
+IntrusivePointer<T>
+const_intrusive_cast(const IntrusivePointer<U>& p) noexcept {
+  return IntrusivePointer<T>(const_cast<typename T*>(p.get()));
+}
+
 } // namespace CesiumUtility

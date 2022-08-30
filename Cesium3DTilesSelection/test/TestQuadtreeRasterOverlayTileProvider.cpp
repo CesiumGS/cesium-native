@@ -18,7 +18,7 @@ namespace {
 class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
-      const RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -33,7 +33,7 @@ public:
       uint32_t imageWidth,
       uint32_t imageHeight) noexcept
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             credit,
@@ -98,7 +98,7 @@ public:
     return asyncSystem
         .createResolvedFuture<IntrusivePointer<RasterOverlayTileProvider>>(
             new TestTileProvider(
-                *pOwner,
+                pOwner,
                 asyncSystem,
                 pAssetAccessor,
                 std::nullopt,

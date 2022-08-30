@@ -15,14 +15,14 @@ namespace {
 class DebugTileProvider : public RasterOverlayTileProvider {
 public:
   DebugTileProvider(
-      const RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger)
       : RasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             std::nullopt,
@@ -81,7 +81,7 @@ DebugColorizeTilesRasterOverlay::createTileProvider(
 
   return asyncSystem.createResolvedFuture(
       IntrusivePointer<RasterOverlayTileProvider>(new DebugTileProvider(
-          *this,
+          this,
           asyncSystem,
           pAssetAccessor,
           pPrepareRendererResources,
