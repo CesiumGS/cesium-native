@@ -176,7 +176,12 @@ void Tileset::_updateLodTransitions(
       TileRenderContent* pRenderContent =
           (*tileIt)->getContent().getRenderContent();
 
-      assert(pRenderContent != nullptr);
+      if (pRenderContent != nullptr) {
+        // This tile is done fading out and was immediately kicked from the
+        // cache.
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
 
       // Remove tile from fade-out list if it is back on the render list.
       TileSelectionState::Result selectionResult =
