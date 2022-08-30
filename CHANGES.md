@@ -38,6 +38,10 @@
   - `update()` that was used to update a tile each frame.
   - `markPermanentlyFailed()` that was used to mark a tile as permanently failing to load.
 
+##### Additions :tada:
+
+- Added support for `KHR_texture_transform` to `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`
+
 ##### Fixes :wrench:
 
 - Make sure that the Raster Overlay that is passed to the `loadErrorCallback` is the same type as the one the user created.

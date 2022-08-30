@@ -167,6 +167,9 @@
     },
     "MAXAR_mesh_variants node extension": {
       "overrideName": "ExtensionNodeMaxarMeshVariants"
+    },
+    "KHR_texture_transform textureInfo extension": {
+      "overrideName": "ExtensionKhrTextureTransform"
     }
   },
   "extensions": [
@@ -245,6 +248,13 @@
     {
       "extensionName": "MAXAR_mesh_variants",
       "schema": "Vendor/MAXAR_mesh_variants/schema/node.MAXAR_mesh_variants.schema.json"
+    },
+    {
+      "extensionName": "KHR_texture_transform",
+      "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
+      "attachTo": [
+        "textureInfo"
+      ]
     }
   ]
 }
