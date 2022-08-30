@@ -199,13 +199,10 @@ void Tileset::_updateLodTransitions(
         continue;
       }
 
-      float newPercentage = currentPercentage - deltaTransitionPercentage;
-      if (newPercentage <= 0.0f) {
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
-      } else {
-        pRenderContent->setLodTransitionFadePercentage(newPercentage);
-        ++tileIt;
-      }
+      float newPercentage =
+          glm::max(currentPercentage - deltaTransitionPercentage, 0.0f);
+      pRenderContent->setLodTransitionFadePercentage(newPercentage);
+      ++tileIt;
     }
 
     // Update fade in
