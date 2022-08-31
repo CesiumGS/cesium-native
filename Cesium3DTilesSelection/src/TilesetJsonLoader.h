@@ -7,6 +7,8 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 
+#include <rapidjson/fwd.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,6 +34,11 @@ public:
       const TilesetExternals& externals,
       const std::string& tilesetJsonUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+
+  static TilesetContentLoaderResult<TilesetJsonLoader> createLoader(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::string& tilesetJsonUrl,
+      const rapidjson::Document& tilesetJson);
 
 private:
   std::string _baseUrl;

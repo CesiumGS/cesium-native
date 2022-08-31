@@ -235,7 +235,7 @@ GltfConverterResult B3dmToGltfConverter::convert(
     const CesiumGltfReader::GltfReaderOptions& options) {
   GltfConverterResult result;
   B3dmHeader header;
-  uint32_t headerLength;
+  uint32_t headerLength = 0;
   parseB3dmHeader(b3dmBinary, header, headerLength, result);
   if (result.errors) {
     return result;

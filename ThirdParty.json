@@ -48,6 +48,12 @@
     "license": ["Apache 2.0"]
   },
   {
+    "name": "libwebp",
+    "url": "https://github.com/webmproject/libwebp",
+    "version": "1.2.4",
+    "license": ["BSD-3-Clause"]
+  },
+  {
     "name": "libmorton",
     "url": "https://github.com/Forceflow/libmorton",
     "version": "0.2.10",
