@@ -30,6 +30,9 @@
     "KHR_texture_basisu glTF extension": {
       "overrideName": "ExtensionKhrTextureBasisu"
     },
+    "EXT_texture_webp": {
+      "overrideName": "ExtensionTextureWebp"
+    },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
       "overrideName": "ExtensionCesiumTileEdges"
     },
@@ -254,6 +257,13 @@
       "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
       "attachTo": [
         "textureInfo"
+      ]
+    },
+    {
+      "extensionName": "EXT_texture_webp",
+      "schema": "Vendor/EXT_texture_webp/schema/glTF.EXT_texture_webp.schema.json",
+      "attachTo": [
+        "texture"
       ]
     }
   ]
