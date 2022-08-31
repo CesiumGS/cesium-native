@@ -604,6 +604,8 @@ TilesetContentManager::TilesetContentManager(
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
+    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
     externals.pAssetAccessor
         ->get(externals.asyncSystem, url, this->_requestHeaders)
         .thenInWorkerThread(
@@ -691,18 +693,18 @@ TilesetContentManager::TilesetContentManager(
               }
             })
         .thenInMainThread(
-            [this, errorCallback = tilesetOptions.loadErrorCallback](
+            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              this->notifyTileDoneLoading(result.pRootTile.get());
-              this->propagateTilesetContentLoaderResult(
+              thiz->notifyTileDoneLoading(result.pRootTile.get());
+              thiz->propagateTilesetContentLoaderResult(
                   TilesetLoadType::TilesetJson,
                   errorCallback,
                   std::move(result));
             })
-        .catchInMainThread([this](std::exception&& e) {
-          notifyTileDoneLoading(nullptr);
+        .catchInMainThread([thiz](std::exception&& e) {
+          thiz->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
-              this->_externals.pLogger,
+              thiz->_externals.pLogger,
               "An unexpected error occurs when loading tile: {}",
               e.what());
         });
@@ -749,6 +751,8 @@ TilesetContentManager::TilesetContentManager(
 
     this->notifyTileStartLoading(nullptr);
 
+    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
     CesiumIonTilesetLoader::createLoader(
         externals,
         tilesetOptions.contentOptions,
@@ -758,18 +762,18 @@ TilesetContentManager::TilesetContentManager(
         authorizationChangeListener,
         tilesetOptions.showCreditsOnScreen)
         .thenInMainThread(
-            [this, errorCallback = tilesetOptions.loadErrorCallback](
+            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
-              this->notifyTileDoneLoading(result.pRootTile.get());
-              this->propagateTilesetContentLoaderResult(
+              thiz->notifyTileDoneLoading(result.pRootTile.get());
+              thiz->propagateTilesetContentLoaderResult(
                   TilesetLoadType::CesiumIon,
                   errorCallback,
                   std::move(result));
             })
-        .catchInMainThread([this](std::exception&& e) {
-          notifyTileDoneLoading(nullptr);
+        .catchInMainThread([thiz](std::exception&& e) {
+          thiz->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
-              this->_externals.pLogger,
+              thiz->_externals.pLogger,
               "An unexpected error occurs when loading tile: {}",
               e.what());
         });
@@ -777,7 +781,7 @@ TilesetContentManager::TilesetContentManager(
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  this->waitUntilIdle();
+  assert(this->_tilesLoadOnProgress == 0);
   this->unloadAll();
 }
 
@@ -996,29 +1000,6 @@ void TilesetContentManager::unloadAll() {
   // tile tree.
   if (this->_pRootTile) {
     unloadTileRecursively(*this->_pRootTile, *this);
-  }
-}
-
-bool TilesetContentManager::isIdle() const {
-  bool noTileLoads = this->_tilesLoadOnProgress == 0;
-  const auto& tileProviders = this->_overlayCollection.getTileProviders();
-  bool noOverlayLoads = std::all_of(
-      tileProviders.begin(),
-      tileProviders.end(),
-      [](const auto& pTileProvider) {
-        return pTileProvider->getNumberOfTilesLoading() == 0;
-      });
-  return noTileLoads && noOverlayLoads;
-}
-
-void TilesetContentManager::tick() {
-  this->_externals.pAssetAccessor->tick();
-  this->_externals.asyncSystem.dispatchMainThreadTasks();
-}
-
-void TilesetContentManager::waitUntilIdle() {
-  while (!this->isIdle()) {
-    this->tick();
   }
 }
 

@@ -59,26 +59,6 @@ public:
    */
   void unloadAll();
 
-  /**
-   * @brief Determines if this content manager is idle, meaning that no content
-   * requests are currently in progress.
-   *
-   * In addition to checking whether the content manager is idle, this method
-   * tries to move toward that goal by ticking the asset accessor and
-   * dispatching any outstanding main thread tasks.
-   *
-   * When this method returns true, {@link waitUntilIdle} will return
-   * immediately and this object's destructor will not block.
-   *
-   * @return true No asynchronous operations are in progress.
-   * @return false Asynchronous operations are currently in progress.
-   */
-  bool isIdle() const;
-
-  void tick();
-
-  void waitUntilIdle();
-
   const Tile* getRootTile() const noexcept;
 
   Tile* getRootTile() noexcept;

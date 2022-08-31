@@ -92,11 +92,6 @@ Tileset::~Tileset() noexcept {
   }
 }
 
-bool Tileset::canBeDestroyedWithoutBlocking() const {
-  this->_pTilesetContentManager->tick();
-  return this->_pTilesetContentManager->isIdle();
-}
-
 const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
   return this->_pTilesetContentManager->getTilesetCredits();
 }

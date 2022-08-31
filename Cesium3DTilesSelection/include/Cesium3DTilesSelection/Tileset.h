@@ -84,21 +84,6 @@ public:
   ~Tileset() noexcept;
 
   /**
-   * @brief Determines if this Tileset can currently be destroyed without
-   * blocking to wait for asynchronous operations to complete.
-   *
-   * In addition to checking whether the object can be destroyed without
-   * blocking, this method tries to move toward that goal by ticking the asset
-   * accessor and dispatching any outstanding main thread tasks.
-   *
-   * @return true No asynchronous operations are in progress and so the Tileset
-   * can be safely destroyed without blocking.
-   * @return false Asynchronous operations are currently in progress so the
-   * Tileset cannot be safely destroyed without blocking.
-   */
-  bool canBeDestroyedWithoutBlocking() const;
-
-  /**
    * @brief Get tileset credits.
    */
   const std::vector<Credit>& getTilesetCredits() const noexcept;
