@@ -4,7 +4,7 @@
 
 ##### Additions :tada:
 
-- Added support for loading WebP images inside glTFs and raster overlays.
+- Added support for loading WebP images inside glTFs and raster overlays. WebP textures can be provided directly in a glTF texture or in the `EXT_texture_webp` extension.
 
 ##### Breaking Changes :mega:
 - Quantized mesh and implicit octree and quadtree can now skip level of details when traversing.
