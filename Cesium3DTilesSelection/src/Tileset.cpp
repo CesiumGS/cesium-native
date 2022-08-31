@@ -223,15 +223,6 @@ void Tileset::_updateLodTransitions(
       }
     }
   } else {
-    // If there are any tiles fading out, hide them right away.
-    for (Tile* pTile : result.tilesFadingOut) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
-      if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
-      }
-    }
-
     // If there are any tiles still fading in, set them to fully visible right
     // away.
     for (Tile* pTile : result.tilesToRenderThisFrame) {
@@ -1431,12 +1422,6 @@ void Tileset::_unloadCachedTiles() noexcept {
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
-
-// TODO The viewState is only needed to
-// compute the priority from the distance. So maybe this function should
-// receive a priority directly and be called with
-// addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
-// (or at least, this function could delegate to such a call...)
 
 void Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
