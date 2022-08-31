@@ -904,16 +904,12 @@ void TilesetContentManager::loadTileContent(
 void TilesetContentManager::updateTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  TileLoadState state = tile.getState();
-  switch (state) {
-  case TileLoadState::ContentLoaded:
+  if (tile.getState() == TileLoadState::ContentLoaded) {
     updateContentLoadedState(tile, tilesetOptions);
-    break;
-  case TileLoadState::Done:
+  }
+
+  if (tile.getState() == TileLoadState::Done) {
     updateDoneState(tile, tilesetOptions);
-    break;
-  default:
-    break;
   }
 
   if (tile.shouldContentContinueUpdating()) {
