@@ -355,10 +355,10 @@ WebMapServiceRasterOverlay::createTileProvider(
                 options.version,
                 options.layers,
                 options.format,
-                options.tileWidth,
-                options.tileHeight,
-                options.minimumLevel,
-                options.maximumLevel);
+                options.tileWidth < 1 ? 1 : uint32_t(options.tileWidth),
+                options.tileHeight < 1 ? 1 : uint32_t(options.tileHeight),
+                options.minimumLevel < 0 ? 0 : uint32_t(options.minimumLevel),
+                options.maximumLevel < 0 ? 0 : uint32_t(options.maximumLevel));
           });
 }
 
