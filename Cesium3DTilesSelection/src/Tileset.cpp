@@ -227,8 +227,9 @@ void Tileset::_updateLodTransitions(
     for (Tile* pTile : result.tilesFadingOut) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
-      assert(pRenderContent != nullptr);
-      pRenderContent->setLodTransitionFadePercentage(0.0f);
+      if (pRenderContent) {
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
+      }
     }
 
     // If there are any tiles still fading in, set them to fully visible right
