@@ -94,29 +94,29 @@ public:
    *
    * @param tileProvider The {@link RasterOverlayTileProvider}. This object
    * _must_ remain valid for the entire lifetime of the tile. If the tile
-   * provider is destroyed before the tile, undefined behavior may result.
+   * provider is destroyed before the tile, undefined behavior will result.
    */
   RasterOverlayTile(RasterOverlayTileProvider& tileProvider) noexcept;
 
   /**
    * @brief Creates a new instance.
    *
-   * This is called by a {@link RasterOverlayTileProvider} when a new,
-   * previously unknown tile is reqested. It receives the request for the image
-   * data, and the {@link getState} will initially be
-   * {@link LoadState `Loading`}.
-   * The constructor will attach a callback to this request.  When
-   * the request completes successfully and the {@link getImage} data can be
-   * created, the state of this instance will change to
-   * {@link LoadState `Loaded`}.
-   * Otherwise, the state will become {@link LoadState `Failed`}.
+   * The tile will start in the `Unloaded` state, and will not begin loading
+   * until {@link RasterOverlayTileProvider::loadTile} or
+   * {@link RasterOverlayTileProvider::loadTileThrottled} is called.
    *
    * @param tileProvider The {@link RasterOverlayTileProvider}. This object
    * _must_ remain valid for the entire lifetime of the tile. If the tile
    * provider is destroyed before the tile, undefined behavior may result.
-   * @param targetGeometricError The geometric error to target for this tile.
-   * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
-   * the rectangle covered by this tile in the overlay's projection.
+   * @param targetScreenPixels The maximum number of pixels on the screen that
+   * this tile is meant to cover. The overlay image should be approximately this
+   * many pixels divided by the
+   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
+   * the desired level-of-detail, but it does not need to be exactly this size.
+   * @param imageryRectangle The rectangle that the returned image must cover.
+   * It is allowed to cover a slightly larger rectangle in order to maintain
+   * pixel alignment. It may also cover a smaller rectangle when the overlay
+   * itself does not cover the entire rectangle.
    */
   RasterOverlayTile(
       RasterOverlayTileProvider& tileProvider,
