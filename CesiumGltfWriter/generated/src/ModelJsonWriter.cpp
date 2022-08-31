@@ -20,7 +20,6 @@
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ClassStatistics.h>
-#include <CesiumGltf/EXT_texture_webpGlTFExtension.h>
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
@@ -56,6 +55,7 @@
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureIDAttribute.h>
 #include <CesiumGltf/FeatureIDTexture.h>
 #include <CesiumGltf/FeatureIDs.h>
@@ -176,7 +176,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::EXT_texture_webpGlTFExtension& obj,
+    const CesiumGltf::ExtensionTextureWebp& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1012,7 +1012,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::EXT_texture_webpGlTFExtension& obj,
+    const CesiumGltf::ExtensionTextureWebp& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2930,8 +2930,8 @@ void ExtensionKhrTextureTransformJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void EXT_texture_webpGlTFExtensionJsonWriter::write(
-    const CesiumGltf::EXT_texture_webpGlTFExtension& obj,
+void ExtensionTextureWebpJsonWriter::write(
+    const CesiumGltf::ExtensionTextureWebp& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

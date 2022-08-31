@@ -7,7 +7,6 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/EXT_texture_webpGlTFExtension.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -25,6 +24,7 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
@@ -83,9 +83,8 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::Texture,
-      EXT_texture_webpGlTFExtensionJsonWriter>();
+  context
+      .registerExtension<CesiumGltf::Texture, ExtensionTextureWebpJsonWriter>();
   context.registerExtension<
       CesiumGltf::TextureInfo,
       ExtensionKhrTextureTransformJsonWriter>();

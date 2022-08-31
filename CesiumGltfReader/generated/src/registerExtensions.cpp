@@ -3,7 +3,6 @@
 
 #include "registerExtensions.h"
 
-#include "EXT_texture_webpGlTFExtensionJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionCesiumRTCJsonHandler.h"
@@ -21,6 +20,7 @@
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
+#include "ExtensionTextureWebpJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -84,7 +84,7 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
       ExtensionKhrTextureBasisuJsonHandler>();
   context.registerExtension<
       CesiumGltf::Texture,
-      EXT_texture_webpGlTFExtensionJsonHandler>();
+      ExtensionTextureWebpJsonHandler>();
   context.registerExtension<
       CesiumGltf::TextureInfo,
       ExtensionKhrTextureTransformJsonHandler>();

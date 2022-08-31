@@ -12,10 +12,9 @@ namespace CesiumGltf {
 /**
  * @brief glTF extension to specify textures using the WebP image format.
  */
-struct CESIUMGLTF_API EXT_texture_webpGlTFExtension final
+struct CESIUMGLTF_API ExtensionTextureWebp final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "EXT_texture_webpGlTFExtension";
+  static inline constexpr const char* TypeName = "ExtensionTextureWebp";
   static inline constexpr const char* ExtensionName = "EXT_texture_webp";
 
   /**
