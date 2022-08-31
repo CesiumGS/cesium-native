@@ -166,13 +166,13 @@ public:
    * @brief Returns `true` if the contents of this pointer is equal to the given
    * pointer.
    */
-  bool operator==(T* pRhs) const noexcept { return this->_p == pRhs; }
+  bool operator==(const T* pRhs) const noexcept { return this->_p == pRhs; }
 
   /**
    * @brief Returns `true` if the contents of this pointer is *not* equal to the
    * given pointer.
    */
-  bool operator!=(T* pRhs) const noexcept { return !(*this == pRhs); }
+  bool operator!=(const T* pRhs) const noexcept { return !(*this == pRhs); }
 
 private:
   void addReference() noexcept {

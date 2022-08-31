@@ -78,12 +78,13 @@ public:
    *
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
-  void add(std::unique_ptr<RasterOverlay>&& pOverlay);
+  void add(const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay);
 
   /**
    * @brief Remove the given {@link RasterOverlay} from this collection.
    */
-  void remove(RasterOverlay* pOverlay) noexcept;
+  void remove(
+      const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) noexcept;
 
   /**
    * @brief Gets the overlays in this collection.

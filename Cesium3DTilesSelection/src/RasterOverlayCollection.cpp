@@ -45,7 +45,8 @@ RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   }
 }
 
-void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
+void RasterOverlayCollection::add(
+    const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) {
   CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   if (!this->_pOverlays)
@@ -53,11 +54,10 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   IntrusivePointer<OverlayList> pList = this->_pOverlays;
 
-  IntrusivePointer<RasterOverlay> pOverlayRaw =
-      pList->overlays.emplace_back(pOverlay.release());
+  pList->overlays.emplace_back(pOverlay);
 
   IntrusivePointer<RasterOverlayTileProvider> pPlaceholder =
-      pOverlayRaw->createPlaceholder(
+      pOverlay->createPlaceholder(
           this->_externals.asyncSystem,
           this->_externals.pAssetAccessor);
 
@@ -67,7 +67,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
 
   CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>> future =
-      pOverlayRaw->createTileProvider(
+      pOverlay->createTileProvider(
           this->_externals.asyncSystem,
           this->_externals.pAssetAccessor,
           this->_externals.pCreditSystem,
@@ -90,14 +90,14 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
   std::move(future)
       .thenInMainThread(
-          [pOverlayRaw,
+          [pOverlay,
            pList](IntrusivePointer<RasterOverlayTileProvider>&& pProvider) {
             // Find the overlay's current location in the list.
             // It's possible it has been removed completely.
             auto it = std::find(
                 pList->overlays.begin(),
                 pList->overlays.end(),
-                pOverlayRaw);
+                pOverlay);
             if (it != pList->overlays.end()) {
               std::int64_t index = it - pList->overlays.begin();
               pList->tileProviders[index] = pProvider;
@@ -114,7 +114,8 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
           });
 }
 
-void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
+void RasterOverlayCollection::remove(
+    const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) noexcept {
   if (!this->_pOverlays)
     return;
 
@@ -123,9 +124,9 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
                              const RasterMappedTo3DTile& mapped) noexcept {
     return (
         (mapped.getLoadingTile() &&
-         &mapped.getLoadingTile()->getTileProvider().getOwner() == pOverlay) ||
+         pOverlay == &mapped.getLoadingTile()->getTileProvider().getOwner()) ||
         (mapped.getReadyTile() &&
-         &mapped.getReadyTile()->getTileProvider().getOwner() == pOverlay));
+         pOverlay == &mapped.getReadyTile()->getTileProvider().getOwner()));
   };
 
   auto pPrepareRenderResources =
@@ -152,7 +153,7 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
       list.overlays.begin(),
       list.overlays.end(),
       [pOverlay](const IntrusivePointer<RasterOverlay>& pCheck) noexcept {
-        return pCheck.get() == pOverlay;
+        return pCheck == pOverlay;
       });
   if (it == list.overlays.end()) {
     return;
