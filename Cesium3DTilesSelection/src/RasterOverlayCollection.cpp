@@ -232,16 +232,4 @@ size_t RasterOverlayCollection::size() const noexcept {
   return this->_pOverlays->overlays.size();
 }
 
-void RasterOverlayCollection::OverlayList::addReference() noexcept {
-  ++this->_referenceCount;
-}
-
-void RasterOverlayCollection::OverlayList::releaseReference() noexcept {
-  assert(this->_referenceCount > 0);
-  --this->_referenceCount;
-  if (this->_referenceCount == 0) {
-    delete this;
-  }
-}
-
 } // namespace Cesium3DTilesSelection

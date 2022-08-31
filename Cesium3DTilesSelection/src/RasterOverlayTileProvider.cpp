@@ -40,8 +40,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0),
-      _referenceCount(0) {
+      _throttledTilesCurrentlyLoading(0) {
   this->_pPlaceholder = new RasterOverlayTile(*this);
 }
 
@@ -65,12 +64,9 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0),
-      _referenceCount(0) {}
+      _throttledTilesCurrentlyLoading(0) {}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
-  assert(this->_referenceCount == 0);
-
   // Explicitly release the placeholder first, because RasterOverlayTiles must
   // be destroyed before the tile provider that created them.
   if (this->_pPlaceholder) {
@@ -122,18 +118,6 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
 
   this->doLoad(tile, true);
   return true;
-}
-
-void RasterOverlayTileProvider::addReference() const noexcept {
-  ++this->_referenceCount;
-}
-
-void RasterOverlayTileProvider::releaseReference() const noexcept {
-  assert(this->_referenceCount > 0);
-  --this->_referenceCount;
-  if (this->_referenceCount == 0) {
-    delete this;
-  }
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

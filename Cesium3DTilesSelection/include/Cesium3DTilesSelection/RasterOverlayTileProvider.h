@@ -8,6 +8,7 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <spdlog/fwd.h>
 
@@ -118,7 +119,9 @@ struct LoadTileImageFromUrlOptions {
  * Instances of this class must be allocated on the heap, and their lifetimes
  * must be managed with {@link CesiumUtility::IntrusivePointer}.
  */
-class CESIUM3DTILESSELECTION_API RasterOverlayTileProvider {
+class CESIUM3DTILESSELECTION_API RasterOverlayTileProvider
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<
+          RasterOverlayTileProvider> {
 public:
   /**
    * Constructs a placeholder tile provider.
@@ -334,27 +337,6 @@ public:
    */
   bool loadTileThrottled(RasterOverlayTile& tile);
 
-  /**
-   * @brief Adds a counted reference to this object. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
-   * directly.
-   *
-   * This method is _not_ thread safe. Do not call it or use an
-   * `IntrusivePointer` from multiple threads simultaneously.
-   */
-  void addReference() const noexcept;
-
-  /**
-   * @brief Removes a counted reference from this object. When the last
-   * reference is removed, this method will delete this instance. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
-   * directly.
-   *
-   * This method is _not_ thread safe. Do not call it or use an
-   * `IntrusivePointer` from multiple threads simultaneously.
-   */
-  void releaseReference() const noexcept;
-
 protected:
   /**
    * @brief Loads the image for a tile.
@@ -417,7 +399,6 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
-  mutable int32_t _referenceCount;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");

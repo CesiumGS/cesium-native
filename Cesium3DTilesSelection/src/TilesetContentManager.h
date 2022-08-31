@@ -12,11 +12,14 @@
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class TilesetContentManager {
+class TilesetContentManager
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<
+          TilesetContentManager> {
 public:
   TilesetContentManager(
       const TilesetExternals& externals,
@@ -41,9 +44,6 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   ~TilesetContentManager() noexcept;
-
-  void addReference() noexcept;
-  void releaseReference() noexcept;
 
   void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
@@ -144,6 +144,5 @@ private:
   int32_t _tilesLoadOnProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
-  int32_t _referenceCount;
 };
 } // namespace Cesium3DTilesSelection

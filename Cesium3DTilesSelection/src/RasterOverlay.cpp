@@ -29,25 +29,15 @@ public:
 RasterOverlay::RasterOverlay(
     const std::string& name,
     const RasterOverlayOptions& options)
-    : _name(name), _options(options), _referenceCount(0) {}
+    : _name(name), _options(options) {}
 
-RasterOverlay::~RasterOverlay() noexcept { assert(this->_referenceCount == 0); }
+RasterOverlay::~RasterOverlay() noexcept {}
 
 CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
 RasterOverlay::createPlaceholder(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const {
   return new PlaceholderTileProvider(this, asyncSystem, pAssetAccessor);
-}
-
-void RasterOverlay::addReference() const noexcept { ++this->_referenceCount; }
-
-void RasterOverlay::releaseReference() const noexcept {
-  assert(this->_referenceCount > 0);
-  --this->_referenceCount;
-  if (this->_referenceCount == 0) {
-    delete this;
-  }
 }
 
 void RasterOverlay::reportError(

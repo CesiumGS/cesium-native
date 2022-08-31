@@ -5,6 +5,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <spdlog/fwd.h>
 
@@ -116,7 +117,8 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
  * @see TileMapServiceRasterOverlay
  * @see WebMapServiceRasterOverlay
  */
-class RasterOverlay {
+class RasterOverlay
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlay> {
 public:
   /**
    * @brief Creates a new instance.
@@ -201,27 +203,6 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const RasterOverlay* pOwner) const = 0;
 
-  /**
-   * @brief Adds a counted reference to this object. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
-   * directly.
-   *
-   * This method is _not_ thread safe. Do not call it or use an
-   * `IntrusivePointer` from multiple threads simultaneously.
-   */
-  void addReference() const noexcept;
-
-  /**
-   * @brief Removes a counted reference from this object. When the last
-   * reference is removed, this method will delete this instance. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
-   * directly.
-   *
-   * This method is _not_ thread safe. Do not call it or use an
-   * `IntrusivePointer` from multiple threads simultaneously.
-   */
-  void releaseReference() const noexcept;
-
 protected:
   void reportError(
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -232,7 +213,6 @@ private:
   std::string _name;
   RasterOverlayOptions _options;
   std::vector<Credit> _credits;
-  mutable std::int32_t _referenceCount;
 };
 
 } // namespace Cesium3DTilesSelection

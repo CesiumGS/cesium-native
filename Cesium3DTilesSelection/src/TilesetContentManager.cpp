@@ -579,8 +579,7 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _referenceCount{0} {}
+      _tilesDataUsed{0} {}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -601,8 +600,7 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _referenceCount{0} {
+      _tilesDataUsed{0} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -732,8 +730,7 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _referenceCount{0} {
+      _tilesDataUsed{0} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -782,16 +779,6 @@ TilesetContentManager::TilesetContentManager(
 TilesetContentManager::~TilesetContentManager() noexcept {
   this->waitUntilIdle();
   this->unloadAll();
-}
-
-void TilesetContentManager::addReference() noexcept { ++this->_referenceCount; }
-
-void TilesetContentManager::releaseReference() noexcept {
-  assert(this->_referenceCount > 0);
-  const int32_t referenceCount = --this->_referenceCount;
-  if (referenceCount == 0) {
-    delete this;
-  }
 }
 
 void TilesetContentManager::loadTileContent(

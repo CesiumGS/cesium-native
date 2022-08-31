@@ -7,6 +7,7 @@
 #include "TilesetExternals.h"
 
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <gsl/span>
 
@@ -151,16 +152,13 @@ private:
   // RasterOverlayCollection has a pointer to the tile LoadedLinkedList, which
   // is owned externally and may become invalid before the async operations
   // complete.
-  struct OverlayList {
+  struct OverlayList
+      : public CesiumUtility::ReferenceCountedNonThreadSafe<OverlayList> {
     std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>> overlays{};
     std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
         tileProviders{};
     std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
         placeholders{};
-    int32_t _referenceCount{0};
-
-    void addReference() noexcept;
-    void releaseReference() noexcept;
   };
 
   Tile::LoadedLinkedList* _pLoadedTiles;
