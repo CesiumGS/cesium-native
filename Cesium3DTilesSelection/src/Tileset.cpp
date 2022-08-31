@@ -176,7 +176,7 @@ void Tileset::_updateLodTransitions(
       TileRenderContent* pRenderContent =
           (*tileIt)->getContent().getRenderContent();
 
-      if (pRenderContent != nullptr) {
+      if (!pRenderContent) {
         // This tile is done fading out and was immediately kicked from the
         // cache.
         tileIt = result.tilesFadingOut.erase(tileIt);
@@ -332,8 +332,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  _updateLodTransitions(frameState, deltaTime, result);
-
   result.tilesLoadingLowPriority =
       static_cast<uint32_t>(this->_loadQueueLow.size());
   result.tilesLoadingMediumPriority =
@@ -349,6 +347,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();
+  this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
