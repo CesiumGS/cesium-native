@@ -370,10 +370,9 @@ private:
    *
    * This method should be called at the beginning of the tile load process.
    *
-   * @param tile The tile that is starting to load.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
+  void beginTileLoad(bool isThrottledLoad) noexcept;
 
   /**
    * @brief Finalizes loading of a tile.
@@ -381,10 +380,9 @@ private:
    * This method should be called at the end of the tile load process,
    * no matter whether the load succeeded or failed.
    *
-   * @param tile The tile that finished loading.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
+  void finalizeTileLoad(bool isThrottledLoad) noexcept;
 
 private:
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;

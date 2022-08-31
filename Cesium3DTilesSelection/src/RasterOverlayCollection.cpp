@@ -100,7 +100,7 @@ void RasterOverlayCollection::add(
                 pOverlay);
             if (it != pList->overlays.end()) {
               std::int64_t index = it - pList->overlays.begin();
-              pList->tileProviders[index] = pProvider;
+              pList->tileProviders[size_t(index)] = pProvider;
             }
             CESIUM_TRACE_END_IN_TRACK("createTileProvider");
           })

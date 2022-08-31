@@ -310,7 +310,12 @@ void RasterOverlayTileProvider::doLoad(
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
-  this->beginTileLoad(tile, isThrottledLoad);
+  this->beginTileLoad(isThrottledLoad);
+
+  // Keep the tile and tile provider alive while the async operation is in
+  // progress.
+  IntrusivePointer<RasterOverlayTile> pTile = &tile;
+  IntrusivePointer<RasterOverlayTileProvider> thiz = this;
 
   this->loadTileImage(tile)
       .thenInWorkerThread(
@@ -325,39 +330,35 @@ void RasterOverlayTileProvider::doLoad(
                 rendererOptions);
           })
       .thenInMainThread(
-          [this, &tile, isThrottledLoad](LoadResult&& result) noexcept {
-            tile._rectangle = result.rectangle;
-            tile._pRendererResources = result.pRendererResources;
-            tile._image = std::move(result.image);
-            tile._tileCredits = std::move(result.credits);
-            tile._moreDetailAvailable =
+          [thiz, pTile, isThrottledLoad](LoadResult&& result) noexcept {
+            pTile->_rectangle = result.rectangle;
+            pTile->_pRendererResources = result.pRendererResources;
+            pTile->_image = std::move(result.image);
+            pTile->_tileCredits = std::move(result.credits);
+            pTile->_moreDetailAvailable =
                 result.moreDetailAvailable
                     ? RasterOverlayTile::MoreDetailAvailable::Yes
                     : RasterOverlayTile::MoreDetailAvailable::No;
-            tile.setState(result.state);
+            pTile->setState(result.state);
 
-            this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
+            thiz->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
 
-            this->finalizeTileLoad(tile, isThrottledLoad);
+            thiz->finalizeTileLoad(isThrottledLoad);
           })
-      .catchInMainThread([this, &tile, isThrottledLoad](
-                             const std::exception& /*e*/) {
-        tile._pRendererResources = nullptr;
-        tile._image = {};
-        tile._tileCredits = {};
-        tile._moreDetailAvailable = RasterOverlayTile::MoreDetailAvailable::No;
-        tile.setState(RasterOverlayTile::LoadState::Failed);
+      .catchInMainThread(
+          [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
+            pTile->_pRendererResources = nullptr;
+            pTile->_image = {};
+            pTile->_tileCredits = {};
+            pTile->_moreDetailAvailable =
+                RasterOverlayTile::MoreDetailAvailable::No;
+            pTile->setState(RasterOverlayTile::LoadState::Failed);
 
-        this->finalizeTileLoad(tile, isThrottledLoad);
-      });
+            thiz->finalizeTileLoad(isThrottledLoad);
+          });
 }
 
-void RasterOverlayTileProvider::beginTileLoad(
-    RasterOverlayTile& tile,
-    bool isThrottledLoad) noexcept {
-  // Keep this tile from being destroyed while it's loading.
-  tile.addReference();
-
+void RasterOverlayTileProvider::beginTileLoad(bool isThrottledLoad) noexcept {
   ++this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
     ++this->_throttledTilesCurrentlyLoading;
@@ -365,16 +366,10 @@ void RasterOverlayTileProvider::beginTileLoad(
 }
 
 void RasterOverlayTileProvider::finalizeTileLoad(
-    RasterOverlayTile& tile,
     bool isThrottledLoad) noexcept {
   --this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
     --this->_throttledTilesCurrentlyLoading;
   }
-
-  // Release the reference we held during load to prevent
-  // the tile from disappearing out from under us. This could cause
-  // it to immediately be deleted.
-  tile.releaseReference();
 }
 } // namespace Cesium3DTilesSelection
