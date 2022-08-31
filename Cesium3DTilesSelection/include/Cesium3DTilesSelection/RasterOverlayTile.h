@@ -233,6 +233,11 @@ private:
 
   void setState(LoadState newState) noexcept;
 
+  // This is a raw pointer instead of an IntrusivePointer in order to avoid
+  // circular references, particularly among a placeholder tile provider and
+  // placeholder tile. However, to avoid undefined behavior, the tile provider
+  // is required to outlive the tile. In normal use, the RasterOverlayCollection
+  // ensures that this is true.
   RasterOverlayTileProvider* _pTileProvider;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
