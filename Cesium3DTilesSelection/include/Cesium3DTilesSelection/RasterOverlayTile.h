@@ -5,6 +5,7 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <vector>
 
@@ -25,7 +26,8 @@ class RasterOverlayTileProvider;
  * raster overlay tile with texture coordinates, to map the
  * image on the geometry of a {@link Tile}.
  */
-class RasterOverlayTile final {
+class RasterOverlayTile final
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlayTile> {
 public:
   /**
    * @brief Lifecycle states of a raster overlay tile.
@@ -226,21 +228,6 @@ public:
     return this->_moreDetailAvailable;
   }
 
-  /**
-   * @brief Adds a counted reference to this instance.
-   */
-  void addReference() noexcept;
-
-  /**
-   * @brief Removes a counted reference from this instance.
-   */
-  void releaseReference() noexcept;
-
-  /**
-   * @brief Returns the current reference count of this instance.
-   */
-  int32_t getReferenceCount() const noexcept { return this->_references; }
-
 private:
   friend class RasterOverlayTileProvider;
 
@@ -253,7 +240,6 @@ private:
   LoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
-  int32_t _references;
   MoreDetailAvailable _moreDetailAvailable;
 };
 } // namespace Cesium3DTilesSelection

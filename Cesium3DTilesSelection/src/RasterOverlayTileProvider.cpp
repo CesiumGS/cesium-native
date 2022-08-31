@@ -94,7 +94,6 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   assert(pTile->getReferenceCount() == 0);
 
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
-  delete pTile;
 }
 
 void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {

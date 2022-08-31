@@ -22,7 +22,6 @@ RasterOverlayTile::RasterOverlayTile(
       _state(LoadState::Placeholder),
       _image(),
       _pRendererResources(nullptr),
-      _references(0),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
 RasterOverlayTile::RasterOverlayTile(
@@ -36,11 +35,13 @@ RasterOverlayTile::RasterOverlayTile(
       _state(LoadState::Unloaded),
       _image(),
       _pRendererResources(nullptr),
-      _references(0),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
 RasterOverlayTile::~RasterOverlayTile() {
   RasterOverlayTileProvider& tileProvider = *this->_pTileProvider;
+
+  tileProvider.removeTile(this);
+
   const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources =
       tileProvider.getPrepareRendererResources();
 
@@ -87,17 +88,8 @@ void RasterOverlayTile::loadInMainThread() {
   this->setState(LoadState::Done);
 }
 
-void RasterOverlayTile::addReference() noexcept { ++this->_references; }
-
-void RasterOverlayTile::releaseReference() noexcept {
-  assert(this->_references > 0);
-  const uint32_t references = --this->_references;
-  if (references == 0) {
-    this->_pTileProvider->removeTile(this);
-  }
-}
-
 void RasterOverlayTile::setState(LoadState newState) noexcept {
   this->_state = newState;
 }
+
 } // namespace Cesium3DTilesSelection
