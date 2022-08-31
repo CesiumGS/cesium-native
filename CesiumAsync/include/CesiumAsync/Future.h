@@ -35,6 +35,12 @@ public:
       : _pSchedulers(std::move(rhs._pSchedulers)),
         _task(std::move(rhs._task)) {}
 
+  Future<T>& operator=(Future<T>&& rhs) noexcept {
+    this->_pSchedulers = std::move(rhs._pSchedulers);
+    this->_task = std::move(rhs._task);
+    return *this;
+  }
+
   Future(const Future<T>& rhs) = delete;
   Future<T>& operator=(const Future<T>& rhs) = delete;
 

@@ -272,14 +272,14 @@ TileMapServiceRasterOverlay::createTileProvider(
                                   pOwner->getOptions().showCreditsOnScreen))
                             : std::nullopt;
 
-  auto reportError = [this, asyncSystem, pLogger](
+  auto reportError = [this, asyncSystem, pLogger, pOwner](
                          const std::shared_ptr<IAssetRequest>& pRequest,
                          const std::string& message) {
     this->reportError(
         asyncSystem,
         pLogger,
         RasterOverlayLoadFailureDetails{
-            this,
+            pOwner,
             RasterOverlayLoadType::TileProvider,
             pRequest,
             message});

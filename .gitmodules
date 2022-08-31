@@ -53,3 +53,6 @@
 [submodule "extern/libwebp"]
 	path = extern/libwebp
 	url = https://github.com/webmproject/libwebp
+[submodule "extern/libmorton"]
+	path = extern/libmorton
+	url = https://github.com/Forceflow/libmorton.git

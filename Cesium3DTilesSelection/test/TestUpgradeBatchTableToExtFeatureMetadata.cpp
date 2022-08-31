@@ -1,10 +1,6 @@
-#include "Batched3DModelContent.h"
-#include "SimpleAssetAccessor.h"
-#include "SimpleAssetRequest.h"
-#include "SimpleAssetResponse.h"
-#include "SimpleTaskProcessor.h"
+#include "B3dmToGltfConverter.h"
+#include "BatchTableToGltfFeatureMetadata.h"
 #include "readFile.h"
-#include "upgradeBatchTableToFeatureMetadata.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
@@ -141,12 +137,11 @@ static void createTestForScalarJson(
       scalarProperty,
       batchTableJson.GetAllocator());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      model);
 
   ExtensionModelExtFeatureMetadata* metadata =
       model.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -218,12 +213,11 @@ static void createTestForArrayJson(
       fixedArrayProperties,
       batchTableJson.GetAllocator());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      model);
 
   ExtensionModelExtFeatureMetadata* metadata =
       model.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -252,47 +246,19 @@ static void createTestForArrayJson(
       totalInstances);
 }
 
-static std::unique_ptr<TileContentLoadResult>
-loadB3dm(const std::filesystem::path& filePath) {
-
-  std::unique_ptr<SimpleAssetResponse> pResponse =
-      std::make_unique<SimpleAssetResponse>(
-          static_cast<uint16_t>(200),
-          "",
-          CesiumAsync::HttpHeaders(),
-          readFile(filePath));
-
-  std::shared_ptr<SimpleAssetRequest> pRequest =
-      std::make_shared<SimpleAssetRequest>(
-          "GET",
-          "test.url",
-          CesiumAsync::HttpHeaders(),
-          std::move(pResponse));
-
-  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockedRequests = {
-      {"test.url", pRequest}};
-
-  TileContentLoadInput input;
-
-  input.asyncSystem =
-      CesiumAsync::AsyncSystem(std::make_shared<SimpleTaskProcessor>());
-  input.pLogger = spdlog::default_logger();
-  input.pAssetAccessor =
-      std::make_shared<SimpleAssetAccessor>(std::move(mockedRequests)),
-  input.pRequest = std::move(pRequest);
-
-  return Batched3DModelContent().load(input).wait();
+GltfConverterResult loadB3dm(const std::filesystem::path& filePath) {
+  return B3dmToGltfConverter::convert(readFile(filePath), {});
 }
 
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
 
-  std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
+  GltfConverterResult result = loadB3dm(testFilePath);
 
-  REQUIRE(pResult->model);
+  REQUIRE(result.model);
 
-  Model& gltf = *pResult->model;
+  Model& gltf = *result.model;
 
   ExtensionModelExtFeatureMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -392,7 +358,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   {
     std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     checkScalarProperty<int8_t>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "id",
@@ -414,7 +380,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         13.74609257467091,
         10.145220385864377};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Height",
@@ -436,7 +402,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         -1.3196471198757775,
         -1.319644104024109};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Longitude",
@@ -458,7 +424,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         0.6988523191715889,
         0.6988697375823105};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Latitude",
@@ -473,13 +439,13 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
 
-  std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
+  GltfConverterResult result = loadB3dm(testFilePath);
 
-  REQUIRE(pResult != nullptr);
-  REQUIRE(pResult->model != std::nullopt);
+  REQUIRE(!result.errors);
+  REQUIRE(result.model != std::nullopt);
 
   ExtensionModelExtFeatureMetadata* metadata =
-      pResult->model->getExtension<ExtensionModelExtFeatureMetadata>();
+      result.model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -498,7 +464,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   {
     std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     checkScalarProperty<int8_t>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "id",
@@ -520,7 +486,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         12.546202838420868,
         7.632075032219291};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Height",
@@ -542,7 +508,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         -1.319683648959897,
         -1.3196959060375169};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Longitude",
@@ -564,7 +530,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         0.6988690935212543,
         0.6988854945986224};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Latitude",
@@ -576,7 +542,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   {
     std::vector<uint8_t> expected(10, 255);
     checkScalarProperty<uint8_t>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "code",
@@ -601,7 +567,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
     };
     // clang-format on
     checkArrayProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "cartographic",
@@ -617,13 +583,13 @@ TEST_CASE("Upgrade json nested json metadata to string") {
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
 
-  std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
+  GltfConverterResult result = loadB3dm(testFilePath);
 
-  REQUIRE(pResult != nullptr);
-  REQUIRE(pResult->model != std::nullopt);
+  REQUIRE(!result.errors);
+  REQUIRE(result.model != std::nullopt);
 
   ExtensionModelExtFeatureMetadata* metadata =
-      pResult->model->getExtension<ExtensionModelExtFeatureMetadata>();
+      result.model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -648,7 +614,7 @@ TEST_CASE("Upgrade json nested json metadata to string") {
       expected.push_back(v);
     }
     checkScalarProperty<std::string, std::string_view>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "info",
@@ -667,7 +633,7 @@ TEST_CASE("Upgrade json nested json metadata to string") {
       expected.emplace_back(std::move(expectedVal));
     }
     checkArrayProperty<std::string, std::string_view>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "rooms",
@@ -705,12 +671,11 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       boolProperties,
       batchTableJson.GetAllocator());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      model);
 
   ExtensionModelExtFeatureMetadata* metadata =
       model.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -1248,12 +1213,11 @@ TEST_CASE("Converts Feature Classes 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      gltf,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      gltf);
 
   ExtensionModelExtFeatureMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -1379,12 +1343,11 @@ TEST_CASE("Converts Feature Hierarchy 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      gltf,
+  BatchTableToGltfFeatureMetadata::convert(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      gltf);
 
   ExtensionModelExtFeatureMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtFeatureMetadata>();
@@ -1574,12 +1537,11 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      gltf,
+  BatchTableToGltfFeatureMetadata::convert(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      gltf);
 
   // There should not be any log messages about parentCounts, since they're
   // all 1.
@@ -1667,15 +1629,14 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      gltf,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      gltf);
 
   // There should be a log message about parentCounts, and no properties.
-  std::vector<std::string> logMessages = pLog->last_formatted();
+  const std::vector<std::string>& logMessages = errors.warnings;
   REQUIRE(logMessages.size() == 1);
   CHECK(logMessages[0].find("parentCounts") != std::string::npos);
 
