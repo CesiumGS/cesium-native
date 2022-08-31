@@ -51,6 +51,8 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
+  void waitUntilIdle();
+
   /**
    * @brief Unload every tile that is safe to unload.
    *

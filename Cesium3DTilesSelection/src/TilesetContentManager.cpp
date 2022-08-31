@@ -1003,6 +1003,29 @@ void TilesetContentManager::unloadAll() {
   }
 }
 
+void TilesetContentManager::waitUntilIdle() {
+  // Wait for all asynchronous loading to terminate.
+  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
+  // being decremented correctly when an async load ends.
+  while (this->_tilesLoadOnProgress > 0) {
+    this->_externals.pAssetAccessor->tick();
+    this->_externals.asyncSystem.dispatchMainThreadTasks();
+  }
+
+  // Wait for all overlays to wrap up their loading, too.
+  uint32_t rasterOverlayTilesLoading = 1;
+  while (rasterOverlayTilesLoading > 0) {
+    this->_externals.pAssetAccessor->tick();
+    this->_externals.asyncSystem.dispatchMainThreadTasks();
+
+    rasterOverlayTilesLoading = 0;
+    for (const auto& pTileProvider :
+         this->_overlayCollection.getTileProviders()) {
+      rasterOverlayTilesLoading += pTileProvider->getNumberOfTilesLoading();
+    }
+  }
+}
+
 const Tile* TilesetContentManager::getRootTile() const noexcept {
   return this->_pRootTile.get();
 }

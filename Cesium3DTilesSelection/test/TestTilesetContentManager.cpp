@@ -205,11 +205,13 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager(
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        "tileset.json");
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager(
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            "tileset.json");
+    TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
     manager.waitUntilIdle();
@@ -234,11 +236,13 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager(
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        "layer.json");
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager(
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            "layer.json");
+    TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
     manager.waitUntilIdle();
@@ -268,11 +272,13 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager(
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        "layer.json");
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager(
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            "layer.json");
+    TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
     manager.waitUntilIdle();
