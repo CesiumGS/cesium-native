@@ -919,7 +919,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     Tile::LoadedLinkedList loadedTiles;
     RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
     rasterOverlayCollection.add(
-        std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
+        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
     asyncSystem.dispatchMainThreadTasks();
 
     // create mock loader
@@ -1154,7 +1154,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     Tile::LoadedLinkedList loadedTiles;
     RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
     rasterOverlayCollection.add(
-        std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
+        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
     asyncSystem.dispatchMainThreadTasks();
 
     // create mock loader
