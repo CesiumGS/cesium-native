@@ -27,6 +27,7 @@ option(WEBP_BUILD_WEBPINFO "" off)
 option(WEBP_BUILD_WEBPMUX "" off)
 option(WEBP_NEAR_LOSSLESS "" off)
 option(WEBP_UNICODE "" off)
+option(WEBP_ENABLE_SIMD "" off)
 add_subdirectory(libwebp)
 
 option(URIPARSER_BUILD_TESTS "" off)
