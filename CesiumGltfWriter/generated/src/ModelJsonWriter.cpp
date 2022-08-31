@@ -55,6 +55,7 @@
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureIDAttribute.h>
 #include <CesiumGltf/FeatureIDTexture.h>
 #include <CesiumGltf/FeatureIDs.h>
@@ -171,6 +172,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionKhrTextureTransform& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionTextureWebp& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -998,6 +1004,22 @@ void writeJson(
   if (obj.texCoord.has_value()) {
     jsonWriter.Key("texCoord");
     writeJson(obj.texCoord, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionTextureWebp& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.source > -1) {
+    jsonWriter.Key("source");
+    writeJson(obj.source, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2903,6 +2925,13 @@ void ExtensionNodeMaxarMeshVariantsJsonWriter::write(
 
 void ExtensionKhrTextureTransformJsonWriter::write(
     const CesiumGltf::ExtensionKhrTextureTransform& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionTextureWebpJsonWriter::write(
+    const CesiumGltf::ExtensionTextureWebp& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

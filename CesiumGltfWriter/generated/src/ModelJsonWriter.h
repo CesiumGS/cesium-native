@@ -27,6 +27,7 @@ struct ExtensionKhrTextureBasisu;
 struct ExtensionModelMaxarMeshVariants;
 struct ExtensionNodeMaxarMeshVariants;
 struct ExtensionKhrTextureTransform;
+struct ExtensionTextureWebp;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionExtStructuralMetadataPropertyAttribute;
@@ -274,6 +275,17 @@ struct ExtensionKhrTextureTransformJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionKhrTextureTransform& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionTextureWebpJsonWriter {
+  using ValueType = CesiumGltf::ExtensionTextureWebp;
+
+  static inline constexpr const char* ExtensionName = "EXT_texture_webp";
+
+  static void write(
+      const CesiumGltf::ExtensionTextureWebp& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

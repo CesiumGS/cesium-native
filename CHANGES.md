@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added support for loading WebP images inside glTFs and raster overlays. WebP textures can be provided directly in a glTF texture or in the `EXT_texture_webp` extension.
+
 ##### Breaking Changes :mega:
 - Quantized mesh and implicit octree and quadtree can now skip level of details when traversing.
 - `Tileset` can be constructed with `TilesetContentLoader` and a root `Tile` for loading and rendering different 3D Tile-like format or creating procedural tileset.
