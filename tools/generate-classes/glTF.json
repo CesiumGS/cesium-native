@@ -30,7 +30,7 @@
     "KHR_texture_basisu glTF extension": {
       "overrideName": "ExtensionKhrTextureBasisu"
     },
-    "EXT_texture_webp": {
+    "EXT_texture_webp glTF extension": {
       "overrideName": "ExtensionTextureWebp"
     },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
