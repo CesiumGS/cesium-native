@@ -664,10 +664,20 @@ TEST_CASE("Test tile state machine") {
     pManager->loadTileContent(upsampledTile, options);
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoading);
 
-    // trying to unload parent while upsampled children is loading won't work
+    // trying to unload parent while upsampled children is loading while put the
+    // tile into the Unloading state but not unload the render content.
     CHECK(!pManager->unloadTileContent(tile));
-    CHECK(tile.getState() == TileLoadState::Done);
+    CHECK(tile.getState() == TileLoadState::Unloading);
     CHECK(tile.isRenderContent());
+
+    // Unloading again will have the same result.
+    CHECK(!pManager->unloadTileContent(tile));
+    CHECK(tile.getState() == TileLoadState::Unloading);
+    CHECK(tile.isRenderContent());
+
+    // Attempting to load won't do anything - unloading must finish first.
+    pManager->loadTileContent(tile, options);
+    CHECK(tile.getState() == TileLoadState::Unloading);
 
     // upsampled tile: ContentLoading -> ContentLoaded
     pManager->waitUntilIdle();

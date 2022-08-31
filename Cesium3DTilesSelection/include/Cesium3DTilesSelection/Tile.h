@@ -29,6 +29,12 @@ class TilesetContentLoader;
  */
 enum class TileLoadState {
   /**
+   * @brief This tile is in the process of being unloaded, but could not be
+   * fully unloaded because an asynchronous process is using its loaded data.
+   */
+  Unloading = -2,
+
+  /**
    * @brief Something went wrong while loading this tile, but it may be a
    * temporary problem.
    */

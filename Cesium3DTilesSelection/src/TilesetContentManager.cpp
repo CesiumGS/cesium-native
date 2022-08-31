@@ -797,6 +797,11 @@ void TilesetContentManager::releaseReference() noexcept {
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  if (tile.getState() == TileLoadState::Unloading) {
+    // We can't load a tile that is unloading; it has to finish unloading first.
+    return;
+  }
+
   if (tile.getState() != TileLoadState::Unloaded &&
       tile.getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
@@ -919,6 +924,9 @@ void TilesetContentManager::updateTileContent(
     const TilesetOptions& tilesetOptions) {
   TileLoadState state = tile.getState();
   switch (state) {
+  case TileLoadState::Unloading:
+    unloadTileContent(tile);
+    break;
   case TileLoadState::ContentLoaded:
     updateContentLoadedState(tile, tilesetOptions);
     break;
@@ -959,20 +967,9 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
-  // don't unload tile if any of its children are upsampled tile and
-  // currently loading. Loader can safely capture the parent tile to upsample
-  // the current tile as the manager guarantee that the parent tile will be
-  // alive
-  for (const Tile& child : tile.getChildren()) {
-    if (child.getState() == TileLoadState::ContentLoading &&
-        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
-            child.getTileID())) {
-      return false;
-    }
-  }
-
-  notifyTileUnloading(&tile);
-
+  // Unload the renderer resources and clear any raster overlay tiles. We can do
+  // this even if the tile can't be fully unloaded because this tile's geometry
+  // is being using by an async upsample operation (checked below).
   switch (state) {
   case TileLoadState::ContentLoaded:
     unloadContentLoadedState(tile);
@@ -984,8 +981,25 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   }
 
-  content.setContentKind(TileUnknownContent{});
   tile.getMappedRasterTiles().clear();
+
+  // Are any children currently being upsampled from this tile?
+  for (const Tile& child : tile.getChildren()) {
+    if (child.getState() == TileLoadState::ContentLoading &&
+        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
+            child.getTileID())) {
+      // Yes, a child is upsampling from this tile, so it may be using the
+      // tile's content from another thread via lambda capture. We can't unload
+      // it right now. So mark the tile as in the process of unloading and stop
+      // here.
+      tile.setState(TileLoadState::Unloading);
+      return false;
+    }
+  }
+
+  // If we make it this far, the tile's content will be fully unloaded.
+  notifyTileUnloading(&tile);
+  content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
   return true;
 }

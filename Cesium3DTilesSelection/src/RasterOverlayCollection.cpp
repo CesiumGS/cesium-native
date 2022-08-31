@@ -78,7 +78,8 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   // Add a placeholder for this overlay to existing geometry tiles.
   forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
-    if (tile.getState() != TileLoadState::Unloaded) {
+    if (tile.getState() != TileLoadState::Unloaded &&
+        tile.getState() != TileLoadState::Unloading) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
           pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
           -1));
