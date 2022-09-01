@@ -192,6 +192,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUD
 set_target_properties(ktx_read PROPERTIES PUBLIC_HEADER "")
 install(TARGETS ktx_read)
 
+install(TARGETS webpdecoder)
+
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
 
 install(TARGETS s2geometry)

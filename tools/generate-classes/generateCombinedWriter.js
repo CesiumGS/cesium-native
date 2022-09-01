@@ -206,7 +206,7 @@ function generateCombinedWriter(options) {
         
         ${writers
           .map((writer) => {
-            return writer.writeBaseJsonDefinition ?? "";
+            return writer.writeBaseJsonDefinition ? writer.writeBaseJsonDefinition : "";
           })
           .join("\n")}
 

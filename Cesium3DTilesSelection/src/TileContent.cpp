@@ -4,7 +4,9 @@ namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},
       _pRenderResources{nullptr},
-      _rasterOverlayDetails{} {}
+      _rasterOverlayDetails{},
+      _credits{},
+      _lodTransitionFadePercentage{0.0f} {}
 
 const CesiumGltf::Model& TileRenderContent::getModel() const noexcept {
   return _model;
@@ -61,6 +63,15 @@ void* TileRenderContent::getRenderResources() const noexcept {
 
 void TileRenderContent::setRenderResources(void* pRenderResources) noexcept {
   this->_pRenderResources = pRenderResources;
+}
+
+float TileRenderContent::getLodTransitionFadePercentage() const noexcept {
+  return _lodTransitionFadePercentage;
+}
+
+void TileRenderContent::setLodTransitionFadePercentage(
+    float percentage) noexcept {
+  this->_lodTransitionFadePercentage = percentage;
 }
 
 TileContent::TileContent() : _contentKind{TileUnknownContent{}} {}

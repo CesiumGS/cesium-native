@@ -63,6 +63,8 @@ target_link_libraries(CesiumGltfReader
         ${CESIUM_NATIVE_DRACO_LIBRARY}
     PRIVATE
         ktx_read
+        webp
+        webpdecoder
 )
 
 install(TARGETS CesiumGltfReader
