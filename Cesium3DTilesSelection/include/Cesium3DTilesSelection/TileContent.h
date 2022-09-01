@@ -162,11 +162,32 @@ public:
    */
   void setRenderResources(void* pRenderResources) noexcept;
 
+  /**
+   * @brief Get the fade percentage that this tile should be rendered with.
+   *
+   * This will be used when {@link TilesetOptions::enableLodTransitionPeriod}
+   * is true. Tile fades can be used to make LOD transitions appear less abrupt
+   * and jarring. It is up to client implementations how to render the fade
+   * percentage, but dithered fading is recommended.
+   *
+   * @return The fade percentage.
+   */
+  float getLodTransitionFadePercentage() const noexcept;
+
+  /**
+   * @brief Set the fade percentage that this tile should be rendered with. Not
+   * to be used by clients.
+   *
+   * @param percentage The new fade percentage.
+   */
+  void setLodTransitionFadePercentage(float percentage) noexcept;
+
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
   RasterOverlayDetails _rasterOverlayDetails;
   std::vector<Credit> _credits;
+  float _lodTransitionFadePercentage;
 };
 
 /**

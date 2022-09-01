@@ -160,35 +160,121 @@ static double computeFogDensity(
   return density;
 }
 
+void Tileset::_updateLodTransitions(
+    const FrameState& frameState,
+    float deltaTime,
+    ViewUpdateResult& result) const noexcept {
+  if (_options.enableLodTransitionPeriod) {
+    // We fade the old tile from 1.0 --> 0.0 while the new tile fades from
+    // 0.0 --> 1.0.
+    float deltaTransitionPercentage =
+        deltaTime / this->_options.lodTransitionLength;
+
+    // Update fade out
+    for (auto tileIt = result.tilesFadingOut.begin();
+         tileIt != result.tilesFadingOut.end();) {
+      TileRenderContent* pRenderContent =
+          (*tileIt)->getContent().getRenderContent();
+
+      if (!pRenderContent) {
+        // This tile is done fading out and was immediately kicked from the
+        // cache.
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
+
+      // Remove tile from fade-out list if it is back on the render list.
+      TileSelectionState::Result selectionResult =
+          (*tileIt)->getLastSelectionState().getResult(
+              frameState.currentFrameNumber);
+      if (selectionResult == TileSelectionState::Result::Rendered) {
+        // This tile will already be on the render list. Just fade it in from
+        // the current fade percentage, no need to set it to 0.0f.
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
+
+      float currentPercentage =
+          pRenderContent->getLodTransitionFadePercentage();
+      if (currentPercentage <= 0.0f) {
+        // Remove this tile from the fading out list if it is already at 0%.
+        // The client will already have had a chance to stop rendering the tile
+        // last frame.
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
+
+      float newPercentage =
+          glm::max(currentPercentage - deltaTransitionPercentage, 0.0f);
+      pRenderContent->setLodTransitionFadePercentage(newPercentage);
+      ++tileIt;
+    }
+
+    // Update fade in
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        float transitionPercentage =
+            pRenderContent->getLodTransitionFadePercentage();
+        float newTransitionPercentage =
+            glm::min(transitionPercentage + deltaTransitionPercentage, 1.0f);
+        pRenderContent->setLodTransitionFadePercentage(newTransitionPercentage);
+      }
+    }
+  } else {
+    // If there are any tiles still fading in, set them to fully visible right
+    // away.
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        pRenderContent->setLodTransitionFadePercentage(1.0f);
+      }
+    }
+  }
+}
+
 const ViewUpdateResult&
 Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
-  std::vector<Tile*> tilesRenderedPrevFrame =
+  std::vector<Tile*> tilesSelectedPrevFrame =
       this->_updateResult.tilesToRenderThisFrame;
 
-  this->updateView(frustums);
+  // TODO: fix the fading for offline case
+  // (https://github.com/CesiumGS/cesium-native/issues/549)
+  this->updateView(frustums, 0.0f);
   while (this->_pTilesetContentManager->getNumberOfTilesLoading() > 0) {
     this->_externals.pAssetAccessor->tick();
-    this->updateView(frustums);
+    this->updateView(frustums, 0.0f);
   }
 
-  std::unordered_set<Tile*> uniqueTilesToRenderedThisFrame(
+  this->_updateResult.tilesFadingOut.clear();
+
+  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame(
       this->_updateResult.tilesToRenderThisFrame.begin(),
       this->_updateResult.tilesToRenderThisFrame.end());
-  std::vector<Tile*> tilesToNoLongerRenderThisFrame;
-  for (Tile* tile : tilesRenderedPrevFrame) {
-    if (uniqueTilesToRenderedThisFrame.find(tile) ==
-        uniqueTilesToRenderedThisFrame.end()) {
-      tilesToNoLongerRenderThisFrame.emplace_back(tile);
+  for (Tile* tile : tilesSelectedPrevFrame) {
+    if (uniqueTilesToRenderThisFrame.find(tile) ==
+        uniqueTilesToRenderThisFrame.end()) {
+      TileRenderContent* pRenderContent = tile->getContent().getRenderContent();
+      if (pRenderContent) {
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
+        this->_updateResult.tilesFadingOut.insert(tile);
+      }
     }
   }
 
-  this->_updateResult.tilesToNoLongerRenderThisFrame =
-      std::move(tilesToNoLongerRenderThisFrame);
   return this->_updateResult;
 }
 
 const ViewUpdateResult&
-Tileset::updateView(const std::vector<ViewState>& frustums) {
+Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
+  // Fixup TilesetOptions to ensure lod transitions works correctly.
+  _options.enableFrustumCulling =
+      _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
+  _options.enableFogCulling =
+      _options.enableFogCulling && !_options.enableLodTransitionPeriod;
+
   this->_asyncSystem.dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
@@ -196,13 +282,16 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
 
   ViewUpdateResult& result = this->_updateResult;
   result.tilesToRenderThisFrame.clear();
-  result.tilesToNoLongerRenderThisFrame.clear();
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;
   result.tilesCulled = 0;
   result.tilesOccluded = 0;
   result.tilesWaitingForOcclusionResults = 0;
   result.maxDepthVisited = 0;
+
+  if (!_options.enableLodTransitionPeriod) {
+    result.tilesFadingOut.clear();
+  }
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
@@ -250,6 +339,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();
+  this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -342,7 +432,11 @@ static void markTileNonRendered(
     Tile& tile,
     ViewUpdateResult& result) {
   if (lastResult == TileSelectionState::Result::Rendered) {
-    result.tilesToNoLongerRenderThisFrame.push_back(&tile);
+    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
+    if (pRenderContent) {
+      pRenderContent->setLodTransitionFadePercentage(1.0f);
+      result.tilesFadingOut.insert(&tile);
+    }
   }
 }
 
@@ -1068,6 +1162,11 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
 
+  const TileSelectionState& lastFrameSelectionState =
+      tile.getLastSelectionState();
+  const TileSelectionState::Result lastFrameSelectionResult =
+      lastFrameSelectionState.getResult(frameState.lastFrameNumber);
+
   // If occlusion culling is enabled, we may not want to refine for two
   // reasons:
   // - The tile is known to be occluded, so don't refine further.
@@ -1077,8 +1176,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   //   valid occlusion info to decide to refine. This might save us from
   //   kicking off descendant loads that we later find to be unnecessary.
   bool tileLastRefined =
-      tile.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Refined;
+      lastFrameSelectionResult == TileSelectionState::Result::Refined;
   bool childLastRefined = false;
   for (const Tile& child : tile.getChildren()) {
     if (child.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
@@ -1137,8 +1235,6 @@ Tileset::TraversalDetails Tileset::_visitTile(
     //
     // Note that even if we decide to render a tile here, it may later get
     // "kicked" in favor of an ancestor.
-    const TileSelectionState& lastFrameSelectionState =
-        tile.getLastSelectionState();
     const bool renderThisTile = shouldRenderThisTile(
         tile,
         lastFrameSelectionState,
@@ -1202,11 +1298,25 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // At least one descendant tile was added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
-  if (!traversalDetails.allAreRenderable &&
-      !traversalDetails.anyWereRenderedLastFrame) {
-    // Some of our descendants aren't ready to render yet, and none were
-    // rendered last frame, so kick them all out of the render list and render
-    // this tile instead. Continue to load them though!
+
+  // Descendants will be kicked if any are not ready to render yet and none
+  // were rendered last frame.
+  bool kickDueToNonReadyDescendant = !traversalDetails.allAreRenderable &&
+                                     !traversalDetails.anyWereRenderedLastFrame;
+
+  // Descendants may also be kicked if this tile was rendered last frame and
+  // has not finished fading in yet.
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  bool kickDueToTileFadingIn =
+      _options.enableLodTransitionPeriod &&
+      _options.kickDescendantsWhileFadingIn &&
+      lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
+      pRenderContent && pRenderContent->getLodTransitionFadePercentage() < 1.0f;
+
+  if (kickDueToNonReadyDescendant || kickDueToTileFadingIn) {
+    // Kick all descendants out of the render list and render this tile instead
+    // Continue to load them though!
     queuedForLoad = _kickDescendantsAndRenderTile(
         frameState,
         tile,
@@ -1288,6 +1398,15 @@ void Tileset::_unloadCachedTiles() noexcept {
       break;
     }
 
+    // Still fading out, can't unload this tile.
+    const TileRenderContent* pRenderContent =
+        pTile->getContent().getRenderContent();
+    if (_options.enableLodTransitionPeriod && pRenderContent &&
+        pRenderContent->getLodTransitionFadePercentage() > 0.0f) {
+      pTile = this->_loadedTiles.next(*pTile);
+      continue;
+    }
+
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
     const bool removed =
@@ -1303,12 +1422,6 @@ void Tileset::_unloadCachedTiles() noexcept {
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
-
-// TODO The viewState is only needed to
-// compute the priority from the distance. So maybe this function should
-// receive a priority directly and be called with
-// addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
-// (or at least, this function could delegate to such a call...)
 
 void Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
