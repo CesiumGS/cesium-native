@@ -2,12 +2,8 @@
 
 ### ? - ?
 
-##### Additions :tada:
-
-- Add new options supporting tile LOD transition periods in `TilesetOptions`. Clients can retrieve a tile's transition percentage from `TileRenderContent::lodTransitionPercentage`.
-- Added support for loading WebP images inside glTFs and raster overlays. WebP textures can be provided directly in a glTF texture or in the `EXT_texture_webp` extension.
-
 ##### Breaking Changes :mega:
+
 - Quantized mesh and implicit octree and quadtree can now skip level of details when traversing.
 - `Tileset` can be constructed with `TilesetContentLoader` and a root `Tile` for loading and rendering different 3D Tile-like format or creating procedural tileset.
 - `RasterOverlayCollection` no longer depends on `Tileset`. It now only uses `TilesetExternals` and `Tile::LoadedLinkList`.
@@ -42,6 +38,12 @@
   - `unloadContent()` that was used to unload the content of a tile.
   - `update()` that was used to update a tile each frame.
   - `markPermanentlyFailed()` that was used to mark a tile as permanently failing to load.
+
+##### Additions :tada:
+
+- Add new options supporting tile LOD transition periods in `TilesetOptions`. Clients can retrieve a tile's transition percentage from `TileRenderContent::lodTransitionPercentage`.
+- Added support for loading WebP images inside glTFs and raster overlays. WebP textures can be provided directly in a glTF texture or in the `EXT_texture_webp` extension.
+- Added support for `KHR_texture_transform` to `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`
 
 ##### Fixes :wrench:
 

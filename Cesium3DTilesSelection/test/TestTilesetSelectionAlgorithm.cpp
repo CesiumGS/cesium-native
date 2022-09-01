@@ -875,6 +875,7 @@ TEST_CASE("Test multiple frustums") {
       REQUIRE(result.tilesToRenderThisFrame.size() == 4);
 
       REQUIRE(result.tilesFadingOut.size() == 1);
+      REQUIRE(*result.tilesFadingOut.begin() == root);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingMediumPriority == 0);
