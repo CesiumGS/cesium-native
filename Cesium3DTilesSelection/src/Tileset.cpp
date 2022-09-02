@@ -165,8 +165,9 @@ void Tileset::_updateLodTransitions(
     float deltaTime,
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
-    // We fade the old tile from 1.0 --> 0.0 while the new tile fades from
-    // 0.0 --> 1.0.
+    // We always fade tiles from 0.0 --> 1.0. Whether the tile is fading in or
+    // out is determined by whether the tile is in the tilesToRenderThisFrame
+    // or tilesFadingOut list.
     float deltaTransitionPercentage =
         deltaTime / this->_options.lodTransitionLength;
 
@@ -197,7 +198,7 @@ void Tileset::_updateLodTransitions(
       float currentPercentage =
           pRenderContent->getLodTransitionFadePercentage();
       if (currentPercentage >= 1.0f) {
-        // Remove this tile from the fading out list if it is already at 0%.
+        // Remove this tile from the fading out list if it is already done.
         // The client will already have had a chance to stop rendering the tile
         // last frame.
         pRenderContent->setLodTransitionFadePercentage(0.0f);

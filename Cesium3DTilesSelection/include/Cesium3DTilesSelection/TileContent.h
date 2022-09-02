@@ -163,7 +163,7 @@ public:
   void setRenderResources(void* pRenderResources) noexcept;
 
   /**
-   * @brief Get the fade percentage that this tile should be rendered with.
+   * @brief Get the fade percentage that this tile during an LOD transition.
    *
    * This will be used when {@link TilesetOptions::enableLodTransitionPeriod}
    * is true. Tile fades can be used to make LOD transitions appear less abrupt
@@ -175,8 +175,8 @@ public:
   float getLodTransitionFadePercentage() const noexcept;
 
   /**
-   * @brief Set the fade percentage that this tile should be rendered with. Not
-   * to be used by clients.
+   * @brief Set the fade percentage of this tile during an LOD transition with. 
+   * Not to be used by clients.
    *
    * @param percentage The new fade percentage.
    */
