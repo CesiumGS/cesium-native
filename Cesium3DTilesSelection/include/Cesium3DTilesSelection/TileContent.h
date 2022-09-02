@@ -175,7 +175,7 @@ public:
   float getLodTransitionFadePercentage() const noexcept;
 
   /**
-   * @brief Set the fade percentage of this tile during an LOD transition with. 
+   * @brief Set the fade percentage of this tile during an LOD transition with.
    * Not to be used by clients.
    *
    * @param percentage The new fade percentage.
