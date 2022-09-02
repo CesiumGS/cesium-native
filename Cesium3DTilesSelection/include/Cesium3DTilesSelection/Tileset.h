@@ -158,11 +158,14 @@ public:
    * @brief Updates this view, returning the set of tiles to render in this
    * view.
    * @param frustums The {@link ViewState}s that the view should be updated for
+   * @param deltaTime The amount of time that has passed since the last call to
+   * updateView, in seconds.
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums);
+  const ViewUpdateResult&
+  updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
    * @brief Estimate the percentage of the tiles for the current view that have
@@ -366,6 +369,11 @@ private:
   void _processLoadQueue();
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
+
+  void _updateLodTransitions(
+      const FrameState& frameState,
+      float deltaTime,
+      ViewUpdateResult& result) const noexcept;
 
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
