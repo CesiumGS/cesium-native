@@ -284,6 +284,14 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * and construction of Gltf models.
    */
   TilesetContentOptions contentOptions;
+
+  /**
+   * @brief Arbitrary data that will be passed to {@link prepareInLoadThread}.
+   *
+   * This object is copied and given to tile preparation threads,
+   * so it must be inexpensive to copy.
+   */
+  std::any rendererOptions;
 };
 
 } // namespace Cesium3DTilesSelection

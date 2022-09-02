@@ -439,7 +439,8 @@ void calcFittestBoundingRegionForLooseTile(
 TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    const TileContentLoadInfo& tileLoadInfo) {
+    const TileContentLoadInfo& tileLoadInfo,
+    const std::any& rendererOptions) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
@@ -469,7 +470,8 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   void* pRenderResources =
       tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
           model,
-          tileLoadInfo.tileTransform);
+          tileLoadInfo.tileTransform,
+          rendererOptions);
 
   return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
@@ -478,7 +480,8 @@ CesiumAsync::Future<TileLoadResultAndRenderResources>
 postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    TileContentLoadInfo&& tileLoadInfo) {
+    TileContentLoadInfo&& tileLoadInfo,
+    const std::any& rendererOptions) {
   assert(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
@@ -511,7 +514,8 @@ postProcessContentInWorkerThread(
       .thenInWorkerThread(
           [result = std::move(result),
            projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo)](
+           tileLoadInfo = std::move(tileLoadInfo),
+           rendererOptions = rendererOptions](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
               if (result.pCompletedRequest) {
@@ -554,7 +558,8 @@ postProcessContentInWorkerThread(
             return postProcessGltfInWorkerThread(
                 std::move(result),
                 std::move(projections),
-                tileLoadInfo);
+                tileLoadInfo,
+                rendererOptions);
           });
 }
 } // namespace
@@ -854,11 +859,13 @@ void TilesetContentManager::loadTileContent(
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
       this->_externals.pLogger,
-      this->_requestHeaders};
+      this->_requestHeaders,
+  };
 
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections)](
+                        projections = std::move(projections),
+                        rendererOptions = tilesetOptions.rendererOptions](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -873,11 +880,13 @@ void TilesetContentManager::loadTileContent(
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo)]() mutable {
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions = rendererOptions]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
-                      std::move(tileLoadInfo));
+                      std::move(tileLoadInfo),
+                      rendererOptions);
                 });
           }
         }
