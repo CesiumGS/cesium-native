@@ -15,14 +15,14 @@ namespace {
 class DebugTileProvider : public RasterOverlayTileProvider {
 public:
   DebugTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger)
       : RasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             std::nullopt,
@@ -69,22 +69,21 @@ DebugColorizeTilesRasterOverlay::DebugColorizeTilesRasterOverlay(
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions) {}
 
-CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>>
 DebugColorizeTilesRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
   pOwner = pOwner ? pOwner : this;
 
   return asyncSystem.createResolvedFuture(
-      (std::unique_ptr<RasterOverlayTileProvider>)
-          std::make_unique<DebugTileProvider>(
-              *this,
-              asyncSystem,
-              pAssetAccessor,
-              pPrepareRendererResources,
-              pLogger));
+      IntrusivePointer<RasterOverlayTileProvider>(new DebugTileProvider(
+          this,
+          asyncSystem,
+          pAssetAccessor,
+          pPrepareRendererResources,
+          pLogger)));
 }

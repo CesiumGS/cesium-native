@@ -8,6 +8,12 @@ namespace CesiumUtility {
  * @brief A smart pointer that calls `addReference` and `releaseReference` on
  * the controlled object.
  *
+ * Please note that the thread-safety of this type is entirely dependent on the
+ * implementation of `addReference` and `releaseReference`. If these methods are
+ * not thread safe on a particular type - which is common for objects that are
+ * not meant to be used from multiple threads simultaneously - then using an
+ * `IntrusivePointer` from multiple threads is also unsafe.
+ *
  * @tparam T The type of object controlled.
  */
 template <class T> class IntrusivePointer final {
@@ -160,13 +166,13 @@ public:
    * @brief Returns `true` if the contents of this pointer is equal to the given
    * pointer.
    */
-  bool operator==(T* pRhs) const noexcept { return this->_p == pRhs; }
+  bool operator==(const T* pRhs) const noexcept { return this->_p == pRhs; }
 
   /**
    * @brief Returns `true` if the contents of this pointer is *not* equal to the
    * given pointer.
    */
-  bool operator!=(T* pRhs) const noexcept { return !(*this == pRhs); }
+  bool operator!=(const T* pRhs) const noexcept { return !(*this == pRhs); }
 
 private:
   void addReference() noexcept {
@@ -184,4 +190,11 @@ private:
   T* _p;
   template <typename U> friend class IntrusivePointer;
 };
+
+template <typename T, typename U>
+IntrusivePointer<T>
+const_intrusive_cast(const IntrusivePointer<U>& p) noexcept {
+  return IntrusivePointer<T>(const_cast<T*>(p.get()));
+}
+
 } // namespace CesiumUtility

@@ -23,8 +23,11 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
       tiles.begin(),
       tiles.end(),
       [&overlay](RasterMappedTo3DTile& raster) noexcept {
-        return raster.getReadyTile() &&
-               &raster.getReadyTile()->getOverlay() == &overlay;
+        RasterOverlayTile* pReady = raster.getReadyTile();
+        if (pReady == nullptr)
+          return false;
+
+        return &pReady->getTileProvider().getOwner() == &overlay;
       });
   if (parentTileIt != tiles.end()) {
     RasterMappedTo3DTile& mapped = *parentTileIt;
@@ -79,8 +82,9 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
     pTile = pTile->getParent();
     if (pTile) {
-      RasterOverlayTile* pOverlayTile =
-          findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
+      RasterOverlayTile* pOverlayTile = findTileOverlay(
+          *pTile,
+          this->_pLoadingTile->getTileProvider().getOwner());
       if (pOverlayTile) {
         this->_pLoadingTile = pOverlayTile;
       }
@@ -114,7 +118,9 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
     pTile = tile.getParent();
     while (pTile) {
-      pCandidate = findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
+      pCandidate = findTileOverlay(
+          *pTile,
+          this->_pLoadingTile->getTileProvider().getOwner());
       if (pCandidate &&
           pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
         break;
@@ -203,22 +209,16 @@ bool RasterMappedTo3DTile::loadThrottled() noexcept {
     return true;
   }
 
-  RasterOverlayTileProvider* pProvider =
-      pLoading->getOverlay().getTileProvider();
-  if (!pProvider) {
-    // This should not be possible.
-    assert(pProvider);
-    return false;
-  }
-
-  return pProvider->loadTileThrottled(*pLoading);
+  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
+  return provider.loadTileThrottled(*pLoading);
 }
 
 namespace {
 
-IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay& overlay) {
+IntrusivePointer<RasterOverlayTile>
+getPlaceholderTile(RasterOverlayTileProvider& tileProvider) {
   // Rectangle and geometric error don't matter for a placeholder.
-  return overlay.getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0));
+  return tileProvider.getTile(Rectangle(), glm::dvec2(0.0));
 }
 
 std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
@@ -304,14 +304,13 @@ RasterMappedTo3DTile* addRealTile(
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
     double maximumScreenSpaceError,
-    RasterOverlay& overlay,
+    RasterOverlayTileProvider& tileProvider,
     Tile& tile,
     std::vector<Projection>& missingProjections) {
-  RasterOverlayTileProvider* pProvider = overlay.getTileProvider();
-  if (pProvider->isPlaceholder()) {
+  if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
-        RasterMappedTo3DTile(getPlaceholderTile(overlay), -1));
+        RasterMappedTo3DTile(getPlaceholderTile(tileProvider), -1));
   }
 
   // We can get a more accurate estimate of the real-world size of the projected
@@ -324,7 +323,7 @@ RasterMappedTo3DTile* addRealTile(
   // width/height as if it's on the ellipsoid surface.
   const double heightForSizeEstimation = 0.0;
 
-  const Projection& projection = pProvider->getProjection();
+  const Projection& projection = tileProvider.getProjection();
 
   // If the tile is loaded, use the precise rectangle computed from the content.
   const TileContent& content = tile.getContent();
@@ -345,7 +344,7 @@ RasterMappedTo3DTile* addRealTile(
           heightForSizeEstimation,
           maximumScreenSpaceError,
           Ellipsoid::WGS84);
-      return addRealTile(tile, *pProvider, *pRectangle, screenPixels, index);
+      return addRealTile(tile, tileProvider, *pRectangle, screenPixels, index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
       // tile was loaded before we knew we needed this projection. We'll need to
@@ -355,7 +354,7 @@ RasterMappedTo3DTile* addRealTile(
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
       return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-          getPlaceholderTile(overlay),
+          getPlaceholderTile(tileProvider),
           textureCoordinateIndex));
     }
   }
@@ -365,7 +364,7 @@ RasterMappedTo3DTile* addRealTile(
       addProjectionToList(missingProjections, projection);
   std::optional<Rectangle> maybeRectangle =
       getPreciseRectangleFromBoundingVolume(
-          pProvider->getProjection(),
+          tileProvider.getProjection(),
           tile.getBoundingVolume());
   if (maybeRectangle) {
     const glm::dvec2 screenPixels = computeDesiredScreenPixels(
@@ -377,14 +376,14 @@ RasterMappedTo3DTile* addRealTile(
         Ellipsoid::WGS84);
     return addRealTile(
         tile,
-        *pProvider,
+        tileProvider,
         *maybeRectangle,
         screenPixels,
         textureCoordinateIndex);
   } else {
     // No precise rectangle yet, so return a placeholder for now.
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        getPlaceholderTile(overlay),
+        getPlaceholderTile(tileProvider),
         textureCoordinateIndex));
   }
 }
@@ -405,7 +404,7 @@ void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   const RasterOverlayDetails& overlayDetails =
       pRenderContent->getRasterOverlayDetails();
   const RasterOverlayTileProvider& tileProvider =
-      *this->_pReadyTile->getOverlay().getTileProvider();
+      this->_pReadyTile->getTileProvider();
 
   const Projection& projection = tileProvider.getProjection();
   const std::vector<Projection>& projections =

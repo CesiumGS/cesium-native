@@ -29,7 +29,7 @@ class WebMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   WebMapServiceTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -49,7 +49,7 @@ public:
       uint32_t minimumLevel,
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             credit,
@@ -236,14 +236,14 @@ static bool validateCapabilities(
   return true;
 }
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<IntrusivePointer<RasterOverlayTileProvider>>
 WebMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
@@ -290,7 +290,7 @@ WebMapServiceRasterOverlay::createTileProvider(
            url = this->_baseUrl,
            headers = this->_headers,
            reportError](const std::shared_ptr<IAssetRequest>& pRequest)
-              -> std::unique_ptr<RasterOverlayTileProvider> {
+              -> IntrusivePointer<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               reportError(
@@ -340,8 +340,8 @@ WebMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 rootTilesY);
 
-            return std::make_unique<WebMapServiceTileProvider>(
-                *pOwner,
+            return new WebMapServiceTileProvider(
+                pOwner,
                 asyncSystem,
                 pAssetAccessor,
                 credit,
@@ -355,10 +355,10 @@ WebMapServiceRasterOverlay::createTileProvider(
                 options.version,
                 options.layers,
                 options.format,
-                options.tileWidth,
-                options.tileHeight,
-                options.minimumLevel,
-                options.maximumLevel);
+                options.tileWidth < 1 ? 1 : uint32_t(options.tileWidth),
+                options.tileHeight < 1 ? 1 : uint32_t(options.tileHeight),
+                options.minimumLevel < 0 ? 0 : uint32_t(options.minimumLevel),
+                options.maximumLevel < 0 ? 0 : uint32_t(options.maximumLevel));
           });
 }
 

@@ -12,11 +12,14 @@
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class TilesetContentManager {
+class TilesetContentManager
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<
+          TilesetContentManager> {
 public:
   TilesetContentManager(
       const TilesetExternals& externals,
@@ -48,25 +51,15 @@ public:
 
   bool unloadTileContent(Tile& tile);
 
-  /**
-   * @brief Determines if this content manager is idle, meaning that no content
-   * requests are currently in progress.
-   *
-   * In addition to checking whether the content manager is idle, this method
-   * tries to move toward that goal by ticking the asset accessor and
-   * dispatching any outstanding main thread tasks.
-   *
-   * When this method returns true, {@link waitUntilIdle} will return
-   * immediately and this object's destructor will not block.
-   *
-   * @return true No asynchronous operations are in progress.
-   * @return false Asynchronous operations are currently in progress.
-   */
-  bool isIdle() const;
-
-  void tick();
-
   void waitUntilIdle();
+
+  /**
+   * @brief Unload every tile that is safe to unload.
+   *
+   * Tiles that are currently loading asynchronously will not be unloaded. If
+   * {@link isIdle} returns true, all tiles will be unloaded.
+   */
+  void unloadAll();
 
   const Tile* getRootTile() const noexcept;
 

@@ -88,7 +88,7 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       Credit bingCredit,
@@ -105,7 +105,7 @@ public:
       uint32_t maximumLevel,
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             bingCredit,
@@ -334,14 +334,14 @@ std::vector<CreditAndCoverageAreas> collectCredits(
 
 } // namespace
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<IntrusivePointer<RasterOverlayTileProvider>>
 BingMapsRasterOverlay::createTileProvider(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
   std::string metadataUrl = CesiumUtility::Uri::resolve(
       this->_url,
       "REST/v1/Imagery/Metadata/" + this->_mapStyle,
@@ -377,7 +377,7 @@ BingMapsRasterOverlay::createTileProvider(
                          reportError](
                             const std::shared_ptr<IAssetRequest>& pRequest,
                             const gsl::span<const std::byte>& data)
-      -> std::unique_ptr<RasterOverlayTileProvider> {
+      -> IntrusivePointer<RasterOverlayTileProvider> {
     rapidjson::Document response;
     response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
@@ -436,8 +436,8 @@ BingMapsRasterOverlay::createTileProvider(
     Credit bingCredit =
         pCreditSystem->createCredit(BING_LOGO_HTML, showCredits);
 
-    return std::make_unique<BingMapsTileProvider>(
-        *pOwner,
+    return new BingMapsTileProvider(
+        pOwner,
         asyncSystem,
         pAssetAccessor,
         bingCredit,
@@ -464,7 +464,7 @@ BingMapsRasterOverlay::createTileProvider(
       .thenInMainThread(
           [metadataUrl, pLogger, handleResponse, reportError](
               std::shared_ptr<IAssetRequest>&& pRequest)
-              -> std::unique_ptr<RasterOverlayTileProvider> {
+              -> IntrusivePointer<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 
             if (pResponse == nullptr) {
@@ -475,7 +475,7 @@ BingMapsRasterOverlay::createTileProvider(
               return nullptr;
             }
 
-            std::unique_ptr<RasterOverlayTileProvider> pProvider =
+            IntrusivePointer<RasterOverlayTileProvider> pProvider =
                 handleResponse(pRequest, pResponse->data());
 
             // If the response successfully created a tile provider, cache it.

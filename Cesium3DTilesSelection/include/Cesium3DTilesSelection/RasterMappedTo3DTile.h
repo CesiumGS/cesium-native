@@ -200,7 +200,7 @@ public:
    *
    * @param maximumScreenSpaceError The maximum screen space error that is used
    * for the current tile
-   * @param overlay The overlay to map to the tile.
+   * @param tileProvider The overlay tile provider to map to the tile.
    * @param tile The tile to which to map the overlay.
    * @param missingProjections The list of projections for which there are not
    * yet any texture coordiantes. On return, the given overlay's Projection may
@@ -213,7 +213,7 @@ public:
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
       double maximumScreenSpaceError,
-      RasterOverlay& overlay,
+      RasterOverlayTileProvider& tileProvider,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections);
 
