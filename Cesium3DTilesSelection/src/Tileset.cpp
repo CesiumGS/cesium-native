@@ -188,24 +188,25 @@ void Tileset::_updateLodTransitions(
           (*tileIt)->getLastSelectionState().getResult(
               frameState.currentFrameNumber);
       if (selectionResult == TileSelectionState::Result::Rendered) {
-        // This tile will already be on the render list. Just fade it in from
-        // the current fade percentage, no need to set it to 0.0f.
+        // This tile will already be on the render list.
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
       float currentPercentage =
           pRenderContent->getLodTransitionFadePercentage();
-      if (currentPercentage <= 0.0f) {
+      if (currentPercentage >= 1.0f) {
         // Remove this tile from the fading out list if it is already at 0%.
         // The client will already have had a chance to stop rendering the tile
         // last frame.
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
       float newPercentage =
-          glm::max(currentPercentage - deltaTransitionPercentage, 0.0f);
+          glm::min(currentPercentage + deltaTransitionPercentage, 1.0f);
       pRenderContent->setLodTransitionFadePercentage(newPercentage);
       ++tileIt;
     }
@@ -258,7 +259,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
         uniqueTilesToRenderThisFrame.end()) {
       TileRenderContent* pRenderContent = tile->getContent().getRenderContent();
       if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
+        pRenderContent->setLodTransitionFadePercentage(1.0f);
         this->_updateResult.tilesFadingOut.insert(tile);
       }
     }
@@ -434,7 +435,7 @@ static void markTileNonRendered(
   if (lastResult == TileSelectionState::Result::Rendered) {
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
-      pRenderContent->setLodTransitionFadePercentage(1.0f);
+      pRenderContent->setLodTransitionFadePercentage(0.0f);
       result.tilesFadingOut.insert(&tile);
     }
   }
@@ -1402,7 +1403,7 @@ void Tileset::_unloadCachedTiles() noexcept {
     const TileRenderContent* pRenderContent =
         pTile->getContent().getRenderContent();
     if (_options.enableLodTransitionPeriod && pRenderContent &&
-        pRenderContent->getLodTransitionFadePercentage() > 0.0f) {
+        pRenderContent->getLodTransitionFadePercentage() < 1.0f) {
       pTile = this->_loadedTiles.next(*pTile);
       continue;
     }
