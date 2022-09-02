@@ -515,7 +515,7 @@ postProcessContentInWorkerThread(
           [result = std::move(result),
            projections = std::move(projections),
            tileLoadInfo = std::move(tileLoadInfo),
-           rendererOptions = rendererOptions](
+           rendererOptions](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
               if (result.pCompletedRequest) {
@@ -880,7 +880,7 @@ void TilesetContentManager::loadTileContent(
                 [result = std::move(result),
                  projections = std::move(projections),
                  tileLoadInfo = std::move(tileLoadInfo),
-                 rendererOptions = rendererOptions]() mutable {
+                 rendererOptions]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
