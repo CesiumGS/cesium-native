@@ -859,8 +859,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
       this->_externals.pLogger,
-      this->_requestHeaders,
-  };
+      this->_requestHeaders};
 
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
