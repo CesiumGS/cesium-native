@@ -89,14 +89,12 @@ TEST_CASE("Writes glTF") {
       "accessors": [
         {
           "bufferView": 0,
-          "byteOffset": 0,
           "componentType": 5123,
           "count": 36,
           "type": "SCALAR"
         },
         {
           "bufferView": 1,
-          "byteOffset": 0,
           "componentType": 5126,
           "count": 24,
           "type": "VEC3"
@@ -120,7 +118,6 @@ TEST_CASE("Writes glTF") {
         },
         {
           "bufferView": 2,
-          "byteOffset": 0,
           "componentType": 5126,
           "count": 24,
           "type": "VEC2"
@@ -169,7 +166,6 @@ TEST_CASE("Writes glTF") {
         },
         {
           "buffer": 0,
-          "byteOffset": 0,
           "byteLength": 576,
           "byteStride": 12,
           "target": 34962
@@ -295,7 +291,6 @@ TEST_CASE("Writes glTF with default values removed") {
       "accessors": [
         {
           "bufferView": 0,
-          "byteOffset": 0,
           "componentType": 5123,
           "count": 36,
           "type": "SCALAR"
@@ -359,7 +354,6 @@ TEST_CASE("Writes glTF with default values removed") {
         },
         {
           "buffer": 0,
-          "byteOffset": 0,
           "byteLength": 576,
           "byteStride": 12,
           "target": 34962
@@ -408,7 +402,6 @@ TEST_CASE("Writes glTF with default values removed") {
       "accessors": [
         {
           "bufferView": 0,
-          "byteOffset": 0,
           "componentType": 5123,
           "count": 36,
           "type": "SCALAR"
@@ -467,7 +460,6 @@ TEST_CASE("Writes glTF with default values removed") {
         },
         {
           "buffer": 0,
-          "byteOffset": 0,
           "byteLength": 576,
           "byteStride": 12,
           "target": 34962
