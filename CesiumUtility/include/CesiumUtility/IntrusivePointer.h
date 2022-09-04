@@ -30,9 +30,14 @@ public:
     this->addReference();
   }
 
-  template <
-      class U,
-      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  /**
+   * @brief Implicit conversion to a pointer to a base (or otherwise
+   * convertible) type.
+   *
+   * @tparam U The new type, usually a base class.
+   * @param rhs The pointer.
+   */
+  template <class U>
   IntrusivePointer(const IntrusivePointer<U>& rhs) noexcept : _p(rhs._p) {
     this->addReference();
   }
@@ -45,13 +50,19 @@ public:
     // Reference count is unchanged
   }
 
-  template <
-      class U,
-      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  /**
+   * @brief Implicit conversion of an r-value to a pointer to a base (or
+   * otherwise convertible) type.
+   *
+   * @tparam U The new type, usually a base class.
+   * @param rhs The pointer.
+   */
+  template <class U>
   IntrusivePointer(IntrusivePointer<U>&& rhs) noexcept
       : _p(std::exchange(rhs._p, nullptr)) {
     // Reference count is unchanged
   }
+
   /**
    * @brief Default destructor.
    */
