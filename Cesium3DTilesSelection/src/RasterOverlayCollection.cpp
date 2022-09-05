@@ -149,6 +149,9 @@ void RasterOverlayCollection::remove(
 
   OverlayList& list = *this->_pOverlays;
 
+  assert(list.overlays.size() == list.tileProviders.size());
+  assert(list.overlays.size() == list.placeholders.size());
+
   auto it = std::find_if(
       list.overlays.begin(),
       list.overlays.end(),
@@ -159,7 +162,10 @@ void RasterOverlayCollection::remove(
     return;
   }
 
-  list.overlays.erase(it);
+  int64_t index = it - list.overlays.begin();
+  list.overlays.erase(list.overlays.begin() + index);
+  list.tileProviders.erase(list.tileProviders.begin() + index);
+  list.placeholders.erase(list.placeholders.begin() + index);
 }
 
 const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>&
