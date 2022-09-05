@@ -102,14 +102,14 @@ IonRasterOverlay::createTileProvider(
         pOwner);
   }
 
-  auto reportError = [this, asyncSystem, pLogger](
+  auto reportError = [this, asyncSystem, pLogger, pOwner](
                          std::shared_ptr<IAssetRequest>&& pRequest,
                          const std::string& message) {
     this->reportError(
         asyncSystem,
         pLogger,
         RasterOverlayLoadFailureDetails{
-            this,
+            pOwner,
             RasterOverlayLoadType::CesiumIon,
             std::move(pRequest),
             message});

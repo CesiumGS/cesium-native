@@ -61,7 +61,7 @@ const std::string GET_ENTRY_SQL =
 
 const std::string UPDATE_LAST_ACCESSED_TIME_SQL =
     "UPDATE " + CACHE_TABLE + " SET " + CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN +
-    " = strftime('%s','now') WHERE " + CACHE_TABLE_KEY_COLUMN + " =?";
+    " = strftime('%s','now') WHERE rowid =?";
 
 // Sql commands for storing response
 const std::string STORE_RESPONSE_SQL =

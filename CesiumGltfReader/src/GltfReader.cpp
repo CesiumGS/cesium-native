@@ -15,6 +15,7 @@
 
 #include <ktx.h>
 #include <rapidjson/reader.h>
+#include <webp/decode.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -440,6 +441,15 @@ bool isKtx(const gsl::span<const std::byte>& data) {
   return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
 }
 
+bool isWebP(const gsl::span<const std::byte>& data) {
+  if (data.size() < 12) {
+    return false;
+  }
+  const uint32_t magic1 = *reinterpret_cast<const uint32_t*>(data.data());
+  const uint32_t magic2 = *reinterpret_cast<const uint32_t*>(data.data() + 8);
+  return magic1 == 0x46464952 && magic2 == 0x50424557;
+}
+
 /*static*/
 ImageReaderResult GltfReader::readImage(
     const gsl::span<const std::byte>& data,
@@ -603,6 +613,29 @@ ImageReaderResult GltfReader::readImage(
     result.errors.emplace_back("KTX2 loading failed");
 
     return result;
+  } else if (isWebP(data)) {
+    if (WebPGetInfo(
+            reinterpret_cast<const uint8_t*>(data.data()),
+            data.size(),
+            &image.width,
+            &image.height)) {
+      image.channels = 4;
+      image.bytesPerChannel = 1;
+      uint8_t* pImage = NULL;
+      const auto bufferSize = image.width * image.height * image.channels;
+      image.pixelData.resize(static_cast<std::size_t>(bufferSize));
+      pImage = WebPDecodeRGBAInto(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          reinterpret_cast<uint8_t*>(image.pixelData.data()),
+          image.pixelData.size(),
+          image.width * image.channels);
+      if (!pImage) {
+        result.image.reset();
+        result.errors.emplace_back("Unable to decode WebP");
+      }
+      return result;
+    }
   }
 
   {

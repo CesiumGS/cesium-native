@@ -1,64 +1,29 @@
 {
   "classes": {
-    "Tileset Property": {
-      "overrideName": "CesiumUtility::ExtensibleObject"
+    "Root Property": {
+      "overrideName": "CesiumUtility::ExtensibleObject",
+      "manuallyDefined": true
+    },
+    "Any Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "Numeric Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "No Data Value": {
+      "overrideName": "CesiumUtility::JsonValue"
     },
     "3DTILES_bounding_volume_S2 extension": {
       "overrideName": "Extension3dTilesBoundingVolumeS2"
     },
-    "3DTILES_content_gltf extension": {
-      "overrideName": "Extension3dTilesContentGltf"
-    },
-    "3DTILES_implicit_tiling tile extension": {
-      "overrideName": "Extension3dTilesImplicitTiling"
-    },
-    "Subtree Property": {
-      "overrideName": "CesiumUtility::ExtensibleObject"
-    },
-    "3DTILES_metadata 3D Tiles extension": {
-      "overrideName": "ExtensionTileset3dTilesMetadata"
-    },
-    "3DTILES_metadata tile extension": {
-      "overrideName": "ExtensionTile3dTilesMetadata"
-    },
-    "3DTILES_metadata tile content extension": {
-      "overrideName": "ExtensionContent3dTilesMetadata"
-    },
     "Metadata Entity": {
       "isBaseClass": true
-    },
-    "3DTILES_multiple_contents tile extension": {
-      "overrideName": "Extension3dTilesMultipleContents"
     }
   },
   "extensions": [
     {
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_content_gltf",
-      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_implicit_tiling",
-      "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_metadata",
-      "schema": "3DTILES_metadata/schema/content.3DTILES_metadata.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_metadata",
-      "schema": "3DTILES_metadata/schema/tile.3DTILES_metadata.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_metadata",
-      "schema": "3DTILES_metadata/schema/tileset.3DTILES_metadata.schema.json"
-    },
-    {
-      "extensionName": "3DTILES_multiple_contents",
-      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json"
     }
   ]
 }

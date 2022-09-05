@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <vector>
 
+namespace Cesium3DTilesSelection {
 class SimpleAssetResponse : public CesiumAsync::IAssetResponse {
 public:
   SimpleAssetResponse(
@@ -36,3 +37,4 @@ public:
   CesiumAsync::HttpHeaders mockHeaders;
   std::vector<std::byte> mockData;
 };
+} // namespace Cesium3DTilesSelection

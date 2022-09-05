@@ -20,8 +20,8 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
       "3DTILES_bounding_volume_S2";
 
   /**
-   * @brief A hexadecimal representation of the S2CellId. Tokens must be
-   * lower-case, must not contain whitespace and must have trailing zeros
+   * @brief A hexadecimal representation of the S2CellId. Tokens shall be
+   * lower-case, shall not contain whitespace and shall have trailing zeros
    * stripped.
    */
   std::string token;
