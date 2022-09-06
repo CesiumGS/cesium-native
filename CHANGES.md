@@ -1,5 +1,15 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareInLoadThread`.
+
+##### Additions :tada:
+
+- Added a `rendererOptions` property to `TilesetOptions` to pass arbitrary data to `prepareInLoadThread`.
+
 ### v0.19.0 - 2022-09-01
 
 ##### Breaking Changes :mega:
