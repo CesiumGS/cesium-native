@@ -1,5 +1,10 @@
 # Change Log
 
+### v0.20.0 - 2022-10-01
+
+##### Breaking Changes :mega:
+- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
+
 ### v0.19.0 - 2022-09-01
 
 ##### Breaking Changes :mega:
