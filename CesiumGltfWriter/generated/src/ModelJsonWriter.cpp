@@ -810,8 +810,10 @@ void writeJson(
     writeJson(obj.buffer, jsonWriter, context);
   }
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteLength");
   writeJson(obj.byteLength, jsonWriter, context);
@@ -2545,8 +2547,10 @@ void writeJson(
     writeJson(obj.buffer, jsonWriter, context);
   }
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteLength");
   writeJson(obj.byteLength, jsonWriter, context);
@@ -2711,8 +2715,10 @@ void writeJson(
     writeJson(obj.bufferView, jsonWriter, context);
   }
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("componentType");
   writeJson(obj.componentType, jsonWriter, context);
@@ -2779,8 +2785,10 @@ void writeJson(
     writeJson(obj.bufferView, jsonWriter, context);
   }
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -2798,8 +2806,10 @@ void writeJson(
     writeJson(obj.bufferView, jsonWriter, context);
   }
 
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
+  if (obj.byteOffset != 0) {
+    jsonWriter.Key("byteOffset");
+    writeJson(obj.byteOffset, jsonWriter, context);
+  }
 
   jsonWriter.Key("componentType");
   writeJson(obj.componentType, jsonWriter, context);
