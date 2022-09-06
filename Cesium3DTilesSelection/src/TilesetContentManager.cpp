@@ -465,6 +465,11 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     model.generateMissingNormalsSmooth();
   }
 
+  // generate mipmaps
+  for (CesiumGltf::Image& image : model.images) {
+    CesiumGltfReader::GltfReader::generateMipMaps(image.cesium);
+  }
+
   // create render resources
   void* pRenderResources =
       tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(

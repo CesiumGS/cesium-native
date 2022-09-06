@@ -272,6 +272,12 @@ static LoadResult createLoadResultFromLoadedImage(
         std::to_string(image.height) + "x" + std::to_string(image.channels) +
         "x" + std::to_string(image.bytesPerChannel));
 
+    std::optional<std::string> mipMapErrorMsg =
+        CesiumGltfReader::GltfReader::generateMipMaps(image);
+    if (mipMapErrorMsg) {
+      SPDLOG_LOGGER_WARN(pLogger, *mipMapErrorMsg);
+    }
+
     void* pRendererResources = nullptr;
     if (pPrepareRendererResources) {
       pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(
