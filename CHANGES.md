@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- In `CesiumGltfWriter`, `accessor.byteOffset` and `bufferView.byteOffset` are no longer written if the value is 0. This fixes validation errors for accessors that don't have buffer views, e.g. attributes that are Draco compressed.
+
 ### v0.19.0 - 2022-09-01
 
 ##### Breaking Changes :mega:
@@ -25,7 +31,6 @@
 ##### Fixes :wrench:
 
 - Fixed a bug where the Raster Overlay passed to the `loadErrorCallback` would not be the one that the user created, but instead an aggregated overlay that was created internally.
-- In `CesiumGltfWriter`, `accessor.byteOffset` and `bufferView.byteOffset` are no longer written if the value is 0. This fixes validation errors for accessors that don't have buffer views, e.g. attributes that are Draco compressed.
 
 ### v0.18.1 - 2022-08-04
 
