@@ -1400,11 +1400,9 @@ void Tileset::_unloadCachedTiles() noexcept {
       break;
     }
 
-    // Still fading out, can't unload this tile.
-    const TileRenderContent* pRenderContent =
-        pTile->getContent().getRenderContent();
-    if (_options.enableLodTransitionPeriod && pRenderContent &&
-        pRenderContent->getLodTransitionFadePercentage() < 1.0f) {
+    // Don't unload this tile if it is still fading out.
+    if (_updateResult.tilesFadingOut.find(pTile) !=
+        _updateResult.tilesFadingOut.end()) {
       pTile = this->_loadedTiles.next(*pTile);
       continue;
     }
