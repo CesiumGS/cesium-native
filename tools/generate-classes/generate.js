@@ -496,14 +496,8 @@ function formatWriterPropertyImpl(property) {
   const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
 
-  // Somewhat opinionated but it's helpful to see byteOffset: 0 in accessors and bufferViews
-  const requiredPropertyOverride = ["byteOffset"];
-
   const hasDefaultValueGuard =
-    !isId &&
-    !isRequiredEnum &&
-    !requiredPropertyOverride.includes(property.cppSafeName) &&
-    defaultValue !== undefined;
+    !isId && !isRequiredEnum && defaultValue !== undefined;
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
