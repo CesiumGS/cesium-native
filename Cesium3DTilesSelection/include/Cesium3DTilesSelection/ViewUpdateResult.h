@@ -2,9 +2,9 @@
 
 #include "Library.h"
 
+#include <cstdint>
 #include <unordered_set>
 #include <vector>
-#include <cstdint>
 
 namespace Cesium3DTilesSelection {
 class Tile;
