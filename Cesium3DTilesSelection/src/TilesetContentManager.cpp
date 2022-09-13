@@ -435,8 +435,8 @@ void calcFittestBoundingRegionForLooseTile(
   }
 }
 
-TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
-    TileLoadResult&& result,
+void postProcessGltfInWorkerThread(
+    TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
@@ -463,14 +463,6 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
     model.generateMissingNormalsSmooth();
   }
-
-  // create render resources
-  void* pRenderResources =
-      tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-          model,
-          tileLoadInfo.tileTransform);
-
-  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
@@ -544,16 +536,34 @@ postProcessContentInWorkerThread(
             }
 
             if (!gltfResult.model) {
-              return TileLoadResultAndRenderResources{
-                  TileLoadResult::createFailedResult(nullptr),
-                  nullptr};
+              return tileLoadInfo.asyncSystem.createResolvedFuture(
+                  TileLoadResultAndRenderResources{
+                      TileLoadResult::createFailedResult(nullptr),
+                      nullptr});
             }
 
             result.contentKind = std::move(*gltfResult.model);
-            return postProcessGltfInWorkerThread(
-                std::move(result),
+
+            postProcessGltfInWorkerThread(
+                result,
                 std::move(projections),
                 tileLoadInfo);
+
+            // create render resources
+            const CesiumGltf::Model& model =
+                std::get<CesiumGltf::Model>(result.contentKind);
+            CesiumAsync::Future<void*> futureRenderResources =
+                tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+                    tileLoadInfo.asyncSystem,
+                    model,
+                    tileLoadInfo.tileTransform);
+            return std::move(futureRenderResources)
+                .thenImmediately([result = std::move(result)](
+                                     void* pRenderResources) mutable {
+                  return TileLoadResultAndRenderResources{
+                      std::move(result),
+                      pRenderResources};
+                });
           });
 }
 } // namespace

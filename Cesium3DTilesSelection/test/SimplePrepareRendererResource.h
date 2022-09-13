@@ -25,10 +25,12 @@ public:
 
   ~SimplePrepareRendererResource() noexcept { CHECK(totalAllocation == 0); }
 
-  virtual void* prepareInLoadThread(
+  virtual CesiumAsync::Future<void*> prepareInLoadThread(
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& /*model*/,
       const glm::dmat4& /*transform*/) override {
-    return new AllocationResult{totalAllocation};
+    return asyncSystem.createResolvedFuture<void*>(
+        new AllocationResult{totalAllocation});
   }
 
   virtual void* prepareInMainThread(

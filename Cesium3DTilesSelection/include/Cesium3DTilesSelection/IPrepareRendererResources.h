@@ -2,6 +2,8 @@
 
 #include "Library.h"
 
+#include <CesiumAsync/Future.h>
+
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <gsl/span>
@@ -43,13 +45,15 @@ public:
    *
    * This method is invoked in the load thread, and it may not modify the tile.
    *
+   * @param asyncSystem The AsyncSystem used to do work in threads.
    * @param model The glTF model to prepare.
    * @param transform The tile's transformation.
-   * @returns Arbitrary data representing the result of the load process. This
-   * data is passed to {@link prepareInMainThread} as the `pLoadThreadResult`
-   * parameter.
+   * @returns A future that resolves to arbitrary data representing the result
+   * of the load process. This data is passed to {@link prepareInMainThread} as
+   * the `pLoadThreadResult` parameter.
    */
-  virtual void* prepareInLoadThread(
+  virtual CesiumAsync::Future<void*> prepareInLoadThread(
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,
       const glm::dmat4& transform) = 0;
 
