@@ -445,23 +445,61 @@ CesiumIonTilesetLoader::createLoader(
     const auto& endpoint = cacheIt->second;
     if (endpoint.type == "TERRAIN") {
       return mainThreadLoadLayerJsonFromAssetEndpoint(
-          externals,
-          contentOptions,
-          endpoint,
-          ionAssetID,
-          ionAccessToken,
-          ionAssetEndpointUrl,
-          headerChangeListener,
-          showCreditsOnScreen);
+                 externals,
+                 contentOptions,
+                 endpoint,
+                 ionAssetID,
+                 ionAccessToken,
+                 ionAssetEndpointUrl,
+                 headerChangeListener,
+                 showCreditsOnScreen)
+          .thenImmediately(
+              [externals,
+               contentOptions,
+               ionAssetID,
+               ionAccessToken,
+               ionAssetEndpointUrl,
+               headerChangeListener,
+               showCreditsOnScreen](
+                  TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+                return refreshTokenIfNeeded(
+                    externals,
+                    contentOptions,
+                    ionAssetID,
+                    ionAccessToken,
+                    ionAssetEndpointUrl,
+                    headerChangeListener,
+                    showCreditsOnScreen,
+                    std::move(result));
+              });
     } else if (endpoint.type == "3DTILES") {
       return mainThreadLoadTilesetJsonFromAssetEndpoint(
-          externals,
-          endpoint,
-          ionAssetID,
-          ionAccessToken,
-          ionAssetEndpointUrl,
-          headerChangeListener,
-          showCreditsOnScreen);
+                 externals,
+                 endpoint,
+                 ionAssetID,
+                 ionAccessToken,
+                 ionAssetEndpointUrl,
+                 headerChangeListener,
+                 showCreditsOnScreen)
+          .thenImmediately(
+              [externals,
+               contentOptions,
+               ionAssetID,
+               ionAccessToken,
+               ionAssetEndpointUrl,
+               headerChangeListener,
+               showCreditsOnScreen](
+                  TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+                return refreshTokenIfNeeded(
+                    externals,
+                    contentOptions,
+                    ionAssetID,
+                    ionAccessToken,
+                    ionAssetEndpointUrl,
+                    headerChangeListener,
+                    showCreditsOnScreen,
+                    std::move(result));
+              });
     }
 
     TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
@@ -491,5 +529,42 @@ CesiumIonTilesetLoader::createLoader(
                   showCreditsOnScreen);
             });
   }
+}
+CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+CesiumIonTilesetLoader::refreshTokenIfNeeded(
+    const TilesetExternals& externals,
+    const TilesetContentOptions& contentOptions,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl,
+    const AuthorizationHeaderChangeListener& headerChangeListener,
+    bool showCreditsOnScreen,
+    TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+  if (result.errors.hasErrors()) {
+    std::string errorString = fmt::format(
+        "Received status code {} for tile content {}",
+        401,
+        ionAssetEndpointUrl);
+    for (std::string error : result.errors.errors) {
+      if (errorString == error) {
+        CesiumIonTilesetLoader* pIonLoader =
+            static_cast<CesiumIonTilesetLoader*>(result.pLoader.get());
+
+        pIonLoader->refreshTokenInMainThread(
+            externals.pLogger,
+            externals.pAssetAccessor,
+            externals.asyncSystem);
+        return pIonLoader->createLoader(
+            externals,
+            contentOptions,
+            ionAssetID,
+            ionAccessToken,
+            ionAssetEndpointUrl,
+            headerChangeListener,
+            showCreditsOnScreen);
+      }
+    }
+  }
+  return externals.asyncSystem.createResolvedFuture(std::move(result));
 }
 } // namespace Cesium3DTilesSelection
