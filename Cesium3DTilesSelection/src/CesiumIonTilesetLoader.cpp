@@ -541,15 +541,11 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
     bool showCreditsOnScreen,
     TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
   if (result.errors.hasErrors()) {
-    std::string errorString = fmt::format(
-        "Received status code {} for tile content {}",
-        401,
-        ionAssetEndpointUrl);
+    std::string errorString = "Received status code 401";
     for (std::string error : result.errors.errors) {
-      if (errorString == error) {
+      if (error.find(errorString) != std::string::npos){
         CesiumIonTilesetLoader* pIonLoader =
             static_cast<CesiumIonTilesetLoader*>(result.pLoader.get());
-
         pIonLoader->refreshTokenInMainThread(
             externals.pLogger,
             externals.pAssetAccessor,
