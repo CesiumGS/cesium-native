@@ -21,11 +21,6 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
-struct TileLoadResultAndRenderResources {
-  TileLoadResult result;
-  void* pRenderResources{nullptr};
-};
-
 struct RegionAndCenter {
   CesiumGeospatial::BoundingRegion region;
   CesiumGeospatial::Cartographic center;
@@ -550,20 +545,10 @@ postProcessContentInWorkerThread(
                 tileLoadInfo);
 
             // create render resources
-            const CesiumGltf::Model& model =
-                std::get<CesiumGltf::Model>(result.contentKind);
-            CesiumAsync::Future<void*> futureRenderResources =
-                tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-                    tileLoadInfo.asyncSystem,
-                    model,
-                    tileLoadInfo.tileTransform);
-            return std::move(futureRenderResources)
-                .thenImmediately([result = std::move(result)](
-                                     void* pRenderResources) mutable {
-                  return TileLoadResultAndRenderResources{
-                      std::move(result),
-                      pRenderResources};
-                });
+            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+                tileLoadInfo.asyncSystem,
+                std::move(result),
+                tileLoadInfo.tileTransform);
           });
 }
 } // namespace

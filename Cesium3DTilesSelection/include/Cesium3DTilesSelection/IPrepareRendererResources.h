@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Library.h"
+#include "TileLoadResult.h"
 
 #include <CesiumAsync/Future.h>
 
@@ -24,6 +25,11 @@ namespace Cesium3DTilesSelection {
 class Tile;
 class RasterOverlayTile;
 
+struct TileLoadResultAndRenderResources {
+  TileLoadResult result;
+  void* pRenderResources{nullptr};
+};
+
 /**
  * @brief When implemented for a rendering engine, allows renderer resources to
  * be created and destroyed under the control of a {@link Tileset}.
@@ -41,20 +47,22 @@ public:
   virtual ~IPrepareRendererResources() = default;
 
   /**
-   * @brief Prepares renderer resources for the given tile.
-   *
-   * This method is invoked in the load thread, and it may not modify the tile.
+   * @brief Prepares renderer resources for the given tile. This method is
+   * invoked in the load thread.
    *
    * @param asyncSystem The AsyncSystem used to do work in threads.
-   * @param model The glTF model to prepare.
+   * @param tileLoadResult The tile data loaded so far.
    * @param transform The tile's transformation.
-   * @returns A future that resolves to arbitrary data representing the result
-   * of the load process. This data is passed to {@link prepareInMainThread} as
-   * the `pLoadThreadResult` parameter.
+   * @returns A future that resolves to the loaded tile data along with
+   * arbitrary "render resources" data representing the result of the load
+   * process. The loaded data may be the same as was originally given to this
+   * method, or it may be modified. The render resources are passed to
+   * {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
    */
-  virtual CesiumAsync::Future<void*> prepareInLoadThread(
+  virtual CesiumAsync::Future<TileLoadResultAndRenderResources>
+  prepareInLoadThread(
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const CesiumGltf::Model& model,
+      TileLoadResult&& tileLoadResult,
       const glm::dmat4& transform) = 0;
 
   /**
