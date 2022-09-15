@@ -544,22 +544,18 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
     std::string errorString = "Received status code 401";
     for (std::string error : result.errors.errors) {
       if (error.find(errorString) != std::string::npos) {
-        CesiumIonTilesetLoader* pIonLoader =
-            static_cast<CesiumIonTilesetLoader*>(result.pLoader.get());
-        if (pIonLoader) {
-          pIonLoader->refreshTokenInMainThread(
-              externals.pLogger,
-              externals.pAssetAccessor,
-              externals.asyncSystem);
-          return pIonLoader->createLoader(
-              externals,
-              contentOptions,
-              ionAssetID,
-              ionAccessToken,
-              ionAssetEndpointUrl,
-              headerChangeListener,
-              showCreditsOnScreen);
-        }
+        endpointCache.erase(createEndpointResource(
+            ionAssetID,
+            ionAccessToken,
+            ionAssetEndpointUrl));
+        return CesiumIonTilesetLoader::createLoader(
+            externals,
+            contentOptions,
+            ionAssetID,
+            ionAccessToken,
+            ionAssetEndpointUrl,
+            headerChangeListener,
+            showCreditsOnScreen);
       }
     }
   }
