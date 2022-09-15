@@ -28,27 +28,27 @@ GltfConverterResult CmptToGltfConverter::convert(
     const CesiumGltfReader::GltfReaderOptions& options) {
   GltfConverterResult result;
   if (cmptBinary.size() < sizeof(CmptHeader)) {
-    result.errors.emplace_warning("Composite tile must be at least 16 bytes.");
+    result.errors.emplaceWarning("Composite tile must be at least 16 bytes.");
     return result;
   }
 
   const CmptHeader* pHeader =
       reinterpret_cast<const CmptHeader*>(cmptBinary.data());
   if (std::string(pHeader->magic, 4) != "cmpt") {
-    result.errors.emplace_warning(
+    result.errors.emplaceWarning(
         "Composite tile does not have the expected magic vaue 'cmpt'.");
     return result;
   }
 
   if (pHeader->version != 1) {
-    result.errors.emplace_warning(fmt::format(
+    result.errors.emplaceWarning(fmt::format(
         "Unsupported composite tile version {}.",
         pHeader->version));
     return result;
   }
 
   if (pHeader->byteLength > cmptBinary.size()) {
-    result.errors.emplace_warning(fmt::format(
+    result.errors.emplaceWarning(fmt::format(
         "Composite tile byteLength is {} but only {} bytes are available.",
         pHeader->byteLength,
         cmptBinary.size()));
@@ -61,14 +61,14 @@ GltfConverterResult CmptToGltfConverter::convert(
   for (uint32_t i = 0; i < pHeader->tilesLength && pos < pHeader->byteLength;
        ++i) {
     if (pos + sizeof(InnerHeader) > pHeader->byteLength) {
-      result.errors.emplace_warning(
+      result.errors.emplaceWarning(
           "Composite tile ends before all embedded tiles could be read.");
       break;
     }
     const InnerHeader* pInner =
         reinterpret_cast<const InnerHeader*>(cmptBinary.data() + pos);
     if (pos + pInner->byteLength > pHeader->byteLength) {
-      result.errors.emplace_warning(
+      result.errors.emplaceWarning(
           "Composite tile ends before all embedded tiles could be read.");
       break;
     }
@@ -85,7 +85,7 @@ GltfConverterResult CmptToGltfConverter::convert(
   uint32_t tilesLength = pHeader->tilesLength;
   if (innerTiles.empty()) {
     if (tilesLength > 0) {
-      result.errors.emplace_warning(
+      result.errors.emplaceWarning(
           "Composite tile does not contain any loadable inner "
           "tiles.");
     }

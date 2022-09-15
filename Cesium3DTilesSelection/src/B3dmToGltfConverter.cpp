@@ -43,9 +43,8 @@ void parseB3dmHeader(
     uint32_t& headerLength,
     GltfConverterResult& result) {
   if (b3dmBinary.size() < sizeof(B3dmHeader)) {
-    result.errors.emplace_error(
-        "The B3DM is invalid because it is too small to "
-        "include a B3DM header.");
+    result.errors.emplaceError("The B3DM is invalid because it is too small to "
+                               "include a B3DM header.");
     return;
   }
 
@@ -76,7 +75,7 @@ void parseB3dmHeader(
     header.featureTableJsonByteLength = 0;
     header.featureTableBinaryByteLength = 0;
 
-    result.errors.emplace_warning(
+    result.errors.emplaceWarning(
         "This b3dm header is using the legacy "
         "format[batchLength][batchTableByteLength]. "
         "The new format "
@@ -95,7 +94,7 @@ void parseB3dmHeader(
     header.featureTableJsonByteLength = 0;
     header.featureTableBinaryByteLength = 0;
 
-    result.errors.emplace_warning(
+    result.errors.emplaceWarning(
         "This b3dm header is using the legacy format "
         "[batchTableJsonByteLength] [batchTableBinaryByteLength] "
         "[batchLength]. "
@@ -108,7 +107,7 @@ void parseB3dmHeader(
   }
 
   if (static_cast<uint32_t>(b3dmBinary.size()) < pHeader->byteLength) {
-    result.errors.emplace_error(
+    result.errors.emplaceError(
         "The B3DM is invalid because the total data available is less than the "
         "size specified in its header.");
     return;
@@ -128,7 +127,7 @@ void convertB3dmContentToGltf(
   const uint32_t glbEnd = header.byteLength;
 
   if (glbEnd <= glbStart) {
-    result.errors.emplace_error(
+    result.errors.emplaceError(
         "The B3DM is invalid because the start of the "
         "glTF model is after the end of the entire B3DM.");
     return;
@@ -152,7 +151,7 @@ rapidjson::Document parseFeatureTableJsonData(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
       featureTableJsonData.size());
   if (document.HasParseError()) {
-    result.errors.emplace_error(fmt::format(
+    result.errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
         document.GetParseError(),
@@ -211,7 +210,7 @@ void convertB3dmMetadataToGltfFeatureMetadata(
           reinterpret_cast<const char*>(batchTableJsonData.data()),
           batchTableJsonData.size());
       if (batchTableJson.HasParseError()) {
-        result.errors.emplace_warning(fmt::format(
+        result.errors.emplaceWarning(fmt::format(
             "Error when parsing batch table JSON, error code {} at byte "
             "offset "
             "{}. Skip parsing metadata",
@@ -236,7 +235,7 @@ GltfConverterResult B3dmToGltfConverter::convert(
     const CesiumGltfReader::GltfReaderOptions& options) {
   GltfConverterResult result;
   B3dmHeader header;
-  uint32_t headerLength;
+  uint32_t headerLength = 0;
   parseB3dmHeader(b3dmBinary, header, headerLength, result);
   if (result.errors) {
     return result;

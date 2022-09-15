@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TilesetContentLoader.h"
 #include "TilesetContentLoaderResult.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 
 #include <functional>
@@ -17,27 +17,22 @@ public:
       void(const std::string& header, const std::string& headerValue)>;
 
   CesiumIonTilesetLoader(
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       std::string&& ionAccessToken,
       std::string&& ionAssetEndpointUrl,
       std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
       AuthorizationHeaderChangeListener&& headerChangeListener);
 
-  CesiumAsync::Future<TileLoadResult> loadTileContent(
-      Tile& tile,
-      const TilesetContentOptions& contentOptions,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders)
-      override;
+  CesiumAsync::Future<TileLoadResult>
+  loadTileContent(const TileLoadInput& loadInput) override;
 
-  bool updateTileContent(Tile& tile) override;
+  TileChildrenResult createTileChildren(const Tile& tile) override;
 
-  static CesiumAsync::Future<TilesetContentLoaderResult> createLoader(
+  static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+  createLoader(
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
-      uint32_t ionAssetID,
+      int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl,
       const AuthorizationHeaderChangeListener& headerChangeListener,
@@ -50,7 +45,7 @@ private:
       const CesiumAsync::AsyncSystem& asyncSystem);
 
   TokenRefreshState _refreshTokenState;
-  uint32_t _ionAssetID;
+  int64_t _ionAssetID;
   std::string _ionAccessToken;
   std::string _ionAssetEndpointUrl;
   std::unique_ptr<TilesetContentLoader> _pAggregatedLoader;

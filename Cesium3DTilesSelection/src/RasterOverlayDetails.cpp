@@ -39,7 +39,7 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   return nullptr;
 }
 
-void RasterOverlayDetails::merge(RasterOverlayDetails&& other) {
+void RasterOverlayDetails::merge(const RasterOverlayDetails& other) {
   rasterOverlayProjections.insert(
       rasterOverlayProjections.end(),
       other.rasterOverlayProjections.begin(),

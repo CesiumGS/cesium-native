@@ -6,10 +6,13 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 
+#include <catch2/catch.hpp>
+
 #include <cstddef>
 #include <map>
 #include <memory>
 
+namespace Cesium3DTilesSelection {
 class SimpleAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
   SimpleAssetAccessor(
@@ -26,6 +29,8 @@ public:
       return asyncSystem.createResolvedFuture(
           std::shared_ptr<CesiumAsync::IAssetRequest>(mockRequestIt->second));
     }
+
+    FAIL("Cannot find request for url " << url);
 
     return asyncSystem.createResolvedFuture(
         std::shared_ptr<CesiumAsync::IAssetRequest>(nullptr));
@@ -46,3 +51,4 @@ public:
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
 };
+} // namespace Cesium3DTilesSelection

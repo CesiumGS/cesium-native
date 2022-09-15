@@ -3,20 +3,17 @@
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
+#include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
+#include "TilesetLoadFailureDetails.h"
 #include "TilesetOptions.h"
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
 
 #include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/IAssetRequest.h>
-#include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
-#include <CesiumGeometry/TileAvailabilityFlags.h>
 
 #include <rapidjson/fwd.h>
 
-#include <atomic>
 #include <memory>
 #include <optional>
 #include <string>
@@ -24,7 +21,6 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
-struct TilesetContentLoaderResult;
 
 /**
  * @brief A <a
@@ -34,6 +30,20 @@ struct TilesetContentLoaderResult;
  */
 class CESIUM3DTILESSELECTION_API Tileset final {
 public:
+  /**
+   * @brief Constructs a new instance with a given custom tileset loader.
+   * @param externals The external interfaces to use.
+   * @param pCustomLoader The custom loader used to load the tileset and tile
+   * content.
+   * @param pRootTile The root tile that is associated with the custom loader
+   * @param options Additional options for the tileset.
+   */
+  Tileset(
+      const TilesetExternals& externals,
+      std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
+      std::unique_ptr<Tile>&& pRootTile,
+      const TilesetOptions& options = TilesetOptions());
+
   /**
    * @brief Constructs a new instance with a given `tileset.json` URL.
    * @param externals The external interfaces to use.
@@ -70,9 +80,10 @@ public:
    */
   ~Tileset() noexcept;
 
-  const std::vector<Credit> getTilesetCredits() const noexcept {
-    return this->_tilesetCredits;
-  }
+  /**
+   * @brief Get tileset credits.
+   */
+  const std::vector<Credit>& getTilesetCredits() const noexcept;
 
   /**
    * @brief Gets the {@link TilesetExternals} that summarize the external
@@ -114,20 +125,18 @@ public:
    *
    * This may be `nullptr` if there is currently no root tile.
    */
-  Tile* getRootTile() noexcept { return this->_pRootTile.get(); }
+  Tile* getRootTile() noexcept;
 
   /** @copydoc Tileset::getRootTile() */
-  const Tile* getRootTile() const noexcept { return this->_pRootTile.get(); }
+  const Tile* getRootTile() const noexcept;
 
   /**
    * @brief Returns the {@link RasterOverlayCollection} of this tileset.
    */
-  RasterOverlayCollection& getOverlays() noexcept { return this->_overlays; }
+  RasterOverlayCollection& getOverlays() noexcept;
 
   /** @copydoc Tileset::getOverlays() */
-  const RasterOverlayCollection& getOverlays() const noexcept {
-    return this->_overlays;
-  }
+  const RasterOverlayCollection& getOverlays() const noexcept;
 
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
@@ -146,19 +155,20 @@ public:
    * @brief Updates this view, returning the set of tiles to render in this
    * view.
    * @param frustums The {@link ViewState}s that the view should be updated for
+   * @param deltaTime The amount of time that has passed since the last call to
+   * updateView, in seconds.
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums);
+  const ViewUpdateResult&
+  updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
-   * @brief Determines if this tileset supports raster overlays.
-   *
-   * Currently, raster overlays can only be draped over quantized-mesh terrain
-   * tilesets.
+   * @brief Estimate the percentage of the tiles for the current view that have
+   * been loaded.
    */
-  bool supportsRasterOverlays() const noexcept { return true; }
+  float computeLoadProgress() noexcept;
 
   /**
    * @brief Invokes a function for each tile that is currently loaded.
@@ -172,19 +182,6 @@ public:
    * are currently loaded.
    */
   int64_t getTotalDataBytes() const noexcept;
-
-  /**
-   * @brief Returns the value indicating the glTF up-axis.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * The value indicates the axis, via 0=X, 1=Y, 2=Z.
-   *
-   * @return The value representing the axis
-   */
-  CesiumGeometry::Axis getGltfUpAxis() const noexcept {
-    return this->_gltfUpAxis;
-  }
 
 private:
   /**
@@ -354,6 +351,7 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile that is potentially being refined.
+   * @param implicitInfo The implicit traversal info.
    * @param tilePriority The load priority of this tile.
    * @return true Some of the required descendents are not yet loaded, so this
    * tile _cannot_ yet be refined.
@@ -369,21 +367,15 @@ private:
   void _unloadCachedTiles() noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
-  void
-  _propagateTilesetContentLoaderResult(TilesetContentLoaderResult&& result);
+  void _updateLodTransitions(
+      const FrameState& frameState,
+      float deltaTime,
+      ViewUpdateResult& result) const noexcept;
 
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 
-  // per-tileset credit passed in explicitly by the user through
-  // `TilesetOptions`
-  std::optional<Credit> _userCredit;
-  //  credits provided with the tileset from Cesium Ion
-  std::vector<Credit> _tilesetCredits;
-
   TilesetOptions _options;
-
-  std::unique_ptr<Tile> _pRootTile;
 
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
@@ -408,22 +400,7 @@ private:
   std::vector<LoadRecord> _loadQueueLow;
   Tile::LoadedLinkedList _loadedTiles;
 
-  RasterOverlayCollection _overlays;
-
-  /**
-   * @brief The axis that was declared as the "up-axis" for glTF content.
-   *
-   * The glTF specification mandates that the Y-axis is the "up"-axis, so the
-   * default value is {@link Axis::Y}. Older tilesets may contain a string
-   * property in the "assets" dictionary, named "gltfUpAxis", indicating a
-   * different up-axis. Although the "gltfUpAxis" property is no longer part of
-   * the 3D tiles specification, it is still considered for backward
-   * compatibility.
-   */
-  CesiumGeometry::Axis _gltfUpAxis;
-
-  // Holds computed distances from view frustums. Store them in this scratch
-  // variable so that it can allocate only when growing bigger.
+  // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.
   std::vector<double> _distances;
 
@@ -432,8 +409,6 @@ private:
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
   std::unique_ptr<TilesetContentManager> _pTilesetContentManager;
-
-  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
   void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,

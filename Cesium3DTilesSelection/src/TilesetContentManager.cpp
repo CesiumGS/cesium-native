@@ -1,16 +1,21 @@
 #include "TilesetContentManager.h"
 
+#include "CesiumIonTilesetLoader.h"
+#include "LayerJsonTerrainLoader.h"
 #include "TileContentLoadInfo.h"
-#include "TilesetContentLoader.h"
+#include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterOverlay.h>
 #include <Cesium3DTilesSelection/RasterOverlayTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/joinToString.h>
 
+#include <rapidjson/document.h>
 #include <spdlog/logger.h>
 
 #include <chrono>
@@ -19,7 +24,6 @@ namespace Cesium3DTilesSelection {
 namespace {
 struct TileLoadResultAndRenderResources {
   TileLoadResult result;
-  std::optional<RasterOverlayDetails> rasterOverlayDetails;
   void* pRenderResources{nullptr};
 };
 
@@ -27,6 +31,43 @@ struct RegionAndCenter {
   CesiumGeospatial::BoundingRegion region;
   CesiumGeospatial::Cartographic center;
 };
+
+struct ContentKindSetter {
+  void operator()(TileUnknownContent content) {
+    tileContent.setContentKind(content);
+  }
+
+  void operator()(TileEmptyContent content) {
+    tileContent.setContentKind(content);
+  }
+
+  void operator()(TileExternalContent content) {
+    tileContent.setContentKind(content);
+  }
+
+  void operator()(CesiumGltf::Model&& model) {
+    auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
+    pRenderContent->setRenderResources(pRenderResources);
+    if (rasterOverlayDetails) {
+      pRenderContent->setRasterOverlayDetails(std::move(*rasterOverlayDetails));
+    }
+
+    tileContent.setContentKind(std::move(pRenderContent));
+  }
+
+  TileContent& tileContent;
+  std::optional<RasterOverlayDetails> rasterOverlayDetails;
+  void* pRenderResources;
+};
+
+void unloadTileRecursively(
+    Tile& tile,
+    TilesetContentManager& tilesetContentManager) {
+  tilesetContentManager.unloadTileContent(tile);
+  for (Tile& child : tile.getChildren()) {
+    unloadTileRecursively(child, tilesetContentManager);
+  }
+}
 
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
@@ -49,7 +90,11 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
 
   // Get an accurate bounding region from the content first.
   const TileContent& parentContent = parent.getContent();
-  const RasterOverlayDetails& details = parentContent.getRasterOverlayDetails();
+  const TileRenderContent* pRenderContent = parentContent.getRenderContent();
+  assert(pRenderContent && "This function only deal with render content");
+
+  const RasterOverlayDetails& details =
+      pRenderContent->getRasterOverlayDetails();
 
   // If we don't have any overlay projections/rectangles, why are we
   // upsampling?
@@ -276,12 +321,11 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
   return tileBoundingVolume;
 }
 
-std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
+void calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   // we will use the fittest bounding volume to calculate raster overlay details
   // below
@@ -297,10 +341,31 @@ std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
   const CesiumGeospatial::BoundingRegion* pRegion =
       getBoundingRegionFromBoundingVolume(contentBoundingVolume);
 
+  // remove any projections that are already used to generated UV
+  int32_t firstRasterOverlayTexCoord = 0;
+  if (result.rasterOverlayDetails) {
+    const std::vector<CesiumGeospatial::Projection>& existingProjections =
+        result.rasterOverlayDetails->rasterOverlayProjections;
+    firstRasterOverlayTexCoord =
+        static_cast<int32_t>(existingProjections.size());
+    auto removedProjectionIt = std::remove_if(
+        projections.begin(),
+        projections.end(),
+        [&](const CesiumGeospatial::Projection& proj) {
+          return std::find(
+                     existingProjections.begin(),
+                     existingProjections.end(),
+                     proj) != existingProjections.end();
+        });
+    projections.erase(removedProjectionIt, projections.end());
+  }
+
+  // generate the overlay details from the rest of projections and merge it with
+  // the existing one
   auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
-      *renderContent.model,
+      model,
       tileLoadInfo.tileTransform,
-      0,
+      firstRasterOverlayTexCoord,
       pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
       std::move(projections));
 
@@ -330,8 +395,8 @@ std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
              0.01) &&
          computed.getNorth() > original.getNorth())) {
 
-      auto it = renderContent.model->extras.find("Cesium3DTiles_TileUrl");
-      std::string url = it != renderContent.model->extras.end()
+      auto it = model.extras.find("Cesium3DTiles_TileUrl");
+      std::string url = it != model.extras.end()
                             ? it->second.getStringOrDefault("Unknown Tile URL")
                             : "Unknown Tile URL";
       SPDLOG_LOGGER_WARN(
@@ -342,15 +407,17 @@ std::optional<RasterOverlayDetails> calcRasterOverlayDetailsInWorkerThread(
     }
   }
 
-  return overlayDetails;
+  if (result.rasterOverlayDetails && overlayDetails) {
+    result.rasterOverlayDetails->merge(*overlayDetails);
+  } else if (overlayDetails) {
+    result.rasterOverlayDetails = std::move(*overlayDetails);
+  }
 }
 
 void calcFittestBoundingRegionForLooseTile(
     TileLoadResult& result,
-    const std::optional<RasterOverlayDetails>& rasterOverlayDetails,
     const TileContentLoadInfo& tileLoadInfo) {
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
       tileLoadInfo.tileBoundingVolume,
@@ -358,13 +425,14 @@ void calcFittestBoundingRegionForLooseTile(
       result.updatedContentBoundingVolume);
   if (std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
           &boundingVolume) != nullptr) {
-    if (rasterOverlayDetails) {
+    if (result.rasterOverlayDetails) {
       // We already computed the bounding region for overlays, so use it.
-      result.updatedBoundingVolume = rasterOverlayDetails->boundingRegion;
+      result.updatedBoundingVolume =
+          result.rasterOverlayDetails->boundingRegion;
     } else {
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
-          *renderContent.model,
+          model,
           tileLoadInfo.tileTransform);
     }
   }
@@ -373,64 +441,57 @@ void calcFittestBoundingRegionForLooseTile(
 TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    const TileContentLoadInfo& tileLoadInfo) {
-  TileRenderContent& renderContent =
-      std::get<TileRenderContent>(result.contentKind);
+    const TileContentLoadInfo& tileLoadInfo,
+    const std::any& rendererOptions) {
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
-    renderContent.model->extras["Cesium3DTiles_TileUrl"] =
-        result.pCompletedRequest->url();
+    model.extras["Cesium3DTiles_TileUrl"] = result.pCompletedRequest->url();
   }
 
+  // have to pass the up axis to extra for backward compatibility
+  model.extras["gltfUpAxis"] =
+      static_cast<std::underlying_type_t<CesiumGeometry::Axis>>(
+          result.glTFUpAxis);
+
   // calculate raster overlay details
-  auto rasterOverlayDetails = calcRasterOverlayDetailsInWorkerThread(
+  calcRasterOverlayDetailsInWorkerThread(
       result,
       std::move(projections),
       tileLoadInfo);
 
   // If our tile bounding region has loose fitting heights, find the real ones.
-  calcFittestBoundingRegionForLooseTile(
-      result,
-      rasterOverlayDetails,
-      tileLoadInfo);
+  calcFittestBoundingRegionForLooseTile(result, tileLoadInfo);
 
   // generate missing smooth normal
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
-    renderContent.model->generateMissingNormalsSmooth();
+    model.generateMissingNormalsSmooth();
   }
 
   // create render resources
   void* pRenderResources =
       tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-          *renderContent.model,
-          tileLoadInfo.tileTransform);
+          model,
+          tileLoadInfo.tileTransform,
+          rendererOptions);
 
-  return TileLoadResultAndRenderResources{
-      std::move(result),
-      std::move(rasterOverlayDetails),
-      pRenderResources};
+  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
 postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    TileContentLoadInfo&& tileLoadInfo) {
+    TileContentLoadInfo&& tileLoadInfo,
+    const std::any& rendererOptions) {
   assert(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
-  TileRenderContent* pRenderContent =
-      std::get_if<TileRenderContent>(&result.contentKind);
-  assert(
-      (pRenderContent && pRenderContent->model != std::nullopt) &&
-      "This function only processes render content");
+  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   // Download any external image or buffer urls in the gltf if there are any
-  CesiumGltfReader::GltfReaderResult gltfResult{
-      std::move(*pRenderContent->model),
-      {},
-      {}};
+  CesiumGltfReader::GltfReaderResult gltfResult{std::move(model), {}, {}};
 
   CesiumAsync::HttpHeaders requestHeaders;
   std::string baseUrl;
@@ -455,7 +516,8 @@ postProcessContentInWorkerThread(
       .thenInWorkerThread(
           [result = std::move(result),
            projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo)](
+           tileLoadInfo = std::move(tileLoadInfo),
+           rendererOptions](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
               if (result.pCompletedRequest) {
@@ -488,61 +550,252 @@ postProcessContentInWorkerThread(
               }
             }
 
-            TileRenderContent& renderContent =
-                std::get<TileRenderContent>(result.contentKind);
-            renderContent.model = std::move(gltfResult.model);
+            if (!gltfResult.model) {
+              return TileLoadResultAndRenderResources{
+                  TileLoadResult::createFailedResult(nullptr),
+                  nullptr};
+            }
+
+            result.contentKind = std::move(*gltfResult.model);
             return postProcessGltfInWorkerThread(
                 std::move(result),
                 std::move(projections),
-                tileLoadInfo);
+                tileLoadInfo,
+                rendererOptions);
           });
 }
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
-    RasterOverlayCollection& overlayCollection)
+    std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
-      _pOverlayCollection{&overlayCollection},
+      _pRootTile{std::move(pRootTile)},
+      _userCredit(
+          (tilesetOptions.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    tilesetOptions.credit.value(),
+                    tilesetOptions.showCreditsOnScreen))
+              : std::nullopt),
+      _tilesetCredits{},
+      _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
+      _loadedTilesCount{0},
       _tilesDataUsed{0} {}
 
+TilesetContentManager::TilesetContentManager(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
+    const std::string& url)
+    : _externals{externals},
+      _requestHeaders{},
+      _pLoader{},
+      _pRootTile{},
+      _userCredit(
+          (tilesetOptions.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    tilesetOptions.credit.value(),
+                    tilesetOptions.showCreditsOnScreen))
+              : std::nullopt),
+      _tilesetCredits{},
+      _overlayCollection{std::move(overlayCollection)},
+      _tilesLoadOnProgress{0},
+      _loadedTilesCount{0},
+      _tilesDataUsed{0} {
+  if (!url.empty()) {
+    this->notifyTileStartLoading(nullptr);
+
+    externals.pAssetAccessor
+        ->get(externals.asyncSystem, url, this->_requestHeaders)
+        .thenInWorkerThread(
+            [pLogger = externals.pLogger,
+             asyncSystem = externals.asyncSystem,
+             pAssetAccessor = externals.pAssetAccessor,
+             contentOptions = tilesetOptions.contentOptions,
+             showCreditsOnScreen = tilesetOptions.showCreditsOnScreen](
+                const std::shared_ptr<CesiumAsync::IAssetRequest>&
+                    pCompletedRequest) {
+              // Check if request is successful
+              const CesiumAsync::IAssetResponse* pResponse =
+                  pCompletedRequest->response();
+              const std::string& url = pCompletedRequest->url();
+              if (!pResponse) {
+                TilesetContentLoaderResult<TilesetContentLoader> result;
+                result.errors.emplaceError(fmt::format(
+                    "Did not receive a valid response for tileset {}",
+                    url));
+                return asyncSystem.createResolvedFuture(std::move(result));
+              }
+
+              uint16_t statusCode = pResponse->statusCode();
+              if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+                TilesetContentLoaderResult<TilesetContentLoader> result;
+                result.errors.emplaceError(fmt::format(
+                    "Received status code {} for tileset {}",
+                    statusCode,
+                    url));
+                return asyncSystem.createResolvedFuture(std::move(result));
+              }
+
+              // Parse Json response
+              gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
+              rapidjson::Document tilesetJson;
+              tilesetJson.Parse(
+                  reinterpret_cast<const char*>(tilesetJsonBinary.data()),
+                  tilesetJsonBinary.size());
+              if (tilesetJson.HasParseError()) {
+                TilesetContentLoaderResult<TilesetContentLoader> result;
+                result.errors.emplaceError(fmt::format(
+                    "Error when parsing tileset JSON, error code {} at byte "
+                    "offset {}",
+                    tilesetJson.GetParseError(),
+                    tilesetJson.GetErrorOffset()));
+                return asyncSystem.createResolvedFuture(std::move(result));
+              }
+
+              // Check if the json is a tileset.json format or layer.json format
+              // and create corresponding loader
+              const auto rootIt = tilesetJson.FindMember("root");
+              if (rootIt != tilesetJson.MemberEnd()) {
+                TilesetContentLoaderResult<TilesetContentLoader> result =
+                    TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
+                return asyncSystem.createResolvedFuture(std::move(result));
+              } else {
+                const auto formatIt = tilesetJson.FindMember("format");
+                bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
+                                         formatIt->value.IsString();
+                isLayerJsonFormat = isLayerJsonFormat &&
+                                    std::string(formatIt->value.GetString()) ==
+                                        "quantized-mesh-1.0";
+                if (isLayerJsonFormat) {
+                  const CesiumAsync::HttpHeaders& completedRequestHeaders =
+                      pCompletedRequest->headers();
+                  std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
+                      completedRequestHeaders.begin(),
+                      completedRequestHeaders.end());
+                  return LayerJsonTerrainLoader::createLoader(
+                             asyncSystem,
+                             pAssetAccessor,
+                             contentOptions,
+                             url,
+                             flatHeaders,
+                             showCreditsOnScreen,
+                             tilesetJson)
+                      .thenImmediately(
+                          [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                                 result) { return std::move(result); });
+                }
+
+                TilesetContentLoaderResult<TilesetContentLoader> result;
+                result.errors.emplaceError("tileset json has unsupport format");
+                return asyncSystem.createResolvedFuture(std::move(result));
+              }
+            })
+        .thenInMainThread(
+            [this, errorCallback = tilesetOptions.loadErrorCallback](
+                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              this->notifyTileDoneLoading(result.pRootTile.get());
+              this->propagateTilesetContentLoaderResult(
+                  TilesetLoadType::TilesetJson,
+                  errorCallback,
+                  std::move(result));
+            })
+        .catchInMainThread([this](std::exception&& e) {
+          notifyTileDoneLoading(nullptr);
+          SPDLOG_LOGGER_ERROR(
+              this->_externals.pLogger,
+              "An unexpected error occurs when loading tile: {}",
+              e.what());
+        });
+  }
+}
+
+TilesetContentManager::TilesetContentManager(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl)
+    : _externals{externals},
+      _requestHeaders{},
+      _pLoader{},
+      _pRootTile{},
+      _userCredit(
+          (tilesetOptions.credit && externals.pCreditSystem)
+              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
+                    tilesetOptions.credit.value(),
+                    tilesetOptions.showCreditsOnScreen))
+              : std::nullopt),
+      _tilesetCredits{},
+      _overlayCollection{std::move(overlayCollection)},
+      _tilesLoadOnProgress{0},
+      _loadedTilesCount{0},
+      _tilesDataUsed{0} {
+  if (ionAssetID > 0) {
+    auto authorizationChangeListener = [this](
+                                           const std::string& header,
+                                           const std::string& headerValue) {
+      auto& requestHeaders = this->_requestHeaders;
+      auto authIt = std::find_if(
+          requestHeaders.begin(),
+          requestHeaders.end(),
+          [&header](auto& headerPair) { return headerPair.first == header; });
+      if (authIt != requestHeaders.end()) {
+        authIt->second = headerValue;
+      } else {
+        requestHeaders.emplace_back(header, headerValue);
+      }
+    };
+
+    this->notifyTileStartLoading(nullptr);
+
+    CesiumIonTilesetLoader::createLoader(
+        externals,
+        tilesetOptions.contentOptions,
+        static_cast<uint32_t>(ionAssetID),
+        ionAccessToken,
+        ionAssetEndpointUrl,
+        authorizationChangeListener,
+        tilesetOptions.showCreditsOnScreen)
+        .thenInMainThread(
+            [this, errorCallback = tilesetOptions.loadErrorCallback](
+                TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+              this->notifyTileDoneLoading(result.pRootTile.get());
+              this->propagateTilesetContentLoaderResult(
+                  TilesetLoadType::CesiumIon,
+                  errorCallback,
+                  std::move(result));
+            })
+        .catchInMainThread([this](std::exception&& e) {
+          notifyTileDoneLoading(nullptr);
+          SPDLOG_LOGGER_ERROR(
+              this->_externals.pLogger,
+              "An unexpected error occurs when loading tile: {}",
+              e.what());
+        });
+  }
+}
+
 TilesetContentManager::~TilesetContentManager() noexcept {
-  // Wait for all asynchronous loading to terminate.
-  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
-  // being decremented correctly when an async load ends.
-  while (_tilesLoadOnProgress > 0) {
-    _externals.pAssetAccessor->tick();
-    _externals.asyncSystem.dispatchMainThreadTasks();
-  }
-
-  if (_externals.pTileOcclusionProxyPool) {
-    _externals.pTileOcclusionProxyPool->destroyPool();
-  }
-
-  // Wait for all overlays to wrap up their loading, too.
-  uint32_t tilesLoading = 1;
-  while (tilesLoading > 0) {
-    _externals.pAssetAccessor->tick();
-    _externals.asyncSystem.dispatchMainThreadTasks();
-
-    tilesLoading = 0;
-    for (const auto& pOverlay : *_pOverlayCollection) {
-      tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
-    }
+  waitUntilIdle();
+  if (_pRootTile) {
+    unloadTileRecursively(*_pRootTile, *this);
   }
 }
 
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  TileContent& content = tile.getContent();
-  if (content.getState() != TileLoadState::Unloaded &&
-      content.getState() != TileLoadState::FailedTemporarily) {
+  if (tile.getState() != TileLoadState::Unloaded &&
+      tile.getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : tile.getMappedRasterTiles()) {
@@ -581,37 +834,39 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      mapOverlaysToTile(tile, *_pOverlayCollection, tilesetOptions);
+      mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
 
   // begin loading tile
-  notifyTileStartLoading(tile);
-  content.setState(TileLoadState::ContentLoading);
+  notifyTileStartLoading(&tile);
+  tile.setState(TileLoadState::ContentLoading);
 
   TileContentLoadInfo tileLoadInfo{
-      _externals.asyncSystem,
-      _externals.pAssetAccessor,
-      _externals.pPrepareRendererResources,
-      _externals.pLogger,
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger,
       tilesetOptions.contentOptions,
       tile};
 
   TilesetContentLoader* pLoader;
-  if (content.getLoader() == &_upsampler) {
-    pLoader = &_upsampler;
+  if (tile.getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
   } else {
-    pLoader = _pLoader.get();
+    pLoader = this->_pLoader.get();
   }
 
-  pLoader
-      ->loadTileContent(
-          tile,
-          tilesetOptions.contentOptions,
-          _externals.asyncSystem,
-          _externals.pAssetAccessor,
-          _externals.pLogger,
-          _requestHeaders)
+  TileLoadInput loadInput{
+      tile,
+      tilesetOptions.contentOptions,
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pLogger,
+      this->_requestHeaders};
+
+  pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections)](
+                        projections = std::move(projections),
+                        rendererOptions = tilesetOptions.rendererOptions](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -621,43 +876,39 @@ void TilesetContentManager::loadTileContent(
         // related to render content. We only ever spawn a new task in the
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::Success) {
-          auto pRenderContent =
-              std::get_if<TileRenderContent>(&result.contentKind);
-          if (pRenderContent && pRenderContent->model) {
+          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
             auto asyncSystem = tileLoadInfo.asyncSystem;
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo)]() mutable {
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
-                      std::move(tileLoadInfo));
+                      std::move(tileLoadInfo),
+                      rendererOptions);
                 });
           }
         }
 
         return tileLoadInfo.asyncSystem
             .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), std::nullopt, nullptr});
+                {std::move(result), nullptr});
       })
       .thenInMainThread([&tile, this](TileLoadResultAndRenderResources&& pair) {
-        setTileContent(
-            tile,
-            std::move(pair.result),
-            std::move(pair.rasterOverlayDetails),
-            pair.pRenderResources);
+        setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
-        notifyTileDoneLoading(tile);
+        notifyTileDoneLoading(&tile);
       })
-      .catchInMainThread(
-          [pLogger = _externals.pLogger, &tile, this](std::exception&& e) {
-            notifyTileDoneLoading(tile);
-            SPDLOG_LOGGER_ERROR(
-                pLogger,
-                "An unexpected error occurs when loading tile: {}",
-                e.what());
-          });
+      .catchInMainThread([pLogger = this->_externals.pLogger, &tile, this](
+                             std::exception&& e) {
+        notifyTileDoneLoading(&tile);
+        SPDLOG_LOGGER_ERROR(
+            pLogger,
+            "An unexpected error occurs when loading tile: {}",
+            e.what());
+      });
 }
 
 void TilesetContentManager::updateTileContent(
@@ -666,29 +917,33 @@ void TilesetContentManager::updateTileContent(
     const TilesetOptions& tilesetOptions) {
   TileContent& content = tile.getContent();
 
-  TileLoadState state = content.getState();
-  switch (state) {
-  case TileLoadState::ContentLoaded:
+  if (tile.getState() == TileLoadState::ContentLoaded) {
     updateContentLoadedState(tile, priority, tilesetOptions);
-    break;
-  case TileLoadState::CreatingResources:
-    updateCreatingResourcesState(tile, priority);
-    break;
-  case TileLoadState::Done:
-    updateDoneState(tile, tilesetOptions);
-    break;
-  default:
-    break;
   }
 
-  if (content.shouldContentContinueUpdated()) {
-    content.setContentShouldContinueUpdated(_pLoader->updateTileContent(tile));
+  if (tile.getState() == TileLoadState::CreatingResources) {
+    updateCreatingResourcesState(tile, priority);
+  }
+
+  if (tile.getState() == TileLoadState::Done) {
+    updateDoneState(tile, tilesetOptions);
+  }
+
+  if (tile.shouldContentContinueUpdating()) {
+    TileChildrenResult childrenResult =
+        this->_pLoader->createTileChildren(tile);
+    if (childrenResult.state == TileLoadResultState::Success) {
+      tile.createChildTiles(std::move(childrenResult.children));
+    }
+
+    bool shouldTileContinueUpdated =
+        childrenResult.state == TileLoadResultState::RetryLater;
+    tile.setContentShouldContinueUpdating(shouldTileContinueUpdated);
   }
 }
 
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
-  TileContent& content = tile.getContent();
-  TileLoadState state = content.getState();
+  TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
     return true;
   }
@@ -696,6 +951,8 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   if (state == TileLoadState::ContentLoading) {
     return false;
   }
+
+  TileContent& content = tile.getContent();
 
   // don't unload external or empty tile
   if (content.isExternalContent() || content.isEmptyContent()) {
@@ -714,7 +971,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     }
   }
 
-  notifyTileUnloading(tile);
+  notifyTileUnloading(&tile);
 
   switch (state) {
   case TileLoadState::ContentLoaded:
@@ -728,31 +985,87 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     break;
   }
 
-  tile.getMappedRasterTiles().clear();
-  content.setCredits({});
-  content.setRasterOverlayDetails(RasterOverlayDetails{});
   content.setContentKind(TileUnknownContent{});
-  content.setState(TileLoadState::Unloaded);
+  tile.getMappedRasterTiles().clear();
+  tile.setState(TileLoadState::Unloaded);
   return true;
+}
+
+void TilesetContentManager::waitUntilIdle() {
+  // Wait for all asynchronous loading to terminate.
+  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
+  // being decremented correctly when an async load ends.
+  while (this->_tilesLoadOnProgress > 0) {
+    this->_externals.pAssetAccessor->tick();
+    this->_externals.asyncSystem.dispatchMainThreadTasks();
+  }
+
+  // Wait for all overlays to wrap up their loading, too.
+  uint32_t rasterOverlayTilesLoading = 1;
+  while (rasterOverlayTilesLoading > 0) {
+    this->_externals.pAssetAccessor->tick();
+    this->_externals.asyncSystem.dispatchMainThreadTasks();
+
+    rasterOverlayTilesLoading = 0;
+    for (const auto& pOverlay : this->_overlayCollection) {
+      rasterOverlayTilesLoading +=
+          pOverlay->getTileProvider()->getNumberOfTilesLoading();
+    }
+  }
+}
+
+const Tile* TilesetContentManager::getRootTile() const noexcept {
+  return this->_pRootTile.get();
+}
+
+Tile* TilesetContentManager::getRootTile() noexcept {
+  return this->_pRootTile.get();
 }
 
 const std::vector<CesiumAsync::IAssetAccessor::THeader>&
 TilesetContentManager::getRequestHeaders() const noexcept {
-  return _requestHeaders;
+  return this->_requestHeaders;
 }
 
 std::vector<CesiumAsync::IAssetAccessor::THeader>&
 TilesetContentManager::getRequestHeaders() noexcept {
-  return _requestHeaders;
+  return this->_requestHeaders;
 }
 
-int32_t TilesetContentManager::getNumOfTilesLoading() const noexcept {
-  return _tilesLoadOnProgress;
+const RasterOverlayCollection&
+TilesetContentManager::getRasterOverlayCollection() const noexcept {
+  return this->_overlayCollection;
+}
+
+RasterOverlayCollection&
+TilesetContentManager::getRasterOverlayCollection() noexcept {
+  return this->_overlayCollection;
+}
+
+const Credit* TilesetContentManager::getUserCredit() const noexcept {
+  if (this->_userCredit) {
+    return &*this->_userCredit;
+  }
+
+  return nullptr;
+}
+
+const std::vector<Credit>&
+TilesetContentManager::getTilesetCredits() const noexcept {
+  return this->_tilesetCredits;
+}
+
+int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {
+  return this->_tilesLoadOnProgress;
+}
+
+int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
+  return this->_loadedTilesCount;
 }
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
-  int64_t bytes = _tilesDataUsed;
-  for (const auto& pOverlay : *_pOverlayCollection) {
+  int64_t bytes = this->_tilesDataUsed;
+  for (const auto& pOverlay : this->_overlayCollection) {
     const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
     if (pProvider) {
       bytes += pProvider->getTileDataBytes();
@@ -762,8 +1075,7 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   return bytes;
 }
 
-bool TilesetContentManager::doesTileNeedLoading(
-    const Tile& tile) const noexcept {
+bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
   auto state = tile.getState();
   return state == TileLoadState::Unloaded ||
          state == TileLoadState::FailedTemporarily ||
@@ -820,9 +1132,18 @@ void TilesetContentManager::tickResourceCreation(double /*timeBudget*/) {
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
-    std::optional<RasterOverlayDetails>&& rasterOverlayDetails,
     void* pWorkerRenderResources) {
-  // update bounding volume
+  if (result.state == TileLoadResultState::Failed) {
+    tile.setState(TileLoadState::Failed);
+    return;
+  }
+
+  if (result.state == TileLoadResultState::RetryLater) {
+    tile.setState(TileLoadState::FailedTemporarily);
+    return;
+  }
+
+  // update tile if the result state is success
   if (result.updatedBoundingVolume) {
     tile.setBoundingVolume(*result.updatedBoundingVolume);
   }
@@ -831,29 +1152,19 @@ void TilesetContentManager::setTileContent(
     tile.setContentBoundingVolume(*result.updatedContentBoundingVolume);
   }
 
-  // set content
   auto& content = tile.getContent();
-  switch (result.state) {
-  case TileLoadResultState::Success:
-    content.setState(TileLoadState::ContentLoaded);
-    break;
-  case TileLoadResultState::Failed:
-    content.setState(TileLoadState::Failed);
-    break;
-  case TileLoadResultState::RetryLater:
-    content.setState(TileLoadState::FailedTemporarily);
-    break;
-  default:
-    assert(false && "Cannot handle an unknown TileLoadResultState");
-    break;
+  std::visit(
+      ContentKindSetter{
+          content,
+          std::move(result.rasterOverlayDetails),
+          pWorkerRenderResources},
+      std::move(result.contentKind));
+
+  if (result.tileInitializer) {
+    result.tileInitializer(tile);
   }
 
-  content.setContentKind(std::move(result.contentKind));
-  if (rasterOverlayDetails) {
-    content.setRasterOverlayDetails(std::move(*rasterOverlayDetails));
-  }
-  content.setRenderResources(pWorkerRenderResources);
-  content.setTileInitializerCallback(std::move(result.tileInitializer));
+  tile.setState(TileLoadState::ContentLoaded);
 }
 
 void TilesetContentManager::updateContentLoadedState(
@@ -865,31 +1176,51 @@ void TilesetContentManager::updateContentLoadedState(
   if (content.isExternalContent()) {
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();
+    tile.setState(TileLoadState::Done);
   } else if (content.isRenderContent()) {
-    const TileRenderContent* pRenderContent = content.getRenderContent();
-    if (pRenderContent->model) {
+    TileRenderContent* pRenderContent = content.getRenderContent();
+    if (pRenderContent) {
       // add copyright
-      content.setCredits(GltfUtilities::parseGltfCopyright(
+      pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
           *_externals.pCreditSystem,
-          *pRenderContent->model,
+          pRenderContent->getModel(),
           tilesetOptions.showCreditsOnScreen));
+      
+      tile.setState(TileLoadState::CreatingResources);
+      updateCreatingResourcesState(tile, priority);
     }
-  }
+  } else if (content.isEmptyContent()) {
+    // There are two possible ways to handle a tile with no content:
+    //
+    // 1. Treat it as a placeholder used for more efficient culling, but
+    //    never render it. Refining to this tile is equivalent to refining
+    //    to its children.
+    // 2. Treat it as an indication that nothing need be rendered in this
+    //    area at this level-of-detail. In other words, "render" it as a
+    //    hole. To have this behavior, the tile should _not_ have content at
+    //    all.
+    //
+    // We distinguish whether the tileset creator wanted (1) or (2) by
+    // comparing this tile's geometricError to the geometricError of its
+    // parent tile. If this tile's error is greater than or equal to its
+    // parent, treat it as (1). If it's less, treat it as (2).
+    //
+    // For a tile with no parent there's no difference between the
+    // behaviors.
+    double myGeometricError = tile.getNonZeroGeometricError();
+    const Tile* pAncestor = tile.getParent();
+    while (pAncestor && pAncestor->getUnconditionallyRefine()) {
+      pAncestor = pAncestor->getParent();
+    }
 
-  // TODO: Should the initializer be called after resource creation instead?
-
-  // call the initializer
-  auto& tileInitializer = content.getTileInitializerCallback();
-  if (tileInitializer) {
-    tileInitializer(tile);
-    content.setTileInitializerCallback({});
-  }
-
-  if (content.isRenderContent() && content.getRenderContent()->model) {
-    content.setState(TileLoadState::CreatingResources);
-    updateCreatingResourcesState(tile, priority);
-  } else {
-    content.setState(TileLoadState::Done);
+    double parentGeometricError = pAncestor
+                                      ? pAncestor->getNonZeroGeometricError()
+                                      : myGeometricError * 2.0;
+    if (myGeometricError >= parentGeometricError) {
+      tile.setUnconditionallyRefine();
+    }
+    
+    tile.setState(TileLoadState::Done);
   }
 }
 
@@ -902,28 +1233,43 @@ void TilesetContentManager::updateCreatingResourcesState(
 void TilesetContentManager::createRenderResources(Tile& tile) {
   // create render resources in the main thread
   TileContent& content = tile.getContent();
+  TileRenderContent* pRenderContent = content.getRenderContent();
 
-  void* pWorkerRenderResources = content.getRenderResources();
+  assert(pRenderContent);
+
+  void* pWorkerRenderResources = pRenderContent->getRenderResources();
   void* pMainThreadRenderResources =
       _externals.pPrepareRendererResources->prepareInMainThread(
           tile,
           pWorkerRenderResources);
 
-  content.setRenderResources(pMainThreadRenderResources);
-  content.setState(TileLoadState::Done);
+  pRenderContent->setRenderResources(pMainThreadRenderResources);
+  tile.setState(TileLoadState::Done);
 }
 
 void TilesetContentManager::updateDoneState(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  if (tile.getContent().shouldContentContinueUpdated()) {
+  // The reason for this method to terminate early when
+  // Tile::shouldContentContinueUpdating() returns true is that: When a tile has
+  // Tile::shouldContentContinueUpdating() to be true, it means the tile's
+  // children need to be created by the
+  // TilesetContentLoader::createTileChildren() which is invoked in the
+  // TilesetContentManager::updateTileContent() method. In the
+  // updateDoneState(), RasterOverlayTiles that are mapped to the tile will
+  // begin updating. If there are more RasterOverlayTiles with higher LOD and
+  // the current tile is a leaf, more upsample children will be created for that
+  // tile. So to accurately determine if a tile is a leaf, it needs the tile to
+  // have no children and Tile::shouldContentContinueUpdating() to return false
+  // which means the loader has no more children for this tile.
+  if (tile.shouldContentContinueUpdating()) {
     return;
   }
 
   // update raster overlay
   TileContent& content = tile.getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
-  if (pRenderContent && pRenderContent->model) {
+  if (pRenderContent) {
     bool moreRasterDetailAvailable = false;
     bool skippedUnknown = false;
     std::vector<RasterMappedTo3DTile>& rasterTiles =
@@ -969,7 +1315,9 @@ void TilesetContentManager::updateDoneState(
       }
 
       const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
-          mappedRasterTile.update(*_externals.pPrepareRendererResources, tile);
+          mappedRasterTile.update(
+              *this->_externals.pPrepareRendererResources,
+              tile);
 
       if (moreDetailAvailable ==
               RasterOverlayTile::MoreDetailAvailable::Unknown &&
@@ -986,51 +1334,101 @@ void TilesetContentManager::updateDoneState(
     // children to hang more detailed rasters on by subdividing this tile.
     if (!skippedUnknown && moreRasterDetailAvailable &&
         tile.getChildren().empty()) {
-      createQuadtreeSubdividedChildren(tile, _upsampler);
+      createQuadtreeSubdividedChildren(tile, this->_upsampler);
     }
   } else {
     // We can't hang raster images on a tile without geometry, and their
     // existence can prevent the tile from being deemed done loading. So clear
     // them out here.
     tile.getMappedRasterTiles().clear();
-    content.setRasterOverlayDetails(RasterOverlayDetails{});
   }
 }
 
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
-  void* pWorkerRenderResources = content.getRenderResources();
-  _externals.pPrepareRendererResources->free(
+  TileRenderContent* pRenderContent = content.getRenderContent();
+  assert(pRenderContent && "Tile must have render content to be unloaded");
+
+  void* pWorkerRenderResources = pRenderContent->getRenderResources();
+  this->_externals.pPrepareRendererResources->free(
       tile,
       pWorkerRenderResources,
       nullptr);
-  content.setRenderResources(nullptr);
+  pRenderContent->setRenderResources(nullptr);
 }
 
 void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
-  void* pMainThreadRenderResources = content.getRenderResources();
-  _externals.pPrepareRendererResources->free(
+  TileRenderContent* pRenderContent = content.getRenderContent();
+  assert(pRenderContent && "Tile must have render content to be unloaded");
+
+  void* pMainThreadRenderResources = pRenderContent->getRenderResources();
+  this->_externals.pPrepareRendererResources->free(
       tile,
       nullptr,
       pMainThreadRenderResources);
-  content.setRenderResources(nullptr);
+  pRenderContent->setRenderResources(nullptr);
 }
 
 void TilesetContentManager::notifyTileStartLoading(
-    [[maybe_unused]] Tile& tile) noexcept {
-  ++_tilesLoadOnProgress;
+    [[maybe_unused]] const Tile* pTile) noexcept {
+  ++this->_tilesLoadOnProgress;
 }
 
-void TilesetContentManager::notifyTileDoneLoading(Tile& tile) noexcept {
+void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
   assert(
-      _tilesLoadOnProgress > 0 &&
+      this->_tilesLoadOnProgress > 0 &&
       "There are no tile loads currently in flight");
-  --_tilesLoadOnProgress;
-  _tilesDataUsed += tile.computeByteSize();
+  --this->_tilesLoadOnProgress;
+  ++this->_loadedTilesCount;
+
+  if (pTile) {
+    this->_tilesDataUsed += pTile->computeByteSize();
+  }
 }
 
-void TilesetContentManager::notifyTileUnloading(Tile& tile) noexcept {
-  _tilesDataUsed -= tile.computeByteSize();
+void TilesetContentManager::notifyTileUnloading(const Tile* pTile) noexcept {
+  if (pTile) {
+    this->_tilesDataUsed -= pTile->computeByteSize();
+  }
+
+  --this->_loadedTilesCount;
+}
+
+template <class TilesetContentLoaderType>
+void TilesetContentManager::propagateTilesetContentLoaderResult(
+    TilesetLoadType type,
+    const std::function<void(const TilesetLoadFailureDetails&)>&
+        loadErrorCallback,
+    TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
+  if (result.errors) {
+    if (loadErrorCallback) {
+      loadErrorCallback(TilesetLoadFailureDetails{
+          nullptr,
+          type,
+          nullptr,
+          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    } else {
+      result.errors.logError(
+          this->_externals.pLogger,
+          "Errors when loading tileset");
+
+      result.errors.logWarning(
+          this->_externals.pLogger,
+          "Warnings when loading tileset");
+    }
+  } else {
+    this->_tilesetCredits.reserve(
+        this->_tilesetCredits.size() + result.credits.size());
+    for (const auto& creditResult : result.credits) {
+      this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
+          creditResult.creditText,
+          creditResult.showOnScreen));
+    }
+
+    this->_requestHeaders = std::move(result.requestHeaders);
+    this->_pLoader = std::move(result.pLoader);
+    this->_pRootTile = std::move(result.pRootTile);
+  }
 }
 } // namespace Cesium3DTilesSelection

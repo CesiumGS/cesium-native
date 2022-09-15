@@ -206,7 +206,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 1);
       REQUIRE(result.tilesLoadingMediumPriority == 0);
@@ -266,7 +266,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 1);
       REQUIRE(result.tilesLoadingMediumPriority == 4);
@@ -290,7 +290,7 @@ TEST_CASE("Test replace refinement for render") {
       // check result
       REQUIRE(result.tilesToRenderThisFrame.size() == 4);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -341,7 +341,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.tilesLoadingLowPriority == 1);
@@ -385,8 +385,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
       REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+      REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -441,7 +440,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
       REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -473,7 +472,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -504,8 +503,7 @@ TEST_CASE("Test replace refinement for render") {
                 &child) != result.tilesToRenderThisFrame.end());
       }
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+      REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -596,7 +594,7 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -646,7 +644,7 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(result.tilesToRenderThisFrame[0] == root);
       REQUIRE(result.tilesToRenderThisFrame[1] == &parentB3DM);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -662,7 +660,7 @@ TEST_CASE("Test additive refinement") {
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 7);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+      REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.tilesLoadingLowPriority == 0);
@@ -734,7 +732,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     }
 
     REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-    REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+    REQUIRE(result.tilesFadingOut.size() == 0);
     REQUIRE(result.tilesVisited == 4);
     REQUIRE(result.tilesLoadingLowPriority == 0);
     REQUIRE(result.tilesLoadingMediumPriority == 3);
@@ -760,7 +758,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     }
 
     REQUIRE(result.tilesToRenderThisFrame.size() == 4);
-    REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+    REQUIRE(result.tilesFadingOut.size() == 0);
     REQUIRE(result.tilesVisited == 4);
     REQUIRE(result.tilesLoadingLowPriority == 0);
     REQUIRE(result.tilesLoadingMediumPriority == 0);
@@ -876,8 +874,8 @@ TEST_CASE("Test multiple frustums") {
       // check result
       REQUIRE(result.tilesToRenderThisFrame.size() == 4);
 
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+      REQUIRE(result.tilesFadingOut.size() == 1);
+      REQUIRE(*result.tilesFadingOut.begin() == root);
 
       REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.tilesLoadingMediumPriority == 0);

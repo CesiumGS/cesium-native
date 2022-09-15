@@ -45,13 +45,16 @@ public:
    *
    * @param model The glTF model to prepare.
    * @param transform The tile's transformation.
+   * @param rendererOptions Renderer options associated with the tile from
+   * {@link TilesetOptions::rendererOptions}.
    * @returns Arbitrary data representing the result of the load process. This
    * data is passed to {@link prepareInMainThread} as the `pLoadThreadResult`
    * parameter.
    */
   virtual void* prepareInLoadThread(
       const CesiumGltf::Model& model,
-      const glm::dmat4& transform) = 0;
+      const glm::dmat4& transform,
+      const std::any& rendererOptions) = 0;
 
   /**
    * @brief Further prepares renderer resources.

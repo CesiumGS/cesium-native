@@ -1,5 +1,7 @@
 #include "TileContentLoadInfo.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+
 namespace Cesium3DTilesSelection {
 TileContentLoadInfo::TileContentLoadInfo(
     const CesiumAsync::AsyncSystem& asyncSystem_,

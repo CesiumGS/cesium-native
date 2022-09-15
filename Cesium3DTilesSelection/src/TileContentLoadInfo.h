@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
 
 #include <gsl/span>
 #include <spdlog/fwd.h>

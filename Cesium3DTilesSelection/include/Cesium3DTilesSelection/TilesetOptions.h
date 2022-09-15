@@ -247,10 +247,51 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   std::function<void(const TilesetLoadFailureDetails&)> loadErrorCallback;
 
   /**
+   * @brief Whether to keep tiles loaded during a transition period when
+   * switching to a different LOD tile.
+   *
+   * For each tile, TileContentLoadResult::lodTransitionFadePercentage will
+   * indicate to the client how faded to render the tile throughout the
+   * transition. Tile fades can be used to mask LOD transitions and make them
+   * appear less abrupt and jarring.
+   */
+  bool enableLodTransitionPeriod = false;
+
+  /**
+   * @brief How long it should take to transition between tiles of different
+   * LODs, in seconds.
+   *
+   * When a tile refines or unrefines to a higher or lower LOD tile, a fade
+   * can optionally be applied to smooth the transition. This value determines
+   * how many seconds the whole transition should take. Note that the old tile
+   * doesn't start fading out until the new tile fully fades in.
+   */
+  float lodTransitionLength = 1.0f;
+
+  /**
+   * @brief Whether to kick descendants while a tile is still fading in.
+   *
+   * This does not delay loading of descendants, but it keeps them off the
+   * render list while the tile is fading in. If this is false, the tile
+   * currently fading in will pop in to full opacity if descendants are
+   * rendered (this counteracts the benefits of LOD transition blending).
+   *
+   */
+  bool kickDescendantsWhileFadingIn = true;
+
+  /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
    * and construction of Gltf models.
    */
   TilesetContentOptions contentOptions;
+
+  /**
+   * @brief Arbitrary data that will be passed to {@link prepareInLoadThread}.
+   *
+   * This object is copied and given to tile preparation threads,
+   * so it must be inexpensive to copy.
+   */
+  std::any rendererOptions;
 };
 
 } // namespace Cesium3DTilesSelection

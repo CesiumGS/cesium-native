@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
+#include "IPrepareRendererResources.h"
+#include "RasterOverlayTile.h"
+
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -152,6 +153,8 @@ public:
    * will return whether there is a more detailed version of the
    * raster data available.
    *
+   * @param prepareRendererResources The IPrepareRendererResources used to
+   * create render resources for raster overlay
    * @param tile The owner tile.
    * @return The {@link MoreDetailAvailable} state.
    */
@@ -162,6 +165,9 @@ public:
 
   /**
    * @brief Detach the raster from the given tile.
+   * @param prepareRendererResources The IPrepareRendererResources used to
+   * detach raster overlay from the tile geometry
+   * @param tile The owner tile.
    */
   void detachFromTile(
       IPrepareRendererResources& prepareRendererResources,
@@ -192,6 +198,8 @@ public:
    * become invalid as soon as another item is added to or removed from this
    * collection.
    *
+   * @param maximumScreenSpaceError The maximum screen space error that is used
+   * for the current tile
    * @param overlay The overlay to map to the tile.
    * @param tile The tile to which to map the overlay.
    * @param missingProjections The list of projections for which there are not

@@ -10,10 +10,12 @@ void ErrorList::merge(const ErrorList& errorList) {
 }
 
 void ErrorList::merge(ErrorList&& errorList) {
+  errors.reserve(errors.size() + errorList.errors.size());
   for (auto& error : errorList.errors) {
     errors.emplace_back(std::move(error));
   }
 
+  warnings.reserve(warnings.size() + errorList.warnings.size());
   for (auto& warning : errorList.warnings) {
     warnings.emplace_back(std::move(warning));
   }

@@ -1,11 +1,12 @@
 #include "ImplicitQuadtreeLoader.h"
 
+#include "logTileLoadResult.h"
+
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumUtility/joinToString.h>
 
 #include <libmorton/morton.h>
 #include <spdlog/logger.h>
@@ -15,137 +16,90 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
-void logErrors(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& errors) {
-  if (!errors.empty()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Failed to load {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(errors, "\n- "));
+struct BoundingVolumeSubdivision {
+  BoundingVolume operator()(const CesiumGeospatial::BoundingRegion& region) {
+    const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
+    double denominator = static_cast<double>(1 << tileID.level);
+    double latSize =
+        (globeRect.getNorth() - globeRect.getSouth()) / denominator;
+    double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
+
+    double childWest = globeRect.getWest() + longSize * tileID.x;
+    double childEast = globeRect.getWest() + longSize * (tileID.x + 1);
+
+    double childSouth = globeRect.getSouth() + latSize * tileID.y;
+    double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
+
+    return CesiumGeospatial::BoundingRegion{
+        CesiumGeospatial::GlobeRectangle(
+            childWest,
+            childSouth,
+            childEast,
+            childNorth),
+        region.getMinimumHeight(),
+        region.getMaximumHeight()};
   }
-}
 
-void logWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const std::vector<std::string>& warnings) {
-  if (!warnings.empty()) {
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "Warning when loading {}:\n- {}",
-        url,
-        CesiumUtility::joinToString(warnings, "\n- "));
+  BoundingVolume
+  operator()(const CesiumGeospatial::S2CellBoundingVolume& s2Volume) {
+    return CesiumGeospatial::S2CellBoundingVolume(
+        CesiumGeospatial::S2CellID::fromQuadtreeTileID(
+            s2Volume.getCellID().getFace(),
+            tileID),
+        s2Volume.getMinimumHeight(),
+        s2Volume.getMaximumHeight());
   }
-}
 
-void logErrorsAndWarnings(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const ErrorList& errorLists) {
-  logErrors(pLogger, url, errorLists.errors);
-  logWarnings(pLogger, url, errorLists.warnings);
-}
+  BoundingVolume operator()(const CesiumGeometry::OrientedBoundingBox& obb) {
+    const glm::dmat3& halfAxes = obb.getHalfAxes();
+    const glm::dvec3& center = obb.getCenter();
 
-CesiumGeospatial::BoundingRegion subdivideRegion(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeospatial::BoundingRegion& region) {
-  const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
-  double denominator = static_cast<double>(1 << tileID.level);
-  double latSize = (globeRect.getNorth() - globeRect.getSouth()) / denominator;
-  double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
+    double denominator = static_cast<double>(1 << tileID.level);
+    glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
 
-  double childWest = globeRect.getWest() + longSize * tileID.x;
-  double childEast = globeRect.getWest() + longSize * (tileID.x + 1);
+    glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
+    glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
+    glm::dvec3 childMin =
+        min + xDim * double(tileID.x) + yDim * double(tileID.y);
+    glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
+                          yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
 
-  double childSouth = globeRect.getSouth() + latSize * tileID.y;
-  double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
+    return CesiumGeometry::OrientedBoundingBox(
+        (childMin + childMax) / 2.0,
+        glm::dmat3{xDim / 2.0, yDim / 2.0, halfAxes[2]});
+  }
 
-  return CesiumGeospatial::BoundingRegion{
-      CesiumGeospatial::GlobeRectangle(
-          childWest,
-          childSouth,
-          childEast,
-          childNorth),
-      region.getMinimumHeight(),
-      region.getMaximumHeight()};
-}
-
-CesiumGeospatial::S2CellBoundingVolume subdivideS2Volume(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeospatial::S2CellBoundingVolume& s2Volume) {
-  return CesiumGeospatial::S2CellBoundingVolume(
-      CesiumGeospatial::S2CellID::fromQuadtreeTileID(
-          s2Volume.getCellID().getFace(),
-          tileID),
-      s2Volume.getMinimumHeight(),
-      s2Volume.getMaximumHeight());
-}
-
-CesiumGeometry::OrientedBoundingBox subdivideOrientedBoundingBox(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    const CesiumGeometry::OrientedBoundingBox& obb) {
-  const glm::dmat3& halfAxes = obb.getHalfAxes();
-  const glm::dvec3& center = obb.getCenter();
-
-  double denominator = static_cast<double>(1 << tileID.level);
-  glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
-
-  glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
-  glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
-  glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
-  glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
-                        yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
-
-  return CesiumGeometry::OrientedBoundingBox(
-      (childMin + childMax) / 2.0,
-      glm::dmat3{xDim / 2.0, yDim / 2.0, halfAxes[2]});
-}
+  const CesiumGeometry::QuadtreeTileID& tileID;
+};
 
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const ImplicitQuadtreeBoundingVolume& rootBoundingVolume) {
-  auto pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&rootBoundingVolume);
-  if (pRegion) {
-    return subdivideRegion(tileID, *pRegion);
-  }
-
-  auto pS2 =
-      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&rootBoundingVolume);
-  if (pS2) {
-    return subdivideS2Volume(tileID, *pS2);
-  }
-
-  auto pOBB =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&rootBoundingVolume);
-  return subdivideOrientedBoundingBox(tileID, *pOBB);
+  return std::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
 }
 
-void populateSubtree(
+std::vector<Tile> populateSubtree(
     const SubtreeAvailability& subtreeAvailability,
     uint32_t subtreeLevels,
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonID,
-    Tile& tile,
+    const Tile& tile,
     ImplicitQuadtreeLoader& loader) {
   if (relativeTileLevel >= subtreeLevels) {
-    return;
+    return {};
   }
 
-  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+  const CesiumGeometry::QuadtreeTileID& quadtreeID =
+      std::get<CesiumGeometry::QuadtreeTileID>(tile.getTileID());
 
   std::vector<Tile> children;
   children.reserve(4);
   for (uint16_t y = 0; y < 2; ++y) {
-    uint32_t childY = (pQuadtreeID->y << 1) | y;
+    uint32_t childY = (quadtreeID.y << 1) | y;
     for (uint16_t x = 0; x < 2; ++x) {
-      uint32_t childX = (pQuadtreeID->x << 1) | x;
+      uint32_t childX = (quadtreeID.x << 1) | x;
       CesiumGeometry::QuadtreeTileID childID{
-          pQuadtreeID->level + 1,
+          quadtreeID.level + 1,
           childX,
           childY};
 
@@ -188,7 +142,7 @@ void populateSubtree(
     }
   }
 
-  tile.createChildTiles(std::move(children));
+  return children;
 }
 
 bool isTileContentAvailable(
@@ -224,13 +178,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               pLogger,
               "Did not receive a valid response for tile content {}",
               tileUrl);
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              TileLoadResultState::Failed,
-              nullptr,
-              {}};
+          return TileLoadResult::createFailedResult(
+              std::move(pCompletedRequest));
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -240,13 +189,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl);
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              TileLoadResultState::Failed,
-              nullptr,
-              {}};
+          return TileLoadResult::createFailedResult(
+              std::move(pCompletedRequest));
         }
 
         // find gltf converter
@@ -264,45 +208,38 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           GltfConverterResult result = converter(responseData, gltfOptions);
 
           // Report any errors if there are any
-          logErrorsAndWarnings(pLogger, tileUrl, result.errors);
-          if (result.errors) {
-            return TileLoadResult{
-                TileRenderContent{std::nullopt},
-                std::nullopt,
-                std::nullopt,
-                TileLoadResultState::Failed,
-                std::move(pCompletedRequest),
-                {}};
+          logTileLoadResult(pLogger, tileUrl, result.errors);
+          if (result.errors || !result.model) {
+            return TileLoadResult::createFailedResult(
+                std::move(pCompletedRequest));
           }
 
           return TileLoadResult{
-              TileRenderContent{std::move(result.model)},
+              std::move(*result.model),
+              CesiumGeometry::Axis::Y,
               std::nullopt,
               std::nullopt,
-              TileLoadResultState::Success,
+              std::nullopt,
               std::move(pCompletedRequest),
-              {}};
+              {},
+              TileLoadResultState::Success};
         }
 
         // content type is not supported
-        return TileLoadResult{
-            TileRenderContent{std::nullopt},
-            std::nullopt,
-            std::nullopt,
-            TileLoadResultState::Failed,
-            std::move(pCompletedRequest),
-            {}};
+        return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
       });
 }
 } // namespace
 
-CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
-    Tile& tile,
-    const TilesetContentOptions& contentOptions,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+CesiumAsync::Future<TileLoadResult>
+ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
+  const auto& tile = loadInput.tile;
+  const auto& asyncSystem = loadInput.asyncSystem;
+  const auto& pAssetAccessor = loadInput.pAssetAccessor;
+  const auto& pLogger = loadInput.pLogger;
+  const auto& requestHeaders = loadInput.requestHeaders;
+  const auto& contentOptions = loadInput.contentOptions;
+
   // Ensure CesiumGeometry::QuadtreeTileID only has 32-bit components. There are
   // solutions below if the ID has more than 32-bit components.
   static_assert(
@@ -325,29 +262,19 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        TileLoadResultState::Failed,
-        nullptr,
-        {}});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
   // find the subtree ID
-  uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(TileLoadResult{
-        TileUnknownContent{},
-        std::nullopt,
-        std::nullopt,
-        TileLoadResultState::Failed,
-        nullptr,
-        {}});
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult(nullptr));
   }
 
-  uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
-  uint32_t subtreeLevel = _subtreeLevels * subtreeLevelIdx;
+  uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
+  uint32_t subtreeLevel = this->_subtreeLevels * subtreeLevelIdx;
   uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
   uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
   CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
@@ -364,11 +291,12 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
   // parent loader. The solution isn't implemented at the moment, as implicit
   // tilesets that exceeds 33 levels are expected to be very rare
   uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
-  auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
-  if (subtreeIt == _loadedSubtrees[subtreeLevelIdx].end()) {
+  auto subtreeIt =
+      this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+  if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
     // subtree is not loaded, so load it now.
     std::string subtreeUrl =
-        resolveUrl(_baseUrl, _subtreeUrlTemplate, subtreeID);
+        resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
     return SubtreeAvailability::loadSubtree(
                2,
                asyncSystem,
@@ -385,13 +313,7 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
           }
 
           // tell client to retry later
-          return TileLoadResult{
-              TileUnknownContent{},
-              std::nullopt,
-              std::nullopt,
-              TileLoadResultState::RetryLater,
-              nullptr,
-              {}};
+          return TileLoadResult::createRetryLaterResult(nullptr);
         });
   }
 
@@ -401,14 +323,17 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
+        CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
-        TileLoadResultState::Success,
+        std::nullopt,
         nullptr,
-        {}});
+        {},
+        TileLoadResultState::Success});
   }
 
-  std::string tileUrl = resolveUrl(_baseUrl, _contentUrlTemplate, *pQuadtreeID);
+  std::string tileUrl =
+      resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
   return requestTileContent(
       pLogger,
       asyncSystem,
@@ -418,69 +343,68 @@ CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::loadTileContent(
       contentOptions.ktx2TranscodeTargets);
 }
 
-bool ImplicitQuadtreeLoader::updateTileContent(Tile& tile) {
-  if (tile.getChildren().empty()) {
-    const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-        std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
-    assert(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
+TileChildrenResult
+ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
+  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+  assert(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
 
-    // find the subtree ID
-    uint32_t subtreeLevelIdx = pQuadtreeID->level / _subtreeLevels;
-    if (subtreeLevelIdx >= _loadedSubtrees.size()) {
-      return false;
-    }
-
-    uint64_t levelLeft = pQuadtreeID->level % _subtreeLevels;
-    uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
-    uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
-
-    uint64_t subtreeMortonIdx =
-        libmorton::morton2D_64_encode(subtreeX, subtreeY);
-    auto subtreeIt = _loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
-    if (subtreeIt != _loadedSubtrees[subtreeLevelIdx].end()) {
-      uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
-          pQuadtreeID->x - (subtreeX << levelLeft),
-          pQuadtreeID->y - (subtreeY << levelLeft));
-      populateSubtree(
-          subtreeIt->second,
-          _subtreeLevels,
-          static_cast<std::uint32_t>(levelLeft),
-          relativeTileMortonIdx,
-          tile,
-          *this);
-
-      return false;
-    }
+  // find the subtree ID
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
+  if (subtreeLevelIdx >= this->_loadedSubtrees.size()) {
+    return {{}, TileLoadResultState::Failed};
   }
 
-  return true;
+  uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
+  uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
+  uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
+
+  uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
+  auto subtreeIt =
+      this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+  if (subtreeIt != this->_loadedSubtrees[subtreeLevelIdx].end()) {
+    uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
+        pQuadtreeID->x - (subtreeX << levelLeft),
+        pQuadtreeID->y - (subtreeY << levelLeft));
+    auto children = populateSubtree(
+        subtreeIt->second,
+        this->_subtreeLevels,
+        static_cast<std::uint32_t>(levelLeft),
+        relativeTileMortonIdx,
+        tile,
+        *this);
+
+    return {std::move(children), TileLoadResultState::Success};
+  }
+
+  return {{}, TileLoadResultState::RetryLater};
 }
 
 uint32_t ImplicitQuadtreeLoader::getSubtreeLevels() const noexcept {
-  return _subtreeLevels;
+  return this->_subtreeLevels;
 }
 
 uint32_t ImplicitQuadtreeLoader::getAvailableLevels() const noexcept {
-  return _availableLevels;
+  return this->_availableLevels;
 }
 
 const ImplicitQuadtreeBoundingVolume&
 ImplicitQuadtreeLoader::getBoundingVolume() const noexcept {
-  return _boundingVolume;
+  return this->_boundingVolume;
 }
 
 void ImplicitQuadtreeLoader::addSubtreeAvailability(
     const CesiumGeometry::QuadtreeTileID& subtreeID,
     SubtreeAvailability&& subtreeAvailability) {
-  uint32_t levelIndex = subtreeID.level / _subtreeLevels;
-  if (levelIndex >= _loadedSubtrees.size()) {
+  uint32_t levelIndex = subtreeID.level / this->_subtreeLevels;
+  if (levelIndex >= this->_loadedSubtrees.size()) {
     return;
   }
 
   uint64_t subtreeMortonID =
       libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y);
 
-  _loadedSubtrees[levelIndex].insert_or_assign(
+  this->_loadedSubtrees[levelIndex].insert_or_assign(
       subtreeMortonID,
       std::move(subtreeAvailability));
 }
