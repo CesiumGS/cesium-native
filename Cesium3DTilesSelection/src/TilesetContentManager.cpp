@@ -1185,7 +1185,7 @@ void TilesetContentManager::updateContentLoadedState(
           *_externals.pCreditSystem,
           pRenderContent->getModel(),
           tilesetOptions.showCreditsOnScreen));
-      
+
       tile.setState(TileLoadState::CreatingResources);
       updateCreatingResourcesState(tile, priority);
     }
@@ -1219,7 +1219,7 @@ void TilesetContentManager::updateContentLoadedState(
     if (myGeometricError >= parentGeometricError) {
       tile.setUnconditionallyRefine();
     }
-    
+
     tile.setState(TileLoadState::Done);
   }
 }

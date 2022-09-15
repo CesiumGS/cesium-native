@@ -53,7 +53,7 @@ enum class TileLoadState {
    * @brief The tile content has finished loading.
    */
   ContentLoaded = 2,
-  
+
   /**
    * @brief Renderer resources for this tile are being created.
    */
