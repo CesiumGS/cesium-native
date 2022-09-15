@@ -11,6 +11,10 @@
 
 #include <any>
 
+namespace CesiumAsync {
+class AsyncSystem;
+}
+
 namespace CesiumGeometry {
 struct Rectangle;
 }
