@@ -87,10 +87,8 @@ private:
       TileLoadResult&& result,
       void* pWorkerRenderResources);
 
-  void updateContentLoadedState(
-      Tile& tile,
-      double priority,
-      const TilesetOptions& tilesetOptions);
+  void
+  updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void updateCreatingResourcesState(Tile& tile, double priority);
 

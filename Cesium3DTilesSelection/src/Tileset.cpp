@@ -339,7 +339,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
-  _pTilesetContentManager->tickResourceCreation(1.0);
+  // TODO: expose this to TilesetOptions
+  _pTilesetContentManager->tickResourceCreation(2.0);
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();
@@ -1390,12 +1391,14 @@ void Tileset::_processLoadQueue() {
 }
 
 void Tileset::_unloadCachedTiles() noexcept {
+  // TODO: this is a hack, time-budget this similar to tickResourceCreation
+  size_t unloadedCount = 0;
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
-  while (this->getTotalDataBytes() > maxBytes) {
+  while (this->getTotalDataBytes() > maxBytes && unloadedCount < 5) {
     if (pTile == nullptr || pTile == pRootTile) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
@@ -1416,6 +1419,7 @@ void Tileset::_unloadCachedTiles() noexcept {
         this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
+      ++unloadedCount;
     }
 
     pTile = pNext;

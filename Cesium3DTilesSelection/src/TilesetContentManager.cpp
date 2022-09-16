@@ -915,10 +915,8 @@ void TilesetContentManager::updateTileContent(
     Tile& tile,
     double priority,
     const TilesetOptions& tilesetOptions) {
-  TileContent& content = tile.getContent();
-
   if (tile.getState() == TileLoadState::ContentLoaded) {
-    updateContentLoadedState(tile, priority, tilesetOptions);
+    updateContentLoadedState(tile, tilesetOptions);
   }
 
   if (tile.getState() == TileLoadState::CreatingResources) {
@@ -1082,48 +1080,20 @@ bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
          anyRasterOverlaysNeedLoading(tile);
 }
 
-void TilesetContentManager::tickResourceCreation(double /*timeBudget*/) {
+void TilesetContentManager::tickResourceCreation(double timeBudget) {
   std::sort(_resourceCreationQueue.begin(), _resourceCreationQueue.end());
-  // TODO: actually use the budget
-
-  // for (ResourceCreationTask& task : _resourceCreationQueue) {
-  //   createRenderResources(*task.pTile);
-  // }
-
-  static std::vector<double> times(30);
-  static size_t index = 0;
 
   std::chrono::time_point<std::chrono::system_clock> start =
       std::chrono::system_clock::now();
-  if (_resourceCreationQueue.size()) {
-    createRenderResources(*_resourceCreationQueue.front().pTile);
-  }
-  std::chrono::time_point<std::chrono::system_clock> end =
-      std::chrono::system_clock::now();
-  times[index] =
-      std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
-          end - start)
-          .count();
-
-  index = (index + 1) % 30;
-
-  double max = 0.0;
-  double sum = 0.0;
-  for (size_t i = 0; i < 30; ++i) {
-    if (times[i] > max) {
-      max = times[i];
+  for (ResourceCreationTask& task : _resourceCreationQueue) {
+    createRenderResources(*task.pTile);
+    std::chrono::time_point<std::chrono::system_clock> time =
+        std::chrono::system_clock::now();
+    if (std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+            time - start)
+            .count() >= timeBudget) {
+      break;
     }
-
-    sum += times[i];
-  }
-  double avg = sum / 30.0;
-
-  if (index == 0) {
-    SPDLOG_LOGGER_WARN(
-        _externals.pLogger,
-        "Resource Creation Avg: {}ms, Max: {}ms",
-        avg,
-        max);
   }
 
   _resourceCreationQueue.clear();
@@ -1169,7 +1139,6 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
-    double priority,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
@@ -1187,7 +1156,6 @@ void TilesetContentManager::updateContentLoadedState(
           tilesetOptions.showCreditsOnScreen));
 
       tile.setState(TileLoadState::CreatingResources);
-      updateCreatingResourcesState(tile, priority);
     }
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
