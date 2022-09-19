@@ -10,8 +10,7 @@ namespace {
 
 enum class DirectionAxis { WestEast, SouthNorth, DownUp };
 
-[[maybe_unused]]
-DirectionAxis directionToAxis(LocalDirection direction) {
+[[maybe_unused]] DirectionAxis directionToAxis(LocalDirection direction) {
   switch (direction) {
   case LocalDirection::West:
   case LocalDirection::East:

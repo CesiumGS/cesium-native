@@ -29,7 +29,8 @@ public:
   prepareInLoadThread(
       const CesiumAsync::AsyncSystem& asyncSystem,
       TileLoadResult&& tileLoadResult,
-      const glm::dmat4& /*transform*/) override {
+      const glm::dmat4& /*transform*/,
+      const std::any& /*rendererOptions*/) override {
     return asyncSystem.createResolvedFuture(TileLoadResultAndRenderResources{
         std::move(tileLoadResult),
         new AllocationResult{totalAllocation}});

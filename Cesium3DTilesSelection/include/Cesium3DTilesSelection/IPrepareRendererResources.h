@@ -57,6 +57,8 @@ public:
    * @param asyncSystem The AsyncSystem used to do work in threads.
    * @param tileLoadResult The tile data loaded so far.
    * @param transform The tile's transformation.
+   * @param rendererOptions Renderer options associated with the tile from
+   * {@link TilesetOptions::rendererOptions}.
    * @returns A future that resolves to the loaded tile data along with
    * arbitrary "render resources" data representing the result of the load
    * process. The loaded data may be the same as was originally given to this
@@ -67,7 +69,8 @@ public:
   prepareInLoadThread(
       const CesiumAsync::AsyncSystem& asyncSystem,
       TileLoadResult&& tileLoadResult,
-      const glm::dmat4& transform) = 0;
+      const glm::dmat4& transform,
+      const std::any& rendererOptions) = 0;
 
   /**
    * @brief Further prepares renderer resources.

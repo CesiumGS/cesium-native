@@ -464,7 +464,8 @@ CesiumAsync::Future<TileLoadResultAndRenderResources>
 postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    TileContentLoadInfo&& tileLoadInfo) {
+    TileContentLoadInfo&& tileLoadInfo,
+    const std::any& rendererOptions) {
   assert(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
@@ -497,7 +498,8 @@ postProcessContentInWorkerThread(
       .thenInWorkerThread(
           [result = std::move(result),
            projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo)](
+           tileLoadInfo = std::move(tileLoadInfo),
+           rendererOptions](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
               if (result.pCompletedRequest) {
@@ -548,7 +550,8 @@ postProcessContentInWorkerThread(
             return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
                 tileLoadInfo.asyncSystem,
                 std::move(result),
-                tileLoadInfo.tileTransform);
+                tileLoadInfo.tileTransform,
+                rendererOptions);
           });
 }
 } // namespace
@@ -862,7 +865,8 @@ void TilesetContentManager::loadTileContent(
 
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections)](
+                        projections = std::move(projections),
+                        rendererOptions = tilesetOptions.rendererOptions](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -877,11 +881,13 @@ void TilesetContentManager::loadTileContent(
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo)]() mutable {
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
-                      std::move(tileLoadInfo));
+                      std::move(tileLoadInfo),
+                      rendererOptions);
                 });
           }
         }
