@@ -165,8 +165,9 @@ void Tileset::_updateLodTransitions(
     float deltaTime,
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
-    // We fade the old tile from 1.0 --> 0.0 while the new tile fades from
-    // 0.0 --> 1.0.
+    // We always fade tiles from 0.0 --> 1.0. Whether the tile is fading in or
+    // out is determined by whether the tile is in the tilesToRenderThisFrame
+    // or tilesFadingOut list.
     float deltaTransitionPercentage =
         deltaTime / this->_options.lodTransitionLength;
 
@@ -188,24 +189,25 @@ void Tileset::_updateLodTransitions(
           (*tileIt)->getLastSelectionState().getResult(
               frameState.currentFrameNumber);
       if (selectionResult == TileSelectionState::Result::Rendered) {
-        // This tile will already be on the render list. Just fade it in from
-        // the current fade percentage, no need to set it to 0.0f.
+        // This tile will already be on the render list.
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
       float currentPercentage =
           pRenderContent->getLodTransitionFadePercentage();
-      if (currentPercentage <= 0.0f) {
-        // Remove this tile from the fading out list if it is already at 0%.
+      if (currentPercentage >= 1.0f) {
+        // Remove this tile from the fading out list if it is already done.
         // The client will already have had a chance to stop rendering the tile
         // last frame.
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
       float newPercentage =
-          glm::max(currentPercentage - deltaTransitionPercentage, 0.0f);
+          glm::min(currentPercentage + deltaTransitionPercentage, 1.0f);
       pRenderContent->setLodTransitionFadePercentage(newPercentage);
       ++tileIt;
     }
@@ -258,7 +260,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
         uniqueTilesToRenderThisFrame.end()) {
       TileRenderContent* pRenderContent = tile->getContent().getRenderContent();
       if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
+        pRenderContent->setLodTransitionFadePercentage(1.0f);
         this->_updateResult.tilesFadingOut.insert(tile);
       }
     }
@@ -336,6 +338,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   if (pOcclusionPool) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
+
+  // TODO: expose this to TilesetOptions
+  _pTilesetContentManager->tickResourceCreation(2.0);
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();
@@ -434,7 +439,7 @@ static void markTileNonRendered(
   if (lastResult == TileSelectionState::Result::Rendered) {
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
-      pRenderContent->setLodTransitionFadePercentage(1.0f);
+      pRenderContent->setLodTransitionFadePercentage(0.0f);
       result.tilesFadingOut.insert(&tile);
     }
   }
@@ -714,7 +719,13 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-  this->_pTilesetContentManager->updateTileContent(tile, this->_options);
+
+  std::vector<double>& distances = this->_distances;
+  computeDistances(tile, frameState.frustums, distances);
+  double tilePriority =
+      computeTilePriority(tile, frameState.frustums, distances);
+
+  _pTilesetContentManager->updateTileContent(tile, tilePriority, _options);
   this->_markTileVisited(tile);
 
   CullResult cullResult{};
@@ -736,11 +747,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       break;
     }
   }
-
-  std::vector<double>& distances = this->_distances;
-  computeDistances(tile, frameState.frustums, distances);
-  double tilePriority =
-      computeTilePriority(tile, frameState.frustums, distances);
 
   // TODO: abstract culling stages into composable interface?
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
@@ -828,7 +834,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      this->_pTilesetContentManager->updateTileContent(child, _options);
+      _pTilesetContentManager->updateTileContent(child, tilePriority, _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1385,12 +1391,14 @@ void Tileset::_processLoadQueue() {
 }
 
 void Tileset::_unloadCachedTiles() noexcept {
+  // TODO: this is a hack, time-budget this similar to tickResourceCreation
+  size_t unloadedCount = 0;
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
-  while (this->getTotalDataBytes() > maxBytes) {
+  while (this->getTotalDataBytes() > maxBytes && unloadedCount < 5) {
     if (pTile == nullptr || pTile == pRootTile) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
@@ -1398,11 +1406,9 @@ void Tileset::_unloadCachedTiles() noexcept {
       break;
     }
 
-    // Still fading out, can't unload this tile.
-    const TileRenderContent* pRenderContent =
-        pTile->getContent().getRenderContent();
-    if (_options.enableLodTransitionPeriod && pRenderContent &&
-        pRenderContent->getLodTransitionFadePercentage() > 0.0f) {
+    // Don't unload this tile if it is still fading out.
+    if (_updateResult.tilesFadingOut.find(pTile) !=
+        _updateResult.tilesFadingOut.end()) {
       pTile = this->_loadedTiles.next(*pTile);
       continue;
     }
@@ -1413,6 +1419,7 @@ void Tileset::_unloadCachedTiles() noexcept {
         this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
+      ++unloadedCount;
     }
 
     pTile = pNext;

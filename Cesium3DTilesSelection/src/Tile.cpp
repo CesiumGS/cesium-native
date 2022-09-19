@@ -181,7 +181,7 @@ int64_t Tile::computeByteSize() const noexcept {
 }
 
 bool Tile::isRenderable() const noexcept {
-  if (getState() >= TileLoadState::ContentLoaded) {
+  if (getState() == TileLoadState::Done) {
     if (!isExternalContent()) {
       return std::all_of(
           this->_rasterTiles.begin(),

@@ -27,7 +27,8 @@ public:
 
   virtual void* prepareInLoadThread(
       const CesiumGltf::Model& /*model*/,
-      const glm::dmat4& /*transform*/) override {
+      const glm::dmat4& /*transform*/,
+      const std::any& /*rendererOptions*/) override {
     return new AllocationResult{totalAllocation};
   }
 

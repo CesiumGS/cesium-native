@@ -18,6 +18,8 @@
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
 
+#include <chrono>
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct TileLoadResultAndRenderResources {
@@ -439,7 +441,8 @@ void calcFittestBoundingRegionForLooseTile(
 TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    const TileContentLoadInfo& tileLoadInfo) {
+    const TileContentLoadInfo& tileLoadInfo,
+    const std::any& rendererOptions) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
@@ -474,7 +477,8 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   void* pRenderResources =
       tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
           model,
-          tileLoadInfo.tileTransform);
+          tileLoadInfo.tileTransform,
+          rendererOptions);
 
   return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
@@ -483,7 +487,8 @@ CesiumAsync::Future<TileLoadResultAndRenderResources>
 postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    TileContentLoadInfo&& tileLoadInfo) {
+    TileContentLoadInfo&& tileLoadInfo,
+    const std::any& rendererOptions) {
   assert(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
@@ -516,7 +521,8 @@ postProcessContentInWorkerThread(
       .thenInWorkerThread(
           [result = std::move(result),
            projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo)](
+           tileLoadInfo = std::move(tileLoadInfo),
+           rendererOptions](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
               if (result.pCompletedRequest) {
@@ -559,7 +565,8 @@ postProcessContentInWorkerThread(
             return postProcessGltfInWorkerThread(
                 std::move(result),
                 std::move(projections),
-                tileLoadInfo);
+                tileLoadInfo,
+                rendererOptions);
           });
 }
 } // namespace
@@ -863,7 +870,8 @@ void TilesetContentManager::loadTileContent(
 
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections)](
+                        projections = std::move(projections),
+                        rendererOptions = tilesetOptions.rendererOptions](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -878,11 +886,13 @@ void TilesetContentManager::loadTileContent(
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo)]() mutable {
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
-                      std::move(tileLoadInfo));
+                      std::move(tileLoadInfo),
+                      rendererOptions);
                 });
           }
         }
@@ -908,9 +918,14 @@ void TilesetContentManager::loadTileContent(
 
 void TilesetContentManager::updateTileContent(
     Tile& tile,
+    double priority,
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::ContentLoaded) {
     updateContentLoadedState(tile, tilesetOptions);
+  }
+
+  if (tile.getState() == TileLoadState::CreatingResources) {
+    updateCreatingResourcesState(tile, priority);
   }
 
   if (tile.getState() == TileLoadState::Done) {
@@ -963,6 +978,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
   switch (state) {
   case TileLoadState::ContentLoaded:
+  case TileLoadState::CreatingResources:
     unloadContentLoadedState(tile);
     break;
   case TileLoadState::Done:
@@ -1069,6 +1085,25 @@ bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
          anyRasterOverlaysNeedLoading(tile);
 }
 
+void TilesetContentManager::tickResourceCreation(double timeBudget) {
+  std::sort(_resourceCreationQueue.begin(), _resourceCreationQueue.end());
+
+  std::chrono::time_point<std::chrono::system_clock> start =
+      std::chrono::system_clock::now();
+  for (ResourceCreationTask& task : _resourceCreationQueue) {
+    createRenderResources(*task.pTile);
+    std::chrono::time_point<std::chrono::system_clock> time =
+        std::chrono::system_clock::now();
+    if (std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+            time - start)
+            .count() >= timeBudget) {
+      break;
+    }
+  }
+
+  _resourceCreationQueue.clear();
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
@@ -1115,6 +1150,18 @@ void TilesetContentManager::updateContentLoadedState(
   if (content.isExternalContent()) {
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();
+    tile.setState(TileLoadState::Done);
+  } else if (content.isRenderContent()) {
+    TileRenderContent* pRenderContent = content.getRenderContent();
+    if (pRenderContent) {
+      // add copyright
+      pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
+          *_externals.pCreditSystem,
+          pRenderContent->getModel(),
+          tilesetOptions.showCreditsOnScreen));
+
+      tile.setState(TileLoadState::CreatingResources);
+    }
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
     //
@@ -1145,23 +1192,31 @@ void TilesetContentManager::updateContentLoadedState(
     if (myGeometricError >= parentGeometricError) {
       tile.setUnconditionallyRefine();
     }
-  } else if (content.isRenderContent()) {
-    TileRenderContent* pRenderContent = content.getRenderContent();
-    // add copyright
-    pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-        *this->_externals.pCreditSystem,
-        pRenderContent->getModel(),
-        tilesetOptions.showCreditsOnScreen));
 
-    // create render resources in the main thread
-    void* pWorkerRenderResources = pRenderContent->getRenderResources();
-    void* pMainThreadRenderResources =
-        this->_externals.pPrepareRendererResources->prepareInMainThread(
-            tile,
-            pWorkerRenderResources);
-    pRenderContent->setRenderResources(pMainThreadRenderResources);
+    tile.setState(TileLoadState::Done);
   }
+}
 
+void TilesetContentManager::updateCreatingResourcesState(
+    Tile& tile,
+    double priority) {
+  _resourceCreationQueue.push_back(ResourceCreationTask{&tile, priority});
+}
+
+void TilesetContentManager::createRenderResources(Tile& tile) {
+  // create render resources in the main thread
+  TileContent& content = tile.getContent();
+  TileRenderContent* pRenderContent = content.getRenderContent();
+
+  assert(pRenderContent);
+
+  void* pWorkerRenderResources = pRenderContent->getRenderResources();
+  void* pMainThreadRenderResources =
+      _externals.pPrepareRendererResources->prepareInMainThread(
+          tile,
+          pWorkerRenderResources);
+
+  pRenderContent->setRenderResources(pMainThreadRenderResources);
   tile.setState(TileLoadState::Done);
 }
 

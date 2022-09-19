@@ -1,5 +1,20 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
+- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareInLoadThread`.
+
+##### Additions :tada:
+
+- Added a `rendererOptions` property to `TilesetOptions` to pass arbitrary data to `prepareInLoadThread`.
+
+##### Fixes :wrench:
+
+- In `CesiumGltfWriter`, `accessor.byteOffset` and `bufferView.byteOffset` are no longer written if the value is 0. This fixes validation errors for accessors that don't have buffer views, e.g. attributes that are Draco compressed.
+
 ### v0.19.0 - 2022-09-01
 
 ##### Breaking Changes :mega:

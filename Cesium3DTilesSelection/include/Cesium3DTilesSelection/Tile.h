@@ -55,15 +55,20 @@ enum class TileLoadState {
   ContentLoaded = 2,
 
   /**
+   * @brief Renderer resources for this tile are being created.
+   */
+  CreatingResources = 3,
+
+  /**
    * @brief The tile is completely done loading.
    */
-  Done = 3,
+  Done = 4,
 
   /**
    * @brief Something went wrong while loading this tile and it will not be
    * retried.
    */
-  Failed = 4,
+  Failed = 5,
 };
 
 /**
