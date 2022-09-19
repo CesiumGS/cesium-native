@@ -1,1 +1,0 @@
-/usr/bin/g++-11  -g  -g CMakeFiles/toktx.dir/image.cc.o CMakeFiles/toktx.dir/jpgimage.cc.o CMakeFiles/toktx.dir/npbmimage.cc.o CMakeFiles/toktx.dir/pngimage.cc.o CMakeFiles/toktx.dir/toktx.cc.o  -o toktx  ../../libktxd.a ../../libobjUtild.a -ldl -lpthread ../../lib/astc-encoder/Source/libastcenc-avx2-staticd.a 

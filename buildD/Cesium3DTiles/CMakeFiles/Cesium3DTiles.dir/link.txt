@@ -1,2 +1,0 @@
-/usr/bin/ar qc libCesium3DTilesd.a  CMakeFiles/Cesium3DTiles.dir/src/Library.cpp.o
-/usr/bin/ranlib libCesium3DTilesd.a

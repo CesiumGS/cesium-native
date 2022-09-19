@@ -1,2 +1,0 @@
-/usr/bin/ar qc libCesium3DTilesWriterd.a  CMakeFiles/Cesium3DTilesWriter.dir/generated/src/TilesetJsonWriter.cpp.o CMakeFiles/Cesium3DTilesWriter.dir/generated/src/registerExtensions.cpp.o CMakeFiles/Cesium3DTilesWriter.dir/src/SchemaWriter.cpp.o CMakeFiles/Cesium3DTilesWriter.dir/src/SubtreeWriter.cpp.o CMakeFiles/Cesium3DTilesWriter.dir/src/TilesetWriter.cpp.o
-/usr/bin/ranlib libCesium3DTilesWriterd.a

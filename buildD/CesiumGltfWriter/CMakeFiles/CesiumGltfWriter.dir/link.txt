@@ -1,2 +1,0 @@
-/usr/bin/ar qc libCesiumGltfWriterd.a  CMakeFiles/CesiumGltfWriter.dir/generated/src/ModelJsonWriter.cpp.o CMakeFiles/CesiumGltfWriter.dir/generated/src/registerExtensions.cpp.o CMakeFiles/CesiumGltfWriter.dir/src/GltfWriter.cpp.o
-/usr/bin/ranlib libCesiumGltfWriterd.a

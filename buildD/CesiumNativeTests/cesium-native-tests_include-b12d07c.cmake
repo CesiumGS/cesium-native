@@ -1,5 +1,0 @@
-if(EXISTS "/home/betto/src/cesium-native-ooc/buildD/CesiumNativeTests/cesium-native-tests_tests-b12d07c.cmake")
-  include("/home/betto/src/cesium-native-ooc/buildD/CesiumNativeTests/cesium-native-tests_tests-b12d07c.cmake")
-else()
-  add_test(cesium-native-tests_NOT_BUILT-b12d07c cesium-native-tests_NOT_BUILT-b12d07c)
-endif()

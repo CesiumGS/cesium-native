@@ -1,1 +1,0 @@
-/usr/bin/g++-11  -g  -g CMakeFiles/ktx2ktx2.dir/ktx2ktx2.cpp.o  -o ktx2ktx2  ../../libktxd.a ../../libobjUtild.a -ldl -lpthread ../../lib/astc-encoder/Source/libastcenc-avx2-staticd.a 
