@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCesiumAsyncd.a  CMakeFiles/CesiumAsync.dir/src/AsyncSystem.cpp.o CMakeFiles/CesiumAsync.dir/src/CachingAssetAccessor.cpp.o CMakeFiles/CesiumAsync.dir/src/HttpHeaders.cpp.o CMakeFiles/CesiumAsync.dir/src/InternalTimegm.cpp.o CMakeFiles/CesiumAsync.dir/src/QueuedScheduler.cpp.o CMakeFiles/CesiumAsync.dir/src/ResponseCacheControl.cpp.o CMakeFiles/CesiumAsync.dir/src/SqliteCache.cpp.o CMakeFiles/CesiumAsync.dir/src/TaskScheduler.cpp.o CMakeFiles/CesiumAsync.dir/src/ThreadPool.cpp.o
+/usr/bin/ranlib libCesiumAsyncd.a

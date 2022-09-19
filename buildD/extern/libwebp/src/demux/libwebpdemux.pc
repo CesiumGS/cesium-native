@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libwebpdemux
+Description: Library for parsing the WebP graphics format container
+Version: 1.2.4
+Requires: libwebp >= 0.2.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lwebpdemux

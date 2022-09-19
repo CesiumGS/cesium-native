@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcsprngd.a  CMakeFiles/csprng.dir/CSPRNG/source/csprng.cpp.o
+/usr/bin/ranlib libcsprngd.a

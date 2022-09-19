@@ -1,0 +1,6 @@
+Name: draco
+Description: Draco geometry de(com)pression library.
+Version: 1.5.2
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -ldraco
+Libs.private: 

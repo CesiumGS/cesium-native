@@ -1,0 +1,127 @@
+[
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_averages_and_directions.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_averages_and_directions.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_averages_and_directions.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_block_sizes.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_block_sizes.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_block_sizes.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_color_quantize.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_color_quantize.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_color_quantize.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_color_unquantize.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_color_unquantize.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_color_unquantize.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_compress_symbolic.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_compress_symbolic.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_compress_symbolic.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_compute_variance.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_compute_variance.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_compute_variance.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_decompress_symbolic.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_decompress_symbolic.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_decompress_symbolic.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_diagnostic_trace.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_diagnostic_trace.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_diagnostic_trace.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_entry.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_entry.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_entry.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_find_best_partitioning.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_find_best_partitioning.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_find_best_partitioning.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_ideal_endpoints_and_weights.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_ideal_endpoints_and_weights.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_ideal_endpoints_and_weights.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_image.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_image.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_image.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_integer_sequence.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_integer_sequence.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_integer_sequence.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_mathlib.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_mathlib.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_mathlib.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_mathlib_softfloat.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_mathlib_softfloat.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_mathlib_softfloat.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_partition_tables.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_partition_tables.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_partition_tables.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_percentile_tables.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_percentile_tables.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_percentile_tables.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_pick_best_endpoint_format.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_pick_best_endpoint_format.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_pick_best_endpoint_format.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_platform_isa_detection.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_platform_isa_detection.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_platform_isa_detection.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_quantization.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_quantization.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_quantization.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_symbolic_physical.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_symbolic_physical.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_symbolic_physical.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_weight_align.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_weight_align.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_weight_align.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/KTX-Software/lib/astc-encoder/Source",
+  "command": "/usr/bin/g++-11  -DASTCENC_AVX=2 -DASTCENC_F16C=1 -DASTCENC_NEON=0 -DASTCENC_POPCNT=1 -DASTCENC_SSE=41 -I/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source  -g -fPIC   -Wall -Wextra -O0 -pthread -Wpedantic -Werror -Wshadow -Wdouble-promotion -Wno-unknown-warning-option -Wno-c++98-compat-pedantic -Wno-c++98-c++11-compat-pedantic -Wno-float-equal -Wno-deprecated-declarations -Wno-old-style-cast -Wno-cast-align -Wno-sign-conversion -Wno-implicit-int-conversion -Wno-shift-sign-overflow -Wno-format-nonliteral -mavx2 -mpopcnt -mf16c -std=c++14 -o CMakeFiles/astcenc-avx2-static.dir/astcenc_weight_quant_xfer_tables.cpp.o -c /home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_weight_quant_xfer_tables.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/KTX-Software/lib/astc-encoder/Source/astcenc_weight_quant_xfer_tables.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/asyncplusplus",
+  "command": "/usr/bin/g++-11  -DLIBASYNC_STATIC -I/home/betto/src/cesium-native-ooc/extern/asyncplusplus/include  -g   -std=c++11 -Wall -Wextra -pedantic -fno-rtti -pthread -o CMakeFiles/Async++.dir/src/scheduler.cpp.o -c /home/betto/src/cesium-native-ooc/extern/asyncplusplus/src/scheduler.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/asyncplusplus/src/scheduler.cpp"
+},
+{
+  "directory": "/home/betto/src/cesium-native-ooc/buildD/extern/asyncplusplus",
+  "command": "/usr/bin/g++-11  -DLIBASYNC_STATIC -I/home/betto/src/cesium-native-ooc/extern/asyncplusplus/include  -g   -std=c++11 -Wall -Wextra -pedantic -fno-rtti -pthread -o CMakeFiles/Async++.dir/src/threadpool_scheduler.cpp.o -c /home/betto/src/cesium-native-ooc/extern/asyncplusplus/src/threadpool_scheduler.cpp",
+  "file": "/home/betto/src/cesium-native-ooc/extern/asyncplusplus/src/threadpool_scheduler.cpp"
+}
+]

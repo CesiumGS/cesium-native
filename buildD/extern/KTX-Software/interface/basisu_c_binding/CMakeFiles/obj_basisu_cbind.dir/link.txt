@@ -1,0 +1,2 @@
+/usr/bin/ar qc libobj_basisu_cbindd.a  CMakeFiles/obj_basisu_cbind.dir/src/basisu_c_binding.cpp.o
+/usr/bin/ranlib libobj_basisu_cbindd.a

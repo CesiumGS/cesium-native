@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libwebpdecoder
+Description: Library for the WebP graphics format (decode only)
+Version: 1.2.4
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lwebpdecoder
+Libs.private: -lm  -lpthread

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libobjUtild.a  CMakeFiles/objUtil.dir/utils/argparser.cpp.o
+/usr/bin/ranlib libobjUtild.a

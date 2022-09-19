@@ -1,0 +1,490 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b5ccb/fast && /usr/bin/make -f CMakeFiles/cmTC_b5ccb.dir/build.make CMakeFiles/cmTC_b5ccb.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b5ccb.dir/src.c.o
+/usr/bin/gcc-11   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_b5ccb.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_b5ccb
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b5ccb.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCMAKE_HAVE_LIBC_PTHREAD    CMakeFiles/cmTC_b5ccb.dir/src.c.o  -o cmTC_b5ccb 
+/usr/bin/ld: CMakeFiles/cmTC_b5ccb.dir/src.c.o: in function `main':
+src.c:(.text+0x46): undefined reference to `pthread_create'
+/usr/bin/ld: src.c:(.text+0x52): undefined reference to `pthread_detach'
+/usr/bin/ld: src.c:(.text+0x63): undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_b5ccb.dir/build.make:87: cmTC_b5ccb] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_b5ccb/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a7aa8/fast && /usr/bin/make -f CMakeFiles/cmTC_a7aa8.dir/build.make CMakeFiles/cmTC_a7aa8.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a7aa8.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-11   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_a7aa8.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_a7aa8
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a7aa8.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_a7aa8.dir/CheckFunctionExists.c.o  -o cmTC_a7aa8  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_a7aa8.dir/build.make:87: cmTC_a7aa8] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_a7aa8/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test HAVE_MATH_LIBRARY failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_eb454/fast && /usr/bin/make -f CMakeFiles/cmTC_eb454.dir/build.make CMakeFiles/cmTC_eb454.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_eb454.dir/src.c.o
+/usr/bin/gcc-11   -pthread -DHAVE_MATH_LIBRARY -fPIE   -o CMakeFiles/cmTC_eb454.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_eb454
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_eb454.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -pthread -DHAVE_MATH_LIBRARY    CMakeFiles/cmTC_eb454.dir/src.c.o  -o cmTC_eb454 
+/usr/bin/ld: CMakeFiles/cmTC_eb454.dir/src.c.o: in function `main':
+src.c:(.text+0x33): undefined reference to `pow'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_eb454.dir/build.make:87: cmTC_eb454] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_eb454/fast] Error 2
+
+
+Source file was:
+
+    #include <math.h>
+    int main(int argc, char** argv) {
+      return (int)pow(argc, 2.5);
+    }
+  
+Determining if files GLUT/glut.h exist failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a8693/fast && /usr/bin/make -f CMakeFiles/cmTC_a8693.dir/build.make CMakeFiles/cmTC_a8693.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a8693.dir/HAVE_GLUT_GLUT_H.c.o
+/usr/bin/gcc-11   -pthread  -fPIE   -o CMakeFiles/cmTC_a8693.dir/HAVE_GLUT_GLUT_H.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_GLUT_GLUT_H.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_GLUT_GLUT_H.c:2:10: fatal error: GLUT/glut.h: No such file or directory
+    2 | #include <GLUT/glut.h>
+      |          ^~~~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_a8693.dir/build.make:66: CMakeFiles/cmTC_a8693.dir/HAVE_GLUT_GLUT_H.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_a8693/fast] Error 2
+
+
+Source:
+/* */
+#include <GLUT/glut.h>
+
+
+int main(void){return 0;}
+
+Determining if files GL/glut.h exist failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_8f14b/fast && /usr/bin/make -f CMakeFiles/cmTC_8f14b.dir/build.make CMakeFiles/cmTC_8f14b.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8f14b.dir/HAVE_GL_GLUT_H.c.o
+/usr/bin/gcc-11   -pthread  -fPIE   -o CMakeFiles/cmTC_8f14b.dir/HAVE_GL_GLUT_H.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_GL_GLUT_H.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_GL_GLUT_H.c:2:10: fatal error: GL/glut.h: No such file or directory
+    2 | #include <GL/glut.h>
+      |          ^~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_8f14b.dir/build.make:66: CMakeFiles/cmTC_8f14b.dir/HAVE_GL_GLUT_H.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_8f14b/fast] Error 2
+
+
+Source:
+/* */
+#include <GL/glut.h>
+
+
+int main(void){return 0;}
+
+Determining if files OpenGL/glut.h exist failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_acc5f/fast && /usr/bin/make -f CMakeFiles/cmTC_acc5f.dir/build.make CMakeFiles/cmTC_acc5f.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_acc5f.dir/HAVE_OPENGL_GLUT_H.c.o
+/usr/bin/gcc-11   -pthread  -fPIE   -o CMakeFiles/cmTC_acc5f.dir/HAVE_OPENGL_GLUT_H.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_OPENGL_GLUT_H.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_OPENGL_GLUT_H.c:2:10: fatal error: OpenGL/glut.h: No such file or directory
+    2 | #include <OpenGL/glut.h>
+      |          ^~~~~~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_acc5f.dir/build.make:66: CMakeFiles/cmTC_acc5f.dir/HAVE_OPENGL_GLUT_H.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_acc5f/fast] Error 2
+
+
+Source:
+/* */
+#include <OpenGL/glut.h>
+
+
+int main(void){return 0;}
+
+Determining if files shlwapi.h exist failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_7bb9d/fast && /usr/bin/make -f CMakeFiles/cmTC_7bb9d.dir/build.make CMakeFiles/cmTC_7bb9d.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7bb9d.dir/HAVE_SHLWAPI_H.c.o
+/usr/bin/gcc-11   -pthread  -fPIE   -o CMakeFiles/cmTC_7bb9d.dir/HAVE_SHLWAPI_H.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_SHLWAPI_H.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_SHLWAPI_H.c:2:10: fatal error: shlwapi.h: No such file or directory
+    2 | #include <shlwapi.h>
+      |          ^~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_7bb9d.dir/build.make:66: CMakeFiles/cmTC_7bb9d.dir/HAVE_SHLWAPI_H.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_7bb9d/fast] Error 2
+
+
+Source:
+/* */
+#include <shlwapi.h>
+
+
+int main(void){return 0;}
+
+Determining if files wincodec.h exist failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ae6ad/fast && /usr/bin/make -f CMakeFiles/cmTC_ae6ad.dir/build.make CMakeFiles/cmTC_ae6ad.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ae6ad.dir/HAVE_WINCODEC_H.c.o
+/usr/bin/gcc-11   -pthread  -fPIE   -o CMakeFiles/cmTC_ae6ad.dir/HAVE_WINCODEC_H.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_WINCODEC_H.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_WINCODEC_H.c:2:10: fatal error: wincodec.h: No such file or directory
+    2 | #include <wincodec.h>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_ae6ad.dir/build.make:66: CMakeFiles/cmTC_ae6ad.dir/HAVE_WINCODEC_H.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_ae6ad/fast] Error 2
+
+
+Source:
+/* */
+#include <wincodec.h>
+
+
+int main(void){return 0;}
+
+Determining if files windows.h exist failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_09092/fast && /usr/bin/make -f CMakeFiles/cmTC_09092.dir/build.make CMakeFiles/cmTC_09092.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_09092.dir/HAVE_WINDOWS_H.c.o
+/usr/bin/gcc-11   -pthread  -fPIE   -o CMakeFiles/cmTC_09092.dir/HAVE_WINDOWS_H.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_WINDOWS_H.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CheckIncludeFiles/HAVE_WINDOWS_H.c:2:10: fatal error: windows.h: No such file or directory
+    2 | #include <windows.h>
+      |          ^~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_09092.dir/build.make:66: CMakeFiles/cmTC_09092.dir/HAVE_WINDOWS_H.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_09092/fast] Error 2
+
+
+Source:
+/* */
+#include <windows.h>
+
+
+int main(void){return 0;}
+
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_SSE41 failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_544e3/fast && /usr/bin/make -f CMakeFiles/cmTC_544e3.dir/build.make CMakeFiles/cmTC_544e3.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_544e3.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_SSE41 -fPIE   -o CMakeFiles/cmTC_544e3.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:9: error: unknown type name ‘this’
+    5 |         this is not valid code
+      |         ^~~~
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:17: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘not’
+    5 |         this is not valid code
+      |                 ^~~
+make[1]: *** [CMakeFiles/cmTC_544e3.dir/build.make:66: CMakeFiles/cmTC_544e3.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_544e3/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_SSE41)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_MIPS32 failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_746c7/fast && /usr/bin/make -f CMakeFiles/cmTC_746c7.dir/build.make CMakeFiles/cmTC_746c7.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_746c7.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_MIPS32 -fPIE   -o CMakeFiles/cmTC_746c7.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:9: error: unknown type name ‘this’
+    5 |         this is not valid code
+      |         ^~~~
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:17: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘not’
+    5 |         this is not valid code
+      |                 ^~~
+make[1]: *** [CMakeFiles/cmTC_746c7.dir/build.make:66: CMakeFiles/cmTC_746c7.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_746c7/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_MIPS32)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_MIPS32 failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_94c40/fast && /usr/bin/make -f CMakeFiles/cmTC_94c40.dir/build.make CMakeFiles/cmTC_94c40.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_94c40.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_MIPS32 -mips32 -fPIE   -o CMakeFiles/cmTC_94c40.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+gcc-11: error: unrecognized command-line option ‘-mips32’; did you mean ‘-mpc32’?
+make[1]: *** [CMakeFiles/cmTC_94c40.dir/build.make:66: CMakeFiles/cmTC_94c40.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_94c40/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_MIPS32)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_MIPS_DSP_R2 failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_cd9e1/fast && /usr/bin/make -f CMakeFiles/cmTC_cd9e1.dir/build.make CMakeFiles/cmTC_cd9e1.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cd9e1.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_MIPS_DSP_R2 -fPIE   -o CMakeFiles/cmTC_cd9e1.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:9: error: unknown type name ‘this’
+    5 |         this is not valid code
+      |         ^~~~
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:17: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘not’
+    5 |         this is not valid code
+      |                 ^~~
+make[1]: *** [CMakeFiles/cmTC_cd9e1.dir/build.make:66: CMakeFiles/cmTC_cd9e1.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_cd9e1/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_MIPS_DSP_R2)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_MIPS_DSP_R2 failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0d627/fast && /usr/bin/make -f CMakeFiles/cmTC_0d627.dir/build.make CMakeFiles/cmTC_0d627.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0d627.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_MIPS_DSP_R2 -mdspr2 -fPIE   -o CMakeFiles/cmTC_0d627.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+gcc-11: error: unrecognized command-line option ‘-mdspr2’
+make[1]: *** [CMakeFiles/cmTC_0d627.dir/build.make:66: CMakeFiles/cmTC_0d627.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_0d627/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_MIPS_DSP_R2)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test HAS_COMPILE_FLAG failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_443b2/fast && /usr/bin/make -f CMakeFiles/cmTC_443b2.dir/build.make CMakeFiles/cmTC_443b2.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_443b2.dir/src.c.o
+/usr/bin/gcc-11   -pthread -DHAS_COMPILE_FLAG -mdspr2 -fPIE   -mno-dspr2 -o CMakeFiles/cmTC_443b2.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+gcc-11: error: unrecognized command-line option '-mdspr2'
+gcc-11: error: unrecognized command-line option '-mno-dspr2'; did you mean '-mno-sse2'?
+make[1]: *** [CMakeFiles/cmTC_443b2.dir/build.make:66: CMakeFiles/cmTC_443b2.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_443b2/fast] Error 2
+
+
+Source file was:
+int main(void) { return 0; }
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_NEON failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f63b6/fast && /usr/bin/make -f CMakeFiles/cmTC_f63b6.dir/build.make CMakeFiles/cmTC_f63b6.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f63b6.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_NEON -fPIE   -o CMakeFiles/cmTC_f63b6.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:9: error: unknown type name ‘this’
+    5 |         this is not valid code
+      |         ^~~~
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:17: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘not’
+    5 |         this is not valid code
+      |                 ^~~
+make[1]: *** [CMakeFiles/cmTC_f63b6.dir/build.make:66: CMakeFiles/cmTC_f63b6.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_f63b6/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_NEON)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_NEON failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_04708/fast && /usr/bin/make -f CMakeFiles/cmTC_04708.dir/build.make CMakeFiles/cmTC_04708.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_04708.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_NEON -mfpu=neon -fPIE   -o CMakeFiles/cmTC_04708.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+gcc-11: error: unrecognized command-line option ‘-mfpu=neon’
+make[1]: *** [CMakeFiles/cmTC_04708.dir/build.make:66: CMakeFiles/cmTC_04708.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_04708/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_NEON)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_MSA failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_6111e/fast && /usr/bin/make -f CMakeFiles/cmTC_6111e.dir/build.make CMakeFiles/cmTC_6111e.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6111e.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_MSA -fPIE   -o CMakeFiles/cmTC_6111e.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:9: error: unknown type name ‘this’
+    5 |         this is not valid code
+      |         ^~~~
+/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c:5:17: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘not’
+    5 |         this is not valid code
+      |                 ^~~
+make[1]: *** [CMakeFiles/cmTC_6111e.dir/build.make:66: CMakeFiles/cmTC_6111e.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_6111e/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_MSA)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test WEBP_HAVE_FLAG_MSA failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b1013/fast && /usr/bin/make -f CMakeFiles/cmTC_b1013.dir/build.make CMakeFiles/cmTC_b1013.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b1013.dir/src.c.o
+/usr/bin/gcc-11  -I/home/betto/src/cesium-native-ooc/extern/libwebp  -pthread -DWEBP_HAVE_FLAG_MSA -mmsa -fPIE   -o CMakeFiles/cmTC_b1013.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+gcc-11: error: unrecognized command-line option ‘-mmsa’
+make[1]: *** [CMakeFiles/cmTC_b1013.dir/build.make:66: CMakeFiles/cmTC_b1013.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_b1013/fast] Error 2
+
+
+Source file was:
+
+      #include "/home/betto/src/cesium-native-ooc/extern/libwebp/cmake/../src/dsp/dsp.h"
+      int main(void) {
+        #if !defined(WEBP_USE_MSA)
+        this is not valid code
+        #endif
+        return 0;
+      }
+    
+Performing C SOURCE FILE Test HAS_COMPILE_FLAG failed with the following output:
+Change Dir: /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2e821/fast && /usr/bin/make -f CMakeFiles/cmTC_2e821.dir/build.make CMakeFiles/cmTC_2e821.dir/build
+make[1]: Entering directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2e821.dir/src.c.o
+/usr/bin/gcc-11   -pthread -DHAS_COMPILE_FLAG -mmsa -fPIE   -mno-msa -o CMakeFiles/cmTC_2e821.dir/src.c.o   -c /home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp/src.c
+gcc-11: error: unrecognized command-line option '-mmsa'
+gcc-11: error: unrecognized command-line option '-mno-msa'; did you mean '-Wno-hsa'?
+make[1]: *** [CMakeFiles/cmTC_2e821.dir/build.make:66: CMakeFiles/cmTC_2e821.dir/src.c.o] Error 1
+make[1]: Leaving directory '/home/betto/src/cesium-native-ooc/buildD/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_2e821/fast] Error 2
+
+
+Source file was:
+int main(void) { return 0; }

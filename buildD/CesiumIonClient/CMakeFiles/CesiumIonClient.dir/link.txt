@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCesiumIonClientd.a  CMakeFiles/CesiumIonClient.dir/src/Connection.cpp.o CMakeFiles/CesiumIonClient.dir/src/Response.cpp.o CMakeFiles/CesiumIonClient.dir/src/parseLinkHeader.cpp.o
+/usr/bin/ranlib libCesiumIonClientd.a

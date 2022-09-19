@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCesiumGltfd.a  CMakeFiles/CesiumGltf.dir/src/Accessor.cpp.o CMakeFiles/CesiumGltf.dir/src/FeatureIDTextureView.cpp.o CMakeFiles/CesiumGltf.dir/src/FeatureTexturePropertyView.cpp.o CMakeFiles/CesiumGltf.dir/src/FeatureTextureView.cpp.o CMakeFiles/CesiumGltf.dir/src/Ktx2TranscodeTargets.cpp.o CMakeFiles/CesiumGltf.dir/src/MetadataFeatureTableView.cpp.o CMakeFiles/CesiumGltf.dir/src/Model.cpp.o CMakeFiles/CesiumGltf.dir/src/PropertyType.cpp.o
+/usr/bin/ranlib libCesiumGltfd.a

@@ -1,0 +1,36 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/ktx_read.dir/lib/basis_transcode.cpp.o"
+  "CMakeFiles/ktx_read.dir/lib/basisu/transcoder/basisu_transcoder.cpp.o"
+  "CMakeFiles/ktx_read.dir/lib/basisu/zstd/zstd.c.o"
+  "CMakeFiles/ktx_read.dir/lib/checkheader.c.o"
+  "CMakeFiles/ktx_read.dir/lib/dfdutils/colourspaces.c.o"
+  "CMakeFiles/ktx_read.dir/lib/dfdutils/createdfd.c.o"
+  "CMakeFiles/ktx_read.dir/lib/dfdutils/interpretdfd.c.o"
+  "CMakeFiles/ktx_read.dir/lib/dfdutils/printdfd.c.o"
+  "CMakeFiles/ktx_read.dir/lib/dfdutils/queries.c.o"
+  "CMakeFiles/ktx_read.dir/lib/dfdutils/vk2dfd.c.o"
+  "CMakeFiles/ktx_read.dir/lib/etcdec.cxx.o"
+  "CMakeFiles/ktx_read.dir/lib/etcunpack.cxx.o"
+  "CMakeFiles/ktx_read.dir/lib/filestream.c.o"
+  "CMakeFiles/ktx_read.dir/lib/gl_funcs.c.o"
+  "CMakeFiles/ktx_read.dir/lib/glloader.c.o"
+  "CMakeFiles/ktx_read.dir/lib/hashlist.c.o"
+  "CMakeFiles/ktx_read.dir/lib/info.c.o"
+  "CMakeFiles/ktx_read.dir/lib/memstream.c.o"
+  "CMakeFiles/ktx_read.dir/lib/strings.c.o"
+  "CMakeFiles/ktx_read.dir/lib/swap.c.o"
+  "CMakeFiles/ktx_read.dir/lib/texture.c.o"
+  "CMakeFiles/ktx_read.dir/lib/texture1.c.o"
+  "CMakeFiles/ktx_read.dir/lib/texture2.c.o"
+  "CMakeFiles/ktx_read.dir/lib/vk_funcs.c.o"
+  "CMakeFiles/ktx_read.dir/lib/vkformat_check.c.o"
+  "CMakeFiles/ktx_read.dir/lib/vkformat_str.c.o"
+  "CMakeFiles/ktx_read.dir/lib/vkloader.c.o"
+  "libktx_readd.a"
+  "libktx_readd.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C CXX)
+  include(CMakeFiles/ktx_read.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../extern/CSPRNG/source/duthomhas/csprng.h
+
+/home/betto/src/cesium-native-ooc/extern/CSPRNG/source/csprng.cpp
+duthomhas/csprng.h
+-
+windows.h
+-
+wincrypt.h
+-
+stdio.h
+-
+

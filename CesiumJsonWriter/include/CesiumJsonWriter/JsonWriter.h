@@ -9,6 +9,7 @@
 #include <memory>
 #include <string_view>
 #include <vector>
+#include <string>
 
 namespace CesiumJsonWriter {
 
@@ -80,9 +81,21 @@ public:
   virtual void
   KeyObject(std::string_view keyName, std::function<void(void)> insideObject);
 
-  virtual std::string toString();
-  virtual std::string_view toStringView();
-  virtual std::vector<std::byte> toBytes();
+  virtual std::string toString() {
+    return std::string(_compactBuffer.GetString());
+  }
+
+  virtual std::string_view toStringView()  {
+    return std::string_view(_compactBuffer.GetString(), _compactBuffer.GetSize());
+  }
+
+  virtual std::vector<std::byte> toBytes() {
+    const auto view = this->toStringView();
+    std::vector<std::byte> result(view.size(), std::byte(0));
+    std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(result.data());
+    std::copy(view.begin(), view.end(), u8Pointer);
+    return result;
+  }
 };
 } // namespace CesiumJsonWriter
 
@@ -245,25 +258,6 @@ void JsonWriterT<T>::KeyObject(
   compact->EndObject();
 }
 
-
-template <typename T>
-std::string JsonWriterT<T>::toString() {
-  return std::string(_compactBuffer.GetString());
-}
-
-template <typename T>
-std::string_view JsonWriterT<T>::toStringView() {
-  return std::string_view(_compactBuffer.GetString(), _compactBuffer.GetSize());
-}
-
-template <typename T>
-std::vector<std::byte> JsonWriterT<T>::toBytes() {
-  const auto view = this->toStringView();
-  std::vector<std::byte> result(view.size(), std::byte(0));
-  std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(result.data());
-  std::copy(view.begin(), view.end(), u8Pointer);
-  return result;
-}
 
 typedef JsonWriterT<rapidjson::CrtAllocator> JsonWriter;
 

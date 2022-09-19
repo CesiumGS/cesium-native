@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCesiumUtilityd.a  CMakeFiles/CesiumUtility.dir/src/ExtensibleObject.cpp.o CMakeFiles/CesiumUtility.dir/src/JsonHelpers.cpp.o CMakeFiles/CesiumUtility.dir/src/JsonValue.cpp.o CMakeFiles/CesiumUtility.dir/src/Tracing.cpp.o CMakeFiles/CesiumUtility.dir/src/Uri.cpp.o
+/usr/bin/ranlib libCesiumUtilityd.a

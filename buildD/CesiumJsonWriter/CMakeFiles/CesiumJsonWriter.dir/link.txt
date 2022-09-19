@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCesiumJsonWriterd.a  CMakeFiles/CesiumJsonWriter.dir/src/ExtensionWriterContext.cpp.o CMakeFiles/CesiumJsonWriter.dir/src/JsonObjectWriter.cpp.o CMakeFiles/CesiumJsonWriter.dir/src/JsonWriter.cpp.o CMakeFiles/CesiumJsonWriter.dir/src/PrettyJsonWriter.cpp.o
+/usr/bin/ranlib libCesiumJsonWriterd.a

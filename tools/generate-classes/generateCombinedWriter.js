@@ -23,7 +23,7 @@ function generateCombinedWriter(options) {
 
         // forward declarations
         namespace CesiumJsonWriter {
-          class JsonWriter;
+          class JsonWriterT;
           class ExtensionWriterContext;
         } // namespace CesiumJsonWriter
 

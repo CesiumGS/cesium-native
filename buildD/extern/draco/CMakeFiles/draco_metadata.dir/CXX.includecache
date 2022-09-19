@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../extern/draco/src/draco/core/hash_utils.h
+stdint.h
+-
+cstddef
+-
+functional
+-
+
+../extern/draco/src/draco/metadata/geometry_metadata.h
+draco/metadata/metadata.h
+../extern/draco/src/draco/metadata/draco/metadata/metadata.h
+
+../extern/draco/src/draco/metadata/metadata.h
+cstring
+-
+map
+-
+memory
+-
+string
+-
+vector
+-
+draco/core/hash_utils.h
+../extern/draco/src/draco/metadata/draco/core/hash_utils.h
+
+/home/betto/src/cesium-native-ooc/extern/draco/src/draco/metadata/geometry_metadata.cc
+draco/metadata/geometry_metadata.h
+/home/betto/src/cesium-native-ooc/extern/draco/src/draco/metadata/draco/metadata/geometry_metadata.h
+utility
+-
+
+/home/betto/src/cesium-native-ooc/extern/draco/src/draco/metadata/metadata.cc
+draco/metadata/metadata.h
+/home/betto/src/cesium-native-ooc/extern/draco/src/draco/metadata/draco/metadata/metadata.h
+utility
+-
+

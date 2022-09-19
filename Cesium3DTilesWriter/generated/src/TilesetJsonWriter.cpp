@@ -57,6 +57,8 @@
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/writeJsonExtensions.h>
 #include <CesiumUtility/JsonValue.h>
+#include "CesiumJsonWriter/JsonWriter.h"
+
 
 namespace Cesium3DTilesWriter {
 
