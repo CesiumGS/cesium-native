@@ -32,7 +32,7 @@ SchemaWriterResult SchemaWriter::writeSchema(
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
-    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter<>>();
   } else {
     writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }

@@ -1,3 +1,4 @@
+#if 0
 #include "CesiumJsonWriter/PrettyJsonWriter.h"
 
 #include <algorithm>
@@ -164,3 +165,5 @@ std::vector<std::byte> PrettyJsonWriter::toBytes() {
   return result;
 }
 } // namespace CesiumJsonWriter
+
+#endif
