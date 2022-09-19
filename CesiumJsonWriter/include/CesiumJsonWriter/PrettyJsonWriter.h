@@ -14,7 +14,7 @@
 namespace CesiumJsonWriter {
 
 template <typename Allocator = rapidjson::CrtAllocator>
-class PrettyJsonWriter : public JsonWriter {
+class PrettyJsonWriterT : public JsonWriter {
   rapidjson::StringBuffer _prettyBuffer;
 
 public:
@@ -30,7 +30,7 @@ private:
   std::unique_ptr<TypeOfPretty> pretty;
 
 public:
-  PrettyJsonWriter() noexcept {
+  PrettyJsonWriterT() noexcept {
   auto writer = rapidjson::PrettyWriter<rapidjson::StringBuffer>(_prettyBuffer);
   writer.SetFormatOptions(
       rapidjson::PrettyFormatOptions::kFormatSingleLineArray);
@@ -39,7 +39,7 @@ public:
   pretty->SetIndent(' ', 2);
 }
 
-  ~PrettyJsonWriter() {}
+  ~PrettyJsonWriterT() {}
 
   // rapidjson methods
   bool Null() override  { return pretty->Null(); }
@@ -152,4 +152,7 @@ public:
   return result;
 }
 };
+
+typedef PrettyJsonWriterT<rapidjson::CrtAllocator> PrettyJsonWriter;
+
 } // namespace CesiumJsonWriter

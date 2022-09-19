@@ -1,9 +1,9 @@
 #pragma once
 
-// forward declarations
-namespace CesiumJsonWriter {
-class JsonWriter;
-}
+
+#include "CesiumJsonWriter/JsonObjectWriter.h"
+#include "CesiumJsonWriter/JsonWriter.h"
+
 
 // forward declarations
 namespace CesiumUtility {
