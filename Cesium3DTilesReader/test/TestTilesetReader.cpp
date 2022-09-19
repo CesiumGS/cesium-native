@@ -1,6 +1,6 @@
 #include "Cesium3DTilesReader/TilesetReader.h"
 
-#include <Cesium3DTiles/Extension3dTilesContentGltf.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <CesiumJsonReader/JsonReader.h>
 
 #include <catch2/catch.hpp>
@@ -204,7 +204,13 @@ TEST_CASE("Reads 3DTILES_content_gltf") {
       "geometricError": 45.0,
       "root": {
         "boundingVolume": {
-          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+          "extensions": {
+            "3DTILES_bounding_volume_S2": {
+              "token": "3",
+              "minimumHeight": 0,
+              "maximumHeight": 1000000
+            }
+          }
         },
         "geometricError": 15.0,
         "refine": "ADD",
@@ -212,14 +218,8 @@ TEST_CASE("Reads 3DTILES_content_gltf") {
           "uri": "root.glb"
         }
       },
-      "extensionsUsed": ["3DTILES_content_gltf"],
-      "extensionsRequired": ["3DTILES_content_gltf"],
-      "extensions": {
-        "3DTILES_content_gltf": {
-          "extensionsUsed": ["KHR_draco_mesh_compression", "KHR_materials_unlit"],
-          "extensionsRequired": ["KHR_draco_mesh_compression"]
-        }
-      }
+      "extensionsUsed": ["3DTILES_bounding_volume_S2"],
+      "extensionsRequired": ["3DTILES_bounding_volume_S2"]
     }
   )";
 
@@ -233,9 +233,10 @@ TEST_CASE("Reads 3DTILES_content_gltf") {
   Cesium3DTiles::Tileset& tileset = result.tileset.value();
   CHECK(tileset.asset.version == "1.0");
 
-  const std::vector<std::string> tilesetExtensionUsed{"3DTILES_content_gltf"};
+  const std::vector<std::string> tilesetExtensionUsed{
+      "3DTILES_bounding_volume_S2"};
   const std::vector<std::string> tilesetExtensionRequired{
-      "3DTILES_content_gltf"};
+      "3DTILES_bounding_volume_S2"};
 
   const std::vector<std::string> gltfExtensionsUsed{
       "KHR_draco_mesh_compression",
@@ -246,11 +247,13 @@ TEST_CASE("Reads 3DTILES_content_gltf") {
   CHECK(tileset.extensionsUsed == tilesetExtensionUsed);
   CHECK(tileset.extensionsUsed == tilesetExtensionUsed);
 
-  Cesium3DTiles::Extension3dTilesContentGltf* contentGltf =
-      tileset.getExtension<Cesium3DTiles::Extension3dTilesContentGltf>();
-  REQUIRE(contentGltf);
-  CHECK(contentGltf->extensionsUsed == gltfExtensionsUsed);
-  CHECK(contentGltf->extensionsRequired == gltfExtensionsRequired);
+  Cesium3DTiles::Extension3dTilesBoundingVolumeS2* boundingVolumeS2 =
+      tileset.root.boundingVolume
+          .getExtension<Cesium3DTiles::Extension3dTilesBoundingVolumeS2>();
+  REQUIRE(boundingVolumeS2);
+  CHECK(boundingVolumeS2->token == "3");
+  CHECK(boundingVolumeS2->minimumHeight == 0);
+  CHECK(boundingVolumeS2->maximumHeight == 1000000);
 }
 
 TEST_CASE("Reads custom extension") {

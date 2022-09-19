@@ -47,7 +47,7 @@ class SchemaCache {
     const searchPaths = this.extensionSchemaPaths.map((path) =>
       this.resolvePath(path, schemaName)
     );
-    // Prioritize paths that contain the extension name because mutliple extensions may have the same schema name.
+    // Prioritize paths that contain the extension name because multiple extensions may have the same schema name.
     searchPaths.sort((pathA, pathB) => {
       const resultA = pathA.indexOf(extensionName) === -1 ? 0 : 1;
       const resultB = pathB.indexOf(extensionName) === -1 ? 0 : 1;

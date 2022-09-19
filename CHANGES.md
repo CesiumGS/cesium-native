@@ -1,5 +1,110 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
+- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareInLoadThread`.
+
+##### Additions :tada:
+
+- Added a `rendererOptions` property to `TilesetOptions` to pass arbitrary data to `prepareInLoadThread`.
+
+##### Fixes :wrench:
+
+- In `CesiumGltfWriter`, `accessor.byteOffset` and `bufferView.byteOffset` are no longer written if the value is 0. This fixes validation errors for accessors that don't have buffer views, e.g. attributes that are Draco compressed.
+
+### v0.19.0 - 2022-09-01
+
+##### Breaking Changes :mega:
+
+- `RasterOverlayCollection` no longer accepts a `Tileset` in its constructor. Instead, it now accepts a `Tile::LoadedLinkList` and a `TilesetExternals`.
+- Removed `TileContext`. It has been replaced by the `TilesetContentLoader` interface.
+- Removed `TileContentFactory`. Instead, conversions of various types to glTF can be registered with `GltfConverters`.
+- Removed `TileContentLoadInput`. It has been replaced by `TileLoadInput` and `TilesetContentLoader`.
+- Removed `TileContentLoadResult`. It has been replaced by `TileContent`.
+- Removed `TileContentLoader`. It has been replaced by `TilesetContentLoader` and `GltfConverters`.
+- Removed `ImplicitTraversal`. It has been replaced by `TilesetContentLoader` and `GltfConverters`.
+- Removed many methods from the `Cesium3DTilesSelection::Tileset` class: `getUrl()`, `getIonAssetID()`, `getIonAssetToken()`, `notifyTileStartLoading`, `notifyTileDoneLoading()`, `notifyTileUnloading()`, `loadTilesFromJson()`, `requestTileContent()`,  `requestAvailabilitySubtree()`, `addContext()`, and `getGltfUpAxis()`. Most of these were already not recommended for use outside of cesium-native.
+- Removed many methods from the `Cesium3DTilesSelection::Tile` class: `getTileset()`, `getContext()`, `setContext()`, `getContent()`, `setEmptyContent()`, `getRendererResources()`, `setState()`, `loadContent()`, `processLoadedContent()`, `unloadContent()`, `update()`, and `markPermanentlyFailed()`. Most of these were already not recommended for use outside of cesium-native.
+
+##### Additions :tada:
+
+- Quantized-mesh terrain and implicit octree and quadtree tilesets can now skip levels-of-detail when traversing, so the correct detail is loaded more quickly.
+- Added new options to `TilesetOptions` supporting smooth transitions between tiles at different levels-of-detail. A tile's transition percentage can be retrieved from `TileRenderContent::lodTransitionPercentage`.
+- Added support for loading WebP images inside glTFs and raster overlays. WebP textures can be provided directly in a glTF texture or in the `EXT_texture_webp` extension.
+- Added support for `KHR_texture_transform` to `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`
+- `Tileset` can be constructed with a `TilesetContentLoader` and a root `Tile` for loading and rendering different 3D Tile-like formats or creating a procedural tileset.
+
+##### Fixes :wrench:
+
+- Fixed a bug where the Raster Overlay passed to the `loadErrorCallback` would not be the one that the user created, but instead an aggregated overlay that was created internally.
+
+### v0.18.1 - 2022-08-04
+
+##### Fixes :wrench:
+
+- Fixed a bug in `SqliteCache` where the last access time of resources was not updated correctly, sometimes causing more recently used resources to be evicted from the cache before less recently used ones.
+
+### v0.18.0 - 2022-08-01
+
+##### Breaking Changes :mega:
+
+- Removed support for 3D Tiles Next extensions in `TilesetWriter` and `TilesetReader` that have been promoted to core in 3D Tiles 1.1
+  - [3DTILES_multiple_contents](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_multiple_contents)
+  - [3DTILES_implicit_tiling](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_implicit_tiling)
+  - [3DTILES_metadata](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_metadata)
+  - [3DTILES_content_gltf](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_content_gltf)
+- Removed the `getSupportsRasterOverlays` from `Tileset` because the property is no longer relevant now that all tilesets support raster overlays.
+
+##### Additions :tada:
+
+- Added support for [3D Tiles 1.1](https://github.com/CesiumGS/3d-tiles/pull/666) in `TilesetWriter` and `TilesetReader`.
+- Added a `TileOcclusionRendererProxyPool` to `TilesetExternals`. If a renderer implements and provides this interface, the tile occlusion information is used to avoid refining parent tiles that are completely occluded, reducing the number of tiles loaded.
+- `Tileset` can now estimate the percentage of the tiles for the current view that have been loaded by calling the `computeLoadProgress` method.
+- Enabled loading Tile Map Service (TMS) URLs that do not have a file named "tilemapresource.xml", such as from GeoServer.
+- Added support for Tile Map Service documents that use the "local" profile when the SRS is mercator or geodetic.
+
+### v0.17.0 - 2022-07-01
+
+##### Fixes :wrench:
+- Fixed crash when parsing an empty copyright string in the glTF model.
+
+### v0.16.0 - 2022-06-01
+
+##### Additions :tada:
+
+- Added option to the `RasterizedPolygonsOverlay` to invert the selection, so everything outside the polygons gets rasterized instead of inside.
+- The `RasterizedPolygonsTileExcluder` excludes tiles outside the selection instead of inside when given an inverted `RasterizedPolygonsOverlay`.
+- Tiles are now upsampled using the projection of the first raster overlay in the list with more detail.
+
+##### Fixes :wrench:
+
+- For consistency with CesiumJS and compatibility with third-party terrain tilers widely used in the community, the `bounds` property of the `layer.json` file of a quantized-mesh terrain tileset is now ignored, and the terrain is assumed to cover the entire globe.
+
+### v0.15.2 - 2022-05-13
+
+##### Fixes :wrench:
+
+- Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
+
+In addition to the above, this release updates the following third-party libraries used by cesium-native:
+- `cpp-httplib` to v0.10.3 ([changes](https://github.com/yhirose/cpp-httplib/compare/c7486ead96dad647b9783941722b5944ac1aaefa...d73395e1dc652465fa9524266cd26ad57365491f))
+- `draco` to v1.5.2 ([changes](https://github.com/google/draco/compare/9bf5d2e4833d445acc85eb95da42d715d3711c6f...bd1e8de7dd0596c2cbe5929cbe1f5d2257cd33db))
+- `earcut` to v2.2.3 ([changes](https://github.com/mapbox/earcut.hpp/compare/6d18edf0ce046023a7cb55e69c4cd9ba90e2c716...b28acde132cdb8e0ef536a96ca7ada8a651f9169))
+- `PicoSHA2` to commit `1677374f23352716fc52183255a40c1b8e1d53eb` ([changes](https://github.com/okdshin/PicoSHA2/compare/b699e6c900be6e00152db5a3d123c1db42ea13d0...1677374f23352716fc52183255a40c1b8e1d53eb))
+- `rapidjson` to commit `fcb23c2dbf561ec0798529be4f66394d3e4996d8` ([changes](https://github.com/Tencent/rapidjson/compare/fd3dc29a5c2852df569e1ea81dbde2c412ac5051...fcb23c2dbf561ec0798529be4f66394d3e4996d8))
+- `spdlog` to v1.10.0 ([changes](https://github.com/gabime/spdlog/compare/cbe9448650176797739dbab13961ef4c07f4290f...76fb40d95455f249bd70824ecfcae7a8f0930fa3))
+- `stb` to commit `af1a5bc352164740c1cc1354942b1c6b72eacb8a` ([changes](https://github.com/nothings/stb/compare/b42009b3b9d4ca35bc703f5310eedc74f584be58...af1a5bc352164740c1cc1354942b1c6b72eacb8a))
+- `uriparser` to v0.9.6 ([changes](https://github.com/uriparser/uriparser/compare/e8a338e0c65fd875a46067d711750e4c13e044e7...24df44b74753017acfaec4b3a30097a8a2ae1ae1))
+
+### v0.15.1 - 2022-05-05
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause tiles in external tilesets to fail to load.
+
 ### v0.15.0 - 2022-05-02
 
 ##### Additions :tada:

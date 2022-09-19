@@ -3,9 +3,11 @@
 #pragma once
 
 #include "BoundingVolumeJsonHandler.h"
+#include "MetadataEntityJsonHandler.h"
 
 #include <Cesium3DTiles/Content.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
@@ -34,5 +36,7 @@ private:
   Cesium3DTiles::Content* _pObject = nullptr;
   BoundingVolumeJsonHandler _boundingVolume;
   CesiumJsonReader::StringJsonHandler _uri;
+  MetadataEntityJsonHandler _metadata;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _group;
 };
 } // namespace Cesium3DTilesReader

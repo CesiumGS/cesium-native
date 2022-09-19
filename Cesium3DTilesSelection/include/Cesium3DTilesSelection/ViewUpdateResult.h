@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <unordered_set>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -20,16 +21,22 @@ class Tile;
 class CESIUM3DTILESSELECTION_API ViewUpdateResult final {
 public:
   /**
-   * @brief The tiles that are contained in the render list of the current
-   * frame.
+   * @brief The tiles that were selected by the tileset traversal this frame.
+   * These tiles should be rendered by the client.
+   *
+   * Tiles in this list may be fading in if
+   * {@link TilesetOptions::enableLodTransitionPeriod} is true.
    */
   std::vector<Tile*> tilesToRenderThisFrame;
 
   /**
-   * @brief The tiles that have been removed from the render list for the
-   * current frame
+   * @brief Tiles on this list are no longer selected for rendering.
+   *
+   * If {@link TilesetOptions::enableLodTransitionPeriod} is true they may be
+   * fading out. If a tile's {TileRenderContent::lodTransitionPercentage} is 0
+   * or lod transitions are disabled, the tile should be hidden right away.
    */
-  std::vector<Tile*> tilesToNoLongerRenderThisFrame;
+  std::unordered_set<Tile*> tilesFadingOut;
 
   //! @cond Doxygen_Suppress
   uint32_t tilesLoadingLowPriority = 0;
@@ -39,6 +46,8 @@ public:
   uint32_t tilesVisited = 0;
   uint32_t culledTilesVisited = 0;
   uint32_t tilesCulled = 0;
+  uint32_t tilesOccluded = 0;
+  uint32_t tilesWaitingForOcclusionResults = 0;
   uint32_t maxDepthVisited = 0;
   //! @endcond
 };

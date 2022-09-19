@@ -2,96 +2,116 @@
   {
     "name": "Async++",
     "url": "https://github.com/Amanieu/asyncplusplus",
-    "license": "MIT"
-  },
-  {
-    "name": "Catch2",
-    "url": "https://github.com/catchorg/Catch2",
-    "license": "Boost Software License 1.0"
-  },
-  {
-    "name": "cmake-modules",
-    "url": "https://github.com/bilke/cmake-modules",
-    "license": "Boost Software License 1.0"
+    "version": "756893feb9e69c098225d5a454a668a2c139e4be",
+    "license": ["MIT"]
   },
   {
     "name": "cpp-httplib",
     "url": "https://github.com/yhirose/cpp-httplib",
-    "license": "MIT"
+    "version": "0.10.3",
+    "license": ["MIT"]
   },
   {
     "name": "CSPRNG",
     "url": "https://github.com/Duthomhas/CSPRNG",
-    "license": "Boost Software License 1.0"
+    "version": "8768a94b4b04213c0798b80824a04ae4990e9847",
+    "license": ["Boost Software License 1.0"]
   },
   {
     "name": "Draco",
     "url": "https://github.com/google/draco",
-    "license": "Apache 2.0"
+    "version": "1.5.2",
+    "license": ["Apache 2.0"]
   },
   {
     "name": "earcut",
     "url": "https://github.com/mapbox/earcut.hpp",
-    "license": "ISC License"
+    "version": "2.2.3",
+    "license": ["ISC License"]
   },
   {
     "name": "GLM",
     "url": "https://github.com/g-truc/glm",
-    "license": "MIT"
+    "version": "0.9.9.8",
+    "license": ["MIT"]
   },
   {
     "name": "GSL",
     "url": "https://github.com/microsoft/GSL",
-    "license": "MIT"
+    "version": "4.0.0",
+    "license": ["MIT"]
   },
   {
     "name": "KTX-Software",
-    "url": "https://github.com/KhronosGroup/KTX-Software",
-    "license": "Apache 2.0"
+    "url": "https://github.com/CesiumGS/KTX-Software",
+    "version": "94764c270d43d90e4e4cedee6248753296f874b3",
+    "license": ["Apache 2.0"]
+  },
+  {
+    "name": "libwebp",
+    "url": "https://github.com/webmproject/libwebp",
+    "version": "1.2.4",
+    "license": ["BSD-3-Clause"]
+  },
+  {
+    "name": "libmorton",
+    "url": "https://github.com/Forceflow/libmorton",
+    "version": "0.2.10",
+    "license": ["MIT"]
   },
   {
     "name": "modp_b64",
     "url": "https://github.com/chromium/chromium/tree/15996b5d2322b634f4197447b10289bddc2b0b32/third_party/modp_b64",
-    "license": "BSD-3-Clause"
+    "version": "15996b5d2322b634f4197447b10289bddc2b0b32",
+    "license": ["BSD-3-Clause"],
+    "notes": "See extern/modp_b64/README.cesium for details."
   },
   {
     "name": "PicoSHA2",
     "url": "https://github.com/okdshin/PicoSHA2",
-    "license": "MIT"
+    "version": "1677374f23352716fc52183255a40c1b8e1d53eb",
+    "license": ["MIT"]
   },
   {
     "name": "RapidJSON",
     "url": "https://github.com/Tencent/rapidjson",
-    "license": "MIT"
+    "version": "fcb23c2dbf561ec0798529be4f66394d3e4996d8",
+    "license": ["MIT"]
   },
   {
     "name": "s2geometry",
     "url": "https://github.com/google/s2geometry",
-    "license": "Apache 2.0"
+    "version": "0.9.0",
+    "license": ["Apache 2.0"]
   },
   {
     "name": "spdlog",
     "url": "https://github.com/gabime/spdlog",
-    "license": "MIT"
+    "versions": "1.10.0",
+    "license": ["MIT"]
   },
   {
     "name": "SQLite Amalgamation",
     "url": "https://www.sqlite.org/amalgamation.html",
-    "license": "Public Domain"
+    "version": "3.34.0",
+    "license": ["Public Domain"]
   },
   {
     "name": "STB",
     "url": "https://github.com/nothings/stb",
-    "license": "Public Domain"
+    "version": "af1a5bc352164740c1cc1354942b1c6b72eacb8a",
+    "license": ["Public Domain"]
   },
   {
     "name": "tinyxml2",
     "url": "https://github.com/leethomason/tinyxml2",
-    "license": "zlib"
+    "version": "1aeb57d26bc303d5cfa1a9ff2a331df7ba278656",
+    "license": ["zlib"]
   },
   {
     "name": "uriparser",
     "url": "https://github.com/uriparser/uriparser",
-    "license": "BSD-3-Clause"
+    "version": "0.9.6",
+    "license": ["BSD-3-Clause"]
   }
 ]

@@ -1,18 +1,29 @@
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 
-#include "Cesium3DTilesSelection/Tileset.h"
-
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
+namespace {
+template <class Function>
+void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
+  Tile* pCurrent = list.head();
+  while (pCurrent) {
+    Tile* pNext = list.next(pCurrent);
+    callback(*pCurrent);
+    pCurrent = pNext;
+  }
+}
+} // namespace
 
-RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept
-    : _pTileset(&tileset) {}
+RasterOverlayCollection::RasterOverlayCollection(
+    Tile::LoadedLinkedList& loadedTiles,
+    const TilesetExternals& externals) noexcept
+    : _pLoadedTiles(&loadedTiles), _externals{externals} {}
 
-RasterOverlayCollection::~RasterOverlayCollection() {
+RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (!this->_overlays.empty()) {
     for (int64_t i = static_cast<int64_t>(this->_overlays.size() - 1); i >= 0;
          --i) {
@@ -28,16 +39,16 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   this->_overlays.push_back(std::move(pOverlay));
 
   pOverlayRaw->loadTileProvider(
-      this->_pTileset->getAsyncSystem(),
-      this->_pTileset->getExternals().pAssetAccessor,
-      this->_pTileset->getExternals().pCreditSystem,
-      this->_pTileset->getExternals().pPrepareRendererResources,
-      this->_pTileset->getExternals().pLogger);
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pCreditSystem,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger);
 
   // Add this overlay to existing geometry tiles.
-  this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
+  forEachTile(*this->_pLoadedTiles, [pOverlayRaw](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
-    if (tile.getState() != Tile::LoadState::Unloaded) {
+    if (tile.getState() != TileLoadState::Unloaded) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
           pOverlayRaw->getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0)),
           -1));
@@ -56,19 +67,23 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
              &mapped.getReadyTile()->getOverlay() == pOverlay));
       };
 
-  this->_pTileset->forEachLoadedTile([&removeCondition](Tile& tile) {
-    std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
+  auto pPrepareRenderResources =
+      this->_externals.pPrepareRendererResources.get();
+  forEachTile(
+      *this->_pLoadedTiles,
+      [&removeCondition, pPrepareRenderResources](Tile& tile) {
+        std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-    for (RasterMappedTo3DTile& rasterTile : mapped) {
-      if (removeCondition(rasterTile)) {
-        rasterTile.detachFromTile(tile);
-      }
-    }
+        for (RasterMappedTo3DTile& rasterTile : mapped) {
+          if (removeCondition(rasterTile)) {
+            rasterTile.detachFromTile(*pPrepareRenderResources, tile);
+          }
+        }
 
-    auto firstToRemove =
-        std::remove_if(mapped.begin(), mapped.end(), removeCondition);
-    mapped.erase(firstToRemove, mapped.end());
-  });
+        auto firstToRemove =
+            std::remove_if(mapped.begin(), mapped.end(), removeCondition);
+        mapped.erase(firstToRemove, mapped.end());
+      });
 
   auto it = std::find_if(
       this->_overlays.begin(),

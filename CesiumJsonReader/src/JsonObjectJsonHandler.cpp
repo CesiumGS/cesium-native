@@ -62,7 +62,15 @@ IJsonHandler* JsonObjectJsonHandler::readDouble(double d) {
 }
 
 IJsonHandler* JsonObjectJsonHandler::readString(const std::string_view& str) {
-  *this->_stack.back() = std::string(str);
+  CesiumUtility::JsonValue& current = *this->_stack.back();
+  CesiumUtility::JsonValue::Array* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&current.value);
+  if (pArray) {
+    pArray->emplace_back(std::string(str));
+  } else {
+    current = std::string(str);
+  }
+
   return this->doneElement();
 }
 

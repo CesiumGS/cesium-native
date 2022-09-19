@@ -15,6 +15,20 @@ endif()
 
 add_subdirectory(KTX-Software)
 
+option(WEBP_BUILD_ANIM_UTILS "" off)
+option(WEBP_BUILD_CWEBP "" off)
+option(WEBP_BUILD_DWEBP "" off)
+option(WEBP_BUILD_EXTRAS "" off)
+option(WEBP_BUILD_GIF2WEBP "" off)
+option(WEBP_BUILD_IMG2WEBP "" off)
+option(WEBP_BUILD_LIBWEBPMUX "" off)
+option(WEBP_BUILD_VWEBP "" off)
+option(WEBP_BUILD_WEBPINFO "" off)
+option(WEBP_BUILD_WEBPMUX "" off)
+option(WEBP_NEAR_LOSSLESS "" off)
+option(WEBP_UNICODE "" off)
+add_subdirectory(libwebp)
+
 option(URIPARSER_BUILD_TESTS "" off)
 option(URIPARSER_BUILD_DOCS "" off)
 option(URIPARSER_ENABLE_INSTALL "" on)
@@ -128,3 +142,9 @@ set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE
 set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
 )
+
+set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/include" CACHE INTERNAL
+    "Include directory for libmorton libraries"
+)
+set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
+add_subdirectory(libmorton)

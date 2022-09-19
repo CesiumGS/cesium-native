@@ -5,8 +5,9 @@
 
 namespace Cesium3DTilesSelection {
 
-CesiumGltf::Model upsampleGltfForRasterOverlays(
+std::optional<CesiumGltf::Model> upsampleGltfForRasterOverlays(
     const CesiumGltf::Model& parentModel,
-    CesiumGeometry::UpsampledQuadtreeNode childID);
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex = 0);
 
 }

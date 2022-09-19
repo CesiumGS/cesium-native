@@ -1,13 +1,13 @@
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "TileUtilities.h"
 
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
+#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -55,8 +55,9 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _state(AttachmentState::Unattached),
       _originalFailed(false) {}
 
-RasterOverlayTile::MoreDetailAvailable
-RasterMappedTo3DTile::update(Tile& tile) {
+RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
+    IPrepareRendererResources& prepareRendererResources,
+    Tile& tile) {
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
                    this->_pReadyTile->isMoreDetailAvailable() !=
@@ -91,8 +92,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
       this->_pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded) {
     // Unattach the old tile
     if (this->_pReadyTile && this->getState() != AttachmentState::Unattached) {
-      const TilesetExternals& externals = tile.getTileset()->getExternals();
-      externals.pPrepareRendererResources->detachRasterInMainThread(
+      prepareRendererResources.detachRasterInMainThread(
           tile,
           this->getTextureCoordinateID(),
           *this->_pReadyTile,
@@ -126,8 +126,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
         pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
         this->_pReadyTile != pCandidate) {
       if (this->getState() != AttachmentState::Unattached) {
-        const TilesetExternals& externals = tile.getTileset()->getExternals();
-        externals.pPrepareRendererResources->detachRasterInMainThread(
+        prepareRendererResources.detachRasterInMainThread(
             tile,
             this->getTextureCoordinateID(),
             *this->_pReadyTile,
@@ -147,8 +146,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
       this->getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
     this->_pReadyTile->loadInMainThread();
 
-    const TilesetExternals& externals = tile.getTileset()->getExternals();
-    externals.pPrepareRendererResources->attachRasterInMainThread(
+    prepareRendererResources.attachRasterInMainThread(
         tile,
         this->getTextureCoordinateID(),
         *this->_pReadyTile,
@@ -173,7 +171,15 @@ RasterMappedTo3DTile::update(Tile& tile) {
   }
 }
 
-void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
+bool RasterMappedTo3DTile::isMoreDetailAvailable() const noexcept {
+  return !_pLoadingTile && !_originalFailed && _pReadyTile &&
+         _pReadyTile->isMoreDetailAvailable() ==
+             RasterOverlayTile::MoreDetailAvailable::Yes;
+}
+
+void RasterMappedTo3DTile::detachFromTile(
+    IPrepareRendererResources& prepareRendererResources,
+    Tile& tile) noexcept {
   if (this->getState() == AttachmentState::Unattached) {
     return;
   }
@@ -182,8 +188,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
     return;
   }
 
-  const TilesetExternals& externals = tile.getTileset()->getExternals();
-  externals.pPrepareRendererResources->detachRasterInMainThread(
+  prepareRendererResources.detachRasterInMainThread(
       tile,
       this->getTextureCoordinateID(),
       *this->_pReadyTile,
@@ -249,6 +254,7 @@ glm::dvec2 computeDesiredScreenPixels(
     const Projection& projection,
     const Rectangle& rectangle,
     double maxHeight,
+    double maximumScreenSpaceError,
     const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
   // We're aiming to estimate the maximum number of pixels (in each projected
   // direction) the tile will occupy on the screen. The will be determined by
@@ -270,13 +276,12 @@ glm::dvec2 computeDesiredScreenPixels(
   // switch distance is not actually dependent on the screen dimensions or
   // field-of-view angle.
   double geometryError = tile.getNonZeroGeometricError();
-  double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
   glm::dvec2 diameters = computeProjectedRectangleSize(
       projection,
       rectangle,
       maxHeight,
       ellipsoid);
-  return diameters * geometrySSE / geometryError;
+  return diameters * maximumScreenSpaceError / geometryError;
 }
 
 RasterMappedTo3DTile* addRealTile(
@@ -298,6 +303,7 @@ RasterMappedTo3DTile* addRealTile(
 } // namespace
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
+    double maximumScreenSpaceError,
     RasterOverlay& overlay,
     Tile& tile,
     std::vector<Projection>& missingProjections) {
@@ -321,22 +327,23 @@ RasterMappedTo3DTile* addRealTile(
   const Projection& projection = pProvider->getProjection();
 
   // If the tile is loaded, use the precise rectangle computed from the content.
-  const TileContentLoadResult* pContent = tile.getContent();
-  if (pContent) {
+  const TileContent& content = tile.getContent();
+  const TileRenderContent* pRenderContent = content.getRenderContent();
+  if (pRenderContent) {
+    const RasterOverlayDetails& overlayDetails =
+        pRenderContent->getRasterOverlayDetails();
     const Rectangle* pRectangle =
-        pContent->overlayDetails
-            ? pContent->overlayDetails->findRectangleForOverlayProjection(
-                  projection)
-            : nullptr;
+        overlayDetails.findRectangleForOverlayProjection(projection);
     if (pRectangle) {
       // We have a rectangle and texture coordinates for this projection.
-      int32_t index = int32_t(
-          pRectangle - &pContent->overlayDetails->rasterOverlayRectangles[0]);
+      int32_t index =
+          int32_t(pRectangle - &overlayDetails.rasterOverlayRectangles[0]);
       const glm::dvec2 screenPixels = computeDesiredScreenPixels(
           tile,
           projection,
           *pRectangle,
           heightForSizeEstimation,
+          maximumScreenSpaceError,
           Ellipsoid::WGS84);
       return addRealTile(tile, *pProvider, *pRectangle, screenPixels, index);
     } else {
@@ -344,10 +351,7 @@ RasterMappedTo3DTile* addRealTile(
       // tile was loaded before we knew we needed this projection. We'll need to
       // reload the tile (later).
       int32_t existingIndex =
-          pContent->overlayDetails
-              ? int32_t(
-                    pContent->overlayDetails->rasterOverlayProjections.size())
-              : 0;
+          int32_t(overlayDetails.rasterOverlayProjections.size());
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
       return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
@@ -369,6 +373,7 @@ RasterMappedTo3DTile* addRealTile(
         projection,
         *maybeRectangle,
         heightForSizeEstimation,
+        maximumScreenSpaceError,
         Ellipsoid::WGS84);
     return addRealTile(
         tile,
@@ -385,18 +390,23 @@ RasterMappedTo3DTile* addRealTile(
 }
 
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
-  if (!this->_pReadyTile || !tile.getContent() ||
-      !tile.getContent()->overlayDetails) {
+  if (!this->_pReadyTile) {
     // This shouldn't happen
     assert(false);
     return;
   }
 
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  if (!pRenderContent) {
+    return;
+  }
+
+  const RasterOverlayDetails& overlayDetails =
+      pRenderContent->getRasterOverlayDetails();
   const RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
 
-  const TileContentDetailsForOverlays& overlayDetails =
-      *tile.getContent()->overlayDetails;
   const Projection& projection = tileProvider.getProjection();
   const std::vector<Projection>& projections =
       overlayDetails.rasterOverlayProjections;

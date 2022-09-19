@@ -27,20 +27,11 @@
     "CESIUM_RTC": {
       "overrideName": "ExtensionCesiumRTC"
     },
-    "KHR_draco_mesh_compression extension": {
-      "overrideName": "ExtensionKhrDracoMeshCompression"
-    },
-    "KHR_materials_unlit glTF extension": {
-      "overrideName": "ExtensionKhrMaterialsUnlit"
-    },
     "KHR_texture_basisu glTF extension": {
       "overrideName": "ExtensionKhrTextureBasisu"
     },
-    "EXT_mesh_gpu_instancing glTF extension": {
-      "overrideName": "ExtensionExtMeshGpuInstancing"
-    },
-    "EXT_meshopt_compression buffer extension": {
-      "overrideName": "ExtensionBufferExtMeshoptCompression"
+    "EXT_texture_webp glTF extension": {
+      "overrideName": "ExtensionTextureWebp"
     },
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
       "overrideName": "ExtensionCesiumTileEdges"
@@ -159,6 +150,15 @@
     "Schema in EXT_structural_metadata": {
       "overrideName": "ExtensionExtStructuralMetadataSchema"
     },
+    "Any Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "Numeric Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "No Data Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
     "KHR_draco_mesh_compression extension": {
       "overrideName": "ExtensionKhrDracoMeshCompression"
     },
@@ -170,6 +170,9 @@
     },
     "MAXAR_mesh_variants node extension": {
       "overrideName": "ExtensionNodeMaxarMeshVariants"
+    },
+    "KHR_texture_transform textureInfo extension": {
+      "overrideName": "ExtensionKhrTextureTransform"
     }
   },
   "extensions": [
@@ -248,6 +251,20 @@
     {
       "extensionName": "MAXAR_mesh_variants",
       "schema": "Vendor/MAXAR_mesh_variants/schema/node.MAXAR_mesh_variants.schema.json"
+    },
+    {
+      "extensionName": "KHR_texture_transform",
+      "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
+      "attachTo": [
+        "textureInfo"
+      ]
+    },
+    {
+      "extensionName": "EXT_texture_webp",
+      "schema": "Vendor/EXT_texture_webp/schema/glTF.EXT_texture_webp.schema.json",
+      "attachTo": [
+        "texture"
+      ]
     }
   ]
 }

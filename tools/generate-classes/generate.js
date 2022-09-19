@@ -29,16 +29,21 @@ function generate(options, schema, writers) {
 
   schemaCache.pushContext(schema);
 
-  let base = "CesiumUtility::ExtensibleObject";
   let baseSchema;
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
     baseSchema = schemaCache.load(schema.allOf[0].$ref);
+  } else if (schema.$ref) {
+    baseSchema = schemaCache.load(schema.$ref);
+  }
+
+  let base = "CesiumUtility::ExtensibleObject";
+  if (baseSchema !== undefined) {
     base = getNameFromTitle(config, baseSchema.title);
   }
 
   const required = schema.required || [];
 
-  const properties = Object.keys(schema.properties)
+  const properties = Object.keys(schema.properties || {})
     .map((key) =>
       resolveProperty(
         schemaCache,
@@ -491,14 +496,8 @@ function formatWriterPropertyImpl(property) {
   const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
 
-  // Somewhat opinionated but it's helpful to see byteOffset: 0 in accessors and bufferViews
-  const requiredPropertyOverride = ["byteOffset"];
-
   const hasDefaultValueGuard =
-    !isId &&
-    !isRequiredEnum &&
-    !requiredPropertyOverride.includes(property.cppSafeName) &&
-    defaultValue !== undefined;
+    !isId && !isRequiredEnum && defaultValue !== undefined;
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
