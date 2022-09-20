@@ -128,6 +128,7 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
           result.requestHeaders = std::move(requestHeaders);
         }
         result.errors = std::move(tilesetJsonResult.errors);
+        result.statusCode = tilesetJsonResult.statusCode;
         return result;
       });
 }
@@ -198,6 +199,7 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
           result.requestHeaders = std::move(requestHeaders);
         }
         result.errors = std::move(tilesetJsonResult.errors);
+        result.statusCode = tilesetJsonResult.statusCode;
         return result;
       });
 }
@@ -229,6 +231,7 @@ mainThreadHandleEndpointResponse(
         "Received status code {} for asset response {}",
         statusCode,
         requestUrl));
+    result.statusCode = statusCode;
     return externals.asyncSystem.createResolvedFuture(std::move(result));
   }
 
@@ -453,7 +456,7 @@ CesiumIonTilesetLoader::createLoader(
                  ionAssetEndpointUrl,
                  headerChangeListener,
                  showCreditsOnScreen)
-          .thenImmediately(
+          .thenInMainThread(
               [externals,
                contentOptions,
                ionAssetID,
@@ -481,7 +484,7 @@ CesiumIonTilesetLoader::createLoader(
                  ionAssetEndpointUrl,
                  headerChangeListener,
                  showCreditsOnScreen)
-          .thenImmediately(
+          .thenInMainThread(
               [externals,
                contentOptions,
                ionAssetID,
@@ -541,22 +544,19 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
     bool showCreditsOnScreen,
     TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
   if (result.errors.hasErrors()) {
-    std::string errorString = "Received status code 401";
-    for (std::string error : result.errors.errors) {
-      if (error.find(errorString) != std::string::npos) {
-        endpointCache.erase(createEndpointResource(
-            ionAssetID,
-            ionAccessToken,
-            ionAssetEndpointUrl));
-        return CesiumIonTilesetLoader::createLoader(
-            externals,
-            contentOptions,
-            ionAssetID,
-            ionAccessToken,
-            ionAssetEndpointUrl,
-            headerChangeListener,
-            showCreditsOnScreen);
-      }
+    if (result.statusCode == 401) {
+      endpointCache.erase(createEndpointResource(
+          ionAssetID,
+          ionAccessToken,
+          ionAssetEndpointUrl));
+      return CesiumIonTilesetLoader::createLoader(
+          externals,
+          contentOptions,
+          ionAssetID,
+          ionAccessToken,
+          ionAssetEndpointUrl,
+          headerChangeListener,
+          showCreditsOnScreen);
     }
   }
   return externals.asyncSystem.createResolvedFuture(std::move(result));
