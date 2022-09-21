@@ -38,6 +38,17 @@ public:
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen);
 
+  static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+  refreshTokenIfNeeded(
+      const TilesetExternals& externals,
+      const TilesetContentOptions& contentOptions,
+      int64_t ionAssetID,
+      const std::string& ionAccessToken,
+      const std::string& ionAssetEndpointUrl,
+      const AuthorizationHeaderChangeListener& headerChangeListener,
+      bool showCreditsOnScreen,
+      TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result);
+
 private:
   void refreshTokenInMainThread(
       const std::shared_ptr<spdlog::logger>& pLogger,

@@ -721,6 +721,7 @@ TilesetJsonLoader::createLoader(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl));
+          result.statusCode = statusCode;
           return result;
         }
 
