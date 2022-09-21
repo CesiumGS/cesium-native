@@ -48,7 +48,14 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   // Add this overlay to existing geometry tiles.
   forEachTile(*this->_pLoadedTiles, [pOverlayRaw](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
-    if (tile.getState() != TileLoadState::Unloaded) {
+    // - When a tile is transitioned from Unloaded to Loading, raster overlay
+    // tiles will be mapped to the tile automatically by TilesetContentManager,
+    // so we don't need to map the raster tiles to this unloaded tile now.
+    // - When a tile is already failed to load, there is no need to map the
+    // raster tiles to the tile as it is not rendered any way
+    TileLoadState tileState = tile.getState();
+    if (tileState != TileLoadState::Unloaded &&
+        tileState != TileLoadState::Failed) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
           pOverlayRaw->getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0)),
           -1));
