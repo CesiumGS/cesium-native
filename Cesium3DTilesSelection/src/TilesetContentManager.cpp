@@ -1102,37 +1102,35 @@ void TilesetContentManager::setTileContent(
     TileLoadResult&& result,
     void* pWorkerRenderResources) {
   if (result.state == TileLoadResultState::Failed) {
+    tile.getMappedRasterTiles().clear();
     tile.setState(TileLoadState::Failed);
-    return;
-  }
-
-  if (result.state == TileLoadResultState::RetryLater) {
+  } else if (result.state == TileLoadResultState::RetryLater) {
+    tile.getMappedRasterTiles().clear();
     tile.setState(TileLoadState::FailedTemporarily);
-    return;
+  } else {
+    // update tile if the result state is success
+    if (result.updatedBoundingVolume) {
+      tile.setBoundingVolume(*result.updatedBoundingVolume);
+    }
+
+    if (result.updatedContentBoundingVolume) {
+      tile.setContentBoundingVolume(*result.updatedContentBoundingVolume);
+    }
+
+    auto& content = tile.getContent();
+    std::visit(
+        ContentKindSetter{
+            content,
+            std::move(result.rasterOverlayDetails),
+            pWorkerRenderResources},
+        std::move(result.contentKind));
+
+    if (result.tileInitializer) {
+      result.tileInitializer(tile);
+    }
+
+    tile.setState(TileLoadState::ContentLoaded);
   }
-
-  // update tile if the result state is success
-  if (result.updatedBoundingVolume) {
-    tile.setBoundingVolume(*result.updatedBoundingVolume);
-  }
-
-  if (result.updatedContentBoundingVolume) {
-    tile.setContentBoundingVolume(*result.updatedContentBoundingVolume);
-  }
-
-  auto& content = tile.getContent();
-  std::visit(
-      ContentKindSetter{
-          content,
-          std::move(result.rasterOverlayDetails),
-          pWorkerRenderResources},
-      std::move(result.contentKind));
-
-  if (result.tileInitializer) {
-    result.tileInitializer(tile);
-  }
-
-  tile.setState(TileLoadState::ContentLoaded);
 }
 
 void TilesetContentManager::updateContentLoadedState(
