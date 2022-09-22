@@ -89,6 +89,11 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
   bool showCreditsOnScreen = false;
 
   /**
+   * @brief Whether to generate mipmaps for raster images. 
+   */
+  bool generateMipMaps = false;
+
+  /**
    * @brief Arbitrary data that will be passed to {@link prepareRasterInLoadThread},
    * for example, data to control the per-raster overlay client-specific texture
    * properties.
