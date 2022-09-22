@@ -10,6 +10,7 @@
 ##### Additions :tada:
 
 - Added a `rendererOptions` property to `TilesetOptions` to pass arbitrary data to `prepareInLoadThread`.
+- Added `LocalHorizontalCoordinateSystem`, which is used to create convenient right- or left-handeded coordinate systems with an origin at a point on the globe.
 
 ##### Fixes :wrench:
 
