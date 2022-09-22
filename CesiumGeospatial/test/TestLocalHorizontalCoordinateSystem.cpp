@@ -117,4 +117,31 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         0.0,
         1e-10));
   }
+
+  SECTION("Scale") {
+    LocalHorizontalCoordinateSystem lh(
+        nullIsland,
+        LocalDirection::East,
+        LocalDirection::South,
+        LocalDirection::Up,
+        1.0 / 100.0);
+
+    CHECK(Math::equalsEpsilon(
+        lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
+        glm::dvec3(100.0, 0.0, 0.0),
+        0.0,
+        1e-10));
+
+    CHECK(Math::equalsEpsilon(
+        lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
+        glm::dvec3(0.0, -100.0, 0.0),
+        0.0,
+        1e-10));
+
+    CHECK(Math::equalsEpsilon(
+        lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
+        glm::dvec3(0.0, 0.0, 100.0),
+        0.0,
+        1e-10));
+  }
 }
