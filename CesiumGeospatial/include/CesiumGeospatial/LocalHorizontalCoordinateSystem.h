@@ -35,7 +35,9 @@ public:
    * origin.
    * @param zAxisDirection The local direction in which the Z axis points at the
    * origin.
-   * @param scaleToMeters A scaling factor of local units to meters.
+   * @param scaleToMeters Local units are converted to meters by multiplying
+   * them by this factor. For example, if the local units are centimeters, this
+   * parameter should be 1.0 / 100.0.
    * @param ellipsoid The ellipsoid on which the coordinate system is based.
    */
   LocalHorizontalCoordinateSystem(
@@ -57,7 +59,9 @@ public:
    * origin.
    * @param zAxisDirection The local direction in which the Z axis points at the
    * origin.
-   * @param scaleToMeters A scaling factor of local units to meters.
+   * @param scaleToMeters Local units are converted to meters by multiplying
+   * them by this factor. For example, if the local units are centimeters, this
+   * parameter should be 1.0 / 100.0.
    * @param ellipsoid The ellipsoid on which the coordinate system is based.
    */
   LocalHorizontalCoordinateSystem(

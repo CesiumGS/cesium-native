@@ -3,6 +3,7 @@
 #include <CesiumGeospatial/Transforms.h>
 
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/mat3x3.hpp>
 
 using namespace CesiumGeospatial;
 
@@ -82,7 +83,7 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
       glm::dvec4(directionToEnuVector(zAxisDirection), 0.0),
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 
-  glm::dmat4 scale(scaleToMeters);
+  glm::dmat4 scale{glm::dmat3(scaleToMeters)};
 
   this->_localToEcef = enuToFixed * localToEnu * scale;
   this->_ecefToLocal = glm::affineInverse(this->_localToEcef);
