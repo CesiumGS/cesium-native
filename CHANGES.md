@@ -6,6 +6,7 @@
 
 - `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
 - Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareInLoadThread`.
+- `IPrepareRendererResources::prepareInLoadThread` now takes a `TileLoadResult` and returns a `Future<TileLoadResultAndRenderResources>`, allowing it to work asynchronously rather than just blocking a worker thread until it is finished.
 
 ##### Additions :tada:
 
