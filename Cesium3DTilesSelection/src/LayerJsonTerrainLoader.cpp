@@ -26,6 +26,7 @@ struct LoadLayersResult {
   std::vector<LayerJsonTerrainLoader::Layer> layers;
   std::vector<std::string> layerCredits;
   ErrorList errors;
+  uint16_t statusCode{200};
 };
 
 /**
@@ -65,6 +66,7 @@ convertToTilesetContentLoaderResult(LoadLayersResult&& loadLayersResult) {
   if (loadLayersResult.errors) {
     TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
     result.errors = std::move(loadLayersResult.errors);
+    result.statusCode = loadLayersResult.statusCode;
     return result;
   }
 
@@ -542,6 +544,7 @@ LayerJsonTerrainLoader::createLoader(
                   "Received status code {} for tile content {}",
                   statusCode,
                   tileUrl));
+              result.statusCode = statusCode;
               return asyncSystem.createResolvedFuture(std::move(result));
             }
 

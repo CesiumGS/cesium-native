@@ -14,6 +14,8 @@
 ##### Fixes :wrench:
 
 - In `CesiumGltfWriter`, `accessor.byteOffset` and `bufferView.byteOffset` are no longer written if the value is 0. This fixes validation errors for accessors that don't have buffer views, e.g. attributes that are Draco compressed.
+- Fixed a bug where failed tiles don't clean up any raster overlay tiles that are mapped to them, and therefore cannot be rendered as empty tiles.
+- Fixed a bug that prevented access to Cesium Ion assets by using expired Access Tokens.
 
 ### v0.19.0 - 2022-09-01
 
