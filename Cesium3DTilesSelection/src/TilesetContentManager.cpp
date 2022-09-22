@@ -21,11 +21,6 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
-struct TileLoadResultAndRenderResources {
-  TileLoadResult result;
-  void* pRenderResources{nullptr};
-};
-
 struct RegionAndCenter {
   CesiumGeospatial::BoundingRegion region;
   CesiumGeospatial::Cartographic center;
@@ -435,11 +430,10 @@ void calcFittestBoundingRegionForLooseTile(
   }
 }
 
-TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
-    TileLoadResult&& result,
+void postProcessGltfInWorkerThread(
+    TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    const TileContentLoadInfo& tileLoadInfo,
-    const std::any& rendererOptions) {
+    const TileContentLoadInfo& tileLoadInfo) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
@@ -464,15 +458,6 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
     model.generateMissingNormalsSmooth();
   }
-
-  // create render resources
-  void* pRenderResources =
-      tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-          model,
-          tileLoadInfo.tileTransform,
-          rendererOptions);
-
-  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
@@ -548,16 +533,24 @@ postProcessContentInWorkerThread(
             }
 
             if (!gltfResult.model) {
-              return TileLoadResultAndRenderResources{
-                  TileLoadResult::createFailedResult(nullptr),
-                  nullptr};
+              return tileLoadInfo.asyncSystem.createResolvedFuture(
+                  TileLoadResultAndRenderResources{
+                      TileLoadResult::createFailedResult(nullptr),
+                      nullptr});
             }
 
             result.contentKind = std::move(*gltfResult.model);
-            return postProcessGltfInWorkerThread(
-                std::move(result),
+
+            postProcessGltfInWorkerThread(
+                result,
                 std::move(projections),
-                tileLoadInfo,
+                tileLoadInfo);
+
+            // create render resources
+            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+                tileLoadInfo.asyncSystem,
+                std::move(result),
+                tileLoadInfo.tileTransform,
                 rendererOptions);
           });
 }

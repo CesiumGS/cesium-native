@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <cstdint>
 #include <unordered_set>
 #include <vector>
 
