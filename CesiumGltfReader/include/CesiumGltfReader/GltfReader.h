@@ -177,6 +177,8 @@ public:
       const gsl::span<const std::byte>& data,
       const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
+  static std::vector<std::byte> writeImageToBmp(const CesiumGltf::Image &img);
+
 private:
   CesiumJsonReader::ExtensionReaderContext _context;
 };

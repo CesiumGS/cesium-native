@@ -23,9 +23,11 @@
 #include <sstream>
 #include <string>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
@@ -456,223 +458,237 @@ ImageReaderResult GltfReader::readImage(
   CESIUM_TRACE("CesiumGltfReader::readImage");
 
   ImageReaderResult result;
+
   result.image.emplace();
-  result.image->pixelData.insert(result.image->pixelData.begin(), data.begin(), data.end());
+  ImageCesium& image = result.image.value();
+
+  if (isKtx(data)) {
+    ktxTexture2* pTexture = nullptr;
+    KTX_error_code errorCode;
+
+    errorCode = ktxTexture2_CreateFromMemory(
+        reinterpret_cast<const std::uint8_t*>(data.data()),
+        data.size(),
+        KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+        &pTexture);
+
+    if (errorCode == KTX_SUCCESS) {
+      if (ktxTexture2_NeedsTranscoding(pTexture)) {
+
+        CESIUM_TRACE("Transcode KTXv2");
+
+        image.channels =
+            static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
+        GpuCompressedPixelFormat transcodeTargetFormat =
+            GpuCompressedPixelFormat::NONE;
+
+        if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGBA;
+          }
+        } else {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGBA;
+          }
+        }
+
+        ktx_transcode_fmt_e transcodeTargetFormat_ = KTX_TTF_RGBA32;
+        switch (transcodeTargetFormat) {
+        case GpuCompressedPixelFormat::ETC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::ETC2_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::BC3_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC4_R:
+          transcodeTargetFormat_ = KTX_TTF_BC4_R;
+          break;
+        case GpuCompressedPixelFormat::BC5_RG:
+          transcodeTargetFormat_ = KTX_TTF_BC5_RG;
+          break;
+        case GpuCompressedPixelFormat::BC7_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_R11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_RG11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
+          break;
+        // case NONE:
+        default:
+          transcodeTargetFormat_ = KTX_TTF_RGBA32;
+          break;
+        };
+
+        errorCode =
+            ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
+        if (errorCode == KTX_SUCCESS) {
+          image.compressedPixelFormat = transcodeTargetFormat;
+          image.width = static_cast<int32_t>(pTexture->baseWidth);
+          image.height = static_cast<int32_t>(pTexture->baseHeight);
+
+          if (transcodeTargetFormat == GpuCompressedPixelFormat::NONE) {
+            // We fully decompressed the texture in this case.
+            image.bytesPerChannel = 1;
+            image.channels = 4;
+          }
+
+          // Copy over the positions of each mip within the buffer.
+          image.mipPositions.resize(pTexture->numLevels);
+          for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
+            ktx_size_t imageOffset;
+            ktxTexture_GetImageOffset(
+                ktxTexture(pTexture),
+                level,
+                0,
+                0,
+                &imageOffset);
+            ktx_size_t imageSize =
+                ktxTexture_GetImageSize(ktxTexture(pTexture), level);
+
+            image.mipPositions[level] = {imageOffset, imageSize};
+          }
+
+          // Copy over the entire buffer, including all mips.
+          ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
+          ktx_size_t pixelDataSize =
+              ktxTexture_GetDataSize(ktxTexture(pTexture));
+
+          image.pixelData.resize(pixelDataSize);
+          std::uint8_t* u8Pointer =
+              reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+          std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
+
+          ktxTexture_Destroy(ktxTexture(pTexture));
+
+          return result;
+        }
+      }
+    }
+
+    result.image.reset();
+    result.errors.emplace_back("KTX2 loading failed");
+
+    return result;
+  } else if (isWebP(data)) {
+    if (WebPGetInfo(
+            reinterpret_cast<const uint8_t*>(data.data()),
+            data.size(),
+            &image.width,
+            &image.height)) {
+      image.channels = 4;
+      image.bytesPerChannel = 1;
+      uint8_t* pImage = NULL;
+      const auto bufferSize = image.width * image.height * image.channels;
+      image.pixelData.resize(static_cast<std::size_t>(bufferSize));
+      pImage = WebPDecodeRGBAInto(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          reinterpret_cast<uint8_t*>(image.pixelData.data()),
+          image.pixelData.size(),
+          image.width * image.channels);
+      if (!pImage) {
+        result.image.reset();
+        result.errors.emplace_back("Unable to decode WebP");
+      }
+      return result;
+    }
+  }
+
+  {
+    CESIUM_TRACE("Decode JPG / PNG");
+
+    image.bytesPerChannel = 1;
+    image.channels = 4;
+
+    int channelsInFile;
+    stbi_uc* pImage = stbi_load_from_memory(
+        reinterpret_cast<const stbi_uc*>(data.data()),
+        static_cast<int>(data.size()),
+        &image.width,
+        &image.height,
+        &channelsInFile,
+        image.channels);
+    if (pImage) {
+      CESIUM_TRACE(
+          "copy image " + std::to_string(image.width) + "x" +
+          std::to_string(image.height) + "x" + std::to_string(image.channels) +
+          "x" + std::to_string(image.bytesPerChannel));
+      // std::uint8_t is not implicitly convertible to std::byte, so we must use
+      // reinterpret_cast to (safely) force the conversion.
+      const auto lastByte =
+          image.width * image.height * image.channels * image.bytesPerChannel;
+      image.pixelData.resize(static_cast<std::size_t>(lastByte));
+      std::uint8_t* u8Pointer =
+          reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+      std::copy(pImage, pImage + lastByte, u8Pointer);
+      stbi_image_free(pImage);
+    } else {
+      result.image.reset();
+      result.errors.emplace_back(stbi_failure_reason());
+    }
+  }
+
   return result;
+}
 
-  //result.image.emplace();
-  //ImageCesium& image = result.image.value();
+std::vector<std::byte> GltfReader::writeImageToBmp(const CesiumGltf::Image& img) {
+  std::vector<std::byte> writeData;
+  stbi_write_bmp_to_func(
+      [](void* context, void* data, int size) {
+        auto &write = *reinterpret_cast<std::vector<std::byte>*>(context);
+        std::byte* bdata = reinterpret_cast<std::byte*>(data);
+        write.insert(write.end(), bdata, bdata + size);
+      },
+      &writeData,
+      img.cesium.width,
+      img.cesium.height,
+      img.cesium.channels,
+      img.cesium.pixelData.data());
 
-  //if (isKtx(data)) {
-  //  ktxTexture2* pTexture = nullptr;
-  //  KTX_error_code errorCode;
-
-  //  errorCode = ktxTexture2_CreateFromMemory(
-  //      reinterpret_cast<const std::uint8_t*>(data.data()),
-  //      data.size(),
-  //      KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
-  //      &pTexture);
-
-  //  if (errorCode == KTX_SUCCESS) {
-  //    if (ktxTexture2_NeedsTranscoding(pTexture)) {
-
-  //      CESIUM_TRACE("Transcode KTXv2");
-
-  //      image.channels =
-  //          static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
-  //      GpuCompressedPixelFormat transcodeTargetFormat =
-  //          GpuCompressedPixelFormat::NONE;
-
-  //      if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
-  //        switch (image.channels) {
-  //        case 1:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_R;
-  //          break;
-  //        case 2:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RG;
-  //          break;
-  //        case 3:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGB;
-  //          break;
-  //        // case 4:
-  //        default:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGBA;
-  //        }
-  //      } else {
-  //        switch (image.channels) {
-  //        case 1:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.UASTC_R;
-  //          break;
-  //        case 2:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RG;
-  //          break;
-  //        case 3:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGB;
-  //          break;
-  //        // case 4:
-  //        default:
-  //          transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGBA;
-  //        }
-  //      }
-
-  //      ktx_transcode_fmt_e transcodeTargetFormat_ = KTX_TTF_RGBA32;
-  //      switch (transcodeTargetFormat) {
-  //      case GpuCompressedPixelFormat::ETC1_RGB:
-  //        transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
-  //        break;
-  //      case GpuCompressedPixelFormat::ETC2_RGBA:
-  //        transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
-  //        break;
-  //      case GpuCompressedPixelFormat::BC1_RGB:
-  //        transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
-  //        break;
-  //      case GpuCompressedPixelFormat::BC3_RGBA:
-  //        transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
-  //        break;
-  //      case GpuCompressedPixelFormat::BC4_R:
-  //        transcodeTargetFormat_ = KTX_TTF_BC4_R;
-  //        break;
-  //      case GpuCompressedPixelFormat::BC5_RG:
-  //        transcodeTargetFormat_ = KTX_TTF_BC5_RG;
-  //        break;
-  //      case GpuCompressedPixelFormat::BC7_RGBA:
-  //        transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
-  //        break;
-  //      case GpuCompressedPixelFormat::PVRTC1_4_RGB:
-  //        transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
-  //        break;
-  //      case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
-  //        transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
-  //        break;
-  //      case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
-  //        transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
-  //        break;
-  //      case GpuCompressedPixelFormat::PVRTC2_4_RGB:
-  //        transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
-  //        break;
-  //      case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
-  //        transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
-  //        break;
-  //      case GpuCompressedPixelFormat::ETC2_EAC_R11:
-  //        transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
-  //        break;
-  //      case GpuCompressedPixelFormat::ETC2_EAC_RG11:
-  //        transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
-  //        break;
-  //      // case NONE:
-  //      default:
-  //        transcodeTargetFormat_ = KTX_TTF_RGBA32;
-  //        break;
-  //      };
-
-  //      errorCode =
-  //          ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
-  //      if (errorCode == KTX_SUCCESS) {
-  //        image.compressedPixelFormat = transcodeTargetFormat;
-  //        image.width = static_cast<int32_t>(pTexture->baseWidth);
-  //        image.height = static_cast<int32_t>(pTexture->baseHeight);
-
-  //        if (transcodeTargetFormat == GpuCompressedPixelFormat::NONE) {
-  //          // We fully decompressed the texture in this case.
-  //          image.bytesPerChannel = 1;
-  //          image.channels = 4;
-  //        }
-
-  //        // Copy over the positions of each mip within the buffer.
-  //        image.mipPositions.resize(pTexture->numLevels);
-  //        for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
-  //          ktx_size_t imageOffset;
-  //          ktxTexture_GetImageOffset(
-  //              ktxTexture(pTexture),
-  //              level,
-  //              0,
-  //              0,
-  //              &imageOffset);
-  //          ktx_size_t imageSize =
-  //              ktxTexture_GetImageSize(ktxTexture(pTexture), level);
-
-  //          image.mipPositions[level] = {imageOffset, imageSize};
-  //        }
-
-  //        // Copy over the entire buffer, including all mips.
-  //        ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
-  //        ktx_size_t pixelDataSize =
-  //            ktxTexture_GetDataSize(ktxTexture(pTexture));
-
-  //        image.pixelData.resize(pixelDataSize);
-  //        std::uint8_t* u8Pointer =
-  //            reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-  //        std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
-
-  //        ktxTexture_Destroy(ktxTexture(pTexture));
-
-  //        return result;
-  //      }
-  //    }
-  //  }
-
-  //  result.image.reset();
-  //  result.errors.emplace_back("KTX2 loading failed");
-
-  //  return result;
-  //} else if (isWebP(data)) {
-  //  if (WebPGetInfo(
-  //          reinterpret_cast<const uint8_t*>(data.data()),
-  //          data.size(),
-  //          &image.width,
-  //          &image.height)) {
-  //    image.channels = 4;
-  //    image.bytesPerChannel = 1;
-  //    uint8_t* pImage = NULL;
-  //    const auto bufferSize = image.width * image.height * image.channels;
-  //    image.pixelData.resize(static_cast<std::size_t>(bufferSize));
-  //    pImage = WebPDecodeRGBAInto(
-  //        reinterpret_cast<const uint8_t*>(data.data()),
-  //        data.size(),
-  //        reinterpret_cast<uint8_t*>(image.pixelData.data()),
-  //        image.pixelData.size(),
-  //        image.width * image.channels);
-  //    if (!pImage) {
-  //      result.image.reset();
-  //      result.errors.emplace_back("Unable to decode WebP");
-  //    }
-  //    return result;
-  //  }
-  //}
-
-  //{
-  //  CESIUM_TRACE("Decode JPG / PNG");
-
-  //  image.bytesPerChannel = 1;
-  //  image.channels = 4;
-
-  //  int channelsInFile;
-  //  stbi_uc* pImage = stbi_load_from_memory(
-  //      reinterpret_cast<const stbi_uc*>(data.data()),
-  //      static_cast<int>(data.size()),
-  //      &image.width,
-  //      &image.height,
-  //      &channelsInFile,
-  //      image.channels);
-  //  if (pImage) {
-  //    CESIUM_TRACE(
-  //        "copy image " + std::to_string(image.width) + "x" +
-  //        std::to_string(image.height) + "x" + std::to_string(image.channels) +
-  //        "x" + std::to_string(image.bytesPerChannel));
-  //    // std::uint8_t is not implicitly convertible to std::byte, so we must use
-  //    // reinterpret_cast to (safely) force the conversion.
-  //    const auto lastByte =
-  //        image.width * image.height * image.channels * image.bytesPerChannel;
-  //    image.pixelData.resize(static_cast<std::size_t>(lastByte));
-  //    std::uint8_t* u8Pointer =
-  //        reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-  //    std::copy(pImage, pImage + lastByte, u8Pointer);
-  //    stbi_image_free(pImage);
-  //  } else {
-  //    result.image.reset();
-  //    result.errors.emplace_back(stbi_failure_reason());
-  //  }
-  //}
-
-  //return result;
+  return writeData;
 }
