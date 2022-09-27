@@ -89,7 +89,7 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
   bool showCreditsOnScreen = false;
 
   /**
-   * @brief Whether to generate mipmaps for raster images. 
+   * @brief Whether to generate mipmaps for raster images.
    */
   bool generateMipMaps = false;
 

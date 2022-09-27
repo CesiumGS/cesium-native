@@ -340,7 +340,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   }
 
   // TODO: expose this to TilesetOptions
-  _pTilesetContentManager->tickResourceCreation(2.0);
+  _pTilesetContentManager->tickResourceCreation(5.0);
 
   this->_unloadCachedTiles();
   this->_processLoadQueue();

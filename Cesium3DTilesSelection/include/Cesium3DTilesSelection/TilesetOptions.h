@@ -41,10 +41,10 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
   bool generateMissingNormalsSmooth = false;
 
   /**
-   * @brief Whether to generate mip maps for glTF textures. 
-   * 
-   * This does not apply to KTX2 images that are transcoded to anything other 
-   * than GpuCompressedPixelFormat::None (i.e., decompressed to RGBA32). In 
+   * @brief Whether to generate mip maps for glTF textures.
+   *
+   * This does not apply to KTX2 images that are transcoded to anything other
+   * than GpuCompressedPixelFormat::None (i.e., decompressed to RGBA32). In
    * such cases, the KTX2 texture must already come with mipmaps.
    */
   bool generateMipMaps = false;
