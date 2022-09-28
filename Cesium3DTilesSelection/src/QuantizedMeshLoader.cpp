@@ -500,22 +500,22 @@ static void addSkirts(
         return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;
       });
   westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
-  addSkirt(
-      ellipsoid,
-      center,
-      rectangle,
-      minimumHeight,
-      maximumHeight,
-      currentVertexCount,
-      currentIndicesCount,
-      skirtHeight,
-      -longitudeOffset,
-      0.0,
-      uvsAndHeights,
-      westEdgeIndices,
-      outputPositions,
-      outputNormals,
-      outputIndices);
+  //addSkirt(
+  //    ellipsoid,
+  //    center,
+  //    rectangle,
+  //    minimumHeight,
+  //    maximumHeight,
+  //    currentVertexCount,
+  //    currentIndicesCount,
+  //    skirtHeight,
+  //    -longitudeOffset,
+  //    0.0,
+  //    uvsAndHeights,
+  //    westEdgeIndices,
+  //    outputPositions,
+  //    outputNormals,
+  //    outputIndices);
 
   currentVertexCount += westVertexCount;
   currentIndicesCount += (westVertexCount - 1) * 6;
@@ -531,22 +531,22 @@ static void addSkirts(
         return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;
       });
   southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
-  addSkirt(
-      ellipsoid,
-      center,
-      rectangle,
-      minimumHeight,
-      maximumHeight,
-      currentVertexCount,
-      currentIndicesCount,
-      skirtHeight,
-      0.0,
-      -latitudeOffset,
-      uvsAndHeights,
-      southEdgeIndices,
-      outputPositions,
-      outputNormals,
-      outputIndices);
+  //addSkirt(
+  //    ellipsoid,
+  //    center,
+  //    rectangle,
+  //    minimumHeight,
+  //    maximumHeight,
+  //    currentVertexCount,
+  //    currentIndicesCount,
+  //    skirtHeight,
+  //    0.0,
+  //    -latitudeOffset,
+  //    uvsAndHeights,
+  //    southEdgeIndices,
+  //    outputPositions,
+  //    outputNormals,
+  //    outputIndices);
 
   currentVertexCount += southVertexCount;
   currentIndicesCount += (southVertexCount - 1) * 6;
@@ -562,22 +562,22 @@ static void addSkirts(
         return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;
       });
   eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
-  addSkirt(
-      ellipsoid,
-      center,
-      rectangle,
-      minimumHeight,
-      maximumHeight,
-      currentVertexCount,
-      currentIndicesCount,
-      skirtHeight,
-      longitudeOffset,
-      0.0,
-      uvsAndHeights,
-      eastEdgeIndices,
-      outputPositions,
-      outputNormals,
-      outputIndices);
+  //addSkirt(
+  //    ellipsoid,
+  //    center,
+  //    rectangle,
+  //    minimumHeight,
+  //    maximumHeight,
+  //    currentVertexCount,
+  //    currentIndicesCount,
+  //    skirtHeight,
+  //    longitudeOffset,
+  //    0.0,
+  //    uvsAndHeights,
+  //    eastEdgeIndices,
+  //    outputPositions,
+  //    outputNormals,
+  //    outputIndices);
 
   currentVertexCount += eastVertexCount;
   currentIndicesCount += (eastVertexCount - 1) * 6;
@@ -593,22 +593,22 @@ static void addSkirts(
         return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x;
       });
   northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
-  addSkirt(
-      ellipsoid,
-      center,
-      rectangle,
-      minimumHeight,
-      maximumHeight,
-      currentVertexCount,
-      currentIndicesCount,
-      skirtHeight,
-      0.0,
-      latitudeOffset,
-      uvsAndHeights,
-      northEdgeIndices,
-      outputPositions,
-      outputNormals,
-      outputIndices);
+  //addSkirt(
+  //    ellipsoid,
+  //    center,
+  //    rectangle,
+  //    minimumHeight,
+  //    maximumHeight,
+  //    currentVertexCount,
+  //    currentIndicesCount,
+  //    skirtHeight,
+  //    0.0,
+  //    latitudeOffset,
+  //    uvsAndHeights,
+  //    northEdgeIndices,
+  //    outputPositions,
+  //    outputNormals,
+  //    outputIndices);
 }
 
 static void decodeNormals(
