@@ -1391,14 +1391,12 @@ void Tileset::_processLoadQueue() {
 }
 
 void Tileset::_unloadCachedTiles() noexcept {
-  // TODO: this is a hack, time-budget this similar to tickResourceCreation
-  size_t unloadedCount = 0;
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
-  while (this->getTotalDataBytes() > maxBytes && unloadedCount < 5) {
+  while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
@@ -1419,7 +1417,6 @@ void Tileset::_unloadCachedTiles() noexcept {
         this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
-      ++unloadedCount;
     }
 
     pTile = pNext;
