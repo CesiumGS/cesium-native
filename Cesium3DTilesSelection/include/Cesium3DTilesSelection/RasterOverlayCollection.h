@@ -6,6 +6,8 @@
 #include "Tile.h"
 #include "TilesetExternals.h"
 
+#include <CesiumUtility/Tracing.h>
+
 #include <gsl/span>
 
 #include <memory>
