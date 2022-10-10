@@ -271,6 +271,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
+  CESIUM_TRACE("Tileset::updateView");
   // Fixup TilesetOptions to ensure lod transitions works correctly.
   _options.enableFrustumCulling =
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
@@ -1379,6 +1380,8 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 }
 
 void Tileset::_processLoadQueue() {
+  CESIUM_TRACE("Tileset::_processLoadQueue");
+
   this->processQueue(
       this->_loadQueueHigh,
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));

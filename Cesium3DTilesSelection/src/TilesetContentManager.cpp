@@ -794,6 +794,8 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  CESIUM_TRACE("TilesetContentManager::loadTileContent");
+
   if (tile.getState() != TileLoadState::Unloaded &&
       tile.getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
@@ -1081,6 +1083,8 @@ bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
 }
 
 void TilesetContentManager::tickResourceCreation(double timeBudget) {
+  CESIUM_TRACE("TilesetContentManager::tickResourceCreation");
+
   std::sort(_resourceCreationQueue.begin(), _resourceCreationQueue.end());
 
   std::chrono::time_point<std::chrono::system_clock> start =
