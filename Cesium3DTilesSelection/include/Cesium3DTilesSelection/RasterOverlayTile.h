@@ -173,6 +173,16 @@ public:
   }
 
   /**
+   * @brief Returns the image data for the tile.
+   *
+   * This will only contain valid image data if the {@link getState} of
+   * this tile is {@link LoadState `Loaded`} or {@link LoadState `Done`}.
+   *
+   * @return The image data.
+   */
+  CesiumGltf::ImageCesium& getImage() noexcept { return this->_image; }
+
+  /**
    * @brief Create the renderer resources for the loaded image.
    *
    * If the {@link getState} of this tile is not {@link LoadState `Loaded`},

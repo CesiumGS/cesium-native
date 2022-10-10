@@ -231,7 +231,6 @@ struct LoadResult {
  * @param pPrepareRendererResources The `IPrepareRendererResources`
  * @param pLogger The logger
  * @param loadedImage The `LoadedRasterOverlayImage`
- * @param generateMipMap Whether a mip map should be generated for this image.
  * @param rendererOptions Renderer options
  * @return The `LoadResult`
  */
@@ -239,7 +238,6 @@ static LoadResult createLoadResultFromLoadedImage(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     LoadedRasterOverlayImage&& loadedImage,
-    bool generateMipMap,
     const std::any& rendererOptions) {
   if (!loadedImage.image.has_value()) {
     SPDLOG_LOGGER_ERROR(
@@ -273,14 +271,6 @@ static LoadResult createLoadResultFromLoadedImage(
         "Prepare Raster " + std::to_string(image.width) + "x" +
         std::to_string(image.height) + "x" + std::to_string(image.channels) +
         "x" + std::to_string(image.bytesPerChannel));
-
-    if (generateMipMap) {
-      std::optional<std::string> mipMapErrorMsg =
-          CesiumGltfReader::GltfReader::generateMipMaps(image);
-      if (mipMapErrorMsg) {
-        SPDLOG_LOGGER_WARN(pLogger, *mipMapErrorMsg);
-      }
-    }
 
     void* pRendererResources = nullptr;
     if (pPrepareRendererResources) {
@@ -326,14 +316,12 @@ void RasterOverlayTileProvider::doLoad(
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger = this->getLogger(),
-           generateMipMap = this->_pOwner->getOptions().generateMipMaps,
            rendererOptions = this->_pOwner->getOptions().rendererOptions](
               LoadedRasterOverlayImage&& loadedImage) {
             return createLoadResultFromLoadedImage(
                 pPrepareRendererResources,
                 pLogger,
                 std::move(loadedImage),
-                generateMipMap,
                 rendererOptions);
           })
       .thenInMainThread(
