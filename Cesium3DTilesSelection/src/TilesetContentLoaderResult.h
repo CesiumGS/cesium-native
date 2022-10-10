@@ -86,5 +86,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 
   ErrorList errors;
+
+  uint16_t statusCode{200};
 };
 } // namespace Cesium3DTilesSelection
