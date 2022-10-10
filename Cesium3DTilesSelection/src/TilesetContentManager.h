@@ -79,7 +79,9 @@ public:
 
   bool tileNeedsLoading(const Tile& tile) const noexcept;
 
-  void tickResourceCreation(double timeBudget);
+  void tickMainThreadLoading(
+      double timeBudget,
+      const TilesetOptions& tilesetOptions);
 
 private:
   static void setTileContent(
@@ -87,14 +89,14 @@ private:
       TileLoadResult&& result,
       void* pWorkerRenderResources);
 
-  void
-  updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
-
-  void updateCreatingResourcesState(Tile& tile, double priority);
+  void updateContentLoadedState(
+      Tile& tile,
+      double priority,
+      const TilesetOptions& tilesetOptions);
 
   void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void createRenderResources(Tile& tile);
+  void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void unloadContentLoadedState(Tile& tile);
 
@@ -125,21 +127,21 @@ private:
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
 
-  struct ResourceCreationTask {
+  struct MainThreadLoadTask {
     Tile* pTile;
 
     /**
-     * @brief The relative priority of creating the resources for this tile.
+     * @brief The relative priority of loading for this tile.
      *
      * Lower priority values load sooner.
      */
     double priority;
 
-    bool operator<(const ResourceCreationTask& rhs) const noexcept {
+    bool operator<(const MainThreadLoadTask& rhs) const noexcept {
       return this->priority < rhs.priority;
     }
   };
 
-  std::vector<ResourceCreationTask> _resourceCreationQueue;
+  std::vector<MainThreadLoadTask> _finishLoadingQueue;
 };
 } // namespace Cesium3DTilesSelection

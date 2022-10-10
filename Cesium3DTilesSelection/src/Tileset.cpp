@@ -340,10 +340,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
-  // TODO: expose this to TilesetOptions
-  _pTilesetContentManager->tickResourceCreation(5.0);
+  _pTilesetContentManager->tickMainThreadLoading(
+      this->_options.mainThreadLoadingTimeLimit,
+      this->_options);
 
-  this->_unloadCachedTiles();
+  this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
   this->_processLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
@@ -1393,12 +1394,14 @@ void Tileset::_processLoadQueue() {
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
 }
 
-void Tileset::_unloadCachedTiles() noexcept {
+void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
+  std::chrono::time_point<std::chrono::system_clock> start =
+      std::chrono::system_clock::now();
   while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {
       // We've either removed all tiles or the next tile is the root.
@@ -1423,6 +1426,16 @@ void Tileset::_unloadCachedTiles() noexcept {
     }
 
     pTile = pNext;
+
+    // A time budget of 0.0 indicates we shouldn't throttle cache unloads.
+    std::chrono::time_point<std::chrono::system_clock> time =
+        std::chrono::system_clock::now();
+    if (timeBudget > 0.0 &&
+        std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+            time - start)
+                .count() >= timeBudget) {
+      break;
+    }
   }
 }
 

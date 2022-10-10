@@ -918,11 +918,7 @@ void TilesetContentManager::updateTileContent(
     double priority,
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::ContentLoaded) {
-    updateContentLoadedState(tile, tilesetOptions);
-  }
-
-  if (tile.getState() == TileLoadState::CreatingResources) {
-    updateCreatingResourcesState(tile, priority);
+    updateContentLoadedState(tile, priority, tilesetOptions);
   }
 
   if (tile.getState() == TileLoadState::Done) {
@@ -975,7 +971,6 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
   switch (state) {
   case TileLoadState::ContentLoaded:
-  case TileLoadState::CreatingResources:
     unloadContentLoadedState(tile);
     break;
   case TileLoadState::Done:
@@ -1082,15 +1077,25 @@ bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
          anyRasterOverlaysNeedLoading(tile);
 }
 
-void TilesetContentManager::tickResourceCreation(double timeBudget) {
-  CESIUM_TRACE("TilesetContentManager::tickResourceCreation");
+void TilesetContentManager::tickMainThreadLoading(
+    double timeBudget,
+    const TilesetOptions& tilesetOptions) {
+  CESIUM_TRACE("TilesetContentManager::tickMainThreadLoading");
 
-  std::sort(_resourceCreationQueue.begin(), _resourceCreationQueue.end());
+  // A budget of 0.0 indicates that all ready tiles should finish loading.
+  if (timeBudget == 0.0) {
+    for (MainThreadLoadTask& task : this->_finishLoadingQueue) {
+      finishLoading(*task.pTile, tilesetOptions);
+    }
+    return;
+  }
+
+  std::sort(this->_finishLoadingQueue.begin(), this->_finishLoadingQueue.end());
 
   std::chrono::time_point<std::chrono::system_clock> start =
       std::chrono::system_clock::now();
-  for (ResourceCreationTask& task : _resourceCreationQueue) {
-    createRenderResources(*task.pTile);
+  for (MainThreadLoadTask& task : this->_finishLoadingQueue) {
+    finishLoading(*task.pTile, tilesetOptions);
     std::chrono::time_point<std::chrono::system_clock> time =
         std::chrono::system_clock::now();
     if (std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
@@ -1100,7 +1105,7 @@ void TilesetContentManager::tickResourceCreation(double timeBudget) {
     }
   }
 
-  _resourceCreationQueue.clear();
+  this->_finishLoadingQueue.clear();
 }
 
 void TilesetContentManager::setTileContent(
@@ -1141,6 +1146,7 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
+    double priority,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
@@ -1149,16 +1155,10 @@ void TilesetContentManager::updateContentLoadedState(
     tile.setUnconditionallyRefine();
     tile.setState(TileLoadState::Done);
   } else if (content.isRenderContent()) {
-    TileRenderContent* pRenderContent = content.getRenderContent();
-    if (pRenderContent) {
-      // add copyright
-      pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-          *_externals.pCreditSystem,
-          pRenderContent->getModel(),
-          tilesetOptions.showCreditsOnScreen));
-
-      tile.setState(TileLoadState::CreatingResources);
-    }
+    // Note: The main thread part of render content loading is throttled, so
+    // this block may evaluate several times before the tile gets pushed to
+    // TileLoadState::Done.
+    this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
     //
@@ -1194,18 +1194,20 @@ void TilesetContentManager::updateContentLoadedState(
   }
 }
 
-void TilesetContentManager::updateCreatingResourcesState(
+void TilesetContentManager::finishLoading(
     Tile& tile,
-    double priority) {
-  _resourceCreationQueue.push_back(ResourceCreationTask{&tile, priority});
-}
-
-void TilesetContentManager::createRenderResources(Tile& tile) {
-  // create render resources in the main thread
+    const TilesetOptions& tilesetOptions) {
+  // Run the main thread part of loading.
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
 
-  assert(pRenderContent);
+  assert(pRenderContent != nullptr);
+
+  // add copyright
+  pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
+      *_externals.pCreditSystem,
+      pRenderContent->getModel(),
+      tilesetOptions.showCreditsOnScreen));
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   void* pMainThreadRenderResources =
