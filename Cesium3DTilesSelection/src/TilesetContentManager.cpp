@@ -1155,10 +1155,16 @@ void TilesetContentManager::updateContentLoadedState(
     tile.setUnconditionallyRefine();
     tile.setState(TileLoadState::Done);
   } else if (content.isRenderContent()) {
-    // Note: The main thread part of render content loading is throttled, so
-    // this block may evaluate several times before the tile gets pushed to
-    // TileLoadState::Done.
-    this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
+    if (tilesetOptions.mainThreadLoadingTimeLimit == 0.0) {
+      // The main thread part of render content loading is not throttled, so
+      // do it right away.
+      finishLoading(tile, tilesetOptions);
+    } else {
+      // The main thread part of render content loading is throttled. Note that
+      // this block may evaluate several times before the tile gets pushed to
+      // TileLoadState::Done.
+      this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
+    }
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
     //

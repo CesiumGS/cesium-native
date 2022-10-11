@@ -288,7 +288,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * Setting this to too low of a value will impede overall tile load progress,
    * creating a discernable load latency.
    */
-  double mainThreadLoadingTimeLimit = 5.0;
+  double mainThreadLoadingTimeLimit = 0.0;
 
   /**
    * @brief A soft limit on how long (in milliseconds) to spend unloading
