@@ -4,13 +4,14 @@
 
 ##### Breaking Changes :mega:
 
-- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
-- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareInLoadThread`.
 - `IPrepareRendererResources::prepareInLoadThread` now takes a `TileLoadResult` and returns a `Future<TileLoadResultAndRenderResources>`, allowing it to work asynchronously rather than just blocking a worker thread until it is finished.
 
-##### Additions :tada:
+### v0.20.0 - 2022-10-03
 
-- Added a `rendererOptions` property to `TilesetOptions` to pass arbitrary data to `prepareInLoadThread`.
+##### Breaking Changes :mega:
+
+- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
+- Added a new parameter to `IPrepareRendererResources::prepareInLoadThread`, `rendererOptions`,  to allow passing arbitrary data from the renderer.
 
 ##### Fixes :wrench:
 
