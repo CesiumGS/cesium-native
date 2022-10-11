@@ -742,7 +742,8 @@ std::optional<std::string> GltfReader::generateMipMaps(ImageCesium& image) {
       mipHeight >>= 1;
     }
 
-    byteSize = mipWidth * mipHeight * image.channels * image.bytesPerChannel;
+    byteSize = static_cast<size_t>(
+        mipWidth * mipHeight * image.channels * image.bytesPerChannel);
 
     image.mipPositions[mipIndex].byteOffset = byteOffset;
     image.mipPositions[mipIndex].byteSize = byteSize;
