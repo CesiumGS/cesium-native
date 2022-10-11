@@ -1223,6 +1223,11 @@ void TilesetContentManager::finishLoading(
 
   pRenderContent->setRenderResources(pMainThreadRenderResources);
   tile.setState(TileLoadState::Done);
+
+  // This allows the raster tile to be updated and children to be created, if
+  // necessary.
+  // Priority doesn't matter here since loading is complete.
+  updateTileContent(tile, 0.0, tilesetOptions);
 }
 
 void TilesetContentManager::updateDoneState(
