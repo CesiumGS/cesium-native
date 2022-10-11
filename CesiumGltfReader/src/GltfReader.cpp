@@ -712,8 +712,8 @@ std::optional<std::string> GltfReader::generateMipMaps(ImageCesium& image) {
   }
 
   // Byte size of the base image.
-  const auto imageByteSize =
-      image.width * image.height * image.channels * image.bytesPerChannel;
+  const size_t imageByteSize = static_cast<size_t>(
+      image.width * image.height * image.channels * image.bytesPerChannel);
 
   image.mipPositions.resize(mipCount);
   image.mipPositions[0].byteOffset = 0;
