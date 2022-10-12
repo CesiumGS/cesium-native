@@ -1211,13 +1211,13 @@ void TilesetContentManager::finishLoading(
 
   // add copyright
   pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-      *_externals.pCreditSystem,
+      *this->_externals.pCreditSystem,
       pRenderContent->getModel(),
       tilesetOptions.showCreditsOnScreen));
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   void* pMainThreadRenderResources =
-      _externals.pPrepareRendererResources->prepareInMainThread(
+      this->_externals.pPrepareRendererResources->prepareInMainThread(
           tile,
           pWorkerRenderResources);
 
