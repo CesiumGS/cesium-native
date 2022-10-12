@@ -340,12 +340,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
+  this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
+  this->_processLoadQueue();
   this->_pTilesetContentManager->tickMainThreadLoading(
       this->_options.mainThreadLoadingTimeLimit,
       this->_options);
-
-  this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
-  this->_processLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
