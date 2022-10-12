@@ -18,6 +18,8 @@
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
 
+#include <chrono>
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct TileLoadResultAndRenderResources {
@@ -792,6 +794,8 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  CESIUM_TRACE("TilesetContentManager::loadTileContent");
+
   if (tile.getState() != TileLoadState::Unloaded &&
       tile.getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
@@ -911,9 +915,10 @@ void TilesetContentManager::loadTileContent(
 
 void TilesetContentManager::updateTileContent(
     Tile& tile,
+    double priority,
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::ContentLoaded) {
-    updateContentLoadedState(tile, tilesetOptions);
+    updateContentLoadedState(tile, priority, tilesetOptions);
   }
 
   if (tile.getState() == TileLoadState::Done) {
@@ -1072,6 +1077,32 @@ bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
          anyRasterOverlaysNeedLoading(tile);
 }
 
+void TilesetContentManager::tickMainThreadLoading(
+    double timeBudget,
+    const TilesetOptions& tilesetOptions) {
+  CESIUM_TRACE("TilesetContentManager::tickMainThreadLoading");
+  // Process deferred main-thread load tasks with a time budget.
+
+  // A time budget of 0.0 indicates that we shouldn't throttle main thread
+  // loading - but in that case updateContentLoadedState will have already
+  // finished loading during the traversal.
+
+  std::sort(this->_finishLoadingQueue.begin(), this->_finishLoadingQueue.end());
+
+  auto start = std::chrono::system_clock::now();
+  auto end =
+      start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
+  for (MainThreadLoadTask& task : this->_finishLoadingQueue) {
+    finishLoading(*task.pTile, tilesetOptions);
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
+  }
+
+  this->_finishLoadingQueue.clear();
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
@@ -1110,12 +1141,25 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
+    double priority,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
   if (content.isExternalContent()) {
     // if tile is external tileset, then it will be refined no matter what
     tile.setUnconditionallyRefine();
+    tile.setState(TileLoadState::Done);
+  } else if (content.isRenderContent()) {
+    if (tilesetOptions.mainThreadLoadingTimeLimit <= 0.0) {
+      // The main thread part of render content loading is not throttled, so
+      // do it right away.
+      finishLoading(tile, tilesetOptions);
+    } else {
+      // The main thread part of render content loading is throttled. Note that
+      // this block may evaluate several times before the tile gets pushed to
+      // TileLoadState::Done.
+      this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
+    }
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
     //
@@ -1146,24 +1190,39 @@ void TilesetContentManager::updateContentLoadedState(
     if (myGeometricError >= parentGeometricError) {
       tile.setUnconditionallyRefine();
     }
-  } else if (content.isRenderContent()) {
-    TileRenderContent* pRenderContent = content.getRenderContent();
-    // add copyright
-    pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-        *this->_externals.pCreditSystem,
-        pRenderContent->getModel(),
-        tilesetOptions.showCreditsOnScreen));
 
-    // create render resources in the main thread
-    void* pWorkerRenderResources = pRenderContent->getRenderResources();
-    void* pMainThreadRenderResources =
-        this->_externals.pPrepareRendererResources->prepareInMainThread(
-            tile,
-            pWorkerRenderResources);
-    pRenderContent->setRenderResources(pMainThreadRenderResources);
+    tile.setState(TileLoadState::Done);
   }
+}
 
+void TilesetContentManager::finishLoading(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) {
+  // Run the main thread part of loading.
+  TileContent& content = tile.getContent();
+  TileRenderContent* pRenderContent = content.getRenderContent();
+
+  assert(pRenderContent != nullptr);
+
+  // add copyright
+  pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
+      *this->_externals.pCreditSystem,
+      pRenderContent->getModel(),
+      tilesetOptions.showCreditsOnScreen));
+
+  void* pWorkerRenderResources = pRenderContent->getRenderResources();
+  void* pMainThreadRenderResources =
+      this->_externals.pPrepareRendererResources->prepareInMainThread(
+          tile,
+          pWorkerRenderResources);
+
+  pRenderContent->setRenderResources(pMainThreadRenderResources);
   tile.setState(TileLoadState::Done);
+
+  // This allows the raster tile to be updated and children to be created, if
+  // necessary.
+  // Priority doesn't matter here since loading is complete.
+  updateTileContent(tile, 0.0, tilesetOptions);
 }
 
 void TilesetContentManager::updateDoneState(

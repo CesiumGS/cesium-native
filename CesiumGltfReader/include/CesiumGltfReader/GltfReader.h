@@ -177,6 +177,18 @@ public:
       const gsl::span<const std::byte>& data,
       const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
+  /**
+   * @brief Generate mipmaps for this image.
+   *
+   * Does nothing if mipmaps already exist or the compressedPixelFormat is not
+   * GpuCompressedPixelFormat::NONE.
+   *
+   * @param image The image to generate mipmaps for.   *
+   * @return A string describing the error, if unable to generate mipmaps.
+   */
+  static std::optional<std::string>
+  generateMipMaps(CesiumGltf::ImageCesium& image);
+
 private:
   CesiumJsonReader::ExtensionReaderContext _context;
 };

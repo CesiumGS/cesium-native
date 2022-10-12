@@ -361,7 +361,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoaded -> Done
       // update tile content to move from ContentLoaded -> Done
-      manager.updateTileContent(tile, options);
+      manager.updateTileContent(tile, 0.0, options);
       CHECK(tile.getState() == TileLoadState::Done);
       CHECK(tile.getChildren().size() == 1);
       CHECK(tile.getChildren().front().getContent().isEmptyContent());
@@ -461,7 +461,7 @@ TEST_CASE("Test tile state machine") {
 
     // FailedTemporarily -> FailedTemporarily
     // tile is failed temporarily but the loader can still add children to it
-    manager.updateTileContent(tile, options);
+    manager.updateTileContent(tile, 0.0, options);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
@@ -535,7 +535,7 @@ TEST_CASE("Test tile state machine") {
 
     // Failed -> Failed
     // tile is failed but the loader can still add children to it
-    manager.updateTileContent(tile, options);
+    manager.updateTileContent(tile, 0.0, options);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
@@ -634,7 +634,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
 
     // parent moves from ContentLoaded -> Done
-    manager.updateTileContent(tile, options);
+    manager.updateTileContent(tile, 0.0, options);
     CHECK(tile.getState() == TileLoadState::Done);
     CHECK(tile.getChildren().size() == 1);
     CHECK(&tile.getChildren().back() == &upsampledTile);
