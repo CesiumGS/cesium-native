@@ -1406,8 +1406,14 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
-  std::chrono::time_point<std::chrono::system_clock> start =
-      std::chrono::system_clock::now();
+  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
+  // the end time to the max time_point in that case.
+  auto start = std::chrono::system_clock::now();
+  auto end = (timeBudget <= 0.0)
+                 ? std::chrono::time_point<std::chrono::system_clock>::max()
+                 : (start + std::chrono::milliseconds(
+                                static_cast<long long>(timeBudget)));
+
   while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {
       // We've either removed all tiles or the next tile is the root.
@@ -1433,13 +1439,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
     pTile = pNext;
 
-    // A time budget of 0.0 indicates we shouldn't throttle cache unloads.
-    std::chrono::time_point<std::chrono::system_clock> time =
-        std::chrono::system_clock::now();
-    if (timeBudget > 0.0 &&
-        std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
-            time - start)
-                .count() >= timeBudget) {
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
       break;
     }
   }

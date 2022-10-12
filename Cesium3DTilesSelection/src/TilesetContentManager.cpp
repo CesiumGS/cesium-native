@@ -1081,26 +1081,21 @@ void TilesetContentManager::tickMainThreadLoading(
     double timeBudget,
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::tickMainThreadLoading");
+  // Process deferred main-thread load tasks with a time budget.
 
-  // A budget of 0.0 indicates that all ready tiles should finish loading.
-  if (timeBudget == 0.0) {
-    for (MainThreadLoadTask& task : this->_finishLoadingQueue) {
-      finishLoading(*task.pTile, tilesetOptions);
-    }
-    return;
-  }
+  // A time budget of 0.0 indicates that we shouldn't throttle main thread
+  // loading - but in that case updateContentLoadedState will have already
+  // finished loading during the traversal.
 
   std::sort(this->_finishLoadingQueue.begin(), this->_finishLoadingQueue.end());
 
-  std::chrono::time_point<std::chrono::system_clock> start =
-      std::chrono::system_clock::now();
+  auto start = std::chrono::system_clock::now();
+  auto end =
+      start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
   for (MainThreadLoadTask& task : this->_finishLoadingQueue) {
     finishLoading(*task.pTile, tilesetOptions);
-    std::chrono::time_point<std::chrono::system_clock> time =
-        std::chrono::system_clock::now();
-    if (std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
-            time - start)
-            .count() >= timeBudget) {
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
       break;
     }
   }
@@ -1155,7 +1150,7 @@ void TilesetContentManager::updateContentLoadedState(
     tile.setUnconditionallyRefine();
     tile.setState(TileLoadState::Done);
   } else if (content.isRenderContent()) {
-    if (tilesetOptions.mainThreadLoadingTimeLimit == 0.0) {
+    if (tilesetOptions.mainThreadLoadingTimeLimit <= 0.0) {
       // The main thread part of render content loading is not throttled, so
       // do it right away.
       finishLoading(tile, tilesetOptions);
