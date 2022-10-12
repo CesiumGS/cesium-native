@@ -340,7 +340,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
-  _pTilesetContentManager->tickMainThreadLoading(
+  this->_pTilesetContentManager->tickMainThreadLoading(
       this->_options.mainThreadLoadingTimeLimit,
       this->_options);
 
@@ -727,7 +727,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   double tilePriority =
       computeTilePriority(tile, frameState.frustums, distances);
 
-  _pTilesetContentManager->updateTileContent(tile, tilePriority, _options);
+  this->_pTilesetContentManager->updateTileContent(
+      tile,
+      tilePriority,
+      _options);
   this->_markTileVisited(tile);
 
   CullResult cullResult{};
@@ -836,7 +839,10 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      _pTilesetContentManager->updateTileContent(child, tilePriority, _options);
+      this->_pTilesetContentManager->updateTileContent(
+          child,
+          tilePriority,
+          _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
