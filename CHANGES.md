@@ -11,6 +11,7 @@
 - Added `mainThreadLoadingTimeLimit` and `tileCacheUnloadTimeLimit` properties to `TilesetOptions`, allowing a limit to be placed on how much time is spent loading and unloading tiles per frame.
 - Added `GltfReader::generateMipMaps` method.
 - Added the `getImage` method to `RasterOverlayTile`.
+- Added `LocalHorizontalCoordinateSystem`, which is used to create convenient right- or left-handeded coordinate systems with an origin at a point on the globe.
 
 ### v0.20.0 - 2022-10-03
 
