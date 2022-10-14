@@ -4,13 +4,21 @@
 
 ##### Breaking Changes :mega:
 
-- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
-- Added a new parameter, `rendererOptions`, to `IPrepareRendererResources::prepareInLoadThread`.
+- On `IPrepareRendererResources`, the `model` parameter passed to `prepareInLoadThread`, the `image` parameter passed to `prepareRasterInLoadThread`, and the `rasterTile` parameter passed to `prepareRasterInMainThread` are no longer const. These methods are now allowed to modify the parameters during load.
 
 ##### Additions :tada:
 
-- Added a `rendererOptions` property to `TilesetOptions` to pass arbitrary data to `prepareInLoadThread`.
+- Added `mainThreadLoadingTimeLimit` and `tileCacheUnloadTimeLimit` properties to `TilesetOptions`, allowing a limit to be placed on how much time is spent loading and unloading tiles per frame.
+- Added `GltfReader::generateMipMaps` method.
+- Added the `getImage` method to `RasterOverlayTile`.
 - Added `LocalHorizontalCoordinateSystem`, which is used to create convenient right- or left-handeded coordinate systems with an origin at a point on the globe.
+
+### v0.20.0 - 2022-10-03
+
+##### Breaking Changes :mega:
+
+- `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
+- Added a new parameter to `IPrepareRendererResources::prepareInLoadThread`, `rendererOptions`,  to allow passing arbitrary data from the renderer.
 
 ##### Fixes :wrench:
 

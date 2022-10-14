@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef CESIUM_OVERRIDE_TRACING
+
 // If the build system doesn't enable the tracing support
 // consider it disabled by default.
 #ifndef CESIUM_TRACING_ENABLED
@@ -341,3 +343,5 @@ private:
 } // namespace CesiumUtility
 
 #endif // CESIUM_TRACING_ENABLED
+
+#endif
