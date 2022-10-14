@@ -9,6 +9,7 @@
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <spdlog/fwd.h>
 
