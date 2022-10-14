@@ -4,7 +4,14 @@
 
 ##### Breaking Changes :mega:
 
+- On `IPrepareRendererResources`, the `image` parameter passed to `prepareRasterInLoadThread` and the `rasterTile` parameter passed to `prepareRasterInMainThread` are no longer const. These methods are now allowed to modify the parameters during load.
 - `IPrepareRendererResources::prepareInLoadThread` now takes a `TileLoadResult` and returns a `Future<TileLoadResultAndRenderResources>`, allowing it to work asynchronously rather than just blocking a worker thread until it is finished.
+
+##### Additions :tada:
+
+- Added `mainThreadLoadingTimeLimit` and `tileCacheUnloadTimeLimit` properties to `TilesetOptions`, allowing a limit to be placed on how much time is spent loading and unloading tiles per frame.
+- Added `GltfReader::generateMipMaps` method.
+- Added the `getImage` method to `RasterOverlayTile`.
 
 ### v0.20.0 - 2022-10-03
 

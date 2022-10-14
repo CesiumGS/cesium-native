@@ -204,6 +204,7 @@ void RasterMappedTo3DTile::detachFromTile(
 }
 
 bool RasterMappedTo3DTile::loadThrottled() noexcept {
+  CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading) {
     return true;

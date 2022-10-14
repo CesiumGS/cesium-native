@@ -367,7 +367,7 @@ private:
       double tilePriority);
 
   void _processLoadQueue();
-  void _unloadCachedTiles() noexcept;
+  void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
   void _updateLodTransitions(

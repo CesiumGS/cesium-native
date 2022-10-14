@@ -272,6 +272,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
+  CESIUM_TRACE("Tileset::updateView");
   // Fixup TilesetOptions to ensure lod transitions works correctly.
   _options.enableFrustumCulling =
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
@@ -340,8 +341,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
-  this->_unloadCachedTiles();
+  this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
   this->_processLoadQueue();
+  this->_pTilesetContentManager->tickMainThreadLoading(
+      this->_options.mainThreadLoadingTimeLimit,
+      this->_options);
   this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -716,7 +720,16 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
-  this->_pTilesetContentManager->updateTileContent(tile, this->_options);
+
+  std::vector<double>& distances = this->_distances;
+  computeDistances(tile, frameState.frustums, distances);
+  double tilePriority =
+      computeTilePriority(tile, frameState.frustums, distances);
+
+  this->_pTilesetContentManager->updateTileContent(
+      tile,
+      tilePriority,
+      _options);
   this->_markTileVisited(tile);
 
   CullResult cullResult{};
@@ -738,11 +751,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       break;
     }
   }
-
-  std::vector<double>& distances = this->_distances;
-  computeDistances(tile, frameState.frustums, distances);
-  double tilePriority =
-      computeTilePriority(tile, frameState.frustums, distances);
 
   // TODO: abstract culling stages into composable interface?
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
@@ -830,7 +838,10 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
 
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
-      this->_pTilesetContentManager->updateTileContent(child, _options);
+      this->_pTilesetContentManager->updateTileContent(
+          child,
+          tilePriority,
+          _options);
 
       // We're using the distance to the parent tile to compute the load
       // priority. This is fine because the relative priority of the children is
@@ -1375,6 +1386,8 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 }
 
 void Tileset::_processLoadQueue() {
+  CESIUM_TRACE("Tileset::_processLoadQueue");
+
   this->processQueue(
       this->_loadQueueHigh,
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
@@ -1386,11 +1399,19 @@ void Tileset::_processLoadQueue() {
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
 }
 
-void Tileset::_unloadCachedTiles() noexcept {
+void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
+
+  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
+  // the end time to the max time_point in that case.
+  auto start = std::chrono::system_clock::now();
+  auto end = (timeBudget <= 0.0)
+                 ? std::chrono::time_point<std::chrono::system_clock>::max()
+                 : (start + std::chrono::milliseconds(
+                                static_cast<long long>(timeBudget)));
 
   while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {
@@ -1416,6 +1437,11 @@ void Tileset::_unloadCachedTiles() noexcept {
     }
 
     pTile = pNext;
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
   }
 }
 
