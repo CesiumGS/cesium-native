@@ -579,7 +579,9 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {}
+      _tilesDataUsed{0},
+      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
+      _destructionCompleteFuture{this->_destructionCompletePromise.getFuture().share()} {}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -600,7 +602,9 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {
+      _tilesDataUsed{0},
+      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
+      _destructionCompleteFuture{this->_destructionCompletePromise.getFuture().share()} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -732,7 +736,9 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {
+      _tilesDataUsed{0},
+      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
+      _destructionCompleteFuture{this->_destructionCompletePromise.getFuture().share()} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -780,9 +786,15 @@ TilesetContentManager::TilesetContentManager(
   }
 }
 
+CesiumAsync::SharedFuture<void> TilesetContentManager::GetAsyncDestructionCompleteEvent() {
+  return this->_destructionCompleteFuture;
+}
+
 TilesetContentManager::~TilesetContentManager() noexcept {
   assert(this->_tilesLoadOnProgress == 0);
   this->unloadAll();
+
+  this->_destructionCompletePromise.resolve();
 }
 
 void TilesetContentManager::loadTileContent(

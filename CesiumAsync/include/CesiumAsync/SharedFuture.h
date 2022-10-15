@@ -8,6 +8,7 @@
 
 #include <CesiumUtility/Tracing.h>
 
+#include <type_traits>
 #include <variant>
 
 namespace CesiumAsync {
@@ -197,7 +198,10 @@ public:
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
-  const T& wait() const { return this->_task.get(); }
+  template <typename TReturn = std::conditional_t<std::is_same_v<T, void>, T, const T&>>
+  TReturn wait() const {
+    return this->_task.get();
+  }
 
   /**
    * @brief Determines if this future is already resolved or rejected.
