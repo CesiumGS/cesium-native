@@ -199,10 +199,19 @@ public:
    * @throws An exception if the future rejected.
    */
   template <
-      typename TReturn =
-          std::conditional_t<std::is_same_v<T, void>, T, const T&>>
-  TReturn wait() const {
+      typename U = T,
+      std::enable_if_t<std::is_same_v<U, T>, int> = 0,
+      std::enable_if_t<!std::is_same_v<U, void>, int> = 0>
+  const U& wait() const {
     return this->_task.get();
+  }
+
+  template <
+      typename U = T,
+      std::enable_if_t<std::is_same_v<U, T>, int> = 0,
+      std::enable_if_t<std::is_same_v<U, void>, int> = 0>
+  void wait() const {
+    this->_task.get();
   }
 
   /**

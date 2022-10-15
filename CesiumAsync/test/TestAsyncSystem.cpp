@@ -529,4 +529,14 @@ TEST_CASE("AsyncSystem") {
     promise.resolve(4);
     CHECK(future.isReady());
   }
+
+  SECTION("SharedFuture may resolve to void") {
+    auto promise = asyncSystem.createPromise<void>();
+    auto future = promise.getFuture().share();
+
+    CHECK(!future.isReady());
+    promise.resolve();
+    CHECK(future.isReady());
+    future.wait();
+  }
 }
