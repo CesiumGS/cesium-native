@@ -198,7 +198,9 @@ public:
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
-  template <typename TReturn = std::conditional_t<std::is_same_v<T, void>, T, const T&>>
+  template <
+      typename TReturn =
+          std::conditional_t<std::is_same_v<T, void>, T, const T&>>
   TReturn wait() const {
     return this->_task.get();
   }

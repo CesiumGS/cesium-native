@@ -581,7 +581,8 @@ TilesetContentManager::TilesetContentManager(
       _loadedTilesCount{0},
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{this->_destructionCompletePromise.getFuture().share()} {}
+      _destructionCompleteFuture{
+          this->_destructionCompletePromise.getFuture().share()} {}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -604,7 +605,8 @@ TilesetContentManager::TilesetContentManager(
       _loadedTilesCount{0},
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{this->_destructionCompletePromise.getFuture().share()} {
+      _destructionCompleteFuture{
+          this->_destructionCompletePromise.getFuture().share()} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -738,7 +740,8 @@ TilesetContentManager::TilesetContentManager(
       _loadedTilesCount{0},
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{this->_destructionCompletePromise.getFuture().share()} {
+      _destructionCompleteFuture{
+          this->_destructionCompletePromise.getFuture().share()} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -786,7 +789,8 @@ TilesetContentManager::TilesetContentManager(
   }
 }
 
-CesiumAsync::SharedFuture<void> TilesetContentManager::GetAsyncDestructionCompleteEvent() {
+CesiumAsync::SharedFuture<void>
+TilesetContentManager::GetAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteFuture;
 }
 
