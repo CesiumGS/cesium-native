@@ -4,6 +4,8 @@
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <spdlog/fwd.h>
 
@@ -100,17 +102,23 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
 };
 
 /**
- * @brief The base class for a quadtree-tiled raster image that can be draped
- * over a {@link Tileset}.
+ * @brief The base class for a rasterized image that can be draped
+ * over a {@link Tileset}. The image may be very, very high resolution, so only
+ * small pieces of it are mapped to the Tileset at a time.
  *
  * Instances of this class can be added to the {@link RasterOverlayCollection}
  * that is returned by {@link Tileset::getOverlays}.
  *
+ * Instances of this class must be allocated on the heap, and their lifetimes
+ * must be managed with {@link CesiumUtility::IntrusivePointer}.
+ *
  * @see BingMapsRasterOverlay
  * @see IonRasterOverlay
  * @see TileMapServiceRasterOverlay
+ * @see WebMapServiceRasterOverlay
  */
-class RasterOverlay {
+class RasterOverlay
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlay> {
 public:
   /**
    * @brief Creates a new instance.
@@ -121,7 +129,7 @@ public:
   RasterOverlay(
       const std::string& name,
       const RasterOverlayOptions& overlayOptions = RasterOverlayOptions());
-  virtual ~RasterOverlay();
+  virtual ~RasterOverlay() noexcept;
 
   /**
    * @brief Gets the name of this overlay.
@@ -146,66 +154,22 @@ public:
   }
 
   /**
-   * @brief Gets the tile provider for this overlay.
-   *
-   * @return `nullptr` if {@link createTileProvider} has not yet been called or
-   * caused an error. If {@link createTileProvider} has been called but the
-   * overlay is not yet ready to provide tiles, a placeholder tile provider will
-   * be returned.
+   * @brief Gets the credits for this overlay.
    */
-  RasterOverlayTileProvider* getTileProvider() noexcept;
-
-  /** @copydoc getTileProvider */
-  const RasterOverlayTileProvider* getTileProvider() const noexcept;
+  std::vector<Credit>& getCredits() noexcept { return this->_credits; }
 
   /**
-   * @brief Gets the placeholder tile provider for this overlay.
-   *
-   * @return `nullptr` if {@link createTileProvider} has not yet been called or
-   * caused an error
-   */
-  RasterOverlayTileProvider* getPlaceholder() noexcept {
-    return this->_pPlaceholder.get();
-  }
-
-  /** @copydoc getPlaceholder */
-  const RasterOverlayTileProvider* getPlaceholder() const noexcept {
-    return this->_pPlaceholder.get();
-  }
-
-  /**
-   * @brief Returns whether this overlay is in the process of being destroyed.
-   */
-  bool isBeingDestroyed() const noexcept { return this->_pSelf != nullptr; }
-
-  /**
-   * @brief Begins asynchronous creation of the tile provider for this overlay
-   * and eventually makes it available directly from this instance.
-   *
-   * When the tile provider is ready, it will be returned by
-   * {@link getTileProvider}.
-   *
-   * This method does nothing if the tile provider has already been created or
-   * is already in the process of being created.
+   * @brief Create a placeholder tile provider can be used in place of the real
+   * one while {@link createTileProvider} completes asynchronously.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to download assets like overlay
    * metadata and tiles.
-   * @param pCreditSystem The {@link CreditSystem} to use when creating a
-   * per-TileProvider {@link Credit}.
-   * @param pPrepareRendererResources The interface used to prepare raster
-   * images for rendering.
-   * @param pLogger The logger to which to send messages about the tile provider
-   * and tiles.
+   * @return The placeholder.
    */
-  CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>
-  loadTileProvider(
+  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> createPlaceholder(
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger);
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const;
 
   /**
    * @brief Begins asynchronous creation of the tile provider for this overlay
@@ -228,7 +192,8 @@ public:
    * @return The future that contains the tile provider when it is ready, or the
    * `nullptr` in case of an error.
    */
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+  virtual CesiumAsync::Future<
+      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
   createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -236,36 +201,18 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) = 0;
-
-  /**
-   * @brief Safely destroys this overlay.
-   *
-   * This method is not supposed to be called by clients.
-   * The overlay will not be truly destroyed until all in-progress tile loads
-   * complete. This may happen before this function returns if no loads are in
-   * progress.
-   *
-   * @param pOverlay A unique pointer to this instance, allowing transfer of
-   * ownership.
-   */
-  void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
+      const RasterOverlay* pOwner) const = 0;
 
 protected:
   void reportError(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlayLoadFailureDetails&& errorDetails);
-  std::vector<Credit> _credits;
+      RasterOverlayLoadFailureDetails&& errorDetails) const;
 
 private:
   std::string _name;
-  std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
-  std::unique_ptr<RasterOverlay> _pSelf;
   RasterOverlayOptions _options;
-  std::optional<
-      CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>>
-      _loadingTileProvider;
+  std::vector<Credit> _credits;
 };
 
 } // namespace Cesium3DTilesSelection

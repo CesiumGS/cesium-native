@@ -41,7 +41,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+      _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
@@ -59,7 +59,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+      _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
@@ -77,7 +77,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{std::make_unique<TilesetContentManager>(
+      _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
@@ -85,7 +85,12 @@ Tileset::Tileset(
           ionAccessToken,
           ionAssetEndpointUrl)} {}
 
+CesiumAsync::SharedFuture<void> Tileset::GetAsyncDestructionCompleteEvent() {
+  return this->_pTilesetContentManager->GetAsyncDestructionCompleteEvent();
+}
+
 Tileset::~Tileset() noexcept {
+  this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
@@ -365,9 +370,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     // per-raster overlay credit
     const RasterOverlayCollection& overlayCollection =
         this->_pTilesetContentManager->getRasterOverlayCollection();
-    for (auto& pOverlay : overlayCollection) {
-      const std::optional<Credit>& overlayCredit =
-          pOverlay->getTileProvider()->getCredit();
+    for (auto& pTileProvider : overlayCollection.getTileProviders()) {
+      const std::optional<Credit>& overlayCredit = pTileProvider->getCredit();
       if (overlayCredit) {
         pCreditSystem->addCreditToFrame(overlayCredit.value());
       }

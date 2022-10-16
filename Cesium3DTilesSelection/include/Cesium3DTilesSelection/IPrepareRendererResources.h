@@ -1,12 +1,19 @@
 #pragma once
 
 #include "Library.h"
+#include "TileLoadResult.h"
+
+#include <CesiumAsync/Future.h>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <gsl/span>
 
 #include <any>
+
+namespace CesiumAsync {
+class AsyncSystem;
+}
 
 namespace CesiumGeometry {
 struct Rectangle;
@@ -21,6 +28,11 @@ namespace Cesium3DTilesSelection {
 
 class Tile;
 class RasterOverlayTile;
+
+struct TileLoadResultAndRenderResources {
+  TileLoadResult result;
+  void* pRenderResources{nullptr};
+};
 
 /**
  * @brief When implemented for a rendering engine, allows renderer resources to
@@ -39,21 +51,24 @@ public:
   virtual ~IPrepareRendererResources() = default;
 
   /**
-   * @brief Prepares renderer resources for the given tile.
+   * @brief Prepares renderer resources for the given tile. This method is
+   * invoked in the load thread.
    *
-   * This method is invoked in the load thread and it may modify the in-memory
-   * glTF.
-   *
-   * @param model The glTF model to prepare.
+   * @param asyncSystem The AsyncSystem used to do work in threads.
+   * @param tileLoadResult The tile data loaded so far.
    * @param transform The tile's transformation.
    * @param rendererOptions Renderer options associated with the tile from
    * {@link TilesetOptions::rendererOptions}.
-   * @returns Arbitrary data representing the result of the load process. This
-   * data is passed to {@link prepareInMainThread} as the `pLoadThreadResult`
-   * parameter.
+   * @returns A future that resolves to the loaded tile data along with
+   * arbitrary "render resources" data representing the result of the load
+   * process. The loaded data may be the same as was originally given to this
+   * method, or it may be modified. The render resources are passed to
+   * {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
    */
-  virtual void* prepareInLoadThread(
-      CesiumGltf::Model& model,
+  virtual CesiumAsync::Future<TileLoadResultAndRenderResources>
+  prepareInLoadThread(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      TileLoadResult&& tileLoadResult,
       const glm::dmat4& transform,
       const std::any& rendererOptions) = 0;
 
@@ -118,7 +133,7 @@ public:
    *
    * @param rasterTile The raster tile to prepare.
    * @param pLoadThreadResult The value returned from
-   * {@link prepareInLoadThread}.
+   * {@link prepareRasterInLoadThread}.
    * @returns Arbitrary data representing the result of the load process. Note
    * that the value returned by {@link prepareRasterInLoadThread} will _not_ be
    * automatically preserved and passed to {@link free}. If you need to free

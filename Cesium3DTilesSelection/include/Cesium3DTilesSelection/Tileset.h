@@ -11,6 +11,7 @@
 #include "ViewUpdateResult.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <rapidjson/fwd.h>
 
@@ -74,9 +75,18 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
+   * @brief A future that resolves when this Tileset has been destroyed (i.e.
+   * its destructor has been called) and all async operations that it was
+   * executing have completed.
+   */
+  CesiumAsync::SharedFuture<void> GetAsyncDestructionCompleteEvent();
+
+  /**
    * @brief Destroys this tileset.
+   *
    * This may block the calling thread while waiting for pending asynchronous
-   * tile loads to terminate.
+   * tile loads to terminate. Use {@link canBeDestroyedWithoutBlocking} to
+   * determine if it will block.
    */
   ~Tileset() noexcept;
 
@@ -408,7 +418,8 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  std::unique_ptr<TilesetContentManager> _pTilesetContentManager;
+  CesiumUtility::IntrusivePointer<TilesetContentManager>
+      _pTilesetContentManager;
 
   void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,

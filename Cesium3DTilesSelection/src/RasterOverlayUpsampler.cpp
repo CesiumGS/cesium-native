@@ -50,10 +50,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
       pParentRenderContent->getRasterOverlayDetails().rasterOverlayProjections;
   for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
     if (mapped.isMoreDetailAvailable()) {
-      const CesiumGeospatial::Projection& projection = mapped.getReadyTile()
-                                                           ->getOverlay()
-                                                           .getTileProvider()
-                                                           ->getProjection();
+      const CesiumGeospatial::Projection& projection =
+          mapped.getReadyTile()->getTileProvider().getProjection();
       auto it = std::find(
           parentProjections.begin(),
           parentProjections.end(),

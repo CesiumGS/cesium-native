@@ -12,11 +12,14 @@
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class TilesetContentManager {
+class TilesetContentManager
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<
+          TilesetContentManager> {
 public:
   TilesetContentManager(
       const TilesetExternals& externals,
@@ -40,6 +43,13 @@ public:
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
+  /**
+   * @brief A future that resolves after all async operations initiated by this
+   * content manager have completed and all tiles are unloaded, but before the
+   * content manager itself is destroyed.
+   */
+  CesiumAsync::SharedFuture<void> GetAsyncDestructionCompleteEvent();
+
   ~TilesetContentManager() noexcept;
 
   void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
@@ -52,6 +62,14 @@ public:
   bool unloadTileContent(Tile& tile);
 
   void waitUntilIdle();
+
+  /**
+   * @brief Unload every tile that is safe to unload.
+   *
+   * Tiles that are currently loading asynchronously will not be unloaded. If
+   * {@link isIdle} returns true, all tiles will be unloaded.
+   */
+  void unloadAll();
 
   const Tile* getRootTile() const noexcept;
 
@@ -143,5 +161,8 @@ private:
   };
 
   std::vector<MainThreadLoadTask> _finishLoadingQueue;
+
+  CesiumAsync::Promise<void> _destructionCompletePromise;
+  CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
 };
 } // namespace Cesium3DTilesSelection

@@ -15,6 +15,7 @@
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -164,7 +165,7 @@ private:
 
 public:
   RasterizedPolygonsTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
@@ -174,7 +175,7 @@ public:
       const std::vector<CartographicPolygon>& polygons,
       bool invertSelection)
       : RasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             std::nullopt,
@@ -240,28 +241,28 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
 
 RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() {}
 
-CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>>
 RasterizedPolygonsOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    const RasterOverlay* pOwner) const {
 
   pOwner = pOwner ? pOwner : this;
 
   return asyncSystem.createResolvedFuture(
-      (std::unique_ptr<RasterOverlayTileProvider>)
-          std::make_unique<RasterizedPolygonsTileProvider>(
-              *this,
+      IntrusivePointer<RasterOverlayTileProvider>(
+          new RasterizedPolygonsTileProvider(
+              this,
               asyncSystem,
               pAssetAccessor,
               pPrepareRendererResources,
               pLogger,
               this->_projection,
               this->_polygons,
-              this->_invertSelection));
+              this->_invertSelection)));
 }
 
 } // namespace Cesium3DTilesSelection

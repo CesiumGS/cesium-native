@@ -4,6 +4,8 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <vector>
 
@@ -24,7 +26,8 @@ class RasterOverlayTileProvider;
  * raster overlay tile with texture coordinates, to map the
  * image on the geometry of a {@link Tile}.
  */
-class RasterOverlayTile final {
+class RasterOverlayTile final
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlayTile> {
 public:
   /**
    * @brief Lifecycle states of a raster overlay tile.
@@ -89,30 +92,34 @@ public:
    * The {@link getState} of this instance will always be
    * {@link LoadState::Placeholder}.
    *
-   * @param overlay The {@link RasterOverlay}.
+   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the tile
+   * provider is destroyed before the tile, undefined behavior will result.
    */
-  RasterOverlayTile(RasterOverlay& overlay) noexcept;
+  RasterOverlayTile(RasterOverlayTileProvider& tileProvider) noexcept;
 
   /**
    * @brief Creates a new instance.
    *
-   * This is called by a {@link RasterOverlayTileProvider} when a new,
-   * previously unknown tile is reqested. It receives the request for the image
-   * data, and the {@link getState} will initially be
-   * {@link LoadState `Loading`}.
-   * The constructor will attach a callback to this request.  When
-   * the request completes successfully and the {@link getImage} data can be
-   * created, the state of this instance will change to
-   * {@link LoadState `Loaded`}.
-   * Otherwise, the state will become {@link LoadState `Failed`}.
+   * The tile will start in the `Unloaded` state, and will not begin loading
+   * until {@link RasterOverlayTileProvider::loadTile} or
+   * {@link RasterOverlayTileProvider::loadTileThrottled} is called.
    *
-   * @param overlay The {@link RasterOverlay}.
-   * @param targetGeometricError The geometric error to target for this tile.
-   * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
-   * the rectangle covered by this tile in the overlay's projection.
+   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the tile
+   * provider is destroyed before the tile, undefined behavior may result.
+   * @param targetScreenPixels The maximum number of pixels on the screen that
+   * this tile is meant to cover. The overlay image should be approximately this
+   * many pixels divided by the
+   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
+   * the desired level-of-detail, but it does not need to be exactly this size.
+   * @param imageryRectangle The rectangle that the returned image must cover.
+   * It is allowed to cover a slightly larger rectangle in order to maintain
+   * pixel alignment. It may also cover a smaller rectangle when the overlay
+   * itself does not cover the entire rectangle.
    */
   RasterOverlayTile(
-      RasterOverlay& overlay,
+      RasterOverlayTileProvider& tileProvider,
       const glm::dvec2& targetScreenPixels,
       const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
@@ -120,14 +127,28 @@ public:
   ~RasterOverlayTile();
 
   /**
-   * @brief Returns the {@link RasterOverlay} of this instance.
+   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
    */
-  RasterOverlay& getOverlay() noexcept { return *this->_pOverlay; }
+  RasterOverlayTileProvider& getTileProvider() noexcept {
+    return *this->_pTileProvider;
+  }
 
   /**
-   * @brief Returns the {@link RasterOverlay} of this instance.
+   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
    */
-  const RasterOverlay& getOverlay() const noexcept { return *this->_pOverlay; }
+  const RasterOverlayTileProvider& getTileProvider() const noexcept {
+    return *this->_pTileProvider;
+  }
+
+  /**
+   * @brief Returns the {@link RasterOverlay} that created this instance.
+   */
+  RasterOverlay& getOverlay() noexcept;
+
+  /**
+   * @brief Returns the {@link RasterOverlay} that created this instance.
+   */
+  const RasterOverlay& getOverlay() const noexcept;
 
   /**
    * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
@@ -217,34 +238,23 @@ public:
     return this->_moreDetailAvailable;
   }
 
-  /**
-   * @brief Adds a counted reference to this instance.
-   */
-  void addReference() noexcept;
-
-  /**
-   * @brief Removes a counted reference from this instance.
-   */
-  void releaseReference() noexcept;
-
-  /**
-   * @brief Returns the current reference count of this instance.
-   */
-  uint32_t getReferenceCount() const noexcept { return this->_references; }
-
 private:
   friend class RasterOverlayTileProvider;
 
   void setState(LoadState newState) noexcept;
 
-  RasterOverlay* _pOverlay;
+  // This is a raw pointer instead of an IntrusivePointer in order to avoid
+  // circular references, particularly among a placeholder tile provider and
+  // placeholder tile. However, to avoid undefined behavior, the tile provider
+  // is required to outlive the tile. In normal use, the RasterOverlayCollection
+  // ensures that this is true.
+  RasterOverlayTileProvider* _pTileProvider;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;
   LoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
-  uint32_t _references;
   MoreDetailAvailable _moreDetailAvailable;
 };
 } // namespace Cesium3DTilesSelection
