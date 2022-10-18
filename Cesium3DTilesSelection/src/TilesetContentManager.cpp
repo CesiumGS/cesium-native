@@ -1430,8 +1430,8 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
   pRenderContent->setRenderResources(nullptr);
 }
 
-void TilesetContentManager::notifyTileStartLoading([
-    [maybe_unused]] const Tile* pTile) noexcept {
+void TilesetContentManager::notifyTileStartLoading(
+    [[maybe_unused]] const Tile* pTile) noexcept {
   ++this->_tilesLoadOnProgress;
 }
 

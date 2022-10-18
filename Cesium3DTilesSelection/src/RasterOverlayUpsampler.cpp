@@ -87,8 +87,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-TileChildrenResult RasterOverlayUpsampler::createTileChildren([
-    [maybe_unused]] const Tile& tile) {
+TileChildrenResult
+RasterOverlayUpsampler::createTileChildren([[maybe_unused]] const Tile& tile) {
   return {{}, TileLoadResultState::Failed};
 }
 } // namespace Cesium3DTilesSelection

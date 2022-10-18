@@ -40,8 +40,8 @@ public:
         std::move(mockLoadTileContent));
   }
 
-  TileChildrenResult createTileChildren([
-      [maybe_unused]] const Tile& tile) override {
+  TileChildrenResult
+  createTileChildren([[maybe_unused]] const Tile& tile) override {
     return std::move(mockCreateTileChildren);
   }
 
