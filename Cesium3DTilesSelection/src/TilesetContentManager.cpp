@@ -41,6 +41,11 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
+  void operator()(TileCachedRenderContent /*content*/) {
+    // TODO: This shouldn't happen, client loading should replace
+    // TileCachedRenderContent with TileRenderContent. assert(false);
+  }
+
   void operator()(CesiumGltf::Model&& model) {
     auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
     pRenderContent->setRenderResources(pRenderResources);
@@ -462,8 +467,33 @@ void postProcessGltfInWorkerThread(
   }
 }
 
-CesiumAsync::Future<TileLoadResultAndRenderResources>
-postProcessContentInWorkerThread(
+CesiumAsync::Future<ClientTileLoadResult>
+loadAndCacheClientTileContentInWorkerThread(
+    TileLoadResult&& result,
+    const TileContentLoadInfo& tileLoadInfo,
+    const std::any& rendererOptions) {
+  return tileLoadInfo.pPrepareRendererResources
+      ->prepareInLoadThread(
+          tileLoadInfo.asyncSystem,
+          std::move(result),
+          tileLoadInfo.tileTransform,
+          rendererOptions)
+      .thenImmediately([asyncSystem = tileLoadInfo.asyncSystem,
+                        pCachedTileContentAccessor =
+                            tileLoadInfo.pCachedTileContentAccessor](
+                           ClientTileLoadResult&& loadResult) {
+        if (pCachedTileContentAccessor &&
+            !loadResult.clientDataToCache.empty()) {
+          pCachedTileContentAccessor->cacheClientTileContent(
+              asyncSystem,
+              loadResult);
+        }
+
+        return std::move(loadResult);
+      });
+}
+
+CesiumAsync::Future<ClientTileLoadResult> postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
@@ -536,9 +566,11 @@ postProcessContentInWorkerThread(
 
             if (!gltfResult.model) {
               return tileLoadInfo.asyncSystem.createResolvedFuture(
-                  TileLoadResultAndRenderResources{
+                  ClientTileLoadResult{
                       TileLoadResult::createFailedResult(nullptr),
-                      nullptr});
+                      nullptr,
+                      false,
+                      {}});
             }
 
             result.contentKind = std::move(*gltfResult.model);
@@ -548,11 +580,10 @@ postProcessContentInWorkerThread(
                 std::move(projections),
                 tileLoadInfo);
 
-            // create render resources
-            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-                tileLoadInfo.asyncSystem,
+            // create and render resources
+            return loadAndCacheClientTileContentInWorkerThread(
                 std::move(result),
-                tileLoadInfo.tileTransform,
+                tileLoadInfo,
                 rendererOptions);
           });
 }
@@ -860,6 +891,7 @@ void TilesetContentManager::loadTileContent(
   TileContentLoadInfo tileLoadInfo{
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
+      this->_externals.pCachedTileContentAccessor,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
       tilesetOptions.contentOptions,
@@ -877,6 +909,7 @@ void TilesetContentManager::loadTileContent(
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
+      this->_externals.pCachedTileContentAccessor,
       this->_externals.pLogger,
       this->_requestHeaders};
 
@@ -909,14 +942,28 @@ void TilesetContentManager::loadTileContent(
                       std::move(tileLoadInfo),
                       rendererOptions);
                 });
+          } else if (std::holds_alternative<TileCachedRenderContent>(
+                         result.contentKind)) {
+            // We have pre-loaded, binary client content from cache, directly
+            // send it to the client.
+            auto asyncSystem = tileLoadInfo.asyncSystem;
+            return asyncSystem.runInWorkerThread(
+                [result = std::move(result),
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions]() mutable {
+                  return loadAndCacheClientTileContentInWorkerThread(
+                      std::move(result),
+                      tileLoadInfo,
+                      rendererOptions);
+                });
           }
         }
 
         return tileLoadInfo.asyncSystem
-            .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), nullptr});
+            .createResolvedFuture<ClientTileLoadResult>(
+                {std::move(result), nullptr, true, {}});
       })
-      .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
+      .thenInMainThread([&tile, thiz](ClientTileLoadResult&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
         thiz->notifyTileDoneLoading(&tile);
@@ -1383,8 +1430,8 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
   pRenderContent->setRenderResources(nullptr);
 }
 
-void TilesetContentManager::notifyTileStartLoading(
-    [[maybe_unused]] const Tile* pTile) noexcept {
+void TilesetContentManager::notifyTileStartLoading([
+    [maybe_unused]] const Tile* pTile) noexcept {
   ++this->_tilesLoadOnProgress;
 }
 

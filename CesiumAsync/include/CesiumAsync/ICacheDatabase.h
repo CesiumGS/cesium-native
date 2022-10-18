@@ -40,6 +40,8 @@ public:
    * @param statusCode The HTTP response status code being cached.
    * @param responseHeaders The HTTP response headers being cached.
    * @param responseData The HTTP response being cached.
+   * @param clientData Client data derived from the HTTP response that the
+   * client wants cache.
    * @return `true` if the entry was successfully stored, or `false` if it could
    * not be stored due to an error.
    */
@@ -51,7 +53,8 @@ public:
       const HttpHeaders& requestHeaders,
       uint16_t statusCode,
       const HttpHeaders& responseHeaders,
-      const gsl::span<const std::byte>& responseData) = 0;
+      const gsl::span<const std::byte>& responseData,
+      const gsl::span<const std::byte>& clientData) = 0;
 
   /**
    * @brief Remove cache entries from the database to satisfy the database

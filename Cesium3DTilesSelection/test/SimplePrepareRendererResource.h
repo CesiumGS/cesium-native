@@ -25,13 +25,12 @@ public:
 
   ~SimplePrepareRendererResource() noexcept { CHECK(totalAllocation == 0); }
 
-  virtual CesiumAsync::Future<TileLoadResultAndRenderResources>
-  prepareInLoadThread(
+  virtual CesiumAsync::Future<ClientTileLoadResult> prepareInLoadThread(
       const CesiumAsync::AsyncSystem& asyncSystem,
       TileLoadResult&& tileLoadResult,
       const glm::dmat4& /*transform*/,
       const std::any& /*rendererOptions*/) override {
-    return asyncSystem.createResolvedFuture(TileLoadResultAndRenderResources{
+    return asyncSystem.createResolvedFuture(ClientTileLoadResult{
         std::move(tileLoadResult),
         new AllocationResult{totalAllocation}});
   }

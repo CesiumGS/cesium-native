@@ -396,9 +396,8 @@ static OrientedBoundingBox fromPlaneExtents(
   const bool fullyAboveEquator = rectangle.getSouth() > 0.0;
   const bool fullyBelowEquator = rectangle.getNorth() < 0.0;
   const double latitudeNearestToEquator =
-      fullyAboveEquator   ? rectangle.getSouth()
-      : fullyBelowEquator ? rectangle.getNorth()
-                          : 0.0;
+      fullyAboveEquator ? rectangle.getSouth()
+                        : fullyBelowEquator ? rectangle.getNorth() : 0.0;
   const double centerLongitude = rectangle.computeCenter().longitude;
 
   // Plane is located at the rectangle's center longitude and the rectangle's

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoundingVolume.h"
+#include "CachedTileContentAccessor.h"
 #include "Library.h"
 #include "RasterOverlayDetails.h"
 #include "TileContent.h"
@@ -34,6 +35,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @param contentOptions The content options the {@link TilesetContentLoader} will use to process the content of the tile.
    * @param asyncSystem The async system to use for tile content loading.
    * @param pAssetAccessor The asset accessor to make further requests with.
+   * @param pCachedTileContentAccessor The asset accessor to request the tile
+   * with.
    * @param pLogger The logger that will be used
    * @param requestHeaders The request headers that will be attached to the
    * request.
@@ -43,6 +46,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CachedTileContentAccessor>&
+          pCachedTileContentAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
@@ -62,10 +67,19 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   const CesiumAsync::AsyncSystem& asyncSystem;
 
   /**
-   * @brief The asset accessor to make requests for the tile content over the
-   * wire.
+   * @brief The asset accessor to make requests with, for everything but tile
+   * content.
    */
   const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor;
+
+  /**
+   * @brief The asset accessor to request the tile content with.
+   *
+   * If implemented by the client, this will retrieve cached, client-ready
+   * derived data. On cache hits, this allows the rest of the tile loading to be
+   * skipped.
+   */
+  const std::shared_ptr<CachedTileContentAccessor>& pCachedTileContentAccessor;
 
   /**
    * @brief The logger that receives details of loading errors and warnings.

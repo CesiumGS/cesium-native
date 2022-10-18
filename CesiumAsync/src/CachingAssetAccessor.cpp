@@ -2,7 +2,6 @@
 
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/CacheItem.h"
-#include "CesiumAsync/IAssetResponse.h"
 #include "InternalTimegm.h"
 #include "ResponseCacheControl.h"
 
@@ -14,62 +13,56 @@
 #include <sstream>
 
 namespace CesiumAsync {
-class CacheAssetResponse : public IAssetResponse {
-public:
-  CacheAssetResponse(const CacheItem* pCacheItem) noexcept
-      : _pCacheItem{pCacheItem} {}
 
-  virtual uint16_t statusCode() const noexcept override {
-    return this->_pCacheItem->cacheResponse.statusCode;
+CacheAssetResponse::CacheAssetResponse(const CacheItem* pCacheItem) noexcept
+    : _pCacheItem{pCacheItem} {}
+
+uint16_t CacheAssetResponse::statusCode() const noexcept {
+  return this->_pCacheItem->cacheResponse.statusCode;
+}
+
+std::string CacheAssetResponse::contentType() const {
+  auto it = this->_pCacheItem->cacheResponse.headers.find("Content-Type");
+  if (it == this->_pCacheItem->cacheResponse.headers.end()) {
+    return std::string();
   }
+  return it->second;
+}
 
-  virtual std::string contentType() const override {
-    auto it = this->_pCacheItem->cacheResponse.headers.find("Content-Type");
-    if (it == this->_pCacheItem->cacheResponse.headers.end()) {
-      return std::string();
-    }
-    return it->second;
-  }
+const HttpHeaders& CacheAssetResponse::headers() const noexcept {
+  return this->_pCacheItem->cacheResponse.headers;
+}
 
-  virtual const HttpHeaders& headers() const noexcept override {
-    return this->_pCacheItem->cacheResponse.headers;
-  }
+gsl::span<const std::byte> CacheAssetResponse::data() const noexcept {
+  return gsl::span<const std::byte>(
+      this->_pCacheItem->cacheResponse.data.data(),
+      this->_pCacheItem->cacheResponse.data.size());
+}
 
-  virtual gsl::span<const std::byte> data() const noexcept override {
-    return gsl::span<const std::byte>(
-        this->_pCacheItem->cacheResponse.data.data(),
-        this->_pCacheItem->cacheResponse.data.size());
-  }
+gsl::span<const std::byte> CacheAssetResponse::clientData() const noexcept {
+  return gsl::span<const std::byte>(
+      this->_pCacheItem->cacheResponse.clientData.data(),
+      this->_pCacheItem->cacheResponse.data.size());
+}
 
-private:
-  const CacheItem* _pCacheItem;
-};
+CacheAssetRequest::CacheAssetRequest(CacheItem&& cacheItem)
+    : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
 
-class CacheAssetRequest : public IAssetRequest {
-public:
-  CacheAssetRequest(CacheItem&& cacheItem)
-      : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
+const std::string& CacheAssetRequest::method() const noexcept {
+  return this->_cacheItem.cacheRequest.method;
+}
 
-  virtual const std::string& method() const noexcept override {
-    return this->_cacheItem.cacheRequest.method;
-  }
+const std::string& CacheAssetRequest::url() const noexcept {
+  return this->_cacheItem.cacheRequest.url;
+}
 
-  virtual const std::string& url() const noexcept override {
-    return this->_cacheItem.cacheRequest.url;
-  }
+const HttpHeaders& CacheAssetRequest::headers() const noexcept {
+  return this->_cacheItem.cacheRequest.headers;
+}
 
-  virtual const HttpHeaders& headers() const noexcept override {
-    return this->_cacheItem.cacheRequest.headers;
-  }
-
-  virtual const IAssetResponse* response() const noexcept override {
-    return &this->_response;
-  }
-
-private:
-  CacheItem _cacheItem;
-  CacheAssetResponse _response;
-};
+const IAssetResponse* CacheAssetRequest::response() const noexcept {
+  return &this->_response;
+}
 
 static std::time_t convertHttpDateToTime(const std::string& httpDate);
 
@@ -108,6 +101,14 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
     const AsyncSystem& asyncSystem,
     const std::string& url,
     const std::vector<THeader>& headers) {
+  return this->get(asyncSystem, url, headers, true);
+}
+
+Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
+    const AsyncSystem& asyncSystem,
+    const std::string& url,
+    const std::vector<THeader>& headers,
+    bool writeThrough) {
   const int32_t requestSinceLastPrune = ++this->_requestSinceLastPrune;
   if (requestSinceLastPrune == this->_requestsPerCachePrune) {
     // More requests may have started and incremented _requestSinceLastPrune
@@ -121,7 +122,6 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
   }
 
   CESIUM_TRACE_BEGIN_IN_TRACK("IAssetAccessor::get (cached)");
-
   const ThreadPool& threadPool = this->_cacheThreadPool;
 
   return asyncSystem
@@ -133,11 +133,17 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
            pLogger = this->_pLogger,
            url,
            headers,
-           threadPool]() -> Future<std::shared_ptr<IAssetRequest>> {
+           threadPool,
+           writeThrough]() -> Future<std::shared_ptr<IAssetRequest>> {
             std::optional<CacheItem> cacheLookup =
                 pCacheDatabase->getEntry(url);
             if (!cacheLookup) {
               // No cache item found, request directly from the server
+
+              if (!writeThrough) {
+                return pAssetAccessor->get(asyncSystem, url, headers);
+              }
+
               return pAssetAccessor->get(asyncSystem, url, headers)
                   .thenInThreadPool(
                       threadPool,
@@ -166,7 +172,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                               pCompletedRequest->headers(),
                               pResponse->statusCode(),
                               pResponse->headers(),
-                              pResponse->data());
+                              pResponse->data(),
+                              {});
                         }
 
                         return std::move(pCompletedRequest);
@@ -190,6 +197,10 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                 newHeaders.emplace_back(
                     "If-Modified-Since",
                     lastModifiedHeader->second);
+              }
+
+              if (!writeThrough) {
+                return pAssetAccessor->get(asyncSystem, url, newHeaders);
               }
 
               return pAssetAccessor->get(asyncSystem, url, newHeaders)
@@ -233,7 +244,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                               pRequestToStore->headers(),
                               pResponseToStore->statusCode(),
                               pResponseToStore->headers(),
-                              pResponseToStore->data());
+                              pResponseToStore->data(),
+                              {});
                         }
 
                         return pRequestToStore;
@@ -249,6 +261,47 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) noexcept {
         CESIUM_TRACE_END_IN_TRACK("IAssetAccessor::get (cached)");
         return std::move(pRequest);
+      });
+}
+
+Future<void> CachingAssetAccessor::writeBack(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetRequest>& pCompletedRequest,
+    bool cacheOriginalResponseData,
+    std::vector<std::byte>&& clientData) {
+  return asyncSystem.createResolvedFuture();
+
+  return asyncSystem.runInThreadPool(
+      this->_cacheThreadPool,
+      [pCacheDatabase = this->_pCacheDatabase,
+       pLogger = this->_pLogger,
+       pCompletedRequest,
+       cacheOriginalResponseData,
+       clientData = std::move(clientData)]() mutable {
+        CESIUM_TRACE("CachingAssetAccessor::writeBack");
+
+        const IAssetResponse* pResponse = pCompletedRequest->response();
+        if (!pResponse) {
+          return;
+        }
+
+        const std::optional<ResponseCacheControl> cacheControl =
+            ResponseCacheControl::parseFromResponseHeaders(
+                pResponse->headers());
+
+        if (pResponse && shouldCacheRequest(*pCompletedRequest, cacheControl)) {
+          std::vector<std::byte> EMPTY_DATA;
+          pCacheDatabase->storeEntry(
+              calculateCacheKey(*pCompletedRequest),
+              calculateExpiryTime(*pCompletedRequest, cacheControl),
+              pCompletedRequest->url(),
+              pCompletedRequest->method(),
+              pCompletedRequest->headers(),
+              pResponse->statusCode(),
+              pResponse->headers(),
+              cacheOriginalResponseData ? pResponse->data() : EMPTY_DATA,
+              clientData);
+        }
       });
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/CachedTileContentAccessor.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -21,6 +22,8 @@ struct TileContentLoadInfo {
   TileContentLoadInfo(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CachedTileContentAccessor>&
+          pCachedTileContentAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -30,6 +33,8 @@ struct TileContentLoadInfo {
   CesiumAsync::AsyncSystem asyncSystem;
 
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+
+  std::shared_ptr<CachedTileContentAccessor> pCachedTileContentAccessor;
 
   std::shared_ptr<spdlog::logger> pLogger;
 

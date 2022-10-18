@@ -32,12 +32,19 @@ class Tile;
  *
  * 3. Returning {@link TileExternalContent} means that this tile points to an external tileset
  *
- * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model
+ * 4. Returning {@link TileCachedRenderContent} means that this tile previously had render
+ * content which was cached and has now been retrieved. The client should read
+ * the custom
+ * cached render data and create a {@link TileRenderContent}.
+ *
+ * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model and render
+ * content should be created from it.
  */
 using TileContentKind = std::variant<
     TileUnknownContent,
     TileEmptyContent,
     TileExternalContent,
+    TileCachedRenderContent,
     CesiumGltf::Model>;
 
 /**
@@ -119,6 +126,14 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * applied to a tile when the loading is finished
    */
   TileLoadResultState state;
+
+  /**
+   * @brief Create a result with a tile content cache hit.
+   *
+   * @param pCompletedRequest The request corresponding to the cache hit.
+   */
+  static TileLoadResult createCacheHitResult(
+      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
 
   /**
    * @brief Create a result with Failed state

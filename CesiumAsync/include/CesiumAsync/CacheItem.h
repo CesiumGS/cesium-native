@@ -22,14 +22,17 @@ public:
    * @param cacheStatusCode the status code of the response
    * @param cacheHeaders the headers of the response
    * @param cacheData the body of the response
+   * @param cacheClientData custom client data that was cached.
    */
   CacheResponse(
       uint16_t cacheStatusCode,
       HttpHeaders&& cacheHeaders,
-      std::vector<std::byte>&& cacheData)
+      std::vector<std::byte>&& cacheData,
+      std::vector<std::byte>&& cacheClientData)
       : statusCode(cacheStatusCode),
         headers(std::move(cacheHeaders)),
-        data(std::move(cacheData)) {}
+        data(std::move(cacheData)),
+        clientData(std::move(cacheClientData)) {}
 
   /**
    * @brief The status code of the response.
@@ -45,6 +48,11 @@ public:
    * @brief The body data of the response.
    */
   std::vector<std::byte> data;
+
+  /**
+   * @brief Custom client data contained in this cache response.
+   */
+  std::vector<std::byte> clientData;
 };
 
 /**

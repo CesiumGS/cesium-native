@@ -10,6 +10,7 @@
 #include <gsl/span>
 
 #include <any>
+#include <memory>
 
 namespace CesiumAsync {
 class AsyncSystem;
@@ -29,9 +30,34 @@ namespace Cesium3DTilesSelection {
 class Tile;
 class RasterOverlayTile;
 
-struct TileLoadResultAndRenderResources {
+/**
+ * @brief The result of client-side tile loading. Contains client resources and
+ * instruction for how to cache this tile.
+ */
+struct ClientTileLoadResult {
+  /**
+   * @brief The result of Cesium Native tile loading.
+   */
   TileLoadResult result;
+
+  /**
+   * @brief The client resources created during client-side tile loading.
+   */
   void* pRenderResources{nullptr};
+
+  /**
+   * @brief Whether the original HTTP response data should be cached.
+   *
+   * It may be useful to disable this if custom client-derived data should be
+   * cached for this tile instead.
+   */
+  bool cacheOriginalResponseData{true};
+
+  /**
+   * @brief Custom data derived from this tile's content that the client wants
+   * to cache, if any.
+   */
+  std::vector<std::byte> clientDataToCache{};
 };
 
 /**
@@ -65,8 +91,7 @@ public:
    * method, or it may be modified. The render resources are passed to
    * {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
    */
-  virtual CesiumAsync::Future<TileLoadResultAndRenderResources>
-  prepareInLoadThread(
+  virtual CesiumAsync::Future<ClientTileLoadResult> prepareInLoadThread(
       const CesiumAsync::AsyncSystem& asyncSystem,
       TileLoadResult&& tileLoadResult,
       const glm::dmat4& transform,

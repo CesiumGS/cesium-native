@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CachedTileContentAccessor.h"
 #include "Library.h"
 #include "TileOcclusionRendererProxy.h"
 #include "spdlog-cesium.h"
@@ -28,6 +29,16 @@ public:
    * @brief An external {@link CesiumAsync::IAssetAccessor}.
    */
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+
+  /**
+   * @brief An external {@link ICachedTileContentAccessor} specifically used
+   * for tile content requests. The pAssetAccessor will be used instead, if
+   * this is not provided.
+   *
+   * This can be used by clients to cache and retrieve custom derived data
+   * associated with a tile's content.
+   */
+  std::shared_ptr<CachedTileContentAccessor> pCachedTileContentAccessor;
 
   /**
    * @brief An external {@link IPrepareRendererResources}.

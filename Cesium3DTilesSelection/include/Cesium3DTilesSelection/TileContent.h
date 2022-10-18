@@ -50,6 +50,14 @@ struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
 struct CESIUM3DTILESSELECTION_API TileExternalContent {};
 
 /**
+ * @brief A content tag that indicates this tile has render content that was
+ * previously cached. The client should read the cached render data in the
+ * completed tile request and replace this content placeholder with a
+ * {@link TileRenderContent}.
+ */
+struct CESIUM3DTILESSELECTION_API TileCachedRenderContent {};
+
+/**
  * @brief A content tag that indicates a tile has a glTF model content and
  * render resources for the model
  */

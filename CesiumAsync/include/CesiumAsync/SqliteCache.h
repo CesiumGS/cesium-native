@@ -14,6 +14,7 @@ namespace CesiumAsync {
 /**
  * @brief Cache storage using SQLITE to store completed response.
  */
+// template <typename TClientDataCacheManager>
 class CESIUMASYNC_API SqliteCache : public ICacheDatabase {
 public:
   /**
@@ -47,7 +48,8 @@ public:
       const HttpHeaders& requestHeaders,
       uint16_t statusCode,
       const HttpHeaders& responseHeaders,
-      const gsl::span<const std::byte>& responseData) override;
+      const gsl::span<const std::byte>& responseData,
+      const gsl::span<const std::byte>& clientData) override;
 
   /** @copydoc ICacheDatabase::prune*/
   virtual bool prune() override;
