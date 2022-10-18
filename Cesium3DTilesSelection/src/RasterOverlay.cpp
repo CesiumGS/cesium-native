@@ -29,26 +29,36 @@ public:
 RasterOverlay::RasterOverlay(
     const std::string& name,
     const RasterOverlayOptions& options)
-    : _name(name), _options(options) {}
+    : _name(name), _options(options), _destructionCompleteDetails{} {}
 
-RasterOverlay::~RasterOverlay() noexcept {}
+RasterOverlay::~RasterOverlay() noexcept {
+  if (this->_destructionCompleteDetails.has_value()) {
+    this->_destructionCompleteDetails->promise.resolve();
+  }
+}
+
+CesiumAsync::SharedFuture<void>&
+RasterOverlay::getAsyncDestructionCompleteEvent(
+    const CesiumAsync::AsyncSystem& asyncSystem) {
+  if (!this->_destructionCompleteDetails.has_value()) {
+    auto promise = asyncSystem.createPromise<void>();
+    auto sharedFuture = promise.getFuture().share();
+    this->_destructionCompleteDetails.emplace(DestructionCompleteDetails{
+        asyncSystem,
+        std::move(promise),
+        std::move(sharedFuture)});
+  } else {
+    // All invocations of getAsyncDestructionCompleteEvent on a particular
+    // RasterOverlay must pass equivalent AsyncSystems.
+    assert(this->_destructionCompleteDetails->asyncSystem == asyncSystem);
+  }
+
+  return this->_destructionCompleteDetails->future;
+}
 
 CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
 RasterOverlay::createPlaceholder(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const {
   return new PlaceholderTileProvider(this, asyncSystem, pAssetAccessor);
-}
-
-void RasterOverlay::reportError(
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlayLoadFailureDetails&& errorDetails) const {
-  SPDLOG_LOGGER_ERROR(pLogger, errorDetails.message);
-  if (this->getOptions().loadErrorCallback) {
-    asyncSystem.runInMainThread(
-        [this, errorDetails = std::move(errorDetails)]() mutable {
-          this->getOptions().loadErrorCallback(std::move(errorDetails));
-        });
-  }
 }

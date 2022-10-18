@@ -1,3 +1,6 @@
+
+#ifndef CESIUM_OVERRIDE_TRACING
+
 #include "CesiumUtility/Tracing.h"
 
 #include <algorithm>
@@ -337,3 +340,5 @@ void TrackReference::dismissCurrentThread() {
 } // namespace CesiumUtility
 
 #endif // CESIUM_TRACING_ENABLED
+
+#endif

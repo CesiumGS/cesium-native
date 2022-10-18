@@ -75,6 +75,13 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
+   * @brief A future that resolves when this Tileset has been destroyed (i.e.
+   * its destructor has been called) and all async operations that it was
+   * executing have completed.
+   */
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
+
+  /**
    * @brief Destroys this tileset.
    *
    * This may block the calling thread while waiting for pending asynchronous
@@ -367,7 +374,7 @@ private:
       double tilePriority);
 
   void _processLoadQueue();
-  void _unloadCachedTiles() noexcept;
+  void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
   void _updateLodTransitions(

@@ -112,7 +112,7 @@ public:
   /**
    * @brief Prepares a raster overlay tile.
    *
-   * This method is invoked in the load thread, and it may not modify the tile.
+   * This method is invoked in the load thread and may modify the image.
    *
    * @param image The raster tile image to prepare.
    * @param rendererOptions Renderer options associated with the raster overlay tile from {@link RasterOverlayOptions::rendererOptions}.
@@ -121,7 +121,7 @@ public:
    * `pLoadThreadResult` parameter.
    */
   virtual void* prepareRasterInLoadThread(
-      const CesiumGltf::ImageCesium& image,
+      CesiumGltf::ImageCesium& image,
       const std::any& rendererOptions) = 0;
 
   /**
@@ -141,7 +141,7 @@ public:
    * later, add it to the object returned from this method.
    */
   virtual void* prepareRasterInMainThread(
-      const RasterOverlayTile& rasterTile,
+      RasterOverlayTile& rasterTile,
       void* pLoadThreadResult) = 0;
 
   /**

@@ -26,6 +26,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
+#include <stb_image_resize.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
@@ -672,4 +673,98 @@ ImageReaderResult GltfReader::readImage(
   }
 
   return result;
+}
+
+/*static*/
+std::optional<std::string> GltfReader::generateMipMaps(ImageCesium& image) {
+  if (!image.mipPositions.empty() ||
+      image.compressedPixelFormat != GpuCompressedPixelFormat::NONE) {
+    // No error message needed, since this is not technically a failure.
+    return std::nullopt;
+  }
+
+  if (image.pixelData.empty()) {
+    return "Unable to generate mipmaps, an empty image was provided.";
+  }
+
+  CESIUM_TRACE(
+      "generate mipmaps " + std::to_string(image.width) + "x" +
+      std::to_string(image.height) + "x" + std::to_string(image.channels) +
+      "x" + std::to_string(image.bytesPerChannel));
+
+  int32_t mipWidth = image.width;
+  int32_t mipHeight = image.height;
+  int32_t totalPixelCount = mipWidth * mipHeight;
+  size_t mipCount = 1;
+  while (mipWidth > 1 || mipHeight > 1) {
+    ++mipCount;
+
+    if (mipWidth > 1) {
+      mipWidth >>= 1;
+    }
+
+    if (mipHeight > 1) {
+      mipHeight >>= 1;
+    }
+
+    // Total pixels in the final mipmap.
+    totalPixelCount += mipWidth * mipHeight;
+  }
+
+  // Byte size of the base image.
+  const size_t imageByteSize = static_cast<size_t>(
+      image.width * image.height * image.channels * image.bytesPerChannel);
+
+  image.mipPositions.resize(mipCount);
+  image.mipPositions[0].byteOffset = 0;
+  image.mipPositions[0].byteSize = imageByteSize;
+
+  image.pixelData.resize(static_cast<size_t>(
+      totalPixelCount * image.channels * image.bytesPerChannel));
+
+  mipWidth = image.width;
+  mipHeight = image.height;
+  size_t mipIndex = 0;
+  size_t byteOffset = 0;
+  size_t byteSize = imageByteSize;
+  while (mipWidth > 1 || mipHeight > 1) {
+    size_t lastByteOffset = byteOffset;
+    byteOffset += byteSize;
+    ++mipIndex;
+
+    int32_t lastWidth = mipWidth;
+    if (mipWidth > 1) {
+      mipWidth >>= 1;
+    }
+
+    int32_t lastHeight = mipHeight;
+    if (mipHeight > 1) {
+      mipHeight >>= 1;
+    }
+
+    byteSize = static_cast<size_t>(
+        mipWidth * mipHeight * image.channels * image.bytesPerChannel);
+
+    image.mipPositions[mipIndex].byteOffset = byteOffset;
+    image.mipPositions[mipIndex].byteSize = byteSize;
+
+    if (!stbir_resize_uint8(
+            reinterpret_cast<const unsigned char*>(
+                &image.pixelData[lastByteOffset]),
+            lastWidth,
+            lastHeight,
+            0,
+            reinterpret_cast<unsigned char*>(&image.pixelData[byteOffset]),
+            mipWidth,
+            mipHeight,
+            0,
+            image.channels)) {
+      // Remove any added mipmaps.
+      image.mipPositions.clear();
+      image.pixelData.resize(imageByteSize);
+      return stbi_failure_reason();
+    }
+  }
+
+  return std::nullopt;
 }

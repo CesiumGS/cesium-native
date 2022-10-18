@@ -66,13 +66,13 @@ public:
   }
 
   virtual void* prepareRasterInLoadThread(
-      const CesiumGltf::ImageCesium& /*image*/,
+      CesiumGltf::ImageCesium& /*image*/,
       const std::any& /*rendererOptions*/) override {
     return new AllocationResult{totalAllocation};
   }
 
   virtual void* prepareRasterInMainThread(
-      const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
+      Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
       void* pLoadThreadResult) override {
     if (pLoadThreadResult) {
       AllocationResult* loadThreadResult =

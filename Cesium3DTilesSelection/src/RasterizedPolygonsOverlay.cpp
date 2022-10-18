@@ -241,21 +241,21 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
 
 RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() {}
 
-CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>>
+CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 RasterizedPolygonsOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const RasterOverlay* pOwner) const {
+    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
 
   pOwner = pOwner ? pOwner : this;
 
-  return asyncSystem.createResolvedFuture(
+  return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
       IntrusivePointer<RasterOverlayTileProvider>(
           new RasterizedPolygonsTileProvider(
-              this,
+              pOwner,
               asyncSystem,
               pAssetAccessor,
               pPrepareRendererResources,

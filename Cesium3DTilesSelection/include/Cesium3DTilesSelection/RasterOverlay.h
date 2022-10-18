@@ -1,12 +1,14 @@
 #pragma once
 
 #include "Library.h"
+#include "RasterOverlayLoadFailureDetails.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
+#include <nonstd/expected.hpp>
 #include <spdlog/fwd.h>
 
 #include <any>
@@ -22,7 +24,6 @@ class CreditSystem;
 class IPrepareRendererResources;
 class RasterOverlayTileProvider;
 class RasterOverlayCollection;
-class RasterOverlayLoadFailureDetails;
 
 /**
  * @brief Options for loading raster overlays.
@@ -80,8 +81,12 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * @brief A callback function that is invoked when a raster overlay resource
    * fails to load.
    *
-   * Raster overlay resources include a Cesium ion asset endpoint, any resources
-   * required for raster overlay metadata, or an individual overlay image.
+   * Raster overlay resources include a Cesium ion asset endpoint or any
+   * resources required for raster overlay metadata.
+   *
+   * This callback is invoked by the {@link RasterOverlayCollection} when an
+   * error occurs while it is creating a tile provider for this RasterOverlay.
+   * It is always invoked in the main thread.
    */
   std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
 
@@ -132,6 +137,18 @@ public:
   virtual ~RasterOverlay() noexcept;
 
   /**
+   * @brief A future that resolves when this RasterOverlay has been destroyed
+   * (i.e. its destructor has been called) and all async operations that it was
+   * executing have completed.
+   *
+   * @param asyncSystem The AsyncSystem to use for the returned SharedFuture,
+   * if required. If this method is called multiple times, all invocations
+   * must pass {@link AsyncSystem} instances that compare equal to each other.
+   */
+  CesiumAsync::SharedFuture<void>&
+  getAsyncDestructionCompleteEvent(const CesiumAsync::AsyncSystem& asyncSystem);
+
+  /**
    * @brief Gets the name of this overlay.
    */
   const std::string& getName() const noexcept { return this->_name; }
@@ -171,12 +188,13 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const;
 
+  using CreateTileProviderResult = nonstd::expected<
+      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>,
+      RasterOverlayLoadFailureDetails>;
+
   /**
-   * @brief Begins asynchronous creation of the tile provider for this overlay
+   * @brief Begins asynchronous creation of a tile provider for this overlay
    * and eventually returns it via a Future.
-   *
-   * The created tile provider will not be returned via {@link getTileProvider}.
-   * This method is primarily useful for overlays that aggregate other overlays.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to download assets like overlay
@@ -189,30 +207,29 @@ public:
    * and tiles.
    * @param pOwner The overlay that owns this overlay, or nullptr if this
    * overlay is not aggregated.
-   * @return The future that contains the tile provider when it is ready, or the
-   * `nullptr` in case of an error.
+   * @return The future that resolves to the tile provider when it is ready, or
+   * to error details in the case of an error.
    */
-  virtual CesiumAsync::Future<
-      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const RasterOverlay* pOwner) const = 0;
-
-protected:
-  void reportError(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlayLoadFailureDetails&& errorDetails) const;
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const = 0;
 
 private:
+  struct DestructionCompleteDetails {
+    CesiumAsync::AsyncSystem asyncSystem;
+    CesiumAsync::Promise<void> promise;
+    CesiumAsync::SharedFuture<void> future;
+  };
+
   std::string _name;
   RasterOverlayOptions _options;
   std::vector<Credit> _credits;
+  std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
 };
 
 } // namespace Cesium3DTilesSelection

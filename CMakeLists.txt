@@ -116,8 +116,10 @@ function(configure_cesium_library targetName)
             PRIVATE
                 ${capitalizedTargetName}_BUILDING
         )
+    endif()
 
-
+    if (CESIUM_EXTRA_INCLUDES)
+      target_include_directories(${targetName} PRIVATE ${CESIUM_EXTRA_INCLUDES})
     endif()
 
 endfunction()
@@ -186,8 +188,8 @@ install(TARGETS csprng)
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
-# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail. 
-# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered 
+# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail.
+# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered
 # private to cesium-native), so just set the PUBLIC_HEADER to an empty string.
 set_target_properties(ktx_read PROPERTIES PUBLIC_HEADER "")
 install(TARGETS ktx_read)
@@ -197,3 +199,6 @@ install(TARGETS webpdecoder)
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
 
 install(TARGETS s2geometry)
+
+install(TARGETS expected-lite)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/expected-lite/include/nonstd TYPE INCLUDE)
