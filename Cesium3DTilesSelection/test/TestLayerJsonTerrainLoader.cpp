@@ -58,6 +58,7 @@ Future<TileLoadResult> loadTile(
       {},
       asyncSystem,
       pAssetAccessor,
+      nullptr,
       spdlog::default_logger(),
       {}};
 
@@ -84,6 +85,7 @@ TEST_CASE("Test create layer json terrain loader") {
 
   TilesetExternals externals{
       pMockedAssetAccessor,
+      nullptr,
       pMockedPrepareRendererResources,
       asyncSystem,
       pMockedCreditSystem};

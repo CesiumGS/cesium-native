@@ -27,6 +27,7 @@ public:
     uint16_t statusCode;
     HttpHeaders responseHeaders;
     std::vector<std::byte> responseData;
+    std::vector<std::byte> clientData;
   };
 
   MockStoreCacheDatabase()
@@ -49,7 +50,8 @@ public:
       const HttpHeaders& requestHeaders,
       uint16_t statusCode,
       const HttpHeaders& responseHeaders,
-      const gsl::span<const std::byte>& responseData) override {
+      const gsl::span<const std::byte>& responseData,
+      const gsl::span<const std::byte>& clientData) override {
     this->storeRequestParam = StoreRequestParameters{
         key,
         expiryTime,
@@ -58,7 +60,8 @@ public:
         requestHeaders,
         statusCode,
         responseHeaders,
-        std::vector<std::byte>(responseData.begin(), responseData.end())};
+        std::vector<std::byte>(responseData.begin(), responseData.end()),
+        std::vector<std::byte>(clientData.begin(), clientData.end())};
     this->storeResponseCall = true;
     return true;
   }
@@ -577,6 +580,7 @@ TEST_CASE("Test serving cache item") {
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
             {"Cache-Control", "max-age=100, private"}},
+        std::vector<std::byte>(),
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime + 100,
@@ -666,6 +670,7 @@ TEST_CASE("Test serving cache item") {
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
             {"Cache-Control", "max-age=100, private"}},
+        std::vector<std::byte>(),
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime - 100,
@@ -760,6 +765,7 @@ TEST_CASE("Test serving cache item") {
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
             {"Cache-Control", "max-age=100, private"}},
+        std::vector<std::byte>(),
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime - 100,

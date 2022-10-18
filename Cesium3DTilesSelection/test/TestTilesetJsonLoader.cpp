@@ -50,6 +50,7 @@ TilesetExternals createMockTilesetExternals(const std::string& tilesetPath) {
 
   return TilesetExternals{
       std::move(pMockAssetAccessor),
+      nullptr,
       std::move(pMockPrepareRendererResource),
       std::move(asyncSystem),
       std::move(pMockCreditSystem)};
@@ -96,6 +97,7 @@ TileLoadResult loadTileContent(
       {},
       asyncSystem,
       pMockAssetAccessor,
+      nullptr,
       spdlog::default_logger(),
       {}};
 
@@ -517,6 +519,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
           {},
           asyncSystem,
           pMockAssetAccessor,
+          nullptr,
           spdlog::default_logger(),
           {}};
       auto implicitContentResultFuture =
@@ -535,6 +538,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
           {},
           asyncSystem,
           pMockAssetAccessor,
+          nullptr,
           spdlog::default_logger(),
           {}};
       auto implicitContentResultFuture =

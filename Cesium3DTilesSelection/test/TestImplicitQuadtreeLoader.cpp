@@ -50,6 +50,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
+        nullptr,
         spdlog::default_logger(),
         {}};
 
@@ -81,6 +82,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
+        nullptr,
         spdlog::default_logger(),
         {}};
 
@@ -132,6 +134,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
+        nullptr,
         spdlog::default_logger(),
         {}};
 
@@ -184,6 +187,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
+        nullptr,
         spdlog::default_logger(),
         {}};
 

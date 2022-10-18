@@ -26,11 +26,11 @@ const std::string CACHE_TABLE_RESPONSE_HEADER_COLUMN = "responseHeaders";
 const std::string CACHE_TABLE_RESPONSE_STATUS_CODE_COLUMN =
     "responseStatusCode";
 const std::string CACHE_TABLE_RESPONSE_DATA_COLUMN = "responseData";
+const std::string CACHE_TABLE_CLIENT_DATA_COLUMN = "clientData";
 const std::string CACHE_TABLE_REQUEST_HEADER_COLUMN = "requestHeader";
 const std::string CACHE_TABLE_REQUEST_METHOD_COLUMN = "requestMethod";
 const std::string CACHE_TABLE_REQUEST_URL_COLUMN = "requestUrl";
 const std::string CACHE_TABLE_VIRTUAL_TOTAL_ITEMS_COLUMN = "totalItems";
-const std::string CACHE_TABLE_CLIENT_DATA_COLUMN = "clientData";
 
 // Sql commands for setting up database
 const std::string CREATE_CACHE_TABLE_SQL =
@@ -74,7 +74,7 @@ const std::string STORE_RESPONSE_SQL =
     CACHE_TABLE_RESPONSE_DATA_COLUMN + ", " + CACHE_TABLE_CLIENT_DATA_COLUMN +
     ", " + CACHE_TABLE_REQUEST_HEADER_COLUMN + ", " +
     CACHE_TABLE_REQUEST_METHOD_COLUMN + ", " + CACHE_TABLE_REQUEST_URL_COLUMN +
-    ", " + CACHE_TABLE_KEY_COLUMN + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    ", " + CACHE_TABLE_KEY_COLUMN + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 // Sql commands for prunning the database
 const std::string TOTAL_ITEMS_QUERY_SQL =

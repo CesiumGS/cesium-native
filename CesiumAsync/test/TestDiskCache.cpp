@@ -45,7 +45,8 @@ TEST_CASE("Test disk cache with Sqlite") {
         request->headers(),
         request->response()->statusCode(),
         request->response()->headers(),
-        request->response()->data()));
+        request->response()->data(),
+        {}));
 
     std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey");
     REQUIRE(cacheItem->expiryTime == currentTime);
@@ -116,7 +117,8 @@ TEST_CASE("Test disk cache with Sqlite") {
           request->headers(),
           request->response()->statusCode(),
           request->response()->headers(),
-          request->response()->data()));
+          request->response()->data(),
+          {}));
     }
 
     REQUIRE(diskCache.prune());
@@ -202,7 +204,8 @@ TEST_CASE("Test disk cache with Sqlite") {
           request->headers(),
           request->response()->statusCode(),
           request->response()->headers(),
-          request->response()->data()));
+          request->response()->data(),
+          {}));
     }
 
     // clear all

@@ -269,8 +269,6 @@ Future<void> CachingAssetAccessor::writeBack(
     const std::shared_ptr<IAssetRequest>& pCompletedRequest,
     bool cacheOriginalResponseData,
     std::vector<std::byte>&& clientData) {
-  return asyncSystem.createResolvedFuture();
-
   return asyncSystem.runInThreadPool(
       this->_cacheThreadPool,
       [pCacheDatabase = this->_pCacheDatabase,
