@@ -82,38 +82,37 @@ public:
       const RasterOverlayOptions& options = RasterOverlayOptions())
       : RasterOverlay(name, options) {}
 
-  virtual CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const RasterOverlay* pOwner) const override {
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const override {
     if (!pOwner) {
       pOwner = this;
     }
 
-    return asyncSystem
-        .createResolvedFuture<IntrusivePointer<RasterOverlayTileProvider>>(
-            new TestTileProvider(
-                pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                std::nullopt,
-                pPrepareRendererResources,
-                pLogger,
-                WebMercatorProjection(),
-                QuadtreeTilingScheme(
-                    WebMercatorProjection::computeMaximumProjectedRectangle(),
-                    1,
-                    1),
+    return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
+        new TestTileProvider(
+            pOwner,
+            asyncSystem,
+            pAssetAccessor,
+            std::nullopt,
+            pPrepareRendererResources,
+            pLogger,
+            WebMercatorProjection(),
+            QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(),
-                0,
-                10,
-                256,
-                256));
+                1,
+                1),
+            WebMercatorProjection::computeMaximumProjectedRectangle(),
+            0,
+            10,
+            256,
+            256));
   }
 };
 
@@ -143,8 +142,9 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
           spdlog::default_logger(),
           nullptr)
       .thenInMainThread(
-          [&pProvider](IntrusivePointer<RasterOverlayTileProvider>&& pCreated) {
-            pProvider = pCreated;
+          [&pProvider](RasterOverlay::CreateTileProviderResult&& created) {
+            CHECK(created);
+            pProvider = *created;
           });
 
   asyncSystem.dispatchMainThreadTasks();

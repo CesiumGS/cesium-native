@@ -1,5 +1,7 @@
 #pragma once
 
+#include <CesiumUtility/IntrusivePointer.h>
+
 #include <memory>
 #include <string>
 
@@ -33,11 +35,6 @@ enum class RasterOverlayLoadType {
 
 class RasterOverlayLoadFailureDetails {
 public:
-  /**
-   * @brief The raster overlay that encountered the load failure.
-   */
-  const RasterOverlay* pOverlay = nullptr;
-
   /**
    * @brief The type of request that failed to load.
    */

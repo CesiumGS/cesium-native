@@ -236,14 +236,14 @@ static bool validateCapabilities(
   return true;
 }
 
-Future<IntrusivePointer<RasterOverlayTileProvider>>
+Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const RasterOverlay* pOwner) const {
+    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
@@ -265,19 +265,6 @@ WebMapServiceRasterOverlay::createTileProvider(
                                   this->_options.credit.value()))
                             : std::nullopt;
 
-  auto reportError = [this, asyncSystem, pLogger, pOwner](
-                         const std::shared_ptr<IAssetRequest>& pRequest,
-                         const std::string& message) {
-    this->reportError(
-        asyncSystem,
-        pLogger,
-        RasterOverlayLoadFailureDetails{
-            pOwner,
-            RasterOverlayLoadType::TileProvider,
-            pRequest,
-            message});
-  };
-
   return pAssetAccessor->get(asyncSystem, xmlUrlGetcapabilities, this->_headers)
       .thenInWorkerThread(
           [pOwner,
@@ -288,15 +275,15 @@ WebMapServiceRasterOverlay::createTileProvider(
            pLogger,
            options = this->_options,
            url = this->_baseUrl,
-           headers = this->_headers,
-           reportError](const std::shared_ptr<IAssetRequest>& pRequest)
-              -> IntrusivePointer<RasterOverlayTileProvider> {
+           headers =
+               this->_headers](const std::shared_ptr<IAssetRequest>& pRequest)
+              -> CreateTileProviderResult {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              reportError(
-                  pRequest,
-                  "No response received from web map service.");
-              return nullptr;
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::TileProvider,
+                  std::move(pRequest),
+                  "No response received from web map service."});
             }
 
             const gsl::span<const std::byte> data = pResponse->data();
@@ -306,23 +293,27 @@ WebMapServiceRasterOverlay::createTileProvider(
                 reinterpret_cast<const char*>(data.data()),
                 data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
-              reportError(pRequest, "Could not parse web map service XML.");
-              return nullptr;
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::TileProvider,
+                  std::move(pRequest),
+                  "Could not parse web map service XML."});
             }
 
             tinyxml2::XMLElement* pRoot = doc.RootElement();
             if (!pRoot) {
-              reportError(
-                  pRequest,
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::TileProvider,
+                  std::move(pRequest),
                   "Web map service XML document does not have a root "
-                  "element.");
-              return nullptr;
+                  "element."});
             }
 
             std::string validationError;
             if (!validateCapabilities(pRoot, options, validationError)) {
-              reportError(pRequest, validationError);
-              return nullptr;
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::TileProvider,
+                  std::move(pRequest),
+                  validationError});
             }
 
             const auto projection = CesiumGeospatial::GeographicProjection();

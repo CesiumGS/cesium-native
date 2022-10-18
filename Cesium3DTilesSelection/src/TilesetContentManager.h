@@ -43,6 +43,13 @@ public:
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
+  /**
+   * @brief A future that resolves after all async operations initiated by this
+   * content manager have completed and all tiles are unloaded, but before the
+   * content manager itself is destroyed.
+   */
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
+
   ~TilesetContentManager() noexcept;
 
   void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
@@ -154,5 +161,8 @@ private:
   };
 
   std::vector<MainThreadLoadTask> _finishLoadingQueue;
+
+  CesiumAsync::Promise<void> _destructionCompletePromise;
+  CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
 };
 } // namespace Cesium3DTilesSelection

@@ -85,6 +85,10 @@ Tileset::Tileset(
           ionAccessToken,
           ionAssetEndpointUrl)} {}
 
+CesiumAsync::SharedFuture<void>& Tileset::getAsyncDestructionCompleteEvent() {
+  return this->_pTilesetContentManager->getAsyncDestructionCompleteEvent();
+}
+
 Tileset::~Tileset() noexcept {
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {

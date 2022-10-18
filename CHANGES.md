@@ -4,7 +4,9 @@
 
 ##### Breaking Changes :mega:
 
-- On `IPrepareRendererResources`, the `model` parameter passed to `prepareInLoadThread`, the `image` parameter passed to `prepareRasterInLoadThread`, and the `rasterTile` parameter passed to `prepareRasterInMainThread` are no longer const. These methods are now allowed to modify the parameters during load.
+- On `IPrepareRendererResources`, the `image` parameter passed to `prepareRasterInLoadThread` and the `rasterTile` parameter passed to `prepareRasterInMainThread` are no longer const. These methods are now allowed to modify the parameters during load.
+- `IPrepareRendererResources::prepareInLoadThread` now takes a `TileLoadResult` and returns a `Future<TileLoadResultAndRenderResources>`, allowing it to work asynchronously rather than just blocking a worker thread until it is finished.
+- `RasterOverlay::createTileProvider` now takes the owner pointer as an `IntrusivePointer` instead of a raw pointer, and returns a future that resolves to a `RasterOverlay::CreateTileProviderResult`.
 
 ##### Additions :tada:
 

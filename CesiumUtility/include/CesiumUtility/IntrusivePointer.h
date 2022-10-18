@@ -85,9 +85,7 @@ public:
 
     return *this;
   }
-  template <
-      class U,
-      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  template <class U>
   IntrusivePointer& operator=(const IntrusivePointer<U>& rhs) noexcept {
     if (this->_p != rhs._p) {
       // addReference the new pointer before releaseReference'ing the old.
@@ -159,9 +157,7 @@ public:
   bool operator==(const IntrusivePointer<T>& rhs) const noexcept {
     return this->_p == rhs._p;
   }
-  template <
-      class U,
-      typename std::enable_if_t<std::is_convertible<U, T>::value>* = nullptr>
+  template <class U>
   bool operator==(const IntrusivePointer<U>& rhs) const noexcept {
     return this->_p == rhs._p;
   }

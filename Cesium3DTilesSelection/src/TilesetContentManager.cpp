@@ -23,11 +23,6 @@
 
 namespace Cesium3DTilesSelection {
 namespace {
-struct TileLoadResultAndRenderResources {
-  TileLoadResult result;
-  void* pRenderResources{nullptr};
-};
-
 struct RegionAndCenter {
   CesiumGeospatial::BoundingRegion region;
   CesiumGeospatial::Cartographic center;
@@ -437,11 +432,10 @@ void calcFittestBoundingRegionForLooseTile(
   }
 }
 
-TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
-    TileLoadResult&& result,
+void postProcessGltfInWorkerThread(
+    TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
-    const TileContentLoadInfo& tileLoadInfo,
-    const std::any& rendererOptions) {
+    const TileContentLoadInfo& tileLoadInfo) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
@@ -466,15 +460,6 @@ TileLoadResultAndRenderResources postProcessGltfInWorkerThread(
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
     model.generateMissingNormalsSmooth();
   }
-
-  // create render resources
-  void* pRenderResources =
-      tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-          model,
-          tileLoadInfo.tileTransform,
-          rendererOptions);
-
-  return TileLoadResultAndRenderResources{std::move(result), pRenderResources};
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
@@ -550,16 +535,24 @@ postProcessContentInWorkerThread(
             }
 
             if (!gltfResult.model) {
-              return TileLoadResultAndRenderResources{
-                  TileLoadResult::createFailedResult(nullptr),
-                  nullptr};
+              return tileLoadInfo.asyncSystem.createResolvedFuture(
+                  TileLoadResultAndRenderResources{
+                      TileLoadResult::createFailedResult(nullptr),
+                      nullptr});
             }
 
             result.contentKind = std::move(*gltfResult.model);
-            return postProcessGltfInWorkerThread(
-                std::move(result),
+
+            postProcessGltfInWorkerThread(
+                result,
                 std::move(projections),
-                tileLoadInfo,
+                tileLoadInfo);
+
+            // create render resources
+            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+                tileLoadInfo.asyncSystem,
+                std::move(result),
+                tileLoadInfo.tileTransform,
                 rendererOptions);
           });
 }
@@ -586,7 +579,10 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {}
+      _tilesDataUsed{0},
+      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
+      _destructionCompleteFuture{
+          this->_destructionCompletePromise.getFuture().share()} {}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -607,7 +603,10 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {
+      _tilesDataUsed{0},
+      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
+      _destructionCompleteFuture{
+          this->_destructionCompletePromise.getFuture().share()} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -739,7 +738,10 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tilesLoadOnProgress{0},
       _loadedTilesCount{0},
-      _tilesDataUsed{0} {
+      _tilesDataUsed{0},
+      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
+      _destructionCompleteFuture{
+          this->_destructionCompletePromise.getFuture().share()} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -787,9 +789,16 @@ TilesetContentManager::TilesetContentManager(
   }
 }
 
+CesiumAsync::SharedFuture<void>&
+TilesetContentManager::getAsyncDestructionCompleteEvent() {
+  return this->_destructionCompleteFuture;
+}
+
 TilesetContentManager::~TilesetContentManager() noexcept {
   assert(this->_tilesLoadOnProgress == 0);
   this->unloadAll();
+
+  this->_destructionCompletePromise.resolve();
 }
 
 void TilesetContentManager::loadTileContent(
