@@ -66,7 +66,7 @@ void RasterOverlayCollection::add(
 
   CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
 
-  CesiumAsync::Future<IntrusivePointer<RasterOverlayTileProvider>> future =
+  CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
       pOverlay->createTileProvider(
           this->_externals.asyncSystem,
           this->_externals.pAssetAccessor,
@@ -97,29 +97,42 @@ void RasterOverlayCollection::add(
   // This continuation, by capturing pList, keeps the OverlayList from being
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
   std::move(future)
-      .thenInMainThread(
-          [pOverlay,
-           pList](IntrusivePointer<RasterOverlayTileProvider>&& pProvider) {
-            // Find the overlay's current location in the list.
-            // It's possible it has been removed completely.
-            auto it = std::find(
-                pList->overlays.begin(),
-                pList->overlays.end(),
-                pOverlay);
-            if (it != pList->overlays.end()) {
-              std::int64_t index = it - pList->overlays.begin();
-              pList->tileProviders[size_t(index)] = pProvider;
-            }
-            CESIUM_TRACE_END_IN_TRACK("createTileProvider");
-          })
       .catchInMainThread(
-          [pLogger = this->_externals.pLogger](const std::exception& e) {
-            SPDLOG_LOGGER_ERROR(
-                pLogger,
-                "Error while creating tile provider: {0}",
-                e.what());
-            CESIUM_TRACE_END_IN_TRACK("createTileProvider");
-          });
+          [](const std::exception& e)
+              -> RasterOverlay::CreateTileProviderResult {
+            return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                RasterOverlayLoadType::Unknown,
+                nullptr,
+                fmt::format(
+                    "Error while creating tile provider: {0}",
+                    e.what())});
+          })
+      .thenInMainThread([pOverlay, pList, pLogger = this->_externals.pLogger](
+                            RasterOverlay::CreateTileProviderResult&& result) {
+        if (result) {
+          // Find the overlay's current location in the list.
+          // It's possible it has been removed completely.
+          auto it = std::find(
+              pList->overlays.begin(),
+              pList->overlays.end(),
+              pOverlay);
+          if (it != pList->overlays.end()) {
+            std::int64_t index = it - pList->overlays.begin();
+            pList->tileProviders[size_t(index)] = *result;
+          }
+        } else {
+          // Report error creating the tile provider.
+          const RasterOverlayLoadFailureDetails& failureDetails =
+              result.error();
+          if (pOverlay->getOptions().loadErrorCallback) {
+            pOverlay->getOptions().loadErrorCallback(failureDetails);
+          } else {
+            SPDLOG_LOGGER_ERROR(pLogger, failureDetails.message);
+          }
+        }
+
+        CESIUM_TRACE_END_IN_TRACK("createTileProvider");
+      });
 }
 
 void RasterOverlayCollection::remove(

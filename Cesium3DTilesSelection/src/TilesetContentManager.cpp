@@ -789,8 +789,8 @@ TilesetContentManager::TilesetContentManager(
   }
 }
 
-CesiumAsync::SharedFuture<void>
-TilesetContentManager::GetAsyncDestructionCompleteEvent() {
+CesiumAsync::SharedFuture<void>&
+TilesetContentManager::getAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteFuture;
 }
 

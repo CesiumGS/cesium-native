@@ -113,8 +113,7 @@ public:
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~BingMapsRasterOverlay() override;
 
-  virtual CesiumAsync::Future<
-      CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
+  virtual CesiumAsync::Future<CreateTileProviderResult>
   createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -122,7 +121,8 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const RasterOverlay* pOwner) const override;
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const override;
 
 private:
   static const std::string BING_LOGO_HTML;

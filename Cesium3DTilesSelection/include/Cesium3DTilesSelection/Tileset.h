@@ -79,7 +79,7 @@ public:
    * its destructor has been called) and all async operations that it was
    * executing have completed.
    */
-  CesiumAsync::SharedFuture<void> GetAsyncDestructionCompleteEvent();
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
 
   /**
    * @brief Destroys this tileset.
