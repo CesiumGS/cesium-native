@@ -82,8 +82,7 @@ public:
       const RasterOverlayOptions& options = RasterOverlayOptions())
       : RasterOverlay(name, options) {}
 
-  virtual CesiumAsync::Future<CreateTileProviderResult>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
@@ -96,25 +95,24 @@ public:
       pOwner = this;
     }
 
-    return asyncSystem
-        .createResolvedFuture<CreateTileProviderResult>(
-            new TestTileProvider(
-                pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                std::nullopt,
-                pPrepareRendererResources,
-                pLogger,
-                WebMercatorProjection(),
-                QuadtreeTilingScheme(
-                    WebMercatorProjection::computeMaximumProjectedRectangle(),
-                    1,
-                    1),
+    return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
+        new TestTileProvider(
+            pOwner,
+            asyncSystem,
+            pAssetAccessor,
+            std::nullopt,
+            pPrepareRendererResources,
+            pLogger,
+            WebMercatorProjection(),
+            QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(),
-                0,
-                10,
-                256,
-                256));
+                1,
+                1),
+            WebMercatorProjection::computeMaximumProjectedRectangle(),
+            0,
+            10,
+            256,
+            256));
   }
 };
 

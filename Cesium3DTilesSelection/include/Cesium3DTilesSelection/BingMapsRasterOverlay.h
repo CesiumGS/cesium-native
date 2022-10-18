@@ -113,8 +113,7 @@ public:
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~BingMapsRasterOverlay() override;
 
-  virtual CesiumAsync::Future<CreateTileProviderResult>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
