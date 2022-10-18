@@ -21,6 +21,8 @@ TEST_CASE("Test disk cache with Sqlite") {
         {"Content-Type", "text/html"}};
     std::vector<std::byte> responseData =
         {std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4)};
+    std::vector<std::byte> clientData =
+        {std::byte(5), std::byte(6), std::byte(7), std::byte(8), std::byte(9)};
     std::unique_ptr<MockAssetResponse> response =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -46,7 +48,7 @@ TEST_CASE("Test disk cache with Sqlite") {
         request->response()->statusCode(),
         request->response()->headers(),
         request->response()->data(),
-        {}));
+        clientData));
 
     std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey");
     REQUIRE(cacheItem->expiryTime == currentTime);
@@ -69,6 +71,13 @@ TEST_CASE("Test disk cache with Sqlite") {
                                   std::byte(2),
                                   std::byte(3),
                                   std::byte(4)});
+    REQUIRE(
+        cacheResponse.clientData == std::vector<std::byte>(
+                                        {std::byte(5),
+                                         std::byte(6),
+                                         std::byte(7),
+                                         std::byte(8),
+                                         std::byte(9)}));
 
     std::optional<ResponseCacheControl> cacheControl =
         ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
@@ -92,6 +101,12 @@ TEST_CASE("Test disk cache with Sqlite") {
           std::byte(2),
           std::byte(3),
           std::byte(4)};
+      std::vector<std::byte> clientData = {
+          std::byte(5),
+          std::byte(6),
+          std::byte(7),
+          std::byte(8),
+          std::byte(9)};
       std::unique_ptr<MockAssetResponse> response =
           std::make_unique<MockAssetResponse>(
               static_cast<uint16_t>(200),
@@ -118,7 +133,7 @@ TEST_CASE("Test disk cache with Sqlite") {
           request->response()->statusCode(),
           request->response()->headers(),
           request->response()->data(),
-          {}));
+          clientData));
     }
 
     REQUIRE(diskCache.prune());
@@ -157,6 +172,13 @@ TEST_CASE("Test disk cache with Sqlite") {
                                     std::byte(2),
                                     std::byte(3),
                                     std::byte(4)});
+      REQUIRE(
+          cacheResponse.clientData == std::vector<std::byte>(
+                                          {std::byte(5),
+                                           std::byte(6),
+                                           std::byte(7),
+                                           std::byte(8),
+                                           std::byte(9)}));
 
       std::optional<ResponseCacheControl> cacheControl =
           ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
@@ -180,6 +202,8 @@ TEST_CASE("Test disk cache with Sqlite") {
         {"Response-Header", "Response-Value"}};
     std::vector<std::byte> responseData =
         {std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4)};
+    std::vector<std::byte> clientData =
+        {std::byte(5), std::byte(6), std::byte(7), std::byte(8), std::byte(9)};
     std::unique_ptr<MockAssetResponse> response =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -205,7 +229,7 @@ TEST_CASE("Test disk cache with Sqlite") {
           request->response()->statusCode(),
           request->response()->headers(),
           request->response()->data(),
-          {}));
+          clientData));
     }
 
     // clear all
