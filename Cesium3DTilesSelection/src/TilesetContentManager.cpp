@@ -1419,7 +1419,7 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
       loadErrorCallback(TilesetLoadFailureDetails{
           nullptr,
           type,
-          nullptr,
+          result.statusCode,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
     } else {
       result.errors.logError(

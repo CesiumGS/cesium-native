@@ -44,10 +44,9 @@ public:
   TilesetLoadType type = TilesetLoadType::Unknown;
 
   /**
-   * @brief The request that failed. The request itself may have succeeded, but
-   * the failure occurred while processing this request.
+   * The status code of the HTTP response.
    */
-  std::shared_ptr<CesiumAsync::IAssetRequest> pRequest = nullptr;
+  uint16_t statusCode{200};
 
   /**
    * @brief A human-readable explanation of what failed.
