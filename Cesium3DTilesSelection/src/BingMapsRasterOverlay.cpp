@@ -88,7 +88,7 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       Credit bingCredit,
@@ -105,7 +105,7 @@ public:
       uint32_t maximumLevel,
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             bingCredit,
@@ -334,14 +334,14 @@ std::vector<CreditAndCoverageAreas> collectCredits(
 
 } // namespace
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+Future<RasterOverlay::CreateTileProviderResult>
 BingMapsRasterOverlay::createTileProvider(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    IntrusivePointer<const RasterOverlay> pOwner) const {
   std::string metadataUrl = CesiumUtility::Uri::resolve(
       this->_url,
       "REST/v1/Imagery/Metadata/" + this->_mapStyle,
@@ -353,65 +353,51 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  auto reportError = [this, asyncSystem, pLogger, pOwner](
-                         const std::shared_ptr<IAssetRequest>& pRequest,
-                         const std::string& message) {
-    this->reportError(
-        asyncSystem,
-        pLogger,
-        RasterOverlayLoadFailureDetails{
-            pOwner,
-            RasterOverlayLoadType::TileProvider,
-            pRequest,
-            message});
-  };
-
-  auto handleResponse = [pOwner,
-                         asyncSystem,
-                         pAssetAccessor,
-                         pCreditSystem,
-                         pPrepareRendererResources,
-                         pLogger,
-                         baseUrl = this->_url,
-                         culture = this->_culture,
-                         reportError](
-                            const std::shared_ptr<IAssetRequest>& pRequest,
-                            const gsl::span<const std::byte>& data)
-      -> std::unique_ptr<RasterOverlayTileProvider> {
+  auto handleResponse =
+      [pOwner,
+       asyncSystem,
+       pAssetAccessor,
+       pCreditSystem,
+       pPrepareRendererResources,
+       pLogger,
+       baseUrl = this->_url,
+       culture = this->_culture](
+          const std::shared_ptr<IAssetRequest>& pRequest,
+          const gsl::span<const std::byte>& data) -> CreateTileProviderResult {
     rapidjson::Document response;
     response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
     if (response.HasParseError()) {
-      reportError(
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          RasterOverlayLoadType::TileProvider,
           pRequest,
           fmt::format(
-              "Error when parsing Bing Maps imagery metadata, error code "
+              "Error while parsing Bing Maps imagery metadata, error code "
               "{} at byte offset {}",
               response.GetParseError(),
-              response.GetErrorOffset()));
-      return nullptr;
+              response.GetErrorOffset())});
     }
 
     rapidjson::Value* pError =
         rapidjson::Pointer("/errorDetails/0").Get(response);
     if (pError && pError->IsString()) {
-      reportError(
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          RasterOverlayLoadType::TileProvider,
           pRequest,
           fmt::format(
               "Received an error from the Bing Maps imagery metadata service: "
               "{}",
-              pError->GetString()));
-      return nullptr;
+              pError->GetString())});
     }
 
     rapidjson::Value* pResource =
         rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
     if (!pResource) {
-      reportError(
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          RasterOverlayLoadType::TileProvider,
           pRequest,
           "Resources were not found in the Bing Maps imagery metadata "
-          "response.");
-      return nullptr;
+          "response."});
     }
 
     uint32_t width =
@@ -426,8 +412,10 @@ BingMapsRasterOverlay::createTileProvider(
     std::string urlTemplate =
         JsonHelpers::getStringOrDefault(*pResource, "imageUrl", std::string());
     if (urlTemplate.empty()) {
-      reportError(pRequest, "Bing Maps tile imageUrl is missing or empty.");
-      return nullptr;
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          RasterOverlayLoadType::TileProvider,
+          pRequest,
+          "Bing Maps tile imageUrl is missing or empty."});
     }
 
     bool showCredits = pOwner->getOptions().showCreditsOnScreen;
@@ -436,8 +424,8 @@ BingMapsRasterOverlay::createTileProvider(
     Credit bingCredit =
         pCreditSystem->createCredit(BING_LOGO_HTML, showCredits);
 
-    return std::make_unique<BingMapsTileProvider>(
-        *pOwner,
+    return new BingMapsTileProvider(
+        pOwner,
         asyncSystem,
         pAssetAccessor,
         bingCredit,
@@ -462,30 +450,30 @@ BingMapsRasterOverlay::createTileProvider(
 
   return pAssetAccessor->get(asyncSystem, metadataUrl)
       .thenInMainThread(
-          [metadataUrl, pLogger, handleResponse, reportError](
-              std::shared_ptr<IAssetRequest>&& pRequest)
-              -> std::unique_ptr<RasterOverlayTileProvider> {
+          [metadataUrl,
+           handleResponse](std::shared_ptr<IAssetRequest>&& pRequest)
+              -> CreateTileProviderResult {
             const IAssetResponse* pResponse = pRequest->response();
 
             if (pResponse == nullptr) {
-              reportError(
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::TileProvider,
                   pRequest,
                   "No response received from Bing Maps imagery metadata "
-                  "service.");
-              return nullptr;
+                  "service."});
             }
 
-            std::unique_ptr<RasterOverlayTileProvider> pProvider =
+            CreateTileProviderResult handleResponseResult =
                 handleResponse(pRequest, pResponse->data());
 
             // If the response successfully created a tile provider, cache it.
-            if (pProvider) {
+            if (handleResponseResult) {
               sessionCache[metadataUrl] = std::vector<std::byte>(
                   pResponse->data().begin(),
                   pResponse->data().end());
             }
 
-            return pProvider;
+            return handleResponseResult;
           });
 }
 

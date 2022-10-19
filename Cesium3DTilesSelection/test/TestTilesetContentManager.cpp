@@ -15,6 +15,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -26,6 +27,7 @@
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
+using namespace CesiumUtility;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -203,11 +205,13 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager(
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        "tileset.json");
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager(
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            "tileset.json");
+    TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
     manager.waitUntilIdle();
@@ -232,11 +236,13 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager(
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        "layer.json");
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager(
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            "layer.json");
+    TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
     manager.waitUntilIdle();
@@ -266,11 +272,13 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager(
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        "layer.json");
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager(
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            "layer.json");
+    TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
     manager.waitUntilIdle();
@@ -326,22 +334,23 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        options,
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            options,
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
     // test manager loading
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, options);
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, options);
 
     SECTION("Load tile from ContentLoading -> Done") {
       // Unloaded -> ContentLoading
       // check the state of the tile before main thread get called
-      CHECK(manager.getNumberOfTilesLoading() == 1);
+      CHECK(pManager->getNumberOfTilesLoading() == 1);
       CHECK(tile.getState() == TileLoadState::ContentLoading);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -352,8 +361,8 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
-      manager.waitUntilIdle();
-      CHECK(manager.getNumberOfTilesLoading() == 0);
+      pManager->waitUntilIdle();
+      CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
       CHECK(tile.getContent().getRenderContent()->getRenderResources());
@@ -361,7 +370,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoaded -> Done
       // update tile content to move from ContentLoaded -> Done
-      manager.updateTileContent(tile, 0.0, options);
+      pManager->updateTileContent(tile, 0.0, options);
       CHECK(tile.getState() == TileLoadState::Done);
       CHECK(tile.getChildren().size() == 1);
       CHECK(tile.getChildren().front().getContent().isEmptyContent());
@@ -370,7 +379,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(initializerCall);
 
       // Done -> Unloaded
-      manager.unloadTileContent(tile);
+      pManager->unloadTileContent(tile);
       CHECK(tile.getState() == TileLoadState::Unloaded);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -379,8 +388,8 @@ TEST_CASE("Test tile state machine") {
 
     SECTION("Try to unload tile when it's still loading") {
       // unload tile to move from Done -> Unload
-      manager.unloadTileContent(tile);
-      CHECK(manager.getNumberOfTilesLoading() == 1);
+      pManager->unloadTileContent(tile);
+      CHECK(pManager->getNumberOfTilesLoading() == 1);
       CHECK(tile.getState() == TileLoadState::ContentLoading);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -388,14 +397,14 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().isEmptyContent());
       CHECK(!tile.getContent().getRenderContent());
 
-      manager.waitUntilIdle();
-      CHECK(manager.getNumberOfTilesLoading() == 0);
+      pManager->waitUntilIdle();
+      CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
       CHECK(tile.getContent().getRenderContent()->getRenderResources());
 
-      manager.unloadTileContent(tile);
-      CHECK(manager.getNumberOfTilesLoading() == 0);
+      pManager->unloadTileContent(tile);
+      CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::Unloaded);
       CHECK(tile.getContent().isUnknownContent());
       CHECK(!tile.getContent().isRenderContent());
@@ -429,20 +438,21 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        options,
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            options,
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
     // test manager loading
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, options);
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, options);
 
     // Unloaded -> ContentLoading
-    CHECK(manager.getNumberOfTilesLoading() == 1);
+    CHECK(pManager->getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getContent().isUnknownContent());
@@ -450,8 +460,8 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> FailedTemporarily
-    manager.waitUntilIdle();
-    CHECK(manager.getNumberOfTilesLoading() == 0);
+    pManager->waitUntilIdle();
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
     CHECK(tile.getContent().isUnknownContent());
@@ -461,8 +471,8 @@ TEST_CASE("Test tile state machine") {
 
     // FailedTemporarily -> FailedTemporarily
     // tile is failed temporarily but the loader can still add children to it
-    manager.updateTileContent(tile, 0.0, options);
-    CHECK(manager.getNumberOfTilesLoading() == 0);
+    pManager->updateTileContent(tile, 0.0, options);
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -472,8 +482,8 @@ TEST_CASE("Test tile state machine") {
     CHECK(!initializerCall);
 
     // FailedTemporarily -> ContentLoading
-    manager.loadTileContent(tile, options);
-    CHECK(manager.getNumberOfTilesLoading() == 1);
+    pManager->loadTileContent(tile, options);
+    CHECK(pManager->getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
   }
 
@@ -503,20 +513,21 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        options,
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            options,
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
     // test manager loading
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, options);
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, options);
 
     // Unloaded -> ContentLoading
-    CHECK(manager.getNumberOfTilesLoading() == 1);
+    CHECK(pManager->getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getContent().isUnknownContent());
@@ -524,8 +535,8 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> Failed
-    manager.waitUntilIdle();
-    CHECK(manager.getNumberOfTilesLoading() == 0);
+    pManager->waitUntilIdle();
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
     CHECK(tile.getContent().isUnknownContent());
@@ -535,8 +546,8 @@ TEST_CASE("Test tile state machine") {
 
     // Failed -> Failed
     // tile is failed but the loader can still add children to it
-    manager.updateTileContent(tile, 0.0, options);
-    CHECK(manager.getNumberOfTilesLoading() == 0);
+    pManager->updateTileContent(tile, 0.0, options);
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -546,8 +557,8 @@ TEST_CASE("Test tile state machine") {
     CHECK(!initializerCall);
 
     // cannot transition from Failed -> ContentLoading
-    manager.loadTileContent(tile, options);
-    CHECK(manager.getNumberOfTilesLoading() == 0);
+    pManager->loadTileContent(tile, options);
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getState() == TileLoadState::Failed);
     CHECK(tile.getContent().isUnknownContent());
     CHECK(!tile.getContent().isRenderContent());
@@ -556,7 +567,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // Failed -> Unloaded
-    manager.unloadTileContent(tile);
+    pManager->unloadTileContent(tile);
     CHECK(tile.getState() == TileLoadState::Unloaded);
     CHECK(tile.getContent().isUnknownContent());
     CHECK(!tile.getContent().isRenderContent());
@@ -603,19 +614,20 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        options,
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            options,
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
-    Tile& tile = *manager.getRootTile();
+    Tile& tile = *pManager->getRootTile();
     Tile& upsampledTile = tile.getChildren().back();
 
     // test manager loading upsample tile
-    manager.loadTileContent(upsampledTile, options);
+    pManager->loadTileContent(upsampledTile, options);
 
     // since parent is not yet loaded, it will load the parent first.
     // The upsampled tile will not be loaded at the moment
@@ -623,18 +635,18 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::ContentLoading);
 
     // parent moves from ContentLoading -> ContentLoaded
-    manager.waitUntilIdle();
+    pManager->waitUntilIdle();
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
     CHECK(tile.isRenderContent());
     CHECK(initializerCall);
 
     // try again with upsample tile, but still not able to load it
     // because parent is not done yet
-    manager.loadTileContent(upsampledTile, options);
+    pManager->loadTileContent(upsampledTile, options);
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
 
     // parent moves from ContentLoaded -> Done
-    manager.updateTileContent(tile, 0.0, options);
+    pManager->updateTileContent(tile, 0.0, options);
     CHECK(tile.getState() == TileLoadState::Done);
     CHECK(tile.getChildren().size() == 1);
     CHECK(&tile.getChildren().back() == &upsampledTile);
@@ -655,28 +667,38 @@ TEST_CASE("Test tile state machine") {
     pMockedLoaderRaw->mockCreateTileChildren = {
         {},
         TileLoadResultState::Failed};
-    manager.loadTileContent(upsampledTile, options);
+    pManager->loadTileContent(upsampledTile, options);
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoading);
 
-    // trying to unload parent while upsampled children is loading won't work
-    CHECK(!manager.unloadTileContent(tile));
-    CHECK(tile.getState() == TileLoadState::Done);
+    // trying to unload parent while upsampled children is loading while put the
+    // tile into the Unloading state but not unload the render content.
+    CHECK(!pManager->unloadTileContent(tile));
+    CHECK(tile.getState() == TileLoadState::Unloading);
     CHECK(tile.isRenderContent());
 
+    // Unloading again will have the same result.
+    CHECK(!pManager->unloadTileContent(tile));
+    CHECK(tile.getState() == TileLoadState::Unloading);
+    CHECK(tile.isRenderContent());
+
+    // Attempting to load won't do anything - unloading must finish first.
+    pManager->loadTileContent(tile, options);
+    CHECK(tile.getState() == TileLoadState::Unloading);
+
     // upsampled tile: ContentLoading -> ContentLoaded
-    manager.waitUntilIdle();
+    pManager->waitUntilIdle();
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoaded);
     CHECK(upsampledTile.isRenderContent());
 
     // trying to unload parent will work now since the upsampled tile is already
     // in the main thread
-    CHECK(manager.unloadTileContent(tile));
+    CHECK(pManager->unloadTileContent(tile));
     CHECK(tile.getState() == TileLoadState::Unloaded);
     CHECK(!tile.isRenderContent());
     CHECK(!tile.getContent().getRenderContent());
 
     // unload upsampled tile: ContentLoaded -> Done
-    CHECK(manager.unloadTileContent(upsampledTile));
+    CHECK(pManager->unloadTileContent(upsampledTile));
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
     CHECK(!upsampledTile.isRenderContent());
     CHECK(!upsampledTile.getContent().getRenderContent());
@@ -743,18 +765,19 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
     // test the gltf model
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, {});
-    manager.waitUntilIdle();
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, {});
+    pManager->waitUntilIdle();
 
     // check the buffer is already loaded
     {
@@ -771,7 +794,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     // unload the tile content
-    manager.unloadTileContent(tile);
+    pManager->unloadTileContent(tile);
   }
 
   SECTION("Ensure the loader generate smooth normal when the mesh doesn't have "
@@ -810,18 +833,19 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        options,
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            options,
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
     // test the gltf model
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, options);
-    manager.waitUntilIdle();
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, options);
+    pManager->waitUntilIdle();
 
     // check that normal is generated
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -851,7 +875,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     // unload tile
-    manager.unloadTileContent(tile);
+    pManager->unloadTileContent(tile);
   }
 
   SECTION("Embed gltf up axis to extra") {
@@ -873,17 +897,18 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     Tile::LoadedLinkedList loadedTiles;
-    TilesetContentManager manager{
-        externals,
-        {},
-        RasterOverlayCollection{loadedTiles, externals},
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, {});
-    manager.waitUntilIdle();
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, {});
+    pManager->waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -892,7 +917,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     CHECK(gltfUpAxisIt != renderContent->getModel().extras.end());
     CHECK(gltfUpAxisIt->second.getInt64() == 2);
 
-    manager.unloadTileContent(tile);
+    pManager->unloadTileContent(tile);
   }
 
   SECTION("Generate raster overlay projections") {
@@ -900,7 +925,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     Tile::LoadedLinkedList loadedTiles;
     RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
     rasterOverlayCollection.add(
-        std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
+        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
     asyncSystem.dispatchMainThreadTasks();
 
     // create mock loader
@@ -921,20 +946,21 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(rasterOverlayCollection),
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            {},
+            std::move(rasterOverlayCollection),
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
     SECTION(
         "Generate raster overlay details when tile don't have loose region") {
       // test the gltf model
-      Tile& tile = *manager.getRootTile();
-      manager.loadTileContent(tile, {});
-      manager.waitUntilIdle();
+      Tile& tile = *pManager->getRootTile();
+      pManager->loadTileContent(tile, {});
+      pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -988,7 +1014,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     SECTION("Generate raster overlay details when tile has loose region") {
-      Tile& tile = *manager.getRootTile();
+      Tile& tile = *pManager->getRootTile();
       auto originalLooseRegion =
           BoundingRegionWithLooseFittingHeights{BoundingRegion{
               GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
@@ -996,8 +1022,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
               9000.0}};
       tile.setBoundingVolume(originalLooseRegion);
 
-      manager.loadTileContent(tile, {});
-      manager.waitUntilIdle();
+      pManager->loadTileContent(tile, {});
+      pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -1078,11 +1104,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     SECTION("Automatically calculate fit bounding region when tile has loose "
             "region") {
       auto pRemovedOverlay =
-          manager.getRasterOverlayCollection().begin()->get();
-      manager.getRasterOverlayCollection().remove(pRemovedOverlay);
-      CHECK(manager.getRasterOverlayCollection().size() == 0);
+          pManager->getRasterOverlayCollection().begin()->get();
+      pManager->getRasterOverlayCollection().remove(pRemovedOverlay);
+      CHECK(pManager->getRasterOverlayCollection().size() == 0);
 
-      Tile& tile = *manager.getRootTile();
+      Tile& tile = *pManager->getRootTile();
       auto originalLooseRegion =
           BoundingRegionWithLooseFittingHeights{BoundingRegion{
               GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
@@ -1090,8 +1116,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
               9000.0}};
       tile.setBoundingVolume(originalLooseRegion);
 
-      manager.loadTileContent(tile, {});
-      manager.waitUntilIdle();
+      pManager->loadTileContent(tile, {});
+      pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
 
@@ -1134,7 +1160,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     Tile::LoadedLinkedList loadedTiles;
     RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
     rasterOverlayCollection.add(
-        std::make_unique<DebugColorizeTilesRasterOverlay>("DebugOverlay"));
+        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
     asyncSystem.dispatchMainThreadTasks();
 
     // create mock loader
@@ -1154,17 +1180,18 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
     // create manager
-    TilesetContentManager manager{
-        externals,
-        {},
-        std::move(rasterOverlayCollection),
-        {},
-        std::move(pMockedLoader),
-        std::move(pRootTile)};
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            {},
+            std::move(rasterOverlayCollection),
+            {},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
 
-    Tile& tile = *manager.getRootTile();
-    manager.loadTileContent(tile, {});
-    manager.waitUntilIdle();
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, {});
+    pManager->waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -1188,6 +1215,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       }
     }
 
-    manager.unloadTileContent(tile);
+    pManager->unloadTileContent(tile);
   }
 }

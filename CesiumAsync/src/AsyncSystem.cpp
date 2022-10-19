@@ -23,4 +23,12 @@ ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {
   return ThreadPool(numberOfThreads);
 }
 
+bool AsyncSystem::operator==(const AsyncSystem& rhs) const noexcept {
+  return this->_pSchedulers == rhs._pSchedulers;
+}
+
+bool AsyncSystem::operator!=(const AsyncSystem& rhs) const noexcept {
+  return this->_pSchedulers != rhs._pSchedulers;
+}
+
 } // namespace CesiumAsync

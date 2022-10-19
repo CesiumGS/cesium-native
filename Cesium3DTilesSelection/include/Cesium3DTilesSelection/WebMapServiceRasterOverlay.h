@@ -91,15 +91,15 @@ public:
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~WebMapServiceRasterOverlay() override;
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override;
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const override;
 
 private:
   std::string _baseUrl;

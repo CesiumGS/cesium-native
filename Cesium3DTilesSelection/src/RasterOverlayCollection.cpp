@@ -4,9 +4,12 @@
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+
 namespace {
+
 template <class Function>
 void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
   Tile* pCurrent = list.head();
@@ -16,63 +19,136 @@ void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
     pCurrent = pNext;
   }
 }
+
+// We use these to avoid a heap allocation just to return empty vectors.
+const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>
+    emptyOverlays{};
+const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
+    emptyTileProviders{};
+
 } // namespace
 
 RasterOverlayCollection::RasterOverlayCollection(
     Tile::LoadedLinkedList& loadedTiles,
     const TilesetExternals& externals) noexcept
-    : _pLoadedTiles(&loadedTiles), _externals{externals} {}
+    : _pLoadedTiles(&loadedTiles), _externals{externals}, _pOverlays(nullptr) {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
-  if (!this->_overlays.empty()) {
-    for (int64_t i = static_cast<int64_t>(this->_overlays.size() - 1); i >= 0;
-         --i) {
-      this->remove(this->_overlays[static_cast<size_t>(i)].get());
+  if (this->_pOverlays) {
+    OverlayList& list = *this->_pOverlays;
+    if (!list.overlays.empty()) {
+      for (int64_t i = static_cast<int64_t>(list.overlays.size() - 1); i >= 0;
+           --i) {
+        this->remove(list.overlays[static_cast<size_t>(i)].get());
+      }
     }
   }
 }
 
-void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
+void RasterOverlayCollection::add(
+    const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) {
   CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
-  RasterOverlay* pOverlayRaw = pOverlay.get();
-  this->_overlays.push_back(std::move(pOverlay));
+  if (!this->_pOverlays)
+    this->_pOverlays = new OverlayList();
 
-  pOverlayRaw->loadTileProvider(
-      this->_externals.asyncSystem,
-      this->_externals.pAssetAccessor,
-      this->_externals.pCreditSystem,
-      this->_externals.pPrepareRendererResources,
-      this->_externals.pLogger);
+  IntrusivePointer<OverlayList> pList = this->_pOverlays;
 
-  // Add this overlay to existing geometry tiles.
-  forEachTile(*this->_pLoadedTiles, [pOverlayRaw](Tile& tile) {
+  pList->overlays.emplace_back(pOverlay);
+
+  IntrusivePointer<RasterOverlayTileProvider> pPlaceholder =
+      pOverlay->createPlaceholder(
+          this->_externals.asyncSystem,
+          this->_externals.pAssetAccessor);
+
+  pList->tileProviders.emplace_back(pPlaceholder);
+  pList->placeholders.emplace_back(pPlaceholder);
+
+  CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
+
+  CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
+      pOverlay->createTileProvider(
+          this->_externals.asyncSystem,
+          this->_externals.pAssetAccessor,
+          this->_externals.pCreditSystem,
+          this->_externals.pPrepareRendererResources,
+          this->_externals.pLogger,
+          nullptr);
+
+  // Add a placeholder for this overlay to existing geometry tiles.
+  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     // - When a tile is transitioned from Unloaded to Loading, raster overlay
     // tiles will be mapped to the tile automatically by TilesetContentManager,
-    // so we don't need to map the raster tiles to this unloaded tile now.
+    // so we don't need to map the raster tiles to this unloaded or unloading
+    // tile now.
     // - When a tile is already failed to load, there is no need to map the
     // raster tiles to the tile as it is not rendered any way
     TileLoadState tileState = tile.getState();
     if (tileState != TileLoadState::Unloaded &&
+        tileState != TileLoadState::Unloading &&
         tileState != TileLoadState::Failed) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
-          pOverlayRaw->getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0)),
+          pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
           -1));
     }
   });
+
+  // This continuation, by capturing pList, keeps the OverlayList from being
+  // destroyed. But it does not keep the RasterOverlayCollection itself alive.
+  std::move(future)
+      .catchInMainThread(
+          [](const std::exception& e)
+              -> RasterOverlay::CreateTileProviderResult {
+            return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                RasterOverlayLoadType::Unknown,
+                nullptr,
+                fmt::format(
+                    "Error while creating tile provider: {0}",
+                    e.what())});
+          })
+      .thenInMainThread([pOverlay, pList, pLogger = this->_externals.pLogger](
+                            RasterOverlay::CreateTileProviderResult&& result) {
+        if (result) {
+          // Find the overlay's current location in the list.
+          // It's possible it has been removed completely.
+          auto it = std::find(
+              pList->overlays.begin(),
+              pList->overlays.end(),
+              pOverlay);
+          if (it != pList->overlays.end()) {
+            std::int64_t index = it - pList->overlays.begin();
+            pList->tileProviders[size_t(index)] = *result;
+          }
+        } else {
+          // Report error creating the tile provider.
+          const RasterOverlayLoadFailureDetails& failureDetails =
+              result.error();
+          if (pOverlay->getOptions().loadErrorCallback) {
+            pOverlay->getOptions().loadErrorCallback(failureDetails);
+          } else {
+            SPDLOG_LOGGER_ERROR(pLogger, failureDetails.message);
+          }
+        }
+
+        CESIUM_TRACE_END_IN_TRACK("createTileProvider");
+      });
 }
 
-void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
+void RasterOverlayCollection::remove(
+    const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) noexcept {
+  if (!this->_pOverlays)
+    return;
+
   // Remove all mappings of this overlay to geometry tiles.
-  auto removeCondition =
-      [pOverlay](const RasterMappedTo3DTile& mapped) noexcept {
-        return (
-            (mapped.getLoadingTile() &&
-             &mapped.getLoadingTile()->getOverlay() == pOverlay) ||
-            (mapped.getReadyTile() &&
-             &mapped.getReadyTile()->getOverlay() == pOverlay));
-      };
+  auto removeCondition = [pOverlay](
+                             const RasterMappedTo3DTile& mapped) noexcept {
+    return (
+        (mapped.getLoadingTile() &&
+         pOverlay == &mapped.getLoadingTile()->getTileProvider().getOwner()) ||
+        (mapped.getReadyTile() &&
+         pOverlay == &mapped.getReadyTile()->getTileProvider().getOwner()));
+  };
 
   auto pPrepareRenderResources =
       this->_externals.pPrepareRendererResources.get();
@@ -92,21 +168,96 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
         mapped.erase(firstToRemove, mapped.end());
       });
 
+  OverlayList& list = *this->_pOverlays;
+
+  assert(list.overlays.size() == list.tileProviders.size());
+  assert(list.overlays.size() == list.placeholders.size());
+
   auto it = std::find_if(
-      this->_overlays.begin(),
-      this->_overlays.end(),
-      [pOverlay](std::unique_ptr<RasterOverlay>& pCheck) noexcept {
-        return pCheck.get() == pOverlay;
+      list.overlays.begin(),
+      list.overlays.end(),
+      [pOverlay](const IntrusivePointer<RasterOverlay>& pCheck) noexcept {
+        return pCheck == pOverlay;
       });
-  if (it == this->_overlays.end()) {
+  if (it == list.overlays.end()) {
     return;
   }
 
-  // Tell the overlay provider to destroy itself, which effectively transfers
-  // ownership _of_ itself, _to_ itself. It will delete itself when all
-  // in-progress loads are complete, which may be immediately.
-  (*it)->destroySafely(std::move(*it));
-  this->_overlays.erase(it);
+  int64_t index = it - list.overlays.begin();
+  list.overlays.erase(list.overlays.begin() + index);
+  list.tileProviders.erase(list.tileProviders.begin() + index);
+  list.placeholders.erase(list.placeholders.begin() + index);
+}
+
+const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>&
+RasterOverlayCollection::getOverlays() const {
+  if (!this->_pOverlays)
+    return emptyOverlays;
+
+  return this->_pOverlays->overlays;
+}
+
+/**
+ * @brief Gets the tile providers in this collection. Each tile provider
+ * corresponds with the overlay at the same position in the collection
+ * returned by {@link getOverlays}.
+ */
+const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
+RasterOverlayCollection::getTileProviders() const {
+  if (!this->_pOverlays)
+    return emptyTileProviders;
+
+  return this->_pOverlays->tileProviders;
+}
+
+RasterOverlayTileProvider* RasterOverlayCollection::findTileProviderForOverlay(
+    RasterOverlay& overlay) noexcept {
+  // Call the const version
+  const RasterOverlayTileProvider* pResult = this->findTileProviderForOverlay(
+      const_cast<const RasterOverlay&>(overlay));
+  return const_cast<RasterOverlayTileProvider*>(pResult);
+}
+
+const RasterOverlayTileProvider*
+RasterOverlayCollection::findTileProviderForOverlay(
+    const RasterOverlay& overlay) const noexcept {
+  if (!this->_pOverlays)
+    return nullptr;
+
+  const auto& overlays = this->_pOverlays->overlays;
+  const auto& tileProviders = this->_pOverlays->tileProviders;
+
+  assert(overlays.size() == tileProviders.size());
+
+  for (size_t i = 0; i < overlays.size() && i < tileProviders.size(); ++i) {
+    if (overlays[i].get() == &overlay)
+      return tileProviders[i].get();
+  }
+
+  return nullptr;
+}
+
+RasterOverlayCollection::const_iterator
+RasterOverlayCollection::begin() const noexcept {
+  if (!this->_pOverlays)
+    return emptyOverlays.begin();
+
+  return this->_pOverlays->overlays.begin();
+}
+
+RasterOverlayCollection::const_iterator
+RasterOverlayCollection::end() const noexcept {
+  if (!this->_pOverlays)
+    return emptyOverlays.end();
+
+  return this->_pOverlays->overlays.end();
+}
+
+size_t RasterOverlayCollection::size() const noexcept {
+  if (!this->_pOverlays)
+    return 0;
+
+  return this->_pOverlays->overlays.size();
 }
 
 } // namespace Cesium3DTilesSelection

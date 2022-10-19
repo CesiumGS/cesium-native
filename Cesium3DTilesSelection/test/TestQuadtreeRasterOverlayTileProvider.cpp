@@ -18,7 +18,7 @@ namespace {
 class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -33,7 +33,7 @@ public:
       uint32_t imageWidth,
       uint32_t imageHeight) noexcept
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             credit,
@@ -82,38 +82,37 @@ public:
       const RasterOverlayOptions& options = RasterOverlayOptions())
       : RasterOverlay(name, options) {}
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override {
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const override {
     if (!pOwner) {
       pOwner = this;
     }
 
-    return asyncSystem
-        .createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(
-            std::make_unique<TestTileProvider>(
-                *pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                std::nullopt,
-                pPrepareRendererResources,
-                pLogger,
-                WebMercatorProjection(),
-                QuadtreeTilingScheme(
-                    WebMercatorProjection::computeMaximumProjectedRectangle(),
-                    1,
-                    1),
+    return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
+        new TestTileProvider(
+            pOwner,
+            asyncSystem,
+            pAssetAccessor,
+            std::nullopt,
+            pPrepareRendererResources,
+            pLogger,
+            WebMercatorProjection(),
+            QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(),
-                0,
-                10,
-                256,
-                256));
+                1,
+                1),
+            WebMercatorProjection::computeMaximumProjectedRectangle(),
+            0,
+            10,
+            256,
+            256));
   }
 };
 
@@ -130,18 +129,26 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
 
   AsyncSystem asyncSystem(pTaskProcessor);
-  TestRasterOverlay overlay("Test");
+  IntrusivePointer<TestRasterOverlay> pOverlay = new TestRasterOverlay("Test");
 
-  overlay.loadTileProvider(
-      asyncSystem,
-      pAssetAccessor,
-      nullptr,
-      nullptr,
-      spdlog::default_logger());
+  IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
+
+  pOverlay
+      ->createTileProvider(
+          asyncSystem,
+          pAssetAccessor,
+          nullptr,
+          nullptr,
+          spdlog::default_logger(),
+          nullptr)
+      .thenInMainThread(
+          [&pProvider](RasterOverlay::CreateTileProviderResult&& created) {
+            CHECK(created);
+            pProvider = *created;
+          });
 
   asyncSystem.dispatchMainThreadTasks();
 
-  RasterOverlayTileProvider* pProvider = overlay.getTileProvider();
   REQUIRE(pProvider);
   REQUIRE(!pProvider->isPlaceholder());
 
@@ -172,7 +179,8 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   SECTION("uses a mix of levels when a tile returns an error") {
     glm::dvec2 center(0.1, 0.2);
 
-    TestTileProvider* pTestProvider = static_cast<TestTileProvider*>(pProvider);
+    TestTileProvider* pTestProvider =
+        static_cast<TestTileProvider*>(pProvider.get());
 
     // Select a rectangle that spans four tiles at tile level 8.
     const uint32_t expectedLevel = 8;

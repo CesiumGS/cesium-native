@@ -64,6 +64,8 @@ endif()
 
 add_subdirectory(modp_b64)
 
+add_subdirectory(expected-lite)
+
 # s2geometry's CMake requires OpenSSL, even though it's not needed for any of
 # the functionality we actually use. So a simple library with enough functionality
 # for our needs is defined here.

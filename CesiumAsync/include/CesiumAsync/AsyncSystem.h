@@ -276,6 +276,20 @@ public:
    */
   ThreadPool createThreadPool(int32_t numberOfThreads) const;
 
+  /**
+   * Returns true if this instance and the right-hand side can be used
+   * interchangeably because they schedule continuations identically. Otherwise,
+   * returns false.
+   */
+  bool operator==(const AsyncSystem& rhs) const noexcept;
+
+  /**
+   * Returns true if this instance and the right-hand side can _not_ be used
+   * interchangeably because they schedule continuations differently. Otherwise,
+   * returns false.
+   */
+  bool operator!=(const AsyncSystem& rhs) const noexcept;
+
 private:
   // Common implementation of 'all' for both Future and SharedFuture.
   template <typename T, typename TFutureType>
