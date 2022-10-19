@@ -50,7 +50,6 @@ TilesetExternals createMockTilesetExternals(const std::string& tilesetPath) {
 
   return TilesetExternals{
       std::move(pMockAssetAccessor),
-      nullptr,
       std::move(pMockPrepareRendererResource),
       std::move(asyncSystem),
       std::move(pMockCreditSystem)};

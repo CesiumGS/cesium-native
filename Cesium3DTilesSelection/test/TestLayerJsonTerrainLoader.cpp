@@ -85,7 +85,6 @@ TEST_CASE("Test create layer json terrain loader") {
 
   TilesetExternals externals{
       pMockedAssetAccessor,
-      nullptr,
       pMockedPrepareRendererResources,
       asyncSystem,
       pMockedCreditSystem};

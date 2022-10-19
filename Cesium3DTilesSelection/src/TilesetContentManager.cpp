@@ -479,14 +479,11 @@ loadAndCacheClientTileContentInWorkerThread(
           tileLoadInfo.tileTransform,
           rendererOptions)
       .thenImmediately([asyncSystem = tileLoadInfo.asyncSystem,
-                        pCachedTileContentAccessor =
-                            tileLoadInfo.pCachedTileContentAccessor](
+                        pTileContentCache = tileLoadInfo.pTileContentCache](
                            ClientTileLoadResult&& loadResult) {
-        if (pCachedTileContentAccessor &&
+        if (loadResult.cacheOriginalResponseData ||
             !loadResult.clientDataToCache.empty()) {
-          pCachedTileContentAccessor->cacheClientTileContent(
-              asyncSystem,
-              loadResult);
+          pTileContentCache->store(asyncSystem, loadResult);
         }
 
         return std::move(loadResult);
@@ -580,7 +577,7 @@ CesiumAsync::Future<ClientTileLoadResult> postProcessContentInWorkerThread(
                 std::move(projections),
                 tileLoadInfo);
 
-            // create and render resources
+            // create and cache render resources
             return loadAndCacheClientTileContentInWorkerThread(
                 std::move(result),
                 tileLoadInfo,
@@ -597,6 +594,8 @@ TilesetContentManager::TilesetContentManager(
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
+      _pTileContentCache{
+          std::make_shared<TileContentCache>(this->_externals.pAssetAccessor)},
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
       _pRootTile{std::move(pRootTile)},
@@ -621,6 +620,8 @@ TilesetContentManager::TilesetContentManager(
     RasterOverlayCollection&& overlayCollection,
     const std::string& url)
     : _externals{externals},
+      _pTileContentCache{
+          std::make_shared<TileContentCache>(this->_externals.pAssetAccessor)},
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
@@ -756,6 +757,8 @@ TilesetContentManager::TilesetContentManager(
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
     : _externals{externals},
+      _pTileContentCache{
+          std::make_shared<TileContentCache>(this->_externals.pAssetAccessor)},
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
@@ -891,7 +894,7 @@ void TilesetContentManager::loadTileContent(
   TileContentLoadInfo tileLoadInfo{
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
-      this->_externals.pCachedTileContentAccessor,
+      this->_pTileContentCache,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
       tilesetOptions.contentOptions,
@@ -909,7 +912,7 @@ void TilesetContentManager::loadTileContent(
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
-      this->_externals.pCachedTileContentAccessor,
+      this->_pTileContentCache,
       this->_externals.pLogger,
       this->_requestHeaders};
 

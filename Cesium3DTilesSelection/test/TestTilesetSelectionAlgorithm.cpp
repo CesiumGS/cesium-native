@@ -160,7 +160,7 @@ TEST_CASE("Test replace refinement for render") {
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
-      nullptr,
+
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
@@ -553,7 +553,7 @@ TEST_CASE("Test additive refinement") {
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
-      nullptr,
+
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
@@ -710,7 +710,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
-      nullptr,
+
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
@@ -808,7 +808,7 @@ TEST_CASE("Test multiple frustums") {
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
-      nullptr,
+
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
@@ -1043,7 +1043,7 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
-      nullptr,
+
       std::make_shared<SimplePrepareRendererResource>(),
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};

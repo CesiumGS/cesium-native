@@ -1,10 +1,10 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "CachedTileContentAccessor.h"
 #include "Library.h"
 #include "RasterOverlayDetails.h"
 #include "TileContent.h"
+#include "TileContentCache.h"
 #include "TileLoadResult.h"
 #include "TilesetOptions.h"
 
@@ -23,6 +23,7 @@
 
 namespace Cesium3DTilesSelection {
 class Tile;
+class TileContentCache;
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -35,8 +36,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @param contentOptions The content options the {@link TilesetContentLoader} will use to process the content of the tile.
    * @param asyncSystem The async system to use for tile content loading.
    * @param pAssetAccessor The asset accessor to make further requests with.
-   * @param pCachedTileContentAccessor The asset accessor to request the tile
-   * with.
+   * @param pTileContentCache The tile content cache.
    * @param pLogger The logger that will be used
    * @param requestHeaders The request headers that will be attached to the
    * request.
@@ -46,8 +46,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CachedTileContentAccessor>&
-          pCachedTileContentAccessor,
+      const std::shared_ptr<TileContentCache>& pTileContentCache,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
@@ -73,13 +72,13 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor;
 
   /**
-   * @brief The asset accessor to request the tile content with.
+   * @brief Tile tile content cache to use.
    *
-   * If implemented by the client, this will retrieve cached, client-ready
-   * derived data. On cache hits, this allows the rest of the tile loading to be
-   * skipped.
+   * If a CachingAssetAccessor is implemented by the client, this will attempt
+   * to retrieve cached, client-ready derived data. On cache hits, this allows
+   * the rest of the tile loading to be skipped.
    */
-  const std::shared_ptr<CachedTileContentAccessor>& pCachedTileContentAccessor;
+  const std::shared_ptr<TileContentCache>& pTileContentCache;
 
   /**
    * @brief The logger that receives details of loading errors and warnings.

@@ -193,7 +193,6 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
   TilesetExternals externals{
       pMockedAssetAccessor,
-      nullptr,
       pMockedPrepareRendererResources,
       asyncSystem,
       pMockedCreditSystem};
@@ -305,7 +304,6 @@ TEST_CASE("Test tile state machine") {
 
   TilesetExternals externals{
       pMockedAssetAccessor,
-      nullptr,
       pMockedPrepareRendererResources,
       asyncSystem,
       pMockedCreditSystem};
@@ -720,7 +718,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
   TilesetExternals externals{
       pMockedAssetAccessor,
-      nullptr,
       pMockedPrepareRendererResources,
       asyncSystem,
       pMockedCreditSystem};
