@@ -47,7 +47,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
   if (loadResult.errors || !loadResult.model) {
-    return TileLoadResult::createFailedResult(nullptr);
+    return TileLoadResult::createFailedResult(loadResult.pRequest);
   }
 
   return TileLoadResult{
@@ -663,6 +663,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
               result.errors.emplaceError(fmt::format(
                   "Did not receive a valid response for tile content {}",
                   pRequest->url()));
+              result.pRequest = std::move(pRequest);
               return result;
             }
 
@@ -674,6 +675,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                   "Receive status code {} for tile content {}",
                   pResponse->statusCode(),
                   pRequest->url()));
+              result.pRequest = std::move(pRequest);
               return result;
             }
 

@@ -30,6 +30,12 @@
     "license": ["ISC License"]
   },
   {
+    "name": "expected-lite",
+    "url": "https://github.com/martinmoene/expected-lite",
+    "version": "0.6.2",
+    "license": ["Boost Software License 1.0"]
+  },
+  {
     "name": "GLM",
     "url": "https://github.com/g-truc/glm",
     "version": "0.9.9.8",

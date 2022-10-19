@@ -820,8 +820,8 @@ TilesetContentManager::TilesetContentManager(
   }
 }
 
-CesiumAsync::SharedFuture<void>
-TilesetContentManager::GetAsyncDestructionCompleteEvent() {
+CesiumAsync::SharedFuture<void>&
+TilesetContentManager::getAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteFuture;
 }
 
@@ -1466,7 +1466,7 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
       loadErrorCallback(TilesetLoadFailureDetails{
           nullptr,
           type,
-          nullptr,
+          result.statusCode,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
     } else {
       result.errors.logError(

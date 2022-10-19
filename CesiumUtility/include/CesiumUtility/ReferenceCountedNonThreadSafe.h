@@ -2,6 +2,10 @@
 
 #include <cstdint>
 
+#ifndef NDEBUG
+#include <thread>
+#endif
+
 namespace CesiumUtility {
 
 /**
@@ -16,6 +20,13 @@ namespace CesiumUtility {
  */
 template <typename T> class ReferenceCountedNonThreadSafe {
 public:
+  ReferenceCountedNonThreadSafe() noexcept
+#ifndef NDEBUG
+      : _threadID(std::this_thread::get_id())
+#endif
+  {
+  }
+
   ~ReferenceCountedNonThreadSafe() noexcept {
     assert(this->_referenceCount == 0);
   }
@@ -28,7 +39,10 @@ public:
    * This method is _not_ thread safe. Do not call it or use an
    * `IntrusivePointer` from multiple threads simultaneously.
    */
-  void addReference() const noexcept { ++this->_referenceCount; }
+  void addReference() const /*noexcept*/ {
+    assert(std::this_thread::get_id() == this->_threadID);
+    ++this->_referenceCount;
+  }
 
   /**
    * @brief Removes a counted reference from this object. When the last
@@ -39,7 +53,8 @@ public:
    * This method is _not_ thread safe. Do not call it or use an
    * `IntrusivePointer` from multiple threads simultaneously.
    */
-  void releaseReference() const noexcept {
+  void releaseReference() const /*noexcept*/ {
+    assert(std::this_thread::get_id() == this->_threadID);
     assert(this->_referenceCount > 0);
     const int32_t references = --this->_referenceCount;
     if (references == 0) {
@@ -56,6 +71,9 @@ public:
 
 private:
   mutable std::int32_t _referenceCount{0};
+#ifndef NDEBUG
+  std::thread::id _threadID;
+#endif
 };
 
 } // namespace CesiumUtility

@@ -48,7 +48,7 @@ public:
    * content manager have completed and all tiles are unloaded, but before the
    * content manager itself is destroyed.
    */
-  CesiumAsync::SharedFuture<void> GetAsyncDestructionCompleteEvent();
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
 
   ~TilesetContentManager() noexcept;
 
