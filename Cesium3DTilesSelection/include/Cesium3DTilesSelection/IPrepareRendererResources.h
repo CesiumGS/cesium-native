@@ -45,6 +45,9 @@ struct ClientTileLoadResult {
    */
   void* pRenderResources{nullptr};
 
+
+  // TODO: wrap these into an optional CacheWriteBack struct
+  
   /**
    * @brief Whether the original HTTP response data should be cached.
    *

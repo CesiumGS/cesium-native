@@ -11,6 +11,8 @@ class SimplePrepareRendererResource
     : public Cesium3DTilesSelection::IPrepareRendererResources {
 public:
   std::atomic<size_t> totalAllocation{};
+  std::vector<std::byte> mockClientData{};
+  bool mockShouldCacheResponseData{true};
 
   struct AllocationResult {
     AllocationResult(std::atomic<size_t>& allocCount_)
@@ -30,9 +32,24 @@ public:
       TileLoadResult&& tileLoadResult,
       const glm::dmat4& /*transform*/,
       const std::any& /*rendererOptions*/) override {
+    // TODO: might be less awkward to have a separate client function 
+    // implemented from IPrepareRenderResources that is responsible for 
+    // re-creating render content from binary client data.
+    /*
+    if (std::get_if<TileCachedRenderContent>(&tileLoadResult.contentKind)) {
+      // TODO: mock creating render data from client data response.
+      // tileLoadResult.contentKind = deserializeModel(pResponse->clientData());
+      // or 
+      // pRenderResources = deserializeRenderResource(pResponse->clientData());
+    }*/
+
+    // Up to the client if to update the cache, even on cache hits.
+    std::vector<std::byte> clientData = this->mockClientData;
     return asyncSystem.createResolvedFuture(ClientTileLoadResult{
         std::move(tileLoadResult),
-        new AllocationResult{totalAllocation}});
+        new AllocationResult{totalAllocation},
+        mockShouldCacheResponseData,
+        std::move(clientData)});
   }
 
   virtual void* prepareInMainThread(

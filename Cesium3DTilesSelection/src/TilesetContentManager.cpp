@@ -42,8 +42,13 @@ struct ContentKindSetter {
   }
 
   void operator()(TileCachedRenderContent /*content*/) {
-    // TODO: This shouldn't happen, client loading should replace
-    // TileCachedRenderContent with TileRenderContent. assert(false);
+    auto pRenderContent = std::make_unique<TileRenderContent>(CesiumGltf::Model());
+    pRenderContent->setRenderResources(pRenderResources);
+    if (rasterOverlayDetails) {
+      pRenderContent->setRasterOverlayDetails(std::move(*rasterOverlayDetails));
+    }
+
+    tileContent.setContentKind(std::move(pRenderContent));
   }
 
   void operator()(CesiumGltf::Model&& model) {
@@ -954,6 +959,8 @@ void TilesetContentManager::loadTileContent(
                 [result = std::move(result),
                  tileLoadInfo = std::move(tileLoadInfo),
                  rendererOptions]() mutable {
+                  // Although this is a cache hit, the client may decide to update the
+                  // cache anyways.
                   return loadAndCacheClientTileContentInWorkerThread(
                       std::move(result),
                       tileLoadInfo,
@@ -966,8 +973,11 @@ void TilesetContentManager::loadTileContent(
             .createResolvedFuture<ClientTileLoadResult>(
                 {std::move(result), nullptr, true, {}});
       })
-      .thenInMainThread([&tile, thiz](ClientTileLoadResult&& pair) {
-        setTileContent(tile, std::move(pair.result), pair.pRenderResources);
+      .thenInMainThread([&tile, thiz](ClientTileLoadResult&& clientResult) {
+        // TODO: Should ClientTileLoadResult, particularly the client-written buffer 
+        // be kept available somewhere after loading completes? Would be useful to 
+        // inspect.  
+        setTileContent(tile, std::move(clientResult.result), clientResult.pRenderResources);
 
         thiz->notifyTileDoneLoading(&tile);
       })
@@ -1111,6 +1121,11 @@ TilesetContentManager::getRequestHeaders() const noexcept {
 std::vector<CesiumAsync::IAssetAccessor::THeader>&
 TilesetContentManager::getRequestHeaders() noexcept {
   return this->_requestHeaders;
+}
+
+const std::shared_ptr<TileContentCache>& 
+TilesetContentManager::getTileContentCache() noexcept {
+  return this->_pTileContentCache;
 }
 
 const RasterOverlayCollection&

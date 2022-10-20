@@ -82,6 +82,8 @@ public:
   std::vector<CesiumAsync::IAssetAccessor::THeader>&
   getRequestHeaders() noexcept;
 
+  const std::shared_ptr<TileContentCache>& getTileContentCache() noexcept;
+
   const RasterOverlayCollection& getRasterOverlayCollection() const noexcept;
 
   RasterOverlayCollection& getRasterOverlayCollection() noexcept;

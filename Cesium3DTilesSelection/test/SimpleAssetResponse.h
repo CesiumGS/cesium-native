@@ -12,11 +12,13 @@ public:
       uint16_t statusCode,
       const std::string& contentType,
       const CesiumAsync::HttpHeaders& headers,
-      const std::vector<std::byte>& data)
+      const std::vector<std::byte>& data,
+      const std::vector<std::byte>& clientData = {})
       : mockStatusCode{statusCode},
         mockContentType{contentType},
         mockHeaders{headers},
-        mockData{data} {}
+        mockData{data},
+        mockClientData{clientData} {}
 
   virtual uint16_t statusCode() const override { return this->mockStatusCode; }
 
@@ -32,9 +34,14 @@ public:
     return gsl::span<const std::byte>(mockData.data(), mockData.size());
   }
 
+  virtual gsl::span<const std::byte> clientData() const override {
+    return gsl::span<const std::byte>(mockClientData.data(), mockClientData.size());;
+  }
+
   uint16_t mockStatusCode;
   std::string mockContentType;
   CesiumAsync::HttpHeaders mockHeaders;
   std::vector<std::byte> mockData;
+  std::vector<std::byte> mockClientData;
 };
 } // namespace Cesium3DTilesSelection
