@@ -4,7 +4,6 @@
 #include "TileLoadResult.h"
 
 #include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/CachingAssetAccessor.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 
@@ -20,11 +19,9 @@ private:
 
 public:
   /**
-   * @brief Create a tile content cache with the given CachingAssetAccessor. If
-   * the given asset accessor is of any other type, no tile content caching
-   * will be done and the given asset accessor will be used plainly.
+   * @brief Create a tile content cache with the given asset accessor.
    *
-   * @param pAssetAccessor The underlying CachingAssetAccessor around which to
+   * @param pAssetAccessor The underlying asset accessor around which to
    * build the tile content cache.
    */
   TileContentCache(
@@ -70,7 +67,6 @@ public:
 
 private:
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  CesiumAsync::CachingAssetAccessor* _pCachingAssetAccessor;
 };
 
 } // namespace Cesium3DTilesSelection

@@ -93,7 +93,8 @@ public:
   virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
   get(const AsyncSystem& asyncSystem,
       const std::string& /* url */,
-      const std::vector<THeader>& /* headers */
+      const std::vector<THeader>& /* headers */,
+      bool /* writeThrough */
       ) override {
     return asyncSystem.createResolvedFuture(
         std::shared_ptr<IAssetRequest>(testRequest));

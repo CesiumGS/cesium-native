@@ -23,7 +23,8 @@ public:
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   get(const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& url,
-      const std::vector<THeader>&) override {
+      const std::vector<THeader>&,
+      bool /*writeThrough*/) override {
     auto mockRequestIt = mockCompletedRequests.find(url);
     if (mockRequestIt != mockCompletedRequests.end()) {
       return asyncSystem.createResolvedFuture(
@@ -43,7 +44,7 @@ public:
       const std::string& url,
       const std::vector<THeader>& headers,
       const gsl::span<const std::byte>&) override {
-    return this->get(asyncSystem, url, headers);
+    return this->get(asyncSystem, url, headers, true);
   }
 
   virtual void tick() noexcept override {}

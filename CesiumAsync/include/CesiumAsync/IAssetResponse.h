@@ -41,6 +41,14 @@ public:
    * @brief Returns the data of this response
    */
   virtual gsl::span<const std::byte> data() const = 0;
+
+  /**
+   * @brief Returns any client-generated data associated with this response.
+   *
+   * Useful for representing custom, derived data that was cached with this
+   * response.
+   */
+  virtual gsl::span<const std::byte> clientData() const { return {}; }
 };
 
 } // namespace CesiumAsync

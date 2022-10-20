@@ -14,55 +14,70 @@
 
 namespace CesiumAsync {
 
-CacheAssetResponse::CacheAssetResponse(const CacheItem* pCacheItem) noexcept
-    : _pCacheItem{pCacheItem} {}
+namespace {
+class CacheAssetResponse : public IAssetResponse {
+private:
+  const CacheItem* _pCacheItem;
 
-uint16_t CacheAssetResponse::statusCode() const noexcept {
-  return this->_pCacheItem->cacheResponse.statusCode;
-}
+public:
+  CacheAssetResponse(const CacheItem* pCacheItem) noexcept
+      : _pCacheItem{pCacheItem} {}
 
-std::string CacheAssetResponse::contentType() const {
-  auto it = this->_pCacheItem->cacheResponse.headers.find("Content-Type");
-  if (it == this->_pCacheItem->cacheResponse.headers.end()) {
-    return std::string();
+  virtual uint16_t statusCode() const noexcept override {
+    return this->_pCacheItem->cacheResponse.statusCode;
   }
-  return it->second;
-}
 
-const HttpHeaders& CacheAssetResponse::headers() const noexcept {
-  return this->_pCacheItem->cacheResponse.headers;
-}
+  virtual std::string contentType() const override {
+    auto it = this->_pCacheItem->cacheResponse.headers.find("Content-Type");
+    if (it == this->_pCacheItem->cacheResponse.headers.end()) {
+      return std::string();
+    }
+    return it->second;
+  }
 
-gsl::span<const std::byte> CacheAssetResponse::data() const noexcept {
-  return gsl::span<const std::byte>(
-      this->_pCacheItem->cacheResponse.data.data(),
-      this->_pCacheItem->cacheResponse.data.size());
-}
+  virtual const HttpHeaders& headers() const noexcept override {
+    return this->_pCacheItem->cacheResponse.headers;
+  }
 
-gsl::span<const std::byte> CacheAssetResponse::clientData() const noexcept {
-  return gsl::span<const std::byte>(
-      this->_pCacheItem->cacheResponse.clientData.data(),
-      this->_pCacheItem->cacheResponse.data.size());
-}
+  virtual gsl::span<const std::byte> data() const noexcept override {
+    return gsl::span<const std::byte>(
+        this->_pCacheItem->cacheResponse.data.data(),
+        this->_pCacheItem->cacheResponse.data.size());
+  }
 
-CacheAssetRequest::CacheAssetRequest(CacheItem&& cacheItem)
-    : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
+  virtual gsl::span<const std::byte> clientData() const noexcept override {
+    return gsl::span<const std::byte>(
+        this->_pCacheItem->cacheResponse.clientData.data(),
+        this->_pCacheItem->cacheResponse.data.size());
+  }
+};
 
-const std::string& CacheAssetRequest::method() const noexcept {
-  return this->_cacheItem.cacheRequest.method;
-}
+class CacheAssetRequest : public IAssetRequest {
+private:
+  CacheItem _cacheItem;
+  CacheAssetResponse _response;
 
-const std::string& CacheAssetRequest::url() const noexcept {
-  return this->_cacheItem.cacheRequest.url;
-}
+public:
+  CacheAssetRequest::CacheAssetRequest(CacheItem&& cacheItem)
+      : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
 
-const HttpHeaders& CacheAssetRequest::headers() const noexcept {
-  return this->_cacheItem.cacheRequest.headers;
-}
+  virtual const std::string& method() const noexcept override {
+    return this->_cacheItem.cacheRequest.method;
+  }
 
-const IAssetResponse* CacheAssetRequest::response() const noexcept {
-  return &this->_response;
-}
+  virtual const std::string& url() const noexcept override {
+    return this->_cacheItem.cacheRequest.url;
+  }
+
+  virtual const HttpHeaders& headers() const noexcept override {
+    return this->_cacheItem.cacheRequest.headers;
+  }
+
+  virtual const IAssetResponse* response() const noexcept override {
+    return &this->_response;
+  }
+};
+} // namespace
 
 static std::time_t convertHttpDateToTime(const std::string& httpDate);
 
@@ -96,13 +111,6 @@ CachingAssetAccessor::CachingAssetAccessor(
       _cacheThreadPool(1) {}
 
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
-
-Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
-    const AsyncSystem& asyncSystem,
-    const std::string& url,
-    const std::vector<THeader>& headers) {
-  return this->get(asyncSystem, url, headers, true);
-}
 
 Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
     const AsyncSystem& asyncSystem,
