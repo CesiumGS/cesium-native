@@ -35,7 +35,10 @@ public:
   }
 
   virtual gsl::span<const std::byte> clientData() const override {
-    return gsl::span<const std::byte>(mockClientData.data(), mockClientData.size());;
+    return gsl::span<const std::byte>(
+        mockClientData.data(),
+        mockClientData.size());
+    ;
   }
 
   uint16_t mockStatusCode;

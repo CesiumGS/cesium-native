@@ -32,14 +32,14 @@ public:
       TileLoadResult&& tileLoadResult,
       const glm::dmat4& /*transform*/,
       const std::any& /*rendererOptions*/) override {
-    // TODO: might be less awkward to have a separate client function 
-    // implemented from IPrepareRenderResources that is responsible for 
+    // TODO: might be less awkward to have a separate client function
+    // implemented from IPrepareRenderResources that is responsible for
     // re-creating render content from binary client data.
     /*
     if (std::get_if<TileCachedRenderContent>(&tileLoadResult.contentKind)) {
       // TODO: mock creating render data from client data response.
       // tileLoadResult.contentKind = deserializeModel(pResponse->clientData());
-      // or 
+      // or
       // pRenderResources = deserializeRenderResource(pResponse->clientData());
     }*/
 

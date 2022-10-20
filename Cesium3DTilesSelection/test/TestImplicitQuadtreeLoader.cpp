@@ -31,6 +31,9 @@ TEST_CASE("Test implicit quadtree loader") {
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
 
+  auto pTileContentCache =
+      std::make_shared<TileContentCache>(pMockedAssetAccessor);
+
   CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
   ImplicitQuadtreeLoader loader{
@@ -50,7 +53,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
-        nullptr,
+        pTileContentCache,
         spdlog::default_logger(),
         {}};
 
@@ -82,7 +85,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
-        nullptr,
+        pTileContentCache,
         spdlog::default_logger(),
         {}};
 
@@ -134,7 +137,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
-        nullptr,
+        pTileContentCache,
         spdlog::default_logger(),
         {}};
 
@@ -187,7 +190,7 @@ TEST_CASE("Test implicit quadtree loader") {
         {},
         asyncSystem,
         pMockedAssetAccessor,
-        nullptr,
+        pTileContentCache,
         spdlog::default_logger(),
         {}};
 
