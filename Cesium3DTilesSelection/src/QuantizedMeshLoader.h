@@ -14,6 +14,10 @@
 #include <optional>
 #include <vector>
 
+namespace CesiumAsync {
+class IAssetRequest;
+}
+
 namespace Cesium3DTilesSelection {
 
 struct QuantizedMeshLoadResult {
@@ -40,6 +44,13 @@ struct QuantizedMeshLoadResult {
    */
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
       availableTileRectangles{};
+
+  /**
+   * @brief The request that was used to download the tile content, if any.
+   *
+   * This field is only populated when there are request-related errors.
+   */
+  std::shared_ptr<CesiumAsync::IAssetRequest> pRequest;
 
   ErrorList errors;
 };
