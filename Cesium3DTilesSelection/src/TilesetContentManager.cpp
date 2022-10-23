@@ -487,8 +487,9 @@ loadAndCacheClientTileContentInWorkerThread(
       .thenImmediately([asyncSystem = tileLoadInfo.asyncSystem,
                         pTileContentCache = tileLoadInfo.pTileContentCache](
                            ClientTileLoadResult&& loadResult) {
-        if (loadResult.cacheOriginalResponseData ||
-            !loadResult.clientDataToCache.empty()) {
+        if (loadResult.result.pCompletedRequest &&
+            (loadResult.cacheOriginalResponseData ||
+             !loadResult.clientDataToCache.empty())) {
           pTileContentCache->store(asyncSystem, loadResult);
         }
 
@@ -967,6 +968,20 @@ void TilesetContentManager::loadTileContent(
                       tileLoadInfo,
                       rendererOptions);
                 });
+          } else {
+            // The tile might have non-render content needed by loaders
+            // (e.g., external tileset content), so just write back the
+            // response data to the cache.
+            ClientTileLoadResult loadResult{
+                std::move(result),
+                nullptr,
+                true,
+                {}};
+            tileLoadInfo.pTileContentCache->store(
+                tileLoadInfo.asyncSystem,
+                loadResult);
+            return tileLoadInfo.asyncSystem.createResolvedFuture(
+                std::move(loadResult));
           }
         }
 

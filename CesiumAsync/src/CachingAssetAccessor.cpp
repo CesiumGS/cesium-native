@@ -48,7 +48,7 @@ public:
   virtual gsl::span<const std::byte> clientData() const noexcept override {
     return gsl::span<const std::byte>(
         this->_pCacheItem->cacheResponse.clientData.data(),
-        this->_pCacheItem->cacheResponse.data.size());
+        this->_pCacheItem->cacheResponse.clientData.size());
   }
 };
 
@@ -58,7 +58,7 @@ private:
   CacheAssetResponse _response;
 
 public:
-  CacheAssetRequest::CacheAssetRequest(CacheItem&& cacheItem)
+  CacheAssetRequest(CacheItem&& cacheItem)
       : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
 
   virtual const std::string& method() const noexcept override {

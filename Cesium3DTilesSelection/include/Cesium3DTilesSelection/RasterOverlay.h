@@ -8,7 +8,12 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
+#pragma warning(push)
+#pragma warning(disable : 4583)
+#pragma warning(disable : 4582)
 #include <nonstd/expected.hpp>
+#pragma warning(pop)
+
 #include <spdlog/fwd.h>
 
 #include <any>

@@ -45,6 +45,10 @@ Future<TileLoadResult> TileContentCache::getOrLoad(
 Future<void> TileContentCache::store(
     const AsyncSystem& asyncSystem,
     ClientTileLoadResult& loadResult) {
+  if (!loadResult.result.pCompletedRequest) {
+    return asyncSystem.createResolvedFuture();
+  }
+
   return this->_pAssetAccessor->writeBack(
       asyncSystem,
       loadResult.result.pCompletedRequest,
