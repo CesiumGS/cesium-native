@@ -49,7 +49,13 @@ const std::string PRAGMA_WAL_SQL = "PRAGMA journal_mode=WAL";
 
 const std::string PRAGMA_SYNC_SQL = "PRAGMA synchronous=OFF";
 
-const std::string PRAGMA_PAGE_SIZE_SQL = "PRAGMA page_size=4096";
+const std::string PRAGMA_PAGE_SIZE_SQL = "PRAGMA page_size=8192";
+
+const std::string PRAGMA_CACHE_SIZE = "PRAGMA default_cache_size=-64000";
+/*
+const std::string PRAGMA_TEMP_STORE = "PRAGMA temp_store=MEMORY";
+
+const std::string PRAGMA_MMAP_SIZE = "PRAGMA mmap_size=30000000000";*/
 
 // Sql commands for getting entry from database
 const std::string GET_ENTRY_SQL =
@@ -165,6 +171,29 @@ SqliteStatementPtr prepareStatement(
   return SqliteStatementPtr(pStmt);
 }
 
+bool resetStatement(
+    const SqliteStatementPtr& pStatement,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  int resetStatus = CESIUM_SQLITE(sqlite3_reset)(pStatement.get());
+  if (resetStatus != SQLITE_OK) {
+    SPDLOG_LOGGER_ERROR(pLogger, CESIUM_SQLITE(sqlite3_errstr)(resetStatus));
+    return false;
+  }
+
+  return true;
+}
+
+bool clearBindings(
+    const SqliteStatementPtr& pStatement,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  int status = CESIUM_SQLITE(sqlite3_clear_bindings)(pStatement.get());
+  if (status != SQLITE_OK) {
+    SPDLOG_LOGGER_ERROR(pLogger, CESIUM_SQLITE(sqlite3_errstr)(status));
+    return false;
+  }
+
+  return true;
+}
 } // namespace
 
 namespace CesiumAsync {
@@ -277,6 +306,48 @@ void SqliteCache::createConnection() const {
     throw std::runtime_error(errorStr);
   }
 
+  // Set cache size
+  char* cacheSizeError = nullptr;
+  status = CESIUM_SQLITE(sqlite3_exec)(
+      this->_pImpl->_pConnection.get(),
+      PRAGMA_CACHE_SIZE.c_str(),
+      nullptr,
+      nullptr,
+      &cacheSizeError);
+  if (status != SQLITE_OK) {
+    std::string errorStr(cacheSizeError);
+    CESIUM_SQLITE(sqlite3_free)(cacheSizeError);
+    throw std::runtime_error(errorStr);
+  }
+  /*
+    // Set temp store
+    char* tempStoreError = nullptr;
+    status = CESIUM_SQLITE(sqlite3_exec)(
+        this->_pImpl->_pConnection.get(),
+        PRAGMA_TEMP_STORE.c_str(),
+        nullptr,
+        nullptr,
+        &tempStoreError);
+    if (status != SQLITE_OK) {
+      std::string errorStr(tempStoreError);
+      CESIUM_SQLITE(sqlite3_free)(tempStoreError);
+      throw std::runtime_error(errorStr);
+    }
+
+    // Reserve 30gb virtual memory
+    char* mmapSizeError = nullptr;
+    status = CESIUM_SQLITE(sqlite3_exec)(
+        this->_pImpl->_pConnection.get(),
+        PRAGMA_MMAP_SIZE.c_str(),
+        nullptr,
+        nullptr,
+        &mmapSizeError);
+    if (status != SQLITE_OK) {
+      std::string errorStr(mmapSizeError);
+      CESIUM_SQLITE(sqlite3_free)(mmapSizeError);
+      throw std::runtime_error(errorStr);
+    }
+  */
   // get entry based on key
   this->_pImpl->_getEntryStmtWrapper =
       prepareStatement(this->_pImpl->_pConnection, GET_ENTRY_SQL);
@@ -313,26 +384,7 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   CESIUM_TRACE("SqliteCache::getEntry");
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 
-  // get entry based on key
-  int status =
-      CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->_getEntryStmtWrapper.get());
-  if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(status));
-    return std::nullopt;
-  }
-
-  status = CESIUM_SQLITE(sqlite3_clear_bindings)(
-      this->_pImpl->_getEntryStmtWrapper.get());
-  if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(status));
-    return std::nullopt;
-  }
-
-  status = CESIUM_SQLITE(sqlite3_bind_text)(
+  int status = CESIUM_SQLITE(sqlite3_bind_text)(
       this->_pImpl->_getEntryStmtWrapper.get(),
       1,
       key.c_str(),
@@ -349,6 +401,8 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
       CESIUM_SQLITE(sqlite3_step)(this->_pImpl->_getEntryStmtWrapper.get());
   if (status == SQLITE_DONE) {
     // Cache miss
+    clearBindings(this->_pImpl->_getEntryStmtWrapper, this->_pImpl->_pLogger);
+    resetStatement(this->_pImpl->_getEntryStmtWrapper, this->_pImpl->_pLogger);
     return std::nullopt;
   }
 
@@ -414,43 +468,55 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   std::string requestUrl = reinterpret_cast<const char*>(CESIUM_SQLITE(
       sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 8));
 
-  // update the last accessed time
-  int updateStatus = CESIUM_SQLITE(sqlite3_reset)(
-      this->_pImpl->_updateLastAccessedTimeStmtWrapper.get());
-  if (updateStatus != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
+  if (!clearBindings(
+          this->_pImpl->_getEntryStmtWrapper,
+          this->_pImpl->_pLogger)) {
     return std::nullopt;
   }
 
-  updateStatus = CESIUM_SQLITE(sqlite3_clear_bindings)(
-      this->_pImpl->_updateLastAccessedTimeStmtWrapper.get());
-  if (updateStatus != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
+  // reset statement so it is not locking, preventing wal checkpoints
+  if (!resetStatement(
+          this->_pImpl->_getEntryStmtWrapper,
+          this->_pImpl->_pLogger)) {
     return std::nullopt;
   }
 
-  updateStatus = CESIUM_SQLITE(sqlite3_bind_int64)(
-      this->_pImpl->_updateLastAccessedTimeStmtWrapper.get(),
-      1,
-      itemIndex);
-  if (updateStatus != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
-    return std::nullopt;
-  }
+  {
+    CESIUM_TRACE("Update last access time");
 
-  updateStatus = CESIUM_SQLITE(sqlite3_step)(
-      this->_pImpl->_updateLastAccessedTimeStmtWrapper.get());
-  if (updateStatus != SQLITE_DONE) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
-    return std::nullopt;
+    // update the last accessed time
+    int updateStatus = CESIUM_SQLITE(sqlite3_bind_int64)(
+        this->_pImpl->_updateLastAccessedTimeStmtWrapper.get(),
+        1,
+        itemIndex);
+    if (updateStatus != SQLITE_OK) {
+      SPDLOG_LOGGER_ERROR(
+          this->_pImpl->_pLogger,
+          CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
+      return std::nullopt;
+    }
+
+    updateStatus = CESIUM_SQLITE(sqlite3_step)(
+        this->_pImpl->_updateLastAccessedTimeStmtWrapper.get());
+
+    if (!clearBindings(
+            this->_pImpl->_updateLastAccessedTimeStmtWrapper,
+            this->_pImpl->_pLogger)) {
+      return std::nullopt;
+    }
+
+    if (!resetStatement(
+            this->_pImpl->_updateLastAccessedTimeStmtWrapper,
+            this->_pImpl->_pLogger)) {
+      return std::nullopt;
+    }
+
+    if (updateStatus != SQLITE_DONE) {
+      SPDLOG_LOGGER_ERROR(
+          this->_pImpl->_pLogger,
+          CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
+      return std::nullopt;
+    }
   }
 
   return CacheItem{
@@ -479,26 +545,7 @@ bool SqliteCache::storeEntry(
   CESIUM_TRACE("SqliteCache::storeEntry");
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 
-  // cache the request with the key
-  int status = CESIUM_SQLITE(sqlite3_reset)(
-      this->_pImpl->_storeResponseStmtWrapper.get());
-  if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(status));
-    return false;
-  }
-
-  status = CESIUM_SQLITE(sqlite3_clear_bindings)(
-      this->_pImpl->_storeResponseStmtWrapper.get());
-  if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(status));
-    return false;
-  }
-
-  status = CESIUM_SQLITE(sqlite3_bind_int64)(
+  int status = CESIUM_SQLITE(sqlite3_bind_int64)(
       this->_pImpl->_storeResponseStmtWrapper.get(),
       1,
       static_cast<int64_t>(expiryTime));
@@ -626,6 +673,19 @@ bool SqliteCache::storeEntry(
 
   status = CESIUM_SQLITE(sqlite3_step)(
       this->_pImpl->_storeResponseStmtWrapper.get());
+
+  if (!clearBindings(
+          this->_pImpl->_storeResponseStmtWrapper,
+          this->_pImpl->_pLogger)) {
+    return false;
+  }
+
+  if (!resetStatement(
+          this->_pImpl->_storeResponseStmtWrapper,
+          this->_pImpl->_pLogger)) {
+    return false;
+  }
+
   if (status != SQLITE_DONE) {
     if (status == SQLITE_CORRUPT) {
       destroyDatabase();
@@ -647,28 +707,16 @@ bool SqliteCache::prune() {
 
   // query total size of response's data
   {
-    int totalItemsQueryStatus = CESIUM_SQLITE(sqlite3_reset)(
-        this->_pImpl->_totalItemsQueryStmtWrapper.get());
-    if (totalItemsQueryStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(totalItemsQueryStatus));
-      return false;
-    }
-
-    totalItemsQueryStatus = CESIUM_SQLITE(sqlite3_clear_bindings)(
-        this->_pImpl->_totalItemsQueryStmtWrapper.get());
-    if (totalItemsQueryStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(totalItemsQueryStatus));
-      return false;
-    }
-
-    totalItemsQueryStatus = CESIUM_SQLITE(sqlite3_step)(
+    int totalItemsQueryStatus = CESIUM_SQLITE(sqlite3_step)(
         this->_pImpl->_totalItemsQueryStmtWrapper.get());
 
     if (totalItemsQueryStatus == SQLITE_DONE) {
+      clearBindings(
+          this->_pImpl->_totalItemsQueryStmtWrapper,
+          this->_pImpl->_pLogger);
+      resetStatement(
+          this->_pImpl->_totalItemsQueryStmtWrapper,
+          this->_pImpl->_pLogger);
       return true;
     }
 
@@ -690,30 +738,37 @@ bool SqliteCache::prune() {
         totalItems <= static_cast<int64_t>(this->_pImpl->_maxItems)) {
       return true;
     }
+
+    if (!clearBindings(
+            this->_pImpl->_totalItemsQueryStmtWrapper,
+            this->_pImpl->_pLogger)) {
+      return false;
+    }
+
+    if (!resetStatement(
+            this->_pImpl->_totalItemsQueryStmtWrapper,
+            this->_pImpl->_pLogger)) {
+      return false;
+    }
   }
 
   // delete expired rows first
   {
-    int deleteExpiredStatus = CESIUM_SQLITE(sqlite3_reset)(
+    int deleteExpiredStatus = CESIUM_SQLITE(sqlite3_step)(
         this->_pImpl->_deleteExpiredStmtWrapper.get());
-    if (deleteExpiredStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(deleteExpiredStatus));
+
+    if (!clearBindings(
+            this->_pImpl->_deleteExpiredStmtWrapper,
+            this->_pImpl->_pLogger)) {
       return false;
     }
 
-    deleteExpiredStatus = CESIUM_SQLITE(sqlite3_clear_bindings)(
-        this->_pImpl->_deleteExpiredStmtWrapper.get());
-    if (deleteExpiredStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(deleteExpiredStatus));
+    if (!resetStatement(
+            this->_pImpl->_deleteExpiredStmtWrapper,
+            this->_pImpl->_pLogger)) {
       return false;
     }
 
-    deleteExpiredStatus = CESIUM_SQLITE(sqlite3_step)(
-        this->_pImpl->_deleteExpiredStmtWrapper.get());
     if (deleteExpiredStatus != SQLITE_DONE) {
       if (deleteExpiredStatus == SQLITE_CORRUPT) {
         destroyDatabase();
@@ -736,25 +791,7 @@ bool SqliteCache::prune() {
 
   // delete rows LRU if we are still over maximum
   {
-    int deleteLLRUStatus =
-        CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->_deleteLRUStmtWrapper.get());
-    if (deleteLLRUStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(deleteLLRUStatus));
-      return false;
-    }
-
-    deleteLLRUStatus = CESIUM_SQLITE(sqlite3_clear_bindings)(
-        this->_pImpl->_deleteLRUStmtWrapper.get());
-    if (deleteLLRUStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(deleteLLRUStatus));
-      return false;
-    }
-
-    deleteLLRUStatus = CESIUM_SQLITE(sqlite3_bind_int64)(
+    int deleteLLRUStatus = CESIUM_SQLITE(sqlite3_bind_int64)(
         this->_pImpl->_deleteLRUStmtWrapper.get(),
         1,
         totalItems - static_cast<int64_t>(this->_pImpl->_maxItems));
@@ -767,6 +804,19 @@ bool SqliteCache::prune() {
 
     deleteLLRUStatus =
         CESIUM_SQLITE(sqlite3_step)(this->_pImpl->_deleteLRUStmtWrapper.get());
+
+    if (!clearBindings(
+            this->_pImpl->_deleteLRUStmtWrapper,
+            this->_pImpl->_pLogger)) {
+      return false;
+    }
+
+    if (!resetStatement(
+            this->_pImpl->_deleteLRUStmtWrapper,
+            this->_pImpl->_pLogger)) {
+      return false;
+    }
+
     if (deleteLLRUStatus != SQLITE_DONE) {
       if (deleteLLRUStatus == SQLITE_CORRUPT) {
         destroyDatabase();
@@ -784,17 +834,21 @@ bool SqliteCache::prune() {
 bool SqliteCache::clearAll() {
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 
-  int status =
-      CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->_clearAllStmtWrapper.get());
-  if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(
-        this->_pImpl->_pLogger,
-        CESIUM_SQLITE(sqlite3_errstr)(status));
+  if (!resetStatement(
+          this->_pImpl->_clearAllStmtWrapper,
+          this->_pImpl->_pLogger)) {
     return false;
   }
 
-  status =
+  int status =
       CESIUM_SQLITE(sqlite3_step)(this->_pImpl->_clearAllStmtWrapper.get());
+
+  if (!resetStatement(
+          this->_pImpl->_clearAllStmtWrapper,
+          this->_pImpl->_pLogger)) {
+    return false;
+  }
+
   if (status != SQLITE_DONE) {
     if (status == SQLITE_CORRUPT) {
       destroyDatabase();
