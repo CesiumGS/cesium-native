@@ -61,6 +61,7 @@ add_subdirectory(spdlog)
 if (NOT TARGET sqlite3)
   add_subdirectory(sqlite3)
 endif()
+target_compile_definitions(sqlite3 PRIVATE SQLITE_THREADSAFE=2)
 
 add_subdirectory(modp_b64)
 

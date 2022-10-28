@@ -11,7 +11,10 @@
 #include <sqlite3.h>
 
 #include <cstddef>
+#include <shared_mutex>
 #include <stdexcept>
+#include <thread>
+#include <unordered_map>
 #include <utility>
 
 using namespace CesiumAsync;
@@ -151,15 +154,20 @@ struct DeleteSqliteStatement {
 
 using SqliteConnectionPtr =
     std::unique_ptr<CESIUM_SQLITE(sqlite3), DeleteSqliteConnection>;
+using SqliteReaderConnectionPtr = std::shared_ptr<CESIUM_SQLITE(sqlite3)>;
 using SqliteStatementPtr =
     std::unique_ptr<CESIUM_SQLITE(sqlite3_stmt), DeleteSqliteStatement>;
 
-SqliteStatementPtr prepareStatement(
-    const SqliteConnectionPtr& pConnection,
-    const std::string& sql) {
+struct SqliteReader {
+  SqliteReaderConnectionPtr pConnection;
+  SqliteStatementPtr pGetEntryStmtWrapper;
+};
+
+SqliteStatementPtr
+prepareStatement(CESIUM_SQLITE(sqlite3*) pConnection, const std::string& sql) {
   CESIUM_SQLITE(sqlite3_stmt*) pStmt;
   const int status = CESIUM_SQLITE(sqlite3_prepare_v2)(
-      pConnection.get(),
+      pConnection,
       sql.c_str(),
       int(sql.size()),
       &pStmt,
@@ -197,7 +205,6 @@ bool clearBindings(
 } // namespace
 
 namespace CesiumAsync {
-
 struct SqliteCache::Impl {
   Impl(
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -207,7 +214,6 @@ struct SqliteCache::Impl {
         _pConnection(nullptr),
         _databaseName(databaseName),
         _maxItems(maxItems),
-        _getEntryStmtWrapper(),
         _updateLastAccessedTimeStmtWrapper(),
         _storeResponseStmtWrapper(),
         _totalItemsQueryStmtWrapper(),
@@ -215,12 +221,56 @@ struct SqliteCache::Impl {
         _deleteLRUStmtWrapper(),
         _clearAllStmtWrapper() {}
 
+  const SqliteReader& getReader() {
+    auto threadId = std::this_thread::get_id();
+
+    // Each unique reader thread registers a separate connection.
+    // Only need a shared lock when reading from the thread-connection map.
+    std::shared_lock sharedLock(this->_readerThreadMapMutex);
+    auto pConnectionIt = this->_readerThreadMap.find(threadId);
+    if (pConnectionIt != this->_readerThreadMap.end()) {
+      return pConnectionIt->second;
+    }
+
+    CESIUM_TRACE("CreateReaderConnection");
+
+    // Need to register a new read connection for this thread.
+    sharedLock.unlock();
+
+    // Need an exclusive lock to actually modify the thread-connection map.
+    // This blocks all other readers, but it should only happen once per thread
+    // on the first read.
+    std::unique_lock exclusiveLock(this->_readerThreadMapMutex);
+
+    CESIUM_SQLITE(sqlite3*) pConnection;
+    int status = CESIUM_SQLITE(sqlite3_open_v2)(
+        this->_databaseName.c_str(),
+        &pConnection,
+        SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READONLY,
+        nullptr);
+    if (status != SQLITE_OK) {
+      throw std::runtime_error(CESIUM_SQLITE(sqlite3_errstr)(status));
+    }
+
+    SqliteReader reader;
+    reader.pConnection = std::shared_ptr<CESIUM_SQLITE(sqlite3)>(
+        pConnection,
+        DeleteSqliteConnection());
+    reader.pGetEntryStmtWrapper =
+        prepareStatement(reader.pConnection.get(), GET_ENTRY_SQL);
+
+    auto result = this->_readerThreadMap.emplace(threadId, std::move(reader));
+
+    return result.first->second;
+  }
+
   std::shared_ptr<spdlog::logger> _pLogger;
   SqliteConnectionPtr _pConnection;
+  std::unordered_map<std::thread::id, SqliteReader> _readerThreadMap;
   std::string _databaseName;
   uint64_t _maxItems;
-  mutable std::mutex _mutex;
-  SqliteStatementPtr _getEntryStmtWrapper;
+  mutable std::mutex _writerMutex;
+  mutable std::shared_mutex _readerThreadMapMutex;
   SqliteStatementPtr _updateLastAccessedTimeStmtWrapper;
   SqliteStatementPtr _storeResponseStmtWrapper;
   SqliteStatementPtr _totalItemsQueryStmtWrapper;
@@ -234,13 +284,18 @@ SqliteCache::SqliteCache(
     const std::string& databaseName,
     uint64_t maxItems)
     : _pImpl(std::make_unique<Impl>(pLogger, databaseName, maxItems)) {
+  assert(CESIUM_SQLITE(sqlite3_threadsafe)() == 2);
+  CESIUM_SQLITE(sqlite3_config)(SQLITE_CONFIG_MULTITHREAD);
   createConnection();
 }
 
 void SqliteCache::createConnection() const {
   CESIUM_SQLITE(sqlite3*) pConnection;
-  int status = CESIUM_SQLITE(
-      sqlite3_open)(this->_pImpl->_databaseName.c_str(), &pConnection);
+  int status = CESIUM_SQLITE(sqlite3_open_v2)(
+      this->_pImpl->_databaseName.c_str(),
+      &pConnection,
+      SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE,
+      nullptr);
   if (status != SQLITE_OK) {
     throw std::runtime_error(CESIUM_SQLITE(sqlite3_errstr)(status));
   }
@@ -348,44 +403,44 @@ void SqliteCache::createConnection() const {
       throw std::runtime_error(errorStr);
     }
   */
-  // get entry based on key
-  this->_pImpl->_getEntryStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, GET_ENTRY_SQL);
-
   // update last accessed for entry
   this->_pImpl->_updateLastAccessedTimeStmtWrapper = prepareStatement(
-      this->_pImpl->_pConnection,
+      this->_pImpl->_pConnection.get(),
       UPDATE_LAST_ACCESSED_TIME_SQL);
 
   // store response
   this->_pImpl->_storeResponseStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, STORE_RESPONSE_SQL);
+      prepareStatement(this->_pImpl->_pConnection.get(), STORE_RESPONSE_SQL);
 
   // query total items
   this->_pImpl->_totalItemsQueryStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, TOTAL_ITEMS_QUERY_SQL);
+      prepareStatement(this->_pImpl->_pConnection.get(), TOTAL_ITEMS_QUERY_SQL);
 
   // delete expired items
-  this->_pImpl->_deleteExpiredStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, DELETE_EXPIRED_ITEMS_SQL);
+  this->_pImpl->_deleteExpiredStmtWrapper = prepareStatement(
+      this->_pImpl->_pConnection.get(),
+      DELETE_EXPIRED_ITEMS_SQL);
 
   // delete expired items
   this->_pImpl->_deleteLRUStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, DELETE_LRU_ITEMS_SQL);
+      prepareStatement(this->_pImpl->_pConnection.get(), DELETE_LRU_ITEMS_SQL);
 
   // clear all items
   this->_pImpl->_clearAllStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, CLEAR_ALL_SQL);
+      prepareStatement(this->_pImpl->_pConnection.get(), CLEAR_ALL_SQL);
 }
 
 SqliteCache::~SqliteCache() = default;
 
-std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
+std::optional<CacheItem>
+SqliteCache::getEntryAnyThread(const std::string& key) const {
   CESIUM_TRACE("SqliteCache::getEntry");
-  std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
+  // std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
+
+  const SqliteReader& reader = this->_pImpl->getReader();
 
   int status = CESIUM_SQLITE(sqlite3_bind_text)(
-      this->_pImpl->_getEntryStmtWrapper.get(),
+      reader.pGetEntryStmtWrapper.get(),
       1,
       key.c_str(),
       -1,
@@ -397,12 +452,11 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
     return std::nullopt;
   }
 
-  status =
-      CESIUM_SQLITE(sqlite3_step)(this->_pImpl->_getEntryStmtWrapper.get());
+  status = CESIUM_SQLITE(sqlite3_step)(reader.pGetEntryStmtWrapper.get());
   if (status == SQLITE_DONE) {
     // Cache miss
-    clearBindings(this->_pImpl->_getEntryStmtWrapper, this->_pImpl->_pLogger);
-    resetStatement(this->_pImpl->_getEntryStmtWrapper, this->_pImpl->_pLogger);
+    clearBindings(reader.pGetEntryStmtWrapper, this->_pImpl->_pLogger);
+    resetStatement(reader.pGetEntryStmtWrapper, this->_pImpl->_pLogger);
     return std::nullopt;
   }
 
@@ -415,111 +469,66 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   }
 
   // Cache hit - unpack and return it.
-  const int64_t itemIndex = CESIUM_SQLITE(
-      sqlite3_column_int64)(this->_pImpl->_getEntryStmtWrapper.get(), 0);
+  const int64_t itemIndex =
+      CESIUM_SQLITE(sqlite3_column_int64)(reader.pGetEntryStmtWrapper.get(), 0);
 
   // parse cache item metadata
-  const std::time_t expiryTime = CESIUM_SQLITE(
-      sqlite3_column_int64)(this->_pImpl->_getEntryStmtWrapper.get(), 1);
+  const std::time_t expiryTime =
+      CESIUM_SQLITE(sqlite3_column_int64)(reader.pGetEntryStmtWrapper.get(), 1);
 
   // parse response cache
-  std::string serializedResponseHeaders =
-      reinterpret_cast<const char*>(CESIUM_SQLITE(
-          sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 2));
+  std::string serializedResponseHeaders = reinterpret_cast<const char*>(
+      CESIUM_SQLITE(sqlite3_column_text)(reader.pGetEntryStmtWrapper.get(), 2));
   std::optional<HttpHeaders> responseHeaders =
       convertStringToHeaders(serializedResponseHeaders, this->_pImpl->_pLogger);
   if (!responseHeaders) {
     return std::nullopt;
   }
-  const uint16_t statusCode = static_cast<uint16_t>(CESIUM_SQLITE(
-      sqlite3_column_int)(this->_pImpl->_getEntryStmtWrapper.get(), 3));
+  const uint16_t statusCode = static_cast<uint16_t>(
+      CESIUM_SQLITE(sqlite3_column_int)(reader.pGetEntryStmtWrapper.get(), 3));
 
-  const std::byte* rawResponseData =
-      reinterpret_cast<const std::byte*>(CESIUM_SQLITE(
-          sqlite3_column_blob)(this->_pImpl->_getEntryStmtWrapper.get(), 4));
-  const int responseDataSize = CESIUM_SQLITE(
-      sqlite3_column_bytes)(this->_pImpl->_getEntryStmtWrapper.get(), 4);
+  const std::byte* rawResponseData = reinterpret_cast<const std::byte*>(
+      CESIUM_SQLITE(sqlite3_column_blob)(reader.pGetEntryStmtWrapper.get(), 4));
+  const int responseDataSize =
+      CESIUM_SQLITE(sqlite3_column_bytes)(reader.pGetEntryStmtWrapper.get(), 4);
   std::vector<std::byte> responseData(
       rawResponseData,
       rawResponseData + responseDataSize);
 
-  const std::byte* rawClientData =
-      reinterpret_cast<const std::byte*>(CESIUM_SQLITE(
-          sqlite3_column_blob)(this->_pImpl->_getEntryStmtWrapper.get(), 5));
-  const int clientDataSize = CESIUM_SQLITE(
-      sqlite3_column_bytes)(this->_pImpl->_getEntryStmtWrapper.get(), 5);
+  const std::byte* rawClientData = reinterpret_cast<const std::byte*>(
+      CESIUM_SQLITE(sqlite3_column_blob)(reader.pGetEntryStmtWrapper.get(), 5));
+  const int clientDataSize =
+      CESIUM_SQLITE(sqlite3_column_bytes)(reader.pGetEntryStmtWrapper.get(), 5);
   std::vector<std::byte> clientData(
       rawClientData,
       rawClientData + clientDataSize);
 
   // parse request
-  std::string serializedRequestHeaders =
-      reinterpret_cast<const char*>(CESIUM_SQLITE(
-          sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 6));
+  std::string serializedRequestHeaders = reinterpret_cast<const char*>(
+      CESIUM_SQLITE(sqlite3_column_text)(reader.pGetEntryStmtWrapper.get(), 6));
   std::optional<HttpHeaders> requestHeaders =
       convertStringToHeaders(serializedRequestHeaders, this->_pImpl->_pLogger);
   if (!requestHeaders) {
     return std::nullopt;
   }
 
-  std::string requestMethod = reinterpret_cast<const char*>(CESIUM_SQLITE(
-      sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 7));
+  std::string requestMethod = reinterpret_cast<const char*>(
+      CESIUM_SQLITE(sqlite3_column_text)(reader.pGetEntryStmtWrapper.get(), 7));
 
-  std::string requestUrl = reinterpret_cast<const char*>(CESIUM_SQLITE(
-      sqlite3_column_text)(this->_pImpl->_getEntryStmtWrapper.get(), 8));
+  std::string requestUrl = reinterpret_cast<const char*>(
+      CESIUM_SQLITE(sqlite3_column_text)(reader.pGetEntryStmtWrapper.get(), 8));
 
-  if (!clearBindings(
-          this->_pImpl->_getEntryStmtWrapper,
-          this->_pImpl->_pLogger)) {
+  if (!clearBindings(reader.pGetEntryStmtWrapper, this->_pImpl->_pLogger)) {
     return std::nullopt;
   }
 
   // reset statement so it is not locking, preventing wal checkpoints
-  if (!resetStatement(
-          this->_pImpl->_getEntryStmtWrapper,
-          this->_pImpl->_pLogger)) {
+  if (!resetStatement(reader.pGetEntryStmtWrapper, this->_pImpl->_pLogger)) {
     return std::nullopt;
   }
 
-  {
-    CESIUM_TRACE("Update last access time");
-
-    // update the last accessed time
-    int updateStatus = CESIUM_SQLITE(sqlite3_bind_int64)(
-        this->_pImpl->_updateLastAccessedTimeStmtWrapper.get(),
-        1,
-        itemIndex);
-    if (updateStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
-      return std::nullopt;
-    }
-
-    updateStatus = CESIUM_SQLITE(sqlite3_step)(
-        this->_pImpl->_updateLastAccessedTimeStmtWrapper.get());
-
-    if (!clearBindings(
-            this->_pImpl->_updateLastAccessedTimeStmtWrapper,
-            this->_pImpl->_pLogger)) {
-      return std::nullopt;
-    }
-
-    if (!resetStatement(
-            this->_pImpl->_updateLastAccessedTimeStmtWrapper,
-            this->_pImpl->_pLogger)) {
-      return std::nullopt;
-    }
-
-    if (updateStatus != SQLITE_DONE) {
-      SPDLOG_LOGGER_ERROR(
-          this->_pImpl->_pLogger,
-          CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
-      return std::nullopt;
-    }
-  }
-
   return CacheItem{
+      itemIndex,
       expiryTime,
       CacheRequest{
           std::move(*requestHeaders),
@@ -532,7 +541,45 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
           std::move(clientData)}};
 }
 
-bool SqliteCache::storeEntry(
+void SqliteCache::updateLastAccessTimeWriterThread(int64_t rowId) {
+  CESIUM_TRACE("Update last access time");
+
+  // update the last accessed time
+  int updateStatus = CESIUM_SQLITE(sqlite3_bind_int64)(
+      this->_pImpl->_updateLastAccessedTimeStmtWrapper.get(),
+      1,
+      rowId);
+  if (updateStatus != SQLITE_OK) {
+    SPDLOG_LOGGER_ERROR(
+        this->_pImpl->_pLogger,
+        CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
+    return;
+  }
+
+  updateStatus = CESIUM_SQLITE(sqlite3_step)(
+      this->_pImpl->_updateLastAccessedTimeStmtWrapper.get());
+
+  if (!clearBindings(
+          this->_pImpl->_updateLastAccessedTimeStmtWrapper,
+          this->_pImpl->_pLogger)) {
+    return;
+  }
+
+  if (!resetStatement(
+          this->_pImpl->_updateLastAccessedTimeStmtWrapper,
+          this->_pImpl->_pLogger)) {
+    return;
+  }
+
+  if (updateStatus != SQLITE_DONE) {
+    SPDLOG_LOGGER_ERROR(
+        this->_pImpl->_pLogger,
+        CESIUM_SQLITE(sqlite3_errstr)(updateStatus));
+    return;
+  }
+}
+
+bool SqliteCache::storeEntryWriterThread(
     const std::string& key,
     std::time_t expiryTime,
     const std::string& url,
@@ -543,7 +590,7 @@ bool SqliteCache::storeEntry(
     const gsl::span<const std::byte>& responseData,
     const gsl::span<const std::byte>& clientData) {
   CESIUM_TRACE("SqliteCache::storeEntry");
-  std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
+  std::lock_guard<std::mutex> guard(this->_pImpl->_writerMutex);
 
   int status = CESIUM_SQLITE(sqlite3_bind_int64)(
       this->_pImpl->_storeResponseStmtWrapper.get(),
@@ -699,9 +746,9 @@ bool SqliteCache::storeEntry(
   return true;
 }
 
-bool SqliteCache::prune() {
+bool SqliteCache::pruneWriterThread() {
   CESIUM_TRACE("SqliteCache::prune");
-  std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
+  std::lock_guard<std::mutex> guard(this->_pImpl->_writerMutex);
 
   int64_t totalItems = 0;
 
@@ -831,8 +878,8 @@ bool SqliteCache::prune() {
   return true;
 }
 
-bool SqliteCache::clearAll() {
-  std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
+bool SqliteCache::clearAllWriterThread() {
+  std::lock_guard<std::mutex> guard(this->_pImpl->_writerMutex);
 
   if (!resetStatement(
           this->_pImpl->_clearAllStmtWrapper,

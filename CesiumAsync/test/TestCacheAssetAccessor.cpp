@@ -37,12 +37,14 @@ public:
         clearAllCall{false} {}
 
   virtual std::optional<CacheItem>
-  getEntry(const std::string& /*key*/) const override {
+  getEntryAnyThread(const std::string& /*key*/) const override {
     this->getEntryCall = true;
     return this->cacheItem;
   }
 
-  virtual bool storeEntry(
+  virtual void updateLastAccessTimeWriterThread(int64_t /*rowId*/) override {}
+
+  virtual bool storeEntryWriterThread(
       const std::string& key,
       std::time_t expiryTime,
       const std::string& url,
@@ -66,12 +68,12 @@ public:
     return true;
   }
 
-  virtual bool prune() override {
+  virtual bool pruneWriterThread() override {
     this->pruneCall = true;
     return true;
   }
 
-  virtual bool clearAll() override {
+  virtual bool clearAllWriterThread() override {
     this->clearAllCall = true;
     return true;
   }
@@ -642,6 +644,7 @@ TEST_CASE("Test serving cache item") {
         std::vector<std::byte>(),
         std::vector<std::byte>());
     CacheItem cacheItem(
+        0,
         currentTime + 100,
         std::move(cacheRequest),
         std::move(cacheResponse));
@@ -806,6 +809,7 @@ TEST_CASE("Test serving cache item") {
         std::vector<std::byte>(),
         std::vector<std::byte>());
     CacheItem cacheItem(
+        0,
         currentTime - 100,
         std::move(cacheRequest),
         std::move(cacheResponse));
@@ -901,6 +905,7 @@ TEST_CASE("Test serving cache item") {
         std::vector<std::byte>(),
         std::vector<std::byte>());
     CacheItem cacheItem(
+        0,
         currentTime - 100,
         std::move(cacheRequest),
         std::move(cacheResponse));

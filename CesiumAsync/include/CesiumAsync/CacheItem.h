@@ -6,6 +6,7 @@
 #include <gsl/span>
 
 #include <cstddef>
+#include <cstdint>
 #include <ctime>
 #include <map>
 #include <vector>
@@ -97,17 +98,25 @@ class CESIUMASYNC_API CacheItem {
 public:
   /**
    * @brief Constructor.
+   * @param rowId The row id of this item in the cache database.
    * @param cacheExpiryTime the time point this cache item will be expired
    * @param request the cache request owned by this item
    * @param response the cache response owned by this item
    */
   CacheItem(
+      int64_t cacheRowId,
       std::time_t cacheExpiryTime,
       CacheRequest&& request,
       CacheResponse&& response)
-      : expiryTime(cacheExpiryTime),
+      : rowId(cacheRowId),
+        expiryTime(cacheExpiryTime),
         cacheRequest(std::move(request)),
         cacheResponse(std::move(response)) {}
+
+  /**
+   * @brief The row id of this item in the cache database.
+   */
+  int64_t rowId;
 
   /**
    * @brief The time point that this cache item is expired.

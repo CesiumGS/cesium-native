@@ -108,7 +108,8 @@ CachingAssetAccessor::CachingAssetAccessor(
       _pLogger(pLogger),
       _pAssetAccessor(pAssetAccessor),
       _pCacheDatabase(pCacheDatabase),
-      _cacheThreadPool(1) {}
+      _cacheWriteThreadPool(1),
+      _cacheReadThreadPool(5) {}
 
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 
@@ -124,27 +125,28 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
     this->_requestSinceLastPrune = 0;
 
     CESIUM_TRACE_USE_TRACK_SET(this->_pruneSlots);
-    asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {
-      this->_pCacheDatabase->prune();
+    asyncSystem.runInThreadPool(this->_cacheWriteThreadPool, [this]() {
+      this->_pCacheDatabase->pruneWriterThread();
     });
   }
 
   CESIUM_TRACE_BEGIN_IN_TRACK("IAssetAccessor::get (cached)");
-  const ThreadPool& threadPool = this->_cacheThreadPool;
+  const ThreadPool& writeThreadPool = this->_cacheWriteThreadPool;
+  const ThreadPool& readThreadPool = this->_cacheReadThreadPool;
 
   return asyncSystem
       .runInThreadPool(
-          this->_cacheThreadPool,
+          readThreadPool,
           [asyncSystem,
            pAssetAccessor = this->_pAssetAccessor,
            pCacheDatabase = this->_pCacheDatabase,
            pLogger = this->_pLogger,
            url,
            headers,
-           threadPool,
+           writeThreadPool,
            writeThrough]() -> Future<std::shared_ptr<IAssetRequest>> {
             std::optional<CacheItem> cacheLookup =
-                pCacheDatabase->getEntry(url);
+                pCacheDatabase->getEntryAnyThread(url);
             if (!cacheLookup) {
               // No cache item found, request directly from the server
 
@@ -154,7 +156,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
 
               return pAssetAccessor->get(asyncSystem, url, headers)
                   .thenInThreadPool(
-                      threadPool,
+                      writeThreadPool,
                       [pCacheDatabase, pLogger](
                           std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
                         const IAssetResponse* pResponse =
@@ -170,7 +172,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                         if (pResponse && shouldCacheRequest(
                                              *pCompletedRequest,
                                              cacheControl)) {
-                          pCacheDatabase->storeEntry(
+                          pCacheDatabase->storeEntryWriterThread(
                               calculateCacheKey(*pCompletedRequest),
                               calculateExpiryTime(
                                   *pCompletedRequest,
@@ -191,6 +193,10 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
             CacheItem& cacheItem = cacheLookup.value();
 
             if (shouldRevalidateCache(cacheItem)) {
+              // Note: If we are going to be invalidating the cache item, don't
+              // bother updating its last accessed time to prevent it from
+              // being pruned.
+
               // Cache is stale and needs revalidation
               std::vector<THeader> newHeaders = headers;
               const CacheResponse& cacheResponse = cacheItem.cacheResponse;
@@ -213,7 +219,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
 
               return pAssetAccessor->get(asyncSystem, url, newHeaders)
                   .thenInThreadPool(
-                      threadPool,
+                      writeThreadPool,
                       [cacheItem = std::move(cacheItem),
                        pCacheDatabase,
                        pLogger](std::shared_ptr<IAssetRequest>&&
@@ -242,7 +248,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                                 *pRequestToStore,
                                 cacheControl)) {
 
-                          pCacheDatabase->storeEntry(
+                          pCacheDatabase->storeEntryWriterThread(
                               calculateCacheKey(*pRequestToStore),
                               calculateExpiryTime(
                                   *pRequestToStore,
@@ -260,8 +266,16 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                       });
             }
 
-            // Good cache item that doesn't need to be revalidated, just return
-            // it.
+            // Good cache item that doesn't need to be revalidated, queue up a
+            // sqlite thread task to update the last accessed time for the row.
+            asyncSystem.runInThreadPool(
+                writeThreadPool,
+                [pCacheDatabase, rowId = cacheItem.rowId]() {
+                  pCacheDatabase->updateLastAccessTimeWriterThread(rowId);
+                });
+
+            // The reading itself is complete, we don't need to wait for the
+            // row update to finish. So just return the cache item.
             std::shared_ptr<IAssetRequest> pRequest =
                 std::make_shared<CacheAssetRequest>(std::move(cacheItem));
             return asyncSystem.createResolvedFuture(std::move(pRequest));
@@ -278,7 +292,7 @@ Future<void> CachingAssetAccessor::writeBack(
     bool cacheOriginalResponseData,
     std::vector<std::byte>&& clientData) {
   return asyncSystem.runInThreadPool(
-      this->_cacheThreadPool,
+      this->_cacheWriteThreadPool,
       [pCacheDatabase = this->_pCacheDatabase,
        pLogger = this->_pLogger,
        pCompletedRequest,
@@ -297,7 +311,7 @@ Future<void> CachingAssetAccessor::writeBack(
 
         if (pResponse && shouldCacheRequest(*pCompletedRequest, cacheControl)) {
           std::vector<std::byte> EMPTY_DATA;
-          pCacheDatabase->storeEntry(
+          pCacheDatabase->storeEntryWriterThread(
               calculateCacheKey(*pCompletedRequest),
               calculateExpiryTime(*pCompletedRequest, cacheControl),
               pCompletedRequest->url(),

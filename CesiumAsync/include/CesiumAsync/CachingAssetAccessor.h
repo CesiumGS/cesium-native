@@ -76,7 +76,8 @@ private:
   std::shared_ptr<spdlog::logger> _pLogger;
   std::shared_ptr<IAssetAccessor> _pAssetAccessor;
   std::shared_ptr<ICacheDatabase> _pCacheDatabase;
-  ThreadPool _cacheThreadPool;
+  ThreadPool _cacheWriteThreadPool;
+  ThreadPool _cacheReadThreadPool;
   CESIUM_TRACE_DECLARE_TRACK_SET(_pruneSlots, "Prune cache database");
 };
 } // namespace CesiumAsync
