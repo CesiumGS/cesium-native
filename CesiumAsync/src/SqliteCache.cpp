@@ -221,6 +221,15 @@ struct SqliteCache::Impl {
         _deleteLRUStmtWrapper(),
         _clearAllStmtWrapper() {}
 
+  ~Impl() {
+    // TODO: Is this needed? I saw a crash once when starting standalone
+    // after playing in the editor, but I don't know if this fixes it.
+
+    // Special shut-down for readers
+    std::unique_lock exclusiveLock(this->_readerThreadMapMutex);
+    this->_readerThreadMap.clear();
+  }
+
   const SqliteReader& getReader() {
     auto threadId = std::this_thread::get_id();
 
