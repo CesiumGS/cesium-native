@@ -210,6 +210,14 @@ RasterOverlayCollection::getTileProviders() const {
   return this->_pOverlays->tileProviders;
 }
 
+const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
+RasterOverlayCollection::getPlaceholderTileProviders() const {
+  if (!this->_pOverlays)
+    return emptyTileProviders;
+
+  return this->_pOverlays->placeholders;
+}
+
 RasterOverlayTileProvider* RasterOverlayCollection::findTileProviderForOverlay(
     RasterOverlay& overlay) noexcept {
   // Call the const version
@@ -232,6 +240,35 @@ RasterOverlayCollection::findTileProviderForOverlay(
   for (size_t i = 0; i < overlays.size() && i < tileProviders.size(); ++i) {
     if (overlays[i].get() == &overlay)
       return tileProviders[i].get();
+  }
+
+  return nullptr;
+}
+
+RasterOverlayTileProvider*
+RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
+    RasterOverlay& overlay) noexcept {
+  // Call the const version
+  const RasterOverlayTileProvider* pResult =
+      this->findPlaceholderTileProviderForOverlay(
+          const_cast<const RasterOverlay&>(overlay));
+  return const_cast<RasterOverlayTileProvider*>(pResult);
+}
+
+const RasterOverlayTileProvider*
+RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
+    const RasterOverlay& overlay) const noexcept {
+  if (!this->_pOverlays)
+    return nullptr;
+
+  const auto& overlays = this->_pOverlays->overlays;
+  const auto& placeholders = this->_pOverlays->placeholders;
+
+  assert(overlays.size() == placeholders.size());
+
+  for (size_t i = 0; i < overlays.size() && i < placeholders.size(); ++i) {
+    if (overlays[i].get() == &overlay)
+      return placeholders[i].get();
   }
 
   return nullptr;

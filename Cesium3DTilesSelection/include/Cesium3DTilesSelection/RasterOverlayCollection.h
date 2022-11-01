@@ -102,7 +102,15 @@ public:
   getTileProviders() const;
 
   /**
-   * @brief Finds the tile provider for a given provider.
+   * @brief Gets the placeholder tile providers in this collection. Each
+   * placeholder tile provider corresponds with the overlay at the same position
+   * in the collection returned by {@link getOverlays}.
+   */
+  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
+  getPlaceholderTileProviders() const;
+
+  /**
+   * @brief Finds the tile provider for a given overlay.
    *
    * If the specified raster overlay is not part of this collection, this method
    * will return nullptr.
@@ -122,6 +130,29 @@ public:
    */
   const RasterOverlayTileProvider*
   findTileProviderForOverlay(const RasterOverlay& overlay) const noexcept;
+
+  /**
+   * @brief Finds the placeholder tile provider for a given overlay.
+   *
+   * If the specified raster overlay is not part of this collection, this method
+   * will return nullptr.
+   *
+   * This method will return the placeholder tile provider even if the real one
+   * has been created. This is useful to create placeholder tiles when the
+   * rectangle in the overlay's projection is not yet known.
+   *
+   * @param overlay The overlay for which to obtain the tile provider.
+   * @return The placeholder tile provider, if any, corresponding to the raster
+   * overlay.
+   */
+  RasterOverlayTileProvider*
+  findPlaceholderTileProviderForOverlay(RasterOverlay& overlay) noexcept;
+
+  /**
+   * @copydoc findPlaceholderTileProviderForOverlay
+   */
+  const RasterOverlayTileProvider* findPlaceholderTileProviderForOverlay(
+      const RasterOverlay& overlay) const noexcept;
 
   /**
    * @brief A constant iterator for {@link RasterOverlay} instances.

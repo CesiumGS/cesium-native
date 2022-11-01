@@ -56,11 +56,15 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _translation(0.0, 0.0),
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
-      _originalFailed(false) {}
+      _originalFailed(false) {
+  assert(this->_pLoadingTile != nullptr);
+}
 
 RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
     IPrepareRendererResources& prepareRendererResources,
     Tile& tile) {
+  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
                    this->_pReadyTile->isMoreDetailAvailable() !=
@@ -163,6 +167,8 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
     this->_state = this->_pLoadingTile ? AttachmentState::TemporarilyAttached
                                        : AttachmentState::Attached;
   }
+
+  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   // TODO: check more precise raster overlay tile availability, rather than just
   // max level?
@@ -306,12 +312,13 @@ RasterMappedTo3DTile* addRealTile(
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
     double maximumScreenSpaceError,
     RasterOverlayTileProvider& tileProvider,
+    RasterOverlayTileProvider& placeholder,
     Tile& tile,
     std::vector<Projection>& missingProjections) {
   if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
-        RasterMappedTo3DTile(getPlaceholderTile(tileProvider), -1));
+        RasterMappedTo3DTile(getPlaceholderTile(placeholder), -1));
   }
 
   // We can get a more accurate estimate of the real-world size of the projected
@@ -355,7 +362,7 @@ RasterMappedTo3DTile* addRealTile(
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
       return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-          getPlaceholderTile(tileProvider),
+          getPlaceholderTile(placeholder),
           textureCoordinateIndex));
     }
   }
@@ -384,7 +391,7 @@ RasterMappedTo3DTile* addRealTile(
   } else {
     // No precise rectangle yet, so return a placeholder for now.
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        getPlaceholderTile(tileProvider),
+        getPlaceholderTile(placeholder),
         textureCoordinateIndex));
   }
 }
