@@ -6,7 +6,7 @@
 namespace Cesium3DTilesWriter {}
 
 #if defined(_WIN32) && defined(CESIUM_SHARED)
-#ifdef CESIUM3DTILESWRTIER_BUILDING
+#ifdef CESIUM3DTILESWRITER_BUILDING
 #define CESIUM3DTILESWRITER_API __declspec(dllexport)
 #else
 #define CESIUM3DTILESWRITER_API __declspec(dllimport)
