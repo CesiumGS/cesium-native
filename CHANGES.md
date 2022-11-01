@@ -15,6 +15,10 @@
 - Added the `getImage` method to `RasterOverlayTile`.
 - Added `LocalHorizontalCoordinateSystem`, which is used to create convenient right- or left-handeded coordinate systems with an origin at a point on the globe.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause a crash when adding raster overlays to sparse tilesets and zooming close enough to cause them to be upsampled.
+
 ### v0.20.0 - 2022-10-03
 
 ##### Breaking Changes :mega:

@@ -14,6 +14,11 @@ public:
 
   /**
    * @brief Gets the final region from this builder.
+   *
+   * If no positions are added to this builder, the returned region's rectangle
+   * will be {@link GlobeRectangle::EMPTY}, its minimum height will be 1.0, and
+   * its maximum height will be -1.0 (the minimum will be greater than the
+   * maximum).
    */
   BoundingRegion toRegion() const;
 

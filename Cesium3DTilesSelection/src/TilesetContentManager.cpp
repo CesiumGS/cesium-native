@@ -129,6 +129,12 @@ void createQuadtreeSubdividedChildren(
     return;
   }
 
+  // Don't try to upsample a parent tile without geometry.
+  if (maybeRegionAndCenter->region.getMaximumHeight() <
+      maybeRegionAndCenter->region.getMinimumHeight()) {
+    return;
+  }
+
   // The quadtree tile ID doesn't actually matter, because we're not going to
   // use the standard tile bounds for the ID. But having a tile ID that reflects
   // the level and _approximate_ location is helpful for debugging.

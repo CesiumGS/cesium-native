@@ -26,10 +26,7 @@ BoundingRegionBuilder::BoundingRegionBuilder() noexcept
 
 BoundingRegion BoundingRegionBuilder::toRegion() const {
   if (this->_longitudeRangeIsEmpty) {
-    return BoundingRegion(
-        GlobeRectangle::EMPTY,
-        this->_minimumHeight,
-        this->_maximumHeight);
+    return BoundingRegion(GlobeRectangle::EMPTY, 1.0, -1.0);
   } else {
     return BoundingRegion(
         this->_rectangle,
