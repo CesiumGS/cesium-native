@@ -129,6 +129,12 @@ void createQuadtreeSubdividedChildren(
     return;
   }
 
+  // Don't try to upsample a parent tile without geometry.
+  if (maybeRegionAndCenter->region.getMaximumHeight() <
+      maybeRegionAndCenter->region.getMinimumHeight()) {
+    return;
+  }
+
   // The quadtree tile ID doesn't actually matter, because we're not going to
   // use the standard tile bounds for the ID. But having a tile ID that reflects
   // the level and _approximate_ location is helpful for debugging.
@@ -258,10 +264,20 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
-  for (auto& pTileProvider : overlays.getTileProviders()) {
+  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
+      tileProviders = overlays.getTileProviders();
+  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
+      placeholders = overlays.getPlaceholderTileProviders();
+  assert(tileProviders.size() == placeholders.size());
+
+  for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
+    RasterOverlayTileProvider& tileProvider = *tileProviders[i];
+    RasterOverlayTileProvider& placeholder = *placeholders[i];
+
     RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
         tilesetOptions.maximumScreenSpaceError,
-        *pTileProvider,
+        tileProvider,
+        placeholder,
         tile,
         projections);
     if (pMapped) {
@@ -1295,9 +1311,12 @@ void TilesetContentManager::updateDoneState(
         RasterOverlayTileProvider* pProvider =
             this->_overlayCollection.findTileProviderForOverlay(
                 pLoadingTile->getOverlay());
+        RasterOverlayTileProvider* pPlaceholder =
+            this->_overlayCollection.findPlaceholderTileProviderForOverlay(
+                pLoadingTile->getOverlay());
 
         // Try to replace this placeholder with real tiles.
-        if (pProvider && !pProvider->isPlaceholder()) {
+        if (pProvider && pPlaceholder && !pProvider->isPlaceholder()) {
           // Remove the existing placeholder mapping
           rasterTiles.erase(
               rasterTiles.begin() +
@@ -1310,6 +1329,7 @@ void TilesetContentManager::updateDoneState(
           RasterMappedTo3DTile::mapOverlayToTile(
               tilesetOptions.maximumScreenSpaceError,
               *pProvider,
+              *pPlaceholder,
               tile,
               missingProjections);
 

@@ -2,6 +2,12 @@
 
 ### ? - ?
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause an assertion failure - and on rare occasions a more serious problem - when creating a tile provider for a `TileMapServiceRasterOverlay` or a `WebMapServiceRasterOverlay`.
+
+### v0.21.0 - 2022-11-01
+
 ##### Breaking Changes :mega:
 
 - On `IPrepareRendererResources`, the `image` parameter passed to `prepareRasterInLoadThread` and the `rasterTile` parameter passed to `prepareRasterInMainThread` are no longer const. These methods are now allowed to modify the parameters during load.
@@ -14,6 +20,10 @@
 - Added `GltfReader::generateMipMaps` method.
 - Added the `getImage` method to `RasterOverlayTile`.
 - Added `LocalHorizontalCoordinateSystem`, which is used to create convenient right- or left-handeded coordinate systems with an origin at a point on the globe.
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause a crash when adding raster overlays to sparse tilesets and zooming close enough to cause them to be upsampled.
 
 ### v0.20.0 - 2022-10-03
 

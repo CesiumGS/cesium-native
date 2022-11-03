@@ -110,6 +110,11 @@ struct CESIUM3DTILESSELECTION_API GltfUtilities {
    * values will be in the usual -PI to PI range, but east will have a smaller
    * value than west.
    *
+   * If the glTF contains no geometry, the returned region's rectangle
+   * will be {@link GlobeRectangle::EMPTY}, its minimum height will be 1.0, and
+   * its maximum height will be -1.0 (the minimum will be greater than the
+   * maximum).
+   *
    * @param gltf The model.
    * @param transform The transform from model coordinates to ECEF coordinates.
    * @return The computed bounding region.
