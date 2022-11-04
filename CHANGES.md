@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause an assertion failure - and on rare occasions a more serious problem - when creating a tile provider for a `TileMapServiceRasterOverlay` or a `WebMapServiceRasterOverlay`.
+
 ### v0.21.0 - 2022-11-01
 
 ##### Breaking Changes :mega:

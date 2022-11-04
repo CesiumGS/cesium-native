@@ -266,7 +266,7 @@ WebMapServiceRasterOverlay::createTileProvider(
                             : std::nullopt;
 
   return pAssetAccessor->get(asyncSystem, xmlUrlGetcapabilities, this->_headers)
-      .thenInWorkerThread(
+      .thenInMainThread(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
