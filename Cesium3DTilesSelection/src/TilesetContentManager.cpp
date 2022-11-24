@@ -993,6 +993,13 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
+  // Detach raster tiles first so that the renderer's tile free
+  // process doesn't need to worry about them.
+  for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    mapped.detachFromTile(*this->_externals.pPrepareRendererResources, tile);
+  }
+  tile.getMappedRasterTiles().clear();
+
   // Unload the renderer resources and clear any raster overlay tiles. We can do
   // this even if the tile can't be fully unloaded because this tile's geometry
   // is being using by an async upsample operation (checked below).
@@ -1006,8 +1013,6 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   default:
     break;
   }
-
-  tile.getMappedRasterTiles().clear();
 
   // Are any children currently being upsampled from this tile?
   for (const Tile& child : tile.getChildren()) {
