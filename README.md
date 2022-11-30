@@ -11,7 +11,7 @@ Cesium Native is a set of C++ libraries for 3D geospatial, including:
 
 Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal), [Cesium for Unity](https://github.com/CesiumGS/cesium-unity), and [Cesium for O3DE](https://github.com/CesiumGS/cesium-o3de). Cesium Native is the foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
 
-![Cesium for Unreal Architecture](./doc/integration-ecosystem-diagram.jpg)
+![Cesium Platform and Ecosystem](./doc/integration-ecosystem-diagram.jpg)
 *<p align="center">A high-level Cesium platform architecture with the runtime integrations powered by Cesium Native and streaming content from Cesium ion.</p>*
 
 ### :card_file_box:Libraries Overview
