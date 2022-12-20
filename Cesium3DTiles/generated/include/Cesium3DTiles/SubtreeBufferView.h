@@ -14,9 +14,9 @@ namespace Cesium3DTiles {
 /**
  * @brief A contiguous subset of a buffer
  */
-struct CESIUM3DTILES_API BufferView final
+struct CESIUM3DTILES_API SubtreeBufferView final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "BufferView";
+  static inline constexpr const char* TypeName = "SubtreeBufferView";
 
   /**
    * @brief The index of the buffer.

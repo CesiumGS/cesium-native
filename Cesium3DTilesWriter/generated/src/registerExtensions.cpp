@@ -12,6 +12,7 @@
 #include <Cesium3DTiles/Extension3dTilesImplicitTilingLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesImplicitTilingSubtreeLegacy.h>
 #include <Cesium3DTiles/Extension3dTilesMultipleContentsLegacy.h>
+#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesMetadataLegacy.h>
 #include <Cesium3DTiles/ExtensionSubtree3dTilesMetadataLegacy.h>
 #include <Cesium3DTiles/ExtensionSubtree3dTilesMultipleContentsLegacy.h>
@@ -37,6 +38,9 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesMetadataLegacyJsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Content,
+      ExtensionContent3dTilesContentVoxelsJsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Tile,
       ExtensionTile3dTilesMetadataLegacyJsonWriter>();

@@ -3,10 +3,10 @@
 #pragma once
 
 #include "AvailabilityJsonHandler.h"
-#include "BufferJsonHandler.h"
-#include "BufferViewJsonHandler.h"
 #include "MetadataEntityJsonHandler.h"
 #include "PropertyTableJsonHandler.h"
+#include "SubtreeBufferJsonHandler.h"
+#include "SubtreeBufferViewJsonHandler.h"
 
 #include <Cesium3DTiles/Subtree.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
@@ -37,11 +37,13 @@ protected:
 
 private:
   Cesium3DTiles::Subtree* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<Cesium3DTiles::Buffer, BufferJsonHandler>
-      _buffers;
   CesiumJsonReader::
-      ArrayJsonHandler<Cesium3DTiles::BufferView, BufferViewJsonHandler>
-          _bufferViews;
+      ArrayJsonHandler<Cesium3DTiles::SubtreeBuffer, SubtreeBufferJsonHandler>
+          _buffers;
+  CesiumJsonReader::ArrayJsonHandler<
+      Cesium3DTiles::SubtreeBufferView,
+      SubtreeBufferViewJsonHandler>
+      _bufferViews;
   CesiumJsonReader::
       ArrayJsonHandler<Cesium3DTiles::PropertyTable, PropertyTableJsonHandler>
           _propertyTables;

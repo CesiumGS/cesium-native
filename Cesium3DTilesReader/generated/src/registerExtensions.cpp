@@ -7,6 +7,7 @@
 #include "Extension3dTilesContentGltfLegacyJsonHandler.h"
 #include "Extension3dTilesImplicitTilingLegacyJsonHandler.h"
 #include "Extension3dTilesMultipleContentsLegacyJsonHandler.h"
+#include "ExtensionContent3dTilesContentVoxelsJsonHandler.h"
 #include "ExtensionContent3dTilesMetadataLegacyJsonHandler.h"
 #include "ExtensionSubtree3dTilesMetadataLegacyJsonHandler.h"
 #include "ExtensionSubtree3dTilesMultipleContentsLegacyJsonHandler.h"
@@ -36,6 +37,9 @@ void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
   context.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesMetadataLegacyJsonHandler>();
+  context.registerExtension<
+      Cesium3DTiles::Content,
+      ExtensionContent3dTilesContentVoxelsJsonHandler>();
   context.registerExtension<
       Cesium3DTiles::Tile,
       ExtensionTile3dTilesMetadataLegacyJsonHandler>();

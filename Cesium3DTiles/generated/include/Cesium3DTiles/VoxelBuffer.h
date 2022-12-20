@@ -12,18 +12,19 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief A buffer is a binary blob. It is either the binary chunk of the
- * subtree file, or an external buffer referenced by a URI.
+ * @brief A buffer is a binary blob. It is either the binary chunk of the voxel
+ * file, or an external buffer referenced by a URI.
  */
-struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "Buffer";
+struct CESIUM3DTILES_API VoxelBuffer final
+    : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* TypeName = "VoxelBuffer";
 
   /**
    * @brief The URI (or IRI) of the external schema file. Relative paths are
    * relative to the file containing the buffer JSON. `uri` is required when
-   * using the JSON subtree format and not required when using the binary
-   * subtree format - when omitted the buffer refers to the binary chunk of the
-   * subtree file. Data URIs are not allowed.
+   * using the JSON voxel format and not required when using the binary voxel
+   * format - when omitted the buffer refers to the binary chunk of the voxel
+   * file. Data URIs are not allowed.
    */
   std::optional<std::string> uri;
 

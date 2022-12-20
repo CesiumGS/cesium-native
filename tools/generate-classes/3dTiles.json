@@ -90,6 +90,15 @@
     },
     "3DTILES_multiple_contents extension for 3DTILES_implicit_tiling subtree legacy": {
       "overrideName": "ExtensionSubtree3dTilesMultipleContentsLegacy"
+    },
+    "Buffer": {
+      "overrideName": "SubtreeBuffer"
+    },
+    "Buffer View": {
+      "overrideName": "SubtreeBufferView"
+    },
+    "3DTILES_content_voxels content extension": {
+      "overrideName": "ExtensionContent3dTilesContentVoxels"
     }
   },
   "extensions": [
@@ -130,6 +139,10 @@
       "extensionName": "3DTILES_multiple_contents",
       "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_multiple_contents/schema/3DTILES_implicit_tiling/subtree.3DTILES_multiple_contents.schema.json",
       "attachTo": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-legacy/extensions/3DTILES_implicit_tiling/schema/subtree/subtree.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_content_voxels",
+      "schema": "3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
     }
   ]
 }

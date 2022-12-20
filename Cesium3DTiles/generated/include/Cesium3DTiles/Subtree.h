@@ -3,11 +3,11 @@
 #pragma once
 
 #include "Cesium3DTiles/Availability.h"
-#include "Cesium3DTiles/Buffer.h"
-#include "Cesium3DTiles/BufferView.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/MetadataEntity.h"
 #include "Cesium3DTiles/PropertyTable.h"
+#include "Cesium3DTiles/SubtreeBuffer.h"
+#include "Cesium3DTiles/SubtreeBufferView.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
@@ -28,12 +28,12 @@ struct CESIUM3DTILES_API Subtree final
   /**
    * @brief An array of buffers.
    */
-  std::vector<Cesium3DTiles::Buffer> buffers;
+  std::vector<Cesium3DTiles::SubtreeBuffer> buffers;
 
   /**
    * @brief An array of buffer views.
    */
-  std::vector<Cesium3DTiles::BufferView> bufferViews;
+  std::vector<Cesium3DTiles::SubtreeBufferView> bufferViews;
 
   /**
    * @brief An array of property tables.
