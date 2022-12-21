@@ -34,7 +34,8 @@ public:
       const std::string& name,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
-      const RasterOverlayOptions& overlayOptions = {});
+      const RasterOverlayOptions& overlayOptions = {},
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
   virtual ~IonRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
@@ -50,6 +51,7 @@ public:
 private:
   int64_t _ionAssetID;
   std::string _ionAccessToken;
+  std::string _ionAssetEndpointUrl;
 
   struct AssetEndpointAttribution {
     std::string html;

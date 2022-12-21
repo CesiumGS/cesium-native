@@ -79,11 +79,11 @@ CesiumGeometry::Axis obtainGltfUpAxis(
     return CesiumGeometry::Axis::Y;
   }
 
-  SPDLOG_LOGGER_WARN(
-      pLogger,
-      "The tileset contains a gltfUpAxis property. "
-      "This property is not part of the specification. "
-      "All glTF content should use the Y-axis as the up-axis.");
+  // SPDLOG_LOGGER_WARN(
+  //     pLogger,
+  //     "The tileset contains a gltfUpAxis property. "
+  //     "This property is not part of the specification. "
+  //     "All glTF content should use the Y-axis as the up-axis.");
 
   const rapidjson::Value& gltfUpAxisJson = gltfUpAxisIt->value;
   auto gltfUpAxisString = std::string(gltfUpAxisJson.GetString());
