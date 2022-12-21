@@ -219,8 +219,9 @@ static bool validateCapabilities(
       const int numLayers = static_cast<int>(configLayers.size());
       if (numLayers > layerLimit) {
         char buffer[512];
-        std::sprintf(
+        std::snprintf(
             buffer,
+            512,
             "the number of configured layers (%d) exceeds WMS LayerLimit %d",
             numLayers,
             layerLimit);
