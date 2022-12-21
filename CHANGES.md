@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug that could prevent loading in tilesets that are additively-refined and have external tilesets, such as Cesium OSM Buildings.
+
 ### v0.21.2 - 2022-12-09
 
 ##### Additions :tada:
@@ -15,7 +21,6 @@
 ##### Fixes :wrench:
 
 - Fixed a bug that could cause an assertion failure - and on rare occasions a more serious problem - when creating a tile provider for a `TileMapServiceRasterOverlay` or a `WebMapServiceRasterOverlay`.
-- Fixed a bug that could prevent loading in tilesets that are additively-refined and have external tilesets.
 
 ### v0.21.0 - 2022-11-01
 
