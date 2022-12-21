@@ -1,5 +1,15 @@
 # Change Log
 
+### v0.21.2 - 2022-12-09
+
+##### Additions :tada:
+
+- Added the ability to specify the endpoint URL of the Cesium ion API when constructing an `IonRasterOverlay`.
+
+##### Fixes :wrench:
+
+- Removed the logged warning about the use of the `gltfUpAxis` property in a 3D Tiles tileset.json. While not technically spec-compliant, this property is quite common and we are not going to remove support for it anytime soon.
+
 ### v0.21.1 - 2022-12-02
 
 ##### Fixes :wrench:
