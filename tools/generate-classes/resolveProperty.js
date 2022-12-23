@@ -553,6 +553,10 @@ function resolveEnum(
     requiredEnum: isRequired,
   };
 
+  if (enumType === "string") {
+    result.headers.push("<string>");
+  }
+
   if (readerTypes.length > 0) {
     result.readerType = `${enumName}JsonHandler`;
   } else if (enumType === "integer") {
