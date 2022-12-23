@@ -11,6 +11,7 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace Cesium3DTiles {
