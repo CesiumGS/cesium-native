@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 
 namespace CesiumGltf {
 /**
