@@ -19,6 +19,11 @@ struct CESIUMGEOMETRY_API OctreeTileID {
 
   /**
    * @brief Creates a new instance.
+   */
+  constexpr OctreeTileID() : level(0), x(0), y(0), z(0){};
+
+  /**
+   * @brief Creates a new instance.
    *
    * @param level The level of the node, with 0 being the root.
    * @param x The x-coordinate of the tile.
@@ -31,6 +36,21 @@ struct CESIUMGEOMETRY_API OctreeTileID {
       uint32_t y,
       uint32_t z) noexcept
       : level(level), x(x), y(y), z(z) {}
+
+  /**
+   * @brief Returns `true` if two identifiers are equal.
+   */
+  constexpr bool operator==(const OctreeTileID& other) const noexcept {
+    return this->level == other.level && this->x == other.x &&
+           this->y == other.y && this->z == other.z;
+  }
+
+  /**
+   * @brief Returns `true` if two identifiers are *not* equal.
+   */
+  constexpr bool operator!=(const OctreeTileID& other) const noexcept {
+    return !(*this == other);
+  }
 
   /**
    * @brief The level of this tile ID, with 0 being the root tile.

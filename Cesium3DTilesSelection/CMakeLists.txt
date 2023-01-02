@@ -3,10 +3,10 @@ add_library(Cesium3DTilesSelection "")
 configure_cesium_library(Cesium3DTilesSelection)
 
 cesium_glob_files(CESIUM_3DTILES_SELECTION_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_SELECTION_HEADERS src/*.h src/*.hpp)
-cesium_glob_files(CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS include/Cesium3DTilesSelection/*.h include/Cesium3DTilesSelection/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_HEADERS src/*.h)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS include/Cesium3DTilesSelection/*.h)
 cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_HEADERS test/*.h test/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_HEADERS test/*.h)
 
 set_target_properties(Cesium3DTilesSelection
     PROPERTIES
@@ -34,6 +34,7 @@ target_include_directories(
     SYSTEM PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
+        ${CESIUM_NATIVE_LIBMORTON_INCUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
@@ -52,6 +53,8 @@ target_link_libraries(Cesium3DTilesSelection
     # PRIVATE
         tinyxml2
         uriparser
+        libmorton
+        expected-lite
         ${CESIUM_NATIVE_DRACO_LIBRARY}
 )
 

@@ -1,8 +1,8 @@
 #include "CesiumGltf/MetadataFeatureTableView.h"
 
-#include <cstring>
+#include <catch2/catch.hpp>
 
-#include "catch2/catch.hpp"
+#include <cstring>
 
 using namespace CesiumGltf;
 
@@ -35,14 +35,14 @@ TEST_CASE("Test numeric properties") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "UINT32";
+  testClassProperty.type = ClassProperty::Type::UINT32;
 
   // setup feature table
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
@@ -58,9 +58,9 @@ TEST_CASE("Test numeric properties") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "UINT32");
+  REQUIRE(classProperty->type == ClassProperty::Type::UINT32);
   REQUIRE(classProperty->componentCount == std::nullopt);
-  REQUIRE(classProperty->componentType.isNull());
+  REQUIRE(classProperty->componentType == std::nullopt);
 
   SECTION("Access correct type") {
     MetadataPropertyView<uint32_t> uint32Property =
@@ -152,14 +152,19 @@ TEST_CASE("Test numeric properties") {
         MetadataPropertyViewStatus::InvalidBufferViewOutOfBound);
   }
 
-  SECTION("Buffer view offset is not a multiple of 8") {
-    model.bufferViews[valueBufferViewIndex].byteOffset = 1;
-    MetadataPropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
-    REQUIRE(
-        uint32Property.status() ==
-        MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes);
-  }
+  // Even though the EXT_feature_metadata spec technically compels us to
+  // enforce an 8-byte alignment, we avoid doing so for compatibility with
+  // incorrect glTFs.
+  /*
+    SECTION("Buffer view offset is not a multiple of 8") {
+      model.bufferViews[valueBufferViewIndex].byteOffset = 1;
+      MetadataPropertyView<uint32_t> uint32Property =
+          view.getPropertyView<uint32_t>("TestClassProperty");
+      REQUIRE(
+          uint32Property.status() ==
+          MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes);
+    }
+    */
 
   SECTION("Buffer view length isn't multiple of sizeof(T)") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
@@ -222,14 +227,14 @@ TEST_CASE("Test boolean properties") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "BOOLEAN";
+  testClassProperty.type = ClassProperty::Type::BOOLEAN;
 
   // setup feature table
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
@@ -246,9 +251,9 @@ TEST_CASE("Test boolean properties") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "BOOLEAN");
+  REQUIRE(classProperty->type == ClassProperty::Type::BOOLEAN);
   REQUIRE(classProperty->componentCount == std::nullopt);
-  REQUIRE(classProperty->componentType.isNull());
+  REQUIRE(classProperty->componentType == std::nullopt);
 
   SECTION("Access correct type") {
     MetadataPropertyView<bool> boolProperty =
@@ -330,14 +335,14 @@ TEST_CASE("Test string property") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "STRING";
+  testClassProperty.type = ClassProperty::Type::STRING;
 
   // setup feature table
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
@@ -347,7 +352,7 @@ TEST_CASE("Test string property") {
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.offsetType = "UINT32";
+  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT32;
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.stringOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
@@ -356,9 +361,9 @@ TEST_CASE("Test string property") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "STRING");
+  REQUIRE(classProperty->type == ClassProperty::Type::STRING);
   REQUIRE(classProperty->componentCount == std::nullopt);
-  REQUIRE(classProperty->componentType.isNull());
+  REQUIRE(classProperty->componentType == std::nullopt);
 
   SECTION("Access correct type") {
     MetadataPropertyView<std::string_view> stringProperty =
@@ -370,14 +375,14 @@ TEST_CASE("Test string property") {
   }
 
   SECTION("Wrong offset type") {
-    featureTableProperty.offsetType = "UINT8";
+    featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT8;
     MetadataPropertyView<std::string_view> stringProperty =
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(
         stringProperty.status() ==
         MetadataPropertyViewStatus::InvalidBufferViewSizeNotFitInstanceCount);
 
-    featureTableProperty.offsetType = "UINT64";
+    featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT64;
     stringProperty =
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(
@@ -443,15 +448,15 @@ TEST_CASE("Test fixed numeric array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "ARRAY";
-  testClassProperty.componentType = "UINT32";
+  testClassProperty.type = ClassProperty::Type::ARRAY;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT32;
   testClassProperty.componentCount = 3;
 
   // setup feature table
@@ -471,9 +476,9 @@ TEST_CASE("Test fixed numeric array") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
   REQUIRE(classProperty->componentCount == 3);
-  REQUIRE(classProperty->componentType.getString() == "UINT32");
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT32);
 
   SECTION("Access the right type") {
     MetadataPropertyView<MetadataArrayView<uint32_t>> arrayProperty =
@@ -489,7 +494,7 @@ TEST_CASE("Test fixed numeric array") {
   }
 
   SECTION("Wrong component type") {
-    testClassProperty.componentType = "UINT8";
+    testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
     MetadataPropertyView<MetadataArrayView<uint32_t>> arrayProperty =
         view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(
@@ -585,15 +590,15 @@ TEST_CASE("Test dynamic numeric array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "ARRAY";
-  testClassProperty.componentType = "UINT16";
+  testClassProperty.type = ClassProperty::Type::ARRAY;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT16;
 
   // setup feature table
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
@@ -606,14 +611,14 @@ TEST_CASE("Test dynamic numeric array") {
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.arrayOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
-  featureTableProperty.offsetType = "UINT64";
+  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT64;
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "ARRAY");
-  REQUIRE(classProperty->componentType.getString() == "UINT16");
+  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT16);
 
   SECTION("Access the correct type") {
     MetadataPropertyView<MetadataArrayView<uint16_t>> property =
@@ -686,15 +691,15 @@ TEST_CASE("Test fixed boolean array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "ARRAY";
-  testClassProperty.componentType = "BOOLEAN";
+  testClassProperty.type = ClassProperty::Type::ARRAY;
+  testClassProperty.componentType = ClassProperty::ComponentType::BOOLEAN;
   testClassProperty.componentCount = 3;
 
   // setup feature table
@@ -714,9 +719,10 @@ TEST_CASE("Test fixed boolean array") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
   REQUIRE(classProperty->componentCount == 3);
-  REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
+  REQUIRE(
+      classProperty->componentType == ClassProperty::ComponentType::BOOLEAN);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<bool>> boolProperty =
@@ -817,15 +823,15 @@ TEST_CASE("Test dynamic bool array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "ARRAY";
-  testClassProperty.componentType = "BOOLEAN";
+  testClassProperty.type = ClassProperty::Type::ARRAY;
+  testClassProperty.componentType = ClassProperty::ComponentType::BOOLEAN;
 
   // setup feature table
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
@@ -838,14 +844,15 @@ TEST_CASE("Test dynamic bool array") {
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.arrayOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
-  featureTableProperty.offsetType = "UINT64";
+  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT64;
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "ARRAY");
-  REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
+  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
+  REQUIRE(
+      classProperty->componentType == ClassProperty::ComponentType::BOOLEAN);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<bool>> boolProperty =
@@ -930,15 +937,15 @@ TEST_CASE("Test fixed array of string") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "ARRAY";
-  testClassProperty.componentType = "STRING";
+  testClassProperty.type = ClassProperty::Type::ARRAY;
+  testClassProperty.componentType = ClassProperty::ComponentType::STRING;
   testClassProperty.componentCount = 2;
 
   // setup feature table
@@ -951,7 +958,7 @@ TEST_CASE("Test fixed array of string") {
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.offsetType = "UINT32";
+  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT32;
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.stringOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
@@ -960,9 +967,9 @@ TEST_CASE("Test fixed array of string") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
   REQUIRE(classProperty->componentCount == 2);
-  REQUIRE(classProperty->componentType.getString() == "STRING");
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::STRING);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =
@@ -999,7 +1006,7 @@ TEST_CASE("Test fixed array of string") {
   }
 
   SECTION("Offset type is unknown") {
-    featureTableProperty.offsetType = "INT8";
+    featureTableProperty.offsetType = "NONSENSE";
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =
         view.getPropertyView<MetadataArrayView<std::string_view>>(
             "TestClassProperty");
@@ -1109,15 +1116,15 @@ TEST_CASE("Test dynamic array of string") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
-  testClassProperty.type = "ARRAY";
-  testClassProperty.componentType = "STRING";
+  testClassProperty.type = ClassProperty::Type::ARRAY;
+  testClassProperty.componentType = ClassProperty::ComponentType::STRING;
 
   // setup feature table
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
@@ -1127,7 +1134,7 @@ TEST_CASE("Test dynamic array of string") {
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.offsetType = "UINT32";
+  featureTableProperty.offsetType = FeatureTableProperty::OffsetType::UINT32;
   featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
   featureTableProperty.arrayOffsetBufferView =
       static_cast<int32_t>(offsetBufferViewIndex);
@@ -1138,8 +1145,8 @@ TEST_CASE("Test dynamic array of string") {
   MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(classProperty->type == "ARRAY");
-  REQUIRE(classProperty->componentType.getString() == "STRING");
+  REQUIRE(classProperty->type == ClassProperty::Type::ARRAY);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::STRING);
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =

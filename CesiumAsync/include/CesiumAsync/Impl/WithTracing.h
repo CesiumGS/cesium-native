@@ -5,7 +5,7 @@
 #include <CesiumUtility/Tracing.h>
 
 namespace CesiumAsync {
-namespace Impl {
+namespace CesiumImpl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
@@ -23,7 +23,7 @@ template <typename T> struct WithTracing {
           return std::move(result);
         };
 #else
-    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+    return CesiumImpl::unwrapFuture<Func, T>(std::forward<Func>(f));
 #endif
   }
 
@@ -31,7 +31,7 @@ template <typename T> struct WithTracing {
   static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
-            f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f)),
+            f = CesiumImpl::unwrapFuture<Func, T>(std::forward<Func>(f)),
             CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& result) mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
@@ -40,7 +40,7 @@ template <typename T> struct WithTracing {
       return f(std::move(result));
     };
 #else
-    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+    return CesiumImpl::unwrapFuture<Func, T>(std::forward<Func>(f));
 #endif
   }
 };
@@ -59,7 +59,7 @@ template <typename T> struct WithTracingShared {
       return result;
     };
 #else
-    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+    return CesiumImpl::unwrapSharedFuture<Func, T>(std::forward<Func>(f));
 #endif
   }
 
@@ -67,7 +67,7 @@ template <typename T> struct WithTracingShared {
   static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
-            f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f)),
+            f = CesiumImpl::unwrapSharedFuture<Func, T>(std::forward<Func>(f)),
             CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](const T& result) mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
@@ -76,7 +76,7 @@ template <typename T> struct WithTracingShared {
       return f(result);
     };
 #else
-    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+    return CesiumImpl::unwrapSharedFuture<Func, T>(std::forward<Func>(f));
 #endif
   }
 };
@@ -93,7 +93,7 @@ template <> struct WithTracing<void> {
       }
     };
 #else
-    return Impl::unwrapFuture<Func>(std::forward<Func>(f));
+    return CesiumImpl::unwrapFuture<Func>(std::forward<Func>(f));
 #endif
   }
 
@@ -101,7 +101,7 @@ template <> struct WithTracing<void> {
   static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
-            f = Impl::unwrapFuture<Func>(std::forward<Func>(f)),
+            f = CesiumImpl::unwrapFuture<Func>(std::forward<Func>(f)),
             CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()]() mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
@@ -110,7 +110,7 @@ template <> struct WithTracing<void> {
       return f();
     };
 #else
-    return Impl::unwrapFuture<Func>(std::forward<Func>(f));
+    return CesiumImpl::unwrapFuture<Func>(std::forward<Func>(f));
 #endif
   }
 };
@@ -120,5 +120,5 @@ template <> struct WithTracingShared<void> : public WithTracing<void> {};
 
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

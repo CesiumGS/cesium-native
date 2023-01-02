@@ -1,4 +1,3 @@
-
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
@@ -14,27 +13,42 @@
 #include <memory>
 #include <string>
 
+using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
 void rasterizePolygons(
-    CesiumGltf::ImageCesium& image,
+    LoadedRasterOverlayImage& loaded,
     const CesiumGeospatial::GlobeRectangle& rectangle,
-    const std::vector<CartographicPolygon>& cartographicPolygons) {
+    const glm::dvec2& textureSize,
+    const std::vector<CartographicPolygon>& cartographicPolygons,
+    bool invertSelection) {
+
+  CesiumGltf::ImageCesium& image = loaded.image.emplace();
+
+  std::byte insideColor;
+  std::byte outsideColor;
+
+  if (invertSelection) {
+    insideColor = static_cast<std::byte>(0);
+    outsideColor = static_cast<std::byte>(0xff);
+  } else {
+    insideColor = static_cast<std::byte>(0xff);
+    outsideColor = static_cast<std::byte>(0);
+  }
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
-  if (Cesium3DTilesSelection::Impl::withinPolygons(
+  if (Cesium3DTilesSelection::CesiumImpl::withinPolygons(
           rectangle,
           cartographicPolygons)) {
+    loaded.moreDetailAvailable = false;
     image.width = 1;
     image.height = 1;
     image.channels = 1;
     image.bytesPerChannel = 1;
-    image.pixelData.resize(1);
-
-    image.pixelData[0] = static_cast<std::byte>(0xff);
-
+    image.pixelData.resize(1, insideColor);
     return;
   }
 
@@ -52,12 +66,12 @@ void rasterizePolygons(
 
   // create a 1x1 mask if the rectangle is completely outside all polygons
   if (completelyOutsidePolygons) {
+    loaded.moreDetailAvailable = false;
     image.width = 1;
     image.height = 1;
     image.channels = 1;
     image.bytesPerChannel = 1;
-    image.pixelData.resize(1);
-
+    image.pixelData.resize(1, outsideColor);
     return;
   }
 
@@ -65,11 +79,12 @@ void rasterizePolygons(
   const double rectangleHeight = rectangle.computeHeight();
 
   // create source image
-  image.width = 256;
-  image.height = 256;
+  loaded.moreDetailAvailable = true;
+  image.width = int32_t(glm::round(textureSize.x));
+  image.height = int32_t(glm::round(textureSize.y));
   image.channels = 1;
   image.bytesPerChannel = 1;
-  image.pixelData.resize(65536);
+  image.pixelData.resize(size_t(image.width * image.height), outsideColor);
 
   // TODO: this is naive approach, use line-triangle
   // intersections to rasterize one row at a time
@@ -107,13 +122,17 @@ void rasterizePolygons(
       const glm::dvec2 ca = a - c;
       const glm::dvec2 ca_perp(-ca.y, ca.x);
 
-      for (size_t j = 0; j < 256; ++j) {
+      size_t width = size_t(image.width);
+      size_t height = size_t(image.height);
+
+      for (size_t j = 0; j < height; ++j) {
         const double pixelY =
             rectangle.getSouth() +
-            rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
-        for (size_t i = 0; i < 256; ++i) {
-          const double pixelX =
-              rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / 256.0;
+            rectangleHeight * (1.0 - (double(j) + 0.5) / double(height));
+        for (size_t i = 0; i < width; ++i) {
+          const double pixelX = rectangle.getWest() + rectangleWidth *
+                                                          (double(i) + 0.5) /
+                                                          double(width);
           const glm::dvec2 v(pixelX, pixelY);
 
           const glm::dvec2 av = v - a;
@@ -128,7 +147,7 @@ void rasterizePolygons(
                v_proj_bc_perp >= 0.0) ||
               (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
                v_proj_bc_perp <= 0.0)) {
-            image.pixelData[256 * j + i] = static_cast<std::byte>(0xff);
+            image.pixelData[width * j + i] = insideColor;
           }
         }
       }
@@ -142,42 +161,67 @@ class CESIUM3DTILESSELECTION_API RasterizedPolygonsTileProvider final
 
 private:
   std::vector<CartographicPolygon> _polygons;
+  bool _invertSelection;
 
 public:
   RasterizedPolygonsTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
-      const std::vector<CartographicPolygon>& polygons)
+      const std::vector<CartographicPolygon>& polygons,
+      bool invertSelection)
       : RasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            projection),
-        _polygons(polygons) {}
+            projection,
+            // computeCoverageRectangle(projection, polygons)),
+            projectRectangleSimple(
+                projection,
+                CesiumGeospatial::GlobeRectangle(
+                    -CesiumUtility::Math::OnePi,
+                    -CesiumUtility::Math::PiOverTwo,
+                    CesiumUtility::Math::OnePi,
+                    CesiumUtility::Math::PiOverTwo))),
+        _polygons(polygons),
+        _invertSelection(invertSelection) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
+    // Choose the texture size according to the geometry screen size and raster
+    // SSE, but no larger than the maximum texture size.
+    const RasterOverlayOptions& options = this->getOwner().getOptions();
+    glm::dvec2 textureSize = glm::min(
+        overlayTile.getTargetScreenPixels() / options.maximumScreenSpaceError,
+        glm::dvec2(options.maximumTextureSize));
+
     return this->getAsyncSystem().runInWorkerThread(
         [&polygons = this->_polygons,
+         invertSelection = this->_invertSelection,
          projection = this->getProjection(),
-         rectangle = overlayTile.getRectangle()]() -> LoadedRasterOverlayImage {
+         rectangle = overlayTile.getRectangle(),
+         textureSize]() -> LoadedRasterOverlayImage {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
-          LoadedRasterOverlayImage resultImage;
-          resultImage.rectangle = rectangle;
-          CesiumGltf::ImageCesium image;
-          rasterizePolygons(image, tileRectangle, polygons);
-          resultImage.image = std::move(image);
-          return resultImage;
+          LoadedRasterOverlayImage result;
+          result.rectangle = rectangle;
+
+          rasterizePolygons(
+              result,
+              tileRectangle,
+              textureSize,
+              polygons,
+              invertSelection);
+
+          return result;
         });
   }
 };
@@ -185,36 +229,40 @@ public:
 RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     const std::string& name,
     const std::vector<CartographicPolygon>& polygons,
+    bool invertSelection,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const CesiumGeospatial::Projection& projection)
-    : RasterOverlay(name),
+    const CesiumGeospatial::Projection& projection,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
       _polygons(polygons),
+      _invertSelection(invertSelection),
       _ellipsoid(ellipsoid),
       _projection(projection) {}
 
 RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() {}
 
-CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
+CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 RasterizedPolygonsOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
 
   pOwner = pOwner ? pOwner : this;
 
-  return asyncSystem.createResolvedFuture(
-      (std::unique_ptr<RasterOverlayTileProvider>)
-          std::make_unique<RasterizedPolygonsTileProvider>(
-              *this,
+  return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
+      IntrusivePointer<RasterOverlayTileProvider>(
+          new RasterizedPolygonsTileProvider(
+              pOwner,
               asyncSystem,
               pAssetAccessor,
               pPrepareRendererResources,
               pLogger,
               this->_projection,
-              this->_polygons));
+              this->_polygons,
+              this->_invertSelection)));
 }
 
 } // namespace Cesium3DTilesSelection

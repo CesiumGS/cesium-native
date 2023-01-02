@@ -1,5 +1,7 @@
 #include "CesiumIonClient/Connection.h"
 
+#include "parseLinkHeader.h"
+
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
@@ -51,9 +53,8 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
 
   return result;
 }
-} // namespace
 
-static std::string createSuccessHtml(const std::string& applicationName) {
+std::string createSuccessHtml(const std::string& applicationName) {
   return std::string("<html>") +
          "<h2 style=\"text-align: center;\">Successfully "
          "authorized!</h2><br/>" +
@@ -62,7 +63,7 @@ static std::string createSuccessHtml(const std::string& applicationName) {
          applicationName + ".</div>" + "<html>";
 }
 
-static std::string createGenericErrorHtml(
+std::string createGenericErrorHtml(
     const std::string& applicationName,
     const std::string& errorMessage,
     const std::string& errorDescription) {
@@ -74,7 +75,7 @@ static std::string createGenericErrorHtml(
          applicationName + " to try again.</div>" + "<html>";
 }
 
-static std::string createAuthorizationErrorHtml(
+std::string createAuthorizationErrorHtml(
     const std::string& applicationName,
     const std::exception& exception) {
   return std::string("<html>") +
@@ -90,6 +91,8 @@ static std::string createAuthorizationErrorHtml(
          "href=\"mailto:support@cesium.com\">support@cesium.com</a>.</div>" +
          "<html>";
 }
+
+} // namespace
 
 /*static*/ CesiumAsync::Future<Connection> Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -137,11 +140,8 @@ static std::string createAuthorizationErrorHtml(
   authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge_method", "S256");
   authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge", hashedChallenge);
 
-  // TODO: state and code_challenge
-
   pServer->Get(
-      redirectPath.c_str(),
-      redirectPath.size(),
+      redirectPath,
       [promise,
        pServer,
        asyncSystem,
@@ -242,29 +242,25 @@ Connection::Connection(
       _accessToken(accessToken),
       _apiUrl(apiUrl) {}
 
-template <typename T> static Response<T> createEmptyResponse() {
-  return Response<T>{
-      std::nullopt,
-      0,
-      "NoResponse",
-      "The server did not return a response."};
+namespace {
+
+template <typename T> Response<T> createEmptyResponse() {
+  return Response<T>{0, "NoResponse", "The server did not return a response."};
 }
 
 template <typename T>
-static Response<T> createErrorResponse(const IAssetResponse* pResponse) {
+Response<T> createErrorResponse(const IAssetResponse* pResponse) {
   return Response<T>{
-      std::nullopt,
       pResponse->statusCode(),
       std::to_string(pResponse->statusCode()),
       "Received response code " + std::to_string(pResponse->statusCode())};
 }
 
 template <typename T>
-static Response<T> createJsonErrorResponse(
+Response<T> createJsonErrorResponse(
     const IAssetResponse* pResponse,
     const rapidjson::Document& d) {
   return Response<T>{
-      std::nullopt,
       pResponse->statusCode(),
       "ParseError",
       std::string("Failed to parse JSON response: ") +
@@ -272,27 +268,34 @@ static Response<T> createJsonErrorResponse(
 }
 
 template <typename T>
-static Response<T> createJsonTypeResponse(
+Response<T> createJsonTypeResponse(
     const IAssetResponse* pResponse,
     const std::string& expectedType) {
   return Response<T>{
-      std::nullopt,
       pResponse->statusCode(),
       "ParseError",
       "Response is not a JSON " + expectedType + "."};
 }
 
-static bool
-parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
+template <typename T> Response<T> createNoMorePagesResponse() {
+  return Response<T>{
+      0,
+      "NoMorePages",
+      "There are no more pages after the current one."};
+}
+
+bool parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
   d.Parse(
       reinterpret_cast<const char*>(pResponse->data().data()),
       pResponse->data().size());
   return !d.HasParseError();
 }
 
+} // namespace
+
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/me"),
           {{"Accept", "application/json"},
@@ -344,14 +347,16 @@ CesiumAsync::Future<Response<Profile>> Connection::me() const {
             }
 
             return Response<Profile>{
-                result,
+                std::move(result),
                 pResponse->statusCode(),
                 std::string(),
                 std::string()};
           });
 }
 
-static Asset jsonToAsset(const rapidjson::Value& item) {
+namespace {
+
+Asset jsonToAsset(const rapidjson::Value& item) {
   Asset result;
   result.id = JsonHelpers::getInt64OrDefault(item, "id", -1);
   result.name = JsonHelpers::getStringOrDefault(item, "name", "");
@@ -366,9 +371,11 @@ static Asset jsonToAsset(const rapidjson::Value& item) {
   return result;
 }
 
+} // namespace
+
 CesiumAsync::Future<Response<Assets>> Connection::assets() const {
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets"),
           {{"Accept", "application/json"},
@@ -409,78 +416,93 @@ CesiumAsync::Future<Response<Assets>> Connection::assets() const {
             }
 
             return Response<Assets>{
-                result,
+                std::move(result),
                 pResponse->statusCode(),
                 std::string(),
                 std::string()};
           });
 }
 
-static Token tokenFromJson(const rapidjson::Value& json) {
+namespace {
+
+Token tokenFromJson(const rapidjson::Value& json) {
 
   Token token;
-  token.jti = JsonHelpers::getStringOrDefault(json, "jti", "");
+
+  token.id = JsonHelpers::getStringOrDefault(json, "id", "");
   token.name = JsonHelpers::getStringOrDefault(json, "name", "");
   token.token = JsonHelpers::getStringOrDefault(json, "token", "");
+  token.dateAdded = JsonHelpers::getStringOrDefault(json, "dateAdded", "");
+  token.dateModified =
+      JsonHelpers::getStringOrDefault(json, "dateModified", "");
+  token.dateLastUsed =
+      JsonHelpers::getStringOrDefault(json, "dateLastUsed", "");
   token.isDefault = JsonHelpers::getBoolOrDefault(json, "isDefault", false);
-  token.lastUsed = JsonHelpers::getStringOrDefault(json, "lastUsed", "");
   token.scopes = JsonHelpers::getStrings(json, "scopes");
 
-  const auto assetsIt = json.FindMember("assets");
-  if (assetsIt != json.MemberEnd()) {
-    token.assets = JsonHelpers::getInt64s(json, "assets");
+  auto assetIdsIt = json.FindMember("assetIds");
+  if (assetIdsIt != json.MemberEnd() && !assetIdsIt->value.IsNull()) {
+    token.assetIds = JsonHelpers::getInt64s(json, "assetIds");
   } else {
-    token.assets = std::nullopt;
+    token.assetIds = std::nullopt;
+  }
+
+  auto allowedUrlsIt = json.FindMember("allowedUrls");
+  if (allowedUrlsIt != json.MemberEnd() && !allowedUrlsIt->value.IsNull()) {
+    token.allowedUrls = JsonHelpers::getStrings(json, "allowedUrls");
+  } else {
+    token.allowedUrls = std::nullopt;
   }
 
   return token;
 }
 
-CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
-  return this->_pAssetAccessor
-      ->requestAsset(
-          this->_asyncSystem,
-          CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
-          {{"Accept", "application/json"},
-           {"Authorization", "Bearer " + this->_accessToken}})
-      .thenInMainThread(
-          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              return createEmptyResponse<std::vector<Token>>();
-            }
+TokenList tokenListFromJson(const rapidjson::Value& json) {
+  TokenList result;
 
-            if (pResponse->statusCode() < 200 ||
-                pResponse->statusCode() >= 300) {
-              return createErrorResponse<std::vector<Token>>(pResponse);
-            }
+  const auto itemsIt = json.FindMember("items");
+  if (itemsIt != json.MemberEnd() || !itemsIt->value.IsArray()) {
+    const rapidjson::Value& items = itemsIt->value;
 
-            rapidjson::Document d;
-            if (!parseJsonObject(pResponse, d)) {
-              return createJsonErrorResponse<std::vector<Token>>(pResponse, d);
-            }
-            if (!d.IsArray()) {
-              return createJsonTypeResponse<std::vector<Token>>(
-                  pResponse,
-                  "array");
-            }
+    for (auto it = items.Begin(); it != items.End(); ++it) {
+      std::optional<Token> token = tokenFromJson(*it);
+      if (!token) {
+        continue;
+      }
 
-            std::vector<Token> result;
-            for (auto it = d.Begin(); it != d.End(); ++it) {
-              std::optional<Token> token = tokenFromJson(*it);
-              if (!token) {
-                continue;
-              }
+      result.items.emplace_back(std::move(token.value()));
+    }
+  }
 
-              result.emplace_back(std::move(token.value()));
-            }
+  return result;
+}
 
-            return Response<std::vector<Token>>{
-                result,
-                pResponse->statusCode(),
-                std::string(),
-                std::string()};
-          });
+} // namespace
+
+Future<Response<TokenList>>
+Connection::tokens(const ListTokensOptions& options) const {
+  std::string url = Uri::resolve(this->_apiUrl, "v2/tokens");
+
+  if (options.limit) {
+    url = Uri::addQuery(url, "limit", std::to_string(*options.limit));
+  }
+  if (options.page) {
+    url = Uri::addQuery(url, "page", std::to_string(*options.page));
+  }
+  if (options.search) {
+    url = Uri::addQuery(url, "search", *options.search);
+  }
+  if (options.sortBy) {
+    url = Uri::addQuery(url, "sortBy", *options.sortBy);
+  }
+  if (options.sortOrder) {
+    url = Uri::addQuery(
+        url,
+        "sortOrder",
+        *options.sortOrder == SortOrder::Ascending ? "ASC" : "DESC");
+  }
+
+  return this->tokens(url);
 }
 
 CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
@@ -488,7 +510,7 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
       CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets/");
 
   return this->_pAssetAccessor
-      ->requestAsset(
+      ->get(
           this->_asyncSystem,
           CesiumUtility::Uri::resolve(assetsUrl, std::to_string(assetID)),
           {{"Accept", "application/json"},
@@ -521,41 +543,117 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
           });
 }
 
+CesiumAsync::Future<Response<Token>>
+Connection::token(const std::string& tokenID) const {
+  std::string tokensUrl =
+      CesiumUtility::Uri::resolve(this->_apiUrl, "v2/tokens/");
+
+  return this->_pAssetAccessor
+      ->get(
+          this->_asyncSystem,
+          CesiumUtility::Uri::resolve(tokensUrl, tokenID),
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return createEmptyResponse<Token>();
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<Token>(pResponse);
+            }
+
+            rapidjson::Document d;
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Token>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<Token>(pResponse, "object");
+            }
+
+            return Response<Token>{
+                tokenFromJson(d),
+                pResponse->statusCode(),
+                std::string(),
+                std::string()};
+          });
+}
+
+CesiumAsync::Future<Response<TokenList>>
+Connection::nextPage(const Response<TokenList>& currentPage) const {
+  if (!currentPage.nextPageUrl) {
+    return this->_asyncSystem.createResolvedFuture(
+        createNoMorePagesResponse<TokenList>());
+  }
+
+  return this->tokens(*currentPage.nextPageUrl);
+}
+
+CesiumAsync::Future<Response<TokenList>>
+Connection::previousPage(const Response<TokenList>& currentPage) const {
+  if (!currentPage.previousPageUrl) {
+    return this->_asyncSystem.createResolvedFuture(
+        createNoMorePagesResponse<TokenList>());
+  }
+
+  return this->tokens(*currentPage.previousPageUrl);
+}
+
 CesiumAsync::Future<Response<Token>> Connection::createToken(
     const std::string& name,
     const std::vector<std::string>& scopes,
-    const std::optional<std::vector<int64_t>>& assets) const {
+    const std::optional<std::vector<int64_t>>& assetIds,
+    const std::optional<std::vector<std::string>>& allowedUrls) const {
   rapidjson::StringBuffer tokenBuffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(tokenBuffer);
 
   writer.StartObject();
+
   writer.Key("name");
   writer.String(name.c_str(), rapidjson::SizeType(name.size()));
+
   writer.Key("scopes");
   writer.StartArray();
   for (auto& scope : scopes) {
     writer.String(scope.c_str(), rapidjson::SizeType(scope.size()));
   }
   writer.EndArray();
-  writer.Key("assets");
-  if (assets) {
+
+  writer.Key("assetIds");
+  if (assetIds) {
     writer.StartArray();
-    for (auto asset : assets.value()) {
+    for (auto asset : assetIds.value()) {
       writer.Int64(asset);
     }
     writer.EndArray();
   } else {
     writer.Null();
   }
+
+  writer.Key("allowedUrls");
+  if (allowedUrls) {
+    writer.StartArray();
+    for (auto& allowedUrl : allowedUrls.value()) {
+      writer.String(allowedUrl.c_str(), rapidjson::SizeType(allowedUrl.size()));
+    }
+    writer.EndArray();
+  } else {
+    writer.Null();
+  }
+
   writer.EndObject();
 
   const gsl::span<const std::byte> tokenBytes(
       reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
       tokenBuffer.GetSize());
   return this->_pAssetAccessor
-      ->post(
+      ->request(
           this->_asyncSystem,
-          CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
+          "POST",
+          Uri::resolve(this->_apiUrl, "v2/tokens"),
           {{"Content-Type", "application/json"},
            {"Accept", "application/json"},
            {"Authorization", "Bearer " + this->_accessToken}},
@@ -589,6 +687,139 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
           });
 }
 
+Future<Response<NoValue>> Connection::modifyToken(
+    const std::string& tokenID,
+    const std::string& newName,
+    const std::optional<std::vector<int64_t>>& newAssetIDs,
+    const std::vector<std::string>& newScopes,
+    const std::optional<std::vector<std::string>>& newAllowedUrls) const {
+  std::string url = Uri::resolve(this->_apiUrl, "v2/tokens/");
+  url = Uri::resolve(url, tokenID);
+
+  rapidjson::StringBuffer tokenBuffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(tokenBuffer);
+
+  writer.StartObject();
+
+  writer.Key("name");
+  writer.String(newName.c_str(), rapidjson::SizeType(newName.size()));
+
+  writer.Key("assetIds");
+  if (newAssetIDs) {
+    writer.StartArray();
+    for (auto asset : newAssetIDs.value()) {
+      writer.Int64(asset);
+    }
+    writer.EndArray();
+  } else {
+    writer.Null();
+  }
+
+  writer.Key("scopes");
+  writer.StartArray();
+  for (auto& scope : newScopes) {
+    writer.String(scope.c_str(), rapidjson::SizeType(scope.size()));
+  }
+  writer.EndArray();
+
+  writer.Key("newAllowedUrls");
+  if (newAllowedUrls) {
+    writer.StartArray();
+    for (auto& allowedUrl : newAllowedUrls.value()) {
+      writer.String(allowedUrl.c_str(), rapidjson::SizeType(allowedUrl.size()));
+    }
+    writer.EndArray();
+  } else {
+    writer.Null();
+  }
+
+  writer.EndObject();
+
+  const gsl::span<const std::byte> tokenBytes(
+      reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
+      tokenBuffer.GetSize());
+
+  return this->_pAssetAccessor
+      ->request(
+          this->_asyncSystem,
+          "PATCH",
+          url,
+          {{"Content-Type", "application/json"},
+           {"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}},
+          tokenBytes)
+      .thenInMainThread([](std::shared_ptr<IAssetRequest>&& pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+          return createEmptyResponse<NoValue>();
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+          return createErrorResponse<NoValue>(pResponse);
+        }
+
+        return Response<NoValue>{
+            NoValue(),
+            pResponse->statusCode(),
+            std::string(),
+            std::string()};
+      });
+}
+
+/*static*/ std::optional<std::string>
+Connection::getIdFromToken(const std::string& token) {
+  size_t startPos = token.find(".");
+  if (startPos == std::string::npos || startPos == token.size() - 1) {
+    return std::nullopt;
+  }
+
+  size_t endPos = token.find(".", startPos + 1);
+  if (endPos == std::string::npos) {
+    return std::nullopt;
+  }
+
+  size_t length = endPos - startPos - 1;
+  if (length == 0) {
+    return std::nullopt;
+  }
+
+  std::string encoded(
+      token.begin() + std::string::difference_type(startPos + 1),
+      token.begin() + std::string::difference_type(endPos));
+
+  // Add base64 padding, as required by modp_b64_decode.
+  size_t remainder = encoded.size() % 4;
+  if (remainder != 0) {
+    encoded.resize(encoded.size() + 4 - remainder, '=');
+  }
+
+  std::string decoded(modp_b64_decode_len(length), '\0');
+  size_t decodedLength =
+      modp_b64_decode(decoded.data(), encoded.data(), encoded.size());
+  if (decodedLength == 0 || decodedLength == std::string::npos) {
+    return std::nullopt;
+  }
+
+  decoded.resize(decodedLength);
+
+  rapidjson::Document document;
+  document.Parse(decoded.data(), decoded.size());
+  if (document.HasParseError()) {
+    return std::nullopt;
+  }
+
+  auto jtiIt = document.FindMember("jti");
+  if (jtiIt == document.MemberEnd()) {
+    return std::nullopt;
+  }
+
+  if (!jtiIt->value.IsString()) {
+    return std::nullopt;
+  }
+
+  return jtiIt->value.GetString();
+}
+
 /*static*/ CesiumAsync::Future<Connection> Connection::completeTokenExchange(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
@@ -618,8 +849,9 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
       postBuffer.GetSize());
 
   return pAssetAccessor
-      ->post(
+      ->request(
           asyncSystem,
+          "POST",
           Uri::resolve(ionApiUrl, "oauth/token"),
           {{"Content-Type", "application/json"},
            {"Accept", "application/json"}},
@@ -656,4 +888,36 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
 
         return Connection(asyncSystem, pAssetAccessor, accessToken, ionApiUrl);
       });
+}
+
+CesiumAsync::Future<Response<TokenList>>
+Connection::tokens(const std::string& url) const {
+  return this->_pAssetAccessor
+      ->get(
+          this->_asyncSystem,
+          url,
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return createEmptyResponse<TokenList>();
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<TokenList>(pResponse);
+            }
+
+            rapidjson::Document d;
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<TokenList>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<TokenList>(pResponse, "object");
+            }
+
+            return Response<TokenList>(pRequest, tokenListFromJson(d));
+          });
 }

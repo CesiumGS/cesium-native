@@ -8,6 +8,8 @@
 
 using namespace CesiumAsync;
 
+namespace {
+
 class MockTaskProcessor : public ITaskProcessor {
 public:
   std::atomic<int32_t> tasksStarted = 0;
@@ -17,6 +19,8 @@ public:
     std::thread(f).detach();
   }
 };
+
+} // namespace
 
 TEST_CASE("AsyncSystem") {
   std::shared_ptr<MockTaskProcessor> pTaskProcessor =
@@ -524,5 +528,15 @@ TEST_CASE("AsyncSystem") {
     CHECK(!future.isReady());
     promise.resolve(4);
     CHECK(future.isReady());
+  }
+
+  SECTION("SharedFuture may resolve to void") {
+    auto promise = asyncSystem.createPromise<void>();
+    auto future = promise.getFuture().share();
+
+    CHECK(!future.isReady());
+    promise.resolve();
+    CHECK(future.isReady());
+    future.wait();
   }
 }

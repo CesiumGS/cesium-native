@@ -80,3 +80,42 @@ TEST_CASE("Test wrong credit handling") {
 
   REQUIRE(creditSystemB.getHtml(creditA1) != html1);
 }
+
+TEST_CASE("Test sorting credits by frequency") {
+
+  CreditSystem creditSystem;
+
+  std::string html0 = "<html>Credit0</html>";
+  std::string html1 = "<html>Credit1</html>";
+  std::string html2 = "<html>Credit2</html>";
+
+  Credit credit0 = creditSystem.createCredit(html0);
+  Credit credit1 = creditSystem.createCredit(html1);
+  Credit credit2 = creditSystem.createCredit(html2);
+
+  REQUIRE(creditSystem.getHtml(credit1) == html1);
+
+  for (int i = 0; i < 3; i++) {
+    creditSystem.addCreditToFrame(credit0);
+  }
+  for (int i = 0; i < 2; i++) {
+    creditSystem.addCreditToFrame(credit1);
+  }
+  creditSystem.addCreditToFrame(credit2);
+
+  std::vector<Credit> expectedShow0{credit0, credit1, credit2};
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow0);
+
+  creditSystem.startNextFrame();
+
+  for (int i = 0; i < 3; i++) {
+    creditSystem.addCreditToFrame(credit2);
+  }
+  for (int i = 0; i < 2; i++) {
+    creditSystem.addCreditToFrame(credit1);
+  }
+  creditSystem.addCreditToFrame(credit0);
+
+  std::vector<Credit> expectedShow1{credit2, credit1, credit0};
+  REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow1);
+}

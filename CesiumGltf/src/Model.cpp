@@ -1,7 +1,7 @@
 #include "CesiumGltf/Model.h"
 
 #include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/KHR_draco_mesh_compression.h"
+#include "CesiumGltf/ExtensionKhrDracoMeshCompression.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
@@ -10,8 +10,7 @@
 
 #include <algorithm>
 
-using namespace CesiumGltf;
-
+namespace CesiumGltf {
 namespace {
 template <typename T>
 size_t copyElements(std::vector<T>& to, std::vector<T>& from) {
@@ -118,8 +117,8 @@ void Model::merge(Model&& rhs) {
         }
       }
 
-      KHR_draco_mesh_compression* pDraco =
-          primitive.getExtension<KHR_draco_mesh_compression>();
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
       if (pDraco) {
         updateIndex(pDraco->bufferView, firstBufferView);
       }
@@ -431,13 +430,13 @@ void addTriangleNormalToVertexNormals(
 
 template <typename TIndex, typename GetIndex>
 bool accumulateNormals(
-    MeshPrimitive::Mode mode,
+    int32_t meshPrimitiveMode,
     const gsl::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     int64_t numIndices,
     GetIndex getIndex) {
 
-  switch (mode) {
+  switch (meshPrimitiveMode) {
   case MeshPrimitive::Mode::TRIANGLES:
     for (int64_t i = 2; i < numIndices; i += 3) {
       TIndex index0 = getIndex(i - 2);
@@ -665,3 +664,4 @@ void Model::generateMissingNormalsSmooth() {
         }
       });
 }
+} // namespace CesiumGltf

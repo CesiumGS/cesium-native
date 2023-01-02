@@ -100,6 +100,7 @@ public:
    * the supported cultures.
    * @param ellipsoid The ellipsoid. Default value:
    * {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   BingMapsRasterOverlay(
       const std::string& name,
@@ -108,18 +109,19 @@ public:
       const std::string& mapStyle = BingMapsStyle::AERIAL,
       const std::string& culture = "",
       const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84);
+          CesiumGeospatial::Ellipsoid::WGS84,
+      const RasterOverlayOptions& overlayOptions = {});
   virtual ~BingMapsRasterOverlay() override;
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override;
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const override;
 
 private:
   static const std::string BING_LOGO_HTML;

@@ -1,0 +1,29 @@
+{
+  "classes": {
+    "Root Property": {
+      "overrideName": "CesiumUtility::ExtensibleObject",
+      "manuallyDefined": true
+    },
+    "Any Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "Numeric Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "No Data Value": {
+      "overrideName": "CesiumUtility::JsonValue"
+    },
+    "3DTILES_bounding_volume_S2 extension": {
+      "overrideName": "Extension3dTilesBoundingVolumeS2"
+    },
+    "Metadata Entity": {
+      "isBaseClass": true
+    }
+  },
+  "extensions": [
+    {
+      "extensionName": "3DTILES_bounding_volume_S2",
+      "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    }
+  ]
+}

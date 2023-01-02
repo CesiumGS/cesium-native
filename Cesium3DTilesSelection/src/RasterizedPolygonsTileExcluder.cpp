@@ -7,12 +7,19 @@
 using namespace Cesium3DTilesSelection;
 
 RasterizedPolygonsTileExcluder::RasterizedPolygonsTileExcluder(
-    const RasterizedPolygonsOverlay& overlay) noexcept
-    : _pOverlay(&overlay) {}
+    const CesiumUtility::IntrusivePointer<const RasterizedPolygonsOverlay>&
+        pOverlay) noexcept
+    : _pOverlay(pOverlay) {}
 
 bool RasterizedPolygonsTileExcluder::shouldExclude(
     const Tile& tile) const noexcept {
-  return Cesium3DTilesSelection::Impl::withinPolygons(
-      tile.getBoundingVolume(),
-      this->_pOverlay->getPolygons());
+  if (this->_pOverlay->getInvertSelection()) {
+    return Cesium3DTilesSelection::CesiumImpl::outsidePolygons(
+        tile.getBoundingVolume(),
+        this->_pOverlay->getPolygons());
+  } else {
+    return Cesium3DTilesSelection::CesiumImpl::withinPolygons(
+        tile.getBoundingVolume(),
+        this->_pOverlay->getPolygons());
+  }
 }

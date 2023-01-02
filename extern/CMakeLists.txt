@@ -4,6 +4,31 @@ add_subdirectory(Catch2)
 
 add_subdirectory(GSL)
 
+option(KTX_FEATURE_STATIC_LIBRARY "" on)
+option(KTX_FEATURE_TESTS "" off)
+
+# cesium-native uses std::variant features that require iOS 12+. Don't let KTX force
+# our build to use iOS 11, because it won't work.
+if(IOS)
+  set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0" CACHE STRING "iOS Deployment Target")
+endif()
+
+add_subdirectory(KTX-Software)
+
+option(WEBP_BUILD_ANIM_UTILS "" off)
+option(WEBP_BUILD_CWEBP "" off)
+option(WEBP_BUILD_DWEBP "" off)
+option(WEBP_BUILD_EXTRAS "" off)
+option(WEBP_BUILD_GIF2WEBP "" off)
+option(WEBP_BUILD_IMG2WEBP "" off)
+option(WEBP_BUILD_LIBWEBPMUX "" off)
+option(WEBP_BUILD_VWEBP "" off)
+option(WEBP_BUILD_WEBPINFO "" off)
+option(WEBP_BUILD_WEBPMUX "" off)
+option(WEBP_NEAR_LOSSLESS "" off)
+option(WEBP_UNICODE "" off)
+add_subdirectory(libwebp)
+
 option(URIPARSER_BUILD_TESTS "" off)
 option(URIPARSER_BUILD_DOCS "" off)
 option(URIPARSER_ENABLE_INSTALL "" on)
@@ -39,12 +64,43 @@ endif()
 
 add_subdirectory(modp_b64)
 
+add_subdirectory(expected-lite)
+
+# s2geometry's CMake requires OpenSSL, even though it's not needed for any of
+# the functionality we actually use. So a simple library with enough functionality
+# for our needs is defined here.
+add_library(
+  s2geometry
+  s2geometry/src/s2/s2cell_id.cc
+  s2geometry/src/s2/r2rect.cc
+  s2geometry/src/s2/s2coords.cc
+  s2geometry/src/s2/util/bits/bits.cc
+  s2geometry/src/s2/util/coding/coder.cc
+  s2geometry/src/s2/s2latlng.cc
+  s2geometry/src/s2/third_party/absl/strings/numbers.cc
+  s2geometry/src/s2/third_party/absl/strings/str_cat.cc
+  s2geometry/src/s2/s1angle.cc
+  s2geometry/src/s2/base/stringprintf.cc
+  s2geometry/src/s2/third_party/absl/base/internal/raw_logging.cc
+  s2geometry/src/s2/third_party/absl/strings/internal/memutil.cc
+  s2geometry/src/s2/third_party/absl/strings/ascii.cc
+  s2geometry/src/s2/third_party/absl/base/internal/throw_delegate.cc
+  s2geometry/src/s2/s1interval.cc
+)
+set_target_properties(s2geometry PROPERTIES
+  CXX_STANDARD 11
+  CXX_STANDARD_REQUIRED YES
+)
+target_include_directories(s2geometry SYSTEM PUBLIC s2geometry/src)
+if (MSVC)
+  target_compile_options(s2geometry PRIVATE "/J" "/wd4127" "/wd4996")
+  target_compile_definitions(s2geometry PRIVATE NOMINMAX _USE_MATH_DEFINES)
+endif()
+
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
 set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
 set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "Don't use OpenSSL")
 add_subdirectory(cpp-httplib)
-
-add_subdirectory(magic_enum)
 
 # CSPRNG's CMake setup is old school, and it really only has one source
 # file, so set up a library manually here.
@@ -88,3 +144,9 @@ set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE
 set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
 )
+
+set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/include" CACHE INTERNAL
+    "Include directory for libmorton libraries"
+)
+set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
+add_subdirectory(libmorton)

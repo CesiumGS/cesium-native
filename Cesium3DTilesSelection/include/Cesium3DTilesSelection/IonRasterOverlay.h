@@ -28,26 +28,55 @@ public:
    * @param name The user-given name of this overlay layer.
    * @param ionAssetID The asset ID.
    * @param ionAccessToken The access token.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   IonRasterOverlay(
       const std::string& name,
-      uint32_t ionAssetID,
-      const std::string& ionAccessToken);
+      int64_t ionAssetID,
+      const std::string& ionAccessToken,
+      const RasterOverlayOptions& overlayOptions = {});
   virtual ~IonRasterOverlay() override;
 
-  virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
-  createTileProvider(
+  virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      RasterOverlay* pOwner) override;
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const override;
 
 private:
-  uint32_t _ionAssetID;
+  int64_t _ionAssetID;
   std::string _ionAccessToken;
+
+  struct AssetEndpointAttribution {
+    std::string html;
+    bool collapsible = true;
+  };
+
+  struct ExternalAssetEndpoint {
+    std::string externalType;
+    std::string url;
+    std::string mapStyle;
+    std::string key;
+    std::string culture;
+    std::string accessToken;
+    std::vector<AssetEndpointAttribution> attributions;
+  };
+
+  static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;
+
+  CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
+      const ExternalAssetEndpoint& endpoint,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
 };
 
 } // namespace Cesium3DTilesSelection

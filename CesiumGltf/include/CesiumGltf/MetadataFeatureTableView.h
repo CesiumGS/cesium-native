@@ -1,9 +1,9 @@
 #pragma once
 
-#include "MetadataPropertyView.h"
-#include "Model.h"
-#include "ModelEXT_feature_metadata.h"
-#include "PropertyType.h"
+#include "CesiumGltf/ExtensionModelExtFeatureMetadata.h"
+#include "CesiumGltf/MetadataPropertyView.h"
+#include "CesiumGltf/Model.h"
+#include "CesiumGltf/PropertyType.h"
 
 #include <glm/common.hpp>
 
@@ -93,9 +93,9 @@ public:
 
     PropertyType type = convertStringToPropertyType(pClassProperty->type);
     PropertyType componentType = PropertyType::None;
-    if (pClassProperty->componentType.isString()) {
-      componentType = convertStringToPropertyType(
-          pClassProperty->componentType.getString());
+    if (pClassProperty->componentType.has_value()) {
+      componentType =
+          convertStringToPropertyType(pClassProperty->componentType.value());
     }
 
     if (type != PropertyType::Array) {
@@ -108,7 +108,7 @@ public:
       getArrayPropertyViewImpl(
           propertyName,
           *pClassProperty,
-          type,
+          componentType,
           std::forward<Callback>(callback));
     }
   }
@@ -384,7 +384,8 @@ private:
         gsl::span<const std::byte>(),
         PropertyType::None,
         0,
-        _pFeatureTable->count);
+        _pFeatureTable->count,
+        classProperty.normalized);
   }
 
   MetadataPropertyView<std::string_view> getStringPropertyValues(
@@ -395,18 +396,18 @@ private:
   MetadataPropertyView<MetadataArrayView<T>> getPrimitiveArrayPropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    if (classProperty.type != "ARRAY") {
+    if (classProperty.type != ClassProperty::Type::ARRAY) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
-    if (!classProperty.componentType.isString()) {
+    if (!classProperty.componentType.has_value()) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
     const PropertyType componentType =
-        convertStringToPropertyType(classProperty.componentType.getString());
+        convertStringToPropertyType(classProperty.componentType.value());
     if (TypeToPropertyType<T>::value != componentType) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
@@ -461,7 +462,8 @@ private:
           gsl::span<const std::byte>(),
           PropertyType::None,
           static_cast<size_t>(componentCount),
-          static_cast<size_t>(_pFeatureTable->count));
+          static_cast<size_t>(_pFeatureTable->count),
+          classProperty.normalized);
     }
 
     // dynamic array
@@ -492,7 +494,8 @@ private:
         gsl::span<const std::byte>(),
         offsetType,
         0,
-        static_cast<size_t>(_pFeatureTable->count));
+        static_cast<size_t>(_pFeatureTable->count),
+        classProperty.normalized);
   }
 
   MetadataPropertyView<MetadataArrayView<std::string_view>>
@@ -522,7 +525,8 @@ private:
         gsl::span<const std::byte>(),
         PropertyType::None,
         0,
-        0);
+        0,
+        false);
   }
 
   const Model* _pModel;

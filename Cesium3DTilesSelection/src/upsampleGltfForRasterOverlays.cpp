@@ -6,11 +6,14 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
+#include <vector>
 
 using namespace CesiumGltf;
 
@@ -27,12 +30,13 @@ struct EdgeIndices {
   std::vector<EdgeVertex> north;
 };
 
-static void upsamplePrimitiveForRasterOverlays(
+static bool upsamplePrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
     Mesh& mesh,
     MeshPrimitive& primitive,
-    CesiumGeometry::UpsampledQuadtreeNode childID);
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex);
 
 struct FloatVertexAttribute {
   const std::vector<std::byte>& buffer;
@@ -95,9 +99,12 @@ isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.y % 2) == 0;
 }
 
-Model upsampleGltfForRasterOverlays(
+static void copyMetadataTables(const Model& parentModel, Model& result);
+
+std::optional<Model> upsampleGltfForRasterOverlays(
     const Model& parentModel,
-    CesiumGeometry::UpsampledQuadtreeNode childID) {
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsampleGltfForRasterOverlays");
   Model result;
 
@@ -118,9 +125,14 @@ Model upsampleGltfForRasterOverlays(
   result.extensionsRequired = parentModel.extensionsRequired;
   result.asset = parentModel.asset;
   result.extras = parentModel.extras;
-  // result.extensions = parentModel.extensions;
+
+  // TODO: check if this is enough, not enough, or overkill
+  result.extensions = parentModel.extensions;
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
+
+  // Copy EXT_feature_metadata feature table buffer views and unique buffers.
+  copyMetadataTables(parentModel, result);
 
   // If the glTF has a name, update it with upsample info.
   auto nameIt = result.extras.find("Cesium3DTiles_TileUrl");
@@ -136,18 +148,32 @@ Model upsampleGltfForRasterOverlays(
     nameIt->second = name;
   }
 
+  bool containsPrimitives = false;
+
   for (Mesh& mesh : result.meshes) {
-    for (MeshPrimitive& primitive : mesh.primitives) {
-      upsamplePrimitiveForRasterOverlays(
+    for (size_t i = 0; i < mesh.primitives.size(); ++i) {
+      MeshPrimitive& primitive = mesh.primitives[i];
+
+      bool keep = upsamplePrimitiveForRasterOverlays(
           parentModel,
           result,
           mesh,
           primitive,
-          childID);
+          childID,
+          textureCoordinateIndex);
+
+      // We're assuming here that nothing references primitives by index, so we
+      // can remove them without any drama.
+      if (!keep) {
+        mesh.primitives.erase(mesh.primitives.begin() + int64_t(i));
+        --i;
+      }
+      containsPrimitives |= !mesh.primitives.empty();
     }
   }
 
-  return result;
+  return containsPrimitives ? std::make_optional<Model>(std::move(result))
+                            : std::nullopt;
 }
 
 static void copyVertexAttributes(
@@ -360,12 +386,13 @@ static T getVertexValue(
 }
 
 template <class TIndex>
-static void upsamplePrimitiveForRasterOverlays(
+static bool upsamplePrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
-    CesiumGeometry::UpsampledQuadtreeNode childID) {
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
 
   // Add up the per-vertex size of all attributes and create buffers,
@@ -399,12 +426,16 @@ static void upsamplePrimitiveForRasterOverlays(
 
   std::vector<std::string> toRemove;
 
+  std::string textureCoordinateName =
+      "_CESIUMOVERLAY_" + std::to_string(textureCoordinateIndex);
+
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
     if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
       if (uvAccessorIndex == -1) {
-        uvAccessorIndex = attribute.second;
+        if (attribute.first == textureCoordinateName) {
+          uvAccessorIndex = attribute.second;
+        }
       }
-
       // Do not include _CESIUMOVERLAY_*, it will be generated later.
       toRemove.push_back(attribute.first);
       continue;
@@ -441,13 +472,14 @@ static void upsamplePrimitiveForRasterOverlays(
         accessor.computeNumberOfComponents();
     if (accessor.componentType != Accessor::ComponentType::FLOAT) {
       // Can only interpolate floating point vertex attributes
-      return;
+      toRemove.push_back(attribute.first);
+      continue;
     }
 
     attribute.second = static_cast<int>(model.accessors.size());
     model.accessors.emplace_back();
     Accessor& newAccessor = model.accessors.back();
-    newAccessor.bufferView = static_cast<int>(vertexBufferIndex);
+    newAccessor.bufferView = static_cast<int>(vertexBufferViewIndex);
     newAccessor.byteOffset = vertexSizeFloats * int64_t(sizeof(float));
     newAccessor.componentType = Accessor::ComponentType::FLOAT;
     newAccessor.type = accessor.type;
@@ -456,7 +488,7 @@ static void upsamplePrimitiveForRasterOverlays(
 
     attributes.push_back(FloatVertexAttribute{
         buffer.cesium.data,
-        accessor.byteOffset,
+        bufferView.byteOffset + accessor.byteOffset,
         accessorByteStride,
         accessorComponentElements,
         attribute.second,
@@ -475,9 +507,8 @@ static void upsamplePrimitiveForRasterOverlays(
   }
 
   if (uvAccessorIndex == -1) {
-    // We don't know how to divide this primitive, so just copy it verbatim.
-    // TODO
-    return;
+    // We don't know how to divide this primitive, so just remove it.
+    return false;
   }
 
   for (const std::string& attribute : toRemove) {
@@ -492,7 +523,7 @@ static void upsamplePrimitiveForRasterOverlays(
 
   if (uvView.status() != AccessorViewStatus::Valid ||
       indicesView.status() != AccessorViewStatus::Valid) {
-    return;
+    return false;
   }
 
   // check if the primitive has skirts
@@ -634,6 +665,9 @@ static void upsamplePrimitiveForRasterOverlays(
     skirtMeshMetadata->noSkirtIndicesBegin = 0;
     skirtMeshMetadata->noSkirtIndicesCount =
         static_cast<uint32_t>(indices.size());
+    skirtMeshMetadata->noSkirtVerticesBegin = 0;
+    skirtMeshMetadata->noSkirtVerticesCount =
+        uint32_t(newVertexFloats.size() / size_t(vertexSizeFloats));
     skirtMeshMetadata->meshCenter = parentSkirtMeshMetadata->meshCenter;
     addSkirts(
         newVertexFloats,
@@ -645,6 +679,10 @@ static void upsamplePrimitiveForRasterOverlays(
         edgeIndices,
         vertexSizeFloats,
         positionAttributeIndex);
+  }
+
+  if (newVertexFloats.empty() || indices.empty()) {
+    return false;
   }
 
   // Update the accessor vertex counts and min/max values
@@ -744,6 +782,8 @@ static void upsamplePrimitiveForRasterOverlays(
   primitive.extras.emplace("WaterMaskScale", waterMaskScale);
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
+
+  return true;
 }
 
 static uint32_t getOrCreateVertex(
@@ -852,21 +892,21 @@ static void addEdge(
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
             0.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.west.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
             1.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.east.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
             thresholdU,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       if (keepAboveU) {
         edgeIndices.west.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
       } else {
@@ -877,21 +917,21 @@ static void addEdge(
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
             0.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
             1.0,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       edgeIndices.north.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
             thresholdV,
-            CesiumUtility::Math::EPSILON4)) {
+            CesiumUtility::Math::Epsilon4)) {
       if (keepAboveV) {
         edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
       } else {
@@ -932,14 +972,9 @@ static void addSkirt(
         position -= center;
 
         for (uint32_t c = 0; c < 3; ++c) {
-          output.push_back(
-              static_cast<float>(position[static_cast<int32_t>(c)]));
-          attribute.minimums[c] = glm::min(
-              attribute.minimums[c],
-              position[static_cast<int32_t>(c)]);
-          attribute.maximums[c] = glm::max(
-              attribute.maximums[c],
-              position[static_cast<int32_t>(c)]);
+          output.push_back(static_cast<float>(position[c]));
+          attribute.minimums[c] = glm::min(attribute.minimums[c], position[c]);
+          attribute.maximums[c] = glm::max(attribute.maximums[c], position[c]);
         }
       } else {
         for (uint32_t c = 0;
@@ -1110,40 +1145,115 @@ static void addSkirts(
       positionAttributeIndex);
 }
 
-static void upsamplePrimitiveForRasterOverlays(
+static bool upsamplePrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
     Mesh& mesh,
     MeshPrimitive& primitive,
-    CesiumGeometry::UpsampledQuadtreeNode childID) {
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    int32_t textureCoordinateIndex) {
   if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
       primitive.indices < 0 ||
       primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
     // Not indexed triangles, so we don't know how to divide this primitive
-    // (yet). So just copy it verbatim.
-    // TODO
-    return;
+    // (yet). So remove it.
+    return false;
   }
 
   const Accessor& indicesAccessorGltf =
       parentModel.accessors[static_cast<size_t>(primitive.indices)];
   if (indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_SHORT) {
-    upsamplePrimitiveForRasterOverlays<uint16_t>(
+    return upsamplePrimitiveForRasterOverlays<uint16_t>(
         parentModel,
         model,
         mesh,
         primitive,
-        childID);
+        childID,
+        textureCoordinateIndex);
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_INT) {
-    upsamplePrimitiveForRasterOverlays<uint32_t>(
+    return upsamplePrimitiveForRasterOverlays<uint32_t>(
         parentModel,
         model,
         mesh,
         primitive,
-        childID);
+        childID,
+        textureCoordinateIndex);
+  }
+
+  return false;
+}
+
+// Copy a buffer view from a parent to a child. Create a new buffer on the
+// child corresponding to the section of the parent buffer specified by the
+// view.
+static int32_t copyBufferView(
+    const Model& parentModel,
+    int32_t parentBufferViewId,
+    Model& result) {
+
+  // Check invalid buffer view.
+  if (parentBufferViewId < 0 || static_cast<size_t>(parentBufferViewId) >=
+                                    parentModel.bufferViews.size()) {
+    return -1;
+  }
+
+  const BufferView& parentBufferView =
+      parentModel.bufferViews[static_cast<size_t>(parentBufferViewId)];
+
+  // Check invalid buffer.
+  if (parentBufferView.buffer < 0 ||
+      static_cast<size_t>(parentBufferView.buffer) >=
+          parentModel.buffers.size()) {
+    // Should we return a valid buffer view with an invalid buffer instead?
+    return -1;
+  }
+
+  const Buffer& parentBuffer =
+      parentModel.buffers[static_cast<size_t>(parentBufferView.buffer)];
+
+  size_t bufferId = result.buffers.size();
+  Buffer& buffer = result.buffers.emplace_back();
+  buffer.byteLength = parentBufferView.byteLength;
+  buffer.cesium.data.resize(static_cast<size_t>(parentBufferView.byteLength));
+  std::memcpy(
+      buffer.cesium.data.data(),
+      &parentBuffer.cesium
+           .data[static_cast<size_t>(parentBufferView.byteOffset)],
+      static_cast<size_t>(parentBufferView.byteLength));
+
+  size_t bufferViewId = result.bufferViews.size();
+  BufferView& bufferView = result.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(bufferId);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = parentBufferView.byteLength;
+  bufferView.byteStride = parentBufferView.byteStride;
+
+  return static_cast<int32_t>(bufferViewId);
+}
+
+// Copy and reconstruct buffer views and buffers from EXT_feature_metadata
+// feature tables.
+static void copyMetadataTables(const Model& parentModel, Model& result) {
+  ExtensionModelExtFeatureMetadata* pMetadata =
+      result.getExtension<ExtensionModelExtFeatureMetadata>();
+  if (pMetadata) {
+    for (auto& featureTablePair : pMetadata->featureTables) {
+      for (auto& propertyPair : featureTablePair.second.properties) {
+        FeatureTableProperty& property = propertyPair.second;
+
+        property.bufferView =
+            copyBufferView(parentModel, property.bufferView, result);
+        property.arrayOffsetBufferView =
+            copyBufferView(parentModel, property.arrayOffsetBufferView, result);
+        property.stringOffsetBufferView = copyBufferView(
+            parentModel,
+            property.stringOffsetBufferView,
+            result);
+      }
+    }
   }
 }
 

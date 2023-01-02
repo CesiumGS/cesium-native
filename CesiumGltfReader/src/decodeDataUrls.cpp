@@ -1,18 +1,20 @@
 #include "decodeDataUrls.h"
 
-#include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/ReaderContext.h"
-#include "CesiumUtility/Tracing.h"
+#include "CesiumGltfReader/GltfReader.h"
+
+#include <CesiumGltf/Model.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <modp_b64.h>
 
 #include <cstddef>
 
+namespace CesiumGltfReader {
+
 namespace {
 
 std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
-  CESIUM_TRACE("CesiumGltf::decodeBase64");
+  CESIUM_TRACE("CesiumGltfReader::decodeBase64");
   std::vector<std::byte> result(modp_b64_decode_len(data.size()));
 
   const size_t resultLength = modp_b64_decode(
@@ -84,20 +86,18 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 }
 } // namespace
 
-namespace CesiumGltf {
-
 void decodeDataUrls(
-    const ReaderContext& context,
-    ModelReaderResult& readModel,
-    bool clearDecodedDataUrls) {
-  CESIUM_TRACE("CesiumGltf::decodeDataUrls");
-  if (!readModel.model) {
+    const GltfReader& reader,
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& options) {
+  CESIUM_TRACE("CesiumGltfReader::decodeDataUrls");
+  if (!readGltf.model) {
     return;
   }
 
-  Model& model = readModel.model.value();
+  CesiumGltf::Model& model = readGltf.model.value();
 
-  for (Buffer& buffer : model.buffers) {
+  for (CesiumGltf::Buffer& buffer : model.buffers) {
     if (!buffer.uri) {
       continue;
     }
@@ -109,12 +109,12 @@ void decodeDataUrls(
 
     buffer.cesium.data = std::move(decoded.value().data);
 
-    if (clearDecodedDataUrls) {
+    if (options.clearDecodedDataUrls) {
       buffer.uri.reset();
     }
   }
 
-  for (Image& image : model.images) {
+  for (CesiumGltf::Image& image : model.images) {
     if (!image.uri) {
       continue;
     }
@@ -125,15 +125,15 @@ void decodeDataUrls(
     }
 
     ImageReaderResult imageResult =
-        context.reader.readImage(decoded.value().data);
+        reader.readImage(decoded.value().data, options.ktx2TranscodeTargets);
     if (imageResult.image) {
       image.cesium = std::move(imageResult.image.value());
     }
 
-    if (clearDecodedDataUrls) {
+    if (options.clearDecodedDataUrls) {
       image.uri.reset();
     }
   }
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumGltfReader

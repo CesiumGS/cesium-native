@@ -1,18 +1,21 @@
-#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltfReader/GltfReader.h"
 
-#include "CesiumGltf/IExtensionJsonHandler.h"
-#include "CesiumGltf/ReaderContext.h"
-#include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/JsonReader.h"
-#include "CesiumUtility/Tracing.h"
-#include "KHR_draco_mesh_compressionJsonHandler.h"
-#include "MeshPrimitiveEXT_feature_metadataJsonHandler.h"
-#include "ModelEXT_feature_metadataJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
+#include "registerExtensions.h"
 
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumJsonReader/ExtensionReaderContext.h>
+#include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/Uri.h>
+
+#include <ktx.h>
 #include <rapidjson/reader.h>
+#include <webp/decode.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -23,13 +26,15 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
+#include <stb_image_resize.h>
 
+using namespace CesiumAsync;
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
-
 #pragma pack(push, 1)
 struct GlbHeader {
   uint32_t magic;
@@ -51,22 +56,22 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
   return reinterpret_cast<const GlbHeader*>(data.data())->magic == 0x46546C67;
 }
 
-ModelReaderResult readJsonModel(
-    const ReaderContext& context,
+GltfReaderResult readJsonGltf(
+    const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  CESIUM_TRACE("CesiumGltf::ModelReader::readJsonModel");
+  CESIUM_TRACE("CesiumGltfReader::GltfReader::readJsonGltf");
 
   ModelJsonHandler modelHandler(context);
-  ReadJsonResult<Model> jsonResult = JsonReader::readJson(data, modelHandler);
+  CesiumJsonReader::ReadJsonResult<Model> jsonResult =
+      CesiumJsonReader::JsonReader::readJson(data, modelHandler);
 
-  return ModelReaderResult{
+  return GltfReaderResult{
       std::move(jsonResult.value),
       std::move(jsonResult.errors),
       std::move(jsonResult.warnings)};
 }
 
-namespace {
 /**
  * @brief Creates a string representation for the given magic value.
  *
@@ -86,12 +91,11 @@ std::string toMagicString(uint32_t i) {
   stream << c0 << c1 << c2 << c3 << " (0x" << std::hex << i << ")";
   return stream.str();
 }
-} // namespace
 
-ModelReaderResult readBinaryModel(
-    const ReaderContext& context,
+GltfReaderResult readBinaryGltf(
+    const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
-  CESIUM_TRACE("CesiumGltf::ModelReader::readBinaryModel");
+  CESIUM_TRACE("CesiumGltfReader::GltfReader::readBinaryGltf");
 
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
@@ -178,7 +182,7 @@ ModelReaderResult readBinaryModel(
     binaryChunk = glbData.subspan(binaryStart, pBinaryChunkHeader->chunkLength);
   }
 
-  ModelReaderResult result = readJsonModel(context, jsonChunk);
+  GltfReaderResult result = readJsonGltf(context, jsonChunk);
 
   if (result.model && !binaryChunk.empty()) {
     Model& model = result.model.value();
@@ -213,25 +217,30 @@ ModelReaderResult readBinaryModel(
 }
 
 void postprocess(
-    const ReaderContext& context,
-    ModelReaderResult& readModel,
-    const ReadModelOptions& options) {
-  Model& model = readModel.model.value();
+    const GltfReader& reader,
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& options) {
+  Model& model = readGltf.model.value();
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(context, readModel, options.clearDecodedDataUrls);
+    decodeDataUrls(reader, readGltf, options);
   }
 
   if (options.decodeEmbeddedImages) {
-    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
+    CESIUM_TRACE("CesiumGltfReader::decodeEmbeddedImages");
     for (Image& image : model.images) {
+      // Ignore external images for now.
+      if (image.uri) {
+        continue;
+      }
+
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
       const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
 
       if (bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
-        readModel.warnings.emplace_back(
+        readGltf.warnings.emplace_back(
             "Image bufferView's byte offset is " +
             std::to_string(bufferView.byteOffset) + " and the byteLength is " +
             std::to_string(bufferView.byteLength) + ", the result is " +
@@ -245,185 +254,517 @@ void postprocess(
       const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
-      ImageReaderResult imageResult = context.reader.readImage(bufferViewSpan);
+      ImageReaderResult imageResult =
+          GltfReader::readImage(bufferViewSpan, options.ktx2TranscodeTargets);
+      readGltf.warnings.insert(
+          readGltf.warnings.end(),
+          imageResult.warnings.begin(),
+          imageResult.warnings.end());
+      readGltf.errors.insert(
+          readGltf.errors.end(),
+          imageResult.errors.begin(),
+          imageResult.errors.end());
       if (imageResult.image) {
         image.cesium = std::move(imageResult.image.value());
+      } else {
+        if (image.mimeType) {
+          readGltf.errors.emplace_back(
+              "Declared image MIME Type: " + image.mimeType.value());
+        } else {
+          readGltf.errors.emplace_back("Image does not declare a MIME Type");
+        }
       }
     }
   }
 
   if (options.decodeDraco) {
-    decodeDraco(readModel);
+    decodeDraco(readGltf);
   }
 }
-
-class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
-                                public IExtensionJsonHandler {
-public:
-  AnyExtensionJsonHandler(const ReaderContext& /* context */) noexcept
-      : JsonObjectJsonHandler() {}
-
-  virtual void reset(
-      IJsonHandler* pParentHandler,
-      ExtensibleObject& o,
-      const std::string_view& extensionName) override {
-    std::any& value =
-        o.extensions.emplace(extensionName, JsonValue(JsonValue::Object()))
-            .first->second;
-    JsonObjectJsonHandler::reset(
-        pParentHandler,
-        &std::any_cast<JsonValue&>(value));
-  }
-
-  virtual IJsonHandler* readNull() override {
-    return JsonObjectJsonHandler::readNull();
-  };
-  virtual IJsonHandler* readBool(bool b) override {
-    return JsonObjectJsonHandler::readBool(b);
-  }
-  virtual IJsonHandler* readInt32(int32_t i) override {
-    return JsonObjectJsonHandler::readInt32(i);
-  }
-  virtual IJsonHandler* readUint32(uint32_t i) override {
-    return JsonObjectJsonHandler::readUint32(i);
-  }
-  virtual IJsonHandler* readInt64(int64_t i) override {
-    return JsonObjectJsonHandler::readInt64(i);
-  }
-  virtual IJsonHandler* readUint64(uint64_t i) override {
-    return JsonObjectJsonHandler::readUint64(i);
-  }
-  virtual IJsonHandler* readDouble(double d) override {
-    return JsonObjectJsonHandler::readDouble(d);
-  }
-  virtual IJsonHandler* readString(const std::string_view& str) override {
-    return JsonObjectJsonHandler::readString(str);
-  }
-  virtual IJsonHandler* readObjectStart() override {
-    return JsonObjectJsonHandler::readObjectStart();
-  }
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
-    return JsonObjectJsonHandler::readObjectKey(str);
-  }
-  virtual IJsonHandler* readObjectEnd() override {
-    return JsonObjectJsonHandler::readObjectEnd();
-  }
-  virtual IJsonHandler* readArrayStart() override {
-    return JsonObjectJsonHandler::readArrayStart();
-  }
-  virtual IJsonHandler* readArrayEnd() override {
-    return JsonObjectJsonHandler::readArrayEnd();
-  }
-
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context =
-          std::vector<std::string>()) override {
-    JsonObjectJsonHandler::reportWarning(warning, std::move(context));
-  }
-};
 
 } // namespace
 
-GltfReader::GltfReader() {
-  this->registerExtension<
-      MeshPrimitive,
-      KHR_draco_mesh_compressionJsonHandler>();
+GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
 
-  this->registerExtension<Model, ModelEXT_feature_metadataJsonHandler>();
-  this->registerExtension<
-      MeshPrimitive,
-      MeshPrimitiveEXT_feature_metadataJsonHandler>();
+CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
+  return this->_context;
 }
 
-void GltfReader::setExtensionState(
-    const std::string& extensionName,
-    ExtensionState newState) {
-  this->_extensionStates[extensionName] = newState;
+const CesiumJsonReader::ExtensionReaderContext&
+GltfReader::getExtensions() const {
+  return this->_context;
 }
 
-ModelReaderResult GltfReader::readModel(
+GltfReaderResult GltfReader::readGltf(
     const gsl::span<const std::byte>& data,
-    const ReadModelOptions& options) const {
+    const GltfReaderOptions& options) const {
 
-  ReaderContext context{*this};
-  ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(context, data)
-                                                : readJsonModel(context, data);
+  const CesiumJsonReader::ExtensionReaderContext& context =
+      this->getExtensions();
+  GltfReaderResult result = isBinaryGltf(data) ? readBinaryGltf(context, data)
+                                               : readJsonGltf(context, data);
 
   if (result.model) {
-    postprocess(context, result, options);
+    postprocess(*this, result, options);
   }
 
   return result;
 }
 
-ImageReaderResult
-GltfReader::readImage(const gsl::span<const std::byte>& data) const {
-  CESIUM_TRACE("CesiumGltf::readImage");
+/*static*/
+Future<GltfReaderResult> GltfReader::resolveExternalData(
+    AsyncSystem asyncSystem,
+    const std::string& baseUrl,
+    const HttpHeaders& headers,
+    std::shared_ptr<IAssetAccessor> pAssetAccessor,
+    const GltfReaderOptions& options,
+    GltfReaderResult&& result) {
+
+  // TODO: Can we avoid this copy conversion?
+  std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
+
+  if (!result.model) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  // Get a rough count of how many external buffers we may have.
+  // Some of these may be data uris though.
+  size_t uriBuffersCount = 0;
+  for (const Buffer& buffer : result.model->buffers) {
+    if (buffer.uri) {
+      ++uriBuffersCount;
+    }
+  }
+
+  for (const Image& image : result.model->images) {
+    if (image.uri) {
+      ++uriBuffersCount;
+    }
+  }
+
+  if (uriBuffersCount == 0) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  auto pResult = std::make_unique<GltfReaderResult>(std::move(result));
+
+  struct ExternalBufferLoadResult {
+    bool success = false;
+    std::string bufferUri;
+  };
+
+  std::vector<Future<ExternalBufferLoadResult>> resolvedBuffers;
+  resolvedBuffers.reserve(uriBuffersCount);
+
+  // We need to skip data uris.
+  constexpr std::string_view dataPrefix = "data:";
+  constexpr size_t dataPrefixLength = dataPrefix.size();
+
+  for (Buffer& buffer : pResult->model->buffers) {
+    if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
+      resolvedBuffers.push_back(
+          pAssetAccessor
+              ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
+              .thenInWorkerThread(
+                  [pBuffer =
+                       &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
+                    const IAssetResponse* pResponse = pRequest->response();
+
+                    std::string bufferUri = *pBuffer->uri;
+
+                    if (pResponse) {
+                      pBuffer->uri = std::nullopt;
+                      pBuffer->cesium.data = std::vector<std::byte>(
+                          pResponse->data().begin(),
+                          pResponse->data().end());
+                      return ExternalBufferLoadResult{true, bufferUri};
+                    }
+
+                    return ExternalBufferLoadResult{false, bufferUri};
+                  }));
+    }
+  }
+
+  for (Image& image : pResult->model->images) {
+    if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
+      resolvedBuffers.push_back(
+          pAssetAccessor
+              ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
+              .thenInWorkerThread(
+                  [pImage = &image,
+                   ktx2TranscodeTargets = options.ktx2TranscodeTargets](
+                      std::shared_ptr<IAssetRequest>&& pRequest) {
+                    const IAssetResponse* pResponse = pRequest->response();
+
+                    std::string imageUri = *pImage->uri;
+
+                    if (pResponse) {
+                      pImage->uri = std::nullopt;
+
+                      ImageReaderResult imageResult =
+                          readImage(pResponse->data(), ktx2TranscodeTargets);
+                      if (imageResult.image) {
+                        pImage->cesium = std::move(*imageResult.image);
+                        return ExternalBufferLoadResult{true, imageUri};
+                      }
+                    }
+
+                    return ExternalBufferLoadResult{false, imageUri};
+                  }));
+    }
+  }
+
+  return asyncSystem.all(std::move(resolvedBuffers))
+      .thenInWorkerThread(
+          [pResult = std::move(pResult)](
+              std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
+            for (auto& bufferResult : loadResults) {
+              if (!bufferResult.success) {
+                pResult->warnings.push_back(
+                    "Could not load the external gltf buffer: " +
+                    bufferResult.bufferUri);
+              }
+            }
+            return std::move(*pResult.release());
+          });
+}
+
+bool isKtx(const gsl::span<const std::byte>& data) {
+  const size_t ktxMagicByteLength = 12;
+  if (data.size() < ktxMagicByteLength) {
+    return false;
+  }
+
+  const uint8_t ktxMagic[ktxMagicByteLength] =
+      {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
+
+  return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
+}
+
+bool isWebP(const gsl::span<const std::byte>& data) {
+  if (data.size() < 12) {
+    return false;
+  }
+  const uint32_t magic1 = *reinterpret_cast<const uint32_t*>(data.data());
+  const uint32_t magic2 = *reinterpret_cast<const uint32_t*>(data.data() + 8);
+  return magic1 == 0x46464952 && magic2 == 0x50424557;
+}
+
+/*static*/
+ImageReaderResult GltfReader::readImage(
+    const gsl::span<const std::byte>& data,
+    const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
+  CESIUM_TRACE("CesiumGltfReader::readImage");
 
   ImageReaderResult result;
 
   result.image.emplace();
   ImageCesium& image = result.image.value();
 
-  image.bytesPerChannel = 1;
-  image.channels = 4;
+  if (isKtx(data)) {
+    ktxTexture2* pTexture = nullptr;
+    KTX_error_code errorCode;
 
-  int channelsInFile;
-  stbi_uc* pImage = stbi_load_from_memory(
-      reinterpret_cast<const stbi_uc*>(data.data()),
-      static_cast<int>(data.size()),
-      &image.width,
-      &image.height,
-      &channelsInFile,
-      image.channels);
-  if (pImage) {
-    CESIUM_TRACE(
-        "copy image " + std::to_string(image.width) + "x" +
-        std::to_string(image.height) + "x" + std::to_string(image.channels) +
-        "x" + std::to_string(image.bytesPerChannel));
-    // std::uint8_t is not implicitly convertible to std::byte, so we must use
-    // reinterpret_cast to (safely) force the conversion.
-    const auto lastByte =
-        image.width * image.height * image.channels * image.bytesPerChannel;
-    image.pixelData.resize(static_cast<std::size_t>(lastByte));
-    std::uint8_t* u8Pointer =
-        reinterpret_cast<std::uint8_t*>(image.pixelData.data());
-    std::copy(pImage, pImage + lastByte, u8Pointer);
-    stbi_image_free(pImage);
-  } else {
+    errorCode = ktxTexture2_CreateFromMemory(
+        reinterpret_cast<const std::uint8_t*>(data.data()),
+        data.size(),
+        KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+        &pTexture);
+
+    if (errorCode == KTX_SUCCESS) {
+      if (ktxTexture2_NeedsTranscoding(pTexture)) {
+
+        CESIUM_TRACE("Transcode KTXv2");
+
+        image.channels =
+            static_cast<int32_t>(ktxTexture2_GetNumComponents(pTexture));
+        GpuCompressedPixelFormat transcodeTargetFormat =
+            GpuCompressedPixelFormat::NONE;
+
+        if (pTexture->supercompressionScheme == KTX_SS_BASIS_LZ) {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.ETC1S_RGBA;
+          }
+        } else {
+          switch (image.channels) {
+          case 1:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_R;
+            break;
+          case 2:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RG;
+            break;
+          case 3:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGB;
+            break;
+          // case 4:
+          default:
+            transcodeTargetFormat = ktx2TranscodeTargets.UASTC_RGBA;
+          }
+        }
+
+        ktx_transcode_fmt_e transcodeTargetFormat_ = KTX_TTF_RGBA32;
+        switch (transcodeTargetFormat) {
+        case GpuCompressedPixelFormat::ETC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_ETC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::ETC2_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC1_RGB:
+          transcodeTargetFormat_ = KTX_TTF_BC1_RGB;
+          break;
+        case GpuCompressedPixelFormat::BC3_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC3_RGBA;
+          break;
+        case GpuCompressedPixelFormat::BC4_R:
+          transcodeTargetFormat_ = KTX_TTF_BC4_R;
+          break;
+        case GpuCompressedPixelFormat::BC5_RG:
+          transcodeTargetFormat_ = KTX_TTF_BC5_RG;
+          break;
+        case GpuCompressedPixelFormat::BC7_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_BC7_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC1_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC1_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ASTC_4x4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_ASTC_4x4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGB:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGB;
+          break;
+        case GpuCompressedPixelFormat::PVRTC2_4_RGBA:
+          transcodeTargetFormat_ = KTX_TTF_PVRTC2_4_RGBA;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_R11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_R11;
+          break;
+        case GpuCompressedPixelFormat::ETC2_EAC_RG11:
+          transcodeTargetFormat_ = KTX_TTF_ETC2_EAC_RG11;
+          break;
+        // case NONE:
+        default:
+          transcodeTargetFormat_ = KTX_TTF_RGBA32;
+          break;
+        };
+
+        errorCode =
+            ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
+        if (errorCode == KTX_SUCCESS) {
+          image.compressedPixelFormat = transcodeTargetFormat;
+          image.width = static_cast<int32_t>(pTexture->baseWidth);
+          image.height = static_cast<int32_t>(pTexture->baseHeight);
+
+          if (transcodeTargetFormat == GpuCompressedPixelFormat::NONE) {
+            // We fully decompressed the texture in this case.
+            image.bytesPerChannel = 1;
+            image.channels = 4;
+          }
+
+          // Copy over the positions of each mip within the buffer.
+          image.mipPositions.resize(pTexture->numLevels);
+          for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
+            ktx_size_t imageOffset;
+            ktxTexture_GetImageOffset(
+                ktxTexture(pTexture),
+                level,
+                0,
+                0,
+                &imageOffset);
+            ktx_size_t imageSize =
+                ktxTexture_GetImageSize(ktxTexture(pTexture), level);
+
+            image.mipPositions[level] = {imageOffset, imageSize};
+          }
+
+          // Copy over the entire buffer, including all mips.
+          ktx_uint8_t* pixelData = ktxTexture_GetData(ktxTexture(pTexture));
+          ktx_size_t pixelDataSize =
+              ktxTexture_GetDataSize(ktxTexture(pTexture));
+
+          image.pixelData.resize(pixelDataSize);
+          std::uint8_t* u8Pointer =
+              reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+          std::copy(pixelData, pixelData + pixelDataSize, u8Pointer);
+
+          ktxTexture_Destroy(ktxTexture(pTexture));
+
+          return result;
+        }
+      }
+    }
+
     result.image.reset();
-    result.errors.emplace_back(stbi_failure_reason());
+    result.errors.emplace_back("KTX2 loading failed");
+
+    return result;
+  } else if (isWebP(data)) {
+    if (WebPGetInfo(
+            reinterpret_cast<const uint8_t*>(data.data()),
+            data.size(),
+            &image.width,
+            &image.height)) {
+      image.channels = 4;
+      image.bytesPerChannel = 1;
+      uint8_t* pImage = NULL;
+      const auto bufferSize = image.width * image.height * image.channels;
+      image.pixelData.resize(static_cast<std::size_t>(bufferSize));
+      pImage = WebPDecodeRGBAInto(
+          reinterpret_cast<const uint8_t*>(data.data()),
+          data.size(),
+          reinterpret_cast<uint8_t*>(image.pixelData.data()),
+          image.pixelData.size(),
+          image.width * image.channels);
+      if (!pImage) {
+        result.image.reset();
+        result.errors.emplace_back("Unable to decode WebP");
+      }
+      return result;
+    }
+  }
+
+  {
+    CESIUM_TRACE("Decode JPG / PNG");
+
+    image.bytesPerChannel = 1;
+    image.channels = 4;
+
+    int channelsInFile;
+    stbi_uc* pImage = stbi_load_from_memory(
+        reinterpret_cast<const stbi_uc*>(data.data()),
+        static_cast<int>(data.size()),
+        &image.width,
+        &image.height,
+        &channelsInFile,
+        image.channels);
+    if (pImage) {
+      CESIUM_TRACE(
+          "copy image " + std::to_string(image.width) + "x" +
+          std::to_string(image.height) + "x" + std::to_string(image.channels) +
+          "x" + std::to_string(image.bytesPerChannel));
+      // std::uint8_t is not implicitly convertible to std::byte, so we must use
+      // reinterpret_cast to (safely) force the conversion.
+      const auto lastByte =
+          image.width * image.height * image.channels * image.bytesPerChannel;
+      image.pixelData.resize(static_cast<std::size_t>(lastByte));
+      std::uint8_t* u8Pointer =
+          reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+      std::copy(pImage, pImage + lastByte, u8Pointer);
+      stbi_image_free(pImage);
+    } else {
+      result.image.reset();
+      result.errors.emplace_back(stbi_failure_reason());
+    }
   }
 
   return result;
 }
 
-std::unique_ptr<IExtensionJsonHandler> GltfReader::createExtensionHandler(
-    const ReaderContext& context,
-    const std::string_view& extensionName,
-    const std::string& extendedObjectType) const {
+/*static*/
+std::optional<std::string> GltfReader::generateMipMaps(ImageCesium& image) {
+  if (!image.mipPositions.empty() ||
+      image.compressedPixelFormat != GpuCompressedPixelFormat::NONE) {
+    // No error message needed, since this is not technically a failure.
+    return std::nullopt;
+  }
 
-  std::string extensionNameString{extensionName};
+  if (image.pixelData.empty()) {
+    return "Unable to generate mipmaps, an empty image was provided.";
+  }
 
-  auto stateIt = this->_extensionStates.find(extensionNameString);
-  if (stateIt != this->_extensionStates.end()) {
-    if (stateIt->second == ExtensionState::Disabled) {
-      return nullptr;
-    } else if (stateIt->second == ExtensionState::JsonOnly) {
-      return std::make_unique<AnyExtensionJsonHandler>(context);
+  CESIUM_TRACE(
+      "generate mipmaps " + std::to_string(image.width) + "x" +
+      std::to_string(image.height) + "x" + std::to_string(image.channels) +
+      "x" + std::to_string(image.bytesPerChannel));
+
+  int32_t mipWidth = image.width;
+  int32_t mipHeight = image.height;
+  int32_t totalPixelCount = mipWidth * mipHeight;
+  size_t mipCount = 1;
+  while (mipWidth > 1 || mipHeight > 1) {
+    ++mipCount;
+
+    if (mipWidth > 1) {
+      mipWidth >>= 1;
+    }
+
+    if (mipHeight > 1) {
+      mipHeight >>= 1;
+    }
+
+    // Total pixels in the final mipmap.
+    totalPixelCount += mipWidth * mipHeight;
+  }
+
+  // Byte size of the base image.
+  const size_t imageByteSize = static_cast<size_t>(
+      image.width * image.height * image.channels * image.bytesPerChannel);
+
+  image.mipPositions.resize(mipCount);
+  image.mipPositions[0].byteOffset = 0;
+  image.mipPositions[0].byteSize = imageByteSize;
+
+  image.pixelData.resize(static_cast<size_t>(
+      totalPixelCount * image.channels * image.bytesPerChannel));
+
+  mipWidth = image.width;
+  mipHeight = image.height;
+  size_t mipIndex = 0;
+  size_t byteOffset = 0;
+  size_t byteSize = imageByteSize;
+  while (mipWidth > 1 || mipHeight > 1) {
+    size_t lastByteOffset = byteOffset;
+    byteOffset += byteSize;
+    ++mipIndex;
+
+    int32_t lastWidth = mipWidth;
+    if (mipWidth > 1) {
+      mipWidth >>= 1;
+    }
+
+    int32_t lastHeight = mipHeight;
+    if (mipHeight > 1) {
+      mipHeight >>= 1;
+    }
+
+    byteSize = static_cast<size_t>(
+        mipWidth * mipHeight * image.channels * image.bytesPerChannel);
+
+    image.mipPositions[mipIndex].byteOffset = byteOffset;
+    image.mipPositions[mipIndex].byteSize = byteSize;
+
+    if (!stbir_resize_uint8(
+            reinterpret_cast<const unsigned char*>(
+                &image.pixelData[lastByteOffset]),
+            lastWidth,
+            lastHeight,
+            0,
+            reinterpret_cast<unsigned char*>(&image.pixelData[byteOffset]),
+            mipWidth,
+            mipHeight,
+            0,
+            image.channels)) {
+      // Remove any added mipmaps.
+      image.mipPositions.clear();
+      image.pixelData.resize(imageByteSize);
+      return stbi_failure_reason();
     }
   }
 
-  auto extensionNameIt = this->_extensions.find(extensionNameString);
-  if (extensionNameIt == this->_extensions.end()) {
-    return std::make_unique<AnyExtensionJsonHandler>(context);
-  }
-
-  auto objectTypeIt = extensionNameIt->second.find(extendedObjectType);
-  if (objectTypeIt == extensionNameIt->second.end()) {
-    return std::make_unique<AnyExtensionJsonHandler>(context);
-  }
-
-  return objectTypeIt->second(context);
+  return std::nullopt;
 }

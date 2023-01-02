@@ -1,9 +1,10 @@
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
+
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/trigonometric.hpp>
@@ -30,11 +31,11 @@ static void checkSkirt(
   glm::dvec3 skirtPosition =
       static_cast<glm::dvec3>(skirtUpsampledPosition) + center;
   REQUIRE(
-      Math::equalsEpsilon(expectedPosition.x, skirtPosition.x, Math::EPSILON7));
+      Math::equalsEpsilon(expectedPosition.x, skirtPosition.x, Math::Epsilon7));
   REQUIRE(
-      Math::equalsEpsilon(expectedPosition.y, skirtPosition.y, Math::EPSILON7));
+      Math::equalsEpsilon(expectedPosition.y, skirtPosition.y, Math::Epsilon7));
   REQUIRE(
-      Math::equalsEpsilon(expectedPosition.z, skirtPosition.z, Math::EPSILON7));
+      Math::equalsEpsilon(expectedPosition.z, skirtPosition.z, Math::Epsilon7));
 }
 
 TEST_CASE("Test upsample tile without skirts") {
@@ -192,7 +193,7 @@ TEST_CASE("Test upsample tile without skirts") {
       CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
   SECTION("Upsample bottom left child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerLeft);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -216,53 +217,53 @@ TEST_CASE("Test upsample tile without skirts") {
         glm::epsilonEqual(
             p0,
             positions[0],
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p1 = upsampledPosition[1];
     REQUIRE(
         glm::epsilonEqual(
             p1,
             (positions[0] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p2 = upsampledPosition[2];
     REQUIRE(
         glm::epsilonEqual(
             p2,
             (upsampledPosition[1] + positions[1]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p3 = upsampledPosition[3];
     REQUIRE(
         glm::epsilonEqual(
             p3,
             (positions[0] + positions[1]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p4 = upsampledPosition[4];
     REQUIRE(
         glm::epsilonEqual(
             p4,
             (positions[0] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p5 = upsampledPosition[5];
     REQUIRE(
         glm::epsilonEqual(
             p5,
             (positions[1] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p6 = upsampledPosition[6];
     REQUIRE(
         glm::epsilonEqual(
             p6,
             (upsampledPosition[4] + positions[1]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
   SECTION("Upsample upper left child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, upperLeft);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperLeft);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -286,53 +287,53 @@ TEST_CASE("Test upsample tile without skirts") {
         glm::epsilonEqual(
             p0,
             positions[1],
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p1 = upsampledPosition[1];
     REQUIRE(
         glm::epsilonEqual(
             p1,
             (positions[0] + positions[1]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p2 = upsampledPosition[2];
     REQUIRE(
         glm::epsilonEqual(
             p2,
             (positions[1] + 0.5f * (positions[0] + positions[2])) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p3 = upsampledPosition[3];
     REQUIRE(
         glm::epsilonEqual(
             p3,
             (positions[1] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p4 = upsampledPosition[4];
     REQUIRE(
         glm::epsilonEqual(
             p4,
             p2,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p5 = upsampledPosition[5];
     REQUIRE(
         glm::epsilonEqual(
             p5,
             (positions[1] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p6 = upsampledPosition[6];
     REQUIRE(
         glm::epsilonEqual(
             p6,
             (positions[1] + positions[3]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
   SECTION("Upsample upper right child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, upperRight);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperRight);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -356,53 +357,53 @@ TEST_CASE("Test upsample tile without skirts") {
         glm::epsilonEqual(
             p0,
             positions[3],
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p1 = upsampledPosition[1];
     REQUIRE(
         glm::epsilonEqual(
             p1,
             (positions[1] + positions[3]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p2 = upsampledPosition[2];
     REQUIRE(
         glm::epsilonEqual(
             p2,
             (positions[2] + 0.5f * (positions[1] + positions[3])) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p3 = upsampledPosition[3];
     REQUIRE(
         glm::epsilonEqual(
             p3,
             (positions[3] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p4 = upsampledPosition[4];
     REQUIRE(
         glm::epsilonEqual(
             p4,
             (positions[1] + positions[3]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p5 = upsampledPosition[5];
     REQUIRE(
         glm::epsilonEqual(
             p5,
             (positions[1] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p6 = upsampledPosition[6];
     REQUIRE(
         glm::epsilonEqual(
             p6,
             p2,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
   SECTION("Upsample bottom right child") {
-    Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerRight);
+    Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerRight);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -426,49 +427,49 @@ TEST_CASE("Test upsample tile without skirts") {
         glm::epsilonEqual(
             p0,
             positions[2],
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p1 = upsampledPosition[1];
     REQUIRE(
         glm::epsilonEqual(
             p1,
             (positions[1] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p2 = upsampledPosition[2];
     REQUIRE(
         glm::epsilonEqual(
             p2,
             (positions[0] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p3 = upsampledPosition[3];
     REQUIRE(
         glm::epsilonEqual(
             p3,
             (positions[2] + positions[3]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p4 = upsampledPosition[4];
     REQUIRE(
         glm::epsilonEqual(
             p4,
             (positions[2] + (positions[1] + positions[3]) * 0.5f) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p5 = upsampledPosition[5];
     REQUIRE(
         glm::epsilonEqual(
             p5,
             (positions[1] + positions[2]) * 0.5f,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 
     glm::vec3 p6 = upsampledPosition[6];
     REQUIRE(
         glm::epsilonEqual(
             p6,
             p4,
-            glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
   SECTION("Check skirt") {
@@ -487,7 +488,7 @@ TEST_CASE("Test upsample tile without skirts") {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
     SECTION("Check bottom left skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerLeft);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -588,7 +589,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Check upper left skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, upperLeft);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperLeft);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -713,7 +714,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Check upper right skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, upperRight);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperRight);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -814,7 +815,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Check bottom right skirt") {
-      Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerRight);
+      Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerRight);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();

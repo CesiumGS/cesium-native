@@ -1,13 +1,18 @@
 #include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumUtility/Math.h"
-#include "QuantizedMeshContent.h"
+#include "QuantizedMeshLoader.h"
+
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
+
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -92,7 +97,7 @@ static double calculateSkirtHeight(
   static const double terrainHeightmapQuality = 0.25;
   static const uint32_t heightmapWidth = 65;
   double levelZeroMaximumGeometricError =
-      ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI *
+      ellipsoid.getMaximumRadius() * CesiumUtility::Math::TwoPi *
       terrainHeightmapQuality / (heightmapWidth * tilingScheme.getRootTilesX());
 
   double levelMaximumGeometricError =
@@ -377,7 +382,7 @@ void checkGridMesh(
     const AccessorView<glm::vec3>& positions,
     const QuadtreeTilingScheme& tilingScheme,
     const Ellipsoid& ellipsoid,
-    const Rectangle& tileRectangle,
+    const CesiumGeometry::Rectangle& tileRectangle,
     uint32_t verticesWidth,
     uint32_t verticesHeight) {
   double west = tileRectangle.minimumX;
@@ -406,11 +411,11 @@ void checkGridMesh(
       REQUIRE(Math::equalsEpsilon(
           uRatio,
           static_cast<double>(x) / static_cast<double>(verticesWidth - 1),
-          Math::EPSILON4));
+          Math::Epsilon4));
       REQUIRE(Math::equalsEpsilon(
           vRatio,
           static_cast<double>(y) / static_cast<double>(verticesHeight - 1),
-          Math::EPSILON4));
+          Math::Epsilon4));
 
       // check grid positions
       double longitude = Math::lerp(west, east, uRatio);
@@ -425,11 +430,11 @@ void checkGridMesh(
           quantizedMesh.header.boundingSphereCenterZ);
 
       REQUIRE(
-          Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
+          Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
       REQUIRE(
-          Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
+          Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
       REQUIRE(
-          Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+          Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
       ++positionIdx;
 
       // check indices
@@ -491,9 +496,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 
   currentVertexCount += westIndicesCount;
@@ -511,9 +516,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 
   currentVertexCount += southIndicesCount;
@@ -531,9 +536,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON2));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon2));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 
   currentVertexCount += eastIndicesCount;
@@ -550,9 +555,9 @@ void checkGridMesh(
         quantizedMesh.header.boundingSphereCenterX,
         quantizedMesh.header.boundingSphereCenterY,
         quantizedMesh.header.boundingSphereCenterZ);
-    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
-    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::EPSILON3));
+    REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::Epsilon3));
+    REQUIRE(Math::equalsEpsilon(position.z, expectPosition.z, Math::Epsilon3));
   }
 }
 
@@ -589,20 +594,20 @@ static void checkGeneratedGridNormal(
     if (!Math::equalsEpsilon(
             glm::dot(expectedNormals[i], expectedNormals[i]),
             0.0,
-            Math::EPSILON7)) {
+            Math::Epsilon7)) {
       expectedNormal = glm::normalize(expectedNormals[i]);
 
       // make sure normal points to the direction of geodetic normal for grid
       // only
       REQUIRE(glm::dot(normal, geodeticNormal) >= 0.0);
 
-      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
     } else {
-      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+      REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+      REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
     }
   }
 
@@ -625,9 +630,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     ++y;
   }
@@ -639,9 +644,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     --x;
   }
@@ -653,9 +658,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     --y;
   }
@@ -667,9 +672,9 @@ static void checkGeneratedGridNormal(
     glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
     glm::vec3 expectedNormal =
         expectedNormals[index2DTo1D(x, y, verticesWidth)];
-    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::Epsilon7));
+    REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::Epsilon7));
 
     ++x;
   }
@@ -680,25 +685,20 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
 
   // mock context
   Ellipsoid ellipsoid = Ellipsoid::WGS84;
-  Rectangle rectangle(
+  CesiumGeometry::Rectangle rectangle(
       glm::radians(-180.0),
       glm::radians(-90.0),
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
-  TileContext context{};
-  context.implicitContext = ImplicitTilingContext{
-      std::vector<std::string>{},
-      tilingScheme,
-      GeographicProjection(ellipsoid),
-      QuadtreeTileAvailability(tilingScheme, 23)};
 
   SECTION("Check quantized mesh that has uint16_t indices") {
     // mock quantized mesh
     uint32_t verticesWidth = 3;
     uint32_t verticesHeight = 3;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -718,19 +718,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    QuantizedMeshLoadResult loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf is the grid
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -774,7 +768,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint32_t verticesWidth = 300;
     uint32_t verticesHeight = 300;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -794,19 +789,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf is the grid
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -850,7 +839,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint32_t verticesWidth = 255;
     uint32_t verticesHeight = 255;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -870,19 +860,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf is the grid
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -926,7 +910,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint32_t verticesWidth = 3;
     uint32_t verticesHeight = 3;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -940,8 +925,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         verticesWidth,
         verticesHeight);
 
-    // add oct-encoded normal extension. This is just a random direction and not
-    // really normal. We want to make sure the normal is written to the gltf
+    // add oct-encoded normal extension. This is just a random direction and
+    // not really normal. We want to make sure the normal is written to the gltf
     glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
     uint8_t x = 0, y = 0;
     octEncode(normal, x, y);
@@ -963,19 +948,13 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-    REQUIRE(loadResult != nullptr);
-    REQUIRE(loadResult->model != std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(!loadResult.errors.hasErrors());
+    REQUIRE(loadResult.model != std::nullopt);
 
     // make sure the gltf has normals
-    const CesiumGltf::Model& model = *loadResult->model;
+    const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
     const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
@@ -993,9 +972,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         static_cast<size_t>(normals.size()) ==
         (verticesWidth * verticesHeight + totalSkirtVerticesCount));
     for (int64_t i = 0; i < normals.size(); ++i) {
-      REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::EPSILON2));
-      REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::EPSILON2));
-      REQUIRE(Math::equalsEpsilon(normals[i].z, normal.z, Math::EPSILON2));
+      REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::Epsilon2));
+      REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::Epsilon2));
+      REQUIRE(Math::equalsEpsilon(normals[i].z, normal.z, Math::Epsilon2));
     }
   }
 }
@@ -1004,25 +983,19 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
   registerAllTileContentTypes();
 
   // mock context
-  Ellipsoid ellipsoid = Ellipsoid::WGS84;
-  Rectangle rectangle(
+  CesiumGeometry::Rectangle rectangle(
       glm::radians(-180.0),
       glm::radians(-90.0),
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
-  TileContext context{};
-  context.implicitContext = ImplicitTilingContext{
-      std::vector<std::string>{},
-      tilingScheme,
-      GeographicProjection(ellipsoid),
-      QuadtreeTileAvailability(tilingScheme, 23)};
 
   // mock quantized mesh
   uint32_t verticesWidth = 3;
   uint32_t verticesHeight = 3;
   QuadtreeTileID tileID(10, 0, 0);
-  Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+  CesiumGeometry::Rectangle tileRectangle =
+      tilingScheme.tileToRectangle(tileID);
   BoundingRegion boundingVolume = BoundingRegion(
       GlobeRectangle(
           tileRectangle.minimumX,
@@ -1058,16 +1031,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
-
-    REQUIRE(loadResult->model == std::nullopt);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed vertex data") {
@@ -1100,16 +1066,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed indices") {
@@ -1169,16 +1129,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed west edge indices") {
@@ -1255,16 +1209,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed south edge indices") {
@@ -1357,16 +1305,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed east edge indices") {
@@ -1475,16 +1417,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 
   SECTION("Quantized mesh with ill-formed north edge indices") {
@@ -1609,15 +1545,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     gsl::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
-    std::unique_ptr<TileContentLoadResult> loadResult =
-        QuantizedMeshContent::load(
-            spdlog::default_logger(),
-            tileID,
-            boundingVolume,
-            "url",
-            data,
-            false);
+    auto loadResult =
+        QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
 
-    REQUIRE(loadResult->model == std::nullopt);
+    REQUIRE(loadResult.model == std::nullopt);
   }
 }

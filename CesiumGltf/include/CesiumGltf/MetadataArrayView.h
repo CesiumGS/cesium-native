@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumUtility/SpanHelper.h"
-#include "PropertyType.h"
+#include "CesiumGltf/PropertyType.h"
+
+#include <CesiumUtility/SpanHelper.h>
 
 #include <gsl/span>
 

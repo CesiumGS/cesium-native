@@ -1,10 +1,15 @@
 #pragma once
-#include "JsonWriter.h"
 
-#include <CesiumUtility/JsonValue.h>
+// forward declarations
+namespace CesiumJsonWriter {
+class JsonWriter;
+}
+
+// forward declarations
+namespace CesiumUtility {
+class JsonValue;
+}
 
 namespace CesiumJsonWriter {
-void writeJsonValue(
-    const CesiumUtility::JsonValue& value,
-    CesiumJsonWriter::JsonWriter& writer);
+void writeJsonValue(const CesiumUtility::JsonValue& value, JsonWriter& writer);
 }

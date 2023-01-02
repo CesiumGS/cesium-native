@@ -4,6 +4,7 @@
 #include "Library.h"
 
 #include <cassert>
+#include <cmath>
 
 namespace CesiumJsonReader {
 template <typename T>
@@ -36,6 +37,16 @@ public:
   virtual IJsonHandler* readUint64(uint64_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
+    return this->parent();
+  }
+  virtual IJsonHandler* readDouble(double d) override {
+    assert(this->_pInteger);
+    double intPart;
+    double fractPart = std::modf(d, &intPart);
+    if (fractPart != 0) {
+      return JsonHandler::readDouble(d);
+    }
+    *this->_pInteger = static_cast<T>(intPart);
     return this->parent();
   }
 

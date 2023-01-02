@@ -14,6 +14,8 @@
 
 using namespace CesiumAsync;
 
+namespace {
+
 class MockStoreCacheDatabase : public ICacheDatabase {
 public:
   struct StoreRequestParameters {
@@ -85,8 +87,8 @@ public:
   MockAssetAccessor(const std::shared_ptr<IAssetRequest>& request)
       : testRequest{request} {}
 
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> requestAsset(
-      const AsyncSystem& asyncSystem,
+  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
+  get(const AsyncSystem& asyncSystem,
       const std::string& /* url */,
       const std::vector<THeader>& /* headers */
       ) override {
@@ -94,8 +96,9 @@ public:
         std::shared_ptr<IAssetRequest>(testRequest));
   }
 
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> post(
+  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> request(
       const AsyncSystem& asyncSystem,
+      const std::string& /* verb */,
       const std::string& /* url */,
       const std::vector<THeader>& /* headers */,
       const gsl::span<const std::byte>& /* contentPayload */
@@ -113,6 +116,8 @@ class MockTaskProcessor : public ITaskProcessor {
 public:
   virtual void startTask(std::function<void()> f) override { f(); }
 };
+
+} // namespace
 
 TEST_CASE("Test the condition of caching the request") {
   SECTION("Cache request") {
@@ -148,10 +153,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == true);
     }
@@ -189,10 +191,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == true);
     }
@@ -230,10 +229,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
@@ -269,10 +265,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
@@ -308,10 +301,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
@@ -347,10 +337,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
@@ -384,10 +371,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
@@ -422,10 +406,7 @@ TEST_CASE("Test the condition of caching the request") {
 
       AsyncSystem asyncSystem(mockTaskProcessor);
       cacheAssetAccessor
-          ->requestAsset(
-              asyncSystem,
-              "test.com",
-              std::vector<IAssetAccessor::THeader>{})
+          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
@@ -463,10 +444,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
 
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->requestAsset(
-            asyncSystem,
-            "test.com",
-            std::vector<IAssetAccessor::THeader>{})
+        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
         .wait();
     REQUIRE(mockCacheDatabase->storeResponseCall == true);
     REQUIRE(
@@ -481,7 +459,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
             "app/json",
             HttpHeaders{
                 {"Content-Type", "app/json"},
-                {"Expires", "Wed, 21 Oct 2021 07:28:00 GMT"}},
+                {"Expires", "Wed, 21 Oct 2037 07:28:00 GMT"}},
             std::vector<std::byte>());
 
     std::shared_ptr<IAssetRequest> mockRequest =
@@ -504,13 +482,10 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
 
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->requestAsset(
-            asyncSystem,
-            "test.com",
-            std::vector<IAssetAccessor::THeader>{})
+        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
         .wait();
     REQUIRE(mockCacheDatabase->storeResponseCall == true);
-    REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime == 1634801280);
+    REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime == 2139722880);
   }
 }
 
@@ -543,10 +518,7 @@ TEST_CASE("Test serving cache item") {
     // test that the response is from the server
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->requestAsset(
-            asyncSystem,
-            "test.com",
-            std::vector<IAssetAccessor::THeader>{})
+        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
@@ -623,10 +595,7 @@ TEST_CASE("Test serving cache item") {
     // test that the response is from the cache
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->requestAsset(
-            asyncSystem,
-            "test.com",
-            std::vector<IAssetAccessor::THeader>{})
+        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
@@ -716,10 +685,7 @@ TEST_CASE("Test serving cache item") {
     // and cache control coming from the validation response
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->requestAsset(
-            asyncSystem,
-            "test.com",
-            std::vector<IAssetAccessor::THeader>{})
+        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
@@ -812,10 +778,7 @@ TEST_CASE("Test serving cache item") {
     // test that the response is from the server directly
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->requestAsset(
-            asyncSystem,
-            "test.com",
-            std::vector<IAssetAccessor::THeader>{})
+        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);

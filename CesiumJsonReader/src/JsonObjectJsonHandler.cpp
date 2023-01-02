@@ -2,12 +2,12 @@
 
 #include <cstdint>
 
-using namespace CesiumJsonReader;
-using namespace CesiumUtility;
-
+namespace CesiumJsonReader {
 namespace {
-template <typename T> void addOrReplace(JsonValue& json, T value) {
-  JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&json.value);
+template <typename T>
+void addOrReplace(CesiumUtility::JsonValue& json, T value) {
+  CesiumUtility::JsonValue::Array* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&json.value);
   if (pArray) {
     pArray->emplace_back(value);
   } else {
@@ -18,14 +18,16 @@ template <typename T> void addOrReplace(JsonValue& json, T value) {
 
 JsonObjectJsonHandler::JsonObjectJsonHandler() noexcept : JsonHandler() {}
 
-void JsonObjectJsonHandler::reset(IJsonHandler* pParent, JsonValue* pValue) {
+void JsonObjectJsonHandler::reset(
+    IJsonHandler* pParent,
+    CesiumUtility::JsonValue* pValue) {
   JsonHandler::reset(pParent);
   this->_stack.clear();
   this->_stack.push_back(pValue);
 }
 
 IJsonHandler* JsonObjectJsonHandler::readNull() {
-  addOrReplace(*this->_stack.back(), JsonValue::Null());
+  addOrReplace(*this->_stack.back(), CesiumUtility::JsonValue::Null());
   return this->doneElement();
 }
 
@@ -60,18 +62,28 @@ IJsonHandler* JsonObjectJsonHandler::readDouble(double d) {
 }
 
 IJsonHandler* JsonObjectJsonHandler::readString(const std::string_view& str) {
-  *this->_stack.back() = std::string(str);
+  CesiumUtility::JsonValue& current = *this->_stack.back();
+  CesiumUtility::JsonValue::Array* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&current.value);
+  if (pArray) {
+    pArray->emplace_back(std::string(str));
+  } else {
+    current = std::string(str);
+  }
+
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
-  JsonValue& current = *this->_stack.back();
-  JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
+  CesiumUtility::JsonValue& current = *this->_stack.back();
+  CesiumUtility::JsonValue::Array* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&current.value);
   if (pArray) {
-    JsonValue& newObject = pArray->emplace_back(JsonValue::Object());
+    CesiumUtility::JsonValue& newObject =
+        pArray->emplace_back(CesiumUtility::JsonValue::Object());
     this->_stack.emplace_back(&newObject);
   } else {
-    current = JsonValue::Object();
+    current = CesiumUtility::JsonValue::Object();
   }
 
   return this;
@@ -79,10 +91,11 @@ IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
 
 IJsonHandler*
 JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
-  JsonValue& json = *this->_stack.back();
-  JsonValue::Object* pObject = std::get_if<JsonValue::Object>(&json.value);
+  CesiumUtility::JsonValue& json = *this->_stack.back();
+  CesiumUtility::JsonValue::Object* pObject =
+      std::get_if<CesiumUtility::JsonValue::Object>(&json.value);
 
-  auto it = pObject->emplace(str, JsonValue()).first;
+  auto it = pObject->emplace(str, CesiumUtility::JsonValue()).first;
   this->_stack.push_back(&it->second);
   this->_currentKey = str;
   return this;
@@ -93,13 +106,15 @@ IJsonHandler* JsonObjectJsonHandler::readObjectEnd() {
 }
 
 IJsonHandler* JsonObjectJsonHandler::readArrayStart() {
-  JsonValue& current = *this->_stack.back();
-  JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
+  CesiumUtility::JsonValue& current = *this->_stack.back();
+  CesiumUtility::JsonValue::Array* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&current.value);
   if (pArray) {
-    JsonValue& newArray = pArray->emplace_back(JsonValue::Array());
+    CesiumUtility::JsonValue& newArray =
+        pArray->emplace_back(CesiumUtility::JsonValue::Array());
     this->_stack.emplace_back(&newArray);
   } else {
-    current = JsonValue::Array();
+    current = CesiumUtility::JsonValue::Array();
   }
 
   return this;
@@ -111,11 +126,13 @@ IJsonHandler* JsonObjectJsonHandler::readArrayEnd() {
 }
 
 IJsonHandler* JsonObjectJsonHandler::doneElement() {
-  JsonValue& current = *this->_stack.back();
-  JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
+  CesiumUtility::JsonValue& current = *this->_stack.back();
+  CesiumUtility::JsonValue::Array* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&current.value);
   if (!pArray) {
     this->_stack.pop_back();
     return this->_stack.empty() ? this->parent() : this;
   }
   return this;
 }
+} // namespace CesiumJsonReader

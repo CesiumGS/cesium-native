@@ -4,12 +4,16 @@
 #include "ContinuationReturnType.h"
 
 namespace CesiumAsync {
-namespace Impl {
+namespace CesiumImpl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
 struct IdentityUnwrapper {
   template <typename Func> static Func unwrap(Func&& f) {
+    return std::forward<Func>(f);
+  }
+
+  template <typename Func> static Func unwrapShared(Func&& f) {
     return std::forward<Func>(f);
   }
 };
@@ -19,6 +23,11 @@ template <typename T> struct ParameterizedTaskUnwrapper {
     return [f = std::forward<Func>(f)](T&& t) mutable {
       return f(std::move(t))._task;
     };
+  }
+
+  template <typename Func> static auto unwrapShared(Func&& f) {
+    return
+        [f = std::forward<Func>(f)](const T& t) mutable { return f(t)._task; };
   }
 };
 
@@ -38,6 +47,16 @@ template <typename Func, typename T> auto unwrapFuture(Func&& f) {
       ParameterizedTaskUnwrapper<T>>::type::unwrap(std::forward<Func>(f));
 }
 
+template <typename Func, typename T> auto unwrapSharedFuture(Func&& f) {
+  return std::conditional<
+      std::is_same<
+          typename ContinuationReturnType<Func, T>::type,
+          typename RemoveFuture<
+              typename ContinuationFutureType<Func, T>::type>::type>::value,
+      IdentityUnwrapper,
+      ParameterizedTaskUnwrapper<T>>::type::unwrapShared(std::forward<Func>(f));
+}
+
 template <typename Func> auto unwrapFuture(Func&& f) {
   return std::conditional<
       std::is_same<
@@ -48,7 +67,11 @@ template <typename Func> auto unwrapFuture(Func&& f) {
       TaskUnwrapper>::type::unwrap(std::forward<Func>(f));
 }
 
+template <typename Func> auto unwrapSharedFuture(Func&& f) {
+  return unwrapFuture(std::forward<Func>(f));
+}
+
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumAsync

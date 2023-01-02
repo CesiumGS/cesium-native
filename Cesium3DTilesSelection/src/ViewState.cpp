@@ -1,4 +1,3 @@
-
 #include "Cesium3DTilesSelection/ViewState.h"
 
 #include <CesiumGeometry/CullingVolume.h>
@@ -112,6 +111,12 @@ bool ViewState::isBoundingVolumeVisible(
           boundingRegion.getBoundingRegion(),
           viewState._cullingVolume);
     }
+
+    bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
+      return Cesium3DTilesSelection::isBoundingVolumeVisible(
+          s2Cell,
+          viewState._cullingVolume);
+    }
   };
 
   return std::visit(Operation{*this}, boundingVolume);
@@ -150,6 +155,10 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
       }
       return boundingRegion.computeConservativeDistanceSquaredToPosition(
           viewState._position);
+    }
+
+    double operator()(const S2CellBoundingVolume& s2Cell) noexcept {
+      return s2Cell.computeDistanceSquaredToPosition(viewState._position);
     }
   };
 

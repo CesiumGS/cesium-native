@@ -1,5 +1,6 @@
 #include "CesiumGltf/MetadataPropertyView.h"
 
+#include <catch2/catch.hpp>
 #include <gsl/span>
 
 #include <bitset>
@@ -7,8 +8,6 @@
 #include <cstddef>
 #include <cstring>
 #include <vector>
-
-#include "catch2/catch.hpp"
 
 template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::vector<std::byte> data;
@@ -22,7 +21,8 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
       gsl::span<const std::byte>(),
       CesiumGltf::PropertyType::None,
       0,
-      static_cast<int64_t>(expected.size()));
+      static_cast<int64_t>(expected.size()),
+      false);
 
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
@@ -52,7 +52,8 @@ static void checkDynamicArray(
       gsl::span<const std::byte>(),
       offsetType,
       0,
-      instanceCount);
+      instanceCount,
+      false);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -82,7 +83,8 @@ static void checkFixedArray(
       gsl::span<const std::byte>(),
       CesiumGltf::PropertyType::None,
       componentCount,
-      instanceCount);
+      instanceCount,
+      false);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -136,7 +138,8 @@ TEST_CASE("Check boolean value") {
       gsl::span<const std::byte>(),
       CesiumGltf::PropertyType::None,
       0,
-      static_cast<int64_t>(instanceCount));
+      static_cast<int64_t>(instanceCount),
+      false);
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == bits[static_cast<size_t>(i)]);
   }
@@ -186,7 +189,8 @@ TEST_CASE("Check string value") {
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       CesiumGltf::PropertyType::Uint32,
       0,
-      static_cast<int64_t>(strings.size()));
+      static_cast<int64_t>(strings.size()),
+      false);
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == strings[static_cast<size_t>(i)]);
   }
@@ -383,7 +387,8 @@ TEST_CASE("Check fixed array of string") {
           gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
           CesiumGltf::PropertyType::Uint32,
           3,
-          static_cast<int64_t>(strings.size() / 3));
+          static_cast<int64_t>(strings.size() / 3),
+          false);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -456,7 +461,8 @@ TEST_CASE("Check dynamic array of string") {
           gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
           CesiumGltf::PropertyType::Uint32,
           0,
-          3);
+          3,
+          false);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -485,7 +491,8 @@ TEST_CASE("Check fixed array of boolean") {
           gsl::span<const std::byte>(),
           CesiumGltf::PropertyType::Uint32,
           12,
-          2);
+          2,
+          false);
 
   REQUIRE(property.size() == 2);
 
@@ -538,7 +545,8 @@ TEST_CASE("Check dynamic array of boolean") {
           gsl::span<const std::byte>(),
           CesiumGltf::PropertyType::Uint32,
           0,
-          3);
+          3,
+          false);
 
   REQUIRE(property.size() == 3);
 

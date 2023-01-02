@@ -1,11 +1,13 @@
-#include "CesiumGltf/ImageCesium.h"
-#include "CesiumGltf/ImageManipulation.h"
+#include "CesiumGltfReader/ImageManipulation.h"
+
+#include <CesiumGltf/ImageCesium.h>
 
 #include <catch2/catch.hpp>
 
 #include <algorithm>
 
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 
 TEST_CASE("ImageManipulation::unsafeBlitImage entire image") {
   size_t width = 10;

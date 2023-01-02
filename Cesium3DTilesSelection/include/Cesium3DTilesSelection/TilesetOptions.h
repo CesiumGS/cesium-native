@@ -2,6 +2,9 @@
 
 #include "Library.h"
 
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
+
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -10,6 +13,7 @@
 namespace Cesium3DTilesSelection {
 
 class ITileExcluder;
+class TilesetLoadFailureDetails;
 
 /**
  * @brief Options for configuring the parsing of a {@link Tileset}'s content
@@ -35,6 +39,12 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * normals.
    */
   bool generateMissingNormalsSmooth = false;
+
+  /**
+   * @brief For each possible input transmission format, this struct names
+   * the ideal target gpu-compressed pixel format to transcode to.
+   */
+  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 };
 
 /**
@@ -61,6 +71,11 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   std::optional<std::string> credit;
 
   /**
+   * @brief Whether or not to display tileset's credits on the screen.
+   */
+  bool showCreditsOnScreen = false;
+
+  /**
    * @brief The maximum number of pixels of error when rendering this tileset.
    * This is used to select an appropriate level-of-detail.
    *
@@ -76,6 +91,12 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * process of loading.
    */
   uint32_t maximumSimultaneousTileLoads = 20;
+
+  /**
+   * @brief The maximum number of subtrees that may simultaneously be in the
+   * process of loading.
+   */
+  uint32_t maximumSimultaneousSubtreeLoads = 20;
 
   /**
    * @brief Indicates whether the ancestors of rendered tiles should be
@@ -122,6 +143,22 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * @brief Enable culling of tiles against the frustum.
    */
   bool enableFrustumCulling = true;
+
+  /**
+   * @brief Enable culling of occluded tiles, as reported by the renderer.
+   */
+  bool enableOcclusionCulling = true;
+
+  /**
+   * @brief Wait to refine until the occlusion state of a tile is known.
+   *
+   * Only applicable when enableOcclusionInfo is true. Enabling this option may
+   * cause a small delay between when a tile is needed according to the SSE and
+   * when the tile load is kicked off. On the other hand, this delay could
+   * allow the occlusion system to avoid loading a tile entirely if it is
+   * found to be unnecessary a few frames later.
+   */
+  bool delayRefinementForOcclusion = true;
 
   /**
    * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
@@ -200,10 +237,79 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   std::vector<std::shared_ptr<ITileExcluder>> excluders;
 
   /**
+   * @brief A callback function that is invoked when a tileset resource fails to
+   * load.
+   *
+   * Tileset resources include a Cesium ion asset endpoint, a tileset's root
+   * tileset.json or layer.json, an individual tile's content, or an implicit
+   * tiling subtree.
+   */
+  std::function<void(const TilesetLoadFailureDetails&)> loadErrorCallback;
+
+  /**
+   * @brief Whether to keep tiles loaded during a transition period when
+   * switching to a different LOD tile.
+   *
+   * For each tile, TileContentLoadResult::lodTransitionFadePercentage will
+   * indicate to the client how faded to render the tile throughout the
+   * transition. Tile fades can be used to mask LOD transitions and make them
+   * appear less abrupt and jarring.
+   */
+  bool enableLodTransitionPeriod = false;
+
+  /**
+   * @brief How long it should take to transition between tiles of different
+   * LODs, in seconds.
+   *
+   * When a tile refines or unrefines to a higher or lower LOD tile, a fade
+   * can optionally be applied to smooth the transition. This value determines
+   * how many seconds the whole transition should take. Note that the old tile
+   * doesn't start fading out until the new tile fully fades in.
+   */
+  float lodTransitionLength = 1.0f;
+
+  /**
+   * @brief Whether to kick descendants while a tile is still fading in.
+   *
+   * This does not delay loading of descendants, but it keeps them off the
+   * render list while the tile is fading in. If this is false, the tile
+   * currently fading in will pop in to full opacity if descendants are
+   * rendered (this counteracts the benefits of LOD transition blending).
+   *
+   */
+  bool kickDescendantsWhileFadingIn = true;
+
+  /**
+   * @brief A soft limit on how long (in milliseconds) to spend on the
+   * main-thread part of tile loading each frame (each call to
+   * Tileset::updateView). A value of 0.0 indicates that all pending
+   * main-thread loads should be completed each tick.
+   *
+   * Setting this to too low of a value will impede overall tile load progress,
+   * creating a discernable load latency.
+   */
+  double mainThreadLoadingTimeLimit = 0.0;
+
+  /**
+   * @brief A soft limit on how long (in milliseconds) to spend unloading
+   * cached tiles each frame (each call to Tileset::updateView). A value of 0.0
+   * indicates that the tile cache should not throttle unloading tiles.
+   */
+  double tileCacheUnloadTimeLimit = 0.0;
+
+  /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
    * and construction of Gltf models.
    */
   TilesetContentOptions contentOptions;
+
+  /**
+   * @brief Arbitrary data that will be passed to {@link prepareInLoadThread}.
+   *
+   * This object is copied and given to tile preparation threads,
+   * so it must be inexpensive to copy.
+   */
+  std::any rendererOptions;
 };
 
 } // namespace Cesium3DTilesSelection

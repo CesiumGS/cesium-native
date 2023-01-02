@@ -1,5 +1,6 @@
 #include "CesiumGeometry/Rectangle.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 
@@ -62,7 +63,7 @@ TEST_CASE("Rectangle::computeSignedDistance") {
   CHECK(CesiumUtility::Math::equalsEpsilon(
       testCase.rectangle.computeSignedDistance(testCase.position),
       testCase.expectedResult,
-      CesiumUtility::Math::EPSILON13));
+      CesiumUtility::Math::Epsilon13));
 }
 
 TEST_CASE("Rectangle::computeUnion") {

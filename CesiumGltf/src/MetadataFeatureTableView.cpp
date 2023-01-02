@@ -74,16 +74,17 @@ MetadataFeatureTableView::MetadataFeatureTableView(
   assert(pModel != nullptr && "model must not be nullptr");
   assert(pFeatureTable != nullptr && "featureTable must not be nullptr");
 
-  const ModelEXT_feature_metadata* pMetadata =
-      pModel->getExtension<ModelEXT_feature_metadata>();
+  const ExtensionModelExtFeatureMetadata* pMetadata =
+      pModel->getExtension<ExtensionModelExtFeatureMetadata>();
   assert(
       pMetadata != nullptr &&
-      "Model must contain ModelEXT_feature_metadata to use FeatureTableView");
+      "Model must contain ExtensionModelExtFeatureMetadata to use "
+      "FeatureTableView");
 
   const std::optional<Schema>& schema = pMetadata->schema;
   assert(
-      schema != std::nullopt &&
-      "ModelEXT_feature_metadata must contain Schema to use FeatureTableView");
+      schema != std::nullopt && "ExtensionModelExtFeatureMetadata must contain "
+                                "Schema to use FeatureTableView");
 
   auto classIter =
       schema->classes.find(_pFeatureTable->classProperty.value_or(""));
@@ -123,9 +124,15 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
     return MetadataPropertyViewStatus::InvalidValueBufferIndex;
   }
 
+  // This is technically required for the EXT_feature_metadata spec, but not
+  // necessarily required for EXT_mesh_features. Due to the discrepancy between
+  // the two specs, a lot of EXT_feature_metadata glTFs fail to be 8-byte
+  // aligned. To be forgiving and more compatible, we do not enforce this.
+  /*
   if (pBufferView->byteOffset % 8 != 0) {
     return MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes;
   }
+  */
 
   if (pBufferView->byteOffset + pBufferView->byteLength >
       static_cast<int64_t>(pBuffer->cesium.data.size())) {
@@ -191,7 +198,7 @@ MetadataPropertyView<std::string_view>
 MetadataFeatureTableView::getStringPropertyValues(
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty.type != "STRING") {
+  if (classProperty.type != ClassProperty::Type::STRING) {
     return createInvalidPropertyView<std::string_view>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
@@ -228,20 +235,20 @@ MetadataFeatureTableView::getStringPropertyValues(
       offsetBuffer,
       offsetType,
       0,
-      _pFeatureTable->count);
+      _pFeatureTable->count,
+      classProperty.normalized);
 }
 
 MetadataPropertyView<MetadataArrayView<std::string_view>>
 MetadataFeatureTableView::getStringArrayPropertyValues(
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty.type != "ARRAY") {
+  if (classProperty.type != ClassProperty::Type::ARRAY) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
 
-  if (!classProperty.componentType.isString() ||
-      classProperty.componentType.getString() != "STRING") {
+  if (classProperty.componentType != ClassProperty::ComponentType::STRING) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
@@ -304,7 +311,8 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
         stringOffsetBuffer,
         offsetType,
         componentCount,
-        _pFeatureTable->count);
+        _pFeatureTable->count,
+        classProperty.normalized);
   }
 
   // dynamic array
@@ -372,6 +380,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
       stringOffsetBuffer,
       offsetType,
       0,
-      _pFeatureTable->count);
+      _pFeatureTable->count,
+      classProperty.normalized);
 }
 } // namespace CesiumGltf

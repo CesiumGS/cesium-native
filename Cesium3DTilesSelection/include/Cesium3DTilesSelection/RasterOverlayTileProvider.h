@@ -6,8 +6,10 @@
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltf/GltfReader.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <spdlog/fwd.h>
 
@@ -115,21 +117,25 @@ struct LoadTileImageFromUrlOptions {
 /**
  * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
  *
+ * Instances of this class must be allocated on the heap, and their lifetimes
+ * must be managed with {@link CesiumUtility::IntrusivePointer}.
  */
-class CESIUM3DTILESSELECTION_API RasterOverlayTileProvider {
+class CESIUM3DTILESSELECTION_API RasterOverlayTileProvider
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<
+          RasterOverlayTileProvider> {
 public:
   /**
    * Constructs a placeholder tile provider.
    *
    * @see RasterOverlayTileProvider::isPlaceholder
    *
-   * @param owner The raster overlay that owns this tile provider.
+   * @param pOwner The raster overlay that created this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
    */
   RasterOverlayTileProvider(
-      RasterOverlay& owner,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>&
           pAssetAccessor) noexcept;
@@ -137,7 +143,7 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param owner The raster overlay that owns this tile provider.
+   * @param pOwner The raster overlay that created this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
@@ -147,19 +153,22 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param coverageRectangle The rectangle that bounds all the area covered by
+   * this overlay, expressed in projected coordinates.
    */
   RasterOverlayTileProvider(
-      RasterOverlay& owner,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection) noexcept;
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
   /** @brief Default destructor. */
-  virtual ~RasterOverlayTileProvider() {}
+  virtual ~RasterOverlayTileProvider() noexcept;
 
   /**
    * @brief Returns whether this is a placeholder.
@@ -230,6 +239,14 @@ public:
   }
 
   /**
+   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
+   * instance.
+   */
+  const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept {
+    return this->_coverageRectangle;
+  }
+
+  /**
    * @brief Returns a new {@link RasterOverlayTile} with the given
    * specifications.
    *
@@ -241,16 +258,16 @@ public:
    * allowed to cover a slightly larger rectangle in order to maintain pixel
    * alignment. It may also cover a smaller rectangle when the overlay itself
    * does not cover the entire rectangle.
-   * @param targetGeometricError The geometric error (in meters) of the
-   * geometry tile to which the returned raster overlay tile will be attached.
-   * With the typical settings, this raster overlay will be shown when the
-   * geometric error, when projected to the screen, is up to 16 pixels. When the
-   * error is more than 16 pixels, more detailed data will be shown instead.
+   * @param targetScreenPixels The maximum number of pixels on the screen that
+   * this tile is meant to cover. The overlay image should be approximately this
+   * many pixels divided by the
+   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
+   * the desired level-of-detail, but it does not need to be exactly this size.
    * @return The tile.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
       const CesiumGeometry::Rectangle& rectangle,
-      double targetGeometricError);
+      const glm::dvec2& targetScreenPixels);
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.
@@ -354,10 +371,9 @@ private:
    *
    * This method should be called at the beginning of the tile load process.
    *
-   * @param tile The tile that is starting to load.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
+  void beginTileLoad(bool isThrottledLoad) noexcept;
 
   /**
    * @brief Finalizes loading of a tile.
@@ -365,20 +381,20 @@ private:
    * This method should be called at the end of the tile load process,
    * no matter whether the load succeeded or failed.
    *
-   * @param tile The tile that finished loading.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
+  void finalizeTileLoad(bool isThrottledLoad) noexcept;
 
 private:
-  RasterOverlay* _pOwner;
+  CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
   std::optional<Credit> _credit;
   std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
-  std::unique_ptr<RasterOverlayTile> _pPlaceholder;
+  CesiumGeometry::Rectangle _coverageRectangle;
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
@@ -386,6 +402,6 @@ private:
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");
 
-  static CesiumGltf::GltfReader _gltfReader;
+  static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesSelection

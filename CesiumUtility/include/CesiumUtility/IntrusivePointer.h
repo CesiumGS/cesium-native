@@ -1,10 +1,18 @@
 #pragma once
+#include <type_traits>
+#include <utility>
 
 namespace CesiumUtility {
 
 /**
  * @brief A smart pointer that calls `addReference` and `releaseReference` on
  * the controlled object.
+ *
+ * Please note that the thread-safety of this type is entirely dependent on the
+ * implementation of `addReference` and `releaseReference`. If these methods are
+ * not thread safe on a particular type - which is common for objects that are
+ * not meant to be used from multiple threads simultaneously - then using an
+ * `IntrusivePointer` from multiple threads is also unsafe.
  *
  * @tparam T The type of object controlled.
  */
@@ -23,9 +31,34 @@ public:
   }
 
   /**
+   * @brief Implicit conversion to a pointer to a base (or otherwise
+   * convertible) type.
+   *
+   * @tparam U The new type, usually a base class.
+   * @param rhs The pointer.
+   */
+  template <class U>
+  IntrusivePointer(const IntrusivePointer<U>& rhs) noexcept : _p(rhs._p) {
+    this->addReference();
+  }
+
+  /**
    * @brief Move constructor.
    */
   IntrusivePointer(IntrusivePointer<T>&& rhs) noexcept
+      : _p(std::exchange(rhs._p, nullptr)) {
+    // Reference count is unchanged
+  }
+
+  /**
+   * @brief Implicit conversion of an r-value to a pointer to a base (or
+   * otherwise convertible) type.
+   *
+   * @tparam U The new type, usually a base class.
+   * @param rhs The pointer.
+   */
+  template <class U>
+  IntrusivePointer(IntrusivePointer<U>&& rhs) noexcept
       : _p(std::exchange(rhs._p, nullptr)) {
     // Reference count is unchanged
   }
@@ -39,6 +72,21 @@ public:
    * @brief Assignment operator.
    */
   IntrusivePointer& operator=(const IntrusivePointer& rhs) noexcept {
+    if (this->_p != rhs._p) {
+      // addReference the new pointer before releaseReference'ing the old.
+      T* pOld = this->_p;
+      this->_p = rhs._p;
+      addReference();
+
+      if (pOld) {
+        pOld->releaseReference();
+      }
+    }
+
+    return *this;
+  }
+  template <class U>
+  IntrusivePointer& operator=(const IntrusivePointer<U>& rhs) noexcept {
     if (this->_p != rhs._p) {
       // addReference the new pointer before releaseReference'ing the old.
       T* pOld = this->_p;
@@ -109,6 +157,10 @@ public:
   bool operator==(const IntrusivePointer<T>& rhs) const noexcept {
     return this->_p == rhs._p;
   }
+  template <class U>
+  bool operator==(const IntrusivePointer<U>& rhs) const noexcept {
+    return this->_p == rhs._p;
+  }
 
   /**
    * @brief Returns `true` if two pointers are *not* equal.
@@ -121,13 +173,13 @@ public:
    * @brief Returns `true` if the contents of this pointer is equal to the given
    * pointer.
    */
-  bool operator==(T* pRhs) const noexcept { return this->_p == pRhs; }
+  bool operator==(const T* pRhs) const noexcept { return this->_p == pRhs; }
 
   /**
    * @brief Returns `true` if the contents of this pointer is *not* equal to the
    * given pointer.
    */
-  bool operator!=(T* pRhs) const noexcept { return !(*this == pRhs); }
+  bool operator!=(const T* pRhs) const noexcept { return !(*this == pRhs); }
 
 private:
   void addReference() noexcept {
@@ -143,5 +195,13 @@ private:
   }
 
   T* _p;
+  template <typename U> friend class IntrusivePointer;
 };
+
+template <typename T, typename U>
+IntrusivePointer<T>
+const_intrusive_cast(const IntrusivePointer<U>& p) noexcept {
+  return IntrusivePointer<T>(const_cast<T*>(p.get()));
+}
+
 } // namespace CesiumUtility

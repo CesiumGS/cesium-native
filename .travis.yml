@@ -22,7 +22,7 @@ jobs:
     - name: Windows + VS2017
       os: windows
       install:
-        - choco install doxygen.install
+        - choco install doxygen.install --version=1.9.2
       before_script:
         - mkdir -p build
         - cd build
@@ -31,7 +31,7 @@ jobs:
       os: windows
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
-        - choco install doxygen.install
+        - choco install doxygen.install --version=1.9.2
     - name: Linux + GCC
       os: linux
       dist: focal
@@ -51,10 +51,15 @@ jobs:
         - # and breaks our ability to update. We don't need it, so remove it.
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
-        -  # Workaround for an apparent Ubuntu package problem.
-        -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
-        - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
-        - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
+        - sudo apt-get install clang-10 cmake doxygen
       env:
         - CC=clang-10
         - CXX=clang++-10
+    - name: macOS
+      os: osx
+      osx_image: xcode12
+      script:
+        - cmake --build . --config Debug
+        - ctest -V
+        - # Doc build doesn't work on Mac (missing Doxygen). Let's just skip it.
+        - #cmake --build . --config Debug --target cesium-native-docs

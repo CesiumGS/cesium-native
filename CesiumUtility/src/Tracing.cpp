@@ -1,3 +1,6 @@
+
+#ifndef CESIUM_OVERRIDE_TRACING
+
 #include "CesiumUtility/Tracing.h"
 
 #include <algorithm>
@@ -6,7 +9,7 @@
 #if CESIUM_TRACING_ENABLED
 
 namespace CesiumUtility {
-namespace Impl {
+namespace CesiumImpl {
 
 Tracer& Tracer::instance() {
   static Tracer instance;
@@ -333,7 +336,9 @@ void TrackReference::dismissCurrentThread() {
   TrackReference::_threadEnlistedTracks.pop_back();
 }
 
-} // namespace Impl
+} // namespace CesiumImpl
 } // namespace CesiumUtility
 
 #endif // CESIUM_TRACING_ENABLED
+
+#endif

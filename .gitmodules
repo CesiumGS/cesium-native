@@ -28,9 +28,6 @@
 [submodule "extern/rapidjson"]
 	path = extern/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "extern/glTF"]
-	path = extern/glTF
-	url = https://github.com/KhronosGroup/glTF.git
 [submodule "extern/stb"]
 	path = extern/stb
 	url = https://github.com/nothings/stb.git
@@ -43,9 +40,22 @@
 [submodule "extern/PicoSHA2"]
 	path = extern/PicoSHA2
 	url = https://github.com/okdshin/PicoSHA2.git
-[submodule "extern/magic_enum"]
-	path = extern/magic_enum
-	url = https://github.com/Neargye/magic_enum.git
 [submodule "extern/cmake-modules"]
 	path = extern/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
+[submodule "extern/s2geometry"]
+	path = extern/s2geometry
+	url = https://github.com/google/s2geometry.git
+[submodule "extern/KTX-Software"]
+	path = extern/KTX-Software
+	url = https://github.com/CesiumGS/KTX-Software.git
+	branch = cesium-native
+[submodule "extern/libwebp"]
+	path = extern/libwebp
+	url = https://github.com/webmproject/libwebp
+[submodule "extern/libmorton"]
+	path = extern/libmorton
+	url = https://github.com/Forceflow/libmorton.git
+[submodule "extern/expected-lite"]
+	path = extern/expected-lite
+	url = https://github.com/martinmoene/expected-lite.git

@@ -1,13 +1,17 @@
-#include "Batched3DModelContent.h"
-#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
-#include "CesiumGltf/MetadataFeatureTableView.h"
-#include "CesiumGltf/MetadataPropertyView.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "B3dmToGltfConverter.h"
+#include "BatchTableToGltfFeatureMetadata.h"
 #include "readFile.h"
-#include "upgradeBatchTableToFeatureMetadata.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/MetadataFeatureTableView.h>
+#include <CesiumGltf/MetadataPropertyView.h>
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
+#include <spdlog/sinks/ringbuffer_sink.h>
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
@@ -27,7 +31,7 @@ static void checkScalarProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedPropertyType);
-  REQUIRE(property.componentType.isNull());
+  REQUIRE(property.componentType == std::nullopt);
   REQUIRE(property.componentCount == std::nullopt);
 
   MetadataFeatureTableView view(&model, &featureTable);
@@ -61,7 +65,8 @@ static void checkArrayProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
-  REQUIRE(property.componentType.getString() == expectedComponentType);
+  REQUIRE(property.componentType.has_value());
+  REQUIRE(*property.componentType == expectedComponentType);
   if (expectedComponentCount > 0) {
     REQUIRE(
         property.componentCount.value() ==
@@ -121,7 +126,9 @@ static void createTestForScalarJson(
           batchTableJson.GetAllocator());
       scalarProperty.PushBack(value, batchTableJson.GetAllocator());
     } else {
-      scalarProperty.PushBack(expected[i], batchTableJson.GetAllocator());
+      scalarProperty.PushBack(
+          ExpectedType(expected[i]),
+          batchTableJson.GetAllocator());
     }
   }
 
@@ -130,15 +137,14 @@ static void createTestForScalarJson(
       scalarProperty,
       batchTableJson.GetAllocator());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      model);
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -194,7 +200,9 @@ static void createTestForArrayJson(
             batchTableJson.GetAllocator());
         innerArray.PushBack(value, batchTableJson.GetAllocator());
       } else {
-        innerArray.PushBack(expected[i][j], batchTableJson.GetAllocator());
+        innerArray.PushBack(
+            ExpectedType(expected[i][j]),
+            batchTableJson.GetAllocator());
       }
     }
     fixedArrayProperties.PushBack(innerArray, batchTableJson.GetAllocator());
@@ -205,15 +213,14 @@ static void createTestForArrayJson(
       fixedArrayProperties,
       batchTableJson.GetAllocator());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      model);
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -239,20 +246,22 @@ static void createTestForArrayJson(
       totalInstances);
 }
 
+GltfConverterResult loadB3dm(const std::filesystem::path& filePath) {
+  return B3dmToGltfConverter::convert(readFile(filePath), {});
+}
+
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
-  std::vector<std::byte> b3dm = readFile(testFilePath);
 
-  std::unique_ptr<TileContentLoadResult> pResult =
-      Batched3DModelContent::load(spdlog::default_logger(), "test.url", b3dm);
+  GltfConverterResult result = loadB3dm(testFilePath);
 
-  REQUIRE(pResult->model);
+  REQUIRE(result.model);
 
-  Model& gltf = *pResult->model;
+  Model& gltf = *result.model;
 
-  ModelEXT_feature_metadata* pExtension =
-      gltf.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(pExtension);
 
   // Check the schema
@@ -333,8 +342,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
           primitive.attributes.find("_FEATURE_ID_1") ==
           primitive.attributes.end());
 
-      MeshPrimitiveEXT_feature_metadata* pPrimitiveExtension =
-          primitive.getExtension<MeshPrimitiveEXT_feature_metadata>();
+      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
@@ -349,7 +358,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   {
     std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     checkScalarProperty<int8_t>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "id",
@@ -371,7 +380,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         13.74609257467091,
         10.145220385864377};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Height",
@@ -393,7 +402,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         -1.3196471198757775,
         -1.319644104024109};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Longitude",
@@ -415,7 +424,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         0.6988523191715889,
         0.6988697375823105};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Latitude",
@@ -429,15 +438,14 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
-  std::vector<std::byte> b3dm = readFile(testFilePath);
 
-  std::unique_ptr<TileContentLoadResult> pResult =
-      Batched3DModelContent::load(spdlog::default_logger(), "test.url", b3dm);
-  REQUIRE(pResult != nullptr);
-  REQUIRE(pResult->model != std::nullopt);
+  GltfConverterResult result = loadB3dm(testFilePath);
 
-  ModelEXT_feature_metadata* metadata =
-      pResult->model->getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(!result.errors);
+  REQUIRE(result.model != std::nullopt);
+
+  ExtensionModelExtFeatureMetadata* metadata =
+      result.model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -456,7 +464,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   {
     std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     checkScalarProperty<int8_t>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "id",
@@ -478,7 +486,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         12.546202838420868,
         7.632075032219291};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Height",
@@ -500,7 +508,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         -1.319683648959897,
         -1.3196959060375169};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Longitude",
@@ -522,7 +530,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         0.6988690935212543,
         0.6988854945986224};
     checkScalarProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "Latitude",
@@ -534,7 +542,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   {
     std::vector<uint8_t> expected(10, 255);
     checkScalarProperty<uint8_t>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "code",
@@ -559,7 +567,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
     };
     // clang-format on
     checkArrayProperty<double>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "cartographic",
@@ -574,15 +582,14 @@ TEST_CASE("Upgrade json nested json metadata to string") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
-  std::vector<std::byte> b3dm = readFile(testFilePath);
 
-  std::unique_ptr<TileContentLoadResult> pResult =
-      Batched3DModelContent::load(spdlog::default_logger(), "test.url", b3dm);
-  REQUIRE(pResult != nullptr);
-  REQUIRE(pResult->model != std::nullopt);
+  GltfConverterResult result = loadB3dm(testFilePath);
 
-  ModelEXT_feature_metadata* metadata =
-      pResult->model->getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(!result.errors);
+  REQUIRE(result.model != std::nullopt);
+
+  ExtensionModelExtFeatureMetadata* metadata =
+      result.model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -607,7 +614,7 @@ TEST_CASE("Upgrade json nested json metadata to string") {
       expected.push_back(v);
     }
     checkScalarProperty<std::string, std::string_view>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "info",
@@ -626,7 +633,7 @@ TEST_CASE("Upgrade json nested json metadata to string") {
       expected.emplace_back(std::move(expectedVal));
     }
     checkArrayProperty<std::string, std::string_view>(
-        *pResult->model,
+        *result.model,
         featureTable,
         defaultClass,
         "rooms",
@@ -664,15 +671,14 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       boolProperties,
       batchTableJson.GetAllocator());
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>());
+      gsl::span<const std::byte>(),
+      model);
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -1150,4 +1156,509 @@ TEST_CASE("Cannot write pass batch length table") {
         0,
         2);
   }
+}
+
+TEST_CASE("Converts Feature Classes 3DTILES_batch_table_hierarchy example to "
+          "EXT_feature_metadata") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 8
+    }
+  )";
+
+  // "Feature classes" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-classes
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Lamp",
+              "length" : 3,
+              "instances" : {
+                "lampStrength" : [10, 5, 7],
+                "lampColor" : ["yellow", "white", "white"]
+              }
+            },
+            {
+              "name" : "Car",
+              "length" : 3,
+              "instances" : {
+                "carType" : ["truck", "bus", "sedan"],
+                "carColor" : ["green", "blue", "red"]
+              }
+            },
+            {
+              "name" : "Tree",
+              "length" : 2,
+              "instances" : {
+                "treeHeight" : [10, 15],
+                "treeAge" : [5, 8]
+              }
+            }
+          ],
+          "instancesLength" : 8,
+          "classIds" : [0, 0, 0, 1, 1, 1, 2, 2]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>(),
+      gltf);
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 6);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 6);
+
+  // Even though some of these properties are numeric, they become STRING
+  // because not every feature has every property, and only STRING can
+  // represent null.
+  struct Expected {
+    std::string name;
+    std::string type;
+    std::vector<std::string> values;
+  };
+
+  std::vector<Expected> expectedProperties{
+      {"lampStrength",
+       "STRING",
+       {"10", "5", "7", "null", "null", "null", "null", "null"}},
+      {"lampColor",
+       "STRING",
+       {"yellow", "white", "white", "null", "null", "null", "null", "null"}},
+      {"carType",
+       "STRING",
+       {"null", "null", "null", "truck", "bus", "sedan", "null", "null"}},
+      {"carColor",
+       "STRING",
+       {"null", "null", "null", "green", "blue", "red", "null", "null"}},
+      {"treeHeight",
+       "STRING",
+       {"null", "null", "null", "null", "null", "null", "10", "15"}},
+      {"treeAge",
+       "STRING",
+       {"null", "null", "null", "null", "null", "null", "5", "8"}}};
+
+  for (const auto& expected : expectedProperties) {
+    auto it = defaultClass.properties.find(expected.name);
+    REQUIRE(it != defaultClass.properties.end());
+    CHECK(it->second.type == expected.type);
+
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        expected.name,
+        expected.type,
+        expected.values,
+        expected.values.size());
+  }
+}
+
+TEST_CASE("Converts Feature Hierarchy 3DTILES_batch_table_hierarchy example to "
+          "EXT_feature_metadata") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 6
+    }
+  )";
+
+  // "Feature hierarchy" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-hierarchy
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Wall",
+              "length" : 6,
+              "instances" : {
+                "wall_color" : ["blue", "pink", "green", "lime", "black", "brown"],
+                "wall_windows" : [2, 4, 4, 2, 0, 3]
+              }
+            },
+            {
+              "name" : "Building",
+              "length" : 3,
+              "instances" : {
+                "building_name" : ["building_0", "building_1", "building_2"],
+                "building_id" : [0, 1, 2],
+                "building_address" : ["10 Main St", "12 Main St", "14 Main St"]
+              }
+            },
+            {
+              "name" : "Block",
+              "length" : 1,
+              "instances" : {
+                "block_lat_long" : [[0.12, 0.543]],
+                "block_district" : ["central"]
+              }
+            }
+          ],
+          "instancesLength" : 10,
+          "classIds" : [0, 0, 0, 0, 0, 0, 1, 1, 1, 2],
+          "parentIds" : [6, 6, 7, 7, 8, 8, 9, 9, 9, 9]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  BatchTableToGltfFeatureMetadata::convert(
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>(),
+      gltf);
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 7);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 7);
+
+  struct ExpectedString {
+    std::string name;
+    std::string type;
+    std::vector<std::string> values;
+  };
+
+  std::vector<ExpectedString> expectedStringProperties{
+      {"wall_color",
+       "STRING",
+       {"blue", "pink", "green", "lime", "black", "brown"}},
+      {"building_name",
+       "STRING",
+       {"building_0",
+        "building_0",
+        "building_1",
+        "building_1",
+        "building_2",
+        "building_2"}},
+      {"building_address",
+       "STRING",
+       {"10 Main St",
+        "10 Main St",
+        "12 Main St",
+        "12 Main St",
+        "14 Main St",
+        "14 Main St"}},
+      {"block_district",
+       "STRING",
+       {"central", "central", "central", "central", "central", "central"}}};
+
+  for (const auto& expected : expectedStringProperties) {
+    auto it = defaultClass.properties.find(expected.name);
+    REQUIRE(it != defaultClass.properties.end());
+    CHECK(it->second.type == expected.type);
+
+    checkScalarProperty<std::string, std::string_view>(
+        gltf,
+        featureTable,
+        defaultClass,
+        expected.name,
+        expected.type,
+        expected.values,
+        expected.values.size());
+  }
+
+  struct ExpectedInt8Properties {
+    std::string name;
+    std::string type;
+    std::vector<int8_t> values;
+  };
+
+  std::vector<ExpectedInt8Properties> expectedInt8Properties{
+      {"wall_windows", "INT8", {2, 4, 4, 2, 0, 3}},
+      {"building_id", "INT8", {0, 0, 1, 1, 2, 2}},
+  };
+
+  for (const auto& expected : expectedInt8Properties) {
+    auto it = defaultClass.properties.find(expected.name);
+    REQUIRE(it != defaultClass.properties.end());
+    CHECK(it->second.type == expected.type);
+
+    checkScalarProperty<int8_t>(
+        gltf,
+        featureTable,
+        defaultClass,
+        expected.name,
+        expected.type,
+        expected.values,
+        expected.values.size());
+  }
+
+  struct ExpectedDoubleArrayProperties {
+    std::string name;
+    std::string type;
+    std::string componentType;
+    int64_t componentCount;
+    std::vector<std::vector<double>> values;
+  };
+
+  std::vector<ExpectedDoubleArrayProperties> expectedDoubleArrayProperties{
+      {"block_lat_long",
+       "ARRAY",
+       "FLOAT64",
+       2,
+       {{0.12, 0.543},
+        {0.12, 0.543},
+        {0.12, 0.543},
+        {0.12, 0.543},
+        {0.12, 0.543},
+        {0.12, 0.543}}}};
+
+  for (const auto& expected : expectedDoubleArrayProperties) {
+    auto it = defaultClass.properties.find(expected.name);
+    REQUIRE(it != defaultClass.properties.end());
+    CHECK(it->second.type == expected.type);
+    CHECK(it->second.componentType == expected.componentType);
+
+    checkArrayProperty<double>(
+        gltf,
+        featureTable,
+        defaultClass,
+        expected.name,
+        expected.componentCount,
+        expected.componentType,
+        expected.values,
+        expected.values.size());
+  }
+}
+
+TEST_CASE(
+    "3DTILES_batch_table_hierarchy with parentCounts is ok if all are 1") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 3
+    }
+  )";
+
+  // "Feature hierarchy" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-hierarchy
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Parent1",
+              "length" : 3,
+              "instances" : {
+                "some_property" : ["a", "b", "c"]
+              }
+            },
+            {
+              "name" : "Parent2",
+              "length" : 3,
+              "instances" : {
+                "another_property" : ["d", "e", "f"]
+              }
+            },
+            {
+              "name" : "Main",
+              "length" : 3,
+              "instances" : {
+                "third" : [1, 2, 3]
+              }
+            }
+          ],
+          "instancesLength" : 5,
+          "classIds" : [2, 2, 2, 0, 1],
+          "parentCounts": [1, 1, 1, 1, 1],
+          "parentIds" : [3, 3, 3, 4, 4]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+  spdlog::default_logger()->sinks().emplace_back(pLog);
+
+  BatchTableToGltfFeatureMetadata::convert(
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>(),
+      gltf);
+
+  // There should not be any log messages about parentCounts, since they're
+  // all 1.
+  std::vector<std::string> logMessages = pLog->last_formatted();
+  REQUIRE(logMessages.size() == 0);
+
+  // There should actually be metadata properties as normal.
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+}
+
+TEST_CASE(
+    "3DTILES_batch_table_hierarchy with parentCounts != 1 is not supported") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 3
+    }
+  )";
+
+  // "Feature hierarchy" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-hierarchy
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Parent1",
+              "length" : 3,
+              "instances" : {
+                "some_property" : ["a", "b", "c"]
+              }
+            },
+            {
+              "name" : "Parent2",
+              "length" : 3,
+              "instances" : {
+                "another_property" : ["d", "e", "f"]
+              }
+            },
+            {
+              "name" : "Main",
+              "length" : 3,
+              "instances" : {
+                "third" : [1, 2, 3]
+              }
+            }
+          ],
+          "instancesLength" : 5,
+          "classIds" : [2, 2, 2, 0, 1],
+          "parentCounts": [2, 2, 2, 1, 1],
+          "parentIds" : [3, 4, 3, 4, 3, 4, 3, 4]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+  spdlog::default_logger()->sinks().emplace_back(pLog);
+
+  auto errors = BatchTableToGltfFeatureMetadata::convert(
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>(),
+      gltf);
+
+  // There should be a log message about parentCounts, and no properties.
+  const std::vector<std::string>& logMessages = errors.warnings;
+  REQUIRE(logMessages.size() == 1);
+  CHECK(logMessages[0].find("parentCounts") != std::string::npos);
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 0);
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 0);
 }

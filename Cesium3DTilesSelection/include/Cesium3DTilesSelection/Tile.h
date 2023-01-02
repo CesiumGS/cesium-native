@@ -3,14 +3,11 @@
 #include "BoundingVolume.h"
 #include "Library.h"
 #include "RasterMappedTo3DTile.h"
-#include "RasterOverlayTile.h"
-#include "TileContext.h"
+#include "TileContent.h"
 #include "TileID.h"
 #include "TileRefine.h"
 #include "TileSelectionState.h"
 
-#include <CesiumAsync/IAssetRequest.h>
-#include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/DoublyLinkedList.h>
 
 #include <glm/common.hpp>
@@ -25,9 +22,55 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class Tileset;
-class TileContent;
-struct TileContentLoadResult;
+class TilesetContentLoader;
+
+/**
+ * The current state of this tile in the loading process.
+ */
+enum class TileLoadState {
+  /**
+   * @brief This tile is in the process of being unloaded, but could not be
+   * fully unloaded because an asynchronous process is using its loaded data.
+   */
+  Unloading = -2,
+
+  /**
+   * @brief Something went wrong while loading this tile, but it may be a
+   * temporary problem.
+   */
+  FailedTemporarily = -1,
+
+  /**
+   * @brief The tile is not yet loaded at all, beyond the metadata in
+   * tileset.json.
+   */
+  Unloaded = 0,
+
+  /**
+   * @brief The tile content is currently being loaded.
+   *
+   * Note that while a tile is in this state, its {@link Tile::getContent},
+   * and {@link Tile::getState}, methods may be called from the load thread,
+   * and the state may change due to the internal loading process.
+   */
+  ContentLoading = 1,
+
+  /**
+   * @brief The tile content has finished loading.
+   */
+  ContentLoaded = 2,
+
+  /**
+   * @brief The tile is completely done loading.
+   */
+  Done = 3,
+
+  /**
+   * @brief Something went wrong while loading this tile and it will not be
+   * retried.
+   */
+  Failed = 4,
+};
 
 /**
  * @brief A tile in a {@link Tileset}.
@@ -55,71 +98,46 @@ struct TileContentLoadResult;
 class CESIUM3DTILESSELECTION_API Tile final {
 public:
   /**
-   * The current state of this tile in the loading process.
+   * @brief Construct a tile with unknown content and a loader that is used to
+   * load the content of this tile. Tile has Unloaded status when initializing
+   * with this constructor.
+   *
+   * @param pLoader The {@link TilesetContentLoader} that is used to load the tile.
    */
-  enum class LoadState {
-    /**
-     * @brief This tile is in the process of being destroyed.
-     *
-     * Any pointers to it will soon be invalid.
-     */
-    Destroying = -3,
-
-    /**
-     * @brief Something went wrong while loading this tile and it will not be
-     * retried.
-     */
-    Failed = -2,
-
-    /**
-     * @brief Something went wrong while loading this tile, but it may be a
-     * temporary problem.
-     */
-    FailedTemporarily = -1,
-
-    /**
-     * @brief The tile is not yet loaded at all, beyond the metadata in
-     * tileset.json.
-     */
-    Unloaded = 0,
-
-    /**
-     * @brief The tile content is currently being loaded.
-     *
-     * Note that while a tile is in this state, its {@link Tile::getContent},
-     * and {@link Tile::getState}, methods may be called from the load thread,
-     * and the state may change due to the internal loading process.
-     */
-    ContentLoading = 1,
-
-    /**
-     * @brief The tile content has finished loading.
-     */
-    ContentLoaded = 2,
-
-    /**
-     * @brief The tile is completely done loading.
-     */
-    Done = 3
-  };
+  explicit Tile(TilesetContentLoader* pLoader) noexcept;
 
   /**
-   * @brief Default constructor for an empty, uninitialized tile.
+   * @brief Construct a tile with an external content and a loader that is
+   * associated with this tile. Tile has ContentLoaded status when initializing
+   * with this constructor.
+   *
+   * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
    */
-  Tile() noexcept;
+  Tile(
+      TilesetContentLoader* pLoader,
+      TileExternalContent externalContent) noexcept;
+
+  /**
+   * @brief Construct a tile with an empty content and a loader that is
+   * associated with this tile. Tile has ContentLoaded status when initializing
+   * with this constructor.
+   *
+   * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   */
+  Tile(TilesetContentLoader* pLoader, TileEmptyContent emptyContent) noexcept;
 
   /**
    * @brief Default destructor, which clears all resources associated with this
    * tile.
    */
-  ~Tile();
+  ~Tile() noexcept = default;
 
   /**
    * @brief Copy constructor.
    *
    * @param rhs The other instance.
    */
-  Tile(Tile& rhs) noexcept = delete;
+  Tile(const Tile& rhs) = delete;
 
   /**
    * @brief Move constructor.
@@ -129,44 +147,18 @@ public:
   Tile(Tile&& rhs) noexcept;
 
   /**
+   * @brief Copy constructor.
+   *
+   * @param rhs The other instance.
+   */
+  Tile& operator=(const Tile& rhs) = delete;
+
+  /**
    * @brief Move assignment operator.
    *
    * @param rhs The other instance.
    */
   Tile& operator=(Tile&& rhs) noexcept;
-
-  /**
-   * @brief Returns the {@link Tileset} to which this tile belongs.
-   */
-  Tileset* getTileset() noexcept { return this->_pContext->pTileset; }
-
-  /** @copydoc Tile::getTileset() */
-  const Tileset* getTileset() const noexcept {
-    return this->_pContext->pTileset;
-  }
-
-  /**
-   * @brief Returns the {@link TileContext} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @return The tile context.
-   */
-  TileContext* getContext() noexcept { return this->_pContext; }
-
-  /** @copydoc Tile::getContext() */
-  const TileContext* getContext() const noexcept { return this->_pContext; }
-
-  /**
-   * @brief Set the {@link TileContext} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param pContext The tile context.
-   */
-  void setContext(TileContext* pContext) noexcept {
-    this->_pContext = pContext;
-  }
 
   /**
    * @brief Returns the parent of this tile in the tile hierarchy.
@@ -179,15 +171,6 @@ public:
 
   /** @copydoc Tile::getParent() */
   const Tile* getParent() const noexcept { return this->_pParent; }
-
-  /**
-   * @brief Set the parent of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param pParent The parent tile .
-   */
-  void setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
   /**
    * @brief Returns a *view* on the children of this tile.
@@ -204,16 +187,6 @@ public:
   gsl::span<const Tile> getChildren() const noexcept {
     return gsl::span<const Tile>(this->_children);
   }
-
-  /**
-   * @brief Allocates space for the given number of child tiles.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param count The number of child tiles.
-   * @throws `std::runtime_error` if this tile already has children.
-   */
-  void createChildTiles(size_t count);
 
   /**
    * @brief Assigns the given child tiles to this tile.
@@ -300,6 +273,22 @@ public:
   }
 
   /**
+   * @brief Gets the tile's geometric error as if by calling
+   * {@link getGeometricError}, except that if the error is smaller than
+   * {@link Math::Epsilon5} the returned geometric error is instead computed as
+   * half of the parent tile's (non-zero) geometric error.
+   *
+   * This is useful for determining when to refine what would ordinarily be a
+   * leaf tile, for example to attach more detailed raster overlays to it.
+   *
+   * If this tile and all of its ancestors have a geometric error less than
+   * {@link Math::Epsilon5}, returns {@link Math::Epsilon5}.
+   *
+   * @return The non-zero geometric error.
+   */
+  double getNonZeroGeometricError() const noexcept;
+
+  /**
    * @brief Returns whether to unconditionally refine this tile.
    *
    * This is useful in cases such as with external tilesets, where instead of a
@@ -381,7 +370,7 @@ public:
    *
    * @param id The tile ID.
    */
-  void setTileID(const TileID& id) noexcept;
+  void setTileID(const TileID& id) noexcept { this->_id = id; }
 
   /**
    * @brief Returns the {@link BoundingVolume} of the renderable content of this
@@ -413,41 +402,6 @@ public:
   }
 
   /**
-   * @brief Returns the {@link TileContentLoadResult} for the content of this
-   * tile.
-   *
-   * This will be a `nullptr` if the content of this tile has not yet been
-   * loaded, as indicated by the indicated by the {@link Tile::getState} of this
-   * tile not being {@link Tile::LoadState::ContentLoaded}.
-   *
-   * @return The tile content load result, or `nullptr` if no content is loaded
-   */
-  TileContentLoadResult* getContent() noexcept { return this->_pContent.get(); }
-
-  /** @copydoc Tile::getContent() */
-  const TileContentLoadResult* getContent() const noexcept {
-    return this->_pContent.get();
-  }
-
-  /**
-   * @brief Returns internal resources required for rendering this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @return The renderer resources.
-   */
-  void* getRendererResources() const noexcept {
-    return this->_pRendererResources;
-  }
-
-  /**
-   * @brief Returns the {@link LoadState} of this tile.
-   */
-  LoadState getState() const noexcept {
-    return this->_state.load(std::memory_order::memory_order_acquire);
-  }
-
-  /**
    * @brief Returns the {@link TileSelectionState} of this tile.
    *
    * This function is not supposed to be called by clients.
@@ -475,6 +429,12 @@ public:
   }
 
   /**
+   * @brief Determines the number of bytes in this tile's geometry and texture
+   * data.
+   */
+  int64_t computeByteSize() const noexcept;
+
+  /**
    * @brief Returns the raster overlay tiles that have been mapped to this tile.
    */
   std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept {
@@ -488,147 +448,94 @@ public:
   }
 
   /**
+   * @brief get the content of the tile.
+   */
+  const TileContent& getContent() const noexcept { return _content; }
+
+  /** @copydoc Tile::getContent() */
+  TileContent& getContent() noexcept { return _content; }
+
+  /**
    * @brief Determines if this tile is currently renderable.
    */
   bool isRenderable() const noexcept;
 
   /**
-   * @brief Determines if this tile is has external tileset content.
+   * @brief Determines if this tile has mesh content.
    */
-  bool isExternalTileset() const noexcept;
+  bool isRenderContent() const noexcept;
 
   /**
-   * @brief Trigger the process of loading the {@link Tile::getContent}.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * If this tile is not in its initial state (indicated by the
-   * {@link Tile::getState} of this tile being *not*
-   * {@link Tile::LoadState::Unloaded}), then nothing will be done.
-   *
-   * Otherwise, the tile will go into the
-   * {@link Tile::LoadState::ContentLoading} state, and the request for
-   * loading the tile content will be sent out.
-   * The function will then return, and the response of the request will
-   * be received asynchronously. Depending on the type of the tile and
-   * the response, the tile will eventually go into the
-   * {@link Tile::LoadState::ContentLoaded} state, and the
-   * {@link Tile::getContent} will be available.
+   * @brief Determines if this tile has external tileset content.
    */
-  void loadContent();
+  bool isExternalContent() const noexcept;
 
   /**
-   * @brief Frees all resources that have been allocated for the
-   * {@link Tile::getContent}.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * If the operation for loading the tile content is currently in progress, as
-   * indicated by the {@link Tile::getState} of this tile being
-   * {@link Tile::LoadState::ContentLoading}), then nothing will be done,
-   * and `false` will be returned.
-   *
-   * Otherwise, the resources that have been allocated for the tile content will
-   * be freed.
-   *
-   * @return Whether the content was unloaded.
+   * @brief Determines if this tile has empty content.
    */
-  bool unloadContent() noexcept;
+  bool isEmptyContent() const noexcept;
 
   /**
-   * @brief Gives this tile a chance to update itself each render frame.
-   *
-   * @param previousFrameNumber The number of the previous render frame.
-   * @param currentFrameNumber The number of the current render frame.
+   * @brief get the loader that is used to load the tile content.
    */
-  void update(int32_t previousFrameNumber, int32_t currentFrameNumber);
+  TilesetContentLoader* getLoader() const noexcept;
 
   /**
-   * @brief Marks the tile as permanently failing to load.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * Moves the tile from the `FailedTemporarily` state to the `Failed` state.
-   * If the tile is not in the `FailedTemporarily` state, this method does
-   * nothing.
+   * @brief Returns the {@link TileLoadState} of this tile.
    */
-  void markPermanentlyFailed() noexcept;
-
-  /**
-   * @brief Determines the number of bytes in this tile's geometry and texture
-   * data.
-   */
-  int64_t computeByteSize() const noexcept;
+  TileLoadState getState() const noexcept;
 
 private:
-  /**
-   * @brief Set the {@link LoadState} of this tile.
-   */
-  void setState(LoadState value) noexcept;
+  struct TileConstructorImpl {};
+  template <
+      typename... TileContentArgs,
+      typename TileContentEnable = std::enable_if_t<
+          std::is_constructible_v<TileContent, TileContentArgs&&...>,
+          int>>
+  Tile(
+      TileConstructorImpl tag,
+      TileLoadState loadState,
+      TilesetContentLoader* pLoader,
+      TileContentArgs&&... args);
 
-  /**
-   * @brief Generates texture coordiantes for the raster overlays of the content
-   * of this tile.
-   *
-   * This will extend the accessors of the glTF model of the content of this
-   * tile with accessors that contain the texture coordinate sets for different
-   * projections. Further details are not specified here.
-   *
-   * @return The bounding region
-   */
-  static std::optional<CesiumGeospatial::BoundingRegion>
-  generateTextureCoordinates(
-      CesiumGltf::Model& model,
-      const glm::dmat4& transform,
-      const BoundingVolume& boundingVolume,
-      const std::vector<CesiumGeospatial::Projection>& projections);
+  void setParent(Tile* pParent) noexcept;
 
-  /**
-   * @brief Upsample the parent of this tile.
-   *
-   * This method should only be called when this tile's parent is already
-   * loaded.
-   */
-  void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
+  void setState(TileLoadState state) noexcept;
 
-  /**
-   * @brief Initiates loading of any overlays attached to this tile.
-   *
-   * This method should only be called when the tile is in the ContentLoading
-   * state and _rasterTiles is empty.
-   *
-   * @param projections On return the set of projections used by the overlays.
-   */
-  void loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
+  bool shouldContentContinueUpdating() const noexcept;
+
+  void
+  setContentShouldContinueUpdating(bool shouldContentContinueUpdating) noexcept;
 
   // Position in bounding-volume hierarchy.
-  TileContext* _pContext;
   Tile* _pParent;
   std::vector<Tile> _children;
 
   // Properties from tileset.json.
   // These are immutable after the tile leaves TileState::Unloaded.
+  TileID _id;
   BoundingVolume _boundingVolume;
   std::optional<BoundingVolume> _viewerRequestVolume;
+  std::optional<BoundingVolume> _contentBoundingVolume;
   double _geometricError;
   TileRefine _refine;
   glm::dmat4x4 _transform;
 
-  TileID _id;
-  std::optional<BoundingVolume> _contentBoundingVolume;
-
-  // Load state and data.
-  std::atomic<LoadState> _state;
-  std::unique_ptr<TileContentLoadResult> _pContent;
-  void* _pRendererResources;
-
   // Selection state
   TileSelectionState _lastSelectionState;
 
-  // Overlays
+  // tile content
+  CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+  TileContent _content;
+  TilesetContentLoader* _pLoader;
+  TileLoadState _loadState;
+  bool _shouldContentContinueUpdating;
+
+  // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+  friend class TilesetContentManager;
+  friend class MockTilesetContentManagerTestFixture;
 
 public:
   /**

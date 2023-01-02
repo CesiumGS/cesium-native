@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
+#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
@@ -16,14 +17,22 @@
 #include <cstddef>
 
 using namespace CesiumAsync;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+
+namespace {
+struct TileMapServiceTileset {
+  std::string url;
+  uint32_t level;
+};
+} // namespace
 
 class TileMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   TileMapServiceTileProvider(
-      RasterOverlay& owner,
+      const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
@@ -39,9 +48,10 @@ public:
       uint32_t width,
       uint32_t height,
       uint32_t minimumLevel,
-      uint32_t maximumLevel)
+      uint32_t maximumLevel,
+      const std::vector<TileMapServiceTileset>& tileSets)
       : QuadtreeRasterOverlayTileProvider(
-            owner,
+            pOwner,
             asyncSystem,
             pAssetAccessor,
             credit,
@@ -56,37 +66,61 @@ public:
             height),
         _url(url),
         _headers(headers),
-        _fileExtension(fileExtension) {}
+        _fileExtension(fileExtension),
+        _tileSets(tileSets) {}
 
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
-    std::string url = CesiumUtility::Uri::resolve(
-        this->_url,
-        std::to_string(tileID.level) + "/" + std::to_string(tileID.x) + "/" +
-            std::to_string(tileID.y) + this->_fileExtension,
-        true);
 
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
+
+    uint32_t level = tileID.level - this->getMinimumLevel();
+
+    if (level < _tileSets.size()) {
+      const TileMapServiceTileset& tileset = _tileSets[level];
+      std::string url = CesiumUtility::Uri::resolve(
+          this->_url,
+          tileset.url + "/" + std::to_string(tileID.x) + "/" +
+              std::to_string(tileID.y) + this->_fileExtension,
+          true);
+      return this->loadTileImageFromUrl(
+          url,
+          this->_headers,
+          std::move(options));
+    } else {
+      return this->getAsyncSystem()
+          .createResolvedFuture<LoadedRasterOverlayImage>(
+              {std::nullopt,
+               options.rectangle,
+               {},
+               {"Failed to load image from TMS."},
+               {},
+               options.moreDetailAvailable});
+    }
   }
 
 private:
   std::string _url;
   std::vector<IAssetAccessor::THeader> _headers;
   std::string _fileExtension;
+  std::vector<TileMapServiceTileset> _tileSets;
 };
 
 TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
     const std::string& name,
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
-    const TileMapServiceRasterOverlayOptions& options)
-    : RasterOverlay(name), _url(url), _headers(headers), _options(options) {}
+    const TileMapServiceRasterOverlayOptions& tmsOptions,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
+      _url(url),
+      _headers(headers),
+      _options(tmsOptions) {}
 
 TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
 
@@ -125,26 +159,125 @@ static std::optional<double> getAttributeDouble(
   return std::nullopt;
 }
 
-Future<std::unique_ptr<RasterOverlayTileProvider>>
+namespace {
+
+using GetXmlDocumentResult = nonstd::expected<
+    std::unique_ptr<tinyxml2::XMLDocument>,
+    RasterOverlayLoadFailureDetails>;
+
+Future<GetXmlDocumentResult> getXmlDocument(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& url,
+    const std::vector<IAssetAccessor::THeader>& headers) {
+  return pAssetAccessor->get(asyncSystem, url, headers)
+      .thenInWorkerThread(
+          [asyncSystem, pAssetAccessor, url, headers](
+              std::shared_ptr<IAssetRequest>&& pRequest)
+              -> Future<GetXmlDocumentResult> {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return asyncSystem.createResolvedFuture<GetXmlDocumentResult>(
+                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                      RasterOverlayLoadType::TileProvider,
+                      std::move(pRequest),
+                      "No response received from Tile Map Service."}));
+            }
+
+            const gsl::span<const std::byte> data = pResponse->data();
+
+            std::unique_ptr<tinyxml2::XMLDocument> pDoc =
+                std::make_unique<tinyxml2::XMLDocument>(
+                    new tinyxml2::XMLDocument());
+            const tinyxml2::XMLError error = pDoc->Parse(
+                reinterpret_cast<const char*>(data.data()),
+                data.size_bytes());
+
+            bool hasError = false;
+            std::string errorMessage;
+
+            if (error != tinyxml2::XMLError::XML_SUCCESS) {
+              hasError = true;
+              errorMessage = "Unable to parse Tile map service XML document.";
+            } else {
+              tinyxml2::XMLElement* pRoot = pDoc->RootElement();
+              if (!pRoot) {
+                hasError = true;
+                errorMessage =
+                    "Tile map service XML document does not have a root "
+                    "element.";
+              } else {
+                tinyxml2::XMLElement* pTilesets =
+                    pRoot->FirstChildElement("TileSets");
+
+                if (!pTilesets) {
+                  hasError = true;
+                  errorMessage = "Tile map service XML document does not have "
+                                 "any tilesets.";
+                }
+                tinyxml2::XMLElement* srs = pRoot->FirstChildElement("SRS");
+                if (srs) {
+                  std::string srsText = srs->GetText();
+                  if (srsText.find("4326") == std::string::npos &&
+                      srsText.find("3857") == std::string::npos &&
+                      srsText.find("900913") == std::string::npos) {
+                    hasError = true;
+                    errorMessage = srsText + " is not supported.";
+                  }
+                } else {
+                  hasError = true;
+                  errorMessage =
+                      "Tile map service XML document does not have an SRS.";
+                }
+              }
+            }
+            if (hasError) {
+              if (url.find("tilemapresource.xml") == std::string::npos) {
+                std::string baseUrl = url;
+                if (baseUrl.size() > 0 && baseUrl[baseUrl.size() - 1] != '/') {
+                  baseUrl += '/';
+                }
+                return getXmlDocument(
+                    asyncSystem,
+                    pAssetAccessor,
+                    CesiumUtility::Uri::resolve(baseUrl, "tilemapresource.xml"),
+                    headers);
+              } else {
+                return asyncSystem.createResolvedFuture<GetXmlDocumentResult>(
+                    nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                        RasterOverlayLoadType::TileProvider,
+                        std::move(pRequest),
+                        errorMessage}));
+              }
+            }
+
+            return asyncSystem.createResolvedFuture<GetXmlDocumentResult>(
+                std::move(pDoc));
+          });
+}
+
+} // namespace
+
+Future<RasterOverlay::CreateTileProviderResult>
 TileMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
-  std::string xmlUrl =
-      CesiumUtility::Uri::resolve(this->_url, "tilemapresource.xml");
+    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
+  std::string xmlUrl = this->_url;
 
   pOwner = pOwner ? pOwner : this;
 
   const std::optional<Credit> credit =
       this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
-                                  this->_options.credit.value()))
+                                  this->_options.credit.value(),
+                                  pOwner->getOptions().showCreditsOnScreen))
                             : std::nullopt;
 
-  return pAssetAccessor->requestAsset(asyncSystem, xmlUrl, this->_headers)
-      .thenInWorkerThread(
+  return getXmlDocument(asyncSystem, pAssetAccessor, xmlUrl, this->_headers)
+      .thenInMainThread(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
@@ -153,41 +286,14 @@ TileMapServiceRasterOverlay::createTileProvider(
            pLogger,
            options = this->_options,
            url = this->_url,
-           headers =
-               this->_headers](const std::shared_ptr<IAssetRequest>& pRequest)
-              -> std::unique_ptr<RasterOverlayTileProvider> {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "No response received from Tile Map Service.");
-              return nullptr;
+           headers = this->_headers](
+              GetXmlDocumentResult&& xml) -> CreateTileProviderResult {
+            if (!xml) {
+              return nonstd::make_unexpected(std::move(xml).error());
             }
 
-            const gsl::span<const std::byte> data = pResponse->data();
-
-            tinyxml2::XMLDocument doc;
-            const tinyxml2::XMLError error = doc.Parse(
-                reinterpret_cast<const char*>(data.data()),
-                data.size_bytes());
-            if (error != tinyxml2::XMLError::XML_SUCCESS) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Could not parse tile map service XML.");
-              return nullptr;
-            }
-
-            tinyxml2::XMLElement* pRoot = doc.RootElement();
-            if (!pRoot) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Tile map service XML document does not have a root "
-                  "element.");
-              return nullptr;
-            }
-
-            // CesiumGeospatial::Ellipsoid ellipsoid =
-            // this->_options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+            std::unique_ptr<tinyxml2::XMLDocument> pDoc = std::move(*xml);
+            tinyxml2::XMLElement* pRoot = pDoc->RootElement();
 
             tinyxml2::XMLElement* pTileFormat =
                 pRoot->FirstChildElement("TileFormat");
@@ -201,17 +307,21 @@ TileMapServiceRasterOverlay::createTileProvider(
             uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
             uint32_t maximumLevel = 0;
 
+            std::vector<TileMapServiceTileset> tileSets;
+
             tinyxml2::XMLElement* pTilesets =
                 pRoot->FirstChildElement("TileSets");
             if (pTilesets) {
               tinyxml2::XMLElement* pTileset =
                   pTilesets->FirstChildElement("TileSet");
               while (pTileset) {
-                const uint32_t level =
+                TileMapServiceTileset& tileSet = tileSets.emplace_back();
+                tileSet.level =
                     getAttributeUint32(pTileset, "order").value_or(0);
-                minimumLevel = glm::min(minimumLevel, level);
-                maximumLevel = glm::max(maximumLevel, level);
-
+                minimumLevel = glm::min(minimumLevel, tileSet.level);
+                maximumLevel = glm::max(maximumLevel, tileSet.level);
+                tileSet.url = getAttributeString(pTileset, "href")
+                                  .value_or(std::to_string(tileSet.level));
                 pTileset = pTileset->NextSiblingElement("TileSet");
               }
             }
@@ -257,6 +367,25 @@ TileMapServiceRasterOverlay::createTileProvider(
 
                 // The geodetic profile is always in degrees.
                 isRectangleInDegrees = true;
+              } else {
+                tinyxml2::XMLElement* srs = pRoot->FirstChildElement("SRS");
+                if (srs) {
+                  std::string srsText = srs->GetText();
+                  if (srsText.find("4326") != std::string::npos) {
+                    projection = CesiumGeospatial::GeographicProjection();
+                    tilingSchemeRectangle = CesiumGeospatial::
+                        GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+                    rootTilesX = 2;
+                    isRectangleInDegrees = true;
+                  } else if (
+                      srsText.find("3857") != std::string::npos ||
+                      srsText.find("900913") != std::string::npos) {
+                    projection = CesiumGeospatial::WebMercatorProjection();
+                    tilingSchemeRectangle = CesiumGeospatial::
+                        WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+                    isRectangleInDegrees = true;
+                  }
+                }
               }
             }
 
@@ -307,8 +436,18 @@ TileMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 1);
 
-            return std::make_unique<TileMapServiceTileProvider>(
-                *pOwner,
+            std::string baseUrl = url;
+
+            if (!(baseUrl.size() < 4)) {
+              if (baseUrl.substr(baseUrl.size() - 4, 4) != ".xml") {
+                if (baseUrl[baseUrl.size() - 1] != '/') {
+                  baseUrl += "/";
+                }
+              }
+            }
+
+            return new TileMapServiceTileProvider(
+                pOwner,
                 asyncSystem,
                 pAssetAccessor,
                 credit,
@@ -317,13 +456,14 @@ TileMapServiceRasterOverlay::createTileProvider(
                 projection,
                 tilingScheme,
                 coverageRectangle,
-                url,
+                baseUrl,
                 headers,
                 !fileExtension.empty() ? "." + fileExtension : fileExtension,
                 tileWidth,
                 tileHeight,
                 minimumLevel,
-                maximumLevel);
+                maximumLevel,
+                tileSets);
           });
 }
 

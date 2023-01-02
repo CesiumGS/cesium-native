@@ -3,12 +3,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(cesium-native
     VERSION 0.1.0
-    LANGUAGES CXX
+    LANGUAGES CXX C
 )
 
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
+option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
@@ -81,7 +82,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 function(configure_cesium_library targetName)
     if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
+        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
     endif()
@@ -90,6 +91,14 @@ function(configure_cesium_library targetName)
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
+    )
+
+    target_compile_definitions(
+        ${targetName}
+        PUBLIC
+            GLM_FORCE_XYZW_ONLY # Disable .rgba and .stpq to make it easier to view values from debugger
+            GLM_FORCE_EXPLICIT_CTOR # Disallow implicit conversions between dvec3 <-> dvec4, dvec3 <-> fvec3, etc
+            GLM_FORCE_SIZE_T_LENGTH # Make vec.length() and vec[idx] use size_t instead of int
     )
 
     if (BUILD_SHARED_LIBS)
@@ -107,8 +116,10 @@ function(configure_cesium_library targetName)
             PRIVATE
                 ${capitalizedTargetName}_BUILDING
         )
+    endif()
 
-
+    if (CESIUM_EXTRA_INCLUDES)
+      target_include_directories(${targetName} PRIVATE ${CESIUM_EXTRA_INCLUDES})
     endif()
 
 endfunction()
@@ -128,17 +139,23 @@ add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
 add_subdirectory(CesiumJsonReader)
 add_subdirectory(CesiumJsonWriter)
-add_subdirectory(CesiumGltfWriter)
 add_subdirectory(CesiumGltfReader)
+add_subdirectory(CesiumGltfWriter)
 add_subdirectory(CesiumAsync)
+add_subdirectory(Cesium3DTiles)
+add_subdirectory(Cesium3DTilesReader)
+add_subdirectory(Cesium3DTilesWriter)
 add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
 
 # Private Targets
-# enable_testing() MUST be called before add_subdirectory or no tests
-# will be found by ctest
-enable_testing()
-add_subdirectory(CesiumNativeTests)
+if (CESIUM_TESTS_ENABLED)
+    # enable_testing() MUST be called before add_subdirectory or no tests
+    # will be found by ctest
+    enable_testing()
+    add_subdirectory(CesiumNativeTests)
+endif()
+
 add_subdirectory(doc)
 
 # Installation of third-party libraries required to use cesium-native
@@ -171,4 +188,17 @@ install(TARGETS csprng)
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
+# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail.
+# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered
+# private to cesium-native), so just set the PUBLIC_HEADER to an empty string.
+set_target_properties(ktx_read PROPERTIES PUBLIC_HEADER "")
+install(TARGETS ktx_read)
+
+install(TARGETS webpdecoder)
+
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
+
+install(TARGETS s2geometry)
+
+install(TARGETS expected-lite)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/expected-lite/include/nonstd TYPE INCLUDE)

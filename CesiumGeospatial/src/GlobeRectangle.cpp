@@ -6,39 +6,57 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
+/*static*/ const GlobeRectangle GlobeRectangle::EMPTY{
+    Math::OnePi,
+    Math::PiOverTwo,
+    -Math::OnePi,
+    -Math::PiOverTwo};
+
 Cartographic GlobeRectangle::computeCenter() const noexcept {
-  double east = this->_east;
-  const double west = this->_west;
+  double latitudeCenter = (this->_south + this->_north) * 0.5;
 
-  if (east < west) {
-    east += Math::TWO_PI;
+  if (this->_west <= this->_east) {
+    // Simple rectangle not crossing the anti-meridian.
+    return Cartographic((this->_west + this->_east) * 0.5, latitudeCenter, 0.0);
+  } else {
+    // Rectangle crosses the anti-meridian.
+    double westToAntiMeridian = Math::OnePi - this->_west;
+    double antiMeridianToEast = this->_east - -Math::OnePi;
+    double total = westToAntiMeridian + antiMeridianToEast;
+    if (westToAntiMeridian >= antiMeridianToEast) {
+      // Center is in the Eastern hemisphere.
+      return Cartographic(
+          glm::min(Math::OnePi, this->_west + total * 0.5),
+          latitudeCenter,
+          0.0);
+    } else {
+      // Center is in the Western hemisphere.
+      return Cartographic(
+          glm::max(-Math::OnePi, this->_east - total * 0.5),
+          latitudeCenter,
+          0.0);
+    }
   }
-
-  const double longitude = Math::negativePiToPi((west + east) * 0.5);
-  const double latitude = (this->_south + this->_north) * 0.5;
-
-  return Cartographic(longitude, latitude, 0.0);
 }
 
 bool GlobeRectangle::contains(const Cartographic& cartographic) const noexcept {
-  double longitude = cartographic.longitude;
   const double latitude = cartographic.latitude;
-
-  const double west = this->_west;
-  double east = this->_east;
-
-  if (east < west) {
-    east += Math::TWO_PI;
-    if (longitude < 0.0) {
-      longitude += Math::TWO_PI;
-    }
+  if (latitude < this->_south || latitude > this->_north) {
+    return false;
   }
-  return (
-      (longitude > west ||
-       Math::equalsEpsilon(longitude, west, Math::EPSILON14)) &&
-      (longitude < east ||
-       Math::equalsEpsilon(longitude, east, Math::EPSILON14)) &&
-      latitude >= this->_south && latitude <= this->_north);
+
+  const double longitude = cartographic.longitude;
+  if (this->_west <= this->_east) {
+    // Simple rectangle not crossing the anti-meridian.
+    return longitude >= this->_west && longitude <= this->_east;
+  } else {
+    // Rectangle crosses the anti-meridian.
+    return longitude >= this->_west || longitude <= this->_east;
+  }
+}
+
+bool GlobeRectangle::isEmpty() const noexcept {
+  return this->_south > this->_north;
 }
 
 std::optional<GlobeRectangle> GlobeRectangle::computeIntersection(
@@ -50,15 +68,15 @@ std::optional<GlobeRectangle> GlobeRectangle::computeIntersection(
   double otherRectangleWest = other._west;
 
   if (rectangleEast < rectangleWest && otherRectangleEast > 0.0) {
-    rectangleEast += CesiumUtility::Math::TWO_PI;
+    rectangleEast += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleEast > 0.0) {
-    otherRectangleEast += CesiumUtility::Math::TWO_PI;
+    otherRectangleEast += CesiumUtility::Math::TwoPi;
   }
 
   if (rectangleEast < rectangleWest && otherRectangleWest < 0.0) {
-    otherRectangleWest += CesiumUtility::Math::TWO_PI;
+    otherRectangleWest += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleWest < 0.0) {
-    rectangleWest += CesiumUtility::Math::TWO_PI;
+    rectangleWest += CesiumUtility::Math::TwoPi;
   }
 
   const double west = CesiumUtility::Math::negativePiToPi(
@@ -90,15 +108,15 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
   double otherRectangleWest = other._west;
 
   if (rectangleEast < rectangleWest && otherRectangleEast > 0.0) {
-    rectangleEast += CesiumUtility::Math::TWO_PI;
+    rectangleEast += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleEast > 0.0) {
-    otherRectangleEast += CesiumUtility::Math::TWO_PI;
+    otherRectangleEast += CesiumUtility::Math::TwoPi;
   }
 
   if (rectangleEast < rectangleWest && otherRectangleWest < 0.0) {
-    otherRectangleWest += CesiumUtility::Math::TWO_PI;
+    otherRectangleWest += CesiumUtility::Math::TwoPi;
   } else if (otherRectangleEast < otherRectangleWest && rectangleWest < 0.0) {
-    rectangleWest += CesiumUtility::Math::TWO_PI;
+    rectangleWest += CesiumUtility::Math::TwoPi;
   }
 
   const double west = CesiumUtility::Math::convertLongitudeRange(

@@ -4,8 +4,7 @@
 
 #include <stdexcept>
 
-using namespace CesiumUtility;
-
+namespace CesiumUtility {
 std::string Uri::resolve(
     const std::string& base,
     const std::string& relative,
@@ -131,3 +130,17 @@ std::string Uri::substituteTemplateParameters(
 
   return result;
 }
+
+std::string Uri::escape(const std::string& s) {
+  // In the worst case, escaping causes each character to turn into three.
+  std::string result(s.size() * 3, '\0');
+  char* pTerminator = uriEscapeExA(
+      s.data(),
+      s.data() + s.size(),
+      result.data(),
+      URI_FALSE,
+      URI_FALSE);
+  result.resize(size_t(pTerminator - result.data()));
+  return result;
+}
+} // namespace CesiumUtility

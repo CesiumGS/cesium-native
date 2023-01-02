@@ -1,6 +1,6 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 
 TEST_CASE("Test PropertyTypeTrait") {
   SECTION("IsNumeric") {

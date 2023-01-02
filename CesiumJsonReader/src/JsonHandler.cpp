@@ -1,7 +1,6 @@
 #include "CesiumJsonReader/JsonHandler.h"
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 JsonHandler::JsonHandler() noexcept {}
 
 IJsonHandler* JsonHandler::readNull() {
@@ -81,3 +80,4 @@ void JsonHandler::reportWarning(
 }
 
 void JsonHandler::reset(IJsonHandler* pParent) { this->_pParent = pParent; }
+} // namespace CesiumJsonReader

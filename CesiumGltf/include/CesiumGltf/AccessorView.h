@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Model.h"
+#include "CesiumGltf/Model.h"
 
 #include <cstddef>
 #include <stdexcept>
@@ -348,41 +348,46 @@ struct AccessorTypes {
 #pragma pack(pop)
 };
 
-namespace Impl {
+namespace CesiumImpl {
 template <typename TCallback, typename TElement>
 std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<TElement>>>
 createAccessorView(
     const Model& model,
     const Accessor& accessor,
     TCallback&& callback) {
-  switch (accessor.type) {
-  case Accessor::Type::SCALAR:
+  if (accessor.type == Accessor::Type::SCALAR) {
     return callback(
         AccessorView<AccessorTypes::SCALAR<TElement>>(model, accessor));
-  case Accessor::Type::VEC2:
+  }
+  if (accessor.type == Accessor::Type::VEC2) {
     return callback(
         AccessorView<AccessorTypes::VEC2<TElement>>(model, accessor));
-  case Accessor::Type::VEC3:
+  }
+  if (accessor.type == Accessor::Type::VEC3) {
     return callback(
         AccessorView<AccessorTypes::VEC3<TElement>>(model, accessor));
-  case Accessor::Type::VEC4:
+  }
+  if (accessor.type == Accessor::Type::VEC4) {
     return callback(
         AccessorView<AccessorTypes::VEC4<TElement>>(model, accessor));
-  case Accessor::Type::MAT2:
+  }
+  if (accessor.type == Accessor::Type::MAT2) {
     return callback(
         AccessorView<AccessorTypes::MAT2<TElement>>(model, accessor));
-  case Accessor::Type::MAT3:
+  }
+  if (accessor.type == Accessor::Type::MAT3) {
     return callback(
         AccessorView<AccessorTypes::MAT3<TElement>>(model, accessor));
-  case Accessor::Type::MAT4:
+  }
+  if (accessor.type == Accessor::Type::MAT4) {
     return callback(
         AccessorView<AccessorTypes::MAT4<TElement>>(model, accessor));
-  default:
-    return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(
-        AccessorViewStatus::InvalidComponentType));
   }
+  // TODO Print a warning here???
+  return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(
+      AccessorViewStatus::InvalidComponentType));
 }
-} // namespace Impl
+} // namespace CesiumImpl
 
 /**
  * @brief Creates an appropriate {@link AccessorView} for a given accessor.
@@ -407,32 +412,32 @@ createAccessorView(
     TCallback&& callback) {
   switch (accessor.componentType) {
   case Accessor::ComponentType::BYTE:
-    return ::CesiumGltf::Impl::createAccessorView<TCallback, int8_t>(
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, int8_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    return ::CesiumGltf::Impl::createAccessorView<TCallback, uint8_t>(
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint8_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));
   case Accessor::ComponentType::SHORT:
-    return ::CesiumGltf::Impl::createAccessorView<TCallback, int16_t>(
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, int16_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    return ::CesiumGltf::Impl::createAccessorView<TCallback, uint16_t>(
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint16_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));
   case Accessor::ComponentType::UNSIGNED_INT:
-    return ::CesiumGltf::Impl::createAccessorView<TCallback, uint32_t>(
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint32_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));
   case Accessor::ComponentType::FLOAT:
-    return ::CesiumGltf::Impl::createAccessorView<TCallback, float>(
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, float>(
         model,
         accessor,
         std::forward<TCallback>(callback));

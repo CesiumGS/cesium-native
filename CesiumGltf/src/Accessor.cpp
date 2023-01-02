@@ -2,31 +2,36 @@
 
 #include "CesiumGltf/Model.h"
 
-using namespace CesiumGltf;
-
+namespace CesiumGltf {
 /*static*/ int8_t
-Accessor::computeNumberOfComponents(CesiumGltf::Accessor::Type type) noexcept {
-  switch (type) {
-  case CesiumGltf::Accessor::Type::SCALAR:
+Accessor::computeNumberOfComponents(const std::string& type) noexcept {
+  if (type == CesiumGltf::Accessor::Type::SCALAR) {
     return 1;
-  case CesiumGltf::Accessor::Type::VEC2:
-    return 2;
-  case CesiumGltf::Accessor::Type::VEC3:
-    return 3;
-  case CesiumGltf::Accessor::Type::VEC4:
-  case CesiumGltf::Accessor::Type::MAT2:
-    return 4;
-  case CesiumGltf::Accessor::Type::MAT3:
-    return 9;
-  case CesiumGltf::Accessor::Type::MAT4:
-    return 16;
-  default:
-    return 0;
   }
+  if (type == CesiumGltf::Accessor::Type::VEC2) {
+    return 2;
+  }
+  if (type == CesiumGltf::Accessor::Type::VEC3) {
+    return 3;
+  }
+  if (type == CesiumGltf::Accessor::Type::VEC4) {
+    return 4;
+  }
+  if (type == CesiumGltf::Accessor::Type::MAT2) {
+    return 4;
+  }
+  if (type == CesiumGltf::Accessor::Type::MAT3) {
+    return 9;
+  }
+  if (type == CesiumGltf::Accessor::Type::MAT4) {
+    return 16;
+  }
+  // TODO Print a warning here!
+  return 0;
 }
 
-/*static*/ int8_t Accessor::computeByteSizeOfComponent(
-    CesiumGltf::Accessor::ComponentType componentType) noexcept {
+/*static*/ int8_t
+Accessor::computeByteSizeOfComponent(int32_t componentType) noexcept {
   switch (componentType) {
   case CesiumGltf::Accessor::ComponentType::BYTE:
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
@@ -38,6 +43,7 @@ Accessor::computeNumberOfComponents(CesiumGltf::Accessor::Type type) noexcept {
   case CesiumGltf::Accessor::ComponentType::FLOAT:
     return 4;
   default:
+    // TODO Print a warning here!
     return 0;
   }
 }
@@ -51,7 +57,8 @@ int8_t Accessor::computeByteSizeOfComponent() const noexcept {
 }
 
 int64_t Accessor::computeBytesPerVertex() const noexcept {
-  return this->computeByteSizeOfComponent() * this->computeNumberOfComponents();
+  return int64_t{this->computeByteSizeOfComponent()} *
+         int64_t{this->computeNumberOfComponents()};
 }
 
 int64_t
@@ -68,3 +75,4 @@ Accessor::computeByteStride(const CesiumGltf::Model& model) const noexcept {
   return computeNumberOfComponents(this->type) *
          computeByteSizeOfComponent(this->componentType);
 }
+} // namespace CesiumGltf

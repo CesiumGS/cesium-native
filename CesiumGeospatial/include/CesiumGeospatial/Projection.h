@@ -1,7 +1,12 @@
 #pragma once
 
+#include "BoundingRegion.h"
+#include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/Rectangle.h"
 #include "GeographicProjection.h"
 #include "WebMercatorProjection.h"
+
+#include <glm/vec2.hpp>
 
 #include <variant>
 
@@ -73,18 +78,55 @@ GlobeRectangle unprojectRectangleSimple(
     const CesiumGeometry::Rectangle& rectangle);
 
 /**
- * @brief Computes a factor for distance approximations.
+ * @brief Projects a bounding region on the globe by simply projecting its
+ * eight corners.
  *
- * Computes a conversion factor that, when multiplied by a difference between
- * two projected coordinate values, yields an approximate distance between them
- * in meters.
+ * This is only accurate when the globe box is still a box after
+ * projecting, which is true for {@link WebMercatorProjection} but not
+ * necessarily true for other projections.
  *
  * @param projection The projection.
- * @param position The position near which to compute the conversion factor.
- * @return The conversion factor.
+ * @param boundingRegion The bounding region to be projected.
+ * @return The projected box.
  */
-double computeApproximateConversionFactorToMetersNearPosition(
+CesiumGeometry::AxisAlignedBox
+projectRegionSimple(const Projection& projection, const BoundingRegion& region);
+
+/**
+ * @brief Unprojects a box to the globe by simply unprojecting its eight
+ * corners.
+ *
+ * This is only accurate when the box is still a box after
+ * unprojecting, which is true for {@link WebMercatorProjection} but not
+ * necessarily true for other projections.
+ *
+ * @param projection The projection.
+ * @param box The box to be unprojected.
+ * @return The unprojected bounding region.
+ */
+BoundingRegion unprojectRegionSimple(
     const Projection& projection,
-    const glm::dvec2& position);
+    const CesiumGeometry::AxisAlignedBox& box);
+
+/**
+ * @brief Computes the approximate real-world size, in meters, of a given
+ * projected rectangle.
+ *
+ * The returned X component corresponds to the size in the projected X
+ * direction, while the returned Y component corresponds to the size in the
+ * projected Y direction.
+ *
+ * @param projection The projection.
+ * @param rectangle The projected rectangle to measure.
+ * @param maxHeight The maximum height of the geometry inside the rectangle.
+ * @param ellipsoid The ellipsoid used to convert longitude and latitude to
+ * ellipsoid-centered coordinates.
+ * @return The approximate size.
+ */
+glm::dvec2 computeProjectedRectangleSize(
+    const Projection& projection,
+    const CesiumGeometry::Rectangle& rectangle,
+    double maxHeight,
+    const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
 } // namespace CesiumGeospatial

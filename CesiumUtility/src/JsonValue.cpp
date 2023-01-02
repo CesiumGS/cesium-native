@@ -1,8 +1,6 @@
 #include "CesiumUtility/JsonValue.h"
 
-#include <cassert>
-
-using namespace CesiumUtility;
+namespace CesiumUtility {
 
 const JsonValue* JsonValue::getValuePtrForKey(const std::string& key) const {
   const Object* pObject = std::get_if<Object>(&this->value);
@@ -31,3 +29,5 @@ JsonValue* JsonValue::getValuePtrForKey(const std::string& key) {
 
   return &it->second;
 }
+
+} // namespace CesiumUtility

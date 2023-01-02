@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MetadataArrayView.h"
-#include "PropertyType.h"
+#include "CesiumGltf/MetadataArrayView.h"
+#include "CesiumGltf/PropertyType.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -59,6 +59,14 @@ template <> struct IsMetadataBoolean<bool> : std::true_type {};
 template <typename... T> struct IsMetadataString;
 template <typename T> struct IsMetadataString<T> : std::false_type {};
 template <> struct IsMetadataString<std::string_view> : std::true_type {};
+
+/**
+ * @brief Check if a C++ type can be represented as an array.
+ */
+template <typename... T> struct IsMetadataArray;
+template <typename T> struct IsMetadataArray<T> : std::false_type {};
+template <typename T>
+struct IsMetadataArray<MetadataArrayView<T>> : std::true_type {};
 
 /**
  * @brief Check if a C++ type can be represented as an array of number property

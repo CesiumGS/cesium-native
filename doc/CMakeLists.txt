@@ -3,6 +3,9 @@ find_package(Doxygen)
 if (DOXYGEN_FOUND)
     set(
         LIB_DIRS
+        ../Cesium3DTiles/include
+        ../Cesium3DTilesReader/include
+        ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
         ../CesiumGeometry/include
@@ -16,6 +19,9 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})
     set(
         DOXYGEN_EXAMPLE_PATH
+        ../Cesium3DTiles/test
+        ../Cesium3DTilesReader/test
+        ../Cesium3DTilesWriter/test
         ../Cesium3DTilesSelection/test
         ../CesiumAsync/test
         ../CesiumGeometry/test
