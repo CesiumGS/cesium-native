@@ -40,7 +40,9 @@ public:
    * `IntrusivePointer` from multiple threads simultaneously.
    */
   void addReference() const /*noexcept*/ {
+#ifndef NDEBUG
     assert(std::this_thread::get_id() == this->_threadID);
+#endif
     ++this->_referenceCount;
   }
 
@@ -54,7 +56,9 @@ public:
    * `IntrusivePointer` from multiple threads simultaneously.
    */
   void releaseReference() const /*noexcept*/ {
+#ifndef NDEBUG
     assert(std::this_thread::get_id() == this->_threadID);
+#endif
     assert(this->_referenceCount > 0);
     const int32_t references = --this->_referenceCount;
     if (references == 0) {

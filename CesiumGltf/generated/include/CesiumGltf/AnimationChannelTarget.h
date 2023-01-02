@@ -7,6 +7,7 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
+#include <string>
 
 namespace CesiumGltf {
 /**

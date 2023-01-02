@@ -24,10 +24,12 @@ IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const RasterOverlayOptions& overlayOptions)
+    const RasterOverlayOptions& overlayOptions,
+    const std::string& ionAssetEndpointUrl)
     : RasterOverlay(name, overlayOptions),
       _ionAssetID(ionAssetID),
-      _ionAccessToken(ionAccessToken) {}
+      _ionAccessToken(ionAccessToken),
+      _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
 
 IonRasterOverlay::~IonRasterOverlay() {}
 
@@ -85,7 +87,7 @@ IonRasterOverlay::createTileProvider(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-  std::string ionUrl = "https://api.cesium.com/v1/assets/" +
+  std::string ionUrl = this->_ionAssetEndpointUrl + "v1/assets/" +
                        std::to_string(this->_ionAssetID) + "/endpoint";
   ionUrl = CesiumUtility::Uri::addQuery(
       ionUrl,

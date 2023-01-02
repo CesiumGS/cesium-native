@@ -8,6 +8,7 @@
 #include "CesiumGltf/NamedObject.h"
 
 #include <optional>
+#include <string>
 
 namespace CesiumGltf {
 /**
