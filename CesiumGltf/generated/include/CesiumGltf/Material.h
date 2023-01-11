@@ -10,6 +10,7 @@
 #include "CesiumGltf/TextureInfo.h"
 
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace CesiumGltf {
