@@ -738,7 +738,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   CullResult cullResult{};
 
-  bool cullWithChildrenBounds = !tile.getChildren().empty();
+  // Culling with children bounds will give us incorrect results with Add
+  // refinement, but is a useful optimization for Replace refinement.
+  bool cullWithChildrenBounds =
+      tile.getRefine() == TileRefine::Replace && !tile.getChildren().empty();
   for (Tile& child : tile.getChildren()) {
     if (child.getUnconditionallyRefine()) {
       cullWithChildrenBounds = false;
