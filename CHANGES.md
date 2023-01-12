@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause parent tiles to be incorrectly culled in tilesets with additive ("ADD") refinement. This could cause geometry to disappear when moving in closer, or fail to appear at all.
+
 ### v0.21.2 - 2022-12-09
 
 ##### Additions :tada:
