@@ -938,7 +938,7 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
 
   // Nothing else to do except mark this tile refined and return.
   TraversalDetails noChildrenTraversalDetails;
-  if (tile.getRefine() == TileRefine::Add) {
+  if (tile.getRefine() == TileRefine::Add && !tile.isExternalContent()) {
     noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
     noChildrenTraversalDetails.anyWereRenderedLastFrame =
         lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
