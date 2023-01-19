@@ -33,10 +33,9 @@ struct SubtreeBuffers {
 
 uint64_t calculateTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels) {
   return static_cast<uint64_t>(
-  (std::pow(4.0, static_cast<double>(subtreeLevels)) - 1) /
-  (static_cast<double>(subtreeLevels) - 1));
+      (std::pow(4.0, static_cast<double>(subtreeLevels)) - 1) /
+      (static_cast<double>(subtreeLevels) - 1));
 }
-
 
 void markTileAvailableForQuadtree(
     const CesiumGeometry::QuadtreeTileID& tileID,
@@ -64,9 +63,9 @@ void markSubtreeAvailableForQuadtree(
 }
 
 SubtreeBuffers createSubtreeBuffers(
-  uint32_t maxSubtreeLevels,
-  const std::vector<CesiumGeometry::QuadtreeTileID>& tileAvailabilities,
-  const std::vector<CesiumGeometry::QuadtreeTileID>& subtreeAvailabilities) {
+    uint32_t maxSubtreeLevels,
+    const std::vector<CesiumGeometry::QuadtreeTileID>& tileAvailabilities,
+    const std::vector<CesiumGeometry::QuadtreeTileID>& subtreeAvailabilities) {
   uint64_t numTiles = calculateTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
   uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
   uint64_t bufferSize =
