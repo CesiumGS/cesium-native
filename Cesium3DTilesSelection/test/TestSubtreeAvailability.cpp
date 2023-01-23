@@ -31,6 +31,12 @@ struct SubtreeBuffers {
   SubtreeBufferViewAvailability contentAvailability;
 };
 
+uint64_t calculateTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels) {
+  return static_cast<uint64_t>(
+      (std::pow(4.0, static_cast<double>(subtreeLevels)) - 1) /
+      (static_cast<double>(subtreeLevels) - 1));
+}
+
 void markTileAvailableForQuadtree(
     const CesiumGeometry::QuadtreeTileID& tileID,
     gsl::span<std::byte> available) {
@@ -60,13 +66,12 @@ SubtreeBuffers createSubtreeBuffers(
     uint32_t maxSubtreeLevels,
     const std::vector<CesiumGeometry::QuadtreeTileID>& tileAvailabilities,
     const std::vector<CesiumGeometry::QuadtreeTileID>& subtreeAvailabilities) {
-  uint64_t maxTiles = static_cast<uint64_t>(
-      std::pow(4.0, static_cast<double>(maxSubtreeLevels - 1)));
+  uint64_t numTiles = calculateTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
   uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
-  uint64_t bufferSize = static_cast<uint64_t>(std::ceil(maxTiles / 8));
-  uint64_t subtreeBufferSize =
-      static_cast<uint64_t>(std::ceil(maxSubtreeTiles / 8));
-
+  uint64_t bufferSize =
+      static_cast<uint64_t>(std::ceil(static_cast<double>(numTiles) / 8.0));
+  uint64_t subtreeBufferSize = static_cast<uint64_t>(
+      std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
   std::vector<std::byte> availabilityBuffer(
       bufferSize + bufferSize + subtreeBufferSize);
 
@@ -357,12 +362,14 @@ TEST_CASE("Test SubtreeAvailability methods") {
 
     // setup tile availability buffer
     uint64_t maxSubtreeLevels = 5;
-    uint64_t maxTiles = static_cast<uint64_t>(
-        std::pow(4.0, static_cast<double>(maxSubtreeLevels - 1)));
+    uint64_t numTiles =
+        calculateTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
+
     uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
-    uint64_t bufferSize = static_cast<uint64_t>(std::ceil(maxTiles / 8));
-    uint64_t subtreeBufferSize =
-        static_cast<uint64_t>(std::ceil(maxSubtreeTiles / 8));
+    uint64_t bufferSize =
+        static_cast<uint64_t>(std::ceil(static_cast<double>(numTiles) / 8.0));
+    uint64_t subtreeBufferSize = static_cast<uint64_t>(
+        std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
 
     std::vector<std::byte> contentAvailabilityBuffer(bufferSize);
     std::vector<std::byte> tileAvailabilityBuffer(bufferSize);
