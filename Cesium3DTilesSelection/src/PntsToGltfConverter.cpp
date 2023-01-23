@@ -478,6 +478,82 @@ void decodeDraco(
   // TODO: check for other semantics and metadata
 }
 
+rapidjson::Document parseFeatureTableJson(
+    const gsl::span<const std::byte>& featureTableJsonData,
+    PntsContent& parsedContent) {
+  rapidjson::Document document;
+  document.Parse(
+      reinterpret_cast<const char*>(featureTableJsonData.data()),
+      featureTableJsonData.size());
+  if (document.HasParseError()) {
+    parsedContent.errors.emplaceError(fmt::format(
+        "Error when parsing feature table JSON, error code {} at byte offset "
+        "{}",
+        document.GetParseError(),
+        document.GetErrorOffset()));
+    return document;
+  }
+
+  const auto pointsLengthIt = document.FindMember("POINTS_LENGTH");
+  if (pointsLengthIt == document.MemberEnd() ||
+      !pointsLengthIt->value.IsUint()) {
+    parsedContent.errors.emplaceError(
+        "Error parsing PNTS feature table, no "
+        "valid POINTS_LENGTH property was found.");
+    return document;
+  }
+
+  parsedContent.pointsLength = pointsLengthIt->value.GetUint();
+
+  if (parsedContent.pointsLength == 0) {
+    // This *should* be disallowed by the spec, but it currently isn't.
+    // In the future, this can be converted to an error.
+    parsedContent.errors.emplaceWarning(
+        "The PNTS has a POINTS_LENGTH of zero.");
+    return document;
+  }
+
+  parseSemanticsFromFeatureTableJson(document, parsedContent);
+  if (parsedContent.errors) {
+    return document;
+  }
+
+  const auto extensionsIt = document.FindMember("extensions");
+  if (extensionsIt != document.MemberEnd() && extensionsIt->value.IsObject()) {
+    const auto dracoExtensionIt =
+        extensionsIt->value.FindMember("3DTILES_draco_point_compression");
+    if (dracoExtensionIt != extensionsIt->value.MemberEnd() &&
+        dracoExtensionIt->value.IsObject()) {
+      const rapidjson::Value& dracoExtensionValue = dracoExtensionIt->value;
+      parseDracoExtension(dracoExtensionValue, parsedContent);
+      if (parsedContent.errors) {
+        return document;
+      }
+    }
+  }
+
+  return document;
+}
+
+rapidjson::Document parseBatchTableJson(
+    const gsl::span<const std::byte>& batchTableJsonData,
+    PntsContent& parsedContent) {
+  rapidjson::Document document;
+  document.Parse(
+      reinterpret_cast<const char*>(batchTableJsonData.data()),
+      batchTableJsonData.size());
+  if (document.HasParseError()) {
+    parsedContent.errors.emplaceWarning(fmt::format(
+        "Error when parsing batch table JSON, error code {} at byte "
+        "offset "
+        "{}. Skip parsing metadata",
+        document.GetParseError(),
+        document.GetErrorOffset()));
+  }
+  return document;
+}
+
+
 int32_t
 createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte> buffer) {
   size_t bufferId = gltf.buffers.size();
@@ -490,9 +566,9 @@ createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte> buffer) {
 
 int32_t createBufferViewInGltf(
     CesiumGltf::Model& gltf,
-    int32_t bufferId,
-    int64_t byteLength,
-    int64_t byteStride) {
+    const int32_t bufferId,
+    const int64_t byteLength,
+    const int64_t byteStride) {
   size_t bufferViewId = gltf.bufferViews.size();
   CesiumGltf::BufferView& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = bufferId;
@@ -506,9 +582,9 @@ int32_t createBufferViewInGltf(
 
 int32_t createAccessorInGltf(
     CesiumGltf::Model& gltf,
-    int32_t bufferViewId,
-    int32_t componentType,
-    int64_t count,
+    const int32_t bufferViewId,
+    const int32_t componentType,
+    const int64_t count,
     const std::string type) {
   size_t accessorId = gltf.accessors.size();
   CesiumGltf::Accessor& accessor = gltf.accessors.emplace_back();
@@ -597,67 +673,6 @@ void createGltfFromFeatureTableData(
   node.mesh = static_cast<int32_t>(meshId);
 }
 
-rapidjson::Document parseFeatureTableJson(
-    const gsl::span<const std::byte>& featureTableJsonData,
-    PntsContent& parsedContent) {
-  rapidjson::Document document;
-  document.Parse(
-      reinterpret_cast<const char*>(featureTableJsonData.data()),
-      featureTableJsonData.size());
-  if (document.HasParseError()) {
-    parsedContent.errors.emplaceError(fmt::format(
-        "Error when parsing feature table JSON, error code {} at byte offset "
-        "{}",
-        document.GetParseError(),
-        document.GetErrorOffset()));
-    return document;
-  }
-
-  const auto pointsLengthIt = document.FindMember("POINTS_LENGTH");
-  if (pointsLengthIt == document.MemberEnd() ||
-      !pointsLengthIt->value.IsUint()) {
-    parsedContent.errors.emplaceError(
-        "Error parsing PNTS feature table, no "
-        "valid POINTS_LENGTH property was found.");
-    return document;
-  }
-
-  parsedContent.pointsLength = pointsLengthIt->value.GetUint();
-
-  if (parsedContent.pointsLength == 0) {
-    // This *should* be disallowed by the spec, but it currently isn't.
-    // In the future, this can be converted to an error.
-    parsedContent.errors.emplaceWarning(
-        "The PNTS has a POINTS_LENGTH of zero.");
-    return document;
-  }
-
-  parseSemanticsFromFeatureTableJson(document, parsedContent);
-  if (parsedContent.errors) {
-    return document;
-  }
-
-  const auto extensionsIt = document.FindMember("extensions");
-  if (extensionsIt != document.MemberEnd() && extensionsIt->value.IsObject()) {
-    const auto dracoExtensionIt =
-        extensionsIt->value.FindMember("3DTILES_draco_point_compression");
-    if (dracoExtensionIt != extensionsIt->value.MemberEnd() &&
-        dracoExtensionIt->value.IsObject()) {
-      const rapidjson::Value& dracoExtensionValue = dracoExtensionIt->value;
-      parseDracoExtension(dracoExtensionValue, parsedContent);
-      if (parsedContent.errors) {
-        return document;
-      }
-    }
-  }
-
-  return document;
-}
-
-rapidjson::Document parseBatchTableJson(
-    const gsl::span<const std::byte>& batchTableJsonData,
-    PntsContent& parsedContent) {}
-
 void convertPntsContentToGltf(
     const gsl::span<const std::byte>& pntsBinary,
     const PntsHeader& header,
@@ -665,15 +680,10 @@ void convertPntsContentToGltf(
     GltfConverterResult& result) {
   if (header.featureTableJsonByteLength > 0 &&
       header.featureTableBinaryByteLength > 0) {
+    PntsContent parsedContent;
+
     const gsl::span<const std::byte> featureTableJsonData =
         pntsBinary.subspan(headerLength, header.featureTableJsonByteLength);
-    const gsl::span<const std::byte> featureTableBinaryData =
-        pntsBinary.subspan(
-            static_cast<size_t>(
-                headerLength + header.featureTableJsonByteLength),
-            header.featureTableBinaryByteLength);
-
-    PntsContent parsedContent;
 
     rapidjson::Document featureTableJson =
         parseFeatureTableJson(featureTableJsonData, parsedContent);
@@ -683,8 +693,9 @@ void convertPntsContentToGltf(
     }
 
     // If the 3DTILES_draco_point_compression extension is present,
-    // the batch table's binary may be compressed with the feature
-    // table's binary. Parse both jsons first in case the extension is there.
+    // the batch table's binary will be compressed with the feature
+    // table's binary. Parse both JSONs first in case the extension is there.
+    rapidjson::Document batchTableJson;
     if (header.batchTableJsonByteLength > 0) {
       const int64_t batchTableStart = headerLength +
                                       header.featureTableJsonByteLength +
@@ -692,8 +703,12 @@ void convertPntsContentToGltf(
       const gsl::span<const std::byte> batchTableJsonData = pntsBinary.subspan(
           static_cast<size_t>(batchTableStart),
           header.batchTableJsonByteLength);
-      rapidjson::Document batchTableJson =
-          parseBatchTableJson(batchTableJsonData, parsedContent);
+
+      batchTableJson = parseBatchTableJson(batchTableJsonData, parsedContent);
+      if (parsedContent.errors) {
+        result.errors.merge(parsedContent.errors);
+        return;
+      }
 
       const gsl::span<const std::byte> batchTableBinaryData =
           pntsBinary.subspan(
@@ -705,6 +720,12 @@ void convertPntsContentToGltf(
     // when parsing the compressed attributes, convert the json and the binary
     // to something that can be put into the existing batchtable to metadata
     // function
+
+    const gsl::span<const std::byte> featureTableBinaryData =
+        pntsBinary.subspan(
+            static_cast<size_t>(
+                headerLength + header.featureTableJsonByteLength),
+            header.featureTableBinaryByteLength);
 
     createGltfFromFeatureTableData(
         parsedContent,
