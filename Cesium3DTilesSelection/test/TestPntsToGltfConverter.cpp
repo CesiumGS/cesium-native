@@ -1,5 +1,5 @@
-#include "PntsToGltfConverter.h"
 #include "BatchTableToGltfFeatureMetadata.h"
+#include "PntsToGltfConverter.h"
 #include "readFile.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -19,6 +19,32 @@
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesSelection;
+
+template <typename Type>
+static void
+checkBuffer(const gsl::span<Type>& values, const gsl::span<Type>& expected) {
+  REQUIRE(values.size() == expected.size());
+  if constexpr (std::is_same_v<Type, glm::vec3>) {
+    for (size_t i = 0; i < value.size(); ++i) {
+      const glm::vec3& value = values[i];
+      const glm::vec3& expectedValue = expected[i];
+      CHECK(
+          value.x == Approx(expectedValue.x) &&
+          value.y == Approx(expectedValue.y) &&
+          value.z == Approx(expectedValue.z));
+    }
+  } else if constexpr (std::is_same_v<Type, glm::vec4>) {
+    const glm::vec4& value = values[i];
+    const glm::vec4& expectedValue = expected[i];
+    CHECK(
+        value.x == Approx(expectedValue.x) &&
+        value.y == Approx(expectedValue.y) &&
+        value.z == Approx(expectedValue.z) &&
+        value.w == Approx(expectedValue.w));
+  }
+
+  // TODO: check batch ids
+}
 
 GltfConverterResult loadPnts(const std::filesystem::path& filePath) {
   return PntsToGltfConverter::convert(readFile(filePath), {});
