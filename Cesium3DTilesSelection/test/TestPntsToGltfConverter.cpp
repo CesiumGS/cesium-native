@@ -46,20 +46,17 @@ static void checkBufferContents(
       CHECK(value.z == Approx(expectedValue.z));
       CHECK(value.w == Approx(expectedValue.w));
     }
-  } else if constexpr (std::is_same_v<Type, glm::u8vec4>) {
+  } else if constexpr (
+      std::is_same_v<Type, glm::u8vec3> || std::is_same_v<Type, glm::u8vec4>) {
     for (size_t i = 0; i < expected.size(); ++i) {
-      const glm::u8vec4& value =
-          *reinterpret_cast<const glm::u8vec4*>(buffer.data() + i * byteStride);
-      const glm::u8vec4& expectedValue = expected[i];
-      CHECK(value.x == expectedValue.x);
-      CHECK(value.y == expectedValue.y);
-      CHECK(value.z == expectedValue.z);
-      CHECK(value.w == expectedValue.w);
+      const Type& value =
+          *reinterpret_cast<const Type*>(buffer.data() + i * byteStride);
+      const Type& expectedValue = expected[i];
+      CHECK(value == expectedValue);
     }
   } else {
-    FAIL("Buffer check has not been implemented for the given type.")
+    FAIL("Buffer check has not been implemented for the given type.");
   }
-  // TODO: check batch ids
 }
 
 template <typename Type>
@@ -184,14 +181,14 @@ TEST_CASE("Converts simple point cloud to glTF") {
   CHECK(static_cast<int64_t>(buffer.cesium.data.size()) == buffer.byteLength);
 
   const std::vector<glm::vec3> expectedPositions = {
-      glm::vec3(-2.4975082874298096, -0.3252686858177185, -3.522307872772217),
-      glm::vec3(2.345669984817505, 0.9171584248542786, -3.522307872772217),
-      glm::vec3(-3.2968313694000244, 2.790619373321533, 0.30552753806114197),
-      glm::vec3(1.54634690284729, 4.033046722412109, 0.30552753806114197),
-      glm::vec3(-1.54634690284729, -4.033046722412109, -0.30552753806114197),
-      glm::vec3(3.2968313694000244, -2.790619373321533, -0.30552753806114197),
-      glm::vec3(-2.345669984817505, -0.9171584248542786, 3.522307872772217),
-      glm::vec3(2.4975082874298096, 0.3252686858177185, 3.522307872772217)};
+      glm::vec3(-2.4975082, -0.3252686, -3.5223078),
+      glm::vec3(2.3456699, 0.9171584, -3.5223078),
+      glm::vec3(-3.2968313, 2.7906193, 0.3055275),
+      glm::vec3(1.5463469, 4.03304672, 0.3055275),
+      glm::vec3(-1.5463469, -4.03304672, -0.3055275),
+      glm::vec3(3.2968313, -2.7906193, -0.3055275),
+      glm::vec3(-2.3456699, -0.9171584, 3.5223078),
+      glm::vec3(2.4975082, 0.3252686, 3.5223078)};
 
   checkBufferContents<glm::vec3>(buffer.cesium.data, expectedPositions);
 
@@ -200,9 +197,9 @@ TEST_CASE("Converts simple point cloud to glTF") {
   const auto& rtcExtension =
       result.model->getExtension<CesiumGltf::ExtensionCesiumRTC>();
   const glm::vec3 expectedRtcCenter(
-      1215012.8828876738,
-      -4736313.051199594,
-      4081605.22126042);
+      1215012.8828876,
+      -4736313.0511995,
+      4081605.2212604);
   CHECK(rtcExtension->center[0] == Approx(expectedRtcCenter.x));
   CHECK(rtcExtension->center[1] == Approx(expectedRtcCenter.y));
   CHECK(rtcExtension->center[2] == Approx(expectedRtcCenter.z));
@@ -285,17 +282,183 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   checkBufferContents<glm::u8vec4>(colorBuffer.cesium.data, expectedColors);
 }
 
-TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
+TEST_CASE("Converts point cloud with RGB to glTF") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath = testFilePath / "PointCloud" / "pointCloudConstantRGBA.pnts";
+  testFilePath = testFilePath / "PointCloud" / "pointCloudRGB.pnts";
+  const int32_t pointsLength = 8;
+  const int32_t expectedAttributeCount = 2;
+
   GltfConverterResult result = loadPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
 
+  CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(gltf.materials.size() == 1);
+  Material& material = gltf.materials[0];
+  CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
+
+  REQUIRE(gltf.accessors.size() == expectedAttributeCount);
+  REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
+  REQUIRE(gltf.buffers.size() == expectedAttributeCount);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == expectedAttributeCount);
+
+  // Check that position attribute is present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+
+  // Check color attribute more thoroughly
+  REQUIRE(attributes.find("COLOR_0") != attributes.end());
+  int32_t colorAccessorId = attributes.at("COLOR_0");
+  REQUIRE(colorAccessorId >= 0);
+  REQUIRE(colorAccessorId < expectedAttributeCount);
+
+  Accessor& colorAccessor = gltf.accessors[colorAccessorId];
+  CHECK(colorAccessor.byteOffset == 0);
+  CHECK(colorAccessor.componentType == Accessor::ComponentType::UNSIGNED_BYTE);
+  CHECK(colorAccessor.count == pointsLength);
+  CHECK(colorAccessor.type == Accessor::Type::VEC3);
+  CHECK(colorAccessor.normalized);
+
+  int32_t colorBufferViewId = colorAccessor.bufferView;
+  REQUIRE(colorBufferViewId >= 0);
+  REQUIRE(colorBufferViewId < expectedAttributeCount);
+
+  BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
+  CHECK(colorBufferView.byteLength == pointsLength * sizeof(glm::u8vec3));
+  CHECK(colorBufferView.byteOffset == 0);
+
+  int32_t colorBufferId = colorBufferView.buffer;
+  REQUIRE(colorBufferId >= 0);
+  REQUIRE(colorBufferId < expectedAttributeCount);
+
+  Buffer& colorBuffer = gltf.buffers[colorBufferId];
+  CHECK(colorBuffer.byteLength == pointsLength * sizeof(glm::u8vec3));
+  CHECK(
+      static_cast<int64_t>(colorBuffer.cesium.data.size()) ==
+      colorBuffer.byteLength);
+
+  const std::vector<glm::u8vec3> expectedColors = {
+      glm::u8vec3(139, 151, 182),
+      glm::u8vec3(153, 218, 138),
+      glm::u8vec3(108, 159, 164),
+      glm::u8vec3(111, 75, 227),
+      glm::u8vec3(245, 69, 97),
+      glm::u8vec3(201, 207, 134),
+      glm::u8vec3(144, 100, 236),
+      glm::u8vec3(18, 86, 22)};
+
+  checkBufferContents<glm::u8vec3>(colorBuffer.cesium.data, expectedColors);
+}
+
+TEST_CASE("Converts point cloud with RGB565 to glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudRGB565.pnts";
+  const int32_t pointsLength = 8;
+  const int32_t expectedAttributeCount = 2;
+
+  GltfConverterResult result = loadPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(gltf.materials.size() == 1);
+  Material& material = gltf.materials[0];
+  CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
+
+  REQUIRE(gltf.accessors.size() == expectedAttributeCount);
+  REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
+  REQUIRE(gltf.buffers.size() == expectedAttributeCount);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == expectedAttributeCount);
+
+  // Check that position attribute is present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+
+  // Check color attribute more thoroughly
+  REQUIRE(attributes.find("COLOR_0") != attributes.end());
+  int32_t colorAccessorId = attributes.at("COLOR_0");
+  REQUIRE(colorAccessorId >= 0);
+  REQUIRE(colorAccessorId < expectedAttributeCount);
+
+  Accessor& colorAccessor = gltf.accessors[colorAccessorId];
+  CHECK(colorAccessor.byteOffset == 0);
+  CHECK(colorAccessor.componentType == Accessor::ComponentType::FLOAT);
+  CHECK(colorAccessor.count == pointsLength);
+  CHECK(colorAccessor.type == Accessor::Type::VEC3);
+  CHECK(!colorAccessor.normalized);
+
+  int32_t colorBufferViewId = colorAccessor.bufferView;
+  REQUIRE(colorBufferViewId >= 0);
+  REQUIRE(colorBufferViewId < expectedAttributeCount);
+
+  BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
+  CHECK(colorBufferView.byteLength == pointsLength * sizeof(glm::vec3));
+  CHECK(colorBufferView.byteOffset == 0);
+
+  int32_t colorBufferId = colorBufferView.buffer;
+  REQUIRE(colorBufferId >= 0);
+  REQUIRE(colorBufferId < expectedAttributeCount);
+
+  Buffer& colorBuffer = gltf.buffers[colorBufferId];
+  CHECK(colorBuffer.byteLength == pointsLength * sizeof(glm::vec3));
+  CHECK(
+      static_cast<int64_t>(colorBuffer.cesium.data.size()) ==
+      colorBuffer.byteLength);
+
+  const std::vector<glm::vec3> expectedColors = {
+      glm::vec3(0.5483871, 0.5873016, 0.7096773),
+      glm::vec3(0.5806451, 0.8571428, 0.5161290),
+      glm::vec3(0.4193548, 0.6190476, 0.6451612),
+      glm::vec3(0.4193548, 0.2857142, 0.8709677),
+      glm::vec3(0.9354838, 0.2698412, 0.3548386),
+      glm::vec3(0.7741935, 0.8095238, 0.5161290),
+      glm::vec3(0.5483871, 0.3809523, 0.9032257),
+      glm::vec3(0.0645161, 0.3333333, 0.0645161)};
+
+  checkBufferContents<glm::vec3>(colorBuffer.cesium.data, expectedColors);
+}
+
+TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudConstantRGBA.pnts";
+  GltfConverterResult result = loadPnts(testFilePath);
+  const int32_t pointsLength = 8;
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(primitive.material == 0);
+
   CHECK(gltf.buffers.size() == 1);
   CHECK(gltf.bufferViews.size() == 1);
   CHECK(gltf.accessors.size() == 1);
+
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];

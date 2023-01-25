@@ -76,7 +76,7 @@ enum ComponentType { NONE, BYTE, UNSIGNED_BYTE, UNSIGNED_SHORT, UNSIGNED_INT };
 
 struct PntsSemantic {
   uint32_t byteOffset = 0;
-  std::optional<uint32_t> dracoId;
+  std::optional<int32_t> dracoId;
   std::vector<std::byte> data;
 };
 
@@ -972,7 +972,8 @@ void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
       count,
       CesiumGltf::Accessor::Type::VEC3);
 
-  CesiumGltf::Accessor& accessor = gltf.accessors[positionAccessorId];
+  CesiumGltf::Accessor& accessor =
+      gltf.accessors[static_cast<uint32_t>(positionAccessorId)];
   accessor.min = {
       parsedContent.positionMin.x,
       parsedContent.positionMin.y,
@@ -985,9 +986,7 @@ void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
   };
 
   CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-  primitive.attributes.emplace(
-      "POSITION",
-      static_cast<int32_t>(positionAccessorId));
+  primitive.attributes.emplace("POSITION", positionAccessorId);
 }
 
 void addColorsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
@@ -996,15 +995,25 @@ void addColorsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
 
     const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
     int64_t colorsByteStride = 0;
+    int32_t componentType = 0;
     std::string type;
     bool isTranslucent = false;
+    bool isNormalized = false;
 
     if (parsedContent.colorType == PntsColorType::RGBA) {
       colorsByteStride = static_cast<int64_t>(sizeof(glm::u8vec4));
+      componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
       type = CesiumGltf::Accessor::Type::VEC4;
       isTranslucent = true;
-    } else {
+      isNormalized = true;
+    } else if (parsedContent.colorType == PntsColorType::RGB) {
       colorsByteStride = static_cast<int64_t>(sizeof(glm::u8vec3));
+      componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
+      isNormalized = true;
+      type = CesiumGltf::Accessor::Type::VEC3;
+    } else if (parsedContent.colorType == PntsColorType::RGB565) {
+      colorsByteStride = static_cast<int64_t>(sizeof(glm::vec3));
+      componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
       type = CesiumGltf::Accessor::Type::VEC3;
     }
 
@@ -1019,33 +1028,28 @@ void addColorsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
     int32_t colorsAccessorId = createAccessorInGltf(
         gltf,
         colorsBufferViewId,
-        CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE,
+        componentType,
         count,
         type);
 
-    CesiumGltf::Accessor& accessor = gltf.accessors[colorsAccessorId];
-    accessor.normalized = true;
+    CesiumGltf::Accessor& accessor =
+        gltf.accessors[static_cast<uint32_t>(colorsAccessorId)];
+    accessor.normalized = isNormalized;
 
     CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    primitive.attributes.emplace(
-        "COLOR_0",
-        static_cast<int32_t>(colorsAccessorId));
+    primitive.attributes.emplace("COLOR_0", colorsAccessorId);
 
     if (isTranslucent) {
-      CesiumGltf::Material& material = gltf.materials[primitive.material];
+      CesiumGltf::Material& material = gltf.materials[static_cast<uint32_t>(primitive.material)];
       material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
     }
-
-    return;
-  }
-
-  if (parsedContent.constantRgba) {
+  } else if (parsedContent.constantRgba) {
     // Map RGBA from [0, 255] to [0, 1]
     glm::vec4 materialColor(parsedContent.constantRgba.value());
     materialColor /= 255.0f;
 
     CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    CesiumGltf::Material& material = gltf.materials[primitive.material];
+    CesiumGltf::Material& material = gltf.materials[static_cast<uint32_t>(primitive.material)];
     material.pbrMetallicRoughness.value().baseColorFactor =
         {materialColor.x, materialColor.y, materialColor.z, materialColor.w};
     material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
