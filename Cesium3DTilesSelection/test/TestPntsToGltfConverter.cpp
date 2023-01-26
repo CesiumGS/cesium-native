@@ -5,10 +5,12 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/MetadataFeatureTableView.h>
 #include <CesiumGltf/MetadataPropertyView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
@@ -20,6 +22,7 @@
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumUtility;
 
 template <typename Type>
 static void checkBufferContents(
@@ -32,19 +35,20 @@ static void checkBufferContents(
       const glm::vec3& value =
           *reinterpret_cast<const glm::vec3*>(buffer.data() + i * byteStride);
       const glm::vec3& expectedValue = expected[i];
-      CHECK(value.x == Approx(expectedValue.x));
-      CHECK(value.y == Approx(expectedValue.y));
-      CHECK(value.z == Approx(expectedValue.z));
+      CHECK(Math::equalsEpsilon(
+          static_cast<glm::dvec3>(value),
+          static_cast<glm::dvec3>(expectedValue),
+          Math::Epsilon6));
     }
   } else if constexpr (std::is_same_v<Type, glm::vec4>) {
     for (size_t i = 0; i < expected.size(); ++i) {
       const glm::vec4& value =
           *reinterpret_cast<const glm::vec4*>(buffer.data() + i * byteStride);
       const glm::vec4& expectedValue = expected[i];
-      CHECK(value.x == Approx(expectedValue.x));
-      CHECK(value.y == Approx(expectedValue.y));
-      CHECK(value.z == Approx(expectedValue.z));
-      CHECK(value.w == Approx(expectedValue.w));
+      CHECK(Math::equalsEpsilon(
+          static_cast<glm::dvec4>(value),
+          static_cast<glm::dvec4>(expectedValue),
+          Math::Epsilon6));
     }
   } else if constexpr (
       std::is_same_v<Type, glm::u8vec3> || std::is_same_v<Type, glm::u8vec4>) {
@@ -70,8 +74,9 @@ static void checkAttribute(
 
   const int32_t accessorId = attributes.at(attributeSemantic);
   REQUIRE(accessorId >= 0);
-  REQUIRE(accessorId < gltf.accessors.size());
-  const Accessor& accessor = gltf.accessors[accessorId];
+  const uint32_t accessorIdUint = static_cast<uint32_t>(accessorId);
+  REQUIRE(accessorIdUint < gltf.accessors.size());
+  const Accessor& accessor = gltf.accessors[accessorIdUint];
 
   int32_t expectedComponentType = -1;
   std::string expectedType;
@@ -79,6 +84,12 @@ static void checkAttribute(
   if constexpr (std::is_same_v<Type, glm::vec3>) {
     expectedComponentType = Accessor::ComponentType::FLOAT;
     expectedType = Accessor::Type::VEC3;
+  } else if constexpr (std::is_same_v<Type, glm::u8vec3>) {
+    expectedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    expectedType = Accessor::Type::VEC3;
+  } else if constexpr (std::is_same_v<Type, glm::u8vec4>) {
+    expectedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    expectedType = Accessor::Type::VEC4;
   } else {
     FAIL("Accessor check has not been implemented for the given type.");
   }
@@ -92,16 +103,18 @@ static void checkAttribute(
 
   const int32_t bufferViewId = accessor.bufferView;
   REQUIRE(bufferViewId >= 0);
-  REQUIRE(bufferViewId < gltf.bufferViews.size());
-  const BufferView& bufferView = gltf.bufferViews[bufferViewId];
+  const uint32_t bufferViewIdUint = static_cast<uint32_t>(bufferViewId);
+  REQUIRE(bufferViewIdUint < gltf.bufferViews.size());
+  const BufferView& bufferView = gltf.bufferViews[bufferViewIdUint];
   CHECK(bufferView.byteLength == expectedByteLength);
   CHECK(bufferView.byteOffset == 0);
 
   const int32_t bufferId = bufferView.buffer;
   REQUIRE(bufferId >= 0);
-  REQUIRE(bufferId < gltf.buffers.size());
+  const uint32_t bufferIdUint = static_cast<uint32_t>(bufferId);
+  REQUIRE(bufferIdUint < gltf.buffers.size());
 
-  const Buffer& buffer = gltf.buffers[bufferId];
+  const Buffer& buffer = gltf.buffers[static_cast<uint32_t>(bufferIdUint)];
   CHECK(buffer.byteLength == expectedByteLength);
   CHECK(static_cast<int64_t>(buffer.cesium.data.size()) == buffer.byteLength);
 }
@@ -123,6 +136,24 @@ TEST_CASE("Converts simple point cloud to glTF") {
   // Check for single mesh node
   REQUIRE(gltf.nodes.size() == 1);
   Node& node = gltf.nodes[0];
+  std::vector<double> expectedMatrix = {
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0};
+  CHECK(node.matrix == expectedMatrix);
   CHECK(node.mesh == 0);
 
   // Check for single mesh primitive
@@ -136,6 +167,7 @@ TEST_CASE("Converts simple point cloud to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(material.pbrMetallicRoughness);
+  CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
 
   auto attributes = primitive.attributes;
   REQUIRE(attributes.size() == 1);
@@ -151,18 +183,12 @@ TEST_CASE("Converts simple point cloud to glTF") {
   CHECK(accessor.count == pointsLength);
   CHECK(accessor.type == Accessor::Type::VEC3);
 
-  const glm::vec3 expectedMin(
-      -3.2968313694000244,
-      -4.033046722412109,
-      -3.522307872772217);
+  const glm::vec3 expectedMin(-3.2968313, -4.0330467, -3.5223078);
   CHECK(accessor.min[0] == Approx(expectedMin.x));
   CHECK(accessor.min[1] == Approx(expectedMin.y));
   CHECK(accessor.min[2] == Approx(expectedMin.z));
 
-  const glm::vec3 expectedMax(
-      3.2968313694000244,
-      4.033046722412109,
-      3.522307872772217);
+  const glm::vec3 expectedMax(3.2968313, 4.0330467, 3.5223078);
   CHECK(accessor.max[0] == Approx(expectedMax.x));
   CHECK(accessor.max[1] == Approx(expectedMax.y));
   CHECK(accessor.max[2] == Approx(expectedMax.z));
@@ -227,6 +253,7 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(material.alphaMode == Material::AlphaMode::BLEND);
+  CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -235,39 +262,20 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   auto attributes = primitive.attributes;
   REQUIRE(attributes.size() == expectedAttributeCount);
 
-  // Check that position attribute is present
+  // Check that position and color attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec4>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check color attribute more thoroughly
-  REQUIRE(attributes.find("COLOR_0") != attributes.end());
-  int32_t colorAccessorId = attributes.at("COLOR_0");
-  REQUIRE(colorAccessorId >= 0);
-  REQUIRE(colorAccessorId < expectedAttributeCount);
-
+  uint32_t colorAccessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
   Accessor& colorAccessor = gltf.accessors[colorAccessorId];
-  CHECK(colorAccessor.byteOffset == 0);
-  CHECK(colorAccessor.componentType == Accessor::ComponentType::UNSIGNED_BYTE);
-  CHECK(colorAccessor.count == pointsLength);
-  CHECK(colorAccessor.type == Accessor::Type::VEC4);
   CHECK(colorAccessor.normalized);
 
-  int32_t colorBufferViewId = colorAccessor.bufferView;
-  REQUIRE(colorBufferViewId >= 0);
-  REQUIRE(colorBufferViewId < expectedAttributeCount);
-
+  uint32_t colorBufferViewId = static_cast<uint32_t>(colorAccessor.bufferView);
   BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
-  CHECK(colorBufferView.byteLength == pointsLength * sizeof(glm::u8vec4));
-  CHECK(colorBufferView.byteOffset == 0);
 
-  int32_t colorBufferId = colorBufferView.buffer;
-  REQUIRE(colorBufferId >= 0);
-  REQUIRE(colorBufferId < expectedAttributeCount);
-
+  uint32_t colorBufferId = static_cast<uint32_t>(colorBufferView.buffer);
   Buffer& colorBuffer = gltf.buffers[colorBufferId];
-  CHECK(colorBuffer.byteLength == pointsLength * sizeof(glm::u8vec4));
-  CHECK(
-      static_cast<int64_t>(colorBuffer.cesium.data.size()) ==
-      colorBuffer.byteLength);
 
   const std::vector<glm::u8vec4> expectedColors = {
       glm::u8vec4(139, 151, 182, 108),
@@ -304,6 +312,7 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
+  CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -312,39 +321,20 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
   auto attributes = primitive.attributes;
   REQUIRE(attributes.size() == expectedAttributeCount);
 
-  // Check that position attribute is present
+  // Check that position and color attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check color attribute more thoroughly
-  REQUIRE(attributes.find("COLOR_0") != attributes.end());
-  int32_t colorAccessorId = attributes.at("COLOR_0");
-  REQUIRE(colorAccessorId >= 0);
-  REQUIRE(colorAccessorId < expectedAttributeCount);
-
+  uint32_t colorAccessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
   Accessor& colorAccessor = gltf.accessors[colorAccessorId];
-  CHECK(colorAccessor.byteOffset == 0);
-  CHECK(colorAccessor.componentType == Accessor::ComponentType::UNSIGNED_BYTE);
-  CHECK(colorAccessor.count == pointsLength);
-  CHECK(colorAccessor.type == Accessor::Type::VEC3);
   CHECK(colorAccessor.normalized);
 
-  int32_t colorBufferViewId = colorAccessor.bufferView;
-  REQUIRE(colorBufferViewId >= 0);
-  REQUIRE(colorBufferViewId < expectedAttributeCount);
-
+  uint32_t colorBufferViewId = static_cast<uint32_t>(colorAccessor.bufferView);
   BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
-  CHECK(colorBufferView.byteLength == pointsLength * sizeof(glm::u8vec3));
-  CHECK(colorBufferView.byteOffset == 0);
 
-  int32_t colorBufferId = colorBufferView.buffer;
-  REQUIRE(colorBufferId >= 0);
-  REQUIRE(colorBufferId < expectedAttributeCount);
-
+  uint32_t colorBufferId = static_cast<uint32_t>(colorBufferView.buffer);
   Buffer& colorBuffer = gltf.buffers[colorBufferId];
-  CHECK(colorBuffer.byteLength == pointsLength * sizeof(glm::u8vec3));
-  CHECK(
-      static_cast<int64_t>(colorBuffer.cesium.data.size()) ==
-      colorBuffer.byteLength);
 
   const std::vector<glm::u8vec3> expectedColors = {
       glm::u8vec3(139, 151, 182),
@@ -381,6 +371,7 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
+  CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -389,39 +380,21 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   auto attributes = primitive.attributes;
   REQUIRE(attributes.size() == expectedAttributeCount);
 
-  // Check that position attribute is present
+  // Check that position and color attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check color attribute more thoroughly
-  REQUIRE(attributes.find("COLOR_0") != attributes.end());
-  int32_t colorAccessorId = attributes.at("COLOR_0");
-  REQUIRE(colorAccessorId >= 0);
-  REQUIRE(colorAccessorId < expectedAttributeCount);
-
+  // Check color attribute more thoroughly
+  uint32_t colorAccessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
   Accessor& colorAccessor = gltf.accessors[colorAccessorId];
-  CHECK(colorAccessor.byteOffset == 0);
-  CHECK(colorAccessor.componentType == Accessor::ComponentType::FLOAT);
-  CHECK(colorAccessor.count == pointsLength);
-  CHECK(colorAccessor.type == Accessor::Type::VEC3);
   CHECK(!colorAccessor.normalized);
 
-  int32_t colorBufferViewId = colorAccessor.bufferView;
-  REQUIRE(colorBufferViewId >= 0);
-  REQUIRE(colorBufferViewId < expectedAttributeCount);
-
+  uint32_t colorBufferViewId = static_cast<uint32_t>(colorAccessor.bufferView);
   BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
-  CHECK(colorBufferView.byteLength == pointsLength * sizeof(glm::vec3));
-  CHECK(colorBufferView.byteOffset == 0);
 
-  int32_t colorBufferId = colorBufferView.buffer;
-  REQUIRE(colorBufferId >= 0);
-  REQUIRE(colorBufferId < expectedAttributeCount);
-
+  uint32_t colorBufferId = static_cast<uint32_t>(colorBufferView.buffer);
   Buffer& colorBuffer = gltf.buffers[colorBufferId];
-  CHECK(colorBuffer.byteLength == pointsLength * sizeof(glm::vec3));
-  CHECK(
-      static_cast<int64_t>(colorBuffer.cesium.data.size()) ==
-      colorBuffer.byteLength);
 
   const std::vector<glm::vec3> expectedColors = {
       glm::vec3(0.5483871, 0.5873016, 0.7096773),
@@ -476,4 +449,195 @@ TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
   CHECK(baseColorFactor[3] == Approx(expectedConstantRGBA.w));
 
   CHECK(material.alphaMode == Material::AlphaMode::BLEND);
+  CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+}
+
+TEST_CASE("Converts point cloud with normals to glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudNormals.pnts";
+  const int32_t pointsLength = 8;
+  const int32_t expectedAttributeCount = 3;
+
+  GltfConverterResult result = loadPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(gltf.materials.size() == 1);
+  Material& material = gltf.materials[0];
+  CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+
+  REQUIRE(gltf.accessors.size() == expectedAttributeCount);
+  REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
+  REQUIRE(gltf.buffers.size() == expectedAttributeCount);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == expectedAttributeCount);
+
+  // Check that position, color, and normal attributes are present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
+
+  // Check normal attribute more thoroughly
+  uint32_t normalAccessorId = static_cast<uint32_t>(attributes.at("NORMAL"));
+  Accessor& normalAccessor = gltf.accessors[normalAccessorId];
+
+  uint32_t normalBufferViewId =
+      static_cast<uint32_t>(normalAccessor.bufferView);
+  BufferView& normalBufferView = gltf.bufferViews[normalBufferViewId];
+
+  uint32_t normalBufferId = static_cast<uint32_t>(normalBufferView.buffer);
+  Buffer& normalBuffer = gltf.buffers[normalBufferId];
+
+  const std::vector<glm::vec3> expectedNormals = {
+      glm::vec3(-0.9854088, 0.1667507, 0.0341110),
+      glm::vec3(-0.5957704, 0.5378777, 0.5964436),
+      glm::vec3(-0.5666092, -0.7828890, -0.2569800),
+      glm::vec3(-0.5804154, -0.7226123, 0.3754320),
+      glm::vec3(-0.8535281, -0.1291752, -0.5047805),
+      glm::vec3(0.7557975, 0.1243999, 0.6428800),
+      glm::vec3(0.1374090, -0.2333731, -0.9626296),
+      glm::vec3(-0.0633145, 0.9630424, 0.2618022)};
+
+  checkBufferContents<glm::vec3>(normalBuffer.cesium.data, expectedNormals);
+}
+
+TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath =
+      testFilePath / "PointCloud" / "pointCloudNormalsOctEncoded.pnts";
+  const int32_t pointsLength = 8;
+  const int32_t expectedAttributeCount = 3;
+
+  GltfConverterResult result = loadPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(gltf.materials.size() == 1);
+  Material& material = gltf.materials[0];
+  CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+
+  REQUIRE(gltf.accessors.size() == expectedAttributeCount);
+  REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
+  REQUIRE(gltf.buffers.size() == expectedAttributeCount);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == expectedAttributeCount);
+
+  // Check that position, color, and normal attributes are present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
+
+  // Check normal attribute more thoroughly
+  uint32_t normalAccessorId = static_cast<uint32_t>(attributes.at("NORMAL"));
+  Accessor& normalAccessor = gltf.accessors[normalAccessorId];
+  CHECK(!normalAccessor.normalized);
+
+  uint32_t normalBufferViewId =
+      static_cast<uint32_t>(normalAccessor.bufferView);
+  BufferView& normalBufferView = gltf.bufferViews[normalBufferViewId];
+
+  uint32_t normalBufferId = static_cast<uint32_t>(normalBufferView.buffer);
+  Buffer& normalBuffer = gltf.buffers[normalBufferId];
+
+  const std::vector<glm::vec3> expectedNormals = {
+      glm::vec3(-0.9856477, 0.1634960, 0.0420418),
+      glm::vec3(-0.5901730, 0.5359042, 0.6037402),
+      glm::vec3(-0.5674310, -0.7817938, -0.2584963),
+      glm::vec3(-0.5861990, -0.7179291, 0.3754308),
+      glm::vec3(-0.8519385, -0.1283743, -0.5076620),
+      glm::vec3(0.7587127, 0.1254564, 0.6392304),
+      glm::vec3(0.1354662, -0.2292506, -0.9638947),
+      glm::vec3(-0.0656172, 0.9640687, 0.2574214)};
+
+  checkBufferContents<glm::vec3>(normalBuffer.cesium.data, expectedNormals);
+}
+
+TEST_CASE("Converts point cloud with quantized positions to glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudQuantized.pnts";
+  const int32_t pointsLength = 8;
+  const int32_t expectedAttributeCount = 2;
+
+  GltfConverterResult result = loadPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(!gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(gltf.materials.size() == 1);
+  Material& material = gltf.materials[0];
+  CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+
+  REQUIRE(gltf.accessors.size() == expectedAttributeCount);
+  REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
+  REQUIRE(gltf.buffers.size() == expectedAttributeCount);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == expectedAttributeCount);
+
+  // Check that position and color attributes are present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+
+  // Check position attribute more thoroughly
+  uint32_t positionAccessorId =
+      static_cast<uint32_t>(attributes.at("POSITION"));
+  Accessor& positionAccessor = gltf.accessors[positionAccessorId];
+  CHECK(!positionAccessor.normalized);
+
+  const glm::vec3 expectedMin(1215009.59, -4736317.08, 4081601.7);
+  CHECK(positionAccessor.min[0] == Approx(expectedMin.x));
+  CHECK(positionAccessor.min[1] == Approx(expectedMin.y));
+  CHECK(positionAccessor.min[2] == Approx(expectedMin.z));
+
+  const glm::vec3 expectedMax(1215016.18, -4736309.02, 4081608.74);
+  CHECK(positionAccessor.max[0] == Approx(expectedMax.x));
+  CHECK(positionAccessor.max[1] == Approx(expectedMax.y));
+  CHECK(positionAccessor.max[2] == Approx(expectedMax.z));
+
+  uint32_t positionBufferViewId =
+      static_cast<uint32_t>(positionAccessor.bufferView);
+  BufferView& positionBufferView = gltf.bufferViews[positionBufferViewId];
+
+  uint32_t positionBufferId = static_cast<uint32_t>(positionBufferView.buffer);
+  Buffer& positionBuffer = gltf.buffers[positionBufferId];
+
+  const std::vector<glm::vec3> expectedPositions = {
+      glm::vec3(1215010.39, -4736313.38, 4081601.7),
+      glm::vec3(1215015.23, -4736312.13, 4081601.7),
+      glm::vec3(1215009.59, -4736310.26, 4081605.53),
+      glm::vec3(1215014.43, -4736309.02, 4081605.53),
+      glm::vec3(1215011.34, -4736317.08, 4081604.92),
+      glm::vec3(1215016.18, -4736315.84, 4081604.92),
+      glm::vec3(1215010.54, -4736313.97, 4081608.74),
+      glm::vec3(1215015.38, -4736312.73, 4081608.74)};
+
+  checkBufferContents<glm::vec3>(positionBuffer.cesium.data, expectedPositions);
 }

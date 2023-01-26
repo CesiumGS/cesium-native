@@ -18,6 +18,8 @@
 #endif
 
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
+#include <CesiumUtility/Math.h>
 
 #include <rapidjson/document.h>
 #include <spdlog/fmt/fmt.h>
@@ -93,7 +95,7 @@ struct PntsContent {
   PntsSemantic position;
   // required by glTF spec
   glm::vec3 positionMin = glm::vec3(std::numeric_limits<float>::max());
-  glm::vec3 positionMax = glm::vec3(std::numeric_limits<float>::min());
+  glm::vec3 positionMax = glm::vec3(std::numeric_limits<float>::lowest());
 
   bool positionQuantized = false;
 
@@ -793,7 +795,7 @@ void parsePositionsFromFeatureTableBinary(
       pointsLength);
 
   if (parsedContent.positionQuantized) {
-    // PERFORMANCE_IDEA: In the future, it would be more performant to detect if
+    // PERFORMANCE_IDEA: In the future, it might be more performant to detect if
     // the recipient rendering engine can handle dequantization on its own and
     // if so, use the KHR_mesh_quantization extension to avoid dequantizing
     // here.
@@ -807,30 +809,34 @@ void parsePositionsFromFeatureTableBinary(
     const glm::vec3 quantizedVolumeOffset =
         glm::vec3(parsedContent.quantizedVolumeOffset.value());
 
+    const glm::vec3 quantizedPositionScalar = quantizedVolumeScale / 65535.0f;
+
     for (size_t i = 0; i < pointsLength; i++) {
       const glm::vec3 quantizedPosition(
           quantizedPositions[i].x,
           quantizedPositions[i].y,
           quantizedPositions[i].z);
 
-      outPositions[i] = quantizedPosition * quantizedVolumeScale / 65535.0f +
-                        quantizedVolumeOffset;
+      const glm::vec3 dequantizedPosition =
+          quantizedPosition * quantizedPositionScalar + quantizedVolumeOffset;
+      outPositions[i] = dequantizedPosition;
+      parsedContent.positionMin =
+          glm::min(parsedContent.positionMin, dequantizedPosition);
+      parsedContent.positionMax =
+          glm::max(parsedContent.positionMax, dequantizedPosition);
     }
   } else {
     // The position accessor min / max is required by the glTF spec, so
     // a for loop is used instead of std::memcpy.
-    auto binaryByteOffset =
-        featureTableBinaryData.data() + parsedContent.position.byteOffset;
     const gsl::span<const glm::vec3> positions(
-        reinterpret_cast<const glm::vec3*>(binaryByteOffset),
+        reinterpret_cast<const glm::vec3*>(
+            featureTableBinaryData.data() + parsedContent.position.byteOffset),
         pointsLength);
     for (size_t i = 0; i < pointsLength; i++) {
-      outPositions[i] = positions[i];
-
-      parsedContent.positionMin =
-          glm::min(parsedContent.positionMin, positions[i]);
-      parsedContent.positionMax =
-          glm::max(parsedContent.positionMax, positions[i]);
+      const glm::vec3 position = positions[i];
+      outPositions[i] = position;
+      parsedContent.positionMin = glm::min(parsedContent.positionMin, position);
+      parsedContent.positionMax = glm::max(parsedContent.positionMax, position);
     }
   }
 }
@@ -845,7 +851,7 @@ void parseColorsFromFeatureTableBinary(
     return;
   }
 
-  uint32_t pointsLength = parsedContent.pointsLength;
+  const uint32_t pointsLength = parsedContent.pointsLength;
 
   if (parsedContent.colorType == PntsColorType::RGBA) {
     const size_t colorsByteStride = sizeof(glm::u8vec4);
@@ -887,16 +893,75 @@ void parseColorsFromFeatureTableBinary(
     const uint16_t mask6 = (1 << 6) - 1;
     const float normalize5 = 1.0f / 31.0f; // normalize [0, 31] to [0, 1]
     const float normalize6 = 1.0f / 63.0f; // normalize [0, 63] to [0, 1]
+    const uint16_t shift11 = 11;
+    const uint16_t shift5 = 5;
 
     for (size_t i = 0; i < pointsLength; i++) {
       const uint16_t compressedColor = compressedColors[i];
-      const uint16_t red = compressedColor >> 11;
-      const uint16_t green = (compressedColor >> 5) & mask6;
+      const uint16_t red = compressedColor >> shift11;
+      const uint16_t green = (compressedColor >> shift5) & mask6;
       const uint16_t blue = compressedColor & mask5;
 
       outColors[i] =
           glm::vec3(red * normalize5, green * normalize6, blue * normalize5);
     }
+  }
+}
+
+void parseNormalsFromFeatureTableBinary(
+    const gsl::span<const std::byte>& featureTableBinaryData,
+    PntsContent& parsedContent) {
+  PntsSemantic& normal = parsedContent.normal.value();
+  std::vector<std::byte>& normalData = normal.data;
+  if (normalData.size() > 0) {
+    // If data isn't empty, it must have been decoded from Draco.
+    return;
+  }
+
+  const uint32_t pointsLength = parsedContent.pointsLength;
+  const size_t normalsByteStride = sizeof(glm::vec3);
+  const size_t normalsByteLength = pointsLength * normalsByteStride;
+  normalData.resize(normalsByteLength);
+
+  if (parsedContent.normalOctEncoded) {
+    const gsl::span<const glm::u8vec2> encodedNormals(
+        reinterpret_cast<const glm::u8vec2*>(
+            featureTableBinaryData.data() + normal.byteOffset),
+        pointsLength);
+
+    gsl::span<glm::vec3> outNormals(
+        reinterpret_cast<glm::vec3*>(normalData.data()),
+        pointsLength);
+
+    constexpr uint8_t rangeMax = 255;
+
+    for (size_t i = 0; i < pointsLength; i++) {
+      const glm::u8vec2 encodedNormal = encodedNormals[i];
+
+      // TODO: This is copied from QuantizedMeshLoader. It should really
+      // be put in its own module, e.g. CesiumUtility::AttributeCompression
+      glm::dvec3 decodedNormal;
+      decodedNormal.x =
+          CesiumUtility::Math::fromSNorm(encodedNormal.x, rangeMax);
+      decodedNormal.y =
+          CesiumUtility::Math::fromSNorm(encodedNormal.y, rangeMax);
+      decodedNormal.z =
+          1.0 - (glm::abs(decodedNormal.x) + glm::abs(decodedNormal.y));
+
+      if (decodedNormal.z < 0.0) {
+        const double oldVX = decodedNormal.x;
+        decodedNormal.x = (1.0 - glm::abs(decodedNormal.y)) *
+                          CesiumUtility::Math::signNotZero(oldVX);
+        decodedNormal.y = (1.0 - glm::abs(oldVX)) *
+                          CesiumUtility::Math::signNotZero(decodedNormal.y);
+      }
+      outNormals[i] = glm::vec3(glm::normalize(decodedNormal));
+    }
+  } else {
+    std::memcpy(
+        normalData.data(),
+        featureTableBinaryData.data() + normal.byteOffset,
+        normalsByteLength);
   }
 }
 
@@ -907,6 +972,9 @@ void parseFeatureTableBinary(
   parsePositionsFromFeatureTableBinary(featureTableBinaryData, parsedContent);
   if (parsedContent.color) {
     parseColorsFromFeatureTableBinary(featureTableBinaryData, parsedContent);
+  }
+  if (parsedContent.normal) {
+    parseNormalsFromFeatureTableBinary(featureTableBinaryData, parsedContent);
   }
 }
 
@@ -955,25 +1023,20 @@ int32_t createAccessorInGltf(
 
 void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-  const int64_t positionsByteStride = static_cast<int64_t>(sizeof(glm ::vec3));
-  const int64_t positionsByteLength =
-      static_cast<int64_t>(positionsByteStride * count);
-  int32_t positionsBufferId =
-      createBufferInGltf(gltf, parsedContent.position.data);
-  int32_t positionsBufferViewId = createBufferViewInGltf(
+  const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
+  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
+  int32_t bufferId = createBufferInGltf(gltf, parsedContent.position.data);
+  int32_t bufferViewId =
+      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
+  int32_t accessorId = createAccessorInGltf(
       gltf,
-      positionsBufferId,
-      positionsByteLength,
-      positionsByteStride);
-  int32_t positionAccessorId = createAccessorInGltf(
-      gltf,
-      positionsBufferViewId,
+      bufferViewId,
       CesiumGltf::Accessor::ComponentType::FLOAT,
       count,
       CesiumGltf::Accessor::Type::VEC3);
 
   CesiumGltf::Accessor& accessor =
-      gltf.accessors[static_cast<uint32_t>(positionAccessorId)];
+      gltf.accessors[static_cast<uint32_t>(accessorId)];
   accessor.min = {
       parsedContent.positionMin.x,
       parsedContent.positionMin.y,
@@ -986,7 +1049,7 @@ void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
   };
 
   CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-  primitive.attributes.emplace("POSITION", positionAccessorId);
+  primitive.attributes.emplace("POSITION", accessorId);
 }
 
 void addColorsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
@@ -994,65 +1057,71 @@ void addColorsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
     PntsSemantic& color = parsedContent.color.value();
 
     const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-    int64_t colorsByteStride = 0;
+    int64_t byteStride = 0;
     int32_t componentType = 0;
     std::string type;
     bool isTranslucent = false;
     bool isNormalized = false;
 
     if (parsedContent.colorType == PntsColorType::RGBA) {
-      colorsByteStride = static_cast<int64_t>(sizeof(glm::u8vec4));
+      byteStride = static_cast<int64_t>(sizeof(glm::u8vec4));
       componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
       type = CesiumGltf::Accessor::Type::VEC4;
       isTranslucent = true;
       isNormalized = true;
     } else if (parsedContent.colorType == PntsColorType::RGB) {
-      colorsByteStride = static_cast<int64_t>(sizeof(glm::u8vec3));
+      byteStride = static_cast<int64_t>(sizeof(glm::u8vec3));
       componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
       isNormalized = true;
       type = CesiumGltf::Accessor::Type::VEC3;
     } else if (parsedContent.colorType == PntsColorType::RGB565) {
-      colorsByteStride = static_cast<int64_t>(sizeof(glm::vec3));
+      byteStride = static_cast<int64_t>(sizeof(glm::vec3));
       componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
       type = CesiumGltf::Accessor::Type::VEC3;
     }
 
-    const int64_t colorsByteLength =
-        static_cast<int64_t>(colorsByteStride * count);
-    int32_t colorsBufferId = createBufferInGltf(gltf, color.data);
-    int32_t colorsBufferViewId = createBufferViewInGltf(
-        gltf,
-        colorsBufferId,
-        colorsByteLength,
-        colorsByteStride);
-    int32_t colorsAccessorId = createAccessorInGltf(
-        gltf,
-        colorsBufferViewId,
-        componentType,
-        count,
-        type);
+    const int64_t byteLength = static_cast<int64_t>(byteStride * count);
+    int32_t bufferId = createBufferInGltf(gltf, color.data);
+    int32_t bufferViewId =
+        createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
+    int32_t accessorId =
+        createAccessorInGltf(gltf, bufferViewId, componentType, count, type);
 
     CesiumGltf::Accessor& accessor =
-        gltf.accessors[static_cast<uint32_t>(colorsAccessorId)];
+        gltf.accessors[static_cast<uint32_t>(accessorId)];
     accessor.normalized = isNormalized;
 
     CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    primitive.attributes.emplace("COLOR_0", colorsAccessorId);
+    primitive.attributes.emplace("COLOR_0", accessorId);
 
     if (isTranslucent) {
-      CesiumGltf::Material& material = gltf.materials[static_cast<uint32_t>(primitive.material)];
+      CesiumGltf::Material& material =
+          gltf.materials[static_cast<uint32_t>(primitive.material)];
       material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
     }
-  } else if (parsedContent.constantRgba) {
-    // Map RGBA from [0, 255] to [0, 1]
-    glm::vec4 materialColor(parsedContent.constantRgba.value());
-    materialColor /= 255.0f;
+  }
+}
+
+void addNormalsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
+  if (parsedContent.normal) {
+    PntsSemantic& normal = parsedContent.normal.value();
+
+    const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
+    const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
+    const int64_t byteLength = static_cast<int64_t>(byteStride * count);
+
+    int32_t bufferId = createBufferInGltf(gltf, normal.data);
+    int32_t bufferViewId =
+        createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
+    int32_t accessorId = createAccessorInGltf(
+        gltf,
+        bufferViewId,
+        CesiumGltf::Accessor::ComponentType::FLOAT,
+        count,
+        CesiumGltf::Accessor::Type::VEC3);
 
     CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    CesiumGltf::Material& material = gltf.materials[static_cast<uint32_t>(primitive.material)];
-    material.pbrMetallicRoughness.value().baseColorFactor =
-        {materialColor.x, materialColor.y, materialColor.z, materialColor.w};
-    material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
+    primitive.attributes.emplace("NORMAL", accessorId);
   }
 }
 
@@ -1087,7 +1156,26 @@ void createGltfFromParsedContent(
   primitive.material = static_cast<int32_t>(materialId);
 
   addPositionsToGltf(parsedContent, gltf);
-  addColorsToGltf(parsedContent, gltf);
+
+  if (parsedContent.color) {
+    addColorsToGltf(parsedContent, gltf);
+  } else if (parsedContent.constantRgba) {
+    // Map RGBA from [0, 255] to [0, 1]
+    glm::vec4 materialColor(parsedContent.constantRgba.value());
+    materialColor /= 255.0f;
+
+    material.pbrMetallicRoughness.value().baseColorFactor =
+        {materialColor.x, materialColor.y, materialColor.z, materialColor.w};
+    material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
+  }
+
+  if (parsedContent.normal) {
+    addNormalsToGltf(parsedContent, gltf);
+  } else {
+    // Points without normals should be rendered without lighting, which we
+    // can indicate with the KHR_materials_unlit extension.
+    material.addExtension<CesiumGltf::ExtensionKhrMaterialsUnlit>();
+  }
 
   if (parsedContent.rtcCenter) {
     // Add the RTC_CENTER value to the glTF as a CESIUM_RTC extension.
