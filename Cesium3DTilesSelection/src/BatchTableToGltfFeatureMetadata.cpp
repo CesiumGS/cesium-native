@@ -45,7 +45,7 @@ struct CompatibleTypes {
 };
 
 struct BinaryProperty {
-  int64_t b3dmByteOffset;
+  int64_t batchTableByteOffset;
   int64_t gltfByteOffset;
   int64_t byteLength;
 };
@@ -55,8 +55,8 @@ struct GltfFeatureTableType {
   size_t typeSize;
 };
 
-const std::map<std::string, GltfFeatureTableType> b3dmComponentTypeToGltfType =
-    {
+const std::map<std::string, GltfFeatureTableType>
+    batchTableComponentTypeToGltfType = {
         {"BYTE", GltfFeatureTableType{"INT8", sizeof(int8_t)}},
         {"UNSIGNED_BYTE", GltfFeatureTableType{"UINT8", sizeof(uint8_t)}},
         {"SHORT", GltfFeatureTableType{"INT16", sizeof(int16_t)}},
@@ -1258,8 +1258,8 @@ void updateExtensionWithBinaryProperty(
   const std::string& componentType = componentTypeIt->value.GetString();
   const std::string& type = typeIt->value.GetString();
 
-  auto convertedTypeIt = b3dmComponentTypeToGltfType.find(componentType);
-  if (convertedTypeIt == b3dmComponentTypeToGltfType.end()) {
+  auto convertedTypeIt = batchTableComponentTypeToGltfType.find(componentType);
+  if (convertedTypeIt == batchTableComponentTypeToGltfType.end()) {
     return;
   }
   const GltfFeatureTableType& gltfType = convertedTypeIt->second;
@@ -1297,7 +1297,7 @@ void updateExtensionWithBinaryProperty(
   featureTableProperty.bufferView =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
-  binaryProperty.b3dmByteOffset = byteOffset;
+  binaryProperty.batchTableByteOffset = byteOffset;
   binaryProperty.gltfByteOffset = gltfBufferOffset;
   binaryProperty.byteLength = static_cast<int64_t>(bufferView.byteLength);
 }
@@ -1379,37 +1379,12 @@ void updateExtensionWithBatchTableHierarchy(
   }
 }
 
-} // namespace
-
-ErrorList BatchTableToGltfFeatureMetadata::convert(
-    const rapidjson::Document& featureTableJson,
+void convertBatchTableToGltfFeatureMetadataExtension(
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData,
-    CesiumGltf::Model& gltf) {
-  // Check to make sure a char of rapidjson is 1 byte
-  static_assert(
-      sizeof(rapidjson::Value::Ch) == 1,
-      "RapidJson::Value::Ch is not 1 byte");
-
-  ErrorList result;
-
-  // Parse the b3dm batch table and convert it to the EXT_feature_metadata
-  // extension.
-
-  // If the feature table is missing the BATCH_LENGTH semantic, ignore the batch
-  // table completely.
-  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
-  if (batchLengthIt == featureTableJson.MemberEnd() ||
-      !batchLengthIt->value.IsInt64()) {
-    result.emplaceWarning(
-        "The B3DM has a batch table, but it is being ignored because there is "
-        "no BATCH_LENGTH semantic in the feature table or it is not an "
-        "integer.");
-    return result;
-  }
-
-  const int64_t batchLength = batchLengthIt->value.GetInt64();
-
+    CesiumGltf::Model& gltf,
+    const int64_t featureCount,
+    ErrorList& result) {
   // Add the binary part of the batch table - if any - to the glTF as a buffer.
   // We will reallign this buffer later on
   int32_t gltfBufferIndex = -1;
@@ -1430,7 +1405,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convert(
   FeatureTable& featureTable =
       modelExtension.featureTables.emplace("default", FeatureTable())
           .first->second;
-  featureTable.count = batchLength;
+  featureTable.count = featureCount;
   featureTable.classProperty = "default";
 
   // Convert each regular property in the batch table
@@ -1499,10 +1474,129 @@ ErrorList BatchTableToGltfFeatureMetadata::convert(
     for (const BinaryProperty& binaryProperty : binaryProperties) {
       std::memcpy(
           buffer.cesium.data.data() + binaryProperty.gltfByteOffset,
-          batchTableBinaryData.data() + binaryProperty.b3dmByteOffset,
+          batchTableBinaryData.data() + binaryProperty.batchTableByteOffset,
           static_cast<size_t>(binaryProperty.byteLength));
     }
   }
+}
+
+} // namespace
+
+ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
+    const rapidjson::Document& featureTableJson,
+    const rapidjson::Document& batchTableJson,
+    const gsl::span<const std::byte>& batchTableBinaryData,
+    CesiumGltf::Model& gltf) {
+  // Check to make sure a char of rapidjson is 1 byte
+  static_assert(
+      sizeof(rapidjson::Value::Ch) == 1,
+      "RapidJson::Value::Ch is not 1 byte");
+
+  ErrorList result;
+
+  // Parse the pnts batch table and convert it to the EXT_feature_metadata
+  // extension.
+
+  const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");
+  if (pointsLengthIt == featureTableJson.MemberEnd() ||
+      !pointsLengthIt->value.IsInt64()) {
+    result.emplaceError("The PNTS cannot be parsed because there is no valid "
+                        "POINTS_LENGTH semantic.");
+    return result;
+  }
+
+  int64_t featureCount = 0;
+  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
+  const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
+
+  // If the feature table is missing the BATCH_LENGTH semantic, the batch table
+  // corresponds to per-point properties.
+  if (batchLengthIt != featureTableJson.MemberEnd() &&
+      batchLengthIt->value.IsInt64()) {
+    featureCount = batchLengthIt->value.GetInt64();
+  } else if (
+      batchIdIt != featureTableJson.MemberEnd() &&
+      batchIdIt->value.IsObject()) {
+    result.emplaceWarning(
+        "The PNTS has a batch table, but it is being ignored because there "
+        "is no valid BATCH_LENGTH semantic in the feature table, and "
+        "the BATCH_ID semantic is defined.");
+    return result;
+  } else {
+    featureCount = pointsLengthIt->value.GetInt64();
+  }
+
+  convertBatchTableToGltfFeatureMetadataExtension(
+      batchTableJson,
+      batchTableBinaryData,
+      gltf,
+      featureCount,
+      result);
+
+  // Create the EXT_feature_metadata extension for the single mesh primitive.
+  assert(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+
+  assert(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  ExtensionMeshPrimitiveExtFeatureMetadata& extension =
+      primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  FeatureIDAttribute& attribute = extension.featureIdAttributes.emplace_back();
+  attribute.featureTable = "default";
+
+  auto primitiveBatchIdIt = primitive.attributes.find("_BATCHID");
+  if (primitiveBatchIdIt != primitive.attributes.end()) {
+    // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
+    primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
+    primitive.attributes.erase("_BATCHID");
+
+    attribute.featureIds.attribute = "_FEATURE_ID_0";
+  } else {
+    // Otherwise, use implicit feature IDs to indicate the metadata is stored in
+    // per-point properties.
+    attribute.featureIds.constant = 0;
+    attribute.featureIds.divisor = 1;
+  }
+
+  return result;
+}
+
+ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
+    const rapidjson::Document& featureTableJson,
+    const rapidjson::Document& batchTableJson,
+    const gsl::span<const std::byte>& batchTableBinaryData,
+    CesiumGltf::Model& gltf) {
+  // Check to make sure a char of rapidjson is 1 byte
+  static_assert(
+      sizeof(rapidjson::Value::Ch) == 1,
+      "RapidJson::Value::Ch is not 1 byte");
+
+  ErrorList result;
+
+  // Parse the b3dm batch table and convert it to the EXT_feature_metadata
+  // extension.
+
+  // If the feature table is missing the BATCH_LENGTH semantic, ignore the batch
+  // table completely.
+  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
+  if (batchLengthIt == featureTableJson.MemberEnd() ||
+      !batchLengthIt->value.IsInt64()) {
+    result.emplaceWarning(
+        "The B3DM has a batch table, but it is being ignored because there is "
+        "no BATCH_LENGTH semantic in the feature table or it is not an "
+        "integer.");
+    return result;
+  }
+
+  const int64_t batchLength = batchLengthIt->value.GetInt64();
+
+  convertBatchTableToGltfFeatureMetadataExtension(
+      batchTableJson,
+      batchTableBinaryData,
+      gltf,
+      batchLength,
+      result);
 
   // Create an EXT_feature_metadata extension for each primitive with a _BATCHID
   // attribute.

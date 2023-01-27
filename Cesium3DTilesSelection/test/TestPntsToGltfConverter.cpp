@@ -1,6 +1,5 @@
 #include "BatchTableToGltfFeatureMetadata.h"
-#include "PntsToGltfConverter.h"
-#include "readFile.h"
+#include "ConvertTileToGltf.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
@@ -127,16 +126,12 @@ static void checkAttribute(
   CHECK(static_cast<int64_t>(buffer.cesium.data.size()) == buffer.byteLength);
 }
 
-GltfConverterResult loadPnts(const std::filesystem::path& filePath) {
-  return PntsToGltfConverter::convert(readFile(filePath), {});
-}
-
 TEST_CASE("Converts simple point cloud to glTF") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudPositionsOnly.pnts";
   const int32_t pointsLength = 8;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -144,23 +139,13 @@ TEST_CASE("Converts simple point cloud to glTF") {
   // Check for single mesh node
   REQUIRE(gltf.nodes.size() == 1);
   Node& node = gltf.nodes[0];
+  // clang-format off
   std::vector<double> expectedMatrix = {
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      -1.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0};
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, -1.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 1.0};
+  // clang-format on
   CHECK(node.matrix == expectedMatrix);
   CHECK(node.mesh == 0);
 
@@ -246,7 +231,7 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -305,7 +290,7 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -364,7 +349,7 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -421,7 +406,7 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
 TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudConstantRGBA.pnts";
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
   const int32_t pointsLength = 8;
 
   REQUIRE(result.model);
@@ -467,7 +452,7 @@ TEST_CASE("Converts point cloud with quantized positions to glTF") {
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -537,7 +522,7 @@ TEST_CASE("Converts point cloud with normals to glTF") {
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 3;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -597,7 +582,7 @@ TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 3;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
@@ -651,31 +636,6 @@ TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
   checkBufferContents<glm::vec3>(normalBuffer.cesium.data, expectedNormals);
 }
 
-std::set<int32_t> getUniqueBufferViewIds(
-    const std::vector<Accessor>& accessors,
-    std::optional<FeatureTable> featureTable) {
-  std::set<int32_t> result;
-  for (auto it = accessors.begin(); it != accessors.end(); it++) {
-    result.insert(it->bufferView);
-  }
-
-  if (featureTable) {
-    auto& properties = featureTable.value().properties;
-    for (auto it = properties.begin(); it != properties.end(); it++) {
-      auto& property = it->second;
-      result.insert(property.bufferView);
-      if (property.arrayOffsetBufferView >= 0) {
-        result.insert(property.arrayOffsetBufferView);
-      }
-      if (property.stringOffsetBufferView >= 0) {
-        result.insert(property.stringOffsetBufferView);
-      }
-    }
-  }
-
-  return result;
-}
-
 std::set<int32_t>
 getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
   std::set<int32_t> result;
@@ -686,76 +646,20 @@ getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
   return result;
 }
 
-static void checkModelFeatureMetadataExtension(Model& gltf) {
-  REQUIRE(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
-  const auto pExtension = gltf.getExtension<ExtensionModelExtFeatureMetadata>();
-
-  // Check the schema
-  REQUIRE(pExtension->schema);
-  REQUIRE(pExtension->schema->classes.size() == 1);
-
-  auto firstClassIt = pExtension->schema->classes.begin();
-  CHECK(firstClassIt->first == "default");
-
-  CesiumGltf::Class& defaultClass = firstClassIt->second;
-  REQUIRE(defaultClass.properties.size() == 3);
-
-  auto nameItClass = defaultClass.properties.find("name");
-  REQUIRE(nameItClass != defaultClass.properties.end());
-  auto dimensionsItClass = defaultClass.properties.find("dimensions");
-  REQUIRE(dimensionsItClass != defaultClass.properties.end());
-  auto idItClass = defaultClass.properties.find("id");
-  REQUIRE(idItClass != defaultClass.properties.end());
-
-  CHECK(nameItClass->second.type == "STRING");
-  CHECK(dimensionsItClass->second.type == "ARRAY");
-  REQUIRE(dimensionsItClass->second.componentType);
-  CHECK(dimensionsItClass->second.componentType.value() == "FLOAT32");
-  CHECK(idItClass->second.type == "UINT32");
-
-  // Check the feature table
-  auto firstFeatureTableIt = pExtension->featureTables.begin();
-  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
-
-  FeatureTable& featureTable = firstFeatureTableIt->second;
-  CHECK(featureTable.classProperty == "default");
-  REQUIRE(featureTable.properties.size() == 3);
-
-  auto nameItTable = featureTable.properties.find("name");
-  REQUIRE(nameItTable != featureTable.properties.end());
-  auto dimensionsItTable = featureTable.properties.find("dimensions");
-  REQUIRE(dimensionsItTable != featureTable.properties.end());
-  auto idItTable = featureTable.properties.find("id");
-  REQUIRE(idItTable != featureTable.properties.end());
-
-  CHECK(nameItTable->second.bufferView >= 0);
-  CHECK(
-      nameItTable->second.bufferView <
-      static_cast<int32_t>(gltf.bufferViews.size()));
-  CHECK(dimensionsItTable->second.bufferView >= 0);
-  CHECK(
-      dimensionsItTable->second.bufferView <
-      static_cast<int32_t>(gltf.bufferViews.size()));
-  CHECK(idItTable->second.bufferView >= 0);
-  CHECK(
-      idItTable->second.bufferView <
-      static_cast<int32_t>(gltf.bufferViews.size()));
-
-  std::set<int32_t> bufferViewSet =
-      getUniqueBufferViewIds(gltf.accessors, featureTable);
-  CHECK(bufferViewSet.size() == gltf.bufferViews.size());
-}
-
 TEST_CASE(
     "Converts point cloud with batch IDs to glTF with EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
   const int32_t pointsLength = 8;
 
-  GltfConverterResult result = loadPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
 
   REQUIRE(result.model);
   Model& gltf = *result.model;
+
+  // The correctness of the model extension is thoroughly tested in
+  // TestUpgradeBatchTableTo
+  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -774,25 +678,23 @@ TEST_CASE(
   CHECK(gltf.materials.size() == 1);
 
   // The file has three metadata properties:
-  // - "name": string array in JSON
-  // - "dimensions": vec3 array in binary
-  // - "id": int array in binary
-  checkModelFeatureMetadataExtension(gltf);
+  // - "name": string scalars in JSON
+  // - "dimensions": float vec3s in binary
+  // - "id": int scalars in binary
 
-  // There are only three accessors (one per primitive attribute)...
+  // There are only three accessors (one per primitive attribute),
+  // but there are four additional buffer views:
+  // - "name" string data buffer view
+  // - "name" string offsets buffer view
+  // - "dimensions" buffer view
+  // - "id" buffer view
   REQUIRE(gltf.accessors.size() == 3);
-
-  // ...but there are four additional buffer views:
-  // - string data buffer view
-  // - string offsets buffer view
-  // - first binary property buffer view
-  // - second binary property buffer view
   REQUIRE(gltf.bufferViews.size() == 7);
 
   // There are also three added buffers:
   // - binary data in the batch table
-  // - string data of the property in the json value
-  // - string offsets for the same property
+  // - string data of "name"
+  // - string offsets for the data for "name"
   REQUIRE(gltf.buffers.size() == 6);
   std::set<int32_t> bufferSet = getUniqueBufferIds(gltf.bufferViews);
   CHECK(bufferSet.size() == 6);
@@ -819,6 +721,63 @@ TEST_CASE(
   Buffer& featureIdBuffer = gltf.buffers[featureIdBufferId];
 
   const std::vector<uint8_t> expectedFeatureIDs = {5, 5, 6, 6, 7, 0, 3, 1};
-
   checkBufferContents<uint8_t>(featureIdBuffer.cesium.data, expectedFeatureIDs);
+}
+
+TEST_CASE("Converts point cloud with per-point properties to glTF with "
+          "EXT_feature_metadata") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath =
+      testFilePath / "PointCloud" / "pointCloudWithPerPointProperties.pnts";
+  const int32_t pointsLength = 8;
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(gltf.nodes.size() == 1);
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(primitive.hasExtension<ExtensionMeshPrimitiveExtFeatureMetadata>());
+  const auto primitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
+  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  CHECK(attribute.featureIds.constant == 0);
+  CHECK(attribute.featureIds.divisor == 1);
+  CHECK(!attribute.featureIds.attribute);
+
+  CHECK(gltf.materials.size() == 1);
+
+  // The file has three binary metadata properties:
+  // - "temperature": float scalars
+  // - "secondaryColor": float vec3s
+  // - "id": unsigned short scalars
+  // checkFeatureMetadataExtensionForBatchedPointCloud(gltf);
+
+  // There are only two accessors (one per primitive attribute).
+  REQUIRE(gltf.accessors.size() == 2);
+
+  // There are three additional buffer views:
+  // - temperature buffer view
+  // - secondary color buffer view
+  // - id buffer view
+  REQUIRE(gltf.bufferViews.size() == 5);
+
+  // There is only one added buffer containing all the binary values.
+  REQUIRE(gltf.buffers.size() == 3);
+  std::set<int32_t> bufferSet = getUniqueBufferIds(gltf.bufferViews);
+  CHECK(bufferSet.size() == 3);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == 2);
+
+  // Check that position and color  attributes are present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
 }

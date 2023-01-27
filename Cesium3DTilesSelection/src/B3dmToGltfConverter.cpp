@@ -220,7 +220,7 @@ void convertB3dmMetadataToGltfFeatureMetadata(
       }
 
       // upgrade batch table to glTF feature metadata and append the result
-      result.errors.merge(BatchTableToGltfFeatureMetadata::convert(
+      result.errors.merge(BatchTableToGltfFeatureMetadata::convertFromB3dm(
           featureTableJson,
           batchTableJson,
           batchTableBinaryData,

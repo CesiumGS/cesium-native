@@ -10,7 +10,13 @@
 
 namespace Cesium3DTilesSelection {
 struct BatchTableToGltfFeatureMetadata {
-  static ErrorList convert(
+  static ErrorList convertFromB3dm(
+      const rapidjson::Document& featureTableJson,
+      const rapidjson::Document& batchTableJson,
+      const gsl::span<const std::byte>& batchTableBinaryData,
+      CesiumGltf::Model& gltf);
+
+  static ErrorList convertFromPnts(
       const rapidjson::Document& featureTableJson,
       const rapidjson::Document& batchTableJson,
       const gsl::span<const std::byte>& batchTableBinaryData,

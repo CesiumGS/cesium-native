@@ -1,6 +1,5 @@
-#include "B3dmToGltfConverter.h"
 #include "BatchTableToGltfFeatureMetadata.h"
-#include "readFile.h"
+#include "ConvertTileToGltf.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
@@ -137,7 +136,7 @@ static void createTestForScalarJson(
       scalarProperty,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -213,7 +212,7 @@ static void createTestForArrayJson(
       fixedArrayProperties,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -246,15 +245,34 @@ static void createTestForArrayJson(
       totalInstances);
 }
 
-GltfConverterResult loadB3dm(const std::filesystem::path& filePath) {
-  return B3dmToGltfConverter::convert(readFile(filePath), {});
+std::set<int32_t> getUniqueBufferViewIds(
+    const std::vector<Accessor>& accessors,
+    FeatureTable& featureTable) {
+  std::set<int32_t> result;
+  for (auto it = accessors.begin(); it != accessors.end(); it++) {
+    result.insert(it->bufferView);
+  }
+
+  auto& properties = featureTable.properties;
+  for (auto it = properties.begin(); it != properties.end(); it++) {
+    auto& property = it->second;
+    result.insert(property.bufferView);
+    if (property.arrayOffsetBufferView >= 0) {
+      result.insert(property.arrayOffsetBufferView);
+    }
+    if (property.stringOffsetBufferView >= 0) {
+      result.insert(property.stringOffsetBufferView);
+    }
+  }
+
+  return result;
 }
 
-TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
+TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
 
-  GltfConverterResult result = loadB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
 
   REQUIRE(result.model);
 
@@ -434,12 +452,12 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   }
 }
 
-TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
+TEST_CASE("Convert binary B3DM batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
 
-  GltfConverterResult result = loadB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
 
   REQUIRE(!result.errors);
   REQUIRE(result.model != std::nullopt);
@@ -578,12 +596,183 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   }
 }
 
+TEST_CASE("Converts batched PNTS batch table to EXT_feature_metadata") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  auto nameItClass = defaultClass.properties.find("name");
+  REQUIRE(nameItClass != defaultClass.properties.end());
+  auto dimensionsItClass = defaultClass.properties.find("dimensions");
+  REQUIRE(dimensionsItClass != defaultClass.properties.end());
+  auto idItClass = defaultClass.properties.find("id");
+  REQUIRE(idItClass != defaultClass.properties.end());
+
+  CHECK(nameItClass->second.type == "STRING");
+  CHECK(dimensionsItClass->second.type == "ARRAY");
+  REQUIRE(dimensionsItClass->second.componentType);
+  CHECK(dimensionsItClass->second.componentType.value() == "FLOAT32");
+  CHECK(idItClass->second.type == "UINT32");
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+
+  auto nameItTable = featureTable.properties.find("name");
+  REQUIRE(nameItTable != featureTable.properties.end());
+  auto dimensionsItTable = featureTable.properties.find("dimensions");
+  REQUIRE(dimensionsItTable != featureTable.properties.end());
+  auto idItTable = featureTable.properties.find("id");
+  REQUIRE(idItTable != featureTable.properties.end());
+
+  CHECK(nameItTable->second.bufferView >= 0);
+  CHECK(
+      nameItTable->second.bufferView <
+      static_cast<int32_t>(gltf.bufferViews.size()));
+  CHECK(dimensionsItTable->second.bufferView >= 0);
+  CHECK(
+      dimensionsItTable->second.bufferView <
+      static_cast<int32_t>(gltf.bufferViews.size()));
+  CHECK(idItTable->second.bufferView >= 0);
+  CHECK(
+      idItTable->second.bufferView <
+      static_cast<int32_t>(gltf.bufferViews.size()));
+
+  std::set<int32_t> bufferViewSet =
+      getUniqueBufferViewIds(gltf.accessors, featureTable);
+  CHECK(bufferViewSet.size() == gltf.bufferViews.size());
+
+  // Check the mesh primitives
+  CHECK(!gltf.meshes.empty());
+
+  for (Mesh& mesh : gltf.meshes) {
+    CHECK(!mesh.primitives.empty());
+    for (MeshPrimitive& primitive : mesh.primitives) {
+      CHECK(
+          primitive.attributes.find("_FEATURE_ID_0") !=
+          primitive.attributes.end());
+
+      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+      REQUIRE(pPrimitiveExtension);
+      REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+
+      FeatureIDAttribute& attribute =
+          pPrimitiveExtension->featureIdAttributes[0];
+      CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
+      CHECK(attribute.featureTable == "default");
+    }
+  }
+  // TODO
+  /*
+  // Check metadata values
+  {
+    std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    checkScalarProperty<int8_t>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "id",
+        "INT8",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<double> expected = {
+        11.762595914304256,
+        13.992324123159051,
+        7.490081690251827,
+        13.484312580898404,
+        11.481756005436182,
+        7.836617760360241,
+        9.338438434526324,
+        13.513022359460592,
+        13.74609257467091,
+        10.145220385864377};
+    checkScalarProperty<double>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "Height",
+        "FLOAT64",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<double> expected = {
+        -1.3196595204101946,
+        -1.3196739888070643,
+        -1.3196641114334025,
+        -1.3196579305297966,
+        -1.3196585149509301,
+        -1.319678877969692,
+        -1.3196612732428445,
+        -1.3196718857616954,
+        -1.3196471198757775,
+        -1.319644104024109};
+    checkScalarProperty<double>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "Longitude",
+        "FLOAT64",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<double> expected = {
+        0.6988582109,
+        0.6988498770649103,
+        0.6988533339856887,
+        0.6988691467754378,
+        0.698848878034009,
+        0.6988592976292447,
+        0.6988600642191055,
+        0.6988670019309562,
+        0.6988523191715889,
+        0.6988697375823105};
+    checkScalarProperty<double>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "Latitude",
+        "FLOAT64",
+        expected,
+        expected.size());
+  }*/
+}
+
 TEST_CASE("Upgrade json nested json metadata to string") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
 
-  GltfConverterResult result = loadB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
 
   REQUIRE(!result.errors);
   REQUIRE(result.model != std::nullopt);
@@ -671,7 +860,7 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       boolProperties,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -1213,7 +1402,7 @@ TEST_CASE("Converts Feature Classes 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1343,7 +1532,7 @@ TEST_CASE("Converts Feature Hierarchy 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  BatchTableToGltfFeatureMetadata::convert(
+  BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1537,7 +1726,7 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  BatchTableToGltfFeatureMetadata::convert(
+  BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1629,7 +1818,7 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),

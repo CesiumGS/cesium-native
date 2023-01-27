@@ -19,6 +19,7 @@
 
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 
@@ -95,7 +96,6 @@ struct PntsContent {
   std::optional<glm::dvec3> quantizedVolumeOffset;
   std::optional<glm::dvec3> quantizedVolumeScale;
   std::optional<glm::u8vec4> constantRgba;
-  std::optional<uint32_t> batchLength;
 
   PntsSemantic position;
   // required by glTF spec
@@ -330,7 +330,7 @@ void parseNormalsFromFeatureTableJson(
   }
 }
 
-void parseBatchIdsAndLengthFromFeatureTableJson(
+void parseBatchIdsFromFeatureTableJson(
     const rapidjson::Document& featureTableJson,
     PntsContent& parsedContent) {
   const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
@@ -370,17 +370,6 @@ void parseBatchIdsAndLengthFromFeatureTableJson(
           Accessor::ComponentType::UNSIGNED_SHORT;
     }
   }
-
-  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
-  if (batchLengthIt != featureTableJson.MemberEnd() &&
-      batchLengthIt->value.IsUint()) {
-    parsedContent.batchLength =
-        std::make_optional<int32_t>(batchLengthIt->value.GetUint());
-  } else if (parsedContent.batchId) {
-    parsedContent.errors.emplaceError(
-        "Error parsing PNTS feature table, BATCH_ID semantic is present but "
-        "no valid BATCH_LENGTH was found.");
-  }
 }
 
 void parseSemanticsFromFeatureTableJson(
@@ -401,7 +390,7 @@ void parseSemanticsFromFeatureTableJson(
     return;
   }
 
-  parseBatchIdsAndLengthFromFeatureTableJson(featureTableJson, parsedContent);
+  parseBatchIdsFromFeatureTableJson(featureTableJson, parsedContent);
   if (parsedContent.errors) {
     return;
   }
@@ -999,8 +988,9 @@ void parseBatchIdsFromFeatureTableBinary(
   const uint32_t pointsLength = parsedContent.pointsLength;
   size_t batchIdsByteStride = sizeof(uint16_t);
   if (parsedContent.batchIdComponentType) {
-    batchIdsByteStride = Accessor::computeByteSizeOfComponent(
-                              parsedContent.batchIdComponentType.value());
+    int8_t componentByteSize = Accessor::computeByteSizeOfComponent(
+        parsedContent.batchIdComponentType.value());
+    batchIdsByteStride = static_cast<size_t>(componentByteSize);
   }
   const size_t batchIdsByteLength = pointsLength * batchIdsByteStride;
   batchIdData.resize(batchIdsByteLength);
@@ -1320,7 +1310,7 @@ void convertPntsContentToGltf(
             header.batchTableBinaryByteLength);
       }
 
-      result.errors.merge(BatchTableToGltfFeatureMetadata::convert(
+      result.errors.merge(BatchTableToGltfFeatureMetadata::convertFromPnts(
           featureTableJson,
           batchTableJson,
           batchTableBinaryData,
