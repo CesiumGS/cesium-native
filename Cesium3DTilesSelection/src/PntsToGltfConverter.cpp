@@ -19,6 +19,7 @@
 
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
+#include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 
 #include <rapidjson/document.h>
@@ -26,6 +27,9 @@
 
 #include <functional>
 #include <limits>
+
+using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -71,13 +75,14 @@ void parsePntsHeader(
   }
 }
 
-// The only semantic that can have a variable component type is the
-// BATCH_ID semantic. For parsing purposes, all other semantics are
-// assigned component type NONE.
-enum ComponentType { NONE, BYTE, UNSIGNED_BYTE, UNSIGNED_SHORT, UNSIGNED_INT };
-
 struct PntsSemantic {
   uint32_t byteOffset = 0;
+  std::optional<int32_t> dracoId;
+  std::vector<std::byte> data;
+};
+
+struct DracoBatchTableValue {
+
   std::optional<int32_t> dracoId;
   std::vector<std::byte> data;
 };
@@ -106,10 +111,12 @@ struct PntsContent {
   bool normalOctEncoded = false;
 
   std::optional<PntsSemantic> batchId;
-  ComponentType batchIdComponentType = ComponentType::NONE;
+  std::optional<int32_t> batchIdComponentType;
 
   std::optional<uint32_t> dracoByteOffset;
   std::optional<uint32_t> dracoByteLength;
+
+  std::unordered_map<std::string, PntsSemantic> dracoBatchTableValues;
 
   Cesium3DTilesSelection::ErrorList errors;
 };
@@ -349,14 +356,18 @@ void parseBatchIdsAndLengthFromFeatureTableJson(
           componentTypeIt->value.GetString();
 
       if (componentTypeString == "UNSIGNED_BYTE") {
-        parsedContent.batchIdComponentType = ComponentType::UNSIGNED_BYTE;
+        parsedContent.batchIdComponentType =
+            Accessor::ComponentType::UNSIGNED_BYTE;
       } else if (componentTypeString == "UNSIGNED_INT") {
-        parsedContent.batchIdComponentType = ComponentType::UNSIGNED_INT;
+        parsedContent.batchIdComponentType =
+            Accessor::ComponentType::UNSIGNED_INT;
       } else {
-        parsedContent.batchIdComponentType = ComponentType::UNSIGNED_SHORT;
+        parsedContent.batchIdComponentType =
+            Accessor::ComponentType::UNSIGNED_SHORT;
       }
     } else {
-      parsedContent.batchIdComponentType = ComponentType::UNSIGNED_SHORT;
+      parsedContent.batchIdComponentType =
+          Accessor::ComponentType::UNSIGNED_SHORT;
     }
   }
 
@@ -563,7 +574,35 @@ rapidjson::Document parseBatchTableJson(
         "{}. Skip parsing metadata",
         document.GetParseError(),
         document.GetErrorOffset()));
+    return document;
   }
+
+  const auto extensionsIt = document.FindMember("extensions");
+  if (extensionsIt != document.MemberEnd() && extensionsIt->value.IsObject()) {
+    const auto dracoExtensionIt =
+        extensionsIt->value.FindMember("3DTILES_draco_point_compression");
+    if (dracoExtensionIt != extensionsIt->value.MemberEnd() &&
+        dracoExtensionIt->value.IsObject()) {
+      const rapidjson::Value& dracoExtensionValue = dracoExtensionIt->value;
+      auto& dracoBatchTableValues = parsedContent.dracoBatchTableValues;
+      for (auto propertyIt = dracoExtensionValue.MemberBegin();
+           propertyIt != dracoExtensionValue.MemberEnd();
+           ++propertyIt) {
+        std::string name = propertyIt->name.GetString();
+        if (propertyIt->value.IsInt()) {
+          PntsSemantic metadataSemantic;
+          metadataSemantic.dracoId = propertyIt->value.GetInt();
+          dracoBatchTableValues.insert(std::make_pair(name, metadataSemantic));
+        } else {
+          parsedContent.errors.emplaceWarning(
+              "Error parsing metadata property " + name +
+              " due to invalid Draco ID. The values for this property will not "
+              "be parsed properly.");
+        }
+      }
+    }
+  }
+
   return document;
 }
 
@@ -605,7 +644,8 @@ void decodeDraco(
         pPointCloud->attribute(parsedContent.position.dracoId.value());
     if (!validateDracoAttribute(pPositionAttribute, draco::DT_FLOAT32, 3)) {
       parsedContent.errors.emplaceError(
-          "Error with decoded Draco point cloud, no valid position attribute.");
+          "Error with decoded Draco point cloud, no valid position "
+          "attribute.");
       return;
     }
 
@@ -620,10 +660,13 @@ void decodeDraco(
     int64_t decodedByteOffset = pPositionAttribute->byte_offset();
     int64_t decodedByteStride = pPositionAttribute->byte_stride();
 
-    // TODO: min max
     for (uint32_t i = 0; i < pointsLength; ++i) {
-      outPositions[i] = *reinterpret_cast<const glm::vec3*>(
+      const glm::vec3 position = *reinterpret_cast<const glm::vec3*>(
           decodedBuffer->data() + decodedByteOffset + decodedByteStride * i);
+      outPositions[i] = position;
+
+      parsedContent.positionMin = glm::min(position, parsedContent.positionMin);
+      parsedContent.positionMax = glm::max(position, parsedContent.positionMax);
     }
   }
 
@@ -669,7 +712,8 @@ void decodeDraco(
         }
       } else {
         parsedContent.errors.emplaceWarning(
-            "Warning: decoded Draco point cloud did not contain a valid color "
+            "Warning: decoded Draco point cloud did not contain a valid "
+            "color "
             "attribute. Skip parsing colors.");
         parsedContent.color = std::nullopt;
         parsedContent.colorType = PntsColorType::CONSTANT;
@@ -711,8 +755,13 @@ void decodeDraco(
       draco::PointAttribute* pBatchIdAttribute =
           pPointCloud->attribute(batchId.dracoId.value());
       std::vector<std::byte>& batchIdData = batchId.data;
-      ComponentType componentType = parsedContent.batchIdComponentType;
-      if (componentType == ComponentType::UNSIGNED_BYTE &&
+
+      int32_t componentType = 0;
+      if (parsedContent.batchIdComponentType) {
+        componentType = parsedContent.batchIdComponentType.value();
+      }
+
+      if (componentType == Accessor::ComponentType::UNSIGNED_BYTE &&
           validateDracoAttribute(pBatchIdAttribute, draco::DT_UINT8, 1)) {
         batchIdData.resize(pointsLength * sizeof(uint8_t));
         gsl::span<uint8_t> outBatchIds(
@@ -729,7 +778,7 @@ void decodeDraco(
               decodedByteStride * i);
         }
       } else if (
-          componentType == ComponentType::UNSIGNED_INT &&
+          componentType == Accessor::ComponentType::UNSIGNED_INT &&
           validateDracoAttribute(pBatchIdAttribute, draco::DT_UINT32, 1)) {
         batchIdData.resize(pointsLength * sizeof(uint32_t));
         gsl::span<uint32_t> outBatchIds(
@@ -746,8 +795,8 @@ void decodeDraco(
               decodedByteStride * i);
         }
       } else if (
-          (componentType == ComponentType::UNSIGNED_SHORT ||
-           componentType == ComponentType::NONE) &&
+          (componentType == 0 ||
+           componentType == Accessor::ComponentType::UNSIGNED_SHORT) &&
           validateDracoAttribute(pBatchIdAttribute, draco::DT_UINT16, 1)) {
         batchIdData.resize(pointsLength * sizeof(uint16_t));
         gsl::span<uint16_t> outBatchIds(
@@ -765,7 +814,8 @@ void decodeDraco(
         }
       } else {
         parsedContent.errors.emplaceWarning(
-            "Warning: decoded Draco point cloud did not contain a valid batch "
+            "Warning: decoded Draco point cloud did not contain a valid "
+            "batch "
             "id "
             "attribute. Skip parsing batch IDs.");
         parsedContent.batchId = std::nullopt;
@@ -795,10 +845,10 @@ void parsePositionsFromFeatureTableBinary(
       pointsLength);
 
   if (parsedContent.positionQuantized) {
-    // PERFORMANCE_IDEA: In the future, it might be more performant to detect if
-    // the recipient rendering engine can handle dequantization on its own and
-    // if so, use the KHR_mesh_quantization extension to avoid dequantizing
-    // here.
+    // PERFORMANCE_IDEA: In the future, it might be more performant to detect
+    // if the recipient rendering engine can handle dequantization on its own
+    // and if so, use the KHR_mesh_quantization extension to avoid
+    // dequantizing here.
     const gsl::span<const glm::u16vec3> quantizedPositions(
         reinterpret_cast<const glm::u16vec3*>(
             featureTableBinaryData.data() + parsedContent.position.byteOffset),
@@ -889,21 +939,10 @@ void parseColorsFromFeatureTableBinary(
             featureTableBinaryData.data() + color.byteOffset),
         pointsLength);
 
-    const uint16_t mask5 = (1 << 5) - 1;
-    const uint16_t mask6 = (1 << 6) - 1;
-    const float normalize5 = 1.0f / 31.0f; // normalize [0, 31] to [0, 1]
-    const float normalize6 = 1.0f / 63.0f; // normalize [0, 63] to [0, 1]
-    const uint16_t shift11 = 11;
-    const uint16_t shift5 = 5;
-
     for (size_t i = 0; i < pointsLength; i++) {
       const uint16_t compressedColor = compressedColors[i];
-      const uint16_t red = compressedColor >> shift11;
-      const uint16_t green = (compressedColor >> shift5) & mask6;
-      const uint16_t blue = compressedColor & mask5;
-
       outColors[i] =
-          glm::vec3(red * normalize5, green * normalize6, blue * normalize5);
+          glm::vec3(AttributeCompression::decodeRGB565(compressedColor));
     }
   }
 }
@@ -933,29 +972,11 @@ void parseNormalsFromFeatureTableBinary(
         reinterpret_cast<glm::vec3*>(normalData.data()),
         pointsLength);
 
-    constexpr uint8_t rangeMax = 255;
-
     for (size_t i = 0; i < pointsLength; i++) {
       const glm::u8vec2 encodedNormal = encodedNormals[i];
-
-      // TODO: This is copied from QuantizedMeshLoader. It should really
-      // be put in its own module, e.g. CesiumUtility::AttributeCompression
-      glm::dvec3 decodedNormal;
-      decodedNormal.x =
-          CesiumUtility::Math::fromSNorm(encodedNormal.x, rangeMax);
-      decodedNormal.y =
-          CesiumUtility::Math::fromSNorm(encodedNormal.y, rangeMax);
-      decodedNormal.z =
-          1.0 - (glm::abs(decodedNormal.x) + glm::abs(decodedNormal.y));
-
-      if (decodedNormal.z < 0.0) {
-        const double oldVX = decodedNormal.x;
-        decodedNormal.x = (1.0 - glm::abs(decodedNormal.y)) *
-                          CesiumUtility::Math::signNotZero(oldVX);
-        decodedNormal.y = (1.0 - glm::abs(oldVX)) *
-                          CesiumUtility::Math::signNotZero(decodedNormal.y);
-      }
-      outNormals[i] = glm::vec3(glm::normalize(decodedNormal));
+      outNormals[i] = glm::vec3(CesiumUtility::AttributeCompression::octDecode(
+          encodedNormal.x,
+          encodedNormal.y));
     }
   } else {
     std::memcpy(
@@ -963,6 +984,31 @@ void parseNormalsFromFeatureTableBinary(
         featureTableBinaryData.data() + normal.byteOffset,
         normalsByteLength);
   }
+}
+
+void parseBatchIdsFromFeatureTableBinary(
+    const gsl::span<const std::byte>& featureTableBinaryData,
+    PntsContent& parsedContent) {
+  PntsSemantic& batchId = parsedContent.batchId.value();
+  std::vector<std::byte>& batchIdData = batchId.data;
+  if (batchIdData.size() > 0) {
+    // If data isn't empty, it must have been decoded from Draco.
+    return;
+  }
+
+  const uint32_t pointsLength = parsedContent.pointsLength;
+  size_t batchIdsByteStride = sizeof(uint16_t);
+  if (parsedContent.batchIdComponentType) {
+    batchIdsByteStride = Accessor::computeByteSizeOfComponent(
+                              parsedContent.batchIdComponentType.value());
+  }
+  const size_t batchIdsByteLength = pointsLength * batchIdsByteStride;
+  batchIdData.resize(batchIdsByteLength);
+
+  std::memcpy(
+      batchIdData.data(),
+      featureTableBinaryData.data() + batchId.byteOffset,
+      batchIdsByteLength);
 }
 
 void parseFeatureTableBinary(
@@ -976,12 +1022,14 @@ void parseFeatureTableBinary(
   if (parsedContent.normal) {
     parseNormalsFromFeatureTableBinary(featureTableBinaryData, parsedContent);
   }
+  if (parsedContent.batchId) {
+    parseBatchIdsFromFeatureTableBinary(featureTableBinaryData, parsedContent);
+  }
 }
 
-int32_t
-createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte>& buffer) {
+int32_t createBufferInGltf(Model& gltf, std::vector<std::byte>& buffer) {
   size_t bufferId = gltf.buffers.size();
-  CesiumGltf::Buffer& gltfBuffer = gltf.buffers.emplace_back();
+  Buffer& gltfBuffer = gltf.buffers.emplace_back();
   gltfBuffer.byteLength = static_cast<int32_t>(buffer.size());
   gltfBuffer.cesium.data = std::move(buffer);
 
@@ -989,29 +1037,29 @@ createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte>& buffer) {
 }
 
 int32_t createBufferViewInGltf(
-    CesiumGltf::Model& gltf,
+    Model& gltf,
     const int32_t bufferId,
     const int64_t byteLength,
     const int64_t byteStride) {
   size_t bufferViewId = gltf.bufferViews.size();
-  CesiumGltf::BufferView& bufferView = gltf.bufferViews.emplace_back();
+  BufferView& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = bufferId;
   bufferView.byteLength = byteLength;
   bufferView.byteOffset = 0;
   bufferView.byteStride = byteStride;
-  bufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+  bufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   return static_cast<int32_t>(bufferViewId);
 }
 
 int32_t createAccessorInGltf(
-    CesiumGltf::Model& gltf,
+    Model& gltf,
     const int32_t bufferViewId,
     const int32_t componentType,
     const int64_t count,
     const std::string type) {
   size_t accessorId = gltf.accessors.size();
-  CesiumGltf::Accessor& accessor = gltf.accessors.emplace_back();
+  Accessor& accessor = gltf.accessors.emplace_back();
   accessor.bufferView = bufferViewId;
   accessor.byteOffset = 0;
   accessor.componentType = componentType;
@@ -1021,7 +1069,7 @@ int32_t createAccessorInGltf(
   return static_cast<int32_t>(accessorId);
 }
 
-void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
+void addPositionsToGltf(PntsContent& parsedContent, Model& gltf) {
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
   const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
   const int64_t byteLength = static_cast<int64_t>(byteStride * count);
@@ -1031,12 +1079,11 @@ void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
   int32_t accessorId = createAccessorInGltf(
       gltf,
       bufferViewId,
-      CesiumGltf::Accessor::ComponentType::FLOAT,
+      Accessor::ComponentType::FLOAT,
       count,
-      CesiumGltf::Accessor::Type::VEC3);
+      Accessor::Type::VEC3);
 
-  CesiumGltf::Accessor& accessor =
-      gltf.accessors[static_cast<uint32_t>(accessorId)];
+  Accessor& accessor = gltf.accessors[static_cast<uint32_t>(accessorId)];
   accessor.min = {
       parsedContent.positionMin.x,
       parsedContent.positionMin.y,
@@ -1048,105 +1095,127 @@ void addPositionsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
       parsedContent.positionMax.z,
   };
 
-  CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
+  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
   primitive.attributes.emplace("POSITION", accessorId);
 }
 
-void addColorsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
-  if (parsedContent.color) {
-    PntsSemantic& color = parsedContent.color.value();
+void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
+  PntsSemantic& color = parsedContent.color.value();
 
-    const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-    int64_t byteStride = 0;
-    int32_t componentType = 0;
-    std::string type;
-    bool isTranslucent = false;
-    bool isNormalized = false;
+  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
+  int64_t byteStride = 0;
+  int32_t componentType = 0;
+  std::string type;
+  bool isTranslucent = false;
+  bool isNormalized = false;
 
-    if (parsedContent.colorType == PntsColorType::RGBA) {
-      byteStride = static_cast<int64_t>(sizeof(glm::u8vec4));
-      componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
-      type = CesiumGltf::Accessor::Type::VEC4;
-      isTranslucent = true;
-      isNormalized = true;
-    } else if (parsedContent.colorType == PntsColorType::RGB) {
-      byteStride = static_cast<int64_t>(sizeof(glm::u8vec3));
-      componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
-      isNormalized = true;
-      type = CesiumGltf::Accessor::Type::VEC3;
-    } else if (parsedContent.colorType == PntsColorType::RGB565) {
-      byteStride = static_cast<int64_t>(sizeof(glm::vec3));
-      componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-      type = CesiumGltf::Accessor::Type::VEC3;
-    }
+  if (parsedContent.colorType == PntsColorType::RGBA) {
+    byteStride = static_cast<int64_t>(sizeof(glm::u8vec4));
+    componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    type = Accessor::Type::VEC4;
+    isTranslucent = true;
+    isNormalized = true;
+  } else if (parsedContent.colorType == PntsColorType::RGB) {
+    byteStride = static_cast<int64_t>(sizeof(glm::u8vec3));
+    componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    isNormalized = true;
+    type = Accessor::Type::VEC3;
+  } else if (parsedContent.colorType == PntsColorType::RGB565) {
+    byteStride = static_cast<int64_t>(sizeof(glm::vec3));
+    componentType = Accessor::ComponentType::FLOAT;
+    type = Accessor::Type::VEC3;
+  }
 
-    const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-    int32_t bufferId = createBufferInGltf(gltf, color.data);
-    int32_t bufferViewId =
-        createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
-    int32_t accessorId =
-        createAccessorInGltf(gltf, bufferViewId, componentType, count, type);
+  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
+  int32_t bufferId = createBufferInGltf(gltf, color.data);
+  int32_t bufferViewId =
+      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
+  int32_t accessorId =
+      createAccessorInGltf(gltf, bufferViewId, componentType, count, type);
 
-    CesiumGltf::Accessor& accessor =
-        gltf.accessors[static_cast<uint32_t>(accessorId)];
-    accessor.normalized = isNormalized;
+  Accessor& accessor = gltf.accessors[static_cast<uint32_t>(accessorId)];
+  accessor.normalized = isNormalized;
 
-    CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    primitive.attributes.emplace("COLOR_0", accessorId);
+  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
+  primitive.attributes.emplace("COLOR_0", accessorId);
 
-    if (isTranslucent) {
-      CesiumGltf::Material& material =
-          gltf.materials[static_cast<uint32_t>(primitive.material)];
-      material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
-    }
+  if (isTranslucent) {
+    Material& material =
+        gltf.materials[static_cast<uint32_t>(primitive.material)];
+    material.alphaMode = Material::AlphaMode::BLEND;
   }
 }
 
-void addNormalsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
-  if (parsedContent.normal) {
-    PntsSemantic& normal = parsedContent.normal.value();
+void addNormalsToGltf(PntsContent& parsedContent, Model& gltf) {
+  PntsSemantic& normal = parsedContent.normal.value();
 
-    const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-    const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
-    const int64_t byteLength = static_cast<int64_t>(byteStride * count);
+  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
+  const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
+  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
 
-    int32_t bufferId = createBufferInGltf(gltf, normal.data);
-    int32_t bufferViewId =
-        createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
-    int32_t accessorId = createAccessorInGltf(
-        gltf,
-        bufferViewId,
-        CesiumGltf::Accessor::ComponentType::FLOAT,
-        count,
-        CesiumGltf::Accessor::Type::VEC3);
+  int32_t bufferId = createBufferInGltf(gltf, normal.data);
+  int32_t bufferViewId =
+      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
+  int32_t accessorId = createAccessorInGltf(
+      gltf,
+      bufferViewId,
+      Accessor::ComponentType::FLOAT,
+      count,
+      Accessor::Type::VEC3);
 
-    CesiumGltf::MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    primitive.attributes.emplace("NORMAL", accessorId);
+  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
+  primitive.attributes.emplace("NORMAL", accessorId);
+}
+
+void addBatchIdsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
+  PntsSemantic& batchId = parsedContent.batchId.value();
+
+  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
+  int32_t componentType = Accessor::ComponentType::UNSIGNED_SHORT;
+  if (parsedContent.batchIdComponentType) {
+    componentType = parsedContent.batchIdComponentType.value();
   }
+  const int64_t byteStride =
+      Accessor::computeByteSizeOfComponent(componentType);
+  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
+
+  int32_t bufferId = createBufferInGltf(gltf, batchId.data);
+  int32_t bufferViewId =
+      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
+  int32_t accessorId = createAccessorInGltf(
+      gltf,
+      bufferViewId,
+      componentType,
+      count,
+      Accessor::Type::SCALAR);
+
+  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
+  // This will be renamed by BatchTableToGltfFeatureMetadata.
+  primitive.attributes.emplace("_BATCHID", accessorId);
 }
 
 void createGltfFromParsedContent(
     PntsContent& parsedContent,
     GltfConverterResult& result) {
   result.model = std::make_optional<CesiumGltf::Model>();
-  CesiumGltf::Model& gltf = result.model.value();
+  Model& gltf = result.model.value();
 
   // Create a single node with a single mesh, with a single primitive.
-  CesiumGltf::Node& node = gltf.nodes.emplace_back();
+  Node& node = gltf.nodes.emplace_back();
   std::memcpy(
       node.matrix.data(),
       &CesiumGeometry::AxisTransforms::Z_UP_TO_Y_UP,
       sizeof(glm::dmat4));
 
   size_t meshId = gltf.meshes.size();
-  CesiumGltf::Mesh& mesh = gltf.meshes.emplace_back();
+  Mesh& mesh = gltf.meshes.emplace_back();
   node.mesh = static_cast<int32_t>(meshId);
 
-  CesiumGltf::MeshPrimitive& primitive = mesh.primitives.emplace_back();
-  primitive.mode = CesiumGltf::MeshPrimitive::Mode::POINTS;
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+  primitive.mode = MeshPrimitive::Mode::POINTS;
 
   size_t materialId = gltf.materials.size();
-  CesiumGltf::Material& material = gltf.materials.emplace_back();
+  Material& material = gltf.materials.emplace_back();
   material.pbrMetallicRoughness =
       std::make_optional<CesiumGltf::MaterialPBRMetallicRoughness>();
   // These values are borrowed from CesiumJS.
@@ -1175,6 +1244,10 @@ void createGltfFromParsedContent(
     // Points without normals should be rendered without lighting, which we
     // can indicate with the KHR_materials_unlit extension.
     material.addExtension<CesiumGltf::ExtensionKhrMaterialsUnlit>();
+  }
+
+  if (parsedContent.batchId) {
+    addBatchIdsToGltf(parsedContent, gltf);
   }
 
   if (parsedContent.rtcCenter) {
@@ -1211,11 +1284,12 @@ void convertPntsContentToGltf(
     // If the 3DTILES_draco_point_compression extension is present,
     // the batch table's binary will be compressed with the feature
     // table's binary. Parse both JSONs first in case the extension is there.
+    const int64_t batchTableStart = headerLength +
+                                    header.featureTableJsonByteLength +
+                                    header.featureTableBinaryByteLength;
+
     rapidjson::Document batchTableJson;
     if (header.batchTableJsonByteLength > 0) {
-      const int64_t batchTableStart = headerLength +
-                                      header.featureTableJsonByteLength +
-                                      header.featureTableBinaryByteLength;
       const gsl::span<const std::byte> batchTableJsonData = pntsBinary.subspan(
           static_cast<size_t>(batchTableStart),
           header.batchTableJsonByteLength);
@@ -1233,13 +1307,25 @@ void convertPntsContentToGltf(
                 headerLength + header.featureTableJsonByteLength),
             header.featureTableBinaryByteLength);
 
-    /*const gsl::span<const std::byte> batchTableBinaryData =
-        pntsBinary.subspan(
-        static_cast<size_t>(batchTableStart + header.batchTableJsonByteLength),
-        header.batchTableBinaryByteLength);*/
-
     parseFeatureTableBinary(featureTableBinaryData, parsedContent);
     createGltfFromParsedContent(parsedContent, result);
+
+    if (header.batchTableJsonByteLength > 0) {
+      gsl::span<const std::byte> batchTableBinaryData;
+      // check if data was manipulated earlier
+      if (header.batchTableBinaryByteLength > 0) {
+        batchTableBinaryData = pntsBinary.subspan(
+            static_cast<size_t>(
+                batchTableStart + header.batchTableJsonByteLength),
+            header.batchTableBinaryByteLength);
+      }
+
+      result.errors.merge(BatchTableToGltfFeatureMetadata::convert(
+          featureTableJson,
+          batchTableJson,
+          batchTableBinaryData,
+          result.model.value()));
+    }
   }
 }
 } // namespace

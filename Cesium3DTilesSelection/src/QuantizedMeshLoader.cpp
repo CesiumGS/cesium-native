@@ -9,6 +9,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
@@ -149,26 +150,6 @@ static T readValue(
     return *reinterpret_cast<const T*>(data.data() + offset);
   }
   return defaultValue;
-}
-
-static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
-  constexpr uint8_t rangeMax = 255;
-
-  glm::dvec3 result;
-
-  result.x = CesiumUtility::Math::fromSNorm(x, rangeMax);
-  result.y = CesiumUtility::Math::fromSNorm(y, rangeMax);
-  result.z = 1.0 - (glm::abs(result.x) + glm::abs(result.y));
-
-  if (result.z < 0.0) {
-    const double oldVX = result.x;
-    result.x =
-        (1.0 - glm::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
-    result.y =
-        (1.0 - glm::abs(oldVX)) * CesiumUtility::Math::signNotZero(result.y);
-  }
-
-  return glm::normalize(result);
 }
 
 static QuantizedMeshMetadataResult
@@ -620,7 +601,7 @@ static void decodeNormals(
 
   size_t normalOutputIndex = 0;
   for (size_t i = 0; i < encoded.size(); i += 2) {
-    glm::dvec3 normal = octDecode(
+    glm::dvec3 normal = AttributeCompression::octDecode(
         static_cast<uint8_t>(encoded[i]),
         static_cast<uint8_t>(encoded[i + 1]));
     decoded[normalOutputIndex++] = static_cast<float>(normal.x);
