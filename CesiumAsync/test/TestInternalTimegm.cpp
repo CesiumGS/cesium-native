@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "InternalTimegm.h"
 
 #include <catch2/catch.hpp>
