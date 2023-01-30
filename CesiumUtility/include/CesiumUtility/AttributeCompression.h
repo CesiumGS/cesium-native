@@ -44,14 +44,12 @@ public:
   }
 
   /**
-   * Decodes a unit-length vector in 2 byte 'oct' encoding to a normalized
+   * @brief Decodes a unit-length vector in 2 byte 'oct' encoding to a normalized
    * 3-component vector.
    *
    * @param x The x component of the oct-encoded unit length vector.
    * @param y The y component of the oct-encoded unit length vector.
    * @returns The decoded and normalized vector.
-   *
-   * @exception {DeveloperError} x and y must be an unsigned normalized integer between 0 and 255.
    *
    * @see AttributeCompression::octDecodeInRange
    */
@@ -74,7 +72,7 @@ public:
     constexpr float normalize6 = 1.0f / 63.0f; // normalize [0, 63] to [0, 1]
 
     const uint16_t red = static_cast<uint16_t>(value >> 11);
-    const uint16_t green = static_cast<uint16_t>(value >> 5 & mask6);
+    const uint16_t green = static_cast<uint16_t>((value >> 5) & mask6);
     const uint16_t blue = value & mask5;
 
     return glm::dvec3(red * normalize5, green * normalize6, blue * normalize5);

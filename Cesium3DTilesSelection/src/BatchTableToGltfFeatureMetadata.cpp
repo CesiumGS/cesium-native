@@ -1482,86 +1482,6 @@ void convertBatchTableToGltfFeatureMetadataExtension(
 
 } // namespace
 
-ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
-    const rapidjson::Document& featureTableJson,
-    const rapidjson::Document& batchTableJson,
-    const gsl::span<const std::byte>& batchTableBinaryData,
-    CesiumGltf::Model& gltf) {
-  // Check to make sure a char of rapidjson is 1 byte
-  static_assert(
-      sizeof(rapidjson::Value::Ch) == 1,
-      "RapidJson::Value::Ch is not 1 byte");
-
-  ErrorList result;
-
-  // Parse the pnts batch table and convert it to the EXT_feature_metadata
-  // extension.
-
-  const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");
-  if (pointsLengthIt == featureTableJson.MemberEnd() ||
-      !pointsLengthIt->value.IsInt64()) {
-    result.emplaceError("The PNTS cannot be parsed because there is no valid "
-                        "POINTS_LENGTH semantic.");
-    return result;
-  }
-
-  int64_t featureCount = 0;
-  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
-  const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
-
-  // If the feature table is missing the BATCH_LENGTH semantic, the batch table
-  // corresponds to per-point properties.
-  if (batchLengthIt != featureTableJson.MemberEnd() &&
-      batchLengthIt->value.IsInt64()) {
-    featureCount = batchLengthIt->value.GetInt64();
-  } else if (
-      batchIdIt != featureTableJson.MemberEnd() &&
-      batchIdIt->value.IsObject()) {
-    result.emplaceWarning(
-        "The PNTS has a batch table, but it is being ignored because there "
-        "is no valid BATCH_LENGTH semantic in the feature table, and "
-        "the BATCH_ID semantic is defined.");
-    return result;
-  } else {
-    featureCount = pointsLengthIt->value.GetInt64();
-  }
-
-  convertBatchTableToGltfFeatureMetadataExtension(
-      batchTableJson,
-      batchTableBinaryData,
-      gltf,
-      featureCount,
-      result);
-
-  // Create the EXT_feature_metadata extension for the single mesh primitive.
-  assert(gltf.meshes.size() == 1);
-  Mesh& mesh = gltf.meshes[0];
-
-  assert(mesh.primitives.size() == 1);
-  MeshPrimitive& primitive = mesh.primitives[0];
-
-  ExtensionMeshPrimitiveExtFeatureMetadata& extension =
-      primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-  FeatureIDAttribute& attribute = extension.featureIdAttributes.emplace_back();
-  attribute.featureTable = "default";
-
-  auto primitiveBatchIdIt = primitive.attributes.find("_BATCHID");
-  if (primitiveBatchIdIt != primitive.attributes.end()) {
-    // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
-    primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
-    primitive.attributes.erase("_BATCHID");
-
-    attribute.featureIds.attribute = "_FEATURE_ID_0";
-  } else {
-    // Otherwise, use implicit feature IDs to indicate the metadata is stored in
-    // per-point properties.
-    attribute.featureIds.constant = 0;
-    attribute.featureIds.divisor = 1;
-  }
-
-  return result;
-}
-
 ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
@@ -1620,6 +1540,86 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
       attribute.featureTable = "default";
       attribute.featureIds.attribute = "_FEATURE_ID_0";
     }
+  }
+
+  return result;
+}
+
+ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
+    const rapidjson::Document& featureTableJson,
+    const rapidjson::Document& batchTableJson,
+    const gsl::span<const std::byte>& batchTableBinaryData,
+    CesiumGltf::Model& gltf) {
+  // Check to make sure a char of rapidjson is 1 byte
+  static_assert(
+      sizeof(rapidjson::Value::Ch) == 1,
+      "RapidJson::Value::Ch is not 1 byte");
+
+  ErrorList result;
+
+  // Parse the pnts batch table and convert it to the EXT_feature_metadata
+  // extension.
+
+  const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");
+  if (pointsLengthIt == featureTableJson.MemberEnd() ||
+      !pointsLengthIt->value.IsInt64()) {
+    result.emplaceError("The PNTS cannot be parsed because there is no valid "
+                        "POINTS_LENGTH semantic.");
+    return result;
+  }
+
+  int64_t featureCount = 0;
+  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
+  const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
+
+  // If the feature table is missing the BATCH_LENGTH semantic, the batch table
+  // corresponds to per-point properties.
+  if (batchLengthIt != featureTableJson.MemberEnd() &&
+      batchLengthIt->value.IsInt64()) {
+    featureCount = batchLengthIt->value.GetInt64();
+  } else if (
+      batchIdIt != featureTableJson.MemberEnd() &&
+      batchIdIt->value.IsObject()) {
+    result.emplaceWarning(
+        "The PNTS has a batch table, but it is being ignored because there "
+        "is no valid BATCH_LENGTH semantic in the feature table even though "
+        "the BATCH_ID semantic is defined.");
+    return result;
+  } else {
+    featureCount = pointsLengthIt->value.GetInt64();
+  }
+
+  convertBatchTableToGltfFeatureMetadataExtension(
+      batchTableJson,
+      batchTableBinaryData,
+      gltf,
+      featureCount,
+      result);
+
+  // Create the EXT_feature_metadata extension for the single mesh primitive.
+  assert(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+
+  assert(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  ExtensionMeshPrimitiveExtFeatureMetadata& extension =
+      primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  FeatureIDAttribute& attribute = extension.featureIdAttributes.emplace_back();
+  attribute.featureTable = "default";
+
+  auto primitiveBatchIdIt = primitive.attributes.find("_BATCHID");
+  if (primitiveBatchIdIt != primitive.attributes.end()) {
+    // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
+    primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
+    primitive.attributes.erase("_BATCHID");
+
+    attribute.featureIds.attribute = "_FEATURE_ID_0";
+  } else {
+    // Otherwise, use implicit feature IDs to indicate the metadata is stored in
+    // per-point properties.
+    attribute.featureIds.constant = 0;
+    attribute.featureIds.divisor = 1;
   }
 
   return result;
