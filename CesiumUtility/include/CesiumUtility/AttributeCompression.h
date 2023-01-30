@@ -44,8 +44,8 @@ public:
   }
 
   /**
-   * @brief Decodes a unit-length vector in 2 byte 'oct' encoding to a normalized
-   * 3-component vector.
+   * @brief Decodes a unit-length vector in 2 byte 'oct' encoding to a
+   * normalized 3-component vector.
    *
    * @param x The x component of the oct-encoded unit length vector.
    * @param y The y component of the oct-encoded unit length vector.

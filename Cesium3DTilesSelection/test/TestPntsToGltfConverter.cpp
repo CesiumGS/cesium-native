@@ -658,7 +658,7 @@ TEST_CASE(
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableTo
+  // TestUpgradeBatchTableToExtFeatureMetadata
   CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
@@ -667,9 +667,9 @@ TEST_CASE(
   REQUIRE(mesh.primitives.size() == 1);
   MeshPrimitive& primitive = mesh.primitives[0];
 
-  REQUIRE(primitive.hasExtension<ExtensionMeshPrimitiveExtFeatureMetadata>());
-  const auto primitiveExtension =
+  auto primitiveExtension =
       primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
   FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
   CHECK(attribute.featureTable == "default");
@@ -681,9 +681,8 @@ TEST_CASE(
   // - "name": string scalars in JSON
   // - "dimensions": float vec3s in binary
   // - "id": int scalars in binary
-
-  // There are only three accessors (one per primitive attribute),
-  // but there are four additional buffer views:
+  // There are three accessors (one per primitive attribute)
+  // and four additional buffer views:
   // - "name" string data buffer view
   // - "name" string offsets buffer view
   // - "dimensions" buffer view
@@ -736,21 +735,26 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   REQUIRE(result.model);
   Model& gltf = *result.model;
 
+  // The correctness of the model extension is thoroughly tested in
+  // TestUpgradeBatchTableToExtFeatureMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
   Mesh& mesh = gltf.meshes[0];
   REQUIRE(mesh.primitives.size() == 1);
   MeshPrimitive& primitive = mesh.primitives[0];
 
-  REQUIRE(primitive.hasExtension<ExtensionMeshPrimitiveExtFeatureMetadata>());
-  const auto primitiveExtension =
+  auto primitiveExtension =
       primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
   FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
   CHECK(attribute.featureTable == "default");
+  // Check for implicit feature IDs
+  CHECK(!attribute.featureIds.attribute);
   CHECK(attribute.featureIds.constant == 0);
   CHECK(attribute.featureIds.divisor == 1);
-  CHECK(!attribute.featureIds.attribute);
 
   CHECK(gltf.materials.size() == 1);
 
@@ -758,15 +762,12 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   // - "temperature": float scalars
   // - "secondaryColor": float vec3s
   // - "id": unsigned short scalars
-  // checkFeatureMetadataExtensionForBatchedPointCloud(gltf);
-
-  // There are only two accessors (one per primitive attribute).
-  REQUIRE(gltf.accessors.size() == 2);
-
-  // There are three additional buffer views:
+  // There are two accessors (one per primitive attribute)
+  // and three additional buffer views:
   // - temperature buffer view
   // - secondary color buffer view
   // - id buffer view
+  REQUIRE(gltf.accessors.size() == 2);
   REQUIRE(gltf.bufferViews.size() == 5);
 
   // There is only one added buffer containing all the binary values.
@@ -776,6 +777,7 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
 
   auto attributes = primitive.attributes;
   REQUIRE(attributes.size() == 2);
+  REQUIRE(attributes.find("_FEATURE_ID_0") == attributes.end());
 
   // Check that position and color  attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
