@@ -92,7 +92,7 @@ public:
   enum Type { SCALAR, VEC2, VEC3, VEC4 };
 
   static std::optional<ComponentType>
-  componentTypeFromDracoDataType(const draco::DataType dataType) {
+  getComponentTypeFromDracoDataType(const draco::DataType dataType) {
     switch (dataType) {
     case draco::DT_INT8:
       return ComponentType::BYTE;
@@ -115,7 +115,7 @@ public:
     }
   }
 
-  static size_t sizeOfComponentType(ComponentType componentType) {
+  static size_t getSizeOfComponentType(ComponentType componentType) {
     switch (componentType) {
     case ComponentType::BYTE:
     case ComponentType::UNSIGNED_BYTE:
@@ -135,7 +135,8 @@ public:
     }
   };
 
-  static std::optional<Type> typeFromNumberOfComponents(int8_t numComponents) {
+  static std::optional<Type>
+  getTypeFromNumberOfComponents(int8_t numComponents) {
     switch (numComponents) {
     case 1:
       return Type::SCALAR;
@@ -205,6 +206,7 @@ struct PntsContent {
 
   std::optional<PntsSemantic> batchId;
   std::optional<int32_t> batchIdComponentType;
+  std::optional<uint32_t> batchLength;
 
   std::optional<uint32_t> dracoByteOffset;
   std::optional<uint32_t> dracoByteLength;
@@ -429,42 +431,55 @@ void parseBatchIdsFromFeatureTableJson(
     const rapidjson::Document& featureTableJson,
     PntsContent& parsedContent) {
   const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
-  if (batchIdIt != featureTableJson.MemberEnd() &&
-      batchIdIt->value.IsObject()) {
-    const auto byteOffsetIt = batchIdIt->value.FindMember("byteOffset");
-    if (byteOffsetIt == batchIdIt->value.MemberEnd() ||
-        !byteOffsetIt->value.IsUint()) {
-      parsedContent.errors.emplaceWarning(
-          "Error parsing PNTS feature table, BATCH_ID semantic does not have "
-          "valid byteOffset. Skip parsing batch IDs.");
-      return;
-    }
+  if (batchIdIt == featureTableJson.MemberEnd() ||
+      !batchIdIt->value.IsObject()) {
+    return;
+  }
 
-    parsedContent.batchId = std::make_optional<PntsSemantic>();
-    PntsSemantic& batchId = parsedContent.batchId.value();
-    batchId.byteOffset = byteOffsetIt->value.GetUint();
+  const auto byteOffsetIt = batchIdIt->value.FindMember("byteOffset");
+  if (byteOffsetIt == batchIdIt->value.MemberEnd() ||
+      !byteOffsetIt->value.IsUint()) {
+    parsedContent.errors.emplaceWarning(
+        "Error parsing PNTS feature table, BATCH_ID semantic does not have "
+        "valid byteOffset. Skip parsing batch IDs.");
+    return;
+  }
 
-    const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
-    if (componentTypeIt != featureTableJson.MemberEnd() &&
-        componentTypeIt->value.IsString()) {
-      const std::string& componentTypeString =
-          componentTypeIt->value.GetString();
+  parsedContent.batchId = std::make_optional<PntsSemantic>();
+  PntsSemantic& batchId = parsedContent.batchId.value();
+  batchId.byteOffset = byteOffsetIt->value.GetUint();
 
-      if (componentTypeString == "UNSIGNED_BYTE") {
-        parsedContent.batchIdComponentType =
-            Accessor::ComponentType::UNSIGNED_BYTE;
-      } else if (componentTypeString == "UNSIGNED_INT") {
-        parsedContent.batchIdComponentType =
-            Accessor::ComponentType::UNSIGNED_INT;
-      } else {
-        parsedContent.batchIdComponentType =
-            Accessor::ComponentType::UNSIGNED_SHORT;
-      }
+  const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
+  if (componentTypeIt != featureTableJson.MemberEnd() &&
+      componentTypeIt->value.IsString()) {
+    const std::string& componentTypeString = componentTypeIt->value.GetString();
+
+    if (componentTypeString == "UNSIGNED_BYTE") {
+      parsedContent.batchIdComponentType =
+          Accessor::ComponentType::UNSIGNED_BYTE;
+    } else if (componentTypeString == "UNSIGNED_INT") {
+      parsedContent.batchIdComponentType =
+          Accessor::ComponentType::UNSIGNED_INT;
     } else {
       parsedContent.batchIdComponentType =
           Accessor::ComponentType::UNSIGNED_SHORT;
     }
+  } else {
+    parsedContent.batchIdComponentType =
+        Accessor::ComponentType::UNSIGNED_SHORT;
   }
+
+  const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
+  if (batchLengthIt == featureTableJson.MemberEnd() ||
+      !batchLengthIt->value.IsUint()) {
+    parsedContent.errors.emplaceWarning(
+        "Error parsing PNTS feature table, BATCH_ID semantic is present but "
+        "no valid BATCH_LENGTH is defined. Skip parsing metadata.");
+    parsedContent.metadataHasErrors = true;
+    return;
+  }
+
+  parsedContent.batchLength = batchLengthIt->value.GetUint();
 }
 
 void parseSemanticsFromFeatureTableJson(
@@ -659,9 +674,27 @@ void parseDracoExtensionFromBatchTableJson(
     return;
   }
 
-  const rapidjson::Value& dracoExtension = dracoExtensionIt->value;
-  for (auto dracoPropertyIt = dracoExtension.MemberBegin();
-       dracoPropertyIt != dracoExtension.MemberEnd();
+  if (parsedContent.batchLength) {
+    parsedContent.errors.emplaceWarning(
+        "Error parsing batch table, the 3DTILES_draco_point_compression "
+        "extension is present but BATCH_LENGTH is defined.");
+    parsedContent.metadataHasErrors = true;
+    return;
+  }
+
+  const auto propertiesIt = dracoExtensionIt->value.FindMember("properties");
+  if (propertiesIt == dracoExtensionIt->value.MemberEnd() ||
+      !propertiesIt->value.IsObject()) {
+    parsedContent.errors.emplaceWarning(
+        "Error parsing 3DTILES_draco_point_compression extension, no "
+        "properties object was found.");
+    parsedContent.metadataHasErrors = true;
+    return;
+  }
+
+  const rapidjson::Value& properties = propertiesIt->value.GetObject();
+  for (auto dracoPropertyIt = properties.MemberBegin();
+       dracoPropertyIt != properties.MemberEnd();
        ++dracoPropertyIt) {
     const std::string name = dracoPropertyIt->name.GetString();
 
@@ -755,7 +788,9 @@ rapidjson::Document parseBatchTableJson(
     return document;
   }
 
-  parseDracoExtensionFromBatchTableJson(document, parsedContent);
+  if (!parsedContent.metadataHasErrors) {
+    parseDracoExtensionFromBatchTableJson(document, parsedContent);
+  }
 
   return document;
 }
@@ -775,13 +810,15 @@ bool validateDracoMetadataAttribute(
     return false;
   }
 
-  if (MetadataProperty::componentTypeFromDracoDataType(
-          pAttribute->data_type()) != semantic.componentType) {
+  auto componentType = MetadataProperty::getComponentTypeFromDracoDataType(
+      pAttribute->data_type());
+  if (!componentType || componentType.value() != semantic.componentType) {
     return false;
   }
 
-  return MetadataProperty::typeFromNumberOfComponents(
-             pAttribute->num_components()) != semantic.type;
+  auto type = MetadataProperty::getTypeFromNumberOfComponents(
+      pAttribute->num_components());
+  return type && type.value() == semantic.type;
 }
 
 template <typename T>
@@ -789,17 +826,25 @@ void getDracoData(
     const draco::PointAttribute* pAttribute,
     std::vector<std::byte>& data,
     const uint32_t pointsLength) {
-  data.resize(pointsLength * sizeof(T));
-
-  gsl::span<T> outData(reinterpret_cast<T*>(data.data()), pointsLength);
+  const size_t dataElementSize = sizeof(T);
+  const size_t databufferByteLength = pointsLength * dataElementSize;
+  data.resize(databufferByteLength);
 
   draco::DataBuffer* decodedBuffer = pAttribute->buffer();
   int64_t decodedByteOffset = pAttribute->byte_offset();
   int64_t decodedByteStride = pAttribute->byte_stride();
 
-  for (uint32_t i = 0; i < pointsLength; ++i) {
-    outData[i] = *reinterpret_cast<const T*>(
-        decodedBuffer->data() + decodedByteOffset + decodedByteStride * i);
+  if (dataElementSize != static_cast<size_t>(decodedByteStride)) {
+    gsl::span<T> outData(reinterpret_cast<T*>(data.data()), pointsLength);
+    for (uint32_t i = 0; i < pointsLength; ++i) {
+      outData[i] = *reinterpret_cast<const T*>(
+          decodedBuffer->data() + decodedByteOffset + decodedByteStride * i);
+    }
+  } else {
+    std::memcpy(
+        data.data(),
+        decodedBuffer->data() + decodedByteOffset,
+        databufferByteLength);
   }
 }
 
@@ -838,7 +883,7 @@ void decodeDracoMetadata(
     byteOffsetIt->value.SetUint(static_cast<uint32_t>(byteOffset));
 
     const size_t metadataByteStride =
-        MetadataProperty::sizeOfComponentType(dracoSemantic.componentType) *
+        MetadataProperty::getSizeOfComponentType(dracoSemantic.componentType) *
         static_cast<size_t>(pAttribute->num_components());
     data.resize(byteOffset + pointsLength * metadataByteStride);
 
@@ -846,11 +891,18 @@ void decodeDracoMetadata(
     int64_t decodedByteOffset = pAttribute->byte_offset();
     int64_t decodedByteStride = pAttribute->byte_stride();
 
-    for (uint32_t i = 0; i < pointsLength; ++i) {
+    if (metadataByteStride != static_cast<size_t>(decodedByteStride)) {
+      for (uint32_t i = 0; i < pointsLength; ++i) {
+        std::memcpy(
+            data.data() + byteOffset + i * metadataByteStride,
+            decodedBuffer->data() + decodedByteOffset + decodedByteStride * i,
+            metadataByteStride);
+      }
+    } else {
       std::memcpy(
-          data.data() + byteOffset + i * metadataByteStride,
-          decodedBuffer->data() + decodedByteOffset + decodedByteStride * i,
-          metadataByteStride);
+          data.data() + byteOffset,
+          decodedBuffer->data() + decodedByteOffset,
+          metadataByteStride * pointsLength);
     }
   }
 }
@@ -937,15 +989,17 @@ void decodeDraco(
 
   if (parsedContent.normal) {
     PntsSemantic& normal = parsedContent.normal.value();
-    draco::PointAttribute* pNormalAttribute =
-        pPointCloud->attribute(normal.dracoId.value());
-    if (validateDracoAttribute(pNormalAttribute, draco::DT_FLOAT32, 3)) {
-      getDracoData<glm::vec3>(pNormalAttribute, normal.data, pointsLength);
-    } else {
-      parsedContent.errors.emplaceWarning(
-          "Warning: decoded Draco point cloud did not contain valid normal "
-          "attribute. Skip parsing normals.");
-      parsedContent.normal = std::nullopt;
+    if (normal.dracoId) {
+      draco::PointAttribute* pNormalAttribute =
+          pPointCloud->attribute(normal.dracoId.value());
+      if (validateDracoAttribute(pNormalAttribute, draco::DT_FLOAT32, 3)) {
+        getDracoData<glm::vec3>(pNormalAttribute, normal.data, pointsLength);
+      } else {
+        parsedContent.errors.emplaceWarning(
+            "Warning: decoded Draco point cloud did not contain valid normal "
+            "attribute. Skip parsing normals.");
+        parsedContent.normal = std::nullopt;
+      }
     }
   }
 
@@ -1511,6 +1565,9 @@ void convertPntsContentToGltf(
     }
 
     if (!parsedContent.dracoBatchTableBinary.empty()) {
+      // If the point cloud has both compressed and uncompressed metadata
+      // values, then dracoBatchTableBinary will contain both the original batch
+      // table binary and the Draco decoded values.
       batchTableBinaryData =
           gsl::span<const std::byte>(parsedContent.dracoBatchTableBinary);
     }

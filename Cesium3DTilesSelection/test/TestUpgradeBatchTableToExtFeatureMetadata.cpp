@@ -900,6 +900,160 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_feature_metadata") {
   }
 }
 
+TEST_CASE("Converts Draco per-point PNTS batch table to "
+          "EXT_feature_metadata") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudDraco.pnts";
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  {
+    auto temperatureIt = defaultClass.properties.find("temperature");
+    REQUIRE(temperatureIt != defaultClass.properties.end());
+    auto secondaryColorIt = defaultClass.properties.find("secondaryColor");
+    REQUIRE(secondaryColorIt != defaultClass.properties.end());
+    auto idIt = defaultClass.properties.find("id");
+    REQUIRE(idIt != defaultClass.properties.end());
+
+    CHECK(temperatureIt->second.type == "FLOAT32");
+    CHECK(secondaryColorIt->second.type == "ARRAY");
+    REQUIRE(secondaryColorIt->second.componentType);
+    CHECK(secondaryColorIt->second.componentType.value() == "FLOAT32");
+    CHECK(idIt->second.type == "UINT16");
+  }
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+
+  {
+    auto temperatureIt = featureTable.properties.find("temperature");
+    REQUIRE(temperatureIt != featureTable.properties.end());
+    auto secondaryColorIt = featureTable.properties.find("secondaryColor");
+    REQUIRE(secondaryColorIt != featureTable.properties.end());
+    auto idIt = featureTable.properties.find("id");
+    REQUIRE(idIt != featureTable.properties.end());
+
+    CHECK(temperatureIt->second.bufferView >= 0);
+    CHECK(
+        temperatureIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(secondaryColorIt->second.bufferView >= 0);
+    CHECK(
+        secondaryColorIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(idIt->second.bufferView >= 0);
+    CHECK(
+        idIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+  }
+
+  std::set<int32_t> bufferViewSet =
+      getUniqueBufferViewIds(gltf.accessors, featureTable);
+  CHECK(bufferViewSet.size() == gltf.bufferViews.size());
+
+  // Check the mesh primitives
+  CHECK(!gltf.meshes.empty());
+
+  for (Mesh& mesh : gltf.meshes) {
+    CHECK(!mesh.primitives.empty());
+    for (MeshPrimitive& primitive : mesh.primitives) {
+      CHECK(
+          primitive.attributes.find("_FEATURE_ID_0") ==
+          primitive.attributes.end());
+
+      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+      REQUIRE(pPrimitiveExtension);
+      REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+
+      FeatureIDAttribute& attribute =
+          pPrimitiveExtension->featureIdAttributes[0];
+      CHECK(attribute.featureTable == "default");
+      // Check for implicit feature IDs
+      CHECK(!attribute.featureIds.attribute);
+      CHECK(attribute.featureIds.constant == 0);
+      CHECK(attribute.featureIds.divisor == 1);
+    }
+  }
+
+  // Check metadata values
+  {
+    std::vector<float> expected = {
+        0.2883025f,
+        0.4338731f,
+        0.1751145f,
+        0.1430345f,
+        0.1156959f,
+        0.3274441f,
+        0.1337535f,
+        0.0207673f};
+    checkScalarProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "temperature",
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::vector<float>> expected = {
+        {0.1182744f, 0, 0},
+        {0.7206645f, 0, 0},
+        {0.6399421f, 0, 0},
+        {0.5820239f, 0, 0},
+        {0.1432983f, 0, 0},
+        {0.5374249f, 0, 0},
+        {0.9446688f, 0, 0},
+        {0.7586040f, 0, 0}};
+
+    checkArrayProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "secondaryColor",
+        3,
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<uint16_t> expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    checkScalarProperty<uint16_t>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "id",
+        "UINT16",
+        expected,
+        expected.size());
+  }
+}
+
 TEST_CASE("Upgrade json nested json metadata to string") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
