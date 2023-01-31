@@ -1110,3 +1110,166 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
     checkBufferContents<glm::vec3>(buffer.cesium.data, expected);
   }
 }
+
+TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudDracoBatched.pnts";
+  const int32_t pointsLength = 8;
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  // The correctness of the model extension is thoroughly tested in
+  // TestUpgradeBatchTableToExtFeatureMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+
+  CHECK(gltf.nodes.size() == 1);
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
+
+  auto primitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(primitiveExtension);
+  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
+  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
+
+  CHECK(gltf.materials.size() == 1);
+
+  // The file has three metadata properties:
+  // - "name": string scalars in JSON
+  // - "dimensions": float vec3s in binary
+  // - "id": int scalars in binary
+  // There are four accessors (one per primitive attribute)
+  // and four additional buffer views:
+  // - "name" string data buffer view
+  // - "name" string offsets buffer view
+  // - "dimensions" buffer view
+  // - "id" buffer view
+  REQUIRE(gltf.accessors.size() == 4);
+  REQUIRE(gltf.bufferViews.size() == 8);
+
+  // There are also three added buffers:
+  // - binary data in the batch table
+  // - string data of "name"
+  // - string offsets for the data for "name"
+  REQUIRE(gltf.buffers.size() == 7);
+  std::set<int32_t> bufferSet = getUniqueBufferIds(gltf.bufferViews);
+  CHECK(bufferSet.size() == 7);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == 4);
+
+  // Check that position, normal, and feature ID attributes are present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
+  checkAttribute<uint8_t>(gltf, primitive, "_FEATURE_ID_0", pointsLength);
+
+  // Check each attribute more thoroughly
+  {
+    uint32_t accessorId = static_cast<uint32_t>(attributes.at("POSITION"));
+    Accessor& accessor = gltf.accessors[accessorId];
+
+    const glm::vec3 expectedMin(-4.9270443f, -3.9144449f, -4.8131480f);
+    CHECK(accessor.min[0] == Approx(expectedMin.x));
+    CHECK(accessor.min[1] == Approx(expectedMin.y));
+    CHECK(accessor.min[2] == Approx(expectedMin.z));
+
+    const glm::vec3 expectedMax(3.7791683f, 4.8152132f, 3.2142156f);
+    CHECK(accessor.max[0] == Approx(expectedMax.x));
+    CHECK(accessor.max[1] == Approx(expectedMax.y));
+    CHECK(accessor.max[2] == Approx(expectedMax.z));
+
+    uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
+    BufferView& bufferView = gltf.bufferViews[bufferViewId];
+
+    uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
+    Buffer& buffer = gltf.buffers[bufferId];
+
+    std::vector<glm::vec3> expected = {
+        glm::vec3(-4.9270443f, 0.8337686f, 0.1705846f),
+        glm::vec3(-2.9789500f, 2.6891474f, 2.9824265f),
+        glm::vec3(-2.8329495f, -3.9144449f, -1.2851576f),
+        glm::vec3(-2.9022198f, -3.6128526f, 1.8772986f),
+        glm::vec3(-4.2673778f, -0.6459517f, -2.5240305f),
+        glm::vec3(3.7791683f, 0.6222278f, 3.2142156f),
+        glm::vec3(0.6870481f, -1.1670776f, -4.8131480f),
+        glm::vec3(-0.3168385f, 4.8152132f, 1.3087492f),
+    };
+    checkBufferContents<glm::vec3>(buffer.cesium.data, expected);
+  }
+
+  {
+    uint32_t accessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
+    Accessor& accessor = gltf.accessors[accessorId];
+    CHECK(accessor.normalized);
+
+    uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
+    BufferView& bufferView = gltf.bufferViews[bufferViewId];
+
+    uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
+    Buffer& buffer = gltf.buffers[bufferId];
+
+    std::vector<glm::u8vec3> expected = {
+        glm::u8vec3(182, 215, 153),
+        glm::u8vec3(108, 159, 164),
+        glm::u8vec3(227, 14, 245),
+        glm::u8vec3(201, 207, 134),
+        glm::u8vec3(236, 213, 18),
+        glm::u8vec3(5, 93, 212),
+        glm::u8vec3(221, 221, 249),
+        glm::u8vec3(117, 132, 199),
+    };
+    checkBufferContents<glm::u8vec3>(buffer.cesium.data, expected);
+  }
+
+  {
+    uint32_t accessorId = static_cast<uint32_t>(attributes.at("NORMAL"));
+    Accessor& accessor = gltf.accessors[accessorId];
+
+    uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
+    BufferView& bufferView = gltf.bufferViews[bufferViewId];
+
+    uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
+    Buffer& buffer = gltf.buffers[bufferId];
+
+    // The Draco-decoded normals are slightly different from the values
+    // derived by manually decoding the uncompressed oct-encoded normals,
+    // hence the less precise comparison.
+    std::vector<glm::vec3> expected{
+        glm::vec3(-0.9824559f, 0.1803542f, 0.0474616f),
+        glm::vec3(-0.5766854f, 0.5427628f, 0.6106081f),
+        glm::vec3(-0.5725988f, -0.7802446f, -0.2516918f),
+        glm::vec3(-0.5705807f, -0.7345407f, 0.36727036f),
+        glm::vec3(-0.8560267f, -0.1281128f, -0.5008047f),
+        glm::vec3(0.7647877f, 0.11264316f, 0.63435888f),
+        glm::vec3(0.1301889f, -0.23434004f, -0.9633979f),
+        glm::vec3(-0.0450783f, 0.9616723f, 0.2704703f),
+    };
+    checkBufferContents<glm::vec3>(
+        buffer.cesium.data,
+        expected,
+        Math::Epsilon1);
+  }
+
+  {
+    uint32_t accessorId = static_cast<uint32_t>(attributes.at("_FEATURE_ID_0"));
+    Accessor& accessor = gltf.accessors[accessorId];
+
+    uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
+    BufferView& bufferView = gltf.bufferViews[bufferViewId];
+
+    uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
+    Buffer& buffer = gltf.buffers[bufferId];
+
+    const std::vector<uint8_t> expected = {5, 5, 6, 6, 7, 0, 3, 1};
+    checkBufferContents<uint8_t>(buffer.cesium.data, expected);
+  }
+}
