@@ -1223,13 +1223,13 @@ void updateExtensionWithBinaryProperty(
   assert(
       gltfBufferIndex >= 0 &&
       "gltfBufferIndex is negative. Need to allocate buffer before "
-      "convert the binary property");
+      "converting the binary property");
 
   const auto& byteOffsetIt = propertyValue.FindMember("byteOffset");
   if (byteOffsetIt == propertyValue.MemberEnd() ||
       !byteOffsetIt->value.IsInt64()) {
     result.emplaceWarning(fmt::format(
-        "Skip convert {}. The binary property doesn't have required "
+        "Skip converting {}. The binary property doesn't have required "
         "byteOffset.",
         propertyName));
     return;
@@ -1239,7 +1239,7 @@ void updateExtensionWithBinaryProperty(
   if (componentTypeIt == propertyValue.MemberEnd() ||
       !componentTypeIt->value.IsString()) {
     result.emplaceWarning(fmt::format(
-        "Skip convert {}. The binary property doesn't have required "
+        "Skip converting {}. The binary property doesn't have required "
         "componentType.",
         propertyName));
     return;

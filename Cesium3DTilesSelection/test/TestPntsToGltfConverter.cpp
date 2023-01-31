@@ -783,3 +783,62 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
   checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
 }
+/*
+TEST_CASE("Converts point cloud with Draco compression to glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudDraco.pnts";
+  const int32_t pointsLength = 8;
+  const int32_t expectedAttributeCount = 3;
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.nodes.size() == 1);
+
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+  MeshPrimitive& primitive = mesh.primitives[0];
+
+  REQUIRE(gltf.materials.size() == 1);
+  Material& material = gltf.materials[0];
+  CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+
+  REQUIRE(gltf.accessors.size() == expectedAttributeCount);
+  REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
+  REQUIRE(gltf.buffers.size() == expectedAttributeCount);
+
+  auto attributes = primitive.attributes;
+  REQUIRE(attributes.size() == expectedAttributeCount);
+
+  // Check that position, color, and normal attributes are present
+  checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
+  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
+
+  // Check each attribute more thoroughly
+  {
+    /* uint32_t accessorId = static_cast<uint32_t>(attributes.at("POSITION"));
+    Accessor& accessor = gltf.accessors[accessorId];
+
+    uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
+    BufferView& bufferView = gltf.bufferViews[bufferViewId];
+
+    uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
+    Buffer& buffer = gltf.buffers[bufferId];
+
+    const std::vector<glm::vec3> expected = {
+        glm::vec3(-0.9856477, 0.1634960, 0.0420418),
+        glm::vec3(-0.5901730, 0.5359042, 0.6037402),
+        glm::vec3(-0.5674310, -0.7817938, -0.2584963),
+        glm::vec3(-0.5861990, -0.7179291, 0.3754308),
+        glm::vec3(-0.8519385, -0.1283743, -0.5076620),
+        glm::vec3(0.7587127, 0.1254564, 0.6392304),
+        glm::vec3(0.1354662, -0.2292506, -0.9638947),
+        glm::vec3(-0.0656172, 0.9640687, 0.2574214)};
+    checkBufferContents<glm::vec3>(buffer.cesium.data, expected);
+  }
+}*/
