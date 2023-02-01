@@ -1,5 +1,16 @@
 # Change Log
 
+### v0.21.3 - 2023-02-01
+
+##### Fixes :wrench:
+
+- Fixed a bug that could prevent loading in tilesets that are additively-refined and have external tilesets, such as Cesium OSM Buildings.
+- Fixed a bug that could cause parent tiles to be incorrectly culled in tilesets with additive ("ADD") refinement. This could cause geometry to disappear when moving in closer, or fail to appear at all.
+- When unloading tile content, raster overlay tiles are now detached from geometry tiles _before_ the geometry tile content is unloaded.
+- Added missing `#include <string>` in generated glTF and 3D Tiles header files.
+- Replaced `std::sprintf` with `std::snprintf`, fixing a warning-as-error in newer versions of Xcode.
+- Upgraded tinyxml2 [from commit 1aeb57d26bc303d5cfa1a9ff2a331df7ba278656 to commit e05956094c27117f989d22f25b75633123d72a83](https://github.com/leethomason/tinyxml2/compare/1aeb57d26bc303d5cfa1a9ff2a331df7ba278656...e05956094c27117f989d22f25b75633123d72a83).
+
 ### v0.21.2 - 2022-12-09
 
 ##### Additions :tada:

@@ -50,8 +50,14 @@ if (NOT TARGET glm)
     add_subdirectory(glm GLM)
 endif()
 
-set(BUILD_TESTS OFF CACHE BOOL "Build tinyxml2 tests" FORCE)
-add_subdirectory(tinyxml2)
+# tinyxml2's CMake build tries to generate a pkg-config file in a way that's incompatible with multi-config generators
+# (e.g., Visual Studio). And anyway it's trivial to build manually, so we do that here.
+add_library(tinyxml2 tinyxml2/tinyxml2.cpp)
+target_include_directories(
+    tinyxml2
+    PUBLIC
+        tinyxml2
+)
 
 add_subdirectory(asyncplusplus)
 

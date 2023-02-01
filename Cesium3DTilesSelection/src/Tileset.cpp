@@ -738,7 +738,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   CullResult cullResult{};
 
-  bool cullWithChildrenBounds = !tile.getChildren().empty();
+  // Culling with children bounds will give us incorrect results with Add
+  // refinement, but is a useful optimization for Replace refinement.
+  bool cullWithChildrenBounds =
+      tile.getRefine() == TileRefine::Replace && !tile.getChildren().empty();
   for (Tile& child : tile.getChildren()) {
     if (child.getUnconditionallyRefine()) {
       cullWithChildrenBounds = false;
@@ -935,7 +938,7 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
 
   // Nothing else to do except mark this tile refined and return.
   TraversalDetails noChildrenTraversalDetails;
-  if (tile.getRefine() == TileRefine::Add) {
+  if (tile.getRefine() == TileRefine::Add && !tile.isExternalContent()) {
     noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
     noChildrenTraversalDetails.anyWereRenderedLastFrame =
         lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
