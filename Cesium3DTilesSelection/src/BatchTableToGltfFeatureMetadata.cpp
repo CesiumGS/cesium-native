@@ -1582,8 +1582,8 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
       batchIdIt->value.IsObject()) {
     result.emplaceWarning(
         "The PNTS has a batch table, but it is being ignored because there "
-        "is no valid BATCH_LENGTH semantic in the feature table even though "
-        "the BATCH_ID semantic is defined.");
+        "is no valid BATCH_LENGTH in the feature table even though BATCH_ID is "
+        "defined.");
     return result;
   } else {
     featureCount = pointsLengthIt->value.GetInt64();
@@ -1613,7 +1613,6 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
     // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
-
     attribute.featureIds.attribute = "_FEATURE_ID_0";
   } else {
     // Otherwise, use implicit feature IDs to indicate the metadata is stored in

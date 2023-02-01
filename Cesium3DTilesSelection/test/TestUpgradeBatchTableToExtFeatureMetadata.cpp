@@ -668,27 +668,23 @@ TEST_CASE("Converts batched PNTS batch table to EXT_feature_metadata") {
       getUniqueBufferViewIds(gltf.accessors, featureTable);
   CHECK(bufferViewSet.size() == gltf.bufferViews.size());
 
-  // Check the mesh primitives
-  CHECK(!gltf.meshes.empty());
+  // Check the mesh primitive
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
 
-  for (Mesh& mesh : gltf.meshes) {
-    CHECK(!mesh.primitives.empty());
-    for (MeshPrimitive& primitive : mesh.primitives) {
-      CHECK(
-          primitive.attributes.find("_FEATURE_ID_0") !=
-          primitive.attributes.end());
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(
+      primitive.attributes.find("_FEATURE_ID_0") != primitive.attributes.end());
 
-      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-      REQUIRE(pPrimitiveExtension);
-      REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
-      FeatureIDAttribute& attribute =
-          pPrimitiveExtension->featureIdAttributes[0];
-      CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
-      CHECK(attribute.featureTable == "default");
-    }
-  }
+  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
 
   // Check metadata values
   {
@@ -819,30 +815,26 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_feature_metadata") {
       getUniqueBufferViewIds(gltf.accessors, featureTable);
   CHECK(bufferViewSet.size() == gltf.bufferViews.size());
 
-  // Check the mesh primitives
-  CHECK(!gltf.meshes.empty());
+  // Check the mesh primitive
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
 
-  for (Mesh& mesh : gltf.meshes) {
-    CHECK(!mesh.primitives.empty());
-    for (MeshPrimitive& primitive : mesh.primitives) {
-      CHECK(
-          primitive.attributes.find("_FEATURE_ID_0") ==
-          primitive.attributes.end());
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(
+      primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
 
-      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-      REQUIRE(pPrimitiveExtension);
-      REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
-      FeatureIDAttribute& attribute =
-          pPrimitiveExtension->featureIdAttributes[0];
-      CHECK(attribute.featureTable == "default");
-      // Check for implicit feature IDs
-      CHECK(!attribute.featureIds.attribute);
-      CHECK(attribute.featureIds.constant == 0);
-      CHECK(attribute.featureIds.divisor == 1);
-    }
-  }
+  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  // Check for implicit feature IDs
+  CHECK(!attribute.featureIds.attribute);
+  CHECK(attribute.featureIds.constant == 0);
+  CHECK(attribute.featureIds.divisor == 1);
 
   // Check metadata values
   {
@@ -973,30 +965,26 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
       getUniqueBufferViewIds(gltf.accessors, featureTable);
   CHECK(bufferViewSet.size() == gltf.bufferViews.size());
 
-  // Check the mesh primitives
-  CHECK(!gltf.meshes.empty());
+  // Check the mesh primitive
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
 
-  for (Mesh& mesh : gltf.meshes) {
-    CHECK(!mesh.primitives.empty());
-    for (MeshPrimitive& primitive : mesh.primitives) {
-      CHECK(
-          primitive.attributes.find("_FEATURE_ID_0") ==
-          primitive.attributes.end());
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(
+      primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
 
-      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-      REQUIRE(pPrimitiveExtension);
-      REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
-      FeatureIDAttribute& attribute =
-          pPrimitiveExtension->featureIdAttributes[0];
-      CHECK(attribute.featureTable == "default");
-      // Check for implicit feature IDs
-      CHECK(!attribute.featureIds.attribute);
-      CHECK(attribute.featureIds.constant == 0);
-      CHECK(attribute.featureIds.divisor == 1);
-    }
-  }
+  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  // Check for implicit feature IDs
+  CHECK(!attribute.featureIds.attribute);
+  CHECK(attribute.featureIds.constant == 0);
+  CHECK(attribute.featureIds.divisor == 1);
 
   // Check metadata values
   {

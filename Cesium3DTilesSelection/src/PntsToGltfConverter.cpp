@@ -213,7 +213,7 @@ struct PntsContent {
   std::vector<std::byte> dracoBatchTableBinary;
 
   Cesium3DTilesSelection::ErrorList errors;
-  bool metadataHasErrors = false;
+  bool dracoMetadataHasErrors = false;
 };
 
 bool validateJsonArrayValues(
@@ -473,15 +473,10 @@ void parseBatchIdsFromFeatureTableJson(
   }
 
   const auto batchLengthIt = featureTableJson.FindMember("BATCH_LENGTH");
-  if (batchLengthIt == featureTableJson.MemberEnd() ||
-      !batchLengthIt->value.IsUint()) {
-    parsedContent.errors.emplaceWarning(
-        "Error parsing PNTS feature table, BATCH_ID is defined but no valid "
-        "BATCH_LENGTH is defined. Skip parsing metadata.");
-    parsedContent.metadataHasErrors = true;
-    return;
+  if (batchLengthIt != featureTableJson.MemberEnd() &&
+      batchLengthIt->value.IsUint()) {
+    parsedContent.batchLength = batchLengthIt->value.GetUint();
   }
-  parsedContent.batchLength = batchLengthIt->value.GetUint();
 }
 
 void parseSemanticsFromFeatureTableJson(
@@ -667,7 +662,7 @@ void parseDracoExtensionFromBatchTableJson(
         "Error parsing batch table, 3DTILES_draco_point_compression is present "
         "but BATCH_LENGTH is defined. Only per-point properties can be "
         "compressed by Draco.");
-    parsedContent.metadataHasErrors = true;
+    parsedContent.dracoMetadataHasErrors = true;
     return;
   }
 
@@ -677,7 +672,7 @@ void parseDracoExtensionFromBatchTableJson(
     parsedContent.errors.emplaceWarning(
         "Error parsing 3DTILES_draco_point_compression extension, no "
         "properties object was found.");
-    parsedContent.metadataHasErrors = true;
+    parsedContent.dracoMetadataHasErrors = true;
     return;
   }
 
@@ -687,8 +682,9 @@ void parseDracoExtensionFromBatchTableJson(
        ++dracoPropertyIt) {
     const std::string name = dracoPropertyIt->name.GetString();
 
-    // Validate the property against the batch table first. If there are
-    // any issues with the batch table, skip parsing metadata altogether.
+    // If there are issues with the extension, skip parsing metadata altogether.
+    // Otherwise, BatchTableToGltfFeatureMetadata will still try to parse the
+    // invalid Draco-compressed properties.
     auto batchTablePropertyIt = batchTableJson.FindMember(name.c_str());
     if (batchTablePropertyIt == batchTableJson.MemberEnd() ||
         !batchTablePropertyIt->value.IsObject()) {
@@ -699,16 +695,27 @@ void parseDracoExtensionFromBatchTableJson(
       continue;
     }
 
+    if (!dracoPropertyIt->value.IsInt()) {
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "Error parsing 3DTILES_draco_compression extension, the metadata "
+          "property {} does not have valid draco ID. Skip parsing metadata.",
+          name));
+      parsedContent.dracoMetadataHasErrors = true;
+      return;
+    }
+
+    // If the batch table binary property is invalid, it will also be ignored by
+    // BatchTableToGltfFeatureMetadata, so it's fine to continue parsing the
+    // other properties.
     const rapidjson::Value& batchTableProperty = batchTablePropertyIt->value;
     auto byteOffsetIt = batchTableProperty.FindMember("byteOffset");
     if (byteOffsetIt == batchTableProperty.MemberEnd() ||
         !byteOffsetIt->value.IsUint()) {
       parsedContent.errors.emplaceWarning(fmt::format(
-          "Error parsing batch table, the metadata property {} does not have "
-          "valid byteOffset. Skip parsing metadata.",
+          "Skip decoding Draco-compressed property {}. The binary property "
+          "doesn't have a valid byteOffset.",
           name));
-      parsedContent.metadataHasErrors = true;
-      return;
+      continue;
     }
 
     std::string componentType;
@@ -720,11 +727,10 @@ void parseDracoExtensionFromBatchTableJson(
     if (stringToMetadataComponentType.find(componentType) ==
         stringToMetadataComponentType.end()) {
       parsedContent.errors.emplaceWarning(fmt::format(
-          "Error parsing batch table, the metadata property {} does not have "
-          "valid componentType. Skip parsing metadata.",
+          "Skip decoding Draco-compressed property {}. The binary property "
+          "doesn't have a valid componentType.",
           name));
-      parsedContent.metadataHasErrors = true;
-      return;
+      continue;
     }
 
     std::string type;
@@ -734,20 +740,10 @@ void parseDracoExtensionFromBatchTableJson(
     }
     if (stringToMetadataType.find(type) == stringToMetadataType.end()) {
       parsedContent.errors.emplaceWarning(fmt::format(
-          "Error parsing batch table, the metadata property {} does not have "
-          "valid type. Skip parsing metadata.",
+          "Skip decoding Draco-compressed property {}. The binary property "
+          "doesn't have a valid type.",
           name));
-      parsedContent.metadataHasErrors = true;
-      return;
-    }
-
-    if (!dracoPropertyIt->value.IsInt()) {
-      parsedContent.errors.emplaceWarning(fmt::format(
-          "Error parsing 3DTILES_draco_compression extension, the metadata "
-          "property {} does not have valid draco ID. Skip parsing metadata.",
-          name));
-      parsedContent.metadataHasErrors = true;
-      return;
+      continue;
     }
 
     DracoMetadataSemantic semantic;
@@ -776,9 +772,7 @@ rapidjson::Document parseBatchTableJson(
     return document;
   }
 
-  if (!parsedContent.metadataHasErrors) {
-    parseDracoExtensionFromBatchTableJson(document, parsedContent);
-  }
+  parseDracoExtensionFromBatchTableJson(document, parsedContent);
 
   return document;
 }
@@ -855,7 +849,7 @@ void decodeDracoMetadata(
           "Error decoding {} property in the 3DTILES_draco_compression "
           "extension. Skip parsing metadata.",
           dracoSemanticIt->first));
-      parsedContent.metadataHasErrors = true;
+      parsedContent.dracoMetadataHasErrors = true;
       return;
     }
 
@@ -1024,7 +1018,7 @@ void decodeDraco(
     }
   }
 
-  if (batchTableJson.HasParseError() || parsedContent.metadataHasErrors) {
+  if (batchTableJson.HasParseError() || parsedContent.dracoMetadataHasErrors) {
     return;
   }
 
@@ -1545,7 +1539,8 @@ void convertPntsContentToGltf(
 
     createGltfFromParsedContent(parsedContent, result);
 
-    if (batchTableJson.HasParseError() || parsedContent.metadataHasErrors) {
+    if (batchTableJson.HasParseError() ||
+        parsedContent.dracoMetadataHasErrors) {
       result.errors.merge(parsedContent.errors);
       return;
     }
