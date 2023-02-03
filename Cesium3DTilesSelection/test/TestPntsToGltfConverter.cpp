@@ -23,7 +23,8 @@ using namespace CesiumUtility;
 template <typename Type>
 static void checkBufferContents(
     const std::vector<std::byte>& buffer,
-    const std::vector<Type>& expected) {
+    const std::vector<Type>& expected,
+    const double epsilon = Math::Epsilon6) {
   REQUIRE(buffer.size() == expected.size() * sizeof(Type));
   const int32_t byteStride = sizeof(Type);
   if constexpr (std::is_same_v<Type, glm::vec3>) {
@@ -34,7 +35,7 @@ static void checkBufferContents(
       REQUIRE(Math::equalsEpsilon(
           static_cast<glm::dvec3>(value),
           static_cast<glm::dvec3>(expectedValue),
-          Math::Epsilon6));
+          epsilon));
     }
   } else if constexpr (std::is_same_v<Type, glm::vec4>) {
     for (size_t i = 0; i < expected.size(); ++i) {
@@ -44,7 +45,7 @@ static void checkBufferContents(
       REQUIRE(Math::equalsEpsilon(
           static_cast<glm::dvec4>(value),
           static_cast<glm::dvec4>(expectedValue),
-          Math::Epsilon6));
+          epsilon));
     }
   } else if constexpr (std::is_floating_point_v<Type>) {
     for (size_t i = 0; i < expected.size(); ++i) {
@@ -64,39 +65,6 @@ static void checkBufferContents(
     }
   } else {
     FAIL("Buffer check has not been implemented for the given type.");
-  }
-}
-
-template <typename Type>
-static void checkBufferContents(
-    const std::vector<std::byte>& buffer,
-    const std::vector<Type>& expected,
-    const double epsilon) {
-  REQUIRE(buffer.size() == expected.size() * sizeof(Type));
-  const int32_t byteStride = sizeof(Type);
-  if constexpr (std::is_same_v<Type, glm::vec3>) {
-    for (size_t i = 0; i < expected.size(); ++i) {
-      const glm::vec3& value =
-          *reinterpret_cast<const glm::vec3*>(buffer.data() + i * byteStride);
-      const glm::vec3& expectedValue = expected[i];
-      REQUIRE(Math::equalsEpsilon(
-          static_cast<glm::dvec3>(value),
-          static_cast<glm::dvec3>(expectedValue),
-          epsilon));
-    }
-  } else if constexpr (std::is_same_v<Type, glm::vec4>) {
-    for (size_t i = 0; i < expected.size(); ++i) {
-      const glm::vec4& value =
-          *reinterpret_cast<const glm::vec4*>(buffer.data() + i * byteStride);
-      const glm::vec4& expectedValue = expected[i];
-      REQUIRE(Math::equalsEpsilon(
-          static_cast<glm::dvec4>(value),
-          static_cast<glm::dvec4>(expectedValue),
-          epsilon));
-    }
-  } else {
-    FAIL("Buffer check with epsilon has not been implemented for the given "
-         "type.");
   }
 }
 

@@ -216,10 +216,11 @@ struct PntsContent {
   bool dracoMetadataHasErrors = false;
 };
 
+template <typename TValidate>
 bool validateJsonArrayValues(
     const rapidjson::Value& arrayValue,
     uint32_t expectedLength,
-    std::function<bool(const rapidjson::Value&)> validate) {
+    TValidate validate) {
   if (!arrayValue.IsArray()) {
     return false;
   }
@@ -816,11 +817,11 @@ void getDracoData(
   int64_t decodedByteOffset = pAttribute->byte_offset();
   int64_t decodedByteStride = pAttribute->byte_stride();
 
+  const uint8_t* pSource = decodedBuffer->data() + decodedByteOffset;
   if (dataElementSize != static_cast<size_t>(decodedByteStride)) {
     gsl::span<T> outData(reinterpret_cast<T*>(data.data()), pointsLength);
     for (uint32_t i = 0; i < pointsLength; ++i) {
-      outData[i] = *reinterpret_cast<const T*>(
-          decodedBuffer->data() + decodedByteOffset + decodedByteStride * i);
+      outData[i] = *reinterpret_cast<const T*>(pSource + decodedByteStride * i);
     }
   } else {
     std::memcpy(
@@ -1234,7 +1235,7 @@ void parseFeatureTableBinary(
   }
 }
 
-int32_t createBufferInGltf(Model& gltf, std::vector<std::byte>& buffer) {
+int32_t createBufferInGltf(Model& gltf, std::vector<std::byte>&& buffer) {
   size_t bufferId = gltf.buffers.size();
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
   gltfBuffer.byteLength = static_cast<int32_t>(buffer.size());
@@ -1280,7 +1281,8 @@ void addPositionsToGltf(PntsContent& parsedContent, Model& gltf) {
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
   const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
   const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-  int32_t bufferId = createBufferInGltf(gltf, parsedContent.position.data);
+  int32_t bufferId =
+      createBufferInGltf(gltf, std::move(parsedContent.position.data));
   int32_t bufferViewId =
       createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
   int32_t accessorId = createAccessorInGltf(
@@ -1334,7 +1336,7 @@ void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
   }
 
   const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-  int32_t bufferId = createBufferInGltf(gltf, color.data);
+  int32_t bufferId = createBufferInGltf(gltf, std::move(color.data));
   int32_t bufferViewId =
       createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
   int32_t accessorId =
@@ -1360,7 +1362,7 @@ void addNormalsToGltf(PntsContent& parsedContent, Model& gltf) {
   const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
   const int64_t byteLength = static_cast<int64_t>(byteStride * count);
 
-  int32_t bufferId = createBufferInGltf(gltf, normal.data);
+  int32_t bufferId = createBufferInGltf(gltf, std::move(normal.data));
   int32_t bufferViewId =
       createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
   int32_t accessorId = createAccessorInGltf(
@@ -1396,7 +1398,7 @@ void addBatchIdsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
         Accessor::computeByteSizeOfComponent(componentType);
     const int64_t byteLength = static_cast<int64_t>(byteStride * count);
 
-    int32_t bufferId = createBufferInGltf(gltf, batchId.data);
+    int32_t bufferId = createBufferInGltf(gltf, std::move(batchId.data));
     int32_t bufferViewId =
         createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
     int32_t accessorId = createAccessorInGltf(
@@ -1518,6 +1520,7 @@ void convertPntsContentToGltf(
             static_cast<size_t>(
                 headerLength + header.featureTableJsonByteLength),
             header.featureTableBinaryByteLength);
+
     gsl::span<const std::byte> batchTableBinaryData;
     if (header.batchTableBinaryByteLength > 0) {
       batchTableBinaryData = pntsBinary.subspan(
@@ -1539,7 +1542,7 @@ void convertPntsContentToGltf(
 
     createGltfFromParsedContent(parsedContent, result);
 
-    if (batchTableJson.HasParseError() || batchTableJson.MemberCount() == 0 ||
+    if (!batchTableJson.IsObject() || batchTableJson.HasParseError() ||
         parsedContent.dracoMetadataHasErrors) {
       result.errors.merge(parsedContent.errors);
       return;
