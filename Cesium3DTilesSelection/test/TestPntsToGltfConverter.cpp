@@ -24,7 +24,7 @@ template <typename Type>
 static void checkBufferContents(
     const std::vector<std::byte>& buffer,
     const std::vector<Type>& expected,
-    const double epsilon = Math::Epsilon6) {
+    [[maybe_unused]] const double epsilon = Math::Epsilon6) {
   REQUIRE(buffer.size() == expected.size() * sizeof(Type));
   const int32_t byteStride = sizeof(Type);
   if constexpr (std::is_same_v<Type, glm::vec3>) {
