@@ -88,6 +88,9 @@ static void checkAttribute(
   if constexpr (std::is_same_v<Type, glm::vec3>) {
     expectedComponentType = Accessor::ComponentType::FLOAT;
     expectedType = Accessor::Type::VEC3;
+  } else if constexpr (std::is_same_v<Type, glm::vec4>) {
+    expectedComponentType = Accessor::ComponentType::FLOAT;
+    expectedType = Accessor::Type::VEC4;
   } else if constexpr (std::is_same_v<Type, glm::u8vec3>) {
     expectedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
     expectedType = Accessor::Type::VEC3;
@@ -257,12 +260,12 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
 
   // Check that position and color attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec4>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec4>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check color attribute more thoroughly
   uint32_t colorAccessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
   Accessor& colorAccessor = gltf.accessors[colorAccessorId];
-  CHECK(colorAccessor.normalized);
+  CHECK(!colorAccessor.normalized);
 
   uint32_t colorBufferViewId = static_cast<uint32_t>(colorAccessor.bufferView);
   BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
@@ -270,17 +273,17 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   uint32_t colorBufferId = static_cast<uint32_t>(colorBufferView.buffer);
   Buffer& colorBuffer = gltf.buffers[colorBufferId];
 
-  const std::vector<glm::u8vec4> expectedColors = {
-      glm::u8vec4(139, 151, 182, 108),
-      glm::u8vec4(153, 218, 138, 108),
-      glm::u8vec4(108, 159, 164, 49),
-      glm::u8vec4(111, 75, 227, 7),
-      glm::u8vec4(245, 69, 97, 61),
-      glm::u8vec4(201, 207, 134, 61),
-      glm::u8vec4(144, 100, 236, 107),
-      glm::u8vec4(18, 86, 22, 82)};
+  const std::vector<glm::vec4> expectedColors = {
+      glm::vec4(0.263174f, 0.315762f, 0.476177f, 0.423529f),
+      glm::vec4(0.325036f, 0.708297f, 0.259027f, 0.423529f),
+      glm::vec4(0.151058f, 0.353740f, 0.378676f, 0.192156f),
+      glm::vec4(0.160443f, 0.067724f, 0.774227f, 0.027450f),
+      glm::vec4(0.915750f, 0.056374f, 0.119264f, 0.239215f),
+      glm::vec4(0.592438f, 0.632042f, 0.242796f, 0.239215f),
+      glm::vec4(0.284452f, 0.127529f, 0.843369f, 0.419607f),
+      glm::vec4(0.002932f, 0.091518f, 0.004559f, 0.321568f)};
 
-  checkBufferContents<glm::u8vec4>(colorBuffer.cesium.data, expectedColors);
+  checkBufferContents<glm::vec4>(colorBuffer.cesium.data, expectedColors);
 }
 
 TEST_CASE("Converts point cloud with RGB to glTF") {
@@ -317,12 +320,12 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
 
   // Check that position and color attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check color attribute more thoroughly
   uint32_t colorAccessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
   Accessor& colorAccessor = gltf.accessors[colorAccessorId];
-  CHECK(colorAccessor.normalized);
+  CHECK(!colorAccessor.normalized);
 
   uint32_t colorBufferViewId = static_cast<uint32_t>(colorAccessor.bufferView);
   BufferView& colorBufferView = gltf.bufferViews[colorBufferViewId];
@@ -330,17 +333,17 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
   uint32_t colorBufferId = static_cast<uint32_t>(colorBufferView.buffer);
   Buffer& colorBuffer = gltf.buffers[colorBufferId];
 
-  const std::vector<glm::u8vec3> expectedColors = {
-      glm::u8vec3(139, 151, 182),
-      glm::u8vec3(153, 218, 138),
-      glm::u8vec3(108, 159, 164),
-      glm::u8vec3(111, 75, 227),
-      glm::u8vec3(245, 69, 97),
-      glm::u8vec3(201, 207, 134),
-      glm::u8vec3(144, 100, 236),
-      glm::u8vec3(18, 86, 22)};
+  const std::vector<glm::vec3> expectedColors = {
+      glm::vec3(0.263174f, 0.315762f, 0.476177f),
+      glm::vec3(0.325036f, 0.708297f, 0.259027f),
+      glm::vec3(0.151058f, 0.353740f, 0.378676f),
+      glm::vec3(0.160443f, 0.067724f, 0.774227f),
+      glm::vec3(0.915750f, 0.056374f, 0.119264f),
+      glm::vec3(0.592438f, 0.632042f, 0.242796f),
+      glm::vec3(0.284452f, 0.127529f, 0.843369f),
+      glm::vec3(0.002932f, 0.091518f, 0.004559f)};
 
-  checkBufferContents<glm::u8vec3>(colorBuffer.cesium.data, expectedColors);
+  checkBufferContents<glm::vec3>(colorBuffer.cesium.data, expectedColors);
 }
 
 TEST_CASE("Converts point cloud with RGB565 to glTF") {
@@ -380,7 +383,6 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check color attribute more thoroughly
-  // Check color attribute more thoroughly
   uint32_t colorAccessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
   Accessor& colorAccessor = gltf.accessors[colorAccessorId];
   CHECK(!colorAccessor.normalized);
@@ -392,14 +394,14 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   Buffer& colorBuffer = gltf.buffers[colorBufferId];
 
   const std::vector<glm::vec3> expectedColors = {
-      glm::vec3(0.5483871, 0.5873016, 0.7096773),
-      glm::vec3(0.5806451, 0.8571428, 0.5161290),
-      glm::vec3(0.4193548, 0.6190476, 0.6451612),
-      glm::vec3(0.4193548, 0.2857142, 0.8709677),
-      glm::vec3(0.9354838, 0.2698412, 0.3548386),
-      glm::vec3(0.7741935, 0.8095238, 0.5161290),
-      glm::vec3(0.5483871, 0.3809523, 0.9032257),
-      glm::vec3(0.0645161, 0.3333333, 0.0645161)};
+      glm::vec3(0.2666808f, 0.3100948f, 0.4702556f),
+      glm::vec3(0.3024152f, 0.7123886f, 0.2333824f),
+      glm::vec3(0.1478017f, 0.3481712f, 0.3813029f),
+      glm::vec3(0.1478017f, 0.0635404f, 0.7379118f),
+      glm::vec3(0.8635347f, 0.0560322f, 0.1023452f),
+      glm::vec3(0.5694675f, 0.6282104f, 0.2333824f),
+      glm::vec3(0.2666808f, 0.1196507f, 0.7993773f),
+      glm::vec3(0.0024058f, 0.0891934f, 0.0024058f)};
 
   checkBufferContents<glm::vec3>(colorBuffer.cesium.data, expectedColors);
 }
@@ -481,7 +483,7 @@ TEST_CASE("Converts point cloud with quantized positions to glTF") {
 
   // Check that position and color attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
 
   // Check position attribute more thoroughly
   uint32_t positionAccessorId =
@@ -552,7 +554,7 @@ TEST_CASE("Converts point cloud with normals to glTF") {
 
   // Check that position, color, and normal attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
   checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
 
   // Check normal attribute more thoroughly
@@ -613,7 +615,7 @@ TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
 
   // Check that position, color, and normal attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
   checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
 
   // Check normal attribute more thoroughly
@@ -788,7 +790,7 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
 
   // Check that position and color  attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
 }
 
 TEST_CASE("Converts point cloud with Draco compression to glTF") {
@@ -848,7 +850,7 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
 
   // Check that position, color, and normal attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
   checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
 
   // Check each attribute more thoroughly
@@ -888,7 +890,7 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
   {
     uint32_t accessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
     Accessor& accessor = gltf.accessors[accessorId];
-    CHECK(accessor.normalized);
+    CHECK(!accessor.normalized);
 
     uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
     BufferView& bufferView = gltf.bufferViews[bufferViewId];
@@ -896,17 +898,17 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
     uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
     Buffer& buffer = gltf.buffers[bufferId];
 
-    std::vector<glm::u8vec3> expected = {
-        glm::u8vec3(182, 215, 153),
-        glm::u8vec3(108, 159, 164),
-        glm::u8vec3(227, 14, 245),
-        glm::u8vec3(201, 207, 134),
-        glm::u8vec3(236, 213, 18),
-        glm::u8vec3(5, 93, 212),
-        glm::u8vec3(221, 221, 249),
-        glm::u8vec3(117, 132, 199),
+    std::vector<glm::vec3> expected = {
+        glm::vec3(0.4761772f, 0.6870308f, 0.3250369f),
+        glm::vec3(0.1510580f, 0.3537409f, 0.3786762f),
+        glm::vec3(0.7742273f, 0.0016869f, 0.9157501f),
+        glm::vec3(0.5924380f, 0.6320426f, 0.2427963f),
+        glm::vec3(0.8433697f, 0.6730490f, 0.0029323f),
+        glm::vec3(0.0001751f, 0.1087111f, 0.6661169f),
+        glm::vec3(0.7299188f, 0.7299188f, 0.9489649f),
+        glm::vec3(0.1801442f, 0.2348952f, 0.5795466f),
     };
-    checkBufferContents<glm::u8vec3>(buffer.cesium.data, expected);
+    checkBufferContents<glm::vec3>(buffer.cesium.data, expected);
   }
 
   {
@@ -994,7 +996,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
 
   // Check that position, color, and normal attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
   checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
 
   // Check each attribute more thoroughly
@@ -1034,7 +1036,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   {
     uint32_t accessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
     Accessor& accessor = gltf.accessors[accessorId];
-    CHECK(accessor.normalized);
+    CHECK(!accessor.normalized);
 
     uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
     BufferView& bufferView = gltf.bufferViews[bufferViewId];
@@ -1042,17 +1044,17 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
     uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
     Buffer& buffer = gltf.buffers[bufferId];
 
-    std::vector<glm::u8vec3> expected = {
-        glm::u8vec3(182, 215, 153),
-        glm::u8vec3(108, 159, 164),
-        glm::u8vec3(227, 14, 245),
-        glm::u8vec3(201, 207, 134),
-        glm::u8vec3(236, 213, 18),
-        glm::u8vec3(5, 93, 212),
-        glm::u8vec3(221, 221, 249),
-        glm::u8vec3(117, 132, 199),
+    std::vector<glm::vec3> expected = {
+        glm::vec3(0.4761772f, 0.6870308f, 0.3250369f),
+        glm::vec3(0.1510580f, 0.3537409f, 0.3786762f),
+        glm::vec3(0.7742273f, 0.0016869f, 0.9157501f),
+        glm::vec3(0.5924380f, 0.6320426f, 0.2427963f),
+        glm::vec3(0.8433697f, 0.6730490f, 0.0029323f),
+        glm::vec3(0.0001751f, 0.1087111f, 0.6661169f),
+        glm::vec3(0.7299188f, 0.7299188f, 0.9489649f),
+        glm::vec3(0.1801442f, 0.2348952f, 0.5795466f),
     };
-    checkBufferContents<glm::u8vec3>(buffer.cesium.data, expected);
+    checkBufferContents<glm::vec3>(buffer.cesium.data, expected);
   }
 
   {
@@ -1136,7 +1138,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
 
   // Check that position, normal, and feature ID attributes are present
   checkAttribute<glm::vec3>(gltf, primitive, "POSITION", pointsLength);
-  checkAttribute<glm::u8vec3>(gltf, primitive, "COLOR_0", pointsLength);
+  checkAttribute<glm::vec3>(gltf, primitive, "COLOR_0", pointsLength);
   checkAttribute<glm::vec3>(gltf, primitive, "NORMAL", pointsLength);
   checkAttribute<uint8_t>(gltf, primitive, "_FEATURE_ID_0", pointsLength);
 
@@ -1177,7 +1179,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   {
     uint32_t accessorId = static_cast<uint32_t>(attributes.at("COLOR_0"));
     Accessor& accessor = gltf.accessors[accessorId];
-    CHECK(accessor.normalized);
+    CHECK(!accessor.normalized);
 
     uint32_t bufferViewId = static_cast<uint32_t>(accessor.bufferView);
     BufferView& bufferView = gltf.bufferViews[bufferViewId];
@@ -1185,17 +1187,17 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
     uint32_t bufferId = static_cast<uint32_t>(bufferView.buffer);
     Buffer& buffer = gltf.buffers[bufferId];
 
-    std::vector<glm::u8vec3> expected = {
-        glm::u8vec3(182, 215, 153),
-        glm::u8vec3(108, 159, 164),
-        glm::u8vec3(227, 14, 245),
-        glm::u8vec3(201, 207, 134),
-        glm::u8vec3(236, 213, 18),
-        glm::u8vec3(5, 93, 212),
-        glm::u8vec3(221, 221, 249),
-        glm::u8vec3(117, 132, 199),
+    std::vector<glm::vec3> expected = {
+        glm::vec3(0.4761772f, 0.6870308f, 0.3250369f),
+        glm::vec3(0.1510580f, 0.3537409f, 0.3786762f),
+        glm::vec3(0.7742273f, 0.0016869f, 0.9157501f),
+        glm::vec3(0.5924380f, 0.6320426f, 0.2427963f),
+        glm::vec3(0.8433697f, 0.6730490f, 0.0029323f),
+        glm::vec3(0.0001751f, 0.1087111f, 0.6661169f),
+        glm::vec3(0.7299188f, 0.7299188f, 0.9489649f),
+        glm::vec3(0.1801442f, 0.2348952f, 0.5795466f),
     };
-    checkBufferContents<glm::u8vec3>(buffer.cesium.data, expected);
+    checkBufferContents<glm::vec3>(buffer.cesium.data, expected);
   }
 
   {

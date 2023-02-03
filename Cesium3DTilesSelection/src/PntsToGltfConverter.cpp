@@ -183,6 +183,23 @@ struct DracoMetadataSemantic {
 
 enum PntsColorType { CONSTANT, RGBA, RGB, RGB565 };
 
+// Point cloud colors are stored in sRGB space, so they need to be converted to
+// linear RGB for the glTF.
+// This function assumes the sRGB values are normalized from [0, 255] to [0, 1]
+template <typename TColor> TColor srgbToLinear(const TColor srgb) {
+  static_assert(
+      std::is_same_v<TColor, glm::vec3> || std::is_same_v<TColor, glm::vec4>);
+
+  glm::vec3 srgbInput = glm::vec3(srgb);
+  glm::vec3 linearOutput = glm::pow(srgbInput, glm::vec3(2.2f));
+
+  if constexpr (std::is_same_v<TColor, glm::vec4>) {
+    return glm::vec4(linearOutput, srgb.w);
+  } else if constexpr (std::is_same_v<TColor, glm::vec3>) {
+    return linearOutput;
+  }
+}
+
 struct PntsContent {
   uint32_t pointsLength = 0;
   std::optional<glm::dvec3> rtcCenter;
@@ -953,13 +970,44 @@ void decodeDraco(
     if (color.dracoId) {
       draco::PointAttribute* pColorAttribute =
           pPointCloud->attribute(color.dracoId.value());
+      std::vector<std::byte>& colorData = parsedContent.color->data;
       if (parsedContent.colorType == PntsColorType::RGBA &&
           validateDracoAttribute(pColorAttribute, draco::DT_UINT8, 4)) {
-        getDracoData<glm::u8vec4>(pColorAttribute, color.data, pointsLength);
+        colorData.resize(pointsLength * sizeof(glm::vec4));
+
+        gsl::span<glm::vec4> outColors(
+            reinterpret_cast<glm::vec4*>(colorData.data()),
+            pointsLength);
+
+        draco::DataBuffer* decodedBuffer = pColorAttribute->buffer();
+        int64_t decodedByteOffset = pColorAttribute->byte_offset();
+        int64_t decodedByteStride = pColorAttribute->byte_stride();
+
+        for (uint32_t i = 0; i < pointsLength; ++i) {
+          const glm::u8vec4 rgbaColor = *reinterpret_cast<const glm::u8vec4*>(
+              decodedBuffer->data() + decodedByteOffset +
+              decodedByteStride * i);
+          outColors[i] = srgbToLinear(glm::vec4(rgbaColor) / 255.0f);
+        }
       } else if (
           parsedContent.colorType == PntsColorType::RGB &&
           validateDracoAttribute(pColorAttribute, draco::DT_UINT8, 3)) {
-        getDracoData<glm::u8vec3>(pColorAttribute, color.data, pointsLength);
+        colorData.resize(pointsLength * sizeof(glm::vec3));
+
+        gsl::span<glm::vec3> outColors(
+            reinterpret_cast<glm::vec3*>(colorData.data()),
+            pointsLength);
+
+        draco::DataBuffer* decodedBuffer = pColorAttribute->buffer();
+        int64_t decodedByteOffset = pColorAttribute->byte_offset();
+        int64_t decodedByteStride = pColorAttribute->byte_stride();
+
+        for (uint32_t i = 0; i < pointsLength; ++i) {
+          const glm::u8vec3 rgbColor = *reinterpret_cast<const glm::u8vec3*>(
+              decodedBuffer->data() + decodedByteOffset +
+              decodedByteStride * i);
+          outColors[i] = srgbToLinear(glm::vec3(rgbColor) / 255.0f);
+        }
       } else {
         parsedContent.errors.emplaceWarning(
             "Error parsing decoded Draco point cloud, invalid color attribute. "
@@ -1112,35 +1160,54 @@ void parseColorsFromFeatureTableBinary(
   }
 
   const uint32_t pointsLength = parsedContent.pointsLength;
-  if (parsedContent.colorType == PntsColorType::RGB565) {
-    const size_t colorsByteStride = sizeof(glm::vec3);
-    const size_t colorsByteLength = pointsLength * colorsByteStride;
-    colorData.resize(colorsByteLength);
+  const size_t colorsByteStride = parsedContent.colorType == PntsColorType::RGBA
+                                      ? sizeof(glm::vec4)
+                                      : sizeof(glm::vec3);
+  const size_t colorsByteLength = pointsLength * colorsByteStride;
+  colorData.resize(colorsByteLength);
 
+  if (parsedContent.colorType == PntsColorType::RGBA) {
+    const gsl::span<const glm::u8vec4> rgbaColors(
+        reinterpret_cast<const glm::u8vec4*>(
+            featureTableBinaryData.data() + color.byteOffset),
+        pointsLength);
+    gsl::span<glm::vec4> outColors(
+        reinterpret_cast<glm::vec4*>(colorData.data()),
+        pointsLength);
+
+    for (size_t i = 0; i < pointsLength; i++) {
+      glm::vec4 normalizedColor = glm::vec4(rgbaColors[i]) / 255.0f;
+      outColors[i] = srgbToLinear(normalizedColor);
+    }
+  } else if (parsedContent.colorType == PntsColorType::RGB) {
+    const gsl::span<const glm::u8vec3> rgbColors(
+        reinterpret_cast<const glm::u8vec3*>(
+            featureTableBinaryData.data() + color.byteOffset),
+        pointsLength);
     gsl::span<glm::vec3> outColors(
         reinterpret_cast<glm::vec3*>(colorData.data()),
         pointsLength);
+
+    for (size_t i = 0; i < pointsLength; i++) {
+      glm::vec3 normalizedColor = glm::vec3(rgbColors[i]) / 255.0f;
+      outColors[i] = srgbToLinear(normalizedColor);
+    }
+  } else if (parsedContent.colorType == PntsColorType::RGB565) {
 
     const gsl::span<const uint16_t> compressedColors(
         reinterpret_cast<const uint16_t*>(
             featureTableBinaryData.data() + color.byteOffset),
         pointsLength);
+    gsl::span<glm::vec3> outColors(
+        reinterpret_cast<glm::vec3*>(colorData.data()),
+        pointsLength);
 
     for (size_t i = 0; i < pointsLength; i++) {
       const uint16_t compressedColor = compressedColors[i];
-      outColors[i] =
+      glm::vec3 decompressedColor =
           glm::vec3(AttributeCompression::decodeRGB565(compressedColor));
+      outColors[i] = srgbToLinear(decompressedColor);
     }
-  } else if (parsedContent.colorType != PntsColorType::CONSTANT) {
-    const size_t colorsByteStride =
-        parsedContent.colorType == PntsColorType::RGBA ? sizeof(glm::u8vec4)
-                                                       : sizeof(glm::u8vec3);
-    const size_t colorsByteLength = pointsLength * colorsByteStride;
-    colorData.resize(colorsByteLength);
-    std::memcpy(
-        colorData.data(),
-        featureTableBinaryData.data() + color.byteOffset,
-        colorsByteLength);
   }
 }
 
@@ -1313,25 +1380,16 @@ void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
 
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
   int64_t byteStride = 0;
-  int32_t componentType = 0;
+  const int32_t componentType = Accessor::ComponentType::FLOAT;
   std::string type;
   bool isTranslucent = false;
-  bool isNormalized = false;
 
   if (parsedContent.colorType == PntsColorType::RGBA) {
-    byteStride = static_cast<int64_t>(sizeof(glm::u8vec4));
-    componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    byteStride = static_cast<int64_t>(sizeof(glm::vec4));
     type = Accessor::Type::VEC4;
     isTranslucent = true;
-    isNormalized = true;
-  } else if (parsedContent.colorType == PntsColorType::RGB) {
-    byteStride = static_cast<int64_t>(sizeof(glm::u8vec3));
-    componentType = Accessor::ComponentType::UNSIGNED_BYTE;
-    isNormalized = true;
-    type = Accessor::Type::VEC3;
-  } else if (parsedContent.colorType == PntsColorType::RGB565) {
+  } else {
     byteStride = static_cast<int64_t>(sizeof(glm::vec3));
-    componentType = Accessor::ComponentType::FLOAT;
     type = Accessor::Type::VEC3;
   }
 
@@ -1341,9 +1399,6 @@ void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
       createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
   int32_t accessorId =
       createAccessorInGltf(gltf, bufferViewId, componentType, count, type);
-
-  Accessor& accessor = gltf.accessors[static_cast<uint32_t>(accessorId)];
-  accessor.normalized = isNormalized;
 
   MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
   primitive.attributes.emplace("COLOR_0", accessorId);
@@ -1449,9 +1504,8 @@ void createGltfFromParsedContent(
   if (parsedContent.color) {
     addColorsToGltf(parsedContent, gltf);
   } else if (parsedContent.constantRgba) {
-    // Map RGBA from [0, 255] to [0, 1]
     glm::vec4 materialColor(parsedContent.constantRgba.value());
-    materialColor /= 255.0f;
+    materialColor = srgbToLinear(materialColor / 255.0f);
 
     material.pbrMetallicRoughness.value().baseColorFactor =
         {materialColor.x, materialColor.y, materialColor.z, materialColor.w};
