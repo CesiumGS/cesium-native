@@ -7,10 +7,8 @@
 
 namespace CesiumGeospatial {
 
-	class CESIUMGEOSPATIAL_API SunPosition {
-	public:
-
-		static glm::dvec3 getSunAngle(float time);
-
-	};
-}
+class CESIUMGEOSPATIAL_API SunPosition {
+public:
+  static glm::dvec3 getSunAngle(float time);
+};
+} // namespace CesiumGeospatial
