@@ -41,6 +41,17 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
+  void operator()(TileCachedRenderContent /*content*/) {
+    auto pRenderContent =
+        std::make_unique<TileRenderContent>(CesiumGltf::Model());
+    pRenderContent->setRenderResources(pRenderResources);
+    if (rasterOverlayDetails) {
+      pRenderContent->setRasterOverlayDetails(std::move(*rasterOverlayDetails));
+    }
+
+    tileContent.setContentKind(std::move(pRenderContent));
+  }
+
   void operator()(CesiumGltf::Model&& model) {
     auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
     pRenderContent->setRenderResources(pRenderResources);
@@ -478,8 +489,31 @@ void postProcessGltfInWorkerThread(
   }
 }
 
-CesiumAsync::Future<TileLoadResultAndRenderResources>
-postProcessContentInWorkerThread(
+CesiumAsync::Future<ClientTileLoadResult>
+loadAndCacheClientTileContentInWorkerThread(
+    TileLoadResult&& result,
+    const TileContentLoadInfo& tileLoadInfo,
+    const std::any& rendererOptions) {
+  return tileLoadInfo.pPrepareRendererResources
+      ->prepareInLoadThread(
+          tileLoadInfo.asyncSystem,
+          std::move(result),
+          tileLoadInfo.tileTransform,
+          rendererOptions)
+      .thenImmediately([asyncSystem = tileLoadInfo.asyncSystem,
+                        pTileContentCache = tileLoadInfo.pTileContentCache](
+                           ClientTileLoadResult&& loadResult) {
+        if (loadResult.result.pCompletedRequest &&
+            (loadResult.cacheOriginalResponseData ||
+             !loadResult.clientDataToCache.empty())) {
+          pTileContentCache->store(asyncSystem, loadResult);
+        }
+
+        return std::move(loadResult);
+      });
+}
+
+CesiumAsync::Future<ClientTileLoadResult> postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
@@ -552,9 +586,11 @@ postProcessContentInWorkerThread(
 
             if (!gltfResult.model) {
               return tileLoadInfo.asyncSystem.createResolvedFuture(
-                  TileLoadResultAndRenderResources{
+                  ClientTileLoadResult{
                       TileLoadResult::createFailedResult(nullptr),
-                      nullptr});
+                      nullptr,
+                      false,
+                      {}});
             }
 
             result.contentKind = std::move(*gltfResult.model);
@@ -564,11 +600,10 @@ postProcessContentInWorkerThread(
                 std::move(projections),
                 tileLoadInfo);
 
-            // create render resources
-            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-                tileLoadInfo.asyncSystem,
+            // create and cache render resources
+            return loadAndCacheClientTileContentInWorkerThread(
                 std::move(result),
-                tileLoadInfo.tileTransform,
+                tileLoadInfo,
                 rendererOptions);
           });
 }
@@ -582,6 +617,8 @@ TilesetContentManager::TilesetContentManager(
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
+      _pTileContentCache{
+          std::make_shared<TileContentCache>(this->_externals.pAssetAccessor)},
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
       _pRootTile{std::move(pRootTile)},
@@ -606,6 +643,8 @@ TilesetContentManager::TilesetContentManager(
     RasterOverlayCollection&& overlayCollection,
     const std::string& url)
     : _externals{externals},
+      _pTileContentCache{
+          std::make_shared<TileContentCache>(this->_externals.pAssetAccessor)},
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
@@ -741,6 +780,8 @@ TilesetContentManager::TilesetContentManager(
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
     : _externals{externals},
+      _pTileContentCache{
+          std::make_shared<TileContentCache>(this->_externals.pAssetAccessor)},
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
@@ -876,6 +917,7 @@ void TilesetContentManager::loadTileContent(
   TileContentLoadInfo tileLoadInfo{
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
+      this->_pTileContentCache,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
       tilesetOptions.contentOptions,
@@ -893,6 +935,7 @@ void TilesetContentManager::loadTileContent(
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
+      this->_pTileContentCache,
       this->_externals.pLogger,
       this->_requestHeaders};
 
@@ -925,15 +968,51 @@ void TilesetContentManager::loadTileContent(
                       std::move(tileLoadInfo),
                       rendererOptions);
                 });
+          } else if (std::holds_alternative<TileCachedRenderContent>(
+                         result.contentKind)) {
+            // We have pre-loaded, binary client content from cache, directly
+            // send it to the client.
+            auto asyncSystem = tileLoadInfo.asyncSystem;
+            return asyncSystem.runInWorkerThread(
+                [result = std::move(result),
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions]() mutable {
+                  // Although this is a cache hit, the client may decide to
+                  // update the cache anyways.
+                  return loadAndCacheClientTileContentInWorkerThread(
+                      std::move(result),
+                      tileLoadInfo,
+                      rendererOptions);
+                });
+          } else {
+            // The tile might have non-render content needed by loaders
+            // (e.g., external tileset content), so just write back the
+            // response data to the cache.
+            ClientTileLoadResult loadResult{
+                std::move(result),
+                nullptr,
+                true,
+                {}};
+            tileLoadInfo.pTileContentCache->store(
+                tileLoadInfo.asyncSystem,
+                loadResult);
+            return tileLoadInfo.asyncSystem.createResolvedFuture(
+                std::move(loadResult));
           }
         }
 
         return tileLoadInfo.asyncSystem
-            .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), nullptr});
+            .createResolvedFuture<ClientTileLoadResult>(
+                {std::move(result), nullptr, true, {}});
       })
-      .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
-        setTileContent(tile, std::move(pair.result), pair.pRenderResources);
+      .thenInMainThread([&tile, thiz](ClientTileLoadResult&& clientResult) {
+        // TODO: Should ClientTileLoadResult, particularly the client-written
+        // buffer be kept available somewhere after loading completes? Would be
+        // useful to inspect.
+        setTileContent(
+            tile,
+            std::move(clientResult.result),
+            clientResult.pRenderResources);
 
         thiz->notifyTileDoneLoading(&tile);
       })
@@ -1082,6 +1161,11 @@ TilesetContentManager::getRequestHeaders() const noexcept {
 std::vector<CesiumAsync::IAssetAccessor::THeader>&
 TilesetContentManager::getRequestHeaders() noexcept {
   return this->_requestHeaders;
+}
+
+const std::shared_ptr<TileContentCache>&
+TilesetContentManager::getTileContentCache() noexcept {
+  return this->_pTileContentCache;
 }
 
 const RasterOverlayCollection&

@@ -162,14 +162,17 @@ bool isTileContentAvailable(
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<TileContentCache>& pTileCache,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
-  return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([pLogger, ktx2TranscodeTargets](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                  pCompletedRequest) mutable {
+  return pTileCache->getOrLoad(
+      asyncSystem,
+      tileUrl,
+      requestHeaders,
+      [pLogger,
+       ktx2TranscodeTargets](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                 pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
         const std::string& tileUrl = pCompletedRequest->url();
@@ -337,7 +340,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   return requestTileContent(
       pLogger,
       asyncSystem,
-      pAssetAccessor,
+      loadInput.pTileContentCache,
       tileUrl,
       requestHeaders,
       contentOptions.ktx2TranscodeTargets);

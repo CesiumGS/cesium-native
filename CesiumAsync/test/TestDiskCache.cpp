@@ -13,7 +13,7 @@ using namespace CesiumAsync;
 TEST_CASE("Test disk cache with Sqlite") {
   SqliteCache diskCache(spdlog::default_logger(), "test.db", 3);
 
-  REQUIRE(diskCache.clearAll());
+  REQUIRE(diskCache.clearAllWriterThread());
 
   SECTION("Test store and retrive cache") {
     HttpHeaders responseHeaders = {
@@ -21,6 +21,8 @@ TEST_CASE("Test disk cache with Sqlite") {
         {"Content-Type", "text/html"}};
     std::vector<std::byte> responseData =
         {std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4)};
+    std::vector<std::byte> clientData =
+        {std::byte(5), std::byte(6), std::byte(7), std::byte(8), std::byte(9)};
     std::unique_ptr<MockAssetResponse> response =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -37,7 +39,7 @@ TEST_CASE("Test disk cache with Sqlite") {
             std::move(response));
 
     std::time_t currentTime = std::time(nullptr);
-    REQUIRE(diskCache.storeEntry(
+    REQUIRE(diskCache.storeEntryWriterThread(
         "TestKey",
         currentTime,
         request->url(),
@@ -45,9 +47,10 @@ TEST_CASE("Test disk cache with Sqlite") {
         request->headers(),
         request->response()->statusCode(),
         request->response()->headers(),
-        request->response()->data()));
+        request->response()->data(),
+        clientData));
 
-    std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey");
+    std::optional<CacheItem> cacheItem = diskCache.getEntryAnyThread("TestKey");
     REQUIRE(cacheItem->expiryTime == currentTime);
 
     const CacheRequest& cacheRequest = cacheItem->cacheRequest;
@@ -68,13 +71,20 @@ TEST_CASE("Test disk cache with Sqlite") {
                                   std::byte(2),
                                   std::byte(3),
                                   std::byte(4)});
+    REQUIRE(
+        cacheResponse.clientData == std::vector<std::byte>(
+                                        {std::byte(5),
+                                         std::byte(6),
+                                         std::byte(7),
+                                         std::byte(8),
+                                         std::byte(9)}));
 
     std::optional<ResponseCacheControl> cacheControl =
         ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
     REQUIRE(!cacheControl.has_value());
   }
 
-  SECTION("Test prune") {
+  SECTION("Test pruneWriterThread") {
     // store data in the cache first
     std::time_t currentTime = std::time(nullptr);
     std::time_t interval = -10;
@@ -91,6 +101,12 @@ TEST_CASE("Test disk cache with Sqlite") {
           std::byte(2),
           std::byte(3),
           std::byte(4)};
+      std::vector<std::byte> clientData = {
+          std::byte(5),
+          std::byte(6),
+          std::byte(7),
+          std::byte(8),
+          std::byte(9)};
       std::unique_ptr<MockAssetResponse> response =
           std::make_unique<MockAssetResponse>(
               static_cast<uint16_t>(200),
@@ -108,7 +124,7 @@ TEST_CASE("Test disk cache with Sqlite") {
               requestHeaders,
               std::move(response));
 
-      REQUIRE(diskCache.storeEntry(
+      REQUIRE(diskCache.storeEntryWriterThread(
           "TestKey" + std::to_string(i),
           currentTime + interval + static_cast<std::time_t>(i),
           request->url(),
@@ -116,19 +132,20 @@ TEST_CASE("Test disk cache with Sqlite") {
           request->headers(),
           request->response()->statusCode(),
           request->response()->headers(),
-          request->response()->data()));
+          request->response()->data(),
+          clientData));
     }
 
-    REQUIRE(diskCache.prune());
+    REQUIRE(diskCache.pruneWriterThread());
     for (int i = 0; i <= 16; ++i) {
       std::optional<CacheItem> cacheItem =
-          diskCache.getEntry("TestKey" + std::to_string(i));
+          diskCache.getEntryAnyThread("TestKey" + std::to_string(i));
       REQUIRE(cacheItem == std::nullopt);
     }
 
     for (int i = 17; i < 20; ++i) {
       std::optional<CacheItem> cacheItem =
-          diskCache.getEntry("TestKey" + std::to_string(i));
+          diskCache.getEntryAnyThread("TestKey" + std::to_string(i));
       REQUIRE(cacheItem != std::nullopt);
 
       // make sure the item is still in there
@@ -155,6 +172,13 @@ TEST_CASE("Test disk cache with Sqlite") {
                                     std::byte(2),
                                     std::byte(3),
                                     std::byte(4)});
+      REQUIRE(
+          cacheResponse.clientData == std::vector<std::byte>(
+                                          {std::byte(5),
+                                           std::byte(6),
+                                           std::byte(7),
+                                           std::byte(8),
+                                           std::byte(9)}));
 
       std::optional<ResponseCacheControl> cacheControl =
           ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
@@ -178,6 +202,8 @@ TEST_CASE("Test disk cache with Sqlite") {
         {"Response-Header", "Response-Value"}};
     std::vector<std::byte> responseData =
         {std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4)};
+    std::vector<std::byte> clientData =
+        {std::byte(5), std::byte(6), std::byte(7), std::byte(8), std::byte(9)};
     std::unique_ptr<MockAssetResponse> response =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -194,7 +220,7 @@ TEST_CASE("Test disk cache with Sqlite") {
             std::move(response));
 
     for (size_t i = 0; i < 10; ++i) {
-      REQUIRE(diskCache.storeEntry(
+      REQUIRE(diskCache.storeEntryWriterThread(
           "TestKey" + std::to_string(i),
           std::time(nullptr),
           request->url(),
@@ -202,14 +228,15 @@ TEST_CASE("Test disk cache with Sqlite") {
           request->headers(),
           request->response()->statusCode(),
           request->response()->headers(),
-          request->response()->data()));
+          request->response()->data(),
+          clientData));
     }
 
     // clear all
-    REQUIRE(diskCache.clearAll());
+    REQUIRE(diskCache.clearAllWriterThread());
     for (size_t i = 0; i < 10; ++i) {
       std::optional<CacheItem> cacheItem =
-          diskCache.getEntry("TestKey" + std::to_string(i));
+          diskCache.getEntryAnyThread("TestKey" + std::to_string(i));
       REQUIRE(cacheItem == std::nullopt);
     }
   }

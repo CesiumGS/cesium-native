@@ -2,6 +2,7 @@
 
 #include "IAssetAccessor.h"
 #include "IAssetRequest.h"
+#include "IAssetResponse.h"
 #include "ICacheDatabase.h"
 #include "ThreadPool.h"
 
@@ -48,14 +49,23 @@ public:
   virtual Future<std::shared_ptr<IAssetRequest>>
   get(const AsyncSystem& asyncSystem,
       const std::string& url,
-      const std::vector<THeader>& headers) override;
+      const std::vector<THeader>& headers,
+      bool writeThrough = true) override;
 
+  /** @copydoc IAssetAccessor::request */
   virtual Future<std::shared_ptr<IAssetRequest>> request(
       const AsyncSystem& asyncSystem,
       const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers,
       const gsl::span<const std::byte>& contentPayload) override;
+
+  /** @copydoc IAssetAccessor::writeBack */
+  virtual Future<void> writeBack(
+      const AsyncSystem& asyncSystem,
+      const std::shared_ptr<IAssetRequest>& pCompletedRequest,
+      bool cacheOriginalResponseData,
+      std::vector<std::byte>&& clientData) override;
 
   /** @copydoc IAssetAccessor::tick */
   virtual void tick() noexcept override;
@@ -66,7 +76,8 @@ private:
   std::shared_ptr<spdlog::logger> _pLogger;
   std::shared_ptr<IAssetAccessor> _pAssetAccessor;
   std::shared_ptr<ICacheDatabase> _pCacheDatabase;
-  ThreadPool _cacheThreadPool;
+  ThreadPool _cacheWriteThreadPool;
+  ThreadPool _cacheReadThreadPool;
   CESIUM_TRACE_DECLARE_TRACK_SET(_pruneSlots, "Prune cache database");
 };
 } // namespace CesiumAsync

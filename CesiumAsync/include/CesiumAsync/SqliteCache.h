@@ -14,6 +14,7 @@ namespace CesiumAsync {
 /**
  * @brief Cache storage using SQLITE to store completed response.
  */
+// template <typename TClientDataCacheManager>
 class CESIUMASYNC_API SqliteCache : public ICacheDatabase {
 public:
   /**
@@ -36,10 +37,13 @@ public:
 
   /** @copydoc ICacheDatabase::getEntry*/
   virtual std::optional<CacheItem>
-  getEntry(const std::string& key) const override;
+  getEntryAnyThread(const std::string& key) const override;
+
+  /** @copydoc ICacheDatabase::updateLastAccessTimeWriterThread*/
+  virtual void updateLastAccessTimeWriterThread(int64_t rowId) override;
 
   /** @copydoc ICacheDatabase::storeEntry*/
-  virtual bool storeEntry(
+  virtual bool storeEntryWriterThread(
       const std::string& key,
       std::time_t expiryTime,
       const std::string& url,
@@ -47,13 +51,14 @@ public:
       const HttpHeaders& requestHeaders,
       uint16_t statusCode,
       const HttpHeaders& responseHeaders,
-      const gsl::span<const std::byte>& responseData) override;
+      const gsl::span<const std::byte>& responseData,
+      const gsl::span<const std::byte>& clientData) override;
 
   /** @copydoc ICacheDatabase::prune*/
-  virtual bool prune() override;
+  virtual bool pruneWriterThread() override;
 
   /** @copydoc ICacheDatabase::clearAll*/
-  virtual bool clearAll() override;
+  virtual bool clearAllWriterThread() override;
 
 private:
   struct Impl;

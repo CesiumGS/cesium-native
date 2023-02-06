@@ -34,12 +34,15 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param url The URL of the asset.
    * @param headers The headers to include in the request.
+   * @param writeThrough In the case of cache misses and revalidation, whether
+   * to update the cache from the network response.
    * @return The in-progress asset request.
    */
   virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
   get(const AsyncSystem& asyncSystem,
       const std::string& url,
-      const std::vector<THeader>& headers = {}) = 0;
+      const std::vector<THeader>& headers = {},
+      bool writeThrough = true) = 0;
 
   /**
    * @brief Starts a new request to the given URL, using the provided HTTP verb
@@ -60,6 +63,26 @@ public:
       const std::string& url,
       const std::vector<THeader>& headers = std::vector<THeader>(),
       const gsl::span<const std::byte>& contentPayload = {}) = 0;
+
+  /**
+   * @brief Writes back a response and derived client data into cache. Useful
+   * in conjunction with disabling writeThrough when calling get(..) - clients
+   * can generate useful derived data and write back to cache at a later time.
+   * Only applicable for asset accessors that perform caching.
+   *
+   * @param asyncSystem The async system to use.
+   * @param pCompletedRequest The completed network request.
+   * @param cacheOriginalResponseData Whether to cache the original, response
+   * data from the completed HTTP request.
+   * @param clientData Arbitrary client data associated with this request.
+   */
+  virtual Future<void> writeBack(
+      const AsyncSystem& asyncSystem,
+      const std::shared_ptr<IAssetRequest>& /*pCompletedRequest*/,
+      bool /*cacheOriginalResponseData*/,
+      std::vector<std::byte>&& /*clientData*/) {
+    return asyncSystem.createResolvedFuture();
+  }
 
   /**
    * @brief Ticks the asset accessor system while the main thread is blocked.

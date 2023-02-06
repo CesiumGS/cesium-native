@@ -58,6 +58,7 @@ Future<TileLoadResult> loadTile(
       {},
       asyncSystem,
       pAssetAccessor,
+      nullptr,
       spdlog::default_logger(),
       {}};
 

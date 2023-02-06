@@ -16,7 +16,7 @@ public:
   virtual ~ICacheDatabase() noexcept = default;
 
   /**
-   * @brief Gets a cache entry from the database.
+   * @brief Gets a cache entry from the database from any thread.
    *
    * If an error prevents checking the database for the key, this function,
    * depending on the implementation, may log the error. However, it should
@@ -26,10 +26,21 @@ public:
    * @return The result of the cache lookup, or `std::nullopt` if the key does
    * not exist in the cache or an error occurred.
    */
-  virtual std::optional<CacheItem> getEntry(const std::string& key) const = 0;
+  virtual std::optional<CacheItem>
+  getEntryAnyThread(const std::string& key) const = 0;
 
   /**
-   * @brief Store a cache entry in the database.
+   * @brief Updates the last accessed time for the given row id. Must be called
+   * in the writer thread.
+   *
+   * @param rowId The row id to update the last access time for. The result of
+   * getEntryAnyThread contains a corresponding row id which can be used here.
+   */
+  virtual void updateLastAccessTimeWriterThread(int64_t rowId) = 0;
+
+  /**
+   * @brief Store a cache entry in the database. Must be called in the writer
+   * thread.
    *
    * @param key the unique key associated with the response
    * @param expiryTime the time point that this response should be expired. An
@@ -40,10 +51,12 @@ public:
    * @param statusCode The HTTP response status code being cached.
    * @param responseHeaders The HTTP response headers being cached.
    * @param responseData The HTTP response being cached.
+   * @param clientData Client data derived from the HTTP response that the
+   * client wants cache.
    * @return `true` if the entry was successfully stored, or `false` if it could
    * not be stored due to an error.
    */
-  virtual bool storeEntry(
+  virtual bool storeEntryWriterThread(
       const std::string& key,
       std::time_t expiryTime,
       const std::string& url,
@@ -51,7 +64,8 @@ public:
       const HttpHeaders& requestHeaders,
       uint16_t statusCode,
       const HttpHeaders& responseHeaders,
-      const gsl::span<const std::byte>& responseData) = 0;
+      const gsl::span<const std::byte>& responseData,
+      const gsl::span<const std::byte>& clientData) = 0;
 
   /**
    * @brief Remove cache entries from the database to satisfy the database
@@ -60,7 +74,7 @@ public:
    * @return `true` if the database was successfully pruned, or `false` if it
    * could not be pruned due to an errror.
    */
-  virtual bool prune() = 0;
+  virtual bool pruneWriterThread() = 0;
 
   /**
    * @brief Removes all cache entries from the database.
@@ -68,6 +82,6 @@ public:
    * @return `true` if the database was successfully cleared, or `false` if it
    * could not be pruned due to an errror.
    */
-  virtual bool clearAll() = 0;
+  virtual bool clearAllWriterThread() = 0;
 };
 } // namespace CesiumAsync

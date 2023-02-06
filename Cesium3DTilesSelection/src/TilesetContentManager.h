@@ -7,6 +7,7 @@
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileContentCache.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
@@ -81,6 +82,8 @@ public:
   std::vector<CesiumAsync::IAssetAccessor::THeader>&
   getRequestHeaders() noexcept;
 
+  const std::shared_ptr<TileContentCache>& getTileContentCache() noexcept;
+
   const RasterOverlayCollection& getRasterOverlayCollection() const noexcept;
 
   RasterOverlayCollection& getRasterOverlayCollection() noexcept;
@@ -134,6 +137,7 @@ private:
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
   TilesetExternals _externals;
+  std::shared_ptr<TileContentCache> _pTileContentCache;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
   std::unique_ptr<Tile> _pRootTile;

@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContentCache.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -21,6 +22,7 @@ struct TileContentLoadInfo {
   TileContentLoadInfo(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<TileContentCache>& pTileContentCache,
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -30,6 +32,8 @@ struct TileContentLoadInfo {
   CesiumAsync::AsyncSystem asyncSystem;
 
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+
+  std::shared_ptr<TileContentCache> pTileContentCache;
 
   std::shared_ptr<spdlog::logger> pLogger;
 

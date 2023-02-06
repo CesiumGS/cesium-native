@@ -89,6 +89,9 @@ TileLoadResult loadTileContent(
   std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
 
+  auto pTileContentCache =
+      std::make_shared<TileContentCache>(pMockAssetAccessor);
+
   AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
   TileLoadInput loadInput{
@@ -96,6 +99,7 @@ TileLoadResult loadTileContent(
       {},
       asyncSystem,
       pMockAssetAccessor,
+      pTileContentCache,
       spdlog::default_logger(),
       {}};
 
@@ -508,6 +512,9 @@ TEST_CASE("Test loading individual tile of tileset json") {
     std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
         std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
 
+    auto pTileContentCache =
+        std::make_shared<TileContentCache>(pMockAssetAccessor);
+
     AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
     {
@@ -517,6 +524,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
           {},
           asyncSystem,
           pMockAssetAccessor,
+          pTileContentCache,
           spdlog::default_logger(),
           {}};
       auto implicitContentResultFuture =
@@ -535,6 +543,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
           {},
           asyncSystem,
           pMockAssetAccessor,
+          pTileContentCache,
           spdlog::default_logger(),
           {}};
       auto implicitContentResultFuture =
