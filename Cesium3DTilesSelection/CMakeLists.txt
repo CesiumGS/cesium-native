@@ -55,6 +55,7 @@ target_link_libraries(Cesium3DTilesSelection
         uriparser
         libmorton
         expected-lite
+	${CESIUM_NATIVE_DRACO_LIBRARY}
 )
 
 install(TARGETS Cesium3DTilesSelection

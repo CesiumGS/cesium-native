@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.?.? - 2023-?-?
+
+##### Additions :tada:
+
+- Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
+
 ### v0.21.3 - 2023-02-01
 
 ##### Fixes :wrench:

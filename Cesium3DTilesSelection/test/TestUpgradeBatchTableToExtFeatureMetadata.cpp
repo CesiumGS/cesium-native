@@ -1,6 +1,5 @@
-#include "B3dmToGltfConverter.h"
 #include "BatchTableToGltfFeatureMetadata.h"
-#include "readFile.h"
+#include "ConvertTileToGltf.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
@@ -137,7 +136,7 @@ static void createTestForScalarJson(
       scalarProperty,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -213,7 +212,7 @@ static void createTestForArrayJson(
       fixedArrayProperties,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -246,15 +245,34 @@ static void createTestForArrayJson(
       totalInstances);
 }
 
-GltfConverterResult loadB3dm(const std::filesystem::path& filePath) {
-  return B3dmToGltfConverter::convert(readFile(filePath), {});
+std::set<int32_t> getUniqueBufferViewIds(
+    const std::vector<Accessor>& accessors,
+    FeatureTable& featureTable) {
+  std::set<int32_t> result;
+  for (auto it = accessors.begin(); it != accessors.end(); it++) {
+    result.insert(it->bufferView);
+  }
+
+  auto& properties = featureTable.properties;
+  for (auto it = properties.begin(); it != properties.end(); it++) {
+    auto& property = it->second;
+    result.insert(property.bufferView);
+    if (property.arrayOffsetBufferView >= 0) {
+      result.insert(property.arrayOffsetBufferView);
+    }
+    if (property.stringOffsetBufferView >= 0) {
+      result.insert(property.stringOffsetBufferView);
+    }
+  }
+
+  return result;
 }
 
-TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
+TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
 
-  GltfConverterResult result = loadB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
 
   REQUIRE(result.model);
 
@@ -434,12 +452,12 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   }
 }
 
-TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
+TEST_CASE("Convert binary B3DM batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
 
-  GltfConverterResult result = loadB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
 
   REQUIRE(!result.errors);
   REQUIRE(result.model != std::nullopt);
@@ -578,12 +596,458 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   }
 }
 
+TEST_CASE("Converts batched PNTS batch table to EXT_feature_metadata") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  {
+    auto nameIt = defaultClass.properties.find("name");
+    REQUIRE(nameIt != defaultClass.properties.end());
+    auto dimensionsIt = defaultClass.properties.find("dimensions");
+    REQUIRE(dimensionsIt != defaultClass.properties.end());
+    auto idIt = defaultClass.properties.find("id");
+    REQUIRE(idIt != defaultClass.properties.end());
+
+    CHECK(nameIt->second.type == "STRING");
+    CHECK(dimensionsIt->second.type == "ARRAY");
+    REQUIRE(dimensionsIt->second.componentType);
+    CHECK(dimensionsIt->second.componentType.value() == "FLOAT32");
+    CHECK(idIt->second.type == "UINT32");
+  }
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+
+  {
+    auto nameIt = featureTable.properties.find("name");
+    REQUIRE(nameIt != featureTable.properties.end());
+    auto dimensionsIt = featureTable.properties.find("dimensions");
+    REQUIRE(dimensionsIt != featureTable.properties.end());
+    auto idIt = featureTable.properties.find("id");
+    REQUIRE(idIt != featureTable.properties.end());
+
+    CHECK(nameIt->second.bufferView >= 0);
+    CHECK(
+        nameIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(dimensionsIt->second.bufferView >= 0);
+    CHECK(
+        dimensionsIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(idIt->second.bufferView >= 0);
+    CHECK(
+        idIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+  }
+
+  std::set<int32_t> bufferViewSet =
+      getUniqueBufferViewIds(gltf.accessors, featureTable);
+  CHECK(bufferViewSet.size() == gltf.bufferViews.size());
+
+  // Check the mesh primitive
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(
+      primitive.attributes.find("_FEATURE_ID_0") != primitive.attributes.end());
+
+  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+
+  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
+
+  // Check metadata values
+  {
+    std::vector<std::string> expected = {
+        "section0",
+        "section1",
+        "section2",
+        "section3",
+        "section4",
+        "section5",
+        "section6",
+        "section7"};
+    checkScalarProperty<std::string, std::string_view>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "name",
+        "STRING",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::vector<float>> expected = {
+        {0.1182744f, 0.7206326f, 0.6399210f},
+        {0.5820198f, 0.1433532f, 0.5373732f},
+        {0.9446688f, 0.7586156f, 0.5218483f},
+        {0.1059076f, 0.4146619f, 0.4736004f},
+        {0.2645556f, 0.1863323f, 0.7742336f},
+        {0.7369181f, 0.4561503f, 0.2165503f},
+        {0.5684339f, 0.1352181f, 0.0187897f},
+        {0.3241409f, 0.6176354f, 0.1496748f}};
+
+    checkArrayProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "dimensions",
+        3,
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<uint32_t> expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    checkScalarProperty<uint32_t>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "id",
+        "UINT32",
+        expected,
+        expected.size());
+  }
+}
+
+TEST_CASE("Converts per-point PNTS batch table to EXT_feature_metadata") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath =
+      testFilePath / "PointCloud" / "pointCloudWithPerPointProperties.pnts";
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  {
+    auto temperatureIt = defaultClass.properties.find("temperature");
+    REQUIRE(temperatureIt != defaultClass.properties.end());
+    auto secondaryColorIt = defaultClass.properties.find("secondaryColor");
+    REQUIRE(secondaryColorIt != defaultClass.properties.end());
+    auto idIt = defaultClass.properties.find("id");
+    REQUIRE(idIt != defaultClass.properties.end());
+
+    CHECK(temperatureIt->second.type == "FLOAT32");
+    CHECK(secondaryColorIt->second.type == "ARRAY");
+    REQUIRE(secondaryColorIt->second.componentType);
+    CHECK(secondaryColorIt->second.componentType.value() == "FLOAT32");
+    CHECK(idIt->second.type == "UINT16");
+  }
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+
+  {
+    auto temperatureIt = featureTable.properties.find("temperature");
+    REQUIRE(temperatureIt != featureTable.properties.end());
+    auto secondaryColorIt = featureTable.properties.find("secondaryColor");
+    REQUIRE(secondaryColorIt != featureTable.properties.end());
+    auto idIt = featureTable.properties.find("id");
+    REQUIRE(idIt != featureTable.properties.end());
+
+    CHECK(temperatureIt->second.bufferView >= 0);
+    CHECK(
+        temperatureIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(secondaryColorIt->second.bufferView >= 0);
+    CHECK(
+        secondaryColorIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(idIt->second.bufferView >= 0);
+    CHECK(
+        idIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+  }
+
+  std::set<int32_t> bufferViewSet =
+      getUniqueBufferViewIds(gltf.accessors, featureTable);
+  CHECK(bufferViewSet.size() == gltf.bufferViews.size());
+
+  // Check the mesh primitive
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(
+      primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
+
+  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+
+  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  // Check for implicit feature IDs
+  CHECK(!attribute.featureIds.attribute);
+  CHECK(attribute.featureIds.constant == 0);
+  CHECK(attribute.featureIds.divisor == 1);
+
+  // Check metadata values
+  {
+    std::vector<float> expected = {
+        0.2883332f,
+        0.4338732f,
+        0.1750928f,
+        0.1430827f,
+        0.1156976f,
+        0.3274261f,
+        0.1337213f,
+        0.0207673f};
+    checkScalarProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "temperature",
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::vector<float>> expected = {
+        {0.0202183f, 0, 0},
+        {0.3682415f, 0, 0},
+        {0.8326198f, 0, 0},
+        {0.9571551f, 0, 0},
+        {0.7781567f, 0, 0},
+        {0.1403507f, 0, 0},
+        {0.8700121f, 0, 0},
+        {0.8700872f, 0, 0}};
+
+    checkArrayProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "secondaryColor",
+        3,
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<uint16_t> expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    checkScalarProperty<uint16_t>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "id",
+        "UINT16",
+        expected,
+        expected.size());
+  }
+}
+
+TEST_CASE("Converts Draco per-point PNTS batch table to "
+          "EXT_feature_metadata") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud" / "pointCloudDraco.pnts";
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  REQUIRE(result.model);
+  Model& gltf = *result.model;
+
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
+  REQUIRE(pExtension);
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 3);
+
+  {
+    auto temperatureIt = defaultClass.properties.find("temperature");
+    REQUIRE(temperatureIt != defaultClass.properties.end());
+    auto secondaryColorIt = defaultClass.properties.find("secondaryColor");
+    REQUIRE(secondaryColorIt != defaultClass.properties.end());
+    auto idIt = defaultClass.properties.find("id");
+    REQUIRE(idIt != defaultClass.properties.end());
+
+    CHECK(temperatureIt->second.type == "FLOAT32");
+    CHECK(secondaryColorIt->second.type == "ARRAY");
+    REQUIRE(secondaryColorIt->second.componentType);
+    CHECK(secondaryColorIt->second.componentType.value() == "FLOAT32");
+    CHECK(idIt->second.type == "UINT16");
+  }
+
+  // Check the feature table
+  auto firstFeatureTableIt = pExtension->featureTables.begin();
+  REQUIRE(firstFeatureTableIt != pExtension->featureTables.end());
+
+  FeatureTable& featureTable = firstFeatureTableIt->second;
+  CHECK(featureTable.classProperty == "default");
+  REQUIRE(featureTable.properties.size() == 3);
+
+  {
+    auto temperatureIt = featureTable.properties.find("temperature");
+    REQUIRE(temperatureIt != featureTable.properties.end());
+    auto secondaryColorIt = featureTable.properties.find("secondaryColor");
+    REQUIRE(secondaryColorIt != featureTable.properties.end());
+    auto idIt = featureTable.properties.find("id");
+    REQUIRE(idIt != featureTable.properties.end());
+
+    CHECK(temperatureIt->second.bufferView >= 0);
+    CHECK(
+        temperatureIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(secondaryColorIt->second.bufferView >= 0);
+    CHECK(
+        secondaryColorIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+    CHECK(idIt->second.bufferView >= 0);
+    CHECK(
+        idIt->second.bufferView <
+        static_cast<int32_t>(gltf.bufferViews.size()));
+  }
+
+  std::set<int32_t> bufferViewSet =
+      getUniqueBufferViewIds(gltf.accessors, featureTable);
+  CHECK(bufferViewSet.size() == gltf.bufferViews.size());
+
+  // Check the mesh primitive
+  REQUIRE(gltf.meshes.size() == 1);
+  Mesh& mesh = gltf.meshes[0];
+  REQUIRE(mesh.primitives.size() == 1);
+
+  MeshPrimitive& primitive = mesh.primitives[0];
+  CHECK(
+      primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
+
+  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
+
+  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
+  CHECK(attribute.featureTable == "default");
+  // Check for implicit feature IDs
+  CHECK(!attribute.featureIds.attribute);
+  CHECK(attribute.featureIds.constant == 0);
+  CHECK(attribute.featureIds.divisor == 1);
+
+  // Check metadata values
+  {
+    std::vector<float> expected = {
+        0.2883025f,
+        0.4338731f,
+        0.1751145f,
+        0.1430345f,
+        0.1156959f,
+        0.3274441f,
+        0.1337535f,
+        0.0207673f};
+    checkScalarProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "temperature",
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<std::vector<float>> expected = {
+        {0.1182744f, 0, 0},
+        {0.7206645f, 0, 0},
+        {0.6399421f, 0, 0},
+        {0.5820239f, 0, 0},
+        {0.1432983f, 0, 0},
+        {0.5374249f, 0, 0},
+        {0.9446688f, 0, 0},
+        {0.7586040f, 0, 0}};
+
+    checkArrayProperty<float>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "secondaryColor",
+        3,
+        "FLOAT32",
+        expected,
+        expected.size());
+  }
+
+  {
+    std::vector<uint16_t> expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    checkScalarProperty<uint16_t>(
+        *result.model,
+        featureTable,
+        defaultClass,
+        "id",
+        "UINT16",
+        expected,
+        expected.size());
+  }
+}
+
 TEST_CASE("Upgrade json nested json metadata to string") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
 
-  GltfConverterResult result = loadB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
 
   REQUIRE(!result.errors);
   REQUIRE(result.model != std::nullopt);
@@ -671,7 +1135,7 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       boolProperties,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -1213,7 +1677,7 @@ TEST_CASE("Converts Feature Classes 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1343,7 +1807,7 @@ TEST_CASE("Converts Feature Hierarchy 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  BatchTableToGltfFeatureMetadata::convert(
+  BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1537,7 +2001,7 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  BatchTableToGltfFeatureMetadata::convert(
+  BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1629,7 +2093,7 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  auto errors = BatchTableToGltfFeatureMetadata::convert(
+  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
