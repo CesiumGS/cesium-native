@@ -9,9 +9,9 @@
 namespace CesiumGeospatial {
 
 /**
- * @brief Transforms positions to various reference frames.
+ * @brief Transforms between globe-related coordinate systems.
  */
-class CESIUMGEOSPATIAL_API Transforms final {
+class CESIUMGEOSPATIAL_API GlobeTransforms final {
 public:
   /**
    * @brief Computes a transformation from east-north-up axes to an

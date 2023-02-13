@@ -2,7 +2,7 @@
 
 #include "BatchTableToGltfFeatureMetadata.h"
 
-#include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
@@ -1479,7 +1479,7 @@ void createGltfFromParsedContent(
   Node& node = gltf.nodes.emplace_back();
   std::memcpy(
       node.matrix.data(),
-      &CesiumGeometry::AxisTransforms::Z_UP_TO_Y_UP,
+      &CesiumGeometry::Transforms::Z_UP_TO_Y_UP,
       sizeof(glm::dmat4));
 
   size_t meshId = gltf.meshes.size();

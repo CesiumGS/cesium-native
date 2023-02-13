@@ -1,6 +1,8 @@
-#include "CesiumGeometry/AxisTransforms.h"
+#include "CesiumGeometry/Transforms.h"
 
-#include <glm/mat3x3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace CesiumGeometry {
 
@@ -56,11 +58,27 @@ glm::dmat4 createYupToXup() {
 }
 } // namespace
 
-const glm::dmat4 AxisTransforms::Y_UP_TO_Z_UP = createYupToZup();
-const glm::dmat4 AxisTransforms::Z_UP_TO_Y_UP = createZupToYup();
-const glm::dmat4 AxisTransforms::X_UP_TO_Z_UP = createXupToZup();
-const glm::dmat4 AxisTransforms::Z_UP_TO_X_UP = createZupToXup();
-const glm::dmat4 AxisTransforms::X_UP_TO_Y_UP = createXupToYup();
-const glm::dmat4 AxisTransforms::Y_UP_TO_X_UP = createYupToXup();
+const glm::dmat4 Transforms::Y_UP_TO_Z_UP = createYupToZup();
+const glm::dmat4 Transforms::Z_UP_TO_Y_UP = createZupToYup();
+const glm::dmat4 Transforms::X_UP_TO_Z_UP = createXupToZup();
+const glm::dmat4 Transforms::Z_UP_TO_X_UP = createZupToXup();
+const glm::dmat4 Transforms::X_UP_TO_Y_UP = createXupToYup();
+const glm::dmat4 Transforms::Y_UP_TO_X_UP = createYupToXup();
+
+glm::dmat4 CesiumGeometry::Transforms::translationRotationScale(
+    const glm::dvec3& translation,
+    const glm::dquat& rotation,
+    const glm::dvec3& scale) {
+  glm::dmat3 rotationScale =
+      glm::mat3_cast(rotation) * glm::dmat3(
+                                     glm::dvec3(scale.x, 0.0, 0.0),
+                                     glm::dvec3(0.0, scale.y, 0.0),
+                                     glm::dvec3(0.0, 0.0, scale.z));
+  return glm::dmat4(
+      glm::dvec4(rotationScale[0], 0.0),
+      glm::dvec4(rotationScale[1], 0.0),
+      glm::dvec4(rotationScale[2], 0.0),
+      glm::dvec4(translation, 1.0));
+}
 
 } // namespace CesiumGeometry

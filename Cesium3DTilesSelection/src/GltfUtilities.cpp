@@ -2,7 +2,7 @@
 
 #include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
@@ -42,14 +42,14 @@ namespace Cesium3DTilesSelection {
     // The default up-axis of glTF is the Y-axis, and no other
     // up-axis was specified. Transform the Y-axis to the Z-axis,
     // to match the 3D Tiles specification
-    return rootTransform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+    return rootTransform * CesiumGeometry::Transforms::Y_UP_TO_Z_UP;
   }
   const CesiumUtility::JsonValue& gltfUpAxis = gltfUpAxisIt->second;
   int gltfUpAxisValue = static_cast<int>(gltfUpAxis.getSafeNumberOrDefault(1));
   if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::X)) {
-    return rootTransform * CesiumGeometry::AxisTransforms::X_UP_TO_Z_UP;
+    return rootTransform * CesiumGeometry::Transforms::X_UP_TO_Z_UP;
   } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Y)) {
-    return rootTransform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+    return rootTransform * CesiumGeometry::Transforms::Y_UP_TO_Z_UP;
   } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Z)) {
     // No transform required
   }
