@@ -127,4 +127,62 @@ TEST_CASE("GlobeAnchor") {
         0.0,
         Math::Epsilon10));
   }
+
+  SECTION("Moving in ECEF adjusts orientation if requested") {
+    glm::dmat4 toLocal = glm::dmat4(
+        glm::dvec4(1.0, 0.0, 0.0, 0.0),
+        glm::dvec4(0.0, 1.0, 0.0, 0.0),
+        glm::dvec4(0.0, 0.0, 1.0, 0.0),
+        glm::dvec4(0.0, 0.0, 0.0, 1.0));
+        //glm::dvec4(1.0, 2.0, 3.0, 1.0));
+    GlobeAnchor anchor =
+        GlobeAnchor::fromAnchorToLocalTransform(leftHandedEastUpNorth, toLocal);
+
+    // Moving without adjusting orientation should leave the orientation
+    // unchanged.
+    GlobeAnchor first = anchor;
+    first.setAnchorToLocalTransform(leftHandedEastUpNorth90, toLocal, false);
+    glm::dmat3 rotationScaleAfter =
+        glm::dmat3(first.getAnchorToLocalTransform(leftHandedEastUpNorth90));
+    CHECK(Math::equalsEpsilon(
+        rotationScaleAfter[0],
+        glm::dmat3(1.0)[0],
+        0.0,
+        Math::Epsilon10));
+    CHECK(Math::equalsEpsilon(
+        rotationScaleAfter[1],
+        glm::dmat3(1.0)[1],
+        0.0,
+        Math::Epsilon10));
+    CHECK(Math::equalsEpsilon(
+        rotationScaleAfter[2],
+        glm::dmat3(1.0)[2],
+        0.0,
+        Math::Epsilon10));
+
+    // But if we allow adjusting orientation, the object should stay upright.
+    GlobeAnchor second = anchor;
+    second.setAnchorToLocalTransform(leftHandedEastUpNorth90, toLocal, true);
+    rotationScaleAfter =
+        glm::dmat3(second.getAnchorToLocalTransform(leftHandedEastUpNorth90));
+    glm::dmat3 expected = glm::dmat3(
+        glm::dvec3(0.0, -1.0, 0.0),
+        glm::dvec3(1.0, 0.0, 0.0),
+        glm::dvec3(0.0, 0.0, 1.0));
+    CHECK(Math::equalsEpsilon(
+        rotationScaleAfter[0],
+        expected[0],
+        0.0,
+        Math::Epsilon10));
+    CHECK(Math::equalsEpsilon(
+        rotationScaleAfter[1],
+        expected[1],
+        0.0,
+        Math::Epsilon10));
+    CHECK(Math::equalsEpsilon(
+        rotationScaleAfter[2],
+        expected[2],
+        0.0,
+        Math::Epsilon10));
+  }
 }
