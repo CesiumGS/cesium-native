@@ -1,8 +1,11 @@
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/GlobeAnchor.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 
 #include <catch2/catch.hpp>
+#include <glm/gtx/quaternion.hpp>
 
+using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
@@ -11,6 +14,12 @@ TEST_CASE("GlobeAnchor") {
 
   LocalHorizontalCoordinateSystem leftHandedEastUpNorth(
       nullIsland,
+      LocalDirection::East,
+      LocalDirection::Up,
+      LocalDirection::North);
+
+  LocalHorizontalCoordinateSystem leftHandedEastUpNorth90(
+      Cartographic::fromDegrees(90.0, 0.0, 0.0),
       LocalDirection::East,
       LocalDirection::Up,
       LocalDirection::North);
@@ -28,9 +37,9 @@ TEST_CASE("GlobeAnchor") {
     GlobeAnchor anchor = GlobeAnchor::fromAnchorToLocalTransform(
         leftHandedEastUpNorth,
         glm::dmat4(
-            glm::dvec4(0.0),
-            glm::dvec4(0.0),
-            glm::dvec4(0.0),
+            glm::dvec4(1.0, 0.0, 0.0, 0.0),
+            glm::dvec4(0.0, 1.0, 0.0, 0.0),
+            glm::dvec4(0.0, 0.0, 1.0, 0.0),
             glm::dvec4(1.0, 2.0, 3.0, 1.0)));
     glm::dvec3 positionInLocal =
         glm::dvec3(anchor.getAnchorToFixedTransform()[3]);
@@ -52,30 +61,69 @@ TEST_CASE("GlobeAnchor") {
         Math::Epsilon10));
   }
 
-  SECTION("Scale in local is represented correctly in ECEF") {
+  SECTION(
+      "Translation-rotation-scale in local is represented correctly in ECEF") {
+    glm::dquat ninetyDegreesAboutX =
+        glm::angleAxis(Math::degreesToRadians(90.0), glm::dvec3(1.0, 0.0, 0.0));
+    glm::dmat4 anchorToLocal = Transforms::translationRotationScale(
+        glm::dvec3(1.0, 2.0, 3.0),
+        ninetyDegreesAboutX,
+        glm::dvec3(30.0, 20.0, 10.0));
+
     GlobeAnchor anchor = GlobeAnchor::fromAnchorToLocalTransform(
         leftHandedEastUpNorth,
-        glm::dmat4(
-            glm::dvec4(0.0),
-            glm::dvec4(0.0),
-            glm::dvec4(0.0),
-            glm::dvec4(1.0, 2.0, 3.0, 1.0)));
-    glm::dvec3 positionInLocal =
-        glm::dvec3(anchor.getAnchorToFixedTransform()[3]);
-    glm::dvec3 originInEcef =
-        glm::dvec3(leftHandedEastUpNorth.getLocalToEcefTransformation()[3]);
+        anchorToLocal);
 
-    // +X in local is East, which is +Y in ECEF.
-    // +Y in local is Up, which is +X in ECEF.
-    // +Z in local is North, which is +Z in ECEF.
-    glm::dvec3 expectedPositionInEcef =
-        originInEcef + glm::dvec3(2.0, 1.0, 3.0);
-    glm::dvec3 actualPositionInEcef =
-        glm::dvec3(anchor.getAnchorToFixedTransform()[3]);
+    glm::dvec3 localPosition = glm::dvec3(7.0, 8.0, 9.0);
+    glm::dvec3 actualPositionInEcef = glm::dvec3(
+        anchor.getAnchorToFixedTransform() * glm::dvec4(localPosition, 1.0));
+    glm::dvec3 expectedPositionInEcef = glm::dvec3(
+        leftHandedEastUpNorth.getLocalToEcefTransformation() *
+        (anchorToLocal * glm::dvec4(localPosition, 1.0)));
 
     CHECK(Math::equalsEpsilon(
         expectedPositionInEcef,
         actualPositionInEcef,
+        0.0,
+        Math::Epsilon10));
+  }
+
+  SECTION("Can transform between different local coordinate systems") {
+    glm::dmat4 toLocal = glm::dmat4(
+        glm::dvec4(1.0, 0.0, 0.0, 0.0),
+        glm::dvec4(0.0, 1.0, 0.0, 0.0),
+        glm::dvec4(0.0, 0.0, 1.0, 0.0),
+        glm::dvec4(1.0, 2.0, 3.0, 1.0));
+    GlobeAnchor anchor =
+        GlobeAnchor::fromAnchorToLocalTransform(leftHandedEastUpNorth, toLocal);
+
+    glm::dmat4 toLocal90 =
+        anchor.getAnchorToLocalTransform(leftHandedEastUpNorth90);
+
+    glm::dvec3 somePosition = glm::dvec3(123.0, 456.0, 789.0);
+    glm::dvec3 positionInLocal =
+        glm::dvec3(toLocal * glm::dvec4(somePosition, 1.0));
+    glm::dvec3 positionInLocal90 =
+        glm::dvec3(toLocal90 * glm::dvec4(somePosition, 1.0));
+
+    // +X in old local is East, which is +Y in ECEF, which is +Y in new local.
+    // +Y in old local is Up, which is +X in ECEF, which is -X in new local.
+    // +Z in old local is North, which is +Z in ECEF, which is +Z in new local.
+    glm::dvec3 anchorPositionEcef =
+        glm::dvec3(Ellipsoid::WGS84.getMaximumRadius() + 2.0, 1.0, 3.0);
+    glm::dvec3 oldOriginEcef =
+        glm::dvec3(Ellipsoid::WGS84.getMaximumRadius(), 0.0, 0.0);
+    glm::dvec3 newOriginEcef =
+        glm::dvec3(0.0, Ellipsoid::WGS84.getMaximumRadius(), 0.0);
+    glm::dvec3 offsetEcef = newOriginEcef - oldOriginEcef;
+    glm::dvec3 offset90 = glm::dvec3(-offsetEcef.x, offsetEcef.y, offsetEcef.z);
+    glm::dvec3 expectedPositionInLocal90 = -offset90 +
+                                           glm::dvec3(-2.0, 1.0, 3.0) +
+                                           glm::dvec3(-456.0, 123.0, 789.0);
+
+    CHECK(Math::equalsEpsilon(
+        expectedPositionInLocal90,
+        positionInLocal90,
         0.0,
         Math::Epsilon10));
   }
