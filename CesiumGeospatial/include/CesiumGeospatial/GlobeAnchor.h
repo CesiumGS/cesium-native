@@ -22,7 +22,6 @@ class LocalHorizontalCoordinateSystem;
  * specifying a new globe-fixed transform or a new local transform, the
  * orientation may optionally be updated to keep the object upright at its new
  * location on the globe.
- *
  */
 class CESIUMGEOSPATIAL_API GlobeAnchor final {
 public:
