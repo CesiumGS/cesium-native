@@ -49,7 +49,7 @@ struct CESIUMGEOMETRY_API Transforms final {
   static const glm::dmat4 Y_UP_TO_X_UP;
 
   /**
-   * @brief Constructs a translation-rotation-scale matrix, equivalent to
+   * @brief Creates a translation-rotation-scale matrix, equivalent to
    * `translation * rotation * scale`. So if a vector is multiplied with the
    * resulting matrix, it will be first scaled, then rotated, then translated.
    *
@@ -57,10 +57,33 @@ struct CESIUMGEOMETRY_API Transforms final {
    * @param rotation The rotation.
    * @param scale The scale.
    */
-  static glm::dmat4 translationRotationScale(
+  static glm::dmat4 createTranslationRotationScaleMatrix(
       const glm::dvec3& translation,
       const glm::dquat& rotation,
       const glm::dvec3& scale);
+
+  /**
+   * @brief Decomposes a matrix into translation, rotation, and scale
+   * components. This is the reverse of
+   * {@link createTranslationRotationScaleMatrix}.
+   *
+   * The scale may be negative (i.e. when switching from a right-handed to a
+   * left-handed system), but skew and other funny business will result in
+   * undefined behavior.
+   *
+   * @param matrix The matrix to decompose.
+   * @param pTranslation A pointer to the vector in which to store the
+   * translation, or nullptr if the translation is not needed.
+   * @param pRotation A pointer to the quaternion in which to store the
+   * rotation, or nullptr if the rotation is not needed.
+   * @param pScale A pointer to the vector in which to store the scale, or
+   * nullptr if the scale is not needed.
+   */
+  static void computeTranslationRotationScaleFromMatrix(
+      const glm::dmat4& matrix,
+      glm::dvec3* pTranslation,
+      glm::dquat* pRotation,
+      glm::dvec3* pScale);
 };
 
 } // namespace CesiumGeometry

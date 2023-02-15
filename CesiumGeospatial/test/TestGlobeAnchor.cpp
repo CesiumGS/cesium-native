@@ -134,7 +134,6 @@ TEST_CASE("GlobeAnchor") {
         glm::dvec4(0.0, 1.0, 0.0, 0.0),
         glm::dvec4(0.0, 0.0, 1.0, 0.0),
         glm::dvec4(0.0, 0.0, 0.0, 1.0));
-        //glm::dvec4(1.0, 2.0, 3.0, 1.0));
     GlobeAnchor anchor =
         GlobeAnchor::fromAnchorToLocalTransform(leftHandedEastUpNorth, toLocal);
 
