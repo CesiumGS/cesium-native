@@ -54,6 +54,8 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
 
+add_dependencies(CesiumGltfReader libjpeg-turbo)
+
 target_link_libraries(CesiumGltfReader
     PUBLIC
         CesiumAsync
@@ -65,6 +67,7 @@ target_link_libraries(CesiumGltfReader
         ktx_read
         webp
         webpdecoder
+        turbojpeg
 )
 
 install(TARGETS CesiumGltfReader

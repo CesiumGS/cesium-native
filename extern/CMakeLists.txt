@@ -156,3 +156,16 @@ set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/incl
 )
 set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
 add_subdirectory(libmorton)
+
+include(ExternalProject)
+ExternalProject_Add(libjpeg-turbo
+    SOURCE_DIR      "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo"
+    CMAKE_ARGS      "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo"
+    BUILD_IN_SOURCE TRUE
+)
+
+add_library(turbojpeg STATIC IMPORTED GLOBAL)
+set_property(TARGET turbojpeg PROPERTY
+    IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg-static${CMAKE_STATIC_LIBRARY_SUFFIX}"
+)
+target_include_directories(turbojpeg INTERFACE "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo/include")
