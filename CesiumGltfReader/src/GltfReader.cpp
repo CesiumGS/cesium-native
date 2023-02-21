@@ -662,10 +662,10 @@ ImageReaderResult GltfReader::readImage(
               static_cast<unsigned long>(data.size()),
               reinterpret_cast<unsigned char*>(image.pixelData.data()),
               image.width,
-              image.width * image.bytesPerChannel * image.channels,
+              0,
               image.height,
               TJPF_RGBX,
-              0)) {
+              TJFLAG_FASTDCT)) {
         result.errors.emplace_back("Unable to decode JPEG");
         result.image.reset();
       }
