@@ -162,11 +162,10 @@ include(ExternalProject)
 ExternalProject_Add(libjpeg-turbo
     SOURCE_DIR      "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo"
     PREFIX          "libjpeg-turbo"
-    INSTALL_COMMAND ""
+    CMAKE_ARGS      "-DCMAKE_INSTALL_PREFIX=../../"
 )
-ExternalProject_Get_Property(libjpeg-turbo BINARY_DIR)
-
-set(CESIUM_NATIVE_TURBOJPEG_LIB_PATH "${BINARY_DIR}/${CMAKE_BUILD_TYPE}/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg-static${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE INTERNAL
+ExternalProject_Get_Property(libjpeg-turbo INSTALL_DIR)
+set(CESIUM_NATIVE_TURBOJPEG_LIB_PATH "${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg-static${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE INTERNAL
     "Path to turbojpeg static library"
 )
 
