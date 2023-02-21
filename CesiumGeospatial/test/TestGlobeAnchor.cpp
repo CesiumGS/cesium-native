@@ -65,7 +65,7 @@ TEST_CASE("GlobeAnchor") {
       "Translation-rotation-scale in local is represented correctly in ECEF") {
     glm::dquat ninetyDegreesAboutX =
         glm::angleAxis(Math::degreesToRadians(90.0), glm::dvec3(1.0, 0.0, 0.0));
-    glm::dmat4 anchorToLocal = Transforms::translationRotationScale(
+    glm::dmat4 anchorToLocal = Transforms::createTranslationRotationScaleMatrix(
         glm::dvec3(1.0, 2.0, 3.0),
         ninetyDegreesAboutX,
         glm::dvec3(30.0, 20.0, 10.0));
