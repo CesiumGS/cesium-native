@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
+- Use `libjpeg-turbo` instead of `stb` for faster jpeg decoding. 
 
 ### v0.21.3 - 2023-02-01
 
