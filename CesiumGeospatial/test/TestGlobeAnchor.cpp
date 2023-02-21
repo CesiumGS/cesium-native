@@ -41,8 +41,6 @@ TEST_CASE("GlobeAnchor") {
             glm::dvec4(0.0, 1.0, 0.0, 0.0),
             glm::dvec4(0.0, 0.0, 1.0, 0.0),
             glm::dvec4(1.0, 2.0, 3.0, 1.0)));
-    glm::dvec3 positionInLocal =
-        glm::dvec3(anchor.getAnchorToFixedTransform()[3]);
     glm::dvec3 originInEcef =
         glm::dvec3(leftHandedEastUpNorth.getLocalToEcefTransformation()[3]);
 
@@ -101,8 +99,6 @@ TEST_CASE("GlobeAnchor") {
         anchor.getAnchorToLocalTransform(leftHandedEastUpNorth90);
 
     glm::dvec3 somePosition = glm::dvec3(123.0, 456.0, 789.0);
-    glm::dvec3 positionInLocal =
-        glm::dvec3(toLocal * glm::dvec4(somePosition, 1.0));
     glm::dvec3 positionInLocal90 =
         glm::dvec3(toLocal90 * glm::dvec4(somePosition, 1.0));
 
