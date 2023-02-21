@@ -105,8 +105,6 @@ TEST_CASE("GlobeAnchor") {
     // +X in old local is East, which is +Y in ECEF, which is +Y in new local.
     // +Y in old local is Up, which is +X in ECEF, which is -X in new local.
     // +Z in old local is North, which is +Z in ECEF, which is +Z in new local.
-    glm::dvec3 anchorPositionEcef =
-        glm::dvec3(Ellipsoid::WGS84.getMaximumRadius() + 2.0, 1.0, 3.0);
     glm::dvec3 oldOriginEcef =
         glm::dvec3(Ellipsoid::WGS84.getMaximumRadius(), 0.0, 0.0);
     glm::dvec3 newOriginEcef =
