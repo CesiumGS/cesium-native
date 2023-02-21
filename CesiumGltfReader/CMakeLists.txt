@@ -50,11 +50,10 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
         ${CESIUM_NATIVE_STB_INCLUDE_DIR}
+        ${CESIUM_NATIVE_TURBOJPEG_INCUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
-
-add_dependencies(CesiumGltfReader libjpeg-turbo)
 
 target_link_libraries(CesiumGltfReader
     PUBLIC

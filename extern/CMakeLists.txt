@@ -154,6 +154,11 @@ set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
 set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/include" CACHE INTERNAL
     "Include directory for libmorton libraries"
 )
+
+set(CESIUM_NATIVE_TURBOJPEG_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo/include" CACHE INTERNAL
+    "Include directory for libjpeg-turbo libraries"
+)
+
 set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
 add_subdirectory(libmorton)
 
@@ -168,4 +173,5 @@ add_library(turbojpeg STATIC IMPORTED GLOBAL)
 set_property(TARGET turbojpeg PROPERTY
     IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg-static${CMAKE_STATIC_LIBRARY_SUFFIX}"
 )
-target_include_directories(turbojpeg INTERFACE "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo/include")
+
+add_dependencies(turbojpeg libjpeg-turbo)
