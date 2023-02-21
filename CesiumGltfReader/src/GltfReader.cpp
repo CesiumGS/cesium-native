@@ -654,8 +654,9 @@ ImageReaderResult GltfReader::readImage(
       CESIUM_TRACE("Decode JPG");
       image.bytesPerChannel = 1;
       image.channels = 4;
-      image.pixelData.resize(
-          image.width * image.height * image.bytesPerChannel * image.channels);
+      const auto lastByte =
+          image.width * image.height * image.channels * image.bytesPerChannel;
+      image.pixelData.resize(static_cast<std::size_t>(lastByte));
       if (tjDecompress2(
               tjInstance,
               reinterpret_cast<const unsigned char*>(data.data()),
