@@ -1,7 +1,7 @@
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 
 #include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Transforms.h"
+#include "CesiumGeospatial/GlobeTransforms.h"
 
 #include <glm/gtc/matrix_inverse.hpp>
 
@@ -94,7 +94,7 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
       double radius = boundingSphere.getRadius();
 
       glm::dmat4 enuToEcef =
-          Transforms::eastNorthUpToFixedFrame(centerEcef /*, ellipsoid*/);
+          GlobeTransforms::eastNorthUpToFixedFrame(centerEcef /*, ellipsoid*/);
       glm::dmat4 ecefBounds = enuToEcef * glm::dmat4(
                                               radius,
                                               0.0,

@@ -2,9 +2,15 @@
 
 ### v0.?.? - 2023-?-?
 
+##### Breaking Changes :mega:
+
+- Renamed `CesiumGeometry::AxisTransforms` to simply `Transforms`.
+- Renamed `CesiumGeospatial::Transforms` to `GlobeTransforms`.
+
 ##### Additions :tada:
 
 - Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
+- Added `createTranslationRotationScaleMatrix` and `computeTranslationRotationScaleFromMatrix` methods to `CesiumGeometry::Transforms`.
 
 ### v0.21.3 - 2023-02-01
 
