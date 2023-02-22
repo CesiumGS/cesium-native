@@ -166,7 +166,7 @@ ExternalProject_Add(libjpeg-turbo
                     -DENABLE_SHARED=0
 )
 
-if(CMAKE_SYSTEM_NAME EQUAL "Windows")
+if(MSVC)
     set(TURBOJPEG_LIB_NAME "turbojpeg-static")
 else()
     set(TURBOJPEG_LIB_NAME "turbojpeg")
