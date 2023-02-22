@@ -188,7 +188,7 @@ bool Tile::isRenderable() const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
-    if (!isExternalContent()) {
+    if (!getUnconditionallyRefine()) {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
