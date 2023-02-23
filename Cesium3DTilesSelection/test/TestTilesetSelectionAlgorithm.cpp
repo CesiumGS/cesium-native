@@ -1140,11 +1140,13 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
     virtual CesiumAsync::Future<TileLoadResult>
     loadTileContent(const TileLoadInput& input) override {
       if (&input.tile == this->_pRootTile) {
-        return input.asyncSystem.createResolvedFuture(
-            TileLoadResult{CesiumGltf::Model()});
+        TileLoadResult result{};
+        result.contentKind = CesiumGltf::Model();
+        return input.asyncSystem.createResolvedFuture(std::move(result));
       } else if (input.tile.getParent() == this->_pRootTile) {
-        return input.asyncSystem.createResolvedFuture(
-            TileLoadResult{TileEmptyContent()});
+        TileLoadResult result{};
+        result.contentKind = TileEmptyContent();
+        return input.asyncSystem.createResolvedFuture(std::move(result));
       } else if (
           input.tile.getParent() != nullptr &&
           input.tile.getParent()->getParent() == this->_pRootTile) {
@@ -1208,7 +1210,9 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   REQUIRE(pRawLoader->_grandchildPromise);
 
   // Once the grandchild is loaded, it should be rendered instead.
-  pRawLoader->_grandchildPromise->resolve(TileLoadResult{CesiumGltf::Model()});
+  TileLoadResult result{};
+  result.contentKind = CesiumGltf::Model();
+  pRawLoader->_grandchildPromise->resolve(std::move(result));
 
   initializeTileset(tileset);
 
