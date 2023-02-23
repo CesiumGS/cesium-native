@@ -859,9 +859,9 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
         // This child tile is set to unconditionally refine. That means refining
         // _to_ it will immediately refine _through_ it. So we need to make sure
         // its children are renderable, too.
-        // The distances are not correct for the child's children, but once again
-        // we don't care because all tiles must be loaded before we can render any
-        // of them, so their relative priority doesn't matter.
+        // The distances are not correct for the child's children, but once
+        // again we don't care because all tiles must be loaded before we can
+        // render any of them, so their relative priority doesn't matter.
         waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
             frameState,
             child,
