@@ -1185,9 +1185,10 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
           tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
       TileSelectionState::Result::Rendered);
 
-  // On the second update, the grandchild load will still be pending.
+  // On the third update, the grandchild load will still be pending.
   // But the child is unconditionally refined, so we should render the root
   // instead of the child.
+  initializeTileset(tileset);
   initializeTileset(tileset);
   const Tile& child = tileset.getRootTile()->getChildren()[0];
   const Tile& grandchild = child.getChildren()[0];
@@ -1204,11 +1205,20 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
           grandchild.getLastSelectionState().getFrameNumber()) !=
       TileSelectionState::Result::Rendered);
 
-  pRawLoader->_grandchildPromise->resolve(
-      TileLoadResult::createFailedResult(nullptr));
+  REQUIRE(pRawLoader->_grandchildPromise);
+
+  // Once the grandchild is loaded, it should be rendered instead.
+  pRawLoader->_grandchildPromise->resolve(TileLoadResult{CesiumGltf::Model()});
+
+  initializeTileset(tileset);
+
+  CHECK(
+      grandchild.getLastSelectionState().getResult(
+          grandchild.getLastSelectionState().getFrameNumber()) ==
+      TileSelectionState::Result::Rendered);
 }
 
-}
+} // namespace
 
 TEST_CASE("An unconditionally-refined tile is not rendered") {
   SECTION("With default settings") {
