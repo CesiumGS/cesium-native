@@ -12,6 +12,10 @@
 - Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
 - Added `createTranslationRotationScaleMatrix` and `computeTranslationRotationScaleFromMatrix` methods to `CesiumGeometry::Transforms`.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause holes to appear in a tileset, even with frustum culling disabled, when the tileset includes some empty tiles with a geometric error greater than their parent's.
+
 ### v0.21.3 - 2023-02-01
 
 ##### Fixes :wrench:
