@@ -1091,7 +1091,9 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   REQUIRE(pGreatGrandchild->getChildren().empty());
 }
 
-TEST_CASE("An unconditionally-refined tile is not rendered") {
+namespace {
+
+void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   class CustomContentLoader : public TilesetContentLoader {
   public:
     Tile* _pRootTile = nullptr;
@@ -1172,7 +1174,8 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
   Tileset tileset(
       tilesetExternals,
       std::move(pCustomLoader),
-      pCustomLoader->createRootTile());
+      pCustomLoader->createRootTile(),
+      options);
 
   // On the first update, we should render the root tile, even though nothing is
   // loaded yet.
@@ -1203,4 +1206,18 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
 
   pRawLoader->_grandchildPromise->resolve(
       TileLoadResult::createFailedResult(nullptr));
+}
+
+}
+
+TEST_CASE("An unconditionally-refined tile is not rendered") {
+  SECTION("With default settings") {
+    runUnconditionallyRefinedTestCase(TilesetOptions());
+  }
+
+  SECTION("With forbidHoles enabled") {
+    TilesetOptions options{};
+    options.forbidHoles = true;
+    runUnconditionallyRefinedTestCase(options);
+  }
 }
