@@ -1101,6 +1101,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
 
     std::unique_ptr<Tile> createRootTile() {
       auto pRootTile = std::make_unique<Tile>(this);
+      this->_pRootTile = pRootTile.get();
+
       pRootTile->setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
 
       Cartographic center = Cartographic::fromDegrees(118.0, 32.0, 0.0);
@@ -1133,7 +1135,6 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       grandchildren.emplace_back(std::move(grandchild));
       pRootTile->getChildren()[0].createChildTiles(std::move(grandchildren));
 
-      this->_pRootTile = pRootTile.get();
       return pRootTile;
     }
 
@@ -1176,7 +1177,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   Tileset tileset(
       tilesetExternals,
       std::move(pCustomLoader),
-      pCustomLoader->createRootTile(),
+      pRawLoader->createRootTile(),
       options);
 
   // On the first update, we should render the root tile, even though nothing is
