@@ -1090,3 +1090,117 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
 
   REQUIRE(pGreatGrandchild->getChildren().empty());
 }
+
+TEST_CASE("An unconditionally-refined tile is not rendered") {
+  class CustomContentLoader : public TilesetContentLoader {
+  public:
+    Tile* _pRootTile = nullptr;
+    std::optional<Promise<TileLoadResult>> _grandchildPromise;
+
+    std::unique_ptr<Tile> createRootTile() {
+      auto pRootTile = std::make_unique<Tile>(this);
+      pRootTile->setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
+
+      Cartographic center = Cartographic::fromDegrees(118.0, 32.0, 0.0);
+      pRootTile->setBoundingVolume(CesiumGeospatial::BoundingRegion(
+          GlobeRectangle(
+              center.longitude - 0.001,
+              center.latitude - 0.001,
+              center.longitude + 0.001,
+              center.latitude + 0.001),
+          0.0,
+          10.0));
+      pRootTile->setGeometricError(100000000000.0);
+
+      Tile child(this);
+      child.setTileID(CesiumGeometry::QuadtreeTileID(1, 0, 0));
+      child.setBoundingVolume(pRootTile->getBoundingVolume());
+      child.setGeometricError(1e100);
+
+      std::vector<Tile> children;
+      children.emplace_back(std::move(child));
+
+      pRootTile->createChildTiles(std::move(children));
+
+      Tile grandchild(this);
+      grandchild.setTileID(CesiumGeometry::QuadtreeTileID(1, 0, 0));
+      grandchild.setBoundingVolume(pRootTile->getBoundingVolume());
+      grandchild.setGeometricError(0.1);
+
+      std::vector<Tile> grandchildren;
+      grandchildren.emplace_back(std::move(grandchild));
+      pRootTile->getChildren()[0].createChildTiles(std::move(grandchildren));
+
+      this->_pRootTile = pRootTile.get();
+      return pRootTile;
+    }
+
+    virtual CesiumAsync::Future<TileLoadResult>
+    loadTileContent(const TileLoadInput& input) override {
+      if (&input.tile == this->_pRootTile) {
+        return input.asyncSystem.createResolvedFuture(
+            TileLoadResult{CesiumGltf::Model()});
+      } else if (input.tile.getParent() == this->_pRootTile) {
+        return input.asyncSystem.createResolvedFuture(
+            TileLoadResult{TileEmptyContent()});
+      } else if (
+          input.tile.getParent() != nullptr &&
+          input.tile.getParent()->getParent() == this->_pRootTile) {
+        this->_grandchildPromise =
+            input.asyncSystem.createPromise<TileLoadResult>();
+        return this->_grandchildPromise->getFuture();
+      }
+
+      return input.asyncSystem.createResolvedFuture(
+          TileLoadResult::createFailedResult(nullptr));
+    }
+
+    virtual TileChildrenResult createTileChildren(const Tile&) override {
+      return TileChildrenResult{{}, TileLoadResultState::Failed};
+    }
+  };
+
+  TilesetExternals tilesetExternals{
+      nullptr,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  auto pCustomLoader = std::make_unique<CustomContentLoader>();
+  CustomContentLoader* pRawLoader = pCustomLoader.get();
+
+  Tileset tileset(
+      tilesetExternals,
+      std::move(pCustomLoader),
+      pCustomLoader->createRootTile());
+
+  // On the first update, we should render the root tile, even though nothing is
+  // loaded yet.
+  initializeTileset(tileset);
+  CHECK(
+      tileset.getRootTile()->getLastSelectionState().getResult(
+          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      TileSelectionState::Result::Rendered);
+
+  // On the second update, the grandchild load will still be pending.
+  // But the child is unconditionally refined, so we should render the root
+  // instead of the child.
+  initializeTileset(tileset);
+  const Tile& child = tileset.getRootTile()->getChildren()[0];
+  const Tile& grandchild = child.getChildren()[0];
+  CHECK(
+      tileset.getRootTile()->getLastSelectionState().getResult(
+          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      TileSelectionState::Result::Rendered);
+  CHECK(
+      child.getLastSelectionState().getResult(
+          child.getLastSelectionState().getFrameNumber()) !=
+      TileSelectionState::Result::Rendered);
+  CHECK(
+      grandchild.getLastSelectionState().getResult(
+          grandchild.getLastSelectionState().getFrameNumber()) !=
+      TileSelectionState::Result::Rendered);
+
+  pRawLoader->_grandchildPromise->resolve(
+      TileLoadResult::createFailedResult(nullptr));
+}
