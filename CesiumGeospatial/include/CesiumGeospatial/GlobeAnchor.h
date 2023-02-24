@@ -13,7 +13,7 @@ namespace CesiumGeospatial {
 class LocalHorizontalCoordinateSystem;
 
 /**
- * @brief Anchors an object to the globe by definining a transformation from the
+ * @brief Anchors an object to the globe by defining a transformation from the
  * object's coordinate to the globe-fixed coordinate system (usually
  * Earth-Centered, Earth-Fixed or ECEF).
  *
