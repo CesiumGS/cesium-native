@@ -9,6 +9,7 @@
 
 ##### Additions :tada:
 
+- Added `GlobeAnchor`, making it easy to define a coordinate system that anchors an object to the globe and maintains it as the object moves or as the local coordinate system it is defined in changes.
 - Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
 - Added `createTranslationRotationScaleMatrix` and `computeTranslationRotationScaleFromMatrix` methods to `CesiumGeometry::Transforms`.
 
