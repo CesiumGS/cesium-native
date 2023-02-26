@@ -1,9 +1,9 @@
 #include "Cesium3DTilesSelection/Tile.h"
 
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/AxisTransforms.h>
 #include <CesiumGeometry/Rectangle.h>
-#include <CesiumGeospatial/Transforms.h>
+#include <CesiumGeometry/Transforms.h>
+#include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Tracing.h>

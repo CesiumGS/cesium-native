@@ -1,6 +1,6 @@
 #include "CesiumGeospatial/EllipsoidTangentPlane.h"
 
-#include "CesiumGeospatial/Transforms.h"
+#include "CesiumGeospatial/GlobeTransforms.h"
 
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Plane.h>
@@ -55,7 +55,9 @@ glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
     throw std::invalid_argument(
         "The origin must not be near the center of the ellipsoid.");
   }
-  return Transforms::eastNorthUpToFixedFrame(scaledOrigin.value(), ellipsoid);
+  return GlobeTransforms::eastNorthUpToFixedFrame(
+      scaledOrigin.value(),
+      ellipsoid);
 }
 
 } // namespace CesiumGeospatial
