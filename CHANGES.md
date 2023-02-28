@@ -1,6 +1,6 @@
 # Change Log
 
-### v0.?.? - 2023-?-?
+### v0.22.0 - 2023-03-01
 
 ##### Breaking Changes :mega:
 
@@ -12,6 +12,7 @@
 - Added `GlobeAnchor`, making it easy to define a coordinate system that anchors an object to the globe and maintains it as the object moves or as the local coordinate system it is defined in changes.
 - Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
 - Added `createTranslationRotationScaleMatrix` and `computeTranslationRotationScaleFromMatrix` methods to `CesiumGeometry::Transforms`.
+- Added `CesiumUtility::AttributeCompression` for encoding and decoding vertex attributes in different formats.
 
 ##### Fixes :wrench:
 
