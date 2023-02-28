@@ -35,7 +35,7 @@ public:
    * @brief Creates a new instance.
    *
    * @param eastNorthUpToFixedFrame A transform that was computed with
-   * {@link Transforms::eastNorthUpToFixedFrame}.
+   * {@link GlobeTransforms::eastNorthUpToFixedFrame}.
    * @param ellipsoid The ellipsoid. Default value: {@link Ellipsoid::WGS84}.
    */
   EllipsoidTangentPlane(

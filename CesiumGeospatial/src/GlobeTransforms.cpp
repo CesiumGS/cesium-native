@@ -1,4 +1,4 @@
-#include "CesiumGeospatial/Transforms.h"
+#include "CesiumGeospatial/GlobeTransforms.h"
 
 #include <CesiumUtility/Math.h>
 
@@ -8,7 +8,7 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
-/*static*/ glm::dmat4x4 Transforms::eastNorthUpToFixedFrame(
+/*static*/ glm::dmat4x4 GlobeTransforms::eastNorthUpToFixedFrame(
     const glm::dvec3& origin,
     const Ellipsoid& ellipsoid /*= Ellipsoid::WGS84*/) noexcept {
   if (Math::equalsEpsilon(origin, glm::dvec3(0.0), Math::Epsilon14)) {

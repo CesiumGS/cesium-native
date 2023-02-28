@@ -840,31 +840,35 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
   for (Tile& child : children) {
     this->_markTileVisited(child);
 
-    if (!child.isRenderable() && !child.isExternalContent()) {
-      waitingForChildren = true;
+    // While we are waiting for the child to load, we need to push along the
+    // tile and raster loading by continuing to update it. This will do
+    // nothing if the tile is already loaded.
+    this->_pTilesetContentManager->updateTileContent(
+        child,
+        tilePriority,
+        _options);
 
-      // While we are waiting for the child to load, we need to push along the
-      // tile and raster loading by continuing to update it.
-      this->_pTilesetContentManager->updateTileContent(
-          child,
-          tilePriority,
-          _options);
+    // We're using the distance to the parent tile to compute the load
+    // priority. This is fine because the relative priority of the children is
+    // irrelevant; we can't display any of them until all are loaded, anyway.
+    // This will also do nothing if the tile is already loaded.
+    addTileToLoadQueue(this->_loadQueueMedium, child, tilePriority);
 
-      // We're using the distance to the parent tile to compute the load
-      // priority. This is fine because the relative priority of the children is
-      // irrelevant; we can't display any of them until all are loaded, anyway.
-      addTileToLoadQueue(this->_loadQueueMedium, child, tilePriority);
-    } else if (child.getUnconditionallyRefine()) {
-      // This child tile is set to unconditionally refine. That means refining
-      // _to_ it will immediately refine _through_ it. So we need to make sure
-      // its children are renderable, too.
-      // The distances are not correct for the child's children, but once again
-      // we don't care because all tiles must be loaded before we can render any
-      // of them, so their relative priority doesn't matter.
-      waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
-          frameState,
-          child,
-          tilePriority);
+    if (!child.isRenderable()) {
+      if (child.getUnconditionallyRefine()) {
+        // This child tile is set to unconditionally refine. That means refining
+        // _to_ it will immediately refine _through_ it. So we need to make sure
+        // its children are renderable, too.
+        // The distances are not correct for the child's children, but once
+        // again we don't care because all tiles must be loaded before we can
+        // render any of them, so their relative priority doesn't matter.
+        waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
+            frameState,
+            child,
+            tilePriority);
+      } else {
+        waitingForChildren = true;
+      }
     }
   }
 

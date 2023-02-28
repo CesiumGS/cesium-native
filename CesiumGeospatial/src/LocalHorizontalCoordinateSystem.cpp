@@ -1,6 +1,6 @@
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
-#include <CesiumGeospatial/Transforms.h>
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/mat3x3.hpp>
@@ -74,7 +74,7 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
 
   // Construct a local horizontal system with East-North-Up axes (right-handed)
   glm::dmat4 enuToFixed =
-      Transforms::eastNorthUpToFixedFrame(originEcef, ellipsoid);
+      GlobeTransforms::eastNorthUpToFixedFrame(originEcef, ellipsoid);
 
   // Construct a matrix to swap and invert axes as necessary
   glm::dmat4 localToEnu(

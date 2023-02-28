@@ -1,9 +1,9 @@
 #include "Cesium3DTilesSelection/Tile.h"
 
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/AxisTransforms.h>
 #include <CesiumGeometry/Rectangle.h>
-#include <CesiumGeospatial/Transforms.h>
+#include <CesiumGeometry/Transforms.h>
+#include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Tracing.h>
@@ -188,7 +188,7 @@ bool Tile::isRenderable() const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
-    if (!isExternalContent()) {
+    if (!getUnconditionallyRefine()) {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),

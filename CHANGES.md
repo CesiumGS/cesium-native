@@ -1,11 +1,23 @@
 # Change Log
 
-### v0.?.? - 2023-?-?
+### v0.22.0 - 2023-03-01
+
+##### Breaking Changes :mega:
+
+- Renamed `CesiumGeometry::AxisTransforms` to simply `Transforms`.
+- Renamed `CesiumGeospatial::Transforms` to `GlobeTransforms`.
 
 ##### Additions :tada:
 
+- Added `GlobeAnchor`, making it easy to define a coordinate system that anchors an object to the globe and maintains it as the object moves or as the local coordinate system it is defined in changes.
 - Added support for loading tilesets with `pnts` content. Point clouds are converted to `glTF`s with a single `POINTS` primitive, while batch tables are converted to `EXT_feature_metadata`.
 - Use `libjpeg-turbo` instead of `stb` for faster jpeg decoding. 
+- Added `createTranslationRotationScaleMatrix` and `computeTranslationRotationScaleFromMatrix` methods to `CesiumGeometry::Transforms`.
+- Added `CesiumUtility::AttributeCompression` for encoding and decoding vertex attributes in different formats.
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause holes to appear in a tileset, even with frustum culling disabled, when the tileset includes some empty tiles with a geometric error greater than their parent's.
 
 ### v0.21.3 - 2023-02-01
 
