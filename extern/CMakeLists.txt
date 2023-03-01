@@ -158,19 +158,29 @@ set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/incl
 set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
 add_subdirectory(libmorton)
 
-include(ExternalProject)
-ExternalProject_Add(libjpeg-turbo
-    SOURCE_DIR      "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo"
-    PREFIX          "libjpeg-turbo"
-    CMAKE_ARGS      -DCMAKE_INSTALL_PREFIX=../../
-                    -DENABLE_SHARED=0
-)
-
 if(MSVC)
     set(TURBOJPEG_LIB_NAME "turbojpeg-static")
 else()
     set(TURBOJPEG_LIB_NAME "turbojpeg")
 endif()
+
+if(DEFINED CMAKE_TOOLCHAIN_FILE)
+	cmake_path(IS_RELATIVE CMAKE_TOOLCHAIN_FILE result)
+	if(result)
+	    cmake_path(ABSOLUTE_PATH CMAKE_TOOLCHAIN_FILE BASE_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE TJ_TOOLCHAIN_FILE)
+	else()
+	    set(TJ_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE})
+	endif()
+endif()
+
+include(ExternalProject)
+ExternalProject_Add(libjpeg-turbo
+    SOURCE_DIR        "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo"
+    PREFIX            "libjpeg-turbo"
+	CONFIGURE_COMMAND ${CMAKE_COMMAND} -B ${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo -S ${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo -DENABLE_SHARED=0 -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE} -DCMAKE_ANDROID_ARCH_ABI=${CMAKE_ANDROID_ARCH_ABI} -G ${CMAKE_GENERATOR} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM} -DCMAKE_TOOLCHAIN_FILE=${TJ_TOOLCHAIN_FILE}
+	BUILD_COMMAND     ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo --config $<CONFIG> --target install
+	INSTALL_COMMAND   ""
+)
 
 ExternalProject_Get_Property(libjpeg-turbo INSTALL_DIR)
 set(CESIUM_NATIVE_TURBOJPEG_LIB_PATH "${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}${TURBOJPEG_LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE INTERNAL
