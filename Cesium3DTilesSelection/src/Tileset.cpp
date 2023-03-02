@@ -766,8 +766,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
   this->_fogCull(frameState, distances, cullResult);
 
-  if (this->_options.forbidHoles &&
-      !cullResult.shouldVisit &&
+  if (this->_options.forbidHoles && !cullResult.shouldVisit &&
       tile.getRefine() == TileRefine::Replace &&
       tile.getUnconditionallyRefine()) {
     // Unconditionally refined tiles must always be visited in forbidHoles
