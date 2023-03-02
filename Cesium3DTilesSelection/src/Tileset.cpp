@@ -766,13 +766,17 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
   this->_fogCull(frameState, distances, cullResult);
 
-  if (!cullResult.shouldVisit && this->_options.forbidHoles &&
+  if (this->_options.forbidHoles &&
+      !cullResult.shouldVisit &&
+      tile.getRefine() == TileRefine::Replace &&
       tile.getUnconditionallyRefine()) {
-    // Unconditionally refined tiles must always be visited in forbidHoles mode,
-    // because we need to load this tile's descendants before we can render any
-    // of its siblings.
+    // Unconditionally refined tiles must always be visited in forbidHoles
+    // mode, because we need to load this tile's descendants before we can
+    // render any of its siblings.
     cullResult.shouldVisit = true;
-  } else if (!cullResult.shouldVisit) {
+  }
+
+  if (!cullResult.shouldVisit) {
     const TileSelectionState lastFrameSelectionState =
         tile.getLastSelectionState();
 
@@ -781,13 +785,16 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         frameState.currentFrameNumber,
         TileSelectionState::Result::Culled));
 
-    TraversalDetails traversalDetails;
+    ++result.tilesCulled;
 
-    if (this->_options.forbidHoles) {
+    TraversalDetails traversalDetails{};
+
+    if (this->_options.forbidHoles && tile.getRefine() == TileRefine::Replace) {
       // In order to prevent holes, we need to load this tile and also not
-      // render any siblings until it is ready. We don't actually need to render
-      // it, though.
+      // render any siblings until it is ready. We don't actually need to
+      // render it, though.
       addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
+
       traversalDetails.allAreRenderable = tile.isRenderable();
       traversalDetails.anyWereRenderedLastFrame =
           lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
@@ -798,8 +805,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       // Preload this culled sibling as requested.
       addTileToLoadQueue(this->_loadQueueLow, tile, tilePriority);
     }
-
-    ++result.tilesCulled;
 
     return traversalDetails;
   }
