@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.23.0 - 2023-04-01
+
+##### Fixes :wrench:
+
+- Fixed crash when a batch table property has too few values.
+
 ### v0.22.0 - 2023-03-01
 
 ##### Breaking Changes :mega:
