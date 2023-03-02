@@ -192,6 +192,21 @@ public:
   int64_t size() const noexcept { return this->_size; }
 
   /**
+   * @brief Returns the stride (number of bytes per component) of this accessor.
+   *
+   * @returns The stride.
+   */
+  int64_t stride() const noexcept { return this->_stride; }
+
+  /**
+   * @brief Returns the start of this AccesorViews data into the buffer.
+   *
+   * @returns The start of this view.
+   */
+  const std::byte* bufferStart() const noexcept {
+    return this->_pData + this->_offset;
+    
+  /**
    * @brief Gets the status of this accessor view.
    *
    * Indicates whether the view accurately reflects the accessor's data, or
