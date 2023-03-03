@@ -1,4 +1,10 @@
 # Change Log
+### v0.22.1 - 2023-03-02
+
+##### Breaking Changes :mega:
+
+##### Additions :tada:
+- Added getters for the `stride` and `data` fields of `AccesorView.h`.
 
 ### v0.22.0 - 2023-03-01
 
