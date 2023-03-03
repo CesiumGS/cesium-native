@@ -267,7 +267,6 @@ void updateExtensionWithJsonStringProperty(
     const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= featureTable.count);
 
   rapidjson::StringBuffer rapidjsonStrBuffer;
   std::vector<uint64_t> rapidjsonOffsets;
@@ -276,6 +275,10 @@ void updateExtensionWithJsonStringProperty(
 
   auto it = propertyValue.begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
+    if (it == propertyValue.end()) {
+      rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
+      continue;
+    }
     if (!it->IsString()) {
       // Everything else that is not string will be serialized by json
       rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
