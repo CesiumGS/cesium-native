@@ -192,7 +192,7 @@ public:
   int64_t size() const noexcept { return this->_size; }
 
   /**
-   * @brief Returns the stride (number of bytes per component) of this accessor.
+   * @brief Returns the stride of this accessor, which is the number of bytes from the start of one element to the start of the next.
    *
    * @returns The stride.
    */
