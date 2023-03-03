@@ -199,7 +199,7 @@ public:
   int64_t stride() const noexcept { return this->_stride; }
 
   /**
-   * @brief Returns the start of this AccesorViews data into the buffer.
+   * @brief Returns a pointer to the first byte of this accessor view's data. The elements are stored contiguously, so the next one starts {@link stride} bytes later.
    *
    * @returns The start of this view.
    */
