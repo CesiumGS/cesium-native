@@ -203,7 +203,7 @@ public:
    *
    * @returns The start of this view.
    */
-  const std::byte* bufferStart() const noexcept {
+  const std::byte* data() const noexcept {
     return this->_pData + this->_offset;
     
   /**
