@@ -158,12 +158,6 @@ set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/incl
 set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
 add_subdirectory(libmorton)
 
-if(MSVC)
-    set(TURBOJPEG_LIB_NAME "turbojpeg-static")
-else()
-    set(TURBOJPEG_LIB_NAME "turbojpeg")
-endif()
-
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
 	cmake_path(IS_RELATIVE CMAKE_TOOLCHAIN_FILE result)
 	if(result)
@@ -183,11 +177,12 @@ ExternalProject_Add(libjpeg-turbo
 )
 
 ExternalProject_Get_Property(libjpeg-turbo INSTALL_DIR)
-set(CESIUM_NATIVE_TURBOJPEG_LIB_PATH "${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}${TURBOJPEG_LIB_NAME}$<$<CONFIG:Debug>:${CMAKE_DEBUG_POSTFIX}>${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE INTERNAL
+set(CESIUM_NATIVE_TURBOJPEG_LIB_PATH "${INSTALL_DIR}/lib" CACHE INTERNAL
     "Path to turbojpeg static library"
 )
 
 add_library(turbojpeg STATIC IMPORTED GLOBAL)
-set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION ${CESIUM_NATIVE_TURBOJPEG_LIB_PATH})
+set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION ${CESIUM_NATIVE_TURBOJPEG_LIB_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
+set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION_DEBUG ${CESIUM_NATIVE_TURBOJPEG_LIB_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_DEBUG_POSTFIX}>${CMAKE_STATIC_LIBRARY_SUFFIX})
 target_include_directories(turbojpeg INTERFACE "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo")
 add_dependencies(turbojpeg libjpeg-turbo)
