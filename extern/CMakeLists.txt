@@ -161,7 +161,7 @@ add_subdirectory(libmorton)
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
     if(NOT IS_ABSOLUTE ${CMAKE_TOOLCHAIN_FILE})
         set(TJ_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/${CMAKE_TOOLCHAIN_FILE})
-    else
+    else()
         set(TJ_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE})
     endif()
 endif()

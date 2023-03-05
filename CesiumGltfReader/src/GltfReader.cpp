@@ -640,7 +640,6 @@ ImageReaderResult GltfReader::readImage(
   }
 
   {
-
     tjhandle tjInstance = tjInitDecompress();
     int inSubsamp, inColorspace;
     if (!tjDecompressHeader3(
@@ -665,8 +664,8 @@ ImageReaderResult GltfReader::readImage(
               image.width,
               0,
               image.height,
-              TJPF_RGBX,
-              TJFLAG_FASTDCT)) {
+              TJPF_RGBA,
+              0)) {
         result.errors.emplace_back("Unable to decode JPEG");
         result.image.reset();
       }
