@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.22.1 - 2023-03-06
+
+##### Fixes :wrench:
+
+- Fixed a crash that could occur when a batch table property had fewer values than the model had features.
+
 ### v0.22.0 - 2023-03-01
 
 ##### Breaking Changes :mega:
