@@ -1196,7 +1196,7 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
-    double priority,
+    double /* priority */,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
@@ -1213,7 +1213,8 @@ void TilesetContentManager::updateContentLoadedState(
       // The main thread part of render content loading is throttled. Note that
       // this block may evaluate several times before the tile gets pushed to
       // TileLoadState::Done.
-      this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
+      //this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
+      // We'll do this in addTileToLoadQueue instead.
     }
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
@@ -1411,6 +1412,10 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
 void TilesetContentManager::notifyTileStartLoading(
     [[maybe_unused]] const Tile* pTile) noexcept {
   ++this->_tilesLoadOnProgress;
+  if (pTile) {
+    const_cast<Tile*>(pTile)->_loadStart =
+        std::chrono::high_resolution_clock::now();
+  }
 }
 
 void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
@@ -1422,6 +1427,15 @@ void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
 
   if (pTile) {
     this->_tilesDataUsed += pTile->computeByteSize();
+    SPDLOG_LOGGER_WARN(
+        this->_externals.pLogger,
+        "Done loading {0} in {1} ms in frame {2} Still in progress {3},",
+        TileIdUtilities::createTileIdString(pTile->getTileID()),
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now() - pTile->_loadStart)
+            .count(),
+        this->_currentFrameNumber,
+        this->_tilesLoadOnProgress);
   }
 }
 

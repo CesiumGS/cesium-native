@@ -283,12 +283,15 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
 
-  this->_asyncSystem.dispatchMainThreadTasks();
-
   const int32_t previousFrameNumber = this->_previousFrameNumber;
   const int32_t currentFrameNumber = previousFrameNumber + 1;
 
+  this->_pTilesetContentManager->_currentFrameNumber = currentFrameNumber;
+
+  this->_asyncSystem.dispatchMainThreadTasks();
+
   ViewUpdateResult& result = this->_updateResult;
+  result.frameNumber = currentFrameNumber;
   result.tilesToRenderThisFrame.clear();
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;
@@ -1434,6 +1437,22 @@ void Tileset::addTileToLoadQueue(
     double tilePriority) {
   if (this->_pTilesetContentManager->tileNeedsLoading(tile)) {
     loadQueue.push_back({&tile, tilePriority});
+  } else if (
+      tile.getState() == TileLoadState::ContentLoaded &&
+      tile.isRenderContent()) {
+    int32_t queueID = 0;
+    if (&loadQueue == &this->_loadQueueLow)
+      queueID = 2;
+    if (&loadQueue == &this->_loadQueueMedium)
+      queueID = 1;
+    if (&loadQueue == &this->_loadQueueHigh)
+      queueID = 0;
+
+    this->_pTilesetContentManager->_finishLoadingQueue.push_back(
+        TilesetContentManager::MainThreadLoadTask{
+            &tile,
+            tilePriority,
+            queueID});
   }
 }
 

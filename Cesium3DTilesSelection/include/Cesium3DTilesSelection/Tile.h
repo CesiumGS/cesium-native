@@ -15,6 +15,7 @@
 #include <gsl/span>
 
 #include <atomic>
+#include <chrono>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -543,6 +544,8 @@ public:
    */
   typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks>
       LoadedLinkedList;
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> _loadStart;
 };
 
 } // namespace Cesium3DTilesSelection

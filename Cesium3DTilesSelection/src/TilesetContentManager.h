@@ -145,6 +145,7 @@ private:
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
 
+public:
   struct MainThreadLoadTask {
     Tile* pTile;
 
@@ -155,14 +156,28 @@ private:
      */
     double priority;
 
+    /**
+     * @brief 2 = low priority, 1 = medium priority, 0 = high priority
+     *
+     * So, lower queue IDs should load sooner.
+     */
+    int32_t queueID;
+
     bool operator<(const MainThreadLoadTask& rhs) const noexcept {
-      return this->priority < rhs.priority;
+      if (this->queueID == rhs.queueID)
+        return this->priority < rhs.priority;
+      else
+        return this->queueID < rhs.queueID;
     }
   };
 
   std::vector<MainThreadLoadTask> _finishLoadingQueue;
 
+private:
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
+
+public:
+  int32_t _currentFrameNumber = 0;
 };
 } // namespace Cesium3DTilesSelection
