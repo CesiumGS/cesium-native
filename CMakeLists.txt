@@ -131,7 +131,6 @@ add_subdirectory(extern EXCLUDE_FROM_ALL)
 # These libraries override the debug postfix, so re-override it.
 set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set(CMAKE_OSX_DEPLOYMENT_TARGET "11")
 
 # Public Targets
 add_subdirectory(CesiumUtility)
