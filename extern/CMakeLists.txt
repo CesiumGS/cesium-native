@@ -176,15 +176,8 @@ ExternalProject_Add(libjpeg-turbo
 )
 
 ExternalProject_Get_Property(libjpeg-turbo INSTALL_DIR)
-
-if(MSVC)
-    set(TURBOJPEG_LIB_NAME "turbojpeg-static")
-else()
-    set(TURBOJPEG_LIB_NAME "turbojpeg")
-endif()
-
 add_library(turbojpeg STATIC IMPORTED GLOBAL)
-set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}${TURBOJPEG_LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX})
-set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION_DEBUG ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}${TURBOJPEG_LIB_NAME}${CMAKE_DEBUG_POSTFIX}${CMAKE_STATIC_LIBRARY_SUFFIX})
+set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
+set_property(TARGET turbojpeg PROPERTY IMPORTED_LOCATION_DEBUG ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_DEBUG_POSTFIX}${CMAKE_STATIC_LIBRARY_SUFFIX})
 target_include_directories(turbojpeg INTERFACE "${CMAKE_CURRENT_LIST_DIR}/libjpeg-turbo")
 add_dependencies(turbojpeg libjpeg-turbo)
