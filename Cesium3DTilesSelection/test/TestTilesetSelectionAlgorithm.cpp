@@ -269,7 +269,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 1);
+      REQUIRE(result.tilesVisited == 5);
       REQUIRE(result.workerThreadTileLoadQueueLength == 4);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);

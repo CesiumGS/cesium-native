@@ -402,6 +402,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   return result;
 }
+int32_t Tileset::getNumberOfTilesLoaded() const {
+  return this->_pTilesetContentManager->getNumberOfTilesLoaded();
+}
 
 float Tileset::computeLoadProgress() noexcept {
   int32_t queueSizeSum = static_cast<int32_t>(
@@ -757,20 +760,46 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
   this->_fogCull(frameState, distances, cullResult);
 
+  if (this->_options.forbidHoles && !cullResult.shouldVisit &&
+      tile.getRefine() == TileRefine::Replace &&
+      tile.getUnconditionallyRefine()) {
+    // Unconditionally refined tiles must always be visited in forbidHoles
+    // mode, because we need to load this tile's descendants before we can
+    // render any of its siblings.
+    cullResult.shouldVisit = true;
+  }
+
   if (!cullResult.shouldVisit) {
+    const TileSelectionState lastFrameSelectionState =
+        tile.getLastSelectionState();
+
     markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
     tile.setLastSelectionState(TileSelectionState(
         frameState.currentFrameNumber,
         TileSelectionState::Result::Culled));
 
-    // Preload this culled sibling if requested.
-    if (this->_options.preloadSiblings) {
+    ++result.tilesCulled;
+
+    TraversalDetails traversalDetails{};
+
+    if (this->_options.forbidHoles && tile.getRefine() == TileRefine::Replace) {
+      // In order to prevent holes, we need to load this tile and also not
+      // render any siblings until it is ready. We don't actually need to
+      // render it, though.
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+
+      traversalDetails.allAreRenderable = tile.isRenderable();
+      traversalDetails.anyWereRenderedLastFrame =
+          lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
+          TileSelectionState::Result::Rendered;
+      traversalDetails.notYetRenderableCount =
+          traversalDetails.allAreRenderable ? 0 : 1;
+    } else if (this->_options.preloadSiblings) {
+      // Preload this culled sibling as requested.
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
     }
 
-    ++result.tilesCulled;
-
-    return TraversalDetails();
+    return traversalDetails;
   }
 
   if (cullResult.culled) {
@@ -818,55 +847,6 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   traversalDetails.notYetRenderableCount =
       traversalDetails.allAreRenderable ? 0 : 1;
   return traversalDetails;
-}
-
-bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
-    const FrameState& frameState,
-    Tile& tile,
-    double tilePriority) {
-  // This method should only be called in "Forbid Holes" mode.
-  assert(this->_options.forbidHoles);
-
-  bool waitingForChildren = false;
-
-  // If we're forbidding holes, don't refine if any children are still loading.
-  gsl::span<Tile> children = tile.getChildren();
-  for (Tile& child : children) {
-    this->_markTileVisited(child);
-
-    // While we are waiting for the child to load, we need to push along the
-    // tile and raster loading by continuing to update it. This will do
-    // nothing if the tile is already loaded.
-    this->_pTilesetContentManager->updateTileContent(
-        child,
-        tilePriority,
-        _options);
-
-    // We're using the distance to the parent tile to compute the load
-    // priority. This is fine because the relative priority of the children is
-    // irrelevant; we can't display any of them until all are loaded, anyway.
-    // This will also do nothing if the tile is already loaded.
-    addTileToLoadQueue(child, TileLoadPriorityGroup::Normal, tilePriority);
-
-    if (!child.isRenderable()) {
-      if (child.getUnconditionallyRefine()) {
-        // This child tile is set to unconditionally refine. That means refining
-        // _to_ it will immediately refine _through_ it. So we need to make sure
-        // its children are renderable, too.
-        // The distances are not correct for the child's children, but once
-        // again we don't care because all tiles must be loaded before we can
-        // render any of them, so their relative priority doesn't matter.
-        waitingForChildren |= this->_queueLoadOfChildrenRequiredForForbidHoles(
-            frameState,
-            child,
-            tilePriority);
-      } else {
-        waitingForChildren = true;
-      }
-    }
-  }
-
-  return waitingForChildren;
 }
 
 /**
@@ -1222,18 +1202,6 @@ Tileset::TraversalDetails Tileset::_visitTile(
     }
   }
 
-  // In "Forbid Holes" mode, we cannot refine this tile until all its children
-  // are loaded. But don't queue the children for load until we _want_ to
-  // refine this tile.
-  if (wantToRefine && this->_options.forbidHoles) {
-    const bool waitingForChildren =
-        this->_queueLoadOfChildrenRequiredForForbidHoles(
-            frameState,
-            tile,
-            tilePriority);
-    wantToRefine = !waitingForChildren;
-  }
-
   if (!wantToRefine) {
     // This tile (or an ancestor) is the one we want to render this frame, but
     // we'll do different things depending on the state of this tile and on what
@@ -1408,7 +1376,9 @@ void Tileset::_processMainThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
   // Process deferred main-thread load tasks with a time budget.
 
-  std::sort(this->_mainThreadLoadQueue.begin(), this->_mainThreadLoadQueue.end());
+  std::sort(
+      this->_mainThreadLoadQueue.begin(),
+      this->_mainThreadLoadQueue.end());
 
   double timeBudget = this->_options.mainThreadLoadingTimeLimit;
 
