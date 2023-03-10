@@ -2,11 +2,19 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Removed `tilesLoadingLowPriority`, `tilesLoadingMediumPriority`, and `tilesLoadingHighPriority` from `ViewUpdateResult`. Use `workerThreadTileLoadQueueLength` and `mainThreadTileLoadQueueLength` instead.
+
 ##### Additions :tada:
 
 - Added `getNumberOfTilesLoaded` method to `Tileset`.
 - Changed how `TilesetOptions::forbidHoles` works so that it loads much more quickly, while still guaranteeing there are no holes in the tileset.
 - Added `frameNumber` property to `ViewUpdateResult`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused the main thread to sometimes load low-priority tiles before high-priority ones. This could result in much longer waits than necessary for a tileset's appropriate level-of-detail to be shown.
 
 ### v0.22.1 - 2023-03-06
 
