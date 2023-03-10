@@ -593,7 +593,7 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
-      _tilesLoadOnProgress{0},
+      _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
@@ -617,7 +617,7 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
-      _tilesLoadOnProgress{0},
+      _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
@@ -752,7 +752,7 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
-      _tilesLoadOnProgress{0},
+      _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
@@ -811,7 +811,7 @@ TilesetContentManager::getAsyncDestructionCompleteEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  assert(this->_tilesLoadOnProgress == 0);
+  assert(this->_tileLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
@@ -1045,9 +1045,9 @@ void TilesetContentManager::unloadAll() {
 
 void TilesetContentManager::waitUntilIdle() {
   // Wait for all asynchronous loading to terminate.
-  // If you're hanging here, it's most likely caused by _tilesLoadOnProgress not
+  // If you're hanging here, it's most likely caused by _tileLoadsInProgress not
   // being decremented correctly when an async load ends.
-  while (this->_tilesLoadOnProgress > 0) {
+  while (this->_tileLoadsInProgress > 0) {
     this->_externals.pAssetAccessor->tick();
     this->_externals.asyncSystem.dispatchMainThreadTasks();
   }
@@ -1108,7 +1108,7 @@ TilesetContentManager::getTilesetCredits() const noexcept {
 }
 
 int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {
-  return this->_tilesLoadOnProgress;
+  return this->_tileLoadsInProgress;
 }
 
 int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
@@ -1125,37 +1125,48 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   return bytes;
 }
 
-bool TilesetContentManager::tileNeedsLoading(const Tile& tile) const noexcept {
+bool TilesetContentManager::tileNeedsWorkerThreadLoading(
+    const Tile& tile) const noexcept {
   auto state = tile.getState();
   return state == TileLoadState::Unloaded ||
          state == TileLoadState::FailedTemporarily ||
          anyRasterOverlaysNeedLoading(tile);
 }
 
-void TilesetContentManager::tickMainThreadLoading(
-    double timeBudget,
+bool TilesetContentManager::tileNeedsMainThreadLoading(
+    const Tile& tile) const noexcept {
+  return tile.getState() == TileLoadState::ContentLoaded &&
+         tile.isRenderContent();
+}
+
+void TilesetContentManager::finishLoading(
+    Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  CESIUM_TRACE("TilesetContentManager::tickMainThreadLoading");
-  // Process deferred main-thread load tasks with a time budget.
+  // Run the main thread part of loading.
+  TileContent& content = tile.getContent();
+  TileRenderContent* pRenderContent = content.getRenderContent();
 
-  // A time budget of 0.0 indicates that we shouldn't throttle main thread
-  // loading - but in that case updateContentLoadedState will have already
-  // finished loading during the traversal.
+  assert(pRenderContent != nullptr);
 
-  std::sort(this->_finishLoadingQueue.begin(), this->_finishLoadingQueue.end());
+  // add copyright
+  pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
+      *this->_externals.pCreditSystem,
+      pRenderContent->getModel(),
+      tilesetOptions.showCreditsOnScreen));
 
-  auto start = std::chrono::system_clock::now();
-  auto end =
-      start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
-  for (MainThreadLoadTask& task : this->_finishLoadingQueue) {
-    finishLoading(*task.pTile, tilesetOptions);
-    auto time = std::chrono::system_clock::now();
-    if (time >= end) {
-      break;
-    }
-  }
+  void* pWorkerRenderResources = pRenderContent->getRenderResources();
+  void* pMainThreadRenderResources =
+      this->_externals.pPrepareRendererResources->prepareInMainThread(
+          tile,
+          pWorkerRenderResources);
 
-  this->_finishLoadingQueue.clear();
+  pRenderContent->setRenderResources(pMainThreadRenderResources);
+  tile.setState(TileLoadState::Done);
+
+  // This allows the raster tile to be updated and children to be created, if
+  // necessary.
+  // Priority doesn't matter here since loading is complete.
+  updateTileContent(tile, 0.0, tilesetOptions);
 }
 
 void TilesetContentManager::setTileContent(
@@ -1196,7 +1207,7 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
-    double priority,
+    double /*priority*/,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
@@ -1205,15 +1216,11 @@ void TilesetContentManager::updateContentLoadedState(
     tile.setUnconditionallyRefine();
     tile.setState(TileLoadState::Done);
   } else if (content.isRenderContent()) {
+    // If the main thread part of render content loading is not throttled,
+    // do it right away. Otherwise we'll do it later in
+    // Tileset::_processMainThreadLoadQueue with prioritization and throttling.
     if (tilesetOptions.mainThreadLoadingTimeLimit <= 0.0) {
-      // The main thread part of render content loading is not throttled, so
-      // do it right away.
       finishLoading(tile, tilesetOptions);
-    } else {
-      // The main thread part of render content loading is throttled. Note that
-      // this block may evaluate several times before the tile gets pushed to
-      // TileLoadState::Done.
-      this->_finishLoadingQueue.push_back(MainThreadLoadTask{&tile, priority});
     }
   } else if (content.isEmptyContent()) {
     // There are two possible ways to handle a tile with no content:
@@ -1248,36 +1255,6 @@ void TilesetContentManager::updateContentLoadedState(
 
     tile.setState(TileLoadState::Done);
   }
-}
-
-void TilesetContentManager::finishLoading(
-    Tile& tile,
-    const TilesetOptions& tilesetOptions) {
-  // Run the main thread part of loading.
-  TileContent& content = tile.getContent();
-  TileRenderContent* pRenderContent = content.getRenderContent();
-
-  assert(pRenderContent != nullptr);
-
-  // add copyright
-  pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-      *this->_externals.pCreditSystem,
-      pRenderContent->getModel(),
-      tilesetOptions.showCreditsOnScreen));
-
-  void* pWorkerRenderResources = pRenderContent->getRenderResources();
-  void* pMainThreadRenderResources =
-      this->_externals.pPrepareRendererResources->prepareInMainThread(
-          tile,
-          pWorkerRenderResources);
-
-  pRenderContent->setRenderResources(pMainThreadRenderResources);
-  tile.setState(TileLoadState::Done);
-
-  // This allows the raster tile to be updated and children to be created, if
-  // necessary.
-  // Priority doesn't matter here since loading is complete.
-  updateTileContent(tile, 0.0, tilesetOptions);
 }
 
 void TilesetContentManager::updateDoneState(
@@ -1410,14 +1387,14 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
 
 void TilesetContentManager::notifyTileStartLoading(
     [[maybe_unused]] const Tile* pTile) noexcept {
-  ++this->_tilesLoadOnProgress;
+  ++this->_tileLoadsInProgress;
 }
 
 void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
   assert(
-      this->_tilesLoadOnProgress > 0 &&
+      this->_tileLoadsInProgress > 0 &&
       "There are no tile loads currently in flight");
-  --this->_tilesLoadOnProgress;
+  --this->_tileLoadsInProgress;
   ++this->_loadedTilesCount;
 
   if (pTile) {

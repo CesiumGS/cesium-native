@@ -306,9 +306,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     return result;
   }
 
-  this->_loadQueueHigh.clear();
-  this->_loadQueueMedium.clear();
-  this->_loadQueueLow.clear();
+  this->_workerThreadLoadQueue.clear();
+  this->_mainThreadLoadQueue.clear();
 
   std::vector<double> fogDensities(frustums.size());
   std::transform(
@@ -332,12 +331,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  result.tilesLoadingLowPriority =
-      static_cast<uint32_t>(this->_loadQueueLow.size());
-  result.tilesLoadingMediumPriority =
-      static_cast<uint32_t>(this->_loadQueueMedium.size());
-  result.tilesLoadingHighPriority =
-      static_cast<uint32_t>(this->_loadQueueHigh.size());
+  result.workerThreadTileLoadQueueLength =
+      static_cast<int32_t>(this->_workerThreadLoadQueue.size());
+  result.mainThreadTileLoadQueueLength =
+      static_cast<int32_t>(this->_mainThreadLoadQueue.size());
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->getExternals().pTileOcclusionProxyPool;
@@ -346,10 +343,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   }
 
   this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
-  this->_processLoadQueue();
-  this->_pTilesetContentManager->tickMainThreadLoading(
-      this->_options.mainThreadLoadingTimeLimit,
-      this->_options);
+  this->_processWorkerThreadLoadQueue();
+  this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -409,15 +404,14 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 }
 
 float Tileset::computeLoadProgress() noexcept {
-  uint32_t queueSizeSum = static_cast<uint32_t>(
-      this->_loadQueueLow.size() + this->_loadQueueMedium.size() +
-      this->_loadQueueHigh.size());
-  uint32_t numOfTilesLoading = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumberOfTilesLoading());
-  uint32_t numOfTilesLoaded = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumberOfTilesLoaded());
-  uint32_t inProgressSum = numOfTilesLoading + queueSizeSum;
-  uint32_t totalNum = numOfTilesLoaded + inProgressSum;
+  int32_t queueSizeSum = static_cast<int32_t>(
+      this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size());
+  int32_t numOfTilesLoading =
+      this->_pTilesetContentManager->getNumberOfTilesLoading();
+  int32_t numOfTilesLoaded =
+      this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
+  int32_t totalNum = numOfTilesLoaded + inProgressSum;
   float percentage =
       static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
   return (percentage * 100.f);
@@ -771,7 +765,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
     // Preload this culled sibling if requested.
     if (this->_options.preloadSiblings) {
-      addTileToLoadQueue(this->_loadQueueLow, tile, tilePriority);
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Low, tilePriority);
     }
 
     ++result.tilesCulled;
@@ -814,7 +808,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
+  addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
@@ -852,7 +846,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
     // priority. This is fine because the relative priority of the children is
     // irrelevant; we can't display any of them until all are loaded, anyway.
     // This will also do nothing if the tile is already loaded.
-    addTileToLoadQueue(this->_loadQueueMedium, child, tilePriority);
+    addTileToLoadQueue(child, TileLoadPriorityGroup::Medium, tilePriority);
 
     if (!child.isRenderable()) {
       if (child.getUnconditionallyRefine()) {
@@ -967,7 +961,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
     result.tilesToRenderThisFrame.push_back(&tile);
-    addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
+    addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
     return true;
   }
 
@@ -982,9 +976,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
     size_t firstRenderedDescendantIndex,
-    size_t loadIndexLow,
-    size_t loadIndexMedium,
-    size_t loadIndexHigh,
+    size_t workerThreadLoadQueueIndex,
+    size_t mainThreadLoadQueueIndex,
     bool queuedForLoad,
     double tilePriority) {
   const TileSelectionState lastFrameSelectionState =
@@ -1037,24 +1030,19 @@ bool Tileset::_kickDescendantsAndRenderTile(
           this->_options.loadingDescendantLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
     // Remove all descendants from the load queues.
-    this->_loadQueueLow.erase(
-        this->_loadQueueLow.begin() +
-            static_cast<std::vector<LoadRecord>::iterator::difference_type>(
-                loadIndexLow),
-        this->_loadQueueLow.end());
-    this->_loadQueueMedium.erase(
-        this->_loadQueueMedium.begin() +
-            static_cast<std::vector<LoadRecord>::iterator::difference_type>(
-                loadIndexMedium),
-        this->_loadQueueMedium.end());
-    this->_loadQueueHigh.erase(
-        this->_loadQueueHigh.begin() +
-            static_cast<std::vector<LoadRecord>::iterator::difference_type>(
-                loadIndexHigh),
-        this->_loadQueueHigh.end());
+    this->_workerThreadLoadQueue.erase(
+        this->_workerThreadLoadQueue.begin() +
+            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
+                workerThreadLoadQueueIndex),
+        this->_workerThreadLoadQueue.end());
+    this->_mainThreadLoadQueue.erase(
+        this->_mainThreadLoadQueue.begin() +
+            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
+                mainThreadLoadQueueIndex),
+        this->_mainThreadLoadQueue.end());
 
     if (!queuedForLoad) {
-      addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
     }
 
     traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -1266,7 +1254,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     if (renderThisTile) {
       // Only load this tile if it (not just an ancestor) meets the SSE.
       if (meetsSse && !ancestorMeetsSse) {
-        addTileToLoadQueue(this->_loadQueueMedium, tile, tilePriority);
+        addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
       }
       return _renderInnerTile(frameState, tile, result);
     }
@@ -1285,7 +1273,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     // Load this blocker tile with high priority, but only if this tile (not
     // just an ancestor) meets the SSE.
     if (meetsSse) {
-      addTileToLoadQueue(this->_loadQueueHigh, tile, tilePriority);
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::High, tilePriority);
     }
   }
 
@@ -1296,9 +1284,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
-  const size_t loadIndexLow = this->_loadQueueLow.size();
-  const size_t loadIndexMedium = this->_loadQueueMedium.size();
-  const size_t loadIndexHigh = this->_loadQueueHigh.size();
+  const size_t workerThreadLoadQueueIndex = this->_workerThreadLoadQueue.size();
+  const size_t mainThreadLoadQueueIndex = this->_mainThreadLoadQueue.size();
 
   TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(
       frameState,
@@ -1347,9 +1334,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
         result,
         traversalDetails,
         firstRenderedDescendantIndex,
-        loadIndexLow,
-        loadIndexMedium,
-        loadIndexHigh,
+        workerThreadLoadQueueIndex,
+        mainThreadLoadQueueIndex,
         queuedForLoad,
         tilePriority);
   } else {
@@ -1362,7 +1348,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   }
 
   if (this->_options.preloadAncestors && !queuedForLoad) {
-    addTileToLoadQueue(this->_loadQueueLow, tile, tilePriority);
+    addTileToLoadQueue(tile, TileLoadPriorityGroup::Low, tilePriority);
   }
 
   return traversalDetails;
@@ -1396,18 +1382,48 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   return traversalDetails;
 }
 
-void Tileset::_processLoadQueue() {
-  CESIUM_TRACE("Tileset::_processLoadQueue");
+void Tileset::_processWorkerThreadLoadQueue() {
+  CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
-  this->processQueue(
-      this->_loadQueueHigh,
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
-  this->processQueue(
-      this->_loadQueueMedium,
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
-  this->processQueue(
-      this->_loadQueueLow,
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads));
+  int32_t maximumSimultaneousTileLoads =
+      this->_options.maximumSimultaneousTileLoads;
+
+  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
+      maximumSimultaneousTileLoads) {
+    return;
+  }
+
+  std::vector<TileLoadTask>& queue = this->_workerThreadLoadQueue;
+  std::sort(queue.begin(), queue.end());
+
+  for (TileLoadTask& task : queue) {
+    this->_pTilesetContentManager->loadTileContent(*task.pTile, _options);
+    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
+        maximumSimultaneousTileLoads) {
+      break;
+    }
+  }
+}
+void Tileset::_processMainThreadLoadQueue() {
+  CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
+  // Process deferred main-thread load tasks with a time budget.
+
+  std::sort(this->_mainThreadLoadQueue.begin(), this->_mainThreadLoadQueue.end());
+
+  double timeBudget = this->_options.mainThreadLoadingTimeLimit;
+
+  auto start = std::chrono::system_clock::now();
+  auto end =
+      start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
+  for (TileLoadTask& task : this->_mainThreadLoadQueue) {
+    this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+    auto time = std::chrono::system_clock::now();
+    if (timeBudget > 0.0 && time >= end) {
+      break;
+    }
+  }
+
+  this->_mainThreadLoadQueue.clear();
 }
 
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
@@ -1461,30 +1477,14 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
 }
 
 void Tileset::addTileToLoadQueue(
-    std::vector<Tileset::LoadRecord>& loadQueue,
     Tile& tile,
-    double tilePriority) {
-  if (this->_pTilesetContentManager->tileNeedsLoading(tile)) {
-    loadQueue.push_back({&tile, tilePriority});
+    TileLoadPriorityGroup priorityGroup,
+    double priority) {
+  if (this->_pTilesetContentManager->tileNeedsWorkerThreadLoading(tile)) {
+    this->_workerThreadLoadQueue.push_back({&tile, priorityGroup, priority});
+  } else if (this->_pTilesetContentManager->tileNeedsMainThreadLoading(tile)) {
+    this->_mainThreadLoadQueue.push_back({&tile, priorityGroup, priority});
   }
 }
 
-void Tileset::processQueue(
-    std::vector<Tileset::LoadRecord>& queue,
-    int32_t maximumLoadsInProgress) {
-  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-      maximumLoadsInProgress) {
-    return;
-  }
-
-  std::sort(queue.begin(), queue.end());
-
-  for (LoadRecord& record : queue) {
-    this->_pTilesetContentManager->loadTileContent(*record.pTile, _options);
-    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumLoadsInProgress) {
-      break;
-    }
-  }
-}
 } // namespace Cesium3DTilesSelection

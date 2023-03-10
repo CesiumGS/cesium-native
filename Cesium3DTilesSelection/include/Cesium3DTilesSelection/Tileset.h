@@ -278,9 +278,8 @@ private:
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
-      size_t loadIndexLow,
-      size_t loadIndexMedium,
-      size_t loadIndexHigh,
+      size_t workerThreadLoadQueueIndex,
+      size_t mainThreadLoadQueueIndex,
       bool queuedForLoad,
       double tilePriority);
   TileOcclusionState
@@ -373,7 +372,8 @@ private:
       Tile& tile,
       double tilePriority);
 
-  void _processLoadQueue();
+  void _processWorkerThreadLoadQueue();
+  void _processMainThreadLoadQueue();
   void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
@@ -390,24 +390,59 @@ private:
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
 
-  struct LoadRecord {
+  enum class TileLoadPriorityGroup {
+    /**
+     * @brief Low priority tiles aren't needed right now, but
+     * are being preloaded for the future.
+     */
+    Low = 0,
+
+    /**
+     * @brief Medium priority tiles are normal tiles that are needed to render
+     * the current view the appropriate level-of-detail.
+     */
+    Medium = 1,
+
+    /**
+     * @brief High priority tiles are causing extra detail to be rendered in the
+     * scene, potentially creating a performance problem.
+     */
+    High = 2
+  };
+
+  struct TileLoadTask {
+    /**
+     * @brief The tile to be loaded.
+     */
     Tile* pTile;
 
     /**
-     * @brief The relative priority of loading this tile.
+     * @brief The priority group (low / medium / high) in which to load this
+     * tile.
      *
-     * Lower priority values load sooner.
+     * All tiles in a higher priority group are given a chance to load before
+     * any tiles in a lower priority group.
+     */
+    TileLoadPriorityGroup group;
+
+    /**
+     * @brief The priority of this tile within its priority group.
+     *
+     * Tiles with a _lower_ value for this property load sooner!
      */
     double priority;
 
-    bool operator<(const LoadRecord& rhs) const noexcept {
-      return this->priority < rhs.priority;
+    bool operator<(const TileLoadTask& rhs) const noexcept {
+      if (this->group == rhs.group)
+        return this->priority < rhs.priority;
+      else
+        return this->group > rhs.group;
     }
   };
 
-  std::vector<LoadRecord> _loadQueueHigh;
-  std::vector<LoadRecord> _loadQueueMedium;
-  std::vector<LoadRecord> _loadQueueLow;
+  std::vector<TileLoadTask> _mainThreadLoadQueue;
+  std::vector<TileLoadTask> _workerThreadLoadQueue;
+
   Tile::LoadedLinkedList _loadedTiles;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
@@ -422,12 +457,9 @@ private:
       _pTilesetContentManager;
 
   void addTileToLoadQueue(
-      std::vector<LoadRecord>& loadQueue,
       Tile& tile,
-      double tilePriority);
-  void processQueue(
-      std::vector<Tileset::LoadRecord>& queue,
-      int32_t maximumLoadsInProgress);
+      TileLoadPriorityGroup priorityGroup,
+      double priority);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;

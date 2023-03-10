@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
+
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           TilesetContentManager> {
@@ -95,11 +96,10 @@ public:
 
   int64_t getTotalDataUsed() const noexcept;
 
-  bool tileNeedsLoading(const Tile& tile) const noexcept;
+  bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
+  bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
 
-  void tickMainThreadLoading(
-      double timeBudget,
-      const TilesetOptions& tilesetOptions);
+  void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
 private:
   static void setTileContent(
@@ -113,8 +113,6 @@ private:
       const TilesetOptions& tilesetOptions);
 
   void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
-
-  void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void unloadContentLoadedState(Tile& tile);
 
@@ -141,26 +139,9 @@ private:
   std::vector<Credit> _tilesetCredits;
   RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection _overlayCollection;
-  int32_t _tilesLoadOnProgress;
+  int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
-
-  struct MainThreadLoadTask {
-    Tile* pTile;
-
-    /**
-     * @brief The relative priority of loading for this tile.
-     *
-     * Lower priority values load sooner.
-     */
-    double priority;
-
-    bool operator<(const MainThreadLoadTask& rhs) const noexcept {
-      return this->priority < rhs.priority;
-    }
-  };
-
-  std::vector<MainThreadLoadTask> _finishLoadingQueue;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
