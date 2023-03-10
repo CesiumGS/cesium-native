@@ -765,7 +765,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
     // Preload this culled sibling if requested.
     if (this->_options.preloadSiblings) {
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::Low, tilePriority);
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
     }
 
     ++result.tilesCulled;
@@ -808,7 +808,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
+  addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
@@ -846,7 +846,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForForbidHoles(
     // priority. This is fine because the relative priority of the children is
     // irrelevant; we can't display any of them until all are loaded, anyway.
     // This will also do nothing if the tile is already loaded.
-    addTileToLoadQueue(child, TileLoadPriorityGroup::Medium, tilePriority);
+    addTileToLoadQueue(child, TileLoadPriorityGroup::Normal, tilePriority);
 
     if (!child.isRenderable()) {
       if (child.getUnconditionallyRefine()) {
@@ -961,7 +961,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
     result.tilesToRenderThisFrame.push_back(&tile);
-    addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
+    addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
     return true;
   }
 
@@ -1042,7 +1042,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
         this->_mainThreadLoadQueue.end());
 
     if (!queuedForLoad) {
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
     }
 
     traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -1254,7 +1254,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     if (renderThisTile) {
       // Only load this tile if it (not just an ancestor) meets the SSE.
       if (meetsSse && !ancestorMeetsSse) {
-        addTileToLoadQueue(tile, TileLoadPriorityGroup::Medium, tilePriority);
+        addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
       }
       return _renderInnerTile(frameState, tile, result);
     }
@@ -1273,7 +1273,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     // Load this blocker tile with high priority, but only if this tile (not
     // just an ancestor) meets the SSE.
     if (meetsSse) {
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::High, tilePriority);
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Urgent, tilePriority);
     }
   }
 
@@ -1348,7 +1348,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   }
 
   if (this->_options.preloadAncestors && !queuedForLoad) {
-    addTileToLoadQueue(tile, TileLoadPriorityGroup::Low, tilePriority);
+    addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
   }
 
   return traversalDetails;

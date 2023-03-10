@@ -392,22 +392,23 @@ private:
 
   enum class TileLoadPriorityGroup {
     /**
-     * @brief Low priority tiles aren't needed right now, but
+     * @brief Low priority tiles that aren't needed right now, but
      * are being preloaded for the future.
      */
-    Low = 0,
+    Preload = 0,
 
     /**
-     * @brief Medium priority tiles are normal tiles that are needed to render
-     * the current view the appropriate level-of-detail.
+     * @brief Medium priority tiles that are needed to render the current view
+     * the appropriate level-of-detail.
      */
-    Medium = 1,
+    Normal = 1,
 
     /**
-     * @brief High priority tiles are causing extra detail to be rendered in the
-     * scene, potentially creating a performance problem.
+     * @brief High priority tiles that are causing extra detail to be rendered
+     * in the scene, potentially creating a performance problem and aliasing
+     * artifacts.
      */
-    High = 2
+    Urgent = 2
   };
 
   struct TileLoadTask {
