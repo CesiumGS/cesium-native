@@ -289,6 +289,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   const int32_t currentFrameNumber = previousFrameNumber + 1;
 
   ViewUpdateResult& result = this->_updateResult;
+  result.frameNumber = currentFrameNumber;
   result.tilesToRenderThisFrame.clear();
   result.tilesVisited = 0;
   result.culledTilesVisited = 0;

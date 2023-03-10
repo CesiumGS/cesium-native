@@ -57,6 +57,8 @@ public:
   uint32_t tilesWaitingForOcclusionResults = 0;
   uint32_t maxDepthVisited = 0;
   //! @endcond
+
+  int32_t frameNumber = 0;
 };
 
 } // namespace Cesium3DTilesSelection
