@@ -1355,7 +1355,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
   int32_t maximumSimultaneousTileLoads =
-      this->_options.maximumSimultaneousTileLoads;
+      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
   if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
       maximumSimultaneousTileLoads) {
