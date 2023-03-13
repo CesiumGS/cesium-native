@@ -212,6 +212,20 @@ int64_t TrackSet::getTracingID(size_t trackIndex) noexcept {
   return this->tracks[trackIndex].id;
 }
 
+TrackSet::TrackSet(TrackSet&& rhs) noexcept : name(), tracks(), mutex() {
+  std::scoped_lock lock(rhs.mutex);
+  name = rhs.name;
+  tracks = rhs.tracks;
+}
+
+TrackSet& TrackSet::operator=(TrackSet&& rhs) noexcept {
+  std::scoped_lock lock(rhs.mutex);
+  std::scoped_lock lock2(this->mutex);
+  name = std::move(rhs.name);
+  tracks = std::move(rhs.tracks);
+  return *this;
+}
+
 LambdaCaptureTrack::LambdaCaptureTrack() : pSet(nullptr), index(0) {
   const TrackReference* pTrack = TrackReference::current();
   if (pTrack) {

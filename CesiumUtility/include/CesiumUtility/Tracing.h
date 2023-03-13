@@ -276,6 +276,9 @@ public:
 
   int64_t getTracingID(size_t trackIndex) noexcept;
 
+  TrackSet(TrackSet&& rhs) noexcept;
+  TrackSet& operator=(TrackSet&& rhs) noexcept;
+
 private:
   struct Track {
     Track(int64_t id_, bool inUse_)

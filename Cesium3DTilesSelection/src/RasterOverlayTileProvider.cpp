@@ -305,7 +305,7 @@ void RasterOverlayTileProvider::doLoad(
     return;
   }
 
-  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+  //CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
