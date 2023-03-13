@@ -61,4 +61,4 @@
 	url = https://github.com/martinmoene/expected-lite.git
 [submodule "extern/libjpeg-turbo"]
 	path = extern/libjpeg-turbo
-	url = https://github.com/joseph-kaile/libjpeg-turbo.git
+	url = https://github.com/CesiumGS/libjpeg-turbo.git
