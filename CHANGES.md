@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented WebP and KTX2 textures from working in the common case where only the extension specified the `source` property, not the glTF's main Texture definition.
+
 ### v0.22.1 - 2023-03-06
 
 ##### Fixes :wrench:
