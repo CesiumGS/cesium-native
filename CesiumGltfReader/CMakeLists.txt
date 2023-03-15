@@ -46,7 +46,6 @@ target_include_directories(
     SYSTEM PUBLIC
         # Necessary for `draco/draco_features.h`
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
-        ${CESIUM_NATIVE_LIBJPEGTURBO_INCUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
@@ -66,7 +65,7 @@ target_link_libraries(CesiumGltfReader
         ktx_read
         webp
         webpdecoder
-        turbojpeg-static
+        turbojpeg
 )
 
 install(TARGETS CesiumGltfReader
