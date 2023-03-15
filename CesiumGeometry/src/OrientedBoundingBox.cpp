@@ -107,4 +107,11 @@ bool OrientedBoundingBox::contains(const glm::dvec3& position) const noexcept {
          glm::abs(localPosition.z) <= 1.0;
 }
 
+OrientedBoundingBox
+OrientedBoundingBox::transform(const glm::dmat4& transformation) {
+  return OrientedBoundingBox(
+      glm::dvec3(transformation * glm::dvec4(this->_center, 1.0)),
+      glm::dmat3(transformation) * this->_halfAxes);
+}
+
 } // namespace CesiumGeometry
