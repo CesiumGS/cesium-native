@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxisAlignedBox.h"
 #include "CullingResult.h"
 #include "Library.h"
 
@@ -113,7 +114,10 @@ public:
    * @param transformation The transformation.
    * @return The oriented bounding box in the new coordinate system.
    */
-  OrientedBoundingBox transform(const glm::dmat4& transformation);
+  OrientedBoundingBox
+  transform(const glm::dmat4& transformation) const noexcept;
+
+  AxisAlignedBox toAxisAligned() const noexcept;
 
 private:
   glm::dvec3 _center;
