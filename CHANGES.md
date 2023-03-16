@@ -1,5 +1,16 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `getOrientedBoundingBoxFromBoundingVolume` to the `Cesium3DTilesSelection` namespace.
+- Added `transform` and `toAxisAligned` methods to `OrientedBoundingBox`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused the `center` field of `AxisAlignedBox` to be incorrect.
+
 ### v0.22.1 - 2023-03-06
 
 ##### Fixes :wrench:
