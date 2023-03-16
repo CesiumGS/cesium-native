@@ -381,11 +381,11 @@ TEST_CASE("OrientedBoundingBox::toAxisAligned") {
     OrientedBoundingBox obb(glm::dvec3(1.0, 2.0, 3.0), rotation);
 
     AxisAlignedBox aabb = obb.toAxisAligned();
-    CHECK(aabb.minimumX == 1.0 - glm::sqrt(2.0));
-    CHECK(aabb.maximumX == 1.0 + glm::sqrt(2.0));
-    CHECK(aabb.minimumY == 2.0 - 1.0);
-    CHECK(aabb.maximumY == 2.0 + 1.0);
-    CHECK(aabb.minimumZ == 3.0 - glm::sqrt(2.0));
-    CHECK(aabb.maximumZ == 3.0 + glm::sqrt(2.0));
+    CHECK(Math::equalsEpsilon(aabb.minimumX, 1.0 - glm::sqrt(2.0), 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.maximumX, 1.0 + glm::sqrt(2.0), 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.minimumY, 2.0 - 1.0, 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.maximumY, 2.0 + 1.0, 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.minimumZ, 3.0 - glm::sqrt(2.0), 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.maximumZ, 3.0 + glm::sqrt(2.0), 0.0, 1e-14));
   }
 }
