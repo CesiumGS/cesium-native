@@ -175,6 +175,11 @@ public:
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
+   * @brief Gets the total number of tiles that are currently loaded.
+   */
+  int32_t getNumberOfTilesLoaded() const;
+
+  /**
    * @brief Estimate the percentage of the tiles for the current view that have
    * been loaded.
    */
@@ -348,29 +353,6 @@ private:
   bool _loadAndRenderAdditiveRefinedTile(
       Tile& tile,
       ViewUpdateResult& result,
-      double tilePriority);
-
-  /**
-   * @brief Queues load of tiles that are _required_ to be loaded before the
-   * given tile can be refined in "Forbid Holes" mode.
-   *
-   * The queued tiles may include descedents, too, if any children are set to
-   * Unconditionally Refine ({@link Tile::getUnconditionallyRefine}).
-   *
-   * This method should only be called if {@link TilesetOptions::forbidHoles} is enabled.
-   *
-   * @param frameState The state of the current frame.
-   * @param tile The tile that is potentially being refined.
-   * @param implicitInfo The implicit traversal info.
-   * @param tilePriority The load priority of this tile.
-   * @return true Some of the required descendents are not yet loaded, so this
-   * tile _cannot_ yet be refined.
-   * @return false All of the required descendents (if there are any) are
-   * loaded, so this tile _can_ be refined.
-   */
-  bool _queueLoadOfChildrenRequiredForForbidHoles(
-      const FrameState& frameState,
-      Tile& tile,
       double tilePriority);
 
   void _processLoadQueue();
