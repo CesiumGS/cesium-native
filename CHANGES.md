@@ -4,6 +4,7 @@
 
 ##### Additions :tada:
 
+- Switched to `libjpeg-turbo` instead of `stb` for faster jpeg decoding.
 - Added `getNumberOfTilesLoaded` method to `Tileset`.
 - Changed how `TilesetOptions::forbidHoles` works so that it loads much more quickly, while still guaranteeing there are no holes in the tileset.
 - Added `frameNumber` property to `ViewUpdateResult`.
