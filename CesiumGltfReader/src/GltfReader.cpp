@@ -381,12 +381,12 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
           })
       .thenInWorkerThread([binaryGltf, options](GltfReaderResult&& result) {
         if (!result.model) {
-          return result;
+          return std::move(result);
         }
         if (!*binaryGltf && options.decodeDraco) {
           decodeDraco(result);
         }
-        return result;
+        return std::move(result);
       });
 }
 
