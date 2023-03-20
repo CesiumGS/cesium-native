@@ -148,7 +148,8 @@ public:
    * @param asyncSystem The async system to use for resolving external data.
    * @param url The url for reading the file.
    * @param headers http headers needed to make the request.
-   * @param pAssetAccessor The asset accessor to use to make the necessary requests.
+   * @param pAssetAccessor The asset accessor to use to make the necessary
+   * requests.
    * @param options Options for how to read the glTF.
    */
   static CesiumAsync::Future<GltfReaderResult> loadGltf(
@@ -157,7 +158,7 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
       const GltfReaderOptions& options = GltfReaderOptions());
-  
+
   /**
    * @brief Accepts the result of {@link readGltf} and resolves any remaining
    * external buffers and images.
