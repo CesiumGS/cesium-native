@@ -79,7 +79,7 @@ CESIUM3DTILESSELECTION_API const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
 
 /**
- * @brief Get an oriented bounding box that contains this bounding volume.
+ * @brief Returns an oriented bounding box that contains the given {@link BoundingVolume}.
  *
  * @param boundingVolume The bounding volume.
  * @return The oriented bounding box.

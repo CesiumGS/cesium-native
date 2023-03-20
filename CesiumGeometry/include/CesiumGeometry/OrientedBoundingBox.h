@@ -50,7 +50,7 @@ public:
   }
 
   /**
-   * @brief Gets he three orthogonal half-axes of the bounding box.
+   * @brief Gets the three orthogonal half-axes of the bounding box.
    * Equivalently, the transformation matrix to rotate and scale a 2x2x2 cube
    * centered at the origin.
    */
