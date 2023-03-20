@@ -6,6 +6,21 @@
 ##### Additions :tada:
 - Added getters for the `stride` and `data` fields of `AccesorView.h`.
 
+### ? - ?
+
+##### Additions :tada:
+
+- Switched to `libjpeg-turbo` instead of `stb` for faster jpeg decoding.
+- Added `getNumberOfTilesLoaded` method to `Tileset`.
+- Changed how `TilesetOptions::forbidHoles` works so that it loads much more quickly, while still guaranteeing there are no holes in the tileset.
+- Added `frameNumber` property to `ViewUpdateResult`.
+
+### v0.22.1 - 2023-03-06
+
+##### Fixes :wrench:
+
+- Fixed a crash that could occur when a batch table property had fewer values than the model had features.
+
 ### v0.22.0 - 2023-03-01
 
 ##### Breaking Changes :mega:
