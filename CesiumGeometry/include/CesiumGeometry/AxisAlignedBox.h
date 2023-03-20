@@ -37,9 +37,9 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
         lengthY(maximumY - minimumY),
         lengthZ(maximumZ - minimumZ),
         center(
-            0.5 * (maximumX - minimumX),
-            0.5 * (maximumY - minimumY),
-            0.5 * (maximumZ - minimumZ)) {}
+            0.5 * (maximumX + minimumX),
+            0.5 * (maximumY + minimumY),
+            0.5 * (maximumZ + minimumZ)) {}
 
   /**
    * @brief The minimum x-coordinate.
