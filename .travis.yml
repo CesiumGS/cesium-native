@@ -23,6 +23,7 @@ jobs:
       os: windows
       install:
         - choco install doxygen.install --version=1.9.2
+        - choco install nasm
       before_script:
         - mkdir -p build
         - cd build
@@ -32,6 +33,7 @@ jobs:
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install --version=1.9.2
+        - choco install nasm
     - name: Linux + GCC
       os: linux
       dist: focal
@@ -40,7 +42,7 @@ jobs:
         - # and breaks our ability to update. We don't need it, so remove it.
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
-        - sudo apt-get install cmake doxygen
+        - sudo apt-get install cmake doxygen nasm
     - name: Linux + Clang
       os: linux
       dist: focal
@@ -51,7 +53,7 @@ jobs:
         - # and breaks our ability to update. We don't need it, so remove it.
         - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
-        - sudo apt-get install clang-10 cmake doxygen
+        - sudo apt-get install clang-10 cmake doxygen nasm
       env:
         - CC=clang-10
         - CXX=clang++-10

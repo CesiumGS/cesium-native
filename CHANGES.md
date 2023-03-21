@@ -8,9 +8,17 @@
 
 ##### Additions :tada:
 
+- Added `getOrientedBoundingBoxFromBoundingVolume` to the `Cesium3DTilesSelection` namespace.
+- Added `transform` and `toAxisAligned` methods to `OrientedBoundingBox`.
+- Switched to `libjpeg-turbo` instead of `stb` for faster jpeg decoding.
 - Added `getNumberOfTilesLoaded` method to `Tileset`.
 - Changed how `TilesetOptions::forbidHoles` works so that it loads much more quickly, while still guaranteeing there are no holes in the tileset.
 - Added `frameNumber` property to `ViewUpdateResult`.
+- Added getters for the `stride` and `data` fields of `AccessorView`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused the `center` field of `AxisAlignedBox` to be incorrect.
 
 ##### Fixes :wrench:
 

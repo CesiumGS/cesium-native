@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxisAlignedBox.h"
 #include "CullingResult.h"
 #include "Library.h"
 
@@ -24,7 +25,7 @@ public:
    *
    * @param center The center of the box.
    * @param halfAxes The three orthogonal half-axes of the bounding box.
-   * Equivalently, the transformation matrix to rotate and scale a 0x0x0 cube
+   * Equivalently, the transformation matrix to rotate and scale a 2x2x2 cube
    * centered at the origin.
    *
    * @snippet TestOrientedBoundingBox.cpp Constructor
@@ -49,8 +50,9 @@ public:
   }
 
   /**
-   * @brief Gets the transformation matrix, to rotate and scale the box to the
-   * right position and size.
+   * @brief Gets the three orthogonal half-axes of the bounding box.
+   * Equivalently, the transformation matrix to rotate and scale a 2x2x2 cube
+   * centered at the origin.
    */
   constexpr const glm::dmat3& getHalfAxes() const noexcept {
     return this->_halfAxes;
@@ -104,6 +106,18 @@ public:
    * @return Whether the position is contained within the bounding box.
    */
   bool contains(const glm::dvec3& position) const noexcept;
+
+  /**
+   * @brief Transforms this bounding box to another coordinate system using a
+   * 4x4 matrix.
+   *
+   * @param transformation The transformation.
+   * @return The oriented bounding box in the new coordinate system.
+   */
+  OrientedBoundingBox
+  transform(const glm::dmat4& transformation) const noexcept;
+
+  AxisAlignedBox toAxisAligned() const noexcept;
 
 private:
   glm::dvec3 _center;

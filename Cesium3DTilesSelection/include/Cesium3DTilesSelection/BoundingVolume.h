@@ -78,4 +78,13 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume);
 CESIUM3DTILESSELECTION_API const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
 
+/**
+ * @brief Returns an oriented bounding box that contains the given {@link BoundingVolume}.
+ *
+ * @param boundingVolume The bounding volume.
+ * @return The oriented bounding box.
+ */
+CESIUM3DTILESSELECTION_API CesiumGeometry::OrientedBoundingBox
+getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume);
+
 } // namespace Cesium3DTilesSelection

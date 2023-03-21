@@ -1,15 +1,18 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
 
 #include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include <optional>
 
 using namespace CesiumGeometry;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumUtility;
 
 TEST_CASE("OrientedBoundingBox::intersectPlane") {
   struct TestCase {
@@ -352,4 +355,37 @@ TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition example") {
 
   CHECK(boxes[0].getCenter().x == 2.0);
   CHECK(boxes[1].getCenter().x == 1.0);
+}
+
+TEST_CASE("OrientedBoundingBox::toAxisAligned") {
+  SECTION("simple box that is already axis-aligned") {
+    OrientedBoundingBox obb(
+        glm::dvec3(1.0, 2.0, 3.0),
+        glm::dmat3(
+            glm::dvec3(10.0, 0.0, 0.0),
+            glm::dvec3(0.0, 20.0, 0.0),
+            glm::dvec3(0.0, 0.0, 30.0)));
+    AxisAlignedBox aabb = obb.toAxisAligned();
+    CHECK(aabb.minimumX == -9.0);
+    CHECK(aabb.maximumX == 11.0);
+    CHECK(aabb.minimumY == -18.0);
+    CHECK(aabb.maximumY == 22.0);
+    CHECK(aabb.minimumZ == -27.0);
+    CHECK(aabb.maximumZ == 33.0);
+  }
+
+  SECTION("a truly oriented box") {
+    // Rotate the OBB 45 degrees around the Y-axis
+    double fortyFiveDegrees = Math::OnePi / 4.0;
+    glm::dmat3 rotation = glm::dmat3(glm::eulerAngleY(fortyFiveDegrees));
+    OrientedBoundingBox obb(glm::dvec3(1.0, 2.0, 3.0), rotation);
+
+    AxisAlignedBox aabb = obb.toAxisAligned();
+    CHECK(Math::equalsEpsilon(aabb.minimumX, 1.0 - glm::sqrt(2.0), 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.maximumX, 1.0 + glm::sqrt(2.0), 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.minimumY, 2.0 - 1.0, 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.maximumY, 2.0 + 1.0, 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.minimumZ, 3.0 - glm::sqrt(2.0), 0.0, 1e-14));
+    CHECK(Math::equalsEpsilon(aabb.maximumZ, 3.0 + glm::sqrt(2.0), 0.0, 1e-14));
+  }
 }
