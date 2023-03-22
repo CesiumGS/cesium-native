@@ -1142,6 +1142,8 @@ bool TilesetContentManager::tileNeedsMainThreadLoading(
 void TilesetContentManager::finishLoading(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  assert(tile.getState() == TileLoadState::ContentLoaded);
+
   // Run the main thread part of loading.
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();

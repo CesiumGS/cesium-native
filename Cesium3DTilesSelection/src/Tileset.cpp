@@ -937,12 +937,14 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
     Tile& tile,
     ViewUpdateResult& result,
-    double tilePriority) {
+    double tilePriority,
+    bool queuedForLoad) {
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
     result.tilesToRenderThisFrame.push_back(&tile);
-    addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+    if (!queuedForLoad)
+      addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
     return true;
   }
 
@@ -1203,6 +1205,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
     }
   }
 
+  bool queuedForLoad = false;
+
   if (!wantToRefine) {
     // This tile (or an ancestor) is the one we want to render this frame, but
     // we'll do different things depending on the state of this tile and on what
@@ -1243,13 +1247,18 @@ Tileset::TraversalDetails Tileset::_visitTile(
     // just an ancestor) meets the SSE.
     if (meetsSse) {
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Urgent, tilePriority);
+      queuedForLoad = true;
     }
   }
 
   // Refine!
 
-  bool queuedForLoad =
-      _loadAndRenderAdditiveRefinedTile(tile, result, tilePriority);
+  queuedForLoad = _loadAndRenderAdditiveRefinedTile(
+                      tile,
+                      result,
+                      tilePriority,
+                      queuedForLoad) ||
+                  queuedForLoad;
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
@@ -1451,6 +1460,20 @@ void Tileset::addTileToLoadQueue(
     Tile& tile,
     TileLoadPriorityGroup priorityGroup,
     double priority) {
+  // Assert that this tile hasn't been added to a queue already.
+  assert(
+      std::find_if(
+          this->_workerThreadLoadQueue.begin(),
+          this->_workerThreadLoadQueue.end(),
+          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
+      this->_workerThreadLoadQueue.end());
+  assert(
+      std::find_if(
+          this->_mainThreadLoadQueue.begin(),
+          this->_mainThreadLoadQueue.end(),
+          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
+      this->_mainThreadLoadQueue.end());
+
   if (this->_pTilesetContentManager->tileNeedsWorkerThreadLoading(tile)) {
     this->_workerThreadLoadQueue.push_back({&tile, priorityGroup, priority});
   } else if (this->_pTilesetContentManager->tileNeedsMainThreadLoading(tile)) {

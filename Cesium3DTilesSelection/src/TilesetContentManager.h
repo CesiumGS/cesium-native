@@ -99,6 +99,7 @@ public:
   bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
   bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
 
+  // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
 private:

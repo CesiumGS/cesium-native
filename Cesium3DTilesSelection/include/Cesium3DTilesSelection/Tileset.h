@@ -345,6 +345,7 @@ private:
    * @param result The current view update result.
    * @param tilePriority The load priority of this tile.
    * priority.
+   * @param queuedForLoad True if this tile has already been queued for loading.
    * @return true The additive-refined tile was queued for load and added to the
    * render list.
    * @return false The non-additive-refined tile was ignored.
@@ -352,7 +353,8 @@ private:
   bool _loadAndRenderAdditiveRefinedTile(
       Tile& tile,
       ViewUpdateResult& result,
-      double tilePriority);
+      double tilePriority,
+      bool queuedForLoad);
 
   void _processWorkerThreadLoadQueue();
   void _processMainThreadLoadQueue();
