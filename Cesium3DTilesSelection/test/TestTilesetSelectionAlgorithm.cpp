@@ -209,7 +209,8 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 1);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
+      REQUIRE(result.mainThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
 
@@ -269,7 +270,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 5);
-      REQUIRE(result.tilesLoadingMediumPriority == 4);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 4);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -293,9 +294,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -344,9 +343,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
-      REQUIRE(result.tilesLoadingLowPriority == 1);
-      REQUIRE(result.tilesLoadingMediumPriority == 4);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 5);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -388,9 +385,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 6);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -443,9 +438,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -475,9 +468,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 5);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 4);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 4);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -506,9 +497,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesFadingOut.size() == 1);
 
       REQUIRE(result.tilesVisited == 5);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -597,9 +586,7 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 5);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 5);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -647,9 +634,7 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 7);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 1);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 1);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -663,9 +648,7 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(result.tilesFadingOut.size() == 0);
 
       REQUIRE(result.tilesVisited == 7);
-      REQUIRE(result.tilesLoadingLowPriority == 0);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
-      REQUIRE(result.tilesLoadingHighPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
@@ -734,9 +717,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     REQUIRE(result.tilesToRenderThisFrame.size() == 1);
     REQUIRE(result.tilesFadingOut.size() == 0);
     REQUIRE(result.tilesVisited == 4);
-    REQUIRE(result.tilesLoadingLowPriority == 0);
-    REQUIRE(result.tilesLoadingMediumPriority == 3);
-    REQUIRE(result.tilesLoadingHighPriority == 0);
+    REQUIRE(result.workerThreadTileLoadQueueLength == 3);
     REQUIRE(result.tilesCulled == 0);
     REQUIRE(result.culledTilesVisited == 0);
   }
@@ -760,9 +741,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     REQUIRE(result.tilesToRenderThisFrame.size() == 4);
     REQUIRE(result.tilesFadingOut.size() == 0);
     REQUIRE(result.tilesVisited == 4);
-    REQUIRE(result.tilesLoadingLowPriority == 0);
-    REQUIRE(result.tilesLoadingMediumPriority == 0);
-    REQUIRE(result.tilesLoadingHighPriority == 0);
+    REQUIRE(result.workerThreadTileLoadQueueLength == 0);
     REQUIRE(result.tilesCulled == 0);
     REQUIRE(result.culledTilesVisited == 0);
   }
@@ -853,7 +832,7 @@ TEST_CASE("Test multiple frustums") {
 
       // check result
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesLoadingMediumPriority == 4);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 4);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
     }
 
@@ -878,7 +857,7 @@ TEST_CASE("Test multiple frustums") {
       REQUIRE(*result.tilesFadingOut.begin() == root);
 
       REQUIRE(result.tilesVisited == 5);
-      REQUIRE(result.tilesLoadingMediumPriority == 0);
+      REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
     }
   }
