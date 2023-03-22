@@ -791,8 +791,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
       traversalDetails.allAreRenderable = tile.isRenderable();
       traversalDetails.anyWereRenderedLastFrame =
+          traversalDetails.allAreRenderable &&
           lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-          TileSelectionState::Result::Rendered;
+              TileSelectionState::Result::Rendered;
       traversalDetails.notYetRenderableCount =
           traversalDetails.allAreRenderable ? 0 : 1;
     } else if (this->_options.preloadSiblings) {
@@ -843,8 +844,9 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
   traversalDetails.anyWereRenderedLastFrame =
+      traversalDetails.allAreRenderable &&
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Rendered;
+          TileSelectionState::Result::Rendered;
   traversalDetails.notYetRenderableCount =
       traversalDetails.allAreRenderable ? 0 : 1;
   return traversalDetails;
@@ -898,40 +900,13 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
   traversalDetails.anyWereRenderedLastFrame =
+      traversalDetails.allAreRenderable &&
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Rendered;
+          TileSelectionState::Result::Rendered;
   traversalDetails.notYetRenderableCount =
       traversalDetails.allAreRenderable ? 0 : 1;
 
   return traversalDetails;
-}
-
-Tileset::TraversalDetails Tileset::_refineToNothing(
-    const FrameState& frameState,
-    Tile& tile,
-    ViewUpdateResult& result,
-    bool areChildrenRenderable) {
-
-  const TileSelectionState lastFrameSelectionState =
-      tile.getLastSelectionState();
-
-  // Nothing else to do except mark this tile refined and return.
-  TraversalDetails noChildrenTraversalDetails;
-  if (tile.getRefine() == TileRefine::Add && !tile.isExternalContent()) {
-    noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
-    noChildrenTraversalDetails.anyWereRenderedLastFrame =
-        lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-        TileSelectionState::Result::Rendered;
-    noChildrenTraversalDetails.notYetRenderableCount =
-        areChildrenRenderable ? 0 : 1;
-  } else {
-    markTileNonRendered(frameState.lastFrameNumber, tile, result);
-  }
-
-  tile.setLastSelectionState(TileSelectionState(
-      frameState.currentFrameNumber,
-      TileSelectionState::Result::Refined));
-  return noChildrenTraversalDetails;
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1033,7 +1008,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
   }
 
   traversalDetails.allAreRenderable = tile.isRenderable();
-  traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
+  traversalDetails.anyWereRenderedLastFrame =
+      traversalDetails.allAreRenderable && wasRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1157,7 +1133,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
 
-  const TileSelectionState& lastFrameSelectionState =
+  const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
   const TileSelectionState::Result lastFrameSelectionResult =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber);
@@ -1272,20 +1248,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
       tile,
       result);
 
-  const bool descendantTilesAdded =
-      firstRenderedDescendantIndex != result.tilesToRenderThisFrame.size();
-  if (!descendantTilesAdded) {
-    // No descendant tiles were added to the render list by the function above,
-    // meaning they were all culled even though this tile was deemed visible.
-    // That's pretty common.
-    return _refineToNothing(
-        frameState,
-        tile,
-        result,
-        traversalDetails.allAreRenderable);
-  }
-
-  // At least one descendant tile was added to the render list.
+  // Zero or more descendant tiles were added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
 
   // Descendants will be kicked if any are not ready to render yet and none

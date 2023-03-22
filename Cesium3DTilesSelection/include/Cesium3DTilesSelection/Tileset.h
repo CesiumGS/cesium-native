@@ -272,11 +272,6 @@ private:
       const FrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result);
-  TraversalDetails _refineToNothing(
-      const FrameState& frameState,
-      Tile& tile,
-      ViewUpdateResult& result,
-      bool areChildrenRenderable);
   bool _kickDescendantsAndRenderTile(
       const FrameState& frameState,
       Tile& tile,
