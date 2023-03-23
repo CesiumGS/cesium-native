@@ -790,7 +790,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       // render it, though.
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
-      traversalDetails = this->createTraversalDetailsForSingleTile(
+      traversalDetails = Tileset::createTraversalDetailsForSingleTile(
           frameState,
           tile,
           lastFrameSelectionState);
@@ -839,7 +839,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 
   addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
-  return this->createTraversalDetailsForSingleTile(
+  return Tileset::createTraversalDetailsForSingleTile(
       frameState,
       tile,
       lastFrameSelectionState);
@@ -890,7 +890,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  return this->createTraversalDetailsForSingleTile(
+  return Tileset::createTraversalDetailsForSingleTile(
       frameState,
       tile,
       lastFrameSelectionState);
