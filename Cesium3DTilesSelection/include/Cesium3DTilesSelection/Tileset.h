@@ -442,7 +442,7 @@ private:
       TileLoadPriorityGroup priorityGroup,
       double priority);
 
-  TraversalDetails createTraversalDetailsForSingleTile(
+  static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
       const Tile& tile,
       const TileSelectionState& lastFrameSelectionState);
