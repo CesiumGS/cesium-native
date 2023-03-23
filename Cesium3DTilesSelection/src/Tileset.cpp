@@ -30,6 +30,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+
 Tileset::Tileset(
     const TilesetExternals& externals,
     std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
@@ -789,13 +790,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       // render it, though.
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
-      traversalDetails.allAreRenderable = tile.isRenderable();
-      traversalDetails.anyWereRenderedLastFrame =
-          traversalDetails.allAreRenderable &&
-          lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-              TileSelectionState::Result::Rendered;
-      traversalDetails.notYetRenderableCount =
-          traversalDetails.allAreRenderable ? 0 : 1;
+      traversalDetails = this->createTraversalDetailsForSingleTile(
+          frameState,
+          tile,
+          lastFrameSelectionState);
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
@@ -841,15 +839,10 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 
   addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
-  TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = tile.isRenderable();
-  traversalDetails.anyWereRenderedLastFrame =
-      traversalDetails.allAreRenderable &&
-      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-          TileSelectionState::Result::Rendered;
-  traversalDetails.notYetRenderableCount =
-      traversalDetails.allAreRenderable ? 0 : 1;
-  return traversalDetails;
+  return this->createTraversalDetailsForSingleTile(
+      frameState,
+      tile,
+      lastFrameSelectionState);
 }
 
 /**
@@ -897,16 +890,10 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = tile.isRenderable();
-  traversalDetails.anyWereRenderedLastFrame =
-      traversalDetails.allAreRenderable &&
-      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-          TileSelectionState::Result::Rendered;
-  traversalDetails.notYetRenderableCount =
-      traversalDetails.allAreRenderable ? 0 : 1;
-
-  return traversalDetails;
+  return this->createTraversalDetailsForSingleTile(
+      frameState,
+      tile,
+      lastFrameSelectionState);
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1007,9 +994,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
     queuedForLoad = true;
   }
 
-  traversalDetails.allAreRenderable = tile.isRenderable();
+  bool isRenderable = tile.isRenderable();
+  traversalDetails.allAreRenderable = isRenderable;
   traversalDetails.anyWereRenderedLastFrame =
-      traversalDetails.allAreRenderable && wasRenderedLastFrame;
+      isRenderable && wasRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1442,6 +1430,24 @@ void Tileset::addTileToLoadQueue(
   } else if (this->_pTilesetContentManager->tileNeedsMainThreadLoading(tile)) {
     this->_mainThreadLoadQueue.push_back({&tile, priorityGroup, priority});
   }
+}
+
+Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
+    const FrameState& frameState,
+    const Tile& tile,
+    const TileSelectionState& lastFrameSelectionState) {
+  bool isRenderable = tile.isRenderable();
+  bool wasRenderedLastFrame =
+      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
+      TileSelectionState::Result::Rendered;
+
+  TraversalDetails traversalDetails;
+  traversalDetails.allAreRenderable = isRenderable;
+  traversalDetails.anyWereRenderedLastFrame =
+      isRenderable && wasRenderedLastFrame;
+  traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
+
+  return traversalDetails;
 }
 
 } // namespace Cesium3DTilesSelection
