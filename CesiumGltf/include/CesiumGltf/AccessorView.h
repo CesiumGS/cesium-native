@@ -199,6 +199,24 @@ public:
    */
   AccessorViewStatus status() const noexcept { return this->_status; }
 
+  /**
+   * @brief Returns the stride of this accessor, which is the number of bytes
+   * from the start of one element to the start of the next.
+   *
+   * @returns The stride.
+   */
+  int64_t stride() const noexcept { return this->_stride; }
+
+  /**
+   * @brief Returns a pointer to the first byte of this accessor view's data.
+   * The elements are stored contiguously, so the next one starts {@link stride} bytes later.
+   *
+   * @returns The start of this view.
+   */
+  const std::byte* data() const noexcept {
+    return this->_pData + this->_offset;
+  }
+
 private:
   void create(const Model& model, const Accessor& accessor) noexcept {
     const CesiumGltf::BufferView* pBufferView =

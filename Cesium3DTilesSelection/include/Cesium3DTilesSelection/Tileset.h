@@ -175,6 +175,11 @@ public:
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
+   * @brief Gets the total number of tiles that are currently loaded.
+   */
+  int32_t getNumberOfTilesLoaded() const;
+
+  /**
    * @brief Estimate the percentage of the tiles for the current view that have
    * been loaded.
    */
@@ -278,9 +283,8 @@ private:
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
-      size_t loadIndexLow,
-      size_t loadIndexMedium,
-      size_t loadIndexHigh,
+      size_t workerThreadLoadQueueIndex,
+      size_t mainThreadLoadQueueIndex,
       bool queuedForLoad,
       double tilePriority);
   TileOcclusionState
@@ -341,6 +345,7 @@ private:
    * @param result The current view update result.
    * @param tilePriority The load priority of this tile.
    * priority.
+   * @param queuedForLoad True if this tile has already been queued for loading.
    * @return true The additive-refined tile was queued for load and added to the
    * render list.
    * @return false The non-additive-refined tile was ignored.
@@ -348,32 +353,12 @@ private:
   bool _loadAndRenderAdditiveRefinedTile(
       Tile& tile,
       ViewUpdateResult& result,
-      double tilePriority);
+      double tilePriority,
+      bool queuedForLoad);
 
-  /**
-   * @brief Queues load of tiles that are _required_ to be loaded before the
-   * given tile can be refined in "Forbid Holes" mode.
-   *
-   * The queued tiles may include descedents, too, if any children are set to
-   * Unconditionally Refine ({@link Tile::getUnconditionallyRefine}).
-   *
-   * This method should only be called if {@link TilesetOptions::forbidHoles} is enabled.
-   *
-   * @param frameState The state of the current frame.
-   * @param tile The tile that is potentially being refined.
-   * @param implicitInfo The implicit traversal info.
-   * @param tilePriority The load priority of this tile.
-   * @return true Some of the required descendents are not yet loaded, so this
-   * tile _cannot_ yet be refined.
-   * @return false All of the required descendents (if there are any) are
-   * loaded, so this tile _can_ be refined.
-   */
-  bool _queueLoadOfChildrenRequiredForForbidHoles(
-      const FrameState& frameState,
-      Tile& tile,
-      double tilePriority);
+  void _processWorkerThreadLoadQueue();
+  void _processMainThreadLoadQueue();
 
-  void _processLoadQueue();
   void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
@@ -390,24 +375,60 @@ private:
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
 
-  struct LoadRecord {
+  enum class TileLoadPriorityGroup {
+    /**
+     * @brief Low priority tiles that aren't needed right now, but
+     * are being preloaded for the future.
+     */
+    Preload = 0,
+
+    /**
+     * @brief Medium priority tiles that are needed to render the current view
+     * the appropriate level-of-detail.
+     */
+    Normal = 1,
+
+    /**
+     * @brief High priority tiles that are causing extra detail to be rendered
+     * in the scene, potentially creating a performance problem and aliasing
+     * artifacts.
+     */
+    Urgent = 2
+  };
+
+  struct TileLoadTask {
+    /**
+     * @brief The tile to be loaded.
+     */
     Tile* pTile;
 
     /**
-     * @brief The relative priority of loading this tile.
+     * @brief The priority group (low / medium / high) in which to load this
+     * tile.
      *
-     * Lower priority values load sooner.
+     * All tiles in a higher priority group are given a chance to load before
+     * any tiles in a lower priority group.
+     */
+    TileLoadPriorityGroup group;
+
+    /**
+     * @brief The priority of this tile within its priority group.
+     *
+     * Tiles with a _lower_ value for this property load sooner!
      */
     double priority;
 
-    bool operator<(const LoadRecord& rhs) const noexcept {
-      return this->priority < rhs.priority;
+    bool operator<(const TileLoadTask& rhs) const noexcept {
+      if (this->group == rhs.group)
+        return this->priority < rhs.priority;
+      else
+        return this->group > rhs.group;
     }
   };
 
-  std::vector<LoadRecord> _loadQueueHigh;
-  std::vector<LoadRecord> _loadQueueMedium;
-  std::vector<LoadRecord> _loadQueueLow;
+  std::vector<TileLoadTask> _mainThreadLoadQueue;
+  std::vector<TileLoadTask> _workerThreadLoadQueue;
+
   Tile::LoadedLinkedList _loadedTiles;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
@@ -422,12 +443,9 @@ private:
       _pTilesetContentManager;
 
   void addTileToLoadQueue(
-      std::vector<LoadRecord>& loadQueue,
       Tile& tile,
-      double tilePriority);
-  void processQueue(
-      std::vector<Tileset::LoadRecord>& queue,
-      int32_t maximumLoadsInProgress);
+      TileLoadPriorityGroup priorityGroup,
+      double priority);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;

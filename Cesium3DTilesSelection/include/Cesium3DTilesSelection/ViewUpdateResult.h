@@ -39,11 +39,17 @@ public:
    */
   std::unordered_set<Tile*> tilesFadingOut;
 
-  //! @cond Doxygen_Suppress
-  uint32_t tilesLoadingLowPriority = 0;
-  uint32_t tilesLoadingMediumPriority = 0;
-  uint32_t tilesLoadingHighPriority = 0;
+  /**
+   * @brief The number of tiles in the worker thread load queue.
+   */
+  int32_t workerThreadTileLoadQueueLength = 0;
 
+  /**
+   * @brief The number of tiles in the main thread load queue.
+   */
+  int32_t mainThreadTileLoadQueueLength = 0;
+
+  //! @cond Doxygen_Suppress
   uint32_t tilesVisited = 0;
   uint32_t culledTilesVisited = 0;
   uint32_t tilesCulled = 0;
@@ -51,6 +57,8 @@ public:
   uint32_t tilesWaitingForOcclusionResults = 0;
   uint32_t maxDepthVisited = 0;
   //! @endcond
+
+  int32_t frameNumber = 0;
 };
 
 } // namespace Cesium3DTilesSelection

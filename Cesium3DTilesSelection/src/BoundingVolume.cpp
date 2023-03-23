@@ -210,4 +210,38 @@ getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume) {
   return pResult;
 }
 
+OrientedBoundingBox
+getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume) {
+  struct Operation {
+    OrientedBoundingBox operator()(const BoundingSphere& sphere) const {
+      glm::dvec3 center = sphere.getCenter();
+      glm::dmat3 halfAxes = glm::dmat3(sphere.getRadius());
+      return OrientedBoundingBox(center, halfAxes);
+    }
+
+    OrientedBoundingBox
+    operator()(const CesiumGeometry::OrientedBoundingBox& box) const {
+      return box;
+    }
+
+    OrientedBoundingBox
+    operator()(const CesiumGeospatial::BoundingRegion& region) const {
+      return region.getBoundingBox();
+    }
+
+    OrientedBoundingBox operator()(
+        const CesiumGeospatial::BoundingRegionWithLooseFittingHeights& region)
+        const {
+      return region.getBoundingRegion().getBoundingBox();
+    }
+
+    OrientedBoundingBox
+    operator()(const CesiumGeospatial::S2CellBoundingVolume& s2) const {
+      return s2.computeBoundingRegion().getBoundingBox();
+    }
+  };
+
+  return std::visit(Operation(), boundingVolume);
+}
+
 } // namespace Cesium3DTilesSelection
