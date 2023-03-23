@@ -307,6 +307,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     return result;
   }
 
+  for (const std::shared_ptr<ITileExcluder>& pExcluder :
+       this->_options.excluders) {
+    pExcluder->startNewFrame();
+  }
+
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
 

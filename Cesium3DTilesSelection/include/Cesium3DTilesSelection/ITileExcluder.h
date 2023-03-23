@@ -11,6 +11,7 @@ class Tile;
 class ITileExcluder {
 public:
   virtual ~ITileExcluder() = default;
+  virtual void startNewFrame() noexcept {}
   virtual bool shouldExclude(const Tile& tile) const noexcept = 0;
 };
 
