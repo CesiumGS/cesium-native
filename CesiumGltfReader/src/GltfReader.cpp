@@ -7,6 +7,8 @@
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
@@ -274,6 +276,23 @@ void postprocess(
         } else {
           readGltf.errors.emplace_back("Image does not declare a MIME Type");
         }
+      }
+    }
+
+    // Copy the source property in texture extensions to the main Texture. The
+    // image has already been decoded as necessary, so it's more convenient for
+    // clients to not need to worry about the extension.
+    for (Texture& texture : model.textures) {
+      ExtensionTextureWebp* pWebP =
+          texture.getExtension<ExtensionTextureWebp>();
+      if (pWebP) {
+        texture.source = pWebP->source;
+      }
+
+      ExtensionKhrTextureBasisu* pKtx =
+          texture.getExtension<ExtensionKhrTextureBasisu>();
+      if (pKtx) {
+        texture.source = pKtx->source;
       }
     }
   }
