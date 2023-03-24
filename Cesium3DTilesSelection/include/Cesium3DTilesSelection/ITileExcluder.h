@@ -22,7 +22,7 @@ public:
    *
    * @param tile The tile to test
    * @return true if this tile and all of its descendants in the bounding volume
-   * hiearchy should be excluded from loading and rendering.
+   * hierarchy should be excluded from loading and rendering.
    * @return false if this tile should be included.
    */
   virtual bool shouldExclude(const Tile& tile) const noexcept = 0;
