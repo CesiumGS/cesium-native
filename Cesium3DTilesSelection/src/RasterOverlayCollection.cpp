@@ -47,7 +47,7 @@ RasterOverlayCollection::~RasterOverlayCollection() noexcept {
 
 void RasterOverlayCollection::add(
     const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) {
-  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+  // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   if (!this->_pOverlays)
     this->_pOverlays = new OverlayList();
@@ -64,7 +64,7 @@ void RasterOverlayCollection::add(
   pList->tileProviders.emplace_back(pPlaceholder);
   pList->placeholders.emplace_back(pPlaceholder);
 
-  CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
+  // CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
 
   CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
       pOverlay->createTileProvider(
@@ -131,7 +131,7 @@ void RasterOverlayCollection::add(
           }
         }
 
-        CESIUM_TRACE_END_IN_TRACK("createTileProvider");
+        // CESIUM_TRACE_END_IN_TRACK("createTileProvider");
       });
 }
 
