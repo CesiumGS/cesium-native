@@ -16,6 +16,7 @@
 - Added `frameNumber` property to `ViewUpdateResult`.
 - Added getters for the `stride` and `data` fields of `AccessorView`.
 - Added `startNewFrame` method to `ITileExcluder`.
+- Added `CreditSystem.setShowOnScreen` and `Tileset.setShowCreditsOnScreen`, which allow on-screen credit rendering to be toggled at runtime. 
 
 ##### Fixes :wrench:
 
