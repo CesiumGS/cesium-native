@@ -104,9 +104,9 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   this->_options.showCreditsOnScreen = showCreditsOnScreen;
 
   const std::vector<Credit>& credits = this->getTilesetCredits();
-  auto creditSystem = this->_externals.pCreditSystem;
+  auto pCreditSystem = this->_externals.pCreditSystem;
   for (size_t i = 0, size = credits.size(); i < size; i++) {
-    creditSystem->setShowOnScreen(credits[i], showCreditsOnScreen);
+    pCreditSystem->setShowOnScreen(credits[i], showCreditsOnScreen);
   }
 }
 
