@@ -96,6 +96,11 @@ public:
   const std::vector<Credit>& getTilesetCredits() const noexcept;
 
   /**
+   * @brief Sets whether the tileset's credits should be shown on screen.
+   */
+  void setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept;
+
+  /**
    * @brief Gets the {@link TilesetExternals} that summarize the external
    * interfaces used by this tileset.
    */

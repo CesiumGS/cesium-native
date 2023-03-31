@@ -26,6 +26,12 @@ bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
   return false;
 }
 
+void CreditSystem::setShowOnScreen(Credit credit, bool showOnScreen) noexcept {
+  if (credit.id < _credits.size()) {
+    _credits[credit.id].showOnScreen = showOnScreen;
+  }
+}
+
 const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
   if (credit.id < _credits.size()) {
     return _credits[credit.id].html;

@@ -52,6 +52,11 @@ public:
   bool shouldBeShownOnScreen(Credit credit) const noexcept;
 
   /**
+   * @brief Sets whether or not the credit should be shown on screen.
+   */
+  void setShowOnScreen(Credit credit, bool showOnScreen) noexcept;
+
+  /**
    * @brief Get the HTML string for this credit
    */
   const std::string& getHtml(Credit credit) const noexcept;

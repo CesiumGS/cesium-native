@@ -100,6 +100,16 @@ const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
   return this->_pTilesetContentManager->getTilesetCredits();
 }
 
+void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
+  this->_options.showCreditsOnScreen = showCreditsOnScreen;
+
+  const std::vector<Credit>& credits = this->getTilesetCredits();
+  auto creditSystem = this->_externals.pCreditSystem;
+  for (size_t i = 0, size = credits.size(); i < size; i++) {
+    creditSystem->setShowOnScreen(credits[i], showCreditsOnScreen);
+  }
+}
+
 Tile* Tileset::getRootTile() noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
