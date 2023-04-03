@@ -8,14 +8,14 @@ Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
+      // Override the existing credit's showOnScreen value.
+      _credits[id].showOnScreen = showOnScreen;
       return Credit(id);
     }
   }
 
-  // this is a new credit so add it to _credits
   _credits.push_back({html, showOnScreen, -1, 0});
 
-  // return a Credit handle to the newly created entry
   return Credit(_credits.size() - 1);
 }
 
@@ -24,6 +24,12 @@ bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
     return _credits[credit.id].showOnScreen;
   }
   return false;
+}
+
+void CreditSystem::setShowOnScreen(Credit credit, bool showOnScreen) noexcept {
+  if (credit.id < _credits.size()) {
+    _credits[credit.id].showOnScreen = showOnScreen;
+  }
 }
 
 const std::string& CreditSystem::getHtml(Credit credit) const noexcept {

@@ -74,7 +74,7 @@ TEST_CASE("Test wrong credit handling") {
 
   // NOTE: This is using a Credit from a different credit
   // system, which coincidentally has a valid ID here.
-  // This is  not (and can hardly be) checked right now,
+  // This is not (and can hardly be) checked right now,
   // so this returns a valid HTML string:
   REQUIRE(creditSystemB.getHtml(creditA0) == html0);
 
@@ -118,4 +118,31 @@ TEST_CASE("Test sorting credits by frequency") {
 
   std::vector<Credit> expectedShow1{credit2, credit1, credit0};
   REQUIRE(creditSystem.getCreditsToShowThisFrame() == expectedShow1);
+}
+
+TEST_CASE("Test setting showOnScreen on credits") {
+
+  CreditSystem creditSystem;
+
+  std::string html0 = "<html>Credit0</html>";
+  std::string html1 = "<html>Credit1</html>";
+  std::string html2 = "<html>Credit2</html>";
+
+  Credit credit0 = creditSystem.createCredit(html0, true);
+  Credit credit1 = creditSystem.createCredit(html1, false);
+  Credit credit2 = creditSystem.createCredit(html2, true);
+
+  REQUIRE(creditSystem.getHtml(credit1) == html1);
+
+  CHECK(creditSystem.shouldBeShownOnScreen(credit0) == true);
+  CHECK(creditSystem.shouldBeShownOnScreen(credit1) == false);
+  CHECK(creditSystem.shouldBeShownOnScreen(credit2) == true);
+
+  creditSystem.setShowOnScreen(credit0, false);
+  creditSystem.setShowOnScreen(credit1, true);
+  creditSystem.setShowOnScreen(credit2, true);
+
+  CHECK(creditSystem.shouldBeShownOnScreen(credit0) == false);
+  CHECK(creditSystem.shouldBeShownOnScreen(credit1) == true);
+  CHECK(creditSystem.shouldBeShownOnScreen(credit2) == true);
 }
