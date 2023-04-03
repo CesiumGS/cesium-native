@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.23.0 - 2023-04-03
 
 ##### Breaking Changes :mega:
 
@@ -16,7 +16,7 @@
 - Added `frameNumber` property to `ViewUpdateResult`.
 - Added getters for the `stride` and `data` fields of `AccessorView`.
 - Added `startNewFrame` method to `ITileExcluder`.
-- Added `CreditSystem.setShowOnScreen` and `Tileset.setShowCreditsOnScreen` to allow on-screen credit rendering to be toggled at runtime. 
+- Added `CreditSystem.setShowOnScreen` and `Tileset.setShowCreditsOnScreen` to allow on-screen credit rendering to be toggled at runtime.
 
 ##### Fixes :wrench:
 
