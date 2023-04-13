@@ -489,33 +489,42 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   // determine if tile points to implicit tiling extension
-  const auto extensionIt = tileJson.FindMember("extensions");
-  bool hasImplicitContent = false;
-  if (extensionIt != tileJson.MemberEnd()) {
-    // this is an external tile pointing to an implicit tileset
-    const auto& extensions = extensionIt->value;
-    const auto implicitExtensionIt =
-        extensions.FindMember("3DTILES_implicit_tiling");
-    hasImplicitContent = implicitExtensionIt != extensions.MemberEnd() &&
-                         implicitExtensionIt->value.IsObject();
-    if (hasImplicitContent) {
-      // mark this tile as external
-      Tile tile{&currentLoader, TileExternalContent{}};
-      tile.setTileID("");
-      tile.setTransform(tileTransform);
-      tile.setBoundingVolume(tileBoundingVolume);
-      tile.setViewerRequestVolume(tileViewerRequestVolume);
-      tile.setGeometricError(tileGeometricError);
-      tile.setRefine(tileRefine);
-
-      parseImplicitTileset(
-          implicitExtensionIt->value,
-          contentUri,
-          tile,
-          currentLoader);
-
-      return tile;
+  const rapidjson::Value* implicitExtensionJson = nullptr;
+  const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
+  if (implicitTilingIt != tileJson.MemberEnd() &&
+      implicitTilingIt->value.IsObject()) {
+    implicitExtensionJson = &implicitTilingIt->value;
+  }
+  if (!implicitExtensionJson) {
+    const auto extensionIt = tileJson.FindMember("extensions");
+    if (extensionIt != tileJson.MemberEnd()) {
+      // this is an external tile pointing to an implicit tileset
+      const auto& extensions = extensionIt->value;
+      const auto implicitExtensionIt =
+          extensions.FindMember("3DTILES_implicit_tiling");
+      if (implicitExtensionIt != extensions.MemberEnd() &&
+          implicitExtensionIt->value.IsObject()) {
+        implicitExtensionJson = &implicitExtensionIt->value;
+      }
     }
+  }
+  if (implicitExtensionJson) {
+    // mark this tile as external
+    Tile tile{&currentLoader, TileExternalContent{}};
+    tile.setTileID("");
+    tile.setTransform(tileTransform);
+    tile.setBoundingVolume(tileBoundingVolume);
+    tile.setViewerRequestVolume(tileViewerRequestVolume);
+    tile.setGeometricError(tileGeometricError);
+    tile.setRefine(tileRefine);
+
+    parseImplicitTileset(
+        *implicitExtensionJson,
+        contentUri,
+        tile,
+        currentLoader);
+
+    return tile;
   }
 
   // this is a regular tile, then parse the content bounding volume
