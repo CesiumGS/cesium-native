@@ -83,9 +83,14 @@ protected:
             this->getProjection(),
             options.rectangle);
 
+    std::string queryString = "?";
+
+    if (this->_url.find(queryString) != std::string::npos)
+      queryString = "&";
+
     const std::string urlTemplate =
-        this->_url +
-        "?request=GetMap&TRANSPARENT=TRUE&version={version}&service="
+        this->_url + queryString +
+        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
         "WMS&"
         "format={format}&styles="
         "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
@@ -248,12 +253,17 @@ WebMapServiceRasterOverlay::createTileProvider(
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
-          "{baseUrl}?request=GetCapabilities&version={version}&service=WMS",
+          "{baseUrl}{queryString}request=GetCapabilities&version={version}&service=WMS",
           [this](const std::string& placeholder) {
             if (placeholder == "baseUrl") {
               return this->_baseUrl;
             } else if (placeholder == "version") {
               return Uri::escape(this->_options.version);
+            } else if (placeholder == "queryString") {
+              std::string queryString = "?";
+              if (this->_baseUrl.find(queryString) != std::string::npos)
+                queryString = "&";
+              return queryString;
             }
             // Keep other placeholders
             return "{" + placeholder + "}";
