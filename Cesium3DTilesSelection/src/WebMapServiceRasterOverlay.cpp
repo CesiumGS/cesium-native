@@ -253,7 +253,8 @@ WebMapServiceRasterOverlay::createTileProvider(
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
-          "{baseUrl}{queryString}request=GetCapabilities&version={version}&service=WMS",
+          "{baseUrl}{queryString}request=GetCapabilities&version={version}&"
+          "service=WMS",
           [this](const std::string& placeholder) {
             if (placeholder == "baseUrl") {
               return this->_baseUrl;
