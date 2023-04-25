@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- `WebMapServiceRasterOverlay` now allows query parameters in the base URL when building GetCapabilities and GetMap requests.
+
 ### v0.23.0 - 2023-04-03
 
 ##### Breaking Changes :mega:
