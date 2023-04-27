@@ -1,3 +1,4 @@
+#include "ImplicitQuadtreeLoader.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
@@ -456,9 +457,9 @@ TEST_CASE("Test loading individual tile of tileset json") {
     }
   }
 
-  SECTION("Load tile that has external content with implicit extensions") {
+  SECTION("Load tile that has external content with implicit tiling") {
     auto loaderResult =
-        createLoader(testDataPath / "ImplicitTileset" / "tileset.json");
+        createLoader(testDataPath / "ImplicitTileset" / "tileset_1.1.json");
 
     CHECK(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->isExternalContent());
@@ -550,5 +551,25 @@ TEST_CASE("Test loading individual tile of tileset json") {
       CHECK(implicitContentResult.state == TileLoadResultState::Success);
       CHECK(!implicitContentResult.tileInitializer);
     }
+  }
+
+  SECTION("Check that tile with legacy implicit tiling extension still works") {
+    auto loaderResult =
+        createLoader(testDataPath / "ImplicitTileset" / "tileset_1.0.json");
+
+    CHECK(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->isExternalContent());
+    CHECK(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto& implicitTile = loaderResult.pRootTile->getChildren().front();
+    const auto& tileID =
+        std::get<CesiumGeometry::QuadtreeTileID>(implicitTile.getTileID());
+    CHECK(tileID == CesiumGeometry::QuadtreeTileID(0, 0, 0));
+
+    const auto pLoader =
+        dynamic_cast<const ImplicitQuadtreeLoader*>(implicitTile.getLoader());
+    CHECK(pLoader);
+    CHECK(pLoader->getSubtreeLevels() == 2);
+    CHECK(pLoader->getAvailableLevels() == 2);
   }
 }

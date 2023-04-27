@@ -488,27 +488,28 @@ std::optional<Tile> parseTileJsonRecursively(
     }
   }
 
-  // determine if tile points to implicit tiling extension
-  const rapidjson::Value* implicitExtensionJson = nullptr;
+  // determine if tile is an implicit tile
+  const rapidjson::Value* implicitTilingJson = nullptr;
   const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
   if (implicitTilingIt != tileJson.MemberEnd() &&
       implicitTilingIt->value.IsObject()) {
-    implicitExtensionJson = &implicitTilingIt->value;
+    // this is an external tile pointing to an implicit tileset
+    implicitTilingJson = &implicitTilingIt->value;
   }
-  if (!implicitExtensionJson) {
+  if (!implicitTilingJson) {
     const auto extensionIt = tileJson.FindMember("extensions");
     if (extensionIt != tileJson.MemberEnd()) {
-      // this is an external tile pointing to an implicit tileset
+      // this is the legacy 3D Tiles Next implicit tiling extension
       const auto& extensions = extensionIt->value;
       const auto implicitExtensionIt =
           extensions.FindMember("3DTILES_implicit_tiling");
       if (implicitExtensionIt != extensions.MemberEnd() &&
           implicitExtensionIt->value.IsObject()) {
-        implicitExtensionJson = &implicitExtensionIt->value;
+        implicitTilingJson = &implicitExtensionIt->value;
       }
     }
   }
-  if (implicitExtensionJson) {
+  if (implicitTilingJson) {
     // mark this tile as external
     Tile tile{&currentLoader, TileExternalContent{}};
     tile.setTileID("");
@@ -518,11 +519,7 @@ std::optional<Tile> parseTileJsonRecursively(
     tile.setGeometricError(tileGeometricError);
     tile.setRefine(tileRefine);
 
-    parseImplicitTileset(
-        *implicitExtensionJson,
-        contentUri,
-        tile,
-        currentLoader);
+    parseImplicitTileset(*implicitTilingJson, contentUri, tile, currentLoader);
 
     return tile;
   }
