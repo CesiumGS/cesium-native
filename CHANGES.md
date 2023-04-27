@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - `WebMapServiceRasterOverlay` now allows query parameters in the base URL when building GetCapabilities and GetMap requests.
+- Added support for parsing implicit tilesets that conform to the 3D Tiles 1.1 Spec.
 
 ### v0.23.0 - 2023-04-03
 
