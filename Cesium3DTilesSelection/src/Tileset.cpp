@@ -30,6 +30,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
+
 Tileset::Tileset(
     const TilesetExternals& externals,
     std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
@@ -804,12 +805,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       // render it, though.
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
-      traversalDetails.allAreRenderable = tile.isRenderable();
-      traversalDetails.anyWereRenderedLastFrame =
-          lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-          TileSelectionState::Result::Rendered;
-      traversalDetails.notYetRenderableCount =
-          traversalDetails.allAreRenderable ? 0 : 1;
+      traversalDetails = Tileset::createTraversalDetailsForSingleTile(
+          frameState,
+          tile,
+          lastFrameSelectionState);
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
@@ -855,14 +854,10 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 
   addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
 
-  TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = tile.isRenderable();
-  traversalDetails.anyWereRenderedLastFrame =
-      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Rendered;
-  traversalDetails.notYetRenderableCount =
-      traversalDetails.allAreRenderable ? 0 : 1;
-  return traversalDetails;
+  return Tileset::createTraversalDetailsForSingleTile(
+      frameState,
+      tile,
+      lastFrameSelectionState);
 }
 
 /**
@@ -910,43 +905,10 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = tile.isRenderable();
-  traversalDetails.anyWereRenderedLastFrame =
-      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Rendered;
-  traversalDetails.notYetRenderableCount =
-      traversalDetails.allAreRenderable ? 0 : 1;
-
-  return traversalDetails;
-}
-
-Tileset::TraversalDetails Tileset::_refineToNothing(
-    const FrameState& frameState,
-    Tile& tile,
-    ViewUpdateResult& result,
-    bool areChildrenRenderable) {
-
-  const TileSelectionState lastFrameSelectionState =
-      tile.getLastSelectionState();
-
-  // Nothing else to do except mark this tile refined and return.
-  TraversalDetails noChildrenTraversalDetails;
-  if (tile.getRefine() == TileRefine::Add && !tile.isExternalContent()) {
-    noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
-    noChildrenTraversalDetails.anyWereRenderedLastFrame =
-        lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-        TileSelectionState::Result::Rendered;
-    noChildrenTraversalDetails.notYetRenderableCount =
-        areChildrenRenderable ? 0 : 1;
-  } else {
-    markTileNonRendered(frameState.lastFrameNumber, tile, result);
-  }
-
-  tile.setLastSelectionState(TileSelectionState(
-      frameState.currentFrameNumber,
-      TileSelectionState::Result::Refined));
-  return noChildrenTraversalDetails;
+  return Tileset::createTraversalDetailsForSingleTile(
+      frameState,
+      tile,
+      lastFrameSelectionState);
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1047,8 +1009,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
     queuedForLoad = true;
   }
 
-  traversalDetails.allAreRenderable = tile.isRenderable();
-  traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
+  bool isRenderable = tile.isRenderable();
+  traversalDetails.allAreRenderable = isRenderable;
+  traversalDetails.anyWereRenderedLastFrame =
+      isRenderable && wasRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1172,7 +1136,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
 
-  const TileSelectionState& lastFrameSelectionState =
+  const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
   const TileSelectionState::Result lastFrameSelectionResult =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber);
@@ -1287,20 +1251,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
       tile,
       result);
 
-  const bool descendantTilesAdded =
-      firstRenderedDescendantIndex != result.tilesToRenderThisFrame.size();
-  if (!descendantTilesAdded) {
-    // No descendant tiles were added to the render list by the function above,
-    // meaning they were all culled even though this tile was deemed visible.
-    // That's pretty common.
-    return _refineToNothing(
-        frameState,
-        tile,
-        result,
-        traversalDetails.allAreRenderable);
-  }
-
-  // At least one descendant tile was added to the render list.
+  // Zero or more descendant tiles were added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
 
   // Descendants will be kicked if any are not ready to render yet and none
@@ -1494,6 +1445,24 @@ void Tileset::addTileToLoadQueue(
   } else if (this->_pTilesetContentManager->tileNeedsMainThreadLoading(tile)) {
     this->_mainThreadLoadQueue.push_back({&tile, priorityGroup, priority});
   }
+}
+
+Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
+    const FrameState& frameState,
+    const Tile& tile,
+    const TileSelectionState& lastFrameSelectionState) {
+  bool isRenderable = tile.isRenderable();
+  bool wasRenderedLastFrame =
+      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
+      TileSelectionState::Result::Rendered;
+
+  TraversalDetails traversalDetails;
+  traversalDetails.allAreRenderable = isRenderable;
+  traversalDetails.anyWereRenderedLastFrame =
+      isRenderable && wasRenderedLastFrame;
+  traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
+
+  return traversalDetails;
 }
 
 } // namespace Cesium3DTilesSelection

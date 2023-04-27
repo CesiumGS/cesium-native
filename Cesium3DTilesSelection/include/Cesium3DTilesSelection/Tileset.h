@@ -278,11 +278,6 @@ private:
       const FrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result);
-  TraversalDetails _refineToNothing(
-      const FrameState& frameState,
-      Tile& tile,
-      ViewUpdateResult& result,
-      bool areChildrenRenderable);
   bool _kickDescendantsAndRenderTile(
       const FrameState& frameState,
       Tile& tile,
@@ -452,6 +447,11 @@ private:
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
+
+  static TraversalDetails createTraversalDetailsForSingleTile(
+      const FrameState& frameState,
+      const Tile& tile,
+      const TileSelectionState& lastFrameSelectionState);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
