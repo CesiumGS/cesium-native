@@ -488,15 +488,14 @@ std::optional<Tile> parseTileJsonRecursively(
     }
   }
 
-  // determine if tile is an implicit tile
+  // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;
   const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
   if (implicitTilingIt != tileJson.MemberEnd() &&
       implicitTilingIt->value.IsObject()) {
     // this is an external tile pointing to an implicit tileset
     implicitTilingJson = &implicitTilingIt->value;
-  }
-  if (!implicitTilingJson) {
+  } else {
     const auto extensionIt = tileJson.FindMember("extensions");
     if (extensionIt != tileJson.MemberEnd()) {
       // this is the legacy 3D Tiles Next implicit tiling extension
@@ -509,6 +508,7 @@ std::optional<Tile> parseTileJsonRecursively(
       }
     }
   }
+
   if (implicitTilingJson) {
     // mark this tile as external
     Tile tile{&currentLoader, TileExternalContent{}};
