@@ -1,11 +1,14 @@
 # Change Log
 
-### ? - ?
+### v0.24.0 - 2023-05-01
 
 ##### Additions :tada:
 
 - `WebMapServiceRasterOverlay` now allows query parameters in the base URL when building GetCapabilities and GetMap requests.
 - Added support for parsing implicit tilesets that conform to the 3D Tiles 1.1 Spec.
+
+##### Fixes :wrench:
+- Fixed various `libjpeg-turbo` build errors, including ones that occurred when building for iOS.
 
 ### v0.23.0 - 2023-04-03
 
