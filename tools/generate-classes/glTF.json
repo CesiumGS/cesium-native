@@ -163,10 +163,10 @@
       "overrideName": "ExtensionKhrDracoMeshCompression"
     },
     "KHR_materials_variants glTF extension": {
-      "overrideName": "ExtensionKhrMaterialsVariants"
+      "overrideName": "ExtensionModelKhrMaterialsVariants"
     },
     "KHR_materials_variants mesh primitive extension": {
-      "overrideName": "ExtensionKhrMaterialsVariantsMeshPrimitive"
+      "overrideName": "ExtensionMeshPrimitiveKhrMaterialsVariants"
     },
     "KHR_materials_unlit glTF extension": {
       "overrideName": "ExtensionKhrMaterialsUnlit"

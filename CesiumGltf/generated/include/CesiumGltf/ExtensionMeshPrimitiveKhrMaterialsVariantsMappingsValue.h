@@ -13,12 +13,12 @@
 
 namespace CesiumGltf {
 /**
- * @brief ExtensionKhrMaterialsVariantsMeshPrimitive Mappings Value
+ * @brief ExtensionMeshPrimitiveKhrMaterialsVariants Mappings Value
  */
-struct CESIUMGLTF_API ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValue
+struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue
     final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName =
-      "ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValue";
+      "ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue";
 
   /**
    * @brief An array of variant index values.

@@ -11,10 +11,10 @@ namespace CesiumGltf {
 /**
  * @brief An object defining a valid material variant
  */
-struct CESIUMGLTF_API ExtensionKhrMaterialsVariantsValue final
+struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
     : public CesiumGltf::NamedObject {
   static inline constexpr const char* TypeName =
-      "ExtensionKhrMaterialsVariantsValue";
+      "ExtensionModelKhrMaterialsVariantsValue";
 
   /**
    * @brief The name of the material variant

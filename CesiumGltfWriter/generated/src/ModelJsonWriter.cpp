@@ -45,16 +45,16 @@
 #include <CesiumGltf/ExtensionExtStructuralMetadataSchema.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionKhrMaterialsVariants.h>
-#include <CesiumGltf/ExtensionKhrMaterialsVariantsMeshPrimitive.h>
-#include <CesiumGltf/ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValue.h>
-#include <CesiumGltf/ExtensionKhrMaterialsVariantsValue.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
+#include <CesiumGltf/ExtensionModelKhrMaterialsVariantsValue.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
@@ -160,12 +160,12 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariants& obj,
+    const CesiumGltf::ExtensionModelKhrMaterialsVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsMeshPrimitive& obj,
+    const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -205,13 +205,13 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValue&
+    const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
         obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsValue& obj,
+    const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -953,7 +953,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariants& obj,
+    const CesiumGltf::ExtensionModelKhrMaterialsVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -969,7 +969,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsMeshPrimitive& obj,
+    const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1127,7 +1127,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValue&
+    const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
         obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -1154,7 +1154,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsValue& obj,
+    const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -3010,15 +3010,15 @@ void ExtensionKhrMaterialsUnlitJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionKhrMaterialsVariantsJsonWriter::write(
-    const CesiumGltf::ExtensionKhrMaterialsVariants& obj,
+void ExtensionModelKhrMaterialsVariantsJsonWriter::write(
+    const CesiumGltf::ExtensionModelKhrMaterialsVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionKhrMaterialsVariantsMeshPrimitiveJsonWriter::write(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsMeshPrimitive& obj,
+void ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter::write(
+    const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
@@ -3073,16 +3073,16 @@ void ExtensionModelMaxarMeshVariantsValueJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValueJsonWriter::write(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsMeshPrimitiveMappingsValue&
+void ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonWriter::write(
+    const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
         obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionKhrMaterialsVariantsValueJsonWriter::write(
-    const CesiumGltf::ExtensionKhrMaterialsVariantsValue& obj,
+void ExtensionModelKhrMaterialsVariantsValueJsonWriter::write(
+    const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
