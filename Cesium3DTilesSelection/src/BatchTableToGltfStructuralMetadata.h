@@ -9,7 +9,7 @@
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {
-struct BatchTableToGltfFeatureMetadata {
+struct BatchTableToGltfStructuralMetadata {
   static ErrorList convertFromB3dm(
       const rapidjson::Document& featureTableJson,
       const rapidjson::Document& batchTableJson,

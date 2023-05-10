@@ -1096,7 +1096,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   MeshPrimitive& primitive = mesh.primitives[0];
   CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
 
- auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
+  auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIds.size() == 1);
   ExtensionExtMeshFeaturesFeatureId& featureId =

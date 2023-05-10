@@ -1,4 +1,4 @@
-#include "BatchTableToGltfFeatureMetadata.h"
+#include "BatchTableToGltfStructuralMetadata.h"
 #include "ConvertTileToGltf.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -136,7 +136,7 @@ static void createTestForScalarJson(
       scalarProperty,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -212,7 +212,7 @@ static void createTestForArrayJson(
       fixedArrayProperties,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -683,7 +683,7 @@ TEST_CASE("Converts batched PNTS batch table to EXT_feature_metadata") {
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
   ExtensionExtMeshFeaturesFeatureId& featureId =
       pPrimitiveExtension->featureIds[0];
-  CHECK(featureId.featureCount ==8);
+  CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
   CHECK(featureId.propertyTable == 0);
 
@@ -973,8 +973,7 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
   CHECK(
       primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
 
-
-      ExtensionExtMeshFeatures* pPrimitiveExtension =
+  ExtensionExtMeshFeatures* pPrimitiveExtension =
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
@@ -1133,7 +1132,7 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       boolProperties,
       batchTableJson.GetAllocator());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
       gsl::span<const std::byte>(),
@@ -1675,7 +1674,7 @@ TEST_CASE("Converts Feature Classes 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1805,7 +1804,7 @@ TEST_CASE("Converts Feature Hierarchy 3DTILES_batch_table_hierarchy example to "
   rapidjson::Document batchTableParsed;
   batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
 
-  BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -1999,7 +1998,7 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),
@@ -2091,7 +2090,7 @@ TEST_CASE(
   auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
   spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  auto errors = BatchTableToGltfFeatureMetadata::convertFromB3dm(
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
       gsl::span<const std::byte>(),

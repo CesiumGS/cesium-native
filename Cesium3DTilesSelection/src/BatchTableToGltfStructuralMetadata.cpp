@@ -1,10 +1,9 @@
-#include "BatchTableToGltfFeatureMetadata.h"
+#include "BatchTableToGltfStructuralMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
@@ -1383,7 +1382,7 @@ void updateExtensionWithBatchTableHierarchy(
   }
 }
 
-void convertBatchTableToGltfFeatureMetadataExtension(
+void convertBatchTableToGltfStructuralMetadataExtension(
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData,
     CesiumGltf::Model& gltf,
@@ -1486,7 +1485,7 @@ void convertBatchTableToGltfFeatureMetadataExtension(
 
 } // namespace
 
-ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
+ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData,
@@ -1515,7 +1514,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
 
   const int64_t batchLength = batchLengthIt->value.GetInt64();
 
-  convertBatchTableToGltfFeatureMetadataExtension(
+  convertBatchTableToGltfStructuralMetadataExtension(
       batchTableJson,
       batchTableBinaryData,
       gltf,
@@ -1546,6 +1545,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
       // subtitute the batch table length.
       featureID.featureCount = batchLength;
       featureID.attribute = 0;
+      featureID.label = "_FEATURE_ID_0";
       featureID.propertyTable = 0;
     }
   }
@@ -1553,7 +1553,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
   return result;
 }
 
-ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
+ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData,
@@ -1597,7 +1597,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
     featureCount = pointsLengthIt->value.GetInt64();
   }
 
-  convertBatchTableToGltfFeatureMetadataExtension(
+  convertBatchTableToGltfStructuralMetadataExtension(
       batchTableJson,
       batchTableBinaryData,
       gltf,
@@ -1626,6 +1626,7 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
     featureID.attribute = 0;
+    featureID.label = "_FEATURE_ID_0";
   }
 
   return result;
