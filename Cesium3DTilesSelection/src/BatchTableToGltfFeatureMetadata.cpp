@@ -3,6 +3,7 @@
 #include "BatchTableHierarchyPropertyValues.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/Model.h>
@@ -1535,13 +1536,17 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromB3dm(
       primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
       primitive.attributes.erase("_BATCHID");
 
-      // Create a feature extension
-      ExtensionMeshPrimitiveExtFeatureMetadata& extension =
-          primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-      FeatureIDAttribute& attribute =
-          extension.featureIdAttributes.emplace_back();
-      attribute.featureTable = "default";
-      attribute.featureIds.attribute = "_FEATURE_ID_0";
+      // Create an EXT_mesh_features extension with a feature ID attribute.
+      ExtensionExtMeshFeatures& extension =
+          primitive.addExtension<ExtensionExtMeshFeatures>();
+
+      ExtensionExtMeshFeaturesFeatureId& featureID =
+          extension.featureIds.emplace_back();
+      // No fast way to count the unique feature IDs in this primitive, so
+      // subtitute the batch table length.
+      featureID.featureCount = batchLength;
+      featureID.attribute = 0;
+      featureID.propertyTable = 0;
     }
   }
 
@@ -1599,29 +1604,28 @@ ErrorList BatchTableToGltfFeatureMetadata::convertFromPnts(
       featureCount,
       result);
 
-  // Create the EXT_feature_metadata extension for the single mesh primitive.
+  // Create the EXT_mesh_features extension for the single mesh primitive.
   assert(gltf.meshes.size() == 1);
   Mesh& mesh = gltf.meshes[0];
 
   assert(mesh.primitives.size() == 1);
   MeshPrimitive& primitive = mesh.primitives[0];
 
-  ExtensionMeshPrimitiveExtFeatureMetadata& extension =
-      primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-  FeatureIDAttribute& attribute = extension.featureIdAttributes.emplace_back();
-  attribute.featureTable = "default";
+  ExtensionExtMeshFeatures& extension =
+      primitive.addExtension<ExtensionExtMeshFeatures>();
+  ExtensionExtMeshFeaturesFeatureId& featureID =
+      extension.featureIds.emplace_back();
+
+  // Setting the feature count is sufficient for implicit feature IDs.
+  featureID.featureCount = featureCount;
+  featureID.propertyTable = 0;
 
   auto primitiveBatchIdIt = primitive.attributes.find("_BATCHID");
   if (primitiveBatchIdIt != primitive.attributes.end()) {
     // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
-    attribute.featureIds.attribute = "_FEATURE_ID_0";
-  } else {
-    // Otherwise, use implicit feature IDs to indicate the metadata is stored in
-    // per-point properties.
-    attribute.featureIds.constant = 0;
-    attribute.featureIds.divisor = 1;
+    featureID.attribute = 0;
   }
 
   return result;

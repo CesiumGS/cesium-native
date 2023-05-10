@@ -3,7 +3,7 @@
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/MetadataFeatureTableView.h>
 #include <CesiumGltf/MetadataPropertyView.h>
@@ -360,15 +360,15 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
           primitive.attributes.find("_FEATURE_ID_1") ==
           primitive.attributes.end());
 
-      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+      ExtensionExtMeshFeatures* pPrimitiveExtension =
+          primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
-      REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
-
-      FeatureIDAttribute& attribute =
-          pPrimitiveExtension->featureIdAttributes[0];
-      CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
-      CHECK(attribute.featureTable == "default");
+      REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
+      ExtensionExtMeshFeaturesFeatureId& featureId =
+          pPrimitiveExtension->featureIds[0];
+      CHECK(featureId.featureCount == 10);
+      CHECK(featureId.attribute == 0);
+      CHECK(featureId.propertyTable == 0);
     }
   }
 
@@ -677,14 +677,15 @@ TEST_CASE("Converts batched PNTS batch table to EXT_feature_metadata") {
   CHECK(
       primitive.attributes.find("_FEATURE_ID_0") != primitive.attributes.end());
 
-  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  ExtensionExtMeshFeatures* pPrimitiveExtension =
+      primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
-  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
-
-  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
-  CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
+  REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
+  ExtensionExtMeshFeaturesFeatureId& featureId =
+      pPrimitiveExtension->featureIds[0];
+  CHECK(featureId.featureCount ==8);
+  CHECK(featureId.attribute == 0);
+  CHECK(featureId.propertyTable == 0);
 
   // Check metadata values
   {
@@ -824,17 +825,15 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_feature_metadata") {
   CHECK(
       primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
 
-  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  ExtensionExtMeshFeatures* pPrimitiveExtension =
+      primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
-  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
-
-  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
-  // Check for implicit feature IDs
-  CHECK(!attribute.featureIds.attribute);
-  CHECK(attribute.featureIds.constant == 0);
-  CHECK(attribute.featureIds.divisor == 1);
+  REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
+  ExtensionExtMeshFeaturesFeatureId& featureId =
+      pPrimitiveExtension->featureIds[0];
+  CHECK(featureId.featureCount == 8);
+  CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   // Check metadata values
   {
@@ -974,17 +973,16 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
   CHECK(
       primitive.attributes.find("_FEATURE_ID_0") == primitive.attributes.end());
 
-  ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
-  REQUIRE(pPrimitiveExtension);
-  REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
-  FeatureIDAttribute& attribute = pPrimitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
-  // Check for implicit feature IDs
-  CHECK(!attribute.featureIds.attribute);
-  CHECK(attribute.featureIds.constant == 0);
-  CHECK(attribute.featureIds.divisor == 1);
+      ExtensionExtMeshFeatures* pPrimitiveExtension =
+      primitive.getExtension<ExtensionExtMeshFeatures>();
+  REQUIRE(pPrimitiveExtension);
+  REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
+  ExtensionExtMeshFeaturesFeatureId& featureId =
+      pPrimitiveExtension->featureIds[0];
+  CHECK(featureId.featureCount == 8);
+  CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   // Check metadata values
   {
@@ -1248,7 +1246,7 @@ TEST_CASE("Upgrade fixed json number array") {
       {1244, 12200000, 1222, 544662},
       {123, 10, 122, 334},
       {13, 45, 122, 94},
-      {11, 22, 3, 4294967295}};
+      {11, 22, 3, (uint32_t)4294967295}};
     // clang-format on
 
     std::string expectedComponentType = "UINT32";
@@ -1408,7 +1406,7 @@ TEST_CASE("Upgrade dynamic json number array") {
       {1244, 12200000, 1222, 544662},
       {123, 10},
       {13, 45, 122, 94, 333, 212, 534, 1122},
-      {11, 22, 3, 4294967295}};
+      {11, 22, 3, (uint32_t)4294967295}};
     // clang-format on
 
     std::string expectedComponentType = "UINT32";
