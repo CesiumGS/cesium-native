@@ -55,7 +55,7 @@ target_link_libraries(Cesium3DTilesReader
     PUBLIC
         Cesium3DTiles
         CesiumJsonReader
-        GSL
+        Microsoft.GSL::GSL
 )
 
 install(TARGETS Cesium3DTilesReader

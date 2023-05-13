@@ -40,15 +40,12 @@ target_include_directories(
 target_link_libraries(CesiumAsync
     PUBLIC
         CesiumUtility
-        GSL
+        Microsoft.GSL::GSL
+        spdlog::spdlog spdlog::spdlog_header_only
         Async++
     PRIVATE
-        sqlite3
-)
-
-# These libraries erroneously do NOT list their headers as `SYSTEM` headers
-target_link_libraries_system(CesiumAsync PUBLIC
-    spdlog
+        unofficial::sqlite3::sqlite3
+        include_helpers # for the cesium-sqlite header
 )
 
 install(TARGETS CesiumAsync

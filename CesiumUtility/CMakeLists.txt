@@ -37,19 +37,12 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-# GLM erroneously does not declare its include a `SYSTEM` include, so
-# we must extract its include_directories using this function and manually
-# reinclude it as 'SYSTEM'.
-target_link_libraries_system(
+target_link_libraries(
     CesiumUtility
     PUBLIC
-        glm
-        uriparser
-)
-
-target_link_libraries(CesiumUtility
-    PUBLIC
-        GSL
+        glm::glm
+        uriparser::uriparser
+        Microsoft.GSL::GSL
 )
 
 install(TARGETS CesiumUtility

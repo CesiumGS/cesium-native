@@ -49,13 +49,13 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumGltf
         CesiumGltfReader
         CesiumUtility
-        spdlog
-    # PRIVATE
-        tinyxml2
-        uriparser
-        libmorton
-        expected-lite
-	${CESIUM_NATIVE_DRACO_LIBRARY}
+        spdlog::spdlog spdlog::spdlog_header_only
+    PRIVATE
+        tinyxml2::tinyxml2
+        uriparser::uriparser
+        libmorton::libmorton
+        nonstd::expected-lite
+        draco::draco
 )
 
 install(TARGETS Cesium3DTilesSelection
