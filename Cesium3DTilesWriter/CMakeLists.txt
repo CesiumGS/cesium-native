@@ -55,7 +55,7 @@ target_link_libraries(Cesium3DTilesWriter
     PUBLIC
         Cesium3DTiles
         CesiumJsonWriter
-        GSL
+        Microsoft.GSL::GSL
 )
 
 install(TARGETS Cesium3DTilesWriter

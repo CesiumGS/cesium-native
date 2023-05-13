@@ -54,7 +54,7 @@ target_include_directories(
 target_link_libraries(Cesium3DTiles
     PUBLIC
         CesiumUtility
-        GSL
+        Microsoft.GSL::GSL
 )
 
 install(TARGETS Cesium3DTiles
