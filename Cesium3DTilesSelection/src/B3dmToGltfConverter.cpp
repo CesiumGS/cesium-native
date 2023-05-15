@@ -1,6 +1,6 @@
 #include "B3dmToGltfConverter.h"
 
-#include "BatchTableToGltfFeatureMetadata.h"
+#include "BatchTableToGltfStructuralMetadata.h"
 #include "BinaryToGltfConverter.h"
 
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -220,7 +220,7 @@ void convertB3dmMetadataToGltfFeatureMetadata(
       }
 
       // upgrade batch table to glTF feature metadata and append the result
-      result.errors.merge(BatchTableToGltfFeatureMetadata::convertFromB3dm(
+      result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromB3dm(
           featureTableJson,
           batchTableJson,
           batchTableBinaryData,
