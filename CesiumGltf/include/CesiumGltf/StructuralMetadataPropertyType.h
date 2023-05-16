@@ -35,22 +35,20 @@ enum class PropertyComponentType {
   Float64,
 };
 
+std::string convertPropertyTypeToString(PropertyType type);
+
+PropertyType convertStringToPropertyType(const std::string& str);
+
 std::string
-convertPropertyTypeToString(CesiumGltf::StructuralMetadata::PropertyType type);
+convertPropertyComponentTypeToString(PropertyComponentType componentType);
 
-CesiumGltf::StructuralMetadata::PropertyType
-convertStringToPropertyType(const std::string& str);
-
-std::string convertPropertyComponentTypeToString(
-    CesiumGltf::StructuralMetadata::PropertyComponentType componentType);
-
-CesiumGltf::StructuralMetadata::PropertyComponentType
+PropertyComponentType
 convertStringToPropertyComponentType(const std::string& str);
 
-CesiumGltf::StructuralMetadata::PropertyComponentType
+PropertyComponentType
 convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str);
 
-CesiumGltf::StructuralMetadata::PropertyComponentType
+PropertyComponentType
 convertStringOffsetTypeStringToPropertyComponentType(const std::string& str);
 
 } // namespace StructuralMetadata
