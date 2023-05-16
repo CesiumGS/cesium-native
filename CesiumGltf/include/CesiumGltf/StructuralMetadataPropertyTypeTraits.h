@@ -55,72 +55,16 @@ template <> struct IsMetadataFloating<double> : std::true_type {};
  */
 template <typename... T> struct IsMetadataVecN;
 template <typename T> struct IsMetadataVecN<T> : std::false_type {};
-template <> struct IsMetadataVecN<glm::u8vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u8vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u8vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i8vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i8vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i8vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u16vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u16vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u16vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i16vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i16vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i16vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::uvec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::uvec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::uvec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::ivec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::ivec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::ivec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u64vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u64vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u64vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i64vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i64vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i64vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::dvec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::dvec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::dvec4> : std::true_type {};
+template <int n, typename T, glm::qualifier P>
+struct IsMetadataVecN<glm::vec<n, T, P>> : IsMetadataScalar<T> {};
 
 /**
  * @brief Check if a C++ type can be represented as a matN type.
  */
 template <typename... T> struct IsMetadataMatN;
 template <typename T> struct IsMetadataMatN<T> : std::false_type {};
-template <> struct IsMetadataMatN<glm::u8mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u8mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u8mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i8mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i8mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i8mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u16mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u16mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u16mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i16mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i16mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i16mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u32mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u32mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u32mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i32mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i32mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i32mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u64mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u64mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u64mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i64mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i64mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i64mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::mat2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::mat3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::mat4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::dmat2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::dmat3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::dmat4> : std::true_type {};
+template <int n, typename T, glm::qualifier P>
+struct IsMetadataMatN<glm::mat<n, n, T, P>> : IsMetadataScalar<T> {};
 
 /**
  * @brief Check if a C++ type can be represented as a numeric property, i.e.
