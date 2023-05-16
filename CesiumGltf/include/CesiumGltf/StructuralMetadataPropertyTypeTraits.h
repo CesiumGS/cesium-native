@@ -55,7 +55,7 @@ template <> struct IsMetadataFloating<double> : std::true_type {};
  */
 template <typename... T> struct IsMetadataVecN;
 template <typename T> struct IsMetadataVecN<T> : std::false_type {};
-template <int n, typename T, glm::qualifier P>
+template <glm::length_t n, typename T, glm::qualifier P>
 struct IsMetadataVecN<glm::vec<n, T, P>> : IsMetadataScalar<T> {};
 
 /**
@@ -63,7 +63,7 @@ struct IsMetadataVecN<glm::vec<n, T, P>> : IsMetadataScalar<T> {};
  */
 template <typename... T> struct IsMetadataMatN;
 template <typename T> struct IsMetadataMatN<T> : std::false_type {};
-template <int n, typename T, glm::qualifier P>
+template <glm::length_t n, typename T, glm::qualifier P>
 struct IsMetadataMatN<glm::mat<n, n, T, P>> : IsMetadataScalar<T> {};
 
 /**
