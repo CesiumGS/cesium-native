@@ -253,6 +253,8 @@ struct TypeToPropertyType<glm::mat<4, 4, T, P>> {
   static constexpr PropertyType value = PropertyType::Mat4;
 };
 
+#pragma endregion
+
 template <> struct TypeToPropertyType<bool> {
   static constexpr PropertyComponentType component =
       PropertyComponentType::None;
@@ -264,8 +266,6 @@ template <> struct TypeToPropertyType<std::string_view> {
       PropertyComponentType::None;
   static constexpr PropertyType value = PropertyType::String;
 };
-
-#pragma endregion
 
 } // namespace StructuralMetadata
 } // namespace CesiumGltf

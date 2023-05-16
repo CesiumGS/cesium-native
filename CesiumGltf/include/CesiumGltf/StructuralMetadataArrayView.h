@@ -24,16 +24,13 @@ public:
   MetadataArrayView() : _values{} {}
 
   MetadataArrayView(const gsl::span<const std::byte>& buffer) noexcept
-      : _values{
-            CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
+      : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
     return _values[index];
   }
 
-  int64_t size() const noexcept {
-    return static_cast<int64_t>(_values.size());
-  }
+  int64_t size() const noexcept { return static_cast<int64_t>(_values.size()); }
 
 private:
   gsl::span<const ElementType> _values;
@@ -41,23 +38,19 @@ private:
 
 template <> class MetadataArrayView<bool> {
 public:
-  MetadataArrayView()
-      : _values{}, _bitOffset{0}, _instanceCount{0} {}
+  MetadataArrayView() : _values{}, _bitOffset{0}, _instanceCount{0} {}
 
   MetadataArrayView(
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
       int64_t instanceCount) noexcept
-      : _values{buffer},
-        _bitOffset{bitOffset},
-        _instanceCount{instanceCount} {}
+      : _values{buffer}, _bitOffset{bitOffset}, _instanceCount{instanceCount} {}
 
   bool operator[](int64_t index) const noexcept {
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
-    const int bitValue =
-        static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 
