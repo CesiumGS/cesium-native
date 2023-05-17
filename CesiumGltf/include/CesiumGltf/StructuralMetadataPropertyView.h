@@ -33,115 +33,115 @@ enum class MetadataPropertyViewStatus {
    * @brief This property view does not exist in the
    * ExtensionExtStructuralMetadataPropertyTable.
    */
-  InvalidPropertyDoesNotExist,
+  ErrorPropertyDoesNotExist,
 
   /**
    * @brief This property view does not have a correct type with what is
    * specified in {@link ExtensionExtStructuralMetadataClassProperty::type}.
    */
-  InvalidTypeMismatch,
+  ErrorTypeMismatch,
 
   /**
    * @brief This property view does not have a correct component type with what
    * is specified in {@link ExtensionExtStructuralMetadataClassProperty::componentType}.
    */
-  InvalidComponentTypeMismatch,
+  ErrorComponentTypeMismatch,
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  InvalidValueBufferView,
+  ErrorInvalidValueBufferView,
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  InvalidArrayOffsetBufferViewIndex,
+  ErrorInvalidArrayOffsetBufferView,
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  InvalidStringOffsetBufferViewIndex,
+  ErrorInvalidStringOffsetBufferView,
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  InvalidValueBufferIndex,
+  ErrorInvalidValueBuffer,
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  InvalidArrayOffsetBufferIndex,
+  ErrorInvalidArrayOffsetBuffer,
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  InvalidStringOffsetBufferIndex,
+  ErrorInvalidStringOffsetBuffer,
 
   /**
    * @brief This property view has an out-of-bounds buffer view
    */
-  InvalidBufferViewOutOfBounds,
+  ErrorBufferViewOutOfBounds,
 
   /**
-   * @brief This property view has an invalid buffer view's length which is not
-   * a multiple of the size of its type or offset type
+   * @brief This property view has an invalid buffer view; its length is not
+   * a multiple of the size of its type / offset type.
    */
-  InvalidBufferViewSizeNotDivisibleByTypeSize,
+  ErrorBufferViewSizeNotDivisibleByTypeSize,
 
   /**
-   * @brief This property view has an invalid buffer view's length which cannot
-   * fit all the instances of the feature table
+   * @brief This property view has an invalid buffer view; its length does not
+   * match the size of the property table.
    */
-  InvalidBufferViewSizeNotFitInstanceCount,
+  ErrorBufferViewSizeDoesNotMatchPropertyTableCount,
 
   /**
    * @brief This array property view has both count and offset buffer
    * view defined.
    */
-  InvalidArrayCountAndOffsetBufferCoexist,
+  ErrorArrayCountAndOffsetBufferCoexist,
 
   /**
    * @brief This array property view doesn't have count nor offset buffer view
    * defined.
    */
-  InvalidArrayCountAndOffsetBufferDontExist,
+  ErrorArrayCountAndOffsetBufferDontExist,
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  InvalidArrayOffsetType,
+  ErrorInvalidArrayOffsetType,
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  InvalidStringOffsetType,
+  ErrorInvalidStringOffsetType,
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  InvalidArrayOffsetValuesNotSorted,
+  ErrorArrayOffsetsNotSorted,
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  InvalidStringOffsetValuesNotSorted,
+  ErrorStringOffsetsNotSorted,
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  InvalidArrayOffsetValueOutOfBounds,
+  ErrorArrayOffsetOutOfBounds,
 
   /**
    * @brief This property view has a string offset that is out of bounds.
    */
-  InvalidStringOffsetValueOutOfBounds
+  ErrorStringOffsetOutOfBounds
 };
 
 /**
@@ -152,11 +152,11 @@ enum class MetadataPropertyViewStatus {
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty::values} like an array of elements.
  * Data of each instance can be accessed through the {@link get(int64_t instance)} method
  *
- * @param ElementType must be one of the following: a scalar (uin8_t, int8_t,
- * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), vecN
- * composed of one of the scalar types, matN composed of one of the scalar
- * types, bool, std::string_view, or MetadataArrayView<T> with T as one of the
- * aforementioned types.
+ * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
+ * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
+ * glm vecN composed of one of the scalar types, a glm matN composed of one of
+ * the scalar types, bool, std::string_view, or MetadataArrayView<T> with T as
+ * one of the aforementioned types.
  */
 template <typename ElementType> class MetadataPropertyView {
 public:
