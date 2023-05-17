@@ -166,8 +166,8 @@ public:
   MetadataPropertyView()
       : _status{MetadataPropertyViewStatus::InvalidPropertyDoesNotExist},
         _values{},
-        _componentCount{},
-        _instanceCount{},
+        _fixedLengthArrayCount{},
+        _size{},
         _normalized{} {}
 
   /**
@@ -178,7 +178,7 @@ public:
    * @param stringOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsets}
    * @param offsetType The offset type of arrayOffsets specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsetType}
    * @param offsetType The offset type of stringOffsets specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsetType}
-   * @param fixedArrayCount The number of elements in each array value specified by {@link ExtensionExtStructuralMetadataClassProperty::count}
+   * @param fixedLengthArrayCount The number of elements in each array value specified by {@link ExtensionExtStructuralMetadataClassProperty::count}
    * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
    */
@@ -267,7 +267,9 @@ public:
    *
    * @return The count of this property.
    */
-  int64_t getFixedLengthArrayCount() const noexcept { return _fixedArrayCount; }
+  int64_t getFixedLengthArrayCount() const noexcept {
+    return _fixedLengthArrayCount;
+  }
 
   /**
    * @brief Whether this property has a normalized integer type.
