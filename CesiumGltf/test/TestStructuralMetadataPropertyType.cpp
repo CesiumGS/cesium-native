@@ -225,7 +225,7 @@ TEST_CASE("Test StructuralMetadata PropertyType utilities function") {
         PropertyComponentType::None);
   }
 
-    SECTION("Convert string offset type string to PropertyComponentType") {
+  SECTION("Convert string offset type string to PropertyComponentType") {
     REQUIRE(
         convertStringOffsetTypeStringToPropertyComponentType(
             ExtensionExtStructuralMetadataPropertyTableProperty::
