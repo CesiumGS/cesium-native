@@ -36,16 +36,22 @@ enum class MetadataPropertyViewStatus {
   ErrorPropertyDoesNotExist,
 
   /**
-   * @brief This property view does not have a correct type with what is
+   * @brief This property view's type does not match what is
    * specified in {@link ExtensionExtStructuralMetadataClassProperty::type}.
    */
   ErrorTypeMismatch,
 
   /**
-   * @brief This property view does not have a correct component type with what
+   * @brief This property view's component type does not match what
    * is specified in {@link ExtensionExtStructuralMetadataClassProperty::componentType}.
    */
   ErrorComponentTypeMismatch,
+
+  /**
+   * @brief This property view differs from what is specified in
+   * {@link ExtensionExtStructuralMetadataClassProperty::array}.
+   */
+  ErrorArrayTypeMismatch,
 
   /**
    * @brief This property view does not have a valid value buffer view index.
@@ -83,7 +89,8 @@ enum class MetadataPropertyViewStatus {
   ErrorInvalidStringOffsetBuffer,
 
   /**
-   * @brief This property view has an out-of-bounds buffer view
+   * @brief This property view has a buffer view that points outside the bounds
+   * of its target buffer.
    */
   ErrorBufferViewOutOfBounds,
 
@@ -100,14 +107,14 @@ enum class MetadataPropertyViewStatus {
   ErrorBufferViewSizeDoesNotMatchPropertyTableCount,
 
   /**
-   * @brief This array property view has both count and offset buffer
-   * view defined.
+   * @brief This array property view has both a fixed length and an offset
+   * buffer view defined.
    */
   ErrorArrayCountAndOffsetBufferCoexist,
 
   /**
-   * @brief This array property view doesn't have count nor offset buffer view
-   * defined.
+   * @brief This array property view has neither a fixed length nor an offset
+   * buffer view defined.
    */
   ErrorArrayCountAndOffsetBufferDontExist,
 
@@ -164,7 +171,7 @@ public:
    * @brief Constructs a new instance with a non-existent property.
    */
   MetadataPropertyView()
-      : _status{MetadataPropertyViewStatus::InvalidPropertyDoesNotExist},
+      : _status{MetadataPropertyViewStatus::ErrorPropertyDoesNotExist},
         _values{},
         _fixedLengthArrayCount{},
         _size{},
