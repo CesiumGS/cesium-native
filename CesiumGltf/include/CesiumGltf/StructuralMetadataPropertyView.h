@@ -152,15 +152,16 @@ enum class MetadataPropertyViewStatus {
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty::values} like an array of elements.
  * Data of each instance can be accessed through the {@link get(int64_t instance)} method
  *
- * @param ElementType must be a scalar (uin8_t, int8_t, uint16_t, int16_t,
- * uint32_t, int32_t, uint64_t, int64_t, float, double), vecN, matN, bool,
- * std::string_view, or MetadataArrayView<T> with T as one of the aforementioned
- * types.
+ * @param ElementType must be one of the following: a scalar (uin8_t, int8_t,
+ * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), vecN
+ * composed of one of the scalar types, matN composed of one of the scalar
+ * types, bool, std::string_view, or MetadataArrayView<T> with T as one of the
+ * aforementioned types.
  */
 template <typename ElementType> class MetadataPropertyView {
 public:
   /**
-   * @brief Constructs a new instance viewing a non-existent property.
+   * @brief Constructs a new instance with a non-existent property.
    */
   MetadataPropertyView()
       : _status{MetadataPropertyViewStatus::InvalidPropertyDoesNotExist},
@@ -171,7 +172,7 @@ public:
 
   /**
    * @brief Construct a new instance pointing to the data specified by
-   * ExtensionExtStructuralMetadataPropertyTableProperty
+   * ExtensionExtStructuralMetadataPropertyTableProperty.
    * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsets}
    * @param stringOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsets}
@@ -325,30 +326,32 @@ private:
   getStringArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
     if (_fixedLengthArrayCount > 0) {
-      size_t arraySize = _fixedLengthArrayCount * _stringOffsetTypeSize;
+      // Copy the corresponding string offsets to pass to the MetadataArrayView.
+      const size_t arraySize = _fixedLengthArrayCount * _stringOffsetTypeSize;
       const gsl::span<const std::byte> stringOffsetValues(
           _stringOffsets.data() + index * arraySize,
-          arraySize);
+          arraySize + _stringOffsetTypeSize);
       return MetadataArrayView<std::string_view>(
           _values,
           stringOffsetValues,
           _stringOffsetType,
-          _count);
+          _fixedLengthArrayCount);
     }
 
+    // Handle variable-length arrays
     const size_t currentArrayOffset =
         getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
     const size_t nextArrayOffset =
         getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
-    const size_t length = currentArrayOffset - nextArrayOffset;
+    const size_t arraySize = nextArrayOffset - currentArrayOffset;
     const gsl::span<const std::byte> stringOffsetValues(
-        _stringOffsets.data() + currentOffset,
-        length * _arrayOffsetTypeSize);
+        _stringOffsets.data() + currentArrayOffset,
+        arraySize + _arrayOffsetTypeSize);
     return MetadataArrayView<std::string_view>(
         _values,
         stringOffsetValues,
         _stringOffsetType,
-        length / _stringOffsetTypeSize);
+        arraySize / _arrayOffsetTypeSize);
   }
 
   MetadataArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
