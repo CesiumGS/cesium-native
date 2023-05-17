@@ -55,72 +55,16 @@ template <> struct IsMetadataFloating<double> : std::true_type {};
  */
 template <typename... T> struct IsMetadataVecN;
 template <typename T> struct IsMetadataVecN<T> : std::false_type {};
-template <> struct IsMetadataVecN<glm::u8vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u8vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u8vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i8vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i8vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i8vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u16vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u16vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u16vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i16vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i16vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i16vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::uvec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::uvec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::uvec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::ivec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::ivec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::ivec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u64vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u64vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::u64vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i64vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i64vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::i64vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::vec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::vec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::vec4> : std::true_type {};
-template <> struct IsMetadataVecN<glm::dvec2> : std::true_type {};
-template <> struct IsMetadataVecN<glm::dvec3> : std::true_type {};
-template <> struct IsMetadataVecN<glm::dvec4> : std::true_type {};
+template <glm::length_t n, typename T, glm::qualifier P>
+struct IsMetadataVecN<glm::vec<n, T, P>> : IsMetadataScalar<T> {};
 
 /**
  * @brief Check if a C++ type can be represented as a matN type.
  */
 template <typename... T> struct IsMetadataMatN;
 template <typename T> struct IsMetadataMatN<T> : std::false_type {};
-template <> struct IsMetadataMatN<glm::u8mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u8mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u8mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i8mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i8mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i8mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u16mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u16mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u16mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i16mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i16mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i16mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u32mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u32mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u32mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i32mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i32mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i32mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u64mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u64mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::u64mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i64mat2x2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i64mat3x3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::i64mat4x4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::mat2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::mat3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::mat4> : std::true_type {};
-template <> struct IsMetadataMatN<glm::dmat2> : std::true_type {};
-template <> struct IsMetadataMatN<glm::dmat3> : std::true_type {};
-template <> struct IsMetadataMatN<glm::dmat4> : std::true_type {};
+template <glm::length_t n, typename T, glm::qualifier P>
+struct IsMetadataMatN<glm::mat<n, n, T, P>> : IsMetadataScalar<T> {};
 
 /**
  * @brief Check if a C++ type can be represented as a numeric property, i.e.
@@ -261,382 +205,51 @@ template <> struct TypeToPropertyType<double> {
 };
 #pragma endregion
 
-#pragma region Vec2 Property Types
+#pragma region Vector Property Types
 
-template <> struct TypeToPropertyType<glm::u8vec2> {
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::vec<2, T, P>> {
   static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint8;
+      TypeToPropertyType<T>::component;
   static constexpr PropertyType value = PropertyType::Vec2;
 };
 
-template <> struct TypeToPropertyType<glm::i8vec2> {
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::vec<3, T, P>> {
   static constexpr PropertyComponentType component =
-      PropertyComponentType::Int8;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::u16vec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint16;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::i16vec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int16;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::uvec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint32;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::ivec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int32;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::u64vec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint64;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::i64vec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int64;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::vec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float32;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-
-template <> struct TypeToPropertyType<glm::dvec2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float64;
-  static constexpr PropertyType value = PropertyType::Vec2;
-};
-#pragma endregion
-
-#pragma region Vec3 Property Types
-
-template <> struct TypeToPropertyType<glm::u8vec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint8;
+      TypeToPropertyType<T>::component;
   static constexpr PropertyType value = PropertyType::Vec3;
 };
 
-template <> struct TypeToPropertyType<glm::i8vec3> {
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::vec<4, T, P>> {
   static constexpr PropertyComponentType component =
-      PropertyComponentType::Int8;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::u16vec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint16;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::i16vec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int16;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::uvec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint32;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::ivec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int32;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::u64vec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint64;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::i64vec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int64;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::vec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float32;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-
-template <> struct TypeToPropertyType<glm::dvec3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float64;
-  static constexpr PropertyType value = PropertyType::Vec3;
-};
-#pragma endregion
-
-#pragma region Vec4 Property Types
-
-template <> struct TypeToPropertyType<glm::u8vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint8;
+      TypeToPropertyType<T>::component;
   static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::i8vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int8;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::u16vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint16;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::i16vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int16;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::uvec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint32;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::ivec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int32;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::u64vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint64;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::i64vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int64;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::vec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float32;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-
-template <> struct TypeToPropertyType<glm::dvec4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float64;
-  static constexpr PropertyType value = PropertyType::Vec4;
-};
-#pragma endregion
-
-#pragma region Mat2 Property Types
-
-template <> struct TypeToPropertyType<glm::u8mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint8;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::i8mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int8;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::u16mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint16;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::i16mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int16;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::u32mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint32;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::i32mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int32;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::u64mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint64;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::i64mat2x2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int64;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::mat2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float32;
-  static constexpr PropertyType value = PropertyType::Mat2;
-};
-
-template <> struct TypeToPropertyType<glm::dmat2> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float64;
-  static constexpr PropertyType value = PropertyType::Mat2;
 };
 
 #pragma endregion
 
-#pragma region Mat3 Property Types
+#pragma region Matrix Property Types
 
-template <> struct TypeToPropertyType<glm::u8mat3x3> {
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::mat<2, 2, T, P>> {
   static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint8;
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Mat2;
+};
+
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::mat<3, 3, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
   static constexpr PropertyType value = PropertyType::Mat3;
 };
 
-template <> struct TypeToPropertyType<glm::i8mat3x3> {
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::mat<4, 4, T, P>> {
   static constexpr PropertyComponentType component =
-      PropertyComponentType::Int8;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::u16mat3x3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint16;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::i16mat3x3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int16;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::u32mat3x3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint32;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::i32mat3x3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int32;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::u64mat3x3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint64;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::i64mat3x3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int64;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::mat3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float32;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-template <> struct TypeToPropertyType<glm::dmat3> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float64;
-  static constexpr PropertyType value = PropertyType::Mat3;
-};
-
-#pragma endregion
-
-#pragma region Mat4 Property Types
-
-template <> struct TypeToPropertyType<glm::u8mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint8;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::i8mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int8;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::u16mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint16;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::i16mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int16;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::u32mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint32;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::i32mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int32;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::u64mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Uint64;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::i64mat4x4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Int64;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::mat4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float32;
-  static constexpr PropertyType value = PropertyType::Mat4;
-};
-
-template <> struct TypeToPropertyType<glm::dmat4> {
-  static constexpr PropertyComponentType component =
-      PropertyComponentType::Float64;
+      TypeToPropertyType<T>::component;
   static constexpr PropertyType value = PropertyType::Mat4;
 };
 

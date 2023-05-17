@@ -35,14 +35,12 @@ enum class PropertyComponentType {
   Float64,
 };
 
+std::string convertPropertyTypeToString(PropertyType type);
+
+PropertyType convertStringToPropertyType(const std::string& str);
+
 std::string
-convertPropertyTypeToString(PropertyType type);
-
-PropertyType
-convertStringToPropertyType(const std::string& str);
-
-std::string convertPropertyComponentTypeToString(
-    PropertyComponentType componentType);
+convertPropertyComponentTypeToString(PropertyComponentType componentType);
 
 PropertyComponentType
 convertStringToPropertyComponentType(const std::string& str);

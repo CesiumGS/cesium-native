@@ -45,8 +45,7 @@ static size_t getOffsetFromOffsetsBuffer(
     assert(false && "Offset type is invalid");
     return 0;
   }
-
-  }
+}
 
 } // namespace StructuralMetadata
 } // namespace CesiumGltf
