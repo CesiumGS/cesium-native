@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 
-# FIXME, siwitch to ezvcpkg_fetch
+include(${CMAKE_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+ezvcpkg_fetch(
+    COMMIT a7b6122f6b6504d16d96117336a0562693579933
+    PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp rapidjson spdlog stb tinyxml2 uriparser modp-base64 cpp-httplib
+    UPDATE_TOOLCHAIN
+)
+
 if (NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Specify the VCPKG toolchain on the command line as '-DCMAKE_TOOLCHAIN_FILE=<VCPKG_ROOT>/scripts/buildsystems/vcpkg.cmake'")
 endif()
-# include(${CMAKE_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
-# ezvcpkg_fetch(
-#     COMMIT a7b6122f6b6504d16d96117336a0562693579933
-#     PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp rapidjson spdlog stb tinyxml2 uriparser modp-base64 cpp-httplib
-#     UPDATE_TOOLCHAIN
-# )
 
 include("cmake/defaults.cmake")
 
