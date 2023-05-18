@@ -15,7 +15,7 @@ bool CesiumUtility::gunzip(
     const gsl::span<const std::byte>& data,
     std::vector<std::byte>& out) {
   int ret;
-  int index = 0;
+  unsigned int index = 0;
   z_stream strm;
   strm.zalloc = Z_NULL;
   strm.zfree = Z_NULL;
