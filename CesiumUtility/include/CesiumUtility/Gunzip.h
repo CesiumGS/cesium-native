@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace CesiumUtility {
-static bool isGzip(const gsl::span<const std::byte>& data) {
+extern bool isGzip(const gsl::span<const std::byte>& data) {
   if (data.size() < 3) {
     return false;
   }
