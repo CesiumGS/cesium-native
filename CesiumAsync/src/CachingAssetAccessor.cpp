@@ -3,6 +3,7 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/CacheItem.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumUtility/Gunzip.h"
 #include "InternalTimegm.h"
 #include "ResponseCacheControl.h"
 
@@ -69,6 +70,63 @@ public:
 private:
   CacheItem _cacheItem;
   CacheAssetResponse _response;
+};
+
+class GunzippedAssetResponse : public IAssetResponse {
+public:
+  GunzippedAssetResponse(const IAssetResponse* pOther) noexcept
+      : _pAssetResponse{pOther} {
+    _dataValid = CesiumUtility::gunzip(
+        this->_pAssetResponse->data(),
+        this->_gunzippedData);
+  }
+
+  virtual uint16_t statusCode() const noexcept override {
+    return this->_pAssetResponse->statusCode();
+  }
+
+  virtual std::string contentType() const override {
+    return this->_pAssetResponse->contentType();
+  }
+
+  virtual const HttpHeaders& headers() const noexcept override {
+    return this->_pAssetResponse->headers();
+  }
+
+  virtual gsl::span<const std::byte> data() const noexcept override {
+    return _dataValid ? gsl::span(_gunzippedData.data(), _gunzippedData.size())
+                      : _pAssetResponse->data();
+  }
+
+private:
+  const IAssetResponse* _pAssetResponse;
+  std::vector<std::byte> _gunzippedData;
+  bool _dataValid;
+};
+
+class GunzippedAssetRequest : public IAssetRequest {
+public:
+  GunzippedAssetRequest(std::shared_ptr<IAssetRequest>& pOther)
+      : _pAssetRequest(pOther), _AssetResponse(pOther->response()){};
+  virtual const std::string& method() const noexcept override {
+    return this->_pAssetRequest->method();
+  }
+
+  virtual const std::string& url() const noexcept override {
+    return this->_pAssetRequest->url();
+  }
+
+  virtual const HttpHeaders& headers() const noexcept override {
+    return this->_pAssetRequest->headers();
+  }
+
+  virtual const IAssetResponse* response() const noexcept override {
+    return &this->_AssetResponse;
+  }
+
+private:
+  std::shared_ptr<IAssetRequest> _pAssetRequest;
+  GunzippedAssetResponse _AssetResponse;
 };
 
 static std::time_t convertHttpDateToTime(const std::string& httpDate);
@@ -147,6 +205,13 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                             pCompletedRequest->response();
                         if (!pResponse) {
                           return std::move(pCompletedRequest);
+                        }
+
+                        if (CesiumUtility::isGzip(pResponse->data())) {
+                          pCompletedRequest =
+                              std::make_shared<GunzippedAssetRequest>(
+                                  GunzippedAssetRequest(pCompletedRequest));
+                          pResponse = pCompletedRequest->response();
                         }
 
                         const std::optional<ResponseCacheControl> cacheControl =

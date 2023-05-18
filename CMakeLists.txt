@@ -198,6 +198,8 @@ install(TARGETS webpdecoder)
 
 install(DIRECTORY $<TARGET_LINKER_FILE:turbojpeg> TYPE LIB)
 
+install(DIRECTORY $<TARGET_LINKER_FILE:zlibstatic> TYPE LIB)
+
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
 
 install(TARGETS s2geometry)

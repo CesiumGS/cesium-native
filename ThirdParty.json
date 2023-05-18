@@ -125,5 +125,11 @@
     "url": "https://github.com/uriparser/uriparser",
     "version": "0.9.6",
     "license": ["BSD-3-Clause"]
+  },
+  {
+    "name": "zlib",
+    "url": "https://github.com/madler/zlib",
+    "version": "1.2.13",
+    "license": ["zlib"]
   }
 ]

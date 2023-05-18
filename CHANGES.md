@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for the `KHR_materials_variants` extension to the glTF reader and writer.
+- The Caching Asset Accessor will now automatically unzip data if gzipped data is detected.
 
 ### v0.24.0 - 2023-05-01
 
