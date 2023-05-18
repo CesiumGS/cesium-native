@@ -50,7 +50,7 @@ endif()
 # Find the VCPKG dependnecies
 find_package(Async++ CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
-find_package(csprng CONFIG REQUIRED)
+# find_package(csprng CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
