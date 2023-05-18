@@ -4,6 +4,13 @@
 
 #define CHUNK 65536
 
+bool CesiumUtility::isGzip(const gsl::span<const std::byte>& data) {
+  if (data.size() < 3) {
+    return false;
+  }
+  return data[0] == std::byte{31} && data[1] == std::byte{139};
+}
+
 bool CesiumUtility::gunzip(
     const gsl::span<const std::byte>& data,
     std::vector<std::byte>& out) {

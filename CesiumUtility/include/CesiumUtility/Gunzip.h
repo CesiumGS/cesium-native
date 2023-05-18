@@ -4,13 +4,7 @@
 #include <vector>
 
 namespace CesiumUtility {
-extern bool isGzip(const gsl::span<const std::byte>& data) {
-  if (data.size() < 3) {
-    return false;
-  }
-  return data[0] == std::byte{31} && data[1] == std::byte{139};
-}
-
+extern bool isGzip(const gsl::span<const std::byte>& data);
 /**
  * Gunzip data. If successful, it will return true and the result will be in the
  * provided vector.
