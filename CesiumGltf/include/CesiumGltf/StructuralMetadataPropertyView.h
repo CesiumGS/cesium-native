@@ -231,7 +231,8 @@ public:
     assert(
         size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be positive");
+    assert(index >= 0 && "index must be non-negative");
+    assert(index < size() && "index must be less than size");
 
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumericValue(index);

@@ -51,5 +51,9 @@ convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str);
 PropertyComponentType
 convertStringOffsetTypeStringToPropertyComponentType(const std::string& str);
 
+bool isPropertyTypeVecN(PropertyType type);
+
+bool isPropertyTypeMatN(PropertyType type);
+
 } // namespace StructuralMetadata
 } // namespace CesiumGltf
