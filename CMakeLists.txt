@@ -4,7 +4,10 @@ include(${CMAKE_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 ezvcpkg_fetch(
     COMMIT a7b6122f6b6504d16d96117336a0562693579933
     PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp rapidjson spdlog stb tinyxml2 uriparser modp-base64 cpp-httplib
+    # Update the cmake toolchain so it can find the above packages
     UPDATE_TOOLCHAIN
+    # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
+    SERIALIZE
 )
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
