@@ -6,6 +6,9 @@
 
 - Added support for the `KHR_materials_variants` extension to the glTF reader and writer.
 
+##### Fixes :wrench:
+- Upon Tileset Load Failure, cesium-native will always log warning/error messages even if the failure callback is set. 
+
 ### v0.24.0 - 2023-05-01
 
 ##### Additions :tada:

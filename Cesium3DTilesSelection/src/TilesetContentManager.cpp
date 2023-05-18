@@ -1425,15 +1425,14 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
           type,
           result.statusCode,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
-    } else {
-      result.errors.logError(
-          this->_externals.pLogger,
-          "Errors when loading tileset");
-
-      result.errors.logWarning(
-          this->_externals.pLogger,
-          "Warnings when loading tileset");
     }
+    result.errors.logError(
+        this->_externals.pLogger,
+        "Errors when loading tileset");
+
+    result.errors.logWarning(
+        this->_externals.pLogger,
+        "Warnings when loading tileset");
   } else {
     this->_tilesetCredits.reserve(
         this->_tilesetCredits.size() + result.credits.size());
