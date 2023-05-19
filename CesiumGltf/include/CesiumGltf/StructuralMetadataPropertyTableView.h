@@ -108,8 +108,11 @@ public:
     }
 
     PropertyType type = convertStringToPropertyType(pClassProperty->type);
-    PropertyComponentType componentType =
-        convertStringToPropertyType(pClassProperty->componentType);
+    PropertyComponentType componentType = PropertyComponentType::None;
+    if (pClassProperty->componentType) {
+      componentType =
+          convertStringToPropertyComponentType(*pClassProperty->componentType);
+    }
 
     if (pClassProperty->array) {
       getArrayPropertyViewImpl(
@@ -167,7 +170,7 @@ public:
   }
 
 private:
-  glm::length_t getDimensionsFromType(PropertyType type) {
+  glm::length_t getDimensionsFromType(PropertyType type) const {
     switch (type) {
     case PropertyType::Vec2:
     case PropertyType::Mat2:
@@ -360,7 +363,7 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    glm::length_t N = getDimensionsFromType(type);
+    const glm::length_t N = getDimensionsFromType(type);
     if (N <= 1) {
       return;
     }
@@ -453,7 +456,7 @@ private:
           propertyName,
           classProperty,
           componentType,
-          std::forward<Callback>(callback))
+          std::forward<Callback>(callback));
     } else if (isPropertyTypeVecN(type)) {
       getVecNArrayPropertyViewImpl(
           propertyName,
@@ -487,13 +490,14 @@ private:
 
   template <typename Callback>
   void getVecNPropertyViewImpl(
+      const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) {
-    glm::length_t N = getDimensionsFromType(type);
+    const glm::length_t N = getDimensionsFromType(type);
     if (N <= 1) {
       return;
     }
@@ -574,6 +578,7 @@ private:
 
   template <typename Callback>
   void getMatNPropertyViewImpl(
+      const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty,

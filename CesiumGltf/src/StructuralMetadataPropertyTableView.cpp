@@ -420,7 +420,6 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         MetadataPropertyViewStatus::ErrorInvalidArrayOffsetBufferView);
   }
 
-
   // Handle variable-length arrays
   gsl::span<const std::byte> stringOffsets;
   status = getBufferSafe(propertyTableProperty.stringOffsets, stringOffsets);
