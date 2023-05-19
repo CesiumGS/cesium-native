@@ -115,6 +115,7 @@ public:
       getArrayPropertyViewImpl(
           propertyName,
           *pClassProperty,
+          type,
           componentType,
           std::forward<Callback>(callback));
     } else if (isPropertyTypeVecN(type)) {
@@ -134,6 +135,7 @@ public:
           propertyName,
           *pClassProperty,
           type,
+          componentType,
           std::forward<Callback>(callback));
     }
   }
@@ -165,99 +167,321 @@ public:
   }
 
 private:
+  glm::length_t getDimensionsFromType(PropertyType type) {
+    switch (type) {
+    case PropertyType::Vec2:
+    case PropertyType::Mat2:
+      return 2;
+    case PropertyType::Vec3:
+    case PropertyType::Mat3:
+      return 3;
+    case PropertyType::Vec4:
+    case PropertyType::Mat4:
+      return 4;
+    default:
+      return 0;
+    }
+  }
+
   template <typename Callback>
-  void getArrayPropertyViewImpl(
+  void getScalarArrayPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      StructuralMetadata::PropertyType type,
+      PropertyComponentType componentType,
       Callback&& callback) const {
-    switch (type) {
-    case PropertyType::Int8:
+    switch (componentType) {
+    case PropertyComponentType::Int8:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<int8_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Uint8:
+    case PropertyComponentType::Uint8:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<uint8_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Int16:
+    case PropertyComponentType::Int16:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<int16_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Uint16:
+    case PropertyComponentType::Uint16:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<uint16_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Int32:
+    case PropertyComponentType::Int32:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<int32_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Uint32:
+    case PropertyComponentType::Uint32:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<uint32_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Int64:
+    case PropertyComponentType::Int64:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<int64_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Uint64:
+    case PropertyComponentType::Uint64:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<uint64_t>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Float32:
+    case PropertyComponentType::Float32:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<float>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Float64:
+    case PropertyComponentType::Float64:
       callback(
           propertyName,
           getPropertyViewImpl<MetadataArrayView<double>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::Boolean:
+    default:
+      break;
+    }
+  }
+
+  template <typename Callback>
+  void getVecNArrayPropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      PropertyType type,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+    glm::length_t N = getDimensionsFromType(type);
+    if (N <= 1) {
+      return;
+    }
+
+    switch (componentType) {
+    case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<bool>>(
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int8_t>>>(
               propertyName,
               classProperty));
       break;
-    case PropertyType::String:
+    case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<std::string_view>>(
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint8_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Int16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int16_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint16_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Int32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int32_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint32_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Int64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int64_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint64_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Float32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, float>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Float64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::vec<N, double>>>(
               propertyName,
               classProperty));
       break;
     default:
       break;
+    }
+  }
+
+  template <typename Callback>
+  void getMatNArrayPropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      PropertyType type,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+    glm::length_t N = getDimensionsFromType(type);
+    if (N <= 1) {
+      return;
+    }
+
+    switch (componentType) {
+    case PropertyComponentType::Int8:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int8_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint8:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint8_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Int16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int16_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint16_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Int32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int32_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint32_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Int64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int64_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint64_t>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Float32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, float>>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyComponentType::Float64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, double>>>(
+              propertyName,
+              classProperty));
+      break;
+    default:
+      break;
+    }
+  }
+
+  template <typename Callback>
+  void getArrayPropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      PropertyType type,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+    if (type == PropertyType::Scalar) {
+      getScalarArrayPropertyViewImpl(
+          propertyName,
+          classProperty,
+          componentType,
+          std::forward<Callback>(callback))
+    } else if (isPropertyTypeVecN(type)) {
+      getVecNArrayPropertyViewImpl(
+          propertyName,
+          classProperty,
+          type,
+          componentType,
+          std::forward<Callback>(callback));
+    } else if (isPropertyTypeMatN(type)) {
+      getMatNArrayPropertyViewImpl(
+          propertyName,
+          classProperty,
+          type,
+          componentType,
+          std::forward<Callback>(callback));
+
+    } else if (type == PropertyType::Boolean) {
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<bool>>(
+              propertyName,
+              classProperty));
+
+    } else if (type == PropertyType::String) {
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<std::string_view>>(
+              propertyName,
+              classProperty));
     }
   }
 
@@ -269,18 +493,8 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) {
-    glm::length_t N;
-    switch (type) {
-    case PropertyType::Vec2:
-      N = 2;
-      break;
-    case PropertyType::Vec3:
-      N = 3;
-      break;
-    case PropertyType::Vec4:
-      N = 4;
-      break;
-    default:
+    glm::length_t N = getDimensionsFromType(type);
+    if (N <= 1) {
       return;
     }
 
@@ -366,18 +580,8 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) {
-    glm::length_t N;
-    switch (type) {
-    case PropertyType::Mat2:
-      N = 2;
-      break;
-    case PropertyType::Mat3:
-      N = 3;
-      break;
-    case PropertyType::Mat4:
-      N = 4;
-      break;
-    default:
+    glm::length_t N = getDimensionsFromType(type);
+    if (N <= 1) {
       return;
     }
 
@@ -461,71 +665,72 @@ private:
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty,
-      PropertyComponentType type,
+      PropertyType type,
+      PropertyComponentType componentType,
       Callback&& callback) const {
-    switch (type) {
-    case PropertyType::Int8:
-      callback(
-          propertyName,
-          getPropertyViewImpl<int8_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Uint8:
-      callback(
-          propertyName,
-          getPropertyViewImpl<uint8_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Int16:
-      callback(
-          propertyName,
-          getPropertyViewImpl<int16_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Uint16:
-      callback(
-          propertyName,
-          getPropertyViewImpl<uint16_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Int32:
-      callback(
-          propertyName,
-          getPropertyViewImpl<int32_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Uint32:
-      callback(
-          propertyName,
-          getPropertyViewImpl<uint32_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Int64:
-      callback(
-          propertyName,
-          getPropertyViewImpl<int64_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Uint64:
-      callback(
-          propertyName,
-          getPropertyViewImpl<uint64_t>(propertyName, classProperty));
-      break;
-    case PropertyType::Float32:
-      callback(
-          propertyName,
-          getPropertyViewImpl<float>(propertyName, classProperty));
-      break;
-    case PropertyType::Float64:
-      callback(
-          propertyName,
-          getPropertyViewImpl<double>(propertyName, classProperty));
-      break;
-    case PropertyType::Boolean:
-      callback(
-          propertyName,
-          getPropertyViewImpl<bool>(propertyName, classProperty));
-      break;
-    case PropertyType::String:
+    if (type == PropertyType::Scalar) {
+      switch (componentType) {
+      case PropertyComponentType::Int8:
+        callback(
+            propertyName,
+            getPropertyViewImpl<int8_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Uint8:
+        callback(
+            propertyName,
+            getPropertyViewImpl<uint8_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Int16:
+        callback(
+            propertyName,
+            getPropertyViewImpl<int16_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Uint16:
+        callback(
+            propertyName,
+            getPropertyViewImpl<uint16_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Int32:
+        callback(
+            propertyName,
+            getPropertyViewImpl<int32_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Uint32:
+        callback(
+            propertyName,
+            getPropertyViewImpl<uint32_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Int64:
+        callback(
+            propertyName,
+            getPropertyViewImpl<int64_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Uint64:
+        callback(
+            propertyName,
+            getPropertyViewImpl<uint64_t>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Float32:
+        callback(
+            propertyName,
+            getPropertyViewImpl<float>(propertyName, classProperty));
+        break;
+      case PropertyComponentType::Float64:
+        callback(
+            propertyName,
+            getPropertyViewImpl<double>(propertyName, classProperty));
+        break;
+      default:
+        break;
+      }
+    } else if (type == PropertyType::String) {
       callback(
           propertyName,
           getPropertyViewImpl<std::string_view>(propertyName, classProperty));
-      break;
-    default:
-      break;
+    } else if (type == PropertyType::Boolean) {
+      callback(
+          propertyName,
+          getPropertyViewImpl<bool>(propertyName, classProperty));
     }
   }
 
@@ -567,7 +772,7 @@ private:
   }
 
   template <typename T>
-  StructuralMetadata::MetadataPropertyView<T> getNumericOrBooleanPropertyValues(
+  MetadataPropertyView<T> getNumericOrBooleanPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty) const {

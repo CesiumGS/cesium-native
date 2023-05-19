@@ -366,15 +366,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         MetadataPropertyViewStatus::ErrorArrayCountAndOffsetBufferDontExist);
   }
 
-  // Get offset types
-  const PropertyComponentType arrayOffsetType =
-      convertArrayOffsetTypeStringToPropertyComponentType(
-          propertyTableProperty.arrayOffsetType);
-  if (arrayOffsetType == PropertyComponentType::None) {
-    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
-        MetadataPropertyViewStatus::ErrorInvalidArrayOffsetType);
-  }
-
+  // Get string offset type
   const PropertyComponentType stringOffsetType =
       convertStringOffsetTypeStringToPropertyComponentType(
           propertyTableProperty.stringOffsetType);
@@ -383,14 +375,9 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         MetadataPropertyViewStatus::ErrorInvalidStringOffsetType);
   }
 
-  if (propertyTableProperty.arrayOffsets < 0) {
-    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
-        MetadataPropertyViewStatus::ErrorInvalidArrayOffsetBuffer);
-  }
-
   if (propertyTableProperty.stringOffsets < 0) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
-        MetadataPropertyViewStatus::ErrorInvalidStringOffsetBuffer);
+        MetadataPropertyViewStatus::ErrorInvalidStringOffsetBufferView);
   }
 
   // Handle fixed-length arrays
@@ -418,6 +405,21 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         _pPropertyTable->count,
         classProperty.normalized);
   }
+
+  // Get array offset type
+  const PropertyComponentType arrayOffsetType =
+      convertArrayOffsetTypeStringToPropertyComponentType(
+          propertyTableProperty.arrayOffsetType);
+  if (arrayOffsetType == PropertyComponentType::None) {
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::ErrorInvalidArrayOffsetType);
+  }
+
+  if (propertyTableProperty.arrayOffsets < 0) {
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::ErrorInvalidArrayOffsetBufferView);
+  }
+
 
   // Handle variable-length arrays
   gsl::span<const std::byte> stringOffsets;
