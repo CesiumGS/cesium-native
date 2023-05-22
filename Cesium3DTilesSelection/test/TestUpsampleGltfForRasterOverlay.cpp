@@ -1088,12 +1088,6 @@ TEST_CASE("Test upsample tile with UNSIGNED_BYTE indices") {
 
   CesiumGeometry::UpsampledQuadtreeNode lowerLeft{
       CesiumGeometry::QuadtreeTileID(1, 0, 0)};
-  CesiumGeometry::UpsampledQuadtreeNode upperLeft{
-      CesiumGeometry::QuadtreeTileID(1, 0, 1)};
-  CesiumGeometry::UpsampledQuadtreeNode lowerRight{
-      CesiumGeometry::QuadtreeTileID(1, 1, 0)};
-  CesiumGeometry::UpsampledQuadtreeNode upperRight{
-      CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
   Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
 
