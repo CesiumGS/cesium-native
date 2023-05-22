@@ -1163,6 +1163,16 @@ static bool upsamplePrimitiveForRasterOverlays(
   const Accessor& indicesAccessorGltf =
       parentModel.accessors[static_cast<size_t>(primitive.indices)];
   if (indicesAccessorGltf.componentType ==
+      Accessor::ComponentType::UNSIGNED_BYTE) {
+    return upsamplePrimitiveForRasterOverlays<uint8_t>(
+        parentModel,
+        model,
+        mesh,
+        primitive,
+        childID,
+        textureCoordinateIndex);
+  } else if (
+      indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_SHORT) {
     return upsamplePrimitiveForRasterOverlays<uint16_t>(
         parentModel,
