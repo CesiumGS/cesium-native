@@ -3104,7 +3104,6 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
   std::vector<uint32_t> values =
       {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
 
-  size_t valueBufferViewIndex = 0;
   {
     Buffer& valueBuffer = model.buffers.emplace_back();
     valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
@@ -3119,7 +3118,6 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
     valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
     valueBufferView.byteOffset = 0;
     valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
   }
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -3193,7 +3191,6 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
       glm::ivec3(40, 61, 3),
   };
 
-  size_t valueBufferViewIndex = 0;
   {
     Buffer& valueBuffer = model.buffers.emplace_back();
     valueBuffer.cesium.data.resize(values.size() * sizeof(glm::ivec3));
@@ -3208,7 +3205,6 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
     valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
     valueBufferView.byteOffset = 0;
     valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
   }
 
   ExtensionModelExtStructuralMetadata& metadata =
