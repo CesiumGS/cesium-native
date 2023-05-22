@@ -366,21 +366,21 @@ private:
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 3:
       getVecNArrayPropertyViewImpl<Callback, 3>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 4:
       getVecNArrayPropertyViewImpl<Callback, 4>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     default:
       break;
@@ -483,21 +483,21 @@ private:
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 3:
       getMatNArrayPropertyViewImpl<Callback, 3>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 4:
       getMatNArrayPropertyViewImpl<Callback, 4>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     default:
       break;
@@ -643,21 +643,21 @@ private:
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 3:
       getVecNPropertyViewImpl<Callback, 3>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 4:
       getVecNPropertyViewImpl<Callback, 4>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     default:
       break;
@@ -723,7 +723,7 @@ private:
     case PropertyComponentType::Uint64:
       callback(
           propertyName,
-          getPropertyViewImp<glm::mat<N, N, uint64_t>>(
+          getPropertyViewImpl<glm::mat<N, N, uint64_t>>(
               propertyName,
               classProperty));
       break;
@@ -760,21 +760,21 @@ private:
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 3:
       getMatNPropertyViewImpl<Callback, 3>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     case 4:
       getMatNPropertyViewImpl<Callback, 4>(
           propertyName,
           classProperty,
           componentType,
-          callback);
+          std::forward<Callback>(callback));
       break;
     default:
       break;

@@ -2589,3 +2589,474 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
         MetadataPropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
   }
 }
+
+TEST_CASE("Test StructuralMetadata callback for scalar property") {
+  Model model;
+  std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
+
+  size_t valueBufferIndex = 0;
+  size_t valueBufferViewIndex = 0;
+
+  // Buffers are constructed in scope to ensure that the tests don't use their
+  // temporary variables.
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
+    valueBufferIndex = model.buffers.size() - 1;
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+  testClassProperty.componentType =
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32;
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(values.size());
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+
+  MetadataPropertyTableView view(&model, &propertyTable);
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32);
+  REQUIRE(!classProperty->array);
+  REQUIRE(classProperty->count == std::nullopt);
+
+  view.getPropertyView(
+      "TestClassProperty",
+      [&values](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() > 0);
+
+        if constexpr (std::is_same_v<
+                          MetadataPropertyView<uint32_t>,
+                          decltype(propertyValue)>) {
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            REQUIRE(
+                static_cast<uint32_t>(propertyValue.get(i)) ==
+                values[static_cast<size_t>(i)]);
+          }
+        } else {
+          FAIL("getPropertyView returned MetadataPropertyView of incorrect "
+               "type for TestClassProperty.");
+        }
+      });
+}
+
+TEST_CASE("Test StructuralMetadata callback for vecN property") {
+  Model model;
+
+  std::vector<glm::ivec3> values = {
+      glm::ivec3(-12, 34, 30),
+      glm::ivec3(11, 73, 0),
+      glm::ivec3(-2, 6, 12),
+      glm::ivec3(-4, 8, -13)};
+
+  size_t valueBufferIndex = 0;
+  size_t valueBufferViewIndex = 0;
+
+  // Buffers are constructed in scope to ensure that the tests don't use their
+  // temporary variables.
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::ivec3));
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
+    valueBufferIndex = model.buffers.size() - 1;
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::VEC3;
+  testClassProperty.componentType =
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32;
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(values.size());
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+
+  MetadataPropertyTableView view(&model, &propertyTable);
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  view.getPropertyView(
+      "TestClassProperty",
+      [&values](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() > 0);
+
+        if constexpr (std::is_same_v<
+                          MetadataPropertyView<glm::ivec3>,
+                          decltype(propertyValue)>) {
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            REQUIRE(
+                static_cast<glm::ivec3>(propertyValue.get(i)) ==
+                values[static_cast<size_t>(i)]);
+          }
+        } else {
+          FAIL("getPropertyView returned MetadataPropertyView of incorrect "
+               "type for TestClassProperty.");
+        }
+      });
+}
+
+TEST_CASE("Test StructuralMetadata callback for matN property") {
+  Model model;
+
+  // clang-format off
+  std::vector<glm::u32mat2x2> values = {
+      glm::u32mat2x2(
+        12, 34,
+        30, 1),
+      glm::u32mat2x2(
+        11, 8,
+        73, 102),
+      glm::u32mat2x2(
+        1, 0,
+        63, 2),
+      glm::u32mat2x2(
+        4, 8,
+        3, 23)};
+  // clang-format on
+
+  size_t valueBufferViewIndex = 0;
+
+  // Buffers are constructed in scope to ensure that the tests don't use their
+  // temporary variables.
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::u32mat2x2));
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::MAT2;
+  testClassProperty.componentType =
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32;
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(values.size());
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+
+  MetadataPropertyTableView view(&model, &propertyTable);
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
+  REQUIRE(
+      classProperty->componentType ==
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  view.getPropertyView(
+      "TestClassProperty",
+      [&values](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() > 0);
+
+        if constexpr (std::is_same_v<
+                          MetadataPropertyView<glm::u32mat2x2>,
+                          decltype(propertyValue)>) {
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            REQUIRE(
+                static_cast<glm::u32mat2x2>(propertyValue.get(i)) ==
+                values[static_cast<size_t>(i)]);
+          }
+        } else {
+          FAIL("getPropertyView returned MetadataPropertyView of incorrect "
+               "type for TestClassProperty.");
+        }
+      });
+}
+
+TEST_CASE("Test StructuralMetadata callback for boolean property") {
+  Model model;
+
+  int64_t instanceCount = 21;
+  std::vector<bool> expected;
+  std::vector<uint8_t> values;
+  values.resize(3);
+  for (int64_t i = 0; i < instanceCount; ++i) {
+    if (i % 2 == 0) {
+      expected.emplace_back(true);
+    } else {
+      expected.emplace_back(false);
+    }
+
+    uint8_t expectedValue = expected.back();
+    int64_t byteIndex = i / 8;
+    int64_t bitIndex = i % 8;
+    values[static_cast<size_t>(byteIndex)] = static_cast<uint8_t>(
+        (expectedValue << bitIndex) | values[static_cast<size_t>(byteIndex)]);
+  }
+
+  // Buffers are constructed in scope to ensure that the tests don't use their
+  // temporary variables.
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size());
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+  }
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN;
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(instanceCount);
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  MetadataPropertyTableView view(&model, &propertyTable);
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  view.getPropertyView(
+      "TestClassProperty",
+      [&expected](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() > 0);
+
+        if constexpr (std::is_same_v<
+                          MetadataPropertyView<bool>,
+                          decltype(propertyValue)>) {
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            REQUIRE(
+                static_cast<bool>(propertyValue.get(i)) ==
+                expected[static_cast<size_t>(i)]);
+          }
+        } else {
+          FAIL("getPropertyView returned MetadataPropertyView of incorrect "
+               "type for TestClassProperty.");
+        }
+      });
+}
+
+TEST_CASE("Test StructuralMetadata callback for string property") {
+  Model model;
+
+  std::vector<std::string> expected{"What's up", "Test_0", "Test_1", "", "Hi"};
+  size_t totalBytes = 0;
+  for (const std::string& expectedValue : expected) {
+    totalBytes += expectedValue.size();
+  }
+
+  std::vector<std::byte> stringOffsets(
+      (expected.size() + 1) * sizeof(uint32_t));
+  std::vector<std::byte> values(totalBytes);
+  uint32_t* offsetValue = reinterpret_cast<uint32_t*>(stringOffsets.data());
+  for (size_t i = 0; i < expected.size(); ++i) {
+    const std::string& expectedValue = expected[i];
+    std::memcpy(
+        values.data() + offsetValue[i],
+        expectedValue.c_str(),
+        expectedValue.size());
+    offsetValue[i + 1] =
+        offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
+  }
+
+  // Buffers are constructed in scope to ensure that the tests don't use their
+  // temporary variables.
+  size_t valueBufferIndex = 0;
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.byteLength = static_cast<int64_t>(values.size());
+    valueBuffer.cesium.data = std::move(values);
+    valueBufferIndex = model.buffers.size() - 1;
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(valueBufferIndex);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
+
+  size_t offsetBufferIndex = 0;
+  size_t offsetBufferViewIndex = 0;
+  {
+    Buffer& offsetBuffer = model.buffers.emplace_back();
+    offsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
+    offsetBuffer.cesium.data = std::move(stringOffsets);
+    offsetBufferIndex = model.buffers.size() - 1;
+
+    BufferView& offsetBufferView = model.bufferViews.emplace_back();
+    offsetBufferView.buffer = static_cast<int32_t>(offsetBufferIndex);
+    offsetBufferView.byteOffset = 0;
+    offsetBufferView.byteLength = offsetBuffer.byteLength;
+    offsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::STRING;
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(expected.size());
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.stringOffsetType =
+      ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
+          UINT32;
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+  propertyTableProperty.stringOffsets =
+      static_cast<int32_t>(offsetBufferViewIndex);
+
+  MetadataPropertyTableView view(&model, &propertyTable);
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(
+      classProperty->type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::STRING);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+    view.getPropertyView(
+      "TestClassProperty",
+      [&expected](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() > 0);
+
+        if constexpr (std::is_same_v<
+                          MetadataPropertyView<std::string_view>,
+                          decltype(propertyValue)>) {
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            REQUIRE(
+                static_cast<std::string_view>(propertyValue.get(i)) ==
+                expected[static_cast<size_t>(i)]);
+          }
+        } else {
+          FAIL("getPropertyView returned MetadataPropertyView of incorrect "
+               "type for TestClassProperty.");
+        }
+      });
+}
