@@ -81,7 +81,7 @@ public:
 
   /**
    * @brief Gets a MetadataPropertyView through a callback that accepts a
-   * property name and a std::optional<MetadataPropertyView<T>> to view the data
+   * property name and a MetadataPropertyView<T> to view the data
    * of a property stored in the ExtensionExtStructuralMetadataPropertyTable.
    *
    * This method will validate the EXT_structural_metadata format to ensure
@@ -90,13 +90,13 @@ public:
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or MetadataArrayView<T> with T as one of the
-   * aforementioned types. If the property is invalid, std::nullopt will be
-   * passed to the callback. Otherwise, a valid property view will be passed to
-   * the callback.
+   * aforementioned types. If the property is invalid, an empty
+   * MetadataPropertyView with an error status code will be passed to the
+   * callback. Otherwise, a valid property view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts property name and
-   * std::optional<MetadataPropertyView<T>>
+   * MetadataPropertyView<T>
    */
   template <typename Callback>
   void
@@ -121,6 +121,12 @@ public:
           type,
           componentType,
           std::forward<Callback>(callback));
+    } else if (type == PropertyType::Scalar) {
+      getScalarPropertyViewImpl(
+          propertyName,
+          *pClassProperty,
+          componentType,
+          std::forward<Callback>(callback));
     } else if (isPropertyTypeVecN(type)) {
       getVecNPropertyViewImpl(
           propertyName,
@@ -135,20 +141,26 @@ public:
           type,
           componentType,
           std::forward<Callback>(callback));
-    } else {
-      getPrimitivePropertyViewImpl(
+    } else if (type == PropertyType::String) {
+      callback(
           propertyName,
-          *pClassProperty,
-          type,
-          componentType,
-          std::forward<Callback>(callback));
+          getPropertyViewImpl<std::string_view>(propertyName, *pClassProperty));
+    } else if (type == PropertyType::Boolean) {
+      callback(
+          propertyName,
+          getPropertyViewImpl<bool>(propertyName, *pClassProperty));
+    } else {
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorTypeMismatch));
     }
   }
 
   /**
    * @brief Iterates over each property in the
    * ExtensionExtStructuralMetadataPropertyTable with a callback that accepts a
-   * property name and a std::optional<MetadataPropertyView<T>> to view the data
+   * property name and a MetadataPropertyView<T> to view the data
    * stored in the ExtensionExtStructuralMetadataPropertyTableProperty.
    *
    * This method will validate the EXT_structural_metadata format to ensure
@@ -157,13 +169,14 @@ public:
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or MetadataArrayView<T> with T as one of the
-   * aforementioned types. If the property is invalid, std::nullopt will be
-   * passed to the callback. Otherwise, a valid property view will be passed to
+   * aforementioned types. If the property is invalid, an empty
+   * MetadataPropertyView with an error status code will be passed to the
+   * callback. Otherwise, a valid property view will be passed to
    * the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts property name and
-   * std::optional<MetadataPropertyView<T>>
+   * MetadataPropertyView<T>
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {
@@ -266,6 +279,10 @@ private:
               classProperty));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -348,6 +365,10 @@ private:
               classProperty));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -383,6 +404,10 @@ private:
           std::forward<Callback>(callback));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -465,6 +490,10 @@ private:
               classProperty));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -500,6 +529,10 @@ private:
           std::forward<Callback>(callback));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -545,6 +578,11 @@ private:
           getPropertyViewImpl<MetadataArrayView<std::string_view>>(
               propertyName,
               classProperty));
+    } else {
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorTypeMismatch));
     }
   }
 
@@ -625,6 +663,10 @@ private:
               classProperty));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -660,6 +702,10 @@ private:
           std::forward<Callback>(callback));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -742,6 +788,10 @@ private:
               classProperty));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -777,80 +827,77 @@ private:
           std::forward<Callback>(callback));
       break;
     default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
 
   template <typename Callback>
-  void getPrimitivePropertyViewImpl(
+  void getScalarPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    if (type == PropertyType::Scalar) {
-      switch (componentType) {
-      case PropertyComponentType::Int8:
-        callback(
-            propertyName,
-            getPropertyViewImpl<int8_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Uint8:
-        callback(
-            propertyName,
-            getPropertyViewImpl<uint8_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Int16:
-        callback(
-            propertyName,
-            getPropertyViewImpl<int16_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Uint16:
-        callback(
-            propertyName,
-            getPropertyViewImpl<uint16_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Int32:
-        callback(
-            propertyName,
-            getPropertyViewImpl<int32_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Uint32:
-        callback(
-            propertyName,
-            getPropertyViewImpl<uint32_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Int64:
-        callback(
-            propertyName,
-            getPropertyViewImpl<int64_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Uint64:
-        callback(
-            propertyName,
-            getPropertyViewImpl<uint64_t>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Float32:
-        callback(
-            propertyName,
-            getPropertyViewImpl<float>(propertyName, classProperty));
-        break;
-      case PropertyComponentType::Float64:
-        callback(
-            propertyName,
-            getPropertyViewImpl<double>(propertyName, classProperty));
-        break;
-      default:
-        break;
-      }
-    } else if (type == PropertyType::String) {
+    switch (componentType) {
+    case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<std::string_view>(propertyName, classProperty));
-    } else if (type == PropertyType::Boolean) {
+          getPropertyViewImpl<int8_t>(propertyName, classProperty));
+      return;
+    case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<bool>(propertyName, classProperty));
+          getPropertyViewImpl<uint8_t>(propertyName, classProperty));
+      return;
+    case PropertyComponentType::Int16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int16_t>(propertyName, classProperty));
+      return;
+    case PropertyComponentType::Uint16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint16_t>(propertyName, classProperty));
+      break;
+    case PropertyComponentType::Int32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int32_t>(propertyName, classProperty));
+      break;
+    case PropertyComponentType::Uint32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint32_t>(propertyName, classProperty));
+      break;
+    case PropertyComponentType::Int64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int64_t>(propertyName, classProperty));
+      break;
+    case PropertyComponentType::Uint64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint64_t>(propertyName, classProperty));
+      break;
+    case PropertyComponentType::Float32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<float>(propertyName, classProperty));
+      break;
+    case PropertyComponentType::Float64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<double>(propertyName, classProperty));
+      break;
+    default:
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+      break;
     }
   }
 
