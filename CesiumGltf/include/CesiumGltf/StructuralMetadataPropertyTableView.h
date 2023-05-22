@@ -125,12 +125,14 @@ public:
       getVecNPropertyViewImpl(
           propertyName,
           *pClassProperty,
+          type,
           componentType,
           std::forward<Callback>(callback));
     } else if (isPropertyTypeMatN(type)) {
       getMatNPropertyViewImpl(
           propertyName,
           *pClassProperty,
+          type,
           componentType,
           std::forward<Callback>(callback));
     } else {
@@ -268,18 +270,12 @@ private:
     }
   }
 
-  template <typename Callback>
+  template <typename Callback, glm::length_t N>
   void getVecNArrayPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    glm::length_t N = getDimensionsFromType(type);
-    if (N <= 1) {
-      return;
-    }
-
     switch (componentType) {
     case PropertyComponentType::Int8:
       callback(
@@ -357,17 +353,46 @@ private:
   }
 
   template <typename Callback>
-  void getMatNArrayPropertyViewImpl(
+  void getVecNArrayPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    const glm::length_t N = getDimensionsFromType(type);
-    if (N <= 1) {
-      return;
+    glm::length_t N = getDimensionsFromType(type);
+    switch (N) {
+    case 2:
+      getVecNArrayPropertyViewImpl<Callback, 2>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 3:
+      getVecNArrayPropertyViewImpl<Callback, 3>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 4:
+      getVecNArrayPropertyViewImpl<Callback, 4>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    default:
+      break;
     }
+  }
 
+  template <typename Callback, glm::length_t N>
+  void getMatNArrayPropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
     switch (componentType) {
     case PropertyComponentType::Int8:
       callback(
@@ -445,6 +470,41 @@ private:
   }
 
   template <typename Callback>
+  void getMatNArrayPropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      PropertyType type,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+    const glm::length_t N = getDimensionsFromType(type);
+    switch (N) {
+    case 2:
+      getMatNArrayPropertyViewImpl<Callback, 2>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 3:
+      getMatNArrayPropertyViewImpl<Callback, 3>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 4:
+      getMatNArrayPropertyViewImpl<Callback, 4>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    default:
+      break;
+    }
+  }
+
+  template <typename Callback>
   void getArrayPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
@@ -488,19 +548,12 @@ private:
     }
   }
 
-  template <typename Callback>
+  template <typename Callback, glm::length_t N>
   void getVecNPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty,
-      PropertyType type,
       PropertyComponentType componentType,
-      Callback&& callback) {
-    const glm::length_t N = getDimensionsFromType(type);
-    if (N <= 1) {
-      return;
-    }
+      Callback&& callback) const {
 
     switch (componentType) {
     case PropertyComponentType::Int8:
@@ -577,25 +630,53 @@ private:
   }
 
   template <typename Callback>
+  void getVecNPropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      PropertyType type,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+    const glm::length_t N = getDimensionsFromType(type);
+    switch (N) {
+    case 2:
+      getVecNPropertyViewImpl<Callback, 2>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 3:
+      getVecNPropertyViewImpl<Callback, 3>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 4:
+      getVecNPropertyViewImpl<Callback, 4>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    default:
+      break;
+    }
+  }
+
+  template <typename Callback, glm::length_t N>
   void getMatNPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty,
-      PropertyType type,
       PropertyComponentType componentType,
-      Callback&& callback) {
-    glm::length_t N = getDimensionsFromType(type);
-    if (N <= 1) {
-      return;
-    }
-
+      Callback&& callback) const {
     switch (componentType) {
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl <
-              glm::mat<N, N, int8_t>(propertyName, classProperty));
+          getPropertyViewImpl<glm::mat<N, N, int8_t>>(
+              propertyName,
+              classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
@@ -666,10 +747,44 @@ private:
   }
 
   template <typename Callback>
-  void getPrimitivePropertyViewImpl(
+  void getMatNPropertyViewImpl(
+      const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty,
+      PropertyType type,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+    glm::length_t N = getDimensionsFromType(type);
+    switch (N) {
+    case 2:
+      getMatNPropertyViewImpl<Callback, 2>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 3:
+      getMatNPropertyViewImpl<Callback, 3>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    case 4:
+      getMatNPropertyViewImpl<Callback, 4>(
+          propertyName,
+          classProperty,
+          componentType,
+          callback);
+      break;
+    default:
+      break;
+    }
+  }
+
+  template <typename Callback>
+  void getPrimitivePropertyViewImpl(
+      const std::string& propertyName,
+      const ExtensionExtStructuralMetadataClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
