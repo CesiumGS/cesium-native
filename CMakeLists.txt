@@ -177,7 +177,14 @@ install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAK
 
 install(TARGETS ${CESIUM_NATIVE_DRACO_LIBRARY})
 
-install(TARGETS sqlite3)
+#if we're aliased then someone else has a sqlite3 lib for us to use, otherwise install our own
+get_target_property(_aliased sqlite3 ALIASED_TARGET)
+if(NOT _aliased)
+    message("sqlite3 not aliased, using ours in extern/sqlite3")
+    install(TARGETS sqlite3)
+else()
+    message("sqlite3 aliased as ${_aliased}")
+endif()
 
 install(TARGETS modp_b64)
 

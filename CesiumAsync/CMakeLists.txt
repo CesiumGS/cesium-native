@@ -35,6 +35,7 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/
+        ${CMAKE_CURRENT_LIST_DIR}/../extern/sqlite3/
 )
 
 target_link_libraries(CesiumAsync
