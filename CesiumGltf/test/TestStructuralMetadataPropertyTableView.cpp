@@ -3292,7 +3292,6 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
   };
   // clang-format on
 
-  size_t valueBufferViewIndex = 0;
   {
     Buffer& valueBuffer = model.buffers.emplace_back();
     valueBuffer.cesium.data.resize(values.size() * sizeof(glm::i32mat2x2));
@@ -3307,7 +3306,6 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
     valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
     valueBufferView.byteOffset = 0;
     valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
   }
 
   ExtensionModelExtStructuralMetadata& metadata =
