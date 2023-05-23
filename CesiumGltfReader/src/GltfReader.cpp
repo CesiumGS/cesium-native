@@ -331,16 +331,12 @@ GltfReaderResult GltfReader::readGltf(
   return result;
 }
 
-// For JSON-encoded gltf,Draco compression has to be done after external
-// references are resolved. Can that sometimes be required for binary gltf?
-/*static*/
 CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
     CesiumAsync::AsyncSystem asyncSystem,
     const std::string& uri,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
-    const GltfReaderOptions& options) {
-  auto binaryGltf = std::make_shared<bool>(false);
+    const GltfReaderOptions& options) const {
   return pAssetAccessor->get(asyncSystem, uri, headers)
       .thenInWorkerThread(
           [=](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
@@ -356,17 +352,10 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
             if (!result.errors.empty()) {
               return asyncSystem.createResolvedFuture(std::move(result));
             }
-            GltfReader reader;
-
-            if (isBinaryGltf(pResponse->data())) {
-              *binaryGltf = true;
-              result = reader.readGltf(pResponse->data(), options);
-            } else {
-              auto newOptions(options);
-              newOptions.decodeDraco = false;
-              *binaryGltf = false;
-              result = reader.readGltf(pResponse->data(), newOptions);
-            }
+            const CesiumJsonReader::ExtensionReaderContext& context =
+                this->getExtensions();
+            result = isBinaryGltf(pResponse->data()) ? readBinaryGltf(context, pResponse->data())
+                : readJsonGltf(context, pResponse->data());
             if (!result.model) {
               return asyncSystem.createResolvedFuture(std::move(result));
             }
@@ -379,13 +368,8 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
                 options,
                 std::move(result));
           })
-      .thenInWorkerThread([binaryGltf, options](GltfReaderResult&& result) {
-        if (!result.model) {
-          return std::move(result);
-        }
-        if (!*binaryGltf && options.decodeDraco) {
-          decodeDraco(result);
-        }
+      .thenInWorkerThread([options, this](GltfReaderResult&& result) {
+        postprocess(*this, result, options);
         return std::move(result);
       });
 }

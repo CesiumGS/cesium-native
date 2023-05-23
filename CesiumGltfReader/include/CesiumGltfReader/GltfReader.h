@@ -152,12 +152,12 @@ public:
    * requests.
    * @param options Options for how to read the glTF.
    */
-  static CesiumAsync::Future<GltfReaderResult> loadGltf(
+  CesiumAsync::Future<GltfReaderResult> loadGltf(
       CesiumAsync::AsyncSystem asyncSystem,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
-      const GltfReaderOptions& options = GltfReaderOptions());
+      const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
    * @brief Accepts the result of {@link readGltf} and resolves any remaining
