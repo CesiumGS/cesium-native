@@ -354,8 +354,9 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
             }
             const CesiumJsonReader::ExtensionReaderContext& context =
                 this->getExtensions();
-            result = isBinaryGltf(pResponse->data()) ? readBinaryGltf(context, pResponse->data())
-                : readJsonGltf(context, pResponse->data());
+            result = isBinaryGltf(pResponse->data())
+                         ? readBinaryGltf(context, pResponse->data())
+                         : readJsonGltf(context, pResponse->data());
             if (!result.model) {
               return asyncSystem.createResolvedFuture(std::move(result));
             }
