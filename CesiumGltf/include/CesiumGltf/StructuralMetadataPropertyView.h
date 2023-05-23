@@ -178,6 +178,30 @@ public:
         _normalized{} {}
 
   /**
+   * @brief Construct a new instance pointing to non-array data specified by
+   * ExtensionExtStructuralMetadataPropertyTableProperty.
+   * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
+   * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
+   * @param normalized Whether this property has a normalized integer type.
+   */
+  MetadataPropertyView(
+      MetadataPropertyViewStatus status,
+      gsl::span<const std::byte> values,
+      int64_t size,
+      bool normalized) noexcept
+      : _status{status},
+        _values{values},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0},
+        _fixedLengthArrayCount{0},
+        _size{size},
+        _normalized{normalized} {}
+
+  /**
    * @brief Construct a new instance pointing to the data specified by
    * ExtensionExtStructuralMetadataPropertyTableProperty.
    * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}

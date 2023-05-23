@@ -338,7 +338,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         propertyTableProperty) const {
   if (!classProperty.array) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
-        MetadataPropertyViewStatus::ErrorTypeMismatch);
+        MetadataPropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   if (classProperty.type !=

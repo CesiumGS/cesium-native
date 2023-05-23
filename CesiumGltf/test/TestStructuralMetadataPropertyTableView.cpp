@@ -554,7 +554,7 @@ TEST_CASE("Test StructuralMetadata matN property") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata boolean properties") {
+TEST_CASE("Test StructuralMetadata boolean property") {
   Model model;
 
   int64_t instanceCount = 21;
@@ -741,6 +741,16 @@ TEST_CASE("Test StructuralMetadata string property") {
     for (size_t i = 0; i < expected.size(); ++i) {
       REQUIRE(stringProperty.get(static_cast<int64_t>(i)) == expected[i]);
     }
+  }
+
+  SECTION("Wrong array type") {
+    MetadataPropertyView<MetadataArrayView<std::string_view>>
+        stringArrayInvalid =
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
+                "TestClassProperty");
+    REQUIRE(
+        stringArrayInvalid.status() ==
+        MetadataPropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   SECTION("Wrong offset type") {
@@ -3559,7 +3569,7 @@ TEST_CASE("Test StructuralMetadata callback for array of strings") {
 
   view.getPropertyView(
       "TestClassProperty",
-      [&expected](const std::string& /*propertyName*/, auto propertyValue) {
+      [](const std::string& /*propertyName*/, auto propertyValue) {
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
 
         if constexpr (std::is_same_v<

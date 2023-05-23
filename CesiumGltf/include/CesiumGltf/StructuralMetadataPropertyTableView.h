@@ -16,36 +16,38 @@ namespace StructuralMetadata {
  * @brief Utility to retrieve the data of
  * ExtensionExtStructuralMetadataPropertyTable.
  *
- * This should be used to get a {@link MetadataPropertyView} of a property.
+ * This should be used to get a {@link MetadataPropertyView} of a property in the property table.
  * It will validate the EXT_structural_metadata format and ensure {@link MetadataPropertyView}
- *  does not access out of bounds.
+ * does not access out of bounds.
  */
 
 class MetadataPropertyTableView {
 public:
   /**
-   * @brief Create an instance of MetadataPropertyTableView.
-   * @param pModel The Gltf Model that stores property table data
-   * @param pPropertyTable The ExtensionExtStructuralMetadataPropertyTable from
-   * which the view will retrieve data.
+   * @brief Creates an instance of MetadataPropertyTableView.
+   * @param pModel A pointer to the Gltf Model that contains property table
+   * data.
+   * @param pPropertyTable A pointer to the
+   * ExtensionExtStructuralMetadataPropertyTable from which the view will
+   * retrieve data.
    */
   MetadataPropertyTableView(
       const Model* pModel,
       const ExtensionExtStructuralMetadataPropertyTable* pPropertyTable);
 
   /**
-   * @brief Find the {@link ExtensionExtStructuralMetadataClassProperty} which
-   * stores the type information of a property based on the property's name.
-   * @param propertyName The name of the property to retrieve type info
-   * @return Pointer to the ExtensionExtStructuralMetadataClassProperty. Return
-   * nullptr if no property was found.
+   * @brief Finds the {@link ExtensionExtStructuralMetadataClassProperty} that
+   * describes the type information of the property with the specified name.
+   * @param propertyName The name of the property to retrieve the class for.
+   * @return A pointer to the ExtensionExtStructuralMetadataClassProperty.
+   * Return nullptr if no property was found.
    */
   const ExtensionExtStructuralMetadataClassProperty*
   getClassProperty(const std::string& propertyName) const;
 
   /**
-   * @brief Gets a MetadataPropertyView to view the data of a property stored in
-   * the ExtensionExtStructuralMetadataPropertyTable.
+   * @brief Gets a MetadataPropertyView that views the data of a property stored
+   * in the ExtensionExtStructuralMetadataPropertyTable.
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * MetadataPropertyView retrieves the correct data. T must be one of the
@@ -56,8 +58,8 @@ public:
    * aforementioned types.
    *
    * @param propertyName The name of the property to retrieve data from
-   * @return MetadataPropertyView of a property. The property view will be
-   * invalid if no property is found.
+   * @return A MetadataPropertyView of the property. If no valid property is
+   * found, the property view will be invalid.
    */
   template <typename T>
   MetadataPropertyView<T>
@@ -81,8 +83,8 @@ public:
 
   /**
    * @brief Gets a MetadataPropertyView through a callback that accepts a
-   * property name and a MetadataPropertyView<T> to view the data
-   * of a property stored in the ExtensionExtStructuralMetadataPropertyTable.
+   * property name and a MetadataPropertyView<T> that views the data
+   * of the property with the specified name.
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * MetadataPropertyView retrieves the correct data. T must be one of the
@@ -91,11 +93,11 @@ public:
    * types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or MetadataArrayView<T> with T as one of the
    * aforementioned types. If the property is invalid, an empty
-   * MetadataPropertyView with an error status code will be passed to the
+   * MetadataPropertyView with an error status will be passed to the
    * callback. Otherwise, a valid property view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
-   * @tparam callback A callback function that accepts property name and
+   * @tparam callback A callback function that accepts a property name and a
    * MetadataPropertyView<T>
    */
   template <typename Callback>
@@ -564,7 +566,6 @@ private:
           type,
           componentType,
           std::forward<Callback>(callback));
-
     } else if (type == PropertyType::Boolean) {
       callback(
           propertyName,
@@ -990,11 +991,6 @@ private:
     return MetadataPropertyView<T>(
         MetadataPropertyViewStatus::Valid,
         values,
-        gsl::span<const std::byte>(),
-        gsl::span<const std::byte>(),
-        PropertyComponentType::None,
-        PropertyComponentType::None,
-        0,
         _pPropertyTable->count,
         classProperty.normalized);
   }
@@ -1147,11 +1143,6 @@ private:
     return MetadataPropertyView<T>(
         invalidStatus,
         gsl::span<const std::byte>(),
-        gsl::span<const std::byte>(),
-        gsl::span<const std::byte>(),
-        PropertyComponentType::None,
-        PropertyComponentType::None,
-        0,
         0,
         false);
   }
