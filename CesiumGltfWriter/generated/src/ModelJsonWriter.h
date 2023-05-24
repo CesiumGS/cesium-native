@@ -23,6 +23,8 @@ struct ExtensionModelExtStructuralMetadata;
 struct ExtensionMeshPrimitiveExtStructuralMetadata;
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
+struct ExtensionModelKhrMaterialsVariants;
+struct ExtensionMeshPrimitiveKhrMaterialsVariants;
 struct ExtensionKhrTextureBasisu;
 struct ExtensionModelMaxarMeshVariants;
 struct ExtensionNodeMaxarMeshVariants;
@@ -30,6 +32,8 @@ struct ExtensionKhrTextureTransform;
 struct ExtensionTextureWebp;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
+struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
+struct ExtensionModelKhrMaterialsVariantsValue;
 struct ExtensionExtStructuralMetadataPropertyAttribute;
 struct ExtensionExtStructuralMetadataPropertyAttributeProperty;
 struct ExtensionExtStructuralMetadataPropertyTexture;
@@ -235,6 +239,28 @@ struct ExtensionKhrMaterialsUnlitJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct ExtensionModelKhrMaterialsVariantsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelKhrMaterialsVariants;
+
+  static inline constexpr const char* ExtensionName = "KHR_materials_variants";
+
+  static void write(
+      const CesiumGltf::ExtensionModelKhrMaterialsVariants& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants;
+
+  static inline constexpr const char* ExtensionName = "KHR_materials_variants";
+
+  static void write(
+      const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct ExtensionKhrTextureBasisuJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrTextureBasisu;
 
@@ -304,6 +330,26 @@ struct ExtensionModelMaxarMeshVariantsValueJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionModelMaxarMeshVariantsValue& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonWriter {
+  using ValueType =
+      CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
+
+  static void write(
+      const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
+          obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModelKhrMaterialsVariantsValueJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelKhrMaterialsVariantsValue;
+
+  static void write(
+      const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
