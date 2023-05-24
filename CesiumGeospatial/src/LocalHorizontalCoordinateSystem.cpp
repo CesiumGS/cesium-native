@@ -90,21 +90,27 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
 }
 
 glm::dvec3 LocalHorizontalCoordinateSystem::localPositionToEcef(
-    const glm::dvec3& localPosition) const {
+    const glm::dvec3& localPosition) const noexcept {
   return glm::dvec3(this->_localToEcef * glm::dvec4(localPosition, 1.0));
 }
 
 glm::dvec3 LocalHorizontalCoordinateSystem::ecefPositionToLocal(
-    const glm::dvec3& ecefPosition) const {
+    const glm::dvec3& ecefPosition) const noexcept {
   return glm::dvec3(this->_ecefToLocal * glm::dvec4(ecefPosition, 1.0));
 }
 
 glm::dvec3 LocalHorizontalCoordinateSystem::localDirectionToEcef(
-    const glm::dvec3& localDirection) const {
+    const glm::dvec3& localDirection) const noexcept {
   return glm::dvec3(this->_localToEcef * glm::dvec4(localDirection, 0.0));
 }
 
 glm::dvec3 LocalHorizontalCoordinateSystem::ecefDirectionToLocal(
-    const glm::dvec3& ecefDirection) const {
+    const glm::dvec3& ecefDirection) const noexcept {
   return glm::dvec3(this->_ecefToLocal * glm::dvec4(ecefDirection, 0.0));
+}
+
+glm::dmat4 LocalHorizontalCoordinateSystem::computeTransformationToAnotherLocal(
+    const LocalHorizontalCoordinateSystem& target) const noexcept {
+  return target.getEcefToLocalTransformation() *
+         this->getLocalToEcefTransformation();
 }
