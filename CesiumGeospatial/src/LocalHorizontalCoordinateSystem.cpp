@@ -77,15 +77,12 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
       GlobeTransforms::eastNorthUpToFixedFrame(originEcef, ellipsoid);
 
   // Construct a matrix to swap and invert axes as necessary
-  glm::dmat4 localToEnu(
-      glm::dvec4(directionToEnuVector(xAxisDirection), 0.0),
-      glm::dvec4(directionToEnuVector(yAxisDirection), 0.0),
-      glm::dvec4(directionToEnuVector(zAxisDirection), 0.0),
-      glm::dvec4(0.0, 0.0, 0.0, 1.0));
+  glm::dmat3 localToEnuAndScale(
+      scaleToMeters * directionToEnuVector(xAxisDirection),
+      scaleToMeters * directionToEnuVector(yAxisDirection),
+      scaleToMeters * directionToEnuVector(zAxisDirection));
 
-  glm::dmat4 scale{glm::dmat3(scaleToMeters)};
-
-  this->_localToEcef = enuToFixed * localToEnu * scale;
+  this->_localToEcef = enuToFixed * glm::dmat4(localToEnuAndScale);
   this->_ecefToLocal = glm::affineInverse(this->_localToEcef);
 }
 
