@@ -4,44 +4,230 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/StructuralMetadataPropertyType.h>
+#include <CesiumGltf/StructuralMetadataPropertyTypeTraits.h>
 
 #include <glm/glm.hpp>
 #include <rapidjson/writer.h>
 #include <spdlog/fmt/fmt.h>
 
+#include <limits>
 #include <map>
 #include <type_traits>
 #include <unordered_set>
 
 using namespace CesiumGltf;
+using namespace CesiumGltf::StructuralMetadata;
 using namespace Cesium3DTilesSelection::CesiumImpl;
 
 namespace Cesium3DTilesSelection {
 namespace {
+/**
+ * Indicates how a JSON value can be interpreted. Does not correspond one-to-one
+ * with types / component types in EXT_structural_metadata.
+ */
 struct MaskedType {
-  bool isInt8 = true;
-  bool isUint8 = true;
-  bool isInt16 = true;
-  bool isUint16 = true;
-  bool isInt32 = true;
-  bool isUint32 = true;
-  bool isInt64 = true;
-  bool isUint64 = true;
-  bool isFloat32 = true;
-  bool isFloat64 = true;
-  bool isBool = true;
-  bool isArray = true;
+  bool isInt8;
+  bool isUint8;
+  bool isInt16;
+  bool isUint16;
+  bool isInt32;
+  bool isUint32;
+  bool isInt64;
+  bool isUint64;
+  bool isFloat32;
+  bool isFloat64;
+  bool isBool;
+
+  MaskedType() : MaskedType(true){};
+
+  MaskedType(bool defaultValue)
+      : isInt8(defaultValue),
+        isUint8(defaultValue),
+        isInt16(defaultValue),
+        isUint16(defaultValue),
+        isInt32(defaultValue),
+        isUint32(defaultValue),
+        isInt64(defaultValue),
+        isUint64(defaultValue),
+        isFloat32(defaultValue),
+        isFloat64(defaultValue),
+        isBool(defaultValue) {}
+
+  /**
+   * Merges another MaskedType into this one.
+   */
+  void operator&=(const MaskedType& source) {
+    isInt8 &= source.isInt8;
+    isUint8 &= source.isUint8;
+    isInt16 &= source.isInt16;
+    isUint16 &= source.isUint16;
+    isInt32 &= source.isInt32;
+    isUint32 &= source.isUint32;
+    isInt64 &= source.isInt64;
+    isUint64 &= source.isUint64;
+    isFloat32 &= source.isFloat32;
+    isFloat64 &= source.isFloat64;
+    isBool &= source.isBool;
+  }
 };
 
+/**
+ * Indicates how the elements of an array JSON value can be interpreted. Does
+ * not correspond one-to-one with types / component types in
+ * EXT_structural_metadata.
+ *
+ * To avoid complications while parsing, this implementation disallows array
+ * elements that are also arrays. The nested arrays will be treated as strings.
+ */
+struct MaskedArrayType {
+  MaskedType elementType;
+  uint32_t minArrayCount;
+  uint32_t maxArrayCount;
+
+  MaskedArrayType() : MaskedArrayType(true){};
+
+  MaskedArrayType(bool defaultValue)
+      : elementType(defaultValue),
+        minArrayCount(std::numeric_limits<uint32_t>::max()),
+        maxArrayCount(std::numeric_limits<uint32_t>::min()){};
+
+  MaskedArrayType(
+      MaskedType elementType,
+      uint32_t minArrayCount,
+      uint32_t maxArrayCount)
+      : elementType(elementType),
+        minArrayCount(minArrayCount),
+        maxArrayCount(maxArrayCount) {}
+
+  /**
+   * Merges another MaskedArrayType into this one.
+   */
+  void operator&=(const MaskedArrayType& source) {
+    elementType &= source.elementType;
+    minArrayCount = glm::min(minArrayCount, source.minArrayCount);
+    maxArrayCount = glm::max(maxArrayCount, source.maxArrayCount);
+  }
+};
+
+/**
+ * Indicates a batch table property's compatibility with C++ types.
+ */
 struct CompatibleTypes {
-  MaskedType type;
-  std::optional<MaskedType> componentType;
-  std::optional<uint32_t> minComponentCount;
-  std::optional<uint32_t> maxComponentCount;
+  // std::monostate represents "complete" compatibility, in that nothing has
+  // been determined to be incompatible yet. Once something is either a
+  // MaskedType or MaskedArrayType, they are considered incompatible with the
+  // other type.
+  std::variant<std::monostate, MaskedType, MaskedArrayType> maskedType;
+
+  CompatibleTypes() : maskedType(){};
+
+  CompatibleTypes(const MaskedType& maskedType) : maskedType(maskedType){};
+  CompatibleTypes(const MaskedArrayType& maskedArrayType)
+      : maskedType(maskedArrayType){};
+
+  /**
+   * Whether this is only compatible with arrays.
+   */
+  bool isArray() const { return std::get_if<MaskedArrayType>(&maskedType); }
+
+  /**
+   * Marks as incompatible with every type. Fully-incompatible types will be
+   * treated as strings.
+   */
+  void makeIncompatible() {
+    MaskedType incompatibleMaskedType(false);
+    maskedType = incompatibleMaskedType;
+  }
+
+  /**
+   * Merges a MaskedType into this CompatibleTypes.
+   */
+  void operator&=(const MaskedType& otherMaskedType) {
+    if (isArray()) {
+      makeIncompatible();
+      return;
+    }
+
+    MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
+    if (pMaskedType) {
+      *pMaskedType &= otherMaskedType;
+    } else {
+      maskedType = otherMaskedType;
+    }
+  }
+
+  /**
+   * Merges a MaskedArrayType into this CompatibleTypes.
+   */
+  void operator&=(const MaskedArrayType& maskedArrayType) {
+    if (!isArray()) {
+      makeIncompatible();
+      return;
+    }
+
+    MaskedArrayType* pMaskedArrayType =
+        std::get_if<MaskedArrayType>(&maskedType);
+    if (pMaskedArrayType) {
+      *pMaskedArrayType &= maskedArrayType;
+    } else {
+      maskedType = maskedArrayType;
+    }
+  }
+
+  /**
+   * Merges another CompatibleTypes into this one.
+   */
+  void operator&=(const CompatibleTypes& otherTypes) {
+    if (otherTypes.isArray()) {
+      const MaskedArrayType& otherMaskedType =
+          std::get<MaskedArrayType>(otherTypes.maskedType);
+      operator&=(otherMaskedType);
+    } else {
+      const MaskedType& otherMaskedType =
+          std::get<MaskedType>(otherTypes.maskedType);
+      operator&=(otherMaskedType);
+    }
+  }
+
+  /**
+   * Derives MaskedType info from this CompatibleTypes. If this CompatibleTypes
+   * is only compatible with arrays, this will return an incompatible
+   * MaskedType.
+   */
+  MaskedType toMaskedType() const {
+    if (isArray()) {
+      return MaskedType(false);
+    }
+
+    const MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
+    if (pMaskedType) {
+      return *pMaskedType;
+    }
+
+    // If maskedType == std::monostate, then this CompatibleTypes is considered
+    // compatible with everything.
+    return MaskedType(true);
+  }
+
+  /**
+   * Derives MaskedArrayType info from this CompatibleTypes. If this
+   * CompatibleTypes is not compatible with arrays, this will return an
+   * incompatible MaskedArrayType.
+   */
+  MaskedArrayType toMaskedArrayType() const {
+    if (isArray()) {
+      return std::get<MaskedArrayType>(maskedType);
+    }
+
+    // If maskedType is a MaskedType, it is incompatible. Otherwise, if
+    // maskedType == std::monostate, then this CompatibleTypes is considered
+    // compatible with everything.
+    const MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
+    return MaskedArrayType(pMaskedType == nullptr);
+  }
 };
 
 struct BinaryProperty {
@@ -50,21 +236,71 @@ struct BinaryProperty {
   int64_t byteLength;
 };
 
-struct GltfFeatureTableType {
-  std::string typeName;
-  size_t typeSize;
+struct GltfPropertyTableType {
+  std::string type;
+  size_t componentCount;
 };
 
-const std::map<std::string, GltfFeatureTableType>
-    batchTableComponentTypeToGltfType = {
-        {"BYTE", GltfFeatureTableType{"INT8", sizeof(int8_t)}},
-        {"UNSIGNED_BYTE", GltfFeatureTableType{"UINT8", sizeof(uint8_t)}},
-        {"SHORT", GltfFeatureTableType{"INT16", sizeof(int16_t)}},
-        {"UNSIGNED_SHORT", GltfFeatureTableType{"UINT16", sizeof(uint16_t)}},
-        {"INT", GltfFeatureTableType{"INT32", sizeof(int32_t)}},
-        {"UNSIGNED_INT", GltfFeatureTableType{"UINT32", sizeof(uint32_t)}},
-        {"FLOAT", GltfFeatureTableType{"FLOAT32", sizeof(float)}},
-        {"DOUBLE", GltfFeatureTableType{"FLOAT64", sizeof(double)}},
+const std::map<std::string, GltfPropertyTableType> batchTableTypeToGltfType = {
+    {"SCALAR",
+     GltfPropertyTableType{
+         ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
+         1}},
+    {"VEC2",
+     GltfPropertyTableType{
+         ExtensionExtStructuralMetadataClassProperty::Type::VEC2,
+         2}},
+    {"VEC3",
+     GltfPropertyTableType{
+         ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
+         3}},
+    {"VEC4",
+     GltfPropertyTableType{
+         ExtensionExtStructuralMetadataClassProperty::Type::VEC4,
+         4}},
+};
+
+struct GltfPropertyTableComponentType {
+  std::string componentType;
+  size_t componentTypeSize;
+};
+
+const std::map<std::string, GltfPropertyTableComponentType>
+    batchTableComponentTypeToGltfComponentType = {
+        {"BYTE",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+             sizeof(int8_t)}},
+        {"UNSIGNED_BYTE",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8,
+             sizeof(uint8_t)}},
+        {"SHORT",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16,
+             sizeof(int16_t)}},
+        {"UNSIGNED_SHORT",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16,
+             sizeof(uint16_t)}},
+        {"INT",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32,
+             sizeof(int32_t)}},
+        {"UNSIGNED_INT",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32,
+             sizeof(uint32_t)}},
+        {"FLOAT",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                 FLOAT32,
+             sizeof(float)}},
+        {"DOUBLE",
+         GltfPropertyTableComponentType{
+             ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                 FLOAT64,
+             sizeof(double)}},
 };
 
 int64_t roundUp(int64_t num, int64_t multiple) noexcept {
@@ -149,132 +385,135 @@ private:
   const rapidjson::Value& _propertyValues;
 };
 
+CompatibleTypes findCompatibleTypesForBoolean() {
+  MaskedType type;
+  // Don't allow conversion of bools to numeric 0 or 1.
+  type.isInt8 = type.isUint8 = false;
+  type.isInt16 = type.isUint16 = false;
+  type.isInt32 = type.isUint32 = false;
+  type.isInt64 = type.isUint64 = false;
+  type.isFloat32 = false;
+  type.isFloat64 = false;
+  type.isBool &= true;
+
+  return CompatibleTypes(type);
+}
+
+template <typename TValueIter>
+CompatibleTypes findCompatibleTypesForNumber(const TValueIter& it) {
+  MaskedType type;
+  type.isBool = false;
+
+  if (it->IsInt64()) {
+    const int64_t value = it->GetInt64();
+    type.isInt8 = isInRangeForSignedInteger<int8_t>(value);
+    type.isUint8 = isInRangeForSignedInteger<uint8_t>(value);
+    type.isInt16 = isInRangeForSignedInteger<int16_t>(value);
+    type.isUint16 = isInRangeForSignedInteger<uint16_t>(value);
+    type.isInt32 = isInRangeForSignedInteger<int32_t>(value);
+    type.isUint32 = isInRangeForSignedInteger<uint32_t>(value);
+    type.isInt64 = true;
+    type.isUint64 = value >= 0;
+    type.isFloat32 = it->IsLosslessFloat();
+    type.isFloat64 = it->IsLosslessDouble();
+  } else if (it->IsUint64()) {
+    // Only uint64_t can represent a value that fits in a uint64_t but not in
+    // an int64_t.
+    type.isInt8 = type.isUint8 = false;
+    type.isInt16 = type.isUint16 = false;
+    type.isInt32 = type.isUint32 = false;
+    type.isInt64 = false;
+    type.isUint64 = true;
+    type.isFloat32 = false;
+    type.isFloat64 = false;
+  } else if (it->IsLosslessFloat()) {
+    type.isInt8 = type.isUint8 = false;
+    type.isInt16 = type.isUint16 = false;
+    type.isInt32 = type.isUint32 = false;
+    type.isInt64 = type.isUint64 = false;
+    type.isFloat32 = true;
+    type.isFloat64 = true;
+  } else if (it->IsDouble()) {
+    type.isInt8 = type.isUint8 = false;
+    type.isInt16 = type.isUint16 = false;
+    type.isInt32 = type.isUint32 = false;
+    type.isInt64 = type.isUint64 = false;
+    type.isFloat32 = false;
+    type.isFloat64 = true;
+  }
+
+  return CompatibleTypes(type);
+}
+
+template <typename TValueIter>
+CompatibleTypes findCompatibleTypesForArray(const TValueIter& it) {
+  // Iterate over all of the elements in the array and determine their
+  // compatible type.
+  CompatibleTypes arrayElementCompatibleTypes =
+      findCompatibleTypes(ArrayOfPropertyValues(*it));
+
+  if (arrayElementCompatibleTypes.isArray()) {
+    // Ignore complications with arrays of arrays. The elements will be treated
+    // like strings.
+    arrayElementCompatibleTypes.makeIncompatible();
+    assert(!arrayElementCompatibleTypes.isArray());
+  }
+
+  MaskedType elementType = arrayElementCompatibleTypes.toMaskedType();
+  MaskedArrayType arrayType(elementType, it->Size(), it->Size());
+
+  return CompatibleTypes(arrayType);
+}
+
 template <typename TValueGetter>
 CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
-  MaskedType type;
-  std::optional<MaskedType> componentType;
-  std::optional<uint32_t> minComponentCount;
-  std::optional<uint32_t> maxComponentCount;
+  CompatibleTypes compatibleTypes;
   for (auto it = propertyValue.begin(); it != propertyValue.end(); ++it) {
     if (it->IsBool()) {
-      // Should we allow conversion of bools to numeric 0 or 1? Nah.
-      type.isInt8 = type.isUint8 = false;
-      type.isInt16 = type.isUint16 = false;
-      type.isInt32 = type.isUint32 = false;
-      type.isInt64 = type.isUint64 = false;
-      type.isFloat32 = false;
-      type.isFloat64 = false;
-      type.isBool &= true;
-      type.isArray = false;
-    } else if (it->IsInt64()) {
-      const int64_t value = it->GetInt64();
-      type.isInt8 &= isInRangeForSignedInteger<int8_t>(value);
-      type.isUint8 &= isInRangeForSignedInteger<uint8_t>(value);
-      type.isInt16 &= isInRangeForSignedInteger<int16_t>(value);
-      type.isUint16 &= isInRangeForSignedInteger<uint16_t>(value);
-      type.isInt32 &= isInRangeForSignedInteger<int32_t>(value);
-      type.isUint32 &= isInRangeForSignedInteger<uint32_t>(value);
-      type.isInt64 &= true;
-      type.isUint64 &= value >= 0;
-      type.isFloat32 &= it->IsLosslessFloat();
-      type.isFloat64 &= it->IsLosslessDouble();
-      type.isBool = false;
-      type.isArray = false;
-    } else if (it->IsUint64()) {
-      // Only uint64_t can represent a value that fits in a uint64_t but not in
-      // an int64_t.
-      type.isInt8 = type.isUint8 = false;
-      type.isInt16 = type.isUint16 = false;
-      type.isInt32 = type.isUint32 = false;
-      type.isInt64 = false;
-      type.isUint64 &= true;
-      type.isFloat32 = false;
-      type.isFloat64 = false;
-      type.isBool = false;
-      type.isArray = false;
-    } else if (it->IsLosslessFloat()) {
-      type.isInt8 = type.isUint8 = false;
-      type.isInt16 = type.isUint16 = false;
-      type.isInt32 = type.isUint32 = false;
-      type.isInt64 = type.isUint64 = false;
-      type.isFloat32 &= true;
-      type.isFloat64 &= true;
-      type.isBool = false;
-      type.isArray = false;
-    } else if (it->IsDouble()) {
-      type.isInt8 = type.isUint8 = false;
-      type.isInt16 = type.isUint16 = false;
-      type.isInt32 = type.isUint32 = false;
-      type.isInt64 = type.isUint64 = false;
-      type.isFloat32 = false;
-      type.isFloat64 &= true;
-      type.isBool = false;
-      type.isArray = false;
+      compatibleTypes &= findCompatibleTypesForBoolean();
+    } else if (it->IsNumber()) {
+      compatibleTypes &= findCompatibleTypesForNumber(it);
     } else if (it->IsArray()) {
-      type.isInt8 = type.isUint8 = false;
-      type.isInt16 = type.isUint16 = false;
-      type.isInt32 = type.isUint32 = false;
-      type.isInt64 = type.isUint64 = false;
-      type.isFloat32 = false;
-      type.isFloat64 = false;
-      type.isBool = false;
-      type.isArray &= true;
-      CompatibleTypes currentComponentType =
-          findCompatibleTypes(ArrayOfPropertyValues(*it));
-      if (!componentType) {
-        componentType = currentComponentType.type;
-      } else {
-        componentType->isInt8 &= currentComponentType.type.isInt8;
-        componentType->isUint8 &= currentComponentType.type.isUint8;
-        componentType->isInt16 &= currentComponentType.type.isInt16;
-        componentType->isUint16 &= currentComponentType.type.isUint16;
-        componentType->isInt32 &= currentComponentType.type.isInt32;
-        componentType->isUint32 &= currentComponentType.type.isUint32;
-        componentType->isInt64 &= currentComponentType.type.isInt64;
-        componentType->isUint64 &= currentComponentType.type.isUint64;
-        componentType->isFloat32 &= currentComponentType.type.isFloat32;
-        componentType->isFloat64 &= currentComponentType.type.isFloat64;
-        componentType->isBool &= currentComponentType.type.isBool;
-        componentType->isArray &= currentComponentType.type.isArray;
-      }
-
-      maxComponentCount = maxComponentCount
-                              ? glm::max(*maxComponentCount, it->Size())
-                              : it->Size();
-      minComponentCount = minComponentCount
-                              ? glm::min(*minComponentCount, it->Size())
-                              : it->Size();
+      compatibleTypes &= findCompatibleTypesForArray(it);
     } else {
       // A string, null, or something else.
-      type.isInt8 = type.isUint8 = false;
-      type.isInt16 = type.isUint16 = false;
-      type.isInt32 = type.isUint32 = false;
-      type.isInt64 = type.isUint64 = false;
-      type.isFloat32 = false;
-      type.isFloat64 = false;
-      type.isBool = false;
-      type.isArray = false;
+      compatibleTypes.makeIncompatible();
     }
   }
 
-  return {type, componentType, minComponentCount, maxComponentCount};
+  return compatibleTypes;
+}
+
+int32_t addBufferToGltf(Model& gltf, std::vector<std::byte>&& buffer) {
+  const size_t gltfBufferIndex = gltf.buffers.size();
+  Buffer& gltfBuffer = gltf.buffers.emplace_back();
+  gltfBuffer.byteLength = static_cast<int64_t>(buffer.size());
+  gltfBuffer.cesium.data = std::move(buffer);
+
+  const size_t bufferViewIndex = gltf.bufferViews.size();
+  BufferView& bufferView = gltf.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(gltfBufferIndex);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = gltfBuffer.byteLength;
+
+  return static_cast<int32_t>(bufferViewIndex);
 }
 
 template <typename TValueGetter>
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
 
   rapidjson::StringBuffer rapidjsonStrBuffer;
   std::vector<uint64_t> rapidjsonOffsets;
-  rapidjsonOffsets.reserve(static_cast<size_t>(featureTable.count + 1));
+  rapidjsonOffsets.reserve(static_cast<size_t>(propertyTable.count + 1));
   rapidjsonOffsets.emplace_back(0);
 
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     if (it == propertyValue.end()) {
       rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
       continue;
@@ -284,9 +523,9 @@ void updateExtensionWithJsonStringProperty(
       rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
       it->Accept(writer);
     } else {
-      // Because serialized string json will add double quotations in the buffer
-      // which is not needed by us, we will manually add the string to the
-      // buffer
+      // Because serialized string json will add double quotations in the
+      // buffer which is not needed by us, we will manually add the string to
+      // the buffer
       const auto& rapidjsonStr = it->GetString();
       rapidjsonStrBuffer.Reserve(it->GetStringLength());
       for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
@@ -307,28 +546,36 @@ void updateExtensionWithJsonStringProperty(
         rapidjsonOffsets,
         buffer,
         offsetBuffer);
-    featureTableProperty.offsetType = "UINT8";
+    propertyTableProperty.stringOffsetType =
+        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
+            UINT8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalSize)) {
     copyStringBuffer<uint16_t>(
         rapidjsonStrBuffer,
         rapidjsonOffsets,
         buffer,
         offsetBuffer);
-    featureTableProperty.offsetType = "UINT16";
+    propertyTableProperty.stringOffsetType =
+        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
+            UINT16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalSize)) {
     copyStringBuffer<uint32_t>(
         rapidjsonStrBuffer,
         rapidjsonOffsets,
         buffer,
         offsetBuffer);
-    featureTableProperty.offsetType = "UINT32";
+    propertyTableProperty.stringOffsetType =
+        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
+            UINT32;
   } else {
     copyStringBuffer<uint64_t>(
         rapidjsonStrBuffer,
         rapidjsonOffsets,
         buffer,
         offsetBuffer);
-    featureTableProperty.offsetType = "UINT64";
+    propertyTableProperty.stringOffsetType =
+        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
+            UINT64;
   }
 
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
@@ -354,85 +601,70 @@ void updateExtensionWithJsonStringProperty(
   const int32_t offsetBufferViewIdx =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
-  classProperty.type = "STRING";
+  classProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::STRING;
 
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+  propertyTableProperty.values = valueBufferViewIdx;
+  propertyTableProperty.stringOffsets = offsetBufferViewIdx;
 }
 
 template <typename T, typename TRapidJson = T, typename TValueGetter>
-void updateExtensionWithJsonNumericProperty(
+void updateExtensionWithJsonScalarProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue,
-    const std::string& typeName) {
-  assert(propertyValue.size() >= featureTable.count);
+    const std::string& componentTypeName) {
+  assert(propertyValue.size() >= propertyTable.count);
 
-  classProperty.type = typeName;
+  classProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+  classProperty.componentType = componentTypeName;
 
   // Create a new buffer for this property.
-  const size_t bufferIndex = gltf.buffers.size();
-  Buffer& buffer = gltf.buffers.emplace_back();
-  buffer.byteLength =
-      static_cast<int64_t>(sizeof(T) * static_cast<size_t>(featureTable.count));
-  buffer.cesium.data.resize(static_cast<size_t>(buffer.byteLength));
+  std::vector<std::byte> buffer;
+  const size_t byteLength =
+      sizeof(T) * static_cast<size_t>(propertyTable.count);
+  buffer.resize(byteLength);
 
-  const size_t bufferViewIndex = gltf.bufferViews.size();
-  BufferView& bufferView = gltf.bufferViews.emplace_back();
-  bufferView.buffer = int32_t(bufferIndex);
-  bufferView.byteOffset = 0;
-  bufferView.byteLength = buffer.byteLength;
-
-  featureTableProperty.bufferView = int32_t(bufferViewIndex);
-
-  T* p = reinterpret_cast<T*>(buffer.cesium.data.data());
+  T* p = reinterpret_cast<T*>(buffer.data());
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     *p = static_cast<T>(it->template Get<TRapidJson>());
     ++p;
     ++it;
   }
+
+  propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
 }
 
 template <typename TValueGetter>
-void updateExtensionWithJsonBoolProperty(
+void updateExtensionWithJsonBooleanProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= featureTable.count);
+  assert(propertyValue.size() >= propertyTable.count);
 
-  std::vector<std::byte> data(static_cast<size_t>(
-      glm::ceil(static_cast<double>(featureTable.count) / 8.0)));
+  std::vector<std::byte> buffer(static_cast<size_t>(
+      glm::ceil(static_cast<double>(propertyTable.count) / 8.0)));
   auto it = propertyValue.begin();
   for (rapidjson::SizeType i = 0;
-       i < static_cast<rapidjson::SizeType>(featureTable.count);
+       i < static_cast<rapidjson::SizeType>(propertyTable.count);
        ++i) {
     const bool value = it->GetBool();
     const size_t byteIndex = i / 8;
     const size_t bitIndex = i % 8;
-    data[byteIndex] =
-        static_cast<std::byte>(value << bitIndex) | data[byteIndex];
+    buffer[byteIndex] =
+        static_cast<std::byte>(value << bitIndex) | buffer[byteIndex];
     ++it;
   }
 
-  const size_t bufferIndex = gltf.buffers.size();
-  Buffer& buffer = gltf.buffers.emplace_back();
-  buffer.byteLength = static_cast<int64_t>(data.size());
-  buffer.cesium.data = std::move(data);
-
-  BufferView& bufferView = gltf.bufferViews.emplace_back();
-  bufferView.buffer = static_cast<int32_t>(bufferIndex);
-  bufferView.byteOffset = 0;
-  bufferView.byteLength = buffer.byteLength;
-
-  featureTableProperty.bufferView =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  classProperty.type = "BOOLEAN";
+  classProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN;
+  propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
 }
 
 template <
@@ -440,20 +672,20 @@ template <
     typename ValueType,
     typename OffsetType,
     typename TValueGetter>
-void copyNumericDynamicArrayBuffers(
+void copyVariableLengthScalarArraysToBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
-    const FeatureTable& featureTable,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
   offsetBuffer.resize(
-      sizeof(OffsetType) * static_cast<size_t>(featureTable.count + 1));
+      sizeof(OffsetType) * static_cast<size_t>(propertyTable.count + 1));
   ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
   OffsetType* offsetValue = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& jsonArrayMember = *it;
     *offsetValue = prevOffset;
     ++offsetValue;
@@ -472,23 +704,31 @@ void copyNumericDynamicArrayBuffers(
 }
 
 template <typename TRapidjson, typename ValueType, typename TValueGetter>
-void updateNumericArrayProperty(
+void updateScalarArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    const FeatureTable& featureTable,
-    const CompatibleTypes& compatibleTypes,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= featureTable.count);
+  assert(propertyValue.size() >= propertyTable.count);
 
-  // check if it's a fixed array
-  if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
-    const size_t numOfValues = static_cast<size_t>(featureTable.count) *
-                               *compatibleTypes.minComponentCount;
+  classProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(static_cast<PropertyComponentType>(
+          TypeToPropertyType<ValueType>::component));
+  classProperty.array = true;
+
+  // Handle fixed-length arrays.
+  if (arrayType.minArrayCount == arrayType.maxArrayCount) {
+    const size_t arrayCount = static_cast<size_t>(arrayType.minArrayCount);
+    const size_t numOfValues =
+        static_cast<size_t>(propertyTable.count) * arrayCount;
     std::vector<std::byte> valueBuffer(sizeof(ValueType) * numOfValues);
     ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
     auto it = propertyValue.begin();
-    for (int64_t i = 0; i < featureTable.count; ++i) {
+    for (int64_t i = 0; i < propertyTable.count; ++i) {
       const auto& jsonArrayMember = *it;
       for (const auto& valueJson : jsonArrayMember.GetArray()) {
         *value = static_cast<ValueType>(valueJson.template Get<TRapidjson>());
@@ -497,121 +737,82 @@ void updateNumericArrayProperty(
       ++it;
     }
 
-    Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-    gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
-    gltfValueBuffer.cesium.data = std::move(valueBuffer);
-
-    BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
-    gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-    gltfValueBufferView.byteOffset = 0;
-    gltfValueBufferView.byteLength =
-        static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
-
-    classProperty.type = "ARRAY";
-    classProperty.componentType = convertPropertyTypeToString(
-        static_cast<PropertyType>(TypeToPropertyType<ValueType>::value));
-    classProperty.componentCount = *compatibleTypes.minComponentCount;
-
-    featureTableProperty.bufferView =
-        static_cast<int32_t>(gltf.bufferViews.size() - 1);
+    classProperty.count = arrayCount;
+    propertyTableProperty.values =
+        addBufferToGltf(gltf, std::move(valueBuffer));
 
     return;
   }
 
-  // total size of value buffer
-  size_t numOfElements = 0;
+  // Handle variable-length arrays.
+  // Compute total size of the value buffer.
+  size_t totalNumElements = 0;
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& jsonArrayMember = *it;
-    numOfElements += jsonArrayMember.Size();
+    totalNumElements += jsonArrayMember.Size();
     ++it;
   }
 
-  PropertyType offsetType = PropertyType::None;
+  PropertyComponentType offsetType = PropertyComponentType::None;
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
-  const uint64_t maxOffsetValue = numOfElements * sizeof(ValueType);
+  const uint64_t maxOffsetValue = totalNumElements * sizeof(ValueType);
   if (isInRangeForUnsignedInteger<uint8_t>(maxOffsetValue)) {
-    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint8_t>(
+    copyVariableLengthScalarArraysToBuffers<TRapidjson, ValueType, uint8_t>(
         valueBuffer,
         offsetBuffer,
-        numOfElements,
-        featureTable,
+        totalNumElements,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint8;
+    offsetType = PropertyComponentType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(maxOffsetValue)) {
-    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint16_t>(
+    copyVariableLengthScalarArraysToBuffers<TRapidjson, ValueType, uint16_t>(
         valueBuffer,
         offsetBuffer,
-        numOfElements,
-        featureTable,
+        totalNumElements,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint16;
+    offsetType = PropertyComponentType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(maxOffsetValue)) {
-    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint32_t>(
+    copyVariableLengthScalarArraysToBuffers<TRapidjson, ValueType, uint32_t>(
         valueBuffer,
         offsetBuffer,
-        numOfElements,
-        featureTable,
+        totalNumElements,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint32;
+    offsetType = PropertyComponentType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(maxOffsetValue)) {
-    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint64_t>(
+    copyVariableLengthScalarArraysToBuffers<TRapidjson, ValueType, uint64_t>(
         valueBuffer,
         offsetBuffer,
-        numOfElements,
-        featureTable,
+        totalNumElements,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint64;
+    offsetType = PropertyComponentType::Uint64;
   }
 
-  Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-  gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
-  gltfValueBuffer.cesium.data = std::move(valueBuffer);
-
-  BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
-  gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfValueBufferView.byteOffset = 0;
-  gltfValueBufferView.byteLength =
-      static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
-  const int32_t valueBufferIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
-  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
-
-  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
-  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfOffsetBufferView.byteOffset = 0;
-  gltfOffsetBufferView.byteLength =
-      static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
-  const int32_t offsetBufferIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  classProperty.type = "ARRAY";
-  classProperty.componentType = convertPropertyTypeToString(
-      static_cast<PropertyType>(TypeToPropertyType<ValueType>::value));
-
-  featureTableProperty.bufferView = valueBufferIdx;
-  featureTableProperty.arrayOffsetBufferView = offsetBufferIdx;
-  featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
+  propertyTableProperty.values = addBufferToGltf(gltf, std::move(valueBuffer));
+  propertyTableProperty.arrayOffsets =
+      addBufferToGltf(gltf, std::move(offsetBuffer));
+  propertyTableProperty.arrayOffsetType =
+      convertPropertyComponentTypeToString(offsetType);
 }
 
 template <typename OffsetType, typename TValueGetter>
-void copyStringArrayBuffers(
+void copyStringsToBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t totalByteLength,
     size_t numOfString,
-    const FeatureTable& featureTable,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize((numOfString + 1) * sizeof(OffsetType));
   OffsetType offset = 0;
   size_t offsetIndex = 0;
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& arrayMember = *it;
     for (const auto& str : arrayMember.GetArray()) {
       OffsetType byteLength = static_cast<OffsetType>(
@@ -634,16 +835,16 @@ void copyStringArrayBuffers(
 }
 
 template <typename OffsetType, typename TValueGetter>
-void copyArrayOffsetBufferForStringArrayProperty(
+void copyArrayOffsetsForStringArraysToBuffer(
     std::vector<std::byte>& offsetBuffer,
-    const FeatureTable& featureTable,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   OffsetType prevOffset = 0;
   offsetBuffer.resize(
-      static_cast<size_t>(featureTable.count + 1) * sizeof(OffsetType));
+      static_cast<size_t>(propertyTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& arrayMember = *it;
     *offset = prevOffset;
     prevOffset = static_cast<OffsetType>(
@@ -658,175 +859,137 @@ void copyArrayOffsetBufferForStringArrayProperty(
 template <typename TValueGetter>
 void updateStringArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    const FeatureTable& featureTable,
-    const CompatibleTypes& compatibleTypes,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= featureTable.count);
+  assert(propertyValue.size() >= propertyTable.count);
 
-  size_t numOfString = 0;
-  size_t totalChars = 0;
+  size_t stringCount = 0;
+  size_t totalCharCount = 0;
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& arrayMember = *it;
-    numOfString += arrayMember.Size();
+    stringCount += arrayMember.Size();
     for (const auto& str : arrayMember.GetArray()) {
-      totalChars += str.GetStringLength();
+      totalCharCount += str.GetStringLength();
     }
     ++it;
   }
 
-  const uint64_t totalByteLength = totalChars * sizeof(rapidjson::Value::Ch);
+  const uint64_t totalByteLength =
+      totalCharCount * sizeof(rapidjson::Value::Ch);
   std::vector<std::byte> valueBuffer;
-  std::vector<std::byte> offsetBuffer;
-  PropertyType offsetType = PropertyType::None;
+  std::vector<std::byte> stringOffsetBuffer;
+  PropertyComponentType stringOffsetType = PropertyComponentType::None;
   if (isInRangeForUnsignedInteger<uint8_t>(totalByteLength)) {
-    copyStringArrayBuffers<uint8_t>(
+    copyStringsToBuffers<uint8_t>(
         valueBuffer,
-        offsetBuffer,
+        stringOffsetBuffer,
         totalByteLength,
-        numOfString,
-        featureTable,
+        stringCount,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint8;
+    stringOffsetType = PropertyComponentType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalByteLength)) {
-    copyStringArrayBuffers<uint16_t>(
+    copyStringsToBuffers<uint16_t>(
         valueBuffer,
-        offsetBuffer,
+        stringOffsetBuffer,
         totalByteLength,
-        numOfString,
-        featureTable,
+        stringCount,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint16;
+    stringOffsetType = PropertyComponentType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalByteLength)) {
-    copyStringArrayBuffers<uint32_t>(
+    copyStringsToBuffers<uint32_t>(
         valueBuffer,
-        offsetBuffer,
+        stringOffsetBuffer,
         totalByteLength,
-        numOfString,
-        featureTable,
+        stringCount,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint32;
+    stringOffsetType = PropertyComponentType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(totalByteLength)) {
-    copyStringArrayBuffers<uint64_t>(
+    copyStringsToBuffers<uint64_t>(
         valueBuffer,
-        offsetBuffer,
+        stringOffsetBuffer,
         totalByteLength,
-        numOfString,
-        featureTable,
+        stringCount,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint64;
+    stringOffsetType = PropertyComponentType::Uint64;
   }
 
-  // create gltf value buffer view
-  Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-  gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
-  gltfValueBuffer.cesium.data = std::move(valueBuffer);
+  classProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::STRING;
+  classProperty.array = true;
+  propertyTableProperty.stringOffsetType =
+      convertPropertyComponentTypeToString(stringOffsetType);
+  propertyTableProperty.values = addBufferToGltf(gltf, std::move(valueBuffer));
+  propertyTableProperty.stringOffsets =
+      addBufferToGltf(gltf, std::move(stringOffsetBuffer));
 
-  BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
-  gltfValueBufferView.buffer =
-      static_cast<std::int32_t>(gltf.buffers.size() - 1);
-  gltfValueBufferView.byteOffset = 0;
-  gltfValueBufferView.byteLength = gltfValueBuffer.byteLength;
-  const int32_t valueBufferViewIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  // create gltf string offset buffer view
-  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
-  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
-
-  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
-  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfOffsetBufferView.byteOffset = 0;
-  gltfOffsetBufferView.byteLength = gltfOffsetBuffer.byteLength;
-  const int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  // fixed array of string
-  if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
-    classProperty.type = "ARRAY";
-    classProperty.componentCount = compatibleTypes.minComponentCount;
-    classProperty.componentType = "STRING";
-
-    featureTableProperty.bufferView = valueBufferViewIdx;
-    featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
-    featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
+  // Handle fixed-length arrays
+  if (arrayType.minArrayCount == arrayType.maxArrayCount) {
+    classProperty.count = arrayType.minArrayCount;
     return;
   }
 
-  // dynamic array of string needs array offset buffer
+  // Handle variable-length arrays
   std::vector<std::byte> arrayOffsetBuffer;
-  switch (offsetType) {
-  case PropertyType::Uint8:
-    copyArrayOffsetBufferForStringArrayProperty<uint8_t>(
+  switch (stringOffsetType) {
+  case PropertyComponentType::Uint8:
+    copyArrayOffsetsForStringArraysToBuffer<uint8_t>(
         arrayOffsetBuffer,
-        featureTable,
+        propertyTable,
         propertyValue);
     break;
-  case PropertyType::Uint16:
-    copyArrayOffsetBufferForStringArrayProperty<uint16_t>(
+  case PropertyComponentType::Uint16:
+    copyArrayOffsetsForStringArraysToBuffer<uint16_t>(
         arrayOffsetBuffer,
-        featureTable,
+        propertyTable,
         propertyValue);
     break;
-  case PropertyType::Uint32:
-    copyArrayOffsetBufferForStringArrayProperty<uint32_t>(
+  case PropertyComponentType::Uint32:
+    copyArrayOffsetsForStringArraysToBuffer<uint32_t>(
         arrayOffsetBuffer,
-        featureTable,
+        propertyTable,
         propertyValue);
     break;
-  case PropertyType::Uint64:
-    copyArrayOffsetBufferForStringArrayProperty<uint64_t>(
+  case PropertyComponentType::Uint64:
+    copyArrayOffsetsForStringArraysToBuffer<uint64_t>(
         arrayOffsetBuffer,
-        featureTable,
+        propertyTable,
         propertyValue);
     break;
   default:
     break;
   }
 
-  // create gltf array offset buffer view
-  Buffer& gltfArrayOffsetBuffer = gltf.buffers.emplace_back();
-  gltfArrayOffsetBuffer.byteLength =
-      static_cast<int64_t>(arrayOffsetBuffer.size());
-  gltfArrayOffsetBuffer.cesium.data = std::move(arrayOffsetBuffer);
-
-  BufferView& gltfArrayOffsetBufferView = gltf.bufferViews.emplace_back();
-  gltfArrayOffsetBufferView.buffer =
-      static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfArrayOffsetBufferView.byteOffset = 0;
-  gltfArrayOffsetBufferView.byteLength = gltfArrayOffsetBuffer.byteLength;
-  const int32_t arrayOffsetBufferViewIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  classProperty.type = "ARRAY";
-  classProperty.componentType = "STRING";
-
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.arrayOffsetBufferView = arrayOffsetBufferViewIdx;
-  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
-  featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
+  propertyTableProperty.arrayOffsets =
+      addBufferToGltf(gltf, std::move(arrayOffsetBuffer));
+  propertyTableProperty.arrayOffsetType =
+      convertPropertyComponentTypeToString(stringOffsetType);
 }
 
 template <typename OffsetType, typename TValueGetter>
-void copyBooleanArrayBuffers(
+void copyVariableLengthBooleanArraysBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
-    const FeatureTable& featureTable,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   size_t currentIndex = 0;
   const size_t totalByteLength =
       static_cast<size_t>(glm::ceil(static_cast<double>(numOfElements) / 8.0));
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize(
-      static_cast<size_t>(featureTable.count + 1) * sizeof(OffsetType));
+      static_cast<size_t>(propertyTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& arrayMember = *it;
 
     *offset = prevOffset;
@@ -850,23 +1013,27 @@ void copyBooleanArrayBuffers(
 template <typename TValueGetter>
 void updateBooleanArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    const FeatureTable& featureTable,
-    const CompatibleTypes& compatibleTypes,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= featureTable.count);
+  assert(propertyValue.size() >= propertyTable.count);
 
-  // fixed array of boolean
-  if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
-    const size_t numOfElements = static_cast<size_t>(
-        featureTable.count * compatibleTypes.minComponentCount.value());
+  classProperty.type = "BOOLEAN";
+  classProperty.array = true;
+
+  // Fixed-length array of booleans
+  if (arrayType.minArrayCount == arrayType.maxArrayCount) {
+    const size_t arrayCount = static_cast<size_t>(arrayType.minArrayCount);
+    const size_t numOfElements =
+        static_cast<size_t>(propertyTable.count) * arrayCount;
     const size_t totalByteLength = static_cast<size_t>(
         glm::ceil(static_cast<double>(numOfElements) / 8.0));
     std::vector<std::byte> valueBuffer(totalByteLength);
     size_t currentIndex = 0;
     auto it = propertyValue.begin();
-    for (int64_t i = 0; i < featureTable.count; ++i) {
+    for (int64_t i = 0; i < propertyTable.count; ++i) {
       const auto& arrayMember = *it;
       for (const auto& data : arrayMember.GetArray()) {
         const bool value = data.GetBool();
@@ -879,29 +1046,17 @@ void updateBooleanArrayProperty(
       ++it;
     }
 
-    Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-    gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
-    gltfValueBuffer.cesium.data = std::move(valueBuffer);
-
-    BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
-    gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-    gltfValueBufferView.byteOffset = 0;
-    gltfValueBufferView.byteLength = gltfValueBuffer.byteLength;
-
-    classProperty.type = "ARRAY";
-    classProperty.componentCount = compatibleTypes.minComponentCount;
-    classProperty.componentType = "BOOLEAN";
-
-    featureTableProperty.bufferView =
-        static_cast<int32_t>(gltf.bufferViews.size() - 1);
+    propertyTableProperty.values =
+        addBufferToGltf(gltf, std::move(valueBuffer));
+    classProperty.count = static_cast<int64_t>(arrayCount);
 
     return;
   }
 
-  // dynamic array of boolean
+  // Variable-length array of booleans
   size_t numOfElements = 0;
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < featureTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i) {
     const auto& arrayMember = *it;
     numOfElements += arrayMember.Size();
     ++it;
@@ -909,197 +1064,175 @@ void updateBooleanArrayProperty(
 
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
-  PropertyType offsetType = PropertyType::None;
+  PropertyComponentType offsetType = PropertyComponentType::None;
   if (isInRangeForUnsignedInteger<uint8_t>(numOfElements)) {
-    copyBooleanArrayBuffers<uint8_t>(
+    copyVariableLengthBooleanArraysBuffers<uint8_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
-        featureTable,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint8;
+    offsetType = PropertyComponentType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(numOfElements)) {
-    copyBooleanArrayBuffers<uint16_t>(
+    copyVariableLengthBooleanArraysBuffers<uint16_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
-        featureTable,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint16;
+    offsetType = PropertyComponentType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(numOfElements)) {
-    copyBooleanArrayBuffers<uint32_t>(
+    copyVariableLengthBooleanArraysBuffers<uint32_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
-        featureTable,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint32;
+    offsetType = PropertyComponentType::Uint32;
   } else {
-    copyBooleanArrayBuffers<uint64_t>(
+    copyVariableLengthBooleanArraysBuffers<uint64_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
-        featureTable,
+        propertyTable,
         propertyValue);
-    offsetType = PropertyType::Uint64;
+    offsetType = PropertyComponentType::Uint64;
   }
 
-  Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-  gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
-  gltfValueBuffer.cesium.data = std::move(valueBuffer);
-
-  BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
-  gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfValueBufferView.byteOffset = 0;
-  gltfValueBufferView.byteLength =
-      static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
-  const int32_t valueBufferIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
-  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
-
-  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
-  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfOffsetBufferView.byteOffset = 0;
-  gltfOffsetBufferView.byteLength =
-      static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
-  const int32_t offsetBufferIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  classProperty.type = "ARRAY";
-  classProperty.componentType = "BOOLEAN";
-
-  featureTableProperty.bufferView = valueBufferIdx;
-  featureTableProperty.arrayOffsetBufferView = offsetBufferIdx;
-  featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
+  propertyTableProperty.values = addBufferToGltf(gltf, std::move(valueBuffer));
+  propertyTableProperty.arrayOffsets =
+      addBufferToGltf(gltf, std::move(offsetBuffer));
+  propertyTableProperty.arrayOffsetType =
+      convertPropertyComponentTypeToString(offsetType);
 }
 
 template <typename TValueGetter>
 void updateExtensionWithArrayProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
-    const CompatibleTypes& compatibleTypes,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= featureTable.count);
+  assert(propertyValue.size() >= propertyTable.count);
 
-  if (compatibleTypes.componentType->isBool) {
+  const MaskedType& elementType = arrayType.elementType;
+  if (elementType.isBool) {
     updateBooleanArrayProperty(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isInt8) {
-    updateNumericArrayProperty<int32_t, int8_t>(
+  } else if (elementType.isInt8) {
+    updateScalarArrayProperty<int32_t, int8_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isUint8) {
-    updateNumericArrayProperty<uint32_t, uint8_t>(
+  } else if (elementType.isUint8) {
+    updateScalarArrayProperty<uint32_t, uint8_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isInt16) {
-    updateNumericArrayProperty<int32_t, int16_t>(
+  } else if (elementType.isInt16) {
+    updateScalarArrayProperty<int32_t, int16_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isUint16) {
-    updateNumericArrayProperty<uint32_t, uint16_t>(
+  } else if (elementType.isUint16) {
+    updateScalarArrayProperty<uint32_t, uint16_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isInt32) {
-    updateNumericArrayProperty<int32_t, int32_t>(
+  } else if (elementType.isInt32) {
+    updateScalarArrayProperty<int32_t, int32_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isUint32) {
-    updateNumericArrayProperty<uint32_t, uint32_t>(
+  } else if (elementType.isUint32) {
+    updateScalarArrayProperty<uint32_t, uint32_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isInt64) {
-    updateNumericArrayProperty<int64_t, int64_t>(
+  } else if (elementType.isInt64) {
+    updateScalarArrayProperty<int64_t, int64_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isUint64) {
-    updateNumericArrayProperty<uint64_t, uint64_t>(
+  } else if (elementType.isUint64) {
+    updateScalarArrayProperty<uint64_t, uint64_t>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isFloat32) {
-    updateNumericArrayProperty<float, float>(
+  } else if (elementType.isFloat32) {
+    updateScalarArrayProperty<float, float>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
-  } else if (compatibleTypes.componentType->isFloat64) {
-    updateNumericArrayProperty<double, double>(
+  } else if (elementType.isFloat64) {
+    updateScalarArrayProperty<double, double>(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
   } else {
     updateStringArrayProperty(
         gltf,
         classProperty,
-        featureTableProperty,
-        featureTable,
-        compatibleTypes,
+        propertyTableProperty,
+        propertyTable,
+        arrayType,
         propertyValue);
   }
 }
 
+// Updates the extension with a property defined as an array of values in the
+// batch table JSON.
 template <typename TValueGetter>
 void updateExtensionWithJsonProperty(
     Model& gltf,
-    ClassProperty& classProperty,
-    const FeatureTable& featureTable,
-    FeatureTableProperty& featureTableProperty,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
 
-  if (propertyValue.size() == 0 || propertyValue.size() < featureTable.count) {
+  if (propertyValue.size() == 0 || propertyValue.size() < propertyTable.count) {
     // No property to infer the type from, so assume string.
     updateExtensionWithJsonStringProperty(
         gltf,
         classProperty,
-        featureTable,
-        featureTableProperty,
+        propertyTable,
+        propertyTableProperty,
         propertyValue);
     return;
   }
@@ -1107,107 +1240,112 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   const CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
-  if (compatibleTypes.type.isBool) {
-    updateExtensionWithJsonBoolProperty(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue);
-  } else if (compatibleTypes.type.isInt8) {
-    updateExtensionWithJsonNumericProperty<int8_t, int32_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "INT8");
-  } else if (compatibleTypes.type.isUint8) {
-    updateExtensionWithJsonNumericProperty<uint8_t, uint32_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "UINT8");
-  } else if (compatibleTypes.type.isInt16) {
-    updateExtensionWithJsonNumericProperty<int16_t, int32_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "INT16");
-  } else if (compatibleTypes.type.isUint16) {
-    updateExtensionWithJsonNumericProperty<uint16_t, uint32_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "UINT16");
-  } else if (compatibleTypes.type.isInt32) {
-    updateExtensionWithJsonNumericProperty<int32_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "INT32");
-  } else if (compatibleTypes.type.isUint32) {
-    updateExtensionWithJsonNumericProperty<uint32_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "UINT32");
-  } else if (compatibleTypes.type.isInt64) {
-    updateExtensionWithJsonNumericProperty<int64_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "INT64");
-  } else if (compatibleTypes.type.isUint64) {
-    updateExtensionWithJsonNumericProperty<uint64_t>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "UINT64");
-  } else if (compatibleTypes.type.isFloat32) {
-    updateExtensionWithJsonNumericProperty<float>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "FLOAT32");
-  } else if (compatibleTypes.type.isFloat64) {
-    updateExtensionWithJsonNumericProperty<double>(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue,
-        "FLOAT64");
-  } else if (compatibleTypes.type.isArray) {
+  if (compatibleTypes.isArray()) {
+    MaskedArrayType arrayType = compatibleTypes.toMaskedArrayType();
     updateExtensionWithArrayProperty(
         gltf,
         classProperty,
-        featureTable,
-        featureTableProperty,
-        compatibleTypes,
+        propertyTable,
+        propertyTableProperty,
+        arrayType,
         propertyValue);
+    return;
+  }
+
+  MaskedType type = compatibleTypes.toMaskedType();
+  if (type.isBool) {
+    updateExtensionWithJsonBooleanProperty(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue);
+  } else if (type.isInt8) {
+    updateExtensionWithJsonScalarProperty<int8_t, int32_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8);
+  } else if (type.isUint8) {
+    updateExtensionWithJsonScalarProperty<uint8_t, uint32_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8);
+  } else if (type.isInt16) {
+    updateExtensionWithJsonScalarProperty<int16_t, int32_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16);
+  } else if (type.isUint16) {
+    updateExtensionWithJsonScalarProperty<uint16_t, uint32_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16);
+  } else if (type.isInt32) {
+    updateExtensionWithJsonScalarProperty<int32_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32);
+  } else if (type.isUint32) {
+    updateExtensionWithJsonScalarProperty<uint32_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32);
+  } else if (type.isInt64) {
+    updateExtensionWithJsonScalarProperty<int64_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64);
+  } else if (type.isUint64) {
+    updateExtensionWithJsonScalarProperty<uint64_t>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64);
+  } else if (type.isFloat32) {
+    updateExtensionWithJsonScalarProperty<float>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
+  } else if (type.isFloat64) {
+    updateExtensionWithJsonScalarProperty<double>(
+        gltf,
+        classProperty,
+        propertyTable,
+        propertyTableProperty,
+        propertyValue,
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64);
   } else {
     updateExtensionWithJsonStringProperty(
         gltf,
         classProperty,
-        featureTable,
-        featureTableProperty,
+        propertyTable,
+        propertyTableProperty,
         propertyValue);
   }
 }
@@ -1217,12 +1355,12 @@ void updateExtensionWithBinaryProperty(
     int32_t gltfBufferIndex,
     int64_t gltfBufferOffset,
     BinaryProperty& binaryProperty,
-    ClassProperty& classProperty,
-    FeatureTableProperty& featureTableProperty,
-    ErrorList& result,
-    const FeatureTable& featureTable,
+    ExtensionExtStructuralMetadataClassProperty& classProperty,
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     const std::string& propertyName,
-    const rapidjson::Value& propertyValue) {
+    const rapidjson::Value& propertyValue,
+    ErrorList& result) {
   assert(
       gltfBufferIndex >= 0 &&
       "gltfBufferIndex is negative. Need to allocate buffer before "
@@ -1232,7 +1370,7 @@ void updateExtensionWithBinaryProperty(
   if (byteOffsetIt == propertyValue.MemberEnd() ||
       !byteOffsetIt->value.IsInt64()) {
     result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have required "
+        "Skip converting {}. The binary property doesn't have a valid "
         "byteOffset.",
         propertyName));
     return;
@@ -1242,7 +1380,7 @@ void updateExtensionWithBinaryProperty(
   if (componentTypeIt == propertyValue.MemberEnd() ||
       !componentTypeIt->value.IsString()) {
     result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have required "
+        "Skip converting {}. The binary property doesn't have a valid "
         "componentType.",
         propertyName));
     return;
@@ -1251,53 +1389,52 @@ void updateExtensionWithBinaryProperty(
   const auto& typeIt = propertyValue.FindMember("type");
   if (typeIt == propertyValue.MemberEnd() || !typeIt->value.IsString()) {
     result.emplaceWarning(fmt::format(
-        "Skip convert {}. The binary property doesn't have required type.",
+        "Skip converting {}. The binary property doesn't have a valid type.",
         propertyName));
     return;
   }
 
-  // convert class property
+  // Convert batch table property to glTF property table property
   const int64_t byteOffset = byteOffsetIt->value.GetInt64();
   const std::string& componentType = componentTypeIt->value.GetString();
   const std::string& type = typeIt->value.GetString();
 
-  auto convertedTypeIt = batchTableComponentTypeToGltfType.find(componentType);
-  if (convertedTypeIt == batchTableComponentTypeToGltfType.end()) {
+  auto convertedTypeIt = batchTableTypeToGltfType.find(type);
+  if (convertedTypeIt == batchTableTypeToGltfType.end()) {
+    result.emplaceWarning(fmt::format(
+        "Skip converting {}. The binary property doesn't have a valid type.",
+        propertyName));
     return;
   }
-  const GltfFeatureTableType& gltfType = convertedTypeIt->second;
-
-  size_t componentCount = 1;
-  if (type == "SCALAR") {
-    classProperty.type = gltfType.typeName;
-  } else if (type == "VEC2") {
-    classProperty.type = "ARRAY";
-    classProperty.componentCount = 2;
-    classProperty.componentType = gltfType.typeName;
-    componentCount = 2;
-  } else if (type == "VEC3") {
-    classProperty.type = "ARRAY";
-    classProperty.componentCount = 3;
-    classProperty.componentType = gltfType.typeName;
-    componentCount = 3;
-  } else if (type == "VEC4") {
-    classProperty.type = "ARRAY";
-    classProperty.componentCount = 4;
-    classProperty.componentType = gltfType.typeName;
-    componentCount = 4;
-  } else {
+  auto convertedComponentTypeIt =
+      batchTableComponentTypeToGltfComponentType.find(componentType);
+  if (convertedComponentTypeIt ==
+      batchTableComponentTypeToGltfComponentType.end()) {
+    result.emplaceWarning(fmt::format(
+        "Skip converting {}. The binary property doesn't have a valid "
+        "componentType.",
+        propertyName));
     return;
   }
 
-  // convert feature table
-  const size_t typeSize = gltfType.typeSize;
+  const GltfPropertyTableType& gltfType = convertedTypeIt->second;
+  const GltfPropertyTableComponentType& gltfComponentType =
+      convertedComponentTypeIt->second;
+
+  classProperty.type = gltfType.type;
+  classProperty.componentType = gltfComponentType.componentType;
+
+  // Convert to a buffer view
+  const size_t componentCount = gltfType.componentCount;
+  const size_t componentTypeSize = gltfComponentType.componentTypeSize;
   auto& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = gltfBufferIndex;
   bufferView.byteOffset = gltfBufferOffset;
   bufferView.byteLength = static_cast<int64_t>(
-      typeSize * componentCount * static_cast<size_t>(featureTable.count));
+      componentTypeSize * componentCount *
+      static_cast<size_t>(propertyTable.count));
 
-  featureTableProperty.bufferView =
+  propertyTableProperty.values =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   binaryProperty.batchTableByteOffset = byteOffset;
@@ -1307,8 +1444,8 @@ void updateExtensionWithBinaryProperty(
 
 void updateExtensionWithBatchTableHierarchy(
     Model& gltf,
-    Class& classDefinition,
-    FeatureTable& featureTable,
+    ExtensionExtStructuralMetadataClass& classDefinition,
+    ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     ErrorList& result,
     const rapidjson::Value& batchTableHierarchy) {
   // EXT_feature_metadata can't support hierarchy, so we need to flatten it.
@@ -1329,7 +1466,8 @@ void updateExtensionWithBatchTableHierarchy(
     for (const auto& element : parentCountsIt->value.GetArray()) {
       if (!element.IsInt64() || element.GetInt64() != 1LL) {
         result.emplaceWarning(
-            "3DTILES_batch_table_hierarchy with a \"parentCounts\" property is "
+            "3DTILES_batch_table_hierarchy with a \"parentCounts\" property "
+            "is "
             "not currently supported. All instances must have at most one "
             "parent.");
         return;
@@ -1350,7 +1488,8 @@ void updateExtensionWithBatchTableHierarchy(
       if (propertyIt->value.IsObject()) {
         result.emplaceWarning(fmt::format(
             "Property {} uses binary values. Only JSON-based "
-            "3DTILES_batch_table_hierarchy properties are currently supported.",
+            "3DTILES_batch_table_hierarchy properties are currently "
+            "supported.",
             propertyIt->name.GetString()));
       } else {
         properties.insert(propertyIt->name.GetString());
@@ -1360,15 +1499,20 @@ void updateExtensionWithBatchTableHierarchy(
 
   BatchTableHierarchyPropertyValues batchTableHierarchyValues(
       batchTableHierarchy,
-      featureTable.count);
+      propertyTable.count);
 
   for (const std::string& name : properties) {
-    ClassProperty& classProperty =
-        classDefinition.properties.emplace(name, ClassProperty()).first->second;
+    ExtensionExtStructuralMetadataClassProperty& classProperty =
+        classDefinition.properties
+            .emplace(name, ExtensionExtStructuralMetadataClassProperty())
+            .first->second;
     classProperty.name = name;
 
-    FeatureTableProperty& featureTableProperty =
-        featureTable.properties.emplace(name, FeatureTableProperty())
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+        propertyTable.properties
+            .emplace(
+                name,
+                ExtensionExtStructuralMetadataPropertyTableProperty())
             .first->second;
 
     batchTableHierarchyValues.setProperty(name);
@@ -1376,8 +1520,8 @@ void updateExtensionWithBatchTableHierarchy(
     updateExtensionWithJsonProperty(
         gltf,
         classProperty,
-        featureTable,
-        featureTableProperty,
+        propertyTable,
+        propertyTableProperty,
         batchTableHierarchyValues);
   }
 }
@@ -1388,8 +1532,8 @@ void convertBatchTableToGltfStructuralMetadataExtension(
     CesiumGltf::Model& gltf,
     const int64_t featureCount,
     ErrorList& result) {
-  // Add the binary part of the batch table - if any - to the glTF as a buffer.
-  // We will reallign this buffer later on
+  // Add the binary part of the batch table - if any - to the glTF as a
+  // buffer. We will reallign this buffer later on
   int32_t gltfBufferIndex = -1;
   int64_t gltfBufferOffset = -1;
   std::vector<BinaryProperty> binaryProperties;
@@ -1399,17 +1543,20 @@ void convertBatchTableToGltfStructuralMetadataExtension(
     gltf.buffers.emplace_back();
   }
 
-  ExtensionModelExtFeatureMetadata& modelExtension =
-      gltf.addExtension<ExtensionModelExtFeatureMetadata>();
-  Schema& schema = modelExtension.schema.emplace();
-  Class& classDefinition =
-      schema.classes.emplace("default", Class()).first->second;
+  ExtensionModelExtStructuralMetadata& modelExtension =
+      gltf.addExtension<ExtensionModelExtStructuralMetadata>();
+  ExtensionExtStructuralMetadataSchema& schema =
+      modelExtension.schema.emplace();
+  schema.id = "default"; // Required by the spec.
 
-  FeatureTable& featureTable =
-      modelExtension.featureTables.emplace("default", FeatureTable())
+  ExtensionExtStructuralMetadataClass& classDefinition =
+      schema.classes.emplace("default", ExtensionExtStructuralMetadataClass())
           .first->second;
-  featureTable.count = featureCount;
-  featureTable.classProperty = "default";
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      modelExtension.propertyTables.emplace_back();
+  propertyTable.count = featureCount;
+  propertyTable.classProperty = "default";
 
   // Convert each regular property in the batch table
   for (auto propertyIt = batchTableJson.MemberBegin();
@@ -1422,20 +1569,25 @@ void convertBatchTableToGltfStructuralMetadataExtension(
       continue;
     }
 
-    ClassProperty& classProperty =
-        classDefinition.properties.emplace(name, ClassProperty()).first->second;
+    ExtensionExtStructuralMetadataClassProperty& classProperty =
+        classDefinition.properties
+            .emplace(name, ExtensionExtStructuralMetadataClassProperty())
+            .first->second;
     classProperty.name = name;
 
-    FeatureTableProperty& featureTableProperty =
-        featureTable.properties.emplace(name, FeatureTableProperty())
+    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+        propertyTable.properties
+            .emplace(
+                name,
+                ExtensionExtStructuralMetadataPropertyTableProperty())
             .first->second;
     const rapidjson::Value& propertyValue = propertyIt->value;
     if (propertyValue.IsArray()) {
       updateExtensionWithJsonProperty(
           gltf,
           classProperty,
-          featureTable,
-          featureTableProperty,
+          propertyTable,
+          propertyTableProperty,
           ArrayOfPropertyValues(propertyValue));
     } else {
       BinaryProperty& binaryProperty = binaryProperties.emplace_back();
@@ -1445,11 +1597,11 @@ void convertBatchTableToGltfStructuralMetadataExtension(
           gltfBufferOffset,
           binaryProperty,
           classProperty,
-          featureTableProperty,
-          result,
-          featureTable,
+          propertyTableProperty,
+          propertyTable,
           name,
-          propertyValue);
+          propertyValue,
+          result);
       gltfBufferOffset += roundUp(binaryProperty.byteLength, 8);
     }
   }
@@ -1463,13 +1615,13 @@ void convertBatchTableToGltfStructuralMetadataExtension(
       updateExtensionWithBatchTableHierarchy(
           gltf,
           classDefinition,
-          featureTable,
+          propertyTable,
           result,
           bthIt->value);
     }
   }
 
-  // re-arrange binary property buffer
+  // Re-arrange binary property buffer
   if (!batchTableBinaryData.empty()) {
     Buffer& buffer = gltf.buffers[static_cast<size_t>(gltfBufferIndex)];
     buffer.byteLength = gltfBufferOffset;
@@ -1521,7 +1673,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       batchLength,
       result);
 
-  // Create an EXT_feature_metadata extension for each primitive with a _BATCHID
+  // Create an EXT_mesh_features extension for each primitive with a _BATCHID
   // attribute.
   for (Mesh& mesh : gltf.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
@@ -1535,7 +1687,6 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
       primitive.attributes.erase("_BATCHID");
 
-      // Create an EXT_mesh_features extension with a feature ID attribute.
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
 

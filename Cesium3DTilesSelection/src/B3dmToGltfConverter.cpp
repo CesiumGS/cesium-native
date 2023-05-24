@@ -219,7 +219,7 @@ void convertB3dmMetadataToGltfFeatureMetadata(
         return;
       }
 
-      // upgrade batch table to glTF feature metadata and append the result
+      // upgrade batch table to glTF structural metadata and append the result
       result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromB3dm(
           featureTableJson,
           batchTableJson,
