@@ -109,31 +109,41 @@ static MetadataPropertyViewStatus checkStringAndArrayOffsetsBuffers(
 MetadataPropertyTableView::MetadataPropertyTableView(
     const Model& model,
     const ExtensionExtStructuralMetadataPropertyTable& propertyTable)
-    : _model{model}, _propertyTable{propertyTable}, _pClass{nullptr} {
+    : _model{model},
+      _propertyTable{propertyTable},
+      _pClass{nullptr},
+      _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
-  assert(
-      pMetadata != nullptr &&
-      "Model must contain ExtensionModelExtStructuralMetadata to use "
-      "MetadataPropertyTableView");
+
+  if (!pMetadata) {
+    _status =
+        MetadataPropertyTableViewStatus::ErrorNoStructuralMetadataExtension;
+    return;
+  }
 
   const std::optional<ExtensionExtStructuralMetadataSchema>& schema =
       pMetadata->schema;
-  assert(
-      schema != std::nullopt &&
-      "ExtensionModelExtStructuralMetadata must contain "
-      "Schema to use MetadataPropertyTableView");
+  if (!schema) {
+    _status = MetadataPropertyTableViewStatus::ErrorNoSchema;
+    return;
+  }
 
   auto classIter = schema->classes.find(_propertyTable.classProperty);
   if (classIter != schema->classes.end()) {
     _pClass = &classIter->second;
+  }
+
+  if (!_pClass) {
+    _status =
+        MetadataPropertyTableViewStatus::ErrorPropertyTableClassDoesNotExist;
   }
 }
 
 const ExtensionExtStructuralMetadataClassProperty*
 MetadataPropertyTableView::getClassProperty(
     const std::string& propertyName) const {
-  if (_pClass == nullptr) {
+  if (_status != MetadataPropertyTableViewStatus::Valid) {
     return nullptr;
   }
 

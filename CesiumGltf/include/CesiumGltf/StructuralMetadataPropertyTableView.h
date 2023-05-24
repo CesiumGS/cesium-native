@@ -13,6 +13,38 @@ namespace CesiumGltf {
 namespace StructuralMetadata {
 
 /**
+ * @brief Indicates the status of a property table view.
+ *
+ * The {@link MetadataPropertyTableView} constructor always completes successfully.
+ * However, it may not always reflect the actual content of the
+ * {@link ExtensionExtStructuralMetadataPropertyTable}, but instead indicate that its
+ * {@link MetadataPropertyTableView::size} is 0. This enumeration provides the reason.
+ */
+enum class MetadataPropertyTableViewStatus {
+  /**
+   * @brief This property table view is valid and ready to use.
+   */
+  Valid,
+
+  /**
+   * @brief The property table view's model does not contain an
+   * EXT_structural_metadata extension.
+   */
+  ErrorNoStructuralMetadataExtension,
+
+  /**
+   * @brief The property table view's model does not have a schema in its
+   * EXT_structural_metadata extension.
+   */
+  ErrorNoSchema,
+
+  /**
+   * @brief The class of the property table does not exist in the schema.
+   */
+  ErrorPropertyTableClassDoesNotExist
+};
+
+/**
  * @brief Utility to retrieve the data of
  * {@link ExtensionExtStructuralMetadataPropertyTable}.
  *
@@ -33,38 +65,62 @@ public:
       const ExtensionExtStructuralMetadataPropertyTable& propertyTable);
 
   /**
+   * @brief Gets the status of this property table view.
+   *
+   * Indicates whether the view accurately reflects the property table's data,
+   * or whether an error occurred.
+   *
+   * @return The status of this property table view.
+   */
+  MetadataPropertyTableViewStatus status() const noexcept { return _status; }
+
+  /**
+   * @brief Get the number of elements in this MetadataPropertyTableView. If the
+   * view is valid, this returns
+   * {@link ExtensionExtStructuralMetadataPropertyTable::count}. Otherwise, this returns 0.
+   *
+   * @return The number of elements in this MetadataPropertyTableView.
+   */
+  int64_t size() const noexcept {
+    return _status == MetadataPropertyTableViewStatus::Valid
+               ? _propertyTable.count
+               : 0;
+  }
+
+  /**
    * @brief Finds the {@link ExtensionExtStructuralMetadataClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
    * @return A pointer to the {@link ExtensionExtStructuralMetadataClassProperty}.
-   * Return nullptr if no property was found.
+   * Return nullptr if the MetadataPropertyTableView is invalid or if no class
+   * property was found.
    */
   const ExtensionExtStructuralMetadataClassProperty*
   getClassProperty(const std::string& propertyName) const;
 
   /**
-   * @brief Gets a MetadataPropertyView that views the data of a property stored
-   * in the ExtensionExtStructuralMetadataPropertyTable.
+   * @brief Gets a {@link MetadataPropertyView} that views the data of a property stored
+   * in the {@link ExtensionExtStructuralMetadataPropertyTable}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * MetadataPropertyView retrieves the correct data. T must be one of the
+   * {@link MetadataPropertyView} retrieves the correct data. T must be one of the
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or MetadataArrayView<T> with T as one of the
+   * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
    * aforementioned types.
    *
    * @param propertyName The name of the property to retrieve data from
-   * @return A MetadataPropertyView of the property. If no valid property is
+   * @return A {@link MetadataPropertyView} of the property. If no valid property is
    * found, the property view will be invalid.
    */
   template <typename T>
   MetadataPropertyView<T>
   getPropertyView(const std::string& propertyName) const {
-    if (_propertyTable.count <= 0) {
+    if (this->size() <= 0) {
       return createInvalidPropertyView<T>(
           StructuralMetadata::MetadataPropertyViewStatus::
-              ErrorPropertyDoesNotExist);
+              ErrorInvalidPropertyTable);
     }
 
     const ExtensionExtStructuralMetadataClassProperty* pClassProperty =
@@ -103,6 +159,10 @@ public:
     const ExtensionExtStructuralMetadataClassProperty* pClassProperty =
         getClassProperty(propertyName);
     if (!pClassProperty) {
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              MetadataPropertyViewStatus::ErrorPropertyDoesNotExist));
       return;
     }
 
@@ -1146,6 +1206,7 @@ private:
   const Model& _model;
   const ExtensionExtStructuralMetadataPropertyTable& _propertyTable;
   const ExtensionExtStructuralMetadataClass* _pClass;
+  MetadataPropertyTableViewStatus _status;
 };
 
 } // namespace StructuralMetadata
