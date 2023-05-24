@@ -56,7 +56,7 @@ TEST_CASE("Test StructuralMetadata scalar property") {
       propertyTable.properties["TestClassProperty"];
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -231,7 +231,7 @@ TEST_CASE("Test StructuralMetadata vecN property") {
       propertyTable.properties["TestClassProperty"];
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -422,7 +422,7 @@ TEST_CASE("Test StructuralMetadata matN property") {
       propertyTable.properties["TestClassProperty"];
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -613,7 +613,7 @@ TEST_CASE("Test StructuralMetadata boolean property") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -724,7 +724,7 @@ TEST_CASE("Test StructuralMetadata string property") {
   propertyTableProperty.stringOffsets =
       static_cast<int32_t>(offsetBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -866,7 +866,7 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -1036,7 +1036,7 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
       ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
           UINT64;
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -1191,7 +1191,7 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -1368,7 +1368,7 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
       ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
           UINT64;
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -1543,7 +1543,7 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -1741,7 +1741,7 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
       ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
           UINT64;
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -1914,7 +1914,7 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2063,7 +2063,7 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
       ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
           UINT64;
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2243,7 +2243,7 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
   propertyTableProperty.stringOffsets =
       static_cast<int32_t>(offsetBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2444,7 +2444,7 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
   propertyTableProperty.stringOffsets =
       static_cast<int32_t>(stringOffsetBufferView);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2623,7 +2623,7 @@ TEST_CASE("Test StructuralMetadata callback for invalid property") {
       propertyTable.properties["InvalidProperty"];
   propertyTableProperty.values = static_cast<int32_t>(-1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("InvalidProperty");
   REQUIRE(classProperty);
@@ -2687,7 +2687,7 @@ TEST_CASE("Test StructuralMetadata callback for scalar property") {
       propertyTable.properties["TestClassProperty"];
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2773,7 +2773,7 @@ TEST_CASE("Test StructuralMetadata callback for vecN property") {
       propertyTable.properties["TestClassProperty"];
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2869,7 +2869,7 @@ TEST_CASE("Test StructuralMetadata callback for matN property") {
       propertyTable.properties["TestClassProperty"];
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -2963,7 +2963,7 @@ TEST_CASE("Test StructuralMetadata callback for boolean property") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -3075,7 +3075,7 @@ TEST_CASE("Test StructuralMetadata callback for string property") {
   propertyTableProperty.stringOffsets =
       static_cast<int32_t>(offsetBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -3155,7 +3155,7 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -3242,7 +3242,7 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -3343,7 +3343,7 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -3445,7 +3445,7 @@ TEST_CASE("Test StructuralMetadata callback for boolean array") {
   propertyTableProperty.values =
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(
@@ -3558,7 +3558,7 @@ TEST_CASE("Test StructuralMetadata callback for array of strings") {
   propertyTableProperty.stringOffsets =
       static_cast<int32_t>(offsetBufferViewIndex);
 
-  MetadataPropertyTableView view(&model, &propertyTable);
+  MetadataPropertyTableView view(model, propertyTable);
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(

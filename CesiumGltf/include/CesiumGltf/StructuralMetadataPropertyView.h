@@ -31,7 +31,7 @@ enum class MetadataPropertyViewStatus {
 
   /**
    * @brief This property view does not exist in the
-   * ExtensionExtStructuralMetadataPropertyTable.
+   * {@link ExtensionExtStructuralMetadataPropertyTable}.
    */
   ErrorPropertyDoesNotExist,
 
@@ -153,7 +153,7 @@ enum class MetadataPropertyViewStatus {
 
 /**
  * @brief A view on the data of the
- * ExtensionExtStructuralMetadataPropertyTableProperty
+ * {@link ExtensionExtStructuralMetadataPropertyTableProperty}
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty::values} like an array of elements.
@@ -179,7 +179,7 @@ public:
 
   /**
    * @brief Construct a new instance pointing to non-array data specified by
-   * ExtensionExtStructuralMetadataPropertyTableProperty.
+   * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
    * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
    * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
@@ -203,7 +203,7 @@ public:
 
   /**
    * @brief Construct a new instance pointing to the data specified by
-   * ExtensionExtStructuralMetadataPropertyTableProperty.
+   * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
    * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsets}
    * @param stringOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsets}
@@ -244,7 +244,7 @@ public:
   MetadataPropertyViewStatus status() const noexcept { return _status; }
 
   /**
-   * @brief Get the value of an element of the FeatureTable.
+   * @brief Get the value of an element of the {@link ExtensionExtStructuralMetadataPropertyTable}.
    * @param index The element index
    * @return The value of the element
    */
@@ -286,10 +286,10 @@ public:
 
   /**
    * @brief Get the number of elements in the
-   * ExtensionExtStructuralMetadataPropertyTable.
+   * {@link ExtensionExtStructuralMetadataPropertyTable}.
    *
    * @return The number of elements in the
-   * ExtensionExtStructuralMetadataPropertyTable.
+   * {@link ExtensionExtStructuralMetadataPropertyTable}.
    */
   int64_t size() const noexcept { return _size; }
 

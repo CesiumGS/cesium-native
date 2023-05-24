@@ -107,14 +107,11 @@ static MetadataPropertyViewStatus checkStringAndArrayOffsetsBuffers(
 }
 
 MetadataPropertyTableView::MetadataPropertyTableView(
-    const Model* pModel,
-    const ExtensionExtStructuralMetadataPropertyTable* pPropertyTable)
-    : _pModel{pModel}, _pPropertyTable{pPropertyTable}, _pClass{nullptr} {
-  assert(pModel != nullptr && "pModel must not be nullptr");
-  assert(pPropertyTable != nullptr && "pPropertyTable must not be nullptr");
-
+    const Model& model,
+    const ExtensionExtStructuralMetadataPropertyTable& propertyTable)
+    : _model{model}, _propertyTable{propertyTable}, _pClass{nullptr} {
   const ExtensionModelExtStructuralMetadata* pMetadata =
-      pModel->getExtension<ExtensionModelExtStructuralMetadata>();
+      model.getExtension<ExtensionModelExtStructuralMetadata>();
   assert(
       pMetadata != nullptr &&
       "Model must contain ExtensionModelExtStructuralMetadata to use "
@@ -127,7 +124,7 @@ MetadataPropertyTableView::MetadataPropertyTableView(
       "ExtensionModelExtStructuralMetadata must contain "
       "Schema to use MetadataPropertyTableView");
 
-  auto classIter = schema->classes.find(_pPropertyTable->classProperty);
+  auto classIter = schema->classes.find(_propertyTable.classProperty);
   if (classIter != schema->classes.end()) {
     _pClass = &classIter->second;
   }
@@ -154,13 +151,12 @@ MetadataPropertyViewStatus MetadataPropertyTableView::getBufferSafe(
   buffer = {};
 
   const BufferView* pBufferView =
-      _pModel->getSafe(&_pModel->bufferViews, bufferViewIdx);
+      _model.getSafe(&_model.bufferViews, bufferViewIdx);
   if (!pBufferView) {
     return MetadataPropertyViewStatus::ErrorInvalidValueBufferView;
   }
 
-  const Buffer* pBuffer =
-      _pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
+  const Buffer* pBuffer = _model.getSafe(&_model.buffers, pBufferView->buffer);
   if (!pBuffer) {
     return MetadataPropertyViewStatus::ErrorInvalidValueBuffer;
   }
@@ -313,7 +309,7 @@ MetadataPropertyTableView::getStringPropertyValues(
       propertyTableProperty.stringOffsets,
       offsetType,
       values.size(),
-      static_cast<size_t>(_pPropertyTable->count),
+      static_cast<size_t>(_propertyTable.count),
       stringOffsets);
   if (status != MetadataPropertyViewStatus::Valid) {
     return createInvalidPropertyView<std::string_view>(status);
@@ -327,7 +323,7 @@ MetadataPropertyTableView::getStringPropertyValues(
       PropertyComponentType::None,
       offsetType,
       0,
-      _pPropertyTable->count,
+      _propertyTable.count,
       classProperty.normalized);
 }
 
@@ -387,7 +383,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         propertyTableProperty.stringOffsets,
         stringOffsetType,
         values.size(),
-        static_cast<size_t>(_pPropertyTable->count * fixedLengthArrayCount),
+        static_cast<size_t>(_propertyTable.count * fixedLengthArrayCount),
         stringOffsets);
     if (status != MetadataPropertyViewStatus::Valid) {
       return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
@@ -402,7 +398,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         PropertyComponentType::None,
         stringOffsetType,
         fixedLengthArrayCount,
-        _pPropertyTable->count,
+        _propertyTable.count,
         classProperty.normalized);
   }
 
@@ -442,7 +438,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        static_cast<size_t>(_propertyTable.count));
     break;
   case PropertyComponentType::Uint16:
     status = checkStringAndArrayOffsetsBuffers<uint16_t>(
@@ -450,7 +446,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        static_cast<size_t>(_propertyTable.count));
     break;
   case PropertyComponentType::Uint32:
     status = checkStringAndArrayOffsetsBuffers<uint32_t>(
@@ -458,7 +454,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        static_cast<size_t>(_propertyTable.count));
     break;
   case PropertyComponentType::Uint64:
     status = checkStringAndArrayOffsetsBuffers<uint64_t>(
@@ -466,7 +462,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        static_cast<size_t>(_propertyTable.count));
     break;
   default:
     status = MetadataPropertyViewStatus::ErrorInvalidArrayOffsetType;
@@ -486,7 +482,7 @@ MetadataPropertyTableView::getStringArrayPropertyValues(
       arrayOffsetType,
       stringOffsetType,
       0,
-      _pPropertyTable->count,
+      _propertyTable.count,
       classProperty.normalized);
 }
 

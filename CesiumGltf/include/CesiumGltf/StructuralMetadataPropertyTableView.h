@@ -14,32 +14,29 @@ namespace StructuralMetadata {
 
 /**
  * @brief Utility to retrieve the data of
- * ExtensionExtStructuralMetadataPropertyTable.
+ * {@link ExtensionExtStructuralMetadataPropertyTable}.
  *
  * This should be used to get a {@link MetadataPropertyView} of a property in the property table.
  * It will validate the EXT_structural_metadata format and ensure {@link MetadataPropertyView}
  * does not access out of bounds.
  */
-
 class MetadataPropertyTableView {
 public:
   /**
    * @brief Creates an instance of MetadataPropertyTableView.
-   * @param pModel A pointer to the Gltf Model that contains property table
-   * data.
-   * @param pPropertyTable A pointer to the
-   * ExtensionExtStructuralMetadataPropertyTable from which the view will
-   * retrieve data.
+   * @param model The Gltf Model that contains property table data.
+   * @param propertyTable The {@link ExtensionExtStructuralMetadataPropertyTable}
+   * from which the view will retrieve data.
    */
   MetadataPropertyTableView(
-      const Model* pModel,
-      const ExtensionExtStructuralMetadataPropertyTable* pPropertyTable);
+      const Model& model,
+      const ExtensionExtStructuralMetadataPropertyTable& propertyTable);
 
   /**
    * @brief Finds the {@link ExtensionExtStructuralMetadataClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
-   * @return A pointer to the ExtensionExtStructuralMetadataClassProperty.
+   * @return A pointer to the {@link ExtensionExtStructuralMetadataClassProperty}.
    * Return nullptr if no property was found.
    */
   const ExtensionExtStructuralMetadataClassProperty*
@@ -64,7 +61,7 @@ public:
   template <typename T>
   MetadataPropertyView<T>
   getPropertyView(const std::string& propertyName) const {
-    if (_pPropertyTable->count <= 0) {
+    if (_propertyTable.count <= 0) {
       return createInvalidPropertyView<T>(
           StructuralMetadata::MetadataPropertyViewStatus::
               ErrorPropertyDoesNotExist);
@@ -82,23 +79,23 @@ public:
   }
 
   /**
-   * @brief Gets a MetadataPropertyView through a callback that accepts a
-   * property name and a MetadataPropertyView<T> that views the data
+   * @brief Gets a {@link MetadataPropertyView} through a callback that accepts a
+   * property name and a {@link MetadataPropertyView<T>} that views the data
    * of the property with the specified name.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * MetadataPropertyView retrieves the correct data. T must be one of the
+   * {@link MetadataPropertyView} retrieves the correct data. T must be one of the
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or MetadataArrayView<T> with T as one of the
+   * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
    * aforementioned types. If the property is invalid, an empty
-   * MetadataPropertyView with an error status will be passed to the
+   * {@link MetadataPropertyView} with an error status will be passed to the
    * callback. Otherwise, a valid property view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts a property name and a
-   * MetadataPropertyView<T>
+   * {@link MetadataPropertyView<T>}
    */
   template <typename Callback>
   void
@@ -161,24 +158,24 @@ public:
 
   /**
    * @brief Iterates over each property in the
-   * ExtensionExtStructuralMetadataPropertyTable with a callback that accepts a
-   * property name and a MetadataPropertyView<T> to view the data
-   * stored in the ExtensionExtStructuralMetadataPropertyTableProperty.
+   * {@link ExtensionExtStructuralMetadataPropertyTable} with a callback that accepts a
+   * property name and a {@link MetadataPropertyView<T>} to view the data
+   * stored in the {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * MetadataPropertyView retrieves the correct data. T must be one of the
+   * {@link MetadataPropertyView} retrieves the correct data. T must be one of the
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or MetadataArrayView<T> with T as one of the
+   * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
    * aforementioned types. If the property is invalid, an empty
-   * MetadataPropertyView with an error status code will be passed to the
+   * {@link MetadataPropertyView} with an error status code will be passed to the
    * callback. Otherwise, a valid property view will be passed to
    * the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts property name and
-   * MetadataPropertyView<T>
+   * {@link MetadataPropertyView<T>}
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {
@@ -907,8 +904,8 @@ private:
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty) const {
     auto propertyTablePropertyIter =
-        _pPropertyTable->properties.find(propertyName);
-    if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
+        _propertyTable.properties.find(propertyName);
+    if (propertyTablePropertyIter == _propertyTable.properties.end()) {
       return createInvalidPropertyView<T>(
           MetadataPropertyViewStatus::ErrorPropertyDoesNotExist);
     }
@@ -977,9 +974,9 @@ private:
     size_t maxRequiredBytes = 0;
     if (IsMetadataBoolean<T>::value) {
       maxRequiredBytes = static_cast<size_t>(
-          glm::ceil(static_cast<double>(_pPropertyTable->count) / 8.0));
+          glm::ceil(static_cast<double>(_propertyTable.count) / 8.0));
     } else {
-      maxRequiredBytes = _pPropertyTable->count * sizeof(T);
+      maxRequiredBytes = _propertyTable.count * sizeof(T);
     }
 
     if (values.size() < maxRequiredBytes) {
@@ -991,7 +988,7 @@ private:
     return MetadataPropertyView<T>(
         MetadataPropertyViewStatus::Valid,
         values,
-        _pPropertyTable->count,
+        _propertyTable.count,
         classProperty.normalized);
   }
 
@@ -1052,12 +1049,11 @@ private:
       size_t maxRequiredBytes = 0;
       if constexpr (IsMetadataBoolean<T>::value) {
         maxRequiredBytes = static_cast<size_t>(glm::ceil(
-            static_cast<double>(
-                _pPropertyTable->count * fixedLengthArrayCount) /
+            static_cast<double>(_propertyTable.count * fixedLengthArrayCount) /
             8.0));
       } else {
         maxRequiredBytes = static_cast<size_t>(
-            _pPropertyTable->count * fixedLengthArrayCount * sizeof(T));
+            _propertyTable.count * fixedLengthArrayCount * sizeof(T));
       }
 
       if (values.size() < maxRequiredBytes) {
@@ -1074,7 +1070,7 @@ private:
           PropertyComponentType::None,
           PropertyComponentType::None,
           static_cast<size_t>(fixedLengthArrayCount),
-          static_cast<size_t>(_pPropertyTable->count),
+          static_cast<size_t>(_propertyTable.count),
           classProperty.normalized);
     }
 
@@ -1093,7 +1089,7 @@ private:
         propertyTableProperty.arrayOffsets,
         arrayOffsetType,
         values.size(),
-        static_cast<size_t>(_pPropertyTable->count),
+        static_cast<size_t>(_propertyTable.count),
         checkBitsSize,
         arrayOffsets);
     if (status != MetadataPropertyViewStatus::Valid) {
@@ -1108,7 +1104,7 @@ private:
         arrayOffsetType,
         PropertyComponentType::None,
         0,
-        static_cast<size_t>(_pPropertyTable->count),
+        static_cast<size_t>(_propertyTable.count),
         classProperty.normalized);
   }
 
@@ -1147,8 +1143,8 @@ private:
         false);
   }
 
-  const Model* _pModel;
-  const ExtensionExtStructuralMetadataPropertyTable* _pPropertyTable;
+  const Model& _model;
+  const ExtensionExtStructuralMetadataPropertyTable& _propertyTable;
   const ExtensionExtStructuralMetadataClass* _pClass;
 };
 
