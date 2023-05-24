@@ -38,7 +38,7 @@ static void checkSkirt(
       Math::equalsEpsilon(expectedPosition.z, skirtPosition.z, Math::Epsilon7));
 }
 
-TEST_CASE("Test upsample tile without skirts") {
+TEST_CASE("Test upsample tile") {
   const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
   Cartographic bottomLeftCart{glm::radians(110.0), glm::radians(32.0), 0.0};
   Cartographic topLeftCart{
@@ -939,4 +939,221 @@ TEST_CASE("Test upsample tile without skirts") {
           skirtHeight * 0.5);
     }
   }
+}
+
+TEST_CASE("Test upsample tile with UNSIGNED_BYTE indices") {
+  const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
+  Cartographic bottomLeftCart{glm::radians(110.0), glm::radians(32.0), 0.0};
+  Cartographic topLeftCart{
+      bottomLeftCart.longitude,
+      bottomLeftCart.latitude + glm::radians(1.0),
+      0.0};
+  Cartographic topRightCart{
+      bottomLeftCart.longitude + glm::radians(1.0),
+      bottomLeftCart.latitude + glm::radians(1.0),
+      0.0};
+  Cartographic bottomRightCart{
+      bottomLeftCart.longitude + glm::radians(1.0),
+      bottomLeftCart.latitude,
+      0.0};
+  Cartographic centerCart{
+      (bottomLeftCart.longitude + topRightCart.longitude) / 2.0,
+      (bottomLeftCart.latitude + topRightCart.latitude) / 2.0,
+      0.0};
+  glm::dvec3 center = ellipsoid.cartographicToCartesian(centerCart);
+  std::vector<glm::vec3> positions{
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(bottomLeftCart) - center),
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(topLeftCart) - center),
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(topRightCart) - center),
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(bottomRightCart) - center),
+  };
+  std::vector<glm::vec2> uvs{
+      glm::vec2{0.0, 0.0},
+      glm::vec2{0.0, 1.0},
+      glm::vec2{1.0, 0.0},
+      glm::vec2{1.0, 1.0}};
+  std::vector<uint8_t> indices{0, 2, 1, 1, 2, 3};
+  uint32_t positionsBufferSize =
+      static_cast<uint32_t>(positions.size() * sizeof(glm::vec3));
+  uint32_t uvsBufferSize =
+      static_cast<uint32_t>(uvs.size() * sizeof(glm::vec2));
+  uint32_t indicesBufferSize =
+      static_cast<uint32_t>(indices.size() * sizeof(uint8_t));
+
+  Model model;
+
+  // create buffer
+  model.buffers.emplace_back();
+  Buffer& buffer = model.buffers.back();
+  buffer.cesium.data.resize(
+      positionsBufferSize + uvsBufferSize + indicesBufferSize);
+  std::memcpy(buffer.cesium.data.data(), positions.data(), positionsBufferSize);
+  std::memcpy(
+      buffer.cesium.data.data() + positionsBufferSize,
+      uvs.data(),
+      uvsBufferSize);
+  std::memcpy(
+      buffer.cesium.data.data() + positionsBufferSize + uvsBufferSize,
+      indices.data(),
+      indicesBufferSize);
+
+  // create position
+  model.bufferViews.emplace_back();
+  BufferView& positionBufferView = model.bufferViews.emplace_back();
+  positionBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+  positionBufferView.byteOffset = 0;
+  positionBufferView.byteLength = positionsBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& positionAccessor = model.accessors.back();
+  positionAccessor.bufferView =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+  positionAccessor.byteOffset = 0;
+  positionAccessor.count = static_cast<int64_t>(positions.size());
+  positionAccessor.componentType = Accessor::ComponentType::FLOAT;
+  positionAccessor.type = Accessor::Type::VEC3;
+
+  int32_t positionAccessorIdx =
+      static_cast<int32_t>(model.accessors.size() - 1);
+
+  // create uv
+  model.bufferViews.emplace_back();
+  BufferView& uvBufferView = model.bufferViews.emplace_back();
+  uvBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  uvBufferView.byteOffset = positionsBufferSize;
+  uvBufferView.byteLength = uvsBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& uvAccessor = model.accessors.back();
+  uvAccessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+  uvAccessor.byteOffset = 0;
+  uvAccessor.count = static_cast<int64_t>(uvs.size());
+  uvAccessor.componentType = Accessor::ComponentType::FLOAT;
+  uvAccessor.type = Accessor::Type::VEC2;
+
+  int32_t uvAccessorIdx = static_cast<int32_t>(model.accessors.size() - 1);
+
+  // create indices
+  model.bufferViews.emplace_back();
+  BufferView& indicesBufferView = model.bufferViews.emplace_back();
+  indicesBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+  indicesBufferView.byteOffset = positionsBufferSize + uvsBufferSize;
+  indicesBufferView.byteLength = indicesBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& indicesAccessor = model.accessors.back();
+  indicesAccessor.bufferView = static_cast<int>(model.bufferViews.size() - 1);
+  indicesAccessor.byteOffset = 0;
+  indicesAccessor.count = static_cast<int64_t>(indices.size());
+  indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+  indicesAccessor.type = Accessor::Type::SCALAR;
+
+  int indicesAccessorIdx = static_cast<int>(model.accessors.size() - 1);
+
+  model.meshes.emplace_back();
+  Mesh& mesh = model.meshes.back();
+  mesh.primitives.emplace_back();
+
+  MeshPrimitive& primitive = mesh.primitives.back();
+  primitive.mode = MeshPrimitive::Mode::TRIANGLES;
+  primitive.attributes["_CESIUMOVERLAY_0"] = uvAccessorIdx;
+  primitive.attributes["POSITION"] = positionAccessorIdx;
+  primitive.indices = indicesAccessorIdx;
+
+  // create node and update bounding volume
+  model.nodes.emplace_back();
+  Node& node = model.nodes[0];
+  node.mesh = static_cast<int>(model.meshes.size() - 1);
+  node.matrix = {
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      center.x,
+      center.z,
+      -center.y,
+      1.0};
+
+  CesiumGeometry::UpsampledQuadtreeNode lowerLeft{
+      CesiumGeometry::QuadtreeTileID(1, 0, 0)};
+
+  Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
+
+  REQUIRE(upsampledModel.meshes.size() == 1);
+  const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+  REQUIRE(upsampledMesh.primitives.size() == 1);
+  const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+  REQUIRE(upsampledPrimitive.indices >= 0);
+  REQUIRE(
+      upsampledPrimitive.attributes.find("POSITION") !=
+      upsampledPrimitive.attributes.end());
+  AccessorView<glm::vec3> upsampledPosition(
+      upsampledModel,
+      upsampledPrimitive.attributes.at("POSITION"));
+  AccessorView<uint32_t> upsampledIndices(
+      upsampledModel,
+      upsampledPrimitive.indices);
+
+  glm::vec3 p0 = upsampledPosition[0];
+  REQUIRE(
+      glm::epsilonEqual(
+          p0,
+          positions[0],
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+  glm::vec3 p1 = upsampledPosition[1];
+  REQUIRE(
+      glm::epsilonEqual(
+          p1,
+          (positions[0] + positions[2]) * 0.5f,
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+  glm::vec3 p2 = upsampledPosition[2];
+  REQUIRE(
+      glm::epsilonEqual(
+          p2,
+          (upsampledPosition[1] + positions[1]) * 0.5f,
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+  glm::vec3 p3 = upsampledPosition[3];
+  REQUIRE(
+      glm::epsilonEqual(
+          p3,
+          (positions[0] + positions[1]) * 0.5f,
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+  glm::vec3 p4 = upsampledPosition[4];
+  REQUIRE(
+      glm::epsilonEqual(
+          p4,
+          (positions[0] + positions[2]) * 0.5f,
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+  glm::vec3 p5 = upsampledPosition[5];
+  REQUIRE(
+      glm::epsilonEqual(
+          p5,
+          (positions[1] + positions[2]) * 0.5f,
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+  glm::vec3 p6 = upsampledPosition[6];
+  REQUIRE(
+      glm::epsilonEqual(
+          p6,
+          (upsampledPosition[4] + positions[1]) * 0.5f,
+          glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
 }
