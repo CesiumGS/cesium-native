@@ -156,6 +156,15 @@ public:
   template <typename Callback>
   void
   getPropertyView(const std::string& propertyName, Callback&& callback) const {
+    if (this->size() <= 0) {
+      callback(
+          propertyName,
+          createInvalidPropertyView<uint8_t>(
+              StructuralMetadata::MetadataPropertyViewStatus::
+                  ErrorInvalidPropertyTable));
+      return;
+    }
+
     const ExtensionExtStructuralMetadataClassProperty* pClassProperty =
         getClassProperty(propertyName);
     if (!pClassProperty) {

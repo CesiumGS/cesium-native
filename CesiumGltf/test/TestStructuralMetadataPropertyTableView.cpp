@@ -7,6 +7,88 @@
 using namespace CesiumGltf;
 using namespace CesiumGltf::StructuralMetadata;
 
+TEST_CASE("Test model without EXT_structural_metadata extension") {
+  Model model;
+
+  // Create an erroneously isolated property table.
+  ExtensionExtStructuralMetadataPropertyTable propertyTable;
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(10);
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(0);
+
+  MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(
+      view.status() ==
+      MetadataPropertyTableViewStatus::ErrorNoStructuralMetadataExtension);
+  REQUIRE(view.size() == 0);
+
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(!classProperty);
+}
+
+TEST_CASE("Test model without metadata schema") {
+  Model model;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(10);
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(0);
+
+  MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::ErrorNoSchema);
+  REQUIRE(view.size() == 0);
+
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(!classProperty);
+}
+
+TEST_CASE("Test property table with nonexistent class") {
+  Model model;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
+  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
+  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
+      testClass.properties["TestClassProperty"];
+  testClassProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+  testClassProperty.componentType =
+      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32;
+
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "I Don't Exist";
+  propertyTable.count = static_cast<int64_t>(10);
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(0);
+
+  MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(
+      view.status() ==
+      MetadataPropertyTableViewStatus::ErrorPropertyTableClassDoesNotExist);
+  REQUIRE(view.size() == 0);
+
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(!classProperty);
+}
+
 TEST_CASE("Test StructuralMetadata scalar property") {
   Model model;
 
@@ -57,8 +139,12 @@ TEST_CASE("Test StructuralMetadata scalar property") {
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
@@ -232,8 +318,12 @@ TEST_CASE("Test StructuralMetadata vecN property") {
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
@@ -423,8 +513,12 @@ TEST_CASE("Test StructuralMetadata matN property") {
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
@@ -614,8 +708,12 @@ TEST_CASE("Test StructuralMetadata boolean property") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
@@ -725,8 +823,12 @@ TEST_CASE("Test StructuralMetadata string property") {
       static_cast<int32_t>(offsetBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::STRING);
@@ -867,8 +969,12 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
@@ -1037,8 +1143,12 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
           UINT64;
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
@@ -1192,8 +1302,12 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
@@ -1369,8 +1483,12 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
           UINT64;
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
@@ -1544,8 +1662,12 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
@@ -1742,8 +1864,12 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
           UINT64;
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
@@ -1915,8 +2041,12 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
@@ -2064,8 +2194,12 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
           UINT64;
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
@@ -2244,8 +2378,12 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
       static_cast<int32_t>(offsetBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::STRING);
@@ -2445,8 +2583,12 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
       static_cast<int32_t>(stringOffsetBufferView);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::STRING);
@@ -2600,6 +2742,48 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
   }
 }
 
+TEST_CASE("Test StructuralMetadata callback on invalid property table view") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+  metadata.schema.emplace();
+
+  // Property table has a nonexistent class.
+  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
+      metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(5);
+
+  ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(-1);
+
+  MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(
+      view.status() ==
+      MetadataPropertyTableViewStatus::ErrorPropertyTableClassDoesNotExist);
+  REQUIRE(view.size() == 0);
+
+  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(!classProperty);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() ==
+            MetadataPropertyViewStatus::ErrorInvalidPropertyTable);
+        REQUIRE(propertyValue.size() == 0);
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
 TEST_CASE("Test StructuralMetadata callback for invalid property") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
@@ -2624,6 +2808,9 @@ TEST_CASE("Test StructuralMetadata callback for invalid property") {
   propertyTableProperty.values = static_cast<int32_t>(-1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("InvalidProperty");
   REQUIRE(classProperty);
@@ -2631,14 +2818,19 @@ TEST_CASE("Test StructuralMetadata callback for invalid property") {
   classProperty = view.getClassProperty("NonexistentProperty");
   REQUIRE(!classProperty);
 
-  auto testCallback = [](const std::string& /*propertyName*/,
-                         auto propertyValue) mutable {
+  uint32_t invokedCallbackCount = 0;
+  auto testCallback = [&invokedCallbackCount](
+                          const std::string& /*propertyName*/,
+                          auto propertyValue) mutable {
+    invokedCallbackCount++;
     REQUIRE(propertyValue.status() != MetadataPropertyViewStatus::Valid);
     REQUIRE(propertyValue.size() == 0);
   };
 
   view.getPropertyView("InvalidProperty", testCallback);
   view.getPropertyView("NonexistentProperty", testCallback);
+
+  REQUIRE(invokedCallbackCount == 2);
 }
 
 TEST_CASE("Test StructuralMetadata callback for scalar property") {
@@ -2688,8 +2880,12 @@ TEST_CASE("Test StructuralMetadata callback for scalar property") {
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
@@ -2699,11 +2895,13 @@ TEST_CASE("Test StructuralMetadata callback for scalar property") {
   REQUIRE(!classProperty->array);
   REQUIRE(classProperty->count == std::nullopt);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&values](
+      [&values, &invokedCallbackCount](
           const std::string& /*propertyName*/,
           auto propertyValue) mutable {
+        invokedCallbackCount++;
         if constexpr (std::is_same_v<
                           MetadataPropertyView<uint32_t>,
                           decltype(propertyValue)>) {
@@ -2720,6 +2918,8 @@ TEST_CASE("Test StructuralMetadata callback for scalar property") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for vecN property") {
@@ -2774,8 +2974,12 @@ TEST_CASE("Test StructuralMetadata callback for vecN property") {
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
@@ -2785,11 +2989,14 @@ TEST_CASE("Test StructuralMetadata callback for vecN property") {
   REQUIRE(classProperty->count == std::nullopt);
   REQUIRE(!classProperty->array);
 
+  uint32_t invokedCallbackCount = 0;
+
   view.getPropertyView(
       "TestClassProperty",
-      [&values](
+      [&values, &invokedCallbackCount](
           const std::string& /*propertyName*/,
           auto propertyValue) mutable {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -2806,6 +3013,8 @@ TEST_CASE("Test StructuralMetadata callback for vecN property") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for matN property") {
@@ -2870,8 +3079,12 @@ TEST_CASE("Test StructuralMetadata callback for matN property") {
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
@@ -2881,9 +3094,10 @@ TEST_CASE("Test StructuralMetadata callback for matN property") {
   REQUIRE(classProperty->count == std::nullopt);
   REQUIRE(!classProperty->array);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&values](
+      [&values, &invokedCallbackCount](
           const std::string& /*propertyName*/,
           auto propertyValue) mutable {
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
@@ -2901,7 +3115,10 @@ TEST_CASE("Test StructuralMetadata callback for matN property") {
           FAIL("getPropertyView returned MetadataPropertyView of incorrect "
                "type for TestClassProperty.");
         }
+        invokedCallbackCount++;
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for boolean property") {
@@ -2964,8 +3181,12 @@ TEST_CASE("Test StructuralMetadata callback for boolean property") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
@@ -2973,11 +3194,14 @@ TEST_CASE("Test StructuralMetadata callback for boolean property") {
   REQUIRE(classProperty->count == std::nullopt);
   REQUIRE(!classProperty->array);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&expected](
+      [&expected, &invokedCallbackCount](
           const std::string& /*propertyName*/,
           auto propertyValue) mutable {
+        invokedCallbackCount++;
+
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -2994,6 +3218,8 @@ TEST_CASE("Test StructuralMetadata callback for boolean property") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for string property") {
@@ -3076,8 +3302,12 @@ TEST_CASE("Test StructuralMetadata callback for string property") {
       static_cast<int32_t>(offsetBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::STRING);
@@ -3085,11 +3315,13 @@ TEST_CASE("Test StructuralMetadata callback for string property") {
   REQUIRE(classProperty->count == std::nullopt);
   REQUIRE(!classProperty->array);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&expected](
+      [&expected, &invokedCallbackCount](
           const std::string& /*propertyName*/,
           auto propertyValue) mutable {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -3106,6 +3338,8 @@ TEST_CASE("Test StructuralMetadata callback for string property") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for scalar array") {
@@ -3156,8 +3390,12 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
@@ -3167,9 +3405,13 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
   REQUIRE(classProperty->array);
   REQUIRE(classProperty->count == 3);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&values](const std::string& /*propertyName*/, auto propertyValue) {
+      [&values, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -3187,6 +3429,8 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for vecN array") {
@@ -3243,8 +3487,12 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
@@ -3254,9 +3502,13 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
   REQUIRE(classProperty->array);
   REQUIRE(classProperty->count == 2);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&values](const std::string& /*propertyName*/, auto propertyValue) {
+      [&values, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -3274,6 +3526,8 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for matN array") {
@@ -3344,8 +3598,12 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
@@ -3355,9 +3613,13 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
   REQUIRE(classProperty->array);
   REQUIRE(classProperty->count == 2);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&values](const std::string& /*propertyName*/, auto propertyValue) {
+      [&values, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -3376,6 +3638,8 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for boolean array") {
@@ -3446,17 +3710,25 @@ TEST_CASE("Test StructuralMetadata callback for boolean array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
   REQUIRE(classProperty->array);
   REQUIRE(classProperty->count == 3);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&expected](const std::string& /*propertyName*/, auto propertyValue) {
+      [&expected, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
@@ -3474,6 +3746,8 @@ TEST_CASE("Test StructuralMetadata callback for boolean array") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
 
 TEST_CASE("Test StructuralMetadata callback for array of strings") {
@@ -3559,25 +3833,32 @@ TEST_CASE("Test StructuralMetadata callback for array of strings") {
       static_cast<int32_t>(offsetBufferViewIndex);
 
   MetadataPropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
   REQUIRE(
       classProperty->type ==
       ExtensionExtStructuralMetadataClassProperty::Type::STRING);
   REQUIRE(classProperty->array);
   REQUIRE(classProperty->count == 2);
 
+  uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [](const std::string& /*propertyName*/, auto propertyValue) {
+      [&invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) {
+        invokedCallbackCount++;
         REQUIRE(propertyValue.status() == MetadataPropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() == 3);
 
         if constexpr (std::is_same_v<
                           MetadataPropertyView<
                               MetadataArrayView<std::string_view>>,
                           decltype(propertyValue)>) {
-          REQUIRE(propertyValue.size() == 3);
-
           MetadataArrayView<std::string_view> v0 = propertyValue.get(0);
           REQUIRE(v0.size() == 2);
           REQUIRE(v0[0] == "What's up");
@@ -3600,4 +3881,6 @@ TEST_CASE("Test StructuralMetadata callback for array of strings") {
                "type for TestClassProperty.");
         }
       });
+
+  REQUIRE(invokedCallbackCount == 1);
 }
