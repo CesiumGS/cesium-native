@@ -2990,7 +2990,6 @@ TEST_CASE("Test StructuralMetadata callback for vecN property") {
   REQUIRE(!classProperty->array);
 
   uint32_t invokedCallbackCount = 0;
-
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](

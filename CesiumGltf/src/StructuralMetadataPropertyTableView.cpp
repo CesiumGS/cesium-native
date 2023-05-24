@@ -115,7 +115,6 @@ MetadataPropertyTableView::MetadataPropertyTableView(
       _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
-
   if (!pMetadata) {
     _status =
         MetadataPropertyTableViewStatus::ErrorNoStructuralMetadataExtension;
