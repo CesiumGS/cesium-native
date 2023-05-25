@@ -83,7 +83,7 @@ public:
    */
   int64_t size() const noexcept {
     return _status == MetadataPropertyTableViewStatus::Valid
-               ? _propertyTable.count
+               ? _pPropertyTable->count
                : 0;
   }
 
@@ -973,8 +973,8 @@ private:
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty) const {
     auto propertyTablePropertyIter =
-        _propertyTable.properties.find(propertyName);
-    if (propertyTablePropertyIter == _propertyTable.properties.end()) {
+        _pPropertyTable->properties.find(propertyName);
+    if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
       return createInvalidPropertyView<T>(
           MetadataPropertyViewStatus::ErrorPropertyDoesNotExist);
     }
@@ -1043,9 +1043,9 @@ private:
     size_t maxRequiredBytes = 0;
     if (IsMetadataBoolean<T>::value) {
       maxRequiredBytes = static_cast<size_t>(
-          glm::ceil(static_cast<double>(_propertyTable.count) / 8.0));
+          glm::ceil(static_cast<double>(_pPropertyTable->count) / 8.0));
     } else {
-      maxRequiredBytes = _propertyTable.count * sizeof(T);
+      maxRequiredBytes = _pPropertyTable->count * sizeof(T);
     }
 
     if (values.size() < maxRequiredBytes) {
@@ -1057,7 +1057,7 @@ private:
     return MetadataPropertyView<T>(
         MetadataPropertyViewStatus::Valid,
         values,
-        _propertyTable.count,
+        _pPropertyTable->count,
         classProperty.normalized);
   }
 
@@ -1118,11 +1118,12 @@ private:
       size_t maxRequiredBytes = 0;
       if constexpr (IsMetadataBoolean<T>::value) {
         maxRequiredBytes = static_cast<size_t>(glm::ceil(
-            static_cast<double>(_propertyTable.count * fixedLengthArrayCount) /
+            static_cast<double>(
+                _pPropertyTable->count * fixedLengthArrayCount) /
             8.0));
       } else {
         maxRequiredBytes = static_cast<size_t>(
-            _propertyTable.count * fixedLengthArrayCount * sizeof(T));
+            _pPropertyTable->count * fixedLengthArrayCount * sizeof(T));
       }
 
       if (values.size() < maxRequiredBytes) {
@@ -1139,7 +1140,7 @@ private:
           PropertyComponentType::None,
           PropertyComponentType::None,
           static_cast<size_t>(fixedLengthArrayCount),
-          static_cast<size_t>(_propertyTable.count),
+          static_cast<size_t>(_pPropertyTable->count),
           classProperty.normalized);
     }
 
@@ -1158,7 +1159,7 @@ private:
         propertyTableProperty.arrayOffsets,
         arrayOffsetType,
         values.size(),
-        static_cast<size_t>(_propertyTable.count),
+        static_cast<size_t>(_pPropertyTable->count),
         checkBitsSize,
         arrayOffsets);
     if (status != MetadataPropertyViewStatus::Valid) {
@@ -1173,7 +1174,7 @@ private:
         arrayOffsetType,
         PropertyComponentType::None,
         0,
-        static_cast<size_t>(_propertyTable.count),
+        static_cast<size_t>(_pPropertyTable->count),
         classProperty.normalized);
   }
 
@@ -1212,8 +1213,8 @@ private:
         false);
   }
 
-  const Model& _model;
-  const ExtensionExtStructuralMetadataPropertyTable& _propertyTable;
+  const Model* _pModel;
+  const ExtensionExtStructuralMetadataPropertyTable* _pPropertyTable;
   const ExtensionExtStructuralMetadataClass* _pClass;
   MetadataPropertyTableViewStatus _status;
 };
