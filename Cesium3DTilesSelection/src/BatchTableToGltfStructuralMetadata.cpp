@@ -95,12 +95,12 @@ struct MaskedArrayType {
         maxArrayCount(std::numeric_limits<uint32_t>::min()){};
 
   MaskedArrayType(
-      MaskedType elementType,
-      uint32_t minArrayCount,
-      uint32_t maxArrayCount)
-      : elementType(elementType),
-        minArrayCount(minArrayCount),
-        maxArrayCount(maxArrayCount) {}
+      MaskedType inElementType,
+      uint32_t inMinArrayCount,
+      uint32_t inMaxArrayCount)
+      : elementType(inElementType),
+        minArrayCount(inMinArrayCount),
+        maxArrayCount(inMaxArrayCount) {}
 
   /**
    * Merges another MaskedArrayType into this one.
@@ -120,76 +120,101 @@ struct CompatibleTypes {
   // been determined to be incompatible yet. Once something is either a
   // MaskedType or MaskedArrayType, they are considered incompatible with the
   // other type.
-  std::variant<std::monostate, MaskedType, MaskedArrayType> maskedType;
+private:
+  std::variant<std::monostate, MaskedType, MaskedArrayType> type;
 
-  CompatibleTypes() : maskedType(){};
+public:
+  CompatibleTypes() : type(){};
 
-  CompatibleTypes(const MaskedType& maskedType) : maskedType(maskedType){};
+  CompatibleTypes(const MaskedType& maskedType) : type(maskedType){};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : maskedType(maskedArrayType){};
+      : type(maskedArrayType){};
 
   /**
-   * Whether this is only compatible with arrays.
+   * Whether this is compatible with array types.
    */
-  bool isArray() const { return std::get_if<MaskedArrayType>(&maskedType); }
+  bool supportsArray() const {
+    return !std::holds_alternative<MaskedType>(type);
+  }
 
   /**
    * Marks as incompatible with every type. Fully-incompatible types will be
    * treated as strings.
    */
-  void makeIncompatible() {
-    MaskedType incompatibleMaskedType(false);
-    maskedType = incompatibleMaskedType;
+  void makeIncompatible() { type = MaskedType(false); }
+
+  /**
+   * Marks as incompatible with array types.
+   */
+  void makeIncompatibleWithArray() {
+    if (std::holds_alternative<MaskedType>(type)) {
+      return;
+    }
+
+    if (std::holds_alternative<MaskedArrayType>(type)) {
+      makeIncompatible();
+      return;
+    }
+
+    // If std::monostate, retain potential compatibility with non-array types
+    type = MaskedType(true);
   }
 
   /**
    * Merges a MaskedType into this CompatibleTypes.
    */
-  void operator&=(const MaskedType& otherMaskedType) {
-    if (isArray()) {
+  void operator&=(const MaskedType& inMaskedType) {
+    if (std::holds_alternative<MaskedType>(type)) {
+      MaskedType& maskedType = std::get<MaskedType>(type);
+      maskedType &= inMaskedType;
+      return;
+    }
+
+    if (std::holds_alternative<MaskedArrayType>(type)) {
       makeIncompatible();
       return;
     }
 
-    MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
-    if (pMaskedType) {
-      *pMaskedType &= otherMaskedType;
-    } else {
-      maskedType = otherMaskedType;
-    }
+    type = inMaskedType;
   }
 
   /**
    * Merges a MaskedArrayType into this CompatibleTypes.
    */
-  void operator&=(const MaskedArrayType& maskedArrayType) {
-    if (isArray()) {
-      MaskedArrayType& arrayType = std::get<MaskedArrayType>(maskedType);
-      arrayType &= maskedArrayType;
+  void operator&=(const MaskedArrayType& inArrayType) {
+    if (std::holds_alternative<MaskedArrayType>(type)) {
+      MaskedArrayType& arrayType = std::get<MaskedArrayType>(type);
+      arrayType &= inArrayType;
       return;
     }
 
-    MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
-    if (pMaskedType) {
+    if (std::holds_alternative<MaskedType>(type)) {
       makeIncompatible();
-    } else {
-      maskedType = maskedArrayType;
+      return;
     }
+
+    type = inArrayType;
   }
 
   /**
    * Merges another CompatibleTypes into this one.
    */
-  void operator&=(const CompatibleTypes& otherTypes) {
-    if (otherTypes.isArray()) {
-      const MaskedArrayType& otherMaskedType =
-          std::get<MaskedArrayType>(otherTypes.maskedType);
-      operator&=(otherMaskedType);
-    } else {
-      const MaskedType& otherMaskedType =
-          std::get<MaskedType>(otherTypes.maskedType);
-      operator&=(otherMaskedType);
+  void operator&=(const CompatibleTypes& inCompatibleTypes) {
+    if (std::holds_alternative<std::monostate>(inCompatibleTypes.type)) {
+      // The other CompatibleTypes is compatible with everything, so it does not
+      // change this one.
+      return;
     }
+
+    if (std::holds_alternative<MaskedArrayType>(inCompatibleTypes.type)) {
+      const MaskedArrayType& arrayType =
+          std::get<MaskedArrayType>(inCompatibleTypes.type);
+      operator&=(arrayType);
+      return;
+    }
+
+    const MaskedType& maskedType = std::get<MaskedType>(inCompatibleTypes.type);
+    operator&=(maskedType);
   }
 
   /**
@@ -198,18 +223,12 @@ struct CompatibleTypes {
    * MaskedType.
    */
   MaskedType toMaskedType() const {
-    if (isArray()) {
-      return MaskedType(false);
+    if (std::holds_alternative<MaskedType>(type)) {
+      return std::get<MaskedType>(type);
     }
 
-    const MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
-    if (pMaskedType) {
-      return *pMaskedType;
-    }
-
-    // If maskedType == std::monostate, then this CompatibleTypes is considered
-    // compatible with everything.
-    return MaskedType(true);
+    bool isArray = std::holds_alternative<MaskedArrayType>(type);
+    return MaskedType(!isArray);
   }
 
   /**
@@ -218,15 +237,12 @@ struct CompatibleTypes {
    * incompatible MaskedArrayType.
    */
   MaskedArrayType toMaskedArrayType() const {
-    if (isArray()) {
-      return std::get<MaskedArrayType>(maskedType);
+    if (std::holds_alternative<MaskedArrayType>(type)) {
+      return std::get<MaskedArrayType>(type);
     }
 
-    // If maskedType is a MaskedType, it is incompatible. Otherwise, if
-    // maskedType == std::monostate, then this CompatibleTypes is considered
-    // compatible with everything.
-    const MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
-    return MaskedArrayType(pMaskedType == nullptr);
+    bool isNonArray = std::holds_alternative<MaskedType>(type);
+    return MaskedArrayType(!isNonArray);
   }
 };
 
@@ -386,23 +402,16 @@ private:
 };
 
 CompatibleTypes findCompatibleTypesForBoolean() {
-  MaskedType type;
   // Don't allow conversion of bools to numeric 0 or 1.
-  type.isInt8 = type.isUint8 = false;
-  type.isInt16 = type.isUint16 = false;
-  type.isInt32 = type.isUint32 = false;
-  type.isInt64 = type.isUint64 = false;
-  type.isFloat32 = false;
-  type.isFloat64 = false;
-  type.isBool &= true;
+  MaskedType type(false);
+  type.isBool = true;
 
   return CompatibleTypes(type);
 }
 
 template <typename TValueIter>
 CompatibleTypes findCompatibleTypesForNumber(const TValueIter& it) {
-  MaskedType type;
-  type.isBool = false;
+  MaskedType type(false);
 
   if (it->IsInt64()) {
     const int64_t value = it->GetInt64();
@@ -419,26 +428,11 @@ CompatibleTypes findCompatibleTypesForNumber(const TValueIter& it) {
   } else if (it->IsUint64()) {
     // Only uint64_t can represent a value that fits in a uint64_t but not in
     // an int64_t.
-    type.isInt8 = type.isUint8 = false;
-    type.isInt16 = type.isUint16 = false;
-    type.isInt32 = type.isUint32 = false;
-    type.isInt64 = false;
     type.isUint64 = true;
-    type.isFloat32 = false;
-    type.isFloat64 = false;
   } else if (it->IsLosslessFloat()) {
-    type.isInt8 = type.isUint8 = false;
-    type.isInt16 = type.isUint16 = false;
-    type.isInt32 = type.isUint32 = false;
-    type.isInt64 = type.isUint64 = false;
     type.isFloat32 = true;
     type.isFloat64 = true;
   } else if (it->IsDouble()) {
-    type.isInt8 = type.isUint8 = false;
-    type.isInt16 = type.isUint16 = false;
-    type.isInt32 = type.isUint32 = false;
-    type.isInt64 = type.isUint64 = false;
-    type.isFloat32 = false;
     type.isFloat64 = true;
   }
 
@@ -450,13 +444,13 @@ CompatibleTypes findCompatibleTypesForArray(const TValueIter& it) {
   // Iterate over all of the elements in the array and determine their
   // compatible type.
   CompatibleTypes arrayElementCompatibleTypes =
-      findCompatibleTypes(ArrayOfPropertyValues(*it));
+      findCompatibleTypes<ArrayOfPropertyValues>(ArrayOfPropertyValues(*it));
 
-  if (arrayElementCompatibleTypes.isArray()) {
+  if (arrayElementCompatibleTypes.supportsArray()) {
     // Ignore complications with arrays of arrays. The elements will be treated
     // like strings.
-    arrayElementCompatibleTypes.makeIncompatible();
-    assert(!arrayElementCompatibleTypes.isArray());
+    arrayElementCompatibleTypes.makeIncompatibleWithArray();
+    assert(!arrayElementCompatibleTypes.supportsArray());
   }
 
   MaskedType elementType = arrayElementCompatibleTypes.toMaskedType();
@@ -578,34 +572,12 @@ void updateExtensionWithJsonStringProperty(
             UINT64;
   }
 
-  Buffer& gltfBuffer = gltf.buffers.emplace_back();
-  gltfBuffer.byteLength = static_cast<int64_t>(buffer.size());
-  gltfBuffer.cesium.data = std::move(buffer);
-
-  BufferView& gltfBufferView = gltf.bufferViews.emplace_back();
-  gltfBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfBufferView.byteOffset = 0;
-  gltfBufferView.byteLength = static_cast<int64_t>(totalSize);
-  const int32_t valueBufferViewIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
-  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
-  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
-
-  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
-  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  gltfOffsetBufferView.byteOffset = 0;
-  gltfOffsetBufferView.byteLength =
-      static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
-  const int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(gltf.bufferViews.size() - 1);
-
   classProperty.type =
       ExtensionExtStructuralMetadataClassProperty::Type::STRING;
 
-  propertyTableProperty.values = valueBufferViewIdx;
-  propertyTableProperty.stringOffsets = offsetBufferViewIdx;
+  propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
+  propertyTableProperty.stringOffsets =
+      addBufferToGltf(gltf, std::move(offsetBuffer));
 }
 
 template <typename T, typename TRapidJson = T, typename TValueGetter>
@@ -623,10 +595,9 @@ void updateExtensionWithJsonScalarProperty(
   classProperty.componentType = componentTypeName;
 
   // Create a new buffer for this property.
-  std::vector<std::byte> buffer;
   const size_t byteLength =
       sizeof(T) * static_cast<size_t>(propertyTable.count);
-  buffer.resize(byteLength);
+  std::vector<std::byte> buffer(byteLength);
 
   T* p = reinterpret_cast<T*>(buffer.data());
   auto it = propertyValue.begin();
@@ -1240,7 +1211,7 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   const CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
-  if (compatibleTypes.isArray()) {
+  if (compatibleTypes.supportsArray()) {
     MaskedArrayType arrayType = compatibleTypes.toMaskedArrayType();
     updateExtensionWithArrayProperty(
         gltf,
@@ -1450,9 +1421,9 @@ void updateExtensionWithBatchTableHierarchy(
     const rapidjson::Value& batchTableHierarchy) {
   // EXT_structural_metadata can't support hierarchy, so we need to flatten it.
   // It also can't support multiple classes with a single set of feature IDs.
-  // (Feature IDs can only specify one property table, which only supports one class.)
-  // So essentially every property of every class gets added to
-  // the one class definition.
+  // (Feature IDs can only specify one property table, which only supports one
+  // class.) So essentially every property of every class gets added to the one
+  // class definition.
   auto classesIt = batchTableHierarchy.FindMember("classes");
   if (classesIt == batchTableHierarchy.MemberEnd()) {
     result.emplaceWarning(

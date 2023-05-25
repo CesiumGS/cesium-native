@@ -1086,7 +1086,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
+  // TestUpgradeBatchTableToExtStructuralMetadata
   CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
