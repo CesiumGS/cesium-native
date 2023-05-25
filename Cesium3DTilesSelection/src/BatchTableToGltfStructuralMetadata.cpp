@@ -384,16 +384,8 @@ private:
   const rapidjson::Value& _propertyValues;
 };
 
-CompatibleTypes findCompatibleTypesForBoolean() {
-  // Don't allow conversion of bools to numeric 0 or 1.
-  MaskedType type(false);
-  type.isBool = true;
-
-  return CompatibleTypes(type);
-}
-
 template <typename TValueIter>
-CompatibleTypes findCompatibleTypesForNumber(const TValueIter& it) {
+MaskedType getCompatibleTypesForNumber(const TValueIter& it) {
   MaskedType type(false);
 
   if (it->IsInt64()) {
@@ -419,23 +411,7 @@ CompatibleTypes findCompatibleTypesForNumber(const TValueIter& it) {
     type.isFloat64 = true;
   }
 
-  return CompatibleTypes(type);
-}
-
-template <typename TValueGetter, typename TValueIter>
-CompatibleTypes findCompatibleTypesForArray(const TValueIter& it) {
-  // Iterate over all of the elements in the array and determine their
-  // compatible type.
-  CompatibleTypes arrayElementCompatibleTypes =
-      findCompatibleTypes(ArrayOfPropertyValues(*it));
-
-  // If the elements inside the array are also arrays, this will return a
-  // completely incompatible MaskedType, which means the elements will be
-  // treated like strings.
-  MaskedType elementType = arrayElementCompatibleTypes.toMaskedType();
-  MaskedArrayType arrayType(elementType, it->Size(), it->Size());
-
-  return CompatibleTypes(arrayType);
+  return type;
 }
 
 template <typename TValueGetter>
@@ -443,11 +419,26 @@ CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
   CompatibleTypes compatibleTypes;
   for (auto it = propertyValue.begin(); it != propertyValue.end(); ++it) {
     if (it->IsBool()) {
-      compatibleTypes &= findCompatibleTypesForBoolean();
+      // Don't allow booleans to be converted to numeric 0 or 1.
+      MaskedType booleanType(false);
+      booleanType.isBool = true;
+
+      compatibleTypes &= booleanType;
     } else if (it->IsNumber()) {
-      compatibleTypes &= findCompatibleTypesForNumber(it);
+      compatibleTypes &= getCompatibleTypesForNumber(it);
     } else if (it->IsArray()) {
-      compatibleTypes &= findCompatibleTypesForArray<TValueGetter>(it);
+      // Iterate over all of the elements in the array
+      // and determine their compatible type.
+      CompatibleTypes arrayElementCompatibleTypes =
+          findCompatibleTypes(ArrayOfPropertyValues(*it));
+
+      // If the elements inside the array are also arrays, this will return a
+      // completely incompatible MaskedType, which means the elements will be
+      // treated like strings.
+      MaskedType elementType = arrayElementCompatibleTypes.toMaskedType();
+      MaskedArrayType arrayType(elementType, it->Size(), it->Size());
+
+      compatibleTypes &= arrayType;
     } else {
       // A string, null, or something else.
       compatibleTypes.makeIncompatible();

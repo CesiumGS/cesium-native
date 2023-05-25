@@ -165,7 +165,8 @@ MetadataPropertyViewStatus MetadataPropertyTableView::getBufferSafe(
     return MetadataPropertyViewStatus::ErrorInvalidValueBufferView;
   }
 
-  const Buffer* pBuffer = _pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
+  const Buffer* pBuffer =
+      _pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
   if (!pBuffer) {
     return MetadataPropertyViewStatus::ErrorInvalidValueBuffer;
   }
