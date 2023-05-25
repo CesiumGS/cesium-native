@@ -15,7 +15,7 @@ namespace StructuralMetadata {
 
 /**
  * @brief A view on an array element of a
- * ExtensionExtStructuralMetadataPropertyTableProperty.
+ * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.

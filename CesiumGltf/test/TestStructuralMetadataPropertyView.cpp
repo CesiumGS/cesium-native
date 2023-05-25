@@ -19,11 +19,6 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   MetadataPropertyView<T> property(
       MetadataPropertyViewStatus::Valid,
       gsl::span<const std::byte>(data.data(), data.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      PropertyComponentType::None,
-      PropertyComponentType::None,
-      0,
       static_cast<int64_t>(expected.size()),
       false);
 
@@ -233,11 +228,6 @@ TEST_CASE("Check StructuralMetadata boolean property") {
   MetadataPropertyView<bool> property(
       MetadataPropertyViewStatus::Valid,
       gsl::span<const std::byte>(data.data(), data.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      PropertyComponentType::None,
-      PropertyComponentType::None,
-      0,
       static_cast<int64_t>(instanceCount),
       false);
   for (int64_t i = 0; i < property.size(); ++i) {

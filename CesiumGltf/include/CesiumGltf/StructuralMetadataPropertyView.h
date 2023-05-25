@@ -17,12 +17,12 @@ namespace StructuralMetadata {
 /**
  * @brief Indicates the status of a property view.
  *
- * The {@link MetadataPropertyView} constructor always completes successfully. However,
- * it may not always reflect the actual content of the {@link ExtensionExtStructuralMetadataPropertyTableProperty}, but
- * instead indicate that its {@link MetadataPropertyView::size} is 0. This enumeration
+ * The {@link MetadataPropertyView} constructor always completes successfully.
+ * However, it may not always reflect the actual content of the
+ * {@link ExtensionExtStructuralMetadataPropertyTableProperty}, but instead
+ * indicate that its {@link MetadataPropertyView::size} is 0. This enumeration
  * provides the reason.
  */
-
 enum class MetadataPropertyViewStatus {
   /**
    * @brief This property view is valid and ready to use.
@@ -30,8 +30,14 @@ enum class MetadataPropertyViewStatus {
   Valid,
 
   /**
+   * @brief This property view was attempting to view an invalid
+   * {@link ExtensionExtStructuralMetadataPropertyTable}.
+   */
+  ErrorInvalidPropertyTable,
+
+  /**
    * @brief This property view does not exist in the
-   * ExtensionExtStructuralMetadataPropertyTable.
+   * {@link ExtensionExtStructuralMetadataPropertyTable}.
    */
   ErrorPropertyDoesNotExist,
 
@@ -153,11 +159,12 @@ enum class MetadataPropertyViewStatus {
 
 /**
  * @brief A view on the data of the
- * ExtensionExtStructuralMetadataPropertyTableProperty
+ * {@link ExtensionExtStructuralMetadataPropertyTableProperty that is created by
+ * a {@link MetadataPropertyTableView}.
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty::values} like an array of elements.
- * Data of each instance can be accessed through the {@link get(int64_t instance)} method
+ * Data of each instance can be accessed through the {@link get(int64_t instance)} method.
  *
  * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
  * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
@@ -178,8 +185,32 @@ public:
         _normalized{} {}
 
   /**
+   * @brief Construct a new instance pointing to non-array data specified by
+   * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
+   * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
+   * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
+   * @param normalized Whether this property has a normalized integer type.
+   */
+  MetadataPropertyView(
+      MetadataPropertyViewStatus status,
+      gsl::span<const std::byte> values,
+      int64_t size,
+      bool normalized) noexcept
+      : _status{status},
+        _values{values},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0},
+        _fixedLengthArrayCount{0},
+        _size{size},
+        _normalized{normalized} {}
+
+  /**
    * @brief Construct a new instance pointing to the data specified by
-   * ExtensionExtStructuralMetadataPropertyTableProperty.
+   * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
    * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsets}
    * @param stringOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsets}
@@ -216,11 +247,13 @@ public:
    *
    * Indicates whether the view accurately reflects the property's data, or
    * whether an error occurred.
+   *
+   * @return The status of this property view.
    */
   MetadataPropertyViewStatus status() const noexcept { return _status; }
 
   /**
-   * @brief Get the value of an element of the FeatureTable.
+   * @brief Get the value of an element of the {@link ExtensionExtStructuralMetadataPropertyTable}.
    * @param index The element index
    * @return The value of the element
    */
@@ -231,7 +264,8 @@ public:
     assert(
         size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be positive");
+    assert(index >= 0 && "index must be non-negative");
+    assert(index < size() && "index must be less than size");
 
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumericValue(index);
@@ -260,13 +294,15 @@ public:
   }
 
   /**
-   * @brief Get the number of elements in the
-   * ExtensionExtStructuralMetadataPropertyTable.
+   * @brief Get the number of elements in this MetadataPropertyView. If the view
+   * is valid, this returns
+   * {@link ExtensionExtStructuralMetadataPropertyTable::count}. Otherwise, this returns 0.
    *
-   * @return The number of elements in the
-   * ExtensionExtStructuralMetadataPropertyTable.
+   * @return The number of elements in this MetadataPropertyView.
    */
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept {
+    return status() == MetadataPropertyViewStatus::Valid ? _size : 0;
+  }
 
   /**
    * @brief Get the element count of the fixed-length arrays in this property.

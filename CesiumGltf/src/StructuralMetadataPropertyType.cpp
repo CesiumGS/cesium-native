@@ -39,39 +39,39 @@ PropertyType convertStringToPropertyType(const std::string& str) {
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::VEC2) {
-    return StructuralMetadata::PropertyType::Vec2;
+    return PropertyType::Vec2;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::VEC3) {
-    return StructuralMetadata::PropertyType::Vec3;
+    return PropertyType::Vec3;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::VEC4) {
-    return StructuralMetadata::PropertyType::Vec4;
+    return PropertyType::Vec4;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::MAT2) {
-    return StructuralMetadata::PropertyType::Mat2;
+    return PropertyType::Mat2;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::MAT3) {
-    return StructuralMetadata::PropertyType::Mat3;
+    return PropertyType::Mat3;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::MAT4) {
-    return StructuralMetadata::PropertyType::Mat4;
+    return PropertyType::Mat4;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN) {
-    return StructuralMetadata::PropertyType::Boolean;
+    return PropertyType::Boolean;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::STRING) {
-    return StructuralMetadata::PropertyType::String;
+    return PropertyType::String;
   }
 
   if (str == ExtensionExtStructuralMetadataClassProperty::Type::ENUM) {
-    return StructuralMetadata::PropertyType::Enum;
+    return PropertyType::Enum;
   }
 
   return PropertyType::Invalid;
@@ -106,7 +106,7 @@ std::string convertPropertyComponentTypeToString(PropertyComponentType type) {
   }
 }
 
-StructuralMetadata::PropertyComponentType
+PropertyComponentType
 convertStringToPropertyComponentType(const std::string& str) {
   if (str ==
       ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8) {
@@ -160,7 +160,7 @@ convertStringToPropertyComponentType(const std::string& str) {
   return PropertyComponentType::None;
 }
 
-StructuralMetadata::PropertyComponentType
+PropertyComponentType
 convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str) {
   if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
                  ArrayOffsetType::UINT8) {
@@ -185,7 +185,7 @@ convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str) {
   return PropertyComponentType::None;
 }
 
-StructuralMetadata::PropertyComponentType
+PropertyComponentType
 convertStringOffsetTypeStringToPropertyComponentType(const std::string& str) {
   if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
                  StringOffsetType::UINT8) {
@@ -208,6 +208,16 @@ convertStringOffsetTypeStringToPropertyComponentType(const std::string& str) {
   }
 
   return PropertyComponentType::None;
+}
+
+bool isPropertyTypeVecN(PropertyType type) {
+  return type == PropertyType::Vec2 || type == PropertyType::Vec3 ||
+         type == PropertyType::Vec4;
+}
+
+bool isPropertyTypeMatN(PropertyType type) {
+  return type == PropertyType::Mat2 || type == PropertyType::Mat3 ||
+         type == PropertyType::Mat4;
 }
 
 } // namespace StructuralMetadata
