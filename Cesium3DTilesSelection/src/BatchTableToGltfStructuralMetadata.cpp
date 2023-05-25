@@ -1448,10 +1448,11 @@ void updateExtensionWithBatchTableHierarchy(
     ExtensionExtStructuralMetadataPropertyTable& propertyTable,
     ErrorList& result,
     const rapidjson::Value& batchTableHierarchy) {
-  // EXT_feature_metadata can't support hierarchy, so we need to flatten it.
+  // EXT_structural_metadata can't support hierarchy, so we need to flatten it.
   // It also can't support multiple classes with a single set of feature IDs.
-  // So essentially every property of every class gets added to the one class
-  // definition.
+  // (Feature IDs can only specify one property table, which only supports one class.)
+  // So essentially every property of every class gets added to
+  // the one class definition.
   auto classesIt = batchTableHierarchy.FindMember("classes");
   if (classesIt == batchTableHierarchy.MemberEnd()) {
     result.emplaceWarning(
@@ -1649,7 +1650,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
 
   ErrorList result;
 
-  // Parse the b3dm batch table and convert it to the EXT_feature_metadata
+  // Parse the b3dm batch table and convert it to the EXT_structural_metadata
   // extension.
 
   // If the feature table is missing the BATCH_LENGTH semantic, ignore the batch
@@ -1716,7 +1717,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
   ErrorList result;
 
-  // Parse the pnts batch table and convert it to the EXT_feature_metadata
+  // Parse the pnts batch table and convert it to the EXT_structural_metadata
   // extension.
 
   const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");

@@ -176,7 +176,7 @@ rapidjson::Document parseFeatureTableJsonData(
   return document;
 }
 
-void convertB3dmMetadataToGltfFeatureMetadata(
+void convertB3dmMetadataToGltfStructuralMetadata(
     const gsl::span<const std::byte>& b3dmBinary,
     const B3dmHeader& header,
     uint32_t headerLength,
@@ -246,7 +246,7 @@ GltfConverterResult B3dmToGltfConverter::convert(
     return result;
   }
 
-  convertB3dmMetadataToGltfFeatureMetadata(
+  convertB3dmMetadataToGltfStructuralMetadata(
       b3dmBinary,
       header,
       headerLength,
