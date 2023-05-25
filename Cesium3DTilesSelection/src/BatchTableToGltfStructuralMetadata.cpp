@@ -163,15 +163,15 @@ struct CompatibleTypes {
    * Merges a MaskedArrayType into this CompatibleTypes.
    */
   void operator&=(const MaskedArrayType& maskedArrayType) {
-    if (!isArray()) {
-      makeIncompatible();
+    if (isArray()) {
+      MaskedArrayType& arrayType = std::get<MaskedArrayType>(maskedType);
+      arrayType &= maskedArrayType;
       return;
     }
 
-    MaskedArrayType* pMaskedArrayType =
-        std::get_if<MaskedArrayType>(&maskedType);
-    if (pMaskedArrayType) {
-      *pMaskedArrayType &= maskedArrayType;
+    MaskedType* pMaskedType = std::get_if<MaskedType>(&maskedType);
+    if (pMaskedType) {
+      makeIncompatible();
     } else {
       maskedType = maskedArrayType;
     }

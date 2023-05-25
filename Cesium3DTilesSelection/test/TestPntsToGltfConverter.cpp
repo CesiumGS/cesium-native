@@ -5,7 +5,7 @@
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -654,7 +654,7 @@ getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
 }
 
 TEST_CASE(
-    "Converts point cloud with batch IDs to glTF with EXT_feature_metadata") {
+    "Converts point cloud with batch IDs to glTF with EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
   const int32_t pointsLength = 8;
@@ -665,8 +665,8 @@ TEST_CASE(
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -744,8 +744,8 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -803,8 +803,8 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -948,7 +948,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -1087,7 +1087,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
 
   // The correctness of the model extension is thoroughly tested in
   // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
