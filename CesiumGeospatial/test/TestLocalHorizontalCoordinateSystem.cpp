@@ -144,4 +144,28 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         0.0,
         1e-10));
   }
+
+  SECTION("computeTransformationToAnotherLocal") {
+    LocalHorizontalCoordinateSystem original(
+        nullIsland,
+        LocalDirection::East,
+        LocalDirection::South,
+        LocalDirection::Up);
+
+    LocalHorizontalCoordinateSystem target(
+        Cartographic::fromDegrees(12.0, 23.0, 1000.0),
+        LocalDirection::East,
+        LocalDirection::South,
+        LocalDirection::Up);
+
+    glm::dvec3 somePointInOriginal = glm::dvec3(1781.0, 373.0, 7777.2);
+    glm::dvec3 samePointInEcef =
+        original.localPositionToEcef(somePointInOriginal);
+    glm::dvec3 samePointInTarget = target.ecefPositionToLocal(samePointInEcef);
+
+    glm::dmat4 transform = original.computeTransformationToAnotherLocal(target);
+    glm::dvec3 computedByTransform =
+        glm::dvec3(transform * glm::dvec4(somePointInOriginal, 1.0));
+    CHECK(Math::equalsEpsilon(computedByTransform, samePointInTarget, 1e-15));
+  }
 }

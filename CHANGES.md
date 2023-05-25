@@ -4,6 +4,7 @@
 
 ##### Additions :tada:
 
+- Added `computeTransformationToAnotherLocal` method to `LocalHorizontalCoordinateSystem`.
 - Added support for the `KHR_materials_variants` extension to the glTF reader and writer.
 
 ##### Fixes :wrench:
