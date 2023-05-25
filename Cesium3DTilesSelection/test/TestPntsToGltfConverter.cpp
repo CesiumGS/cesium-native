@@ -653,8 +653,8 @@ getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
   return result;
 }
 
-TEST_CASE(
-    "Converts point cloud with batch IDs to glTF with EXT_structural_metadata") {
+TEST_CASE("Converts point cloud with batch IDs to glTF with "
+          "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
   const int32_t pointsLength = 8;

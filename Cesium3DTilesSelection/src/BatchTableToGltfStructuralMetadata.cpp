@@ -131,10 +131,10 @@ public:
       : type(maskedArrayType){};
 
   /**
-   * Whether this is compatible with array types.
+   * Whether this is exclusively compatible with array types.
    */
-  bool supportsArray() const {
-    return !std::holds_alternative<MaskedType>(type);
+  bool isExclusivelyArray() const {
+    return std::holds_alternative<MaskedArrayType>(type);
   }
 
   /**
@@ -142,23 +142,6 @@ public:
    * treated as strings.
    */
   void makeIncompatible() { type = MaskedType(false); }
-
-  /**
-   * Marks as incompatible with array types.
-   */
-  void makeIncompatibleWithArray() {
-    if (std::holds_alternative<MaskedType>(type)) {
-      return;
-    }
-
-    if (std::holds_alternative<MaskedArrayType>(type)) {
-      makeIncompatible();
-      return;
-    }
-
-    // If std::monostate, retain potential compatibility with non-array types
-    type = MaskedType(true);
-  }
 
   /**
    * Merges a MaskedType into this CompatibleTypes.
@@ -439,20 +422,16 @@ CompatibleTypes findCompatibleTypesForNumber(const TValueIter& it) {
   return CompatibleTypes(type);
 }
 
-template <typename TValueIter>
+template <typename TValueGetter, typename TValueIter>
 CompatibleTypes findCompatibleTypesForArray(const TValueIter& it) {
   // Iterate over all of the elements in the array and determine their
   // compatible type.
   CompatibleTypes arrayElementCompatibleTypes =
-      findCompatibleTypes<ArrayOfPropertyValues>(ArrayOfPropertyValues(*it));
+      findCompatibleTypes(ArrayOfPropertyValues(*it));
 
-  if (arrayElementCompatibleTypes.supportsArray()) {
-    // Ignore complications with arrays of arrays. The elements will be treated
-    // like strings.
-    arrayElementCompatibleTypes.makeIncompatibleWithArray();
-    assert(!arrayElementCompatibleTypes.supportsArray());
-  }
-
+  // If the elements inside the array are also arrays, this will return a
+  // completely incompatible MaskedType, which means the elements will be
+  // treated like strings.
   MaskedType elementType = arrayElementCompatibleTypes.toMaskedType();
   MaskedArrayType arrayType(elementType, it->Size(), it->Size());
 
@@ -468,7 +447,7 @@ CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
     } else if (it->IsNumber()) {
       compatibleTypes &= findCompatibleTypesForNumber(it);
     } else if (it->IsArray()) {
-      compatibleTypes &= findCompatibleTypesForArray(it);
+      compatibleTypes &= findCompatibleTypesForArray<TValueGetter>(it);
     } else {
       // A string, null, or something else.
       compatibleTypes.makeIncompatible();
@@ -601,10 +580,8 @@ void updateExtensionWithJsonScalarProperty(
 
   T* p = reinterpret_cast<T*>(buffer.data());
   auto it = propertyValue.begin();
-  for (int64_t i = 0; i < propertyTable.count; ++i) {
+  for (int64_t i = 0; i < propertyTable.count; ++i, ++p, ++it) {
     *p = static_cast<T>(it->template Get<TRapidJson>());
-    ++p;
-    ++it;
   }
 
   propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
@@ -881,7 +858,7 @@ void updateStringArrayProperty(
         propertyTable,
         propertyValue);
     stringOffsetType = PropertyComponentType::Uint32;
-  } else if (isInRangeForUnsignedInteger<uint64_t>(totalByteLength)) {
+  } else {
     copyStringsToBuffers<uint64_t>(
         valueBuffer,
         stringOffsetBuffer,
@@ -907,45 +884,46 @@ void updateStringArrayProperty(
     return;
   }
 
-  // Handle variable-length arrays
+  // Handle variable-length arrays.
+  // For string arrays, arrayOffsets indexes into the stringOffsets buffer,
+  // the size of which is the number of stringElements + 1. This determines the
+  // component type of the array offsets.
   std::vector<std::byte> arrayOffsetBuffer;
-  switch (stringOffsetType) {
-  case PropertyComponentType::Uint8:
+  PropertyComponentType arrayOffsetType = PropertyComponentType::None;
+  if (isInRangeForUnsignedInteger<uint8_t>(stringCount + 1)) {
     copyArrayOffsetsForStringArraysToBuffer<uint8_t>(
         arrayOffsetBuffer,
         propertyTable,
         propertyValue);
-    break;
-  case PropertyComponentType::Uint16:
+    arrayOffsetType = PropertyComponentType::Uint8;
+  } else if (isInRangeForUnsignedInteger<uint16_t>(stringCount + 1)) {
     copyArrayOffsetsForStringArraysToBuffer<uint16_t>(
         arrayOffsetBuffer,
         propertyTable,
         propertyValue);
-    break;
-  case PropertyComponentType::Uint32:
+    arrayOffsetType = PropertyComponentType::Uint16;
+  } else if (isInRangeForUnsignedInteger<uint32_t>(stringCount + 1)) {
     copyArrayOffsetsForStringArraysToBuffer<uint32_t>(
         arrayOffsetBuffer,
         propertyTable,
         propertyValue);
-    break;
-  case PropertyComponentType::Uint64:
+    arrayOffsetType = PropertyComponentType::Uint32;
+  } else {
     copyArrayOffsetsForStringArraysToBuffer<uint64_t>(
         arrayOffsetBuffer,
         propertyTable,
         propertyValue);
-    break;
-  default:
-    break;
+    arrayOffsetType = PropertyComponentType::Uint64;
   }
 
   propertyTableProperty.arrayOffsets =
       addBufferToGltf(gltf, std::move(arrayOffsetBuffer));
   propertyTableProperty.arrayOffsetType =
-      convertPropertyComponentTypeToString(stringOffsetType);
+      convertPropertyComponentTypeToString(arrayOffsetType);
 }
 
 template <typename OffsetType, typename TValueGetter>
-void copyVariableLengthBooleanArraysBuffers(
+void copyVariableLengthBooleanArraysToBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
@@ -1036,24 +1014,24 @@ void updateBooleanArrayProperty(
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
   PropertyComponentType offsetType = PropertyComponentType::None;
-  if (isInRangeForUnsignedInteger<uint8_t>(numOfElements)) {
-    copyVariableLengthBooleanArraysBuffers<uint8_t>(
+  if (isInRangeForUnsignedInteger<uint8_t>(numOfElements + 1)) {
+    copyVariableLengthBooleanArraysToBuffers<uint8_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
         propertyTable,
         propertyValue);
     offsetType = PropertyComponentType::Uint8;
-  } else if (isInRangeForUnsignedInteger<uint16_t>(numOfElements)) {
-    copyVariableLengthBooleanArraysBuffers<uint16_t>(
+  } else if (isInRangeForUnsignedInteger<uint16_t>(numOfElements + 1)) {
+    copyVariableLengthBooleanArraysToBuffers<uint16_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
         propertyTable,
         propertyValue);
     offsetType = PropertyComponentType::Uint16;
-  } else if (isInRangeForUnsignedInteger<uint32_t>(numOfElements)) {
-    copyVariableLengthBooleanArraysBuffers<uint32_t>(
+  } else if (isInRangeForUnsignedInteger<uint32_t>(numOfElements + 1)) {
+    copyVariableLengthBooleanArraysToBuffers<uint32_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
@@ -1061,7 +1039,7 @@ void updateBooleanArrayProperty(
         propertyValue);
     offsetType = PropertyComponentType::Uint32;
   } else {
-    copyVariableLengthBooleanArraysBuffers<uint64_t>(
+    copyVariableLengthBooleanArraysToBuffers<uint64_t>(
         valueBuffer,
         offsetBuffer,
         numOfElements,
@@ -1211,7 +1189,7 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   const CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
-  if (compatibleTypes.supportsArray()) {
+  if (compatibleTypes.isExclusivelyArray()) {
     MaskedArrayType arrayType = compatibleTypes.toMaskedArrayType();
     updateExtensionWithArrayProperty(
         gltf,
@@ -1420,10 +1398,9 @@ void updateExtensionWithBatchTableHierarchy(
     ErrorList& result,
     const rapidjson::Value& batchTableHierarchy) {
   // EXT_structural_metadata can't support hierarchy, so we need to flatten it.
-  // It also can't support multiple classes with a single set of feature IDs.
-  // (Feature IDs can only specify one property table, which only supports one
-  // class.) So essentially every property of every class gets added to the one
-  // class definition.
+  // It also can't support multiple classes with a single set of feature IDs,
+  // because IDs can only specify one property table. So essentially every
+  // property of every class gets added to the one class definition.
   auto classesIt = batchTableHierarchy.FindMember("classes");
   if (classesIt == batchTableHierarchy.MemberEnd()) {
     result.emplaceWarning(
@@ -1439,8 +1416,7 @@ void updateExtensionWithBatchTableHierarchy(
       if (!element.IsInt64() || element.GetInt64() != 1LL) {
         result.emplaceWarning(
             "3DTILES_batch_table_hierarchy with a \"parentCounts\" property "
-            "is "
-            "not currently supported. All instances must have at most one "
+            "is not currently supported. All instances must have at most one "
             "parent.");
         return;
       }
