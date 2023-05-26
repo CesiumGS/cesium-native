@@ -9,6 +9,7 @@
 
 ##### Fixes :wrench:
 
+- On Tileset Load Failure, warning/error messages will always be logged even if the failure callback is set. 
 - Fixed a bug that caused meshes to be missing entirely when upsampled from a parent with `UNSIGNED_BYTE` indices.
 
 ### v0.24.0 - 2023-05-01
