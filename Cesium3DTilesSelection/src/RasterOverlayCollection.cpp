@@ -128,8 +128,8 @@ void RasterOverlayCollection::add(
           if (pOverlay->getOptions().loadErrorCallback) {
             pOverlay->getOptions().loadErrorCallback(failureDetails);
           }
-          // CESIUM_TRACE_END_IN_TRACK("createTileProvider");
         }
+        // CESIUM_TRACE_END_IN_TRACK("createTileProvider");
       });
 }
 
