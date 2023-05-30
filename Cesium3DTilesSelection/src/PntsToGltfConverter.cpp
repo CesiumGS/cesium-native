@@ -5,7 +5,6 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 
