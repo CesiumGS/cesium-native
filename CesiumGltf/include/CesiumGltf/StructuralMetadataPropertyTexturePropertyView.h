@@ -58,6 +58,11 @@ enum class PropertyTexturePropertyViewStatus {
   ErrorEmptyImage,
 
   /**
+   * @brief This property texture property has a negative TEXCOORD set index.
+   */
+  ErrorInvalidTexCoordSetIndex,
+
+  /**
    * @brief The channels of this property texture property are invalid.
    * Channels must be in the range 0-3, with a minimum of one channel and a
    * maximum of four.
@@ -187,17 +192,16 @@ public:
   }
 
   /**
-   * @brief Get the count for this property.
-   *
-   * This is also how many channels a pixel value for this property will use.
+   * @brief Get the count for this property. This is equivalent to how many
+   * channels a pixel value for this property will use.
    */
   int64_t getCount() const noexcept { return this->_count; }
 
   /**
    * @brief Get the texture coordinate set index for this property.
    */
-  int64_t getTextureCoordinateSetIndex() const noexcept {
-    return this->_textureCoordinateSetIndex;
+  int64_t getTexCoordSetIndex() const noexcept {
+    return this->_texCoordSetIndex;
   }
 
   /**
@@ -233,7 +237,7 @@ private:
 
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
-  int64_t _textureCoordinateSetIndex;
+  int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
   PropertyTexturePropertyComponentType _type;

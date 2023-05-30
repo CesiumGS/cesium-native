@@ -10,7 +10,7 @@ PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
       _pPropertyTextureProperty(nullptr),
       _pSampler(nullptr),
       _pImage(nullptr),
-      _textureCoordinateSetIndex(-1),
+      _texCoordSetIndex(-1),
       _channels(),
       _swizzle(""),
       _type(PropertyTexturePropertyComponentType::Uint8),
@@ -27,7 +27,7 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
       _pPropertyTextureProperty(&propertyTextureProperty),
       _pSampler(nullptr),
       _pImage(nullptr),
-      _textureCoordinateSetIndex(propertyTextureProperty.texCoord),
+      _texCoordSetIndex(propertyTextureProperty.texCoord),
       _channels(),
       _swizzle(""),
       _type(PropertyTexturePropertyComponentType::Uint8),
@@ -58,6 +58,12 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
   this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+    return;
+  }
+
+  if (this->_texCoordSetIndex < 0) {
+    this->_status =
+        PropertyTexturePropertyViewStatus::ErrorInvalidTexCoordSetIndex;
     return;
   }
 

@@ -5,8 +5,8 @@
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltf/StructuralMetadataPropertyTableView.h>
 #include <CesiumGltf/StructuralMetadataPropertyTablePropertyView.h>
+#include <CesiumGltf/StructuralMetadataPropertyTableView.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
