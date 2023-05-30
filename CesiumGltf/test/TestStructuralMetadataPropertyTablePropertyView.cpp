@@ -1,4 +1,4 @@
-#include "CesiumGltf/StructuralMetadataPropertyView.h"
+#include "CesiumGltf/StructuralMetadataPropertyTablePropertyView.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -16,8 +16,8 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   data.resize(expected.size() * sizeof(T));
   std::memcpy(data.data(), expected.data(), data.size());
 
-  MetadataPropertyView<T> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<T> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(data.data(), data.size()),
       static_cast<int64_t>(expected.size()),
       false);
@@ -46,8 +46,8 @@ static void checkVariableLengthArray(
       offsets.data(),
       offsets.size() * sizeof(OffsetType));
 
-  MetadataPropertyView<MetadataArrayView<DataType>> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<MetadataArrayView<DataType>> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       gsl::span<const std::byte>(),
@@ -78,8 +78,8 @@ static void checkFixedLengthArray(
   buffer.resize(data.size() * sizeof(T));
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
 
-  MetadataPropertyView<MetadataArrayView<T>> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<MetadataArrayView<T>> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -225,8 +225,8 @@ TEST_CASE("Check StructuralMetadata boolean property") {
   std::memcpy(data.data(), &val, sizeof(val));
 
   size_t instanceCount = sizeof(unsigned long) * CHAR_BIT;
-  MetadataPropertyView<bool> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<bool> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(data.data(), data.size()),
       static_cast<int64_t>(instanceCount),
       false);
@@ -272,8 +272,8 @@ TEST_CASE("Check StructuralMetadata string property") {
       &currentOffset,
       sizeof(uint32_t));
 
-  MetadataPropertyView<std::string_view> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<std::string_view> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
@@ -831,8 +831,8 @@ TEST_CASE("Check StructuralMetadata fixed-length array of string") {
       &currentStringOffset,
       sizeof(uint32_t));
 
-  MetadataPropertyView<MetadataArrayView<std::string_view>> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<MetadataArrayView<std::string_view>> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
@@ -904,8 +904,8 @@ TEST_CASE(
       &currentOffset,
       sizeof(uint32_t));
 
-  MetadataPropertyView<MetadataArrayView<std::string_view>> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<MetadataArrayView<std::string_view>> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(arrayOffsets.data()),
@@ -936,8 +936,8 @@ TEST_CASE("Check StructuralMetadata fixed-length boolean array property") {
       static_cast<std::byte>(0b11111010),
       static_cast<std::byte>(0b11100111)};
 
-  MetadataPropertyView<MetadataArrayView<bool>> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<MetadataArrayView<bool>> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -988,8 +988,8 @@ TEST_CASE("Check StructuralMetadata variable-length boolean array property") {
 
   std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
 
-  MetadataPropertyView<MetadataArrayView<bool>> property(
-      MetadataPropertyViewStatus::Valid,
+  PropertyTablePropertyView<MetadataArrayView<bool>> property(
+      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(offsetBuffer.data()),

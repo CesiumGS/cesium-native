@@ -2,8 +2,8 @@
 
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
 #include "CesiumGltf/Model.h"
+#include "CesiumGltf/StructuralMetadataPropertyTablePropertyView.h"
 #include "CesiumGltf/StructuralMetadataPropertyType.h"
-#include "CesiumGltf/StructuralMetadataPropertyView.h"
 
 #include <glm/common.hpp>
 
@@ -15,12 +15,12 @@ namespace StructuralMetadata {
 /**
  * @brief Indicates the status of a property table view.
  *
- * The {@link MetadataPropertyTableView} constructor always completes successfully.
+ * The {@link PropertyTableView} constructor always completes successfully.
  * However, it may not always reflect the actual content of the
  * {@link ExtensionExtStructuralMetadataPropertyTable}, but instead indicate that its
- * {@link MetadataPropertyTableView::size} is 0. This enumeration provides the reason.
+ * {@link PropertyTableView::size} is 0. This enumeration provides the reason.
  */
-enum class MetadataPropertyTableViewStatus {
+enum class PropertyTableViewStatus {
   /**
    * @brief This property table view is valid and ready to use.
    */
@@ -30,37 +30,38 @@ enum class MetadataPropertyTableViewStatus {
    * @brief The property table view's model does not contain an
    * EXT_structural_metadata extension.
    */
-  ErrorNoStructuralMetadataExtension,
+  ErrorMissingMetadataExtension,
 
   /**
    * @brief The property table view's model does not have a schema in its
    * EXT_structural_metadata extension.
    */
-  ErrorNoSchema,
+  ErrorMissingSchema,
 
   /**
-   * @brief The class of the property table does not exist in the schema.
+   * @brief The property table's specified class could not be found in the
+   * extension.
    */
-  ErrorPropertyTableClassDoesNotExist
+  ErrorClassNotFound
 };
 
 /**
  * @brief Utility to retrieve the data of
  * {@link ExtensionExtStructuralMetadataPropertyTable}.
  *
- * This should be used to get a {@link MetadataPropertyView} of a property in the property table.
- * It will validate the EXT_structural_metadata format and ensure {@link MetadataPropertyView}
+ * This should be used to get a {@link PropertyTablePropertyView} of a property in the property table.
+ * It will validate the EXT_structural_metadata format and ensure {@link PropertyTablePropertyView}
  * does not access out of bounds.
  */
-class MetadataPropertyTableView {
+class PropertyTableView {
 public:
   /**
-   * @brief Creates an instance of MetadataPropertyTableView.
+   * @brief Creates an instance of PropertyTableView.
    * @param model The Gltf Model that contains property table data.
    * @param propertyTable The {@link ExtensionExtStructuralMetadataPropertyTable}
    * from which the view will retrieve data.
    */
-  MetadataPropertyTableView(
+  PropertyTableView(
       const Model& model,
       const ExtensionExtStructuralMetadataPropertyTable& propertyTable);
 
@@ -72,19 +73,18 @@ public:
    *
    * @return The status of this property table view.
    */
-  MetadataPropertyTableViewStatus status() const noexcept { return _status; }
+  PropertyTableViewStatus status() const noexcept { return _status; }
 
   /**
-   * @brief Get the number of elements in this MetadataPropertyTableView. If the
+   * @brief Get the number of elements in this PropertyTableView. If the
    * view is valid, this returns
    * {@link ExtensionExtStructuralMetadataPropertyTable::count}. Otherwise, this returns 0.
    *
-   * @return The number of elements in this MetadataPropertyTableView.
+   * @return The number of elements in this PropertyTableView.
    */
   int64_t size() const noexcept {
-    return _status == MetadataPropertyTableViewStatus::Valid
-               ? _pPropertyTable->count
-               : 0;
+    return _status == PropertyTableViewStatus::Valid ? _pPropertyTable->count
+                                                     : 0;
   }
 
   /**
@@ -92,18 +92,18 @@ public:
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
    * @return A pointer to the {@link ExtensionExtStructuralMetadataClassProperty}.
-   * Return nullptr if the MetadataPropertyTableView is invalid or if no class
+   * Return nullptr if the PropertyTableView is invalid or if no class
    * property was found.
    */
   const ExtensionExtStructuralMetadataClassProperty*
   getClassProperty(const std::string& propertyName) const;
 
   /**
-   * @brief Gets a {@link MetadataPropertyView} that views the data of a property stored
+   * @brief Gets a {@link PropertyTablePropertyView} that views the data of a property stored
    * in the {@link ExtensionExtStructuralMetadataPropertyTable}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link MetadataPropertyView} retrieves the correct data. T must be one of the
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
@@ -111,15 +111,15 @@ public:
    * aforementioned types.
    *
    * @param propertyName The name of the property to retrieve data from
-   * @return A {@link MetadataPropertyView} of the property. If no valid property is
+   * @return A {@link PropertyTablePropertyView} of the property. If no valid property is
    * found, the property view will be invalid.
    */
   template <typename T>
-  MetadataPropertyView<T>
+  PropertyTablePropertyView<T>
   getPropertyView(const std::string& propertyName) const {
     if (this->size() <= 0) {
       return createInvalidPropertyView<T>(
-          StructuralMetadata::MetadataPropertyViewStatus::
+          StructuralMetadata::PropertyTablePropertyViewStatus::
               ErrorInvalidPropertyTable);
     }
 
@@ -127,7 +127,7 @@ public:
         getClassProperty(propertyName);
     if (!pClassProperty) {
       return createInvalidPropertyView<T>(
-          StructuralMetadata::MetadataPropertyViewStatus::
+          StructuralMetadata::PropertyTablePropertyViewStatus::
               ErrorPropertyDoesNotExist);
     }
 
@@ -135,23 +135,23 @@ public:
   }
 
   /**
-   * @brief Gets a {@link MetadataPropertyView} through a callback that accepts a
-   * property name and a {@link MetadataPropertyView<T>} that views the data
+   * @brief Gets a {@link PropertyTablePropertyView} through a callback that accepts a
+   * property name and a {@link PropertyTablePropertyView<T>} that views the data
    * of the property with the specified name.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link MetadataPropertyView} retrieves the correct data. T must be one of the
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
    * aforementioned types. If the property is invalid, an empty
-   * {@link MetadataPropertyView} with an error status will be passed to the
+   * {@link PropertyTablePropertyView} with an error status will be passed to the
    * callback. Otherwise, a valid property view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts a property name and a
-   * {@link MetadataPropertyView<T>}
+   * {@link PropertyTablePropertyView<T>}
    */
   template <typename Callback>
   void
@@ -160,7 +160,7 @@ public:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              StructuralMetadata::MetadataPropertyViewStatus::
+              StructuralMetadata::PropertyTablePropertyViewStatus::
                   ErrorInvalidPropertyTable));
       return;
     }
@@ -171,7 +171,7 @@ public:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorPropertyDoesNotExist));
+              PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist));
       return;
     }
 
@@ -221,30 +221,30 @@ public:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorTypeMismatch));
     }
   }
 
   /**
    * @brief Iterates over each property in the
    * {@link ExtensionExtStructuralMetadataPropertyTable} with a callback that accepts a
-   * property name and a {@link MetadataPropertyView<T>} to view the data
+   * property name and a {@link PropertyTablePropertyView<T>} to view the data
    * stored in the {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link MetadataPropertyView} retrieves the correct data. T must be one of the
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
    * aforementioned types. If the property is invalid, an empty
-   * {@link MetadataPropertyView} with an error status code will be passed to the
+   * {@link PropertyTablePropertyView} with an error status code will be passed to the
    * callback. Otherwise, a valid property view will be passed to
    * the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts property name and
-   * {@link MetadataPropertyView<T>}
+   * {@link PropertyTablePropertyView<T>}
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {
@@ -350,7 +350,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -436,7 +436,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -475,7 +475,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -561,7 +561,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -600,7 +600,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -649,7 +649,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorTypeMismatch));
     }
   }
 
@@ -733,7 +733,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -772,7 +772,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -858,7 +858,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
@@ -897,7 +897,7 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
   }
@@ -963,20 +963,20 @@ private:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              MetadataPropertyViewStatus::ErrorComponentTypeMismatch));
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
   }
 
   template <typename T>
-  MetadataPropertyView<T> getPropertyViewImpl(
+  PropertyTablePropertyView<T> getPropertyViewImpl(
       const std::string& propertyName,
       const ExtensionExtStructuralMetadataClassProperty& classProperty) const {
     auto propertyTablePropertyIter =
         _pPropertyTable->properties.find(propertyName);
     if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
       return createInvalidPropertyView<T>(
-          MetadataPropertyViewStatus::ErrorPropertyDoesNotExist);
+          PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
     }
 
     const ExtensionExtStructuralMetadataPropertyTableProperty&
@@ -1006,37 +1006,37 @@ private:
   }
 
   template <typename T>
-  MetadataPropertyView<T> getNumericOrBooleanPropertyValues(
+  PropertyTablePropertyView<T> getNumericOrBooleanPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty) const {
     if (classProperty.array) {
       return createInvalidPropertyView<T>(
-          MetadataPropertyViewStatus::ErrorArrayTypeMismatch);
+          PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
       return createInvalidPropertyView<T>(
-          MetadataPropertyViewStatus::ErrorTypeMismatch);
+          PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
       return createInvalidPropertyView<T>(
-          MetadataPropertyViewStatus::ErrorComponentTypeMismatch);
+          PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
     gsl::span<const std::byte> values;
     const auto status = getBufferSafe(propertyTableProperty.values, values);
-    if (status != MetadataPropertyViewStatus::Valid) {
+    if (status != PropertyTablePropertyViewStatus::Valid) {
       return createInvalidPropertyView<T>(status);
     }
 
     if (values.size() % sizeof(T) != 0) {
       return createInvalidPropertyView<T>(
-          StructuralMetadata::MetadataPropertyViewStatus::
+          StructuralMetadata::PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
 
@@ -1050,36 +1050,37 @@ private:
 
     if (values.size() < maxRequiredBytes) {
       return createInvalidPropertyView<T>(
-          MetadataPropertyViewStatus::
+          PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
     }
 
-    return MetadataPropertyView<T>(
-        MetadataPropertyViewStatus::Valid,
+    return PropertyTablePropertyView<T>(
+        PropertyTablePropertyViewStatus::Valid,
         values,
         _pPropertyTable->count,
         classProperty.normalized);
   }
 
-  MetadataPropertyView<std::string_view> getStringPropertyValues(
+  PropertyTablePropertyView<std::string_view> getStringPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty) const;
 
   template <typename T>
-  MetadataPropertyView<MetadataArrayView<T>> getPrimitiveArrayPropertyValues(
+  PropertyTablePropertyView<MetadataArrayView<T>>
+  getPrimitiveArrayPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty) const {
     if (!classProperty.array) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::ErrorArrayTypeMismatch);
+          PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::ErrorTypeMismatch);
+          PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
 
     const PropertyComponentType componentType =
@@ -1087,30 +1088,32 @@ private:
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::ErrorComponentTypeMismatch);
+          PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
     gsl::span<const std::byte> values;
     auto status = getBufferSafe(propertyTableProperty.values, values);
-    if (status != MetadataPropertyViewStatus::Valid) {
+    if (status != PropertyTablePropertyViewStatus::Valid) {
       return createInvalidPropertyView<MetadataArrayView<T>>(status);
     }
 
     if (values.size() % sizeof(T) != 0) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::
+          PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
 
     const int64_t fixedLengthArrayCount = classProperty.count.value_or(0);
     if (fixedLengthArrayCount > 0 && propertyTableProperty.arrayOffsets >= 0) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
+          PropertyTablePropertyViewStatus::
+              ErrorArrayCountAndOffsetBufferCoexist);
     }
 
     if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::ErrorArrayCountAndOffsetBufferDontExist);
+          PropertyTablePropertyViewStatus::
+              ErrorArrayCountAndOffsetBufferDontExist);
     }
 
     // Handle fixed-length arrays
@@ -1128,12 +1131,12 @@ private:
 
       if (values.size() < maxRequiredBytes) {
         return createInvalidPropertyView<MetadataArrayView<T>>(
-            MetadataPropertyViewStatus::
+            PropertyTablePropertyViewStatus::
                 ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
       }
 
-      return MetadataPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::Valid,
+      return PropertyTablePropertyView<MetadataArrayView<T>>(
+          PropertyTablePropertyViewStatus::Valid,
           values,
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
@@ -1150,7 +1153,7 @@ private:
             propertyTableProperty.arrayOffsetType);
     if (arrayOffsetType == PropertyComponentType::None) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
-          MetadataPropertyViewStatus::ErrorInvalidArrayOffsetType);
+          PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
     }
 
     constexpr bool checkBitsSize = IsMetadataBoolean<T>::value;
@@ -1162,12 +1165,12 @@ private:
         static_cast<size_t>(_pPropertyTable->count),
         checkBitsSize,
         arrayOffsets);
-    if (status != MetadataPropertyViewStatus::Valid) {
+    if (status != PropertyTablePropertyViewStatus::Valid) {
       return createInvalidPropertyView<MetadataArrayView<T>>(status);
     }
 
-    return MetadataPropertyView<MetadataArrayView<T>>(
-        MetadataPropertyViewStatus::Valid,
+    return PropertyTablePropertyView<MetadataArrayView<T>>(
+        PropertyTablePropertyViewStatus::Valid,
         values,
         arrayOffsets,
         gsl::span<const std::byte>(),
@@ -1178,17 +1181,17 @@ private:
         classProperty.normalized);
   }
 
-  MetadataPropertyView<MetadataArrayView<std::string_view>>
+  PropertyTablePropertyView<MetadataArrayView<std::string_view>>
   getStringArrayPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty) const;
 
-  MetadataPropertyViewStatus getBufferSafe(
+  PropertyTablePropertyViewStatus getBufferSafe(
       int32_t bufferView,
       gsl::span<const std::byte>& buffer) const noexcept;
 
-  MetadataPropertyViewStatus getArrayOffsetsBufferSafe(
+  PropertyTablePropertyViewStatus getArrayOffsetsBufferSafe(
       int32_t arrayOffsetsBufferView,
       PropertyComponentType arrayOffsetType,
       size_t valuesBufferSize,
@@ -1196,7 +1199,7 @@ private:
       bool checkBitsSize,
       gsl::span<const std::byte>& arrayOffsetsBuffer) const noexcept;
 
-  MetadataPropertyViewStatus getStringOffsetsBufferSafe(
+  PropertyTablePropertyViewStatus getStringOffsetsBufferSafe(
       int32_t stringOffsetsBufferView,
       PropertyComponentType stringOffsetType,
       size_t valuesBufferSize,
@@ -1204,9 +1207,9 @@ private:
       gsl::span<const std::byte>& stringOffsetsBuffer) const noexcept;
 
   template <typename T>
-  static MetadataPropertyView<T>
-  createInvalidPropertyView(MetadataPropertyViewStatus invalidStatus) noexcept {
-    return MetadataPropertyView<T>(
+  static PropertyTablePropertyView<T> createInvalidPropertyView(
+      PropertyTablePropertyViewStatus invalidStatus) noexcept {
+    return PropertyTablePropertyView<T>(
         invalidStatus,
         gsl::span<const std::byte>(),
         0,
@@ -1216,7 +1219,7 @@ private:
   const Model* _pModel;
   const ExtensionExtStructuralMetadataPropertyTable* _pPropertyTable;
   const ExtensionExtStructuralMetadataClass* _pClass;
-  MetadataPropertyTableViewStatus _status;
+  PropertyTableViewStatus _status;
 };
 
 } // namespace StructuralMetadata
