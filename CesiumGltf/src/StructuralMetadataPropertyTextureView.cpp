@@ -11,7 +11,8 @@ PropertyTextureView::PropertyTextureView() noexcept
 
 PropertyTextureView::PropertyTextureView(
     const Model& model,
-    const ExtensionExtStructuralMetadataPropertyTexture& propertyTexture) noexcept
+    const ExtensionExtStructuralMetadataPropertyTexture&
+        propertyTexture) noexcept
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),
