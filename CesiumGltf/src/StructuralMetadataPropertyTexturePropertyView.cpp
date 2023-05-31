@@ -3,7 +3,6 @@
 
 namespace CesiumGltf {
 namespace StructuralMetadata {
-
 PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(nullptr),

@@ -138,8 +138,7 @@ PropertyTableView::PropertyTableView(
 }
 
 const ExtensionExtStructuralMetadataClassProperty*
-PropertyTableView::getClassProperty(
-    const std::string& propertyName) const {
+PropertyTableView::getClassProperty(const std::string& propertyName) const {
   if (_status != PropertyTableViewStatus::Valid) {
     return nullptr;
   }
@@ -231,8 +230,7 @@ PropertyTablePropertyViewStatus PropertyTableView::getArrayOffsetsBufferSafe(
   }
 }
 
-PropertyTablePropertyViewStatus
-PropertyTableView::getStringOffsetsBufferSafe(
+PropertyTablePropertyViewStatus PropertyTableView::getStringOffsetsBufferSafe(
     int32_t stringOffsetsBufferView,
     PropertyComponentType stringOffsetType,
     size_t valueBufferSize,
@@ -367,7 +365,8 @@ PropertyTableView::getStringArrayPropertyValues(
 
   if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
-        PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferDontExist);
+        PropertyTablePropertyViewStatus::
+            ErrorArrayCountAndOffsetBufferDontExist);
   }
 
   // Get string offset type
