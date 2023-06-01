@@ -33,7 +33,7 @@ TEST_CASE("GunzipAssetAccessor") {
             "https://example.com",
             HttpHeaders{std::make_pair("Foo", "Bar")},
             std::make_unique<MockAssetResponse>(
-                200,
+                static_cast<uint16_t>(200),
                 "Application/Whatever",
                 HttpHeaders{std::make_pair("Some-Header", "in the response")},
                 asBytes(std::vector<int>{0x01, 0x02, 0x03})))));
@@ -71,7 +71,7 @@ TEST_CASE("GunzipAssetAccessor") {
             "https://example.com",
             HttpHeaders{std::make_pair("Foo", "Bar")},
             std::make_unique<MockAssetResponse>(
-                200,
+                static_cast<uint16_t>(200),
                 "Application/Whatever",
                 HttpHeaders{std::make_pair("Some-Header", "in the response")},
                 asBytes(std::vector<int>{
@@ -114,7 +114,7 @@ TEST_CASE("GunzipAssetAccessor") {
             "https://example.com",
             HttpHeaders{std::make_pair("Foo", "Bar")},
             std::make_unique<MockAssetResponse>(
-                200,
+                static_cast<uint16_t>(200),
                 "Application/Whatever",
                 HttpHeaders{std::make_pair("Some-Header", "in the response")},
                 asBytes(std::vector<int>{0x1F, 0x8B, 0x01, 0x02, 0x03})))));
