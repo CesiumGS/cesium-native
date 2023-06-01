@@ -152,7 +152,7 @@ TEST_CASE("GunzipAssetAccessor") {
             "https://example.com",
             HttpHeaders{std::make_pair("Foo", "Bar")},
             std::make_unique<MockAssetResponse>(
-                200,
+                static_cast<uint16_t>(200),
                 "Application/Whatever",
                 HttpHeaders{std::make_pair("Some-Header", "in the response")},
                 asBytes(std::vector<int>{
