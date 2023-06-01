@@ -35,6 +35,8 @@ target_include_directories(
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
+        ${CMAKE_CURRENT_LIST_DIR}/../extern/zlib
+        ${CMAKE_CURRENT_BINARY_DIR}/../extern/zlib
 )
 
 # GLM erroneously does not declare its include a `SYSTEM` include, so
@@ -50,6 +52,7 @@ target_link_libraries_system(
 target_link_libraries(CesiumUtility
     PUBLIC
         GSL
+        zlibstatic
 )
 
 install(TARGETS CesiumUtility

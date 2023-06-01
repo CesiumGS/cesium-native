@@ -2,8 +2,10 @@
 #include "CesiumAsync/CachingAssetAccessor.h"
 #include "CesiumAsync/ICacheDatabase.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "MockAssetAccessor.h"
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
+#include "MockTaskProcessor.h"
 #include "ResponseCacheControl.h"
 
 #include <catch2/catch.hpp>
@@ -80,41 +82,6 @@ public:
 
   std::optional<StoreRequestParameters> storeRequestParam;
   std::optional<CacheItem> cacheItem;
-};
-
-class MockAssetAccessor : public IAssetAccessor {
-public:
-  MockAssetAccessor(const std::shared_ptr<IAssetRequest>& request)
-      : testRequest{request} {}
-
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>>
-  get(const AsyncSystem& asyncSystem,
-      const std::string& /* url */,
-      const std::vector<THeader>& /* headers */
-      ) override {
-    return asyncSystem.createResolvedFuture(
-        std::shared_ptr<IAssetRequest>(testRequest));
-  }
-
-  virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> request(
-      const AsyncSystem& asyncSystem,
-      const std::string& /* verb */,
-      const std::string& /* url */,
-      const std::vector<THeader>& /* headers */,
-      const gsl::span<const std::byte>& /* contentPayload */
-      ) override {
-    return asyncSystem.createResolvedFuture(
-        std::shared_ptr<IAssetRequest>(testRequest));
-  }
-
-  virtual void tick() noexcept override {}
-
-  std::shared_ptr<IAssetRequest> testRequest;
-};
-
-class MockTaskProcessor : public ITaskProcessor {
-public:
-  virtual void startTask(std::function<void()> f) override { f(); }
 };
 
 } // namespace
