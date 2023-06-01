@@ -6,11 +6,11 @@
 
 - Added `computeTransformationToAnotherLocal` method to `LocalHorizontalCoordinateSystem`.
 - Added support for the `KHR_materials_variants` extension to the glTF reader and writer.
-- The Caching Asset Accessor will now automatically unzip data if gzipped data is detected.
+- Added `GunzipAssetAccessor`. It can decorate another asset accessor in order to automatically gunzip responses (if they're gzipped) even if they're missing the proper `Content-Encoding` header.
 
 ##### Fixes :wrench:
 
-- On Tileset Load Failure, warning/error messages will always be logged even if the failure callback is set. 
+- On Tileset Load Failure, warning/error messages will always be logged even if the failure callback is set.
 - Fixed a bug that caused meshes to be missing entirely when upsampled from a parent with `UNSIGNED_BYTE` indices.
 
 ### v0.24.0 - 2023-05-01
