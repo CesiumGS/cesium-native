@@ -101,7 +101,8 @@ public:
    * @param localPosition The position in the local coordinate system.
    * @return The equivalent position in the ECEF coordinate system.
    */
-  glm::dvec3 localPositionToEcef(const glm::dvec3& localPosition) const;
+  glm::dvec3
+  localPositionToEcef(const glm::dvec3& localPosition) const noexcept;
 
   /**
    * @brief Converts a position in the Earth-Centered, Earth-Fixed (ECEF)
@@ -111,7 +112,7 @@ public:
    * @param ecefPosition The position in the ECEF coordinate system.
    * @return The equivalent position in the local coordinate system.
    */
-  glm::dvec3 ecefPositionToLocal(const glm::dvec3& ecefPosition) const;
+  glm::dvec3 ecefPositionToLocal(const glm::dvec3& ecefPosition) const noexcept;
 
   /**
    * @brief Converts a direction in the local horizontal coordinate system
@@ -123,7 +124,8 @@ public:
    * @param localPosition The direction in the local coordinate system.
    * @return The equivalent direction in the ECEF coordinate system.
    */
-  glm::dvec3 localDirectionToEcef(const glm::dvec3& localDirection) const;
+  glm::dvec3
+  localDirectionToEcef(const glm::dvec3& localDirection) const noexcept;
 
   /**
    * @brief Converts a direction in the Earth-Centered, Earth-Fixed (ECEF)
@@ -136,7 +138,21 @@ public:
    * @param ecefPosition The direction in the ECEF coordinate system.
    * @return The equivalent direction in the local coordinate system.
    */
-  glm::dvec3 ecefDirectionToLocal(const glm::dvec3& ecefDirection) const;
+  glm::dvec3
+  ecefDirectionToLocal(const glm::dvec3& ecefDirection) const noexcept;
+
+  /**
+   * @brief Computes the transformation matrix from this local horizontal
+   * coordinate system to another one. For example, if the returned matrix is
+   * multiplied with a vector representing a position in this coordinate system,
+   * the result will be a new vector representing the position in the target
+   * coordinate system.
+   *
+   * @param target The other local horizontal coordinate system.
+   * @return The transformation.
+   */
+  glm::dmat4 computeTransformationToAnotherLocal(
+      const LocalHorizontalCoordinateSystem& target) const noexcept;
 
 private:
   glm::dmat4 _ecefToLocal;

@@ -1418,23 +1418,24 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     const std::function<void(const TilesetLoadFailureDetails&)>&
         loadErrorCallback,
     TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
-  if (result.errors) {
-    if (loadErrorCallback) {
-      loadErrorCallback(TilesetLoadFailureDetails{
-          nullptr,
-          type,
-          result.statusCode,
-          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
-    } else {
-      result.errors.logError(
-          this->_externals.pLogger,
-          "Errors when loading tileset");
 
-      result.errors.logWarning(
-          this->_externals.pLogger,
-          "Warnings when loading tileset");
-    }
-  } else {
+  result.errors.logError(
+      this->_externals.pLogger,
+      "Errors when loading tileset");
+
+  result.errors.logWarning(
+      this->_externals.pLogger,
+      "Warnings when loading tileset");
+
+  if (loadErrorCallback) {
+    loadErrorCallback(TilesetLoadFailureDetails{
+        nullptr,
+        type,
+        result.statusCode,
+        CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+  }
+
+  if (!result.errors) {
     this->_tilesetCredits.reserve(
         this->_tilesetCredits.size() + result.credits.size());
     for (const auto& creditResult : result.credits) {
