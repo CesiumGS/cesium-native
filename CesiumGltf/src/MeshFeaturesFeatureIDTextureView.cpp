@@ -12,7 +12,7 @@ FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
     const ExtensionExtMeshFeaturesFeatureIdTexture& featureIdTexture) noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
-      _texCoordSetIndex(featureIdTexture.texCoord),
+      _texCoordSetIndex(-1),
       _channels(featureIdTexture.channels),
       _pImage(nullptr) {
   int32_t textureIndex = featureIdTexture.index;
@@ -41,15 +41,30 @@ FeatureIdTextureView::FeatureIdTextureView(
   // decompressed here.
 
   if (this->_pImage->bytesPerChannel > 1) {
-    this->_status = FeatureIdTextureViewStatus::ErrorInvalidImageChannelSize;
+    this->_status =
+        FeatureIdTextureViewStatus::ErrorInvalidImageBytesPerChannel;
     return;
   }
+
+  if (featureIdTexture.texCoord < 0) {
+    this->_status = FeatureIdTextureViewStatus::ErrorInvalidTexCoordSetIndex;
+    return;
+  }
+  this->_texCoordSetIndex = featureIdTexture.texCoord;
 
   const std::vector<int64_t>& channels = featureIdTexture.channels;
   if (channels.size() == 0 || channels.size() > 4 ||
       channels.size() > static_cast<size_t>(this->_pImage->channels)) {
     this->_status = FeatureIdTextureViewStatus::ErrorInvalidChannels;
     return;
+  }
+
+  // Only channel values 0-3 are supported.
+  for (int i = 0; i < channels.size(); i++) {
+    if (channels[i] < 0 || channels[i] > 3) {
+      this->_status = FeatureIdTextureViewStatus::ErrorInvalidChannels;
+      return;
+    }
   }
   this->_channels = channels;
 

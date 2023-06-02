@@ -57,7 +57,7 @@ enum class FeatureIdTextureViewStatus {
    * than a byte. The feature ID texture's channels should represent the bytes
    * of the actual feature ID.
    */
-  ErrorInvalidImageChannelSize,
+  ErrorInvalidImageBytesPerChannel,
 
   /**
    * @brief This feature ID texture has a negative TEXCOORD set index.
