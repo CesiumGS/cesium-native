@@ -97,7 +97,7 @@ int64_t FeatureIdTextureView::getFeatureId(double u, double v) const noexcept {
   for (size_t i = 0; i < this->_channels.size(); i++) {
     int64_t channelValue = static_cast<int64_t>(
         this->_pImage
-            ->pixelData[static_cast<size_t>(pixelOffset) + this->_channels[i]]);
+            ->pixelData[static_cast<size_t>(pixelOffset + this->_channels[i])]);
     value |= channelValue << bitOffset;
     bitOffset += 8;
   }
