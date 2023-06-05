@@ -140,8 +140,8 @@ public:
 
 private:
   FeatureIdTextureViewStatus _status;
-  std::vector<int64_t> _channels;
   int64_t _texCoordSetIndex;
+  std::vector<int64_t> _channels;
 
   const ImageCesium* _pImage;
 };

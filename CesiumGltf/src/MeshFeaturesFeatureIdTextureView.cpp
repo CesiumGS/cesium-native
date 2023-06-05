@@ -60,7 +60,7 @@ FeatureIdTextureView::FeatureIdTextureView(
   }
 
   // Only channel values 0-3 are supported.
-  for (int i = 0; i < channels.size(); i++) {
+  for (size_t i = 0; i < channels.size(); i++) {
     if (channels[i] < 0 || channels[i] > 3) {
       this->_status = FeatureIdTextureViewStatus::ErrorInvalidChannels;
       return;
@@ -90,14 +90,16 @@ int64_t FeatureIdTextureView::getFeatureId(double u, double v) const noexcept {
                         (y * this->_pImage->width + x);
 
   int64_t value = 0;
+  int64_t bitOffset = 0;
   // As stated in the spec: values from the selected channels are treated as
   // unsigned 8 bit integers, and represent the bytes of the actual feature ID,
   // in little-endian order.
-  for (int i = 0, offset = 0; i < this->_channels.size(); i++, offset += 8) {
+  for (size_t i = 0; i < this->_channels.size(); i++) {
     int64_t channelValue = static_cast<int64_t>(
         this->_pImage
-            ->pixelData[static_cast<size_t>(pixelOffset + this->_channels[i])]);
-    value |= channelValue << offset;
+            ->pixelData[static_cast<size_t>(pixelOffset) + this->_channels[i]]);
+    value |= channelValue << bitOffset;
+    bitOffset += 8;
   }
 
   return value;
