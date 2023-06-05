@@ -162,8 +162,8 @@ TEST_CASE("Test PropertyTexturePropertyView on property with empty image") {
   REQUIRE(view.status() == PropertyTexturePropertyViewStatus::ErrorEmptyImage);
 }
 
-TEST_CASE("Test PropertyTextureView on model with negative texture coordinate "
-          "set index") {
+TEST_CASE("Test PropertyTextureView on property table property with negative "
+          "texcoord set index") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -205,7 +205,8 @@ TEST_CASE("Test PropertyTextureView on model with negative texture coordinate "
       PropertyTexturePropertyViewStatus::ErrorInvalidTexCoordSetIndex);
 }
 
-TEST_CASE("Test PropertyTextureView on model with zero channels") {
+TEST_CASE("Test PropertyTextureView on property texture property with zero "
+          "channels") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -247,7 +248,8 @@ TEST_CASE("Test PropertyTextureView on model with zero channels") {
       view.status() == PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
 }
 
-TEST_CASE("Test PropertyTextureView on model with too many channels") {
+TEST_CASE("Test PropertyTextureView on property texture property with too many "
+          "channels") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();

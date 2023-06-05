@@ -6,7 +6,6 @@ namespace StructuralMetadata {
 PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(nullptr),
-      _pPropertyTextureProperty(nullptr),
       _pSampler(nullptr),
       _pImage(nullptr),
       _texCoordSetIndex(-1),
@@ -23,7 +22,6 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
         propertyTextureProperty) noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(&classProperty),
-      _pPropertyTextureProperty(&propertyTextureProperty),
       _pSampler(nullptr),
       _pImage(nullptr),
       _texCoordSetIndex(propertyTextureProperty.texCoord),
@@ -32,7 +30,7 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
       _type(PropertyTexturePropertyComponentType::Uint8),
       _count(0),
       _normalized(false) {
-  const int64_t index = _pPropertyTextureProperty->index;
+  const int64_t index = propertyTextureProperty.index;
   if (index < 0 || static_cast<size_t>(index) >= model.textures.size()) {
     this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
     return;
@@ -73,7 +71,7 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
       this->_pClassProperty->count ? *this->_pClassProperty->count : 1;
   this->_normalized = this->_pClassProperty->normalized;
 
-  const std::vector<int64_t>& channels = _pPropertyTextureProperty->channels;
+  const std::vector<int64_t>& channels = propertyTextureProperty.channels;
   if (channels.size() == 0 || channels.size() > 4 ||
       channels.size() > static_cast<size_t>(this->_pImage->channels) ||
       channels.size() != static_cast<size_t>(this->_count)) {
@@ -100,6 +98,8 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
       return;
     }
   }
+
+  this->_channels = channels;
 
   this->_status = PropertyTexturePropertyViewStatus::Valid;
 }

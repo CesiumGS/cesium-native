@@ -64,8 +64,9 @@ enum class PropertyTexturePropertyViewStatus {
 
   /**
    * @brief The channels of this property texture property are invalid.
-   * Channels must be in the range 0-3, with a minimum of one channel and a
-   * maximum of four.
+   * Channels must be in the range 0-3, with a minimum of one channel. Although
+   * more than four channels can be defined for specialized texture
+   * formats, this view only supports a maximum of four channels.
    */
   ErrorInvalidChannels
 };
@@ -230,8 +231,6 @@ public:
 private:
   PropertyTexturePropertyViewStatus _status;
   const ExtensionExtStructuralMetadataClassProperty* _pClassProperty;
-  const ExtensionExtStructuralMetadataPropertyTextureProperty*
-      _pPropertyTextureProperty;
 
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
