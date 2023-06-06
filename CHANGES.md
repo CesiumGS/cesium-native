@@ -1,5 +1,27 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+Many classes have been overhauled to support `EXT_mesh_features` and `EXT_structural_metadata`. This includes the following changes:
+
+- Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `ExtensionExtMeshFeaturesFeatureIdTexture`.
+  - Replaced `FeatureIDTextureViewStatus` with `FeatureIdTextureViewStatus`.
+  - Replaced `getChannel` with `getChannels`. This retrieves the channels as a vector of integers, instead of a single integer.
+  - Renamed `getTextureCoordinateAttributeId` to `getTexCoordSetIndex`.
+- Replaced `MetadataFeatureTableView` with `PropertyTableView`, which views a `ExtensionExtStructuralMetadataPropertyTable`.
+  - Added `PropertyTableViewStatus` to indicate whether or not `PropertyTableView` is valid.
+- Renamed `MetadataArrayView` to `PropertyArrayView`.
+- Replaced `FeatureTextureView` with `PropertyTextureView`, which views a `ExtensionExtMeshFeaturesPropertyTexture`.
+  - Replaced `FeatureTextureViewStatus` with `PropertyTextureViewStatus`.
+- Replaced `FeatureTexturePropertyView` with `PropertyTexturePropertyView`, which views a `ExtensionExtMeshFeaturesPropertyTextureProperty`.
+  - Replaced `FeatureTexturePropertyViewStatus` with `PropertyTexturePropertyViewStatus`.
+- Refactored the `PropertyType` enum to reflect the values of `type` in an `ExtensionExtStructuralMetadataClassProperty`.
+- Added the `PropertyComponentType` enum to reflect the values of `componentType` in an `ExtensionExtStructuralMetadataClassProperty`.
+
+Additionally, views of the data contained by `EXT_feature_metadata` will no longer supported by Cesium Native. The extension will still be parsed, but it will log a warning. Batch tables will also be converted to `EXT_structural_metadata` instead of `EXT_feature_metadata`.
+
 ### v0.25.0 - 2023-06-01
 
 ##### Additions :tada:
