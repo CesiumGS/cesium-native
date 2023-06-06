@@ -855,8 +855,7 @@ TEST_CASE("Check fixed-length array of string") {
   REQUIRE(expectedIdx == stringCount);
 }
 
-TEST_CASE(
-    "Check variable-length array of strings property") {
+TEST_CASE("Check variable-length array of strings property") {
   // clang-format off
   std::vector<uint32_t> arrayOffsets{
     0,

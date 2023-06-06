@@ -6,8 +6,8 @@
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/StructuralMetadataPropertyType.h>
-#include <CesiumGltf/StructuralMetadataPropertyTypeTraits.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <glm/glm.hpp>
 #include <rapidjson/writer.h>
@@ -19,7 +19,6 @@
 #include <unordered_set>
 
 using namespace CesiumGltf;
-using namespace CesiumGltf::StructuralMetadata;
 using namespace Cesium3DTilesSelection::CesiumImpl;
 
 namespace Cesium3DTilesSelection {
