@@ -5,8 +5,8 @@
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/StructuralMetadataPropertyTablePropertyView.h>
 #include <CesiumGltf/StructuralMetadataPropertyTableView.h>
-#include <CesiumGltf/StructuralMetadataPropertyView.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -39,13 +39,13 @@ static void checkNonArrayProperty(
   REQUIRE(!property.array);
   REQUIRE(property.count == std::nullopt);
 
-  MetadataPropertyTableView view(model, propertyTable);
-  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
   REQUIRE(view.size() == propertyTable.count);
 
-  MetadataPropertyView<PropertyViewType> propertyView =
+  PropertyTablePropertyView<PropertyViewType> propertyView =
       view.getPropertyView<PropertyViewType>(propertyName);
-  REQUIRE(propertyView.status() == MetadataPropertyViewStatus::Valid);
+  REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
   REQUIRE(propertyView.size() == propertyTable.count);
   REQUIRE(propertyView.size() == static_cast<int64_t>(expectedTotalInstances));
   for (int64_t i = 0; i < propertyView.size(); ++i) {
@@ -84,13 +84,13 @@ static void checkArrayProperty(
   REQUIRE(property.array);
   REQUIRE(property.count.value_or(0) == expectedCount);
 
-  MetadataPropertyTableView view(model, propertyTable);
-  REQUIRE(view.status() == MetadataPropertyTableViewStatus::Valid);
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
   REQUIRE(view.size() == propertyTable.count);
 
-  MetadataPropertyView<MetadataArrayView<PropertyViewType>> propertyView =
+  PropertyTablePropertyView<MetadataArrayView<PropertyViewType>> propertyView =
       view.getPropertyView<MetadataArrayView<PropertyViewType>>(propertyName);
-  REQUIRE(propertyView.status() == MetadataPropertyViewStatus::Valid);
+  REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
   REQUIRE(propertyView.size() == propertyTable.count);
   REQUIRE(propertyView.size() == static_cast<int64_t>(expectedTotalInstances));
   for (size_t i = 0; i < expectedTotalInstances; ++i) {

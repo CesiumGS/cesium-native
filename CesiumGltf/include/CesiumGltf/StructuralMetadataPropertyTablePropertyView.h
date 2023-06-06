@@ -15,15 +15,15 @@ namespace CesiumGltf {
 namespace StructuralMetadata {
 
 /**
- * @brief Indicates the status of a property view.
+ * @brief Indicates the status of a property table property view.
  *
- * The {@link MetadataPropertyView} constructor always completes successfully.
+ * The {@link PropertyTablePropertyView} constructor always completes successfully.
  * However, it may not always reflect the actual content of the
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty}, but instead
- * indicate that its {@link MetadataPropertyView::size} is 0. This enumeration
+ * indicate that its {@link PropertyTablePropertyView::size} is 0. This enumeration
  * provides the reason.
  */
-enum class MetadataPropertyViewStatus {
+enum class PropertyTablePropertyViewStatus {
   /**
    * @brief This property view is valid and ready to use.
    */
@@ -36,7 +36,8 @@ enum class MetadataPropertyViewStatus {
   ErrorInvalidPropertyTable,
 
   /**
-   * @brief This property view does not exist in the
+   * @brief This property view is trying to view a property that does not exist
+   * in the
    * {@link ExtensionExtStructuralMetadataPropertyTable}.
    */
   ErrorPropertyDoesNotExist,
@@ -172,15 +173,15 @@ enum class MetadataPropertyViewStatus {
  * the scalar types, bool, std::string_view, or MetadataArrayView<T> with T as
  * one of the aforementioned types.
  */
-template <typename ElementType> class MetadataPropertyView {
+template <typename ElementType> class PropertyTablePropertyView {
 public:
   /**
    * @brief Constructs a new instance with a non-existent property.
    */
-  MetadataPropertyView()
-      : _status{MetadataPropertyViewStatus::ErrorPropertyDoesNotExist},
+  PropertyTablePropertyView()
+      : _status{PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist},
         _values{},
-        _fixedLengthArrayCount{},
+        _arrayCount{},
         _size{},
         _normalized{} {}
 
@@ -191,8 +192,8 @@ public:
    * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
    */
-  MetadataPropertyView(
-      MetadataPropertyViewStatus status,
+  PropertyTablePropertyView(
+      PropertyTablePropertyViewStatus status,
       gsl::span<const std::byte> values,
       int64_t size,
       bool normalized) noexcept
@@ -204,7 +205,7 @@ public:
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
         _stringOffsetTypeSize{0},
-        _fixedLengthArrayCount{0},
+        _arrayCount{0},
         _size{size},
         _normalized{normalized} {}
 
@@ -216,18 +217,18 @@ public:
    * @param stringOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsets}
    * @param offsetType The offset type of arrayOffsets specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsetType}
    * @param offsetType The offset type of stringOffsets specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsetType}
-   * @param fixedLengthArrayCount The number of elements in each array value specified by {@link ExtensionExtStructuralMetadataClassProperty::count}
+   * @param arrayCount The number of elements in each array value specified by {@link ExtensionExtStructuralMetadataClassProperty::count}
    * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
    */
-  MetadataPropertyView(
-      MetadataPropertyViewStatus status,
+  PropertyTablePropertyView(
+      PropertyTablePropertyViewStatus status,
       gsl::span<const std::byte> values,
       gsl::span<const std::byte> arrayOffsets,
       gsl::span<const std::byte> stringOffsets,
       StructuralMetadata::PropertyComponentType arrayOffsetType,
       StructuralMetadata::PropertyComponentType stringOffsetType,
-      int64_t fixedLengthArrayCount,
+      int64_t arrayCount,
       int64_t size,
       bool normalized) noexcept
       : _status{status},
@@ -238,19 +239,19 @@ public:
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
-        _fixedLengthArrayCount{fixedLengthArrayCount},
+        _arrayCount{arrayCount},
         _size{size},
         _normalized{normalized} {}
 
   /**
-   * @brief Gets the status of this property view.
+   * @brief Gets the status of this property table property view.
    *
    * Indicates whether the view accurately reflects the property's data, or
    * whether an error occurred.
    *
    * @return The status of this property view.
    */
-  MetadataPropertyViewStatus status() const noexcept { return _status; }
+  PropertyTablePropertyViewStatus status() const noexcept { return _status; }
 
   /**
    * @brief Get the value of an element of the {@link ExtensionExtStructuralMetadataPropertyTable}.
@@ -259,7 +260,7 @@ public:
    */
   ElementType get(int64_t index) const noexcept {
     assert(
-        _status == MetadataPropertyViewStatus::Valid &&
+        _status == PropertyTablePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
     assert(
         size() > 0 &&
@@ -294,14 +295,14 @@ public:
   }
 
   /**
-   * @brief Get the number of elements in this MetadataPropertyView. If the view
-   * is valid, this returns
+   * @brief Get the number of elements in this
+   * PropertyTablePropertyView. If the view is valid, this returns
    * {@link ExtensionExtStructuralMetadataPropertyTable::count}. Otherwise, this returns 0.
    *
-   * @return The number of elements in this MetadataPropertyView.
+   * @return The number of elements in this PropertyTablePropertyView.
    */
   int64_t size() const noexcept {
-    return status() == MetadataPropertyViewStatus::Valid ? _size : 0;
+    return status() == PropertyTablePropertyViewStatus::Valid ? _size : 0;
   }
 
   /**
@@ -310,9 +311,7 @@ public:
    *
    * @return The count of this property.
    */
-  int64_t getFixedLengthArrayCount() const noexcept {
-    return _fixedLengthArrayCount;
-  }
+  int64_t getArrayCount() const noexcept { return _arrayCount; }
 
   /**
    * @brief Whether this property has a normalized integer type.
@@ -348,8 +347,8 @@ private:
   template <typename T>
   MetadataArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
-    if (_fixedLengthArrayCount > 0) {
-      size_t arraySize = _fixedLengthArrayCount * sizeof(T);
+    if (_arrayCount > 0) {
+      size_t arraySize = _arrayCount * sizeof(T);
       const gsl::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
@@ -370,9 +369,9 @@ private:
   MetadataArrayView<std::string_view>
   getStringArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
-    if (_fixedLengthArrayCount > 0) {
+    if (_arrayCount > 0) {
       // Copy the corresponding string offsets to pass to the MetadataArrayView.
-      const size_t arraySize = _fixedLengthArrayCount * _stringOffsetTypeSize;
+      const size_t arraySize = _arrayCount * _stringOffsetTypeSize;
       const gsl::span<const std::byte> stringOffsetValues(
           _stringOffsets.data() + index * arraySize,
           arraySize + _stringOffsetTypeSize);
@@ -380,7 +379,7 @@ private:
           _values,
           stringOffsetValues,
           _stringOffsetType,
-          _fixedLengthArrayCount);
+          _arrayCount);
     }
 
     // Handle variable-length arrays
@@ -401,16 +400,13 @@ private:
 
   MetadataArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
-    if (_fixedLengthArrayCount > 0) {
-      const size_t offsetBits = _fixedLengthArrayCount * index;
-      const size_t nextOffsetBits = _fixedLengthArrayCount * (index + 1);
+    if (_arrayCount > 0) {
+      const size_t offsetBits = _arrayCount * index;
+      const size_t nextOffsetBits = _arrayCount * (index + 1);
       const gsl::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return MetadataArrayView<bool>(
-          buffer,
-          offsetBits % 8,
-          _fixedLengthArrayCount);
+      return MetadataArrayView<bool>(buffer, offsetBits % 8, _arrayCount);
     }
 
     // Handle variable-length arrays
@@ -440,7 +436,7 @@ private:
     }
   }
 
-  MetadataPropertyViewStatus _status;
+  PropertyTablePropertyViewStatus _status;
   gsl::span<const std::byte> _values;
 
   gsl::span<const std::byte> _arrayOffsets;
@@ -451,7 +447,7 @@ private:
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
 
-  int64_t _fixedLengthArrayCount;
+  int64_t _arrayCount;
   int64_t _size;
   bool _normalized;
 };
