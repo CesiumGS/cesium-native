@@ -4,7 +4,7 @@
 #include "CesiumGltf/ExtensionExtStructuralMetadataClassProperty.h"
 #include "CesiumGltf/ExtensionExtStructuralMetadataPropertyTexture.h"
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/StructuralMetadataPropertyTexturePropertyView.h"
+#include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumGltf/Texture.h"
 #include "CesiumGltf/TextureAccessor.h"
 #include "Image.h"
@@ -12,8 +12,6 @@
 #include "Model.h"
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
-
 /**
  * @brief Indicates the status of a property texture view.
  *
@@ -119,6 +117,4 @@ private:
   std::unordered_map<std::string, PropertyTexturePropertyView> _propertyViews;
   PropertyTextureViewStatus _status;
 };
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

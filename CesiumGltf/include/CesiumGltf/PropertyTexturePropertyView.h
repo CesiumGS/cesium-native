@@ -14,7 +14,6 @@
 #include <variant>
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
 /**
  * @brief Indicates the status of a property texture property view.
  *
@@ -241,6 +240,4 @@ private:
   int64_t _count;
   bool _normalized;
 };
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf
