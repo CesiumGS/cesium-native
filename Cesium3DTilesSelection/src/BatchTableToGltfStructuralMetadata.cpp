@@ -195,7 +195,8 @@ public:
       return;
     }
 
-    const MaskedType& maskedType = std::get<MaskedType>(inCompatibleTypes._type);
+    const MaskedType& maskedType =
+        std::get<MaskedType>(inCompatibleTypes._type);
     operator&=(maskedType);
   }
 
