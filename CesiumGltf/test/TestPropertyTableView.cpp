@@ -1,11 +1,10 @@
-#include "CesiumGltf/StructuralMetadataPropertyTableView.h"
+#include "CesiumGltf/PropertyTableView.h"
 
 #include <catch2/catch.hpp>
 
 #include <cstring>
 
 using namespace CesiumGltf;
-using namespace CesiumGltf::StructuralMetadata;
 
 TEST_CASE("Test PropertyTableView on model without EXT_structural_metadata "
           "extension") {
@@ -87,7 +86,7 @@ TEST_CASE("Test property table with nonexistent class") {
   REQUIRE(!classProperty);
 }
 
-TEST_CASE("Test StructuralMetadata scalar property") {
+TEST_CASE("Test scalar property") {
   Model model;
 
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
@@ -210,8 +209,8 @@ TEST_CASE("Test StructuralMetadata scalar property") {
   }
 
   SECTION("Access incorrectly as array") {
-    PropertyTablePropertyView<MetadataArrayView<uint32_t>> uint32ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint32_t>> uint32ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(
         uint32ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -265,7 +264,7 @@ TEST_CASE("Test StructuralMetadata scalar property") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata vecN property") {
+TEST_CASE("Test vecN property") {
   Model model;
 
   std::vector<glm::ivec3> values = {
@@ -398,8 +397,8 @@ TEST_CASE("Test StructuralMetadata vecN property") {
   }
 
   SECTION("Access incorrectly as array") {
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> ivec3ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> ivec3ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         ivec3ArrayInvalid.status() ==
@@ -454,7 +453,7 @@ TEST_CASE("Test StructuralMetadata vecN property") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata matN property") {
+TEST_CASE("Test matN property") {
   Model model;
 
   // clang-format off
@@ -598,9 +597,9 @@ TEST_CASE("Test StructuralMetadata matN property") {
   }
 
   SECTION("Access incorrectly as array") {
-    PropertyTablePropertyView<MetadataArrayView<glm::u32mat2x2>>
+    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>>
         u32mat2x2ArrayInvalid =
-            view.getPropertyView<MetadataArrayView<glm::u32mat2x2>>(
+            view.getPropertyView<PropertyArrayView<glm::u32mat2x2>>(
                 "TestClassProperty");
     REQUIRE(
         u32mat2x2ArrayInvalid.status() ==
@@ -657,7 +656,7 @@ TEST_CASE("Test StructuralMetadata matN property") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata boolean property") {
+TEST_CASE("Test boolean property") {
   Model model;
 
   int64_t instanceCount = 21;
@@ -752,7 +751,7 @@ TEST_CASE("Test StructuralMetadata boolean property") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata string property") {
+TEST_CASE("Test string property") {
   Model model;
 
   std::vector<std::string> expected{"What's up", "Test_0", "Test_1", "", "Hi"};
@@ -855,9 +854,9 @@ TEST_CASE("Test StructuralMetadata string property") {
   }
 
   SECTION("Wrong array type") {
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         stringArrayInvalid =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         stringArrayInvalid.status() ==
@@ -928,7 +927,7 @@ TEST_CASE("Test StructuralMetadata string property") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
+TEST_CASE("Test fixed-length scalar array") {
   Model model;
 
   std::vector<uint32_t> values =
@@ -994,12 +993,12 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
   REQUIRE(classProperty->count == 3);
 
   SECTION("Access the right type") {
-    PropertyTablePropertyView<MetadataArrayView<uint32_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint32_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      MetadataArrayView<uint32_t> member = arrayProperty.get(i);
+      PropertyArrayView<uint32_t> member = arrayProperty.get(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 3 + j)]);
       }
@@ -1007,14 +1006,14 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
   }
 
   SECTION("Wrong type") {
-    PropertyTablePropertyView<MetadataArrayView<bool>> boolArrayInvalid =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayInvalid =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         boolArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<MetadataArrayView<glm::uvec2>> uvec2ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<glm::uvec2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::uvec2>> uvec2ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::uvec2>>(
             "TestClassProperty");
     REQUIRE(
         uvec2ArrayInvalid.status() ==
@@ -1022,8 +1021,8 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
   }
 
   SECTION("Wrong component type") {
-    PropertyTablePropertyView<MetadataArrayView<int32_t>> int32ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<int32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<int32_t>> int32ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<int32_t>>("TestClassProperty");
     REQUIRE(
         int32ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
@@ -1039,8 +1038,8 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
 
   SECTION("Buffer size is not a multiple of type size") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<MetadataArrayView<uint32_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint32_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -1049,8 +1048,8 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
 
   SECTION("Negative component count") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<MetadataArrayView<uint32_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint32_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() == PropertyTablePropertyViewStatus::
                                       ErrorArrayCountAndOffsetBufferDontExist);
@@ -1058,8 +1057,8 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
 
   SECTION("Value buffer doesn't fit into property table count") {
     testClassProperty.count = 55;
-    PropertyTablePropertyView<MetadataArrayView<uint32_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint32_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint32_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -1067,7 +1066,7 @@ TEST_CASE("Test StructuralMetadata fixed-length scalar array") {
   }
 }
 
-TEST_CASE("Test Structural Metadata variable-length scalar array") {
+TEST_CASE("Test variable-length scalar array") {
   Model model;
 
   std::vector<std::vector<uint16_t>> expected{
@@ -1169,11 +1168,11 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
   REQUIRE(!classProperty->count);
 
   SECTION("Access the correct type") {
-    PropertyTablePropertyView<MetadataArrayView<uint16_t>> property =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> property =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<uint16_t> valueMember =
+      PropertyArrayView<uint16_t> valueMember =
           property.get(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
@@ -1185,8 +1184,8 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT8;
-    PropertyTablePropertyView<MetadataArrayView<uint16_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -1196,7 +1195,7 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT16;
     arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -1204,7 +1203,7 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
 
     propertyTableProperty.arrayOffsetType = "NONSENSE";
     arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
@@ -1214,7 +1213,7 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
         ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
             UINT64;
     arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
@@ -1227,8 +1226,8 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
     uint64_t* offset = reinterpret_cast<uint64_t*>(
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<MetadataArrayView<uint16_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayOffsetsNotSorted);
@@ -1239,8 +1238,8 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] =
         static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<MetadataArrayView<uint16_t>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds);
@@ -1248,15 +1247,15 @@ TEST_CASE("Test Structural Metadata variable-length scalar array") {
 
   SECTION("Count and offset buffer are both present") {
     testClassProperty.count = 3;
-    PropertyTablePropertyView<MetadataArrayView<uint16_t>> property =
-        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> property =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         property.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
   }
 }
 
-TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
+TEST_CASE("Test fixed-length vecN array") {
   Model model;
 
   std::vector<glm::ivec3> values = {
@@ -1328,13 +1327,13 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
   REQUIRE(classProperty->count == 2);
 
   SECTION("Access the right type") {
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      MetadataArrayView<glm::ivec3> member = arrayProperty.get(i);
+      PropertyArrayView<glm::ivec3> member = arrayProperty.get(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
       }
@@ -1342,14 +1341,14 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
   }
 
   SECTION("Wrong type") {
-    PropertyTablePropertyView<MetadataArrayView<int32_t>> int32ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<int32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<int32_t>> int32ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<int32_t>>("TestClassProperty");
     REQUIRE(
         int32ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec2>> ivec2ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<glm::ivec2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec2>> ivec2ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::ivec2>>(
             "TestClassProperty");
     REQUIRE(
         ivec2ArrayInvalid.status() ==
@@ -1357,8 +1356,8 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
   }
 
   SECTION("Wrong component type") {
-    PropertyTablePropertyView<MetadataArrayView<glm::uvec3>> uvec3ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<glm::uvec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::uvec3>> uvec3ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::uvec3>>(
             "TestClassProperty");
     REQUIRE(
         uvec3ArrayInvalid.status() ==
@@ -1375,8 +1374,8 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
 
   SECTION("Buffer size is not a multiple of type size") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1386,8 +1385,8 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
 
   SECTION("Negative component count") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() == PropertyTablePropertyViewStatus::
@@ -1396,8 +1395,8 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
 
   SECTION("Value buffer doesn't fit into property table count") {
     testClassProperty.count = 55;
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1406,7 +1405,7 @@ TEST_CASE("Test StructuralMetadata fixed-length vecN array") {
   }
 }
 
-TEST_CASE("Test Structural Metadata variable-length vecN array") {
+TEST_CASE("Test variable-length vecN array") {
   Model model;
 
   // clang-format off
@@ -1510,12 +1509,12 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
   REQUIRE(!classProperty->count);
 
   SECTION("Access the correct type") {
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> property =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> property =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<glm::ivec3> valueMember =
+      PropertyArrayView<glm::ivec3> valueMember =
           property.get(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
@@ -1528,8 +1527,8 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT8;
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1539,7 +1538,7 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT16;
-    arrayProperty = view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::ivec3>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1547,7 +1546,7 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::ivec3>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1557,7 +1556,7 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
     propertyTableProperty.stringOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
             UINT64;
-    arrayProperty = view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::ivec3>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1571,8 +1570,8 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
     uint64_t* offset = reinterpret_cast<uint64_t*>(
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1584,8 +1583,8 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] =
         static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1594,8 +1593,8 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
 
   SECTION("Count and offset buffer are both present") {
     testClassProperty.count = 3;
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec3>> property =
-        view.getPropertyView<MetadataArrayView<glm::ivec3>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> property =
+        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
             "TestClassProperty");
     REQUIRE(
         property.status() ==
@@ -1603,7 +1602,7 @@ TEST_CASE("Test Structural Metadata variable-length vecN array") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata fixed-length matN array") {
+TEST_CASE("Test fixed-length matN array") {
   Model model;
 
   // clang-format off
@@ -1689,13 +1688,13 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
   REQUIRE(classProperty->count == 2);
 
   SECTION("Access the right type") {
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      MetadataArrayView<glm::i32mat2x2> member = arrayProperty.get(i);
+      PropertyArrayView<glm::i32mat2x2> member = arrayProperty.get(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
       }
@@ -1703,14 +1702,14 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
   }
 
   SECTION("Wrong type") {
-    PropertyTablePropertyView<MetadataArrayView<int32_t>> int32ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<int32_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<int32_t>> int32ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<int32_t>>("TestClassProperty");
     REQUIRE(
         int32ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<MetadataArrayView<glm::ivec2>> ivec2ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<glm::ivec2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec2>> ivec2ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::ivec2>>(
             "TestClassProperty");
     REQUIRE(
         ivec2ArrayInvalid.status() ==
@@ -1718,9 +1717,9 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
   }
 
   SECTION("Wrong component type") {
-    PropertyTablePropertyView<MetadataArrayView<glm::u32mat2x2>>
+    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>>
         u32mat2x2ArrayInvalid =
-            view.getPropertyView<MetadataArrayView<glm::u32mat2x2>>(
+            view.getPropertyView<PropertyArrayView<glm::u32mat2x2>>(
                 "TestClassProperty");
     REQUIRE(
         u32mat2x2ArrayInvalid.status() ==
@@ -1737,8 +1736,8 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
 
   SECTION("Buffer size is not a multiple of type size") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1748,8 +1747,8 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
 
   SECTION("Negative component count") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() == PropertyTablePropertyViewStatus::
@@ -1758,8 +1757,8 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
 
   SECTION("Value buffer doesn't fit into property table count") {
     testClassProperty.count = 55;
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1768,7 +1767,7 @@ TEST_CASE("Test StructuralMetadata fixed-length matN array") {
   }
 }
 
-TEST_CASE("Test Structural Metadata variable-length matN array") {
+TEST_CASE("Test variable-length matN array") {
   Model model;
 
   // clang-format off
@@ -1892,12 +1891,12 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
   REQUIRE(!classProperty->count);
 
   SECTION("Access the correct type") {
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> property =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> property =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<glm::i32mat2x2> valueMember =
+      PropertyArrayView<glm::i32mat2x2> valueMember =
           property.get(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
@@ -1910,8 +1909,8 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT8;
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1921,7 +1920,7 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT16;
-    arrayProperty = view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1929,7 +1928,7 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1939,7 +1938,7 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
     propertyTableProperty.stringOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
             UINT64;
-    arrayProperty = view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1953,8 +1952,8 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
     uint64_t* offset = reinterpret_cast<uint64_t*>(
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1966,8 +1965,8 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] =
         static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -1976,8 +1975,8 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
 
   SECTION("Count and offset buffer are both present") {
     testClassProperty.count = 3;
-    PropertyTablePropertyView<MetadataArrayView<glm::i32mat2x2>> property =
-        view.getPropertyView<MetadataArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> property =
+        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
             "TestClassProperty");
     REQUIRE(
         property.status() ==
@@ -1985,7 +1984,7 @@ TEST_CASE("Test Structural Metadata variable-length matN array") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
+TEST_CASE("Test fixed-length boolean array") {
   Model model;
 
   std::vector<bool> expected = {
@@ -2066,14 +2065,14 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
   REQUIRE(classProperty->count == 3);
 
   SECTION("Access correct type") {
-    PropertyTablePropertyView<MetadataArrayView<bool>> boolArrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         boolArrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(boolArrayProperty.size() == propertyTable.count);
     REQUIRE(boolArrayProperty.size() > 0);
     for (int64_t i = 0; i < boolArrayProperty.size(); ++i) {
-      MetadataArrayView<bool> valueMember = boolArrayProperty.get(i);
+      PropertyArrayView<bool> valueMember = boolArrayProperty.get(i);
       for (int64_t j = 0; j < valueMember.size(); ++j) {
         REQUIRE(valueMember[j] == expected[static_cast<size_t>(i * 3 + j)]);
       }
@@ -2081,8 +2080,8 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
   }
 
   SECTION("Wrong type") {
-    PropertyTablePropertyView<MetadataArrayView<uint8_t>> uint8ArrayInvalid =
-        view.getPropertyView<MetadataArrayView<uint8_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<uint8_t>> uint8ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
     REQUIRE(
         uint8ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
@@ -2098,8 +2097,8 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
 
   SECTION("Value buffer doesn't have enough required bytes") {
     testClassProperty.count = 11;
-    PropertyTablePropertyView<MetadataArrayView<bool>> boolArrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         boolArrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -2108,8 +2107,8 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
 
   SECTION("Count is negative") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<MetadataArrayView<bool>> boolArrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         boolArrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -2117,7 +2116,7 @@ TEST_CASE("Test StructuralMetadata fixed-length boolean array") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata variable-length boolean array") {
+TEST_CASE("Test variable-length boolean array") {
   Model model;
 
   std::vector<std::vector<bool>> expected{
@@ -2221,12 +2220,12 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
   REQUIRE(!classProperty->count);
 
   SECTION("Access correct type") {
-    PropertyTablePropertyView<MetadataArrayView<bool>> boolArrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         boolArrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<bool> arrayMember =
+      PropertyArrayView<bool> arrayMember =
           boolArrayProperty.get(static_cast<int64_t>(i));
       REQUIRE(arrayMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
@@ -2239,8 +2238,8 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT8;
-    PropertyTablePropertyView<MetadataArrayView<bool>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -2250,7 +2249,7 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT16;
     arrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -2258,7 +2257,7 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
 
     propertyTableProperty.arrayOffsetType = "NONSENSE";
     arrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
@@ -2268,7 +2267,7 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
         ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
             UINT64;
     arrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
@@ -2281,8 +2280,8 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
     uint64_t* offset = reinterpret_cast<uint64_t*>(
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<MetadataArrayView<bool>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayOffsetsNotSorted);
@@ -2293,8 +2292,8 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] = static_cast<uint32_t>(
         model.buffers[valueBufferIndex].byteLength * 8 + 20);
-    PropertyTablePropertyView<MetadataArrayView<bool>> arrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds);
@@ -2302,15 +2301,15 @@ TEST_CASE("Test StructuralMetadata variable-length boolean array") {
 
   SECTION("Count and offset buffer both present") {
     testClassProperty.count = 3;
-    PropertyTablePropertyView<MetadataArrayView<bool>> boolArrayProperty =
-        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayProperty =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
     REQUIRE(
         boolArrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
   }
 }
 
-TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
+TEST_CASE("Test fixed-length arrays of strings") {
   Model model;
 
   std::vector<std::string> expected{
@@ -2406,24 +2405,24 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
   REQUIRE(classProperty->count == 2);
 
   SECTION("Access correct type") {
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         stringProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(stringProperty.size() == 3);
 
-    MetadataArrayView<std::string_view> v0 = stringProperty.get(0);
+    PropertyArrayView<std::string_view> v0 = stringProperty.get(0);
     REQUIRE(v0.size() == 2);
     REQUIRE(v0[0] == "What's up");
     REQUIRE(v0[1] == "Breaking news!!! Aliens no longer attacks the US first");
 
-    MetadataArrayView<std::string_view> v1 = stringProperty.get(1);
+    PropertyArrayView<std::string_view> v1 = stringProperty.get(1);
     REQUIRE(v1.size() == 2);
     REQUIRE(v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
     REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
-    MetadataArrayView<std::string_view> v2 = stringProperty.get(2);
+    PropertyArrayView<std::string_view> v2 = stringProperty.get(2);
     REQUIRE(v2.size() == 2);
     REQUIRE(v2[0] == "I love you, meat bags! ❤️");
     REQUIRE(v2[1] == "Book in the freezer");
@@ -2439,9 +2438,9 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
 
   SECTION("Count is negative") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         stringProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         stringProperty.status() == PropertyTablePropertyViewStatus::
@@ -2450,9 +2449,9 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
 
   SECTION("Offset type is unknown") {
     propertyTableProperty.stringOffsetType = "NONSENSE";
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         stringProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         stringProperty.status() ==
@@ -2462,7 +2461,7 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT32;
-    stringProperty = view.getPropertyView<MetadataArrayView<std::string_view>>(
+    stringProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         stringProperty.status() ==
@@ -2471,9 +2470,9 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
 
   SECTION("String offsets don't exist") {
     propertyTableProperty.stringOffsets = -1;
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         stringProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         stringProperty.status() ==
@@ -2481,7 +2480,7 @@ TEST_CASE("Test StructuralMetadata fixed-length arrays of strings") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
+TEST_CASE("Test variable-length arrays of strings") {
   Model model;
 
   std::vector<std::vector<std::string>> expected{
@@ -2616,13 +2615,13 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
   REQUIRE(!classProperty->count);
 
   SECTION("Access correct type") {
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         stringProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<std::string_view> stringArray =
+      PropertyArrayView<std::string_view> stringArray =
           stringProperty.get(static_cast<int64_t>(i));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(stringArray[static_cast<int64_t>(j)] == expected[i][j]);
@@ -2634,9 +2633,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT8;
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2646,7 +2645,7 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
     propertyTableProperty.arrayOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::ArrayOffsetType::
             UINT16;
-    arrayProperty = view.getPropertyView<MetadataArrayView<std::string_view>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2654,7 +2653,7 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<MetadataArrayView<std::string_view>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2668,9 +2667,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
     propertyTableProperty.stringOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
             UINT8;
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2680,7 +2679,7 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
     propertyTableProperty.stringOffsetType =
         ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
             UINT16;
-    arrayProperty = view.getPropertyView<MetadataArrayView<std::string_view>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2688,7 +2687,7 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.stringOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<MetadataArrayView<std::string_view>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2702,9 +2701,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
     uint32_t* offset = reinterpret_cast<uint32_t*>(
         model.buffers[arrayOffsetBuffer].cesium.data.data());
     offset[0] = static_cast<uint32_t>(1000);
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2716,9 +2715,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
     uint32_t* offset = reinterpret_cast<uint32_t*>(
         model.buffers[stringOffsetBuffer].cesium.data.data());
     offset[0] = static_cast<uint32_t>(1000);
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2731,9 +2730,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
         model.buffers[arrayOffsetBuffer].cesium.data.data());
     uint32_t previousValue = offset[propertyTable.count];
     offset[propertyTable.count] = static_cast<uint32_t>(100000);
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2746,9 +2745,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
         model.buffers[stringOffsetBuffer].cesium.data.data());
     uint32_t previousValue = offset[6];
     offset[6] = static_cast<uint32_t>(100000);
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2758,9 +2757,9 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
 
   SECTION("Count and offset buffer both present") {
     testClassProperty.count = 3;
-    PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         boolArrayProperty =
-            view.getPropertyView<MetadataArrayView<std::string_view>>(
+            view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(
         boolArrayProperty.status() ==
@@ -2768,7 +2767,7 @@ TEST_CASE("Test StructuralMetadata variable-length arrays of strings") {
   }
 }
 
-TEST_CASE("Test StructuralMetadata callback on invalid property table view") {
+TEST_CASE("Test callback on invalid property table view") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2808,7 +2807,7 @@ TEST_CASE("Test StructuralMetadata callback on invalid property table view") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for invalid property") {
+TEST_CASE("Test callback for invalid property") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2857,7 +2856,7 @@ TEST_CASE("Test StructuralMetadata callback for invalid property") {
   REQUIRE(invokedCallbackCount == 2);
 }
 
-TEST_CASE("Test StructuralMetadata callback for scalar property") {
+TEST_CASE("Test callback for scalar property") {
   Model model;
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
 
@@ -2948,7 +2947,7 @@ TEST_CASE("Test StructuralMetadata callback for scalar property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for vecN property") {
+TEST_CASE("Test callback for vecN property") {
   Model model;
 
   std::vector<glm::ivec3> values = {
@@ -3044,7 +3043,7 @@ TEST_CASE("Test StructuralMetadata callback for vecN property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for matN property") {
+TEST_CASE("Test callback for matN property") {
   Model model;
 
   // clang-format off
@@ -3150,7 +3149,7 @@ TEST_CASE("Test StructuralMetadata callback for matN property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for boolean property") {
+TEST_CASE("Test callback for boolean property") {
   Model model;
 
   int64_t instanceCount = 21;
@@ -3253,7 +3252,7 @@ TEST_CASE("Test StructuralMetadata callback for boolean property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for string property") {
+TEST_CASE("Test callback for string property") {
   Model model;
 
   std::vector<std::string> expected{"What's up", "Test_0", "Test_1", "", "Hi"};
@@ -3375,7 +3374,7 @@ TEST_CASE("Test StructuralMetadata callback for string property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for scalar array") {
+TEST_CASE("Test callback for scalar array") {
   Model model;
 
   std::vector<uint32_t> values =
@@ -3451,10 +3450,10 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
 
         if constexpr (std::is_same_v<
                           PropertyTablePropertyView<
-                              MetadataArrayView<uint32_t>>,
+                              PropertyArrayView<uint32_t>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            MetadataArrayView<uint32_t> member = propertyValue.get(i);
+            PropertyArrayView<uint32_t> member = propertyValue.get(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 3 + j)]);
             }
@@ -3469,7 +3468,7 @@ TEST_CASE("Test StructuralMetadata callback for scalar array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for vecN array") {
+TEST_CASE("Test callback for vecN array") {
   Model model;
 
   std::vector<glm::ivec3> values = {
@@ -3551,10 +3550,10 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
 
         if constexpr (std::is_same_v<
                           PropertyTablePropertyView<
-                              MetadataArrayView<glm::ivec3>>,
+                              PropertyArrayView<glm::ivec3>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            MetadataArrayView<glm::ivec3> member = propertyValue.get(i);
+            PropertyArrayView<glm::ivec3> member = propertyValue.get(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
             }
@@ -3569,7 +3568,7 @@ TEST_CASE("Test StructuralMetadata callback for vecN array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for matN array") {
+TEST_CASE("Test callback for matN array") {
   Model model;
 
   // clang-format off
@@ -3665,10 +3664,10 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
 
         if constexpr (std::is_same_v<
                           PropertyTablePropertyView<
-                              MetadataArrayView<glm::i32mat2x2>>,
+                              PropertyArrayView<glm::i32mat2x2>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            MetadataArrayView<glm::i32mat2x2> member = propertyValue.get(i);
+            PropertyArrayView<glm::i32mat2x2> member = propertyValue.get(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
             }
@@ -3683,7 +3682,7 @@ TEST_CASE("Test StructuralMetadata callback for matN array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for boolean array") {
+TEST_CASE("Test callback for boolean array") {
   Model model;
 
   std::vector<bool> expected = {
@@ -3775,10 +3774,10 @@ TEST_CASE("Test StructuralMetadata callback for boolean array") {
         REQUIRE(propertyValue.size() > 0);
 
         if constexpr (std::is_same_v<
-                          PropertyTablePropertyView<MetadataArrayView<bool>>,
+                          PropertyTablePropertyView<PropertyArrayView<bool>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            MetadataArrayView<bool> member = propertyValue.get(i);
+            PropertyArrayView<bool> member = propertyValue.get(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == expected[static_cast<size_t>(i * 3 + j)]);
             }
@@ -3793,7 +3792,7 @@ TEST_CASE("Test StructuralMetadata callback for boolean array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test StructuralMetadata callback for array of strings") {
+TEST_CASE("Test callback for array of strings") {
   Model model;
 
   std::vector<std::string> expected{
@@ -3901,22 +3900,22 @@ TEST_CASE("Test StructuralMetadata callback for array of strings") {
 
         if constexpr (std::is_same_v<
                           PropertyTablePropertyView<
-                              MetadataArrayView<std::string_view>>,
+                              PropertyArrayView<std::string_view>>,
                           decltype(propertyValue)>) {
-          MetadataArrayView<std::string_view> v0 = propertyValue.get(0);
+          PropertyArrayView<std::string_view> v0 = propertyValue.get(0);
           REQUIRE(v0.size() == 2);
           REQUIRE(v0[0] == "What's up");
           REQUIRE(
               v0[1] ==
               "Breaking news!!! Aliens no longer attacks the US first");
 
-          MetadataArrayView<std::string_view> v1 = propertyValue.get(1);
+          PropertyArrayView<std::string_view> v1 = propertyValue.get(1);
           REQUIRE(v1.size() == 2);
           REQUIRE(
               v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
           REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
-          MetadataArrayView<std::string_view> v2 = propertyValue.get(2);
+          PropertyArrayView<std::string_view> v2 = propertyValue.get(2);
           REQUIRE(v2.size() == 2);
           REQUIRE(v2[0] == "I love you, meat bags! ❤️");
           REQUIRE(v2[1] == "Book in the freezer");

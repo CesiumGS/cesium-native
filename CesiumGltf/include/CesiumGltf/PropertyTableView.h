@@ -2,16 +2,14 @@
 
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
 #include "CesiumGltf/Model.h"
-#include "CesiumGltf/StructuralMetadataPropertyTablePropertyView.h"
-#include "CesiumGltf/StructuralMetadataPropertyType.h"
+#include "CesiumGltf/PropertyTablePropertyView.h"
+#include "CesiumGltf/PropertyType.h"
 
 #include <glm/common.hpp>
 
 #include <optional>
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
-
 /**
  * @brief Indicates the status of a property table view.
  *
@@ -107,7 +105,7 @@ public:
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
+   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
    * aforementioned types.
    *
    * @param propertyName The name of the property to retrieve data from
@@ -119,16 +117,14 @@ public:
   getPropertyView(const std::string& propertyName) const {
     if (this->size() <= 0) {
       return createInvalidPropertyView<T>(
-          StructuralMetadata::PropertyTablePropertyViewStatus::
-              ErrorInvalidPropertyTable);
+          PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
     }
 
     const ExtensionExtStructuralMetadataClassProperty* pClassProperty =
         getClassProperty(propertyName);
     if (!pClassProperty) {
       return createInvalidPropertyView<T>(
-          StructuralMetadata::PropertyTablePropertyViewStatus::
-              ErrorPropertyDoesNotExist);
+          PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
     }
 
     return getPropertyViewImpl<T>(propertyName, *pClassProperty);
@@ -144,7 +140,7 @@ public:
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
+   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
    * aforementioned types. If the property is invalid, an empty
    * {@link PropertyTablePropertyView} with an error status will be passed to the
    * callback. Otherwise, a valid property view will be passed to the callback.
@@ -160,8 +156,7 @@ public:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              StructuralMetadata::PropertyTablePropertyViewStatus::
-                  ErrorInvalidPropertyTable));
+              PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable));
       return;
     }
 
@@ -236,7 +231,7 @@ public:
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or {@link MetadataArrayView<T>} with T as one of the
+   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
    * aforementioned types. If the property is invalid, an empty
    * {@link PropertyTablePropertyView} with an error status code will be passed to the
    * callback. Otherwise, a valid property view will be passed to
@@ -279,70 +274,70 @@ private:
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<int8_t>>(
+          getPropertyViewImpl<PropertyArrayView<int8_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<uint8_t>>(
+          getPropertyViewImpl<PropertyArrayView<uint8_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<int16_t>>(
+          getPropertyViewImpl<PropertyArrayView<int16_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<uint16_t>>(
+          getPropertyViewImpl<PropertyArrayView<uint16_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<int32_t>>(
+          getPropertyViewImpl<PropertyArrayView<int32_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<uint32_t>>(
+          getPropertyViewImpl<PropertyArrayView<uint32_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<int64_t>>(
+          getPropertyViewImpl<PropertyArrayView<int64_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<uint64_t>>(
+          getPropertyViewImpl<PropertyArrayView<uint64_t>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<float>>(
+          getPropertyViewImpl<PropertyArrayView<float>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Float64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<double>>(
+          getPropertyViewImpl<PropertyArrayView<double>>(
               propertyName,
               classProperty));
       break;
@@ -365,70 +360,70 @@ private:
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int8_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, int8_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint8_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, uint8_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int16_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, int16_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint16_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, uint16_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int32_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, int32_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint32_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, uint32_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, int64_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, int64_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, uint64_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, uint64_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, float>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, float>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Float64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::vec<N, double>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::vec<N, double>>>(
               propertyName,
               classProperty));
       break;
@@ -490,70 +485,70 @@ private:
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int8_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, int8_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint8_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, uint8_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int16_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, int16_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint16_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, uint16_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int32_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, int32_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint32_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, uint32_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, int64_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, int64_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, uint64_t>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, uint64_t>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, float>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, float>>>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Float64:
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<glm::mat<N, N, double>>>(
+          getPropertyViewImpl<PropertyArrayView<glm::mat<N, N, double>>>(
               propertyName,
               classProperty));
       break;
@@ -635,14 +630,14 @@ private:
     } else if (type == PropertyType::Boolean) {
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<bool>>(
+          getPropertyViewImpl<PropertyArrayView<bool>>(
               propertyName,
               classProperty));
 
     } else if (type == PropertyType::String) {
       callback(
           propertyName,
-          getPropertyViewImpl<MetadataArrayView<std::string_view>>(
+          getPropertyViewImpl<PropertyArrayView<std::string_view>>(
               propertyName,
               classProperty));
     } else {
@@ -1036,7 +1031,7 @@ private:
 
     if (values.size() % sizeof(T) != 0) {
       return createInvalidPropertyView<T>(
-          StructuralMetadata::PropertyTablePropertyViewStatus::
+          PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
 
@@ -1067,19 +1062,19 @@ private:
           propertyTableProperty) const;
 
   template <typename T>
-  PropertyTablePropertyView<MetadataArrayView<T>>
+  PropertyTablePropertyView<PropertyArrayView<T>>
   getPrimitiveArrayPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
           propertyTableProperty) const {
     if (!classProperty.array) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
 
@@ -1087,31 +1082,31 @@ private:
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
     gsl::span<const std::byte> values;
     auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(status);
+      return createInvalidPropertyView<PropertyArrayView<T>>(status);
     }
 
     if (values.size() % sizeof(T) != 0) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
 
     const int64_t fixedLengthArrayCount = classProperty.count.value_or(0);
     if (fixedLengthArrayCount > 0 && propertyTableProperty.arrayOffsets >= 0) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::
               ErrorArrayCountAndOffsetBufferCoexist);
     }
 
     if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::
               ErrorArrayCountAndOffsetBufferDontExist);
     }
@@ -1130,12 +1125,12 @@ private:
       }
 
       if (values.size() < maxRequiredBytes) {
-        return createInvalidPropertyView<MetadataArrayView<T>>(
+        return createInvalidPropertyView<PropertyArrayView<T>>(
             PropertyTablePropertyViewStatus::
                 ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
       }
 
-      return PropertyTablePropertyView<MetadataArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::Valid,
           values,
           gsl::span<const std::byte>(),
@@ -1152,7 +1147,7 @@ private:
         convertArrayOffsetTypeStringToPropertyComponentType(
             propertyTableProperty.arrayOffsetType);
     if (arrayOffsetType == PropertyComponentType::None) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(
+      return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
     }
 
@@ -1166,10 +1161,10 @@ private:
         checkBitsSize,
         arrayOffsets);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return createInvalidPropertyView<MetadataArrayView<T>>(status);
+      return createInvalidPropertyView<PropertyArrayView<T>>(status);
     }
 
-    return PropertyTablePropertyView<MetadataArrayView<T>>(
+    return PropertyTablePropertyView<PropertyArrayView<T>>(
         PropertyTablePropertyViewStatus::Valid,
         values,
         arrayOffsets,
@@ -1181,7 +1176,7 @@ private:
         classProperty.normalized);
   }
 
-  PropertyTablePropertyView<MetadataArrayView<std::string_view>>
+  PropertyTablePropertyView<PropertyArrayView<std::string_view>>
   getStringArrayPropertyValues(
       const ExtensionExtStructuralMetadataClassProperty& classProperty,
       const ExtensionExtStructuralMetadataPropertyTableProperty&
@@ -1221,6 +1216,4 @@ private:
   const ExtensionExtStructuralMetadataClass* _pClass;
   PropertyTableViewStatus _status;
 };
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

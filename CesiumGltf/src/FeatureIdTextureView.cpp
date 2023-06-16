@@ -1,7 +1,6 @@
-#include "CesiumGltf/MeshFeaturesFeatureIdTextureView.h"
+#include "CesiumGltf/FeatureIdTextureView.h"
 
 namespace CesiumGltf {
-namespace MeshFeatures {
 FeatureIdTextureView::FeatureIdTextureView() noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
       _texCoordSetIndex(-1),
@@ -104,6 +103,4 @@ int64_t FeatureIdTextureView::getFeatureId(double u, double v) const noexcept {
 
   return value;
 }
-
-} // namespace MeshFeatures
 } // namespace CesiumGltf

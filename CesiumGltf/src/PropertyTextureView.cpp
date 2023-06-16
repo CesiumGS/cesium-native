@@ -1,7 +1,6 @@
-#include "CesiumGltf/StructuralMetadataPropertyTextureView.h"
+#include "CesiumGltf/PropertyTextureView.h"
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
 PropertyTextureView::PropertyTextureView() noexcept
     : _pModel(nullptr),
       _pPropertyTexture(nullptr),
@@ -80,6 +79,4 @@ PropertyTextureView::getClassProperty(const std::string& propertyName) const {
 
   return &propertyIter->second;
 }
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

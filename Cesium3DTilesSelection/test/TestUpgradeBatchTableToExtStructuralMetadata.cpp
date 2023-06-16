@@ -5,8 +5,8 @@
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltf/StructuralMetadataPropertyTablePropertyView.h>
-#include <CesiumGltf/StructuralMetadataPropertyTableView.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyTableView.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -18,7 +18,6 @@
 #include <set>
 
 using namespace CesiumGltf;
-using namespace CesiumGltf::StructuralMetadata;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumUtility;
 
@@ -88,13 +87,13 @@ static void checkArrayProperty(
   REQUIRE(view.status() == PropertyTableViewStatus::Valid);
   REQUIRE(view.size() == propertyTable.count);
 
-  PropertyTablePropertyView<MetadataArrayView<PropertyViewType>> propertyView =
-      view.getPropertyView<MetadataArrayView<PropertyViewType>>(propertyName);
+  PropertyTablePropertyView<PropertyArrayView<PropertyViewType>> propertyView =
+      view.getPropertyView<PropertyArrayView<PropertyViewType>>(propertyName);
   REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
   REQUIRE(propertyView.size() == propertyTable.count);
   REQUIRE(propertyView.size() == static_cast<int64_t>(expectedTotalInstances));
   for (size_t i = 0; i < expectedTotalInstances; ++i) {
-    MetadataArrayView<PropertyViewType> value =
+    PropertyArrayView<PropertyViewType> value =
         propertyView.get(static_cast<int64_t>(i));
     if (expectedCount > 0) {
       REQUIRE(value.size() == expectedCount);

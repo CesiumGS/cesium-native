@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/StructuralMetadataPropertyType.h"
+#include "CesiumGltf/PropertyType.h"
 
 #include <CesiumUtility/SpanHelper.h>
 
@@ -10,8 +10,6 @@
 #include <cstddef>
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
-
 static size_t getOffsetFromOffsetsBuffer(
     size_t index,
     const gsl::span<const std::byte>& offsetBuffer,
@@ -46,6 +44,4 @@ static size_t getOffsetFromOffsetsBuffer(
     return 0;
   }
 }
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

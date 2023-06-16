@@ -1,5 +1,5 @@
 #include "CesiumGltf/ExtensionExtMeshFeatures.h"
-#include "CesiumGltf/MeshFeaturesFeatureIdTextureView.h"
+#include "CesiumGltf/FeatureIdTextureView.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -11,7 +11,6 @@
 #include <vector>
 
 using namespace CesiumGltf;
-using namespace CesiumGltf::MeshFeatures;
 
 TEST_CASE("Test FeatureIdTextureView on feature ID texture with invalid "
           "texture index") {
