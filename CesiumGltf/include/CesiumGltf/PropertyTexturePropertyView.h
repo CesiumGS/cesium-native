@@ -89,9 +89,7 @@ enum class PropertyTexturePropertyComponentType {
  * @tparam T The component type, must correspond to a valid
  * {@link PropertyTexturePropertyComponentType}.
  */
-template <typename T> struct PropertyTexturePropertyValue {
-  T components[4];
-};
+template <typename T> struct PropertyTexturePropertyValue { T components[4]; };
 
 /**
  * @brief A view of the data specified by a {@link PropertyTextureProperty}.
