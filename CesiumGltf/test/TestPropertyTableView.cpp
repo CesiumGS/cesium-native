@@ -6,6 +6,22 @@
 
 using namespace CesiumGltf;
 
+template <typename T>
+void addBufferToModel(Model& model, std::vector<T>& values) {
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.cesium.data.resize(values.size() * sizeof(T));
+  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
+  std::memcpy(
+      valueBuffer.cesium.data.data(),
+      values.data(),
+      valueBuffer.cesium.data.size());
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+}
+
 TEST_CASE("Test PropertyTableView on model without EXT_structural_metadata "
           "extension") {
   Model model;
@@ -83,31 +99,11 @@ TEST_CASE("Test property table with nonexistent class") {
 
 TEST_CASE("Test scalar property") {
   Model model;
-
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
 
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-    valueBufferIndex = model.buffers.size() - 1;
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -253,35 +249,15 @@ TEST_CASE("Test scalar property") {
 
 TEST_CASE("Test vecN property") {
   Model model;
-
   std::vector<glm::ivec3> values = {
       glm::ivec3(-12, 34, 30),
       glm::ivec3(11, 73, 0),
       glm::ivec3(-2, 6, 12),
       glm::ivec3(-4, 8, -13)};
 
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::ivec3));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-    valueBufferIndex = model.buffers.size() - 1;
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -434,7 +410,6 @@ TEST_CASE("Test vecN property") {
 
 TEST_CASE("Test matN property") {
   Model model;
-
   // clang-format off
   std::vector<glm::u32mat2x2> values = {
       glm::u32mat2x2(
@@ -451,28 +426,9 @@ TEST_CASE("Test matN property") {
         3, 23)};
   // clang-format on
 
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::u32mat2x2));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-    valueBufferIndex = model.buffers.size() - 1;
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -647,24 +603,7 @@ TEST_CASE("Test boolean property") {
     values[static_cast<size_t>(byteIndex)] = static_cast<uint8_t>(
         (expectedValue << bitIndex) | values[static_cast<size_t>(byteIndex)]);
   }
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size());
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -740,37 +679,13 @@ TEST_CASE("Test string property") {
         offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
   }
 
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
-    valueBufferIndex = model.buffers.size() - 1;
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(valueBufferIndex);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferIndex = 0;
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
-    offsetBuffer.cesium.data = std::move(stringOffsets);
-    offsetBufferIndex = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(offsetBufferIndex);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, stringOffsets);
+  size_t offsetBufferIndex = model.buffers.size() - 1;
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -886,27 +801,11 @@ TEST_CASE("Test string property") {
 
 TEST_CASE("Test fixed-length scalar array") {
   Model model;
-
   std::vector<uint32_t> values =
       {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
 
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1043,35 +942,13 @@ TEST_CASE("Test variable-length scalar array") {
     offsetValue[i + 1] = offsetValue[i] + expected[i].size() * sizeof(uint16_t);
   }
 
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
-    valueBufferIndex = model.buffers.size() - 1;
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferIndex = 0;
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-    offsetBufferIndex = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t offsetBufferIndex = model.buffers.size() - 1;
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1193,7 +1070,6 @@ TEST_CASE("Test variable-length scalar array") {
 
 TEST_CASE("Test fixed-length vecN array") {
   Model model;
-
   std::vector<glm::ivec3> values = {
       glm::ivec3(12, 34, -30),
       glm::ivec3(-2, 0, 1),
@@ -1203,23 +1079,8 @@ TEST_CASE("Test fixed-length vecN array") {
       glm::ivec3(40, 61, 3),
   };
 
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::ivec3));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1335,7 +1196,6 @@ TEST_CASE("Test fixed-length vecN array") {
 
 TEST_CASE("Test variable-length vecN array") {
   Model model;
-
   // clang-format off
   std::vector<std::vector<glm::ivec3>> expected{
       { glm::ivec3(12, 34, -30), glm::ivec3(-2, 0, 1) },
@@ -1363,35 +1223,13 @@ TEST_CASE("Test variable-length vecN array") {
         offsetValue[i] + expected[i].size() * sizeof(glm::ivec3);
   }
 
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
-    valueBufferIndex = model.buffers.size() - 1;
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferIndex = 0;
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-    offsetBufferIndex = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t offsetBufferIndex = model.buffers.size() - 1;
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1519,7 +1357,6 @@ TEST_CASE("Test variable-length vecN array") {
 
 TEST_CASE("Test fixed-length matN array") {
   Model model;
-
   // clang-format off
   std::vector<glm::i32mat2x2> values = {
       glm::i32mat2x2(
@@ -1543,23 +1380,8 @@ TEST_CASE("Test fixed-length matN array") {
   };
   // clang-format on
 
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::i32mat2x2));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1676,7 +1498,6 @@ TEST_CASE("Test fixed-length matN array") {
 
 TEST_CASE("Test variable-length matN array") {
   Model model;
-
   // clang-format off
     std::vector<glm::i32mat2x2> data0{
         glm::i32mat2x2(
@@ -1724,35 +1545,13 @@ TEST_CASE("Test variable-length matN array") {
         offsetValue[i] + expected[i].size() * sizeof(glm::i32mat2x2);
   }
 
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
-    valueBufferIndex = model.buffers.size() - 1;
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferIndex = 0;
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-    offsetBufferIndex = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t offsetBufferIndex = model.buffers.size() - 1;
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1906,21 +1705,7 @@ TEST_CASE("Test fixed-length boolean array") {
         static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
   }
 
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size());
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2040,35 +1825,13 @@ TEST_CASE("Test variable-length boolean array") {
     offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
-  size_t valueBufferViewIndex = 0;
-  size_t valueBufferIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
-    valueBufferIndex = model.buffers.size() - 1;
+  addBufferToModel(model, values);
+  size_t valueBufferIndex = model.buffers.size() - 1;
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(valueBufferIndex);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferIndex = 0;
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-    offsetBufferIndex = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(offsetBufferIndex);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t offsetBufferIndex = model.buffers.size() - 1;
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2217,31 +1980,11 @@ TEST_CASE("Test fixed-length arrays of strings") {
         offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
   }
 
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2399,48 +2142,16 @@ TEST_CASE("Test variable-length arrays of strings") {
         static_cast<uint32_t>(expected[i].size() * sizeof(uint32_t));
   }
 
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t arrayOffsetBuffer = model.buffers.size() - 1;
+  size_t arrayOffsetBufferView = model.bufferViews.size() - 1;
 
-  size_t arrayOffsetBuffer = 0;
-  size_t arrayOffsetBufferView = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-    arrayOffsetBuffer = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(arrayOffsetBuffer);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    arrayOffsetBufferView = model.bufferViews.size() - 1;
-  }
-
-  size_t stringOffsetBuffer = 0;
-  size_t stringOffsetBufferView = 0;
-  {
-    Buffer& strOffsetBuffer = model.buffers.emplace_back();
-    strOffsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
-    strOffsetBuffer.cesium.data = std::move(stringOffsets);
-    stringOffsetBuffer = model.buffers.size() - 1;
-
-    BufferView& strOffsetBufferView = model.bufferViews.emplace_back();
-    strOffsetBufferView.buffer = static_cast<int32_t>(stringOffsetBuffer);
-    strOffsetBufferView.byteOffset = 0;
-    strOffsetBufferView.byteLength = strOffsetBuffer.byteLength;
-    stringOffsetBufferView = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, stringOffsets);
+  size_t stringOffsetBuffer = model.buffers.size() - 1;
+  size_t stringOffsetBufferView = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2713,26 +2424,8 @@ TEST_CASE("Test callback for scalar property") {
   Model model;
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
 
-  size_t valueBufferViewIndex = 0;
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2794,33 +2487,14 @@ TEST_CASE("Test callback for scalar property") {
 
 TEST_CASE("Test callback for vecN property") {
   Model model;
-
   std::vector<glm::ivec3> values = {
       glm::ivec3(-12, 34, 30),
       glm::ivec3(11, 73, 0),
       glm::ivec3(-2, 6, 12),
       glm::ivec3(-4, 8, -13)};
 
-  size_t valueBufferViewIndex = 0;
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::ivec3));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2882,7 +2556,6 @@ TEST_CASE("Test callback for vecN property") {
 
 TEST_CASE("Test callback for matN property") {
   Model model;
-
   // clang-format off
   std::vector<glm::u32mat2x2> values = {
       glm::u32mat2x2(
@@ -2899,26 +2572,8 @@ TEST_CASE("Test callback for matN property") {
         3, 23)};
   // clang-format on
 
-  size_t valueBufferViewIndex = 0;
-
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::u32mat2x2));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2999,23 +2654,7 @@ TEST_CASE("Test callback for boolean property") {
         (expectedValue << bitIndex) | values[static_cast<size_t>(byteIndex)]);
   }
 
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size());
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -3099,37 +2738,11 @@ TEST_CASE("Test callback for string property") {
         offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
   }
 
-  // Buffers are constructed in scope to ensure that the tests don't use their
-  // temporary variables.
-  size_t valueBufferIndex = 0;
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
-    valueBufferIndex = model.buffers.size() - 1;
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(valueBufferIndex);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferIndex = 0;
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
-    offsetBuffer.cesium.data = std::move(stringOffsets);
-    offsetBufferIndex = model.buffers.size() - 1;
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(offsetBufferIndex);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, stringOffsets);
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -3194,25 +2807,10 @@ TEST_CASE("Test callback for string property") {
 
 TEST_CASE("Test callback for scalar array") {
   Model model;
-
   std::vector<uint32_t> values =
       {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
 
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -3280,7 +2878,6 @@ TEST_CASE("Test callback for scalar array") {
 
 TEST_CASE("Test callback for vecN array") {
   Model model;
-
   std::vector<glm::ivec3> values = {
       glm::ivec3(12, 34, -30),
       glm::ivec3(-2, 0, 1),
@@ -3290,21 +2887,7 @@ TEST_CASE("Test callback for vecN array") {
       glm::ivec3(40, 61, 3),
   };
 
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::ivec3));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -3372,7 +2955,6 @@ TEST_CASE("Test callback for vecN array") {
 
 TEST_CASE("Test callback for matN array") {
   Model model;
-
   // clang-format off
   std::vector<glm::i32mat2x2> values = {
       glm::i32mat2x2(
@@ -3396,21 +2978,7 @@ TEST_CASE("Test callback for matN array") {
   };
   // clang-format on
 
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size() * sizeof(glm::i32mat2x2));
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -3504,21 +3072,7 @@ TEST_CASE("Test callback for boolean array") {
         static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
   }
 
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.cesium.data.resize(values.size());
-    valueBuffer.byteLength =
-        static_cast<int64_t>(valueBuffer.cesium.data.size());
-    std::memcpy(
-        valueBuffer.cesium.data.data(),
-        values.data(),
-        valueBuffer.cesium.data.size());
-
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-  }
+  addBufferToModel(model, values);
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -3610,31 +3164,11 @@ TEST_CASE("Test callback for array of strings") {
         offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
   }
 
-  size_t valueBufferViewIndex = 0;
-  {
-    Buffer& valueBuffer = model.buffers.emplace_back();
-    valueBuffer.byteLength = static_cast<int64_t>(values.size());
-    valueBuffer.cesium.data = std::move(values);
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
-    BufferView& valueBufferView = model.bufferViews.emplace_back();
-    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    valueBufferView.byteOffset = 0;
-    valueBufferView.byteLength = valueBuffer.byteLength;
-    valueBufferViewIndex = model.bufferViews.size() - 1;
-  }
-
-  size_t offsetBufferViewIndex = 0;
-  {
-    Buffer& offsetBuffer = model.buffers.emplace_back();
-    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-    offsetBuffer.cesium.data = std::move(offsets);
-
-    BufferView& offsetBufferView = model.bufferViews.emplace_back();
-    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    offsetBufferView.byteOffset = 0;
-    offsetBufferView.byteLength = offsetBuffer.byteLength;
-    offsetBufferViewIndex = model.bufferViews.size() - 1;
-  }
+  addBufferToModel(model, offsets);
+  size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
