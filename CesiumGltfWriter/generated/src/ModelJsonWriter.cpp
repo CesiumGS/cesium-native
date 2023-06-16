@@ -17,20 +17,28 @@
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
 #include <CesiumGltf/CameraPerspective.h>
-#include <CesiumGltf/Class.h>
-#include <CesiumGltf/ClassProperty.h>
-#include <CesiumGltf/ClassStatistics.h>
-#include <CesiumGltf/Enum.h>
-#include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataClass.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataClassProperty.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataClassStatistics.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataEnum.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataEnumValue.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureIDAttribute.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureIDTexture.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureIDs.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureTable.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureTableProperty.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureTexture.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataPropertyStatistics.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataSchema.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataStatistics.h>
+#include <CesiumGltf/ExtensionExtFeatureMetadataTextureAccessor.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
-#include <CesiumGltf/ExtensionExtMeshFeaturesFeatureId.h>
-#include <CesiumGltf/ExtensionExtMeshFeaturesFeatureIdTexture.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadataClass.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadataClassProperty.h>
@@ -60,12 +68,8 @@
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumGltf/FeatureIDAttribute.h>
-#include <CesiumGltf/FeatureIDTexture.h>
-#include <CesiumGltf/FeatureIDs.h>
-#include <CesiumGltf/FeatureTable.h>
-#include <CesiumGltf/FeatureTableProperty.h>
-#include <CesiumGltf/FeatureTexture.h>
+#include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
@@ -75,14 +79,10 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
-#include <CesiumGltf/PropertyStatistics.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/Scene.h>
-#include <CesiumGltf/Schema.h>
 #include <CesiumGltf/Skin.h>
-#include <CesiumGltf/Statistics.h>
 #include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureAccessor.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
@@ -278,12 +278,12 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
+    const CesiumGltf::FeatureId& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
+    const CesiumGltf::FeatureIdTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -293,77 +293,77 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::FeatureIDTexture& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::TextureAccessor& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataTextureAccessor& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::FeatureIDAttribute& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDAttribute& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::FeatureIDs& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDs& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::FeatureTexture& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::FeatureTable& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTable& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::FeatureTableProperty& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::Statistics& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ClassStatistics& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataClassStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::PropertyStatistics& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataPropertyStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::Schema& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataSchema& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::Enum& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataEnum& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::EnumValue& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataEnumValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::Class& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataClass& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ClassProperty& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataClassProperty& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1595,7 +1595,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
+    const CesiumGltf::FeatureId& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1634,7 +1634,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
+    const CesiumGltf::FeatureIdTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1685,7 +1685,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::FeatureIDTexture& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1702,7 +1702,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::TextureAccessor& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataTextureAccessor& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1719,7 +1719,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::FeatureIDAttribute& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDAttribute& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1736,7 +1736,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::FeatureIDs& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDs& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1762,7 +1762,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::FeatureTexture& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1781,7 +1781,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::FeatureTable& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTable& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1805,7 +1805,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::FeatureTableProperty& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1815,7 +1815,9 @@ void writeJson(
     writeJson(obj.bufferView, jsonWriter, context);
   }
 
-  if (obj.offsetType != CesiumGltf::FeatureTableProperty::OffsetType::UINT32) {
+  if (obj.offsetType !=
+      CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty::OffsetType::
+          UINT32) {
     jsonWriter.Key("offsetType");
     writeJson(obj.offsetType, jsonWriter, context);
   }
@@ -1836,7 +1838,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::Statistics& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1852,7 +1854,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ClassStatistics& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataClassStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1873,7 +1875,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::PropertyStatistics& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataPropertyStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1924,7 +1926,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::Schema& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataSchema& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1960,7 +1962,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::Enum& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataEnum& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1975,7 +1977,8 @@ void writeJson(
     writeJson(obj.description, jsonWriter, context);
   }
 
-  if (obj.valueType != CesiumGltf::Enum::ValueType::UINT16) {
+  if (obj.valueType !=
+      CesiumGltf::ExtensionExtFeatureMetadataEnum::ValueType::UINT16) {
     jsonWriter.Key("valueType");
     writeJson(obj.valueType, jsonWriter, context);
   }
@@ -1991,7 +1994,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::EnumValue& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataEnumValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2013,7 +2016,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::Class& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataClass& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2039,7 +2042,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ClassProperty& obj,
+    const CesiumGltf::ExtensionExtFeatureMetadataClassProperty& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -3174,15 +3177,15 @@ void ExtensionExtStructuralMetadataClassPropertyJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionExtMeshFeaturesFeatureIdJsonWriter::write(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
+void FeatureIdJsonWriter::write(
+    const CesiumGltf::FeatureId& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionExtMeshFeaturesFeatureIdTextureJsonWriter::write(
-    const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
+void FeatureIdTextureJsonWriter::write(
+    const CesiumGltf::FeatureIdTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
@@ -3195,106 +3198,106 @@ void ExtensionExtInstanceFeaturesFeatureIdJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void FeatureIDTextureJsonWriter::write(
-    const CesiumGltf::FeatureIDTexture& obj,
+void ExtensionExtFeatureMetadataFeatureIDTextureJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void TextureAccessorJsonWriter::write(
-    const CesiumGltf::TextureAccessor& obj,
+void ExtensionExtFeatureMetadataTextureAccessorJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataTextureAccessor& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void FeatureIDAttributeJsonWriter::write(
-    const CesiumGltf::FeatureIDAttribute& obj,
+void ExtensionExtFeatureMetadataFeatureIDAttributeJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDAttribute& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void FeatureIDsJsonWriter::write(
-    const CesiumGltf::FeatureIDs& obj,
+void ExtensionExtFeatureMetadataFeatureIDsJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDs& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void FeatureTextureJsonWriter::write(
-    const CesiumGltf::FeatureTexture& obj,
+void ExtensionExtFeatureMetadataFeatureTextureJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTexture& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void FeatureTableJsonWriter::write(
-    const CesiumGltf::FeatureTable& obj,
+void ExtensionExtFeatureMetadataFeatureTableJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTable& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void FeatureTablePropertyJsonWriter::write(
-    const CesiumGltf::FeatureTableProperty& obj,
+void ExtensionExtFeatureMetadataFeatureTablePropertyJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void StatisticsJsonWriter::write(
-    const CesiumGltf::Statistics& obj,
+void ExtensionExtFeatureMetadataStatisticsJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ClassStatisticsJsonWriter::write(
-    const CesiumGltf::ClassStatistics& obj,
+void ExtensionExtFeatureMetadataClassStatisticsJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataClassStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void PropertyStatisticsJsonWriter::write(
-    const CesiumGltf::PropertyStatistics& obj,
+void ExtensionExtFeatureMetadataPropertyStatisticsJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataPropertyStatistics& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void SchemaJsonWriter::write(
-    const CesiumGltf::Schema& obj,
+void ExtensionExtFeatureMetadataSchemaJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataSchema& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void EnumJsonWriter::write(
-    const CesiumGltf::Enum& obj,
+void ExtensionExtFeatureMetadataEnumJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataEnum& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void EnumValueJsonWriter::write(
-    const CesiumGltf::EnumValue& obj,
+void ExtensionExtFeatureMetadataEnumValueJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataEnumValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ClassJsonWriter::write(
-    const CesiumGltf::Class& obj,
+void ExtensionExtFeatureMetadataClassJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataClass& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void ClassPropertyJsonWriter::write(
-    const CesiumGltf::ClassProperty& obj,
+void ExtensionExtFeatureMetadataClassPropertyJsonWriter::write(
+    const CesiumGltf::ExtensionExtFeatureMetadataClassProperty& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

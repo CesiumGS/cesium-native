@@ -411,8 +411,7 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-      ExtensionExtMeshFeaturesFeatureId& featureId =
-          pPrimitiveExtension->featureIds[0];
+      const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
       CHECK(featureId.attribute == 0);
       CHECK(featureId.propertyTable == 0);
@@ -557,8 +556,7 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-      const ExtensionExtMeshFeaturesFeatureId& featureId =
-          pPrimitiveExtension->featureIds[0];
+      const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
       CHECK(featureId.attribute == 0);
       CHECK(featureId.propertyTable == 0);
@@ -780,8 +778,7 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-  const ExtensionExtMeshFeaturesFeatureId& featureId =
-      pPrimitiveExtension->featureIds[0];
+  const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
   CHECK(featureId.propertyTable == 0);
@@ -942,8 +939,7 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-  const ExtensionExtMeshFeaturesFeatureId& featureId =
-      pPrimitiveExtension->featureIds[0];
+  const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(!featureId.attribute);
   CHECK(featureId.propertyTable == 0);
@@ -1104,8 +1100,7 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-  const ExtensionExtMeshFeaturesFeatureId& featureId =
-      pPrimitiveExtension->featureIds[0];
+  const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(!featureId.attribute);
   CHECK(featureId.propertyTable == 0);

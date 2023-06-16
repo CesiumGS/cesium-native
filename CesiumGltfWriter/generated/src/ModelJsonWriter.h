@@ -46,24 +46,24 @@ struct ExtensionExtStructuralMetadataEnum;
 struct ExtensionExtStructuralMetadataEnumValue;
 struct ExtensionExtStructuralMetadataClass;
 struct ExtensionExtStructuralMetadataClassProperty;
-struct ExtensionExtMeshFeaturesFeatureId;
-struct ExtensionExtMeshFeaturesFeatureIdTexture;
+struct FeatureId;
+struct FeatureIdTexture;
 struct ExtensionExtInstanceFeaturesFeatureId;
-struct FeatureIDTexture;
-struct TextureAccessor;
-struct FeatureIDAttribute;
-struct FeatureIDs;
-struct FeatureTexture;
-struct FeatureTable;
-struct FeatureTableProperty;
-struct Statistics;
-struct ClassStatistics;
-struct PropertyStatistics;
-struct Schema;
-struct Enum;
-struct EnumValue;
-struct Class;
-struct ClassProperty;
+struct ExtensionExtFeatureMetadataFeatureIDTexture;
+struct ExtensionExtFeatureMetadataTextureAccessor;
+struct ExtensionExtFeatureMetadataFeatureIDAttribute;
+struct ExtensionExtFeatureMetadataFeatureIDs;
+struct ExtensionExtFeatureMetadataFeatureTexture;
+struct ExtensionExtFeatureMetadataFeatureTable;
+struct ExtensionExtFeatureMetadataFeatureTableProperty;
+struct ExtensionExtFeatureMetadataStatistics;
+struct ExtensionExtFeatureMetadataClassStatistics;
+struct ExtensionExtFeatureMetadataPropertyStatistics;
+struct ExtensionExtFeatureMetadataSchema;
+struct ExtensionExtFeatureMetadataEnum;
+struct ExtensionExtFeatureMetadataEnumValue;
+struct ExtensionExtFeatureMetadataClass;
+struct ExtensionExtFeatureMetadataClassProperty;
 struct Model;
 struct Texture;
 struct Skin;
@@ -468,20 +468,20 @@ struct ExtensionExtStructuralMetadataClassPropertyJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionExtMeshFeaturesFeatureIdJsonWriter {
-  using ValueType = CesiumGltf::ExtensionExtMeshFeaturesFeatureId;
+struct FeatureIdJsonWriter {
+  using ValueType = CesiumGltf::FeatureId;
 
   static void write(
-      const CesiumGltf::ExtensionExtMeshFeaturesFeatureId& obj,
+      const CesiumGltf::FeatureId& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionExtMeshFeaturesFeatureIdTextureJsonWriter {
-  using ValueType = CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture;
+struct FeatureIdTextureJsonWriter {
+  using ValueType = CesiumGltf::FeatureIdTexture;
 
   static void write(
-      const CesiumGltf::ExtensionExtMeshFeaturesFeatureIdTexture& obj,
+      const CesiumGltf::FeatureIdTexture& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -495,137 +495,137 @@ struct ExtensionExtInstanceFeaturesFeatureIdJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct FeatureIDTextureJsonWriter {
-  using ValueType = CesiumGltf::FeatureIDTexture;
+struct ExtensionExtFeatureMetadataFeatureIDTextureJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataFeatureIDTexture;
 
   static void write(
-      const CesiumGltf::FeatureIDTexture& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDTexture& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct TextureAccessorJsonWriter {
-  using ValueType = CesiumGltf::TextureAccessor;
+struct ExtensionExtFeatureMetadataTextureAccessorJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataTextureAccessor;
 
   static void write(
-      const CesiumGltf::TextureAccessor& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataTextureAccessor& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct FeatureIDAttributeJsonWriter {
-  using ValueType = CesiumGltf::FeatureIDAttribute;
+struct ExtensionExtFeatureMetadataFeatureIDAttributeJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataFeatureIDAttribute;
 
   static void write(
-      const CesiumGltf::FeatureIDAttribute& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDAttribute& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct FeatureIDsJsonWriter {
-  using ValueType = CesiumGltf::FeatureIDs;
+struct ExtensionExtFeatureMetadataFeatureIDsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataFeatureIDs;
 
   static void write(
-      const CesiumGltf::FeatureIDs& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataFeatureIDs& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct FeatureTextureJsonWriter {
-  using ValueType = CesiumGltf::FeatureTexture;
+struct ExtensionExtFeatureMetadataFeatureTextureJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataFeatureTexture;
 
   static void write(
-      const CesiumGltf::FeatureTexture& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataFeatureTexture& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct FeatureTableJsonWriter {
-  using ValueType = CesiumGltf::FeatureTable;
+struct ExtensionExtFeatureMetadataFeatureTableJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataFeatureTable;
 
   static void write(
-      const CesiumGltf::FeatureTable& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataFeatureTable& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct FeatureTablePropertyJsonWriter {
-  using ValueType = CesiumGltf::FeatureTableProperty;
+struct ExtensionExtFeatureMetadataFeatureTablePropertyJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty;
 
   static void write(
-      const CesiumGltf::FeatureTableProperty& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataFeatureTableProperty& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct StatisticsJsonWriter {
-  using ValueType = CesiumGltf::Statistics;
+struct ExtensionExtFeatureMetadataStatisticsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataStatistics;
 
   static void write(
-      const CesiumGltf::Statistics& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataStatistics& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ClassStatisticsJsonWriter {
-  using ValueType = CesiumGltf::ClassStatistics;
+struct ExtensionExtFeatureMetadataClassStatisticsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataClassStatistics;
 
   static void write(
-      const CesiumGltf::ClassStatistics& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataClassStatistics& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct PropertyStatisticsJsonWriter {
-  using ValueType = CesiumGltf::PropertyStatistics;
+struct ExtensionExtFeatureMetadataPropertyStatisticsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataPropertyStatistics;
 
   static void write(
-      const CesiumGltf::PropertyStatistics& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataPropertyStatistics& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct SchemaJsonWriter {
-  using ValueType = CesiumGltf::Schema;
+struct ExtensionExtFeatureMetadataSchemaJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataSchema;
 
   static void write(
-      const CesiumGltf::Schema& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataSchema& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct EnumJsonWriter {
-  using ValueType = CesiumGltf::Enum;
+struct ExtensionExtFeatureMetadataEnumJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataEnum;
 
   static void write(
-      const CesiumGltf::Enum& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataEnum& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct EnumValueJsonWriter {
-  using ValueType = CesiumGltf::EnumValue;
+struct ExtensionExtFeatureMetadataEnumValueJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataEnumValue;
 
   static void write(
-      const CesiumGltf::EnumValue& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataEnumValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ClassJsonWriter {
-  using ValueType = CesiumGltf::Class;
+struct ExtensionExtFeatureMetadataClassJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataClass;
 
   static void write(
-      const CesiumGltf::Class& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataClass& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ClassPropertyJsonWriter {
-  using ValueType = CesiumGltf::ClassProperty;
+struct ExtensionExtFeatureMetadataClassPropertyJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtFeatureMetadataClassProperty;
 
   static void write(
-      const CesiumGltf::ClassProperty& obj,
+      const CesiumGltf::ExtensionExtFeatureMetadataClassProperty& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

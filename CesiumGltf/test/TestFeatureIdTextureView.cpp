@@ -21,13 +21,12 @@ TEST_CASE("Test FeatureIdTextureView on feature ID texture with invalid "
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = -1;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {0};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -47,13 +46,12 @@ TEST_CASE("Test FeatureIdTextureView on feature ID texture with invalid image "
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {0};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -76,13 +74,12 @@ TEST_CASE("Test FeatureIdTextureView on feature ID texture with empty image") {
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {0};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -107,13 +104,12 @@ TEST_CASE("Test FeatureIdTextureView on feature ID texture with too many bytes "
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {0};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -140,13 +136,12 @@ TEST_CASE(
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = -1;
   featureIdTexture.channels = {0};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -172,13 +167,12 @@ TEST_CASE(
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -202,13 +196,12 @@ TEST_CASE(
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {0, 1, 2, 3, 3};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
@@ -232,13 +225,12 @@ TEST_CASE("Test FeatureIdTextureView on feature ID texture with out of range "
   ExtensionExtMeshFeatures& meshFeatures =
       primitive.addExtension<ExtensionExtMeshFeatures>();
 
-  ExtensionExtMeshFeaturesFeatureIdTexture featureIdTexture;
+  FeatureIdTexture featureIdTexture;
   featureIdTexture.index = 0;
   featureIdTexture.texCoord = 0;
   featureIdTexture.channels = {4};
 
-  ExtensionExtMeshFeaturesFeatureId featureId =
-      meshFeatures.featureIds.emplace_back();
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
   FeatureIdTextureView view(model, featureIdTexture);
