@@ -6,8 +6,8 @@
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/StructuralMetadataPropertyType.h>
-#include <CesiumGltf/StructuralMetadataPropertyTypeTraits.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <glm/glm.hpp>
 #include <rapidjson/writer.h>
@@ -19,7 +19,6 @@
 #include <unordered_set>
 
 using namespace CesiumGltf;
-using namespace CesiumGltf::StructuralMetadata;
 using namespace Cesium3DTilesSelection::CesiumImpl;
 
 namespace Cesium3DTilesSelection {
@@ -121,82 +120,83 @@ struct CompatibleTypes {
   // MaskedType or MaskedArrayType, they are considered incompatible with the
   // other type.
 private:
-  std::variant<std::monostate, MaskedType, MaskedArrayType> type;
+  std::variant<std::monostate, MaskedType, MaskedArrayType> _type;
 
 public:
-  CompatibleTypes() : type(){};
+  CompatibleTypes() : _type(){};
 
-  CompatibleTypes(const MaskedType& maskedType) : type(maskedType){};
+  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : type(maskedArrayType){};
+      : _type(maskedArrayType){};
 
   /**
    * Whether this is exclusively compatible with array types.
    */
   bool isExclusivelyArray() const {
-    return std::holds_alternative<MaskedArrayType>(type);
+    return std::holds_alternative<MaskedArrayType>(_type);
   }
 
   /**
    * Marks as incompatible with every type. Fully-incompatible types will be
    * treated as strings.
    */
-  void makeIncompatible() { type = MaskedType(false); }
+  void makeIncompatible() { _type = MaskedType(false); }
 
   /**
    * Merges a MaskedType into this CompatibleTypes.
    */
   void operator&=(const MaskedType& inMaskedType) {
-    if (std::holds_alternative<MaskedType>(type)) {
-      MaskedType& maskedType = std::get<MaskedType>(type);
+    if (std::holds_alternative<MaskedType>(_type)) {
+      MaskedType& maskedType = std::get<MaskedType>(_type);
       maskedType &= inMaskedType;
       return;
     }
 
-    if (std::holds_alternative<MaskedArrayType>(type)) {
+    if (std::holds_alternative<MaskedArrayType>(_type)) {
       makeIncompatible();
       return;
     }
 
-    type = inMaskedType;
+    _type = inMaskedType;
   }
 
   /**
    * Merges a MaskedArrayType into this CompatibleTypes.
    */
   void operator&=(const MaskedArrayType& inArrayType) {
-    if (std::holds_alternative<MaskedArrayType>(type)) {
-      MaskedArrayType& arrayType = std::get<MaskedArrayType>(type);
+    if (std::holds_alternative<MaskedArrayType>(_type)) {
+      MaskedArrayType& arrayType = std::get<MaskedArrayType>(_type);
       arrayType &= inArrayType;
       return;
     }
 
-    if (std::holds_alternative<MaskedType>(type)) {
+    if (std::holds_alternative<MaskedType>(_type)) {
       makeIncompatible();
       return;
     }
 
-    type = inArrayType;
+    _type = inArrayType;
   }
 
   /**
    * Merges another CompatibleTypes into this one.
    */
   void operator&=(const CompatibleTypes& inCompatibleTypes) {
-    if (std::holds_alternative<std::monostate>(inCompatibleTypes.type)) {
+    if (std::holds_alternative<std::monostate>(inCompatibleTypes._type)) {
       // The other CompatibleTypes is compatible with everything, so it does not
       // change this one.
       return;
     }
 
-    if (std::holds_alternative<MaskedArrayType>(inCompatibleTypes.type)) {
+    if (std::holds_alternative<MaskedArrayType>(inCompatibleTypes._type)) {
       const MaskedArrayType& arrayType =
-          std::get<MaskedArrayType>(inCompatibleTypes.type);
+          std::get<MaskedArrayType>(inCompatibleTypes._type);
       operator&=(arrayType);
       return;
     }
 
-    const MaskedType& maskedType = std::get<MaskedType>(inCompatibleTypes.type);
+    const MaskedType& maskedType =
+        std::get<MaskedType>(inCompatibleTypes._type);
     operator&=(maskedType);
   }
 
@@ -206,11 +206,11 @@ public:
    * MaskedType.
    */
   MaskedType toMaskedType() const {
-    if (std::holds_alternative<MaskedType>(type)) {
-      return std::get<MaskedType>(type);
+    if (std::holds_alternative<MaskedType>(_type)) {
+      return std::get<MaskedType>(_type);
     }
 
-    bool isArray = std::holds_alternative<MaskedArrayType>(type);
+    bool isArray = std::holds_alternative<MaskedArrayType>(_type);
     return MaskedType(!isArray);
   }
 
@@ -220,11 +220,11 @@ public:
    * incompatible MaskedArrayType.
    */
   MaskedArrayType toMaskedArrayType() const {
-    if (std::holds_alternative<MaskedArrayType>(type)) {
-      return std::get<MaskedArrayType>(type);
+    if (std::holds_alternative<MaskedArrayType>(_type)) {
+      return std::get<MaskedArrayType>(_type);
     }
 
-    bool isNonArray = std::holds_alternative<MaskedType>(type);
+    bool isNonArray = std::holds_alternative<MaskedType>(_type);
     return MaskedArrayType(!isNonArray);
   }
 };
@@ -307,7 +307,7 @@ int64_t roundUp(int64_t num, int64_t multiple) noexcept {
 }
 
 template <typename T> bool isInRangeForSignedInteger(int64_t value) noexcept {
-  // this only work if sizeof(T) is smaller than int64_t
+  // This only works if sizeof(T) is smaller than int64_t
   static_assert(
       !std::is_same_v<T, uint64_t> && !std::is_same_v<T, float> &&
       !std::is_same_v<T, double>);
@@ -960,7 +960,8 @@ void updateBooleanArrayProperty(
     const TValueGetter& propertyValue) {
   assert(propertyValue.size() >= propertyTable.count);
 
-  classProperty.type = "BOOLEAN";
+  classProperty.type =
+      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN;
   classProperty.array = true;
 
   // Fixed-length array of booleans
@@ -1494,6 +1495,7 @@ void convertBatchTableToGltfStructuralMetadataExtension(
 
   ExtensionExtStructuralMetadataPropertyTable& propertyTable =
       modelExtension.propertyTables.emplace_back();
+  propertyTable.name = "default";
   propertyTable.count = featureCount;
   propertyTable.classProperty = "default";
 

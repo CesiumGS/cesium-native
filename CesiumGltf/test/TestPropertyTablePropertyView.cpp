@@ -1,4 +1,4 @@
-#include "CesiumGltf/StructuralMetadataPropertyTablePropertyView.h"
+#include "CesiumGltf/PropertyTablePropertyView.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -9,7 +9,7 @@
 #include <cstring>
 #include <vector>
 
-using namespace CesiumGltf::StructuralMetadata;
+using namespace CesiumGltf;
 
 template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::vector<std::byte> data;
@@ -46,7 +46,7 @@ static void checkVariableLengthArray(
       offsets.data(),
       offsets.size() * sizeof(OffsetType));
 
-  PropertyTablePropertyView<MetadataArrayView<DataType>> property(
+  PropertyTablePropertyView<PropertyArrayView<DataType>> property(
       PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
@@ -59,7 +59,7 @@ static void checkVariableLengthArray(
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    MetadataArrayView<DataType> values = property.get(i);
+    PropertyArrayView<DataType> values = property.get(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       REQUIRE(values[j] == data[expectedIdx]);
       ++expectedIdx;
@@ -78,7 +78,7 @@ static void checkFixedLengthArray(
   buffer.resize(data.size() * sizeof(T));
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
 
-  PropertyTablePropertyView<MetadataArrayView<T>> property(
+  PropertyTablePropertyView<PropertyArrayView<T>> property(
       PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
@@ -91,7 +91,7 @@ static void checkFixedLengthArray(
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    MetadataArrayView<T> values = property.get(i);
+    PropertyArrayView<T> values = property.get(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       REQUIRE(values[j] == data[expectedIdx]);
       ++expectedIdx;
@@ -101,7 +101,7 @@ static void checkFixedLengthArray(
   REQUIRE(expectedIdx == data.size());
 }
 
-TEST_CASE("Check StructuralMetadata scalar numeric property view") {
+TEST_CASE("Check scalar numeric property view") {
   SECTION("Uint8 Scalar") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     checkNumeric(data);
@@ -127,7 +127,7 @@ TEST_CASE("Check StructuralMetadata scalar numeric property view") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata vecN numeric property view") {
+TEST_CASE("Check vecN numeric property view") {
   SECTION("Float Vec2") {
     std::vector<glm::vec2> data{
         glm::vec2(10.001f, 0.005f),
@@ -156,7 +156,7 @@ TEST_CASE("Check StructuralMetadata vecN numeric property view") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata matN numeric property view") {
+TEST_CASE("Check matN numeric property view") {
   SECTION("Float Mat2") {
     // clang-format off
     std::vector<glm::mat2> data{
@@ -218,7 +218,7 @@ TEST_CASE("Check StructuralMetadata matN numeric property view") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata boolean property") {
+TEST_CASE("Check boolean property") {
   std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
   unsigned long val = bits.to_ulong();
   std::vector<std::byte> data(sizeof(val));
@@ -235,7 +235,7 @@ TEST_CASE("Check StructuralMetadata boolean property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata string property") {
+TEST_CASE("Check string property") {
   std::vector<std::string> strings{
       "This is a fine test",
       "What's going on",
@@ -287,7 +287,7 @@ TEST_CASE("Check StructuralMetadata string property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata fixed-length scalar array property") {
+TEST_CASE("Check fixed-length scalar array property") {
   SECTION("Fixed-length array of 4 uint8_ts") {
     // clang-format off
     std::vector<uint8_t> data{
@@ -376,7 +376,7 @@ TEST_CASE("Check StructuralMetadata fixed-length scalar array property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata fixed-length vecN array property") {
+TEST_CASE("Check fixed-length vecN array property") {
   SECTION("Fixed-length array of 4 u8vec2s") {
     // clang-format off
     std::vector<glm::u8vec2> data{
@@ -419,7 +419,7 @@ TEST_CASE("Check StructuralMetadata fixed-length vecN array property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata fixed-length matN array property") {
+TEST_CASE("Check fixed-length matN array property") {
   SECTION("Fixed-length array of 4 i8mat2x2") {
     // clang-format off
     std::vector<glm::i8mat2x2> data{
@@ -520,7 +520,7 @@ TEST_CASE("Check StructuralMetadata fixed-length matN array property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata variable-length scalar array property") {
+TEST_CASE("Check variable-length scalar array property") {
   SECTION("Variable-length array of uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
@@ -572,7 +572,7 @@ TEST_CASE("Check StructuralMetadata variable-length scalar array property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata variable-length vecN array property") {
+TEST_CASE("Check variable-length vecN array property") {
   SECTION("Variable-length array of ivec2") {
     // clang-format off
     std::vector<glm::ivec2> data{
@@ -636,7 +636,7 @@ TEST_CASE("Check StructuralMetadata variable-length vecN array property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata variable-length matN array property") {
+TEST_CASE("Check variable-length matN array property") {
   SECTION("Variable-length array of dmat2") {
     // clang-format off
     std::vector<glm::dmat2> data0{
@@ -786,7 +786,7 @@ TEST_CASE("Check StructuralMetadata variable-length matN array property") {
   }
 }
 
-TEST_CASE("Check StructuralMetadata fixed-length array of string") {
+TEST_CASE("Check fixed-length array of string") {
   std::vector<std::string> strings{
       "Test 1",
       "Test 2",
@@ -831,7 +831,7 @@ TEST_CASE("Check StructuralMetadata fixed-length array of string") {
       &currentStringOffset,
       sizeof(uint32_t));
 
-  PropertyTablePropertyView<MetadataArrayView<std::string_view>> property(
+  PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
       PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
@@ -844,7 +844,7 @@ TEST_CASE("Check StructuralMetadata fixed-length array of string") {
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    MetadataArrayView<std::string_view> values = property.get(i);
+    PropertyArrayView<std::string_view> values = property.get(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       std::string_view v = values[j];
       REQUIRE(v == strings[expectedIdx]);
@@ -855,8 +855,7 @@ TEST_CASE("Check StructuralMetadata fixed-length array of string") {
   REQUIRE(expectedIdx == stringCount);
 }
 
-TEST_CASE(
-    "Check StructuralMetadata variable-length array of strings property") {
+TEST_CASE("Check variable-length array of strings property") {
   // clang-format off
   std::vector<uint32_t> arrayOffsets{
     0,
@@ -904,7 +903,7 @@ TEST_CASE(
       &currentOffset,
       sizeof(uint32_t));
 
-  PropertyTablePropertyView<MetadataArrayView<std::string_view>> property(
+  PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
       PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
@@ -919,7 +918,7 @@ TEST_CASE(
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    MetadataArrayView<std::string_view> values = property.get(i);
+    PropertyArrayView<std::string_view> values = property.get(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       std::string_view v = values[j];
       REQUIRE(v == strings[expectedIdx]);
@@ -930,13 +929,13 @@ TEST_CASE(
   REQUIRE(expectedIdx == stringCount);
 }
 
-TEST_CASE("Check StructuralMetadata fixed-length boolean array property") {
+TEST_CASE("Check fixed-length boolean array property") {
   std::vector<std::byte> buffer{
       static_cast<std::byte>(0b10101111),
       static_cast<std::byte>(0b11111010),
       static_cast<std::byte>(0b11100111)};
 
-  PropertyTablePropertyView<MetadataArrayView<bool>> property(
+  PropertyTablePropertyView<PropertyArrayView<bool>> property(
       PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
@@ -949,7 +948,7 @@ TEST_CASE("Check StructuralMetadata fixed-length boolean array property") {
 
   REQUIRE(property.size() == 2);
 
-  MetadataArrayView<bool> val0 = property.get(0);
+  PropertyArrayView<bool> val0 = property.get(0);
   REQUIRE(val0.size() == 12);
   REQUIRE(static_cast<int>(val0[0]) == 1);
   REQUIRE(static_cast<int>(val0[1]) == 1);
@@ -964,7 +963,7 @@ TEST_CASE("Check StructuralMetadata fixed-length boolean array property") {
   REQUIRE(static_cast<int>(val0[10]) == 0);
   REQUIRE(static_cast<int>(val0[11]) == 1);
 
-  MetadataArrayView<bool> val1 = property.get(1);
+  PropertyArrayView<bool> val1 = property.get(1);
   REQUIRE(static_cast<int>(val1[0]) == 1);
   REQUIRE(static_cast<int>(val1[1]) == 1);
   REQUIRE(static_cast<int>(val1[2]) == 1);
@@ -979,7 +978,7 @@ TEST_CASE("Check StructuralMetadata fixed-length boolean array property") {
   REQUIRE(static_cast<int>(val1[11]) == 1);
 }
 
-TEST_CASE("Check StructuralMetadata variable-length boolean array property") {
+TEST_CASE("Check variable-length boolean array property") {
   std::vector<std::byte> buffer{
       static_cast<std::byte>(0b10101111),
       static_cast<std::byte>(0b11111010),
@@ -988,7 +987,7 @@ TEST_CASE("Check StructuralMetadata variable-length boolean array property") {
 
   std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
 
-  PropertyTablePropertyView<MetadataArrayView<bool>> property(
+  PropertyTablePropertyView<PropertyArrayView<bool>> property(
       PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
@@ -1003,13 +1002,13 @@ TEST_CASE("Check StructuralMetadata variable-length boolean array property") {
 
   REQUIRE(property.size() == 3);
 
-  MetadataArrayView<bool> val0 = property.get(0);
+  PropertyArrayView<bool> val0 = property.get(0);
   REQUIRE(val0.size() == 3);
   REQUIRE(static_cast<int>(val0[0]) == 1);
   REQUIRE(static_cast<int>(val0[1]) == 1);
   REQUIRE(static_cast<int>(val0[2]) == 1);
 
-  MetadataArrayView<bool> val1 = property.get(1);
+  PropertyArrayView<bool> val1 = property.get(1);
   REQUIRE(val1.size() == 9);
   REQUIRE(static_cast<int>(val1[0]) == 1);
   REQUIRE(static_cast<int>(val1[1]) == 0);
@@ -1021,7 +1020,7 @@ TEST_CASE("Check StructuralMetadata variable-length boolean array property") {
   REQUIRE(static_cast<int>(val1[7]) == 0);
   REQUIRE(static_cast<int>(val1[8]) == 1);
 
-  MetadataArrayView<bool> val2 = property.get(2);
+  PropertyArrayView<bool> val2 = property.get(2);
   REQUIRE(val2.size() == 16);
   REQUIRE(static_cast<int>(val2[0]) == 1);
   REQUIRE(static_cast<int>(val2[1]) == 1);

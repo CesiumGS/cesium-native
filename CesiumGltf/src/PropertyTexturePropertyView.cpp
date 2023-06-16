@@ -1,8 +1,7 @@
 
-#include "CesiumGltf/StructuralMetadataPropertyTexturePropertyView.h"
+#include "CesiumGltf/PropertyTexturePropertyView.h"
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
 PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(nullptr),
@@ -103,5 +102,4 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
 
   this->_status = PropertyTexturePropertyViewStatus::Valid;
 }
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

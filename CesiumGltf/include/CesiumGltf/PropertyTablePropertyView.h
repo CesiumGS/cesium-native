@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/StructuralMetadataArrayView.h"
-#include "CesiumGltf/StructuralMetadataPropertyTypeTraits.h"
+#include "CesiumGltf/PropertyArrayView.h"
+#include "CesiumGltf/PropertyTypeTraits.h"
 
 #include <gsl/span>
 
@@ -12,8 +12,6 @@
 #include <type_traits>
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
-
 /**
  * @brief Indicates the status of a property table property view.
  *
@@ -161,7 +159,7 @@ enum class PropertyTablePropertyViewStatus {
 /**
  * @brief A view on the data of the
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty that is created by
- * a {@link MetadataPropertyTableView}.
+ * a {@link PropertyTableView}.
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty::values} like an array of elements.
@@ -170,7 +168,7 @@ enum class PropertyTablePropertyViewStatus {
  * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
  * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
  * glm vecN composed of one of the scalar types, a glm matN composed of one of
- * the scalar types, bool, std::string_view, or MetadataArrayView<T> with T as
+ * the scalar types, bool, std::string_view, or PropertyArrayView<T> with T as
  * one of the aforementioned types.
  */
 template <typename ElementType> class PropertyTablePropertyView {
@@ -226,8 +224,8 @@ public:
       gsl::span<const std::byte> values,
       gsl::span<const std::byte> arrayOffsets,
       gsl::span<const std::byte> stringOffsets,
-      StructuralMetadata::PropertyComponentType arrayOffsetType,
-      StructuralMetadata::PropertyComponentType stringOffsetType,
+      PropertyComponentType arrayOffsetType,
+      PropertyComponentType stringOffsetType,
       int64_t arrayCount,
       int64_t size,
       bool normalized) noexcept
@@ -345,14 +343,14 @@ private:
   }
 
   template <typename T>
-  MetadataArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
+  PropertyArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
     if (_arrayCount > 0) {
       size_t arraySize = _arrayCount * sizeof(T);
       const gsl::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
-      return MetadataArrayView<T>{values};
+      return PropertyArrayView<T>{values};
     }
 
     // Handle variable-length arrays
@@ -363,19 +361,19 @@ private:
     const gsl::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
-    return MetadataArrayView<T>{values};
+    return PropertyArrayView<T>{values};
   }
 
-  MetadataArrayView<std::string_view>
+  PropertyArrayView<std::string_view>
   getStringArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
     if (_arrayCount > 0) {
-      // Copy the corresponding string offsets to pass to the MetadataArrayView.
+      // Copy the corresponding string offsets to pass to the PropertyArrayView.
       const size_t arraySize = _arrayCount * _stringOffsetTypeSize;
       const gsl::span<const std::byte> stringOffsetValues(
           _stringOffsets.data() + index * arraySize,
           arraySize + _stringOffsetTypeSize);
-      return MetadataArrayView<std::string_view>(
+      return PropertyArrayView<std::string_view>(
           _values,
           stringOffsetValues,
           _stringOffsetType,
@@ -391,14 +389,14 @@ private:
     const gsl::span<const std::byte> stringOffsetValues(
         _stringOffsets.data() + currentArrayOffset,
         arraySize + _arrayOffsetTypeSize);
-    return MetadataArrayView<std::string_view>(
+    return PropertyArrayView<std::string_view>(
         _values,
         stringOffsetValues,
         _stringOffsetType,
         arraySize / _arrayOffsetTypeSize);
   }
 
-  MetadataArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
+  PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
     // Handle fixed-length arrays
     if (_arrayCount > 0) {
       const size_t offsetBits = _arrayCount * index;
@@ -406,7 +404,7 @@ private:
       const gsl::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return MetadataArrayView<bool>(buffer, offsetBits % 8, _arrayCount);
+      return PropertyArrayView<bool>(buffer, offsetBits % 8, _arrayCount);
     }
 
     // Handle variable-length arrays
@@ -418,7 +416,7 @@ private:
     const gsl::span<const std::byte> buffer(
         _values.data() + currentOffset / 8,
         (nextOffset / 8 - currentOffset / 8 + 1));
-    return MetadataArrayView<bool>(buffer, currentOffset % 8, totalBits);
+    return PropertyArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
   static int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
@@ -451,6 +449,4 @@ private:
   int64_t _size;
   bool _normalized;
 };
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

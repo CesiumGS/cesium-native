@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/StructuralMetadataPropertyType.h"
+#include "CesiumGltf/PropertyType.h"
 #include "getOffsetFromOffsetsBuffer.h"
 
 #include <CesiumUtility/SpanHelper.h>
@@ -11,8 +11,6 @@
 #include <cstddef>
 
 namespace CesiumGltf {
-namespace StructuralMetadata {
-
 /**
  * @brief A view on an array element of a
  * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
@@ -20,11 +18,11 @@ namespace StructuralMetadata {
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
  */
-template <typename ElementType> class MetadataArrayView {
+template <typename ElementType> class PropertyArrayView {
 public:
-  MetadataArrayView() : _values{} {}
+  PropertyArrayView() : _values{} {}
 
-  MetadataArrayView(const gsl::span<const std::byte>& buffer) noexcept
+  PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
       : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
@@ -34,14 +32,14 @@ public:
   int64_t size() const noexcept { return static_cast<int64_t>(_values.size()); }
 
 private:
-  const gsl::span<const ElementType> _values;
+  gsl::span<const ElementType> _values;
 };
 
-template <> class MetadataArrayView<bool> {
+template <> class PropertyArrayView<bool> {
 public:
-  MetadataArrayView() : _values{}, _bitOffset{0}, _size{0} {}
+  PropertyArrayView() : _values{}, _bitOffset{0}, _size{0} {}
 
-  MetadataArrayView(
+  PropertyArrayView(
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
       int64_t size) noexcept
@@ -63,15 +61,15 @@ private:
   int64_t _size;
 };
 
-template <> class MetadataArrayView<std::string_view> {
+template <> class PropertyArrayView<std::string_view> {
 public:
-  MetadataArrayView()
+  PropertyArrayView()
       : _values{}, _stringOffsets{}, _stringOffsetType{}, _size{0} {}
 
-  MetadataArrayView(
+  PropertyArrayView(
       const gsl::span<const std::byte>& values,
       const gsl::span<const std::byte>& stringOffsets,
-      StructuralMetadata::PropertyComponentType stringOffsetType,
+      PropertyComponentType stringOffsetType,
       int64_t size) noexcept
       : _values{values},
         _stringOffsets{stringOffsets},
@@ -95,9 +93,7 @@ public:
 private:
   gsl::span<const std::byte> _values;
   gsl::span<const std::byte> _stringOffsets;
-  StructuralMetadata::PropertyComponentType _stringOffsetType;
+  PropertyComponentType _stringOffsetType;
   int64_t _size;
 };
-
-} // namespace StructuralMetadata
 } // namespace CesiumGltf

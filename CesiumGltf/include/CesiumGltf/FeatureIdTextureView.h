@@ -15,8 +15,6 @@
 #include <string>
 
 namespace CesiumGltf {
-namespace MeshFeatures {
-
 /**
  * @brief The status of a feature ID texture view.
  *
@@ -145,6 +143,4 @@ private:
 
   const ImageCesium* _pImage;
 };
-
-} // namespace MeshFeatures
 } // namespace CesiumGltf

@@ -1,5 +1,5 @@
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/FeatureTableProperty.h"
+#include "CesiumGltf/ExtensionExtStructuralMetadataClassProperty.h"
+#include "CesiumGltf/ExtensionExtStructuralMetadataPropertyTableProperty.h"
 #include "CesiumGltf/PropertyType.h"
 
 #include <catch2/catch.hpp>
@@ -9,132 +9,244 @@ using namespace CesiumGltf;
 TEST_CASE("Test PropertyType utilities function") {
   SECTION("Convert string to PropertyType") {
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::UINT8) ==
-        PropertyType::Uint8);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::SCALAR) ==
+        PropertyType::Scalar);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::INT8) ==
-        PropertyType::Int8);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::VEC2) ==
+        PropertyType::Vec2);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::UINT16) ==
-        PropertyType::Uint16);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::VEC3) ==
+        PropertyType::Vec3);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::INT16) ==
-        PropertyType::Int16);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::VEC4) ==
+        PropertyType::Vec4);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::UINT32) ==
-        PropertyType::Uint32);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::MAT2) ==
+        PropertyType::Mat2);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::INT32) ==
-        PropertyType::Int32);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::MAT3) ==
+        PropertyType::Mat3);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::UINT64) ==
-        PropertyType::Uint64);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::MAT4) ==
+        PropertyType::Mat4);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::INT64) ==
-        PropertyType::Int64);
-
-    REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::FLOAT32) ==
-        PropertyType::Float32);
-
-    REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::FLOAT64) ==
-        PropertyType::Float64);
-
-    REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::STRING) ==
-        PropertyType::String);
-
-    REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::BOOLEAN) ==
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN) ==
         PropertyType::Boolean);
 
     REQUIRE(
-        convertStringToPropertyType(ClassProperty::Type::ARRAY) ==
-        PropertyType::Array);
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::STRING) ==
+        PropertyType::String);
 
-    REQUIRE(convertStringToPropertyType("NONESENSE") == PropertyType::None);
+    REQUIRE(
+        convertStringToPropertyType(
+            ExtensionExtStructuralMetadataClassProperty::Type::ENUM) ==
+        PropertyType::Enum);
+
+    REQUIRE(convertStringToPropertyType("invalid") == PropertyType::Invalid);
   }
 
-  SECTION("PropertyType to String") {
+  SECTION("Convert string to PropertyComponentType") {
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Uint8) ==
-        ClassProperty::Type::UINT8);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                UINT8) == PropertyComponentType::Uint8);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Int8) ==
-        ClassProperty::Type::INT8);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8) ==
+        PropertyComponentType::Int8);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Uint16) ==
-        ClassProperty::Type::UINT16);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                UINT16) == PropertyComponentType::Uint16);
+    REQUIRE(
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                INT16) == PropertyComponentType::Int16);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Int16) ==
-        ClassProperty::Type::INT16);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                UINT32) == PropertyComponentType::Uint32);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Uint32) ==
-        ClassProperty::Type::UINT32);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                INT32) == PropertyComponentType::Int32);
+    REQUIRE(
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                UINT64) == PropertyComponentType::Uint64);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Int32) ==
-        ClassProperty::Type::INT32);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                INT64) == PropertyComponentType::Int64);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Uint64) ==
-        ClassProperty::Type::UINT64);
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                FLOAT32) == PropertyComponentType::Float32);
+    REQUIRE(
+        convertStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataClassProperty::ComponentType::
+                FLOAT64) == PropertyComponentType::Float64);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Int64) ==
-        ClassProperty::Type::INT64);
+        convertStringToPropertyComponentType("invalid") ==
+        PropertyComponentType::None);
+  }
+
+  SECTION("Convert PropertyType to string") {
+    REQUIRE(
+        convertPropertyTypeToString(PropertyType::Scalar) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Float32) ==
-        ClassProperty::Type::FLOAT32);
+        convertPropertyTypeToString(PropertyType::Vec2) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::VEC2);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Float64) ==
-        ClassProperty::Type::FLOAT64);
+        convertPropertyTypeToString(PropertyType::Vec3) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::String) ==
-        ClassProperty::Type::STRING);
+        convertPropertyTypeToString(PropertyType::Vec4) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::VEC4);
+
+    REQUIRE(
+        convertPropertyTypeToString(PropertyType::Mat2) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::MAT2);
+
+    REQUIRE(
+        convertPropertyTypeToString(PropertyType::Mat3) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::MAT3);
+
+    REQUIRE(
+        convertPropertyTypeToString(PropertyType::Mat4) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::MAT4);
 
     REQUIRE(
         convertPropertyTypeToString(PropertyType::Boolean) ==
-        ClassProperty::Type::BOOLEAN);
+        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN);
 
     REQUIRE(
-        convertPropertyTypeToString(PropertyType::Array) ==
-        ClassProperty::Type::ARRAY);
+        convertPropertyTypeToString(PropertyType::String) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::STRING);
+
+    REQUIRE(
+        convertPropertyTypeToString(PropertyType::Enum) ==
+        ExtensionExtStructuralMetadataClassProperty::Type::ENUM);
   }
 
-  SECTION("OffsetString to PropertyType") {
+  SECTION("Convert PropertyComponentType to string") {
     REQUIRE(
-        convertOffsetStringToPropertyType(
-            FeatureTableProperty::OffsetType::UINT8) == PropertyType::Uint8);
+        convertPropertyComponentTypeToString(PropertyComponentType::Uint8) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8);
 
     REQUIRE(
-        convertOffsetStringToPropertyType(
-            FeatureTableProperty::OffsetType::UINT16) == PropertyType::Uint16);
+        convertPropertyComponentTypeToString(PropertyComponentType::Int8) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8);
 
     REQUIRE(
-        convertOffsetStringToPropertyType(
-            FeatureTableProperty::OffsetType::UINT32) == PropertyType::Uint32);
+        convertPropertyComponentTypeToString(PropertyComponentType::Uint16) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16);
 
     REQUIRE(
-        convertOffsetStringToPropertyType(
-            FeatureTableProperty::OffsetType::UINT64) == PropertyType::Uint64);
+        convertPropertyComponentTypeToString(PropertyComponentType::Int16) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16);
 
     REQUIRE(
-        convertOffsetStringToPropertyType("NONESENSE") == PropertyType::None);
+        convertPropertyComponentTypeToString(PropertyComponentType::Uint32) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32);
+
+    REQUIRE(
+        convertPropertyComponentTypeToString(PropertyComponentType::Int32) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32);
+
+    REQUIRE(
+        convertPropertyComponentTypeToString(PropertyComponentType::Uint64) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64);
+
+    REQUIRE(
+        convertPropertyComponentTypeToString(PropertyComponentType::Int64) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64);
+
+    REQUIRE(
+        convertPropertyComponentTypeToString(PropertyComponentType::Float32) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
+
+    REQUIRE(
+        convertPropertyComponentTypeToString(PropertyComponentType::Float64) ==
+        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64);
+  }
+
+  SECTION("Convert array offset type string to PropertyComponentType") {
+    REQUIRE(
+        convertArrayOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                ArrayOffsetType::UINT8) == PropertyComponentType::Uint8);
+
+    REQUIRE(
+        convertArrayOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                ArrayOffsetType::UINT16) == PropertyComponentType::Uint16);
+
+    REQUIRE(
+        convertArrayOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                ArrayOffsetType::UINT32) == PropertyComponentType::Uint32);
+
+    REQUIRE(
+        convertArrayOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                ArrayOffsetType::UINT64) == PropertyComponentType::Uint64);
+
+    REQUIRE(
+        convertArrayOffsetTypeStringToPropertyComponentType("invalid") ==
+        PropertyComponentType::None);
+  }
+
+  SECTION("Convert string offset type string to PropertyComponentType") {
+    REQUIRE(
+        convertStringOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                StringOffsetType::UINT8) == PropertyComponentType::Uint8);
+
+    REQUIRE(
+        convertStringOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                StringOffsetType::UINT16) == PropertyComponentType::Uint16);
+
+    REQUIRE(
+        convertStringOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                StringOffsetType::UINT32) == PropertyComponentType::Uint32);
+
+    REQUIRE(
+        convertStringOffsetTypeStringToPropertyComponentType(
+            ExtensionExtStructuralMetadataPropertyTableProperty::
+                StringOffsetType::UINT64) == PropertyComponentType::Uint64);
+
+    REQUIRE(
+        convertStringOffsetTypeStringToPropertyComponentType("invalid") ==
+        PropertyComponentType::None);
   }
 }

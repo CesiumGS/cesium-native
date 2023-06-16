@@ -1,10 +1,10 @@
-#include "CesiumGltf/StructuralMetadataPropertyTypeTraits.h"
+#include "CesiumGltf/PropertyTypeTraits.h"
 
 #include <catch2/catch.hpp>
 
-using namespace CesiumGltf::StructuralMetadata;
+using namespace CesiumGltf;
 
-TEST_CASE("Test StructuralMetadata PropertyTypeTraits") {
+TEST_CASE("Test PropertyTypeTraits") {
   SECTION("IsScalar") {
     REQUIRE(IsMetadataScalar<uint8_t>::value);
     REQUIRE(IsMetadataScalar<int8_t>::value);
@@ -140,25 +140,25 @@ TEST_CASE("Test StructuralMetadata PropertyTypeTraits") {
   }
 
   SECTION("IsNumericArray") {
-    REQUIRE(IsMetadataNumericArray<MetadataArrayView<uint32_t>>::value);
-    REQUIRE(IsMetadataNumericArray<MetadataArrayView<glm::vec3>>::value);
-    REQUIRE(IsMetadataNumericArray<MetadataArrayView<glm::mat4>>::value);
-    REQUIRE(!IsMetadataNumericArray<MetadataArrayView<bool>>::value);
+    REQUIRE(IsMetadataNumericArray<PropertyArrayView<uint32_t>>::value);
+    REQUIRE(IsMetadataNumericArray<PropertyArrayView<glm::vec3>>::value);
+    REQUIRE(IsMetadataNumericArray<PropertyArrayView<glm::mat4>>::value);
+    REQUIRE(!IsMetadataNumericArray<PropertyArrayView<bool>>::value);
   }
 
   SECTION("IsBooleanArray") {
-    REQUIRE(IsMetadataBooleanArray<MetadataArrayView<bool>>::value);
-    REQUIRE(!IsMetadataBooleanArray<MetadataArrayView<uint8_t>>::value);
+    REQUIRE(IsMetadataBooleanArray<PropertyArrayView<bool>>::value);
+    REQUIRE(!IsMetadataBooleanArray<PropertyArrayView<uint8_t>>::value);
   }
 
   SECTION("IsStringArray") {
-    REQUIRE(IsMetadataStringArray<MetadataArrayView<std::string_view>>::value);
-    REQUIRE(!IsMetadataStringArray<MetadataArrayView<std::string>>::value);
-    REQUIRE(!IsMetadataStringArray<MetadataArrayView<uint32_t>>::value);
+    REQUIRE(IsMetadataStringArray<PropertyArrayView<std::string_view>>::value);
+    REQUIRE(!IsMetadataStringArray<PropertyArrayView<std::string>>::value);
+    REQUIRE(!IsMetadataStringArray<PropertyArrayView<uint32_t>>::value);
   }
 
   SECTION("ArrayType") {
-    using type = MetadataArrayType<MetadataArrayView<uint32_t>>::type;
+    using type = MetadataArrayType<PropertyArrayView<uint32_t>>::type;
     REQUIRE(std::is_same_v<type, uint32_t>);
   }
 

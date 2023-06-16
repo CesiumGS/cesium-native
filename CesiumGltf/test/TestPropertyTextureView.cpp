@@ -1,4 +1,4 @@
-#include "CesiumGltf/StructuralMetadataPropertyTextureView.h"
+#include "CesiumGltf/PropertyTextureView.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -10,7 +10,6 @@
 #include <vector>
 
 using namespace CesiumGltf;
-using namespace CesiumGltf::StructuralMetadata;
 
 TEST_CASE("Test PropertyTextureView on model without EXT_structural_metadata "
           "extension") {
