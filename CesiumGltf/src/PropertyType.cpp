@@ -1,74 +1,74 @@
 #include "CesiumGltf/PropertyType.h"
 
-#include "CesiumGltf/ExtensionExtStructuralMetadataClassProperty.h"
-#include "CesiumGltf/ExtensionExtStructuralMetadataPropertyTable.h"
+#include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/PropertyTable.h"
 
 namespace CesiumGltf {
 std::string convertPropertyTypeToString(PropertyType type) {
   switch (type) {
   case PropertyType::Scalar:
-    return ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+    return ClassProperty::Type::SCALAR;
   case PropertyType::Vec2:
-    return ExtensionExtStructuralMetadataClassProperty::Type::VEC2;
+    return ClassProperty::Type::VEC2;
   case PropertyType::Vec3:
-    return ExtensionExtStructuralMetadataClassProperty::Type::VEC3;
+    return ClassProperty::Type::VEC3;
   case PropertyType::Vec4:
-    return ExtensionExtStructuralMetadataClassProperty::Type::VEC4;
+    return ClassProperty::Type::VEC4;
   case PropertyType::Mat2:
-    return ExtensionExtStructuralMetadataClassProperty::Type::MAT2;
+    return ClassProperty::Type::MAT2;
   case PropertyType::Mat3:
-    return ExtensionExtStructuralMetadataClassProperty::Type::MAT3;
+    return ClassProperty::Type::MAT3;
   case PropertyType::Mat4:
-    return ExtensionExtStructuralMetadataClassProperty::Type::MAT4;
+    return ClassProperty::Type::MAT4;
   case PropertyType::Boolean:
-    return ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN;
+    return ClassProperty::Type::BOOLEAN;
   case PropertyType::Enum:
-    return ExtensionExtStructuralMetadataClassProperty::Type::ENUM;
+    return ClassProperty::Type::ENUM;
   case PropertyType::String:
-    return ExtensionExtStructuralMetadataClassProperty::Type::STRING;
+    return ClassProperty::Type::STRING;
   default:
     return "INVALID";
   }
 }
 
 PropertyType convertStringToPropertyType(const std::string& str) {
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::SCALAR) {
+  if (str == ClassProperty::Type::SCALAR) {
     return PropertyType::Scalar;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::VEC2) {
+  if (str == ClassProperty::Type::VEC2) {
     return PropertyType::Vec2;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::VEC3) {
+  if (str == ClassProperty::Type::VEC3) {
     return PropertyType::Vec3;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::VEC4) {
+  if (str == ClassProperty::Type::VEC4) {
     return PropertyType::Vec4;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::MAT2) {
+  if (str == ClassProperty::Type::MAT2) {
     return PropertyType::Mat2;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::MAT3) {
+  if (str == ClassProperty::Type::MAT3) {
     return PropertyType::Mat3;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::MAT4) {
+  if (str == ClassProperty::Type::MAT4) {
     return PropertyType::Mat4;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN) {
+  if (str == ClassProperty::Type::BOOLEAN) {
     return PropertyType::Boolean;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::STRING) {
+  if (str == ClassProperty::Type::STRING) {
     return PropertyType::String;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::Type::ENUM) {
+  if (str == ClassProperty::Type::ENUM) {
     return PropertyType::Enum;
   }
 
@@ -80,25 +80,25 @@ std::string convertPropertyComponentTypeToString(PropertyComponentType type) {
   case PropertyComponentType::None:
     return "NONE";
   case PropertyComponentType::Uint8:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+    return ClassProperty::ComponentType::UINT8;
   case PropertyComponentType::Int8:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8;
+    return ClassProperty::ComponentType::INT8;
   case PropertyComponentType::Uint16:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16;
+    return ClassProperty::ComponentType::UINT16;
   case PropertyComponentType::Int16:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16;
+    return ClassProperty::ComponentType::INT16;
   case PropertyComponentType::Uint32:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32;
+    return ClassProperty::ComponentType::UINT32;
   case PropertyComponentType::Int32:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32;
+    return ClassProperty::ComponentType::INT32;
   case PropertyComponentType::Uint64:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64;
+    return ClassProperty::ComponentType::UINT64;
   case PropertyComponentType::Int64:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64;
+    return ClassProperty::ComponentType::INT64;
   case PropertyComponentType::Float32:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32;
+    return ClassProperty::ComponentType::FLOAT32;
   case PropertyComponentType::Float64:
-    return ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64;
+    return ClassProperty::ComponentType::FLOAT64;
   default:
     return "NONE";
   }
@@ -106,52 +106,43 @@ std::string convertPropertyComponentTypeToString(PropertyComponentType type) {
 
 PropertyComponentType
 convertStringToPropertyComponentType(const std::string& str) {
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8) {
+  if (str == ClassProperty::ComponentType::UINT8) {
     return PropertyComponentType::Uint8;
   }
 
-  if (str == ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8) {
+  if (str == ClassProperty::ComponentType::INT8) {
     return PropertyComponentType::Int8;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16) {
+  if (str == ClassProperty::ComponentType::UINT16) {
     return PropertyComponentType::Uint16;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16) {
+  if (str == ClassProperty::ComponentType::INT16) {
     return PropertyComponentType::Int16;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32) {
+  if (str == ClassProperty::ComponentType::UINT32) {
     return PropertyComponentType::Uint32;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32) {
+  if (str == ClassProperty::ComponentType::INT32) {
     return PropertyComponentType::Int32;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64) {
+  if (str == ClassProperty::ComponentType::UINT64) {
     return PropertyComponentType::Uint64;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64) {
+  if (str == ClassProperty::ComponentType::INT64) {
     return PropertyComponentType::Int64;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32) {
+  if (str == ClassProperty::ComponentType::FLOAT32) {
     return PropertyComponentType::Float32;
   }
 
-  if (str ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64) {
+  if (str == ClassProperty::ComponentType::FLOAT64) {
     return PropertyComponentType::Float64;
   }
 
@@ -160,23 +151,19 @@ convertStringToPropertyComponentType(const std::string& str) {
 
 PropertyComponentType
 convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str) {
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 ArrayOffsetType::UINT8) {
+  if (str == PropertyTableProperty::ArrayOffsetType::UINT8) {
     return PropertyComponentType::Uint8;
   }
 
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 ArrayOffsetType::UINT16) {
+  if (str == PropertyTableProperty::ArrayOffsetType::UINT16) {
     return PropertyComponentType::Uint16;
   }
 
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 ArrayOffsetType::UINT32) {
+  if (str == PropertyTableProperty::ArrayOffsetType::UINT32) {
     return PropertyComponentType::Uint32;
   }
 
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 ArrayOffsetType::UINT64) {
+  if (str == PropertyTableProperty::ArrayOffsetType::UINT64) {
     return PropertyComponentType::Uint64;
   }
 
@@ -185,23 +172,19 @@ convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str) {
 
 PropertyComponentType
 convertStringOffsetTypeStringToPropertyComponentType(const std::string& str) {
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 StringOffsetType::UINT8) {
+  if (str == PropertyTableProperty::StringOffsetType::UINT8) {
     return PropertyComponentType::Uint8;
   }
 
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 StringOffsetType::UINT16) {
+  if (str == PropertyTableProperty::StringOffsetType::UINT16) {
     return PropertyComponentType::Uint16;
   }
 
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 StringOffsetType::UINT32) {
+  if (str == PropertyTableProperty::StringOffsetType::UINT32) {
     return PropertyComponentType::Uint32;
   }
 
-  if (str == ExtensionExtStructuralMetadataPropertyTableProperty::
-                 StringOffsetType::UINT64) {
+  if (str == PropertyTableProperty::StringOffsetType::UINT64) {
     return PropertyComponentType::Uint64;
   }
 

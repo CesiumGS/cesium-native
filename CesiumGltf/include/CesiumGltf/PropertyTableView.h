@@ -14,9 +14,9 @@ namespace CesiumGltf {
  * @brief Indicates the status of a property table view.
  *
  * The {@link PropertyTableView} constructor always completes successfully.
- * However, it may not always reflect the actual content of the
- * {@link ExtensionExtStructuralMetadataPropertyTable}, but instead indicate that its
- * {@link PropertyTableView::size} is 0. This enumeration provides the reason.
+ * However, it may not always reflect the actual content of the {@link PropertyTable},
+ * but instead indicate that its {@link PropertyTableView::size} is 0.
+ * This enumeration provides the reason.
  */
 enum class PropertyTableViewStatus {
   /**
@@ -44,8 +44,7 @@ enum class PropertyTableViewStatus {
 };
 
 /**
- * @brief Utility to retrieve the data of
- * {@link ExtensionExtStructuralMetadataPropertyTable}.
+ * @brief Utility to retrieve the data of {@link PropertyTable}.
  *
  * This should be used to get a {@link PropertyTablePropertyView} of a property in the property table.
  * It will validate the EXT_structural_metadata format and ensure {@link PropertyTablePropertyView}
@@ -56,12 +55,10 @@ public:
   /**
    * @brief Creates an instance of PropertyTableView.
    * @param model The Gltf Model that contains property table data.
-   * @param propertyTable The {@link ExtensionExtStructuralMetadataPropertyTable}
+   * @param propertyTable The {@link PropertyTable}
    * from which the view will retrieve data.
    */
-  PropertyTableView(
-      const Model& model,
-      const ExtensionExtStructuralMetadataPropertyTable& propertyTable);
+  PropertyTableView(const Model& model, const PropertyTable& propertyTable);
 
   /**
    * @brief Gets the status of this property table view.
@@ -75,8 +72,7 @@ public:
 
   /**
    * @brief Get the number of elements in this PropertyTableView. If the
-   * view is valid, this returns
-   * {@link ExtensionExtStructuralMetadataPropertyTable::count}. Otherwise, this returns 0.
+   * view is valid, this returns {@link PropertyTable::count}. Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTableView.
    */
@@ -86,19 +82,18 @@ public:
   }
 
   /**
-   * @brief Finds the {@link ExtensionExtStructuralMetadataClassProperty} that
+   * @brief Finds the {@link ClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
-   * @return A pointer to the {@link ExtensionExtStructuralMetadataClassProperty}.
+   * @return A pointer to the {@link ClassProperty}.
    * Return nullptr if the PropertyTableView is invalid or if no class
    * property was found.
    */
-  const ExtensionExtStructuralMetadataClassProperty*
-  getClassProperty(const std::string& propertyName) const;
+  const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
   /**
    * @brief Gets a {@link PropertyTablePropertyView} that views the data of a property stored
-   * in the {@link ExtensionExtStructuralMetadataPropertyTable}.
+   * in the {@link PropertyTable}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
@@ -120,8 +115,7 @@ public:
           PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
     }
 
-    const ExtensionExtStructuralMetadataClassProperty* pClassProperty =
-        getClassProperty(propertyName);
+    const ClassProperty* pClassProperty = getClassProperty(propertyName);
     if (!pClassProperty) {
       return createInvalidPropertyView<T>(
           PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
@@ -160,8 +154,7 @@ public:
       return;
     }
 
-    const ExtensionExtStructuralMetadataClassProperty* pClassProperty =
-        getClassProperty(propertyName);
+    const ClassProperty* pClassProperty = getClassProperty(propertyName);
     if (!pClassProperty) {
       callback(
           propertyName,
@@ -221,10 +214,9 @@ public:
   }
 
   /**
-   * @brief Iterates over each property in the
-   * {@link ExtensionExtStructuralMetadataPropertyTable} with a callback that accepts a
-   * property name and a {@link PropertyTablePropertyView<T>} to view the data
-   * stored in the {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
+   * @brief Iterates over each property in the {@link PropertyTable} with a callback
+   * that accepts a property name and a {@link PropertyTablePropertyView<T>} to view
+   * the data stored in the {@link PropertyTableProperty}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
@@ -267,7 +259,7 @@ private:
   template <typename Callback>
   void getScalarArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -353,7 +345,7 @@ private:
   template <typename Callback, glm::length_t N>
   void getVecNArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -439,7 +431,7 @@ private:
   template <typename Callback>
   void getVecNArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -478,7 +470,7 @@ private:
   template <typename Callback, glm::length_t N>
   void getMatNArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -564,7 +556,7 @@ private:
   template <typename Callback>
   void getMatNArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -603,7 +595,7 @@ private:
   template <typename Callback>
   void getArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -651,7 +643,7 @@ private:
   template <typename Callback, glm::length_t N>
   void getVecNPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
 
@@ -736,7 +728,7 @@ private:
   template <typename Callback>
   void getVecNPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -775,7 +767,7 @@ private:
   template <typename Callback, glm::length_t N>
   void getMatNPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -861,7 +853,7 @@ private:
   template <typename Callback>
   void getMatNPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -900,7 +892,7 @@ private:
   template <typename Callback>
   void getScalarPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
+      const ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -966,7 +958,7 @@ private:
   template <typename T>
   PropertyTablePropertyView<T> getPropertyViewImpl(
       const std::string& propertyName,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty) const {
+      const ClassProperty& classProperty) const {
     auto propertyTablePropertyIter =
         _pPropertyTable->properties.find(propertyName);
     if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
@@ -974,8 +966,8 @@ private:
           PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
     }
 
-    const ExtensionExtStructuralMetadataPropertyTableProperty&
-        propertyTableProperty = propertyTablePropertyIter->second;
+    const PropertyTableProperty& propertyTableProperty =
+        propertyTablePropertyIter->second;
 
     if constexpr (IsMetadataNumeric<T>::value || IsMetadataBoolean<T>::value) {
       return getNumericOrBooleanPropertyValues<T>(
@@ -1002,9 +994,8 @@ private:
 
   template <typename T>
   PropertyTablePropertyView<T> getNumericOrBooleanPropertyValues(
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty) const {
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& propertyTableProperty) const {
     if (classProperty.array) {
       return createInvalidPropertyView<T>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -1057,16 +1048,14 @@ private:
   }
 
   PropertyTablePropertyView<std::string_view> getStringPropertyValues(
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty) const;
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& propertyTableProperty) const;
 
   template <typename T>
   PropertyTablePropertyView<PropertyArrayView<T>>
   getPrimitiveArrayPropertyValues(
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty) const {
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& propertyTableProperty) const {
     if (!classProperty.array) {
       return createInvalidPropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -1178,9 +1167,8 @@ private:
 
   PropertyTablePropertyView<PropertyArrayView<std::string_view>>
   getStringArrayPropertyValues(
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTableProperty&
-          propertyTableProperty) const;
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& propertyTableProperty) const;
 
   PropertyTablePropertyViewStatus getBufferSafe(
       int32_t bufferView,
@@ -1212,8 +1200,8 @@ private:
   }
 
   const Model* _pModel;
-  const ExtensionExtStructuralMetadataPropertyTable* _pPropertyTable;
-  const ExtensionExtStructuralMetadataClass* _pClass;
+  const PropertyTable* _pPropertyTable;
+  const Class* _pClass;
   PropertyTableViewStatus _status;
 };
 } // namespace CesiumGltf

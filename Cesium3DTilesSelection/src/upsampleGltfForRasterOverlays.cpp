@@ -1252,8 +1252,7 @@ static void copyMetadataTables(const Model& parentModel, Model& result) {
   if (pMetadata) {
     for (auto& propertyTable : pMetadata->propertyTables) {
       for (auto& propertyPair : propertyTable.properties) {
-        ExtensionExtStructuralMetadataPropertyTableProperty& property =
-            propertyPair.second;
+        PropertyTableProperty& property = propertyPair.second;
         property.values = copyBufferView(parentModel, property.values, result);
         property.arrayOffsets =
             copyBufferView(parentModel, property.arrayOffsets, result);

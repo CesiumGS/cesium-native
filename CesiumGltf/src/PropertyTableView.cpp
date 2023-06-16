@@ -106,7 +106,7 @@ static PropertyTablePropertyViewStatus checkStringAndArrayOffsetsBuffers(
 
 PropertyTableView::PropertyTableView(
     const Model& model,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable)
+    const PropertyTable& propertyTable)
     : _pModel{&model},
       _pPropertyTable{&propertyTable},
       _pClass{nullptr},
@@ -118,8 +118,7 @@ PropertyTableView::PropertyTableView(
     return;
   }
 
-  const std::optional<ExtensionExtStructuralMetadataSchema>& schema =
-      pMetadata->schema;
+  const std::optional<Schema>& schema = pMetadata->schema;
   if (!schema) {
     _status = PropertyTableViewStatus::ErrorMissingSchema;
     return;
@@ -135,7 +134,7 @@ PropertyTableView::PropertyTableView(
   }
 }
 
-const ExtensionExtStructuralMetadataClassProperty*
+const ClassProperty*
 PropertyTableView::getClassProperty(const std::string& propertyName) const {
   if (_status != PropertyTableViewStatus::Valid) {
     return nullptr;
@@ -280,16 +279,14 @@ PropertyTablePropertyViewStatus PropertyTableView::getStringOffsetsBufferSafe(
 
 PropertyTablePropertyView<std::string_view>
 PropertyTableView::getStringPropertyValues(
-    const ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTableProperty&
-        propertyTableProperty) const {
+    const ClassProperty& classProperty,
+    const PropertyTableProperty& propertyTableProperty) const {
   if (classProperty.array) {
     return createInvalidPropertyView<std::string_view>(
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
-  if (classProperty.type !=
-      ExtensionExtStructuralMetadataClassProperty::Type::STRING) {
+  if (classProperty.type != ClassProperty::Type::STRING) {
     return createInvalidPropertyView<std::string_view>(
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
@@ -333,16 +330,14 @@ PropertyTableView::getStringPropertyValues(
 
 PropertyTablePropertyView<PropertyArrayView<std::string_view>>
 PropertyTableView::getStringArrayPropertyValues(
-    const ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTableProperty&
-        propertyTableProperty) const {
+    const ClassProperty& classProperty,
+    const PropertyTableProperty& propertyTableProperty) const {
   if (!classProperty.array) {
     return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
-  if (classProperty.type !=
-      ExtensionExtStructuralMetadataClassProperty::Type::STRING) {
+  if (classProperty.type != ClassProperty::Type::STRING) {
     return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }

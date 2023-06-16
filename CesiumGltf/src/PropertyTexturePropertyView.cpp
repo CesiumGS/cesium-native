@@ -16,9 +16,8 @@ PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
 
 PropertyTexturePropertyView::PropertyTexturePropertyView(
     const Model& model,
-    const ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTextureProperty&
-        propertyTextureProperty) noexcept
+    const ClassProperty& classProperty,
+    const PropertyTextureProperty& propertyTextureProperty) noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(&classProperty),
       _pSampler(nullptr),
