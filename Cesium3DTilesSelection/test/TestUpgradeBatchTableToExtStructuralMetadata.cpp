@@ -411,7 +411,7 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-      FeatureId& featureId = pPrimitiveExtension->featureIds[0];
+      const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
       CHECK(featureId.attribute == 0);
       CHECK(featureId.propertyTable == 0);

@@ -4,12 +4,10 @@
 
 ##### Breaking Changes :mega:
 
-Many classes have been overhauled to support `EXT_mesh_features` and `EXT_structural_metadata`. This includes the following changes:
-
-- Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `ExtensionExtMeshFeaturesFeatureIdTexture`.
-  - Replaced `FeatureIDTextureViewStatus` with `FeatureIdTextureViewStatus`.
-  - Replaced `getChannel` with `getChannels`. This retrieves the channels as a vector of integers, instead of a single integer.
-  - Renamed `getTextureCoordinateAttributeId` to `getTexCoordSetIndex`.
+- In `CesiumGltf`, all generated classes related to `EXT_feature_metadata` are now prefixed with `ExtensionExtFeatureMetadata`. For example, `ClassProperty` becomes `ExtensionExtFeatureMetadataClassProperty`. This also extends to the glTF reader and writer.
+- In `CesiumGltf`, `ExtensionExtMeshFeaturesFeatureId` and `ExtensionExtMeshFeaturesFeatureIdTexture` have been renamed to `FeatureId` and `FeatureIdTexture` respectively.
+- Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `FeatureIdTexture` in `EXT_mesh_features`. Feature ID textures from `EXT_feature_metadata` are no longer supported.
+- Renamed `FeatureIDTextureViewStatus` to `FeatureIdTextureViewStatus` for consistency.
 - Replaced `MetadataFeatureTableView` with `PropertyTableView`, which views a `ExtensionExtStructuralMetadataPropertyTable`.
   - Added `PropertyTableViewStatus` to indicate whether or not `PropertyTableView` is valid.
 - Renamed `MetadataArrayView` to `PropertyArrayView`.
