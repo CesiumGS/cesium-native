@@ -58,11 +58,6 @@ enum class FeatureIdTextureViewStatus {
   ErrorInvalidImageBytesPerChannel,
 
   /**
-   * @brief This feature ID texture has a negative TEXCOORD set index.
-   */
-  ErrorInvalidTexCoordSetIndex,
-
-  /**
    * @brief The channels of this feature ID texture property are invalid.
    * Channels must be in the range 0-3, with a minimum of one channel. Although
    * more than four channels can be defined for specialized texture
@@ -97,9 +92,8 @@ public:
           featureIdTexture) noexcept;
 
   /**
-   * @brief Get the Feature ID for the given texture coordinates.
-   *
-   * Will return -1 when the status is not Valid.
+   * @brief Get the feature ID from the texture at the given texture
+   * coordinates. If the texture is somehow invalid, this returns -1.
    *
    * @param u The u-component of the texture coordinates. Must be within
    * [0.0, 1.0].
@@ -107,7 +101,7 @@ public:
    * [0.0, 1.0].
    * @return The feature ID at the nearest pixel to the texture coordinates.
    */
-  int64_t getFeatureId(double u, double v) const noexcept;
+  int64_t getFeatureID(double u, double v) const noexcept;
 
   /**
    * @brief Get the status of this view.

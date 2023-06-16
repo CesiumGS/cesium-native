@@ -130,7 +130,7 @@ TEST_CASE("Test property texture with nonexistent class property") {
   REQUIRE(!classProperty);
 }
 
-TEST_CASE("Test property texture with invalid property") {
+TEST_CASE("Test property texture with invalid property is still valid") {
   Model model;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -154,7 +154,7 @@ TEST_CASE("Test property texture with invalid property") {
   propertyTextureProperty.index = -1;
 
   PropertyTextureView view(model, propertyTexture);
-  REQUIRE(view.status() == PropertyTextureViewStatus::ErrorInvalidPropertyView);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
 
   auto properties = view.getProperties();
   REQUIRE(properties.size() == 1);
@@ -164,5 +164,5 @@ TEST_CASE("Test property texture with invalid property") {
 
   const ExtensionExtStructuralMetadataClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
-  REQUIRE(!classProperty);
+  REQUIRE(classProperty == &testClassProperty);
 }

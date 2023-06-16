@@ -28,7 +28,7 @@ enum class PropertyTablePropertyViewStatus {
   Valid,
 
   /**
-   * @brief This property view was attempting to view an invalid
+   * @brief This property view was initialized from an invalid
    * {@link ExtensionExtStructuralMetadataPropertyTable}.
    */
   ErrorInvalidPropertyTable,
@@ -38,7 +38,7 @@ enum class PropertyTablePropertyViewStatus {
    * in the
    * {@link ExtensionExtStructuralMetadataPropertyTable}.
    */
-  ErrorPropertyDoesNotExist,
+  ErrorNonexistentProperty,
 
   /**
    * @brief This property view's type does not match what is

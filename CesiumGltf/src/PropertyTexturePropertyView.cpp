@@ -1,17 +1,47 @@
 
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 
+#include <unordered_set>
+
 namespace CesiumGltf {
+namespace {
+static std::unordered_set<std::string> supportedTypes{
+    ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
+    ExtensionExtStructuralMetadataClassProperty::Type::VEC2,
+    ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
+    ExtensionExtStructuralMetadataClassProperty::Type::VEC4};
+
+bool isValidClassProperty(
+    const ExtensionExtStructuralMetadataClassProperty& classProperty) {
+  if (supportedTypes.find(classProperty.type) == supportedTypes.end()) {
+    return false;
+  }
+
+  // Non-arrays don't need further validation.
+  if (!classProperty.array) {
+    return true;
+  }
+
+  if (classProperty.type !=
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR) {
+    return false;
+  }
+
+  int64_t count = classProperty.count.value_or(0);
+  return count > 0 && count <= 4;
+}
+} // namespace
+
 PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(nullptr),
       _pSampler(nullptr),
       _pImage(nullptr),
-      _texCoordSetIndex(-1),
+      _texCoordSetIndex(0),
       _channels(),
       _swizzle(""),
-      _type(PropertyTexturePropertyComponentType::Uint8),
-      _count(0),
+      _componentType(PropertyTexturePropertyComponentType::Uint8),
+      _componentCount(0),
       _normalized(false) {}
 
 PropertyTexturePropertyView::PropertyTexturePropertyView(
@@ -26,9 +56,36 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
       _texCoordSetIndex(propertyTextureProperty.texCoord),
       _channels(),
       _swizzle(""),
-      _type(PropertyTexturePropertyComponentType::Uint8),
-      _count(0),
+      _componentType(PropertyTexturePropertyComponentType::Uint8),
+      _componentCount(0),
       _normalized(false) {
+
+  if (!isValidClassProperty(classProperty)) {
+    this->_status =
+        PropertyTexturePropertyViewStatus::ErrorInvalidClassProperty;
+    return;
+  }
+
+  if (classProperty.array) {
+    this->_componentCount = *classProperty.count;
+  } else if (
+      classProperty.type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR) {
+    this->_componentCount = 1;
+  } else if (
+      classProperty.type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::VEC2) {
+    this->_componentCount = 2;
+  } else if (
+      classProperty.type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::VEC3) {
+    this->_componentCount = 3;
+  } else if (
+      classProperty.type ==
+      ExtensionExtStructuralMetadataClassProperty::Type::VEC4) {
+    this->_componentCount = 4;
+  }
+
   const int64_t index = propertyTextureProperty.index;
   if (index < 0 || static_cast<size_t>(index) >= model.textures.size()) {
     this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
@@ -57,23 +114,17 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
     return;
   }
 
-  if (this->_texCoordSetIndex < 0) {
-    this->_status =
-        PropertyTexturePropertyViewStatus::ErrorInvalidTexCoordSetIndex;
-    return;
-  }
+  // TODO: support more component types
+  // this->_componentType = ...
 
-  // TODO: support more types
-  // this->_type = ...
-
-  this->_count =
-      this->_pClassProperty->count ? *this->_pClassProperty->count : 1;
   this->_normalized = this->_pClassProperty->normalized;
 
+  // TODO: channels can represent a multi-byte value, so the last check will
+  // need to change.
   const std::vector<int64_t>& channels = propertyTextureProperty.channels;
   if (channels.size() == 0 || channels.size() > 4 ||
       channels.size() > static_cast<size_t>(this->_pImage->channels) ||
-      channels.size() != static_cast<size_t>(this->_count)) {
+      channels.size() != static_cast<size_t>(this->_componentCount)) {
     this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
     return;
   }

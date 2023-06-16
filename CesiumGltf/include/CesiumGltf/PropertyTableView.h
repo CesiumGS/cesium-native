@@ -124,7 +124,8 @@ public:
         getClassProperty(propertyName);
     if (!pClassProperty) {
       return createInvalidPropertyView<T>(
-          PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
+          StructuralMetadata::PropertyTablePropertyViewStatus::
+              ErrorNonexistentProperty);
     }
 
     return getPropertyViewImpl<T>(propertyName, *pClassProperty);
@@ -166,7 +167,7 @@ public:
       callback(
           propertyName,
           createInvalidPropertyView<uint8_t>(
-              PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist));
+              PropertyTablePropertyViewStatus::ErrorNonexistentProperty));
       return;
     }
 
@@ -971,7 +972,7 @@ private:
         _pPropertyTable->properties.find(propertyName);
     if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
       return createInvalidPropertyView<T>(
-          PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
+          PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
     }
 
     const ExtensionExtStructuralMetadataPropertyTableProperty&

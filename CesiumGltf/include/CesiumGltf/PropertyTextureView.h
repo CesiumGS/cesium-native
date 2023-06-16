@@ -50,14 +50,7 @@ enum class PropertyTextureViewStatus {
    * @brief A property name specified in the property texture could not be found
    * in the class.
    */
-  ErrorClassPropertyNotFound,
-
-  /**
-   * @brief A property view for one of this property texture's properties failed
-   * to initialize successfully. Look for the invalid property view's status to
-   * find why it failed.
-   */
-  ErrorInvalidPropertyView
+  ErrorClassPropertyNotFound
 };
 
 /**

@@ -3,7 +3,7 @@
 namespace CesiumGltf {
 FeatureIdTextureView::FeatureIdTextureView() noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
-      _texCoordSetIndex(-1),
+      _texCoordSetIndex(0),
       _channels(),
       _pImage(nullptr) {}
 
@@ -11,8 +11,8 @@ FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
     const ExtensionExtMeshFeaturesFeatureIdTexture& featureIdTexture) noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
-      _texCoordSetIndex(-1),
-      _channels(featureIdTexture.channels),
+      _texCoordSetIndex(featureIdTexture.texCoord),
+      _channels(),
       _pImage(nullptr) {
   int32_t textureIndex = featureIdTexture.index;
   if (textureIndex < 0 ||
@@ -29,7 +29,6 @@ FeatureIdTextureView::FeatureIdTextureView(
   }
 
   // Ignore the texture's sampler, we will always use nearest pixel sampling.
-
   this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_status = FeatureIdTextureViewStatus::ErrorEmptyImage;
@@ -44,12 +43,6 @@ FeatureIdTextureView::FeatureIdTextureView(
         FeatureIdTextureViewStatus::ErrorInvalidImageBytesPerChannel;
     return;
   }
-
-  if (featureIdTexture.texCoord < 0) {
-    this->_status = FeatureIdTextureViewStatus::ErrorInvalidTexCoordSetIndex;
-    return;
-  }
-  this->_texCoordSetIndex = featureIdTexture.texCoord;
 
   const std::vector<int64_t>& channels = featureIdTexture.channels;
   if (channels.size() == 0 || channels.size() > 4 ||
@@ -70,7 +63,7 @@ FeatureIdTextureView::FeatureIdTextureView(
   this->_status = FeatureIdTextureViewStatus::Valid;
 }
 
-int64_t FeatureIdTextureView::getFeatureId(double u, double v) const noexcept {
+int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
   }
@@ -78,11 +71,11 @@ int64_t FeatureIdTextureView::getFeatureId(double u, double v) const noexcept {
   int64_t x = std::clamp(
       std::llround(u * this->_pImage->width),
       0LL,
-      (long long)this->_pImage->width);
+      (long long)this->_pImage->width - 1);
   int64_t y = std::clamp(
       std::llround(v * this->_pImage->height),
       0LL,
-      (long long)this->_pImage->height);
+      (long long)this->_pImage->height - 1);
 
   int64_t pixelOffset = this->_pImage->bytesPerChannel *
                         this->_pImage->channels *

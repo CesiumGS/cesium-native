@@ -55,14 +55,6 @@ PropertyTextureView::PropertyTextureView(
         property.second);
   }
 
-  for (const auto& propertyView : this->_propertyViews) {
-    if (propertyView.second.status() !=
-        PropertyTexturePropertyViewStatus::Valid) {
-      this->_status = PropertyTextureViewStatus::ErrorInvalidPropertyView;
-      return;
-    }
-  }
-
   this->_status = PropertyTextureViewStatus::Valid;
 }
 
