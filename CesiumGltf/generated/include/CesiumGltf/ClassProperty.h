@@ -15,10 +15,9 @@ namespace CesiumGltf {
 /**
  * @brief A class property.
  */
-struct CESIUMGLTF_API ExtensionExtStructuralMetadataClassProperty final
+struct CESIUMGLTF_API ClassProperty final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionExtStructuralMetadataClassProperty";
+  static inline constexpr const char* TypeName = "ClassProperty";
 
   /**
    * @brief Known values for The element type.

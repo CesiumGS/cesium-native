@@ -14,10 +14,8 @@ namespace CesiumGltf {
 /**
  * @brief An enum value.
  */
-struct CESIUMGLTF_API ExtensionExtStructuralMetadataEnumValue final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionExtStructuralMetadataEnumValue";
+struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* TypeName = "EnumValue";
 
   /**
    * @brief The name of the enum value.

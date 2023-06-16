@@ -4,7 +4,7 @@
 
 #include "TextureInfoJsonHandler.h"
 
-#include <CesiumGltf/ExtensionExtStructuralMetadataPropertyTextureProperty.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
@@ -14,31 +14,26 @@ class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-class ExtensionExtStructuralMetadataPropertyTexturePropertyJsonHandler
-    : public TextureInfoJsonHandler {
+class PropertyTexturePropertyJsonHandler : public TextureInfoJsonHandler {
 public:
-  using ValueType =
-      CesiumGltf::ExtensionExtStructuralMetadataPropertyTextureProperty;
+  using ValueType = CesiumGltf::PropertyTextureProperty;
 
-  ExtensionExtStructuralMetadataPropertyTexturePropertyJsonHandler(
+  PropertyTexturePropertyJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionExtStructuralMetadataPropertyTextureProperty*
-          pObject);
+      CesiumGltf::PropertyTextureProperty* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  readObjectKeyExtensionExtStructuralMetadataPropertyTextureProperty(
+  IJsonHandler* readObjectKeyPropertyTextureProperty(
       const std::string& objectType,
       const std::string_view& str,
-      CesiumGltf::ExtensionExtStructuralMetadataPropertyTextureProperty& o);
+      CesiumGltf::PropertyTextureProperty& o);
 
 private:
-  CesiumGltf::ExtensionExtStructuralMetadataPropertyTextureProperty* _pObject =
-      nullptr;
+  CesiumGltf::PropertyTextureProperty* _pObject = nullptr;
   CesiumJsonReader::
       ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>>
           _channels;
