@@ -6,7 +6,6 @@
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumGltf/Texture.h"
-#include "CesiumGltf/TextureAccessor.h"
 #include "Image.h"
 #include "ImageCesium.h"
 #include "Model.h"

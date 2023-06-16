@@ -1,18 +1,15 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionExtMeshFeaturesFeatureIdTexture.h"
+#include "CesiumGltf/FeatureIdTexture.h"
 #include "CesiumGltf/Texture.h"
-#include "CesiumGltf/TextureAccessor.h"
 #include "Image.h"
 #include "ImageCesium.h"
 #include "Model.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <string>
 
 namespace CesiumGltf {
 /**
@@ -20,7 +17,7 @@ namespace CesiumGltf {
  *
  * The {@link FeatureIdTextureView} constructor always completes successfully,
  * but it may not always reflect the actual content of the
- * {@link ExtensionExtMeshFeaturesFeatureIdTexture}. This enumeration provides the reason.
+ * {@link FeatureIdTexture}. This enumeration provides the reason.
  */
 enum class FeatureIdTextureViewStatus {
   /**
@@ -72,10 +69,10 @@ enum class FeatureIdTextureViewStatus {
 };
 
 /**
- * @brief A view on the image data of {@link ExtensionExtMeshFeaturesFeatureIdTexture}.
+ * @brief A view on the image data of {@link FeatureIdTexture}.
  *
  * It provides the ability to sample the feature IDs from the
- * {@link ExtensionExtMeshFeaturesFeatureIdTexture} using texture coordinates.
+ * {@link FeatureIdTexture} using texture coordinates.
  */
 class FeatureIdTextureView {
 public:
@@ -86,15 +83,14 @@ public:
 
   /**
    * @brief Construct a view of the data specified by a
-   * {@link ExtensionExtMeshFeaturesFeatureIdTexture}.
+   * {@link FeatureIdTexture}.
    *
-   * @param model The glTF in which to look for the feature id texture's data.
-   * @param featureIDTexture The feature id texture to create a view for.
+   * @param model The glTF in which to look for the feature ID texture's data.
+   * @param featureIDTexture The feature ID texture to create a view for.
    */
   FeatureIdTextureView(
       const Model& model,
-      const ExtensionExtMeshFeaturesFeatureIdTexture&
-          featureIdTexture) noexcept;
+      const FeatureIdTexture& featureIdTexture) noexcept;
 
   /**
    * @brief Get the Feature ID for the given texture coordinates.

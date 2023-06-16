@@ -1631,8 +1631,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
 
-      ExtensionExtMeshFeaturesFeatureId& featureID =
-          extension.featureIds.emplace_back();
+      FeatureId& featureID = extension.featureIds.emplace_back();
       // No fast way to count the unique feature IDs in this primitive, so
       // subtitute the batch table length.
       featureID.featureCount = batchLength;
@@ -1705,8 +1704,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
-  ExtensionExtMeshFeaturesFeatureId& featureID =
-      extension.featureIds.emplace_back();
+  FeatureId& featureID = extension.featureIds.emplace_back();
 
   // Setting the feature count is sufficient for implicit feature IDs.
   featureID.featureCount = featureCount;
