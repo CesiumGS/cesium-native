@@ -3,30 +3,25 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-#include "CesiumGltf/TextureInfo.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
-#include <cstdint>
 #include <optional>
-#include <vector>
+#include <string>
 
 namespace CesiumGltf {
 /**
- * @brief A texture containing property values.
+ * @brief An attribute containing property values.
  */
-struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyTextureProperty
-    final : public TextureInfo {
-  static inline constexpr const char* TypeName =
-      "ExtensionExtStructuralMetadataPropertyTextureProperty";
+struct CESIUMGLTF_API PropertyAttributeProperty final
+    : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* TypeName = "PropertyAttributeProperty";
 
   /**
-   * @brief Texture channels containing property values, identified by index.
-   * The values may be packed into multiple channels if a single channel does
-   * not have sufficient bit depth. The values are packed in little-endian
-   * order.
+   * @brief The name of the attribute containing property values.
    */
-  std::vector<int64_t> channels = {0};
+  std::string attribute;
 
   /**
    * @brief An offset to apply to property values. Only applicable when the

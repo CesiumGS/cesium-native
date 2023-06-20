@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionExtStructuralMetadataClass.h"
-#include "CesiumGltf/ExtensionExtStructuralMetadataClassProperty.h"
-#include "CesiumGltf/ExtensionExtStructuralMetadataPropertyTexture.h"
+#include "CesiumGltf/Class.h"
+#include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/PropertyTexture.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumGltf/Texture.h"
 #include "Image.h"
@@ -16,7 +16,7 @@ namespace CesiumGltf {
  *
  * The {@link PropertyTextureView} constructor always completes successfully.
  * However it may not always reflect the actual content of the
- * {@link ExtensionExtStructuralMetadataPropertyTexture}. This enumeration provides the reason.
+ * {@link PropertyTexture}. This enumeration provides the reason.
  */
 enum class PropertyTextureViewStatus {
   /**
@@ -60,7 +60,7 @@ enum class PropertyTextureViewStatus {
 };
 
 /**
- * @brief A view on the {@link ExtensionExtStructuralMetadataPropertyTexture}.
+ * @brief A view on the {@link PropertyTexture}.
  *
  * Provides access to views on the property texture properties.
  */
@@ -79,8 +79,7 @@ public:
    */
   PropertyTextureView(
       const Model& model,
-      const ExtensionExtStructuralMetadataPropertyTexture&
-          propertyTexture) noexcept;
+      const PropertyTexture& propertyTexture) noexcept;
 
   /**
    * @brief Gets the status of this property texture view.
@@ -91,15 +90,14 @@ public:
   PropertyTextureViewStatus status() const noexcept { return this->_status; }
 
   /**
-   * @brief Finds the {@link ExtensionExtStructuralMetadataClassProperty} that
+   * @brief Finds the {@link ClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
-   * @return A pointer to the {@link ExtensionExtStructuralMetadataClassProperty}.
+   * @return A pointer to the {@link ClassProperty}.
    * Return nullptr if the PropertyTextureView is invalid or if no class
    * property was found.
    */
-  const ExtensionExtStructuralMetadataClassProperty*
-  getClassProperty(const std::string& propertyName) const;
+  const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
   /**
    * @brief Get the views for this property texture's properties.
@@ -111,8 +109,8 @@ public:
 
 private:
   const Model* _pModel;
-  const ExtensionExtStructuralMetadataPropertyTexture* _pPropertyTexture;
-  const ExtensionExtStructuralMetadataClass* _pClass;
+  const PropertyTexture* _pPropertyTexture;
+  const Class* _pClass;
   std::unordered_map<std::string, PropertyTexturePropertyView> _propertyViews;
   PropertyTextureViewStatus _status;
 };

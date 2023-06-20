@@ -15,10 +15,9 @@ namespace CesiumGltf {
 /**
  * @brief An array of binary property values.
  */
-struct CESIUMGLTF_API ExtensionExtStructuralMetadataPropertyTableProperty final
+struct CESIUMGLTF_API PropertyTableProperty final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionExtStructuralMetadataPropertyTableProperty";
+  static inline constexpr const char* TypeName = "PropertyTableProperty";
 
   /**
    * @brief Known values for The type of values in `arrayOffsets`.

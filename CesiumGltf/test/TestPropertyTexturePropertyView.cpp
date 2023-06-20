@@ -17,20 +17,17 @@ TEST_CASE(
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = -1;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -49,14 +46,11 @@ TEST_CASE(
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
   Image& image = model.images.emplace_back();
   image.cesium.width = 1;
@@ -65,11 +59,11 @@ TEST_CASE(
   texture.sampler = -1;
   texture.source = 0;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -89,14 +83,11 @@ TEST_CASE(
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
   model.samplers.emplace_back();
 
@@ -104,11 +95,11 @@ TEST_CASE(
   texture.sampler = 0;
   texture.source = -1;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -126,14 +117,11 @@ TEST_CASE("Test PropertyTexturePropertyView on property with empty image") {
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
   Image& image = model.images.emplace_back();
   image.cesium.width = 0;
@@ -145,11 +133,11 @@ TEST_CASE("Test PropertyTexturePropertyView on property with empty image") {
   texture.sampler = 0;
   texture.source = 0;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -167,14 +155,11 @@ TEST_CASE("Test PropertyTextureView on property table property with negative "
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
   Image& image = model.images.emplace_back();
   image.cesium.width = 1;
@@ -186,11 +171,11 @@ TEST_CASE("Test PropertyTextureView on property table property with negative "
   texture.sampler = 0;
   texture.source = 0;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = -1;
   propertyTextureProperty.channels = {0};
@@ -210,14 +195,11 @@ TEST_CASE("Test PropertyTextureView on property texture property with zero "
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
   Image& image = model.images.emplace_back();
   image.cesium.width = 1;
@@ -230,11 +212,11 @@ TEST_CASE("Test PropertyTextureView on property texture property with zero "
   texture.sampler = 0;
   texture.source = 0;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {};
@@ -253,14 +235,11 @@ TEST_CASE("Test PropertyTextureView on property texture property with too many "
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
   Image& image = model.images.emplace_back();
   image.cesium.width = 1;
@@ -273,11 +252,11 @@ TEST_CASE("Test PropertyTextureView on property texture property with too many "
   texture.sampler = 0;
   texture.source = 0;
 
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0, 1};

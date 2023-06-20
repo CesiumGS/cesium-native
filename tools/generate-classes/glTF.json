@@ -118,37 +118,37 @@
       "overrideName": "ExtensionMeshPrimitiveExtStructuralMetadata"
     },
     "Class Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataClassProperty"
+      "overrideName": "ClassProperty"
     },
     "Class in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataClass"
+      "overrideName": "Class"
     },
     "Enum in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataEnum"
+      "overrideName": "Enum"
     },
     "Enum Value in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataEnumValue"
+      "overrideName": "EnumValue"
     },
     "Property Attribute Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyAttributeProperty"
+      "overrideName": "PropertyAttributeProperty"
     },
     "Property Attribute in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyAttribute"
+      "overrideName": "PropertyAttribute"
     },
     "Property Table Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTableProperty"
+      "overrideName": "PropertyTableProperty"
     },
     "Property Table in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTable"
+      "overrideName": "PropertyTable"
     },
     "Property Texture Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTextureProperty"
+      "overrideName": "PropertyTextureProperty"
     },
     "Property Texture in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTexture"
+      "overrideName": "PropertyTexture"
     },
     "Schema in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataSchema"
+      "overrideName": "Schema"
     },
     "Any Value": {
       "overrideName": "CesiumUtility::JsonValue"
