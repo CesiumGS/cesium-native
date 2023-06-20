@@ -16,10 +16,9 @@ namespace CesiumGltf {
  * @brief Indicates the status of a property table property view.
  *
  * The {@link PropertyTablePropertyView} constructor always completes successfully.
- * However, it may not always reflect the actual content of the
- * {@link ExtensionExtStructuralMetadataPropertyTableProperty}, but instead
- * indicate that its {@link PropertyTablePropertyView::size} is 0. This enumeration
- * provides the reason.
+ * However, it may not always reflect the actual content of the {@link PropertyTableProperty},
+ * but instead indicate that its {@link PropertyTablePropertyView::size} is 0.
+ * This enumeration provides the reason.
  */
 enum class PropertyTablePropertyViewStatus {
   /**
@@ -29,32 +28,31 @@ enum class PropertyTablePropertyViewStatus {
 
   /**
    * @brief This property view was initialized from an invalid
-   * {@link ExtensionExtStructuralMetadataPropertyTable}.
+   * {@link PropertyTable}.
    */
   ErrorInvalidPropertyTable,
 
   /**
    * @brief This property view is trying to view a property that does not exist
-   * in the
-   * {@link ExtensionExtStructuralMetadataPropertyTable}.
+   * in the {@link PropertyTable}.
    */
   ErrorNonexistentProperty,
 
   /**
    * @brief This property view's type does not match what is
-   * specified in {@link ExtensionExtStructuralMetadataClassProperty::type}.
+   * specified in {@link ClassProperty::type}.
    */
   ErrorTypeMismatch,
 
   /**
    * @brief This property view's component type does not match what
-   * is specified in {@link ExtensionExtStructuralMetadataClassProperty::componentType}.
+   * is specified in {@link ClassProperty::componentType}.
    */
   ErrorComponentTypeMismatch,
 
   /**
    * @brief This property view differs from what is specified in
-   * {@link ExtensionExtStructuralMetadataClassProperty::array}.
+   * {@link ClassProperty::array}.
    */
   ErrorArrayTypeMismatch,
 
@@ -157,13 +155,12 @@ enum class PropertyTablePropertyViewStatus {
 };
 
 /**
- * @brief A view on the data of the
- * {@link ExtensionExtStructuralMetadataPropertyTableProperty that is created by
- * a {@link PropertyTableView}.
+ * @brief A view on the data of the {@link PropertyTableProperty} that is created
+ * by a {@link PropertyTableView}.
  *
  * It provides utility to retrieve the actual data stored in the
- * {@link ExtensionExtStructuralMetadataPropertyTableProperty::values} like an array of elements.
- * Data of each instance can be accessed through the {@link get(int64_t instance)} method.
+ * {@link PropertyTableProperty::values} like an array of elements. Data of each
+ * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
  *
  * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
  * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
@@ -185,9 +182,9 @@ public:
 
   /**
    * @brief Construct a new instance pointing to non-array data specified by
-   * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
-   * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
-   * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
+   * {@link PropertyTableProperty}.
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTablePropertyView(
@@ -209,14 +206,14 @@ public:
 
   /**
    * @brief Construct a new instance pointing to the data specified by
-   * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
-   * @param values The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::values}
-   * @param arrayOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsets}
-   * @param stringOffsets The raw buffer specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsets}
-   * @param offsetType The offset type of arrayOffsets specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::arrayOffsetType}
-   * @param offsetType The offset type of stringOffsets specified by {@link ExtensionExtStructuralMetadataPropertyTableProperty::stringOffsetType}
-   * @param arrayCount The number of elements in each array value specified by {@link ExtensionExtStructuralMetadataClassProperty::count}
-   * @param size The number of elements in the property table specified by {@link ExtensionExtStructuralMetadataPropertyTable::count}
+   * {@link PropertyTableProperty}.
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
+   * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
+   * @param offsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param offsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
+   * @param arrayCount The number of elements in each array value specified by {@link ClassProperty::count}
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTablePropertyView(
@@ -252,7 +249,7 @@ public:
   PropertyTablePropertyViewStatus status() const noexcept { return _status; }
 
   /**
-   * @brief Get the value of an element of the {@link ExtensionExtStructuralMetadataPropertyTable}.
+   * @brief Get the value of an element of the {@link PropertyTable}.
    * @param index The element index
    * @return The value of the element
    */
@@ -295,7 +292,7 @@ public:
   /**
    * @brief Get the number of elements in this
    * PropertyTablePropertyView. If the view is valid, this returns
-   * {@link ExtensionExtStructuralMetadataPropertyTable::count}. Otherwise, this returns 0.
+   * {@link PropertyTable::count}. Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */

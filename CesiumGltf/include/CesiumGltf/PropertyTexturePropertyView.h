@@ -1,11 +1,11 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionExtStructuralMetadataClassProperty.h"
-#include "CesiumGltf/ExtensionExtStructuralMetadataPropertyTexture.h"
+#include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
 #include "CesiumGltf/Image.h"
 #include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltf/Model.h"
+#include "CesiumGltf/PropertyTexture.h"
 #include "CesiumGltf/Sampler.h"
 #include "CesiumGltf/Texture.h"
 
@@ -95,8 +95,7 @@ template <typename T> struct PropertyTexturePropertyValue {
 };
 
 /**
- * @brief A view of the data specified by a
- * {@link ExtensionExtStructuralMetadataPropertyTextureProperty}.
+ * @brief A view of the data specified by a {@link PropertyTextureProperty}.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
@@ -110,8 +109,8 @@ public:
 
   /**
    * @brief Construct a view of the data specified by the given property texture
-   * property. Assumes the model has already been validated by
-   * PropertyTextureView.
+   * property. Assumes the model has already been validated by the
+   * {@link PropertyTextureView} that invoked this constructor.
    *
    * @param model The glTF in which to look for the data specified by the
    * property texture property.
@@ -120,9 +119,8 @@ public:
    */
   PropertyTexturePropertyView(
       const Model& model,
-      const ExtensionExtStructuralMetadataClassProperty& classProperty,
-      const ExtensionExtStructuralMetadataPropertyTextureProperty&
-          propertyTextureProperty) noexcept;
+      const ClassProperty& classProperty,
+      const PropertyTextureProperty& propertyTextureProperty) noexcept;
 
   /**
    * @brief Gets the unswizzled property value for the given texture
@@ -274,7 +272,7 @@ public:
 
 private:
   PropertyTexturePropertyViewStatus _status;
-  const ExtensionExtStructuralMetadataClassProperty* _pClassProperty;
+  const ClassProperty* _pClassProperty;
 
   const Sampler* _pSampler;
   const ImageCesium* _pImage;

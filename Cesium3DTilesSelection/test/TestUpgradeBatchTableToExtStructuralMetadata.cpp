@@ -24,15 +24,14 @@ using namespace CesiumUtility;
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkNonArrayProperty(
     const Model& model,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    const ExtensionExtStructuralMetadataClass& metaClass,
+    const PropertyTable& propertyTable,
+    const Class& metaClass,
     const std::string& propertyName,
     const std::string& expectedType,
     const std::optional<std::string>& expectedComponentType,
     const std::vector<ExpectedType>& expected,
     size_t expectedTotalInstances) {
-  const ExtensionExtStructuralMetadataClassProperty& property =
-      metaClass.properties.at(propertyName);
+  const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedType);
   REQUIRE(property.componentType == expectedComponentType);
   REQUIRE(!property.array);
@@ -68,16 +67,15 @@ static void checkNonArrayProperty(
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkArrayProperty(
     const Model& model,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    const ExtensionExtStructuralMetadataClass& metaClass,
+    const PropertyTable& propertyTable,
+    const Class& metaClass,
     const std::string& propertyName,
     int64_t expectedCount,
     const std::string& expectedType,
     const std::optional<std::string>& expectedComponentType,
     const std::vector<std::vector<ExpectedType>>& expected,
     size_t expectedTotalInstances) {
-  const ExtensionExtStructuralMetadataClassProperty& property =
-      metaClass.properties.at(propertyName);
+  const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedType);
   REQUIRE(property.componentType == expectedComponentType);
   REQUIRE(property.array);
@@ -161,26 +159,20 @@ static void createTestForNonArrayJson(
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<ExtensionExtStructuralMetadataSchema> schema =
-      pMetadata->schema;
+  const std::optional<Schema> schema = pMetadata->schema;
   REQUIRE(schema);
 
-  const std::unordered_map<std::string, ExtensionExtStructuralMetadataClass>&
-      classes = schema->classes;
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      classes.at("default");
-  const std::unordered_map<
-      std::string,
-      ExtensionExtStructuralMetadataClassProperty>& properties =
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
   REQUIRE(pMetadata->propertyTables.size() == 1);
 
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pMetadata->propertyTables[0];
+  const PropertyTable& propertyTable = pMetadata->propertyTables[0];
   checkNonArrayProperty<ExpectedType, PropertyViewType>(
       model,
       propertyTable,
@@ -247,18 +239,15 @@ static void createTestForArrayJson(
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<ExtensionExtStructuralMetadataSchema>& schema =
-      pMetadata->schema;
+  const std::optional<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
   REQUIRE(schema->classes.find("default") != schema->classes.end());
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      schema->classes.at("default");
+  const Class& defaultClass = schema->classes.at("default");
   REQUIRE(defaultClass.properties.size() == 1);
 
   REQUIRE(pMetadata->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pMetadata->propertyTables[0];
+  const PropertyTable& propertyTable = pMetadata->propertyTables[0];
 
   checkArrayProperty<ExpectedType, PropertyViewType>(
       model,
@@ -274,7 +263,7 @@ static void createTestForArrayJson(
 
 std::set<int32_t> getUniqueBufferViewIds(
     const std::vector<Accessor>& accessors,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable) {
+    const PropertyTable& propertyTable) {
   std::set<int32_t> result;
   for (auto it = accessors.begin(); it != accessors.end(); it++) {
     result.insert(it->bufferView);
@@ -316,7 +305,7 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  ExtensionExtStructuralMetadataClass& defaultClass = firstClassIt->second;
+  Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 4);
 
   auto idIt = defaultClass.properties.find("id");
@@ -328,36 +317,24 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
   auto heightIt = defaultClass.properties.find("Height");
   REQUIRE(heightIt != defaultClass.properties.end());
 
-  CHECK(
-      idIt->second.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
-  CHECK(
-      longitudeIt->second.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
-  CHECK(
-      latitudeIt->second.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
-  CHECK(
-      heightIt->second.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
+  CHECK(idIt->second.type == ClassProperty::Type::SCALAR);
+  CHECK(longitudeIt->second.type == ClassProperty::Type::SCALAR);
+  CHECK(latitudeIt->second.type == ClassProperty::Type::SCALAR);
+  CHECK(heightIt->second.type == ClassProperty::Type::SCALAR);
 
-  CHECK(
-      idIt->second.componentType ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8);
+  CHECK(idIt->second.componentType == ClassProperty::ComponentType::INT8);
   CHECK(
       longitudeIt->second.componentType ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64);
+      ClassProperty::ComponentType::FLOAT64);
   CHECK(
       latitudeIt->second.componentType ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64);
+      ClassProperty::ComponentType::FLOAT64);
   CHECK(
-      heightIt->second.componentType ==
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64);
+      heightIt->second.componentType == ClassProperty::ComponentType::FLOAT64);
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 4);
 
@@ -411,8 +388,7 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-      ExtensionExtMeshFeaturesFeatureId& featureId =
-          pPrimitiveExtension->featureIds[0];
+      const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
       CHECK(featureId.attribute == 0);
       CHECK(featureId.propertyTable == 0);
@@ -427,8 +403,8 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
         propertyTable,
         defaultClass,
         "id",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
         expected,
         expected.size());
   }
@@ -450,8 +426,8 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
         propertyTable,
         defaultClass,
         "Height",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -473,8 +449,8 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
         propertyTable,
         defaultClass,
         "Longitude",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -496,8 +472,8 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
         propertyTable,
         defaultClass,
         "Latitude",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -519,24 +495,19 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(metadata);
 
-  std::optional<ExtensionExtStructuralMetadataSchema> schema = metadata->schema;
+  std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema);
 
-  const std::unordered_map<std::string, ExtensionExtStructuralMetadataClass>&
-      classes = schema->classes;
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      classes.at("default");
-  const std::unordered_map<
-      std::string,
-      ExtensionExtStructuralMetadataClassProperty>& properties =
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
   REQUIRE(metadata->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      metadata->propertyTables[0];
+  const PropertyTable& propertyTable = metadata->propertyTables[0];
 
   // Check that batch IDs were converted to EXT_mesh_features
   CHECK(!model.meshes.empty());
@@ -557,8 +528,7 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-      const ExtensionExtMeshFeaturesFeatureId& featureId =
-          pPrimitiveExtension->featureIds[0];
+      const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
       CHECK(featureId.attribute == 0);
       CHECK(featureId.propertyTable == 0);
@@ -572,8 +542,8 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "id",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
         expected,
         expected.size());
   }
@@ -595,8 +565,8 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "Height",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -618,8 +588,8 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "Longitude",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -641,8 +611,8 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "Latitude",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -654,8 +624,8 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "code",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT8,
         expected,
         expected.size());
   }
@@ -680,8 +650,8 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "cartographic",
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::VEC3,
+        ClassProperty::ComponentType::FLOAT64,
         expected,
         expected.size());
   }
@@ -707,8 +677,7 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      firstClassIt->second;
+  const Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 3);
 
   {
@@ -719,27 +688,18 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
     auto idIt = defaultClass.properties.find("id");
     REQUIRE(idIt != defaultClass.properties.end());
 
-    CHECK(
-        nameIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING);
-    CHECK(
-        dimensionsIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
+    CHECK(nameIt->second.type == ClassProperty::Type::STRING);
+    CHECK(dimensionsIt->second.type == ClassProperty::Type::VEC3);
     CHECK(
         dimensionsIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
-    CHECK(
-        idIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
-    CHECK(
-        idIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32);
+        ClassProperty::ComponentType::FLOAT32);
+    CHECK(idIt->second.type == ClassProperty::Type::SCALAR);
+    CHECK(idIt->second.componentType == ClassProperty::ComponentType::UINT32);
   }
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  const PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 3);
 
@@ -780,8 +740,7 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-  const ExtensionExtMeshFeaturesFeatureId& featureId =
-      pPrimitiveExtension->featureIds[0];
+  const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
   CHECK(featureId.propertyTable == 0);
@@ -802,7 +761,7 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "name",
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         expected,
         expected.size());
@@ -823,8 +782,8 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "dimensions",
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::VEC3,
+        ClassProperty::ComponentType::FLOAT32,
         expected,
         expected.size());
   }
@@ -836,8 +795,8 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "id",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT32,
         expected,
         expected.size());
   }
@@ -864,8 +823,7 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      firstClassIt->second;
+  const Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 3);
 
   {
@@ -876,31 +834,22 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
     auto idIt = defaultClass.properties.find("id");
     REQUIRE(idIt != defaultClass.properties.end());
 
-    CHECK(
-        temperatureIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
+    CHECK(temperatureIt->second.type == ClassProperty::Type::SCALAR);
     CHECK(
         temperatureIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
-    CHECK(
-        secondaryColorIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
+        ClassProperty::ComponentType::FLOAT32);
+    CHECK(secondaryColorIt->second.type == ClassProperty::Type::VEC3);
     REQUIRE(secondaryColorIt->second.componentType);
     CHECK(
         secondaryColorIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
-    CHECK(
-        idIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
-    CHECK(
-        idIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16);
+        ClassProperty::ComponentType::FLOAT32);
+    CHECK(idIt->second.type == ClassProperty::Type::SCALAR);
+    CHECK(idIt->second.componentType == ClassProperty::ComponentType::UINT16);
   }
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  const PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 3);
 
@@ -942,8 +891,7 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-  const ExtensionExtMeshFeaturesFeatureId& featureId =
-      pPrimitiveExtension->featureIds[0];
+  const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(!featureId.attribute);
   CHECK(featureId.propertyTable == 0);
@@ -964,8 +912,8 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "temperature",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT32,
         expected,
         expected.size());
   }
@@ -985,8 +933,8 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "secondaryColor",
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::VEC3,
+        ClassProperty::ComponentType::FLOAT32,
         expected,
         expected.size());
   }
@@ -998,8 +946,8 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
         propertyTable,
         defaultClass,
         "id",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT16,
         expected,
         expected.size());
   }
@@ -1026,8 +974,7 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      firstClassIt->second;
+  const Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 3);
 
   {
@@ -1038,31 +985,22 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
     auto idIt = defaultClass.properties.find("id");
     REQUIRE(idIt != defaultClass.properties.end());
 
-    CHECK(
-        temperatureIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
+    CHECK(temperatureIt->second.type == ClassProperty::Type::SCALAR);
     CHECK(
         temperatureIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
-    CHECK(
-        secondaryColorIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3);
+        ClassProperty::ComponentType::FLOAT32);
+    CHECK(secondaryColorIt->second.type == ClassProperty::Type::VEC3);
     REQUIRE(secondaryColorIt->second.componentType);
     CHECK(
         secondaryColorIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
-    CHECK(
-        idIt->second.type ==
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR);
-    CHECK(
-        idIt->second.componentType ==
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16);
+        ClassProperty::ComponentType::FLOAT32);
+    CHECK(idIt->second.type == ClassProperty::Type::SCALAR);
+    CHECK(idIt->second.componentType == ClassProperty::ComponentType::UINT16);
   }
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  const PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 3);
 
@@ -1104,8 +1042,7 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
-  const ExtensionExtMeshFeaturesFeatureId& featureId =
-      pPrimitiveExtension->featureIds[0];
+  const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(!featureId.attribute);
   CHECK(featureId.propertyTable == 0);
@@ -1126,8 +1063,8 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
         propertyTable,
         defaultClass,
         "temperature",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT32,
         expected,
         expected.size());
   }
@@ -1147,8 +1084,8 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
         propertyTable,
         defaultClass,
         "secondaryColor",
-        ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::VEC3,
+        ClassProperty::ComponentType::FLOAT32,
         expected,
         expected.size());
   }
@@ -1160,8 +1097,8 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
         propertyTable,
         defaultClass,
         "id",
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT16,
         expected,
         expected.size());
   }
@@ -1182,25 +1119,19 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
       result.model->getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<ExtensionExtStructuralMetadataSchema>& schema =
-      pMetadata->schema;
+  const std::optional<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
 
-  const std::unordered_map<std::string, ExtensionExtStructuralMetadataClass>&
-      classes = schema->classes;
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      classes.at("default");
-  const std::unordered_map<
-      std::string,
-      ExtensionExtStructuralMetadataClassProperty>& properties =
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
   REQUIRE(pMetadata->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pMetadata->propertyTables[0];
+  const PropertyTable& propertyTable = pMetadata->propertyTables[0];
   REQUIRE(propertyTable.count == 10);
 
   {
@@ -1215,7 +1146,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
         propertyTable,
         defaultClass,
         "info",
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         expected,
         expected.size());
@@ -1236,7 +1167,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
         defaultClass,
         "rooms",
         3,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         expected,
         expected.size());
@@ -1280,35 +1211,28 @@ TEST_CASE("Upgrade JSON booleans to binary") {
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<ExtensionExtStructuralMetadataSchema>& schema =
-      pMetadata->schema;
+  const std::optional<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
 
-  const std::unordered_map<std::string, ExtensionExtStructuralMetadataClass>&
-      classes = schema->classes;
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      classes.at("default");
-  const std::unordered_map<
-      std::string,
-      ExtensionExtStructuralMetadataClassProperty>& properties =
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
       defaultClass.properties;
   REQUIRE(properties.size() == 1);
 
-  const ExtensionExtStructuralMetadataClassProperty& propertyClass =
-      properties.at("boolProp");
+  const ClassProperty& propertyClass = properties.at("boolProp");
   REQUIRE(propertyClass.type == "BOOLEAN");
 
   REQUIRE(pMetadata->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pMetadata->propertyTables[0];
+  const PropertyTable& propertyTable = pMetadata->propertyTables[0];
   checkNonArrayProperty(
       model,
       propertyTable,
       defaultClass,
       "boolProp",
-      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+      ClassProperty::Type::BOOLEAN,
       std::nullopt,
       expected,
       expected.size());
@@ -1327,8 +1251,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
         4,
         expected.size());
   }
@@ -1345,8 +1269,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT8,
         5,
         expected.size());
   }
@@ -1363,8 +1287,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT16,
         4,
         expected.size());
   }
@@ -1381,8 +1305,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT16,
         4,
         expected.size());
   }
@@ -1399,8 +1323,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT32,
         4,
         expected.size());
   }
@@ -1417,8 +1341,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT32,
         4,
         expected.size());
   }
@@ -1437,8 +1361,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT64,
         4,
         expected.size());
   }
@@ -1455,8 +1379,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT64,
         4,
         expected.size());
   }
@@ -1473,8 +1397,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT32,
         4,
         expected.size());
   }
@@ -1491,8 +1415,8 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         4,
         expected.size());
   }
@@ -1509,7 +1433,7 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson<std::string, std::string_view>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         4,
         expected.size());
@@ -1527,7 +1451,7 @@ TEST_CASE("Upgrade fixed-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+        ClassProperty::Type::BOOLEAN,
         std::nullopt,
         6,
         expected.size());
@@ -1547,8 +1471,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
         0,
         expected.size());
   }
@@ -1565,8 +1489,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT8,
         0,
         expected.size());
   }
@@ -1583,8 +1507,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT16,
         0,
         expected.size());
   }
@@ -1601,8 +1525,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT16,
         0,
         expected.size());
   }
@@ -1619,8 +1543,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT32,
         0,
         expected.size());
   }
@@ -1637,8 +1561,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT32,
         0,
         expected.size());
   }
@@ -1655,8 +1579,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT64,
         0,
         expected.size());
   }
@@ -1673,8 +1597,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT64,
         0,
         expected.size());
   }
@@ -1691,8 +1615,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT32,
         0,
         expected.size());
   }
@@ -1709,8 +1633,8 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::FLOAT64,
         0,
         expected.size());
   }
@@ -1727,7 +1651,7 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson<std::string, std::string_view>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         0,
         expected.size());
@@ -1746,7 +1670,7 @@ TEST_CASE("Upgrade variable-length JSON arrays") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+        ClassProperty::Type::BOOLEAN,
         std::nullopt,
         0,
         expected.size());
@@ -1760,8 +1684,8 @@ TEST_CASE("Upgrade JSON values") {
     std::vector<uint32_t> expected{32, 45, 21, 65, 78};
     createTestForNonArrayJson<uint32_t, int8_t>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
         expected.size());
   }
 
@@ -1769,7 +1693,7 @@ TEST_CASE("Upgrade JSON values") {
     std::vector<bool> expected{true, false, true, false, true, true, false};
     createTestForNonArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+        ClassProperty::Type::BOOLEAN,
         std::nullopt,
         expected.size());
   }
@@ -1778,7 +1702,7 @@ TEST_CASE("Upgrade JSON values") {
     std::vector<std::string> expected{"Test 0", "Test 1", "Test 2", "Test 3"};
     createTestForNonArrayJson<std::string, std::string_view>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         expected.size());
   }
@@ -1789,8 +1713,8 @@ TEST_CASE("Cannot write past batch table length") {
     std::vector<uint32_t> expected{32, 45, 21, 65, 78, 20, 33, 12};
     createTestForNonArrayJson<uint32_t, int8_t>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
         4);
   }
 
@@ -1798,7 +1722,7 @@ TEST_CASE("Cannot write past batch table length") {
     std::vector<bool> expected{true, false, true, false, true, true, false};
     createTestForNonArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+        ClassProperty::Type::BOOLEAN,
         std::nullopt,
         4);
   }
@@ -1808,7 +1732,7 @@ TEST_CASE("Cannot write past batch table length") {
         expected{"Test 0", "Test 1", "Test 2", "Test 3", "Test 4"};
     createTestForNonArrayJson<std::string, std::string_view>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         3);
   }
@@ -1825,8 +1749,8 @@ TEST_CASE("Cannot write past batch table length") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::UINT64,
         4,
         2);
   }
@@ -1843,7 +1767,7 @@ TEST_CASE("Cannot write past batch table length") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+        ClassProperty::Type::BOOLEAN,
         std::nullopt,
         3,
         2);
@@ -1861,7 +1785,7 @@ TEST_CASE("Cannot write past batch table length") {
 
     createTestForArrayJson<std::string, std::string_view>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         4,
         2);
@@ -1879,8 +1803,8 @@ TEST_CASE("Cannot write past batch table length") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT32,
         0,
         3);
   }
@@ -1898,7 +1822,7 @@ TEST_CASE("Cannot write past batch table length") {
 
     createTestForArrayJson(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN,
+        ClassProperty::Type::BOOLEAN,
         std::nullopt,
         0,
         2);
@@ -1916,7 +1840,7 @@ TEST_CASE("Cannot write past batch table length") {
 
     createTestForArrayJson<std::string, std::string_view>(
         expected,
-        ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+        ClassProperty::Type::STRING,
         std::nullopt,
         0,
         2);
@@ -1995,13 +1919,12 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  ExtensionExtStructuralMetadataClass& defaultClass = firstClassIt->second;
+  Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 6);
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 6);
 
@@ -2017,27 +1940,27 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
 
   std::vector<Expected> expectedProperties{
       {"lampStrength",
-       ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+       ClassProperty::Type::STRING,
        std::nullopt,
        {"10", "5", "7", "null", "null", "null", "null", "null"}},
       {"lampColor",
-       ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+       ClassProperty::Type::STRING,
        std::nullopt,
        {"yellow", "white", "white", "null", "null", "null", "null", "null"}},
       {"carType",
-       ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+       ClassProperty::Type::STRING,
        std::nullopt,
        {"null", "null", "null", "truck", "bus", "sedan", "null", "null"}},
       {"carColor",
-       ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+       ClassProperty::Type::STRING,
        std::nullopt,
        {"null", "null", "null", "green", "blue", "red", "null", "null"}},
       {"treeHeight",
-       ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+       ClassProperty::Type::STRING,
        std::nullopt,
        {"null", "null", "null", "null", "null", "null", "10", "15"}},
       {"treeAge",
-       ExtensionExtStructuralMetadataClassProperty::Type::STRING,
+       ClassProperty::Type::STRING,
        std::nullopt,
        {"null", "null", "null", "null", "null", "null", "5", "8"}}};
 
@@ -2133,22 +2056,19 @@ TEST_CASE(
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  ExtensionExtStructuralMetadataClass& defaultClass = firstClassIt->second;
+  Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 7);
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 7);
 
   struct ExpectedString {
     std::string name;
     std::vector<std::string> values;
-    std::string type() const {
-      return ExtensionExtStructuralMetadataClassProperty::Type::STRING;
-    }
+    std::string type() const { return ClassProperty::Type::STRING; }
     std::optional<std::string> componentType() const { return std::nullopt; }
   };
 
@@ -2191,11 +2111,9 @@ TEST_CASE(
   struct ExpectedInt8Properties {
     std::string name;
     std::vector<int8_t> values;
-    std::string type() const {
-      return ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-    }
+    std::string type() const { return ClassProperty::Type::SCALAR; }
     std::optional<std::string> componentType() const {
-      return ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8;
+      return ClassProperty::ComponentType::INT8;
     }
   };
 
@@ -2225,12 +2143,9 @@ TEST_CASE(
     std::string name;
     int64_t count;
     std::vector<std::vector<double>> values;
-    std::string type() const {
-      return ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-    }
+    std::string type() const { return ClassProperty::Type::SCALAR; }
     std::optional<std::string> componentType() const {
-      return ExtensionExtStructuralMetadataClassProperty::ComponentType::
-          FLOAT64;
+      return ClassProperty::ComponentType::FLOAT64;
     }
   };
 
@@ -2345,14 +2260,12 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts is okay if all "
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      firstClassIt->second;
+  const Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 3);
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  const PropertyTable& propertyTable = pExtension->propertyTables[0];
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 3);
 }
@@ -2436,14 +2349,12 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts values != 1 is "
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  const ExtensionExtStructuralMetadataClass& defaultClass =
-      firstClassIt->second;
+  const Class& defaultClass = firstClassIt->second;
   REQUIRE(defaultClass.properties.size() == 0);
 
   // Check the property table
   REQUIRE(pExtension->propertyTables.size() == 1);
-  const ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      pExtension->propertyTables[0];
+  const PropertyTable& propertyTable = pExtension->propertyTables[0];
 
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 0);

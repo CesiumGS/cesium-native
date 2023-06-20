@@ -6,7 +6,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -1244,24 +1244,20 @@ static int32_t copyBufferView(
   return static_cast<int32_t>(bufferViewId);
 }
 
-// Copy and reconstruct buffer views and buffers from EXT_feature_metadata
-// feature tables.
+// Copy and reconstruct buffer views and buffers from EXT_structural_metadata
+// property tables.
 static void copyMetadataTables(const Model& parentModel, Model& result) {
-  ExtensionModelExtFeatureMetadata* pMetadata =
-      result.getExtension<ExtensionModelExtFeatureMetadata>();
+  ExtensionModelExtStructuralMetadata* pMetadata =
+      result.getExtension<ExtensionModelExtStructuralMetadata>();
   if (pMetadata) {
-    for (auto& featureTablePair : pMetadata->featureTables) {
-      for (auto& propertyPair : featureTablePair.second.properties) {
-        FeatureTableProperty& property = propertyPair.second;
-
-        property.bufferView =
-            copyBufferView(parentModel, property.bufferView, result);
-        property.arrayOffsetBufferView =
-            copyBufferView(parentModel, property.arrayOffsetBufferView, result);
-        property.stringOffsetBufferView = copyBufferView(
-            parentModel,
-            property.stringOffsetBufferView,
-            result);
+    for (auto& propertyTable : pMetadata->propertyTables) {
+      for (auto& propertyPair : propertyTable.properties) {
+        PropertyTableProperty& property = propertyPair.second;
+        property.values = copyBufferView(parentModel, property.values, result);
+        property.arrayOffsets =
+            copyBufferView(parentModel, property.arrayOffsets, result);
+        property.stringOffsets =
+            copyBufferView(parentModel, property.stringOffsets, result);
       }
     }
   }

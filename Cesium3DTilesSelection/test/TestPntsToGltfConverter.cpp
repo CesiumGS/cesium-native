@@ -678,8 +678,7 @@ TEST_CASE("Converts point cloud with batch IDs to glTF with "
   auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIds.size() == 1);
-  ExtensionExtMeshFeaturesFeatureId& featureId =
-      primitiveExtension->featureIds[0];
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
 
@@ -757,8 +756,7 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIds.size() == 1);
-  ExtensionExtMeshFeaturesFeatureId& featureId =
-      primitiveExtension->featureIds[0];
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   // Check for implicit feature IDs
   CHECK(featureId.featureCount == pointsLength);
   CHECK(!featureId.attribute);
@@ -816,8 +814,7 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
   auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIds.size() == 1);
-  ExtensionExtMeshFeaturesFeatureId& featureId =
-      primitiveExtension->featureIds[0];
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   // Check for implicit feature IDs
   CHECK(featureId.featureCount == pointsLength);
   CHECK(!featureId.attribute);
@@ -960,8 +957,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIds.size() == 1);
-  ExtensionExtMeshFeaturesFeatureId& featureId =
-      primitiveExtension->featureIds[0];
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   // Check for implicit feature IDs
   CHECK(featureId.featureCount == pointsLength);
   CHECK(!featureId.attribute);
@@ -1099,8 +1095,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
   REQUIRE(primitiveExtension->featureIds.size() == 1);
-  ExtensionExtMeshFeaturesFeatureId& featureId =
-      primitiveExtension->featureIds[0];
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
 

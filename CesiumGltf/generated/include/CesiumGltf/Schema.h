@@ -20,7 +20,13 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Schema";
 
   /**
-   * @brief The name of the schema.
+   * @brief Unique identifier for the schema. Schema IDs must be alphanumeric
+   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+   */
+  std::string id;
+
+  /**
+   * @brief The name of the schema, e.g. for display purposes.
    */
   std::optional<std::string> name;
 
@@ -36,13 +42,15 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
 
   /**
    * @brief A dictionary, where each key is a class ID and each value is an
-   * object defining the class.
+   * object defining the class. Class IDs must be alphanumeric identifiers
+   * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, CesiumGltf::Class> classes;
 
   /**
    * @brief A dictionary, where each key is an enum ID and each value is an
-   * object defining the values for the enum.
+   * object defining the values for the enum. Enum IDs must be alphanumeric
+   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, CesiumGltf::Enum> enums;
 };

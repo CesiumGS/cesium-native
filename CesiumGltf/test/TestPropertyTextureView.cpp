@@ -16,11 +16,11 @@ TEST_CASE("Test PropertyTextureView on model without EXT_structural_metadata "
   Model model;
 
   // Create an erroneously isolated property texture.
-  ExtensionExtStructuralMetadataPropertyTexture propertyTexture;
+  PropertyTexture propertyTexture;
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -31,7 +31,7 @@ TEST_CASE("Test PropertyTextureView on model without EXT_structural_metadata "
       PropertyTextureViewStatus::ErrorMissingMetadataExtension);
   REQUIRE(view.getProperties().empty());
 
-  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+  const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(!classProperty);
 }
@@ -42,12 +42,11 @@ TEST_CASE("Test PropertyTextureView on model without metadata schema") {
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataPropertyTexture& propertyTexture =
-      metadata.propertyTextures.emplace_back();
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -56,7 +55,7 @@ TEST_CASE("Test PropertyTextureView on model without metadata schema") {
   REQUIRE(view.status() == PropertyTextureViewStatus::ErrorMissingSchema);
   REQUIRE(view.getProperties().empty());
 
-  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+  const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(!classProperty);
 }
@@ -67,21 +66,17 @@ TEST_CASE("Test property texture with nonexistent class") {
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
-  ExtensionExtStructuralMetadataPropertyTexture& propertyTexture =
-      metadata.propertyTextures.emplace_back();
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
   propertyTexture.classProperty = "I Don't Exist";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -90,7 +85,7 @@ TEST_CASE("Test property texture with nonexistent class") {
   REQUIRE(view.status() == PropertyTextureViewStatus::ErrorClassNotFound);
   REQUIRE(view.getProperties().empty());
 
-  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+  const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(!classProperty);
 }
@@ -101,21 +96,17 @@ TEST_CASE("Test property texture with nonexistent class property") {
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
-  ExtensionExtStructuralMetadataPropertyTexture& propertyTexture =
-      metadata.propertyTextures.emplace_back();
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["I Don't Exist"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["I Don't Exist"];
   propertyTextureProperty.index = 0;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
@@ -125,7 +116,7 @@ TEST_CASE("Test property texture with nonexistent class property") {
       view.status() == PropertyTextureViewStatus::ErrorClassPropertyNotFound);
   REQUIRE(view.getProperties().empty());
 
-  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+  const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(!classProperty);
 }
@@ -136,21 +127,17 @@ TEST_CASE("Test property texture with invalid property is still valid") {
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
-  ExtensionExtStructuralMetadataSchema& schema = metadata.schema.emplace();
-  ExtensionExtStructuralMetadataClass& testClass = schema.classes["TestClass"];
-  ExtensionExtStructuralMetadataClassProperty& testClassProperty =
-      testClass.properties["TestClassProperty"];
-  testClassProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
-  testClassProperty.componentType =
-      ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8;
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
 
-  ExtensionExtStructuralMetadataPropertyTexture& propertyTexture =
-      metadata.propertyTextures.emplace_back();
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
   propertyTexture.classProperty = "TestClass";
 
-  ExtensionExtStructuralMetadataPropertyTextureProperty&
-      propertyTextureProperty = propertyTexture.properties["TestClassProperty"];
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
   propertyTextureProperty.index = -1;
 
   PropertyTextureView view(model, propertyTexture);
@@ -162,7 +149,7 @@ TEST_CASE("Test property texture with invalid property is still valid") {
   PropertyTexturePropertyView& propertyView = properties["TestClassProperty"];
   REQUIRE(propertyView.status() != PropertyTexturePropertyViewStatus::Valid);
 
-  const ExtensionExtStructuralMetadataClassProperty* classProperty =
+  const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty == &testClassProperty);
 }

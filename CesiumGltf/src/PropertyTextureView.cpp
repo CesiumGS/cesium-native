@@ -10,8 +10,7 @@ PropertyTextureView::PropertyTextureView() noexcept
 
 PropertyTextureView::PropertyTextureView(
     const Model& model,
-    const ExtensionExtStructuralMetadataPropertyTexture&
-        propertyTexture) noexcept
+    const PropertyTexture& propertyTexture) noexcept
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),
@@ -58,7 +57,7 @@ PropertyTextureView::PropertyTextureView(
   this->_status = PropertyTextureViewStatus::Valid;
 }
 
-const ExtensionExtStructuralMetadataClassProperty*
+const ClassProperty*
 PropertyTextureView::getClassProperty(const std::string& propertyName) const {
   if (_status != PropertyTextureViewStatus::Valid) {
     return nullptr;

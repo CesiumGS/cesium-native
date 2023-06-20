@@ -12,8 +12,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief A view on an array element of a
- * {@link ExtensionExtStructuralMetadataPropertyTableProperty}.
+ * @brief A view on an array element of a {@link PropertyTableProperty}.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.

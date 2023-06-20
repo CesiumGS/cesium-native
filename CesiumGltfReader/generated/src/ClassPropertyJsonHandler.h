@@ -36,14 +36,18 @@ private:
   CesiumJsonReader::StringJsonHandler _name;
   CesiumJsonReader::StringJsonHandler _description;
   CesiumJsonReader::StringJsonHandler _type;
-  CesiumJsonReader::StringJsonHandler _enumType;
   CesiumJsonReader::StringJsonHandler _componentType;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _componentCount;
+  CesiumJsonReader::StringJsonHandler _enumType;
+  CesiumJsonReader::BoolJsonHandler _array;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
   CesiumJsonReader::BoolJsonHandler _normalized;
+  CesiumJsonReader::JsonObjectJsonHandler _offset;
+  CesiumJsonReader::JsonObjectJsonHandler _scale;
   CesiumJsonReader::JsonObjectJsonHandler _max;
   CesiumJsonReader::JsonObjectJsonHandler _min;
+  CesiumJsonReader::BoolJsonHandler _required;
+  CesiumJsonReader::JsonObjectJsonHandler _noData;
   CesiumJsonReader::JsonObjectJsonHandler _defaultProperty;
-  CesiumJsonReader::BoolJsonHandler _optional;
   CesiumJsonReader::StringJsonHandler _semantic;
 };
 } // namespace CesiumGltfReader

@@ -9,7 +9,7 @@ FeatureIdTextureView::FeatureIdTextureView() noexcept
 
 FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
-    const ExtensionExtMeshFeaturesFeatureIdTexture& featureIdTexture) noexcept
+    const FeatureIdTexture& featureIdTexture) noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
       _texCoordSetIndex(featureIdTexture.texCoord),
       _channels(),

@@ -241,22 +241,10 @@ struct GltfPropertyTableType {
 };
 
 const std::map<std::string, GltfPropertyTableType> batchTableTypeToGltfType = {
-    {"SCALAR",
-     GltfPropertyTableType{
-         ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-         1}},
-    {"VEC2",
-     GltfPropertyTableType{
-         ExtensionExtStructuralMetadataClassProperty::Type::VEC2,
-         2}},
-    {"VEC3",
-     GltfPropertyTableType{
-         ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
-         3}},
-    {"VEC4",
-     GltfPropertyTableType{
-         ExtensionExtStructuralMetadataClassProperty::Type::VEC4,
-         4}},
+    {"SCALAR", GltfPropertyTableType{ClassProperty::Type::SCALAR, 1}},
+    {"VEC2", GltfPropertyTableType{ClassProperty::Type::VEC2, 2}},
+    {"VEC3", GltfPropertyTableType{ClassProperty::Type::VEC3, 3}},
+    {"VEC4", GltfPropertyTableType{ClassProperty::Type::VEC4, 4}},
 };
 
 struct GltfPropertyTableComponentType {
@@ -268,37 +256,35 @@ const std::map<std::string, GltfPropertyTableComponentType>
     batchTableComponentTypeToGltfComponentType = {
         {"BYTE",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8,
+             ClassProperty::ComponentType::INT8,
              sizeof(int8_t)}},
         {"UNSIGNED_BYTE",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8,
+             ClassProperty::ComponentType::UINT8,
              sizeof(uint8_t)}},
         {"SHORT",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16,
+             ClassProperty::ComponentType::INT16,
              sizeof(int16_t)}},
         {"UNSIGNED_SHORT",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16,
+             ClassProperty::ComponentType::UINT16,
              sizeof(uint16_t)}},
         {"INT",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32,
+             ClassProperty::ComponentType::INT32,
              sizeof(int32_t)}},
         {"UNSIGNED_INT",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32,
+             ClassProperty::ComponentType::UINT32,
              sizeof(uint32_t)}},
         {"FLOAT",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::
-                 FLOAT32,
+             ClassProperty::ComponentType::FLOAT32,
              sizeof(float)}},
         {"DOUBLE",
          GltfPropertyTableComponentType{
-             ExtensionExtStructuralMetadataClassProperty::ComponentType::
-                 FLOAT64,
+             ClassProperty::ComponentType::FLOAT64,
              sizeof(double)}},
 };
 
@@ -466,9 +452,9 @@ int32_t addBufferToGltf(Model& gltf, std::vector<std::byte>&& buffer) {
 template <typename TValueGetter>
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    ClassProperty& classProperty,
+    const PropertyTable& propertyTable,
+    PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
 
   rapidjson::StringBuffer rapidjsonStrBuffer;
@@ -511,8 +497,7 @@ void updateExtensionWithJsonStringProperty(
         buffer,
         offsetBuffer);
     propertyTableProperty.stringOffsetType =
-        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
-            UINT8;
+        PropertyTableProperty::StringOffsetType::UINT8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalSize)) {
     copyStringBuffer<uint16_t>(
         rapidjsonStrBuffer,
@@ -520,8 +505,7 @@ void updateExtensionWithJsonStringProperty(
         buffer,
         offsetBuffer);
     propertyTableProperty.stringOffsetType =
-        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
-            UINT16;
+        PropertyTableProperty::StringOffsetType::UINT16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalSize)) {
     copyStringBuffer<uint32_t>(
         rapidjsonStrBuffer,
@@ -529,8 +513,7 @@ void updateExtensionWithJsonStringProperty(
         buffer,
         offsetBuffer);
     propertyTableProperty.stringOffsetType =
-        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
-            UINT32;
+        PropertyTableProperty::StringOffsetType::UINT32;
   } else {
     copyStringBuffer<uint64_t>(
         rapidjsonStrBuffer,
@@ -538,12 +521,10 @@ void updateExtensionWithJsonStringProperty(
         buffer,
         offsetBuffer);
     propertyTableProperty.stringOffsetType =
-        ExtensionExtStructuralMetadataPropertyTableProperty::StringOffsetType::
-            UINT64;
+        PropertyTableProperty::StringOffsetType::UINT64;
   }
 
-  classProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::STRING;
+  classProperty.type = ClassProperty::Type::STRING;
 
   propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
   propertyTableProperty.stringOffsets =
@@ -553,15 +534,14 @@ void updateExtensionWithJsonStringProperty(
 template <typename T, typename TRapidJson = T, typename TValueGetter>
 void updateExtensionWithJsonScalarProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    ClassProperty& classProperty,
+    const PropertyTable& propertyTable,
+    PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue,
     const std::string& componentTypeName) {
   assert(propertyValue.size() >= propertyTable.count);
 
-  classProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+  classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = componentTypeName;
 
   // Create a new buffer for this property.
@@ -581,9 +561,9 @@ void updateExtensionWithJsonScalarProperty(
 template <typename TValueGetter>
 void updateExtensionWithJsonBooleanProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    ClassProperty& classProperty,
+    const PropertyTable& propertyTable,
+    PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
   assert(propertyValue.size() >= propertyTable.count);
 
@@ -601,8 +581,7 @@ void updateExtensionWithJsonBooleanProperty(
     ++it;
   }
 
-  classProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN;
+  classProperty.type = ClassProperty::Type::BOOLEAN;
   propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
 }
 
@@ -615,7 +594,7 @@ void copyVariableLengthScalarArraysToBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const PropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
   offsetBuffer.resize(
@@ -645,15 +624,14 @@ void copyVariableLengthScalarArraysToBuffers(
 template <typename TRapidjson, typename ValueType, typename TValueGetter>
 void updateScalarArrayProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ClassProperty& classProperty,
+    PropertyTableProperty& propertyTableProperty,
+    const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
   assert(propertyValue.size() >= propertyTable.count);
 
-  classProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR;
+  classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType =
       convertPropertyComponentTypeToString(static_cast<PropertyComponentType>(
           TypeToPropertyType<ValueType>::component));
@@ -744,7 +722,7 @@ void copyStringsToBuffers(
     std::vector<std::byte>& offsetBuffer,
     size_t totalByteLength,
     size_t numOfString,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const PropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize((numOfString + 1) * sizeof(OffsetType));
@@ -776,7 +754,7 @@ void copyStringsToBuffers(
 template <typename OffsetType, typename TValueGetter>
 void copyArrayOffsetsForStringArraysToBuffer(
     std::vector<std::byte>& offsetBuffer,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const PropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   OffsetType prevOffset = 0;
   offsetBuffer.resize(
@@ -798,9 +776,9 @@ void copyArrayOffsetsForStringArraysToBuffer(
 template <typename TValueGetter>
 void updateStringArrayProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ClassProperty& classProperty,
+    PropertyTableProperty& propertyTableProperty,
+    const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
   assert(propertyValue.size() >= propertyTable.count);
@@ -860,8 +838,7 @@ void updateStringArrayProperty(
     stringOffsetType = PropertyComponentType::Uint64;
   }
 
-  classProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::STRING;
+  classProperty.type = ClassProperty::Type::STRING;
   classProperty.array = true;
   propertyTableProperty.stringOffsetType =
       convertPropertyComponentTypeToString(stringOffsetType);
@@ -918,7 +895,7 @@ void copyVariableLengthBooleanArraysToBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    const PropertyTable& propertyTable,
     const TValueGetter& propertyValue) {
   size_t currentIndex = 0;
   const size_t totalByteLength =
@@ -953,15 +930,14 @@ void copyVariableLengthBooleanArraysToBuffers(
 template <typename TValueGetter>
 void updateBooleanArrayProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ClassProperty& classProperty,
+    PropertyTableProperty& propertyTableProperty,
+    const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
   assert(propertyValue.size() >= propertyTable.count);
 
-  classProperty.type =
-      ExtensionExtStructuralMetadataClassProperty::Type::BOOLEAN;
+  classProperty.type = ClassProperty::Type::BOOLEAN;
   classProperty.array = true;
 
   // Fixed-length array of booleans
@@ -1050,9 +1026,9 @@ void updateBooleanArrayProperty(
 template <typename TValueGetter>
 void updateExtensionWithArrayProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    ClassProperty& classProperty,
+    const PropertyTable& propertyTable,
+    PropertyTableProperty& propertyTableProperty,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
   assert(propertyValue.size() >= propertyTable.count);
@@ -1162,9 +1138,9 @@ void updateExtensionWithArrayProperty(
 template <typename TValueGetter>
 void updateExtensionWithJsonProperty(
     Model& gltf,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
+    ClassProperty& classProperty,
+    const PropertyTable& propertyTable,
+    PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
 
   if (propertyValue.size() == 0 || propertyValue.size() < propertyTable.count) {
@@ -1208,7 +1184,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT8);
+        ClassProperty::ComponentType::INT8);
   } else if (type.isUint8) {
     updateExtensionWithJsonScalarProperty<uint8_t, uint32_t>(
         gltf,
@@ -1216,7 +1192,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT8);
+        ClassProperty::ComponentType::UINT8);
   } else if (type.isInt16) {
     updateExtensionWithJsonScalarProperty<int16_t, int32_t>(
         gltf,
@@ -1224,7 +1200,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT16);
+        ClassProperty::ComponentType::INT16);
   } else if (type.isUint16) {
     updateExtensionWithJsonScalarProperty<uint16_t, uint32_t>(
         gltf,
@@ -1232,7 +1208,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT16);
+        ClassProperty::ComponentType::UINT16);
   } else if (type.isInt32) {
     updateExtensionWithJsonScalarProperty<int32_t>(
         gltf,
@@ -1240,7 +1216,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT32);
+        ClassProperty::ComponentType::INT32);
   } else if (type.isUint32) {
     updateExtensionWithJsonScalarProperty<uint32_t>(
         gltf,
@@ -1248,7 +1224,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT32);
+        ClassProperty::ComponentType::UINT32);
   } else if (type.isInt64) {
     updateExtensionWithJsonScalarProperty<int64_t>(
         gltf,
@@ -1256,7 +1232,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::INT64);
+        ClassProperty::ComponentType::INT64);
   } else if (type.isUint64) {
     updateExtensionWithJsonScalarProperty<uint64_t>(
         gltf,
@@ -1264,7 +1240,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::UINT64);
+        ClassProperty::ComponentType::UINT64);
   } else if (type.isFloat32) {
     updateExtensionWithJsonScalarProperty<float>(
         gltf,
@@ -1272,7 +1248,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT32);
+        ClassProperty::ComponentType::FLOAT32);
   } else if (type.isFloat64) {
     updateExtensionWithJsonScalarProperty<double>(
         gltf,
@@ -1280,7 +1256,7 @@ void updateExtensionWithJsonProperty(
         propertyTable,
         propertyTableProperty,
         propertyValue,
-        ExtensionExtStructuralMetadataClassProperty::ComponentType::FLOAT64);
+        ClassProperty::ComponentType::FLOAT64);
   } else {
     updateExtensionWithJsonStringProperty(
         gltf,
@@ -1296,9 +1272,9 @@ void updateExtensionWithBinaryProperty(
     int32_t gltfBufferIndex,
     int64_t gltfBufferOffset,
     BinaryProperty& binaryProperty,
-    ExtensionExtStructuralMetadataClassProperty& classProperty,
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty,
-    const ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    ClassProperty& classProperty,
+    PropertyTableProperty& propertyTableProperty,
+    const PropertyTable& propertyTable,
     const std::string& propertyName,
     const rapidjson::Value& propertyValue,
     ErrorList& result) {
@@ -1385,8 +1361,8 @@ void updateExtensionWithBinaryProperty(
 
 void updateExtensionWithBatchTableHierarchy(
     Model& gltf,
-    ExtensionExtStructuralMetadataClass& classDefinition,
-    ExtensionExtStructuralMetadataPropertyTable& propertyTable,
+    Class& classDefinition,
+    PropertyTable& propertyTable,
     ErrorList& result,
     const rapidjson::Value& batchTableHierarchy) {
   // EXT_structural_metadata can't support hierarchy, so we need to flatten it.
@@ -1442,17 +1418,12 @@ void updateExtensionWithBatchTableHierarchy(
       propertyTable.count);
 
   for (const std::string& name : properties) {
-    ExtensionExtStructuralMetadataClassProperty& classProperty =
-        classDefinition.properties
-            .emplace(name, ExtensionExtStructuralMetadataClassProperty())
-            .first->second;
+    ClassProperty& classProperty =
+        classDefinition.properties.emplace(name, ClassProperty()).first->second;
     classProperty.name = name;
 
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
-        propertyTable.properties
-            .emplace(
-                name,
-                ExtensionExtStructuralMetadataPropertyTableProperty())
+    PropertyTableProperty& propertyTableProperty =
+        propertyTable.properties.emplace(name, PropertyTableProperty())
             .first->second;
 
     batchTableHierarchyValues.setProperty(name);
@@ -1485,16 +1456,13 @@ void convertBatchTableToGltfStructuralMetadataExtension(
 
   ExtensionModelExtStructuralMetadata& modelExtension =
       gltf.addExtension<ExtensionModelExtStructuralMetadata>();
-  ExtensionExtStructuralMetadataSchema& schema =
-      modelExtension.schema.emplace();
+  Schema& schema = modelExtension.schema.emplace();
   schema.id = "default"; // Required by the spec.
 
-  ExtensionExtStructuralMetadataClass& classDefinition =
-      schema.classes.emplace("default", ExtensionExtStructuralMetadataClass())
-          .first->second;
+  Class& classDefinition =
+      schema.classes.emplace("default", Class()).first->second;
 
-  ExtensionExtStructuralMetadataPropertyTable& propertyTable =
-      modelExtension.propertyTables.emplace_back();
+  PropertyTable& propertyTable = modelExtension.propertyTables.emplace_back();
   propertyTable.name = "default";
   propertyTable.count = featureCount;
   propertyTable.classProperty = "default";
@@ -1510,17 +1478,12 @@ void convertBatchTableToGltfStructuralMetadataExtension(
       continue;
     }
 
-    ExtensionExtStructuralMetadataClassProperty& classProperty =
-        classDefinition.properties
-            .emplace(name, ExtensionExtStructuralMetadataClassProperty())
-            .first->second;
+    ClassProperty& classProperty =
+        classDefinition.properties.emplace(name, ClassProperty()).first->second;
     classProperty.name = name;
 
-    ExtensionExtStructuralMetadataPropertyTableProperty& propertyTableProperty =
-        propertyTable.properties
-            .emplace(
-                name,
-                ExtensionExtStructuralMetadataPropertyTableProperty())
+    PropertyTableProperty& propertyTableProperty =
+        propertyTable.properties.emplace(name, PropertyTableProperty())
             .first->second;
     const rapidjson::Value& propertyValue = propertyIt->value;
     if (propertyValue.IsArray()) {
@@ -1630,9 +1593,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
 
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
+      FeatureId& featureID = extension.featureIds.emplace_back();
 
-      ExtensionExtMeshFeaturesFeatureId& featureID =
-          extension.featureIds.emplace_back();
       // No fast way to count the unique feature IDs in this primitive, so
       // subtitute the batch table length.
       featureID.featureCount = batchLength;
@@ -1705,8 +1667,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
-  ExtensionExtMeshFeaturesFeatureId& featureID =
-      extension.featureIds.emplace_back();
+  FeatureId& featureID = extension.featureIds.emplace_back();
 
   // Setting the feature count is sufficient for implicit feature IDs.
   featureID.featureCount = featureCount;

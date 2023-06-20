@@ -6,13 +6,12 @@
 namespace CesiumGltf {
 namespace {
 static std::unordered_set<std::string> supportedTypes{
-    ExtensionExtStructuralMetadataClassProperty::Type::SCALAR,
-    ExtensionExtStructuralMetadataClassProperty::Type::VEC2,
-    ExtensionExtStructuralMetadataClassProperty::Type::VEC3,
-    ExtensionExtStructuralMetadataClassProperty::Type::VEC4};
+    ClassProperty::Type::SCALAR,
+    ClassProperty::Type::VEC2,
+    ClassProperty::Type::VEC3,
+    ClassProperty::Type::VEC4};
 
-bool isValidClassProperty(
-    const ExtensionExtStructuralMetadataClassProperty& classProperty) {
+bool isValidClassProperty(const ClassProperty& classProperty) {
   if (supportedTypes.find(classProperty.type) == supportedTypes.end()) {
     return false;
   }
@@ -22,8 +21,7 @@ bool isValidClassProperty(
     return true;
   }
 
-  if (classProperty.type !=
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR) {
+  if (classProperty.type != ClassProperty::Type::SCALAR) {
     return false;
   }
 
@@ -46,9 +44,8 @@ PropertyTexturePropertyView::PropertyTexturePropertyView() noexcept
 
 PropertyTexturePropertyView::PropertyTexturePropertyView(
     const Model& model,
-    const ExtensionExtStructuralMetadataClassProperty& classProperty,
-    const ExtensionExtStructuralMetadataPropertyTextureProperty&
-        propertyTextureProperty) noexcept
+    const ClassProperty& classProperty,
+    const PropertyTextureProperty& propertyTextureProperty) noexcept
     : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
       _pClassProperty(&classProperty),
       _pSampler(nullptr),
@@ -68,21 +65,13 @@ PropertyTexturePropertyView::PropertyTexturePropertyView(
 
   if (classProperty.array) {
     this->_componentCount = *classProperty.count;
-  } else if (
-      classProperty.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::SCALAR) {
+  } else if (classProperty.type == ClassProperty::Type::SCALAR) {
     this->_componentCount = 1;
-  } else if (
-      classProperty.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::VEC2) {
+  } else if (classProperty.type == ClassProperty::Type::VEC2) {
     this->_componentCount = 2;
-  } else if (
-      classProperty.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::VEC3) {
+  } else if (classProperty.type == ClassProperty::Type::VEC3) {
     this->_componentCount = 3;
-  } else if (
-      classProperty.type ==
-      ExtensionExtStructuralMetadataClassProperty::Type::VEC4) {
+  } else if (classProperty.type == ClassProperty::Type::VEC4) {
     this->_componentCount = 4;
   }
 
