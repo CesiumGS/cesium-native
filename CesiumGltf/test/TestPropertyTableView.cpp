@@ -7,7 +7,7 @@
 using namespace CesiumGltf;
 
 template <typename T>
-void addBufferToModel(Model& model, std::vector<T>& values) {
+void addBufferToModel(Model& model, const std::vector<T>& values) {
   Buffer& valueBuffer = model.buffers.emplace_back();
   valueBuffer.cesium.data.resize(values.size() * sizeof(T));
   valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());

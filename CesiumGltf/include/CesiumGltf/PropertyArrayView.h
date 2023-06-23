@@ -9,35 +9,76 @@
 
 #include <cassert>
 #include <cstddef>
+#include <variant>
+#include <vector>
 
 namespace CesiumGltf {
 /**
- * @brief A view on an array element of a {@link PropertyTableProperty}.
+ * @brief A view on an array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
  */
 template <typename ElementType> class PropertyArrayView {
 public:
+  /**
+   * @brief Constructs an empty array view.
+   */
   PropertyArrayView() : _values{} {}
 
+  /**
+   * @brief Constructs an array view from a buffer.
+   *
+   * @param buffer The buffer containing the values.
+   */
   PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
       : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
+  /**
+   * @brief Constructs an array view from a vector of values. This is mainly
+   * used by PropertyTextureProperty -- since the values are swizzled from the
+   * texture, the values cannot be viewed in place, and must passed in through a
+   * correctly ordered vector.
+   *
+   * @param values The vector containing the values.
+   */
+  PropertyArrayView(const std::vector<ElementType>&& values)
+      : _values{std::move(values)} {}
+
   const ElementType& operator[](int64_t index) const noexcept {
-    return _values[index];
+    return std::visit(
+        [index](auto const& values) -> auto const& { return values[index]; },
+        _values);
   }
 
-  int64_t size() const noexcept { return static_cast<int64_t>(_values.size()); }
+  int64_t size() const noexcept {
+    return std::visit(
+        [](auto const& values) { return static_cast<int64_t>(values.size()); },
+        _values);
+  }
 
 private:
-  gsl::span<const ElementType> _values;
+  using ArrayType =
+      std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
+  ArrayType _values;
 };
 
 template <> class PropertyArrayView<bool> {
 public:
+  /**
+   * @brief Constructs an empty array view.
+   */
   PropertyArrayView() : _values{}, _bitOffset{0}, _size{0} {}
 
+  /**
+   * @brief Constructs an array view from a buffer.
+   *
+   * @param buffer The buffer containing the values.
+   * @param bitOffset The offset into the buffer where the values actually
+   * begin.
+   * @param size The number of values in the array.
+   */
   PropertyArrayView(
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
@@ -62,9 +103,20 @@ private:
 
 template <> class PropertyArrayView<std::string_view> {
 public:
+  /**
+   * @brief Constructs an empty array view.
+   */
   PropertyArrayView()
       : _values{}, _stringOffsets{}, _stringOffsetType{}, _size{0} {}
 
+  /**
+   * @brief Constructs an array view from buffers and their information.
+   *
+   * @param values The buffer containing the values.
+   * @param stringOffsets The buffer containing the string offsets.
+   * @param stringOffsetType The component type of the string offsets.
+   * @param size The number of values in the array.
+   */
   PropertyArrayView(
       const gsl::span<const std::byte>& values,
       const gsl::span<const std::byte>& stringOffsets,

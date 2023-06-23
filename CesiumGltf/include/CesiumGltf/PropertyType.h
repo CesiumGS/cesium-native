@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 
+#include <glm/common.hpp>
+
 namespace CesiumGltf {
 enum class PropertyType {
   Invalid,
@@ -52,4 +54,9 @@ convertStringOffsetTypeStringToPropertyComponentType(const std::string& str);
 bool isPropertyTypeVecN(PropertyType type);
 
 bool isPropertyTypeMatN(PropertyType type);
+
+glm::length_t getDimensionsFromPropertyType(PropertyType type);
+
+size_t getSizeOfComponentType(PropertyComponentType componentType);
+
 } // namespace CesiumGltf

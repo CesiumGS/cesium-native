@@ -1,22 +1,13 @@
 #include "CesiumGltf/PropertyTextureView.h"
 
 namespace CesiumGltf {
-PropertyTextureView::PropertyTextureView() noexcept
-    : _pModel(nullptr),
-      _pPropertyTexture(nullptr),
-      _pClass(nullptr),
-      _propertyViews(),
-      _status(PropertyTextureViewStatus::ErrorUninitialized) {}
-
 PropertyTextureView::PropertyTextureView(
     const Model& model,
     const PropertyTexture& propertyTexture) noexcept
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),
-      _propertyViews(),
-      _status(PropertyTextureViewStatus::ErrorUninitialized) {
-
+      _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
 
@@ -38,23 +29,6 @@ PropertyTextureView::PropertyTextureView(
   }
 
   this->_pClass = &classIt->second;
-
-  this->_propertyViews.reserve(propertyTexture.properties.size());
-  for (const auto& property : propertyTexture.properties) {
-    auto classPropertyIt = this->_pClass->properties.find(property.first);
-
-    if (classPropertyIt == this->_pClass->properties.end()) {
-      this->_status = PropertyTextureViewStatus::ErrorClassPropertyNotFound;
-      return;
-    }
-
-    this->_propertyViews[property.first] = PropertyTexturePropertyView(
-        model,
-        classPropertyIt->second,
-        property.second);
-  }
-
-  this->_status = PropertyTextureViewStatus::Valid;
 }
 
 const ClassProperty*
@@ -70,4 +44,71 @@ PropertyTextureView::getClassProperty(const std::string& propertyName) const {
 
   return &propertyIter->second;
 }
+
+PropertyTexturePropertyViewStatus PropertyTextureView::getTextureSafe(
+    const int32_t textureIndex,
+    int32_t& samplerIndex,
+    int32_t& imageIndex) const noexcept {
+  if (textureIndex < 0 ||
+      static_cast<size_t>(textureIndex) >= _pModel->textures.size()) {
+    return PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
+  }
+
+  const Texture& texture = _pModel->textures[static_cast<size_t>(textureIndex)];
+  samplerIndex = texture.sampler;
+  imageIndex = texture.source;
+
+  return PropertyTexturePropertyViewStatus::Valid;
+}
+
+PropertyTexturePropertyViewStatus
+PropertyTextureView::checkSampler(const int32_t samplerIndex) const noexcept {
+  if (samplerIndex < 0 ||
+      static_cast<size_t>(samplerIndex) >= _pModel->samplers.size()) {
+    return PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
+  }
+
+  // TODO: check if sampler filter values are supported
+
+  return PropertyTexturePropertyViewStatus::Valid;
+}
+
+PropertyTexturePropertyViewStatus
+PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
+  if (imageIndex < 0 ||
+      static_cast<size_t>(imageIndex) >= _pModel->images.size()) {
+    return PropertyTexturePropertyViewStatus::ErrorInvalidImage;
+  }
+
+  const ImageCesium& image =
+      _pModel->images[static_cast<size_t>(imageIndex)].cesium;
+
+  if (image.width < 1 || image.height < 1) {
+    return PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+  }
+
+  if (image.bytesPerChannel > 1) {
+    return PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
+  }
+
+  return PropertyTexturePropertyViewStatus::Valid;
+}
+
+PropertyTexturePropertyViewStatus PropertyTextureView::checkChannels(
+    const std::vector<int64_t>& channels,
+    const ImageCesium& image) const noexcept {
+  int64_t imageChannelCount = static_cast<int64_t>(image.channels);
+  for (size_t i = 0; i < channels.size(); i++) {
+    if (channels[i] < 0 || channels[i] >= imageChannelCount) {
+      return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
+    }
+  }
+
+  if (static_cast<size_t>(imageChannelCount) < channels.size()) {
+    return PropertyTexturePropertyViewStatus::ErrorTooManyChannels;
+  }
+
+  return PropertyTexturePropertyViewStatus::Valid;
+}
+
 } // namespace CesiumGltf

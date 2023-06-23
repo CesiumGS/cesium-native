@@ -1,17 +1,12 @@
 #pragma once
 
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/Image.h"
 #include "CesiumGltf/ImageCesium.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/PropertyTexture.h"
+#include "CesiumGltf/PropertyTextureProperty.h"
+#include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/Texture.h"
 
 #include <cassert>
 #include <cstdint>
-#include <variant>
 
 namespace CesiumGltf {
 /**
@@ -24,43 +19,71 @@ namespace CesiumGltf {
  */
 enum class PropertyTexturePropertyViewStatus {
   /**
-   * @brief This view is valid and ready to use.
+   * @brief This property view is valid and ready to use.
    */
   Valid,
 
   /**
-   * @brief This view has not been initialized.
+   * @brief This property view was initialized from an invalid
+   * {@link PropertyTexture}.
    */
-  ErrorUninitialized,
+  ErrorInvalidPropertyTexture,
 
   /**
-   * @brief This property texture property is associated with a class property
-   * with an invalid or unsupported type.
+   * @brief This property view is trying to view a property that does not exist
+   * in the {@link PropertyTexture}.
    */
-  ErrorInvalidClassProperty,
+  ErrorNonexistentProperty,
 
   /**
-   * @brief This property texture property has a texture index that does not
-   * exist in the glTF.
+   * @brief This property view is associated with a {@link ClassProperty} of an
+   * unsupported type.
+   */
+  ErrorUnsupportedProperty,
+
+  /**
+   * @brief This property view's type does not match what is
+   * specified in {@link ClassProperty::type}.
+   */
+  ErrorTypeMismatch,
+
+  /**
+   * @brief This property view's component type does not match what
+   * is specified in {@link ClassProperty::componentType}.
+   */
+  ErrorComponentTypeMismatch,
+
+  /**
+   * @brief This property view differs from what is specified in
+   * {@link ClassProperty::array}.
+   */
+  ErrorArrayTypeMismatch,
+
+  /**
+   * @brief This property view does not have a valid texture index.
    */
   ErrorInvalidTexture,
 
   /**
-   * @brief This property texture property has a texture sampler index that does
-   * not exist in the glTF.
+   * @brief This property view does not have a valid sampler index.
    */
-  ErrorInvalidTextureSampler,
+  ErrorInvalidSampler,
 
   /**
-   * @brief This property texture property has an image index that does not
-   * exist in the glTF.
+   * @brief This property view does not have a valid image index.
    */
   ErrorInvalidImage,
 
   /**
-   * @brief This property texture property points to an empty image.
+   * @brief This property is viewing an empty image.
    */
   ErrorEmptyImage,
+
+  /**
+   * @brief This property uses an image with multi-byte channels. Only
+   * single-byte channels are supported.
+   */
+  ErrorInvalidBytesPerChannel,
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -68,30 +91,21 @@ enum class PropertyTexturePropertyViewStatus {
    * more than four channels can be defined for specialized texture
    * formats, this view only supports a maximum of four channels.
    */
-  ErrorInvalidChannels
-};
+  ErrorInvalidChannels,
 
-/**
- * @brief The supported component types that can exist in property id textures.
- */
-enum class PropertyTexturePropertyComponentType {
-  Uint8
-  // TODO: add more types. Currently this is the only one outputted by stb,
-  // so change stb call to output more of the original types.
-};
+  /**
+   * @brief This property texture property is trying to sample channels that
+   * don't exist in the image.
+   */
+  ErrorTooManyChannels,
 
-/**
- * @brief The property texture property value for a pixel. This will contain
- * four channels of the specified type.
- *
- * Only the first n components will be valid, where n is the number of channels
- * in this property texture property.
- *
- * @tparam T The component type, must correspond to a valid
- * {@link PropertyTexturePropertyComponentType}.
- */
-template <typename T> struct PropertyTexturePropertyValue {
-  T components[4];
+  /**
+   * @brief The channels of this property texture property do not provide the
+   * exact number of bytes required by the property type. This may be because
+   * an incorrect number of channels was provided, or because the image itself
+   * has a different channel count / byte size than expected.
+   */
+  ErrorChannelsAndTypeMismatch,
 };
 
 /**
@@ -100,143 +114,141 @@ template <typename T> struct PropertyTexturePropertyValue {
  * Provides utilities to sample the property texture property using texture
  * coordinates.
  */
-class PropertyTexturePropertyView {
+template <typename ElementType> class PropertyTexturePropertyView {
 public:
   /**
-   * @brief Construct an uninitialized, invalid view.
+   * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyTexturePropertyView() noexcept;
+  PropertyTexturePropertyView() noexcept
+      : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
+        _pSampler(nullptr),
+        _pImage(nullptr),
+        _texCoordSetIndex(0),
+        _channels(),
+        _swizzle(""),
+        _normalized(false) {}
 
   /**
-   * @brief Construct a view of the data specified by the given property texture
-   * property. Assumes the model has already been validated by the
-   * {@link PropertyTextureView} that invoked this constructor.
+   * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param model The glTF in which to look for the data specified by the
-   * property texture property.
-   * @param classProperty The property description.
-   * @param propertyTextureProperty The property texture property
+   * @param status The {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
+   */
+  PropertyTexturePropertyView(PropertyTexturePropertyViewStatus status) noexcept
+      : _status(status),
+        _pSampler(nullptr),
+        _pImage(nullptr),
+        _texCoordSetIndex(0),
+        _channels(),
+        _swizzle(""),
+        _normalized(false) {}
+
+  /**
+   * @brief Construct a valid view of the data specified by a {@link PropertyTextureProperty}.
+   *
+   * @param pSampler A pointer to the sampler used by the property.
+   * @param pImage A pointer to the image used by the property.
+   * @param texCoordSetIndex The value of {@link PropertyTextureProperty::texcoord}.
+   * @param channels The value of {@link PropertyTextureProperty::channels}.
+   * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTexturePropertyView(
-      const Model& model,
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& propertyTextureProperty) noexcept;
+      const Sampler& sampler,
+      const ImageCesium& image,
+      int64_t texCoordSetIndex,
+      const std::vector<int64_t>& channels,
+      bool normalized) noexcept
+      : _status(PropertyTexturePropertyViewStatus::Valid),
+        _pSampler(&sampler),
+        _pImage(&image),
+        _texCoordSetIndex(texCoordSetIndex),
+        _channels(channels),
+        _swizzle(""),
+        _normalized(normalized) {
+    for (size_t i = 0; i < _channels.size(); ++i) {
+      switch (_channels[i]) {
+      case 0:
+        _swizzle += "r";
+        break;
+      case 1:
+        _swizzle += "g";
+        break;
+      case 2:
+        _swizzle += "b";
+        break;
+      case 3:
+        _swizzle += "a";
+        break;
+      default:
+        assert(false && "A valid channels vector must be passed to the view.");
+      }
+    }
+  }
 
   /**
-   * @brief Gets the unswizzled property value for the given texture
-   * coordinates.
+   * @brief Gets the property value for the given texture coordinates. The
+   * sampler's wrapping mode will be used when sampling the texture.
    *
-   * Will return 0s when the status is not Valid or when the templated
-   * component type doesn't match the image's channel byte-size.
+   * @param u The u-component of the texture coordinates.
+   * @param v The v-component of the texture coordinates.
    *
-   * @tparam T The component type to use when interpreting the channels of the
-   * property's pixel value.
-   * @param u The u-component of the texture coordinates. Must be within
-   * [0.0, 1.0].
-   * @param v The v-component of the texture coordinates. Must be within
-   * [0.0, 1.0].
-   * @return The property at the nearest pixel to the texture coordinates.
+   * @return The value at the nearest pixel to the texture coordinates.
    */
-  template <typename T>
-  PropertyTexturePropertyValue<T> get(double u, double v) const noexcept {
-    PropertyTexturePropertyValue<T> property;
-    property.components[0] = 0;
-    property.components[1] = 0;
-    property.components[2] = 0;
-    property.components[3] = 0;
 
-    if (this->_status != PropertyTexturePropertyViewStatus::Valid ||
-        sizeof(T) != this->_pImage->bytesPerChannel) {
-      return property;
-    }
+  ElementType get(double u, double v) const noexcept {
+    assert(
+        _status == PropertyTexturePropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
 
-    double fraction = 0, integral = 0;
-    int64_t integer = 0;
-    switch (this->_pSampler->wrapS) {
-    case Sampler::WrapS::REPEAT:
-      fraction = std::modf(u, &integral);
-      // Wrap negative values.
-      u = fraction < 0 ? 1.0 - fraction : fraction;
-      break;
-    case Sampler::WrapS::MIRRORED_REPEAT:
-      fraction = std::abs(std::modf(u, &integral));
-      integer = static_cast<int64_t>(std::abs(integral));
-      // If the integer part is odd, the direction is reversed.
-      u = integer % 2 == 1 ? 1.0 - fraction : fraction;
-      break;
-    case Sampler::WrapS::CLAMP_TO_EDGE:
-    default:
-      u = std::clamp(u, 0.0, 1.0);
-      break;
-    }
+    double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);
+    double wrappedV = applySamplerWrapT(v, this->_pSampler->wrapT);
 
-    switch (this->_pSampler->wrapT) {
-    case Sampler::WrapT::REPEAT:
-      fraction = std::modf(v, &integral);
-      // Wrap negative values.
-      v = fraction < 0 ? 1.0 - fraction : fraction;
-      break;
-    case Sampler::WrapT::MIRRORED_REPEAT:
-      fraction = std::abs(std::modf(v, &integral));
-      integer = static_cast<int64_t>(std::abs(integral));
-      // If the integer part is odd, the direction is reversed.
-      v = integer % 2 == 1 ? 1.0 - fraction : fraction;
-      break;
-    case Sampler::WrapT::CLAMP_TO_EDGE:
-    default:
-      v = std::clamp(u, 0.0, 1.0);
-      break;
-    }
+    // TODO: account for sampler's filter (can be nearest or linear)
 
-    // Clamp here to ensure no out-of-bounds data access.
+    // For nearest filtering, std::floor is used instead of std::round.
+    // This is because filtering is supposed to consider the pixel centers. But
+    // memory access here acts as sampling the beginning of the pixel. Example:
+    // 0.4 * 2 = 0.8. In a 2x1 pixel image, that should be closer to the left
+    // pixel's center. But it will round to 1.0 which corresponds to the right
+    // pixel. So the right pixel has a bigger range than the left one, which is
+    // incorrect.
+    double xCoord = std::floor(wrappedU * this->_pImage->width);
+    double yCoord = std::floor(wrappedV * this->_pImage->height);
+
+    // Clamp to ensure no out-of-bounds data access
     int64_t x = std::clamp(
-        std::llround(u * this->_pImage->width),
+        static_cast<int64_t>(xCoord),
         0LL,
         static_cast<int64_t>(this->_pImage->width) - 1);
     int64_t y = std::clamp(
-        std::llround(v * this->_pImage->height),
+        static_cast<int64_t>(yCoord),
         0LL,
         static_cast<int64_t>(this->_pImage->height) - 1);
 
-    int64_t pixelOffset = this->_pImage->bytesPerChannel *
-                          this->_pImage->channels *
-                          (y * this->_pImage->width + x);
-    const T* pRedChannel = reinterpret_cast<const T*>(
-        this->_pImage->pixelData.data() + pixelOffset);
+    int64_t pixelIndex = this->_pImage->bytesPerChannel *
+                         this->_pImage->channels *
+                         (y * this->_pImage->width + x);
 
-    // TODO: account for the sampler filter.
-    // TODO: it is possible for channels to represent multi-byte values for a
-    // property. But we only support uint8 property types at the moment.
+    // TODO: Currently stb only outputs uint8 pixel types. If that
+    // changes this should account for additional pixel byte sizes.
+    const uint8_t* pValue = reinterpret_cast<const uint8_t*>(
+        this->_pImage->pixelData.data() + pixelIndex);
+
+    std::vector<uint8_t> channelValues(this->_channels.size());
     for (size_t i = 0; i < this->_channels.size(); i++) {
-      const size_t channel = static_cast<size_t>(this->_channels[i]);
-      property.components[channel] = *(pRedChannel + channel);
+      channelValues[i] = *(pValue + this->_channels[i]);
     }
 
-    return property;
+    return assembleValueFromChannels(channelValues);
   }
 
   /**
    * @brief Get the status of this view.
    *
-   * If invalid, it will not be safe to sample from this view.
+   * If invalid, this view cannot be sampled.
    */
   PropertyTexturePropertyViewStatus status() const noexcept {
     return this->_status;
   }
-
-  /**
-   * @brief Get the component type for this property.
-   */
-  PropertyTexturePropertyComponentType
-  getPropertyComponentType() const noexcept {
-    return this->_componentType;
-  }
-
-  /**
-   * @brief Get the component count of this property. This is equivalent to how
-   * many channels a pixel value for this property will use.
-   */
-  int64_t getComponentCount() const noexcept { return this->_componentCount; }
 
   /**
    * @brief Get the texture coordinate set index for this property.
@@ -271,16 +283,176 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
 private:
+  ElementType
+  assembleValueFromChannels(const std::vector<uint8_t>& bytes) const noexcept {
+    assert(bytes.size() > 0 && "Channel input must have at least one value.");
+
+    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return assembleScalarValue(bytes);
+    }
+
+    if constexpr (IsMetadataVecN<ElementType>::value) {
+      return assembleVecNValue(bytes);
+    }
+
+    if constexpr (IsMetadataArray<ElementType>::value) {
+      return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
+          bytes);
+    }
+  }
+
+  ElementType
+  assembleScalarValue(const std::vector<uint8_t>& bytes) const noexcept {
+    if constexpr (std::is_same_v<ElementType, float>) {
+      assert(
+          bytes.size() == sizeof(float) &&
+          "Not enough channel inputs to construct a float.");
+      uint32_t resultAsUint = 0;
+      for (size_t i = 0; i < bytes.size(); i++) {
+        resultAsUint |= static_cast<uint32_t>(bytes[i]) << i * 8;
+      }
+
+      // Reinterpret the bits as a float.
+      return *reinterpret_cast<float*>(&resultAsUint);
+    }
+
+    if constexpr (
+        IsMetadataInteger<ElementType>::value &&
+        std::is_signed_v<ElementType>) {
+      using UintType = std::make_unsigned_t<ElementType>;
+      UintType resultAsUint = 0;
+      for (size_t i = 0; i < bytes.size(); i++) {
+        resultAsUint |= static_cast<UintType>(bytes[i]) << i * 8;
+      }
+      // Reinterpret the bits as a signed integer.
+      return *reinterpret_cast<ElementType*>(&resultAsUint);
+    } else if constexpr (IsMetadataInteger<ElementType>::value) {
+      ElementType result = 0;
+      for (size_t i = 0; i < bytes.size(); i++) {
+        result |= static_cast<ElementType>(bytes[i]) << i * 8;
+      }
+      return result;
+    }
+  }
+
+  ElementType
+  assembleVecNValue(const std::vector<uint8_t>& bytes) const noexcept {
+    ElementType result = ElementType();
+
+    PropertyComponentType componentType =
+        TypeToPropertyType<ElementType>::component;
+    size_t componentSize = getSizeOfComponentType(componentType);
+    assert(
+        componentSize <= 2 &&
+        "Components cannot be larger than two bytes in size.");
+
+    if (componentSize == 2) {
+      assert(
+          TypeToPropertyType<ElementType>::value == PropertyType::Vec2 &&
+          "Only vec2s can contain two-byte integer components.");
+      uint16_t x = static_cast<uint16_t>(bytes[0]) |
+                   (static_cast<uint16_t>(bytes[1]) << 8);
+      uint16_t y = static_cast<uint16_t>(bytes[2]) |
+                   (static_cast<uint16_t>(bytes[3]) << 8);
+
+      if (componentType == PropertyComponentType::Int16) {
+        result[0] = *reinterpret_cast<int16_t*>(&x);
+        result[1] = *reinterpret_cast<int16_t*>(&y);
+      } else {
+        result[0] = x;
+        result[1] = y;
+      }
+
+      return result;
+    }
+
+    if (componentType == PropertyComponentType::Int8) {
+      for (size_t i = 0; i < bytes.size(); i++) {
+        result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
+      }
+    } else {
+      for (size_t i = 0; i < bytes.size(); i++) {
+        result[i] = bytes[i];
+      }
+    }
+
+    return result;
+  }
+
+  template <typename T>
+  PropertyArrayView<T>
+  assembleArrayValue(const std::vector<uint8_t>& bytes) const noexcept {
+    if (sizeof(T) == 2) {
+      std::vector<T> result(bytes.size() / sizeof(T));
+      for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
+        if constexpr (std::is_signed_v<T>) {
+          using UintType = std::make_unsigned_t<T>;
+          UintType resultAsUint = static_cast<UintType>(bytes[b]) |
+                                  (static_cast<UintType>(bytes[b + 1]) << 8);
+          result[i] = *reinterpret_cast<T*>(&resultAsUint);
+        } else {
+          result[i] =
+              static_cast<T>(bytes[b]) | (static_cast<T>(bytes[b + 1]) << 8);
+        }
+      }
+
+      return PropertyArrayView<T>(std::move(result));
+    }
+
+    std::vector<T> result(bytes.size());
+    for (size_t i = 0; i < bytes.size(); i++) {
+      if constexpr (std::is_signed_v<T>) {
+        result[i] = *reinterpret_cast<const T*>(&bytes[i]);
+      } else {
+        result[i] = bytes[i];
+      }
+    }
+    return PropertyArrayView<T>(std::move(result));
+  }
+
+  double applySamplerWrapS(const double u, const int32_t wrapS) const noexcept {
+    if (wrapS == Sampler::WrapS::REPEAT) {
+      double integral = 0;
+      double fraction = std::modf(u, &integral);
+      return fraction < 0 ? 1.0 - fraction : fraction;
+    }
+
+    if (wrapS == Sampler::WrapS::MIRRORED_REPEAT) {
+      double integral = 0;
+      double fraction = std::abs(std::modf(u, &integral));
+      int64_t integer = static_cast<int64_t>(std::abs(integral));
+      // If the integer part is odd, the direction is reversed.
+      return integer % 2 == 1 ? 1.0 - fraction : fraction;
+    }
+
+    return glm::clamp(u, 0.0, 1.0);
+  }
+
+  double applySamplerWrapT(const double v, const int32_t wrapT) const noexcept {
+    if (wrapT == Sampler::WrapT::REPEAT) {
+      double integral = 0;
+      double fraction = std::modf(v, &integral);
+      return fraction < 0 ? 1.0 - fraction : fraction;
+    }
+
+    if (wrapT == Sampler::WrapT::MIRRORED_REPEAT) {
+      double integral = 0;
+      double fraction = std::abs(std::modf(v, &integral));
+      int64_t integer = static_cast<int64_t>(std::abs(integral));
+      // If the integer part is odd, the direction is reversed.
+      return integer % 2 == 1 ? 1.0 - fraction : fraction;
+    }
+
+    return glm::clamp(v, 0.0, 1.0);
+  }
+
   PropertyTexturePropertyViewStatus _status;
-  const ClassProperty* _pClassProperty;
 
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
-  PropertyTexturePropertyComponentType _componentType;
-  int64_t _componentCount;
   bool _normalized;
 };
 } // namespace CesiumGltf

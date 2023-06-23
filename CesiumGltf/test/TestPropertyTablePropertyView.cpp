@@ -17,7 +17,6 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::memcpy(data.data(), expected.data(), data.size());
 
   PropertyTablePropertyView<T> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(data.data(), data.size()),
       static_cast<int64_t>(expected.size()),
       false);
@@ -47,7 +46,6 @@ static void checkVariableLengthArray(
       offsets.size() * sizeof(OffsetType));
 
   PropertyTablePropertyView<PropertyArrayView<DataType>> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       gsl::span<const std::byte>(),
@@ -79,7 +77,6 @@ static void checkFixedLengthArray(
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
 
   PropertyTablePropertyView<PropertyArrayView<T>> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -101,7 +98,7 @@ static void checkFixedLengthArray(
   REQUIRE(expectedIdx == data.size());
 }
 
-TEST_CASE("Check scalar numeric property view") {
+TEST_CASE("Check scalar PropertyTablePropertyView") {
   SECTION("Uint8 Scalar") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     checkNumeric(data);
@@ -127,7 +124,7 @@ TEST_CASE("Check scalar numeric property view") {
   }
 }
 
-TEST_CASE("Check vecN numeric property view") {
+TEST_CASE("Check vecN PropertyTablePropertyView") {
   SECTION("Float Vec2") {
     std::vector<glm::vec2> data{
         glm::vec2(10.001f, 0.005f),
@@ -156,7 +153,7 @@ TEST_CASE("Check vecN numeric property view") {
   }
 }
 
-TEST_CASE("Check matN numeric property view") {
+TEST_CASE("Check matN PropertyTablePropertyView") {
   SECTION("Float Mat2") {
     // clang-format off
     std::vector<glm::mat2> data{
@@ -218,7 +215,7 @@ TEST_CASE("Check matN numeric property view") {
   }
 }
 
-TEST_CASE("Check boolean property") {
+TEST_CASE("Check boolean PropertyTablePropertyView") {
   std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
   unsigned long val = bits.to_ulong();
   std::vector<std::byte> data(sizeof(val));
@@ -226,7 +223,6 @@ TEST_CASE("Check boolean property") {
 
   size_t instanceCount = sizeof(unsigned long) * CHAR_BIT;
   PropertyTablePropertyView<bool> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(data.data(), data.size()),
       static_cast<int64_t>(instanceCount),
       false);
@@ -235,7 +231,7 @@ TEST_CASE("Check boolean property") {
   }
 }
 
-TEST_CASE("Check string property") {
+TEST_CASE("Check string PropertyTablePropertyView") {
   std::vector<std::string> strings{
       "This is a fine test",
       "What's going on",
@@ -273,7 +269,6 @@ TEST_CASE("Check string property") {
       sizeof(uint32_t));
 
   PropertyTablePropertyView<std::string_view> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
@@ -287,7 +282,7 @@ TEST_CASE("Check string property") {
   }
 }
 
-TEST_CASE("Check fixed-length scalar array property") {
+TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
   SECTION("Fixed-length array of 4 uint8_ts") {
     // clang-format off
     std::vector<uint8_t> data{
@@ -376,7 +371,7 @@ TEST_CASE("Check fixed-length scalar array property") {
   }
 }
 
-TEST_CASE("Check fixed-length vecN array property") {
+TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
   SECTION("Fixed-length array of 4 u8vec2s") {
     // clang-format off
     std::vector<glm::u8vec2> data{
@@ -419,7 +414,7 @@ TEST_CASE("Check fixed-length vecN array property") {
   }
 }
 
-TEST_CASE("Check fixed-length matN array property") {
+TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
   SECTION("Fixed-length array of 4 i8mat2x2") {
     // clang-format off
     std::vector<glm::i8mat2x2> data{
@@ -520,7 +515,7 @@ TEST_CASE("Check fixed-length matN array property") {
   }
 }
 
-TEST_CASE("Check variable-length scalar array property") {
+TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
   SECTION("Variable-length array of uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
@@ -572,7 +567,7 @@ TEST_CASE("Check variable-length scalar array property") {
   }
 }
 
-TEST_CASE("Check variable-length vecN array property") {
+TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
   SECTION("Variable-length array of ivec2") {
     // clang-format off
     std::vector<glm::ivec2> data{
@@ -636,7 +631,7 @@ TEST_CASE("Check variable-length vecN array property") {
   }
 }
 
-TEST_CASE("Check variable-length matN array property") {
+TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
   SECTION("Variable-length array of dmat2") {
     // clang-format off
     std::vector<glm::dmat2> data0{
@@ -832,7 +827,6 @@ TEST_CASE("Check fixed-length array of string") {
       sizeof(uint32_t));
 
   PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
@@ -855,7 +849,7 @@ TEST_CASE("Check fixed-length array of string") {
   REQUIRE(expectedIdx == stringCount);
 }
 
-TEST_CASE("Check variable-length array of strings property") {
+TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
   // clang-format off
   std::vector<uint32_t> arrayOffsets{
     0,
@@ -904,7 +898,6 @@ TEST_CASE("Check variable-length array of strings property") {
       sizeof(uint32_t));
 
   PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(arrayOffsets.data()),
@@ -929,14 +922,13 @@ TEST_CASE("Check variable-length array of strings property") {
   REQUIRE(expectedIdx == stringCount);
 }
 
-TEST_CASE("Check fixed-length boolean array property") {
+TEST_CASE("Check fixed-length boolean array PropertyTablePropertyView") {
   std::vector<std::byte> buffer{
       static_cast<std::byte>(0b10101111),
       static_cast<std::byte>(0b11111010),
       static_cast<std::byte>(0b11100111)};
 
   PropertyTablePropertyView<PropertyArrayView<bool>> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -978,7 +970,7 @@ TEST_CASE("Check fixed-length boolean array property") {
   REQUIRE(static_cast<int>(val1[11]) == 1);
 }
 
-TEST_CASE("Check variable-length boolean array property") {
+TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
   std::vector<std::byte> buffer{
       static_cast<std::byte>(0b10101111),
       static_cast<std::byte>(0b11111010),
@@ -988,7 +980,6 @@ TEST_CASE("Check variable-length boolean array property") {
   std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
 
   PropertyTablePropertyView<PropertyArrayView<bool>> property(
-      PropertyTablePropertyViewStatus::Valid,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(offsetBuffer.data()),

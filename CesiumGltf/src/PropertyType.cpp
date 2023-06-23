@@ -200,4 +200,43 @@ bool isPropertyTypeMatN(PropertyType type) {
   return type == PropertyType::Mat2 || type == PropertyType::Mat3 ||
          type == PropertyType::Mat4;
 }
+
+glm::length_t getDimensionsFromPropertyType(PropertyType type) {
+  switch (type) {
+  case PropertyType::Scalar:
+    return 1;
+  case PropertyType::Vec2:
+  case PropertyType::Mat2:
+    return 2;
+  case PropertyType::Vec3:
+  case PropertyType::Mat3:
+    return 3;
+  case PropertyType::Vec4:
+  case PropertyType::Mat4:
+    return 4;
+  default:
+    return 0;
+  }
+}
+
+size_t getSizeOfComponentType(PropertyComponentType componentType) {
+  switch (componentType) {
+  case PropertyComponentType::Int8:
+  case PropertyComponentType::Uint8:
+    return 1;
+  case PropertyComponentType::Int16:
+  case PropertyComponentType::Uint16:
+    return 2;
+  case PropertyComponentType::Int32:
+  case PropertyComponentType::Uint32:
+  case PropertyComponentType::Float32:
+    return 4;
+  case PropertyComponentType::Int64:
+  case PropertyComponentType::Uint64:
+  case PropertyComponentType::Float64:
+    return 8;
+  default:
+    return 0;
+  }
+}
 } // namespace CesiumGltf

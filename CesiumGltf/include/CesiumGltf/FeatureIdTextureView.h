@@ -49,8 +49,7 @@ enum class FeatureIdTextureViewStatus {
 
   /**
    * @brief The image for this feature ID texture has channels that take up more
-   * than a byte. The feature ID texture's channels should represent the bytes
-   * of the actual feature ID.
+   * than a byte. Only single-byte channels are supported.
    */
   ErrorInvalidImageBytesPerChannel,
 
