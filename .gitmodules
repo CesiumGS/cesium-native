@@ -52,3 +52,6 @@
 [submodule "extern/libmorton"]
 	path = extern/libmorton
 	url = https://github.com/Forceflow/libmorton.git
+[submodule "extern/KTX-Software"]
+	path = extern/KTX-Software
+	url = https://github.com/KhronosGroup/KTX-Software.git
