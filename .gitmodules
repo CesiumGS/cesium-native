@@ -46,10 +46,6 @@
 [submodule "extern/s2geometry"]
 	path = extern/s2geometry
 	url = https://github.com/google/s2geometry.git
-[submodule "extern/KTX-Software"]
-	path = extern/KTX-Software
-	url = https://github.com/CesiumGS/KTX-Software.git
-	branch = cesium-native
 [submodule "extern/libwebp"]
 	path = extern/libwebp
 	url = https://github.com/webmproject/libwebp
