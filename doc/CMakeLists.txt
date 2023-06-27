@@ -4,6 +4,7 @@ if (DOXYGEN_FOUND)
     set(
         LIB_DIRS
         ../Cesium3DTiles/include
+        ../Cesium3DTiles/generated/include
         ../Cesium3DTilesReader/include
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
@@ -11,6 +12,7 @@ if (DOXYGEN_FOUND)
         ../CesiumGeometry/include
         ../CesiumGeospatial/include
         ../CesiumGltf/include
+        ../CesiumGltf/generated/include
         ../CesiumGltfReader/include
         ../CesiumGltfWriter/include
         ../CesiumUtility/include
