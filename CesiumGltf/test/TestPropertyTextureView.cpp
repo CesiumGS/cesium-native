@@ -565,6 +565,344 @@ TEST_CASE("Test array PropertyTextureProperty") {
   }
 }
 
+TEST_CASE("Test callback on invalid property texture view") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+  metadata.schema.emplace();
+
+  // Property texture has a nonexistent class.
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = -1;
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::ErrorClassNotFound);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(!classProperty);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() ==
+            PropertyTexturePropertyViewStatus::ErrorInvalidPropertyTexture);
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
+TEST_CASE("Test callback on invalid PropertyTextureProperty") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["InvalidProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["InvalidProperty"];
+  propertyTextureProperty.index = -1;
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty = view.getClassProperty("InvalidProperty");
+  REQUIRE(classProperty);
+
+  classProperty = view.getClassProperty("NonexistentProperty");
+  REQUIRE(!classProperty);
+
+  uint32_t invokedCallbackCount = 0;
+  auto testCallback = [&invokedCallbackCount](
+                          const std::string& /*propertyName*/,
+                          auto propertyValue) mutable {
+    invokedCallbackCount++;
+    REQUIRE(propertyValue.status() != PropertyTexturePropertyViewStatus::Valid);
+  };
+
+  view.getPropertyView("InvalidProperty", testCallback);
+  view.getPropertyView("NonexistentProperty", testCallback);
+
+  REQUIRE(invokedCallbackCount == 2);
+}
+
+TEST_CASE("Test callback for scalar PropertyTextureProperty") {
+  Model model;
+  std::vector<uint8_t> data = {255, 255, 12, 1, 30, 2, 0, 255};
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      2,
+      2,
+      2,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::INT16;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0, 1};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::INT16);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  std::vector<int16_t> expected{-1, 268, 542, -256};
+  std::vector<glm::vec2> texCoords{
+      glm::vec2(0, 0),
+      glm::vec2(0.5, 0),
+      glm::vec2(0, 0.5),
+      glm::vec2(0.5, 0.5)};
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&expected, &texCoords, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        if constexpr (std::is_same_v<
+                          PropertyTexturePropertyView<int16_t>,
+                          decltype(propertyValue)>) {
+          REQUIRE(
+              propertyValue.status() ==
+              PropertyTexturePropertyViewStatus::Valid);
+
+          for (size_t i = 0; i < expected.size(); ++i) {
+            glm::vec2& texCoord = texCoords[i];
+            REQUIRE(propertyValue.get(texCoord[0], texCoord[1]) == expected[i]);
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTexturePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
+TEST_CASE("Test callback for vecN PropertyTextureProperty") {
+  Model model;
+  // clang-format off
+  std::vector<uint8_t> data = {
+    255, 255,
+    12, 1,
+    30, 2,
+    0, 255};
+  // clang-format on
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      2,
+      2,
+      2,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::VEC2;
+  testClassProperty.componentType = ClassProperty::ComponentType::INT8;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0, 1};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::VEC2);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::INT8);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  std::vector<glm::i8vec2> expected{
+      glm::i8vec2(-1, -1),
+      glm::i8vec2(12, 1),
+      glm::i8vec2(30, 2),
+      glm::i8vec2(0, -1)};
+  std::vector<glm::vec2> texCoords{
+      glm::vec2(0, 0),
+      glm::vec2(0.5, 0),
+      glm::vec2(0, 0.5),
+      glm::vec2(0.5, 0.5)};
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&expected, &texCoords, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        if constexpr (std::is_same_v<
+                          PropertyTexturePropertyView<glm::i8vec2>,
+                          decltype(propertyValue)>) {
+          REQUIRE(
+              propertyValue.status() ==
+              PropertyTexturePropertyViewStatus::Valid);
+
+          for (size_t i = 0; i < expected.size(); ++i) {
+            glm::vec2& texCoord = texCoords[i];
+            REQUIRE(propertyValue.get(texCoord[0], texCoord[1]) == expected[i]);
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTexturePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
+TEST_CASE("Test callback for array PropertyTextureProperty") {
+  Model model;
+  // clang-format off
+  std::vector<uint8_t> data = {
+    254, 0, 253, 1,
+    10, 2, 40, 3,
+    30, 0, 0, 2,
+    10, 2, 255, 4};
+  // clang-format on
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      2,
+      2,
+      4,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT16;
+  testClassProperty.array = true;
+  testClassProperty.count = 2;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0, 1, 2, 3};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT16);
+  REQUIRE(classProperty->array);
+  REQUIRE(classProperty->count == 2);
+
+  std::vector<std::vector<uint16_t>> expected{
+      {254, 509},
+      {522, 808},
+      {30, 512},
+      {522, 1279}};
+  std::vector<glm::vec2> texCoords{
+      glm::vec2(0, 0),
+      glm::vec2(0.5, 0),
+      glm::vec2(0, 0.5),
+      glm::vec2(0.5, 0.5)};
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&expected, &texCoords, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        if constexpr (std::is_same_v<
+                          PropertyTexturePropertyView<
+                              PropertyArrayView<uint16_t>>,
+                          decltype(propertyValue)>) {
+          REQUIRE(
+              propertyValue.status() ==
+              PropertyTexturePropertyViewStatus::Valid);
+
+          for (size_t i = 0; i < expected.size(); ++i) {
+            std::vector<uint16_t>& expectedArray = expected[i];
+            glm::vec2& texCoord = texCoords[i];
+            PropertyArrayView<uint16_t> array =
+                propertyValue.get(texCoord[0], texCoord[1]);
+
+            REQUIRE(static_cast<size_t>(array.size()) == expectedArray.size());
+            for (int64_t j = 0; j < array.size(); j++) {
+              REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
+            }
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTexturePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
 TEST_CASE("Test unsupported PropertyTextureProperty classes") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
