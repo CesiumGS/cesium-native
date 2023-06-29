@@ -129,6 +129,7 @@ private:
           classProperty,
           propertyTextureProperty);
     } else if constexpr (IsMetadataVecN<T>::value) {
+      return createVecNPropertyView<T>(classProperty, propertyTextureProperty);
     } else if constexpr (IsMetadataArray<T>::value) {
       return createArrayPropertyView<typename MetadataArrayType<T>::type>(
           classProperty,
@@ -168,12 +169,12 @@ private:
         std::is_same_v<T, double>) {
       return PropertyTexturePropertyView<T>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    } else {
+      return createPropertyViewImpl<T>(
+          classProperty,
+          propertyTextureProperty,
+          sizeof(T));
     }
-
-    return createPropertyViewImpl<T>(
-        classProperty,
-        propertyTextureProperty,
-        sizeof(T));
   }
 
   template <typename T>
@@ -199,15 +200,11 @@ private:
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
-    // Only uint8 and uint16s are supported.
-    if (componentType != PropertyComponentType::Uint8 &&
-        componentType != PropertyComponentType::Uint16) {
-      return PropertyTexturePropertyView<T>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-    }
-
     // Only up to four bytes of image data are supported.
-    if (sizeof(T) > 4) {
+    size_t dimensions =
+        static_cast<size_t>(getDimensionsFromPropertyType(type));
+
+    if (dimensions * getSizeOfComponentType(componentType) > 4) {
       return PropertyTexturePropertyView<T>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
@@ -292,7 +289,7 @@ private:
       return PropertyTexturePropertyView<T>(status);
     }
 
-    status = checkImage(samplerIndex);
+    status = checkImage(imageIndex);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
       return PropertyTexturePropertyView<T>(status);
     }

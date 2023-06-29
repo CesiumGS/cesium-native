@@ -624,7 +624,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
         view.get(0, 0.5),
         view.get(0.5, 0.5)};
 
-    for (size_t i = 0; i < 4; i++) {
+    for (size_t i = 0; i < values.size(); i++) {
       auto dataStart = data.begin() + i * 4;
       std::vector<uint8_t> expected(dataStart, dataStart + 4);
       const PropertyArrayView<uint8_t>& value = values[i];

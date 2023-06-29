@@ -97,7 +97,7 @@ TEST_CASE("Test property table with nonexistent class") {
   REQUIRE(!classProperty);
 }
 
-TEST_CASE("Test scalar property") {
+TEST_CASE("Test scalar PropertyTableProperty") {
   Model model;
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
 
@@ -247,7 +247,7 @@ TEST_CASE("Test scalar property") {
   }
 }
 
-TEST_CASE("Test vecN property") {
+TEST_CASE("Test vecN PropertyTableProperty") {
   Model model;
   std::vector<glm::ivec3> values = {
       glm::ivec3(-12, 34, 30),
@@ -408,7 +408,7 @@ TEST_CASE("Test vecN property") {
   }
 }
 
-TEST_CASE("Test matN property") {
+TEST_CASE("Test matN PropertyTableProperty") {
   Model model;
   // clang-format off
   std::vector<glm::u32mat2x2> values = {
@@ -583,7 +583,7 @@ TEST_CASE("Test matN property") {
   }
 }
 
-TEST_CASE("Test boolean property") {
+TEST_CASE("Test boolean PropertyTableProperty") {
   Model model;
 
   int64_t instanceCount = 21;
@@ -656,7 +656,7 @@ TEST_CASE("Test boolean property") {
   }
 }
 
-TEST_CASE("Test string property") {
+TEST_CASE("Test string PropertyTableProperty") {
   Model model;
 
   std::vector<std::string> expected{"What's up", "Test_0", "Test_1", "", "Hi"};
@@ -2376,7 +2376,7 @@ TEST_CASE("Test callback on invalid property table view") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for invalid property") {
+TEST_CASE("Test callback for invalid PropertyTableProperty") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2420,7 +2420,7 @@ TEST_CASE("Test callback for invalid property") {
   REQUIRE(invokedCallbackCount == 2);
 }
 
-TEST_CASE("Test callback for scalar property") {
+TEST_CASE("Test callback for scalar PropertyTableProperty") {
   Model model;
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
 
@@ -2485,7 +2485,7 @@ TEST_CASE("Test callback for scalar property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for vecN property") {
+TEST_CASE("Test callback for vecN PropertyTableProperty") {
   Model model;
   std::vector<glm::ivec3> values = {
       glm::ivec3(-12, 34, 30),
@@ -2554,7 +2554,7 @@ TEST_CASE("Test callback for vecN property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for matN property") {
+TEST_CASE("Test callback for matN PropertyTableProperty") {
   Model model;
   // clang-format off
   std::vector<glm::u32mat2x2> values = {
@@ -2633,7 +2633,7 @@ TEST_CASE("Test callback for matN property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for boolean property") {
+TEST_CASE("Test callback for boolean PropertyTableProperty") {
   Model model;
 
   int64_t instanceCount = 21;
@@ -2715,7 +2715,7 @@ TEST_CASE("Test callback for boolean property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for string property") {
+TEST_CASE("Test callback for string PropertyTableProperty") {
   Model model;
 
   std::vector<std::string> expected{"What's up", "Test_0", "Test_1", "", "Hi"};
@@ -2805,7 +2805,7 @@ TEST_CASE("Test callback for string property") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for scalar array") {
+TEST_CASE("Test callback for scalar array PropertyTableProperty") {
   Model model;
   std::vector<uint32_t> values =
       {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
@@ -2876,7 +2876,7 @@ TEST_CASE("Test callback for scalar array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for vecN array") {
+TEST_CASE("Test callback for vecN array PropertyTableProperty") {
   Model model;
   std::vector<glm::ivec3> values = {
       glm::ivec3(12, 34, -30),
@@ -2953,7 +2953,7 @@ TEST_CASE("Test callback for vecN array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for matN array") {
+TEST_CASE("Test callback for matN array PropertyTableProperty") {
   Model model;
   // clang-format off
   std::vector<glm::i32mat2x2> values = {
@@ -3044,7 +3044,7 @@ TEST_CASE("Test callback for matN array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for boolean array") {
+TEST_CASE("Test callback for boolean array PropertyTableProperty") {
   Model model;
 
   std::vector<bool> expected = {
@@ -3135,7 +3135,7 @@ TEST_CASE("Test callback for boolean array") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test callback for array of strings") {
+TEST_CASE("Test callback for string array PropertyTableProperty") {
   Model model;
 
   std::vector<std::string> expected{

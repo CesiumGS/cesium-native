@@ -128,6 +128,8 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
       2,
       1,
       data);
+  size_t textureIndex = model.textures.size() - 1;
+  size_t imageIndex = model.images.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -143,7 +145,7 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
 
   PropertyTextureProperty& propertyTextureProperty =
       propertyTexture.properties["TestClassProperty"];
-  propertyTextureProperty.index = 0;
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
 
@@ -175,6 +177,14 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
     }
   }
 
+  SECTION("Access wrong type") {
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Invalid =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+  }
+
   SECTION("Access wrong component type") {
     PropertyTexturePropertyView<uint16_t> uint16Invalid =
         view.getPropertyView<uint16_t>("TestClassProperty");
@@ -202,305 +212,369 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
         arrayInvalid.status() ==
         PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
   }
+
+  SECTION("Channel and type mismatch") {
+    model.images[imageIndex].cesium.channels = 2;
+    propertyTextureProperty.channels = {0, 1};
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
+  }
+
+  SECTION("Invalid channel values") {
+    propertyTextureProperty.channels = {5};
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
+  }
+
+  SECTION("Zero channel values") {
+    propertyTextureProperty.channels.clear();
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
+  }
+
+  SECTION("Invalid bytes per channel") {
+    model.images[imageIndex].cesium.bytesPerChannel = 2;
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
+  }
+
+  SECTION("Empty image") {
+    model.images[imageIndex].cesium.width = 0;
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorEmptyImage);
+  }
+
+  SECTION("Wrong image index") {
+    model.textures[textureIndex].source = 1;
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidImage);
+  }
+
+  SECTION("Wrong sampler index") {
+    model.textures[textureIndex].sampler = 1;
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidSampler);
+  }
+
+  SECTION("Wrong texture index") {
+    propertyTextureProperty.index = 1;
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidTexture);
+  }
 }
 
-// TEST_CASE(
-//     "Test PropertyTexturePropertyView on property with invalid texture
-//     index") {
-//   Model model;
-//   ExtensionModelExtStructuralMetadata& metadata =
-//       model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//   Schema& schema = metadata.schema.emplace();
-//   Class& testClass = schema.classes["TestClass"];
-//   ClassProperty& testClassProperty =
-//   testClass.properties["TestClassProperty"]; testClassProperty.type =
-//   ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//   ClassProperty::ComponentType::UINT8;
-//
-//   PropertyTexture propertyTexture;
-//   propertyTexture.classProperty = "TestClass";
-//
-//   PropertyTextureProperty& propertyTextureProperty =
-//       propertyTexture.properties["TestClassProperty"];
-//   propertyTextureProperty.index = -1;
-//   propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {0};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(
-//      view.status() ==
-//      PropertyTexturePropertyViewStatus::ErrorInvalidTexture);
-//}
-//
-// TEST_CASE(
-//    "Test PropertyTexturePropertyView on property with invalid sampler index")
-//    {
-//  Model model;
-//  ExtensionModelExtStructuralMetadata& metadata =
-//      model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//  Schema& schema = metadata.schema.emplace();
-//  Class& testClass = schema.classes["TestClass"];
-//  ClassProperty& testClassProperty =
-//  testClass.properties["TestClassProperty"]; testClassProperty.type =
-//  ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//  ClassProperty::ComponentType::UINT8;
-//
-//  Image& image = model.images.emplace_back();
-//  image.cesium.width = 1;
-//  image.cesium.height = 1;
-//  Texture& texture = model.textures.emplace_back();
-//  texture.sampler = -1;
-//  texture.source = 0;
-//
-//  PropertyTexture propertyTexture;
-//  propertyTexture.classProperty = "TestClass";
-//
-//  PropertyTextureProperty& propertyTextureProperty =
-//      propertyTexture.properties["TestClassProperty"];
-//  propertyTextureProperty.index = 0;
-//  propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {0};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(
-//      view.status() ==
-//      PropertyTexturePropertyViewStatus::ErrorInvalidTextureSampler);
-//}
-//
-// TEST_CASE(
-//    "Test PropertyTexturePropertyView on property with invalid image index") {
-//  Model model;
-//  ExtensionModelExtStructuralMetadata& metadata =
-//      model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//  Schema& schema = metadata.schema.emplace();
-//  Class& testClass = schema.classes["TestClass"];
-//  ClassProperty& testClassProperty =
-//  testClass.properties["TestClassProperty"]; testClassProperty.type =
-//  ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//  ClassProperty::ComponentType::UINT8;
-//
-//  model.samplers.emplace_back();
-//
-//  Texture& texture = model.textures.emplace_back();
-//  texture.sampler = 0;
-//  texture.source = -1;
-//
-//  PropertyTexture propertyTexture;
-//  propertyTexture.classProperty = "TestClass";
-//
-//  PropertyTextureProperty& propertyTextureProperty =
-//      propertyTexture.properties["TestClassProperty"];
-//  propertyTextureProperty.index = 0;
-//  propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {0};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(
-//      view.status() == PropertyTexturePropertyViewStatus::ErrorInvalidImage);
-//}
-//
-// TEST_CASE("Test PropertyTexturePropertyView on property with empty image") {
-//  Model model;
-//  ExtensionModelExtStructuralMetadata& metadata =
-//      model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//  Schema& schema = metadata.schema.emplace();
-//  Class& testClass = schema.classes["TestClass"];
-//  ClassProperty& testClassProperty =
-//  testClass.properties["TestClassProperty"]; testClassProperty.type =
-//  ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//  ClassProperty::ComponentType::UINT8;
-//
-//  Image& image = model.images.emplace_back();
-//  image.cesium.width = 0;
-//  image.cesium.height = 0;
-//
-//  model.samplers.emplace_back();
-//
-//  Texture& texture = model.textures.emplace_back();
-//  texture.sampler = 0;
-//  texture.source = 0;
-//
-//  PropertyTexture propertyTexture;
-//  propertyTexture.classProperty = "TestClass";
-//
-//  PropertyTextureProperty& propertyTextureProperty =
-//      propertyTexture.properties["TestClassProperty"];
-//  propertyTextureProperty.index = 0;
-//  propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {0};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(view.status() ==
-//  PropertyTexturePropertyViewStatus::ErrorEmptyImage);
-//}
-//
-// TEST_CASE("Test PropertyTextureView on property texture property with zero "
-//          "channels") {
-//  Model model;
-//  ExtensionModelExtStructuralMetadata& metadata =
-//      model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//  Schema& schema = metadata.schema.emplace();
-//  Class& testClass = schema.classes["TestClass"];
-//  ClassProperty& testClassProperty =
-//  testClass.properties["TestClassProperty"]; testClassProperty.type =
-//  ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//  ClassProperty::ComponentType::UINT8;
-//
-//  Image& image = model.images.emplace_back();
-//  image.cesium.width = 1;
-//  image.cesium.height = 1;
-//  image.cesium.channels = 1;
-//
-//  model.samplers.emplace_back();
-//
-//  Texture& texture = model.textures.emplace_back();
-//  texture.sampler = 0;
-//  texture.source = 0;
-//
-//  PropertyTexture propertyTexture;
-//  propertyTexture.classProperty = "TestClass";
-//
-//  PropertyTextureProperty& propertyTextureProperty =
-//      propertyTexture.properties["TestClassProperty"];
-//  propertyTextureProperty.index = 0;
-//  propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(
-//      view.status() ==
-//      PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-//}
-//
-// TEST_CASE("Test PropertyTextureView on property texture property with too
-// many "
-//          "channels") {
-//  Model model;
-//  ExtensionModelExtStructuralMetadata& metadata =
-//      model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//  Schema& schema = metadata.schema.emplace();
-//  Class& testClass = schema.classes["TestClass"];
-//  ClassProperty& testClassProperty =
-//  testClass.properties["TestClassProperty"]; testClassProperty.type =
-//  ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//  ClassProperty::ComponentType::UINT8;
-//
-//  Image& image = model.images.emplace_back();
-//  image.cesium.width = 1;
-//  image.cesium.height = 1;
-//  image.cesium.channels = 1;
-//
-//  model.samplers.emplace_back();
-//
-//  Texture& texture = model.textures.emplace_back();
-//  texture.sampler = 0;
-//  texture.source = 0;
-//
-//  PropertyTexture propertyTexture;
-//  propertyTexture.classProperty = "TestClass";
-//
-//  PropertyTextureProperty& propertyTextureProperty =
-//      propertyTexture.properties["TestClassProperty"];
-//  propertyTextureProperty.index = 0;
-//  propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {0, 1};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(
-//      view.status() ==
-//      PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-//}
-//
-// TEST_CASE("Test PropertyTextureView on property texture property with "
-//          "unsupported class property") {
-//  Model model;
-//  ExtensionModelExtStructuralMetadata& metadata =
-//      model.addExtension<ExtensionModelExtStructuralMetadata>();
-//
-//  Schema& schema = metadata.schema.emplace();
-//  Class& testClass = schema.classes["TestClass"];
-//  ClassProperty& testClassProperty =
-//  testClass.properties["TestClassProperty"]; testClassProperty.type =
-//  ClassProperty::Type::SCALAR; testClassProperty.componentType =
-//  ClassProperty::ComponentType::UINT8;
-//
-//  Image& image = model.images.emplace_back();
-//  image.cesium.width = 1;
-//  image.cesium.height = 1;
-//  image.cesium.channels = 1;
-//
-//  model.samplers.emplace_back();
-//
-//  Texture& texture = model.textures.emplace_back();
-//  texture.sampler = 0;
-//  texture.source = 0;
-//
-//  PropertyTexture propertyTexture;
-//  propertyTexture.classProperty = "TestClass";
-//
-//  PropertyTextureProperty& propertyTextureProperty =
-//      propertyTexture.properties["TestClassProperty"];
-//  propertyTextureProperty.index = 0;
-//  propertyTextureProperty.texCoord = 0;
-//  propertyTextureProperty.channels = {0, 1};
-//
-//  PropertyTexturePropertyView view(
-//      model,
-//      testClassProperty,
-//      propertyTextureProperty);
-//  REQUIRE(
-//      view.status() ==
-//      PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-//}
-/*
-TEST_CASE("Test PropertyTexturePropertyView on valid property texture") {
+TEST_CASE("Test vecN PropertyTextureProperty") {
+  Model model;
+  std::vector<uint8_t> data = {12, 34, 10, 3, 40, 0, 30, 11};
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      2,
+      2,
+      2,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+  size_t imageIndex = model.images.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::VEC2;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0, 1};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::VEC2);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT8);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  SECTION("Access correct type") {
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    std::vector<glm::u8vec2> expected{
+        glm::u8vec2(12, 34),
+        glm::u8vec2(10, 3),
+        glm::u8vec2(40, 0),
+        glm::u8vec2(30, 11)};
+    std::vector<glm::u8vec2> values{
+        u8vec2Property.get(0.0, 0.0),
+        u8vec2Property.get(0.5, 0.0),
+        u8vec2Property.get(0.0, 0.5),
+        u8vec2Property.get(0.5, 0.5),
+    };
+    for (size_t i = 0; i < values.size(); ++i) {
+      REQUIRE(values[i] == expected[i]);
+    }
+  }
+
+  SECTION("Access wrong type") {
+    PropertyTexturePropertyView<uint8_t> uint8Invalid =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+
+    PropertyTexturePropertyView<glm::u8vec3> u8vec3Invalid =
+        view.getPropertyView<glm::u8vec3>("TestClassProperty");
+    REQUIRE(
+        u8vec3Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Access wrong component type") {
+    PropertyTexturePropertyView<glm::u16vec2> u16vec2Invalid =
+        view.getPropertyView<glm::u16vec2>("TestClassProperty");
+    REQUIRE(
+        u16vec2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+
+    PropertyTexturePropertyView<glm::i8vec2> i8vec2Invalid =
+        view.getPropertyView<glm::i8vec2>("TestClassProperty");
+    REQUIRE(
+        i8vec2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Access incorrectly as array") {
+    PropertyTexturePropertyView<PropertyArrayView<glm::u8vec2>> arrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::u8vec2>>(
+            "TestClassProperty");
+    REQUIRE(
+        arrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Channel and type mismatch") {
+    model.images[imageIndex].cesium.channels = 4;
+    propertyTextureProperty.channels = {0, 1, 2, 3};
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
+  }
+
+  SECTION("Invalid channel values") {
+    propertyTextureProperty.channels = {0, 4};
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
+  }
+
+  SECTION("Invalid bytes per channel") {
+    model.images[imageIndex].cesium.bytesPerChannel = 2;
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
+  }
+}
+
+TEST_CASE("Test array PropertyTextureProperty") {
+  Model model;
+  // clang-format off
+  std::vector<uint8_t> data = {
+    12, 34, 10,
+    40, 0, 30,
+    80, 4, 2,
+    6, 3, 4,
+  };
+  // clang-format on
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      2,
+      2,
+      3,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+  size_t imageIndex = model.images.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+  testClassProperty.array = true;
+  testClassProperty.count = 3;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0, 1, 2};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT8);
+  REQUIRE(classProperty->array);
+  REQUIRE(classProperty->count == 3);
+
+  SECTION("Access correct type") {
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
+        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::Valid);
+
+    std::vector<PropertyArrayView<uint8_t>> values{
+        uint8ArrayProperty.get(0.0, 0.0),
+        uint8ArrayProperty.get(0.5, 0.0),
+        uint8ArrayProperty.get(0.0, 0.5),
+        uint8ArrayProperty.get(0.5, 0.5),
+    };
+
+    for (size_t i = 0; i < values.size(); ++i) {
+      auto dataStart = data.begin() + i * 3;
+      std::vector<uint8_t> expected(dataStart, dataStart + 3);
+      const PropertyArrayView<uint8_t>& value = values[i];
+      REQUIRE(static_cast<size_t>(value.size()) == expected.size());
+      for (size_t j = 0; j < expected.size(); j++) {
+        REQUIRE(value[j] == expected[j]);
+      }
+    }
+  }
+
+  SECTION("Access wrong type") {
+    PropertyTexturePropertyView<PropertyArrayView<glm::u8vec3>>
+        u8vec3ArrayInvalid =
+            view.getPropertyView<PropertyArrayView<glm::u8vec3>>(
+                "TestClassProperty");
+    REQUIRE(
+        u8vec3ArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Access wrong component type") {
+    PropertyTexturePropertyView<PropertyArrayView<int8_t>> int8ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<int8_t>>("TestClassProperty");
+    REQUIRE(
+        int8ArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+
+    PropertyTexturePropertyView<PropertyArrayView<uint16_t>>
+        uint16ArrayInvalid = view.getPropertyView<PropertyArrayView<uint16_t>>(
+            "TestClassProperty");
+    REQUIRE(
+        uint16ArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Access incorrectly as non-array") {
+    PropertyTexturePropertyView<uint8_t> uint8Invalid =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
+
+    PropertyTexturePropertyView<glm::u8vec3> u8vec3Invalid =
+        view.getPropertyView<glm::u8vec3>("TestClassProperty");
+    REQUIRE(
+        u8vec3Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Channel and type mismatch") {
+    model.images[imageIndex].cesium.channels = 4;
+    propertyTextureProperty.channels = {0, 1, 2, 3};
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
+        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
+  }
+
+  SECTION("Invalid channel values") {
+    propertyTextureProperty.channels = {0, 4, 1};
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
+        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
+  }
+
+  SECTION("Invalid bytes per channel") {
+    model.images[imageIndex].cesium.bytesPerChannel = 2;
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
+        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
+  }
+}
+
+TEST_CASE("Test unsupported PropertyTextureProperty classes") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty =
-testClass.properties["TestClassProperty"]; testClassProperty.type =
-ClassProperty::Type::SCALAR; testClassProperty.componentType =
-ClassProperty::ComponentType::UINT8;
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
 
-  Image& image = model.images.emplace_back();
-  image.cesium.width = 1;
-  image.cesium.height = 1;
-  image.cesium.channels = 1;
-
-  model.samplers.emplace_back();
-
-  Texture& texture = model.textures.emplace_back();
-  texture.sampler = 0;
-  texture.source = 0;
-
-  PropertyTexture propertyTexture;
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
   propertyTexture.classProperty = "TestClass";
 
   PropertyTextureProperty& propertyTextureProperty =
@@ -509,56 +583,105 @@ ClassProperty::ComponentType::UINT8;
   propertyTextureProperty.texCoord = 0;
   propertyTextureProperty.channels = {0};
 
-  PropertyTexturePropertyView view(
-      model,
-      testClassProperty,
-      propertyTextureProperty);
-  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  SECTION("Unsupported types") {
+    testClassProperty.type = ClassProperty::Type::BOOLEAN;
+    PropertyTexturePropertyView<bool> boolInvalid =
+        view.getPropertyView<bool>("TestClassProperty");
+    REQUIRE(
+        boolInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::STRING;
+    PropertyTexturePropertyView<std::string_view> stringInvalid =
+        view.getPropertyView<std::string_view>("TestClassProperty");
+    REQUIRE(
+        stringInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::MAT2;
+    PropertyTexturePropertyView<glm::u8mat2x2> mat2Invalid =
+        view.getPropertyView<glm::u8mat2x2>("TestClassProperty");
+    REQUIRE(
+        mat2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+  }
+
+  SECTION("Unsupported component types") {
+    testClassProperty.type = ClassProperty::Type::SCALAR;
+    testClassProperty.componentType = ClassProperty::ComponentType::FLOAT64;
+    PropertyTexturePropertyView<double> doubleInvalid =
+        view.getPropertyView<double>("TestClassProperty");
+    REQUIRE(
+        doubleInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::SCALAR;
+    testClassProperty.componentType = ClassProperty::ComponentType::UINT64;
+    PropertyTexturePropertyView<uint64_t> uint64Invalid =
+        view.getPropertyView<uint64_t>("TestClassProperty");
+    REQUIRE(
+        uint64Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::VEC2;
+    testClassProperty.componentType = ClassProperty::ComponentType::INT32;
+    PropertyTexturePropertyView<glm::ivec2> ivec2Invalid =
+        view.getPropertyView<glm::ivec2>("TestClassProperty");
+    REQUIRE(
+        ivec2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::VEC3;
+    testClassProperty.componentType = ClassProperty::ComponentType::UINT16;
+    PropertyTexturePropertyView<glm::u16vec3> u16vec3Invalid =
+        view.getPropertyView<glm::u16vec3>("TestClassProperty");
+    REQUIRE(
+        u16vec3Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+  }
+
+  SECTION("Unsupported array types") {
+    testClassProperty.array = true;
+
+    testClassProperty.type = ClassProperty::Type::SCALAR;
+    testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+    testClassProperty.count = 5;
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> bigArrayInvalid =
+        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    REQUIRE(
+        bigArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.count = std::nullopt;
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>>
+        variableArrayInvalid = view.getPropertyView<PropertyArrayView<uint8_t>>(
+            "TestClassProperty");
+    REQUIRE(
+        variableArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::VEC2;
+    testClassProperty.componentType = ClassProperty::ComponentType::UINT32;
+    testClassProperty.count = 2;
+    PropertyTexturePropertyView<PropertyArrayView<glm::uvec2>>
+        uvec2ArrayInvalid = view.getPropertyView<PropertyArrayView<glm::uvec2>>(
+            "TestClassProperty");
+    REQUIRE(
+        uvec2ArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+
+    testClassProperty.type = ClassProperty::Type::VEC3;
+    testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+    testClassProperty.count = 1;
+    PropertyTexturePropertyView<PropertyArrayView<glm::u8vec3>>
+        u8vec3ArrayInvalid =
+            view.getPropertyView<PropertyArrayView<glm::u8vec3>>(
+                "TestClassProperty");
+    REQUIRE(
+        u8vec3ArrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+  }
 }
-
-TEST_CASE("Test getting value from valid view") {
-  Model model;
-  ExtensionModelExtStructuralMetadata& metadata =
-      model.addExtension<ExtensionModelExtStructuralMetadata>();
-
-  Schema& schema = metadata.schema.emplace();
-  Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty =
-testClass.properties["TestClassProperty"]; testClassProperty.type =
-ClassProperty::Type::SCALAR; testClassProperty.componentType =
-ClassProperty::ComponentType::UINT8;
-
-  std::vector<uint8_t> values{10, 8, 4, 22};
-
-  Image& image = model.images.emplace_back();
-  image.cesium.width = 2;
-  image.cesium.height = 2;
-  image.cesium.channels = 1;
-  image.cesium.bytesPerChannel = 1;
-  image.cesium.pixelData.resize(values.size());
-  std::memcpy(image.cesium.pixelData.data(), values.data(), values.size());
-
-  Sampler& sampler = model.samplers.emplace_back();
-  sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
-  sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
-
-  Texture& texture = model.textures.emplace_back();
-  texture.sampler = 0;
-  texture.source = 0;
-
-  PropertyTexture propertyTexture;
-  propertyTexture.classProperty = "TestClass";
-
-  PropertyTextureProperty& propertyTextureProperty =
-      propertyTexture.properties["TestClassProperty"];
-  propertyTextureProperty.index = 0;
-  propertyTextureProperty.texCoord = 0;
-  propertyTextureProperty.channels = {0};
-
-  PropertyTexturePropertyView view(
-      model,
-      testClassProperty,
-      propertyTextureProperty);
-
-
-}*/

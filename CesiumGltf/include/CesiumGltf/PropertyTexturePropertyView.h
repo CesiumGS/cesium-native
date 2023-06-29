@@ -87,17 +87,12 @@ enum class PropertyTexturePropertyViewStatus {
 
   /**
    * @brief The channels of this property texture property are invalid.
-   * Channels must be in the range 0-3, with a minimum of one channel. Although
+   * Channels must be in the range 0-N, where N is the number of available
+   * channels in the image. There must be a minimum of one channel. Although
    * more than four channels can be defined for specialized texture
-   * formats, this view only supports a maximum of four channels.
+   * formats, this implementation only supports four channels max.
    */
   ErrorInvalidChannels,
-
-  /**
-   * @brief This property texture property is trying to sample channels that
-   * don't exist in the image.
-   */
-  ErrorTooManyChannels,
 
   /**
    * @brief The channels of this property texture property do not provide the

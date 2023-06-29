@@ -97,15 +97,15 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
 PropertyTexturePropertyViewStatus PropertyTextureView::checkChannels(
     const std::vector<int64_t>& channels,
     const ImageCesium& image) const noexcept {
+  if (channels.size() <= 0 || channels.size() > 4) {
+    return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
+  }
+
   int64_t imageChannelCount = static_cast<int64_t>(image.channels);
   for (size_t i = 0; i < channels.size(); i++) {
     if (channels[i] < 0 || channels[i] >= imageChannelCount) {
       return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
     }
-  }
-
-  if (static_cast<size_t>(imageChannelCount) < channels.size()) {
-    return PropertyTexturePropertyViewStatus::ErrorTooManyChannels;
   }
 
   return PropertyTexturePropertyViewStatus::Valid;
