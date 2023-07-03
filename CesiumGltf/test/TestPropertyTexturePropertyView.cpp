@@ -624,13 +624,15 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
         view.get(0, 0.5),
         view.get(0.5, 0.5)};
 
-    for (size_t i = 0; i < values.size(); i++) {
+    int64_t size = static_cast<int64_t>(values.size());
+    for (int64_t i = 0; i < size; i++) {
       auto dataStart = data.begin() + i * 4;
       std::vector<uint8_t> expected(dataStart, dataStart + 4);
-      const PropertyArrayView<uint8_t>& value = values[i];
+
+      const PropertyArrayView<uint8_t>& value = values[static_cast<size_t>(i)];
       REQUIRE(static_cast<size_t>(value.size()) == expected.size());
-      for (size_t j = 0; j < expected.size(); j++) {
-        REQUIRE(value[j] == expected[j]);
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expected[static_cast<size_t>(j)]);
       }
     }
   }
@@ -671,12 +673,13 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
         view.get(0.5, 0),
         view.get(0, 0.5),
         view.get(0.5, 0.5)};
+
     for (size_t i = 0; i < values.size(); i++) {
       std::vector<int8_t>& expectedValue = expected[i];
       const PropertyArrayView<int8_t>& value = values[i];
       REQUIRE(static_cast<size_t>(value.size()) == expected.size());
-      for (size_t j = 0; j < expected.size(); j++) {
-        REQUIRE(value[j] == expectedValue[j]);
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedValue[static_cast<size_t>(j)]);
       }
     }
   }
@@ -723,8 +726,8 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
       std::vector<uint16_t>& expectedValue = expected[i];
       const PropertyArrayView<uint16_t>& value = values[i];
       REQUIRE(static_cast<size_t>(value.size()) == expectedValue.size());
-      for (size_t j = 0; j < expectedValue.size(); j++) {
-        REQUIRE(value[j] == expectedValue[j]);
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedValue[static_cast<size_t>(j)]);
       }
     }
   }
@@ -769,8 +772,8 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
       std::vector<int16_t>& expectedValue = expected[i];
       const PropertyArrayView<int16_t>& value = values[i];
       REQUIRE(static_cast<size_t>(value.size()) == expectedValue.size());
-      for (size_t j = 0; j < expectedValue.size(); j++) {
-        REQUIRE(value[j] == expectedValue[j]);
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedValue[static_cast<size_t>(j)]);
       }
     }
   }
@@ -932,8 +935,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
       std::vector<uint8_t>& expectedValue = expected[i];
       const PropertyArrayView<uint8_t>& value = values[i];
       REQUIRE(static_cast<size_t>(value.size()) == expectedValue.size());
-      for (size_t j = 0; j < expectedValue.size(); j++) {
-        REQUIRE(value[j] == expectedValue[j]);
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedValue[static_cast<size_t>(j)]);
       }
     }
   }

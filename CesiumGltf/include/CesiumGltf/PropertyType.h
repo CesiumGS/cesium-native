@@ -1,10 +1,10 @@
 #pragma once
 
+#include <glm/common.hpp>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
-
-#include <glm/common.hpp>
 
 namespace CesiumGltf {
 enum class PropertyType {

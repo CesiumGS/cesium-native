@@ -5,7 +5,9 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/Sampler.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdint>
 
 namespace CesiumGltf {
@@ -115,7 +117,7 @@ public:
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTexturePropertyView() noexcept
-      : _status(PropertyTexturePropertyViewStatus::ErrorUninitialized),
+      : _status(PropertyTexturePropertyViewStatus::ErrorNonexistentProperty),
         _pSampler(nullptr),
         _pImage(nullptr),
         _texCoordSetIndex(0),
@@ -212,11 +214,11 @@ public:
     // Clamp to ensure no out-of-bounds data access
     int64_t x = std::clamp(
         static_cast<int64_t>(xCoord),
-        0LL,
+        static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->width) - 1);
     int64_t y = std::clamp(
         static_cast<int64_t>(yCoord),
-        0LL,
+        static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->height) - 1);
 
     int64_t pixelIndex = this->_pImage->bytesPerChannel *
@@ -284,15 +286,13 @@ private:
 
     if constexpr (IsMetadataScalar<ElementType>::value) {
       return assembleScalarValue(bytes);
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
+    } else if constexpr (IsMetadataVecN<ElementType>::value) {
       return assembleVecNValue(bytes);
-    }
-
-    if constexpr (IsMetadataArray<ElementType>::value) {
+    } else if constexpr (IsMetadataArray<ElementType>::value) {
       return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
           bytes);
+    } else {
+      return ElementType();
     }
   }
 
@@ -319,6 +319,7 @@ private:
       for (size_t i = 0; i < bytes.size(); i++) {
         resultAsUint |= static_cast<UintType>(bytes[i]) << i * 8;
       }
+
       // Reinterpret the bits as a signed integer.
       return *reinterpret_cast<ElementType*>(&resultAsUint);
     } else if constexpr (IsMetadataInteger<ElementType>::value) {
@@ -332,40 +333,54 @@ private:
 
   ElementType
   assembleVecNValue(const std::vector<uint8_t>& bytes) const noexcept {
-    ElementType result = ElementType();
+    const glm::length_t N =
+        getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
+    switch (N) {
+    case 2:
+      return assembleVecNValueImpl<2, typename ElementType::value_type>(bytes);
+    case 3:
+      return assembleVecNValueImpl<3, typename ElementType::value_type>(bytes);
+    case 4:
+      return assembleVecNValueImpl<4, typename ElementType::value_type>(bytes);
+    default:
+      return ElementType();
+    }
+  }
 
-    PropertyComponentType componentType =
-        TypeToPropertyType<ElementType>::component;
-    size_t componentSize = getSizeOfComponentType(componentType);
+  template <glm::length_t N, typename T>
+  ElementType
+  assembleVecNValueImpl(const std::vector<uint8_t>& bytes) const noexcept {
+    ElementType result = ElementType();
     assert(
-        componentSize <= 2 &&
+        sizeof(T) <= 2 &&
         "Components cannot be larger than two bytes in size.");
 
-    if (componentSize == 2) {
-      assert(
-          TypeToPropertyType<ElementType>::value == PropertyType::Vec2 &&
-          "Only vec2s can contain two-byte integer components.");
+    if constexpr (std::is_same_v<T, int16_t>) {
+      assert(N == 2 && "Only vec2s can contain two-byte integer components.");
       uint16_t x = static_cast<uint16_t>(bytes[0]) |
                    (static_cast<uint16_t>(bytes[1]) << 8);
       uint16_t y = static_cast<uint16_t>(bytes[2]) |
                    (static_cast<uint16_t>(bytes[3]) << 8);
 
-      if (componentType == PropertyComponentType::Int16) {
-        result[0] = *reinterpret_cast<int16_t*>(&x);
-        result[1] = *reinterpret_cast<int16_t*>(&y);
-      } else {
-        result[0] = x;
-        result[1] = y;
-      }
-
-      return result;
+      result[0] = *reinterpret_cast<int16_t*>(&x);
+      result[1] = *reinterpret_cast<int16_t*>(&y);
     }
 
-    if (componentType == PropertyComponentType::Int8) {
+    if constexpr (std::is_same_v<T, uint16_t>) {
+      assert(N == 2 && "Only vec2s can contain two-byte integer components.");
+      result[0] = static_cast<uint16_t>(bytes[0]) |
+                  (static_cast<uint16_t>(bytes[1]) << 8);
+      result[1] = static_cast<uint16_t>(bytes[2]) |
+                  (static_cast<uint16_t>(bytes[3]) << 8);
+    }
+
+    if constexpr (std::is_same_v<T, int8_t>) {
       for (size_t i = 0; i < bytes.size(); i++) {
         result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
       }
-    } else {
+    }
+
+    if constexpr (std::is_same_v<T, uint8_t>) {
       for (size_t i = 0; i < bytes.size(); i++) {
         result[i] = bytes[i];
       }
@@ -377,8 +392,9 @@ private:
   template <typename T>
   PropertyArrayView<T>
   assembleArrayValue(const std::vector<uint8_t>& bytes) const noexcept {
-    if (sizeof(T) == 2) {
-      std::vector<T> result(bytes.size() / sizeof(T));
+    std::vector<T> result;
+    if constexpr (sizeof(T) == 2) {
+      result.resize(bytes.size() / sizeof(T));
       for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
         if constexpr (std::is_signed_v<T>) {
           using UintType = std::make_unsigned_t<T>;
@@ -390,16 +406,14 @@ private:
               static_cast<T>(bytes[b]) | (static_cast<T>(bytes[b + 1]) << 8);
         }
       }
-
-      return PropertyArrayView<T>(std::move(result));
-    }
-
-    std::vector<T> result(bytes.size());
-    for (size_t i = 0; i < bytes.size(); i++) {
-      if constexpr (std::is_signed_v<T>) {
-        result[i] = *reinterpret_cast<const T*>(&bytes[i]);
-      } else {
-        result[i] = bytes[i];
+    } else {
+      result.resize(bytes.size());
+      for (size_t i = 0; i < bytes.size(); i++) {
+        if constexpr (std::is_signed_v<T>) {
+          result[i] = *reinterpret_cast<const T*>(&bytes[i]);
+        } else {
+          result[i] = bytes[i];
+        }
       }
     }
     return PropertyArrayView<T>(std::move(result));
@@ -420,7 +434,7 @@ private:
       return integer % 2 == 1 ? 1.0 - fraction : fraction;
     }
 
-    return glm::clamp(u, 0.0, 1.0);
+    return std::clamp(u, 0.0, 1.0);
   }
 
   double applySamplerWrapT(const double v, const int32_t wrapT) const noexcept {
@@ -438,7 +452,7 @@ private:
       return integer % 2 == 1 ? 1.0 - fraction : fraction;
     }
 
-    return glm::clamp(v, 0.0, 1.0);
+    return std::clamp(v, 0.0, 1.0);
   }
 
   PropertyTexturePropertyViewStatus _status;

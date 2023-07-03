@@ -486,13 +486,14 @@ TEST_CASE("Test array PropertyTextureProperty") {
         uint8ArrayProperty.get(0.5, 0.5),
     };
 
-    for (size_t i = 0; i < values.size(); ++i) {
+    int64_t size = static_cast<int64_t>(values.size());
+    for (int64_t i = 0; i < size; ++i) {
       auto dataStart = data.begin() + i * 3;
       std::vector<uint8_t> expected(dataStart, dataStart + 3);
-      const PropertyArrayView<uint8_t>& value = values[i];
+      const PropertyArrayView<uint8_t>& value = values[static_cast<size_t>(i)];
       REQUIRE(static_cast<size_t>(value.size()) == expected.size());
-      for (size_t j = 0; j < expected.size(); j++) {
-        REQUIRE(value[j] == expected[j]);
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expected[static_cast<size_t>(j)]);
       }
     }
   }

@@ -210,7 +210,7 @@ private:
   template <typename T>
   PropertyTexturePropertyView<T> getPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty& classProperty) const {
+      [[maybe_unused]] const ClassProperty& classProperty) const {
     auto propertyTexturePropertyIter =
         _pPropertyTexture->properties.find(propertyName);
     if (propertyTexturePropertyIter == _pPropertyTexture->properties.end()) {
@@ -218,7 +218,7 @@ private:
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    const PropertyTextureProperty& propertyTextureProperty =
+    [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty =
         propertyTexturePropertyIter->second;
 
     if constexpr (IsMetadataScalar<T>::value) {

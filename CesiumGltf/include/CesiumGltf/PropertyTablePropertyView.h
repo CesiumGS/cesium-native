@@ -174,7 +174,7 @@ public:
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTablePropertyView()
-      : _status{PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist},
+      : _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
         _values{},
         _arrayCount{},
         _size{},
