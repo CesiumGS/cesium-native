@@ -1,5 +1,12 @@
 # Change Log
 
+### v0.25.1 - 2023-07-03
+
+##### Additions :tada:
+
+- Included generated glTF and 3D Tiles classes in the generated referenced documentation.
+- Updated the 3D Tiles class generator to use the `main` branch instead of the `draft-1.1` branch.
+
 ### v0.25.0 - 2023-06-01
 
 ##### Additions :tada:
