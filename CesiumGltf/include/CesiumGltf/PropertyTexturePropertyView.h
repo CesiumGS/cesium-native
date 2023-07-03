@@ -286,13 +286,15 @@ private:
 
     if constexpr (IsMetadataScalar<ElementType>::value) {
       return assembleScalarValue(bytes);
-    } else if constexpr (IsMetadataVecN<ElementType>::value) {
+    }
+
+    if constexpr (IsMetadataVecN<ElementType>::value) {
       return assembleVecNValue(bytes);
-    } else if constexpr (IsMetadataArray<ElementType>::value) {
+    }
+
+    if constexpr (IsMetadataArray<ElementType>::value) {
       return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
           bytes);
-    } else {
-      return ElementType();
     }
   }
 
@@ -311,23 +313,15 @@ private:
       return *reinterpret_cast<float*>(&resultAsUint);
     }
 
-    if constexpr (
-        IsMetadataInteger<ElementType>::value &&
-        std::is_signed_v<ElementType>) {
+    if constexpr (IsMetadataInteger<ElementType>::value) {
       using UintType = std::make_unsigned_t<ElementType>;
       UintType resultAsUint = 0;
       for (size_t i = 0; i < bytes.size(); i++) {
         resultAsUint |= static_cast<UintType>(bytes[i]) << i * 8;
       }
 
-      // Reinterpret the bits as a signed integer.
+      // Reinterpret the bits with the correct signedness.
       return *reinterpret_cast<ElementType*>(&resultAsUint);
-    } else if constexpr (IsMetadataInteger<ElementType>::value) {
-      ElementType result = 0;
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result |= static_cast<ElementType>(bytes[i]) << i * 8;
-      }
-      return result;
     }
   }
 
@@ -392,30 +386,21 @@ private:
   template <typename T>
   PropertyArrayView<T>
   assembleArrayValue(const std::vector<uint8_t>& bytes) const noexcept {
-    std::vector<T> result;
+    std::vector<T> result(bytes.size() / sizeof(T));
+
     if constexpr (sizeof(T) == 2) {
-      result.resize(bytes.size() / sizeof(T));
       for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
-        if constexpr (std::is_signed_v<T>) {
-          using UintType = std::make_unsigned_t<T>;
-          UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-                                  (static_cast<UintType>(bytes[b + 1]) << 8);
-          result[i] = *reinterpret_cast<T*>(&resultAsUint);
-        } else {
-          result[i] =
-              static_cast<T>(bytes[b]) | (static_cast<T>(bytes[b + 1]) << 8);
-        }
+        using UintType = std::make_unsigned_t<T>;
+        UintType resultAsUint = static_cast<UintType>(bytes[b]) |
+                                (static_cast<UintType>(bytes[b + 1]) << 8);
+        result[i] = *reinterpret_cast<T*>(&resultAsUint);
       }
     } else {
-      result.resize(bytes.size());
       for (size_t i = 0; i < bytes.size(); i++) {
-        if constexpr (std::is_signed_v<T>) {
-          result[i] = *reinterpret_cast<const T*>(&bytes[i]);
-        } else {
-          result[i] = bytes[i];
-        }
+        result[i] = *reinterpret_cast<const T*>(&bytes[i]);
       }
     }
+
     return PropertyArrayView<T>(std::move(result));
   }
 

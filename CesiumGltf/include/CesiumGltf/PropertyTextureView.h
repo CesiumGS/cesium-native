@@ -210,7 +210,7 @@ private:
   template <typename T>
   PropertyTexturePropertyView<T> getPropertyViewImpl(
       const std::string& propertyName,
-      [[maybe_unused]] const ClassProperty& classProperty) const {
+      const ClassProperty& classProperty) const {
     auto propertyTexturePropertyIter =
         _pPropertyTexture->properties.find(propertyName);
     if (propertyTexturePropertyIter == _pPropertyTexture->properties.end()) {
@@ -218,22 +218,23 @@ private:
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty =
+    const PropertyTextureProperty& propertyTextureProperty =
         propertyTexturePropertyIter->second;
 
     if constexpr (IsMetadataScalar<T>::value) {
       return createScalarPropertyView<T>(
           classProperty,
           propertyTextureProperty);
-    } else if constexpr (IsMetadataVecN<T>::value) {
+    }
+
+    if constexpr (IsMetadataVecN<T>::value) {
       return createVecNPropertyView<T>(classProperty, propertyTextureProperty);
-    } else if constexpr (IsMetadataArray<T>::value) {
+    }
+
+    if constexpr (IsMetadataArray<T>::value) {
       return createArrayPropertyView<typename MetadataArrayType<T>::type>(
           classProperty,
           propertyTextureProperty);
-    } else {
-      return PropertyTexturePropertyView<T>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
   }
 
@@ -250,6 +251,7 @@ private:
           propertyName,
           PropertyTexturePropertyView<uint8_t>(
               PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty));
+      return;
     }
 
     int64_t count = classProperty.count.value_or(0);
@@ -258,6 +260,7 @@ private:
           propertyName,
           PropertyTexturePropertyView<uint8_t>(
               PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty));
+      return;
     }
 
     switch (componentType) {
@@ -294,6 +297,7 @@ private:
           propertyName,
           PropertyTexturePropertyView<uint8_t>(
               PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty));
+      break;
     }
   }
 
@@ -370,19 +374,23 @@ private:
               classProperty));
       break;
     case PropertyComponentType::Int16:
-      callback(
-          propertyName,
-          getPropertyViewImpl<glm::vec<N, int16_t>>(
-              propertyName,
-              classProperty));
-      break;
+      if constexpr (N == 2) {
+        callback(
+            propertyName,
+            getPropertyViewImpl<glm::vec<N, int16_t>>(
+                propertyName,
+                classProperty));
+        break;
+      }
     case PropertyComponentType::Uint16:
-      callback(
-          propertyName,
-          getPropertyViewImpl<glm::vec<N, uint16_t>>(
-              propertyName,
-              classProperty));
-      break;
+      if constexpr (N == 2) {
+        callback(
+            propertyName,
+            getPropertyViewImpl<glm::vec<N, uint16_t>>(
+                propertyName,
+                classProperty));
+        break;
+      }
     default:
       callback(
           propertyName,
@@ -454,17 +462,13 @@ private:
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
-    // Eight-byte scalar types are unsupported.
-    size_t componentSize = getSizeOfComponentType(componentType);
-    if (componentSize == 0 || componentSize > 4) {
-      return PropertyTexturePropertyView<T>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    // Only up to four bytes of image data are supported.
+    if constexpr (sizeof(T) <= 4) {
+      return createPropertyViewImpl<T>(
+          classProperty,
+          propertyTextureProperty,
+          sizeof(T));
     }
-
-    return createPropertyViewImpl<T>(
-        classProperty,
-        propertyTextureProperty,
-        sizeof(T));
   }
 
   template <typename T>
@@ -491,18 +495,12 @@ private:
     }
 
     // Only up to four bytes of image data are supported.
-    size_t dimensions =
-        static_cast<size_t>(getDimensionsFromPropertyType(type));
-
-    if (dimensions * getSizeOfComponentType(componentType) > 4) {
-      return PropertyTexturePropertyView<T>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    if constexpr (sizeof(T) <= 4) {
+      return createPropertyViewImpl<T>(
+          classProperty,
+          propertyTextureProperty,
+          sizeof(T));
     }
-
-    return createPropertyViewImpl<T>(
-        classProperty,
-        propertyTextureProperty,
-        sizeof(T));
   }
 
   template <typename T>
@@ -520,19 +518,6 @@ private:
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
 
-    // Only scalar arrays are supported.
-    if (type != PropertyType::Scalar) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-    }
-
-    // Only up to four elements are supported.
-    int64_t count = classProperty.count.value_or(0);
-    if (count <= 0 || count > 4) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-    }
-
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
@@ -541,22 +526,26 @@ private:
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
-    // Only up to two-byte components are supported.
-    size_t componentSize = getSizeOfComponentType(componentType);
-    if (componentSize == 0 || componentSize > 2) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-    }
+    // Only scalar arrays are supported. The scalar component type must not
+    // exceed two bytes.
+    if constexpr (IsMetadataScalar<T>::value && sizeof(T) <= 4) {
+      // Only up to four elements are supported.
+      int64_t count = classProperty.count.value_or(0);
+      if (count <= 0 || count > 4) {
+        return PropertyTexturePropertyView<PropertyArrayView<T>>(
+            PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+      }
 
-    if (componentSize * count > 4) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
-          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-    }
+      if (count * sizeof(T) > 4) {
+        return PropertyTexturePropertyView<PropertyArrayView<T>>(
+            PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+      }
 
-    return createPropertyViewImpl<PropertyArrayView<T>>(
-        classProperty,
-        propertyTextureProperty,
-        count * sizeof(T));
+      return createPropertyViewImpl<PropertyArrayView<T>>(
+          classProperty,
+          propertyTextureProperty,
+          count * sizeof(T));
+    }
   }
 
   template <typename T>

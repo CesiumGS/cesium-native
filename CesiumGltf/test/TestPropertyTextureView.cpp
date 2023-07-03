@@ -381,15 +381,6 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
         PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
-  SECTION("Access incorrectly as array") {
-    PropertyTexturePropertyView<PropertyArrayView<glm::u8vec2>> arrayInvalid =
-        view.getPropertyView<PropertyArrayView<glm::u8vec2>>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
-  }
-
   SECTION("Channel and type mismatch") {
     model.images[imageIndex].cesium.channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
@@ -496,16 +487,6 @@ TEST_CASE("Test array PropertyTextureProperty") {
         REQUIRE(value[j] == expected[static_cast<size_t>(j)]);
       }
     }
-  }
-
-  SECTION("Access wrong type") {
-    PropertyTexturePropertyView<PropertyArrayView<glm::u8vec3>>
-        u8vec3ArrayInvalid =
-            view.getPropertyView<PropertyArrayView<glm::u8vec3>>(
-                "TestClassProperty");
-    REQUIRE(
-        u8vec3ArrayInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
   }
 
   SECTION("Access wrong component type") {
@@ -904,123 +885,99 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
-TEST_CASE("Test unsupported PropertyTextureProperty classes") {
+TEST_CASE("Test callback on unsupported PropertyTextureProperty") {
   Model model;
+  // clang-format off
+  std::vector<uint8_t> data = {
+    254, 0, 253, 1,
+    10, 2, 40, 3,
+    30, 0, 0, 2,
+    10, 2, 255, 4};
+  // clang-format on
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::CLAMP_TO_EDGE,
+      2,
+      1,
+      8,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
 
   Schema& schema = metadata.schema.emplace();
   Class& testClass = schema.classes["TestClass"];
-  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+
+  ClassProperty& doubleClassProperty =
+      testClass.properties["DoubleClassProperty"];
+  doubleClassProperty.type = ClassProperty::Type::SCALAR;
+  doubleClassProperty.componentType = ClassProperty::ComponentType::FLOAT64;
+
+  ClassProperty& arrayClassProperty =
+      testClass.properties["ArrayClassProperty"];
+  arrayClassProperty.type = ClassProperty::Type::VEC4;
+  arrayClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+  arrayClassProperty.array = true;
+  arrayClassProperty.count = 2;
 
   PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
   propertyTexture.classProperty = "TestClass";
 
-  PropertyTextureProperty& propertyTextureProperty =
-      propertyTexture.properties["TestClassProperty"];
-  propertyTextureProperty.index = 0;
-  propertyTextureProperty.texCoord = 0;
-  propertyTextureProperty.channels = {0};
+  PropertyTextureProperty& doubleProperty =
+      propertyTexture.properties["DoubleClassProperty"];
+  doubleProperty.index = static_cast<int32_t>(textureIndex);
+  doubleProperty.texCoord = 0;
+  doubleProperty.channels = {0, 1, 2, 3, 4, 5, 6, 7};
+
+  PropertyTextureProperty& arrayProperty =
+      propertyTexture.properties["ArrayClassProperty"];
+  arrayProperty.index = static_cast<int32_t>(textureIndex);
+  arrayProperty.texCoord = 0;
+  arrayProperty.channels = {0, 1, 2, 3, 4, 5, 6, 7};
 
   PropertyTextureView view(model, propertyTexture);
   REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
 
-  SECTION("Unsupported types") {
-    testClassProperty.type = ClassProperty::Type::BOOLEAN;
-    PropertyTexturePropertyView<bool> boolInvalid =
-        view.getPropertyView<bool>("TestClassProperty");
-    REQUIRE(
-        boolInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+  const ClassProperty* classProperty =
+      view.getClassProperty("DoubleClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(
+      classProperty->componentType == ClassProperty::ComponentType::FLOAT64);
+  REQUIRE(!classProperty->array);
 
-    testClassProperty.type = ClassProperty::Type::STRING;
-    PropertyTexturePropertyView<std::string_view> stringInvalid =
-        view.getPropertyView<std::string_view>("TestClassProperty");
-    REQUIRE(
-        stringInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+  classProperty = view.getClassProperty("ArrayClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::VEC4);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT8);
+  REQUIRE(classProperty->array);
+  REQUIRE(classProperty->count == 2);
 
-    testClassProperty.type = ClassProperty::Type::MAT2;
-    PropertyTexturePropertyView<glm::u8mat2x2> mat2Invalid =
-        view.getPropertyView<glm::u8mat2x2>("TestClassProperty");
-    REQUIRE(
-        mat2Invalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-  }
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "DoubleClassProperty",
+      [&invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() ==
+            PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+      });
+  REQUIRE(invokedCallbackCount == 1);
 
-  SECTION("Unsupported component types") {
-    testClassProperty.type = ClassProperty::Type::SCALAR;
-    testClassProperty.componentType = ClassProperty::ComponentType::FLOAT64;
-    PropertyTexturePropertyView<double> doubleInvalid =
-        view.getPropertyView<double>("TestClassProperty");
-    REQUIRE(
-        doubleInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-
-    testClassProperty.type = ClassProperty::Type::SCALAR;
-    testClassProperty.componentType = ClassProperty::ComponentType::UINT64;
-    PropertyTexturePropertyView<uint64_t> uint64Invalid =
-        view.getPropertyView<uint64_t>("TestClassProperty");
-    REQUIRE(
-        uint64Invalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-
-    testClassProperty.type = ClassProperty::Type::VEC2;
-    testClassProperty.componentType = ClassProperty::ComponentType::INT32;
-    PropertyTexturePropertyView<glm::ivec2> ivec2Invalid =
-        view.getPropertyView<glm::ivec2>("TestClassProperty");
-    REQUIRE(
-        ivec2Invalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-
-    testClassProperty.type = ClassProperty::Type::VEC3;
-    testClassProperty.componentType = ClassProperty::ComponentType::UINT16;
-    PropertyTexturePropertyView<glm::u16vec3> u16vec3Invalid =
-        view.getPropertyView<glm::u16vec3>("TestClassProperty");
-    REQUIRE(
-        u16vec3Invalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-  }
-
-  SECTION("Unsupported array types") {
-    testClassProperty.array = true;
-
-    testClassProperty.type = ClassProperty::Type::SCALAR;
-    testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
-    testClassProperty.count = 5;
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> bigArrayInvalid =
-        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
-    REQUIRE(
-        bigArrayInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-
-    testClassProperty.count = std::nullopt;
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>>
-        variableArrayInvalid = view.getPropertyView<PropertyArrayView<uint8_t>>(
-            "TestClassProperty");
-    REQUIRE(
-        variableArrayInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-
-    testClassProperty.type = ClassProperty::Type::VEC2;
-    testClassProperty.componentType = ClassProperty::ComponentType::UINT32;
-    testClassProperty.count = 2;
-    PropertyTexturePropertyView<PropertyArrayView<glm::uvec2>>
-        uvec2ArrayInvalid = view.getPropertyView<PropertyArrayView<glm::uvec2>>(
-            "TestClassProperty");
-    REQUIRE(
-        uvec2ArrayInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-
-    testClassProperty.type = ClassProperty::Type::VEC3;
-    testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
-    testClassProperty.count = 1;
-    PropertyTexturePropertyView<PropertyArrayView<glm::u8vec3>>
-        u8vec3ArrayInvalid =
-            view.getPropertyView<PropertyArrayView<glm::u8vec3>>(
-                "TestClassProperty");
-    REQUIRE(
-        u8vec3ArrayInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
-  }
+  view.getPropertyView(
+      "ArrayClassProperty",
+      [&invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() ==
+            PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+      });
+  REQUIRE(invokedCallbackCount == 2);
 }
