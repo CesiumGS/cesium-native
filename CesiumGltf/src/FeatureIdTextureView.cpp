@@ -68,14 +68,25 @@ int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
     return -1;
   }
 
+  // Always use nearest filtering, and use std::floor instead of std::round.
+  // This is because filtering is supposed to consider the pixel centers. But
+  // memory access here acts as sampling the beginning of the pixel. Example:
+  // 0.4 * 2 = 0.8. In a 2x1 pixel image, that should be closer to the left
+  // pixel's center. But it will round to 1.0 which corresponds to the right
+  // pixel. So the right pixel has a bigger range than the left one, which is
+  // incorrect.
+  double xCoord = std::floor(u * this->_pImage->width);
+  double yCoord = std::floor(v * this->_pImage->height);
+
+  // Clamp to ensure no out-of-bounds data access
   int64_t x = std::clamp(
-      std::llround(u * this->_pImage->width),
-      0LL,
-      (long long)this->_pImage->width - 1);
+      static_cast<int64_t>(xCoord),
+      static_cast<int64_t>(0),
+      static_cast<int64_t>(this->_pImage->width - 1));
   int64_t y = std::clamp(
-      std::llround(v * this->_pImage->height),
-      0LL,
-      (long long)this->_pImage->height - 1);
+      static_cast<int64_t>(yCoord),
+      static_cast<int64_t>(0),
+      static_cast<int64_t>(this->_pImage->height - 1));
 
   int64_t pixelOffset = this->_pImage->bytesPerChannel *
                         this->_pImage->channels *

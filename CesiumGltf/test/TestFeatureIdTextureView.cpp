@@ -338,9 +338,9 @@ TEST_CASE("Test getFeatureID rounds to nearest pixel") {
 
   FeatureIdTextureView view(model, featureIdTexture);
   REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
-  REQUIRE(view.getFeatureID(0.1, 0.24) == 1);
+  REQUIRE(view.getFeatureID(0.1, 0.4) == 1);
   REQUIRE(view.getFeatureID(0.86, 0.2) == 2);
-  REQUIRE(view.getFeatureID(0.21, 0.555) == 0);
+  REQUIRE(view.getFeatureID(0.29, 0.555) == 0);
   REQUIRE(view.getFeatureID(0.99, 0.81) == 7);
 }
 
