@@ -160,7 +160,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     pProvider->loadTile(*pTile);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
-        asyncSystem.dispatchMainThreadTasks();
+      asyncSystem.dispatchMainThreadTasks();
     }
 
     CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
@@ -214,7 +214,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     pProvider->loadTile(*pTile);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
-        asyncSystem.dispatchMainThreadTasks();
+      asyncSystem.dispatchMainThreadTasks();
     }
 
     CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
