@@ -137,7 +137,11 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle(""),
-        _normalized(false) {}
+        _normalized(false) {
+    assert(
+        _status != PropertyTexturePropertyViewStatus::Valid &&
+        "An empty property view should not be constructed with a valid status");
+  }
 
   /**
    * @brief Construct a valid view of the data specified by a {@link PropertyTextureProperty}.
