@@ -596,20 +596,51 @@ ImageReaderResult GltfReader::readImage(
             image.channels = 4;
           }
 
-          // Copy over the positions of each mip within the buffer.
-          image.mipPositions.resize(pTexture->numLevels);
-          for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
-            ktx_size_t imageOffset;
-            ktxTexture_GetImageOffset(
-                ktxTexture(pTexture),
-                level,
-                0,
-                0,
-                &imageOffset);
-            ktx_size_t imageSize =
-                ktxTexture_GetImageSize(ktxTexture(pTexture), level);
+          // In the KTX2 spec, there's a distinction between "this image has no
+          // mipmaps, so they should be generated at runtime" and and "this
+          // image has no mipmaps because it makes no sense to create a mipmap
+          // for this type of image." It is, confusingly, encoded in the
+          // `levelCount` property:
+          // https://registry.khronos.org/KTX/specs/2.0/ktxspec.v2.html#_levelcount
+          //
+          // With `levelCount=0`, mipmaps should be generated. With
+          // `levelCount=1`, mipmaps make no sense. So when `levelCount=0`, we
+          // want to leave the `mipPositions` array _empty_. With
+          // `levelCount=1`, we want to populate it with a single mip level.
+          //
+          // However, this `levelCount` property is not directly exposed by the
+          // KTX2 loader API we're using here. Instead, there is a `numLevels`
+          // property, but it will _never_ have the value 0, because it
+          // represents the number of levels of actual pixel data we have. When
+          // the API sees `levelCount=0`, it will assign the value 1 to
+          // `numLevels`, but it will _also_ set `generateMipmaps` to true.
+          //
+          // The API docs say that `numLevels` will always be 1 when
+          // `generateMipmaps` is true.
+          //
+          // So, in summary, when `generateMipmaps=false`, we populate
+          // `mipPositions` with whatever mip levels the KTX provides and we
+          // don't generate any more. When it's true, we treat all the image
+          // data as belonging to a single base-level image and generate mipmaps
+          // from that if necessary.
+          if (!pTexture->generateMipmaps) {
+            // Copy over the positions of each mip within the buffer.
+            image.mipPositions.resize(pTexture->numLevels);
+            for (ktx_uint32_t level = 0; level < pTexture->numLevels; ++level) {
+              ktx_size_t imageOffset;
+              ktxTexture_GetImageOffset(
+                  ktxTexture(pTexture),
+                  level,
+                  0,
+                  0,
+                  &imageOffset);
+              ktx_size_t imageSize =
+                  ktxTexture_GetImageSize(ktxTexture(pTexture), level);
 
-            image.mipPositions[level] = {imageOffset, imageSize};
+              image.mipPositions[level] = {imageOffset, imageSize};
+            }
+          } else {
+            assert(pTexture->numLevels == 1);
           }
 
           // Copy over the entire buffer, including all mips.
