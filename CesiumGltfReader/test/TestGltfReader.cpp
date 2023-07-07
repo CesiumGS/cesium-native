@@ -456,7 +456,7 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
     CHECK(image.mipPositions[0].byteSize > 0);
     CHECK(
         image.mipPositions[0].byteSize ==
-        image.width * image.height * image.channels);
+        size_t(image.width * image.height * image.channels));
     CHECK(image.mipPositions[0].byteSize == image.pixelData.size());
   }
 
@@ -489,7 +489,7 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
     CHECK(image.mipPositions[0].byteSize > 0);
     CHECK(
         image.mipPositions[0].byteSize ==
-        image.width * image.height * image.channels);
+        size_t(image.width * image.height * image.channels));
     CHECK(image.mipPositions[0].byteSize < image.pixelData.size());
 
     size_t smallerThan = image.mipPositions[0].byteSize;
