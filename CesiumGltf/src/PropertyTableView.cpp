@@ -125,13 +125,12 @@ PropertyTableView::PropertyTableView(
   }
 
   auto classIter = schema->classes.find(_pPropertyTable->classProperty);
-  if (classIter != schema->classes.end()) {
-    _pClass = &classIter->second;
+  if (classIter == schema->classes.end()) {
+    _status = PropertyTableViewStatus::ErrorClassNotFound;
+    return;
   }
 
-  if (!_pClass) {
-    _status = PropertyTableViewStatus::ErrorClassNotFound;
-  }
+  _pClass = &classIter->second;
 }
 
 const ClassProperty*
@@ -282,26 +281,26 @@ PropertyTableView::getStringPropertyValues(
     const ClassProperty& classProperty,
     const PropertyTableProperty& propertyTableProperty) const {
   if (classProperty.array) {
-    return createInvalidPropertyView<std::string_view>(
+    return PropertyTablePropertyView<std::string_view>(
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   if (classProperty.type != ClassProperty::Type::STRING) {
-    return createInvalidPropertyView<std::string_view>(
+    return PropertyTablePropertyView<std::string_view>(
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
 
   gsl::span<const std::byte> values;
   auto status = getBufferSafe(propertyTableProperty.values, values);
   if (status != PropertyTablePropertyViewStatus::Valid) {
-    return createInvalidPropertyView<std::string_view>(status);
+    return PropertyTablePropertyView<std::string_view>(status);
   }
 
   const PropertyComponentType offsetType =
       convertStringOffsetTypeStringToPropertyComponentType(
           propertyTableProperty.stringOffsetType);
   if (offsetType == PropertyComponentType::None) {
-    return createInvalidPropertyView<std::string_view>(
+    return PropertyTablePropertyView<std::string_view>(
         PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType);
   }
 
@@ -313,11 +312,10 @@ PropertyTableView::getStringPropertyValues(
       static_cast<size_t>(_pPropertyTable->count),
       stringOffsets);
   if (status != PropertyTablePropertyViewStatus::Valid) {
-    return createInvalidPropertyView<std::string_view>(status);
+    return PropertyTablePropertyView<std::string_view>(status);
   }
 
   return PropertyTablePropertyView<std::string_view>(
-      PropertyTablePropertyViewStatus::Valid,
       values,
       gsl::span<const std::byte>(),
       stringOffsets,
@@ -333,31 +331,31 @@ PropertyTableView::getStringArrayPropertyValues(
     const ClassProperty& classProperty,
     const PropertyTableProperty& propertyTableProperty) const {
   if (!classProperty.array) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   if (classProperty.type != ClassProperty::Type::STRING) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
 
   gsl::span<const std::byte> values;
   auto status = getBufferSafe(propertyTableProperty.values, values);
   if (status != PropertyTablePropertyViewStatus::Valid) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         status);
   }
 
   // Check if array is fixed or variable length
   const int64_t fixedLengthArrayCount = classProperty.count.value_or(0);
   if (fixedLengthArrayCount > 0 && propertyTableProperty.arrayOffsets >= 0) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
   }
 
   if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::
             ErrorArrayCountAndOffsetBufferDontExist);
   }
@@ -367,12 +365,12 @@ PropertyTableView::getStringArrayPropertyValues(
       convertStringOffsetTypeStringToPropertyComponentType(
           propertyTableProperty.stringOffsetType);
   if (stringOffsetType == PropertyComponentType::None) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType);
   }
 
   if (propertyTableProperty.stringOffsets < 0) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetBufferView);
   }
 
@@ -386,12 +384,11 @@ PropertyTableView::getStringArrayPropertyValues(
         static_cast<size_t>(_pPropertyTable->count * fixedLengthArrayCount),
         stringOffsets);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+      return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
           status);
     }
 
     return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
-        PropertyTablePropertyViewStatus::Valid,
         values,
         gsl::span<const std::byte>(),
         stringOffsets,
@@ -407,12 +404,12 @@ PropertyTableView::getStringArrayPropertyValues(
       convertArrayOffsetTypeStringToPropertyComponentType(
           propertyTableProperty.arrayOffsetType);
   if (arrayOffsetType == PropertyComponentType::None) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
   }
 
   if (propertyTableProperty.arrayOffsets < 0) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetBufferView);
   }
 
@@ -420,14 +417,14 @@ PropertyTableView::getStringArrayPropertyValues(
   gsl::span<const std::byte> stringOffsets;
   status = getBufferSafe(propertyTableProperty.stringOffsets, stringOffsets);
   if (status != PropertyTablePropertyViewStatus::Valid) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         status);
   }
 
   gsl::span<const std::byte> arrayOffsets;
   status = getBufferSafe(propertyTableProperty.arrayOffsets, arrayOffsets);
   if (status != PropertyTablePropertyViewStatus::Valid) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         status);
   }
 
@@ -470,12 +467,11 @@ PropertyTableView::getStringArrayPropertyValues(
   }
 
   if (status != PropertyTablePropertyViewStatus::Valid) {
-    return createInvalidPropertyView<PropertyArrayView<std::string_view>>(
+    return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         status);
   }
 
   return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
-      PropertyTablePropertyViewStatus::Valid,
       values,
       arrayOffsets,
       stringOffsets,

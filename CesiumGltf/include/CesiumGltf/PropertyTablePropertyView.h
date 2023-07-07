@@ -27,7 +27,7 @@ enum class PropertyTablePropertyViewStatus {
   Valid,
 
   /**
-   * @brief This property view was attempting to view an invalid
+   * @brief This property view was initialized from an invalid
    * {@link PropertyTable}.
    */
   ErrorInvalidPropertyTable,
@@ -36,7 +36,7 @@ enum class PropertyTablePropertyViewStatus {
    * @brief This property view is trying to view a property that does not exist
    * in the {@link PropertyTable}.
    */
-  ErrorPropertyDoesNotExist,
+  ErrorNonexistentProperty,
 
   /**
    * @brief This property view's type does not match what is
@@ -171,28 +171,39 @@ enum class PropertyTablePropertyViewStatus {
 template <typename ElementType> class PropertyTablePropertyView {
 public:
   /**
-   * @brief Constructs a new instance with a non-existent property.
+   * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTablePropertyView()
-      : _status{PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist},
+      : _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
         _values{},
         _arrayCount{},
         _size{},
         _normalized{} {}
 
   /**
-   * @brief Construct a new instance pointing to non-array data specified by
-   * {@link PropertyTableProperty}.
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   */
+  PropertyTablePropertyView(PropertyTablePropertyViewStatus status)
+      : _status{status}, _values{}, _arrayCount{}, _size{}, _normalized{} {
+    assert(
+        _status != PropertyTablePropertyViewStatus::Valid &&
+        "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Construct a valid instance pointing to non-array data specified by
+   * a {@link PropertyTableProperty}.
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTablePropertyView(
-      PropertyTablePropertyViewStatus status,
       gsl::span<const std::byte> values,
       int64_t size,
       bool normalized) noexcept
-      : _status{status},
+      : _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
@@ -205,8 +216,8 @@ public:
         _normalized{normalized} {}
 
   /**
-   * @brief Construct a new instance pointing to the data specified by
-   * {@link PropertyTableProperty}.
+   * @brief Construct a valid instance pointing to the data specified by
+   * a {@link PropertyTableProperty}.
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
    * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
@@ -217,7 +228,6 @@ public:
    * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTablePropertyView(
-      PropertyTablePropertyViewStatus status,
       gsl::span<const std::byte> values,
       gsl::span<const std::byte> arrayOffsets,
       gsl::span<const std::byte> stringOffsets,
@@ -226,7 +236,7 @@ public:
       int64_t arrayCount,
       int64_t size,
       bool normalized) noexcept
-      : _status{status},
+      : _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
         _arrayOffsets{arrayOffsets},
         _arrayOffsetType{arrayOffsetType},

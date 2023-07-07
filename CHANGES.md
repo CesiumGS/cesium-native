@@ -4,22 +4,26 @@
 
 ##### Breaking Changes :mega:
 
+- Views of the data contained by `EXT_feature_metadata` will no longer supported by Cesium Native. The extension will still be parsed, but it will log a warning.
+- Batch tables will be converted to `EXT_structural_metadata` instead of `EXT_feature_metadata`.
 - In `CesiumGltf`, all generated classes related to `EXT_feature_metadata` are now prefixed with `ExtensionExtFeatureMetadata`. For example, `ClassProperty` has become `ExtensionExtFeatureMetadataClassProperty`. This also extends to the glTF reader and writer.
 - In `CesiumGltf`, all generated classes related to `EXT_structural_metadata` have had their `ExtensionExtStructuralMetadata` prefix removed. For example, `ExtensionExtStructuralMetadataClassProperty` has become `ClassProperty`. This also extends to the glTF reader and writer.
 - In `CesiumGltf`, `ExtensionExtMeshFeaturesFeatureId` and `ExtensionExtMeshFeaturesFeatureIdTexture` have been renamed to `FeatureId` and `FeatureIdTexture` respectively.
 - Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `FeatureIdTexture` in `EXT_mesh_features`. Feature ID textures from `EXT_feature_metadata` are no longer supported.
 - Renamed `FeatureIDTextureViewStatus` to `FeatureIdTextureViewStatus` for consistency.
 - Replaced `MetadataFeatureTableView` with `PropertyTableView`, which views a `PropertyTable` in `EXT_structural_metadata`.
-- Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
 - Renamed `MetadataArrayView` to `PropertyArrayView`.
 - Replaced `FeatureTextureView` with `PropertyTextureView`, which views a `PropertyTexture` in `EXT_structural_metadata`.
 - Renamed `FeatureTextureViewStatus` to `PropertyTextureViewStatus`.
-- Replaced `FeatureTexturePropertyView` with `PropertyTexturePropertyView`, which views a `PropertyTextureProperty` in `EXT_structural_metadata`.
+- Replaced `FeatureTexturePropertyView` with `PropertyTexturePropertyView`, which is a templated view of a `PropertyTextureProperty` in `EXT_structural_metadata`.
+- Removed `FeatureTexturePropertyComponentType`, `FeatureTexturePropertyChannelOffsets`, and `FeatureTexturePropertyValue`. `PropertyTextureProperty` retrieves the values with the type indicated by its class property.
 - Renamed `FeatureTexturePropertyViewStatus` to `PropertyTexturePropertyViewStatus`.
 - Refactored `PropertyType` to reflect the values of `type` in a `ClassProperty` from `EXT_structural_metadata`.
-- Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
 
-Additionally, views of the data contained by `EXT_feature_metadata` will no longer supported by Cesium Native. The extension will still be parsed, but it will log a warning. Batch tables will also be converted to `EXT_structural_metadata` instead of `EXT_feature_metadata`.
+##### Additions :tada:
+
+- Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
+- Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
 
 ### v0.25.0 - 2023-06-01
 

@@ -3,7 +3,7 @@
 namespace CesiumGltf {
 FeatureIdTextureView::FeatureIdTextureView() noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
-      _texCoordSetIndex(-1),
+      _texCoordSetIndex(0),
       _channels(),
       _pImage(nullptr) {}
 
@@ -11,8 +11,8 @@ FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
     const FeatureIdTexture& featureIdTexture) noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
-      _texCoordSetIndex(-1),
-      _channels(featureIdTexture.channels),
+      _texCoordSetIndex(featureIdTexture.texCoord),
+      _channels(),
       _pImage(nullptr) {
   int32_t textureIndex = featureIdTexture.index;
   if (textureIndex < 0 ||
@@ -29,7 +29,6 @@ FeatureIdTextureView::FeatureIdTextureView(
   }
 
   // Ignore the texture's sampler, we will always use nearest pixel sampling.
-
   this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_status = FeatureIdTextureViewStatus::ErrorEmptyImage;
@@ -44,12 +43,6 @@ FeatureIdTextureView::FeatureIdTextureView(
         FeatureIdTextureViewStatus::ErrorInvalidImageBytesPerChannel;
     return;
   }
-
-  if (featureIdTexture.texCoord < 0) {
-    this->_status = FeatureIdTextureViewStatus::ErrorInvalidTexCoordSetIndex;
-    return;
-  }
-  this->_texCoordSetIndex = featureIdTexture.texCoord;
 
   const std::vector<int64_t>& channels = featureIdTexture.channels;
   if (channels.size() == 0 || channels.size() > 4 ||
@@ -70,19 +63,30 @@ FeatureIdTextureView::FeatureIdTextureView(
   this->_status = FeatureIdTextureViewStatus::Valid;
 }
 
-int64_t FeatureIdTextureView::getFeatureId(double u, double v) const noexcept {
+int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
   }
 
+  // Always use nearest filtering, and use std::floor instead of std::round.
+  // This is because filtering is supposed to consider the pixel centers. But
+  // memory access here acts as sampling the beginning of the pixel. Example:
+  // 0.4 * 2 = 0.8. In a 2x1 pixel image, that should be closer to the left
+  // pixel's center. But it will round to 1.0 which corresponds to the right
+  // pixel. So the right pixel has a bigger range than the left one, which is
+  // incorrect.
+  double xCoord = std::floor(u * this->_pImage->width);
+  double yCoord = std::floor(v * this->_pImage->height);
+
+  // Clamp to ensure no out-of-bounds data access
   int64_t x = std::clamp(
-      std::llround(u * this->_pImage->width),
-      0LL,
-      (long long)this->_pImage->width);
+      static_cast<int64_t>(xCoord),
+      static_cast<int64_t>(0),
+      static_cast<int64_t>(this->_pImage->width - 1));
   int64_t y = std::clamp(
-      std::llround(v * this->_pImage->height),
-      0LL,
-      (long long)this->_pImage->height);
+      static_cast<int64_t>(yCoord),
+      static_cast<int64_t>(0),
+      static_cast<int64_t>(this->_pImage->height - 1));
 
   int64_t pixelOffset = this->_pImage->bytesPerChannel *
                         this->_pImage->channels *

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/common.hpp>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -52,4 +54,9 @@ convertStringOffsetTypeStringToPropertyComponentType(const std::string& str);
 bool isPropertyTypeVecN(PropertyType type);
 
 bool isPropertyTypeMatN(PropertyType type);
+
+glm::length_t getDimensionsFromPropertyType(PropertyType type);
+
+size_t getSizeOfComponentType(PropertyComponentType componentType);
+
 } // namespace CesiumGltf

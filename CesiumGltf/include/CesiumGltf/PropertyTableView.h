@@ -54,7 +54,7 @@ class PropertyTableView {
 public:
   /**
    * @brief Creates an instance of PropertyTableView.
-   * @param model The Gltf Model that contains property table data.
+   * @param model The glTF Model that contains the property table data.
    * @param propertyTable The {@link PropertyTable}
    * from which the view will retrieve data.
    */
@@ -111,14 +111,14 @@ public:
   PropertyTablePropertyView<T>
   getPropertyView(const std::string& propertyName) const {
     if (this->size() <= 0) {
-      return createInvalidPropertyView<T>(
+      return PropertyTablePropertyView<T>(
           PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
     }
 
     const ClassProperty* pClassProperty = getClassProperty(propertyName);
     if (!pClassProperty) {
-      return createInvalidPropertyView<T>(
-          PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
+      return PropertyTablePropertyView<T>(
+          PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
     }
 
     return getPropertyViewImpl<T>(propertyName, *pClassProperty);
@@ -149,7 +149,7 @@ public:
     if (this->size() <= 0) {
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable));
       return;
     }
@@ -158,8 +158,8 @@ public:
     if (!pClassProperty) {
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
-              PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist));
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorNonexistentProperty));
       return;
     }
 
@@ -208,7 +208,7 @@ public:
     } else {
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorTypeMismatch));
     }
   }
@@ -240,22 +240,6 @@ public:
   }
 
 private:
-  glm::length_t getDimensionsFromType(PropertyType type) const {
-    switch (type) {
-    case PropertyType::Vec2:
-    case PropertyType::Mat2:
-      return 2;
-    case PropertyType::Vec3:
-    case PropertyType::Mat3:
-      return 3;
-    case PropertyType::Vec4:
-    case PropertyType::Mat4:
-      return 4;
-    default:
-      return 0;
-    }
-  }
-
   template <typename Callback>
   void getScalarArrayPropertyViewImpl(
       const std::string& propertyName,
@@ -336,7 +320,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
@@ -422,7 +406,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
@@ -435,7 +419,7 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    glm::length_t N = getDimensionsFromType(type);
+    glm::length_t N = getDimensionsFromPropertyType(type);
     switch (N) {
     case 2:
       getVecNArrayPropertyViewImpl<Callback, 2>(
@@ -461,7 +445,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
@@ -547,7 +531,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
@@ -560,7 +544,7 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    const glm::length_t N = getDimensionsFromType(type);
+    const glm::length_t N = getDimensionsFromPropertyType(type);
     switch (N) {
     case 2:
       getMatNArrayPropertyViewImpl<Callback, 2>(
@@ -586,7 +570,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
@@ -635,7 +619,7 @@ private:
     } else {
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorTypeMismatch));
     }
   }
@@ -719,7 +703,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
@@ -732,7 +716,7 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    const glm::length_t N = getDimensionsFromType(type);
+    const glm::length_t N = getDimensionsFromPropertyType(type);
     switch (N) {
     case 2:
       getVecNPropertyViewImpl<Callback, 2>(
@@ -758,7 +742,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
@@ -844,7 +828,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
@@ -857,7 +841,7 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    glm::length_t N = getDimensionsFromType(type);
+    glm::length_t N = getDimensionsFromPropertyType(type);
     switch (N) {
     case 2:
       getMatNPropertyViewImpl<Callback, 2>(
@@ -883,7 +867,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorTypeMismatch));
       break;
     }
@@ -949,7 +933,7 @@ private:
     default:
       callback(
           propertyName,
-          createInvalidPropertyView<uint8_t>(
+          PropertyTablePropertyView<uint8_t>(
               PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
       break;
     }
@@ -962,8 +946,8 @@ private:
     auto propertyTablePropertyIter =
         _pPropertyTable->properties.find(propertyName);
     if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
-      return createInvalidPropertyView<T>(
-          PropertyTablePropertyViewStatus::ErrorPropertyDoesNotExist);
+      return PropertyTablePropertyView<T>(
+          PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
     }
 
     const PropertyTableProperty& propertyTableProperty =
@@ -997,31 +981,31 @@ private:
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const {
     if (classProperty.array) {
-      return createInvalidPropertyView<T>(
+      return PropertyTablePropertyView<T>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return createInvalidPropertyView<T>(
+      return PropertyTablePropertyView<T>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
-      return createInvalidPropertyView<T>(
+      return PropertyTablePropertyView<T>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
     gsl::span<const std::byte> values;
     const auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return createInvalidPropertyView<T>(status);
+      return PropertyTablePropertyView<T>(status);
     }
 
     if (values.size() % sizeof(T) != 0) {
-      return createInvalidPropertyView<T>(
+      return PropertyTablePropertyView<T>(
           PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
@@ -1035,13 +1019,12 @@ private:
     }
 
     if (values.size() < maxRequiredBytes) {
-      return createInvalidPropertyView<T>(
+      return PropertyTablePropertyView<T>(
           PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
     }
 
     return PropertyTablePropertyView<T>(
-        PropertyTablePropertyViewStatus::Valid,
         values,
         _pPropertyTable->count,
         classProperty.normalized);
@@ -1057,13 +1040,13 @@ private:
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const {
     if (!classProperty.array) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
 
@@ -1071,31 +1054,31 @@ private:
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
     gsl::span<const std::byte> values;
     auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(status);
+      return PropertyTablePropertyView<PropertyArrayView<T>>(status);
     }
 
     if (values.size() % sizeof(T) != 0) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
 
     const int64_t fixedLengthArrayCount = classProperty.count.value_or(0);
     if (fixedLengthArrayCount > 0 && propertyTableProperty.arrayOffsets >= 0) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::
               ErrorArrayCountAndOffsetBufferCoexist);
     }
 
     if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::
               ErrorArrayCountAndOffsetBufferDontExist);
     }
@@ -1114,13 +1097,12 @@ private:
       }
 
       if (values.size() < maxRequiredBytes) {
-        return createInvalidPropertyView<PropertyArrayView<T>>(
+        return PropertyTablePropertyView<PropertyArrayView<T>>(
             PropertyTablePropertyViewStatus::
                 ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
       }
 
       return PropertyTablePropertyView<PropertyArrayView<T>>(
-          PropertyTablePropertyViewStatus::Valid,
           values,
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
@@ -1136,7 +1118,7 @@ private:
         convertArrayOffsetTypeStringToPropertyComponentType(
             propertyTableProperty.arrayOffsetType);
     if (arrayOffsetType == PropertyComponentType::None) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(
+      return PropertyTablePropertyView<PropertyArrayView<T>>(
           PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
     }
 
@@ -1150,11 +1132,10 @@ private:
         checkBitsSize,
         arrayOffsets);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return createInvalidPropertyView<PropertyArrayView<T>>(status);
+      return PropertyTablePropertyView<PropertyArrayView<T>>(status);
     }
 
     return PropertyTablePropertyView<PropertyArrayView<T>>(
-        PropertyTablePropertyViewStatus::Valid,
         values,
         arrayOffsets,
         gsl::span<const std::byte>(),
@@ -1188,16 +1169,6 @@ private:
       size_t valuesBufferSize,
       size_t propertyTableCount,
       gsl::span<const std::byte>& stringOffsetsBuffer) const noexcept;
-
-  template <typename T>
-  static PropertyTablePropertyView<T> createInvalidPropertyView(
-      PropertyTablePropertyViewStatus invalidStatus) noexcept {
-    return PropertyTablePropertyView<T>(
-        invalidStatus,
-        gsl::span<const std::byte>(),
-        0,
-        false);
-  }
 
   const Model* _pModel;
   const PropertyTable* _pPropertyTable;
