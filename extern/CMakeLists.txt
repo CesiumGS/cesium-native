@@ -160,6 +160,9 @@ add_subdirectory(libmorton)
 
 add_subdirectory(zlib)
 
+# Undo zlib's unnecessary and repo-dirtying rename.
+file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/zlib/zconf.h.included ${CMAKE_CURRENT_SOURCE_DIR}/zlib/zconf.h)
+
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
     if(NOT IS_ABSOLUTE ${CMAKE_TOOLCHAIN_FILE})
         set(TJ_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/${CMAKE_TOOLCHAIN_FILE})
