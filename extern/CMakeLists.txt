@@ -158,7 +158,12 @@ set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/incl
 set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")
 add_subdirectory(libmorton)
 
+# Be sure the include directories zlib adds are added before any existing directories.
+# We need to make sure it finds zconf.h in the build directory not the source directory.
+set(ORIGINAL_CMAKE_INCLUDE_DIRECTORIES_BEFORE ${CMAKE_INCLUDE_DIRECTORIES_BEFORE})
+set(CMAKE_INCLUDE_DIRECTORIES_BEFORE ON)
 add_subdirectory(zlib)
+set(CMAKE_INCLUDE_DIRECTORIES_BEFORE ${ORIGINAL_CMAKE_INCLUDE_DIRECTORIES_BEFORE})
 
 # Undo zlib's unnecessary and repo-dirtying rename.
 file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/zlib/zconf.h.included ${CMAKE_CURRENT_SOURCE_DIR}/zlib/zconf.h)
