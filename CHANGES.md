@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug in the 3D Tiles selection algorithm that could cause missing detail if a tileset had a leaf tile that was considered "unconditionally refined" due to have a geometric error larger than its parent's.
+
 ### v0.25.1 - 2023-07-03
 
 ##### Additions :tada:
