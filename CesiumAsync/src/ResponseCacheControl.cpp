@@ -15,7 +15,8 @@ ResponseCacheControl::ResponseCacheControl(
     bool accessControlPrivate,
     bool proxyRevalidate,
     int maxAge,
-    int sharedMaxAge)
+    int sharedMaxAge,
+    int staleWhileRevalidate)
     : _mustRevalidate{mustRevalidate},
       _noCache{noCache},
       _noStore{noStore},
@@ -24,7 +25,8 @@ ResponseCacheControl::ResponseCacheControl(
       _accessControlPrivate{accessControlPrivate},
       _proxyRevalidate{proxyRevalidate},
       _maxAge{maxAge},
-      _sharedMaxAge{sharedMaxAge} {}
+      _sharedMaxAge{sharedMaxAge},
+      _staleWhileRevalidate{staleWhileRevalidate} {}
 
 /*static*/ std::optional<ResponseCacheControl>
 ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
@@ -87,6 +89,13 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
     sharedMaxAge = std::stoi(sharedMaxAgeIter->second);
   }
 
+  int staleWhileRevalidate = 0;
+  std::map<std::string, std::string, CaseInsensitiveCompare>::const_iterator
+      staleWhileRevalidateIter = parameterizedDirectives.find("stale-while-revalidate");
+  if (staleWhileRevalidateIter != parameterizedDirectives.end()) {
+    staleWhileRevalidate = std::stoi(staleWhileRevalidateIter->second);
+  }
+
   return ResponseCacheControl(
       mustRevalidate,
       noCache,
@@ -96,7 +105,8 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
       accessControlPrivate,
       proxyRevalidate,
       maxAge,
-      sharedMaxAge);
+      sharedMaxAge,
+      staleWhileRevalidate);
 }
 
 std::string trimSpace(const std::string& str) {

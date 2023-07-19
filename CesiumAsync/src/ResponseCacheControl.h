@@ -40,7 +40,8 @@ public:
       bool accessControlPrivate,
       bool proxyRevalidate,
       int maxAge,
-      int sharedMaxAge);
+      int sharedMaxAge,
+      int staleWhileRevalidate);
 
   /**
    * @brief Must-Revalidate directive that appears in the Cache-Control header.
@@ -92,6 +93,11 @@ public:
   int sharedMaxAge() const noexcept { return _sharedMaxAge; }
 
   /**
+   * @brief Stale-While-Revalidate directive that appears in the Cache-Control header.
+   */
+  int staleWhileRevalidate() const noexcept { return _staleWhileRevalidate; }
+
+  /**
    * @brief Parse response cache control from the response's headers.
    */
   static std::optional<ResponseCacheControl>
@@ -107,5 +113,6 @@ private:
   bool _proxyRevalidate;
   int _maxAge;
   int _sharedMaxAge;
+  int _staleWhileRevalidate;
 };
 } // namespace CesiumAsync
