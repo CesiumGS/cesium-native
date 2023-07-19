@@ -3,10 +3,13 @@
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
+#include "decodeMeshOpt.h"
+#include "decodeQuantized.h"
 #include "registerExtensions.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
@@ -299,6 +302,21 @@ void postprocess(
 
   if (options.decodeDraco) {
     decodeDraco(readGltf);
+  }
+
+  if (std::find(
+          model.extensionsUsed.begin(),
+          model.extensionsUsed.end(),
+          "EXT_meshopt_compression") != model.extensionsUsed.end()) {
+    decodeMeshOpt(model);
+  }
+
+  if (options.decodeQuantized &&
+      std::find(
+          model.extensionsUsed.begin(),
+          model.extensionsUsed.end(),
+          "KHR_mesh_quantization") != model.extensionsUsed.end()) {
+    decodeQuantized(model);
   }
 }
 

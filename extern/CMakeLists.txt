@@ -46,6 +46,8 @@ endif()
 
 set(CESIUM_NATIVE_DRACO_LIBRARY ${CESIUM_NATIVE_DRACO_LIBRARY} PARENT_SCOPE)
 
+add_subdirectory(meshoptimizer)
+
 if (NOT TARGET glm)
     add_subdirectory(glm GLM)
 endif()
@@ -153,6 +155,10 @@ set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
 
 set(CESIUM_NATIVE_LIBMORTON_INCUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/libmorton/include" CACHE INTERNAL
     "Include directory for libmorton libraries"
+)
+
+set(CESIUM_NATIVE_MESHOPTIMIZER_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/meshoptimizer/src/" CACHE INTERNAL
+    "Include directory for meshoptimizer"
 )
 
 set(BUILD_TESTING OFF CACHE INTERNAL "Disable libmorton Testing")

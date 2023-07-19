@@ -101,6 +101,8 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    */
   bool decodeDraco = true;
 
+  bool decodeQuantized = true;
+
   /**
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
