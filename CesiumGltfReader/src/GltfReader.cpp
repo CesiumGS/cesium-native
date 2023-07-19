@@ -597,7 +597,7 @@ ImageReaderResult GltfReader::readImage(
           }
 
           // In the KTX2 spec, there's a distinction between "this image has no
-          // mipmaps, so they should be generated at runtime" and and "this
+          // mipmaps, so they should be generated at runtime" and "this
           // image has no mipmaps because it makes no sense to create a mipmap
           // for this type of image." It is, confusingly, encoded in the
           // `levelCount` property:
