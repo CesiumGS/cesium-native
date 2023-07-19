@@ -311,17 +311,21 @@ bool shouldCacheRequest(
 
   // check if cache control contains no-store or no-cache directives
   int maxAge = 0;
+  int staleWhileRevalidate = 0;
   if (cacheControl) {
     if (cacheControl->noStore() || cacheControl->noCache()) {
       return false;
     }
 
     maxAge = cacheControl->maxAge();
+    staleWhileRevalidate = cacheControl->staleWhileRevalidate();
   }
 
-  // check response header contains expires if maxAge is not specified
-  const HttpHeaders& responseHeaders = pResponse->headers();
-  if (maxAge == 0) {
+  // Prefer cache control directives over older Expires header
+  if (maxAge != 0 || staleWhileRevalidate != 0) {
+    // The response is cacheable
+  } else {
+    const HttpHeaders& responseHeaders = pResponse->headers();
     HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
     if (expiresHeader == responseHeaders.end()) {
       return false;
@@ -343,8 +347,14 @@ std::string calculateCacheKey(const IAssetRequest& request) {
 std::time_t calculateExpiryTime(
     const IAssetRequest& request,
     const std::optional<ResponseCacheControl>& cacheControl) {
+
+  // Prefer cache control directives over older Expires header
   if (cacheControl) {
-    if (cacheControl->maxAge() != 0) {
+    // A specified maxAge indicates exact expiration.
+    // A specified staleWhileRevalidate still indicates expiration with maxAge,
+    // even if it is 0.
+    if (cacheControl->maxAge() != 0 ||
+        cacheControl->staleWhileRevalidate() != 0) {
       return std::time(nullptr) + cacheControl->maxAge();
     }
   }
