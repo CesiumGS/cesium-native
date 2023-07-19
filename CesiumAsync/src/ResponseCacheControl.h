@@ -93,7 +93,8 @@ public:
   int sharedMaxAge() const noexcept { return _sharedMaxAge; }
 
   /**
-   * @brief Stale-While-Revalidate directive that appears in the Cache-Control header.
+   * @brief Stale-While-Revalidate directive that appears in the Cache-Control
+   * header.
    */
   int staleWhileRevalidate() const noexcept { return _staleWhileRevalidate; }
 

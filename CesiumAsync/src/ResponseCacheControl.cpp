@@ -91,7 +91,8 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
 
   int staleWhileRevalidate = 0;
   std::map<std::string, std::string, CaseInsensitiveCompare>::const_iterator
-      staleWhileRevalidateIter = parameterizedDirectives.find("stale-while-revalidate");
+      staleWhileRevalidateIter =
+          parameterizedDirectives.find("stale-while-revalidate");
   if (staleWhileRevalidateIter != parameterizedDirectives.end()) {
     staleWhileRevalidate = std::stoi(staleWhileRevalidateIter->second);
   }
