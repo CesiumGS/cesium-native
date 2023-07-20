@@ -634,8 +634,7 @@ TilesetContentManager::TilesetContentManager(
             [pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
-             contentOptions = tilesetOptions.contentOptions,
-             showCreditsOnScreen = tilesetOptions.showCreditsOnScreen](
+             contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
               // Check if request is successful
