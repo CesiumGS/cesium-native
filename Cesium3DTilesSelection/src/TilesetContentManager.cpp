@@ -702,7 +702,6 @@ TilesetContentManager::TilesetContentManager(
                              contentOptions,
                              url,
                              flatHeaders,
-                             showCreditsOnScreen,
                              tilesetJson)
                       .thenImmediately(
                           [](TilesetContentLoaderResult<TilesetContentLoader>&&
