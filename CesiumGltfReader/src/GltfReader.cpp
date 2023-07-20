@@ -6,10 +6,10 @@
 #include "decodeMeshOpt.h"
 #include "decodeQuantized.h"
 #include "registerExtensions.h"
+#include "transformTexture.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumJsonReader/ExtensionReaderContext.h>
@@ -317,6 +317,14 @@ void postprocess(
           model.extensionsUsed.end(),
           "KHR_mesh_quantization") != model.extensionsUsed.end()) {
     decodeQuantized(model);
+  }
+
+  if (options.transformTexture &&
+      std::find(
+          model.extensionsUsed.begin(),
+          model.extensionsUsed.end(),
+          "KHR_texture_transform") != model.extensionsUsed.end()) {
+    transformTexture(model);
   }
 }
 
