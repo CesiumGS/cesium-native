@@ -14,9 +14,12 @@ ResponseCacheControl::ResponseCacheControl(
     bool accessControlPublic,
     bool accessControlPrivate,
     bool proxyRevalidate,
-    int maxAge,
-    int sharedMaxAge,
-    int staleWhileRevalidate)
+    bool maxAgeExists,
+    int maxAgeValue,
+    bool sharedMaxAgeExists,
+    int sharedMaxAgeValue,
+    bool staleWhileRevalidateExists,
+    int staleWhileRevalidateValue)
     : _mustRevalidate{mustRevalidate},
       _noCache{noCache},
       _noStore{noStore},
@@ -24,9 +27,12 @@ ResponseCacheControl::ResponseCacheControl(
       _accessControlPublic{accessControlPublic},
       _accessControlPrivate{accessControlPrivate},
       _proxyRevalidate{proxyRevalidate},
-      _maxAge{maxAge},
-      _sharedMaxAge{sharedMaxAge},
-      _staleWhileRevalidate{staleWhileRevalidate} {}
+      _maxAgeExists{maxAgeExists},
+      _maxAgeValue{maxAgeValue},
+      _sharedMaxAgeExists{sharedMaxAgeExists},
+      _sharedMaxAgeValue{sharedMaxAgeValue},
+      _staleWhileRevalidateExists{staleWhileRevalidateExists},
+      _staleWhileRevalidateValue{staleWhileRevalidateValue} {}
 
 /*static*/ std::optional<ResponseCacheControl>
 ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
@@ -75,27 +81,21 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
   bool proxyRevalidate =
       directives.find("proxy-revalidate") != directives.end();
 
-  int maxAge = 0;
   std::map<std::string, std::string, CaseInsensitiveCompare>::const_iterator
-      maxAgeIter = parameterizedDirectives.find("max-age");
-  if (maxAgeIter != parameterizedDirectives.end()) {
-    maxAge = std::stoi(maxAgeIter->second);
-  }
+      mapIter;
 
-  int sharedMaxAge = 0;
-  std::map<std::string, std::string, CaseInsensitiveCompare>::const_iterator
-      sharedMaxAgeIter = parameterizedDirectives.find("s-maxage");
-  if (sharedMaxAgeIter != parameterizedDirectives.end()) {
-    sharedMaxAge = std::stoi(sharedMaxAgeIter->second);
-  }
+  mapIter = parameterizedDirectives.find("max-age");
+  bool maxAgeExists = mapIter != parameterizedDirectives.end();
+  int maxAgeValue = maxAgeExists ? std::stoi(mapIter->second) : 0;
 
-  int staleWhileRevalidate = 0;
-  std::map<std::string, std::string, CaseInsensitiveCompare>::const_iterator
-      staleWhileRevalidateIter =
-          parameterizedDirectives.find("stale-while-revalidate");
-  if (staleWhileRevalidateIter != parameterizedDirectives.end()) {
-    staleWhileRevalidate = std::stoi(staleWhileRevalidateIter->second);
-  }
+  mapIter = parameterizedDirectives.find("s-maxage");
+  bool sharedMaxAgeExists = mapIter != parameterizedDirectives.end();
+  int sharedMaxAgeValue = sharedMaxAgeExists ? std::stoi(mapIter->second) : 0;
+
+  mapIter = parameterizedDirectives.find("stale-while-revalidate");
+  bool staleWhileRevalidateExists = mapIter != parameterizedDirectives.end();
+  int staleWhileRevalidateValue =
+      staleWhileRevalidateExists ? std::stoi(mapIter->second) : 0;
 
   return ResponseCacheControl(
       mustRevalidate,
@@ -105,9 +105,12 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
       accessControlPublic,
       accessControlPrivate,
       proxyRevalidate,
-      maxAge,
-      sharedMaxAge,
-      staleWhileRevalidate);
+      maxAgeExists,
+      maxAgeValue,
+      sharedMaxAgeExists,
+      sharedMaxAgeValue,
+      staleWhileRevalidateExists,
+      staleWhileRevalidateValue);
 }
 
 std::string trimSpace(const std::string& str) {

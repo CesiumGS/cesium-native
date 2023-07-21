@@ -39,9 +39,12 @@ public:
       bool accessControlPublic,
       bool accessControlPrivate,
       bool proxyRevalidate,
-      int maxAge,
-      int sharedMaxAge,
-      int staleWhileRevalidate);
+      bool maxAgeExists,
+      int maxAgeValue,
+      bool sharedMaxAgeExists,
+      int sharedMaxAgeValue,
+      bool staleWhileRevalidateExists,
+      int staleWhileRevalidateValue);
 
   /**
    * @brief Must-Revalidate directive that appears in the Cache-Control header.
@@ -83,20 +86,43 @@ public:
   inline bool proxyRevalidate() const noexcept { return _proxyRevalidate; }
 
   /**
-   * @brief Max-Age directive that appears in the Cache-Control header.
-   */
-  int maxAge() const noexcept { return _maxAge; }
-
-  /**
-   * @brief S-Maxage directive that appears in the Cache-Control header.
-   */
-  int sharedMaxAge() const noexcept { return _sharedMaxAge; }
-
-  /**
-   * @brief Stale-While-Revalidate directive that appears in the Cache-Control
+   * @brief Existence of Max-Age directive that appears in the Cache-Control
    * header.
    */
-  int staleWhileRevalidate() const noexcept { return _staleWhileRevalidate; }
+  bool maxAgeExists() const noexcept { return _maxAgeExists; }
+
+  /**
+   * @brief Value of Max-Age directive that appears in the Cache-Control header.
+   */
+  int maxAgeValue() const noexcept { return _maxAgeValue; }
+
+  /**
+   * @brief Existence of S-Maxage directive that appears in the Cache-Control
+   * header.
+   */
+  bool sharedMaxAgeExists() const noexcept { return _sharedMaxAgeExists; }
+
+  /**
+   * @brief Value of S-Maxage directive that appears in the Cache-Control
+   * header.
+   */
+  int sharedMaxAgeValue() const noexcept { return _sharedMaxAgeValue; }
+
+  /**
+   * @brief Existence of Stale-While-Revalidate directive that appears in the
+   * Cache-Control header.
+   */
+  bool staleWhileRevalidateExists() const noexcept {
+    return _staleWhileRevalidateExists;
+  }
+
+  /**
+   * @brief Value of Stale-While-Revalidate directive that appears in the
+   * Cache-Control header.
+   */
+  int staleWhileRevalidateValue() const noexcept {
+    return _staleWhileRevalidateValue;
+  }
 
   /**
    * @brief Parse response cache control from the response's headers.
@@ -112,8 +138,14 @@ private:
   bool _accessControlPublic;
   bool _accessControlPrivate;
   bool _proxyRevalidate;
-  int _maxAge;
-  int _sharedMaxAge;
-  int _staleWhileRevalidate;
+
+  bool _maxAgeExists;
+  int _maxAgeValue;
+
+  bool _sharedMaxAgeExists;
+  int _sharedMaxAgeValue;
+
+  bool _staleWhileRevalidateExists;
+  int _staleWhileRevalidateValue;
 };
 } // namespace CesiumAsync
