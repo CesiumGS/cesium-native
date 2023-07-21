@@ -311,14 +311,6 @@ bool shouldCacheRequest(
     return false;
   }
 
-  // If no headers exist that allow us to revalidate, don't put it in the cache
-  const HttpHeaders& headers = pResponse->headers();
-  bool hasEtag = headers.find("Etag") != headers.end();
-  bool hasLastModified = headers.find("Last-Modified") != headers.end();
-  bool canRevalidate = hasEtag || hasLastModified;
-  if (!canRevalidate)
-    return false;
-
   // Check cache control header if it exists
   bool ignoreExpiresHeader = false;
   if (cacheControl) {
@@ -333,6 +325,7 @@ bool shouldCacheRequest(
 
   // Check older Expires header
   if (!ignoreExpiresHeader) {
+    const HttpHeaders& headers = pResponse->headers();
     HttpHeaders::const_iterator expiresHeader = headers.find("Expires");
     if (expiresHeader == headers.end())
       return false;
