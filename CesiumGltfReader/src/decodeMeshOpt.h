@@ -5,6 +5,12 @@ struct Model;
 }
 
 namespace CesiumGltfReader {
+struct GltfReaderResult;
+}
 
-void decodeMeshOpt(CesiumGltf::Model& model);
+namespace CesiumGltfReader {
+
+void decodeMeshOpt(
+    CesiumGltf::Model& model,
+    CesiumGltfReader::GltfReaderResult& readGltf);
 } // namespace CesiumGltfReader

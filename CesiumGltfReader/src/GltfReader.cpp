@@ -308,7 +308,7 @@ void postprocess(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "EXT_meshopt_compression") != model.extensionsUsed.end()) {
-    decodeMeshOpt(model);
+    decodeMeshOpt(model, readGltf);
   }
 
   if (options.unquantizeMeshData &&
