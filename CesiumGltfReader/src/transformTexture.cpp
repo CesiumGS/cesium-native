@@ -64,7 +64,8 @@ void processTextureInfo(
           find->second = static_cast<int32_t>(model.accessors.size());
           Accessor& accessor = model.accessors.emplace_back(*pAccessor);
           Buffer& buffer = model.buffers.emplace_back();
-          buffer.cesium.data.resize(pBufferView->byteLength);
+          buffer.cesium.data.resize(
+              static_cast<size_t>(pBufferView->byteLength));
           transformBufferView(model, accessor, buffer, *textureTransform);
           accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
           BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
@@ -76,7 +77,7 @@ void processTextureInfo(
 }
 } // namespace
 
-void CesiumGltfReader::transformTexture(Model& model) {
+void transformTexture(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       Material* pMaterial =

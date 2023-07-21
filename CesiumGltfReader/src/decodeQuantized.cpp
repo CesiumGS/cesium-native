@@ -6,36 +6,39 @@
 
 #include <meshoptimizer.h>
 
-using namespace std;
 using namespace CesiumGltf;
 
 namespace CesiumGltfReader {
 
 namespace {
-template <typename T, int N>
+template <typename T, size_t N>
 using xVec = AccessorView<glm::vec<N, T, glm::defaultp>>;
 
-template <typename T, int N>
+template <typename T> float intToFloat(T t) { return intToFloat(t); }
+
+template <> float intToFloat(std::int8_t c) {
+  return std::max(c / 127.0f, -1.0f);
+}
+
+template <> float intToFloat(std::uint8_t c) { return c / 127.0f; }
+
+template <> float intToFloat(std::int16_t c) {
+  return std::max(c / 65535.0f, -1.0f);
+}
+
+template <> float intToFloat(std::uint16_t c) { return c / 65535.0f; }
+
+template <typename T, size_t N>
 void unquantizeFloat(float* fPtr, xVec<T, N>& quantizedView) {
   for (int i = 0; i < quantizedView.size(); i++) {
     const auto& q = quantizedView[i];
-    for (int j = 0; j < q.length(); j++) {
+    for (unsigned int j = 0; j < q.length(); j++) {
       *fPtr++ = intToFloat<T>(q[j]);
     }
   }
 }
 
-template <typename T> float intToFloat(T t) { return intToFloat(t); }
-
-float intToFloat(int8_t c) { return max(c / 127.0f, -1.0f); }
-
-float intToFloat(uint8_t c) { return c / 127.0f; }
-
-float intToFloat(int16_t c) { return max(c / 65535.0f, -1.0f); }
-
-float intToFloat(unsigned short c) { return c / 65535.0f; }
-
-template <typename T, int N>
+template <typename T, size_t N>
 void decodeAccessor(Model& model, Accessor& accessor) {
 
   xVec<T, N> quantizedView(model, accessor);
@@ -63,26 +66,26 @@ void decodeAccessor(Model& model, Accessor& accessor) {
 
   Buffer& buffer = model.buffers.emplace_back();
   buffer.byteLength = pBufferView->byteLength;
-  buffer.cesium.data.resize(buffer.byteLength);
+  buffer.cesium.data.resize(static_cast<size_t>(buffer.byteLength));
 
   unquantizeFloat<T>(
       reinterpret_cast<float*>(buffer.cesium.data.data()),
       quantizedView);
 }
 
-template <int N> void decodeAccessor(Model& model, Accessor& accessor) {
+template <size_t N> void decodeAccessor(Model& model, Accessor& accessor) {
   switch (accessor.componentType) {
   case Accessor::ComponentType::BYTE:
-    decodeAccessor<int8_t, N>(model, accessor);
+    decodeAccessor<std::int8_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    decodeAccessor<uint8_t, N>(model, accessor);
+    decodeAccessor<std::uint8_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::SHORT:
-    decodeAccessor<int16_t, N>(model, accessor);
+    decodeAccessor<std::int16_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    decodeAccessor<uint16_t, N>(model, accessor);
+    decodeAccessor<std::uint16_t, N>(model, accessor);
     break;
   }
 }
@@ -103,10 +106,11 @@ void decodeAccessor(Model& model, Accessor& accessor) {
 }
 } // namespace
 
-void CesiumGltfReader::decodeQuantized(Model& model) {
+void decodeQuantized(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
-      for (pair<const string, int32_t>& attribute : primitive.attributes) {
+      for (std::pair<const std::string, int32_t>& attribute :
+           primitive.attributes) {
         Accessor* pAccessor =
             Model::getSafe(&model.accessors, attribute.second);
         if (pAccessor) {

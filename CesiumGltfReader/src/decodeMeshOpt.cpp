@@ -23,7 +23,7 @@ void decodeBufferView(
 
   destination.byteLength =
       static_cast<int64_t>(meshOpt.byteStride * accessor.count);
-  destination.cesium.data.resize(destination.byteLength);
+  destination.cesium.data.resize(static_cast<size_t>(destination.byteLength));
   bufferView.byteLength = destination.byteLength;
   bufferView.byteStride = meshOpt.byteStride;
   bufferView.byteOffset = 0;
@@ -32,8 +32,8 @@ void decodeBufferView(
       ExtensionBufferViewExtMeshoptCompression::Mode::ATTRIBUTES) {
     if (meshopt_decodeVertexBuffer(
             destination.cesium.data.data(),
-            accessor.count,
-            bufferView.byteStride.value(),
+            static_cast<size_t>(accessor.count),
+            static_cast<size_t>(meshOpt.byteStride),
             reinterpret_cast<const unsigned char*>(buffer.data()),
             buffer.size())) {
       return;
@@ -43,7 +43,7 @@ void decodeBufferView(
       ExtensionBufferViewExtMeshoptCompression::Mode::TRIANGLES) {
     if (meshopt_decodeIndexBuffer(
             reinterpret_cast<uint16_t*>(destination.cesium.data.data()),
-            accessor.count,
+            static_cast<size_t>(accessor.count),
             sizeof(uint16_t),
             reinterpret_cast<const unsigned char*>(buffer.data()),
             buffer.size())) {
@@ -53,7 +53,7 @@ void decodeBufferView(
       meshOpt.mode == ExtensionBufferViewExtMeshoptCompression::Mode::INDICES) {
     if (meshopt_decodeIndexSequence(
             reinterpret_cast<uint16_t*>(destination.cesium.data.data()),
-            accessor.count,
+            static_cast<size_t>(accessor.count),
             sizeof(uint16_t),
             reinterpret_cast<const unsigned char*>(buffer.data()),
             buffer.size())) {
@@ -90,7 +90,7 @@ void decodeAccessor(int32_t accessor, Model& model) {
 }
 } // namespace
 
-void CesiumGltfReader::decodeMeshOpt(Model& model) {
+void decodeMeshOpt(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       decodeAccessor(primitive.indices, model);
