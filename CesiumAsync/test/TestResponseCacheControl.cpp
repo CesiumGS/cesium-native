@@ -32,8 +32,8 @@ TEST_CASE("Test parsing cache-control header") {
     REQUIRE(cacheControl->accessControlPublic());
     REQUIRE(cacheControl->accessControlPrivate());
     REQUIRE(cacheControl->proxyRevalidate());
-    REQUIRE(cacheControl->maxAge() == 1000);
-    REQUIRE(cacheControl->sharedMaxAge() == 10);
+    REQUIRE(cacheControl->maxAgeValue() == 1000);
+    REQUIRE(cacheControl->sharedMaxAgeValue() == 10);
   }
 
   SECTION("Header has cache-control header with only some directive") {
@@ -53,7 +53,7 @@ TEST_CASE("Test parsing cache-control header") {
     REQUIRE(cacheControl->accessControlPublic());
     REQUIRE(cacheControl->accessControlPrivate());
     REQUIRE(cacheControl->proxyRevalidate() == false);
-    REQUIRE(cacheControl->maxAge() == 1000);
-    REQUIRE(cacheControl->sharedMaxAge() == 10);
+    REQUIRE(cacheControl->maxAgeValue() == 1000);
+    REQUIRE(cacheControl->sharedMaxAgeValue() == 10);
   }
 }

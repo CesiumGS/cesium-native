@@ -593,8 +593,8 @@ TEST_CASE("Test serving cache item") {
               REQUIRE(cacheControl->accessControlPublic() == false);
               REQUIRE(cacheControl->accessControlPrivate() == true);
               REQUIRE(cacheControl->proxyRevalidate() == false);
-              REQUIRE(cacheControl->maxAge() == 100);
-              REQUIRE(cacheControl->sharedMaxAge() == 0);
+              REQUIRE(cacheControl->maxAgeValue() == 100);
+              REQUIRE(cacheControl->sharedMaxAgeValue() == 0);
             })
         .wait();
   }
@@ -687,8 +687,8 @@ TEST_CASE("Test serving cache item") {
               REQUIRE(cacheControl->accessControlPublic() == false);
               REQUIRE(cacheControl->accessControlPrivate() == true);
               REQUIRE(cacheControl->proxyRevalidate() == false);
-              REQUIRE(cacheControl->maxAge() == 300);
-              REQUIRE(cacheControl->sharedMaxAge() == 0);
+              REQUIRE(cacheControl->maxAgeValue() == 300);
+              REQUIRE(cacheControl->sharedMaxAgeValue() == 0);
             })
         .wait();
   }
