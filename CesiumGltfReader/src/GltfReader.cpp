@@ -4,9 +4,9 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
-#include "unquantizeMeshData.h"
 #include "registerExtensions.h"
 #include "transformTextureCoords.h"
+#include "unquantizeMeshData.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
