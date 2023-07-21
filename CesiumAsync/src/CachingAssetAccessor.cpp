@@ -269,13 +269,14 @@ bool shouldRevalidateCache(const CacheItem& cacheItem) {
   std::optional<ResponseCacheControl> cacheControl =
       ResponseCacheControl::parseFromResponseHeaders(
           cacheItem.cacheResponse.headers);
-  if (cacheControl) {
-    if (isCacheStale(cacheItem) && cacheControl->mustRevalidate()) {
-      return true;
-    }
-  }
+  if (cacheControl && cacheControl->noCache())
+    return true;
 
-  return isCacheStale(cacheItem);
+  bool cacheIsStale = isCacheStale(cacheItem);
+  if (cacheControl && cacheIsStale && cacheControl->mustRevalidate())
+    return true;
+
+  return cacheIsStale;
 }
 
 bool isCacheStale(const CacheItem& cacheItem) noexcept {
@@ -321,7 +322,7 @@ bool shouldCacheRequest(
   // Check cache control header if it exists
   bool ignoreExpiresHeader = false;
   if (cacheControl) {
-    if (cacheControl->noStore() || cacheControl->noCache())
+    if (cacheControl->noStore())
       return false;
 
     // If there is a Cache-Control header with the max-age or s-maxage directive
