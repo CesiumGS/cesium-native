@@ -1,4 +1,4 @@
-#include "decodeQuantized.h"
+#include "unquantizeMeshData.h"
 
 #include "CesiumGltfReader/GltfReader.h"
 
@@ -39,7 +39,7 @@ void unquantizeFloat(float* fPtr, xVec<T, N>& quantizedView) {
 }
 
 template <typename T, size_t N>
-void decodeAccessor(Model& model, Accessor& accessor) {
+void unquantizeAccessor(Model& model, Accessor& accessor) {
 
   xVec<T, N> quantizedView(model, accessor);
   accessor.componentType = AccessorSpec::ComponentType::FLOAT;
@@ -73,40 +73,40 @@ void decodeAccessor(Model& model, Accessor& accessor) {
       quantizedView);
 }
 
-template <size_t N> void decodeAccessor(Model& model, Accessor& accessor) {
+template <size_t N> void unquantizeAccessor(Model& model, Accessor& accessor) {
   switch (accessor.componentType) {
   case Accessor::ComponentType::BYTE:
-    decodeAccessor<std::int8_t, N>(model, accessor);
+    unquantizeAccessor<std::int8_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    decodeAccessor<std::uint8_t, N>(model, accessor);
+    unquantizeAccessor<std::uint8_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::SHORT:
-    decodeAccessor<std::int16_t, N>(model, accessor);
+    unquantizeAccessor<std::int16_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    decodeAccessor<std::uint16_t, N>(model, accessor);
+    unquantizeAccessor<std::uint16_t, N>(model, accessor);
     break;
   }
 }
 
-void decodeAccessor(Model& model, Accessor& accessor) {
+void unquantizeAccessor(Model& model, Accessor& accessor) {
   int8_t numberOfComponents = accessor.computeNumberOfComponents();
   switch (numberOfComponents) {
   case 2:
-    decodeAccessor<2>(model, accessor);
+    unquantizeAccessor<2>(model, accessor);
     break;
   case 3:
-    decodeAccessor<3>(model, accessor);
+    unquantizeAccessor<3>(model, accessor);
     break;
   case 4:
-    decodeAccessor<4>(model, accessor);
+    unquantizeAccessor<4>(model, accessor);
     break;
   }
 }
 } // namespace
 
-void decodeQuantized(Model& model) {
+void unquantizeMeshData(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       for (std::pair<const std::string, int32_t>& attribute :
@@ -114,7 +114,7 @@ void decodeQuantized(Model& model) {
         Accessor* pAccessor =
             Model::getSafe(&model.accessors, attribute.second);
         if (pAccessor) {
-          decodeAccessor(model, *pAccessor);
+          unquantizeAccessor(model, *pAccessor);
         }
       }
     }

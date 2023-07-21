@@ -1,10 +1,9 @@
-#include "transformTexture.h"
+#include "transformTextureCoords.h"
 
 #include "CesiumGltf/ExtensionKhrTextureTransform.h"
 #include "CesiumGltfReader/GltfReader.h"
 
 #include <CesiumGltf/AccessorView.h>
-using namespace glm;
 using namespace CesiumGltf;
 namespace CesiumGltfReader {
 namespace {
@@ -14,13 +13,13 @@ void transformBufferView(
     Buffer& buffer,
     ExtensionKhrTextureTransform& textureTransform) {
 
-  const AccessorView<vec2> accessorView(model, accessor);
+  const AccessorView<glm::vec2> accessorView(model, accessor);
   if (accessorView.status() == AccessorViewStatus::Valid) {
-    vec2 Offset(textureTransform.offset[0], textureTransform.offset[1]);
-    vec2 Scale(textureTransform.scale[0], textureTransform.scale[1]);
+    glm::vec2 Offset(textureTransform.offset[0], textureTransform.offset[1]);
+    glm::vec2 Scale(textureTransform.scale[0], textureTransform.scale[1]);
     float Rotation = static_cast<float>(textureTransform.rotation);
-    mat3 translation = mat3(1, 0, 0, 0, 1, 0, Offset.x, Offset.y, 1);
-    mat3 rotation = mat3(
+    glm::mat3 translation = glm::mat3(1, 0, 0, 0, 1, 0, Offset.x, Offset.y, 1);
+    glm::mat3 rotation = glm::mat3(
         cos(Rotation),
         sin(Rotation),
         0,
@@ -30,10 +29,10 @@ void transformBufferView(
         0,
         0,
         1);
-    mat3 scale = mat3(Scale.x, 0, 0, 0, Scale.y, 0, 0, 0, 1);
-    mat3 matrix = translation * rotation * scale;
+    glm::mat3 scale = glm::mat3(Scale.x, 0, 0, 0, Scale.y, 0, 0, 0, 1);
+    glm::mat3 matrix = translation * rotation * scale;
 
-    vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
 
     for (int i = 0; i < accessorView.size(); i++) {
       *uvs++ = glm::vec2((matrix * glm::vec3(accessorView[i], 1)));

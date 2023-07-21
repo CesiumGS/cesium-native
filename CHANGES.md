@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added support for the `EXT_meshopt_compression` extension, which allows decompressing mesh data using the meshoptimizer library. Also added support for the `KHR_mesh_quantization` and `KHR_texture_transform` extensions, which are often used together with the `EXT_meshopt_compression` extension to optimize the size and performance of glTF files.
+
 ##### Fixes :wrench:
 
 - Fixed a bug where `GltfReader::readImage` would always populate `mipPositions` when reading KTX2 images, even when the KTX2 file indicated that it had no mip levels and that they should be created, if necessary, from the base image. As a result, `generateMipMaps` wouldn't generate any mipmaps for the image.

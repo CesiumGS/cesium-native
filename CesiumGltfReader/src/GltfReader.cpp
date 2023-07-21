@@ -4,9 +4,9 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
-#include "decodeQuantized.h"
+#include "unquantizeMeshData.h"
 #include "registerExtensions.h"
-#include "transformTexture.h"
+#include "transformTextureCoords.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -311,15 +311,15 @@ void postprocess(
     decodeMeshOpt(model);
   }
 
-  if (options.decodeQuantized &&
+  if (options.unquantizeMeshData &&
       std::find(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "KHR_mesh_quantization") != model.extensionsUsed.end()) {
-    decodeQuantized(model);
+    unquantizeMeshData(model);
   }
 
-  if (options.transformTexture &&
+  if (options.applyTextureTransform &&
       std::find(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),

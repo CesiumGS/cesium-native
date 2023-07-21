@@ -68,21 +68,22 @@ void decodeAccessor(int32_t accessor, Model& model) {
     BufferView* pBufferView =
         Model::getSafe(&model.bufferViews, pAccessor->bufferView);
     if (pBufferView) {
-      ExtensionBufferViewExtMeshoptCompression* meshOpt =
+      ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
           pBufferView->getExtension<ExtensionBufferViewExtMeshoptCompression>();
-      if (meshOpt) {
-        pBufferView->buffer = static_cast<int32_t>(model.buffers.size());
-        Buffer* pDest = &model.buffers.emplace_back();
-        Buffer* pBuffer = model.getSafe(&model.buffers, meshOpt->buffer);
+      if (pMeshOpt) {
+       Buffer* pBuffer = model.getSafe(&model.buffers, pMeshOpt->buffer);
         if (pBuffer) {
+          pBufferView->buffer = static_cast<int32_t>(model.buffers.size());
+          Buffer* pDest = &model.buffers.emplace_back();
+          pBuffer = model.getSafe(&model.buffers, pMeshOpt->buffer);
           decodeBufferView(
               *pAccessor,
               *pDest,
               gsl::span<const byte>(
-                  pBuffer->cesium.data.data() + meshOpt->byteOffset,
-                  static_cast<uint64_t>(meshOpt->byteLength)),
+                  pBuffer->cesium.data.data() + pMeshOpt->byteOffset,
+                  static_cast<size_t>(pMeshOpt->byteLength)),
               *pBufferView,
-              *meshOpt);
+              *pMeshOpt);
         }
       }
     }
