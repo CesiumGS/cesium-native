@@ -40,42 +40,43 @@ void transformBufferView(
 void processTextureInfo(
     Model& model,
     MeshPrimitive& primitive,
-    TextureInfo& textureInfo) {
+    std::optional<TextureInfo>& textureInfo) {
+  if (!textureInfo) {
+    return;
+  }
   ExtensionKhrTextureTransform* pTextureTransform =
-      textureInfo.getExtension<ExtensionKhrTextureTransform>();
-  if (pTextureTransform) {
-    int64_t texCoord = 0;
-    if (pTextureTransform->texCoord) {
-      texCoord = *pTextureTransform->texCoord;
-    }
-    auto find =
-        primitive.attributes.find("TEXCOORD_" + std::to_string(texCoord));
-    if (find != primitive.attributes.end()) {
-      const Accessor* pAccessor =
-          Model::getSafe(&model.accessors, find->second);
-      if (pAccessor) {
-        const BufferView* pBufferView =
-            Model::getSafe(&model.bufferViews, pAccessor->bufferView);
-        if (pBufferView) {
-          Accessor& accessor = model.accessors.emplace_back(*pAccessor);
-          Buffer& buffer = model.buffers.emplace_back();
-          buffer.cesium.data.resize(
-              static_cast<size_t>(pBufferView->byteLength));
-          const AccessorView<glm::vec2> accessorView(model, accessor);
-          if (accessorView.status() == AccessorViewStatus::Valid) {
-            transformBufferView(accessorView, buffer, *pTextureTransform);
-            accessor.bufferView =
-                static_cast<int32_t>(model.bufferViews.size());
-            BufferView& bufferView =
-                model.bufferViews.emplace_back(*pBufferView);
-            bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-            find->second = static_cast<int32_t>(model.accessors.size() - 1);
-            textureInfo.extensions.erase(
-                ExtensionKhrTextureTransform::ExtensionName);
-          }
-        }
-      }
-    }
+      textureInfo->getExtension<ExtensionKhrTextureTransform>();
+  if (!pTextureTransform) {
+    return;
+  }
+  int64_t texCoord = 0;
+  if (pTextureTransform->texCoord) {
+    texCoord = *pTextureTransform->texCoord;
+  }
+  auto find = primitive.attributes.find("TEXCOORD_" + std::to_string(texCoord));
+  if (find == primitive.attributes.end()) {
+    return;
+  }
+  const Accessor* pAccessor = Model::getSafe(&model.accessors, find->second);
+  if (!pAccessor) {
+    return;
+  }
+  const BufferView* pBufferView =
+      Model::getSafe(&model.bufferViews, pAccessor->bufferView);
+  if (!pBufferView) {
+    return;
+  }
+  Accessor& accessor = model.accessors.emplace_back(*pAccessor);
+  Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data.resize(static_cast<size_t>(pBufferView->byteLength));
+  const AccessorView<glm::vec2> accessorView(model, accessor);
+  if (accessorView.status() == AccessorViewStatus::Valid) {
+    transformBufferView(accessorView, buffer, *pTextureTransform);
+    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
+    BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    find->second = static_cast<int32_t>(model.accessors.size() - 1);
+    textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
   }
 } // namespace
 
@@ -86,11 +87,10 @@ void transformTexture(Model& model) {
           Model::getSafe(&model.materials, primitive.material);
       if (pMaterial) {
         if (pMaterial->pbrMetallicRoughness) {
-          std::optional<TextureInfo>& textureInfo =
-              pMaterial->pbrMetallicRoughness->baseColorTexture;
-          if (textureInfo) {
-            processTextureInfo(model, primitive, *textureInfo);
-          }
+          processTextureInfo(
+              model,
+              primitive,
+              pMaterial->pbrMetallicRoughness->baseColorTexture);
         }
       }
     }

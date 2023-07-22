@@ -29,10 +29,10 @@ template <> float intToFloat(std::int16_t c) {
 template <> float intToFloat(std::uint16_t c) { return c / 65535.0f; }
 
 template <typename T, size_t N>
-void unquantizeFloat(float* fPtr, xVec<T, N>& quantizedView) {
+void unquantizeFloat(float* fPtr, const xVec<T, N>& quantizedView) {
   for (int i = 0; i < quantizedView.size(); i++) {
     const auto& q = quantizedView[i];
-    for (unsigned int j = 0; j < q.length(); j++) {
+    for (unsigned int j = 0; j < N; j++) {
       *fPtr++ = intToFloat<T>(q[j]);
     }
   }
@@ -40,12 +40,20 @@ void unquantizeFloat(float* fPtr, xVec<T, N>& quantizedView) {
 
 template <typename T, size_t N>
 void unquantizeAccessor(Model& model, Accessor& accessor) {
-
   xVec<T, N> quantizedView(model, accessor);
+  if (quantizedView.status() != AccessorViewStatus::Valid) {
+    return;
+  }
+  if (quantizedView.size() != accessor.count) {
+    return;
+  }
+  Buffer& buffer = model.buffers.emplace_back();
+  int64_t byteLength = accessor.count * N * sizeof(float);
+  buffer.byteLength = byteLength;
+  buffer.cesium.data.resize(byteLength);
+
   accessor.componentType = AccessorSpec::ComponentType::FLOAT;
   accessor.byteOffset = 0;
-  accessor.count = accessor.count;
-
   for (double& d : accessor.min) {
     d = intToFloat<T>(static_cast<T>(d));
   }
@@ -55,20 +63,12 @@ void unquantizeAccessor(Model& model, Accessor& accessor) {
 
   BufferView* pBufferView =
       Model::getSafe(&model.bufferViews, accessor.bufferView);
-  if (!pBufferView) {
-    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
-    pBufferView = &model.bufferViews.emplace_back();
-  }
+  pBufferView->buffer = static_cast<int32_t>(model.buffers.size() - 1);
   pBufferView->byteOffset = 0;
   pBufferView->byteStride = N * sizeof(float);
-  pBufferView->byteLength = accessor.count * *pBufferView->byteStride;
-  pBufferView->buffer = static_cast<int32_t>(model.buffers.size());
+  pBufferView->byteLength = byteLength;
 
-  Buffer& buffer = model.buffers.emplace_back();
-  buffer.byteLength = pBufferView->byteLength;
-  buffer.cesium.data.resize(static_cast<size_t>(buffer.byteLength));
-
-  unquantizeFloat<T>(
+  unquantizeFloat(
       reinterpret_cast<float*>(buffer.cesium.data.data()),
       quantizedView);
 }
@@ -109,7 +109,7 @@ void unquantizeAccessor(Model& model, Accessor& accessor) {
 void unquantizeMeshData(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
-      for (std::pair<const std::string, int32_t>& attribute :
+      for (std::pair<const std::string, int32_t> attribute :
            primitive.attributes) {
         Accessor* pAccessor =
             Model::getSafe(&model.accessors, attribute.second);

@@ -108,6 +108,27 @@ TEST_CASE("CesiumGltfReader::GltfReader") {
   CHECK(model.meshes[0].primitives[0].targets[0]["NORMAL"] == 11);
 }
 
+TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
+  std::vector<std::string> filenames;
+  for (int n = 3; n <= 15; n += 3) {
+    std::string filename = CesiumGltfReader_TEST_DATA_DIR +
+                           std::string("/DucksMeshopt/Duck") + "-vp-" +
+                           std::to_string(n) + "-vt-" + std::to_string(n) +
+                           "-vn-" + std::to_string(n) + ".glb";
+    if (std::filesystem::exists(filename)) {
+      filenames.push_back(filename);
+    }
+  }
+
+  for (const std::string& filename : filenames) {
+    std::vector<std::byte> data = readFile(filename);
+    GltfReader reader;
+    GltfReaderResult result = reader.readGltf(data);
+    REQUIRE(result.model);
+    REQUIRE(result.warnings.empty());
+  }
+}
+
 TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /=
