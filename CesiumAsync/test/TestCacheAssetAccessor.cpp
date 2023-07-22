@@ -86,81 +86,98 @@ public:
 
 } // namespace
 
+bool runResponseCacheTest(
+    int statusCode,
+    const std::string& methodStr,
+    const HttpHeaders& httpHeaders) {
+  std::unique_ptr<IAssetResponse> mockResponse =
+      std::make_unique<MockAssetResponse>(
+          static_cast<uint16_t>(statusCode),
+          "app/json",
+          httpHeaders,
+          std::vector<std::byte>());
+
+  std::shared_ptr<IAssetRequest> mockRequest =
+      std::make_shared<MockAssetRequest>(
+          methodStr,
+          "test.com",
+          HttpHeaders{},
+          std::move(mockResponse));
+
+  std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase =
+      std::make_unique<MockStoreCacheDatabase>();
+  MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
+
+  std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor =
+      std::make_shared<CachingAssetAccessor>(
+          spdlog::default_logger(),
+          std::make_unique<MockAssetAccessor>(mockRequest),
+          std::move(ownedMockCacheDatabase));
+
+  std::shared_ptr<MockTaskProcessor> mockTaskProcessor =
+      std::make_shared<MockTaskProcessor>();
+
+  AsyncSystem asyncSystem(mockTaskProcessor);
+  cacheAssetAccessor
+      ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
+      .wait();
+
+  return mockCacheDatabase->storeResponseCall;
+}
+
 TEST_CASE("Test the condition of caching the request") {
   SECTION("Cache request") {
-    SECTION("Request with GET method, has max-age, cacheable status code") {
+    SECTION("GET request, has max-age, cacheable status code") {
       int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
 
-      std::unique_ptr<IAssetResponse> mockResponse =
-          std::make_unique<MockAssetResponse>(
-              static_cast<uint16_t>(statusCode),
-              "app/json",
-              HttpHeaders{
-                  {"Content-Type", "app/json"},
-                  {"Cache-Control", "must-revalidate, max-age=100"}},
-              std::vector<std::byte>());
+      HttpHeaders headers = {
+          {"Content-Type", "app/json"},
+          {"Cache-Control", "must-revalidate, max-age=100"}};
 
-      std::shared_ptr<IAssetRequest> mockRequest =
-          std::make_shared<MockAssetRequest>(
-              "GET",
-              "test.com",
-              HttpHeaders{},
-              std::move(mockResponse));
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
 
-      std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase =
-          std::make_unique<MockStoreCacheDatabase>();
-      MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
-      std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor =
-          std::make_shared<CachingAssetAccessor>(
-              spdlog::default_logger(),
-              std::make_unique<MockAssetAccessor>(mockRequest),
-              std::move(ownedMockCacheDatabase));
-      std::shared_ptr<MockTaskProcessor> mockTaskProcessor =
-          std::make_shared<MockTaskProcessor>();
-
-      AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor
-          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
-          .wait();
-      REQUIRE(mockCacheDatabase->storeResponseCall == true);
+      REQUIRE(responseCached == true);
     }
 
-    SECTION(
-        "Request with GET method, has Expires header, cacheable status code") {
+    SECTION("GET Request, has Expires header, cacheable status code") {
       int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
 
-      std::unique_ptr<IAssetResponse> mockResponse =
-          std::make_unique<MockAssetResponse>(
-              static_cast<uint16_t>(statusCode),
-              "app/json",
-              HttpHeaders{
-                  {"Content-Type", "app/json"},
-                  {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}},
-              std::vector<std::byte>());
+      HttpHeaders headers = {
+          {"Content-Type", "app/json"},
+          {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}};
 
-      std::shared_ptr<IAssetRequest> mockRequest =
-          std::make_shared<MockAssetRequest>(
-              "GET",
-              "test.com",
-              HttpHeaders{},
-              std::move(mockResponse));
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
 
-      std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase =
-          std::make_unique<MockStoreCacheDatabase>();
-      MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
-      std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor =
-          std::make_shared<CachingAssetAccessor>(
-              spdlog::default_logger(),
-              std::make_unique<MockAssetAccessor>(mockRequest),
-              std::move(ownedMockCacheDatabase));
-      std::shared_ptr<MockTaskProcessor> mockTaskProcessor =
-          std::make_shared<MockTaskProcessor>();
+      REQUIRE(responseCached == true);
+    }
 
-      AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor
-          ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
-          .wait();
-      REQUIRE(mockCacheDatabase->storeResponseCall == true);
+    SECTION("GET Request, max-age 0, old Expires header") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      // Similar to Google Photorealistic 3D Tiles, root request
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"Cache-Control", "private, max-age=0, must-revalidate"},
+          {"ETag", "deadbeef"},
+          {"Expires", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+
+      REQUIRE(responseCached == true);
+    }
+
+    SECTION("GET Request, max-age 0, stale-while-revalidate") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      // Similar to Google Photorealistic 3D Tiles, tile request
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"Cache-Control", "private, max-age=0, stale-while-revalidate=86400"},
+          {"ETag", "deadbeef"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+
+      REQUIRE(responseCached == true);
     }
   }
 
