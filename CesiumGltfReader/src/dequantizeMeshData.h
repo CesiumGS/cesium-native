@@ -6,5 +6,5 @@ struct Model;
 
 namespace CesiumGltfReader {
 
-void unquantizeMeshData(CesiumGltf::Model& model);
+void dequantizeMeshData(CesiumGltf::Model& model);
 } // namespace CesiumGltfReader

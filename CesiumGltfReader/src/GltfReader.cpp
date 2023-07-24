@@ -4,9 +4,9 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
+#include "dequantizeMeshData.h"
 #include "registerExtensions.h"
 #include "transformTextureCoords.h"
-#include "unquantizeMeshData.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -311,7 +311,7 @@ void postprocess(
     decodeMeshOpt(model, readGltf);
   }
 
-  if (options.unquantizeMeshData &&
+  if (options.dequantizeMeshData &&
       std::find(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),

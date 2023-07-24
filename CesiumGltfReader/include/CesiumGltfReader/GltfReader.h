@@ -102,10 +102,10 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool decodeDraco = true;
 
   /**
-   * @brief Whether the quantized and compressed mesh data are unquantized on
+   * @brief Whether the quantized and compressed mesh data are dequantized on
    * the CPU or not, according to the KHR_mesh_quantization extension
    */
-  bool unquantizeMeshData = true;
+  bool dequantizeMeshData = true;
 
   /**
    * @brief  Whether the texture coordinates of a texture are transformed or

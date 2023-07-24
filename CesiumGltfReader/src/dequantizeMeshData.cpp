@@ -1,4 +1,4 @@
-#include "unquantizeMeshData.h"
+#include "dequantizeMeshData.h"
 
 #include "CesiumGltfReader/GltfReader.h"
 
@@ -11,8 +11,6 @@ using namespace CesiumGltf;
 namespace CesiumGltfReader {
 
 namespace {
-template <typename T, size_t N>
-using xVec = AccessorView<glm::vec<N, T, glm::defaultp>>;
 
 template <typename T> float intToFloat(T t) { return intToFloat(t); }
 
@@ -29,28 +27,20 @@ template <> float intToFloat(std::int16_t c) {
 template <> float intToFloat(std::uint16_t c) { return c / 65535.0f; }
 
 template <typename T, size_t N>
-void unquantizeFloat(float* fPtr, const xVec<T, N>& quantizedView) {
-  for (int i = 0; i < quantizedView.size(); i++) {
-    const auto& q = quantizedView[i];
+void dequantizeFloat(
+    float* fPtr,
+    int64_t count,
+    std::byte* bPtr,
+    int64_t stride) {
+  for (int i = 0; i < count; i++, bPtr += stride) {
     for (unsigned int j = 0; j < N; j++) {
-      *fPtr++ = intToFloat<T>(q[j]);
+      *fPtr++ = intToFloat<T>(reinterpret_cast<T*>(bPtr)[j]);
     }
   }
 }
 
 template <typename T, size_t N>
-void unquantizeAccessor(Model& model, Accessor& accessor) {
-  xVec<T, N> quantizedView(model, accessor);
-  if (quantizedView.status() != AccessorViewStatus::Valid) {
-    return;
-  }
-  if (quantizedView.size() != accessor.count) {
-    return;
-  }
-  Buffer& buffer = model.buffers.emplace_back();
-  int64_t byteLength = accessor.count * N * sizeof(float);
-  buffer.byteLength = byteLength;
-  buffer.cesium.data.resize(byteLength);
+void dequantizeAccessor(Model& model, Accessor& accessor) {
 
   accessor.componentType = AccessorSpec::ComponentType::FLOAT;
   accessor.byteOffset = 0;
@@ -63,50 +53,76 @@ void unquantizeAccessor(Model& model, Accessor& accessor) {
 
   BufferView* pBufferView =
       Model::getSafe(&model.bufferViews, accessor.bufferView);
-  pBufferView->buffer = static_cast<int32_t>(model.buffers.size() - 1);
+
+  if (!pBufferView) {
+    return;
+  }
+
+  Buffer* pBuffer = Model::getSafe(&model.buffers, pBufferView->buffer);
+  if (!pBuffer) {
+    return;
+  }
+
+  int64_t byteStride;
+  if (pBufferView->byteStride) {
+    byteStride = *pBufferView->byteStride;
+  } else {
+    byteStride = accessor.computeByteStride(model);
+  }
+
+  int64_t byteLength = accessor.count * N * sizeof(float);
+  std::vector<std::byte> buffer;
+  buffer.resize(byteLength);
+
+  dequantizeFloat<T, N>(
+      reinterpret_cast<float*>(buffer.data()),
+      accessor.count,
+      pBuffer->cesium.data.data() + pBufferView->byteOffset +
+          accessor.byteOffset,
+      byteStride);
+
   pBufferView->byteOffset = 0;
   pBufferView->byteStride = N * sizeof(float);
   pBufferView->byteLength = byteLength;
 
-  unquantizeFloat(
-      reinterpret_cast<float*>(buffer.cesium.data.data()),
-      quantizedView);
+  pBuffer->cesium.data = std::move(buffer);
+  pBuffer->byteLength = byteLength;
 }
 
-template <size_t N> void unquantizeAccessor(Model& model, Accessor& accessor) {
+template <size_t N> void dequantizeAccessor(Model& model, Accessor& accessor) {
   switch (accessor.componentType) {
   case Accessor::ComponentType::BYTE:
-    unquantizeAccessor<std::int8_t, N>(model, accessor);
+    dequantizeAccessor<std::int8_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    unquantizeAccessor<std::uint8_t, N>(model, accessor);
+    dequantizeAccessor<std::uint8_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::SHORT:
-    unquantizeAccessor<std::int16_t, N>(model, accessor);
+    dequantizeAccessor<std::int16_t, N>(model, accessor);
     break;
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    unquantizeAccessor<std::uint16_t, N>(model, accessor);
+    dequantizeAccessor<std::uint16_t, N>(model, accessor);
     break;
   }
 }
 
-void unquantizeAccessor(Model& model, Accessor& accessor) {
+void dequantizeAccessor(Model& model, Accessor& accessor) {
   int8_t numberOfComponents = accessor.computeNumberOfComponents();
   switch (numberOfComponents) {
   case 2:
-    unquantizeAccessor<2>(model, accessor);
+    dequantizeAccessor<2>(model, accessor);
     break;
   case 3:
-    unquantizeAccessor<3>(model, accessor);
+    dequantizeAccessor<3>(model, accessor);
     break;
   case 4:
-    unquantizeAccessor<4>(model, accessor);
+    dequantizeAccessor<4>(model, accessor);
     break;
   }
 }
 } // namespace
 
-void unquantizeMeshData(Model& model) {
+void dequantizeMeshData(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       for (std::pair<const std::string, int32_t> attribute :
@@ -114,7 +130,7 @@ void unquantizeMeshData(Model& model) {
         Accessor* pAccessor =
             Model::getSafe(&model.accessors, attribute.second);
         if (pAccessor) {
-          unquantizeAccessor(model, *pAccessor);
+          dequantizeAccessor(model, *pAccessor);
         }
       }
     }

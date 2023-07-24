@@ -12,27 +12,47 @@ void transformBufferView(
     Buffer& buffer,
     ExtensionKhrTextureTransform& textureTransform) {
 
-  glm::vec2 Offset(textureTransform.offset[0], textureTransform.offset[1]);
-  glm::vec2 Scale(textureTransform.scale[0], textureTransform.scale[1]);
+  if (textureTransform.offset.size() < 2 || textureTransform.scale.size() < 2) {
+    return;
+  }
+
   float Rotation = static_cast<float>(textureTransform.rotation);
-  glm::mat3 translation = glm::mat3(1, 0, 0, 0, 1, 0, Offset.x, Offset.y, 1);
-  glm::mat3 rotation = glm::mat3(
-      cos(Rotation),
-      sin(Rotation),
-      0,
-      -sin(Rotation),
-      cos(Rotation),
-      0,
-      0,
-      0,
-      1);
-  glm::mat3 scale = glm::mat3(Scale.x, 0, 0, 0, Scale.y, 0, 0, 0, 1);
-  glm::mat3 matrix = translation * rotation * scale;
 
-  glm::vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+  if (Rotation == 0.0f) {
+    float OffsetX = static_cast<float>(textureTransform.offset[0]);
+    float OffsetY = static_cast<float>(textureTransform.offset[1]);
+    float ScaleX = static_cast<float>(textureTransform.scale[0]);
+    float ScaleY = static_cast<float>(textureTransform.scale[1]);
 
-  for (int i = 0; i < accessorView.size(); i++) {
-    *uvs++ = glm::vec2((matrix * glm::vec3(accessorView[i], 1)));
+    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+    for (int i = 0; i < accessorView.size(); i++) {
+      glm::vec2 uv = accessorView[i];
+      uv.x = uv.x * ScaleX + OffsetX;
+      uv.y = uv.y * ScaleY + OffsetY;
+      *uvs++ = uv;
+    }
+  } else {
+    glm::vec2 Offset(textureTransform.offset[0], textureTransform.offset[1]);
+    glm::vec2 Scale(textureTransform.scale[0], textureTransform.scale[1]);
+    glm::mat3 translation = glm::mat3(1, 0, 0, 0, 1, 0, Offset.x, Offset.y, 1);
+    glm::mat3 rotation = glm::mat3(
+        cos(Rotation),
+        sin(Rotation),
+        0,
+        -sin(Rotation),
+        cos(Rotation),
+        0,
+        0,
+        0,
+        1);
+    glm::mat3 scale = glm::mat3(Scale.x, 0, 0, 0, Scale.y, 0, 0, 0, 1);
+    glm::mat3 matrix = translation * rotation * scale;
+
+    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+
+    for (int i = 0; i < accessorView.size(); i++) {
+      *uvs++ = glm::vec2((matrix * glm::vec3(accessorView[i], 1)));
+    }
   }
 }
 } // namespace
