@@ -316,7 +316,7 @@ void postprocess(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "KHR_mesh_quantization") != model.extensionsUsed.end()) {
-    unquantizeMeshData(model);
+    dequantizeMeshData(model);
   }
 
   if (options.applyTextureTransform &&
