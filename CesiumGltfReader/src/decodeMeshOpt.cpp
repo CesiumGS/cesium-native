@@ -107,8 +107,8 @@ void decodeAccessor(
     return;
   }
   if (pMeshOpt->byteOffset < 0 || pMeshOpt->byteLength < 0 ||
-      pMeshOpt->byteOffset + pMeshOpt->byteLength >
-          static_cast<int64_t>(pBuffer->cesium.data.size())) {
+      static_cast<size_t>(pMeshOpt->byteOffset + pMeshOpt->byteLength) >
+          pBuffer->cesium.data.size()) {
     readGltf.warnings.emplace_back(
         "The ext_meshopt_compression extension has a bufferView that "
         "extends beyond its buffer.");

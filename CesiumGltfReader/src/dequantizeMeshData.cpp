@@ -59,10 +59,10 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     byteStride = accessor.computeByteStride(model);
   }
 
-  if (pBufferView->byteOffset + accessor.byteOffset +
-              static_cast<size_t>(accessor.count * byteStride) >
-          pBuffer->cesium.data.size() ||
-      sizeof(T) * N > byteStride) {
+  if (static_cast<size_t>(
+          pBufferView->byteOffset + accessor.byteOffset +
+          accessor.count * byteStride) > pBuffer->cesium.data.size() ||
+      static_cast<int64_t>(sizeof(T) * N) > byteStride) {
     return;
   }
 
