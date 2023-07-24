@@ -40,15 +40,6 @@ void dequantizeFloat(
 template <typename T, size_t N>
 void dequantizeAccessor(Model& model, Accessor& accessor) {
 
-  accessor.componentType = AccessorSpec::ComponentType::FLOAT;
-  accessor.byteOffset = 0;
-  for (double& d : accessor.min) {
-    d = intToFloat<T>(static_cast<T>(d));
-  }
-  for (double& d : accessor.max) {
-    d = intToFloat<T>(static_cast<T>(d));
-  }
-
   BufferView* pBufferView =
       Model::getSafe(&model.bufferViews, accessor.bufferView);
 
@@ -68,7 +59,18 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     byteStride = accessor.computeByteStride(model);
   }
 
+  if (pBufferView->byteOffset + accessor.byteOffset +
+              static_cast<size_t>(accessor.count * byteStride) >
+          pBuffer->cesium.data.size() ||
+      sizeof(T) * N > byteStride) {
+    return;
+  }
+
   int64_t byteLength = accessor.count * static_cast<int64_t>(N * sizeof(float));
+  if (byteLength < 0) {
+    return;
+  }
+
   std::vector<std::byte> buffer;
   buffer.resize(static_cast<size_t>(byteLength));
 
@@ -78,6 +80,15 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
       pBuffer->cesium.data.data() + pBufferView->byteOffset +
           accessor.byteOffset,
       byteStride);
+
+  accessor.componentType = AccessorSpec::ComponentType::FLOAT;
+  accessor.byteOffset = 0;
+  for (double& d : accessor.min) {
+    d = intToFloat<T>(static_cast<T>(d));
+  }
+  for (double& d : accessor.max) {
+    d = intToFloat<T>(static_cast<T>(d));
+  }
 
   pBufferView->byteOffset = 0;
   pBufferView->byteStride = N * sizeof(float);

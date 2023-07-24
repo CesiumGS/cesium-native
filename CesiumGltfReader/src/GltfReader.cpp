@@ -304,27 +304,28 @@ void postprocess(
     decodeDraco(readGltf);
   }
 
-  if (std::find(
+  if (options.decompressMeshData &&
+      std::find(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "EXT_meshopt_compression") != model.extensionsUsed.end()) {
     decodeMeshOpt(model, readGltf);
-  }
 
-  if (options.dequantizeMeshData &&
-      std::find(
-          model.extensionsUsed.begin(),
-          model.extensionsUsed.end(),
-          "KHR_mesh_quantization") != model.extensionsUsed.end()) {
-    dequantizeMeshData(model);
-  }
+    if (options.dequantizeMeshData &&
+        std::find(
+            model.extensionsUsed.begin(),
+            model.extensionsUsed.end(),
+            "KHR_mesh_quantization") != model.extensionsUsed.end()) {
+      dequantizeMeshData(model);
 
-  if (options.applyTextureTransform &&
-      std::find(
-          model.extensionsUsed.begin(),
-          model.extensionsUsed.end(),
-          "KHR_texture_transform") != model.extensionsUsed.end()) {
-    transformTexture(model);
+      if (options.applyTextureTransform &&
+          std::find(
+              model.extensionsUsed.begin(),
+              model.extensionsUsed.end(),
+              "KHR_texture_transform") != model.extensionsUsed.end()) {
+        transformTexture(model);
+      }
+    }
   }
 }
 
