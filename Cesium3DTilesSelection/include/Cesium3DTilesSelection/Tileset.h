@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Library.h"
+#include "MaterialVariants.h";
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
 #include "TilesetContentLoader.h"
@@ -153,6 +154,8 @@ public:
 
   /** @copydoc Tileset::getOverlays() */
   const RasterOverlayCollection& getOverlays() const noexcept;
+
+  const MaterialVariants& getMaterialVariants() const noexcept;
 
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish

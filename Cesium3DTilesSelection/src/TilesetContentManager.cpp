@@ -572,6 +572,237 @@ postProcessContentInWorkerThread(
                 rendererOptions);
           });
 }
+
+//============================================================================
+// Material variants handling
+
+bool hasStringEntry(
+    const rapidjson::Value& dictionary,
+    const std::string& key,
+    const std::string& value) {
+  if (!dictionary.IsObject()) {
+    return false;
+  }
+  const auto it = dictionary.FindMember(key.c_str());
+  if (it == dictionary.MemberEnd()) {
+    return false;
+  }
+  const rapidjson::Value& valueJson = it->value;
+  if (!valueJson.IsString()) {
+    return false;
+  }
+  const std::string actualValue = valueJson.GetString();
+  return actualValue == value;
+}
+
+bool hasBooleanEntry(
+    const rapidjson::Value& dictionary,
+    const std::string& key,
+    const bool value) {
+  if (!dictionary.IsObject()) {
+    return false;
+  }
+  const auto it = dictionary.FindMember(key.c_str());
+  if (it == dictionary.MemberEnd()) {
+    return false;
+  }
+  const rapidjson::Value& valueJson = it->value;
+  if (!valueJson.IsBool()) {
+    return false;
+  }
+  const bool actualValue = valueJson.GetBool();
+  return actualValue == value;
+}
+
+bool metadataClassPropertyIsStringArray(
+    const rapidjson::Value& metadataClassProperty) {
+  if (!hasStringEntry(metadataClassProperty, "type", "STRING")) {
+    return false;
+  }
+  if (!hasBooleanEntry(metadataClassProperty, "array", true)) {
+    return false;
+  }
+  return true;
+}
+
+template <typename C, typename T>
+bool contains(const C& container, const T& value) {
+  return std::find(container.begin(), container.end(), value) !=
+         container.end();
+}
+
+std::vector<std::string> computeMaterialVariantsPropertyNames(
+    const rapidjson::Value& schema,
+    const std::string& className) {
+  std::vector<std::string> result;
+
+  // Basic sanity check
+  if (!schema.IsObject()) {
+    return result;
+  }
+
+  // Find the classes
+  const auto classesIt = schema.FindMember("classes");
+  if (classesIt == schema.MemberEnd()) {
+    return result;
+  }
+  const rapidjson::Value& classes = classesIt->value;
+  if (!classes.IsObject()) {
+    return result;
+  }
+
+  // Find the class
+  const auto classIt = classes.FindMember(className.c_str());
+  if (classIt == schema.MemberEnd()) {
+    return result;
+  }
+  const rapidjson::Value& classValue = classIt->value;
+  if (!classValue.IsObject()) {
+    return result;
+  }
+
+  // Find the class properties
+  const auto propertiesIt = classValue.FindMember("properties");
+  if (propertiesIt == classValue.MemberEnd()) {
+    return result;
+  }
+  const rapidjson::Value& properties = propertiesIt->value;
+  if (!properties.IsObject()) {
+    return result;
+  }
+
+  // Iterate over all properties
+  for (rapidjson::GenericMemberIterator p = properties.MemberBegin();
+       p != properties.MemberEnd();
+       ++p) {
+    const std::string& propertyName = p->name.GetString();
+    const rapidjson::Value& property = p->value;
+
+    // Check if the property is a STRING array property that
+    // has the "MATERIAL_VARIANTS" semantic
+    if (!hasStringEntry(property, "type", "STRING")) {
+      continue;
+    }
+    if (!hasBooleanEntry(property, "array", true)) {
+      continue;
+    }
+    if (!hasStringEntry(property, "semantic", "MATERIAL_VARIANTS")) {
+      continue;
+    }
+    result.push_back(propertyName);
+  }
+  return result;
+}
+
+std::vector<std::string> computeMaterialVariantNames(
+    const rapidjson::Value& entity,
+    const rapidjson::Value& schema) {
+  std::vector<std::string> result;
+
+  // Find the class (name)
+  const auto classIt = entity.FindMember("class");
+  if (classIt == schema.MemberEnd()) {
+    return result;
+  }
+  const rapidjson::Value& classValue = classIt->value;
+  if (!classValue.IsString()) {
+    return result;
+  }
+  std::string className = classValue.GetString();
+
+  // Find the entity properties
+  const auto propertiesIt = entity.FindMember("properties");
+  if (propertiesIt == entity.MemberEnd()) {
+    return result;
+  }
+  const rapidjson::Value& properties = propertiesIt->value;
+  if (!properties.IsObject()) {
+    return result;
+  }
+
+  std::vector<std::string> propertiesWithMaterialVariantsSemantic =
+      computeMaterialVariantsPropertyNames(schema, className);
+
+  // Iterate over all properties
+  for (rapidjson::GenericMemberIterator p = properties.MemberBegin();
+       p != properties.MemberEnd();
+       ++p) {
+    const std::string& propertyName = p->name.GetString();
+
+    // If the property has the material variants semantic,
+    // then it should be a STRING array and its value will
+    // be the available variant names
+    if (!contains(propertiesWithMaterialVariantsSemantic, propertyName)) {
+      continue;
+    }
+    const rapidjson::Value& variantNames = p->value;
+    if (!variantNames.IsArray()) {
+      continue;
+    }
+    for (rapidjson::Value::ConstValueIterator n = variantNames.Begin();
+         n != variantNames.End();
+         ++n) {
+      if (!n->IsString()) {
+        continue;
+      }
+      const std::string variantName = n->GetString();
+      result.push_back(variantName);
+    }
+  }
+  return result;
+}
+
+/**
+ */
+MaterialVariants parseMaterialVariants(const rapidjson::Document& tileset) {
+
+  MaterialVariants materialVariants;
+
+  // Find the schema
+  const auto schemaIt = tileset.FindMember("schema");
+  if (schemaIt == tileset.MemberEnd()) {
+    return materialVariants;
+  }
+  const rapidjson::Value& schema = schemaIt->value;
+  if (!schema.IsObject()) {
+    return materialVariants;
+  }
+
+  // Find the metadata entity of the tileset
+  const auto metadataIt = tileset.FindMember("metadata");
+  if (metadataIt != tileset.MemberEnd()) {
+    const rapidjson::Value& metadata = metadataIt->value;
+    if (metadata.IsObject()) {
+      materialVariants.tilesetMaterialVariantNames =
+          computeMaterialVariantNames(metadata, schema);
+    }
+  }
+
+  // Find group metadata entities
+  const auto groupsIt = tileset.FindMember("groups");
+  if (groupsIt != tileset.MemberEnd()) {
+    const rapidjson::Value& groups = groupsIt->value;
+    if (groups.IsArray()) {
+
+      for (rapidjson::Value::ConstValueIterator g = groups.Begin();
+           g != groups.End();
+           ++g) {
+        if (!g->IsObject()) {
+          continue;
+        }
+        std::vector<std::string> groupMaterialVariantNames =
+            computeMaterialVariantNames(*g, schema);
+        materialVariants.groupsMaterialVariantNames.push_back(
+            groupMaterialVariantNames);
+      }
+    }
+  }
+  return materialVariants;
+}
+
+// Material variants handling
+//============================================================================
+
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
@@ -623,114 +854,118 @@ TilesetContentManager::TilesetContentManager(
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()} {
-  if (!url.empty()) {
-    this->notifyTileStartLoading(nullptr);
-
-    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
-
-    externals.pAssetAccessor
-        ->get(externals.asyncSystem, url, this->_requestHeaders)
-        .thenInWorkerThread(
-            [pLogger = externals.pLogger,
-             asyncSystem = externals.asyncSystem,
-             pAssetAccessor = externals.pAssetAccessor,
-             contentOptions = tilesetOptions.contentOptions,
-             showCreditsOnScreen = tilesetOptions.showCreditsOnScreen](
-                const std::shared_ptr<CesiumAsync::IAssetRequest>&
-                    pCompletedRequest) {
-              // Check if request is successful
-              const CesiumAsync::IAssetResponse* pResponse =
-                  pCompletedRequest->response();
-              const std::string& url = pCompletedRequest->url();
-              if (!pResponse) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Did not receive a valid response for tileset {}",
-                    url));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
-
-              uint16_t statusCode = pResponse->statusCode();
-              if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Received status code {} for tileset {}",
-                    statusCode,
-                    url));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
-
-              // Parse Json response
-              gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
-              rapidjson::Document tilesetJson;
-              tilesetJson.Parse(
-                  reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-                  tilesetJsonBinary.size());
-              if (tilesetJson.HasParseError()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Error when parsing tileset JSON, error code {} at byte "
-                    "offset {}",
-                    tilesetJson.GetParseError(),
-                    tilesetJson.GetErrorOffset()));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
-
-              // Check if the json is a tileset.json format or layer.json format
-              // and create corresponding loader
-              const auto rootIt = tilesetJson.FindMember("root");
-              if (rootIt != tilesetJson.MemberEnd()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
-                return asyncSystem.createResolvedFuture(std::move(result));
-              } else {
-                const auto formatIt = tilesetJson.FindMember("format");
-                bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
-                                         formatIt->value.IsString();
-                isLayerJsonFormat = isLayerJsonFormat &&
-                                    std::string(formatIt->value.GetString()) ==
-                                        "quantized-mesh-1.0";
-                if (isLayerJsonFormat) {
-                  const CesiumAsync::HttpHeaders& completedRequestHeaders =
-                      pCompletedRequest->headers();
-                  std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
-                      completedRequestHeaders.begin(),
-                      completedRequestHeaders.end());
-                  return LayerJsonTerrainLoader::createLoader(
-                             asyncSystem,
-                             pAssetAccessor,
-                             contentOptions,
-                             url,
-                             flatHeaders,
-                             showCreditsOnScreen,
-                             tilesetJson)
-                      .thenImmediately(
-                          [](TilesetContentLoaderResult<TilesetContentLoader>&&
-                                 result) { return std::move(result); });
-                }
-
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError("tileset json has unsupport format");
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
-            })
-        .thenInMainThread(
-            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
-                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              thiz->notifyTileDoneLoading(result.pRootTile.get());
-              thiz->propagateTilesetContentLoaderResult(
-                  TilesetLoadType::TilesetJson,
-                  errorCallback,
-                  std::move(result));
-            })
-        .catchInMainThread([thiz](std::exception&& e) {
-          thiz->notifyTileDoneLoading(nullptr);
-          SPDLOG_LOGGER_ERROR(
-              thiz->_externals.pLogger,
-              "An unexpected error occurs when loading tile: {}",
-              e.what());
-        });
+  if (url.empty()) {
+    return;
   }
+  this->notifyTileStartLoading(nullptr);
+
+  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
+  externals.pAssetAccessor
+      ->get(externals.asyncSystem, url, this->_requestHeaders)
+      .thenInWorkerThread([pLogger = externals.pLogger,
+                           asyncSystem = externals.asyncSystem,
+                           pAssetAccessor = externals.pAssetAccessor,
+                           contentOptions = tilesetOptions.contentOptions,
+                           showCreditsOnScreen =
+                               tilesetOptions.showCreditsOnScreen](
+                              const std::shared_ptr<CesiumAsync::IAssetRequest>&
+                                  pCompletedRequest) {
+        // Check if request is successful
+        const CesiumAsync::IAssetResponse* pResponse =
+            pCompletedRequest->response();
+        const std::string& url = pCompletedRequest->url();
+        if (!pResponse) {
+          TilesetContentLoaderResult<TilesetContentLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Did not receive a valid response for tileset {}",
+              url));
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        uint16_t statusCode = pResponse->statusCode();
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          TilesetContentLoaderResult<TilesetContentLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Received status code {} for tileset {}",
+              statusCode,
+              url));
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        // Parse Json response
+        gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
+        rapidjson::Document tilesetJson;
+        tilesetJson.Parse(
+            reinterpret_cast<const char*>(tilesetJsonBinary.data()),
+            tilesetJsonBinary.size());
+        if (tilesetJson.HasParseError()) {
+          TilesetContentLoaderResult<TilesetContentLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Error when parsing tileset JSON, error code {} at byte "
+              "offset {}",
+              tilesetJson.GetParseError(),
+              tilesetJson.GetErrorOffset()));
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        // Check if the json is a tileset.json format or layer.json format
+        // and create corresponding loader
+        const auto rootIt = tilesetJson.FindMember("root");
+        if (rootIt != tilesetJson.MemberEnd()) {
+          TilesetContentLoaderResult<TilesetContentLoader> result =
+              TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
+
+          result.materialVariants = parseMaterialVariants(tilesetJson);
+
+          return asyncSystem.createResolvedFuture(std::move(result));
+        } else {
+          const auto formatIt = tilesetJson.FindMember("format");
+          bool isLayerJsonFormat =
+              formatIt != tilesetJson.MemberEnd() && formatIt->value.IsString();
+          isLayerJsonFormat =
+              isLayerJsonFormat &&
+              std::string(formatIt->value.GetString()) == "quantized-mesh-1.0";
+          if (isLayerJsonFormat) {
+            const CesiumAsync::HttpHeaders& completedRequestHeaders =
+                pCompletedRequest->headers();
+            std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
+                completedRequestHeaders.begin(),
+                completedRequestHeaders.end());
+            return LayerJsonTerrainLoader::createLoader(
+                       asyncSystem,
+                       pAssetAccessor,
+                       contentOptions,
+                       url,
+                       flatHeaders,
+                       showCreditsOnScreen,
+                       tilesetJson)
+                .thenImmediately(
+                    [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                           result) { return std::move(result); });
+          }
+
+          TilesetContentLoaderResult<TilesetContentLoader> result;
+          result.errors.emplaceError("tileset json has unsupport format");
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+      })
+      .thenInMainThread(
+          [thiz, errorCallback = tilesetOptions.loadErrorCallback](
+              TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+            thiz->notifyTileDoneLoading(result.pRootTile.get());
+            thiz->propagateTilesetContentLoaderResult(
+                TilesetLoadType::TilesetJson,
+                errorCallback,
+                std::move(result));
+          })
+      .catchInMainThread([thiz](std::exception&& e) {
+        thiz->notifyTileDoneLoading(nullptr);
+        SPDLOG_LOGGER_ERROR(
+            thiz->_externals.pLogger,
+            "An unexpected error occurs when loading tile: {}",
+            e.what());
+      });
 }
 
 TilesetContentManager::TilesetContentManager(
@@ -1072,6 +1307,11 @@ const Tile* TilesetContentManager::getRootTile() const noexcept {
 
 Tile* TilesetContentManager::getRootTile() noexcept {
   return this->_pRootTile.get();
+}
+
+const MaterialVariants&
+TilesetContentManager::getMaterialVariants() const noexcept {
+  return this->_materialVariants;
 }
 
 const std::vector<CesiumAsync::IAssetAccessor::THeader>&
@@ -1447,6 +1687,7 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     this->_requestHeaders = std::move(result.requestHeaders);
     this->_pLoader = std::move(result.pLoader);
     this->_pRootTile = std::move(result.pRootTile);
+    this->_materialVariants = std::move(result.materialVariants);
   }
 }
 } // namespace Cesium3DTilesSelection

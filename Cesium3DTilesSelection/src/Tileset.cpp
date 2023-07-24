@@ -127,6 +127,10 @@ const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
   return this->_pTilesetContentManager->getRasterOverlayCollection();
 }
 
+const MaterialVariants& Tileset::getMaterialVariants() const noexcept {
+  return this->_pTilesetContentManager->getMaterialVariants();
+}
+
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
   return fogDensity.cameraHeight < height;

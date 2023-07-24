@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/ErrorList.h>
+#include <Cesium3DTilesSelection/MaterialVariants.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
@@ -23,11 +24,13 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
       std::unique_ptr<TilesetContentLoaderType>&& pLoader_,
       std::unique_ptr<Tile>&& pRootTile_,
       std::vector<LoaderCreditResult>&& credits_,
+      MaterialVariants&& materialVariants_,
       std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders_,
       ErrorList&& errors_)
       : pLoader{std::move(pLoader_)},
         pRootTile{std::move(pRootTile_)},
         credits{std::move(credits_)},
+        materialVariants{std::move(materialVariants_)},
         requestHeaders{std::move(requestHeaders_)},
         errors{std::move(errors_)} {}
 
@@ -54,6 +57,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
       : pLoader{std::move(rhs.pLoader)},
         pRootTile{std::move(rhs.pRootTile)},
         credits{std::move(rhs.credits)},
+        materialVariants{std::move(rhs.materialVariants)},
         requestHeaders{std::move(rhs.requestHeaders)},
         errors{std::move(rhs.errors)} {}
 
@@ -71,6 +75,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
     swap(this->pLoader, rhs.pLoader);
     swap(this->pRootTile, rhs.pRootTile);
     swap(this->credits, rhs.credits);
+    swap(this->materialVariants, rhs.materialVariants);
     swap(this->requestHeaders, rhs.requestHeaders);
     swap(this->errors, rhs.errors);
 
@@ -82,6 +87,8 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
   std::unique_ptr<Tile> pRootTile;
 
   std::vector<LoaderCreditResult> credits;
+
+  MaterialVariants materialVariants;
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 

@@ -17,6 +17,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/pointer.h>
 #include <spdlog/logger.h>
 
 #include <cctype>
@@ -614,6 +615,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::move(pLoader),
       std::move(pRootTile),
       std::vector<LoaderCreditResult>{},
+      MaterialVariants{},
       std::vector<CesiumAsync::IAssetAccessor::THeader>{},
       ErrorList{}};
 }

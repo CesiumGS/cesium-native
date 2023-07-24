@@ -124,6 +124,7 @@ convertToTilesetContentLoaderResult(LoadLayersResult&& loadLayersResult) {
       std::move(pLoader),
       std::move(pRootTile),
       std::move(credits),
+      MaterialVariants{},
       std::vector<IAssetAccessor::THeader>{},
       std::move(loadLayersResult.errors)};
 }

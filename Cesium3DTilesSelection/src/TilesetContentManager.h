@@ -4,6 +4,7 @@
 #include "TilesetContentLoaderResult.h"
 
 #include <Cesium3DTilesSelection/CreditSystem.h>
+#include <Cesium3DTilesSelection/MaterialVariants.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -76,6 +77,8 @@ public:
 
   Tile* getRootTile() noexcept;
 
+  const MaterialVariants& getMaterialVariants() const noexcept;
+
   const std::vector<CesiumAsync::IAssetAccessor::THeader>&
   getRequestHeaders() const noexcept;
 
@@ -143,6 +146,8 @@ private:
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+
+  MaterialVariants _materialVariants;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
