@@ -12,14 +12,12 @@ std::unordered_map<std::string, GltfConverters::ConverterFunction>
 void GltfConverters::registerMagic(
     const std::string& magic,
     ConverterFunction converter) {
-  SPDLOG_INFO("Registering magic header {}", magic);
   _loadersByMagic[magic] = converter;
 }
 
 void GltfConverters::registerFileExtension(
     const std::string& fileExtension,
     ConverterFunction converter) {
-  SPDLOG_INFO("Registering file extension {}", fileExtension);
 
   std::string lowerCaseFileExtension = toLowerCase(fileExtension);
   _loadersByFileExtension[lowerCaseFileExtension] = converter;
