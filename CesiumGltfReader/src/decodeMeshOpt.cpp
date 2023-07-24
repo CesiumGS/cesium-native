@@ -5,7 +5,14 @@
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
 #include <meshoptimizer.h>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 using namespace CesiumGltf;
 

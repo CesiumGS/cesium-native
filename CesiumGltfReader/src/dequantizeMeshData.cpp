@@ -4,8 +4,6 @@
 
 #include <CesiumGltf/AccessorView.h>
 
-#include <meshoptimizer.h>
-
 using namespace CesiumGltf;
 
 namespace CesiumGltfReader {
@@ -70,9 +68,9 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     byteStride = accessor.computeByteStride(model);
   }
 
-  int64_t byteLength = accessor.count * N * sizeof(float);
+  int64_t byteLength = accessor.count * static_cast<int64_t>(N * sizeof(float));
   std::vector<std::byte> buffer;
-  buffer.resize(byteLength);
+  buffer.resize(static_cast<size_t>(byteLength));
 
   dequantizeFloat<T, N>(
       reinterpret_cast<float*>(buffer.data()),
