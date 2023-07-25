@@ -309,29 +309,36 @@ bool shouldCacheRequest(
     return false;
   }
 
-  // Check cache control header if it exists
-  bool ignoreExpiresHeader = false;
-  if (cacheControl) {
-    if (cacheControl->noStore())
-      return false;
+  const HttpHeaders& headers = pResponse->headers();
+  HttpHeaders::const_iterator expiresHeader = headers.find("Expires");
+  bool expiresExists = expiresHeader != headers.end();
 
-    // If there is a Cache-Control header with the max-age or s-maxage directive
-    // in the response, the Expires header is ignored
-    ignoreExpiresHeader =
-        cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists();
-  }
+  // If no cache control or expires, don't cache
+  if (!cacheControl && !expiresExists)
+    return false;
+
+  //
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+  //
+  // The no-store response directive indicates that any caches of any kind
+  // (private or shared) should not store this response.
+  if (cacheControl && cacheControl->noStore())
+    return false;
+
+  //
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
+  //
+  // If there is a Cache-Control header with the max-age or s-maxage directive
+  // in the response, the Expires header is ignored
+  bool ignoreExpiresHeader =
+      cacheControl &&
+      (cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists());
 
   // Check older Expires header
-  if (!ignoreExpiresHeader) {
-    const HttpHeaders& headers = pResponse->headers();
-    HttpHeaders::const_iterator expiresHeader = headers.find("Expires");
-    if (expiresHeader == headers.end())
-      return false;
-
+  if (expiresExists && !ignoreExpiresHeader)
     return std::difftime(
                convertHttpDateToTime(expiresHeader->second),
                std::time(nullptr)) > 0.0;
-  }
 
   return true;
 }
@@ -345,6 +352,9 @@ std::time_t calculateExpiryTime(
     const IAssetRequest& request,
     const std::optional<ResponseCacheControl>& cacheControl) {
 
+  //
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
+  //
   // If there is a Cache-Control header with the max-age or s-maxage directive
   // in the response, the Expires header is ignored
   bool preferCacheControl =
