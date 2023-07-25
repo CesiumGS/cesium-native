@@ -272,11 +272,9 @@ bool shouldRevalidateCache(const CacheItem& cacheItem) {
   if (cacheControl && cacheControl->noCache())
     return true;
 
-  bool cacheIsStale = isCacheStale(cacheItem);
-  if (cacheControl && cacheIsStale && cacheControl->mustRevalidate())
-    return true;
-
-  return cacheIsStale;
+  // Always revalidate if cache is stale. We always assume online scenarios.
+  // A must-revalidate directive doesn't change this logic.
+  return isCacheStale(cacheItem);
 }
 
 bool isCacheStale(const CacheItem& cacheItem) noexcept {
