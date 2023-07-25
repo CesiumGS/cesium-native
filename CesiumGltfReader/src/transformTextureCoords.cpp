@@ -57,10 +57,11 @@ void transformBufferView(
 }
 } // namespace
 
+template <typename T>
 void processTextureInfo(
     Model& model,
     MeshPrimitive& primitive,
-    std::optional<TextureInfo>& textureInfo) {
+    T& textureInfo) {
   if (!textureInfo) {
     return;
   }
@@ -87,10 +88,10 @@ void processTextureInfo(
     return;
   }
   Accessor& accessor = model.accessors.emplace_back(*pAccessor);
-  Buffer& buffer = model.buffers.emplace_back();
-  buffer.cesium.data.resize(static_cast<size_t>(pBufferView->byteLength));
   const AccessorView<glm::vec2> accessorView(model, accessor);
   if (accessorView.status() == AccessorViewStatus::Valid) {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(static_cast<size_t>(pBufferView->byteLength));
     transformBufferView(accessorView, buffer, *pTextureTransform);
     accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
     BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
@@ -103,15 +104,19 @@ void processTextureInfo(
 void transformTexture(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
-      Material* pMaterial =
-          Model::getSafe(&model.materials, primitive.material);
-      if (pMaterial) {
-        if (pMaterial->pbrMetallicRoughness) {
-          processTextureInfo(
-              model,
-              primitive,
-              pMaterial->pbrMetallicRoughness->baseColorTexture);
-        }
+      Material* material = Model::getSafe(&model.materials, primitive.material);
+      if (material) {
+        processTextureInfo(
+            model,
+            primitive,
+            material->pbrMetallicRoughness->baseColorTexture);
+        processTextureInfo(
+            model,
+            primitive,
+            material->pbrMetallicRoughness->metallicRoughnessTexture);
+        processTextureInfo(model, primitive, material->normalTexture);
+        processTextureInfo(model, primitive, material->occlusionTexture);
+        processTextureInfo(model, primitive, material->emissiveTexture);
       }
     }
   }

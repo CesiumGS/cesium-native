@@ -57,12 +57,12 @@ int decodeBufferView(
         buffer.size());
   } else {
     if (meshOpt.byteStride == sizeof(std::uint16_t)) {
-      return decodeIndices<std::uint16_t>(
+      return decodeIndices(
           reinterpret_cast<std::uint16_t*>(pDest),
           buffer,
           meshOpt);
     } else if (meshOpt.byteStride == sizeof(std::uint32_t)) {
-      return decodeIndices<std::uint32_t>(
+      return decodeIndices(
           reinterpret_cast<std::uint32_t*>(pDest),
           buffer,
           meshOpt);

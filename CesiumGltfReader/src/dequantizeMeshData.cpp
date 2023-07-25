@@ -10,7 +10,7 @@ namespace CesiumGltfReader {
 
 namespace {
 
-template <typename T> float intToFloat(T t) { return intToFloat(t); }
+template <typename T> float intToFloat(T t) = delete;
 
 template <> float intToFloat(std::int8_t c) {
   return std::max(c / 127.0f, -1.0f);
@@ -28,11 +28,24 @@ template <typename T, size_t N>
 void dequantizeFloat(
     float* fPtr,
     int64_t count,
-    std::byte* bPtr,
+    const std::byte* bPtr,
     int64_t stride) {
   for (int i = 0; i < count; i++, bPtr += stride) {
     for (unsigned int j = 0; j < N; j++) {
-      *fPtr++ = intToFloat<T>(reinterpret_cast<T*>(bPtr)[j]);
+      *fPtr++ = intToFloat<T>(reinterpret_cast<const T*>(bPtr)[j]);
+    }
+  }
+}
+
+template <typename T, size_t N>
+void castToFloat(
+    float* fPtr,
+    int64_t count,
+    const std::byte* bPtr,
+    int64_t stride) {
+  for (int i = 0; i < count; i++, bPtr += stride) {
+    for (unsigned int j = 0; j < N; j++) {
+      *fPtr++ = static_cast<float>(reinterpret_cast<const T*>(bPtr)[j]);
     }
   }
 }
@@ -74,13 +87,23 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
   std::vector<std::byte> buffer;
   buffer.resize(static_cast<size_t>(byteLength));
 
-  dequantizeFloat<T, N>(
-      reinterpret_cast<float*>(buffer.data()),
-      accessor.count,
+  const std::byte* bPtr = reinterpret_cast<std::byte*>(
       pBuffer->cesium.data.data() + pBufferView->byteOffset +
-          accessor.byteOffset,
-      byteStride);
+      accessor.byteOffset);
 
+  if (accessor.normalized) {
+    dequantizeFloat<T, N>(
+        reinterpret_cast<float*>(buffer.data()),
+        accessor.count,
+        bPtr,
+        byteStride);
+  } else {
+    castToFloat<T, N>(
+        reinterpret_cast<float*>(buffer.data()),
+        accessor.count,
+        bPtr,
+        byteStride);
+  }
   accessor.componentType = AccessorSpec::ComponentType::FLOAT;
   accessor.byteOffset = 0;
   for (double& d : accessor.min) {
@@ -138,7 +161,16 @@ void dequantizeMeshData(Model& model) {
            primitive.attributes) {
         Accessor* pAccessor =
             Model::getSafe(&model.accessors, attribute.second);
-        if (pAccessor) {
+        if (!pAccessor) {
+          continue;
+        }
+        if (pAccessor->componentType == Accessor::ComponentType::FLOAT) {
+          continue;
+        }
+        const std::string& attributeName = attribute.first;
+        if (attributeName == "POSITION" || attributeName == "NORMAL" ||
+            attributeName == "TANGENT" ||
+            attributeName.find("TEXCOORD") != std::string::npos) {
           dequantizeAccessor(model, *pAccessor);
         }
       }
