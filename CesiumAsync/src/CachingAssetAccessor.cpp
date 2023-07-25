@@ -354,7 +354,9 @@ std::time_t calculateExpiryTime(
       (cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists());
 
   if (preferCacheControl) {
-    return std::time(nullptr) + cacheControl->maxAgeValue();
+    int maxAgeValue =
+        cacheControl->maxAgeExists() ? cacheControl->maxAgeValue() : 0;
+    return std::time(nullptr) + maxAgeValue;
   } else {
     const IAssetResponse* pResponse = request.response();
     const HttpHeaders& responseHeaders = pResponse->headers();

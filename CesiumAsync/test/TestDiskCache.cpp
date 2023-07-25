@@ -166,8 +166,8 @@ TEST_CASE("Test disk cache with Sqlite") {
       REQUIRE(cacheControl->accessControlPublic() == true);
       REQUIRE(cacheControl->accessControlPrivate() == false);
       REQUIRE(cacheControl->proxyRevalidate() == true);
-      REQUIRE(cacheControl->maxAgeValue() == 0);
-      REQUIRE(cacheControl->sharedMaxAgeValue() == 0);
+      REQUIRE(cacheControl->maxAgeExists() == false);
+      REQUIRE(cacheControl->sharedMaxAgeExists() == false);
     }
   }
 
