@@ -94,12 +94,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -183,12 +179,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -207,12 +199,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -231,12 +219,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -264,12 +248,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -311,12 +291,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"./Parent/layer.json", createMockAssetRequest(parentJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -349,12 +325,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -376,12 +348,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -406,8 +374,7 @@ TEST_CASE("Test create layer json terrain loader") {
         externals,
         options,
         "layer.json",
-        {},
-        true);
+        {});
 
     asyncSystem.dispatchMainThreadTasks();
 

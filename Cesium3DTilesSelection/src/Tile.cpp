@@ -188,7 +188,9 @@ bool Tile::isRenderable() const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
-    if (!getUnconditionallyRefine()) {
+    // An unconditionally-refined tile is never renderable... UNLESS it has no
+    // children, in which case waiting longer will be futile.
+    if (!getUnconditionallyRefine() || this->_children.empty()) {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),

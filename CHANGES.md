@@ -1,11 +1,15 @@
 # Change Log
 
-
-### v?.?.? - 2023-?-?
+### ? - ?
 
 ##### Additions :tada:
 
 - Add caching support for Google 3d Photorealistic Tiles. Fixes cases where the origin server is using combinations of HTTP header directives that would cause tiles to not go to disk cache (`max-age-0`, `stale-while-revalidate`, and `Expires`).
+
+##### Fixes :wrench:
+
+- Fixed a bug in the 3D Tiles selection algorithm that could cause missing detail if a tileset had a leaf tile that was considered "unconditionally refined" due to having a geometric error larger than its parent's.
+- Fixed a bug where `GltfReader::readImage` would always populate `mipPositions` when reading KTX2 images, even when the KTX2 file indicated that it had no mip levels and that they should be created, if necessary, from the base image. As a result, `generateMipMaps` wouldn't generate any mipmaps for the image.>>>>>>> main
 
 ### v0.25.1 - 2023-07-03
 
