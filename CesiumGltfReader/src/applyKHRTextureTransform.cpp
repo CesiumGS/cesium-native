@@ -10,7 +10,7 @@ namespace {
 void transformBufferView(
     const AccessorView<glm::vec2>& accessorView,
     Buffer& buffer,
-    ExtensionKhrTextureTransform& textureTransform) {
+    const ExtensionKhrTextureTransform& textureTransform) {
 
   if (textureTransform.offset.size() < 2 || textureTransform.scale.size() < 2) {
     return;
@@ -61,12 +61,14 @@ template <typename T>
 void processTextureInfo(
     Model& model,
     MeshPrimitive& primitive,
-    T& textureInfo) {
+    std::optional<T>& textureInfo) {
+  static_assert(std::is_base_of<TextureInfo, T>::value);
   if (!textureInfo) {
     return;
   }
-  ExtensionKhrTextureTransform* pTextureTransform =
-      textureInfo->getExtension<ExtensionKhrTextureTransform>();
+  const TextureInfo& textureInfoValue = static_cast<TextureInfo&>(*textureInfo);
+  const ExtensionKhrTextureTransform* pTextureTransform =
+      textureInfoValue.getExtension<ExtensionKhrTextureTransform>();
   if (!pTextureTransform) {
     return;
   }
