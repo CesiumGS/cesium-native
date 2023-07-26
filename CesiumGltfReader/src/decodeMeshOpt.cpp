@@ -20,6 +20,36 @@ namespace CesiumGltfReader {
 
 namespace {
 
+void decodeFilter(
+    std::byte* buffer,
+    ExtensionBufferViewExtMeshoptCompression& meshOpt) {
+  if (meshOpt.filter ==
+      ExtensionBufferViewExtMeshoptCompression::Filter::NONE) {
+    return;
+  }
+  if (meshOpt.filter ==
+      ExtensionBufferViewExtMeshoptCompression::Filter::OCTAHEDRAL) {
+    meshopt_decodeFilterOct(
+        buffer,
+        static_cast<size_t>(meshOpt.count),
+        static_cast<size_t>(meshOpt.byteStride));
+  } else if (
+      meshOpt.filter ==
+      ExtensionBufferViewExtMeshoptCompression::Filter::QUATERNION) {
+    meshopt_decodeFilterQuat(
+        buffer,
+        static_cast<size_t>(meshOpt.count),
+        static_cast<size_t>(meshOpt.byteStride));
+  } else if (
+      meshOpt.filter ==
+      ExtensionBufferViewExtMeshoptCompression::Filter::EXPONENTIAL) {
+    meshopt_decodeFilterExp(
+        buffer,
+        static_cast<size_t>(meshOpt.count),
+        static_cast<size_t>(meshOpt.byteStride));
+  }
+}
+
 template <typename T>
 int decodeIndices(
     T* data,
@@ -91,14 +121,6 @@ void decodeAccessor(
     return;
   }
 
-  // check the filter value
-  if (pMeshOpt->filter !=
-      ExtensionBufferViewExtMeshoptCompression::Filter::NONE) {
-    // add a warning message
-    readGltf.warnings.emplace_back("The EXT_meshopt_compression extension has "
-                                   "a filter that is not supported.");
-    return;
-  }
   Buffer* pBuffer = model.getSafe(&model.buffers, pMeshOpt->buffer);
   if (!pBuffer) {
     readGltf.warnings.emplace_back(
@@ -138,6 +160,7 @@ void decodeAccessor(
         "incompatible meshopt compression buffer.");
     return;
   }
+  decodeFilter(pDest->cesium.data.data(), *pMeshOpt);
   pBufferView->buffer = static_cast<int32_t>(model.buffers.size() - 1);
   pBufferView->extensions.erase(
       ExtensionBufferViewExtMeshoptCompression::ExtensionName);
