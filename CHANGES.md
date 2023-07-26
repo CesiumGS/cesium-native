@@ -9,7 +9,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in the 3D Tiles selection algorithm that could cause missing detail if a tileset had a leaf tile that was considered "unconditionally refined" due to having a geometric error larger than its parent's.
-- Fixed a bug where `GltfReader::readImage` would always populate `mipPositions` when reading KTX2 images, even when the KTX2 file indicated that it had no mip levels and that they should be created, if necessary, from the base image. As a result, `generateMipMaps` wouldn't generate any mipmaps for the image.>>>>>>> main
+- Fixed a bug where `GltfReader::readImage` would always populate `mipPositions` when reading KTX2 images, even when the KTX2 file indicated that it had no mip levels and that they should be created, if necessary, from the base image. As a result, `generateMipMaps` wouldn't generate any mipmaps for the image.
 
 ### v0.25.1 - 2023-07-03
 
