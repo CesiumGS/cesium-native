@@ -1,5 +1,12 @@
 # Change Log
 
+
+### v?.?.? - 2023-?-?
+
+##### Additions :tada:
+
+- Add caching support for Google 3d Photorealistic Tiles. Fixes cases where the origin server is using combinations of HTTP header directives that would cause tiles to not go to disk cache (`max-age-0`, `stale-while-revalidate`, and `Expires`).
+
 ### v0.25.1 - 2023-07-03
 
 ##### Additions :tada:
