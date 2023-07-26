@@ -199,6 +199,28 @@ TEST_CASE("Test the condition of caching the request") {
       bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
       REQUIRE(responseCached == true);
     }
+
+    SECTION("GET Request, just Last-Modified") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == true);
+    }
+
+    SECTION("GET Request, just Etag") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"ETag", "deadbeef"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == true);
+    }
   }
 
   SECTION("No cache condition") {
@@ -311,7 +333,7 @@ TEST_CASE("Test the condition of caching the request") {
     }
 
     SECTION(
-        "Store for response that has No-Cache in the cache-control header") {
+        "No store for response that has No-Cache in the cache-control header") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
               static_cast<uint16_t>(200),
@@ -352,7 +374,7 @@ TEST_CASE("Test the condition of caching the request") {
       // server before each reuse, even when the cache is disconnected from the
       // origin server.
 
-      REQUIRE(mockCacheDatabase->storeResponseCall == true);
+      REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
     SECTION(

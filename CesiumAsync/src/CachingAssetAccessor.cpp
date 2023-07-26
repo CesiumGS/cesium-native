@@ -313,10 +313,6 @@ bool shouldCacheRequest(
   HttpHeaders::const_iterator expiresHeader = headers.find("Expires");
   bool expiresExists = expiresHeader != headers.end();
 
-  // If no cache control or expires, don't cache
-  if (!cacheControl && !expiresExists)
-    return false;
-
   //
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
   //
@@ -330,17 +326,28 @@ bool shouldCacheRequest(
   //
   // If there is a Cache-Control header with the max-age or s-maxage directive
   // in the response, the Expires header is ignored
-  bool ignoreExpiresHeader =
+  bool preferCacheControl =
       cacheControl &&
       (cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists());
 
-  // Check older Expires header
-  if (expiresExists && !ignoreExpiresHeader)
+  // Cache control defines expiration in the future, we should cache
+  if (preferCacheControl)
+    return true;
+
+  // Check older Expires header, if no cache control is overriding it
+  if (expiresExists && !preferCacheControl)
     return std::difftime(
                convertHttpDateToTime(expiresHeader->second),
                std::time(nullptr)) > 0.0;
 
-  return true;
+  // If we have a way to revalidate, we can store
+  bool hasEtag = headers.find("ETag") != headers.end();
+  bool hasLastModifiedEtag = headers.find("Last-Modified") != headers.end();
+  if (hasEtag || hasLastModifiedEtag)
+    return true;
+
+  // Else don't store it
+  return false;
 }
 
 std::string calculateCacheKey(const IAssetRequest& request) {
