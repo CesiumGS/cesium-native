@@ -1,4 +1,4 @@
-#include "transformTextureCoords.h"
+#include "applyKHRTextureTransform.h"
 
 #include "CesiumGltf/ExtensionKhrTextureTransform.h"
 #include "CesiumGltfReader/GltfReader.h"
@@ -101,7 +101,7 @@ void processTextureInfo(
   }
 } // namespace
 
-void transformTexture(Model& model) {
+void applyKHRTextureTransform(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       Material* material = Model::getSafe(&model.materials, primitive.material);

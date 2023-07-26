@@ -95,14 +95,14 @@ void decodeAccessor(
   if (pMeshOpt->filter !=
       ExtensionBufferViewExtMeshoptCompression::Filter::NONE) {
     // add a warning message
-    readGltf.warnings.emplace_back("The ext_meshopt_compression extension has "
+    readGltf.warnings.emplace_back("The EXT_meshopt_compression extension has "
                                    "a filter that is not supported.");
     return;
   }
   Buffer* pBuffer = model.getSafe(&model.buffers, pMeshOpt->buffer);
   if (!pBuffer) {
     readGltf.warnings.emplace_back(
-        "The ext_meshopt_compression extension has an invalid buffer "
+        "The EXT_meshopt_compression extension has an invalid buffer "
         "index.");
     return;
   }
@@ -110,7 +110,7 @@ void decodeAccessor(
       static_cast<size_t>(pMeshOpt->byteOffset + pMeshOpt->byteLength) >
           pBuffer->cesium.data.size()) {
     readGltf.warnings.emplace_back(
-        "The ext_meshopt_compression extension has a bufferView that "
+        "The EXT_meshopt_compression extension has a bufferView that "
         "extends beyond its buffer.");
     return;
   }
@@ -119,7 +119,7 @@ void decodeAccessor(
   int64_t byteLength = pMeshOpt->byteStride * pMeshOpt->count;
   if (byteLength < 0) {
     readGltf.warnings.emplace_back(
-        "The ext_meshopt_compression extension has a negative byte length.");
+        "The EXT_meshopt_compression extension has a negative byte length.");
     return;
   }
   pDest->cesium.data.resize(static_cast<size_t>(byteLength));
@@ -134,7 +134,7 @@ void decodeAccessor(
               static_cast<size_t>(pMeshOpt->byteLength)),
           *pMeshOpt) != 0) {
     readGltf.warnings.emplace_back(
-        "The ext_meshopt_compression extension has a corrupted or "
+        "The EXT_meshopt_compression extension has a corrupted or "
         "incompatible meshopt compression buffer.");
     return;
   }

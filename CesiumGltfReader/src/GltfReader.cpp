@@ -1,12 +1,12 @@
 #include "CesiumGltfReader/GltfReader.h"
 
 #include "ModelJsonHandler.h"
+#include "applyKHRTextureTransform.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
 #include "dequantizeMeshData.h"
 #include "registerExtensions.h"
-#include "transformTextureCoords.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -304,7 +304,7 @@ void postprocess(
     decodeDraco(readGltf);
   }
 
-  if (options.decompressMeshData &&
+  if (options.decodeMeshOptData &&
       std::find(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
@@ -325,7 +325,7 @@ void postprocess(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "KHR_texture_transform") != model.extensionsUsed.end()) {
-    transformTexture(model);
+    applyKHRTextureTransform(model);
   }
 }
 

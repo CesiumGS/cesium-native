@@ -87,9 +87,8 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
   std::vector<std::byte> buffer;
   buffer.resize(static_cast<size_t>(byteLength));
 
-  const std::byte* bPtr = reinterpret_cast<std::byte*>(
-      pBuffer->cesium.data.data() + pBufferView->byteOffset +
-      accessor.byteOffset);
+  const std::byte* bPtr = pBuffer->cesium.data.data() +
+                          pBufferView->byteOffset + accessor.byteOffset;
 
   if (accessor.normalized) {
     dequantizeFloat<T, N>(
