@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Add caching support for Google 3d Photorealistic Tiles. Fixes cases where the origin server is using combinations of HTTP header directives that would cause tiles to not go to disk cache (`max-age-0`, `stale-while-revalidate`, and `Expires`).
+
 ##### Fixes :wrench:
 
 - Fixed a bug in the 3D Tiles selection algorithm that could cause missing detail if a tileset had a leaf tile that was considered "unconditionally refined" due to having a geometric error larger than its parent's.
