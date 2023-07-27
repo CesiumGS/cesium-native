@@ -221,6 +221,56 @@ TEST_CASE("Test the condition of caching the request") {
       bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
       REQUIRE(responseCached == true);
     }
+
+    SECTION(
+        "GET Request, Expires header is less than current, but has an ETag") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"ETag", "deadbeef"},
+          {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == true);
+    }
+
+    SECTION("GET Request, Expires header is less than current, but has a "
+            "Last-Modified") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
+          {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == true);
+    }
+
+    SECTION("GET Request, max-age is zero, but has an ETag") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"ETag", "deadbeef"},
+          {"Cache-Control", "max-age=0"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == true);
+    }
+
+    SECTION("GET Request, max-age is zero, but has a Last-Modified") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
+          {"Cache-Control", "max-age=0"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == true);
+    }
   }
 
   SECTION("No cache condition") {
@@ -444,6 +494,17 @@ TEST_CASE("Test the condition of caching the request") {
           ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
           .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
+    }
+
+    SECTION("No store if max-age=0 and response has no ETag or Last-Modified") {
+      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+
+      HttpHeaders headers = {
+          {"Content-Type", "application/json"},
+          {"Cache-Control", "max-age=0"}};
+
+      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+      REQUIRE(responseCached == false);
     }
   }
 }

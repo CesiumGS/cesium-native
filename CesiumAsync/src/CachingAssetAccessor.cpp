@@ -326,19 +326,31 @@ bool shouldCacheRequest(
   //
   // If there is a Cache-Control header with the max-age or s-maxage directive
   // in the response, the Expires header is ignored
-  bool preferCacheControl =
-      cacheControl &&
-      (cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists());
+  bool preferCacheControl = false;
 
-  // Cache control defines expiration in the future, we should cache
-  if (preferCacheControl)
-    return true;
+  // If Cache-Control expiration is in the future, definitely cache. But we
+  // might be able to cache even if it's not.
+  if (cacheControl) {
+    if (cacheControl->maxAgeExists()) {
+      preferCacheControl = true;
+      if (cacheControl->maxAgeValue() > 0)
+        return true;
+    } else if (cacheControl->sharedMaxAgeExists()) {
+      preferCacheControl = true;
+      if (cacheControl->sharedMaxAgeValue() > 0)
+        return true;
+    }
+  }
 
-  // Check older Expires header, if no cache control is overriding it
-  if (expiresExists && !preferCacheControl)
-    return std::difftime(
-               convertHttpDateToTime(expiresHeader->second),
-               std::time(nullptr)) > 0.0;
+  // If Expires is in the future, definitely cache. But we might be able to
+  // cache even if it's not.
+  if (!preferCacheControl && expiresExists) {
+    bool alreadyExpired = std::difftime(
+                              convertHttpDateToTime(expiresHeader->second),
+                              std::time(nullptr)) <= 0.0;
+    if (!alreadyExpired)
+      return true;
+  }
 
   // If we have a way to revalidate, we can store
   bool hasEtag = headers.find("ETag") != headers.end();
