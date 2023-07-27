@@ -25,7 +25,7 @@ template <> float intToFloat(std::int16_t c) {
 template <> float intToFloat(std::uint16_t c) { return c / 65535.0f; }
 
 template <typename T, size_t N>
-void dequantizeFloat(
+void normalizeQuantized(
     float* fPtr,
     int64_t count,
     const std::byte* bPtr,
@@ -38,7 +38,7 @@ void dequantizeFloat(
 }
 
 template <typename T, size_t N>
-void castToFloat(
+void castQuantizedToFloat(
     float* fPtr,
     int64_t count,
     const std::byte* bPtr,
@@ -84,40 +84,44 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     return;
   }
 
-  std::vector<std::byte> buffer;
-  buffer.resize(static_cast<size_t>(byteLength));
+  std::vector<std::byte> data;
+  data.resize(static_cast<size_t>(byteLength));
 
   const std::byte* bPtr = pBuffer->cesium.data.data() +
                           pBufferView->byteOffset + accessor.byteOffset;
 
   if (accessor.normalized) {
-    dequantizeFloat<T, N>(
-        reinterpret_cast<float*>(buffer.data()),
+    normalizeQuantized<T, N>(
+        reinterpret_cast<float*>(data.data()),
         accessor.count,
         bPtr,
         byteStride);
+    for (double& d : accessor.min) {
+      d = intToFloat<T>(static_cast<T>(d));
+    }
+    for (double& d : accessor.max) {
+      d = intToFloat<T>(static_cast<T>(d));
+    }
   } else {
-    castToFloat<T, N>(
-        reinterpret_cast<float*>(buffer.data()),
+    castQuantizedToFloat<T, N>(
+        reinterpret_cast<float*>(data.data()),
         accessor.count,
         bPtr,
         byteStride);
   }
   accessor.componentType = AccessorSpec::ComponentType::FLOAT;
   accessor.byteOffset = 0;
-  for (double& d : accessor.min) {
-    d = intToFloat<T>(static_cast<T>(d));
-  }
-  for (double& d : accessor.max) {
-    d = intToFloat<T>(static_cast<T>(d));
-  }
+  accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
 
-  pBufferView->byteOffset = 0;
-  pBufferView->byteStride = N * sizeof(float);
-  pBufferView->byteLength = byteLength;
+  BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
+  bufferView.byteOffset = 0;
+  bufferView.byteStride = N * sizeof(float);
+  bufferView.byteLength = byteLength;
+  bufferView.buffer = static_cast<int32_t>(model.buffers.size());
 
-  pBuffer->cesium.data = std::move(buffer);
-  pBuffer->byteLength = byteLength;
+  Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data = std::move(data);
+  buffer.byteLength = byteLength;
 }
 
 template <size_t N> void dequantizeAccessor(Model& model, Accessor& accessor) {

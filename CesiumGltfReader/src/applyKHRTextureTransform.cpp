@@ -9,7 +9,7 @@ namespace CesiumGltfReader {
 namespace {
 void transformBufferView(
     const AccessorView<glm::vec2>& accessorView,
-    Buffer& buffer,
+    std::vector<std::byte>& data,
     const ExtensionKhrTextureTransform& textureTransform) {
 
   if (textureTransform.offset.size() < 2 || textureTransform.scale.size() < 2) {
@@ -24,7 +24,7 @@ void transformBufferView(
     float ScaleX = static_cast<float>(textureTransform.scale[0]);
     float ScaleY = static_cast<float>(textureTransform.scale[1]);
 
-    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(data.data());
     for (int i = 0; i < accessorView.size(); i++) {
       glm::vec2 uv = accessorView[i];
       uv.x = uv.x * ScaleX + OffsetX;
@@ -48,7 +48,7 @@ void transformBufferView(
     glm::mat3 scale = glm::mat3(Scale.x, 0, 0, 0, Scale.y, 0, 0, 0, 1);
     glm::mat3 matrix = translation * rotation * scale;
 
-    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(data.data());
 
     for (int i = 0; i < accessorView.size(); i++) {
       *uvs++ = glm::vec2((matrix * glm::vec3(accessorView[i], 1)));
@@ -89,17 +89,21 @@ void processTextureInfo(
   if (!pBufferView) {
     return;
   }
-  Accessor& accessor = model.accessors.emplace_back(*pAccessor);
-  const AccessorView<glm::vec2> accessorView(model, accessor);
+  const AccessorView<glm::vec2> accessorView(model, *pAccessor);
   if (accessorView.status() == AccessorViewStatus::Valid) {
-    Buffer& buffer = model.buffers.emplace_back();
-    buffer.cesium.data.resize(static_cast<size_t>(pBufferView->byteLength));
-    transformBufferView(accessorView, buffer, *pTextureTransform);
+    std::vector<std::byte> data;
+    data.resize(static_cast<size_t>(pBufferView->byteLength));
+    transformBufferView(accessorView, data, *pTextureTransform);
+    textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
+    find->second = static_cast<int32_t>(model.accessors.size());
+    Accessor& accessor = model.accessors.emplace_back(*pAccessor);
+    pBufferView = Model::getSafe(&model.bufferViews, accessor.bufferView);
     accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
     BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
-    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    find->second = static_cast<int32_t>(model.accessors.size() - 1);
-    textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size());
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.byteLength = bufferView.byteLength;
+    buffer.cesium.data = std::move(data);
   }
 } // namespace
 
