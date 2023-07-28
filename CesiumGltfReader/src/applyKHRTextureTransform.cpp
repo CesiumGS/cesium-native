@@ -72,7 +72,7 @@ void processTextureInfo(
   if (!pTextureTransform) {
     return;
   }
-  int64_t texCoord = 0;
+  int64_t texCoord = textureInfoValue.texCoord;
   if (pTextureTransform->texCoord) {
     texCoord = *pTextureTransform->texCoord;
   }
@@ -97,7 +97,6 @@ void processTextureInfo(
     textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
     find->second = static_cast<int32_t>(model.accessors.size());
     Accessor& accessor = model.accessors.emplace_back(*pAccessor);
-    pBufferView = Model::getSafe(&model.bufferViews, accessor.bufferView);
     accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
     BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
     bufferView.buffer = static_cast<int32_t>(model.buffers.size());

@@ -102,14 +102,16 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool decodeDraco = true;
 
   /**
-   * @brief Whether the mesh data are decompressed on the CPU or not, according
-   * to the EXT_meshopt_compression extension
+   * @brief Whether the mesh data are decompressed as part of the load process,
+   * or left in the compressed format according to the EXT_meshopt_compression
+   * extension
    */
   bool decodeMeshOptData = true;
 
   /**
-   * @brief Whether the quantized and compressed mesh data are dequantized on
-   * the CPU or not, according to the KHR_mesh_quantization extension
+   * @brief Whether the quantized mesh data are dequantized and converted to
+   * floating-point values when loading, according to the KHR_mesh_quantization
+   * extension.
    */
   bool dequantizeMeshData = true;
 

@@ -2,7 +2,6 @@
 
 #include "CesiumGltfReader/GltfReader.h"
 
-#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 
 #ifdef __GNUC__
@@ -74,13 +73,13 @@ int decodeIndices(
 }
 
 int decodeBufferView(
-    void* pDest,
+    void* data,
     const gsl::span<const std::byte>& buffer,
     const ExtensionBufferViewExtMeshoptCompression& meshOpt) {
   if (meshOpt.mode ==
       ExtensionBufferViewExtMeshoptCompression::Mode::ATTRIBUTES) {
     return meshopt_decodeVertexBuffer(
-        pDest,
+        data,
         static_cast<size_t>(meshOpt.count),
         static_cast<size_t>(meshOpt.byteStride),
         reinterpret_cast<const unsigned char*>(buffer.data()),
@@ -88,12 +87,12 @@ int decodeBufferView(
   } else {
     if (meshOpt.byteStride == sizeof(std::uint16_t)) {
       return decodeIndices(
-          reinterpret_cast<std::uint16_t*>(pDest),
+          reinterpret_cast<std::uint16_t*>(data),
           buffer,
           meshOpt);
     } else if (meshOpt.byteStride == sizeof(std::uint32_t)) {
       return decodeIndices(
-          reinterpret_cast<std::uint32_t*>(pDest),
+          reinterpret_cast<std::uint32_t*>(data),
           buffer,
           meshOpt);
     } else {
@@ -104,8 +103,7 @@ int decodeBufferView(
 } // namespace
 
 void decodeMeshOpt(Model& model, CesiumGltfReader::GltfReaderResult& readGltf) {
-  for (size_t i = 0; i < model.bufferViews.size(); ++i) {
-    BufferView& bufferView = model.bufferViews[i];
+  for (BufferView& bufferView : model.bufferViews) {
     const ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
         bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
     if (pMeshOpt) {

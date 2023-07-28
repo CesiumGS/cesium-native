@@ -2,8 +2,6 @@
 
 #include "CesiumGltfReader/GltfReader.h"
 
-#include <CesiumGltf/AccessorView.h>
-
 using namespace CesiumGltf;
 
 namespace CesiumGltfReader {
