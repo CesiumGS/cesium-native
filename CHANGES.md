@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Add caching support for Google 3d Photorealistic Tiles. Fixes cases where the origin server is using combinations of HTTP header directives that would cause tiles to not go to disk cache (`max-age-0`, `stale-while-revalidate`, and `Expires`).
+- Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
 
 ##### Fixes :wrench:
 
