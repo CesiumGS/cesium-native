@@ -72,6 +72,12 @@
     "license": ["IJG", "BSD-3-Clause", "zlib"]
   },
   {
+    "name": "meshoptimizer",
+    "url": "https://github.com/zeux/meshoptimizer",
+    "version": "0.19",
+    "license": ["MIT"]
+  },
+  {
     "name": "modp_b64",
     "url": "https://github.com/chromium/chromium/tree/15996b5d2322b634f4197447b10289bddc2b0b32/third_party/modp_b64",
     "version": "15996b5d2322b634f4197447b10289bddc2b0b32",

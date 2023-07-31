@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Add caching support for Google 3d Photorealistic Tiles. Fixes cases where the origin server is using combinations of HTTP header directives that would cause tiles to not go to disk cache (`max-age-0`, `stale-while-revalidate`, and `Expires`).
+- Added support for the `EXT_meshopt_compression` extension, which allows decompressing mesh data using the meshoptimizer library. Also added support for the `KHR_mesh_quantization` and `KHR_texture_transform` extensions, which are often used together with the `EXT_meshopt_compression` extension to optimize the size and performance of glTF files.
 
 ##### Fixes :wrench:
 
