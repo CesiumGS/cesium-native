@@ -1,6 +1,6 @@
 #include "dequantizeMeshData.h"
 
-#include "CesiumGltfReader/GltfReader.h"
+#include <CesiumGltfReader/GltfReader.h>
 
 using namespace CesiumGltf;
 
@@ -170,8 +170,7 @@ void dequantizeMeshData(Model& model) {
         }
         const std::string& attributeName = attribute.first;
         if (attributeName == "POSITION" || attributeName == "NORMAL" ||
-            attributeName == "TANGENT" ||
-            attributeName.find("TEXCOORD") != std::string::npos) {
+            attributeName == "TANGENT" || attributeName.find("TEXCOORD") == 0) {
           dequantizeAccessor(model, *pAccessor);
         }
       }

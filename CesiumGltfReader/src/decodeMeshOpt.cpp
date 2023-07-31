@@ -1,8 +1,7 @@
 #include "decodeMeshOpt.h"
 
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push

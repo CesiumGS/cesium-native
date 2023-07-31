@@ -1,10 +1,11 @@
 #include "applyKHRTextureTransform.h"
 
-#include "CesiumGltf/ExtensionKhrTextureTransform.h"
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltfReader/GltfReader.h>
+
 using namespace CesiumGltf;
+
 namespace CesiumGltfReader {
 namespace {
 void transformBufferView(
@@ -66,7 +67,7 @@ void processTextureInfo(
   if (!textureInfo) {
     return;
   }
-  const TextureInfo& textureInfoValue = static_cast<TextureInfo&>(*textureInfo);
+  const TextureInfo& textureInfoValue = *textureInfo;
   const ExtensionKhrTextureTransform* pTextureTransform =
       textureInfoValue.getExtension<ExtensionKhrTextureTransform>();
   if (!pTextureTransform) {
@@ -104,7 +105,7 @@ void processTextureInfo(
     buffer.byteLength = bufferView.byteLength;
     buffer.cesium.data = std::move(data);
   }
-} // namespace
+}
 
 void applyKHRTextureTransform(Model& model) {
   for (Mesh& mesh : model.meshes) {
