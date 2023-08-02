@@ -46,6 +46,8 @@ endif()
 
 set(CESIUM_NATIVE_DRACO_LIBRARY ${CESIUM_NATIVE_DRACO_LIBRARY} PARENT_SCOPE)
 
+add_subdirectory(meshoptimizer)
+
 if (NOT TARGET glm)
     add_subdirectory(glm GLM)
 endif()

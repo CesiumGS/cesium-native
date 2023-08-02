@@ -4,8 +4,14 @@
 
 ##### Additions :tada:
 
-- Add caching support for Google 3d Photorealistic Tiles. Fixes cases where the origin server is using combinations of HTTP header directives that would cause tiles to not go to disk cache (`max-age-0`, `stale-while-revalidate`, and `Expires`).
 - Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
+
+### v0.26.0 - 2023-08-01
+
+##### Additions :tada:
+
+- Added caching support for Google Maps Photorealistic 3D Tiles. Or other cases where the origin server is using combinations of HTTP header directives that previously caused tiles not to go to disk cache (such as `max-age-0`, `stale-while-revalidate`, and `Expires`).
+- Added support for the `EXT_meshopt_compression` extension, which allows decompressing mesh data using the meshoptimizer library. Also added support for the `KHR_mesh_quantization` and `KHR_texture_transform` extensions, which are often used together with the `EXT_meshopt_compression` extension to optimize the size and performance of glTF files.
 
 ##### Fixes :wrench:
 
