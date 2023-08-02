@@ -88,14 +88,14 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
 
 CesiumGeospatial::LocalHorizontalCoordinateSystem::
     LocalHorizontalCoordinateSystem(const glm::dmat4& localToEcef)
-    : _localToEcef(localToEcef),
-      _ecefToLocal(glm::affineInverse(localToEcef)) {}
+    : _ecefToLocal(glm::affineInverse(localToEcef)),
+      _localToEcef(localToEcef) {}
 
 CesiumGeospatial::LocalHorizontalCoordinateSystem::
     LocalHorizontalCoordinateSystem(
         const glm::dmat4& localToEcef,
         const glm::dmat4& ecefToLocal)
-    : _localToEcef(localToEcef), _ecefToLocal(ecefToLocal) {}
+    : _ecefToLocal(ecefToLocal), _localToEcef(localToEcef) {}
 
 glm::dvec3 LocalHorizontalCoordinateSystem::localPositionToEcef(
     const glm::dvec3& localPosition) const noexcept {
