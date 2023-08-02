@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.27.0 - 2023-09-01
+
+##### Fixes :wrench:
+
+- Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
+
 ### v0.26.0 - 2023-08-01
 
 ##### Additions :tada:
