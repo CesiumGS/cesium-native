@@ -39,7 +39,7 @@ target_link_libraries(CesiumIonClient
         CesiumAsync
         CesiumUtility
     PRIVATE
-        csprng
+        # csprng
         modp_b64
         PicoSHA2
 )

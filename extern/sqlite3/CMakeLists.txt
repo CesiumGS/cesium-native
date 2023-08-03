@@ -16,6 +16,10 @@ if (PRIVATE_CESIUM_SQLITE)
     target_compile_definitions(sqlite3 PUBLIC PRIVATE_CESIUM_SQLITE)
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
+    target_compile_definitions(sqlite3 PUBLIC SQLITE_OS_WINRT)
+endif()
+
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/sqlite3.h CONTENT "${SQLITE3_HEADER_CONTENTS}")
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/sqlite3.c CONTENT "${SQLITE3_SOURCE_CONTENTS}")
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/cesium-sqlite3.h INPUT ${CMAKE_CURRENT_SOURCE_DIR}/cesium-sqlite3.h)

@@ -183,7 +183,7 @@ install(TARGETS modp_b64)
 
 install(TARGETS httplib)
 
-install(TARGETS csprng)
+# install(TARGETS csprng)
 
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
