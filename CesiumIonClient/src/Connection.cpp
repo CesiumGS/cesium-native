@@ -1,6 +1,6 @@
-#define _CRT_RAND_S
 #include "CesiumIonClient/Connection.h"
 
+#include "fillWithRandomBytes.h"
 #include "parseLinkHeader.h"
 
 #include <CesiumAsync/IAssetResponse.h>
@@ -9,7 +9,6 @@
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
-// #include <duthomhas/csprng.hpp>
 #include <httplib.h>
 #include <modp_b64.h>
 #include <rapidjson/document.h>
@@ -17,7 +16,6 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
-#include <cstdlib>
 #include <thread>
 
 #ifdef _MSC_VER
@@ -117,32 +115,13 @@ std::string createAuthorizationErrorHtml(
   std::string redirectUrl =
       Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
 
-  // duthomhas::csprng rng;
   std::vector<uint8_t> stateBytes(32, 0);
-  // rng(stateBytes);
-
-  gsl::span<uint8_t> span = stateBytes;
-  gsl::span<uint32_t> intSpan =
-      CesiumUtility::reintepretCastSpan<uint32_t>(span);
-  for (size_t i = 0; i < intSpan.size(); ++i) {
-    if (rand_s(&intSpan[i]) != 0) {
-      throw std::exception("Failed to generate random numbers for \"state\".");
-    }
-  }
+  fillWithRandomBytes(stateBytes);
 
   std::string state = encodeBase64(stateBytes);
 
   std::vector<uint8_t> codeVerifierBytes(32, 0);
-  //  rng(codeVerifierBytes);
-
-  span = codeVerifierBytes;
-  intSpan = CesiumUtility::reintepretCastSpan<uint32_t>(span);
-  for (size_t i = 0; i < intSpan.size(); ++i) {
-    if (rand_s(&intSpan[i]) != 0) {
-      throw std::exception(
-          "Failed to generate random numbers for \"codeVerifier\".");
-    }
-  }
+  fillWithRandomBytes(codeVerifierBytes);
 
   std::string codeVerifier = encodeBase64(codeVerifierBytes);
 

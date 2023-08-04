@@ -112,13 +112,15 @@ add_subdirectory(cpp-httplib)
 
 # CSPRNG's CMake setup is old school, and it really only has one source
 # file, so set up a library manually here.
-# add_library(csprng CSPRNG/source/csprng.cpp)
-# target_include_directories(
-#     csprng
-#     PUBLIC
-#         CSPRNG/source
-# )
-# set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
+  add_library(csprng CSPRNG/source/csprng.cpp)
+  target_include_directories(
+      csprng
+      PUBLIC
+          CSPRNG/source
+  )
+  set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
+endif()
 
 # PicoSHA2 doesn't have CMakeLists.txt at all
 add_library(PicoSHA2 INTERFACE)
