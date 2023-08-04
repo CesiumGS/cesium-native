@@ -116,7 +116,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
   add_library(csprng CSPRNG/source/csprng.cpp)
   target_include_directories(
       csprng
-      PUBLIC
+      SYSTEM PRIVATE
           CSPRNG/source
   )
   set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
