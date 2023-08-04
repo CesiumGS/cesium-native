@@ -29,13 +29,15 @@ namespace CesiumIonClient {
 void fillWithRandomBytes(const gsl::span<uint8_t>& buffer) {
 #if IS_UWP
   size_t i = 0;
-  for (; i <= buffer.size() - sizeof(std::uint32_t);
-       i += sizeof(std::uint32_t)) {
-    std::uint32_t r;
-    if (rand_s(&r) != 0) {
-      throw std::exception("Failed to generate random numbers.");
+  if (buffer.size() >= sizeof(uint32_t)) {
+    for (; i <= buffer.size() - sizeof(std::uint32_t);
+        i += sizeof(std::uint32_t)) {
+      std::uint32_t r;
+      if (rand_s(&r) != 0) {
+        throw std::exception("Failed to generate random numbers.");
+      }
+      std::memcpy(&buffer[i], &r, sizeof(std::uint32_t));
     }
-    std::memcpy(&buffer[i], &r, sizeof(std::uint32_t));
   }
 
   if (i < buffer.size()) {
