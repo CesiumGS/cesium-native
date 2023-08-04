@@ -31,7 +31,7 @@ void fillWithRandomBytes(const gsl::span<uint8_t>& buffer) {
   size_t i = 0;
   if (buffer.size() >= sizeof(uint32_t)) {
     for (; i <= buffer.size() - sizeof(std::uint32_t);
-        i += sizeof(std::uint32_t)) {
+         i += sizeof(std::uint32_t)) {
       std::uint32_t r;
       if (rand_s(&r) != 0) {
         throw std::exception("Failed to generate random numbers.");
