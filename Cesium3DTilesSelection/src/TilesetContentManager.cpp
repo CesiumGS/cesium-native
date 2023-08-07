@@ -1425,12 +1425,14 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
       this->_externals.pLogger,
       "Warnings when loading tileset");
 
-  if (loadErrorCallback) {
-    loadErrorCallback(TilesetLoadFailureDetails{
-        nullptr,
-        type,
-        result.statusCode,
-        CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+  if (result.errors) {
+    if (loadErrorCallback) {
+      loadErrorCallback(TilesetLoadFailureDetails{
+          nullptr,
+          type,
+          result.statusCode,
+          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    }
   }
 
   if (!result.errors) {

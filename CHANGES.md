@@ -6,6 +6,10 @@
 
 - Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
 
+##### Fixes :wrench:
+
+- Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
+
 ### v0.26.0 - 2023-08-01
 
 ##### Additions :tada:
