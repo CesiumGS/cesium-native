@@ -25,6 +25,31 @@
 - Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
 - Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
 
+### v0.27.0 - 2023-09-01
+
+##### Fixes :wrench:
+
+- Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
+
+### v0.26.0 - 2023-08-01
+
+##### Additions :tada:
+
+- Added caching support for Google Maps Photorealistic 3D Tiles. Or other cases where the origin server is using combinations of HTTP header directives that previously caused tiles not to go to disk cache (such as `max-age-0`, `stale-while-revalidate`, and `Expires`).
+- Added support for the `EXT_meshopt_compression` extension, which allows decompressing mesh data using the meshoptimizer library. Also added support for the `KHR_mesh_quantization` and `KHR_texture_transform` extensions, which are often used together with the `EXT_meshopt_compression` extension to optimize the size and performance of glTF files.
+
+##### Fixes :wrench:
+
+- Fixed a bug in the 3D Tiles selection algorithm that could cause missing detail if a tileset had a leaf tile that was considered "unconditionally refined" due to having a geometric error larger than its parent's.
+- Fixed a bug where `GltfReader::readImage` would always populate `mipPositions` when reading KTX2 images, even when the KTX2 file indicated that it had no mip levels and that they should be created, if necessary, from the base image. As a result, `generateMipMaps` wouldn't generate any mipmaps for the image.
+
+### v0.25.1 - 2023-07-03
+
+##### Additions :tada:
+
+- Included generated glTF and 3D Tiles classes in the generated referenced documentation.
+- Updated the 3D Tiles class generator to use the `main` branch instead of the `draft-1.1` branch.
+
 ### v0.25.0 - 2023-06-01
 
 ##### Additions :tada:

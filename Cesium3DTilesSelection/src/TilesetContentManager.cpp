@@ -634,8 +634,7 @@ TilesetContentManager::TilesetContentManager(
             [pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
-             contentOptions = tilesetOptions.contentOptions,
-             showCreditsOnScreen = tilesetOptions.showCreditsOnScreen](
+             contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
               // Check if request is successful
@@ -702,7 +701,6 @@ TilesetContentManager::TilesetContentManager(
                              contentOptions,
                              url,
                              flatHeaders,
-                             showCreditsOnScreen,
                              tilesetJson)
                       .thenImmediately(
                           [](TilesetContentLoaderResult<TilesetContentLoader>&&
@@ -1427,12 +1425,14 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
       this->_externals.pLogger,
       "Warnings when loading tileset");
 
-  if (loadErrorCallback) {
-    loadErrorCallback(TilesetLoadFailureDetails{
-        nullptr,
-        type,
-        result.statusCode,
-        CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+  if (result.errors) {
+    if (loadErrorCallback) {
+      loadErrorCallback(TilesetLoadFailureDetails{
+          nullptr,
+          type,
+          result.statusCode,
+          CesiumUtility::joinToString(result.errors.errors, "\n- ")});
+    }
   }
 
   if (!result.errors) {
