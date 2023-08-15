@@ -10,7 +10,7 @@
   "author": "CesiumGS, Inc.",
   "license": "UNLICENSED",
   "dependencies": {
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "sync-request": "^6.1.0",
     "yargs": "^16.2.0"
   },
