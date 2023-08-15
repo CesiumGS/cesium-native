@@ -413,7 +413,7 @@ public:
 
   /**
    * @brief Gets the array from the value.
-   * @return The arrayj.
+   * @return The array.
    * @throws std::bad_variant_access if the underlying type is not a
    * JsonValue::Array
    */

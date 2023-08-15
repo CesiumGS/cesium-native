@@ -37,9 +37,7 @@ public:
 
   /**
    * @brief Constructs an array view from a vector of values. This is mainly
-   * used by PropertyTextureProperty -- since the values are swizzled from the
-   * texture, the values cannot be viewed in place, and must passed in through a
-   * correctly ordered vector.
+   * used when the values cannot be viewed in place.
    *
    * @param values The vector containing the values.
    */
@@ -85,18 +83,39 @@ public:
       int64_t size) noexcept
       : _values{buffer}, _bitOffset{bitOffset}, _size{size} {}
 
+  /**
+   * @brief Constructs an array view from a vector of values. This is mainly
+   * used when the values cannot be viewed in place.
+   *
+   * @param values The vector containing the values.
+   */
+  PropertyArrayView(const std::vector<bool>&& values)
+      : _values{std::move(values)}, _bitOffset{0}, _size{0} {
+    const auto vectorValues = std::get<std::vector<bool>>(_values);
+    _size = static_cast<int64_t>(vectorValues.size());
+  }
+
   bool operator[](int64_t index) const noexcept {
+    // There's no way to access the bitstream data in std::vector<bool>, so this
+    // implementation is very "either or".
+    if (std::holds_alternative<std::vector<bool>>(_values)) {
+      const auto vectorValues = std::get<std::vector<bool>>(_values);
+      return vectorValues[static_cast<size_t>(index)];
+    }
+
+    const auto values = std::get<gsl::span<const std::byte>>(_values);
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    const int bitValue = static_cast<int>(values[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 
   int64_t size() const noexcept { return _size; }
 
 private:
-  gsl::span<const std::byte> _values;
+  using ArrayType = std::variant<gsl::span<const std::byte>, std::vector<bool>>;
+  ArrayType _values;
   int64_t _bitOffset;
   int64_t _size;
 };
@@ -127,7 +146,28 @@ public:
         _stringOffsetType{stringOffsetType},
         _size{size} {}
 
+  /**
+   * @brief Constructs an array view from a vector of values. This is mainly
+   * used when the values cannot be viewed in place.
+   *
+   * @param values The vector containing the values.
+   */
+  PropertyArrayView(const std::vector<std::string>&& values)
+      : _values{std::move(values)},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _size{0} {
+    const auto vectorValues = std::get<std::vector<std::string>>(_values);
+    _size = static_cast<int64_t>(vectorValues.size());
+  }
+
   std::string_view operator[](int64_t index) const noexcept {
+    if (std::holds_alternative<std::vector<std::string>>(_values)) {
+      const auto vectorValues = std::get<std::vector<std::string>>(_values);
+      return vectorValues[static_cast<size_t>(index)];
+    }
+
+    const auto values = std::get<gsl::span<const std::byte>>(_values);
     const size_t currentOffset =
         getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
@@ -135,15 +175,18 @@ public:
         _stringOffsets,
         _stringOffsetType);
     return std::string_view(
-        reinterpret_cast<const char*>(_values.data() + currentOffset),
+        reinterpret_cast<const char*>(values.data() + currentOffset),
         (nextOffset - currentOffset));
   }
 
   int64_t size() const noexcept { return _size; }
 
 private:
-  gsl::span<const std::byte> _values;
+  using ArrayType =
+      std::variant<gsl::span<const std::byte>, std::vector<std::string>>;
+  ArrayType _values;
   gsl::span<const std::byte> _stringOffsets;
+
   PropertyComponentType _stringOffsetType;
   int64_t _size;
 };

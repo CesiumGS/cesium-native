@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/PropertyArrayView.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
+#include "CesiumGltf/PropertyView.h"
 
 #include <gsl/span>
 
@@ -168,17 +169,17 @@ enum class PropertyTablePropertyViewStatus {
  * the scalar types, bool, std::string_view, or PropertyArrayView<T> with T as
  * one of the aforementioned types.
  */
-template <typename ElementType> class PropertyTablePropertyView {
+template <typename ElementType>
+class PropertyTablePropertyView : public PropertyView<ElementType> {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTablePropertyView()
-      : _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
-        _values{},
-        _arrayCount{},
-        _size{},
-        _normalized{} {}
+      : PropertyView(),
+        _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
+        _values,
+        _size{} {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -186,7 +187,7 @@ public:
    * @param status The {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
   PropertyTablePropertyView(PropertyTablePropertyViewStatus status)
-      : _status{status}, _values{}, _arrayCount{}, _size{}, _normalized{} {
+      : PropertyView(), _status{status}, _values{}, _size{} {
     assert(
         _status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -200,10 +201,12 @@ public:
    * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTablePropertyView(
-      gsl::span<const std::byte> values,
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
       int64_t size,
-      bool normalized) noexcept
-      : _status{PropertyTablePropertyViewStatus::Valid},
+      gsl::span<const std::byte> values) noexcept
+      : PropertyView(classProperty, property),
+        _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
@@ -211,9 +214,7 @@ public:
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
         _stringOffsetTypeSize{0},
-        _arrayCount{0},
-        _size{size},
-        _normalized{normalized} {}
+        _size{size} {}
 
   /**
    * @brief Construct a valid instance pointing to the data specified by
@@ -225,18 +226,20 @@ public:
    * @param offsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
    * @param arrayCount The number of elements in each array value specified by {@link ClassProperty::count}
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param normalized Whether this property has a normalized integer type.
+   * @param normalized Whether this property has a normalized integer
+   * type.
    */
   PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
       gsl::span<const std::byte> values,
       gsl::span<const std::byte> arrayOffsets,
       gsl::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
-      PropertyComponentType stringOffsetType,
-      int64_t arrayCount,
-      int64_t size,
-      bool normalized) noexcept
-      : _status{PropertyTablePropertyViewStatus::Valid},
+      PropertyComponentType stringOffsetType) noexcept
+      : PropertyView(classProperty, property),
+        _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
         _arrayOffsets{arrayOffsets},
         _arrayOffsetType{arrayOffsetType},
@@ -244,9 +247,7 @@ public:
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
-        _arrayCount{arrayCount},
-        _size{size},
-        _normalized{normalized} {}
+        _size{size} {}
 
   /**
    * @brief Gets the status of this property table property view.
@@ -310,21 +311,6 @@ public:
     return status() == PropertyTablePropertyViewStatus::Valid ? _size : 0;
   }
 
-  /**
-   * @brief Get the element count of the fixed-length arrays in this property.
-   * Only applicable when the property is an array type.
-   *
-   * @return The count of this property.
-   */
-  int64_t getArrayCount() const noexcept { return _arrayCount; }
-
-  /**
-   * @brief Whether this property has a normalized integer type.
-   *
-   * @return Whether this property has a normalized integer type.
-   */
-  bool isNormalized() const noexcept { return _normalized; }
-
 private:
   ElementType getNumericValue(int64_t index) const noexcept {
     return reinterpret_cast<const ElementType*>(_values.data())[index];
@@ -351,9 +337,10 @@ private:
 
   template <typename T>
   PropertyArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
-    if (_arrayCount > 0) {
-      size_t arraySize = _arrayCount * sizeof(T);
+    if (count > 0) {
+      size_t arraySize = count * sizeof(T);
       const gsl::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
@@ -373,10 +360,11 @@ private:
 
   PropertyArrayView<std::string_view>
   getStringArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
-    if (_arrayCount > 0) {
+    if (count > 0) {
       // Copy the corresponding string offsets to pass to the PropertyArrayView.
-      const size_t arraySize = _arrayCount * _stringOffsetTypeSize;
+      const size_t arraySize = count * _stringOffsetTypeSize;
       const gsl::span<const std::byte> stringOffsetValues(
           _stringOffsets.data() + index * arraySize,
           arraySize + _stringOffsetTypeSize);
@@ -384,7 +372,7 @@ private:
           _values,
           stringOffsetValues,
           _stringOffsetType,
-          _arrayCount);
+          count);
     }
 
     // Handle variable-length arrays
@@ -404,14 +392,15 @@ private:
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
-    if (_arrayCount > 0) {
-      const size_t offsetBits = _arrayCount * index;
-      const size_t nextOffsetBits = _arrayCount * (index + 1);
+    if (count > 0) {
+      const size_t offsetBits = count * index;
+      const size_t nextOffsetBits = count * (index + 1);
       const gsl::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return PropertyArrayView<bool>(buffer, offsetBits % 8, _arrayCount);
+      return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
     }
 
     // Handle variable-length arrays
@@ -452,8 +441,6 @@ private:
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
 
-  int64_t _arrayCount;
   int64_t _size;
-  bool _normalized;
 };
 } // namespace CesiumGltf

@@ -1025,9 +1025,10 @@ private:
     }
 
     return PropertyTablePropertyView<T>(
-        values,
+        propertyTableProperty,
+        classProperty,
         _pPropertyTable->count,
-        classProperty.normalized);
+        values);
   }
 
   PropertyTablePropertyView<std::string_view> getStringPropertyValues(
@@ -1103,14 +1104,14 @@ private:
       }
 
       return PropertyTablePropertyView<PropertyArrayView<T>>(
+          propertyTableProperty,
+          classProperty,
+          static_cast<size_t>(_pPropertyTable->count),
           values,
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
           PropertyComponentType::None,
-          PropertyComponentType::None,
-          static_cast<size_t>(fixedLengthArrayCount),
-          static_cast<size_t>(_pPropertyTable->count),
-          classProperty.normalized);
+          PropertyComponentType::None);
     }
 
     // Handle variable-length arrays
@@ -1136,14 +1137,14 @@ private:
     }
 
     return PropertyTablePropertyView<PropertyArrayView<T>>(
+        propertyTableProperty,
+        classProperty,
+        static_cast<size_t>(_pPropertyTable->count),
         values,
         arrayOffsets,
         gsl::span<const std::byte>(),
         arrayOffsetType,
-        PropertyComponentType::None,
-        0,
-        static_cast<size_t>(_pPropertyTable->count),
-        classProperty.normalized);
+        PropertyComponentType::None);
   }
 
   PropertyTablePropertyView<PropertyArrayView<std::string_view>>

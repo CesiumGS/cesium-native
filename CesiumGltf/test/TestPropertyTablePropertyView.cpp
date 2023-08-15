@@ -16,10 +16,22 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   data.resize(expected.size() * sizeof(T));
   std::memcpy(data.data(), expected.data(), data.size());
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  if (componentType != PropertyComponentType::None) {
+    classProperty.componentType =
+        convertPropertyComponentTypeToString(componentType);
+  }
+
   PropertyTablePropertyView<T> property(
-      gsl::span<const std::byte>(data.data(), data.size()),
+      propertyTableProperty,
+      classProperty,
       static_cast<int64_t>(expected.size()),
-      false);
+      gsl::span<const std::byte>(data.data(), data.size()));
 
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
@@ -45,15 +57,30 @@ static void checkVariableLengthArray(
       offsets.data(),
       offsets.size() * sizeof(OffsetType));
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<DataType>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<DataType>::component;
+  if (componentType != PropertyComponentType::None) {
+    classProperty.componentType =
+        convertPropertyComponentTypeToString(componentType);
+  }
+
+  classProperty.array = true;
+
   PropertyTablePropertyView<PropertyArrayView<DataType>> property(
+      propertyTableProperty,
+      classProperty,
+      instanceCount,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       gsl::span<const std::byte>(),
       offsetType,
-      PropertyComponentType::None,
-      0,
-      instanceCount,
-      false);
+      PropertyComponentType::None);
+
+  REQUIRE(property.arrayCount() == 0);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -76,15 +103,31 @@ static void checkFixedLengthArray(
   buffer.resize(data.size() * sizeof(T));
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  if (componentType != PropertyComponentType::None) {
+    classProperty.componentType =
+        convertPropertyComponentTypeToString(componentType);
+  }
+
+  classProperty.array = true;
+  classProperty.count = fixedLengthArrayCount;
+
   PropertyTablePropertyView<PropertyArrayView<T>> property(
+      propertyTableProperty,
+      classProperty,
+      instanceCount,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
       PropertyComponentType::None,
-      PropertyComponentType::None,
-      fixedLengthArrayCount,
-      instanceCount,
-      false);
+      PropertyComponentType::None);
+
+  REQUIRE(property.arrayCount() == fixedLengthArrayCount);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -221,11 +264,17 @@ TEST_CASE("Check boolean PropertyTablePropertyView") {
   std::vector<std::byte> data(sizeof(val));
   std::memcpy(data.data(), &val, sizeof(val));
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::BOOLEAN;
+
   size_t instanceCount = sizeof(unsigned long) * CHAR_BIT;
   PropertyTablePropertyView<bool> property(
-      gsl::span<const std::byte>(data.data(), data.size()),
+      propertyTableProperty,
+      classProperty,
       static_cast<int64_t>(instanceCount),
-      false);
+      gsl::span<const std::byte>(data.data(), data.size()));
+
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == bits[static_cast<size_t>(i)]);
   }
@@ -268,15 +317,20 @@ TEST_CASE("Check string PropertyTablePropertyView") {
       &currentOffset,
       sizeof(uint32_t));
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::STRING;
+
   PropertyTablePropertyView<std::string_view> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(strings.size()),
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       PropertyComponentType::None,
-      PropertyComponentType::Uint32,
-      0,
-      static_cast<int64_t>(strings.size()),
-      false);
+      PropertyComponentType::Uint32);
+
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == strings[static_cast<size_t>(i)]);
   }
@@ -826,15 +880,23 @@ TEST_CASE("Check fixed-length array of string") {
       &currentStringOffset,
       sizeof(uint32_t));
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::STRING;
+  classProperty.array = true;
+  classProperty.count = 3;
+
   PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(stringCount / 3),
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
       PropertyComponentType::None,
-      PropertyComponentType::Uint32,
-      3,
-      static_cast<int64_t>(stringCount / 3),
-      false);
+      PropertyComponentType::Uint32);
+
+  REQUIRE(property.arrayCount() == classProperty.count);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -897,17 +959,24 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
       &currentOffset,
       sizeof(uint32_t));
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::STRING;
+  classProperty.array = true;
+
   PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+      propertyTableProperty,
+      classProperty,
+      3,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(arrayOffsets.data()),
           arrayOffsets.size() * sizeof(uint32_t)),
       gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
       PropertyComponentType::Uint32,
-      PropertyComponentType::Uint32,
-      0,
-      3,
-      false);
+      PropertyComponentType::Uint32);
+
+  REQUIRE(property.arrayCount() == 0);
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
@@ -928,17 +997,24 @@ TEST_CASE("Check fixed-length boolean array PropertyTablePropertyView") {
       static_cast<std::byte>(0b11111010),
       static_cast<std::byte>(0b11100111)};
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::BOOLEAN;
+  classProperty.array = true;
+  classProperty.count = 12;
+
   PropertyTablePropertyView<PropertyArrayView<bool>> property(
+      propertyTableProperty,
+      classProperty,
+      2,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
       PropertyComponentType::Uint32,
-      PropertyComponentType::None,
-      12,
-      2,
-      false);
+      PropertyComponentType::None);
 
   REQUIRE(property.size() == 2);
+  REQUIRE(property.arrayCount() == classProperty.count);
 
   PropertyArrayView<bool> val0 = property.get(0);
   REQUIRE(val0.size() == 12);
@@ -979,19 +1055,25 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
 
   std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
 
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::BOOLEAN;
+  classProperty.array = true;
+
   PropertyTablePropertyView<PropertyArrayView<bool>> property(
+      propertyTableProperty,
+      classProperty,
+      3,
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(offsetBuffer.data()),
           offsetBuffer.size() * sizeof(uint32_t)),
       gsl::span<const std::byte>(),
       PropertyComponentType::Uint32,
-      PropertyComponentType::None,
-      0,
-      3,
-      false);
+      PropertyComponentType::None);
 
   REQUIRE(property.size() == 3);
+  REQUIRE(property.arrayCount() == 0);
 
   PropertyArrayView<bool> val0 = property.get(0);
   REQUIRE(val0.size() == 3);

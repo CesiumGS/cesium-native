@@ -316,14 +316,14 @@ PropertyTableView::getStringPropertyValues(
   }
 
   return PropertyTablePropertyView<std::string_view>(
+      propertyTableProperty,
+      classProperty,
+      _pPropertyTable->count,
       values,
       gsl::span<const std::byte>(),
       stringOffsets,
       PropertyComponentType::None,
-      offsetType,
-      0,
-      _pPropertyTable->count,
-      classProperty.normalized);
+      offsetType);
 }
 
 PropertyTablePropertyView<PropertyArrayView<std::string_view>>
@@ -389,14 +389,14 @@ PropertyTableView::getStringArrayPropertyValues(
     }
 
     return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
+        propertyTableProperty,
+        classProperty,
+        _pPropertyTable->count,
         values,
         gsl::span<const std::byte>(),
         stringOffsets,
         PropertyComponentType::None,
-        stringOffsetType,
-        fixedLengthArrayCount,
-        _pPropertyTable->count,
-        classProperty.normalized);
+        stringOffsetType);
   }
 
   // Get array offset type
@@ -472,13 +472,13 @@ PropertyTableView::getStringArrayPropertyValues(
   }
 
   return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
+      propertyTableProperty,
+      classProperty,
+      _pPropertyTable->count,
       values,
       arrayOffsets,
       stringOffsets,
       arrayOffsetType,
-      stringOffsetType,
-      0,
-      _pPropertyTable->count,
-      classProperty.normalized);
+      stringOffsetType);
 }
 } // namespace CesiumGltf
