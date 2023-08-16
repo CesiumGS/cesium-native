@@ -29,6 +29,7 @@ private:
       CesiumJsonReader::JsonObjectJsonHandler>
       _extras;
   ExtensionsJsonHandler _extensions;
-  JsonObjectJsonHandler _unsupported;
+  JsonObjectJsonHandler _unknownProperties;
+  bool _captureUnknownProperties;
 };
 } // namespace CesiumJsonReader

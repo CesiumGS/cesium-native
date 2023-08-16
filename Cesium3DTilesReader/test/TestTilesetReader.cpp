@@ -311,7 +311,7 @@ TEST_CASE("Reads custom extension") {
   REQUIRE(zeroExtensions.empty());
 }
 
-TEST_CASE("Reads tileset JSON with unsupported properties") {
+TEST_CASE("Reads tileset JSON with unknown properties") {
   using namespace std::string_literals;
 
   std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
@@ -323,44 +323,44 @@ TEST_CASE("Reads tileset JSON with unsupported properties") {
   CHECK(result.warnings.empty());
   REQUIRE(result.tileset);
 
-  const CesiumUtility::JsonValue::Object& unsupported =
-      result.tileset->asset.unsupported;
+  const CesiumUtility::JsonValue::Object& unknownProperties =
+      result.tileset->asset.unknownProperties;
 
-  auto itString = unsupported.find("someString");
-  REQUIRE(itString != unsupported.end());
+  auto itString = unknownProperties.find("someString");
+  REQUIRE(itString != unknownProperties.end());
   REQUIRE(itString->second.isString());
   REQUIRE(itString->second.getString() == "A");
 
-  auto itDouble = unsupported.find("someDouble");
-  REQUIRE(itDouble != unsupported.end());
+  auto itDouble = unknownProperties.find("someDouble");
+  REQUIRE(itDouble != unknownProperties.end());
   REQUIRE(itDouble->second.isDouble());
   REQUIRE(itDouble->second.getDouble() == 2.1);
 
-  auto itInt = unsupported.find("someInt");
-  REQUIRE(itInt != unsupported.end());
+  auto itInt = unknownProperties.find("someInt");
+  REQUIRE(itInt != unknownProperties.end());
   REQUIRE(itInt->second.isUint64());
   REQUIRE(itInt->second.getUint64() == 5);
 
-  auto itSignedInt = unsupported.find("someSignedInt");
-  REQUIRE(itSignedInt != unsupported.end());
+  auto itSignedInt = unknownProperties.find("someSignedInt");
+  REQUIRE(itSignedInt != unknownProperties.end());
   REQUIRE(itSignedInt->second.isInt64());
   REQUIRE(itSignedInt->second.getInt64() == -5);
 
-  auto itBool = unsupported.find("someBool");
-  REQUIRE(itBool != unsupported.end());
+  auto itBool = unknownProperties.find("someBool");
+  REQUIRE(itBool != unknownProperties.end());
   REQUIRE(itBool->second.isBool());
   REQUIRE(itBool->second.getBool() == true);
 
-  auto itArray = unsupported.find("someArray");
-  REQUIRE(itArray != unsupported.end());
+  auto itArray = unknownProperties.find("someArray");
+  REQUIRE(itArray != unknownProperties.end());
   REQUIRE(itArray->second.isArray());
   const CesiumUtility::JsonValue::Array& array = itArray->second.getArray();
   REQUIRE(array.size() == 1);
   REQUIRE(array[0].isString());
   REQUIRE(array[0].getString() == "hi");
 
-  auto itObject = unsupported.find("someObject");
-  REQUIRE(itObject != unsupported.end());
+  auto itObject = unknownProperties.find("someObject");
+  REQUIRE(itObject != unknownProperties.end());
   REQUIRE(itObject->second.isObject());
   const CesiumUtility::JsonValue::Object& o = itObject->second.getObject();
   REQUIRE(o.size() == 1);
@@ -369,7 +369,25 @@ TEST_CASE("Reads tileset JSON with unsupported properties") {
   REQUIRE(itObjectValue->second.isString());
   REQUIRE(itObjectValue->second.getString() == "test");
 
-  auto itNull = unsupported.find("someNull");
-  REQUIRE(itNull != unsupported.end());
+  auto itNull = unknownProperties.find("someNull");
+  REQUIRE(itNull != unknownProperties.end());
   REQUIRE(itNull->second.isNull());
+}
+
+TEST_CASE("Reads tileset JSON with unknown properties and ignores them when requested") {
+  using namespace std::string_literals;
+
+  std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
+  tilesetFile /= "tileset-with-unsupported-properties.json";
+  std::vector<std::byte> data = readFile(tilesetFile);
+  Cesium3DTilesReader::TilesetReader reader;
+  reader.getExtensions().setCaptureUnknownProperties(false);
+  Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(data);
+  CHECK(result.errors.empty());
+  CHECK(result.warnings.empty());
+  REQUIRE(result.tileset);
+
+  const CesiumUtility::JsonValue::Object& unknownProperties =
+      result.tileset->asset.unknownProperties;
+  CHECK(unknownProperties.empty());
 }

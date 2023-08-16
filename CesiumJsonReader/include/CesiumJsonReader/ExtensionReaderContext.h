@@ -45,6 +45,26 @@ enum class ExtensionState {
 class CESIUMJSONREADER_API ExtensionReaderContext {
 public:
   /**
+   * @brief Gets a value indicating whether the values of unknown properties are
+   * captured in the {@link ExtensibleObject::unknownProperties} field.
+   *
+   * If this is false, unknown properties are completely ignored.
+   */
+  bool getCaptureUnknownProperties() const {
+    return this->_captureUnknownProperties;
+  }
+
+  /**
+   * @brief Sets a value indicating whether the values of unknown properties are
+   * captured in the {@link ExtensibleObject::unknownProperties} field.
+   *
+   * If this is false, unknown properties are completely ignored.
+   */
+  void setCaptureUnknownProperties(bool value) {
+    this->_captureUnknownProperties = value;
+  }
+
+  /**
    * @brief Registers an extension for an object.
    *
    * @tparam TExtended The object to extend.
@@ -119,6 +139,7 @@ private:
 
   ExtensionNameMap _extensions;
   std::unordered_map<std::string, ExtensionState> _extensionStates;
+  bool _captureUnknownProperties = true;
 };
 
 } // namespace CesiumJsonReader
