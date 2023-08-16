@@ -95,5 +95,14 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * best portability.
    */
   JsonValue::Object extras;
+
+  /**
+   * @brief Unsupported properties that exist on this object but do not have any
+   * representation in the statically-typed classes.
+   *
+   * These properties may be invalid, or they may represent deprecated,
+   * experimental, or next-version properties.
+   */
+  JsonValue::Object unsupported;
 };
 } // namespace CesiumUtility

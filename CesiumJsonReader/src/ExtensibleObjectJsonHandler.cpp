@@ -29,6 +29,11 @@ IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     return &this->_extensions;
   }
 
-  return this->ignoreAndContinue();
+  // Add this unknown property to the unsupported dictionary.
+  auto it = o.unsupported.emplace(str, CesiumUtility::JsonValue()).first;
+  this->setCurrentKey(it->first.c_str());
+  CesiumUtility::JsonValue& value = it->second;
+  this->_unsupported.reset(this, &value);
+  return &this->_unsupported;
 }
 } // namespace CesiumJsonReader

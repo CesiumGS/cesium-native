@@ -310,3 +310,66 @@ TEST_CASE("Reads custom extension") {
   auto& zeroExtensions = withoutCustomExt.tileset->extensions;
   REQUIRE(zeroExtensions.empty());
 }
+
+TEST_CASE("Reads tileset JSON with unsupported properties") {
+  using namespace std::string_literals;
+
+  std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
+  tilesetFile /= "tileset-with-unsupported-properties.json";
+  std::vector<std::byte> data = readFile(tilesetFile);
+  Cesium3DTilesReader::TilesetReader reader;
+  Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(data);
+  CHECK(result.errors.empty());
+  CHECK(result.warnings.empty());
+  REQUIRE(result.tileset);
+
+  const CesiumUtility::JsonValue::Object& unsupported =
+      result.tileset->asset.unsupported;
+
+  auto itString = unsupported.find("someString");
+  REQUIRE(itString != unsupported.end());
+  REQUIRE(itString->second.isString());
+  REQUIRE(itString->second.getString() == "A");
+
+  auto itDouble = unsupported.find("someDouble");
+  REQUIRE(itDouble != unsupported.end());
+  REQUIRE(itDouble->second.isDouble());
+  REQUIRE(itDouble->second.getDouble() == 2.1);
+
+  auto itInt = unsupported.find("someInt");
+  REQUIRE(itInt != unsupported.end());
+  REQUIRE(itInt->second.isUint64());
+  REQUIRE(itInt->second.getUint64() == 5);
+
+  auto itSignedInt = unsupported.find("someSignedInt");
+  REQUIRE(itSignedInt != unsupported.end());
+  REQUIRE(itSignedInt->second.isInt64());
+  REQUIRE(itSignedInt->second.getInt64() == -5);
+
+  auto itBool = unsupported.find("someBool");
+  REQUIRE(itBool != unsupported.end());
+  REQUIRE(itBool->second.isBool());
+  REQUIRE(itBool->second.getBool() == true);
+
+  auto itArray = unsupported.find("someArray");
+  REQUIRE(itArray != unsupported.end());
+  REQUIRE(itArray->second.isArray());
+  const CesiumUtility::JsonValue::Array& array = itArray->second.getArray();
+  REQUIRE(array.size() == 1);
+  REQUIRE(array[0].isString());
+  REQUIRE(array[0].getString() == "hi");
+
+  auto itObject = unsupported.find("someObject");
+  REQUIRE(itObject != unsupported.end());
+  REQUIRE(itObject->second.isObject());
+  const CesiumUtility::JsonValue::Object& o = itObject->second.getObject();
+  REQUIRE(o.size() == 1);
+  auto itObjectValue = o.find("value");
+  REQUIRE(itObjectValue != o.end());
+  REQUIRE(itObjectValue->second.isString());
+  REQUIRE(itObjectValue->second.getString() == "test");
+
+  auto itNull = unsupported.find("someNull");
+  REQUIRE(itNull != unsupported.end());
+  REQUIRE(itNull->second.isNull());
+}
