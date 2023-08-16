@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `ExtensionReaderContext`.
+
 ### v0.27.0 - 2023-09-01
 
 ##### Fixes :wrench:
