@@ -45,8 +45,8 @@ struct CESIUM3DTILES_API ClassProperty final
   };
 
   /**
-   * @brief Known values for The datatype of the element's components. Only
-   * applicable to `SCALAR`, `VECN`, and `MATN` types.
+   * @brief Known values for The datatype of the element's components. Required
+   * for `SCALAR`, `VECN`, and `MATN` types, and disallowed for other types.
    */
   struct ComponentType {
     inline static const std::string INT8 = "INT8";
@@ -89,8 +89,8 @@ struct CESIUM3DTILES_API ClassProperty final
   std::string type = Type::SCALAR;
 
   /**
-   * @brief The datatype of the element's components. Only applicable to
-   * `SCALAR`, `VECN`, and `MATN` types.
+   * @brief The datatype of the element's components. Required for `SCALAR`,
+   * `VECN`, and `MATN` types, and disallowed for other types.
    *
    * Known values are defined in {@link ComponentType}.
    *
@@ -99,7 +99,7 @@ struct CESIUM3DTILES_API ClassProperty final
 
   /**
    * @brief Enum ID as declared in the `enums` dictionary. Required when `type`
-   * is `ENUM`.
+   * is `ENUM`. Disallowed when `type` is not `ENUM`
    */
   std::optional<std::string> enumType;
 
@@ -129,14 +129,16 @@ struct CESIUM3DTILES_API ClassProperty final
   /**
    * @brief An offset to apply to property values. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types when the component type is `FLOAT32` or `FLOAT64`,
-   * or when the property is `normalized`.
+   * or when the property is `normalized`. Not applicable to variable-length
+   * arrays.
    */
   std::optional<CesiumUtility::JsonValue> offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types when the component type is `FLOAT32` or `FLOAT64`,
-   * or when the property is `normalized`.
+   * or when the property is `normalized`. Not applicable to variable-length
+   * arrays.
    */
   std::optional<CesiumUtility::JsonValue> scale;
 
@@ -144,7 +146,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * @brief Maximum allowed value for the property. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types. This is the maximum of all property values, after
    * the transforms based on the `normalized`, `offset`, and `scale` properties
-   * have been applied.
+   * have been applied. Not applicable to variable-length arrays.
    */
   std::optional<CesiumUtility::JsonValue> max;
 
@@ -152,7 +154,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * @brief Minimum allowed value for the property. Only applicable to `SCALAR`,
    * `VECN`, and `MATN` types. This is the minimum of all property values, after
    * the transforms based on the `normalized`, `offset`, and `scale` properties
-   * have been applied.
+   * have been applied. Not applicable to variable-length arrays.
    */
   std::optional<CesiumUtility::JsonValue> min;
 

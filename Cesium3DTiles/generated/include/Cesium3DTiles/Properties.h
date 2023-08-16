@@ -16,13 +16,13 @@ struct CESIUM3DTILES_API Properties final
 
   /**
    * @brief The maximum value of this property of all the features in the
-   * tileset.
+   * tileset. The maximum value shall not be larger than the minimum value.
    */
   double maximum = double();
 
   /**
    * @brief The minimum value of this property of all the features in the
-   * tileset.
+   * tileset. The maximum value shall not be larger than the minimum value.
    */
   double minimum = double();
 };
