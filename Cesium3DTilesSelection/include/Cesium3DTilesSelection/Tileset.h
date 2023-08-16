@@ -84,9 +84,12 @@ public:
   /**
    * @brief Destroys this tileset.
    *
-   * This may block the calling thread while waiting for pending asynchronous
-   * tile loads to terminate. Use {@link canBeDestroyedWithoutBlocking} to
-   * determine if it will block.
+   * Destroying the tileset will immediately (before the destructor returns)
+   * unload as much tile content as possible. However, tiles that are currently
+   * in the process of being loaded cannot be unloaded immediately. These tiles
+   * will be unloaded asynchronously some time after this destructor returns. To
+   * be notified of completion of the async portion of the tileset destruction,
+   * subscribe to {@link getAsyncDestructionCompleteEvent}.
    */
   ~Tileset() noexcept;
 
