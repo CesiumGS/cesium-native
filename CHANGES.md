@@ -19,12 +19,13 @@
 - Removed `FeatureTexturePropertyComponentType`, `FeatureTexturePropertyChannelOffsets`, and `FeatureTexturePropertyValue`. `PropertyTextureProperty` retrieves the values with the type indicated by its class property.
 - Renamed `FeatureTexturePropertyViewStatus` to `PropertyTexturePropertyViewStatus`.
 - Refactored `PropertyType` to reflect the values of `type` in a `ClassProperty` from `EXT_structural_metadata`.
+- Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
 
 ##### Additions :tada:
 
 - Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
 - Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
-- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `ExtensionReaderContext`.
+- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
 
 ### v0.27.0 - 2023-09-01
 

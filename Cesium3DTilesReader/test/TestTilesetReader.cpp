@@ -296,10 +296,10 @@ TEST_CASE("Reads custom extension") {
       pB->getValuePtrForKey("another")->getStringOrDefault("") == "Goodbye");
 
   // Repeat test but this time the extension should be skipped.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "A",
       CesiumJsonReader::ExtensionState::Disabled);
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 
@@ -374,14 +374,15 @@ TEST_CASE("Reads tileset JSON with unknown properties") {
   REQUIRE(itNull->second.isNull());
 }
 
-TEST_CASE("Reads tileset JSON with unknown properties and ignores them when requested") {
+TEST_CASE("Reads tileset JSON with unknown properties and ignores them when "
+          "requested") {
   using namespace std::string_literals;
 
   std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
   tilesetFile /= "tileset-with-unsupported-properties.json";
   std::vector<std::byte> data = readFile(tilesetFile);
   Cesium3DTilesReader::TilesetReader reader;
-  reader.getExtensions().setCaptureUnknownProperties(false);
+  reader.getOptions().setCaptureUnknownProperties(false);
   Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(data);
   CHECK(result.errors.empty());
   CHECK(result.warnings.empty());

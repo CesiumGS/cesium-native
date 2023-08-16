@@ -3,7 +3,7 @@
 #include "Cesium3DTilesReader/Library.h"
 
 #include <Cesium3DTiles/Subtree.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 
 #include <gsl/span>
 
@@ -48,16 +48,14 @@ public:
   SubtreeReader();
 
   /**
-   * @brief Gets the context used to control how extensions are loaded from a
-   * subtree.
+   * @brief Gets the options controlling how the JSON is read.
    */
-  CesiumJsonReader::ExtensionReaderContext& getExtensions();
+  CesiumJsonReader::JsonReaderOptions& getOptions();
 
   /**
-   * @brief Gets the context used to control how extensions are loaded from a
-   * subtree.
+   * @brief Gets the options controlling how the JSON is read.
    */
-  const CesiumJsonReader::ExtensionReaderContext& getExtensions() const;
+  const CesiumJsonReader::JsonReaderOptions& getOptions() const;
 
   /**
    * @brief Reads a subtree.
@@ -69,7 +67,7 @@ public:
   SubtreeReaderResult readSubtree(const gsl::span<const std::byte>& data) const;
 
 private:
-  CesiumJsonReader::ExtensionReaderContext _context;
+  CesiumJsonReader::JsonReaderOptions _context;
 };
 
 } // namespace Cesium3DTilesReader

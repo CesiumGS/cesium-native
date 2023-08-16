@@ -8,7 +8,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -18,7 +18,7 @@ public:
   using ValueType = CesiumGltf::AnimationSampler;
 
   AnimationSamplerJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, CesiumGltf::AnimationSampler* pObject);
 

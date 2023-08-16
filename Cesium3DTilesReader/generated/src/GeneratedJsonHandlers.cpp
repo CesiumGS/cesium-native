@@ -11,8 +11,8 @@ namespace Cesium3DTilesReader {
 
 Extension3dTilesBoundingVolumeS2JsonHandler::
     Extension3dTilesBoundingVolumeS2JsonHandler(
-        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+        const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _token(),
       _minimumHeight(),
       _maximumHeight() {}
@@ -78,9 +78,9 @@ CesiumJsonReader::IJsonHandler* Extension3dTilesBoundingVolumeS2JsonHandler::
 namespace Cesium3DTilesReader {
 
 StatisticsJsonHandler::StatisticsJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
-      _classes(context) {}
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _classes(options) {}
 
 void StatisticsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -123,10 +123,10 @@ CesiumJsonReader::IJsonHandler* StatisticsJsonHandler::readObjectKeyStatistics(
 namespace Cesium3DTilesReader {
 
 ClassStatisticsJsonHandler::ClassStatisticsJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _count(),
-      _properties(context) {}
+      _properties(options) {}
 
 void ClassStatisticsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -172,8 +172,8 @@ ClassStatisticsJsonHandler::readObjectKeyClassStatistics(
 namespace Cesium3DTilesReader {
 
 PropertyStatisticsJsonHandler::PropertyStatisticsJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _min(),
       _max(),
       _mean(),
@@ -242,14 +242,14 @@ PropertyStatisticsJsonHandler::readObjectKeyPropertyStatistics(
 namespace Cesium3DTilesReader {
 
 SchemaJsonHandler::SchemaJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _id(),
       _name(),
       _description(),
       _version(),
-      _classes(context),
-      _enums(context) {}
+      _classes(options),
+      _enums(options) {}
 
 void SchemaJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -302,12 +302,12 @@ CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKeySchema(
 namespace Cesium3DTilesReader {
 
 EnumJsonHandler::EnumJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _description(),
       _valueType(),
-      _values(context) {}
+      _values(options) {}
 
 void EnumJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -356,8 +356,8 @@ CesiumJsonReader::IJsonHandler* EnumJsonHandler::readObjectKeyEnum(
 namespace Cesium3DTilesReader {
 
 EnumValueJsonHandler::EnumValueJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _description(),
       _value() {}
@@ -407,11 +407,11 @@ CesiumJsonReader::IJsonHandler* EnumValueJsonHandler::readObjectKeyEnumValue(
 namespace Cesium3DTilesReader {
 
 ClassJsonHandler::ClassJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _description(),
-      _properties(context) {}
+      _properties(options) {}
 
 void ClassJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -458,8 +458,8 @@ CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(
 namespace Cesium3DTilesReader {
 
 ClassPropertyJsonHandler::ClassPropertyJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _description(),
       _type(),
@@ -549,17 +549,17 @@ ClassPropertyJsonHandler::readObjectKeyClassProperty(
 namespace Cesium3DTilesReader {
 
 SubtreeJsonHandler::SubtreeJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
-      _buffers(context),
-      _bufferViews(context),
-      _propertyTables(context),
-      _tileAvailability(context),
-      _contentAvailability(context),
-      _childSubtreeAvailability(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _buffers(options),
+      _bufferViews(options),
+      _propertyTables(options),
+      _tileAvailability(options),
+      _contentAvailability(options),
+      _childSubtreeAvailability(options),
       _tileMetadata(),
       _contentMetadata(),
-      _subtreeMetadata(context) {}
+      _subtreeMetadata(options) {}
 
 void SubtreeJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -633,8 +633,8 @@ CesiumJsonReader::IJsonHandler* SubtreeJsonHandler::readObjectKeySubtree(
 namespace Cesium3DTilesReader {
 
 MetadataEntityJsonHandler::MetadataEntityJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _classProperty(),
       _properties() {}
 
@@ -682,8 +682,8 @@ MetadataEntityJsonHandler::readObjectKeyMetadataEntity(
 namespace Cesium3DTilesReader {
 
 AvailabilityJsonHandler::AvailabilityJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _bitstream(),
       _availableCount(),
       _constant() {}
@@ -734,12 +734,12 @@ AvailabilityJsonHandler::readObjectKeyAvailability(
 namespace Cesium3DTilesReader {
 
 PropertyTableJsonHandler::PropertyTableJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _classProperty(),
       _count(),
-      _properties(context) {}
+      _properties(options) {}
 
 void PropertyTableJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -789,8 +789,8 @@ PropertyTableJsonHandler::readObjectKeyPropertyTable(
 namespace Cesium3DTilesReader {
 
 PropertyTablePropertyJsonHandler::PropertyTablePropertyJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _values(),
       _arrayOffsets(),
       _stringOffsets(),
@@ -865,8 +865,8 @@ PropertyTablePropertyJsonHandler::readObjectKeyPropertyTableProperty(
 namespace Cesium3DTilesReader {
 
 BufferViewJsonHandler::BufferViewJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _buffer(),
       _byteOffset(),
       _byteLength(),
@@ -919,8 +919,8 @@ CesiumJsonReader::IJsonHandler* BufferViewJsonHandler::readObjectKeyBufferView(
 namespace Cesium3DTilesReader {
 
 BufferJsonHandler::BufferJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _uri(),
       _byteLength(),
       _name() {}
@@ -970,17 +970,17 @@ CesiumJsonReader::IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
 namespace Cesium3DTilesReader {
 
 TilesetJsonHandler::TilesetJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
-      _asset(context),
-      _properties(context),
-      _schema(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _asset(options),
+      _properties(options),
+      _schema(options),
       _schemaUri(),
-      _statistics(context),
-      _groups(context),
-      _metadata(context),
+      _statistics(options),
+      _groups(options),
+      _metadata(options),
       _geometricError(),
-      _root(context),
+      _root(options),
       _extensionsUsed(),
       _extensionsRequired() {}
 
@@ -1048,18 +1048,18 @@ CesiumJsonReader::IJsonHandler* TilesetJsonHandler::readObjectKeyTileset(
 namespace Cesium3DTilesReader {
 
 TileJsonHandler::TileJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
-      _boundingVolume(context),
-      _viewerRequestVolume(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _boundingVolume(options),
+      _viewerRequestVolume(options),
       _geometricError(),
       _refine(),
       _transform(),
-      _content(context),
-      _contents(context),
-      _metadata(context),
-      _implicitTiling(context),
-      _children(context) {}
+      _content(options),
+      _contents(options),
+      _metadata(options),
+      _implicitTiling(options),
+      _children(options) {}
 
 void TileJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1123,12 +1123,12 @@ CesiumJsonReader::IJsonHandler* TileJsonHandler::readObjectKeyTile(
 namespace Cesium3DTilesReader {
 
 ImplicitTilingJsonHandler::ImplicitTilingJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _subdivisionScheme(),
       _subtreeLevels(),
       _availableLevels(),
-      _subtrees(context) {}
+      _subtrees(options) {}
 
 void ImplicitTilingJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1184,8 +1184,8 @@ ImplicitTilingJsonHandler::readObjectKeyImplicitTiling(
 namespace Cesium3DTilesReader {
 
 SubtreesJsonHandler::SubtreesJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _uri() {}
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _uri() {}
 
 void SubtreesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1228,11 +1228,11 @@ CesiumJsonReader::IJsonHandler* SubtreesJsonHandler::readObjectKeySubtrees(
 namespace Cesium3DTilesReader {
 
 ContentJsonHandler::ContentJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
-      _boundingVolume(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _boundingVolume(options),
       _uri(),
-      _metadata(context),
+      _metadata(options),
       _group() {}
 
 void ContentJsonHandler::reset(
@@ -1282,8 +1282,8 @@ CesiumJsonReader::IJsonHandler* ContentJsonHandler::readObjectKeyContent(
 namespace Cesium3DTilesReader {
 
 BoundingVolumeJsonHandler::BoundingVolumeJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _box(),
       _region(),
       _sphere() {}
@@ -1334,8 +1334,8 @@ BoundingVolumeJsonHandler::readObjectKeyBoundingVolume(
 namespace Cesium3DTilesReader {
 
 GroupMetadataJsonHandler::GroupMetadataJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : MetadataEntityJsonHandler(context) {}
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : MetadataEntityJsonHandler(options) {}
 
 void GroupMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1378,8 +1378,8 @@ GroupMetadataJsonHandler::readObjectKeyGroupMetadata(
 namespace Cesium3DTilesReader {
 
 PropertiesJsonHandler::PropertiesJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _maximum(),
       _minimum() {}
 
@@ -1426,8 +1426,8 @@ CesiumJsonReader::IJsonHandler* PropertiesJsonHandler::readObjectKeyProperties(
 namespace Cesium3DTilesReader {
 
 AssetJsonHandler::AssetJsonHandler(
-    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::JsonReaderOptions& options) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _version(),
       _tilesetVersion() {}
 

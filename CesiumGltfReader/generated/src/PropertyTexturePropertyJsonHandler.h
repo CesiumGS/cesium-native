@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -19,7 +19,7 @@ public:
   using ValueType = CesiumGltf::PropertyTextureProperty;
 
   PropertyTexturePropertyJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::PropertyTextureProperty* pObject);

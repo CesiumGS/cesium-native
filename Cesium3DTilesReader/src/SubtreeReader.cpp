@@ -11,7 +11,7 @@ namespace Cesium3DTilesReader {
 namespace {
 
 SubtreeReaderResult readSubtreeJson(
-    const CesiumJsonReader::ExtensionReaderContext& context,
+    const CesiumJsonReader::JsonReaderOptions& context,
     const gsl::span<const std::byte>& data) {
 
   CESIUM_TRACE("Cesium3DTilesReader::SubtreeReader::readSubtreeJson");
@@ -30,19 +30,17 @@ SubtreeReaderResult readSubtreeJson(
 
 SubtreeReader::SubtreeReader() { registerExtensions(this->_context); }
 
-CesiumJsonReader::ExtensionReaderContext& SubtreeReader::getExtensions() {
+CesiumJsonReader::JsonReaderOptions& SubtreeReader::getOptions() {
   return this->_context;
 }
 
-const CesiumJsonReader::ExtensionReaderContext&
-SubtreeReader::getExtensions() const {
+const CesiumJsonReader::JsonReaderOptions& SubtreeReader::getOptions() const {
   return this->_context;
 }
 
 SubtreeReaderResult
 SubtreeReader::readSubtree(const gsl::span<const std::byte>& data) const {
-  const CesiumJsonReader::ExtensionReaderContext& context =
-      this->getExtensions();
+  const CesiumJsonReader::JsonReaderOptions& context = this->getOptions();
   SubtreeReaderResult result = readSubtreeJson(context, data);
 
   return result;

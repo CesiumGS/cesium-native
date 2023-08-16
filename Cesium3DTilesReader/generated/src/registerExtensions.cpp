@@ -6,13 +6,13 @@
 #include "Extension3dTilesBoundingVolumeS2JsonHandler.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 
 namespace Cesium3DTilesReader {
 
-void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
-  (void)context;
-  context.registerExtension<
+void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
+  (void)options;
+  options.registerExtension<
       Cesium3DTiles::BoundingVolume,
       Extension3dTilesBoundingVolumeS2JsonHandler>();
 }
