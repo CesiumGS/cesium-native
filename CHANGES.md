@@ -24,6 +24,7 @@
 
 - Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
 - Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
+- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `ExtensionReaderContext`.
 
 ### v0.27.0 - 2023-09-01
 
