@@ -14,7 +14,7 @@ class NamedObjectJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 protected:
   NamedObjectJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& context) noexcept;
   void reset(IJsonHandler* pParentReader, CesiumGltf::NamedObject* pObject);
   IJsonHandler* readObjectKeyNamedObject(
       const std::string& objectType,

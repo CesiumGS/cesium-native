@@ -42,7 +42,10 @@ enum class ExtensionState {
   Disabled
 };
 
-class CESIUMJSONREADER_API ExtensionReaderContext {
+/**
+ * @brief Holds options for reading statically-typed data structures from JSON.
+ */
+class CESIUMJSONREADER_API JsonReaderOptions {
 public:
   /**
    * @brief Gets a value indicating whether the values of unknown properties are
@@ -78,7 +81,7 @@ public:
         this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionReaderFactory([](const ExtensionReaderContext& context) {
+        ExtensionReaderFactory([](const JsonReaderOptions& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -100,7 +103,7 @@ public:
             .first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionHandlerFactory([](const ExtensionReaderContext& context) {
+        ExtensionHandlerFactory([](const JsonReaderOptions& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -133,7 +136,7 @@ public:
 private:
   using ExtensionHandlerFactory =
       std::function<std::unique_ptr<IExtensionJsonHandler>(
-          const ExtensionReaderContext&)>;
+          const JsonReaderOptions&)>;
   using ObjectTypeToHandler = std::map<std::string, ExtensionHandlerFactory>;
   using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 

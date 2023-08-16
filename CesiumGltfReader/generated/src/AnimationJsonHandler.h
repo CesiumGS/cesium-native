@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -19,7 +19,7 @@ public:
   using ValueType = CesiumGltf::Animation;
 
   AnimationJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Animation* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

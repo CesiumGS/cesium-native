@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -18,8 +18,7 @@ class MeshJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
 public:
   using ValueType = CesiumGltf::Mesh;
 
-  MeshJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  MeshJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Mesh* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

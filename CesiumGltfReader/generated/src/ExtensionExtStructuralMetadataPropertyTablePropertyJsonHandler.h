@@ -9,7 +9,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -20,7 +20,7 @@ public:
       CesiumGltf::ExtensionExtStructuralMetadataPropertyTableProperty;
 
   ExtensionExtStructuralMetadataPropertyTablePropertyJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionExtStructuralMetadataPropertyTableProperty* pObject);

@@ -12,9 +12,9 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
@@ -63,7 +63,7 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
 }
 
 GltfReaderResult readJsonGltf(
-    const CesiumJsonReader::ExtensionReaderContext& context,
+    const CesiumJsonReader::JsonReaderOptions& context,
     const gsl::span<const std::byte>& data) {
 
   CESIUM_TRACE("CesiumGltfReader::GltfReader::readJsonGltf");
@@ -99,7 +99,7 @@ std::string toMagicString(uint32_t i) {
 }
 
 GltfReaderResult readBinaryGltf(
-    const CesiumJsonReader::ExtensionReaderContext& context,
+    const CesiumJsonReader::JsonReaderOptions& context,
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("CesiumGltfReader::GltfReader::readBinaryGltf");
 
@@ -333,12 +333,11 @@ void postprocess(
 
 GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
 
-CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
+CesiumJsonReader::JsonReaderOptions& GltfReader::getOptions() {
   return this->_context;
 }
 
-const CesiumJsonReader::ExtensionReaderContext&
-GltfReader::getExtensions() const {
+const CesiumJsonReader::JsonReaderOptions& GltfReader::getExtensions() const {
   return this->_context;
 }
 
@@ -346,8 +345,7 @@ GltfReaderResult GltfReader::readGltf(
     const gsl::span<const std::byte>& data,
     const GltfReaderOptions& options) const {
 
-  const CesiumJsonReader::ExtensionReaderContext& context =
-      this->getExtensions();
+  const CesiumJsonReader::JsonReaderOptions& context = this->getExtensions();
   GltfReaderResult result = isBinaryGltf(data) ? readBinaryGltf(context, data)
                                                : readJsonGltf(context, data);
 

@@ -7,7 +7,7 @@
 #include <Cesium3DTiles/GroupMetadata.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace Cesium3DTilesReader {
@@ -16,7 +16,7 @@ public:
   using ValueType = Cesium3DTiles::GroupMetadata;
 
   GroupMetadataJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, Cesium3DTiles::GroupMetadata* pObject);
 

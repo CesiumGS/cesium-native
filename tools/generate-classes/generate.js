@@ -150,7 +150,7 @@ function generate(options, schema, writers) {
         ${readerHeaders.map((header) => `#include ${header}`).join("\n")}
 
         namespace CesiumJsonReader {
-          class ExtensionReaderContext;
+          class JsonReaderOptions;
         }
 
         namespace ${readerNamespace} {
@@ -160,7 +160,7 @@ function generate(options, schema, writers) {
 
             ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
-            ${name}JsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+            ${name}JsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
             void reset(IJsonHandler* pParentHandler, ${namespace}::${name}* pObject);
 
             virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
@@ -268,7 +268,7 @@ function generate(options, schema, writers) {
 
         namespace ${readerNamespace} {
 
-        ${name}JsonHandler::${name}JsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : ${baseReader}(context)${generateReaderOptionsInitializerList(properties, 'context')} {}
+        ${name}JsonHandler::${name}JsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept : ${baseReader}(options)${generateReaderOptionsInitializerList(properties, 'options')} {}
 
         void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, ${namespace}::${name}* pObject) {
           ${baseReader}::reset(pParentHandler, pObject);

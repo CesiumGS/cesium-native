@@ -2,9 +2,13 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
+
 ##### Additions :tada:
 
-- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `ExtensionReaderContext`.
+- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
 
 ### v0.27.0 - 2023-09-01
 

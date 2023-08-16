@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -20,7 +20,7 @@ public:
   using ValueType = CesiumGltf::AccessorSparse;
 
   AccessorSparseJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::AccessorSparse* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

@@ -332,7 +332,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   // Repeat test but this time the extension should be deserialized as a
   // JsonValue.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::JsonOnly);
 
@@ -367,7 +367,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
           ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
   // Repeat test but this time the extension should not be deserialized at all.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::Disabled);
 
@@ -432,10 +432,10 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "A",
       CesiumJsonReader::ExtensionState::Disabled);
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 

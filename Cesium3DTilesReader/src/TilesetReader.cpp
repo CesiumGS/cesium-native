@@ -11,7 +11,7 @@ namespace Cesium3DTilesReader {
 namespace {
 
 TilesetReaderResult readTilesetJson(
-    const CesiumJsonReader::ExtensionReaderContext& context,
+    const CesiumJsonReader::JsonReaderOptions& context,
     const gsl::span<const std::byte>& data) {
 
   CESIUM_TRACE("Cesium3DTilesReader::TilesetReader::readTilesetJson");
@@ -30,19 +30,17 @@ TilesetReaderResult readTilesetJson(
 
 TilesetReader::TilesetReader() { registerExtensions(this->_context); }
 
-CesiumJsonReader::ExtensionReaderContext& TilesetReader::getExtensions() {
+CesiumJsonReader::JsonReaderOptions& TilesetReader::getOptions() {
   return this->_context;
 }
 
-const CesiumJsonReader::ExtensionReaderContext&
-TilesetReader::getExtensions() const {
+const CesiumJsonReader::JsonReaderOptions& TilesetReader::getOptions() const {
   return this->_context;
 }
 
 TilesetReaderResult
 TilesetReader::readTileset(const gsl::span<const std::byte>& data) const {
-  const CesiumJsonReader::ExtensionReaderContext& context =
-      this->getExtensions();
+  const CesiumJsonReader::JsonReaderOptions& context = this->getOptions();
   TilesetReaderResult result = readTilesetJson(context, data);
 
   return result;
