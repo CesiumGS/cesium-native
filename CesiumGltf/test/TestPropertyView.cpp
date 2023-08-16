@@ -321,6 +321,200 @@ TEST_CASE("VecN PropertyView") {
   }
 }
 
+TEST_CASE("MatN PropertyView") {
+  SECTION("Constructs with non-optional properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    classProperty.required = true;
+
+    PropertyView<glm::imat3x3> view(classProperty);
+    REQUIRE(view.normalized());
+    REQUIRE(view.required());
+
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Ignores count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.count = 5;
+
+    PropertyView<glm::imat3x3> view(classProperty);
+    REQUIRE(view.arrayCount() == 0);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    // clang-format off
+    classProperty.offset = JsonValue::Array{
+      -1,  1, 2,
+       3, -1, 4,
+      -5, -5, 0};
+    classProperty.scale = JsonValue::Array{
+      1, 1, 1,
+      2, 2, 3,
+      3, 4, 5};
+    classProperty.max = JsonValue::Array{
+      20,  5, 20,
+      30, 22, 43,
+      37,  1,  8};
+    classProperty.min = JsonValue::Array{
+      -10, -2, -3,
+        0, 20,  4,
+        9,  4,  5};
+    // clang-format on
+
+    PropertyView<glm::imat3x3> view(classProperty);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    // clang-format off
+    glm::imat3x3 expectedOffset(
+      -1,  1, 2,
+       3, -1, 4,
+      -5, -5, 0);
+    REQUIRE(*view.offset() == expectedOffset);
+
+    glm::imat3x3 expectedScale(
+      1, 1, 1,
+      2, 2, 3,
+      3, 4, 5);
+    REQUIRE(*view.scale() == expectedScale);
+
+    glm::imat3x3 expectedMax(
+      20,  5, 20,
+      30, 22, 43,
+      37,  1,  8);
+    REQUIRE(*view.max() == expectedMax);
+
+    glm::imat3x3 expectedMin(
+      -10, -2, -3,
+        0, 20,  4,
+        9,  4,  5);
+    REQUIRE(*view.min() == expectedMin);
+    // clang-format on
+  }
+
+  SECTION("Returns nullopt for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    // clang-format off
+    classProperty.offset = JsonValue::Array{
+       -1,  2,
+      129, -2};
+    classProperty.scale = JsonValue::Array{
+      1, 7,
+      4, 6};
+    classProperty.max = JsonValue::Array{
+      10, 240,
+       1,   8};
+    classProperty.min = JsonValue::Array{
+      -29, -40,
+      -55, -43};
+    // clang-format on
+
+    PropertyView<glm::i8mat2x2> view(classProperty);
+    REQUIRE(view.scale());
+    REQUIRE(view.min());
+
+    // clang-format off
+    glm::i8mat2x2 expectedScale(
+      1, 7,
+      4, 6);
+    REQUIRE(*view.scale() == expectedScale);
+
+    glm::i8mat2x2 expectedMin(
+      -29, -40,
+      -55, -43);
+    REQUIRE(*view.min() == expectedMin);
+    // clang-format on
+
+    REQUIRE(!view.offset());
+    REQUIRE(!view.max());
+  }
+
+  SECTION("Returns nullopt for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.offset = "(1, 2, 3, 4)";
+    classProperty.scale = 1;
+    classProperty.max = JsonValue::Array{10, 20, 30, 40, 50};
+    classProperty.min = JsonValue::Array{0, 0};
+
+    PropertyView<glm::i8mat2x2> view(classProperty);
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.required = false;
+    // clang-format off
+    classProperty.noData = JsonValue::Array{
+      0.0f, 0.0f,
+      0.0f, 0.0f};
+    classProperty.defaultProperty = JsonValue::Array{
+      1.0f, 2.0f,
+      3.0f, 4.0f};
+    // clang-format on
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    // clang-format off
+    glm::mat2 expectedNoData(
+      0.0f, 0.0f,
+      0.0f, 0.0f);
+    REQUIRE(*view.noData() == expectedNoData);
+
+    glm::mat2 expectedDefaultValue(
+      1.0f, 2.0f,
+      3.0f, 4.0f);
+    REQUIRE(*view.defaultValue() == expectedDefaultValue);
+  }
+
+  SECTION("Ignores noData and defaultProperty when required is true") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.required = true;
+    // clang-format off
+    classProperty.noData = JsonValue::Array{
+      0.0f, 0.0f,
+      0.0f, 0.0f};
+    classProperty.defaultProperty = JsonValue::Array{
+      1.0f, 2.0f,
+      3.0f, 4.0f};
+    // clang-format on
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+}
+
 TEST_CASE("String PropertyView") {
   SECTION("Ignores non-applicable properties") {
     ClassProperty classProperty;

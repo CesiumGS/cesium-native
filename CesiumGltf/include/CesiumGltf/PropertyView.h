@@ -297,12 +297,15 @@ private:
   getValue(const CesiumUtility::JsonValue& jsonValue) {
     if constexpr (IsMetadataScalar<ElementType>::value) {
       return getScalar<ElementType>(jsonValue);
-    } else if constexpr (IsMetadataVecN<ElementType>::value) {
+    }
+
+    if constexpr (IsMetadataVecN<ElementType>::value) {
       return getVecN<ElementType>(jsonValue);
-    } else
-      return std::nullopt;
-    // if constexpr (IsMetadataMatN<T>::value) {
-    //}
+    }
+
+    if constexpr (IsMetadataMatN<ElementType>::value) {
+      return getMatN<ElementType>(jsonValue);
+    }
   }
 
   /**
@@ -333,7 +336,7 @@ private:
     }
 
     const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
-    glm::length_t N = VecType::length();
+    constexpr glm::length_t N = VecType::length();
     if (array.size() != N) {
       return std::nullopt;
     }
@@ -355,28 +358,30 @@ private:
 
   template <typename MatType>
   static std::optional<MatType>
-  getMatNFromJsonValue(const CesiumUtility::JsonValue& value) {
+  getMatN(const CesiumUtility::JsonValue& jsonValue) {
     if (!jsonValue.isArray()) {
       return std::nullopt;
     }
 
     const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
-    glm::length_t N = VecType::length();
-    glm::length_t numValues = N * N;
-    if (array.size() != numValues) {
+    constexpr glm::length_t N = MatType::length();
+    if (array.size() != N * N) {
       return std::nullopt;
     }
 
     using T = MatType::value_type;
 
     MatType result;
-    for (glm::length_t i = 0; i < numValues; i++) {
-      std::optional<T> value = getScalar<T>(array[i]);
-      if (!value) {
-        return std::nullopt;
-      }
+    for (glm::length_t i = 0; i < N; i++) {
+      // Try to parse each value in the column.
+      for (glm::length_t j = 0; j < N; j++) {
+        std::optional<T> value = getScalar<T>(array[i * N + j]);
+        if (!value) {
+          return std::nullopt;
+        }
 
-      result[i] = value;
+        result[i][j] = *value;
+      }
     }
 
     return result;
