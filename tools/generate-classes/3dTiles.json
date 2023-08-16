@@ -16,6 +16,9 @@
     "3DTILES_bounding_volume_S2 extension": {
       "overrideName": "Extension3dTilesBoundingVolumeS2"
     },
+    "3DTILES_implicit_tiling tile extension": {
+      "overrideName": "Extension3dTilesImplicitTiling"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     }
@@ -24,6 +27,13 @@
     {
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_implicit_tiling",
+      "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
     }
+  ],
+  "excludePaths": [
+    "extensions/3DTILES_implicit_tiling/schema/subtrees.schema.json"
   ]
 }

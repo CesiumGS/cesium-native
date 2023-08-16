@@ -4,6 +4,9 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/Extension3dTilesImplicitTiling.h>
+#include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -67,26 +70,24 @@ struct ExternalContentInitializer {
  * @return The up-axis to use for glTF content
  */
 CesiumGeometry::Axis obtainGltfUpAxis(
-    const rapidjson::Document& tileset,
+    const Cesium3DTiles::Tileset& tileset,
     const std::shared_ptr<spdlog::logger>& pLogger) {
-  const auto assetIt = tileset.FindMember("asset");
-  if (assetIt == tileset.MemberEnd()) {
-    return CesiumGeometry::Axis::Y;
-  }
-  const rapidjson::Value& assetJson = assetIt->value;
-  const auto gltfUpAxisIt = assetJson.FindMember("gltfUpAxis");
-  if (gltfUpAxisIt == assetJson.MemberEnd()) {
+  // gltfUpAxis isn't officially part of the 3D Tiles spec, but it's widely
+  // used. Look for it in `unknownProperties`.
+  auto gltfUpAxisIt = tileset.asset.unknownProperties.find("gltfUpAxis");
+  if (gltfUpAxisIt == tileset.asset.unknownProperties.end()) {
     return CesiumGeometry::Axis::Y;
   }
 
-  // SPDLOG_LOGGER_WARN(
-  //     pLogger,
-  //     "The tileset contains a gltfUpAxis property. "
-  //     "This property is not part of the specification. "
-  //     "All glTF content should use the Y-axis as the up-axis.");
+  const CesiumUtility::JsonValue& gltfUpAxis = gltfUpAxisIt->second;
+  if (!gltfUpAxis.isString()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "The gltfUpAxis property is not a string, using default (Y)");
+    return CesiumGeometry::Axis::Y;
+  }
 
-  const rapidjson::Value& gltfUpAxisJson = gltfUpAxisIt->value;
-  auto gltfUpAxisString = std::string(gltfUpAxisJson.GetString());
+  const std::string& gltfUpAxisString = gltfUpAxis.getString();
   if (gltfUpAxisString == "X" || gltfUpAxisString == "x") {
     return CesiumGeometry::Axis::X;
   }
@@ -105,100 +106,43 @@ CesiumGeometry::Axis obtainGltfUpAxis(
 }
 
 std::optional<BoundingVolume> getBoundingVolumeProperty(
-    const rapidjson::Value& tileJson,
-    const std::string& key) {
-  const auto bvIt = tileJson.FindMember(key.c_str());
-  if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
-    return std::nullopt;
+    const Cesium3DTiles::BoundingVolume& boundingVolumeJson) {
+  const Cesium3DTiles::Extension3dTilesBoundingVolumeS2* pS2 =
+      boundingVolumeJson
+          .getExtension<Cesium3DTiles::Extension3dTilesBoundingVolumeS2>();
+  if (pS2) {
+    return CesiumGeospatial::S2CellBoundingVolume(
+        CesiumGeospatial::S2CellID::fromToken(pS2->token),
+        pS2->minimumHeight,
+        pS2->maximumHeight);
   }
 
-  const auto extensionsIt = bvIt->value.FindMember("extensions");
-  if (extensionsIt != bvIt->value.MemberEnd() &&
-      extensionsIt->value.IsObject()) {
-    const auto s2It =
-        extensionsIt->value.FindMember("3DTILES_bounding_volume_S2");
-    if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
-      std::string token = CesiumUtility::JsonHelpers::getStringOrDefault(
-          s2It->value,
-          "token",
-          "1");
-      double minimumHeight = CesiumUtility::JsonHelpers::getDoubleOrDefault(
-          s2It->value,
-          "minimumHeight",
-          0.0);
-      double maximumHeight = CesiumUtility::JsonHelpers::getDoubleOrDefault(
-          s2It->value,
-          "maximumHeight",
-          0.0);
-      return CesiumGeospatial::S2CellBoundingVolume(
-          CesiumGeospatial::S2CellID::fromToken(token),
-          minimumHeight,
-          maximumHeight);
-    }
-  }
-
-  const auto boxIt = bvIt->value.FindMember("box");
-  if (boxIt != bvIt->value.MemberEnd() && boxIt->value.IsArray() &&
-      boxIt->value.Size() >= 12) {
-    const auto& a = boxIt->value.GetArray();
-    for (rapidjson::SizeType i = 0; i < 12; ++i) {
-      if (!a[i].IsNumber()) {
-        return std::nullopt;
-      }
-    }
+  if (boundingVolumeJson.box.size() >= 12) {
+    const std::vector<double>& a = boundingVolumeJson.box;
     return CesiumGeometry::OrientedBoundingBox(
-        glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
-        glm::dmat3(
-            a[3].GetDouble(),
-            a[4].GetDouble(),
-            a[5].GetDouble(),
-            a[6].GetDouble(),
-            a[7].GetDouble(),
-            a[8].GetDouble(),
-            a[9].GetDouble(),
-            a[10].GetDouble(),
-            a[11].GetDouble()));
+        glm::dvec3(a[0], a[1], a[2]),
+        glm::dmat3(a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11]));
   }
 
-  const auto regionIt = bvIt->value.FindMember("region");
-  if (regionIt != bvIt->value.MemberEnd() && regionIt->value.IsArray() &&
-      regionIt->value.Size() >= 6) {
-    const auto& a = regionIt->value;
-    for (rapidjson::SizeType i = 0; i < 6; ++i) {
-      if (!a[i].IsNumber()) {
-        return std::nullopt;
-      }
-    }
+  if (boundingVolumeJson.region.size() >= 6) {
+    const std::vector<double>& a = boundingVolumeJson.region;
     return CesiumGeospatial::BoundingRegion(
-        CesiumGeospatial::GlobeRectangle(
-            a[0].GetDouble(),
-            a[1].GetDouble(),
-            a[2].GetDouble(),
-            a[3].GetDouble()),
-        a[4].GetDouble(),
-        a[5].GetDouble());
+        CesiumGeospatial::GlobeRectangle(a[0], a[1], a[2], a[3]),
+        a[4],
+        a[5]);
   }
 
-  const auto sphereIt = bvIt->value.FindMember("sphere");
-  if (sphereIt != bvIt->value.MemberEnd() && sphereIt->value.IsArray() &&
-      sphereIt->value.Size() >= 4) {
-    const auto& a = sphereIt->value;
-    for (rapidjson::SizeType i = 0; i < 4; ++i) {
-      if (!a[i].IsNumber()) {
-        return std::nullopt;
-      }
-    }
-    return CesiumGeometry::BoundingSphere(
-        glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
-        a[3].GetDouble());
+  if (boundingVolumeJson.sphere.size() >= 4) {
+    const std::vector<double>& a = boundingVolumeJson.sphere;
+    return CesiumGeometry::BoundingSphere(glm::dvec3(a[0], a[1], a[2]), a[3]);
   }
 
   return std::nullopt;
 }
 
 void createImplicitQuadtreeLoader(
-    const char* contentUriTemplate,
-    const char* subtreeUriTemplate,
+    const std::string& contentUriTemplate,
+    const std::string& subtreeUriTemplate,
     uint32_t subtreeLevels,
     uint32_t availableLevels,
     Tile& implicitTile,
@@ -262,8 +206,8 @@ void createImplicitQuadtreeLoader(
 }
 
 void createImplicitOctreeLoader(
-    const char* contentUriTemplate,
-    const char* subtreeUriTemplate,
+    const std::string& contentUriTemplate,
+    const std::string& subtreeUriTemplate,
     uint32_t subtreeLevels,
     uint32_t availableLevels,
     Tile& implicitTile,
@@ -319,113 +263,108 @@ void createImplicitOctreeLoader(
 }
 
 void parseImplicitTileset(
-    const rapidjson::Value& implicitExtensionJson,
-    const char* contentUri,
+    const Cesium3DTiles::ImplicitTiling& implicitJson,
+    const std::string& contentUri,
     Tile& tile,
     TilesetJsonLoader& currentLoader) {
-  auto implicitTiling = implicitExtensionJson.GetObject();
-  auto tilingSchemeIt = implicitTiling.FindMember("subdivisionScheme");
-  auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
-  auto subtreesIt = implicitTiling.FindMember("subtrees");
-  auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
-  if (availableLevelsIt == implicitTiling.MemberEnd()) {
-    // old version of implicit uses maximumLevel instead of availableLevels.
-    // They have the same semantic
-    availableLevelsIt = implicitTiling.FindMember("maximumLevel");
+  const std::string& subdivisionScheme = implicitJson.subdivisionScheme;
+  int64_t subtreeLevels = implicitJson.subtreeLevels;
+  const Cesium3DTiles::Subtrees& subtrees = implicitJson.subtrees;
+  int64_t availableLevels = implicitJson.availableLevels;
+  if (availableLevels == 0) {
+    // The old version of implicit uses maximumLevel instead of availableLevels.
+    // They have the same semantics.
+    auto maximumLevelIt = implicitJson.unknownProperties.find("maximumLevel");
+    if (maximumLevelIt != implicitJson.unknownProperties.end() &&
+        maximumLevelIt->second.isNumber()) {
+      availableLevels =
+          maximumLevelIt->second.getSafeNumberOrDefault<int64_t>(0LL);
+    }
   }
 
-  // check that all the required properties above are available
-  bool hasTilingSchemeProp = tilingSchemeIt != implicitTiling.MemberEnd() &&
-                             tilingSchemeIt->value.IsString();
-  bool hasSubtreeLevelsProp = subtreeLevelsIt != implicitTiling.MemberEnd() &&
-                              subtreeLevelsIt->value.IsUint();
-  bool hasAvailableLevelsProp =
-      availableLevelsIt != implicitTiling.MemberEnd() &&
-      availableLevelsIt->value.IsUint();
-  bool hasSubtreesProp =
-      subtreesIt != implicitTiling.MemberEnd() && subtreesIt->value.IsObject();
-  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp ||
-      !hasAvailableLevelsProp || !hasSubtreesProp) {
+  const std::string& subtreesUri = subtrees.uri;
+  if (subtreesUri.empty())
     return;
-  }
-
-  auto subtrees = subtreesIt->value.GetObject();
-  auto subtreesUriIt = subtrees.FindMember("uri");
-  if (subtreesUriIt == subtrees.MemberEnd() ||
-      !subtreesUriIt->value.IsString()) {
-    return;
-  }
 
   // create implicit loaders
-  uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t availableLevels = availableLevelsIt->value.GetUint();
-  const char* subtreesUri = subtreesUriIt->value.GetString();
-  const char* subdivisionScheme = tilingSchemeIt->value.GetString();
-
-  if (std::strcmp(subdivisionScheme, "QUADTREE") == 0) {
+  if (subdivisionScheme == "QUADTREE") {
     createImplicitQuadtreeLoader(
         contentUri,
         subtreesUri,
-        subtreeLevels,
-        availableLevels,
+        uint32_t(subtreeLevels),
+        uint32_t(availableLevels),
         tile,
         currentLoader);
-  } else if (std::strcmp(subdivisionScheme, "OCTREE") == 0) {
+  } else if (subdivisionScheme == "OCTREE") {
     createImplicitOctreeLoader(
         contentUri,
         subtreesUri,
-        subtreeLevels,
-        availableLevels,
+        uint32_t(subtreeLevels),
+        uint32_t(availableLevels),
         tile,
         currentLoader);
   }
 }
 
+namespace {
+
+std::optional<glm::dmat4x4>
+getTransformProperty(const std::vector<double>& transform) {
+  if (transform.size() != 16)
+    return std::nullopt;
+
+  const std::vector<double>& a = transform;
+  return std::make_optional<glm::dmat4>(
+      glm::dvec4(a[0], a[1], a[2], a[3]),
+      glm::dvec4(a[4], a[5], a[6], a[7]),
+      glm::dvec4(a[8], a[9], a[10], a[11]),
+      glm::dvec4(a[12], a[13], a[14], a[15]));
+}
+
+} // namespace
+
 std::optional<Tile> parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const rapidjson::Value& tileJson,
+    const Cesium3DTiles::Tile& tileJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
     double parentGeometricError,
     TilesetJsonLoader& currentLoader) {
-  if (!tileJson.IsObject()) {
-    return std::nullopt;
-  }
-
   // parse tile transform
-  const std::optional<glm::dmat4x4> transform =
-      CesiumUtility::JsonHelpers::getTransformProperty(tileJson, "transform");
-  glm::dmat4x4 tileTransform =
-      parentTransform * transform.value_or(glm::dmat4x4(1.0));
+  std::optional<glm::dmat4x4> transform =
+      getTransformProperty(tileJson.transform);
+  if (!transform) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Tile's transform is invalid and will be ignored.");
+    transform = glm::dmat4x4(1.0);
+  }
+  glm::dmat4x4 tileTransform = parentTransform * (*transform);
 
   // parse bounding volume
   std::optional<BoundingVolume> boundingVolume =
-      getBoundingVolumeProperty(tileJson, "boundingVolume");
+      getBoundingVolumeProperty(tileJson.boundingVolume);
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return std::nullopt;
   }
 
-  auto tileBoundingVolume =
+  Cesium3DTilesSelection::BoundingVolume tileBoundingVolume =
       transformBoundingVolume(tileTransform, boundingVolume.value());
 
   // parse viewer request volume
   std::optional<BoundingVolume> tileViewerRequestVolume =
-      getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
+      tileJson.viewerRequestVolume.has_value()
+          ? getBoundingVolumeProperty(tileJson.viewerRequestVolume.value())
+          : std::nullopt;
   if (tileViewerRequestVolume) {
     tileViewerRequestVolume =
         transformBoundingVolume(tileTransform, tileViewerRequestVolume.value());
   }
 
-  // parse geometric error
-  std::optional<double> geometricError =
-      CesiumUtility::JsonHelpers::getScalarProperty(tileJson, "geometricError");
-  if (!geometricError) {
+  double geometricError = tileJson.geometricError;
+  if (geometricError == 0.0) {
     geometricError = parentGeometricError * 0.5;
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "Tile did not contain a geometricError. "
-        "Using half of the parent tile's geometric error.");
   }
 
   const glm::dvec3 scale = glm::dvec3(
@@ -434,13 +373,12 @@ std::optional<Tile> parseTileJsonRecursively(
       glm::length(tileTransform[2]));
   const double maxScaleComponent =
       glm::max(scale.x, glm::max(scale.y, scale.z));
-  double tileGeometricError = geometricError.value() * maxScaleComponent;
+  double tileGeometricError = geometricError * maxScaleComponent;
 
   // parse refinement
   TileRefine tileRefine = parentRefine;
-  const auto refineIt = tileJson.FindMember("refine");
-  if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
-    std::string refine = refineIt->value.GetString();
+  if (tileJson.refine.has_value()) {
+    const std::string& refine = tileJson.refine.value();
     if (refine == "REPLACE") {
       tileRefine = TileRefine::Replace;
     } else if (refine == "ADD") {
@@ -465,51 +403,48 @@ std::optional<Tile> parseTileJsonRecursively(
       } else {
         SPDLOG_LOGGER_WARN(
             pLogger,
-            "Tile contained an unknown refine value: {}",
+            "Tile contains an unknown refine value: {}",
             refine);
       }
     }
-  } else {
   }
 
   // Parse content member to determine tile content Url.
-  const auto contentIt = tileJson.FindMember("content");
-  bool hasContentMember =
-      (contentIt != tileJson.MemberEnd()) && (contentIt->value.IsObject());
-  const char* contentUri = nullptr;
-  if (hasContentMember) {
-    auto uriIt = contentIt->value.FindMember("uri");
-    if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
-      uriIt = contentIt->value.FindMember("url");
-    }
-
-    if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      contentUri = uriIt->value.GetString();
+  const std::string* pContentUri = nullptr;
+  if (tileJson.content.has_value()) {
+    const Cesium3DTiles::Content& content = tileJson.content.value();
+    if (!content.uri.empty()) {
+      pContentUri = &content.uri;
+    } else {
+      // Old versions of the 3D Tiles spec used "url" instead of "uri".
+      auto urlIt = content.unknownProperties.find("url");
+      if (urlIt != content.unknownProperties.end() &&
+          urlIt->second.isString()) {
+        pContentUri = &urlIt->second.getString();
+      }
     }
   }
 
   // determine if tile has implicit tiling
-  const rapidjson::Value* implicitTilingJson = nullptr;
-  const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
-  if (implicitTilingIt != tileJson.MemberEnd() &&
-      implicitTilingIt->value.IsObject()) {
+  std::optional<Cesium3DTiles::ImplicitTiling> maybeImplicit;
+  if (tileJson.implicitTiling.has_value()) {
     // this is an external tile pointing to an implicit tileset
-    implicitTilingJson = &implicitTilingIt->value;
+    maybeImplicit = tileJson.implicitTiling.value();
   } else {
-    const auto extensionIt = tileJson.FindMember("extensions");
-    if (extensionIt != tileJson.MemberEnd()) {
-      // this is the legacy 3D Tiles Next implicit tiling extension
-      const auto& extensions = extensionIt->value;
-      const auto implicitExtensionIt =
-          extensions.FindMember("3DTILES_implicit_tiling");
-      if (implicitExtensionIt != extensions.MemberEnd() &&
-          implicitExtensionIt->value.IsObject()) {
-        implicitTilingJson = &implicitExtensionIt->value;
-      }
+    const Cesium3DTiles::Extension3dTilesImplicitTiling* pImplicit =
+        tileJson.getExtension<Cesium3DTiles::Extension3dTilesImplicitTiling>();
+    if (pImplicit) {
+      // This is the legacy 3D Tiles Next implicit tiling extension.
+      // Convert it to the modern version.
+      maybeImplicit = Cesium3DTiles::ImplicitTiling{};
+      maybeImplicit->subdivisionScheme = pImplicit->subdivisionScheme;
+      maybeImplicit->subtreeLevels = pImplicit->subtreeLevels;
+      maybeImplicit->availableLevels = pImplicit->availableLevels;
+      maybeImplicit->subtrees = pImplicit->subtrees;
     }
   }
 
-  if (implicitTilingJson) {
+  if (maybeImplicit) {
     // mark this tile as external
     Tile tile{&currentLoader, TileExternalContent{}};
     tile.setTileID("");
@@ -519,16 +454,21 @@ std::optional<Tile> parseTileJsonRecursively(
     tile.setGeometricError(tileGeometricError);
     tile.setRefine(tileRefine);
 
-    parseImplicitTileset(*implicitTilingJson, contentUri, tile, currentLoader);
+    parseImplicitTileset(
+        maybeImplicit.value(),
+        pContentUri ? *pContentUri : std::string(),
+        tile,
+        currentLoader);
 
     return tile;
   }
 
-  // this is a regular tile, then parse the content bounding volume
+  // If this is a regular non-implicit tile, parse the content bounding volume
   std::optional<BoundingVolume> tileContentBoundingVolume;
-  if (hasContentMember) {
+  if (tileJson.content.has_value() &&
+      tileJson.content->boundingVolume.has_value()) {
     tileContentBoundingVolume =
-        getBoundingVolumeProperty(contentIt->value, "boundingVolume");
+        getBoundingVolumeProperty(tileJson.content->boundingVolume.value());
     if (tileContentBoundingVolume) {
       tileContentBoundingVolume = transformBoundingVolume(
           tileTransform,
@@ -538,13 +478,12 @@ std::optional<Tile> parseTileJsonRecursively(
 
   // parse tile's children
   std::vector<Tile> childTiles;
-  const auto childrenIt = tileJson.FindMember("children");
-  if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {
-    const auto& childrenJson = childrenIt->value;
-    childTiles.reserve(childrenJson.Size());
-    for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
-      const auto& childJson = childrenJson[i];
-      auto maybeChild = parseTileJsonRecursively(
+  if (!tileJson.children.empty()) {
+    const std::vector<Cesium3DTiles::Tile>& childrenJson = tileJson.children;
+    childTiles.reserve(childrenJson.size());
+    for (size_t i = 0; i < childrenJson.size(); ++i) {
+      const Cesium3DTiles::Tile& childJson = childrenJson[i];
+      std::optional<Tile> maybeChild = parseTileJsonRecursively(
           pLogger,
           childJson,
           tileTransform,
@@ -558,9 +497,9 @@ std::optional<Tile> parseTileJsonRecursively(
     }
   }
 
-  if (contentUri) {
+  if (pContentUri) {
     Tile tile{&currentLoader};
-    tile.setTileID(contentUri);
+    tile.setTileID(*pContentUri);
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
     tile.setViewerRequestVolume(tileViewerRequestVolume);
@@ -588,34 +527,47 @@ std::optional<Tile> parseTileJsonRecursively(
 TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
-    const rapidjson::Document& tilesetJson,
+    const Cesium3DTilesReader::TilesetReaderResult& readerResult,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine) {
+  const Cesium3DTiles::Tileset& tileset = *readerResult.tileset;
   std::unique_ptr<Tile> pRootTile;
-  auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
+  auto gltfUpAxis = obtainGltfUpAxis(tileset, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
-  const auto rootIt = tilesetJson.FindMember("root");
-  if (rootIt != tilesetJson.MemberEnd()) {
-    const rapidjson::Value& rootJson = rootIt->value;
-    auto maybeRootTile = parseTileJsonRecursively(
-        pLogger,
-        rootJson,
-        parentTransform,
-        parentRefine,
-        10000000.0,
-        *pLoader);
 
-    if (maybeRootTile) {
-      pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
-    }
+  // const auto metadataIt = tilesetJson.FindMember("metadata");
+  // if (metadataIt != tilesetJson.MemberEnd()) {
+  //   // metadataIt->value.data_
+  // }
+
+  auto maybeRootTile = parseTileJsonRecursively(
+      pLogger,
+      tileset.root,
+      parentTransform,
+      parentRefine,
+      10000000.0,
+      *pLoader);
+
+  if (maybeRootTile) {
+    pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
   }
+
+  ErrorList errors{};
+  errors.errors.insert(
+      errors.errors.end(),
+      readerResult.errors.begin(),
+      readerResult.errors.end());
+  errors.warnings.insert(
+      errors.warnings.end(),
+      readerResult.warnings.begin(),
+      readerResult.warnings.end());
 
   return {
       std::move(pLoader),
       std::move(pRootTile),
       std::vector<LoaderCreditResult>{},
       std::vector<CesiumAsync::IAssetAccessor::THeader>{},
-      ErrorList{}};
+      std::move(errors)};
 }
 
 TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
@@ -624,23 +576,27 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const gsl::span<const std::byte>& tilesetJsonBinary,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine) {
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(
-      reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-      tilesetJsonBinary.size());
-  if (tilesetJson.HasParseError()) {
+  Cesium3DTilesReader::TilesetReader reader{};
+  Cesium3DTilesReader::TilesetReaderResult readerResult =
+      reader.readTileset(tilesetJsonBinary);
+
+  if (!readerResult.errors.empty() || !readerResult.tileset) {
     TilesetContentLoaderResult<TilesetJsonLoader> result;
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset()));
+    result.errors.errors.insert(
+        result.errors.errors.end(),
+        readerResult.errors.begin(),
+        readerResult.errors.end());
+    result.errors.warnings.insert(
+        result.errors.warnings.end(),
+        readerResult.warnings.begin(),
+        readerResult.warnings.end());
     return result;
   }
 
   return parseTilesetJson(
       pLogger,
       baseUrl,
-      tilesetJson,
+      readerResult,
       parentTransform,
       parentRefine);
 }
@@ -743,7 +699,7 @@ TilesetJsonLoader::createLoader(
 TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
-    const rapidjson::Document& tilesetJson) {
+    const gsl::span<const std::byte>& tilesetJson) {
   return parseTilesetJson(
       pLogger,
       tilesetJsonUrl,

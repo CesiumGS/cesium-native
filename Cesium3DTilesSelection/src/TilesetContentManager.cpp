@@ -14,11 +14,13 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/SpanHelper.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
 
+#include <algorithm>
 #include <chrono>
 
 namespace Cesium3DTilesSelection {
@@ -661,28 +663,40 @@ TilesetContentManager::TilesetContentManager(
 
               // Parse Json response
               gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
-              rapidjson::Document tilesetJson;
-              tilesetJson.Parse(
-                  reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-                  tilesetJsonBinary.size());
-              if (tilesetJson.HasParseError()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Error when parsing tileset JSON, error code {} at byte "
-                    "offset {}",
-                    tilesetJson.GetParseError(),
-                    tilesetJson.GetErrorOffset()));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
-
-              // Check if the json is a tileset.json format or layer.json format
-              // and create corresponding loader
-              const auto rootIt = tilesetJson.FindMember("root");
-              if (rootIt != tilesetJson.MemberEnd()) {
+              gsl::span<const char> tilesetJsonChars =
+                  CesiumUtility::reintepretCastSpan<const char>(tilesetJsonBinary);
+              static const char quotedRoot[] = "\"root\"";
+              auto rootElementIt = std::search(
+                  tilesetJsonChars.begin(),
+                  tilesetJsonChars.end(),
+                  quotedRoot,
+                  quotedRoot + sizeof(quotedRoot) - 1);
+              if (rootElementIt != tilesetJsonChars.end()) {
+                // This JSON has a "root" element, so attempt to load it as
+                // tileset.json.
                 TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
+                    TilesetJsonLoader::createLoader(
+                        pLogger,
+                        url,
+                        tilesetJsonBinary);
                 return asyncSystem.createResolvedFuture(std::move(result));
               } else {
+                // No root element, so parse it as JSON and then see what we've
+                // got.
+                rapidjson::Document tilesetJson;
+                tilesetJson.Parse(
+                    reinterpret_cast<const char*>(tilesetJsonBinary.data()),
+                    tilesetJsonBinary.size());
+                if (tilesetJson.HasParseError()) {
+                  TilesetContentLoaderResult<TilesetContentLoader> result;
+                  result.errors.emplaceError(fmt::format(
+                      "Error when parsing tileset JSON, error code {} at byte "
+                      "offset {}",
+                      tilesetJson.GetParseError(),
+                      tilesetJson.GetErrorOffset()));
+                  return asyncSystem.createResolvedFuture(std::move(result));
+                }
+
                 const auto formatIt = tilesetJson.FindMember("format");
                 bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
                                          formatIt->value.IsString();

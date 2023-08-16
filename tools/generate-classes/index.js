@@ -202,6 +202,12 @@ function processSchemas() {
     }
     processed[schema.sourcePath] = true;
 
+    console.log("**** " + schema.sourcePath);
+    if (options.config.excludePaths.find(p => schema.sourcePath.endsWith(p))) {
+      console.log("Excluding " + schema.sourcePath);
+      continue;
+    }
+
     if ((options.config.classes[schema.title] || {}).manuallyDefined) {
       continue;
     }
