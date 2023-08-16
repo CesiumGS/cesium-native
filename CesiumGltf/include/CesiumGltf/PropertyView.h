@@ -8,43 +8,6 @@
 
 namespace CesiumGltf {
 /**
- * @brief Indicates the status of a property view.
- *
- * The {@link PropertyView} constructor always completes successfully.
- * However, it may find fundamental errors within the property definition
- * itself. This enumeration provides the reason.
- */
-enum class PropertyViewStatus {
-  /**
-   * @brief This property view is valid and ready to use.
-   */
-  Valid,
-
-  /**
-   * @brief This property view is trying to view a property that does not exist.
-   */
-  ErrorNonexistentProperty,
-
-  /**
-   * @brief This property view's type does not match what is
-   * specified in {@link ClassProperty::type}.
-   */
-  ErrorTypeMismatch,
-
-  /**
-   * @brief This property view's component type does not match what
-   * is specified in {@link ClassProperty::componentType}.
-   */
-  ErrorComponentTypeMismatch,
-
-  /**
-   * @brief This property view differs from what is specified in
-   * {@link ClassProperty::array}.
-   */
-  ErrorArrayTypeMismatch,
-};
-
-/**
  * @brief An interface for generic metadata property in EXT_structural_metadata.
  *
  * Whether they belong to property tables, property textures, or property
@@ -52,6 +15,15 @@ enum class PropertyViewStatus {
  * property values. Although they are typically defined via class property, they
  * may be overriden by individual instances of the property. The constructor is
  * responsible for resolving those differences.
+ *
+ * However, there are fundamental differences between property tables, property
+ * textures, and property attributes. Notably, the ways in which values are
+ * stored -- as well as what types of values are even supported -- vary between
+ * the three. Therefore, this interface has no "status" and does not validate
+ * ElementType against the input class property. Derived classes must do their
+ * own validation to ensure that ElementType matches the given class definition.
+ *
+ * @tparam ElementType The C++ type of the values in this property
  */
 template <typename ElementType> class IPropertyView {
 public:
@@ -130,13 +102,6 @@ public:
    * effect of normalized, offset, and scale properties into account.
    */
   virtual std::optional<ElementType> defaultValue() const noexcept = 0;
-
-protected:
-  /**
-   * @brief Gets the status of the property view. Derived classes will often
-   * have their own status enumerations, so this is only used internally.
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept = 0;
 };
 
 /**
@@ -153,8 +118,7 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _propertyViewStatus(PropertyViewStatus::ErrorNonexistentProperty),
-        _normalized(false),
+      : _normalized(false),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -167,8 +131,7 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _propertyViewStatus(PropertyViewStatus::Valid),
-        _normalized(classProperty.normalized),
+      : _normalized(classProperty.normalized),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -176,49 +139,21 @@ public:
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {
-    if (convertStringToPropertyType(classProperty.type) !=
-        TypeToPropertyType<ElementType>::value) {
-      _propertyViewStatus = PropertyViewStatus::ErrorTypeMismatch;
-      return;
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
+      _offset =
+          classProperty.offset ? getValue(*classProperty.offset) : std::nullopt;
+      _scale =
+          classProperty.scale ? getValue(*classProperty.scale) : std::nullopt;
+      _max = classProperty.max ? getValue(*classProperty.max) : std::nullopt;
+      _min = classProperty.min ? getValue(*classProperty.min) : std::nullopt;
     }
-
-    if (!classProperty.componentType &&
-        TypeToPropertyType<ElementType>::component !=
-            PropertyComponentType::None) {
-      _propertyViewStatus = PropertyViewStatus::ErrorComponentTypeMismatch;
-      return;
-    }
-
-    if (classProperty.componentType &&
-        convertStringToPropertyComponentType(*classProperty.componentType) !=
-            TypeToPropertyType<ElementType>::component) {
-      _propertyViewStatus = PropertyViewStatus::ErrorComponentTypeMismatch;
-      return;
-    }
-
-    if (classProperty.array) {
-      _propertyViewStatus = PropertyViewStatus::ErrorArrayTypeMismatch;
-      return;
-    }
-
-    _offset = classProperty.offset
-                  ? getValue<ElementType>(*classProperty.offset)
-                  : std::nullopt;
-    _scale = classProperty.scale ? getValue<ElementType>(*classProperty.scale)
-                                 : std::nullopt;
-    _max = classProperty.max ? getValue<ElementType>(*classProperty.max)
-                             : std::nullopt;
-    _min = classProperty.min ? getValue<ElementType>(*classProperty.min)
-                             : std::nullopt;
 
     if (!_required) {
-      _noData = classProperty.noData
-                    ? getValue<ElementType>(*classProperty.noData)
-                    : std::nullopt;
-      _defaultValue =
-          classProperty.defaultProperty
-              ? getValue<ElementType>(*classProperty.defaultProperty)
-              : std::nullopt;
+      _noData =
+          classProperty.noData ? getValue(*classProperty.noData) : std::nullopt;
+      _defaultValue = classProperty.defaultProperty
+                          ? getValue(*classProperty.defaultProperty)
+                          : std::nullopt;
     }
   }
 
@@ -231,25 +166,23 @@ protected:
       const ClassProperty& classProperty,
       const PropertyTableProperty& property)
       : PropertyView(classProperty) {
-    if (_propertyViewStatus != PropertyViewStatus::Valid) {
-      return;
-    }
-
     // If the property has its own values, override the class-provided values.
-    if (property.offset) {
-      _offset = getValue<ElementType>(*property.offset);
-    }
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
+      if (property.offset) {
+        _offset = getValue(*property.offset);
+      }
 
-    if (property.scale) {
-      _scale = getValue<ElementType>(*property.scale);
-    }
+      if (property.scale) {
+        _scale = getValue(*property.scale);
+      }
 
-    if (property.max) {
-      _max = getValue<ElementType>(*property.max);
-    }
+      if (property.max) {
+        _max = getValue(*property.max);
+      }
 
-    if (property.min) {
-      _min = getValue<ElementType>(*property.min);
+      if (property.min) {
+        _min = getValue(*property.min);
+      }
     }
   }
 
@@ -261,25 +194,23 @@ protected:
       const ClassProperty& classProperty,
       const PropertyTextureProperty& property)
       : PropertyView(classProperty) {
-    if (_propertyViewStatus != PropertyViewStatus::Valid) {
-      return;
-    }
-
     // If the property has its own values, override the class-provided values.
-    if (property.offset) {
-      _offset = getValue<ElementType>(*property.offset);
-    }
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
+      if (property.offset) {
+        _offset = getValue(*property.offset);
+      }
 
-    if (property.scale) {
-      _scale = getValue<ElementType>(*property.scale);
-    }
+      if (property.scale) {
+        _scale = getValue(*property.scale);
+      }
 
-    if (property.max) {
-      _max = getValue<ElementType>(*property.max);
-    }
+      if (property.max) {
+        _max = getValue(*property.max);
+      }
 
-    if (property.min) {
-      _min = getValue<ElementType>(*property.min);
+      if (property.min) {
+        _min = getValue(*property.min);
+      }
     }
   }
 
@@ -328,30 +259,20 @@ public:
   virtual bool required() const noexcept override { return _required; }
 
   /**
-   * @copydoc IPropertyView::arrayCount
+   * @copydoc IPropertyView::noData
    */
   virtual std::optional<ElementType> noData() const noexcept override {
     return _noData;
   }
 
   /**
-   * @copydoc IPropertyView::arrayCount
+   * @copydoc IPropertyView::defaultValue
    */
   virtual std::optional<ElementType> defaultValue() const noexcept override {
     return _defaultValue;
   }
 
-protected:
-  /**
-   * @copydoc IPropertyView::propertyViewStatus
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept override {
-    return _propertyViewStatus;
-  }
-
 private:
-  PropertyViewStatus _propertyViewStatus;
-
   bool _normalized;
 
   std::optional<ElementType> _offset;
@@ -369,98 +290,39 @@ private:
    * If T is a type with multiple components, e.g. a VECN or MATN type, this
    * will return std::nullopt if one or more components could not be parsed.
    *
-   * If T is an array view, this will return std::nullopt if one or
-   * more entries could not be parsed.
-   *
    * @return The value as an instance of T, or std::nullopt if it could not be
    * parsed.
    */
-  template <typename T>
-  static std::optional<T> getValue(const CesiumUtility::JsonValue& jsonValue) {
-    if constexpr (IsMetadataScalar<T>::value) {
-      return getScalar<T>(jsonValue);
-    } else
-
-        if constexpr (IsMetadataVecN<T>::value) {
-      return getVecN<T>(jsonValue);
+  static std::optional<ElementType>
+  getValue(const CesiumUtility::JsonValue& jsonValue) {
+    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return getScalar<ElementType>(jsonValue);
+    } else if constexpr (IsMetadataVecN<ElementType>::value) {
+      return getVecN<ElementType>(jsonValue);
     } else
       return std::nullopt;
-
     // if constexpr (IsMetadataMatN<T>::value) {
     //}
   }
 
   /**
-   * @brief Attempts to parse from the given json value. If it could not be
-   * parsed as an ElementType, this returns the default value.
+   * @brief Attempts to parse a scalar from the given JSON value. If the JSON
+   * value is a number of the wrong type, this will round it to the closest
+   * representation in the desired type, if possible. Otherwise, this returns
+   * std::nullopt.
    *
-   * If ElementType is a type with multiple components, e.g. a VECN or MATN
-   * type.
-   *
-   * @return The value as an ElementType, or std::nullopt if it could not be
-   * parsed.
-   */
-  template <typename T>
-  static T getValueOrDefault(
-      const CesiumUtility::JsonValue& jsonValue,
-      const T& defaultValue) {
-    if constexpr (IsMetadataScalar<T>::value) {
-      return jsonValue.getSafeNumberOrDefault<T>(defaultValue);
-    }
-
-    if constexpr (IsMetadataVecN<T>::value) {
-      return getVecNOrDefault(jsonValue, defaultValue);
-    }
-
-    if constexpr (IsMetadataMatN<T>::value) {
-    }
-  }
-
-  /**
-   * @brief Attempts to parse from the given json value. If it could not be
-   * parsed as an ElementType, this returns the default value.
-   *
-   * If ElementType is a type with multiple components, e.g. a VECN or MATN
-   * type.
-   *
-   * @return The value as an ElementType, or std::nullopt if it could not be
+   * @return The value as a type T, or std::nullopt if it could not be
    * parsed.
    */
   template <typename T>
   static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
     try {
-      return jsonValue.getSafeNumber<ElementType>();
+      return jsonValue.getSafeNumber<T>();
     } catch (const CesiumUtility::JsonValueNotRealValue& /*error*/) {
       return std::nullopt;
     } catch (const gsl::narrowing_error& /*error*/) {
-      // Continue below.
+      return std::nullopt;
     }
-
-    // If the value is in range, but it loses precision, a narrowing_error will
-    // be returned. Try to round to a reasonable number anyways, even if it
-    // loses precision.
-    if (jsonValue.isInt64()) {
-      int64_t int64Value = jsonValue.getInt64();
-      if (int64Value >=
-              static_cast<int64_t>(std::numeric_limits<T>::lowest()) &&
-          int64Value <= static_cast<int64_t>(std::numeric_limits<T>::max())) {
-        return static_cast<T>(int64Value);
-      }
-    } else if (jsonValue.isUint64()) {
-      uint64_t uint64Value = jsonValue.getUint64();
-      if (uint64Value <= static_cast<uint64_t>(std::numeric_limits<T>::max())) {
-        return static_cast<T>(uint64Value);
-      }
-    } else if (jsonValue.isDouble()) {
-      double doubleValue = jsonValue.getDouble();
-      if (doubleValue >=
-              static_cast<int64_t>(std::numeric_limits<T>::lowest()) &&
-          doubleValue <= static_cast<int64_t>(std::numeric_limits<T>::max())) {
-        return static_cast<T>(doubleValue);
-      }
-    }
-
-    return std::nullopt;
   }
 
   template <typename VecType>
@@ -470,81 +332,55 @@ private:
       return std::nullopt;
     }
 
-    return std::nullopt;
-    // const CesiumUtility::JsonValue::Array& array = value.getArray();
-    // glm::length_t N = VecType::length();
-    // if (array.size() != N) {
-    //  return std::nullopt;
-    //}
-
-    // using T = VecType::type;
-
-    // glm::length<N, T> result;
-    // for (glm::length_t i = 0; i < N; i++) {
-    //  std::optional<T> value = getValue<T>(array[i]);
-    //  if (!value) {
-    //    return std::nullopt;
-    //  }
-
-    //  result[i] = value;
-    //}
-
-    // return result;
-  }
-
-  template <typename VecType>
-  static VecType getVecNOrDefault(
-      const CesiumUtility::JsonValue& value,
-      const VecType& defaultValue) {
-    if (!jsonValue.isArray()) {
-      return defaultValue;
-    }
-
     const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
     glm::length_t N = VecType::length();
     if (array.size() != N) {
-      return defaultValue;
+      return std::nullopt;
     }
 
-    using T = VecType::type;
+    using T = VecType::value_type;
 
     VecType result;
     for (glm::length_t i = 0; i < N; i++) {
-      std::optional<T> value = getValue(array[i]);
+      std::optional<T> value = getScalar<T>(array[i]);
       if (!value) {
         return std::nullopt;
       }
 
-      result[i] = value ? *value : defaultValue;
+      result[i] = *value;
     }
 
     return result;
   }
 
-  // template <typename MatType>
-  // static std::optional<MatType>
-  // getMatNFromJsonValue(const CesiumUtility::JsonValue& value) {
-  //  if (!jsonValue.isArray()) {
-  //    return std::nullopt;
-  //  }
+  template <typename MatType>
+  static std::optional<MatType>
+  getMatNFromJsonValue(const CesiumUtility::JsonValue& value) {
+    if (!jsonValue.isArray()) {
+      return std::nullopt;
+    }
 
-  //  const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
-  //  if (array.size() != N) {
-  //    return std::nullopt;
-  //  }
+    const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
+    glm::length_t N = VecType::length();
+    glm::length_t numValues = N * N;
+    if (array.size() != numValues) {
+      return std::nullopt;
+    }
 
-  //  glm::vec<N, T, Q> result;
-  //  for (glm::length_t i = 0; i < N; i++) {
-  //    std::optional<T> value = getValue(array[i]);
-  //    if (!value) {
-  //      return std::nullopt;
-  //    }
+    using T = MatType::value_type;
 
-  //    result[i] = value;
-  //  }
+    MatType result;
+    for (glm::length_t i = 0; i < numValues; i++) {
+      std::optional<T> value = getScalar<T>(array[i]);
+      if (!value) {
+        return std::nullopt;
+      }
 
-  //  return result;
-  //}
+      result[i] = value;
+    }
+
+    return result;
+  }
 };
 
 template <> class PropertyView<bool> : IPropertyView<bool> {
@@ -552,28 +388,13 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
-      : _propertyViewStatus(PropertyViewStatus::ErrorNonexistentProperty),
-        _required(false),
-        _defaultValue(std::nullopt) {}
+  PropertyView() : _required(false), _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _propertyViewStatus(PropertyViewStatus::Valid),
-        _required(classProperty.required),
-        _defaultValue(std::nullopt) {
-    if (classProperty.type != ClassProperty::Type::BOOLEAN) {
-      _propertyViewStatus = PropertyViewStatus::ErrorTypeMismatch;
-      return;
-    }
-
-    if (classProperty.array) {
-      _propertyViewStatus = PropertyViewStatus::ErrorArrayTypeMismatch;
-      return;
-    }
-
+      : _required(classProperty.required), _defaultValue(std::nullopt) {
     if (!_required) {
       _defaultValue = classProperty.defaultProperty
                           ? getBooleanValue(*classProperty.defaultProperty)
@@ -581,6 +402,7 @@ public:
     }
   }
 
+protected:
   /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
@@ -599,8 +421,7 @@ public:
       const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
-  ~PropertyView() {}
-
+public:
   /**
    * @copydoc IPropertyView::arrayCount
    */
@@ -658,16 +479,7 @@ public:
     return _defaultValue;
   }
 
-protected:
-  /**
-   * @copydoc IPropertyView::propertyViewStatus
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept override {
-    return _propertyViewStatus;
-  }
-
 private:
-  PropertyViewStatus _propertyViewStatus;
   bool _required;
   std::optional<bool> _defaultValue;
 
@@ -688,29 +500,15 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _propertyViewStatus(PropertyViewStatus::ErrorNonexistentProperty),
-        _required(false),
-        _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+      : _required(false), _noData(std::nullopt), _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _propertyViewStatus(PropertyViewStatus::Valid),
-        _required(classProperty.required),
+      : _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {
-    if (classProperty.type != ClassProperty::Type::STRING) {
-      _propertyViewStatus = PropertyViewStatus::ErrorTypeMismatch;
-      return;
-    }
-
-    if (classProperty.array) {
-      _propertyViewStatus = PropertyViewStatus::ErrorArrayTypeMismatch;
-      return;
-    }
-
     if (!_required) {
       _noData = classProperty.noData ? getStringValue(*classProperty.noData)
                                      : std::nullopt;
@@ -720,6 +518,7 @@ public:
     }
   }
 
+protected:
   /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
@@ -738,8 +537,7 @@ public:
       const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
-  ~PropertyView() {}
-
+public:
   /**
    * @copydoc IPropertyView::arrayCount
    */
@@ -804,16 +602,7 @@ public:
     return std::nullopt;
   }
 
-protected:
-  /**
-   * @copydoc IPropertyView::propertyViewStatus
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept override {
-    return _propertyViewStatus;
-  }
-
 private:
-  PropertyViewStatus _propertyViewStatus;
   bool _required;
   std::optional<std::string> _noData;
   std::optional<std::string> _defaultValue;
@@ -836,8 +625,7 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _propertyViewStatus(PropertyViewStatus::ErrorNonexistentProperty),
-        _count(0),
+      : _count(0),
         _normalized(false),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -851,8 +639,7 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _propertyViewStatus(PropertyViewStatus::Valid),
-        _count(0),
+      : _count(_count = classProperty.count ? *classProperty.count : 0),
         _normalized(classProperty.normalized),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -861,33 +648,6 @@ public:
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {
-    if (convertStringToPropertyType(classProperty.type) !=
-        TypeToPropertyType<ElementType>::value) {
-      _propertyViewStatus = PropertyViewStatus::ErrorTypeMismatch;
-      return;
-    }
-
-    if (!classProperty.componentType &&
-        TypeToPropertyType<ElementType>::component !=
-            PropertyComponentType::None) {
-      _propertyViewStatus = PropertyViewStatus::ErrorComponentTypeMismatch;
-      return;
-    }
-
-    if (classProperty.componentType &&
-        convertStringToPropertyComponentType(*classProperty.componentType) !=
-            TypeToPropertyType<ElementType>::component) {
-      _propertyViewStatus = PropertyViewStatus::ErrorComponentTypeMismatch;
-      return;
-    }
-
-    if (!classProperty.array) {
-      _propertyViewStatus = PropertyViewStatus::ErrorArrayTypeMismatch;
-      return;
-    }
-
-    _count = classProperty.count ? *classProperty.count : 0;
-
     //_offset = classProperty.offset
     //              ? getValue<ElementType>(*classProperty.offset)
     //              : std::nullopt;
@@ -898,7 +658,7 @@ public:
     //_min = classProperty.min ? getValue<ElementType>(*classProperty.min)
     //                         : std::nullopt;
 
-    //if (!_required) {
+    // if (!_required) {
     //  _noData = classProperty.noData
     //                ? getValue<ElementType>(*classProperty.noData)
     //                : std::nullopt;
@@ -918,24 +678,20 @@ protected:
       const ClassProperty& classProperty,
       const PropertyTableProperty& /*property*/)
       : PropertyView(classProperty) {
-    if (_propertyViewStatus != PropertyViewStatus::Valid) {
-      return;
-    }
-
     //// If the property has its own values, override the class-provided values.
-    //if (property.offset) {
+    // if (property.offset) {
     //  _offset = getValue<ElementType>(*property.offset);
     //}
 
-    //if (property.scale) {
+    // if (property.scale) {
     //  _scale = getValue<ElementType>(*property.scale);
     //}
 
-    //if (property.max) {
+    // if (property.max) {
     //  _max = getValue<ElementType>(*property.max);
     //}
 
-    //if (property.min) {
+    // if (property.min) {
     //  _min = getValue<ElementType>(*property.min);
     //}
   }
@@ -948,24 +704,20 @@ protected:
       const ClassProperty& classProperty,
       const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {
-    if (_propertyViewStatus != PropertyViewStatus::Valid) {
-      return;
-    }
-
     //// If the property has its own values, override the class-provided values.
-    //if (property.offset) {
+    // if (property.offset) {
     //  _offset = getValue<ElementType>(*property.offset);
     //}
 
-    //if (property.scale) {
+    // if (property.scale) {
     //  _scale = getValue<ElementType>(*property.scale);
     //}
 
-    //if (property.max) {
+    // if (property.max) {
     //  _max = getValue<ElementType>(*property.max);
     //}
 
-    //if (property.min) {
+    // if (property.min) {
     //  _min = getValue<ElementType>(*property.min);
     //}
   }
@@ -1034,17 +786,7 @@ public:
     return _defaultValue;
   }
 
-protected:
-  /**
-   * @copydoc IPropertyView::propertyViewStatus
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept override {
-    return _propertyViewStatus;
-  }
-
 private:
-  PropertyViewStatus _propertyViewStatus;
-
   int64_t _count;
   bool _normalized;
 
@@ -1060,65 +802,24 @@ private:
   /**
    * @brief Attempts to parse from the given json value.
    *
-   * If T is a type with multiple components, e.g. a VECN or MATN type, this
-   * will return std::nullopt if one or more components could not be parsed.
-   *
-   * If T is an array view, this will return std::nullopt if one or
-   * more entries could not be parsed.
-   *
-   * @return The value as an instance of T, or std::nullopt if it could not be
+   * If ElementType is a type with multiple components, e.g. a VECN or MATN
+   * type, this will return std::nullopt if one or more components could not be
    * parsed.
+   *
+   * @return The value as an instance of ElementType, or std::nullopt if it
+   * could not be parsed.
    */
-  template <typename T>
-  static std::optional<T> getValue(const CesiumUtility::JsonValue& jsonValue) {
-    if constexpr (IsMetadataScalar<T>::value) {
-      return getScalar<T>(jsonValue);
-    } else
-
-        if constexpr (IsMetadataVecN<T>::value) {
-      return getVecN<T>(jsonValue);
+  static std::optional<ElementType>
+  getValue(const CesiumUtility::JsonValue& jsonValue) {
+    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return getScalar<ElementType>(jsonValue);
+    } else if constexpr (IsMetadataVecN<ElementType>::value) {
+      return getVecN<ElementType>(jsonValue);
     } else
       return std::nullopt;
 
     // if constexpr (IsMetadataMatN<T>::value) {
     //}
-  }
-
-  /**
-   * @brief Attempts to parse from the given json value. If it could not be
-   * parsed as an ElementType, this returns the default value.
-   *
-   * If ElementType is a type with multiple components, e.g. a VECN or MATN
-   * type.
-   *
-   * @return The value as an ElementType, or std::nullopt if it could not be
-   * parsed.
-   */
-  template <typename T>
-  static T getValueOrDefault(
-      const CesiumUtility::JsonValue& jsonValue,
-      const T& defaultValue) {
-    if constexpr (IsMetadataScalar<T>::value) {
-      return jsonValue.getSafeNumberOrDefault<T>(defaultValue);
-    }
-
-    if constexpr (IsMetadataVecN<T>::value) {
-      return getVecNOrDefault(jsonValue, defaultValue);
-    }
-
-    if constexpr (IsMetadataMatN<T>::value) {
-    }
-
-    if constexpr (IsMetadataArray<T>::value) {
-      return defaultValue;
-      //  if (!jsonValue.isArray()) {
-      //    return PropertyArrayView<ElementType>(std::vector<ElementType>());
-      //  }
-
-      //  return jsonValue.isArray()
-      //             ? getArrayValueOrDefault(jsonValue.getArray(),
-      //             defaultValue) : defaultValue;
-    }
   }
 
   /**
@@ -1138,89 +839,30 @@ private:
     } catch (const CesiumUtility::JsonValueNotRealValue& /*error*/) {
       return std::nullopt;
     } catch (const gsl::narrowing_error& /*error*/) {
-      // Continue below.
+      return std::nullopt;
     }
-
-    // If the value is in range, but it loses precision, a narrowing_error will
-    // be returned. Try to round to a reasonable number anyways, even if it
-    // loses precision.
-    if (jsonValue.isInt64()) {
-      int64_t int64Value = jsonValue.getInt64();
-      if (int64Value >=
-              static_cast<int64_t>(std::numeric_limits<T>::lowest()) &&
-          int64Value <= static_cast<int64_t>(std::numeric_limits<T>::max())) {
-        return static_cast<T>(int64Value);
-      }
-    } else if (jsonValue.isUint64()) {
-      uint64_t uint64Value = jsonValue.getUint64();
-      if (uint64Value <= static_cast<uint64_t>(std::numeric_limits<T>::max())) {
-        return static_cast<T>(uint64Value);
-      }
-    } else if (jsonValue.isDouble()) {
-      double doubleValue = jsonValue.getDouble();
-      if (doubleValue >=
-              static_cast<int64_t>(std::numeric_limits<T>::lowest()) &&
-          doubleValue <= static_cast<int64_t>(std::numeric_limits<T>::max())) {
-        return static_cast<T>(doubleValue);
-      }
-    }
-
-    return std::nullopt;
   }
 
-  template <typename VecType>
-  static std::optional<VecType>
+  template <glm::length_t N, typename T, glm::qualifier Q>
+  static std::optional<glm::vec<N, T, Q>>
   getVecN(const CesiumUtility::JsonValue& jsonValue) {
     if (!jsonValue.isArray()) {
       return std::nullopt;
     }
 
-    return std::nullopt;
-    // const CesiumUtility::JsonValue::Array& array = value.getArray();
-    // glm::length_t N = VecType::length();
-    // if (array.size() != N) {
-    //  return std::nullopt;
-    //}
-
-    // using T = VecType::type;
-
-    // glm::length<N, T> result;
-    // for (glm::length_t i = 0; i < N; i++) {
-    //  std::optional<T> value = getValue<T>(array[i]);
-    //  if (!value) {
-    //    return std::nullopt;
-    //  }
-
-    //  result[i] = value;
-    //}
-
-    // return result;
-  }
-
-  template <typename VecType>
-  static VecType getVecNOrDefault(
-      const CesiumUtility::JsonValue& value,
-      const VecType& defaultValue) {
-    if (!jsonValue.isArray()) {
-      return defaultValue;
-    }
-
-    const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
-    glm::length_t N = VecType::length();
+    const CesiumUtility::JsonValue::Array& array = value.getArray();
     if (array.size() != N) {
-      return defaultValue;
+      return std::nullopt;
     }
 
-    using T = VecType::type;
-
-    VecType result;
+    glm::vec<N, T, Q> result;
     for (glm::length_t i = 0; i < N; i++) {
-      std::optional<T> value = getValue(array[i]);
+      std::optional<T> value = getValue<T>(array[i]);
       if (!value) {
         return std::nullopt;
       }
 
-      result[i] = value ? *value : defaultValue;
+      result[i] = value;
     }
 
     return result;
@@ -1250,35 +892,6 @@ private:
 
   //  return result;
   //}
-
-  template <typename ArrayType>
-  static std::optional<PropertyArrayView<ArrayType>>
-  getArrayValue(const CesiumUtility::JsonValue::Array& /*arrayValue*/) {
-    return std::nullopt;
-    // std::vector<ArrayType> values(arrayValue.size());
-    // for (size_t i = 0; i < arrayValue.size(); i++) {
-    //  const CesiumUtility::JsonValue& value = arrayValue[i];
-    //  std::optional<ArrayType> arrayElement = getValue<ArrayType>(value);
-    //  values[i] = arrayElement;
-    //}
-
-    // return PropertyArrayView<ArrayType>(values);
-  }
-
-  template <typename ArrayType>
-  static PropertyArrayView<ArrayType> getArrayValueOrDefault(
-      const CesiumUtility::JsonValue::Array& arrayValue,
-      const ArrayType& defaultElementValue) {
-
-    std::vector<ArrayType> values(arrayValue.size());
-    for (size_t i = 0; i < arrayValue.size(); i++) {
-      const CesiumUtility::JsonValue& value = arrayValue[i];
-      std::optional<ArrayType> arrayElement = getValue<ArrayType>(value);
-      values[i] = arrayElement;
-    }
-
-    return PropertyArrayView<ArrayType>(values);
-  }
 };
 
 template <>
@@ -1288,40 +901,23 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
-      : _propertyViewStatus(PropertyViewStatus::ErrorNonexistentProperty),
-        _count(0),
-        _required(false),
-        _defaultValue(std::nullopt) {}
+  PropertyView() : _count(0), _required(false), _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _propertyViewStatus(PropertyViewStatus::Valid),
-        _count(0),
+      : _count(classProperty.count ? *classProperty.count : 0),
         _required(classProperty.required),
         _defaultValue(std::nullopt) {
-    if (classProperty.type != ClassProperty::Type::BOOLEAN) {
-      _propertyViewStatus = PropertyViewStatus::ErrorTypeMismatch;
-      return;
-    }
-
-    if (!classProperty.array) {
-      _propertyViewStatus = PropertyViewStatus::ErrorArrayTypeMismatch;
-      return;
-    }
-
-    _count = classProperty.count ? *classProperty.count : 0;
-
     if (!_required) {
-      _defaultValue =
-          classProperty.defaultProperty
-              ? getBooleanArrayValues(*classProperty.defaultProperty)
-              : std::nullopt;
+      _defaultValue = classProperty.defaultProperty
+                          ? getBooleanArrayValue(*classProperty.defaultProperty)
+                          : std::nullopt;
     }
   }
 
+protected:
   /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
@@ -1340,8 +936,7 @@ public:
       const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
-  ~PropertyView() {}
-
+public:
   /**
    * @copydoc IPropertyView::arrayCount
    */
@@ -1400,25 +995,22 @@ public:
    */
   virtual std::optional<PropertyArrayView<bool>>
   defaultValue() const noexcept override {
-    return _defaultValue;
-  }
-
-protected:
-  /**
-   * @copydoc IPropertyView::propertyViewStatus
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept override {
-    return _propertyViewStatus;
+    if (!_defaultValue) {
+      return std::nullopt;
+    }
+    // Not as easy to construct a gsl::span for the boolean data (the .data() of
+    // a boolean vector is inaccessible). Just make a copy.
+    std::vector<bool> defaultValueCopy(*_defaultValue);
+    return PropertyArrayView<bool>(std::move(defaultValueCopy));
   }
 
 private:
-  PropertyViewStatus _propertyViewStatus;
   int64_t _count;
   bool _required;
-  std::optional<PropertyArrayView<bool>> _defaultValue;
+  std::optional<std::vector<bool>> _defaultValue;
 
-  static std::optional<PropertyArrayView<bool>>
-  getBooleanArrayValues(const CesiumUtility::JsonValue& value) {
+  static std::optional<std::vector<bool>>
+  getBooleanArrayValue(const CesiumUtility::JsonValue& value) {
     if (!value.isArray()) {
       return std::nullopt;
     }
@@ -1444,44 +1036,27 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
-      : _propertyViewStatus(PropertyViewStatus::ErrorNonexistentProperty),
-        _count(0),
-        _required(false),
-        _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+  PropertyView() : _count(0), _required(false), _noData(), _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _propertyViewStatus(PropertyViewStatus::Valid),
-        _count(0),
+      : _count(classProperty.count ? *classProperty.count : 0),
         _required(classProperty.required),
-        _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
-    if (classProperty.type != ClassProperty::Type::STRING) {
-      _propertyViewStatus = PropertyViewStatus::ErrorTypeMismatch;
-      return;
+        _noData(),
+        _defaultValue() {
+    if (!_required) {
+      _noData = classProperty.noData
+                    ? getStringArrayValue(*classProperty.noData)
+                    : std::nullopt;
+      _defaultValue = classProperty.defaultProperty
+                          ? getStringArrayValue(*classProperty.defaultProperty)
+                          : std::nullopt;
     }
-
-    if (!classProperty.array) {
-      _propertyViewStatus = PropertyViewStatus::ErrorArrayTypeMismatch;
-      return;
-    }
-
-    _count = classProperty.count ? *classProperty.count : 0;
-
-    // if (!_required) {
-    //  _noData = classProperty.noData ?
-    //  getStringArrayData(*classProperty.noData)
-    //                                 : std::nullopt;
-    //  _defaultValue = classProperty.defaultProperty
-    //                      ? getStringArrayData(*classProperty.defaultProperty)
-    //                      : std::nullopt;
-    //}
   }
 
+protected:
   /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
@@ -1500,8 +1075,7 @@ public:
       const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
-  ~PropertyView() {}
-
+public:
   /**
    * @copydoc IPropertyView::arrayCount
    */
@@ -1554,7 +1128,14 @@ public:
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
   noData() const noexcept override {
-    return _noData;
+    if (!_noData) {
+      return std::nullopt;
+    }
+
+    // Just copy the strings. Easier than iterating through all of the strings
+    // to generate an offsets buffer with a best-fitting offset type.
+    std::vector<std::string> noDataCopy(*_noData);
+    return PropertyArrayView<std::string_view>(std::move(noDataCopy));
   }
 
   /**
@@ -1562,31 +1143,43 @@ public:
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
   defaultValue() const noexcept override {
-    return _defaultValue;
-  }
-
-protected:
-  /**
-   * @copydoc IPropertyView::propertyViewStatus
-   */
-  virtual PropertyViewStatus propertyViewStatus() const noexcept override {
-    return _propertyViewStatus;
-  }
-
-private:
-  PropertyViewStatus _propertyViewStatus;
-  int64_t _count;
-  bool _required;
-  std::optional<PropertyArrayView<std::string_view>> _noData;
-  std::optional<PropertyArrayView<std::string_view>> _defaultValue;
-
-  static std::optional<PropertyArrayView<std::string_view>>
-  getStringArrayData(const CesiumUtility::JsonValue& value) {
-    if (!value.isArray()) {
+    if (!_defaultValue) {
       return std::nullopt;
     }
 
-    std::vector<std::string> strings;
+    // Just copy the strings. Easier than iterating through all of the strings
+    // to generate an offsets buffer with a best-fitting offset type.
+    std::vector<std::string> defaultValueCopy(*_defaultValue);
+    return PropertyArrayView<std::string_view>(std::move(defaultValueCopy));
+  }
+
+private:
+  int64_t _count;
+  bool _required;
+
+  std::optional<std::vector<std::string>> _noData;
+  std::optional<std::vector<std::string>> _defaultValue;
+
+  static std::optional<std::vector<std::string>>
+  getStringArrayValue(const CesiumUtility::JsonValue& jsonValue) {
+    if (!jsonValue.isArray()) {
+      return std::nullopt;
+    }
+
+    std::vector<std::string> result;
+    const auto array = jsonValue.getArray();
+    result.reserve(array.size());
+
+    for (size_t i = 0; i < array.size(); i++) {
+      if (!array[i].isString()) {
+        // The entire array is invalidated; return.
+        return std::nullopt;
+      }
+
+      result.push_back(array[i].getString());
+    }
+
+    return result;
   }
 };
 

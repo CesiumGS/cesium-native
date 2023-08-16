@@ -23,11 +23,11 @@ TEST_CASE("Boolean PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.normalized = true;
-    classProperty.offset = JsonValue(true);
-    classProperty.scale = JsonValue(true);
-    classProperty.max = JsonValue(true);
-    classProperty.min = JsonValue(true);
-    classProperty.noData = JsonValue(true);
+    classProperty.offset = true;
+    classProperty.scale = true;
+    classProperty.max = true;
+    classProperty.min = true;
+    classProperty.noData = true;
 
     PropertyView<bool> view(classProperty);
     REQUIRE(!view.normalized());
@@ -38,7 +38,7 @@ TEST_CASE("Boolean PropertyView") {
     REQUIRE(!view.noData());
   }
 
-  SECTION("Ignores count (array is false)") {
+  SECTION("Ignores count") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.count = 5;
@@ -51,7 +51,7 @@ TEST_CASE("Boolean PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.required = false;
-    classProperty.defaultProperty = JsonValue(false);
+    classProperty.defaultProperty = false;
 
     PropertyView<bool> view(classProperty);
     REQUIRE(!view.required());
@@ -63,7 +63,7 @@ TEST_CASE("Boolean PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.required = true;
-    classProperty.defaultProperty = JsonValue(false);
+    classProperty.defaultProperty = false;
 
     PropertyView<bool> view(classProperty);
     REQUIRE(view.required());
@@ -73,7 +73,7 @@ TEST_CASE("Boolean PropertyView") {
   SECTION("Returns nullopt for invalid types") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
-    classProperty.defaultProperty = JsonValue(1);
+    classProperty.defaultProperty = 1;
 
     PropertyView<bool> view(classProperty);
     REQUIRE(!view.required());
@@ -102,7 +102,7 @@ TEST_CASE("Scalar PropertyView") {
     REQUIRE(!view.defaultValue());
   }
 
-  SECTION("Ignores count (array is false)") {
+  SECTION("Ignores count") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
@@ -116,10 +116,10 @@ TEST_CASE("Scalar PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::INT16;
-    classProperty.offset = JsonValue(5);
-    classProperty.scale = JsonValue(2);
-    classProperty.max = JsonValue(10);
-    classProperty.min = JsonValue(-10);
+    classProperty.offset = 5;
+    classProperty.scale = 2;
+    classProperty.max = 10;
+    classProperty.min = -10;
 
     PropertyView<int16_t> view(classProperty);
     REQUIRE(view.offset());
@@ -133,49 +133,34 @@ TEST_CASE("Scalar PropertyView") {
     REQUIRE(*view.min() == -10);
   }
 
-  SECTION("Returns nullopt for out-of-bounds offset, scale, max, and min") {
+  SECTION("Returns nullopt for out-of-bounds values") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::INT8;
-    classProperty.offset = JsonValue(129);
-    classProperty.scale = JsonValue(255);
-    classProperty.max = JsonValue(1000);
-    classProperty.min = JsonValue(-1000);
-
-    PropertyView<int8_t> view(classProperty);
-    REQUIRE(!view.offset());
-    REQUIRE(!view.scale());
-    REQUIRE(!view.max());
-    REQUIRE(!view.min());
-  }
-
-  SECTION("Rounds numbers where possible") {
-    ClassProperty classProperty;
-    classProperty.type = ClassProperty::Type::SCALAR;
-    classProperty.componentType = ClassProperty::ComponentType::INT8;
-    classProperty.offset = JsonValue(-5.5);
-    classProperty.scale = JsonValue(2.4);
-    classProperty.max = JsonValue(150);
-    classProperty.min = JsonValue(-150);
+    classProperty.offset = 20;
+    classProperty.scale = 255;
+    classProperty.max = 127;
+    classProperty.min = -1000;
 
     PropertyView<int8_t> view(classProperty);
     REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(!view.max());
-    REQUIRE(!view.min());
+    REQUIRE(view.max());
 
-    REQUIRE(*view.offset() == -5);
-    REQUIRE(*view.scale() == 2);
+    REQUIRE(*view.offset() == 20);
+    REQUIRE(*view.max() == 127);
+
+    REQUIRE(!view.scale());
+    REQUIRE(!view.min());
   }
 
   SECTION("Returns nullopt for invalid types") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::INT8;
-    classProperty.offset = JsonValue("10");
-    classProperty.scale = JsonValue(false);
-    classProperty.max = JsonValue(JsonValue::Array());
-    classProperty.min = JsonValue(JsonValue::Array{10});
+    classProperty.offset = "10";
+    classProperty.scale = false;
+    classProperty.max = 5.5;
+    classProperty.min = JsonValue::Array{1};
 
     PropertyView<int8_t> view(classProperty);
     REQUIRE(!view.offset());
@@ -189,8 +174,8 @@ TEST_CASE("Scalar PropertyView") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.required = false;
-    classProperty.noData = JsonValue(0);
-    classProperty.defaultProperty = JsonValue(1);
+    classProperty.noData = 0;
+    classProperty.defaultProperty = 1;
 
     PropertyView<uint8_t> view(classProperty);
     REQUIRE(!view.required());
@@ -206,10 +191,130 @@ TEST_CASE("Scalar PropertyView") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.required = true;
-    classProperty.noData = JsonValue(0);
-    classProperty.defaultProperty = JsonValue(1);
+    classProperty.noData = 0;
+    classProperty.defaultProperty = 1;
 
     PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+}
+
+TEST_CASE("VecN PropertyView") {
+  SECTION("Constructs with non-optional properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT16;
+    classProperty.normalized = true;
+    classProperty.required = true;
+
+    PropertyView<glm::i16vec3> view(classProperty);
+    REQUIRE(view.normalized());
+    REQUIRE(view.required());
+
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Ignores count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT16;
+    classProperty.count = 5;
+
+    PropertyView<glm::i16vec3> view(classProperty);
+    REQUIRE(view.arrayCount() == 0);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT16;
+    classProperty.offset = JsonValue::Array{-1, 1, 2};
+    classProperty.scale = JsonValue::Array{2, 1, 3};
+    classProperty.max = JsonValue::Array{10, 5, 6};
+    classProperty.min = JsonValue::Array{-11, -12, -13};
+
+    PropertyView<glm::i16vec3> view(classProperty);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    REQUIRE(*view.offset() == glm::i16vec3(-1, 1, 2));
+    REQUIRE(*view.scale() == glm::i16vec3(2, 1, 3));
+    REQUIRE(*view.max() == glm::i16vec3(10, 5, 6));
+    REQUIRE(*view.min() == glm::i16vec3(-11, -12, -13));
+  }
+
+  SECTION("Returns nullopt for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.offset = JsonValue::Array{-1, 2};
+    classProperty.scale = JsonValue::Array{1, 128};
+    classProperty.max = JsonValue::Array{10, 5};
+    classProperty.min = JsonValue::Array{-200, 0};
+
+    PropertyView<glm::i8vec2> view(classProperty);
+    REQUIRE(view.offset());
+    REQUIRE(view.max());
+
+    REQUIRE(*view.offset() == glm::i8vec2(-1, 2));
+    REQUIRE(*view.max() == glm::i8vec2(10, 5));
+
+    REQUIRE(!view.scale());
+    REQUIRE(!view.min());
+  }
+
+  SECTION("Returns nullopt for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.offset = "(1, 2, 3)";
+    classProperty.scale = 1;
+    classProperty.max = JsonValue::Array{10, 20, 30, 40};
+    classProperty.min = JsonValue::Array{-10, -1};
+
+    PropertyView<glm::i8vec3> view(classProperty);
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC4;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.required = false;
+    classProperty.noData = JsonValue::Array{0.0f, 0.0f, 0.0f, 0.0f};
+    classProperty.defaultProperty = JsonValue::Array{1.0f, 2.0f, 3.0f, 4.0f};
+
+    PropertyView<glm::vec4> view(classProperty);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    REQUIRE(*view.noData() == glm::vec4(0.0f));
+    REQUIRE(*view.defaultValue() == glm::vec4(1.0f, 2.0f, 3.0f, 4.0f));
+  }
+
+  SECTION("Ignores noData and defaultProperty when required is true") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC4;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.required = true;
+    classProperty.noData = JsonValue::Array{0.0f, 0.0f, 0.0f, 0.0f};
+    classProperty.defaultProperty = JsonValue::Array{1.0f, 2.0f, 3.0f, 4.0f};
+
+    PropertyView<glm::vec4> view(classProperty);
     REQUIRE(view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
@@ -221,10 +326,10 @@ TEST_CASE("String PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
     classProperty.normalized = true;
-    classProperty.offset = JsonValue("test");
-    classProperty.scale = JsonValue("test");
-    classProperty.max = JsonValue("test");
-    classProperty.min = JsonValue("test");
+    classProperty.offset = "offset";
+    classProperty.scale = "scale";
+    classProperty.max = "max";
+    classProperty.min = "min";
 
     PropertyView<std::string_view> view(classProperty);
     REQUIRE(!view.normalized());
@@ -234,7 +339,7 @@ TEST_CASE("String PropertyView") {
     REQUIRE(!view.min());
   }
 
-  SECTION("Ignores count (array is false)") {
+  SECTION("Ignores count") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
     classProperty.count = 5;
@@ -247,8 +352,8 @@ TEST_CASE("String PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
     classProperty.required = false;
-    classProperty.noData = JsonValue("null");
-    classProperty.defaultProperty = JsonValue("default");
+    classProperty.noData = "null";
+    classProperty.defaultProperty = "default";
 
     PropertyView<std::string_view> view(classProperty);
     REQUIRE(!view.required());
@@ -263,8 +368,8 @@ TEST_CASE("String PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
     classProperty.required = true;
-    classProperty.noData = JsonValue("null");
-    classProperty.defaultProperty = JsonValue("default");
+    classProperty.noData = "null";
+    classProperty.defaultProperty = "default";
 
     PropertyView<std::string_view> view(classProperty);
     REQUIRE(view.required());
@@ -275,8 +380,8 @@ TEST_CASE("String PropertyView") {
   SECTION("Returns nullopt for invalid types") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
-    classProperty.noData = JsonValue::Array{JsonValue("null")};
-    classProperty.defaultProperty = JsonValue(true);
+    classProperty.noData = JsonValue::Array{"null"};
+    classProperty.defaultProperty = true;
 
     PropertyView<std::string_view> view(classProperty);
     REQUIRE(!view.required());
@@ -290,11 +395,11 @@ TEST_CASE("Boolean Array PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.normalized = true;
-    classProperty.offset = JsonValue::Array{JsonValue(true)};
-    classProperty.scale = JsonValue::Array{JsonValue(true)};
-    classProperty.max = JsonValue::Array{JsonValue(true)};
-    classProperty.min = JsonValue::Array{JsonValue(true)};
-    classProperty.noData = JsonValue::Array{JsonValue(true)};
+    classProperty.offset = JsonValue::Array{true};
+    classProperty.scale = JsonValue::Array{true};
+    classProperty.max = JsonValue::Array{true};
+    classProperty.min = JsonValue::Array{true};
+    classProperty.noData = JsonValue::Array{true};
 
     PropertyView<PropertyArrayView<bool>> view(classProperty);
     REQUIRE(!view.normalized());
@@ -320,8 +425,7 @@ TEST_CASE("Boolean Array PropertyView") {
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.array = true;
     classProperty.required = false;
-    classProperty.defaultProperty =
-        JsonValue::Array{JsonValue(false), JsonValue(true)};
+    classProperty.defaultProperty = JsonValue::Array{false, true};
 
     PropertyView<PropertyArrayView<bool>> view(classProperty);
     REQUIRE(!view.required());
@@ -338,10 +442,9 @@ TEST_CASE("Boolean Array PropertyView") {
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.array = true;
     classProperty.required = true;
-    classProperty.defaultProperty =
-        JsonValue::Array{JsonValue(false), JsonValue(true)};
+    classProperty.defaultProperty = JsonValue::Array{false, true};
 
-    PropertyView<bool> view(classProperty);
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
     REQUIRE(view.required());
     REQUIRE(!view.defaultValue());
   }
@@ -350,10 +453,89 @@ TEST_CASE("Boolean Array PropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
     classProperty.array = true;
-    classProperty.defaultProperty = JsonValue(true);
+    classProperty.defaultProperty = true;
 
-    PropertyView<bool> view(classProperty);
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
     REQUIRE(!view.required());
+    REQUIRE(!view.defaultValue());
+  }
+}
+
+TEST_CASE("String Array PropertyView") {
+  SECTION("Ignores non-applicable properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.normalized = true;
+    classProperty.offset = {"offset"};
+    classProperty.scale = {"scale"};
+    classProperty.max = {"max"};
+    classProperty.min = {"min"};
+
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.required = false;
+    classProperty.noData = JsonValue::Array{"null", "0"};
+    classProperty.defaultProperty = JsonValue::Array{"default1", "default2"};
+
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    const auto noData = *view.noData();
+    REQUIRE(noData.size() == 2);
+    REQUIRE(noData[0] == "null");
+    REQUIRE(noData[1] == "0");
+
+    const auto defaultValue = *view.defaultValue();
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(defaultValue[0] == "default1");
+    REQUIRE(defaultValue[1] == "default2");
+  }
+
+  SECTION("Ignores noData and defaultProperty when required is true") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.required = true;
+    classProperty.noData = JsonValue::Array{"null", "0"};
+    classProperty.defaultProperty = JsonValue::Array{"default1", "default2"};
+
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Returns nullopt for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.noData = JsonValue::Array{"null"};
+    classProperty.defaultProperty = true;
+
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
   }
 }

@@ -67,7 +67,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{}, _bitOffset{0}, _size{0} {}
+  PropertyArrayView() : _values{}, _size{0} {}
 
   /**
    * @brief Constructs an array view from a buffer.
@@ -81,7 +81,7 @@ public:
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
       int64_t size) noexcept
-      : _values{buffer}, _bitOffset{bitOffset}, _size{size} {}
+      : _values{BooleanArrayView{buffer, bitOffset}}, _size{size} {}
 
   /**
    * @brief Constructs an array view from a vector of values. This is mainly
@@ -90,33 +90,35 @@ public:
    * @param values The vector containing the values.
    */
   PropertyArrayView(const std::vector<bool>&& values)
-      : _values{std::move(values)}, _bitOffset{0}, _size{0} {
-    const auto vectorValues = std::get<std::vector<bool>>(_values);
-    _size = static_cast<int64_t>(vectorValues.size());
+      : _values{std::move(values)}, _size{0} {
+    size_t size = std::get<std::vector<bool>>(_values).size();
+    _size = static_cast<int64_t>(size);
   }
 
   bool operator[](int64_t index) const noexcept {
-    // There's no way to access the bitstream data in std::vector<bool>, so this
-    // implementation is very "either or".
-    if (std::holds_alternative<std::vector<bool>>(_values)) {
-      const auto vectorValues = std::get<std::vector<bool>>(_values);
-      return vectorValues[static_cast<size_t>(index)];
-    }
-
-    const auto values = std::get<gsl::span<const std::byte>>(_values);
-    index += _bitOffset;
-    const int64_t byteIndex = index / 8;
-    const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(values[byteIndex] >> bitIndex) & 1;
-    return bitValue == 1;
+    return std::visit(
+        [index](auto const& values) -> auto const { return values[index]; },
+        _values);
   }
 
   int64_t size() const noexcept { return _size; }
 
 private:
-  using ArrayType = std::variant<gsl::span<const std::byte>, std::vector<bool>>;
+  struct BooleanArrayView {
+    gsl::span<const std::byte> values;
+    int64_t bitOffset = 0;
+
+    bool operator[](int64_t index) const noexcept {
+      index += bitOffset;
+      const int64_t byteIndex = index / 8;
+      const int64_t bitIndex = index % 8;
+      const int bitValue = static_cast<int>(values[byteIndex] >> bitIndex) & 1;
+      return bitValue == 1;
+    }
+  };
+
+  using ArrayType = std::variant<BooleanArrayView, std::vector<bool>>;
   ArrayType _values;
-  int64_t _bitOffset;
   int64_t _size;
 };
 
@@ -125,8 +127,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView()
-      : _values{}, _stringOffsets{}, _stringOffsetType{}, _size{0} {}
+  PropertyArrayView() : _values{}, _size{0} {}
 
   /**
    * @brief Constructs an array view from buffers and their information.
@@ -141,9 +142,7 @@ public:
       const gsl::span<const std::byte>& stringOffsets,
       PropertyComponentType stringOffsetType,
       int64_t size) noexcept
-      : _values{values},
-        _stringOffsets{stringOffsets},
-        _stringOffsetType{stringOffsetType},
+      : _values{StringArrayView{values, stringOffsets, stringOffsetType}},
         _size{size} {}
 
   /**
@@ -152,42 +151,43 @@ public:
    *
    * @param values The vector containing the values.
    */
-  PropertyArrayView(const std::vector<std::string>&& values)
-      : _values{std::move(values)},
-        _stringOffsets{},
-        _stringOffsetType{PropertyComponentType::None},
-        _size{0} {
-    const auto vectorValues = std::get<std::vector<std::string>>(_values);
-    _size = static_cast<int64_t>(vectorValues.size());
+  PropertyArrayView(const std::vector<std::string>&& values) noexcept
+      : _values{std::move(values)}, _size{0} {
+    size_t size = std::get<std::vector<std::string>>(_values).size();
+    _size = static_cast<int64_t>(size);
   }
 
   std::string_view operator[](int64_t index) const noexcept {
-    if (std::holds_alternative<std::vector<std::string>>(_values)) {
-      const auto vectorValues = std::get<std::vector<std::string>>(_values);
-      return vectorValues[static_cast<size_t>(index)];
-    }
-
-    const auto values = std::get<gsl::span<const std::byte>>(_values);
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
-    const size_t nextOffset = getOffsetFromOffsetsBuffer(
-        index + 1,
-        _stringOffsets,
-        _stringOffsetType);
-    return std::string_view(
-        reinterpret_cast<const char*>(values.data() + currentOffset),
-        (nextOffset - currentOffset));
+    return std::visit(
+        [index](auto const& values) -> auto const {
+          return std::string_view(values[index]);
+        },
+        _values);
   }
 
   int64_t size() const noexcept { return _size; }
 
 private:
-  using ArrayType =
-      std::variant<gsl::span<const std::byte>, std::vector<std::string>>;
-  ArrayType _values;
-  gsl::span<const std::byte> _stringOffsets;
+  struct StringArrayView {
+    gsl::span<const std::byte> values;
+    gsl::span<const std::byte> stringOffsets;
+    PropertyComponentType stringOffsetType = PropertyComponentType::None;
 
-  PropertyComponentType _stringOffsetType;
+    std::string_view operator[](int64_t index) const noexcept {
+      const size_t currentOffset =
+          getOffsetFromOffsetsBuffer(index, stringOffsets, stringOffsetType);
+      const size_t nextOffset = getOffsetFromOffsetsBuffer(
+          index + 1,
+          stringOffsets,
+          stringOffsetType);
+      return std::string_view(
+          reinterpret_cast<const char*>(values.data() + currentOffset),
+          (nextOffset - currentOffset));
+    }
+  };
+
+  using ArrayType = std::variant<StringArrayView, std::vector<std::string>>;
+  ArrayType _values;
   int64_t _size;
 };
 } // namespace CesiumGltf
