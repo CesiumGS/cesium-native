@@ -178,8 +178,7 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0}
-  {
+        _stringOffsetTypeSize{0} {
     assert(
         _status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -206,8 +205,7 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0}
-  {}
+        _stringOffsetTypeSize{0} {}
 
   /**
    * @brief Construct a valid instance pointing to the data specified by

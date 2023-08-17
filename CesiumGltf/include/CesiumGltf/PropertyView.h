@@ -243,14 +243,14 @@ public:
       PropertyComponentType componentType =
           TypeToPropertyType<ElementType>::component;
       switch (componentType) {
-      case PropertyComponentType::Uint8:
       case PropertyComponentType::Int8:
-      case PropertyComponentType::Uint16:
+      case PropertyComponentType::Uint8:
       case PropertyComponentType::Int16:
-      case PropertyComponentType::Uint32:
+      case PropertyComponentType::Uint16:
       case PropertyComponentType::Int32:
-      case PropertyComponentType::Uint64:
+      case PropertyComponentType::Uint32:
       case PropertyComponentType::Int64:
+      case PropertyComponentType::Uint64:
         break;
       default:
         _status = PropertyViewStatus::ErrorInvalidNormalization;
@@ -947,9 +947,23 @@ public:
       return;
     }
 
-    if (classProperty.normalized && !IsMetadataInteger<ElementType>::value) {
-      _status = PropertyViewStatus::ErrorInvalidNormalization;
-      return;
+    if (classProperty.normalized) {
+      PropertyComponentType componentType =
+          TypeToPropertyType<ElementType>::component;
+      switch (componentType) {
+      case PropertyComponentType::Int8:
+      case PropertyComponentType::Uint8:
+      case PropertyComponentType::Int16:
+      case PropertyComponentType::Uint16:
+      case PropertyComponentType::Int32:
+      case PropertyComponentType::Uint32:
+      case PropertyComponentType::Int64:
+      case PropertyComponentType::Uint64:
+        break;
+      default:
+        _status = PropertyViewStatus::ErrorInvalidNormalization;
+        return;
+      }
     }
 
     // If the property has its own values, override the class-provided values.
