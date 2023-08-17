@@ -81,48 +81,22 @@ public:
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
       int64_t size) noexcept
-      : _values{BooleanArrayView{buffer, bitOffset, size}} {}
-
-  /**
-   * @brief Constructs an array view from a vector of values. This is mainly
-   * used when the values cannot be viewed in place.
-   *
-   * @param values The vector containing the values.
-   */
-  PropertyArrayView(const std::vector<bool>&& values)
-      : _values{std::move(values)} {}
+      : _values{buffer}, _bitOffset{bitOffset}, _size{size} {}
 
   bool operator[](int64_t index) const noexcept {
-    return std::visit(
-        [index](auto const& values) -> auto const { return values[index]; },
-        _values);
+    index += _bitOffset;
+    const int64_t byteIndex = index / 8;
+    const int64_t bitIndex = index % 8;
+    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    return bitValue == 1;
   }
 
-  int64_t size() const noexcept {
-    return std::visit(
-        [](auto const& values) { return static_cast<int64_t>(values.size()); },
-        _values);
-  }
+  int64_t size() const noexcept { return _size; }
 
 private:
-  struct BooleanArrayView {
-    gsl::span<const std::byte> _values;
-    int64_t _bitOffset = 0;
-    int64_t _size = 0;
-
-    bool operator[](int64_t index) const noexcept {
-      index += _bitOffset;
-      const int64_t byteIndex = index / 8;
-      const int64_t bitIndex = index % 8;
-      const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
-      return bitValue == 1;
-    }
-
-    int64_t size() const noexcept { return _size; }
-  };
-
-  using ArrayType = std::variant<BooleanArrayView, std::vector<bool>>;
-  ArrayType _values;
+  gsl::span<const std::byte> _values;
+  int64_t _bitOffset = 0;
+  int64_t _size = 0;
 };
 
 template <> class PropertyArrayView<std::string_view> {
@@ -130,7 +104,11 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{} {}
+  PropertyArrayView()
+      : _values{},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _size{0} {}
 
   /**
    * @brief Constructs an array view from buffers and their information.
@@ -145,55 +123,29 @@ public:
       const gsl::span<const std::byte>& stringOffsets,
       PropertyComponentType stringOffsetType,
       int64_t size) noexcept
-      : _values{
-            StringArrayView{values, stringOffsets, stringOffsetType, size}} {}
-
-  /**
-   * @brief Constructs an array view from a vector of values. This is mainly
-   * used when the values cannot be viewed in place.
-   *
-   * @param values The vector containing the values.
-   */
-  PropertyArrayView(const std::vector<std::string>&& values) noexcept
-      : _values{std::move(values)} {}
+      : _values{values},
+        _stringOffsets{stringOffsets},
+        _stringOffsetType{stringOffsetType},
+        _size(size) {}
 
   std::string_view operator[](int64_t index) const noexcept {
-    return std::visit(
-        [index](auto const& values) -> auto const {
-          return std::string_view(values[index]);
-        },
-        _values);
+    const size_t currentOffset =
+        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
+    const size_t nextOffset = getOffsetFromOffsetsBuffer(
+        index + 1,
+        _stringOffsets,
+        _stringOffsetType);
+    return std::string_view(
+        reinterpret_cast<const char*>(_values.data() + currentOffset),
+        (nextOffset - currentOffset));
   }
 
-  int64_t size() const noexcept {
-    return std::visit(
-        [](auto const& values) { return static_cast<int64_t>(values.size()); },
-        _values);
-  }
+  int64_t size() const noexcept { return _size; }
 
 private:
-  struct StringArrayView {
-    gsl::span<const std::byte> _values;
-    gsl::span<const std::byte> _stringOffsets;
-    PropertyComponentType _stringOffsetType = PropertyComponentType::None;
-    int64_t _size = 0;
-
-    std::string_view operator[](int64_t index) const noexcept {
-      const size_t currentOffset =
-          getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
-      const size_t nextOffset = getOffsetFromOffsetsBuffer(
-          index + 1,
-          _stringOffsets,
-          _stringOffsetType);
-      return std::string_view(
-          reinterpret_cast<const char*>(_values.data() + currentOffset),
-          (nextOffset - currentOffset));
-    }
-
-    int64_t size() const noexcept { return _size; }
-  };
-
-  using ArrayType = std::variant<StringArrayView, std::vector<std::string>>;
-  ArrayType _values;
+  gsl::span<const std::byte> _values;
+  gsl::span<const std::byte> _stringOffsets;
+  PropertyComponentType _stringOffsetType;
+  int64_t _size;
 };
 } // namespace CesiumGltf

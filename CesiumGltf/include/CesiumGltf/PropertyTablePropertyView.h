@@ -21,138 +21,113 @@ namespace CesiumGltf {
  * but instead indicate that its {@link PropertyTablePropertyView::size} is 0.
  * This enumeration provides the reason.
  */
-enum class PropertyTablePropertyViewStatus {
+class PropertyTablePropertyViewStatus : public PropertyViewStatus {
+public:
   /**
-   * @brief This property view is valid and ready to use.
+   * @brief This property view was initialized from an invalid {@link PropertyTable}.
    */
-  Valid,
-
-  /**
-   * @brief This property view was initialized from an invalid
-   * {@link PropertyTable}.
-   */
-  ErrorInvalidPropertyTable,
-
-  /**
-   * @brief This property view is trying to view a property that does not exist
-   * in the {@link PropertyTable}.
-   */
-  ErrorNonexistentProperty,
-
-  /**
-   * @brief This property view's type does not match what is
-   * specified in {@link ClassProperty::type}.
-   */
-  ErrorTypeMismatch,
-
-  /**
-   * @brief This property view's component type does not match what
-   * is specified in {@link ClassProperty::componentType}.
-   */
-  ErrorComponentTypeMismatch,
-
-  /**
-   * @brief This property view differs from what is specified in
-   * {@link ClassProperty::array}.
-   */
-  ErrorArrayTypeMismatch,
+  static const PropertyViewStatusType ErrorInvalidPropertyTable = 12;
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  ErrorInvalidValueBufferView,
+  static const PropertyViewStatusType ErrorInvalidValueBufferView = 13;
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  ErrorInvalidArrayOffsetBufferView,
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 14;
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  ErrorInvalidStringOffsetBufferView,
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 15;
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  ErrorInvalidValueBuffer,
+  static const PropertyViewStatusType ErrorInvalidValueBuffer = 16;
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  ErrorInvalidArrayOffsetBuffer,
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 17;
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  ErrorInvalidStringOffsetBuffer,
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 18;
 
   /**
    * @brief This property view has a buffer view that points outside the bounds
    * of its target buffer.
    */
-  ErrorBufferViewOutOfBounds,
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 19;
 
   /**
    * @brief This property view has an invalid buffer view; its length is not
    * a multiple of the size of its type / offset type.
    */
-  ErrorBufferViewSizeNotDivisibleByTypeSize,
+  static const PropertyViewStatusType
+      ErrorBufferViewSizeNotDivisibleByTypeSize = 20;
 
   /**
    * @brief This property view has an invalid buffer view; its length does not
    * match the size of the property table.
    */
-  ErrorBufferViewSizeDoesNotMatchPropertyTableCount,
+  static const PropertyViewStatusType
+      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 21;
 
   /**
    * @brief This array property view has both a fixed length and an offset
    * buffer view defined.
    */
-  ErrorArrayCountAndOffsetBufferCoexist,
+  static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferCoexist =
+      22;
 
   /**
    * @brief This array property view has neither a fixed length nor an offset
    * buffer view defined.
    */
-  ErrorArrayCountAndOffsetBufferDontExist,
+  static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferDontExist =
+      23;
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  ErrorInvalidArrayOffsetType,
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 24;
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  ErrorInvalidStringOffsetType,
+  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 25;
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  ErrorArrayOffsetsNotSorted,
+  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 26;
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  ErrorStringOffsetsNotSorted,
+  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 27;
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  ErrorArrayOffsetOutOfBounds,
+  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 28;
 
   /**
    * @brief This property view has a string offset that is out of bounds.
    */
-  ErrorStringOffsetOutOfBounds
+  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 29;
 };
 
 /**
@@ -179,15 +154,32 @@ public:
       : PropertyView(),
         _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
         _values,
-        _size{} {}
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0},
+  {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
-  PropertyTablePropertyView(PropertyTablePropertyViewStatus status)
-      : PropertyView(), _status{status}, _values{}, _size{} {
+  PropertyTablePropertyView(PropertyViewStatusType status)
+      : PropertyView(),
+        _status{status},
+        _values{},
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0}
+  {
     assert(
         _status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -208,13 +200,14 @@ public:
       : PropertyView(classProperty, property),
         _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
+        _size{size},
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0},
-        _size{size} {}
+        _stringOffsetTypeSize{0}
+  {}
 
   /**
    * @brief Construct a valid instance pointing to the data specified by
@@ -250,14 +243,9 @@ public:
         _size{size} {}
 
   /**
-   * @brief Gets the status of this property table property view.
-   *
-   * Indicates whether the view accurately reflects the property's data, or
-   * whether an error occurred.
-   *
-   * @return The status of this property view.
+   * @copydoc IPropertyView::status
    */
-  PropertyTablePropertyViewStatus status() const noexcept { return _status; }
+  virtual int32_t status() const noexcept override { return _status; }
 
   /**
    * @brief Get the value of an element of the {@link PropertyTable}.
@@ -430,8 +418,9 @@ private:
     }
   }
 
-  PropertyTablePropertyViewStatus _status;
+  PropertyViewStatusType _status;
   gsl::span<const std::byte> _values;
+  int64_t _size;
 
   gsl::span<const std::byte> _arrayOffsets;
   PropertyComponentType _arrayOffsetType;
@@ -440,7 +429,5 @@ private:
   gsl::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
-
-  int64_t _size;
 };
 } // namespace CesiumGltf

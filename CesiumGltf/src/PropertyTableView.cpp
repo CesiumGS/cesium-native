@@ -2,13 +2,13 @@
 
 namespace CesiumGltf {
 template <typename T>
-static PropertyTablePropertyViewStatus checkOffsetsBuffer(
+static PropertyViewStatusType checkOffsetsBuffer(
     const gsl::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
     bool checkBitSize,
-    PropertyTablePropertyViewStatus offsetsNotSortedError,
-    PropertyTablePropertyViewStatus offsetOutOfBoundsError) noexcept {
+    PropertyViewStatusType offsetsNotSortedError,
+    PropertyViewStatusType offsetOutOfBoundsError) noexcept {
   if (offsetBuffer.size() % sizeof(T) != 0) {
     return PropertyTablePropertyViewStatus::
         ErrorBufferViewSizeNotDivisibleByTypeSize;
@@ -46,7 +46,7 @@ static PropertyTablePropertyViewStatus checkOffsetsBuffer(
 }
 
 template <typename T>
-static PropertyTablePropertyViewStatus checkStringAndArrayOffsetsBuffers(
+static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     const gsl::span<const std::byte>& arrayOffsets,
     const gsl::span<const std::byte>& stringOffsets,
     size_t valueBufferSize,
@@ -147,7 +147,7 @@ PropertyTableView::getClassProperty(const std::string& propertyName) const {
   return &propertyIter->second;
 }
 
-PropertyTablePropertyViewStatus PropertyTableView::getBufferSafe(
+PropertyViewStatusType PropertyTableView::getBufferSafe(
     int32_t bufferViewIdx,
     gsl::span<const std::byte>& buffer) const noexcept {
   buffer = {};
@@ -175,14 +175,14 @@ PropertyTablePropertyViewStatus PropertyTableView::getBufferSafe(
   return PropertyTablePropertyViewStatus::Valid;
 }
 
-PropertyTablePropertyViewStatus PropertyTableView::getArrayOffsetsBufferSafe(
+PropertyViewStatusType PropertyTableView::getArrayOffsetsBufferSafe(
     int32_t arrayOffsetsBufferView,
     PropertyComponentType arrayOffsetType,
     size_t valueBufferSize,
     size_t propertyTableCount,
     bool checkBitsSize,
     gsl::span<const std::byte>& arrayOffsetsBuffer) const noexcept {
-  const PropertyTablePropertyViewStatus bufferStatus =
+  const PropertyViewStatusType bufferStatus =
       getBufferSafe(arrayOffsetsBufferView, arrayOffsetsBuffer);
   if (bufferStatus != PropertyTablePropertyViewStatus::Valid) {
     return bufferStatus;
@@ -226,13 +226,13 @@ PropertyTablePropertyViewStatus PropertyTableView::getArrayOffsetsBufferSafe(
   }
 }
 
-PropertyTablePropertyViewStatus PropertyTableView::getStringOffsetsBufferSafe(
+PropertyViewStatusType PropertyTableView::getStringOffsetsBufferSafe(
     int32_t stringOffsetsBufferView,
     PropertyComponentType stringOffsetType,
     size_t valueBufferSize,
     size_t propertyTableCount,
     gsl::span<const std::byte>& stringOffsetsBuffer) const noexcept {
-  const PropertyTablePropertyViewStatus bufferStatus =
+  const PropertyViewStatusType bufferStatus =
       getBufferSafe(stringOffsetsBufferView, stringOffsetsBuffer);
   if (bufferStatus != PropertyTablePropertyViewStatus::Valid) {
     return bufferStatus;

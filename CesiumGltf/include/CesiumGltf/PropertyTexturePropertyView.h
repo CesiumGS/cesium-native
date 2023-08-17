@@ -4,6 +4,7 @@
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/PropertyView.h"
 
 #include <algorithm>
 #include <cassert>

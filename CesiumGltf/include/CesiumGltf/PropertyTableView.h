@@ -1152,11 +1152,11 @@ private:
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const;
 
-  PropertyTablePropertyViewStatus getBufferSafe(
+  PropertyViewStatusType getBufferSafe(
       int32_t bufferView,
       gsl::span<const std::byte>& buffer) const noexcept;
 
-  PropertyTablePropertyViewStatus getArrayOffsetsBufferSafe(
+  PropertyViewStatusType getArrayOffsetsBufferSafe(
       int32_t arrayOffsetsBufferView,
       PropertyComponentType arrayOffsetType,
       size_t valuesBufferSize,
@@ -1164,7 +1164,7 @@ private:
       bool checkBitsSize,
       gsl::span<const std::byte>& arrayOffsetsBuffer) const noexcept;
 
-  PropertyTablePropertyViewStatus getStringOffsetsBufferSafe(
+  PropertyViewStatusType getStringOffsetsBufferSafe(
       int32_t stringOffsetsBufferView,
       PropertyComponentType stringOffsetType,
       size_t valuesBufferSize,
