@@ -612,7 +612,7 @@ ImageReaderResult GltfReader::readImage(
 
         errorCode =
             ktxTexture2_TranscodeBasis(pTexture, transcodeTargetFormat_, 0);
-        if (errorCode != KTX_SUCCESS){
+        if (errorCode != KTX_SUCCESS) {
           transcodeTargetFormat_ = KTX_TTF_RGBA32;
           transcodeTargetFormat = GpuCompressedPixelFormat::NONE;
           errorCode =
@@ -694,7 +694,9 @@ ImageReaderResult GltfReader::readImage(
     }
 
     result.image.reset();
-    result.errors.emplace_back("KTX2 loading failed with error: " + std::string(ktxErrorString(errorCode)));
+    result.errors.emplace_back(
+        "KTX2 loading failed with error: " +
+        std::string(ktxErrorString(errorCode)));
 
     return result;
   } else if (isWebP(data)) {
