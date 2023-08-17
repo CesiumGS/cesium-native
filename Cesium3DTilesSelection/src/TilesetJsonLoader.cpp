@@ -363,8 +363,15 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   double geometricError = tileJson.geometricError;
-  if (geometricError == 0.0) {
+  if (geometricError == 0.0 && !tileJson.children.empty()) {
+    // It doesn't make sense to have a geometric error of zero in a non-leaf
+    // tile. Replace it with half the parent's geometric error.
     geometricError = parentGeometricError * 0.5;
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "A non-leaf tile has a geometricError of 0.0 (or it was missing "
+        "entirely). Using a value of {} instead.",
+        geometricError);
   }
 
   const glm::dvec3 scale = glm::dvec3(

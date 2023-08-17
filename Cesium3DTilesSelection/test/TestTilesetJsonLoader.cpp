@@ -278,7 +278,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pRootTile->getGeometricError() == Approx(70.0));
     CHECK(loaderResult.pRootTile->getChildren().size() == 4);
     for (const Tile& child : loaderResult.pRootTile->getChildren()) {
-      CHECK(child.getGeometricError() == Approx(35.0));
+      CHECK(child.getGeometricError() == Approx(0.0));
     }
 
     // check loader up axis
