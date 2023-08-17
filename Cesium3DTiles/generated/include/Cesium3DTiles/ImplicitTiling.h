@@ -54,5 +54,14 @@ struct CESIUM3DTILES_API ImplicitTiling final
    * @brief An object describing the location of subtree files.
    */
   Cesium3DTiles::Subtrees subtrees;
+
+  /** @brief Indicates whether the {@link subdivisionScheme} property is defined. */
+  bool subdivisionSchemeDefined : 1;
+  /** @brief Indicates whether the {@link subtreeLevels} property is defined. */
+  bool subtreeLevelsDefined : 1;
+  /** @brief Indicates whether the {@link availableLevels} property is defined. */
+  bool availableLevelsDefined : 1;
+  /** @brief Indicates whether the {@link subtrees} property is defined. */
+  bool subtreesDefined : 1;
 };
 } // namespace Cesium3DTiles

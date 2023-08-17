@@ -37,5 +37,12 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
    * the WGS84 ellipsoid.
    */
   double maximumHeight = double();
+
+  /** @brief Indicates whether the {@link token} property is defined. */
+  bool tokenDefined : 1;
+  /** @brief Indicates whether the {@link minimumHeight} property is defined. */
+  bool minimumHeightDefined : 1;
+  /** @brief Indicates whether the {@link maximumHeight} property is defined. */
+  bool maximumHeightDefined : 1;
 };
 } // namespace Cesium3DTiles

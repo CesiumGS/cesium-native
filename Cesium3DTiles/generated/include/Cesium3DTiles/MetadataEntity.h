@@ -36,5 +36,10 @@ struct CESIUM3DTILES_API MetadataEntity
    * in this dictionary.
    */
   std::unordered_map<std::string, CesiumUtility::JsonValue> properties;
+
+  /** @brief Indicates whether the {@link classProperty} property is defined. */
+  bool classPropertyDefined : 1;
+  /** @brief Indicates whether the {@link properties} property is defined. */
+  bool propertiesDefined : 1;
 };
 } // namespace Cesium3DTiles

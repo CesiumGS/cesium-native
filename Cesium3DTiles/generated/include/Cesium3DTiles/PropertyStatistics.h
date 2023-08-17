@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 
-#include <optional>
 #include <unordered_map>
 
 namespace Cesium3DTiles {
@@ -24,7 +23,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * values, after the transforms based on the `normalized`, `offset`, and
    * `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> min;
+  CesiumUtility::JsonValue min;
 
   /**
    * @brief The maximum property value occurring in the tileset. Only applicable
@@ -32,7 +31,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * values, after the transforms based on the `normalized`, `offset`, and
    * `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> max;
+  CesiumUtility::JsonValue max;
 
   /**
    * @brief The arithmetic mean of property values occurring in the tileset.
@@ -40,7 +39,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * all property values, after the transforms based on the `normalized`,
    * `offset`, and `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> mean;
+  CesiumUtility::JsonValue mean;
 
   /**
    * @brief The median of property values occurring in the tileset. Only
@@ -48,7 +47,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * property values, after the transforms based on the `normalized`, `offset`,
    * and `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> median;
+  CesiumUtility::JsonValue median;
 
   /**
    * @brief The standard deviation of property values occurring in the tileset.
@@ -56,7 +55,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * deviation of all property values, after the transforms based on the
    * `normalized`, `offset`, and `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> standardDeviation;
+  CesiumUtility::JsonValue standardDeviation;
 
   /**
    * @brief The variance of property values occurring in the tileset. Only
@@ -64,7 +63,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * all property values, after the transforms based on the `normalized`,
    * `offset`, and `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> variance;
+  CesiumUtility::JsonValue variance;
 
   /**
    * @brief The sum of property values occurring in the tileset. Only applicable
@@ -72,7 +71,7 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * values, after the transforms based on the `normalized`, `offset`, and
    * `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> sum;
+  CesiumUtility::JsonValue sum;
 
   /**
    * @brief A dictionary, where each key corresponds to an enum `name` and each
@@ -81,5 +80,22 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * component-wise occurrences.
    */
   std::unordered_map<std::string, CesiumUtility::JsonValue> occurrences;
+
+  /** @brief Indicates whether the {@link min} property is defined. */
+  bool minDefined : 1;
+  /** @brief Indicates whether the {@link max} property is defined. */
+  bool maxDefined : 1;
+  /** @brief Indicates whether the {@link mean} property is defined. */
+  bool meanDefined : 1;
+  /** @brief Indicates whether the {@link median} property is defined. */
+  bool medianDefined : 1;
+  /** @brief Indicates whether the {@link standardDeviation} property is defined. */
+  bool standardDeviationDefined : 1;
+  /** @brief Indicates whether the {@link variance} property is defined. */
+  bool varianceDefined : 1;
+  /** @brief Indicates whether the {@link sum} property is defined. */
+  bool sumDefined : 1;
+  /** @brief Indicates whether the {@link occurrences} property is defined. */
+  bool occurrencesDefined : 1;
 };
 } // namespace Cesium3DTiles

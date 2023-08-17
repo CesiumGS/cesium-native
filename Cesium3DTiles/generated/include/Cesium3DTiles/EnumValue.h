@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -26,11 +25,18 @@ struct CESIUM3DTILES_API EnumValue final
   /**
    * @brief The description of the enum value.
    */
-  std::optional<std::string> description;
+  std::string description;
 
   /**
    * @brief The integer enum value.
    */
   int64_t value = int64_t();
+
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
+  /** @brief Indicates whether the {@link description} property is defined. */
+  bool descriptionDefined : 1;
+  /** @brief Indicates whether the {@link value} property is defined. */
+  bool valueDefined : 1;
 };
 } // namespace Cesium3DTiles

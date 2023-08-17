@@ -24,6 +24,8 @@ public:
   virtual IJsonHandler* readArrayStart() = 0;
   virtual IJsonHandler* readArrayEnd() = 0;
 
+  virtual IJsonHandler* onReturn(bool succeeded) = 0;
+
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) = 0;

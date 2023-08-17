@@ -104,5 +104,8 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * experimental, or next-version properties.
    */
   JsonValue::Object unknownProperties;
+
+  bool extrasDefined : 1;
+  bool extensionsDefined : 1;
 };
 } // namespace CesiumUtility

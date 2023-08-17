@@ -8,7 +8,6 @@
 #include <CesiumUtility/JsonValue.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -73,12 +72,12 @@ struct CESIUM3DTILES_API ClassProperty final
   /**
    * @brief The name of the property, e.g. for display purposes.
    */
-  std::optional<std::string> name;
+  std::string name;
 
   /**
    * @brief The description of the property.
    */
-  std::optional<std::string> description;
+  std::string description;
 
   /**
    * @brief The element type.
@@ -95,13 +94,13 @@ struct CESIUM3DTILES_API ClassProperty final
    * Known values are defined in {@link ComponentType}.
    *
    */
-  std::optional<std::string> componentType;
+  std::string componentType = ComponentType::INT8;
 
   /**
    * @brief Enum ID as declared in the `enums` dictionary. Required when `type`
    * is `ENUM`. Disallowed when `type` is not `ENUM`
    */
-  std::optional<std::string> enumType;
+  std::string enumType;
 
   /**
    * @brief Whether the property is an array. When `count` is defined the
@@ -114,7 +113,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * @brief The number of array elements. May only be defined when `array` is
    * `true`.
    */
-  std::optional<int64_t> count;
+  int64_t count = int64_t();
 
   /**
    * @brief Specifies whether integer values are normalized. Only applicable to
@@ -132,7 +131,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * or when the property is `normalized`. Not applicable to variable-length
    * arrays.
    */
-  std::optional<CesiumUtility::JsonValue> offset;
+  CesiumUtility::JsonValue offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable to `SCALAR`,
@@ -140,7 +139,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * or when the property is `normalized`. Not applicable to variable-length
    * arrays.
    */
-  std::optional<CesiumUtility::JsonValue> scale;
+  CesiumUtility::JsonValue scale;
 
   /**
    * @brief Maximum allowed value for the property. Only applicable to `SCALAR`,
@@ -148,7 +147,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * the transforms based on the `normalized`, `offset`, and `scale` properties
    * have been applied. Not applicable to variable-length arrays.
    */
-  std::optional<CesiumUtility::JsonValue> max;
+  CesiumUtility::JsonValue max;
 
   /**
    * @brief Minimum allowed value for the property. Only applicable to `SCALAR`,
@@ -156,7 +155,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * the transforms based on the `normalized`, `offset`, and `scale` properties
    * have been applied. Not applicable to variable-length arrays.
    */
-  std::optional<CesiumUtility::JsonValue> min;
+  CesiumUtility::JsonValue min;
 
   /**
    * @brief If required, the property shall be present in every entity
@@ -174,7 +173,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * from the `normalized`, `offset`, and `scale` properties. Shall not be
    * defined if `required` is true.
    */
-  std::optional<CesiumUtility::JsonValue> noData;
+  CesiumUtility::JsonValue noData;
 
   /**
    * @brief A default value to use when encountering a `noData` value or an
@@ -182,12 +181,45 @@ struct CESIUM3DTILES_API ClassProperty final
    * of `normalized`, `offset`, and `scale` properties into account. Shall not
    * be defined if `required` is true.
    */
-  std::optional<CesiumUtility::JsonValue> defaultProperty;
+  CesiumUtility::JsonValue defaultProperty;
 
   /**
    * @brief An identifier that describes how this property should be
    * interpreted. The semantic cannot be used by other properties in the class.
    */
-  std::optional<std::string> semantic;
+  std::string semantic;
+
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
+  /** @brief Indicates whether the {@link description} property is defined. */
+  bool descriptionDefined : 1;
+  /** @brief Indicates whether the {@link type} property is defined. */
+  bool typeDefined : 1;
+  /** @brief Indicates whether the {@link componentType} property is defined. */
+  bool componentTypeDefined : 1;
+  /** @brief Indicates whether the {@link enumType} property is defined. */
+  bool enumTypeDefined : 1;
+  /** @brief Indicates whether the {@link array} property is defined. */
+  bool arrayDefined : 1;
+  /** @brief Indicates whether the {@link count} property is defined. */
+  bool countDefined : 1;
+  /** @brief Indicates whether the {@link normalized} property is defined. */
+  bool normalizedDefined : 1;
+  /** @brief Indicates whether the {@link offset} property is defined. */
+  bool offsetDefined : 1;
+  /** @brief Indicates whether the {@link scale} property is defined. */
+  bool scaleDefined : 1;
+  /** @brief Indicates whether the {@link max} property is defined. */
+  bool maxDefined : 1;
+  /** @brief Indicates whether the {@link min} property is defined. */
+  bool minDefined : 1;
+  /** @brief Indicates whether the {@link required} property is defined. */
+  bool requiredDefined : 1;
+  /** @brief Indicates whether the {@link noData} property is defined. */
+  bool noDataDefined : 1;
+  /** @brief Indicates whether the {@link defaultProperty} property is defined. */
+  bool defaultPropertyDefined : 1;
+  /** @brief Indicates whether the {@link semantic} property is defined. */
+  bool semanticDefined : 1;
 };
 } // namespace Cesium3DTiles

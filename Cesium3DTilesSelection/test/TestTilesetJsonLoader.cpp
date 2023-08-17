@@ -149,7 +149,7 @@ TEST_CASE("Test creating tileset json loader") {
 
     CHECK(children[1].getParent() == pRootTile);
     CHECK(children[1].getChildren().size() == 0);
-    CHECK(children[1].getGeometricError() == 0.0);
+    CHECK(children[1].getGeometricError() == 35.0);
     CHECK(children[1].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[1].getTileID()) == "lr.b3dm");
     CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
@@ -157,7 +157,7 @@ TEST_CASE("Test creating tileset json loader") {
 
     CHECK(children[2].getParent() == pRootTile);
     CHECK(children[2].getChildren().size() == 0);
-    CHECK(children[2].getGeometricError() == 0.0);
+    CHECK(children[2].getGeometricError() == 35.0);
     CHECK(children[2].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[2].getTileID()) == "ur.b3dm");
     CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
@@ -165,7 +165,7 @@ TEST_CASE("Test creating tileset json loader") {
 
     CHECK(children[3].getParent() == pRootTile);
     CHECK(children[3].getChildren().size() == 0);
-    CHECK(children[3].getGeometricError() == 0.0);
+    CHECK(children[3].getGeometricError() == 35.0);
     CHECK(children[3].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[3].getTileID()) == "ul.b3dm");
     CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
@@ -208,7 +208,7 @@ TEST_CASE("Test creating tileset json loader") {
     for (const Tile& child : pRootTile->getChildren()) {
       CHECK(child.getParent() == pRootTile);
       CHECK(child.getChildren().size() == 0);
-      CHECK(child.getGeometricError() == 0.0);
+      CHECK(child.getGeometricError() == 35.0);
       CHECK(child.getRefine() == TileRefine::Add);
       CHECK(std::get<std::string>(child.getTileID()) == *expectedUrlIt);
       CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
@@ -450,7 +450,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     for (std::size_t i = 0; i < parentB3dmChildren.size(); ++i) {
       const Tile& child = parentB3dmChildren[i];
       CHECK(std::get<std::string>(child.getTileID()) == expectedChildUrls[i]);
-      CHECK(child.getGeometricError() == Approx(0.0));
+      CHECK(child.getGeometricError() == Approx(35.0));
       CHECK(child.getRefine() == TileRefine::Add);
       CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
           child.getBoundingVolume()));

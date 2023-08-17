@@ -664,7 +664,8 @@ TilesetContentManager::TilesetContentManager(
               // Parse Json response
               gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
               gsl::span<const char> tilesetJsonChars =
-                  CesiumUtility::reintepretCastSpan<const char>(tilesetJsonBinary);
+                  CesiumUtility::reintepretCastSpan<const char>(
+                      tilesetJsonBinary);
               static const char quotedRoot[] = "\"root\"";
               auto rootElementIt = std::search(
                   tilesetJsonChars.begin(),

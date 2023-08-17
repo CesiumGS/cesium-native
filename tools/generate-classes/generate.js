@@ -104,6 +104,15 @@ function generate(options, schema, writers) {
                     .join("\n\n"),
                   16
                 )}
+
+                ${indent(
+                  properties
+                    .map((property) => (
+                      `/** @brief Indicates whether the {@link ${property.cppSafeName}} property is defined. */\n` +
+                      `bool ${property.cppSafeName}Defined : 1;`)
+                    ).join("\n"),
+                  16
+                )}
                 ${thisConfig.toBeInherited ? privateSpecConstructor(name) : ""}
             };
         }

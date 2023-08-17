@@ -13,7 +13,6 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -40,18 +39,18 @@ struct CESIUM3DTILES_API Tileset final
    * @brief An object defining the structure of metadata classes and enums. When
    * this is defined, then `schemaUri` shall be undefined.
    */
-  std::optional<Cesium3DTiles::Schema> schema;
+  Cesium3DTiles::Schema schema;
 
   /**
    * @brief The URI (or IRI) of the external schema file. When this is defined,
    * then `schema` shall be undefined.
    */
-  std::optional<std::string> schemaUri;
+  std::string schemaUri;
 
   /**
    * @brief An object containing statistics about metadata entities.
    */
-  std::optional<Cesium3DTiles::Statistics> statistics;
+  Cesium3DTiles::Statistics statistics;
 
   /**
    * @brief An array of groups that tile content may belong to. Each element of
@@ -63,7 +62,7 @@ struct CESIUM3DTILES_API Tileset final
   /**
    * @brief A metadata entity that is associated with this tileset.
    */
-  std::optional<Cesium3DTiles::MetadataEntity> metadata;
+  Cesium3DTiles::MetadataEntity metadata;
 
   /**
    * @brief The error, in meters, introduced if this tileset is not rendered. At
@@ -87,5 +86,28 @@ struct CESIUM3DTILES_API Tileset final
    * Each element of this array shall also be contained in `extensionsUsed`.
    */
   std::vector<std::string> extensionsRequired;
+
+  /** @brief Indicates whether the {@link asset} property is defined. */
+  bool assetDefined : 1;
+  /** @brief Indicates whether the {@link properties} property is defined. */
+  bool propertiesDefined : 1;
+  /** @brief Indicates whether the {@link schema} property is defined. */
+  bool schemaDefined : 1;
+  /** @brief Indicates whether the {@link schemaUri} property is defined. */
+  bool schemaUriDefined : 1;
+  /** @brief Indicates whether the {@link statistics} property is defined. */
+  bool statisticsDefined : 1;
+  /** @brief Indicates whether the {@link groups} property is defined. */
+  bool groupsDefined : 1;
+  /** @brief Indicates whether the {@link metadata} property is defined. */
+  bool metadataDefined : 1;
+  /** @brief Indicates whether the {@link geometricError} property is defined. */
+  bool geometricErrorDefined : 1;
+  /** @brief Indicates whether the {@link root} property is defined. */
+  bool rootDefined : 1;
+  /** @brief Indicates whether the {@link extensionsUsed} property is defined. */
+  bool extensionsUsedDefined : 1;
+  /** @brief Indicates whether the {@link extensionsRequired} property is defined. */
+  bool extensionsRequiredDefined : 1;
 };
 } // namespace Cesium3DTiles

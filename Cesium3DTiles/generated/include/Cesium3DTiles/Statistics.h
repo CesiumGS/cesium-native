@@ -24,5 +24,8 @@ struct CESIUM3DTILES_API Statistics final
    * statistics about entities that conform to the class.
    */
   std::unordered_map<std::string, Cesium3DTiles::ClassStatistics> classes;
+
+  /** @brief Indicates whether the {@link classes} property is defined. */
+  bool classesDefined : 1;
 };
 } // namespace Cesium3DTiles

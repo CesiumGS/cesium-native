@@ -7,7 +7,6 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -42,12 +41,12 @@ struct CESIUM3DTILES_API Enum final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The name of the enum, e.g. for display purposes.
    */
-  std::optional<std::string> name;
+  std::string name;
 
   /**
    * @brief The description of the enum.
    */
-  std::optional<std::string> description;
+  std::string description;
 
   /**
    * @brief The type of the integer enum value.
@@ -62,5 +61,14 @@ struct CESIUM3DTILES_API Enum final : public CesiumUtility::ExtensibleObject {
    * are not allowed.
    */
   std::vector<Cesium3DTiles::EnumValue> values;
+
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
+  /** @brief Indicates whether the {@link description} property is defined. */
+  bool descriptionDefined : 1;
+  /** @brief Indicates whether the {@link valueType} property is defined. */
+  bool valueTypeDefined : 1;
+  /** @brief Indicates whether the {@link values} property is defined. */
+  bool valuesDefined : 1;
 };
 } // namespace Cesium3DTiles

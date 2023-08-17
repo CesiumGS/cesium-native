@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -25,7 +24,7 @@ struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
    * the binary subtree format - when omitted the buffer refers to the binary
    * chunk of the subtree file. Data URIs are not allowed.
    */
-  std::optional<std::string> uri;
+  std::string uri;
 
   /**
    * @brief The length of the buffer in bytes.
@@ -35,6 +34,13 @@ struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The name of the buffer.
    */
-  std::optional<std::string> name;
+  std::string name;
+
+  /** @brief Indicates whether the {@link uri} property is defined. */
+  bool uriDefined : 1;
+  /** @brief Indicates whether the {@link byteLength} property is defined. */
+  bool byteLengthDefined : 1;
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
 };
 } // namespace Cesium3DTiles

@@ -8,7 +8,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <unordered_map>
 
 namespace Cesium3DTiles {
@@ -23,7 +22,7 @@ struct CESIUM3DTILES_API ClassStatistics final
   /**
    * @brief The number of entities that conform to the class.
    */
-  std::optional<int64_t> count;
+  int64_t count = int64_t();
 
   /**
    * @brief A dictionary, where each key corresponds to a property ID in the
@@ -31,5 +30,10 @@ struct CESIUM3DTILES_API ClassStatistics final
    * statistics about property values.
    */
   std::unordered_map<std::string, Cesium3DTiles::PropertyStatistics> properties;
+
+  /** @brief Indicates whether the {@link count} property is defined. */
+  bool countDefined : 1;
+  /** @brief Indicates whether the {@link properties} property is defined. */
+  bool propertiesDefined : 1;
 };
 } // namespace Cesium3DTiles

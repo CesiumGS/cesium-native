@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 
 namespace Cesium3DTiles {
 /**
@@ -33,13 +32,13 @@ struct CESIUM3DTILES_API Availability final
    * in the 3D Metadata specification. If an element is available, its bit is 1,
    * and if it is unavailable, its bit is 0.
    */
-  std::optional<int64_t> bitstream;
+  int64_t bitstream = int64_t();
 
   /**
    * @brief A number indicating how many 1 bits exist in the availability
    * bitstream.
    */
-  std::optional<int64_t> availableCount;
+  int64_t availableCount = int64_t();
 
   /**
    * @brief Integer indicating whether all of the elements are available (1) or
@@ -48,6 +47,13 @@ struct CESIUM3DTILES_API Availability final
    * Known values are defined in {@link Constant}.
    *
    */
-  std::optional<int32_t> constant;
+  int32_t constant = Constant::UNAVAILABLE;
+
+  /** @brief Indicates whether the {@link bitstream} property is defined. */
+  bool bitstreamDefined : 1;
+  /** @brief Indicates whether the {@link availableCount} property is defined. */
+  bool availableCountDefined : 1;
+  /** @brief Indicates whether the {@link constant} property is defined. */
+  bool constantDefined : 1;
 };
 } // namespace Cesium3DTiles

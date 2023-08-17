@@ -25,10 +25,13 @@ IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     CesiumUtility::ExtensibleObject& o) {
   using namespace std::string_literals;
 
-  if ("extras"s == str)
+  if ("extras"s == str) {
+    o.extrasDefined = true;
     return property("extras", this->_extras, o.extras);
+  }
 
   if ("extensions"s == str) {
+    o.extensionsDefined = true;
     this->_extensions.reset(this, &o, objectType);
     return &this->_extensions;
   }

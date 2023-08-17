@@ -8,7 +8,6 @@
 #include <CesiumUtility/JsonValue.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -76,7 +75,7 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * `arrayOffsetType`. The buffer view `byteOffset` shall be aligned to a
    * multiple of the `arrayOffsetType` size.
    */
-  std::optional<int64_t> arrayOffsets;
+  int64_t arrayOffsets = int64_t();
 
   /**
    * @brief The index of the buffer view containing offsets for strings. The
@@ -88,7 +87,7 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * type of these offsets is determined by `stringOffsetType`. The buffer view
    * `byteOffset` shall be aligned to a multiple of the `stringOffsetType` size.
    */
-  std::optional<int64_t> stringOffsets;
+  int64_t stringOffsets = int64_t();
 
   /**
    * @brief The type of values in `arrayOffsets`.
@@ -111,14 +110,14 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * component type is `FLOAT32` or `FLOAT64`, or when the property is
    * `normalized`. Overrides the class property's `offset` if both are defined.
    */
-  std::optional<CesiumUtility::JsonValue> offset;
+  CesiumUtility::JsonValue offset;
 
   /**
    * @brief A scale to apply to property values. Only applicable when the
    * component type is `FLOAT32` or `FLOAT64`, or when the property is
    * `normalized`. Overrides the class property's `scale` if both are defined.
    */
-  std::optional<CesiumUtility::JsonValue> scale;
+  CesiumUtility::JsonValue scale;
 
   /**
    * @brief Maximum value present in the property values. Only applicable to
@@ -126,7 +125,7 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * values, after the transforms based on the `normalized`, `offset`, and
    * `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> max;
+  CesiumUtility::JsonValue max;
 
   /**
    * @brief Minimum value present in the property values. Only applicable to
@@ -134,6 +133,25 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * values, after the transforms based on the `normalized`, `offset`, and
    * `scale` properties have been applied.
    */
-  std::optional<CesiumUtility::JsonValue> min;
+  CesiumUtility::JsonValue min;
+
+  /** @brief Indicates whether the {@link values} property is defined. */
+  bool valuesDefined : 1;
+  /** @brief Indicates whether the {@link arrayOffsets} property is defined. */
+  bool arrayOffsetsDefined : 1;
+  /** @brief Indicates whether the {@link stringOffsets} property is defined. */
+  bool stringOffsetsDefined : 1;
+  /** @brief Indicates whether the {@link arrayOffsetType} property is defined. */
+  bool arrayOffsetTypeDefined : 1;
+  /** @brief Indicates whether the {@link stringOffsetType} property is defined. */
+  bool stringOffsetTypeDefined : 1;
+  /** @brief Indicates whether the {@link offset} property is defined. */
+  bool offsetDefined : 1;
+  /** @brief Indicates whether the {@link scale} property is defined. */
+  bool scaleDefined : 1;
+  /** @brief Indicates whether the {@link max} property is defined. */
+  bool maxDefined : 1;
+  /** @brief Indicates whether the {@link min} property is defined. */
+  bool minDefined : 1;
 };
 } // namespace Cesium3DTiles

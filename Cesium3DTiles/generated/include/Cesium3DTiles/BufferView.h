@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -36,6 +35,15 @@ struct CESIUM3DTILES_API BufferView final
   /**
    * @brief The name of the `bufferView`.
    */
-  std::optional<std::string> name;
+  std::string name;
+
+  /** @brief Indicates whether the {@link buffer} property is defined. */
+  bool bufferDefined : 1;
+  /** @brief Indicates whether the {@link byteOffset} property is defined. */
+  bool byteOffsetDefined : 1;
+  /** @brief Indicates whether the {@link byteLength} property is defined. */
+  bool byteLengthDefined : 1;
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
 };
 } // namespace Cesium3DTiles

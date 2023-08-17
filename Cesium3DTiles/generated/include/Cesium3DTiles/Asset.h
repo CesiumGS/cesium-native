@@ -6,7 +6,6 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -26,6 +25,11 @@ struct CESIUM3DTILES_API Asset final : public CesiumUtility::ExtensibleObject {
    * @brief Application-specific version of this tileset, e.g., for when an
    * existing tileset is updated.
    */
-  std::optional<std::string> tilesetVersion;
+  std::string tilesetVersion;
+
+  /** @brief Indicates whether the {@link version} property is defined. */
+  bool versionDefined : 1;
+  /** @brief Indicates whether the {@link tilesetVersion} property is defined. */
+  bool tilesetVersionDefined : 1;
 };
 } // namespace Cesium3DTiles

@@ -10,7 +10,6 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -43,7 +42,7 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * inside of before the tile's content will be requested and before the tile
    * will be refined based on geometricError.
    */
-  std::optional<Cesium3DTiles::BoundingVolume> viewerRequestVolume;
+  Cesium3DTiles::BoundingVolume viewerRequestVolume;
 
   /**
    * @brief The error, in meters, introduced if this tile is rendered and its
@@ -61,7 +60,7 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * Known values are defined in {@link Refine}.
    *
    */
-  std::optional<std::string> refine;
+  std::string refine = Refine::ADD;
 
   /**
    * @brief A floating-point 4x4 affine transformation matrix, stored in
@@ -82,7 +81,7 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * this is omitted the tile is just used for culling. When this is defined,
    * then `contents` shall be undefined.
    */
-  std::optional<Cesium3DTiles::Content> content;
+  Cesium3DTiles::Content content;
 
   /**
    * @brief An array of contents. When this is defined, then `content` shall be
@@ -93,12 +92,12 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief A metadata entity that is associated with this tile.
    */
-  std::optional<Cesium3DTiles::MetadataEntity> metadata;
+  Cesium3DTiles::MetadataEntity metadata;
 
   /**
    * @brief An object that describes the implicit subdivision of this tile.
    */
-  std::optional<Cesium3DTiles::ImplicitTiling> implicitTiling;
+  Cesium3DTiles::ImplicitTiling implicitTiling;
 
   /**
    * @brief An array of objects that define child tiles. Each child tile content
@@ -107,5 +106,26 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * tiles, the length of this array is zero, and children may not be defined.
    */
   std::vector<Cesium3DTiles::Tile> children;
+
+  /** @brief Indicates whether the {@link boundingVolume} property is defined. */
+  bool boundingVolumeDefined : 1;
+  /** @brief Indicates whether the {@link viewerRequestVolume} property is defined. */
+  bool viewerRequestVolumeDefined : 1;
+  /** @brief Indicates whether the {@link geometricError} property is defined. */
+  bool geometricErrorDefined : 1;
+  /** @brief Indicates whether the {@link refine} property is defined. */
+  bool refineDefined : 1;
+  /** @brief Indicates whether the {@link transform} property is defined. */
+  bool transformDefined : 1;
+  /** @brief Indicates whether the {@link content} property is defined. */
+  bool contentDefined : 1;
+  /** @brief Indicates whether the {@link contents} property is defined. */
+  bool contentsDefined : 1;
+  /** @brief Indicates whether the {@link metadata} property is defined. */
+  bool metadataDefined : 1;
+  /** @brief Indicates whether the {@link implicitTiling} property is defined. */
+  bool implicitTilingDefined : 1;
+  /** @brief Indicates whether the {@link children} property is defined. */
+  bool childrenDefined : 1;
 };
 } // namespace Cesium3DTiles

@@ -8,7 +8,6 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -28,17 +27,17 @@ struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The name of the schema, e.g. for display purposes.
    */
-  std::optional<std::string> name;
+  std::string name;
 
   /**
    * @brief The description of the schema.
    */
-  std::optional<std::string> description;
+  std::string description;
 
   /**
    * @brief Application-specific version of the schema.
    */
-  std::optional<std::string> version;
+  std::string version;
 
   /**
    * @brief A dictionary, where each key is a class ID and each value is an
@@ -53,5 +52,18 @@ struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, Cesium3DTiles::Enum> enums;
+
+  /** @brief Indicates whether the {@link id} property is defined. */
+  bool idDefined : 1;
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
+  /** @brief Indicates whether the {@link description} property is defined. */
+  bool descriptionDefined : 1;
+  /** @brief Indicates whether the {@link version} property is defined. */
+  bool versionDefined : 1;
+  /** @brief Indicates whether the {@link classes} property is defined. */
+  bool classesDefined : 1;
+  /** @brief Indicates whether the {@link enums} property is defined. */
+  bool enumsDefined : 1;
 };
 } // namespace Cesium3DTiles

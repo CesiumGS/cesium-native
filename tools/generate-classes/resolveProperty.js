@@ -28,7 +28,7 @@ function resolveProperty(
   // If we don't know what's required, act as if everything is.
   // Specifically this means we _don't_ make it optional.
   const isRequired = required === undefined || required.includes(propertyName);
-  const makeOptional = !isRequired && propertyDetails.default === undefined;
+  const makeOptional = false; //!isRequired && propertyDetails.default === undefined;
 
   if (isEnum(propertyDetails)) {
     return resolveEnum(

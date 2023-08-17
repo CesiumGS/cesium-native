@@ -8,7 +8,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -24,7 +23,7 @@ struct CESIUM3DTILES_API PropertyTable final
   /**
    * @brief The name of the property table, e.g. for display purposes.
    */
-  std::optional<std::string> name;
+  std::string name;
 
   /**
    * @brief The class that property values conform to. The value shall be a
@@ -45,5 +44,14 @@ struct CESIUM3DTILES_API PropertyTable final
    */
   std::unordered_map<std::string, Cesium3DTiles::PropertyTableProperty>
       properties;
+
+  /** @brief Indicates whether the {@link name} property is defined. */
+  bool nameDefined : 1;
+  /** @brief Indicates whether the {@link classProperty} property is defined. */
+  bool classPropertyDefined : 1;
+  /** @brief Indicates whether the {@link count} property is defined. */
+  bool countDefined : 1;
+  /** @brief Indicates whether the {@link properties} property is defined. */
+  bool propertiesDefined : 1;
 };
 } // namespace Cesium3DTiles

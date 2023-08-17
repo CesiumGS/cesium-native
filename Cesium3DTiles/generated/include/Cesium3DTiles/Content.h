@@ -9,7 +9,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 
 namespace Cesium3DTiles {
@@ -26,7 +25,7 @@ struct CESIUM3DTILES_API Content final
    * tile.content.boundingVolume enables tight view frustum culling. When this
    * is omitted, tile.boundingVolume is used.
    */
-  std::optional<Cesium3DTiles::BoundingVolume> boundingVolume;
+  Cesium3DTiles::BoundingVolume boundingVolume;
 
   /**
    * @brief A uri that points to tile content. When the uri is relative, it is
@@ -37,12 +36,21 @@ struct CESIUM3DTILES_API Content final
   /**
    * @brief Metadata that is associated with this content.
    */
-  std::optional<Cesium3DTiles::MetadataEntity> metadata;
+  Cesium3DTiles::MetadataEntity metadata;
 
   /**
    * @brief The group this content belongs to. The value is an index into the
    * array of `groups` that is defined for the containing tileset.
    */
-  std::optional<int64_t> group;
+  int64_t group = int64_t();
+
+  /** @brief Indicates whether the {@link boundingVolume} property is defined. */
+  bool boundingVolumeDefined : 1;
+  /** @brief Indicates whether the {@link uri} property is defined. */
+  bool uriDefined : 1;
+  /** @brief Indicates whether the {@link metadata} property is defined. */
+  bool metadataDefined : 1;
+  /** @brief Indicates whether the {@link group} property is defined. */
+  bool groupDefined : 1;
 };
 } // namespace Cesium3DTiles

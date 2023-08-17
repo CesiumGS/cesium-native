@@ -47,5 +47,12 @@ struct CESIUM3DTILES_API BoundingVolume final
    * shall not be negative.
    */
   std::vector<double> sphere;
+
+  /** @brief Indicates whether the {@link box} property is defined. */
+  bool boxDefined : 1;
+  /** @brief Indicates whether the {@link region} property is defined. */
+  bool regionDefined : 1;
+  /** @brief Indicates whether the {@link sphere} property is defined. */
+  bool sphereDefined : 1;
 };
 } // namespace Cesium3DTiles

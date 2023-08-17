@@ -12,7 +12,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 #include <vector>
 
 namespace Cesium3DTiles {
@@ -82,7 +81,7 @@ struct CESIUM3DTILES_API Subtree final
    * index. To access individual tile metadata, implementations may create a
    * mapping from tile indices to tile metadata indices.
    */
-  std::optional<int64_t> tileMetadata;
+  int64_t tileMetadata = int64_t();
 
   /**
    * @brief An array of indexes to property tables containing content metadata.
@@ -98,6 +97,25 @@ struct CESIUM3DTILES_API Subtree final
   /**
    * @brief Subtree metadata encoded in JSON.
    */
-  std::optional<Cesium3DTiles::MetadataEntity> subtreeMetadata;
+  Cesium3DTiles::MetadataEntity subtreeMetadata;
+
+  /** @brief Indicates whether the {@link buffers} property is defined. */
+  bool buffersDefined : 1;
+  /** @brief Indicates whether the {@link bufferViews} property is defined. */
+  bool bufferViewsDefined : 1;
+  /** @brief Indicates whether the {@link propertyTables} property is defined. */
+  bool propertyTablesDefined : 1;
+  /** @brief Indicates whether the {@link tileAvailability} property is defined. */
+  bool tileAvailabilityDefined : 1;
+  /** @brief Indicates whether the {@link contentAvailability} property is defined. */
+  bool contentAvailabilityDefined : 1;
+  /** @brief Indicates whether the {@link childSubtreeAvailability} property is defined. */
+  bool childSubtreeAvailabilityDefined : 1;
+  /** @brief Indicates whether the {@link tileMetadata} property is defined. */
+  bool tileMetadataDefined : 1;
+  /** @brief Indicates whether the {@link contentMetadata} property is defined. */
+  bool contentMetadataDefined : 1;
+  /** @brief Indicates whether the {@link subtreeMetadata} property is defined. */
+  bool subtreeMetadataDefined : 1;
 };
 } // namespace Cesium3DTiles

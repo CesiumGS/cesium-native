@@ -25,5 +25,10 @@ struct CESIUM3DTILES_API Properties final
    * tileset. The maximum value shall not be larger than the minimum value.
    */
   double minimum = double();
+
+  /** @brief Indicates whether the {@link maximum} property is defined. */
+  bool maximumDefined : 1;
+  /** @brief Indicates whether the {@link minimum} property is defined. */
+  bool minimumDefined : 1;
 };
 } // namespace Cesium3DTiles
