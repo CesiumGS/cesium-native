@@ -165,7 +165,7 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0},
+        _stringOffsetTypeSize{0}
   {}
 
   /**
@@ -202,7 +202,7 @@ public:
       const ClassProperty& classProperty,
       int64_t size,
       gsl::span<const std::byte> values) noexcept
-      : PropertyView(classProperty, property),
+      : PropertyView<ElementType>(classProperty, property),
         _status{PropertyTablePropertyViewStatus::Valid},
         _values{},
         _size{},
@@ -240,7 +240,7 @@ public:
       gsl::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
       PropertyComponentType stringOffsetType) noexcept
-      : PropertyView(classProperty, property),
+      : PropertyView<ElementType>(classProperty, property),
         _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
         _arrayOffsets{arrayOffsets},
