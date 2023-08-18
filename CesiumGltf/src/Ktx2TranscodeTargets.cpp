@@ -22,8 +22,6 @@ Ktx2TranscodeTargets::Ktx2TranscodeTargets(
     this->ETC1S_RGBA = GpuCompressedPixelFormat::BC7_RGBA;
   } else if (supportedFormats.BC3_RGBA) {
     this->ETC1S_RGBA = GpuCompressedPixelFormat::BC3_RGBA;
-  } else if (supportedFormats.ASTC_4x4_RGBA) {
-    this->ETC1S_RGBA = GpuCompressedPixelFormat::ASTC_4x4_RGBA;
   } else if (supportedFormats.PVRTC1_4_RGBA) {
     this->ETC1S_RGBA = GpuCompressedPixelFormat::PVRTC1_4_RGBA;
   }
@@ -35,8 +33,6 @@ Ktx2TranscodeTargets::Ktx2TranscodeTargets(
     this->ETC1S_RGB = GpuCompressedPixelFormat::BC7_RGBA;
   } else if (supportedFormats.BC1_RGB) {
     this->ETC1S_RGB = GpuCompressedPixelFormat::BC1_RGB;
-  } else if (supportedFormats.ASTC_4x4_RGBA) {
-    this->ETC1S_RGBA = GpuCompressedPixelFormat::ASTC_4x4_RGBA;
   } else if (supportedFormats.PVRTC1_4_RGB) {
     this->ETC1S_RGB = GpuCompressedPixelFormat::PVRTC1_4_RGB;
   }
