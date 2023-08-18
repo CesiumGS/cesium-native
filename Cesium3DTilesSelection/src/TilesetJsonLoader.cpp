@@ -4,7 +4,7 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesReader/SchemaReader.h>
+#include <Cesium3DTilesReader/Readers.h>
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -598,11 +598,27 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
 
   const auto schemaIt = tilesetJson.FindMember("schema");
   if (schemaIt != tilesetJson.MemberEnd()) {
-    Cesium3DTilesReader::SchemaReader reader{};
-    Cesium3DTilesReader::SchemaReaderResult schemaResult =
-        reader.readSchema(schemaIt->value);
-    if (schemaResult.schema) {
-      pLoader->getSchema() = std::move(*schemaResult.schema);
+    auto schemaResult = Cesium3DTilesReader::readSchema(schemaIt->value);
+    if (schemaResult.value) {
+      pLoader->getSchema() = std::move(*schemaResult.value);
+    }
+  }
+
+  const auto metadataIt = tilesetJson.FindMember("metadata");
+  if (metadataIt != tilesetJson.MemberEnd()) {
+    auto metadataResult =
+        Cesium3DTilesReader::readMetadataEntity(metadataIt->value);
+    if (metadataResult.value) {
+      // pLoader->getSchema() = std::move(*schemaResult.value);
+    }
+  }
+
+  const auto groupsIt = tilesetJson.FindMember("groups");
+  if (groupsIt != tilesetJson.MemberEnd()) {
+    auto groupsResult =
+        Cesium3DTilesReader::readGroupMetadataArray(groupsIt->value);
+    if (groupsResult.value) {
+      // pLoader->getSchema() = std::move(*schemaResult.value);
     }
   }
 

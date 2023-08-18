@@ -15,6 +15,8 @@ namespace CesiumJsonReader {
 template <typename T, typename THandler>
 class CESIUMJSONREADER_API ArrayJsonHandler : public JsonHandler {
 public:
+  using ValueType = std::vector<T>;
+
   template <typename... Ts>
   ArrayJsonHandler(Ts&&... args) noexcept
       : JsonHandler(),
