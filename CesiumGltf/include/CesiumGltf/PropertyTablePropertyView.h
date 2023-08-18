@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/PropertyArrayView.h"
+//#include "CesiumGltf/PropertyConversions.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 
@@ -185,11 +186,12 @@ public:
   }
 
   /**
-   * @brief Construct a valid instance pointing to non-array data specified by
-   * a {@link PropertyTableProperty}.
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @brief Construct an instance pointing to non-array data specified by a {@link PropertyTableProperty}.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param normalized Whether this property has a normalized integer type.
+   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -198,27 +200,32 @@ public:
       gsl::span<const std::byte> values) noexcept
       : PropertyView(classProperty, property),
         _status{PropertyTablePropertyViewStatus::Valid},
-        _values{values},
-        _size{size},
+        _values{},
+        _size{},
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+        _stringOffsetTypeSize{0} {
+    if (PropertyView::status() == PropertyTablePropertyViewStatus::Valid) {
+      _values = values;
+      _size = size;
+    }
+  }
 
   /**
-   * @brief Construct a valid instance pointing to the data specified by
-   * a {@link PropertyTableProperty}.
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
+   *
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
    * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
    * @param offsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
    * @param offsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
-   * @param arrayCount The number of elements in each array value specified by {@link ClassProperty::count}
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param normalized Whether this property has a normalized integer
-   * type.
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -238,7 +245,12 @@ public:
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
-        _size{size} {}
+        _size{size} {
+    if (PropertyView::status() == PropertyTablePropertyViewStatus::Valid) {
+      _values = values;
+      _size = size;
+    }
+  }
 
   /**
    * @copydoc IPropertyView::status
@@ -246,7 +258,12 @@ public:
   virtual int32_t status() const noexcept override { return _status; }
 
   /**
-   * @brief Get the value of an element of the {@link PropertyTable}.
+   * @brief Get the raw value of an element of the {@link PropertyTable},
+   * without offset, scale, or normalization applied.
+   *
+   * If this property has a "no data" value defined, the raw value will still be
+   * returned, even if it equals the "no data" value.
+   *
    * @param index The element index
    * @return The value of the element
    */
@@ -285,6 +302,48 @@ public:
       return getStringArrayValues(index);
     }
   }
+
+  ///**
+  // * @brief Gets the value of an element in the {@link PropertyTable} as an instance
+  // * of T. If T is not the same as the ElementType of the property, then
+  // * this attempts to convert it to the desired type. If such a conversion is
+  // * not possible, this returns std::nullopt.
+  // *
+  // * If this property contains a "no data" sentinel value, then std::nullopt is
+  // * returned for any raw values that equal the sentinel value. If a default
+  // * value is supplied, then it will be returned instead.
+  // *
+  // * If this property is affected by offset, scale, and / or normalization,
+  // * the value will be transformed before conversion like so:
+  // *
+  // * transformedValue = offset + scale * normalize(value)
+  // *
+  // * The transformed value will then attempt to be converted to the desired type
+  // * T.
+  // *
+  // * @param index The element index
+  // * @return The value of the element as T, or std::nullopt if conversion fails.
+  // */
+  //template <typename T = ElementType>
+  //std::optional<T> getAs(int64_t index) const noexcept {
+  //  assert(
+  //      _status == PropertyTablePropertyViewStatus::Valid &&
+  //      "Check the status() first to make sure view is valid");
+  //  assert(
+  //      size() > 0 &&
+  //      "Check the size() of the view to make sure it's not empty");
+  //  assert(index >= 0 && "index must be non-negative");
+  //  assert(index < size() && "index must be less than size");
+  //  ElementType result = getRaw(index);
+
+  //  if (noData() && result == *noData()) {
+  //    return defaultValue() ? *defaultValue() : std::nullopt;
+  //  }
+
+  //  // apply transform
+
+  //  return PropertyConversions<T, ElementType>::convert(result);
+  //}
 
   /**
    * @brief Get the number of elements in this
@@ -427,5 +486,122 @@ private:
   gsl::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
+};
+
+/**
+ * @brief A view on the boolean data of the {@link PropertyTableProperty} that is created
+ * by a {@link PropertyTableView}.
+ *
+ * It provides utility to retrieve the actual data stored in the
+ * {@link PropertyTableProperty::values} like an array of elements. Data of each
+ * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
+ */
+template <> class PropertyTablePropertyView<bool> : public PropertyView<bool> {
+public:
+  /**
+   * @brief Constructs an invalid instance for a non-existent property.
+   */
+  PropertyTablePropertyView()
+      : PropertyView(),
+        _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
+        _values{},
+        _size{0} {}
+
+  /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   */
+  PropertyTablePropertyView(PropertyViewStatusType status)
+      : PropertyView(), _status{status}, _values{}, _size{0} {
+    assert(
+        _status != PropertyTablePropertyViewStatus::Valid &&
+        "An empty property view should not be constructed with a valid "
+        "status");
+  }
+
+  /**
+   * @brief Construct an instance pointing to the boolean data specified by a {@link PropertyTableProperty}.
+   *
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      gsl::span<const std::byte> values) noexcept
+      : PropertyView(classProperty, property),
+        _status{PropertyView::status()},
+        _values{values},
+        _size{size} {}
+
+  /**
+   * @copydoc IPropertyView::status
+   */
+  virtual int32_t status() const noexcept override { return _status; }
+
+  /**
+   * @brief Get the value of an element of the {@link PropertyTable}.
+   *
+   * @param index The element index
+   * @return The value of the element
+   */
+  bool get(int64_t index) const noexcept {
+    assert(
+        _status == PropertyTablePropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
+    assert(
+        size() > 0 &&
+        "Check the size() of the view to make sure it's not empty");
+    assert(index >= 0 && "index must be non-negative");
+    assert(index < size() && "index must be less than size");
+
+    const int64_t byteIndex = index / 8;
+    const int64_t bitIndex = index % 8;
+    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    return bitValue == 1;
+  }
+
+  /**
+   * @brief Gets the value of an element in the {@link PropertyTable} as an instance
+   * of T. If T is not the same as the ElementType of the property, then
+   * this attempts to convert it to the desired type. If such a conversion is
+   * not possible, this returns std::nullopt.
+   *
+   * @param index The element index
+   * @return The value of the element as T, or std::nullopt if conversion fails.
+   */
+  template <typename T> std::optional<T> getAs(int64_t index) const noexcept {
+    assert(
+        _status == PropertyTablePropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
+    assert(
+        size() > 0 &&
+        "Check the size() of the view to make sure it's not empty");
+    assert(index >= 0 && "index must be non-negative");
+    assert(index < size() && "index must be less than size");
+
+    return PropertyConversions<T, bool>::convert(get(index));
+  }
+
+  /**
+   * @brief Get the number of elements in this
+   * PropertyTablePropertyView. If the view is valid, this returns
+   * {@link PropertyTable::count}. Otherwise, this returns 0.
+   *
+   * @return The number of elements in this PropertyTablePropertyView.
+   */
+  int64_t size() const noexcept {
+    return status() == PropertyTablePropertyViewStatus::Valid ? _size : 0;
+  }
+
+private:
+  PropertyViewStatusType _status;
+  gsl::span<const std::byte> _values;
+  int64_t _size;
 };
 } // namespace CesiumGltf

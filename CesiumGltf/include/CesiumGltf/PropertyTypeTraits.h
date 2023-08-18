@@ -264,4 +264,16 @@ template <> struct TypeToPropertyType<std::string_view> {
       PropertyComponentType::None;
   static constexpr PropertyType value = PropertyType::String;
 };
+
+template <typename T> struct TypeToNormalizedType;
+
+template <>
+struct TypeToNormalizedType<int32_t> {
+  using type = double;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<glm::vec<N, T, Q>> {
+  using type = glm::vec<N, double, Q>;
+};
 } // namespace CesiumGltf

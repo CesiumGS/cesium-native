@@ -2,6 +2,7 @@
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
+#include "PropertyValue.h"
 
 #include <bitset>
 #include <optional>
@@ -10,6 +11,17 @@ namespace CesiumGltf {
 
 typedef int32_t PropertyViewStatusType;
 
+/**
+ * @brief Indicates the status of a property view.
+ *
+ * The {@link PropertyView} constructor always completes successfully.
+ * However, there may be fundamental errors with the property definition. In
+ * such cases, this enumeration provides the reason.
+ *
+ * This is defined with a class of static consts as opposed to an enum, so that
+ * derived property view classes can extend the statuses with their own specific
+ * errors.
+ */
 class PropertyViewStatus {
 public:
   /**
@@ -81,13 +93,6 @@ public:
 /**
  * @brief An interface for generic metadata property in EXT_structural_metadata.
  *
- * Whether they belong to property tables, property textures, or property
- * attributes, properties have their own sub-properties affecting the actual
- * property values. Although they are typically defined via class property, they
- * may be overridden by individual instances of the property. The constructor is
- * responsible for resolving those differences.
- *
- * @tparam ElementType The C++ type of the values in this property
  */
 template <typename ElementType> class IPropertyView {
 public:
@@ -176,15 +181,22 @@ public:
   virtual std::optional<ElementType> defaultValue() const noexcept = 0;
 };
 
+template <typename ElementType, bool Normalized = false, typename Enable = void>
+class PropertyView;
+
 /**
  * @brief Represents a generic metadata property in EXT_structural_metadata.
- * Implements the {@link IPropertyView} interface.
  *
- * Child classes should validate that the class property type matches the
- * "ElementType" before constructing a property view.
+ * Whether they belong to property tables, property textures, or property
+ * attributes, properties have their own sub-properties affecting the actual
+ * property values. Although they are typically defined via class property, they
+ * may be overridden by individual instances of the property themselves. The
+ * constructor is responsible for resolving those differences.
+ *
+ * @tparam ElementType The C++ type of the values in this property
  */
 template <typename ElementType>
-class PropertyView : IPropertyView<ElementType> {
+class PropertyView<ElementType> {
 public:
   /**
    * @brief Constructs an empty property instance.
@@ -330,7 +342,7 @@ protected:
       return;
     }
 
-    // If the property has its own values, override the class-provided values.
+    // If the property has its own values,  the class-provided values.
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       if (property.offset) {
         _offset = getValue(*property.offset);
@@ -382,7 +394,7 @@ protected:
       return;
     }
 
-    // If the property has its own values, override the class-provided values.
+    // If the property has its own values,  the class-provided values.
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       if (property.offset) {
         _offset = getValue(*property.offset);
@@ -426,64 +438,64 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept override {
+  virtual PropertyViewStatusType status() const noexcept  {
     return _status;
   }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept override { return 0; }
+  virtual int64_t arrayCount() const noexcept  { return 0; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept override { return _normalized; }
+  virtual bool normalized() const noexcept  { return _normalized; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<ElementType> offset() const noexcept override {
+  virtual std::optional<ElementType> offset() const noexcept  {
     return _offset;
   }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<ElementType> scale() const noexcept override {
+  virtual std::optional<ElementType> scale() const noexcept  {
     return _scale;
   }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<ElementType> max() const noexcept override {
+  virtual std::optional<ElementType> max() const noexcept  {
     return _max;
   }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<ElementType> min() const noexcept override {
+  virtual std::optional<ElementType> min() const noexcept  {
     return _min;
   }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept override { return _required; }
+  virtual bool required() const noexcept  { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<ElementType> noData() const noexcept override {
+  virtual std::optional<ElementType> noData() const noexcept  {
     return _noData;
   }
 
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<ElementType> defaultValue() const noexcept override {
+  virtual std::optional<ElementType> defaultValue() const noexcept  {
     return _defaultValue;
   }
 
@@ -655,64 +667,64 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept override {
+  virtual PropertyViewStatusType status() const noexcept  {
     return _status;
   }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept override { return 0; }
+  virtual int64_t arrayCount() const noexcept  { return 0; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept override { return false; }
+  virtual bool normalized() const noexcept  { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<bool> offset() const noexcept override {
+  virtual std::optional<bool> offset() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<bool> scale() const noexcept override {
+  virtual std::optional<bool> scale() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<bool> max() const noexcept override {
+  virtual std::optional<bool> max() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<bool> min() const noexcept override {
+  virtual std::optional<bool> min() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept override { return _required; }
+  virtual bool required() const noexcept  { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<bool> noData() const noexcept override {
+  virtual std::optional<bool> noData() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<bool> defaultValue() const noexcept override {
+  virtual std::optional<bool> defaultValue() const noexcept  {
     return _defaultValue;
   }
 
@@ -804,57 +816,57 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept override {
+  virtual PropertyViewStatusType status() const noexcept  {
     return _status;
   }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept override { return 0; }
+  virtual int64_t arrayCount() const noexcept  { return 0; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept override { return false; }
+  virtual bool normalized() const noexcept  { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<std::string_view> offset() const noexcept override {
+  virtual std::optional<std::string_view> offset() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<std::string_view> scale() const noexcept override {
+  virtual std::optional<std::string_view> scale() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<std::string_view> max() const noexcept override {
+  virtual std::optional<std::string_view> max() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<std::string_view> min() const noexcept override {
+  virtual std::optional<std::string_view> min() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept override { return _required; }
+  virtual bool required() const noexcept  { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<std::string_view> noData() const noexcept override {
+  virtual std::optional<std::string_view> noData() const noexcept  {
     if (_noData)
       return std::string_view(*_noData);
 
@@ -865,7 +877,7 @@ public:
    * @copydoc IPropertyView::defaultValue
    */
   virtual std::optional<std::string_view>
-  defaultValue() const noexcept override {
+  defaultValue() const noexcept  {
     if (_defaultValue)
       return std::string_view(*_defaultValue);
 
@@ -966,7 +978,7 @@ public:
       }
     }
 
-    // If the property has its own values, override the class-provided values.
+    // If the property has its own values,  the class-provided values.
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       if (classProperty.offset) {
         _offset = getArrayValue(*classProperty.offset);
@@ -1043,7 +1055,7 @@ protected:
       return;
     }
 
-    // If the property has its own values, override the class-provided values.
+    // If the property has its own values,  the class-provided values.
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       if (property.offset) {
         _offset = getArrayValue(*property.offset);
@@ -1095,7 +1107,7 @@ protected:
       return;
     }
 
-    // If the property has its own values, override the class-provided values.
+    // If the property has its own values,  the class-provided values.
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       if (property.offset) {
         _offset = getArrayValue(*property.offset);
@@ -1139,25 +1151,25 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept override {
+  virtual PropertyViewStatusType status() const noexcept  {
     return _status;
   }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept override { return _count; }
+  virtual int64_t arrayCount() const noexcept  { return _count; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept override { return _normalized; }
+  virtual bool normalized() const noexcept  { return _normalized; }
 
   /**
    * @copydoc IPropertyView::offset
    */
   virtual std::optional<PropertyArrayView<ElementType>>
-  offset() const noexcept override {
+  offset() const noexcept  {
     if (!_offset) {
       return std::nullopt;
     }
@@ -1170,7 +1182,7 @@ public:
    * @copydoc IPropertyView::scale
    */
   virtual std::optional<PropertyArrayView<ElementType>>
-  scale() const noexcept override {
+  scale() const noexcept  {
     if (!_scale) {
       return std::nullopt;
     }
@@ -1183,7 +1195,7 @@ public:
    * @copydoc IPropertyView::max
    */
   virtual std::optional<PropertyArrayView<ElementType>>
-  max() const noexcept override {
+  max() const noexcept  {
     if (!_max) {
       return std::nullopt;
     }
@@ -1196,7 +1208,7 @@ public:
    * @copydoc IPropertyView::min
    */
   virtual std::optional<PropertyArrayView<ElementType>>
-  min() const noexcept override {
+  min() const noexcept  {
     if (!_min) {
       return std::nullopt;
     }
@@ -1208,13 +1220,13 @@ public:
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept override { return _required; }
+  virtual bool required() const noexcept  { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
   virtual std::optional<PropertyArrayView<ElementType>>
-  noData() const noexcept override {
+  noData() const noexcept  {
     if (!_noData) {
       return std::nullopt;
     }
@@ -1227,7 +1239,7 @@ public:
    * @copydoc IPropertyView::defaultValue
    */
   virtual std::optional<PropertyArrayView<ElementType>>
-  defaultValue() const noexcept override {
+  defaultValue() const noexcept  {
     if (!_defaultValue) {
       return std::nullopt;
     }
@@ -1437,25 +1449,25 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept override {
+  virtual PropertyViewStatusType status() const noexcept  {
     return _status;
   }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept override { return _count; }
+  virtual int64_t arrayCount() const noexcept  { return _count; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept override { return false; }
+  virtual bool normalized() const noexcept  { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
   virtual std::optional<PropertyArrayView<bool>>
-  offset() const noexcept override {
+  offset() const noexcept  {
     return std::nullopt;
   }
 
@@ -1463,34 +1475,34 @@ public:
    * @copydoc IPropertyView::scale
    */
   virtual std::optional<PropertyArrayView<bool>>
-  scale() const noexcept override {
+  scale() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<PropertyArrayView<bool>> max() const noexcept override {
+  virtual std::optional<PropertyArrayView<bool>> max() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<PropertyArrayView<bool>> min() const noexcept override {
+  virtual std::optional<PropertyArrayView<bool>> min() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept override { return _required; }
+  virtual bool required() const noexcept  { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
   virtual std::optional<PropertyArrayView<bool>>
-  noData() const noexcept override {
+  noData() const noexcept  {
     return std::nullopt;
   }
 
@@ -1498,7 +1510,7 @@ public:
    * @copydoc IPropertyView::defaultValue
    */
   virtual std::optional<PropertyArrayView<bool>>
-  defaultValue() const noexcept override {
+  defaultValue() const noexcept  {
     if (_size > 0) {
       return PropertyArrayView<bool>(
           gsl::span<const std::byte>(
@@ -1654,25 +1666,25 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept override {
+  virtual PropertyViewStatusType status() const noexcept  {
     return _status;
   }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept override { return _count; }
+  virtual int64_t arrayCount() const noexcept  { return _count; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept override { return false; }
+  virtual bool normalized() const noexcept  { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
-  offset() const noexcept override {
+  offset() const noexcept  {
     return std::nullopt;
   }
 
@@ -1680,7 +1692,7 @@ public:
    * @copydoc IPropertyView::scale
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
-  scale() const noexcept override {
+  scale() const noexcept  {
     return std::nullopt;
   }
 
@@ -1688,7 +1700,7 @@ public:
    * @copydoc IPropertyView::max
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
-  max() const noexcept override {
+  max() const noexcept  {
     return std::nullopt;
   }
 
@@ -1696,20 +1708,20 @@ public:
    * @copydoc IPropertyView::min
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
-  min() const noexcept override {
+  min() const noexcept  {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept override { return _required; }
+  virtual bool required() const noexcept  { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
-  noData() const noexcept override {
+  noData() const noexcept  {
     if (_noDataSize > 0) {
       return PropertyArrayView<std::string_view>(
           gsl::span<const std::byte>(_noData.data(), _noData.size()),
@@ -1727,7 +1739,7 @@ public:
    * @copydoc IPropertyView::defaultValue
    */
   virtual std::optional<PropertyArrayView<std::string_view>>
-  defaultValue() const noexcept override {
+  defaultValue() const noexcept  {
     if (_noDataSize > 0) {
       return PropertyArrayView<std::string_view>(
           gsl::span<const std::byte>(

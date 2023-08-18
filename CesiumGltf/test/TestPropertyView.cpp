@@ -1,9 +1,20 @@
 #include "CesiumGltf/PropertyView.h"
 
+#include "CesiumGltf/PropertyValue.h"
+
 #include <catch2/catch.hpp>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
+
+TEST_CASE("TEST") { TestPropertyTablePropertyView<int32_t, true> normalizedView;
+  REQUIRE(normalizedView.normalized());
+  REQUIRE(normalizedView.getValue() == 1.0);
+
+  TestPropertyTablePropertyView<int32_t, false> regView;
+  REQUIRE(!regView.normalized());
+  REQUIRE(regView.getValue() == 1);
+}
 
 TEST_CASE("Boolean PropertyView") {
   SECTION("Constructs empty PropertyView") {
