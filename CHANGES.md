@@ -5,7 +5,7 @@
 ##### Fixes :wrench:
 
 - When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
-- Fixed texture format selection for KTX on mobile platforms. Specifically, it will select ASTC if it is available and fall back to PVRTC if it is not.
+
 ### v0.26.0 - 2023-08-01
 
 ##### Additions :tada:
