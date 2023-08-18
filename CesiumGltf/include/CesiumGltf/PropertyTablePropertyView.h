@@ -131,6 +131,9 @@ public:
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 29;
 };
 
+template <typename ElementType, bool Normalized = false, typename Enable = void>
+class PropertyTablePropertyView;
+
 /**
  * @brief A view on the data of the {@link PropertyTableProperty} that is created
  * by a {@link PropertyTableView}.
@@ -146,15 +149,16 @@ public:
  * one of the aforementioned types.
  */
 template <typename ElementType>
-class PropertyTablePropertyView : public PropertyView<ElementType> {
+class PropertyTablePropertyView<ElementType>
+    : public PropertyView<ElementType> {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTablePropertyView()
-      : PropertyView(),
+      : PropertyView<ElementType>(),
         _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
-        _values,
+        _values{},
         _size{0},
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
@@ -170,7 +174,7 @@ public:
    * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
   PropertyTablePropertyView(PropertyViewStatusType status)
-      : PropertyView(),
+      : PropertyView<ElementType>(),
         _status{status},
         _values{},
         _size{0},
@@ -309,7 +313,8 @@ public:
   // * this attempts to convert it to the desired type. If such a conversion is
   // * not possible, this returns std::nullopt.
   // *
-  // * If this property contains a "no data" sentinel value, then std::nullopt is
+  // * If this property contains a "no data" sentinel value, then std::nullopt
+  // is
   // * returned for any raw values that equal the sentinel value. If a default
   // * value is supplied, then it will be returned instead.
   // *
@@ -318,14 +323,16 @@ public:
   // *
   // * transformedValue = offset + scale * normalize(value)
   // *
-  // * The transformed value will then attempt to be converted to the desired type
+  // * The transformed value will then attempt to be converted to the desired
+  // type
   // * T.
   // *
   // * @param index The element index
-  // * @return The value of the element as T, or std::nullopt if conversion fails.
+  // * @return The value of the element as T, or std::nullopt if conversion
+  // fails.
   // */
-  //template <typename T = ElementType>
-  //std::optional<T> getAs(int64_t index) const noexcept {
+  // template <typename T = ElementType>
+  // std::optional<T> getAs(int64_t index) const noexcept {
   //  assert(
   //      _status == PropertyTablePropertyViewStatus::Valid &&
   //      "Check the status() first to make sure view is valid");
@@ -486,122 +493,5 @@ private:
   gsl::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
-};
-
-/**
- * @brief A view on the boolean data of the {@link PropertyTableProperty} that is created
- * by a {@link PropertyTableView}.
- *
- * It provides utility to retrieve the actual data stored in the
- * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
- */
-template <> class PropertyTablePropertyView<bool> : public PropertyView<bool> {
-public:
-  /**
-   * @brief Constructs an invalid instance for a non-existent property.
-   */
-  PropertyTablePropertyView()
-      : PropertyView(),
-        _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
-        _values{},
-        _size{0} {}
-
-  /**
-   * @brief Constructs an invalid instance for an erroneous property.
-   *
-   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
-   */
-  PropertyTablePropertyView(PropertyViewStatusType status)
-      : PropertyView(), _status{status}, _values{}, _size{0} {
-    assert(
-        _status != PropertyTablePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid "
-        "status");
-  }
-
-  /**
-   * @brief Construct an instance pointing to the boolean data specified by a {@link PropertyTableProperty}.
-   *
-   *
-   * @param property The {@link PropertyTableProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   */
-  PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
-      int64_t size,
-      gsl::span<const std::byte> values) noexcept
-      : PropertyView(classProperty, property),
-        _status{PropertyView::status()},
-        _values{values},
-        _size{size} {}
-
-  /**
-   * @copydoc IPropertyView::status
-   */
-  virtual int32_t status() const noexcept override { return _status; }
-
-  /**
-   * @brief Get the value of an element of the {@link PropertyTable}.
-   *
-   * @param index The element index
-   * @return The value of the element
-   */
-  bool get(int64_t index) const noexcept {
-    assert(
-        _status == PropertyTablePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
-
-    const int64_t byteIndex = index / 8;
-    const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
-    return bitValue == 1;
-  }
-
-  /**
-   * @brief Gets the value of an element in the {@link PropertyTable} as an instance
-   * of T. If T is not the same as the ElementType of the property, then
-   * this attempts to convert it to the desired type. If such a conversion is
-   * not possible, this returns std::nullopt.
-   *
-   * @param index The element index
-   * @return The value of the element as T, or std::nullopt if conversion fails.
-   */
-  template <typename T> std::optional<T> getAs(int64_t index) const noexcept {
-    assert(
-        _status == PropertyTablePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
-
-    return PropertyConversions<T, bool>::convert(get(index));
-  }
-
-  /**
-   * @brief Get the number of elements in this
-   * PropertyTablePropertyView. If the view is valid, this returns
-   * {@link PropertyTable::count}. Otherwise, this returns 0.
-   *
-   * @return The number of elements in this PropertyTablePropertyView.
-   */
-  int64_t size() const noexcept {
-    return status() == PropertyTablePropertyViewStatus::Valid ? _size : 0;
-  }
-
-private:
-  PropertyViewStatusType _status;
-  gsl::span<const std::byte> _values;
-  int64_t _size;
 };
 } // namespace CesiumGltf

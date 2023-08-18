@@ -1,20 +1,11 @@
 #include "CesiumGltf/PropertyView.h"
 
-#include "CesiumGltf/PropertyValue.h"
+//#include "CesiumGltf/PropertyValue.h"
 
 #include <catch2/catch.hpp>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
-
-TEST_CASE("TEST") { TestPropertyTablePropertyView<int32_t, true> normalizedView;
-  REQUIRE(normalizedView.normalized());
-  REQUIRE(normalizedView.getValue() == 1.0);
-
-  TestPropertyTablePropertyView<int32_t, false> regView;
-  REQUIRE(!regView.normalized());
-  REQUIRE(regView.getValue() == 1);
-}
 
 TEST_CASE("Boolean PropertyView") {
   SECTION("Constructs empty PropertyView") {
@@ -172,7 +163,7 @@ TEST_CASE("Scalar PropertyView") {
     classProperty.normalized = true;
     classProperty.required = true;
 
-    PropertyView<uint8_t> view(classProperty);
+    PropertyView<uint8_t, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(view.normalized());
     REQUIRE(view.required());
@@ -372,7 +363,7 @@ TEST_CASE("VecN PropertyView") {
     classProperty.normalized = true;
     classProperty.required = true;
 
-    PropertyView<glm::i16vec3> view(classProperty);
+    PropertyView<glm::i16vec3, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(view.normalized());
     REQUIRE(view.required());
@@ -572,7 +563,7 @@ TEST_CASE("MatN PropertyView") {
     classProperty.normalized = true;
     classProperty.required = true;
 
-    PropertyView<glm::imat3x3> view(classProperty);
+    PropertyView<glm::imat3x3, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(view.normalized());
     REQUIRE(view.required());

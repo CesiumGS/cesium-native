@@ -265,15 +265,28 @@ template <> struct TypeToPropertyType<std::string_view> {
   static constexpr PropertyType value = PropertyType::String;
 };
 
+/**
+ * @brief Convert an integer numeric type to the corresponding representation as
+ * a double type. Doubles are preferred over floats to maintain more precision.
+ */
 template <typename T> struct TypeToNormalizedType;
 
-template <>
-struct TypeToNormalizedType<int32_t> {
-  using type = double;
-};
+template <> struct TypeToNormalizedType<int8_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint8_t> { using type = double; };
+template <> struct TypeToNormalizedType<int16_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint16_t> { using type = double; };
+template <> struct TypeToNormalizedType<int32_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint32_t> { using type = double; };
+template <> struct TypeToNormalizedType<int64_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint64_t> { using type = double; };
 
 template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<glm::vec<N, T, Q>> {
   using type = glm::vec<N, double, Q>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<glm::mat<N, N, T, Q>> {
+  using type = glm::mat<N, N, double, Q>;
 };
 } // namespace CesiumGltf
