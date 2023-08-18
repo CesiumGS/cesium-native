@@ -21,6 +21,12 @@ struct CESIUM3DTILES_API PropertyTable final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "PropertyTable";
 
+  PropertyTable() noexcept = default;
+  PropertyTable(PropertyTable&& rhs) noexcept = default;
+  PropertyTable(const PropertyTable& rhs) noexcept = default;
+  PropertyTable& operator=(const PropertyTable& rhs) noexcept = default;
+  PropertyTable& operator=(PropertyTable&& rhs) noexcept = default;
+
   /**
    * @brief The name of the property table, e.g. for display purposes.
    */

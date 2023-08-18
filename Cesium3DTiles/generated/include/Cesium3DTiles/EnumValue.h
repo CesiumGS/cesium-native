@@ -18,6 +18,12 @@ struct CESIUM3DTILES_API EnumValue final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "EnumValue";
 
+  EnumValue() noexcept = default;
+  EnumValue(EnumValue&& rhs) noexcept = default;
+  EnumValue(const EnumValue& rhs) noexcept = default;
+  EnumValue& operator=(const EnumValue& rhs) noexcept = default;
+  EnumValue& operator=(EnumValue&& rhs) noexcept = default;
+
   /**
    * @brief The name of the enum value.
    */

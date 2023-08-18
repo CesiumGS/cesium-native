@@ -116,7 +116,7 @@ void JsonReader::FinalJsonHandler::reportWarning(
 }
 
 void JsonReader::FinalJsonHandler::setInputStream(
-    rapidjson::MemoryStream* pInputStream) noexcept {
+    CesiumMemoryStream* pInputStream) noexcept {
   this->_pInputStream = pInputStream;
 }
 
@@ -128,8 +128,8 @@ void JsonReader::FinalJsonHandler::setInputStream(
     std::vector<std::string>& /* warnings */) {
 
   rapidjson::Reader reader;
-  rapidjson::MemoryStream inputStream(
-      reinterpret_cast<const char*>(data.data()),
+  CesiumMemoryStream inputStream(
+      reinterpret_cast<char*>(const_cast<std::byte*>(data.data())),
       data.size());
 
   finalHandler.setInputStream(&inputStream);
@@ -141,9 +141,8 @@ void JsonReader::FinalJsonHandler::setInputStream(
   bool success = true;
   while (success && !reader.IterativeParseComplete()) {
     success = reader.IterativeParseNext<
-        rapidjson::kParseDefaultFlags | rapidjson::kParseFullPrecisionFlag>(
-        inputStream,
-        dispatcher);
+        rapidjson::kParseDefaultFlags | rapidjson::kParseFullPrecisionFlag |
+        rapidjson::kParseInsituFlag>(inputStream, dispatcher);
   }
 
   if (reader.HasParseError()) {

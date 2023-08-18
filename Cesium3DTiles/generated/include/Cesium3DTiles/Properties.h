@@ -14,6 +14,12 @@ struct CESIUM3DTILES_API Properties final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Properties";
 
+  Properties() noexcept = default;
+  Properties(Properties&& rhs) noexcept = default;
+  Properties(const Properties& rhs) noexcept = default;
+  Properties& operator=(const Properties& rhs) noexcept = default;
+  Properties& operator=(Properties&& rhs) noexcept = default;
+
   /**
    * @brief The maximum value of this property of all the features in the
    * tileset. The maximum value shall not be larger than the minimum value.

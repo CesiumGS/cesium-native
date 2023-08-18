@@ -306,10 +306,12 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
     }
   )";
 
+  std::string sCopy = s;
+
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span(reinterpret_cast<const std::byte*>(sCopy.c_str()), sCopy.size()),
       options);
 
   REQUIRE(result.errors.empty());
@@ -336,8 +338,11 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::JsonOnly);
 
+  sCopy = s;
   GltfReaderResult result2 = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span(
+          reinterpret_cast<const std::byte*>(sCopy.c_str()),
+          sCopy.size()),
       options);
 
   REQUIRE(result2.errors.empty());
@@ -371,8 +376,11 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::Disabled);
 
+  sCopy = s;
   GltfReaderResult result3 = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span(
+          reinterpret_cast<const std::byte*>(sCopy.c_str()),
+          sCopy.size()),
       options);
 
   REQUIRE(result3.errors.empty());
@@ -406,10 +414,12 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
     }
   )";
 
+  std::string sCopy = s;
+
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult withCustomExtModel = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span(reinterpret_cast<const std::byte*>(sCopy.c_str()), sCopy.size()),
       options);
 
   REQUIRE(withCustomExtModel.errors.empty());
@@ -439,8 +449,9 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 
+  sCopy = s;
   GltfReaderResult withoutCustomExt = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span(reinterpret_cast<const std::byte*>(sCopy.c_str()), sCopy.size()),
       options);
 
   auto& zeroExtensions = withoutCustomExt.model->extensions;

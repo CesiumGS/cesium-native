@@ -26,6 +26,12 @@ struct CESIUM3DTILES_API Tileset final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tileset";
 
+  Tileset() noexcept = default;
+  Tileset(Tileset&& rhs) noexcept = default;
+  Tileset(const Tileset& rhs) noexcept = default;
+  Tileset& operator=(const Tileset& rhs) noexcept = default;
+  Tileset& operator=(Tileset&& rhs) noexcept = default;
+
   /**
    * @brief Metadata about the entire tileset.
    */

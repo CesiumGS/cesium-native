@@ -19,6 +19,12 @@ struct CESIUM3DTILES_API MetadataEntity
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "MetadataEntity";
 
+  MetadataEntity() noexcept = default;
+  MetadataEntity(MetadataEntity&& rhs) noexcept = default;
+  MetadataEntity(const MetadataEntity& rhs) noexcept = default;
+  MetadataEntity& operator=(const MetadataEntity& rhs) noexcept = default;
+  MetadataEntity& operator=(MetadataEntity&& rhs) noexcept = default;
+
   /**
    * @brief The class that property values conform to. The value shall be a
    * class ID declared in the `classes` dictionary of the metadata schema.

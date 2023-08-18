@@ -18,6 +18,12 @@ struct CESIUM3DTILES_API BoundingVolume final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "BoundingVolume";
 
+  BoundingVolume() noexcept = default;
+  BoundingVolume(BoundingVolume&& rhs) noexcept = default;
+  BoundingVolume(const BoundingVolume& rhs) noexcept = default;
+  BoundingVolume& operator=(const BoundingVolume& rhs) noexcept = default;
+  BoundingVolume& operator=(BoundingVolume&& rhs) noexcept = default;
+
   /**
    * @brief An array of 12 numbers that define an oriented bounding box. The
    * first three elements define the x, y, and z values for the center of the

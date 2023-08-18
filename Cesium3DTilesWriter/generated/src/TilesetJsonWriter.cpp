@@ -171,6 +171,12 @@ void writeJson(
 
 // Forward declaration to avoid circular dependency since some properties
 // are vector of unordered_map and others are unordered_map of vector
+template <typename T, std::size_t N>
+[[maybe_unused]] void writeJson(
+    const std::array<T, N>& list,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
 template <typename T>
 [[maybe_unused]] void writeJson(
     const std::vector<T>& list,
@@ -242,6 +248,18 @@ template <typename T>
     writeJson(item.second, jsonWriter, context);
   }
   jsonWriter.EndObject();
+}
+
+template <typename T, std::size_t N>
+[[maybe_unused]] void writeJson(
+    const std::array<T, N>& list,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartArray();
+  for (const T& item : list) {
+    writeJson(item, jsonWriter, context);
+  }
+  jsonWriter.EndArray();
 }
 
 template <typename T>
@@ -957,7 +975,7 @@ void writeJson(
     writeJson(obj.refine, jsonWriter, context);
   }
 
-  static const std::vector<double> transformDefault =
+  static const std::array<double, 16> transformDefault =
       {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
   if (obj.transform != transformDefault) {
     jsonWriter.Key("transform");

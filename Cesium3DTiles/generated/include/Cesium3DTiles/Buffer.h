@@ -18,6 +18,12 @@ namespace Cesium3DTiles {
 struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Buffer";
 
+  Buffer() noexcept = default;
+  Buffer(Buffer&& rhs) noexcept = default;
+  Buffer(const Buffer& rhs) noexcept = default;
+  Buffer& operator=(const Buffer& rhs) noexcept = default;
+  Buffer& operator=(Buffer&& rhs) noexcept = default;
+
   /**
    * @brief The URI (or IRI) of the file that contains the binary buffer data.
    * Relative paths are relative to the file containing the buffer JSON. `uri`

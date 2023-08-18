@@ -19,6 +19,16 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
   static inline constexpr const char* ExtensionName =
       "3DTILES_bounding_volume_S2";
 
+  Extension3dTilesBoundingVolumeS2() noexcept = default;
+  Extension3dTilesBoundingVolumeS2(
+      Extension3dTilesBoundingVolumeS2&& rhs) noexcept = default;
+  Extension3dTilesBoundingVolumeS2(
+      const Extension3dTilesBoundingVolumeS2& rhs) noexcept = default;
+  Extension3dTilesBoundingVolumeS2&
+  operator=(const Extension3dTilesBoundingVolumeS2& rhs) noexcept = default;
+  Extension3dTilesBoundingVolumeS2&
+  operator=(Extension3dTilesBoundingVolumeS2&& rhs) noexcept = default;
+
   /**
    * @brief A hexadecimal representation of the S2CellId. Tokens shall be
    * lower-case, shall not contain whitespace and shall have trailing zeros

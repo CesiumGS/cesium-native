@@ -25,6 +25,12 @@ struct CESIUM3DTILES_API Subtree final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Subtree";
 
+  Subtree() noexcept = default;
+  Subtree(Subtree&& rhs) noexcept = default;
+  Subtree(const Subtree& rhs) noexcept = default;
+  Subtree& operator=(const Subtree& rhs) noexcept = default;
+  Subtree& operator=(Subtree&& rhs) noexcept = default;
+
   /**
    * @brief An array of buffers.
    */

@@ -18,6 +18,13 @@ struct CESIUM3DTILES_API PropertyStatistics final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "PropertyStatistics";
 
+  PropertyStatistics() noexcept = default;
+  PropertyStatistics(PropertyStatistics&& rhs) noexcept = default;
+  PropertyStatistics(const PropertyStatistics& rhs) noexcept = default;
+  PropertyStatistics&
+  operator=(const PropertyStatistics& rhs) noexcept = default;
+  PropertyStatistics& operator=(PropertyStatistics&& rhs) noexcept = default;
+
   /**
    * @brief The minimum property value occurring in the tileset. Only applicable
    * to `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property

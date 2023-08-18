@@ -4,6 +4,7 @@
 #include "Library.h"
 
 #include <gsl/span>
+#include <rapidjson/stream.h>
 
 #include <cstddef>
 #include <optional>
@@ -73,17 +74,43 @@ public:
   }
 
 private:
+  struct CesiumMemoryStream {
+    typedef char Ch; // byte
+
+    CesiumMemoryStream(Ch* src, size_t size)
+        : src_(src), begin_(src), end_(src + size), size_(size) {}
+
+    Ch Peek() const { return RAPIDJSON_UNLIKELY(src_ == end_) ? '\0' : *src_; }
+    Ch Take() { return RAPIDJSON_UNLIKELY(src_ == end_) ? '\0' : *src_++; }
+    size_t Tell() const { return static_cast<size_t>(src_ - begin_); }
+
+    Ch* PutBegin() { return dst_ = src_; }
+    void Put(Ch c) { RAPIDJSON_ASSERT(dst_ != 0); *dst_++ = c; }
+    void Flush() {}
+    size_t PutEnd(Ch* begin) { return static_cast<size_t>(dst_ - begin); }
+
+    // For encoding detection only.
+    const Ch* Peek4() const { return Tell() + 4 <= size_ ? src_ : 0; }
+
+    Ch* src_;         //!< Current read position.
+    const Ch* begin_; //!< Original head of the string.
+    const Ch* end_;   //!< End of stream.
+    size_t size_;     //!< Size of the stream.
+    Ch* dst_;
+  };
+
   class FinalJsonHandler : public JsonHandler {
   public:
     FinalJsonHandler(std::vector<std::string>& warnings);
     virtual void reportWarning(
         const std::string& warning,
         std::vector<std::string>&& context) override;
-    void setInputStream(rapidjson::MemoryStream* pInputStream) noexcept;
+    // void setInputStream(rapidjson::MemoryStream* pInputStream) noexcept;
+    void setInputStream(CesiumMemoryStream* pInputStream) noexcept;
 
   private:
     std::vector<std::string>& _warnings;
-    rapidjson::MemoryStream* _pInputStream;
+    CesiumMemoryStream* _pInputStream;
   };
 
   static void internalRead(

@@ -19,6 +19,12 @@ struct CESIUM3DTILES_API ClassProperty final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ClassProperty";
 
+  ClassProperty() noexcept = default;
+  ClassProperty(ClassProperty&& rhs) noexcept = default;
+  ClassProperty(const ClassProperty& rhs) noexcept = default;
+  ClassProperty& operator=(const ClassProperty& rhs) noexcept = default;
+  ClassProperty& operator=(ClassProperty&& rhs) noexcept = default;
+
   /**
    * @brief Known values for The element type.
    */

@@ -22,6 +22,16 @@ struct CESIUM3DTILES_API Extension3dTilesImplicitTiling final
       "Extension3dTilesImplicitTiling";
   static inline constexpr const char* ExtensionName = "3DTILES_implicit_tiling";
 
+  Extension3dTilesImplicitTiling() noexcept = default;
+  Extension3dTilesImplicitTiling(
+      Extension3dTilesImplicitTiling&& rhs) noexcept = default;
+  Extension3dTilesImplicitTiling(
+      const Extension3dTilesImplicitTiling& rhs) noexcept = default;
+  Extension3dTilesImplicitTiling&
+  operator=(const Extension3dTilesImplicitTiling& rhs) noexcept = default;
+  Extension3dTilesImplicitTiling&
+  operator=(Extension3dTilesImplicitTiling&& rhs) noexcept = default;
+
   /**
    * @brief Known values for A string describing the subdivision scheme used
    * within the tileset.

@@ -27,6 +27,10 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 }
 } // namespace
 
+TEST_CASE("Tile is nothrow move constructible") {
+  CHECK(std::is_nothrow_move_constructible_v<Cesium3DTiles::Tile>);
+}
+
 TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;
 
@@ -90,11 +94,15 @@ TEST_CASE("Reads tileset JSON") {
       158.4};
 
   REQUIRE_THAT(
-      tileset.root.boundingVolume.region,
+      std::vector<double>(
+          tileset.root.boundingVolume.region.begin(),
+          tileset.root.boundingVolume.region.end()),
       Catch::Matchers::Approx(expectedRegion));
 
   REQUIRE_THAT(
-      tileset.root.content->boundingVolume->region,
+      std::vector<double>(
+          tileset.root.content->boundingVolume->region.begin(),
+          tileset.root.content->boundingVolume->region.end()),
       Catch::Matchers::Approx(expectedContentRegion));
 
   REQUIRE(tileset.root.children.size() == 4);
@@ -102,11 +110,15 @@ TEST_CASE("Reads tileset JSON") {
   const Cesium3DTiles::Tile& child = tileset.root.children[0];
 
   REQUIRE_THAT(
-      child.boundingVolume.region,
+      std::vector<double>(
+          child.boundingVolume.region.begin(),
+          child.boundingVolume.region.end()),
       Catch::Matchers::Approx(expectedChildRegion));
 
   REQUIRE_THAT(
-      child.content->boundingVolume->region,
+      std::vector<double>(
+          child.content->boundingVolume->region.begin(),
+          child.content->boundingVolume->region.end()),
       Catch::Matchers::Approx(expectedChildContentRegion));
 
   CHECK(child.content->uri == "1/0/0.b3dm");
@@ -274,8 +286,11 @@ TEST_CASE("Reads custom extension") {
   )";
 
   Cesium3DTilesReader::TilesetReader reader;
-  Cesium3DTilesReader::TilesetReaderResult withCustomExt = reader.readTileset(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  std::string sCopy = s;
+  Cesium3DTilesReader::TilesetReaderResult withCustomExt =
+      reader.readTileset(gsl::span(
+          reinterpret_cast<const std::byte*>(sCopy.c_str()),
+          sCopy.size()));
   REQUIRE(withCustomExt.errors.empty());
   REQUIRE(withCustomExt.tileset.has_value());
 
@@ -303,10 +318,13 @@ TEST_CASE("Reads custom extension") {
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 
+  sCopy = s;
   Cesium3DTilesReader::TilesetReaderResult withoutCustomExt =
-      reader.readTileset(
-          gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      reader.readTileset(gsl::span(
+          reinterpret_cast<const std::byte*>(sCopy.c_str()),
+          sCopy.size()));
 
+  REQUIRE(withoutCustomExt.tileset);
   auto& zeroExtensions = withoutCustomExt.tileset->extensions;
   REQUIRE(zeroExtensions.empty());
 }

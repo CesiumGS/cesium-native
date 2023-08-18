@@ -18,6 +18,12 @@ namespace Cesium3DTiles {
 struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Class";
 
+  Class() noexcept = default;
+  Class(Class&& rhs) noexcept = default;
+  Class(const Class& rhs) noexcept = default;
+  Class& operator=(const Class& rhs) noexcept = default;
+  Class& operator=(Class&& rhs) noexcept = default;
+
   /**
    * @brief The name of the class, e.g. for display purposes.
    */

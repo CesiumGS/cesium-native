@@ -20,6 +20,12 @@ struct CESIUM3DTILES_API ClassStatistics final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ClassStatistics";
 
+  ClassStatistics() noexcept = default;
+  ClassStatistics(ClassStatistics&& rhs) noexcept = default;
+  ClassStatistics(const ClassStatistics& rhs) noexcept = default;
+  ClassStatistics& operator=(const ClassStatistics& rhs) noexcept = default;
+  ClassStatistics& operator=(ClassStatistics&& rhs) noexcept = default;
+
   /**
    * @brief The number of entities that conform to the class.
    */

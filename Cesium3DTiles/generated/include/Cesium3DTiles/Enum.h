@@ -18,6 +18,12 @@ namespace Cesium3DTiles {
 struct CESIUM3DTILES_API Enum final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Enum";
 
+  Enum() noexcept = default;
+  Enum(Enum&& rhs) noexcept = default;
+  Enum(const Enum& rhs) noexcept = default;
+  Enum& operator=(const Enum& rhs) noexcept = default;
+  Enum& operator=(Enum&& rhs) noexcept = default;
+
   /**
    * @brief Known values for The type of the integer enum value.
    */

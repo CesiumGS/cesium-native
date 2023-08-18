@@ -20,6 +20,12 @@ struct CESIUM3DTILES_API Content final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Content";
 
+  Content() noexcept = default;
+  Content(Content&& rhs) noexcept = default;
+  Content(const Content& rhs) noexcept = default;
+  Content& operator=(const Content& rhs) noexcept = default;
+  Content& operator=(Content&& rhs) noexcept = default;
+
   /**
    * @brief An optional bounding volume that tightly encloses tile content.
    * tile.boundingVolume provides spatial coherence and

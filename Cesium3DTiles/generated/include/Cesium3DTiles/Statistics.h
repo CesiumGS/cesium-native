@@ -17,6 +17,12 @@ struct CESIUM3DTILES_API Statistics final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Statistics";
 
+  Statistics() noexcept = default;
+  Statistics(Statistics&& rhs) noexcept = default;
+  Statistics(const Statistics& rhs) noexcept = default;
+  Statistics& operator=(const Statistics& rhs) noexcept = default;
+  Statistics& operator=(Statistics&& rhs) noexcept = default;
+
   /**
    * @brief A dictionary, where each key corresponds to a class ID in the
    * `classes` dictionary of the metatata schema that was defined for the

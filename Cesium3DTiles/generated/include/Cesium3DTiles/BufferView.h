@@ -18,6 +18,12 @@ struct CESIUM3DTILES_API BufferView final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "BufferView";
 
+  BufferView() noexcept = default;
+  BufferView(BufferView&& rhs) noexcept = default;
+  BufferView(const BufferView& rhs) noexcept = default;
+  BufferView& operator=(const BufferView& rhs) noexcept = default;
+  BufferView& operator=(BufferView&& rhs) noexcept = default;
+
   /**
    * @brief The index of the buffer.
    */

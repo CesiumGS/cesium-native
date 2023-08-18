@@ -20,6 +20,12 @@ struct CESIUM3DTILES_API ImplicitTiling final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ImplicitTiling";
 
+  ImplicitTiling() noexcept = default;
+  ImplicitTiling(ImplicitTiling&& rhs) noexcept = default;
+  ImplicitTiling(const ImplicitTiling& rhs) noexcept = default;
+  ImplicitTiling& operator=(const ImplicitTiling& rhs) noexcept = default;
+  ImplicitTiling& operator=(ImplicitTiling&& rhs) noexcept = default;
+
   /**
    * @brief Known values for A string describing the subdivision scheme used
    * within the tileset.

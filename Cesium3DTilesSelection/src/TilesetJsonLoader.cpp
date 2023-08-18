@@ -309,11 +309,11 @@ void parseImplicitTileset(
 namespace {
 
 std::optional<glm::dmat4x4>
-getTransformProperty(const std::vector<double>& transform) {
+getTransformProperty(const std::array<double, 16>& transform) {
   if (transform.size() != 16)
     return std::nullopt;
 
-  const std::vector<double>& a = transform;
+  const std::array<double, 16>& a = transform;
   return std::make_optional<glm::dmat4>(
       glm::dvec4(a[0], a[1], a[2], a[3]),
       glm::dvec4(a[4], a[5], a[6], a[7]),
@@ -325,7 +325,7 @@ getTransformProperty(const std::vector<double>& transform) {
 
 std::optional<Tile> parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const Cesium3DTiles::Tile& tileJson,
+    Cesium3DTiles::Tile& tileJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
     double parentGeometricError,
@@ -417,9 +417,9 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   // Parse content member to determine tile content Url.
-  const std::string* pContentUri = nullptr;
+  std::string* pContentUri = nullptr;
   if (tileJson.content.has_value()) {
-    const Cesium3DTiles::Content& content = tileJson.content.value();
+    Cesium3DTiles::Content& content = tileJson.content.value();
     if (!content.uri.empty()) {
       pContentUri = &content.uri;
     } else {
@@ -427,7 +427,7 @@ std::optional<Tile> parseTileJsonRecursively(
       auto urlIt = content.unknownProperties.find("url");
       if (urlIt != content.unknownProperties.end() &&
           urlIt->second.isString()) {
-        pContentUri = &urlIt->second.getString();
+        // pContentUri = &urlIt->second.getString();
       }
     }
   }
@@ -486,10 +486,10 @@ std::optional<Tile> parseTileJsonRecursively(
   // parse tile's children
   std::vector<Tile> childTiles;
   if (!tileJson.children.empty()) {
-    const std::vector<Cesium3DTiles::Tile>& childrenJson = tileJson.children;
+    std::vector<Cesium3DTiles::Tile>& childrenJson = tileJson.children;
     childTiles.reserve(childrenJson.size());
     for (size_t i = 0; i < childrenJson.size(); ++i) {
-      const Cesium3DTiles::Tile& childJson = childrenJson[i];
+      Cesium3DTiles::Tile& childJson = childrenJson[i];
       std::optional<Tile> maybeChild = parseTileJsonRecursively(
           pLogger,
           childJson,
@@ -506,7 +506,7 @@ std::optional<Tile> parseTileJsonRecursively(
 
   if (pContentUri) {
     Tile tile{&currentLoader};
-    tile.setTileID(*pContentUri);
+    tile.setTileID(std::move(*pContentUri));
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
     tile.setViewerRequestVolume(tileViewerRequestVolume);
@@ -534,10 +534,10 @@ std::optional<Tile> parseTileJsonRecursively(
 TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
-    const Cesium3DTilesReader::TilesetReaderResult& readerResult,
+    Cesium3DTilesReader::TilesetReaderResult& readerResult,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine) {
-  const Cesium3DTiles::Tileset& tileset = *readerResult.tileset;
+  Cesium3DTiles::Tileset& tileset = *readerResult.tileset;
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tileset, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);

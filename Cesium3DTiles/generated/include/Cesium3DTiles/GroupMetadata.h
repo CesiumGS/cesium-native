@@ -11,5 +11,11 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API GroupMetadata final : public MetadataEntity {
   static inline constexpr const char* TypeName = "GroupMetadata";
+
+  GroupMetadata() noexcept = default;
+  GroupMetadata(GroupMetadata&& rhs) noexcept = default;
+  GroupMetadata(const GroupMetadata& rhs) noexcept = default;
+  GroupMetadata& operator=(const GroupMetadata& rhs) noexcept = default;
+  GroupMetadata& operator=(GroupMetadata&& rhs) noexcept = default;
 };
 } // namespace Cesium3DTiles

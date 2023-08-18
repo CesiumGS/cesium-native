@@ -17,6 +17,12 @@ struct CESIUM3DTILES_API Availability final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Availability";
 
+  Availability() noexcept = default;
+  Availability(Availability&& rhs) noexcept = default;
+  Availability(const Availability& rhs) noexcept = default;
+  Availability& operator=(const Availability& rhs) noexcept = default;
+  Availability& operator=(Availability&& rhs) noexcept = default;
+
   /**
    * @brief Known values for Integer indicating whether all of the elements are
    * available (1) or all are unavailable (0).

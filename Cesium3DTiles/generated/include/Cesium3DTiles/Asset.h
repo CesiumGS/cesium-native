@@ -16,6 +16,12 @@ namespace Cesium3DTiles {
 struct CESIUM3DTILES_API Asset final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Asset";
 
+  Asset() noexcept = default;
+  Asset(Asset&& rhs) noexcept = default;
+  Asset(const Asset& rhs) noexcept = default;
+  Asset& operator=(const Asset& rhs) noexcept = default;
+  Asset& operator=(Asset&& rhs) noexcept = default;
+
   /**
    * @brief The 3D Tiles version. The version defines the JSON schema for the
    * tileset JSON and the base set of tile formats.

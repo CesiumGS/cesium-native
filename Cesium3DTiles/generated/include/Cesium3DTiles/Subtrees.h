@@ -16,6 +16,12 @@ struct CESIUM3DTILES_API Subtrees final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Subtrees";
 
+  Subtrees() noexcept = default;
+  Subtrees(Subtrees&& rhs) noexcept = default;
+  Subtrees(const Subtrees& rhs) noexcept = default;
+  Subtrees& operator=(const Subtrees& rhs) noexcept = default;
+  Subtrees& operator=(Subtrees&& rhs) noexcept = default;
+
   /**
    * @brief A URI with embedded expressions that describes the resource that is associated with an implicit tile in an implicit tileset. Allowed expressions are `{level}`, `{x}`, `{y}`, and `{z}`. `{level}` is substituted with the level of the node, `{x}` is substituted with the x index of the node within the level, and `{y}` is substituted with the y index of the node within the level. `{z}` may only be given when the subdivision scheme is `OCTREE`, and it is substituted with the z index of the node within the level.
    */

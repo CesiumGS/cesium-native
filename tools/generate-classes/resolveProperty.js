@@ -331,13 +331,26 @@ function resolveArray(
     return undefined;
   }
 
+  const isRequired = required && required.includes(propertyName);
+
+  const isFixedSize =
+    typeof propertyDetails.minItems === "number" &&
+    propertyDetails.minItems === propertyDetails.maxItems;
+  const isRequiredOrHasDefault = isRequired || propertyDetails.default;
+  const useEmbeddedArray = isFixedSize && isRequiredOrHasDefault;
+
   return {
     ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
     name: propertyName,
-    headers: ["<vector>", ...itemProperty.headers],
+    headers: [
+      useEmbeddedArray ? "<array>" : "<vector>",
+      ...itemProperty.headers,
+    ],
     schemas: itemProperty.schemas,
     localTypes: itemProperty.localTypes,
-    type: `std::vector<${itemProperty.type}>`,
+    type: useEmbeddedArray
+      ? `std::array<${itemProperty.type}, ${propertyDetails.minItems}>`
+      : `std::vector<${itemProperty.type}>`,
     defaultValue: propertyDetails.default
       ? `{ ${propertyDetails.default} }`
       : undefined,

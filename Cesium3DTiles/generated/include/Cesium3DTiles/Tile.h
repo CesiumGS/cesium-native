@@ -10,6 +10,7 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -20,6 +21,12 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tile";
+
+  Tile() noexcept = default;
+  Tile(Tile&& rhs) noexcept = default;
+  Tile(const Tile& rhs) noexcept = default;
+  Tile& operator=(const Tile& rhs) noexcept = default;
+  Tile& operator=(Tile&& rhs) noexcept = default;
 
   /**
    * @brief Known values for Specifies if additive or replacement refinement is
@@ -74,7 +81,7 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * in EPSG:4979 coordinates. `transform` scales the `geometricError` by the
    * maximum scaling factor from the matrix.
    */
-  std::vector<double> transform =
+  std::array<double, 16> transform =
       {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
   /**

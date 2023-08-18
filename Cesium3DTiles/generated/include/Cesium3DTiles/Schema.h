@@ -19,6 +19,12 @@ namespace Cesium3DTiles {
 struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Schema";
 
+  Schema() noexcept = default;
+  Schema(Schema&& rhs) noexcept = default;
+  Schema(const Schema& rhs) noexcept = default;
+  Schema& operator=(const Schema& rhs) noexcept = default;
+  Schema& operator=(Schema&& rhs) noexcept = default;
+
   /**
    * @brief Unique identifier for the schema. Schema IDs shall be alphanumeric
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.

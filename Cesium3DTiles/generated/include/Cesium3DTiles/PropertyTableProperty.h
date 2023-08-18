@@ -21,6 +21,14 @@ struct CESIUM3DTILES_API PropertyTableProperty final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "PropertyTableProperty";
 
+  PropertyTableProperty() noexcept = default;
+  PropertyTableProperty(PropertyTableProperty&& rhs) noexcept = default;
+  PropertyTableProperty(const PropertyTableProperty& rhs) noexcept = default;
+  PropertyTableProperty&
+  operator=(const PropertyTableProperty& rhs) noexcept = default;
+  PropertyTableProperty&
+  operator=(PropertyTableProperty&& rhs) noexcept = default;
+
   /**
    * @brief Known values for The type of values in `arrayOffsets`.
    */
