@@ -156,27 +156,6 @@ TEST_CASE("Scalar PropertyView") {
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
   }
 
-  SECTION("Constructs with non-optional properties") {
-    ClassProperty classProperty;
-    classProperty.type = ClassProperty::Type::SCALAR;
-    classProperty.componentType = ClassProperty::ComponentType::UINT8;
-    classProperty.normalized = true;
-    classProperty.required = true;
-
-    PropertyView<uint8_t, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.normalized());
-    REQUIRE(view.required());
-
-    REQUIRE(view.arrayCount() == 0);
-    REQUIRE(!view.offset());
-    REQUIRE(!view.scale());
-    REQUIRE(!view.max());
-    REQUIRE(!view.min());
-    REQUIRE(!view.noData());
-    REQUIRE(!view.defaultValue());
-  }
-
   SECTION("Ignores count") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
@@ -191,23 +170,23 @@ TEST_CASE("Scalar PropertyView") {
   SECTION("Constructs with offset, scale, max, and min") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
-    classProperty.componentType = ClassProperty::ComponentType::INT16;
-    classProperty.offset = 5;
-    classProperty.scale = 2;
-    classProperty.max = 10;
-    classProperty.min = -10;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.offset = 5.04f;
+    classProperty.scale = 2.2f;
+    classProperty.max = 10.5f;
+    classProperty.min = -10.5f;
 
-    PropertyView<int16_t> view(classProperty);
+    PropertyView<float> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(view.offset());
     REQUIRE(view.scale());
     REQUIRE(view.max());
     REQUIRE(view.min());
 
-    REQUIRE(*view.offset() == 5);
-    REQUIRE(*view.scale() == 2);
-    REQUIRE(*view.max() == 10);
-    REQUIRE(*view.min() == -10);
+    REQUIRE(*view.offset() == 5.04f);
+    REQUIRE(*view.scale() == 2.2f);
+    REQUIRE(*view.max() == 10.5f);
+    REQUIRE(*view.min() == -10.5f);
   }
 
   SECTION("Constructs with noData and defaultProperty") {
@@ -228,19 +207,27 @@ TEST_CASE("Scalar PropertyView") {
     REQUIRE(*view.defaultValue() == 1);
   }
 
-  SECTION("Ignores noData and defaultProperty when required is true") {
+  SECTION("Reports errors for incorrectly defined properties") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
-    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
     classProperty.required = true;
-    classProperty.noData = 0;
     classProperty.defaultProperty = 1;
 
-    PropertyView<uint8_t> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.required());
-    REQUIRE(!view.noData());
-    REQUIRE(!view.defaultValue());
+    PropertyView<int8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = 0;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = 200;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = 1234;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 
   SECTION("Reports errors for out-of-bounds values") {
@@ -263,43 +250,27 @@ TEST_CASE("Scalar PropertyView") {
     classProperty.max = 1000;
     view = PropertyView<int8_t>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
-
-    classProperty.scale = 200;
-    view = PropertyView<int8_t>(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
-
-    classProperty.offset = 1234;
-    view = PropertyView<int8_t>(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 
   SECTION("Reports errors for invalid types") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
-    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
     classProperty.defaultProperty = JsonValue::Array{1};
 
-    PropertyView<int8_t> view(classProperty);
+    PropertyView<float> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
 
     classProperty.noData = "0";
-    view = PropertyView<int8_t>(classProperty);
+    view = PropertyView<float>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
 
-    classProperty.min = -12.7f;
-    view = PropertyView<int8_t>(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
-
-    classProperty.max = 5.5;
-    view = PropertyView<int8_t>(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
-
     classProperty.scale = false;
-    view = PropertyView<int8_t>(classProperty);
+    view = PropertyView<float>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
 
     classProperty.offset = JsonValue::Array{};
-    view = PropertyView<int8_t>(classProperty);
+    view = PropertyView<float>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 }
@@ -354,27 +325,6 @@ TEST_CASE("VecN PropertyView") {
 
     PropertyView<glm::vec3> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Constructs with non-optional properties") {
-    ClassProperty classProperty;
-    classProperty.type = ClassProperty::Type::VEC3;
-    classProperty.componentType = ClassProperty::ComponentType::INT16;
-    classProperty.normalized = true;
-    classProperty.required = true;
-
-    PropertyView<glm::i16vec3, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.normalized());
-    REQUIRE(view.required());
-
-    REQUIRE(view.arrayCount() == 0);
-    REQUIRE(!view.offset());
-    REQUIRE(!view.scale());
-    REQUIRE(!view.max());
-    REQUIRE(!view.min());
-    REQUIRE(!view.noData());
-    REQUIRE(!view.defaultValue());
   }
 
   SECTION("Ignores count") {

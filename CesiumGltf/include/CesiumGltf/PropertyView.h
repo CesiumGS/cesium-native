@@ -95,6 +95,52 @@ class PropertyView;
 
 namespace {
 template <typename T>
+PropertyViewStatusType
+validatePropertyType(const ClassProperty& classProperty) {
+  using ElementType = T;
+  if constexpr (IsMetadataArray<T>::value) {
+    using ElementType = typename MetadataArrayType<T>::type;
+  }
+
+  if (TypeToPropertyType<ElementType>::value !=
+      convertStringToPropertyType(classProperty.type)) {
+    return PropertyViewStatus::ErrorTypeMismatch;
+  }
+
+  PropertyComponentType expectedComponentType =
+      TypeToPropertyType<ElementType>::component;
+
+  if (!classProperty.componentType &&
+      expectedComponentType != PropertyComponentType::None) {
+    return PropertyViewStatus::ErrorComponentTypeMismatch;
+  }
+
+  if (classProperty.componentType &&
+      expectedComponentType !=
+          convertStringToPropertyComponentType(*classProperty.componentType)) {
+    return PropertyViewStatus::ErrorComponentTypeMismatch;
+  }
+
+  if constexpr (IsMetadataArray<T>::value) {
+    if (!classProperty.array) {
+      return PropertyViewStatus::ErrorArrayTypeMismatch;
+    }
+  } else {
+    if (classProperty.array) {
+      return PropertyViewStatus::ErrorArrayTypeMismatch;
+    }
+  }
+
+  if (!CanBeNormalized<T>::value) {
+    if (classProperty.normalized) {
+      return PropertyViewStatus::ErrorInvalidNormalization;
+    }
+  }
+
+  return PropertyViewStatus::Valid;
+}
+
+template <typename T>
 static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
   try {
     return jsonValue.getSafeNumber<T>();
@@ -197,7 +243,7 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _status(PropertyViewStatus::Valid),
+      : _status(validatePropertyType<ElementType>(classProperty)),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -205,96 +251,113 @@ public:
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {
-    if (convertPropertyTypeToString(TypeToPropertyType<ElementType>::value) !=
-        classProperty.type) {
-      _status = PropertyViewStatus::ErrorTypeMismatch;
-      return;
-    }
-
-    if (!classProperty.componentType &&
-        TypeToPropertyType<ElementType>::component !=
-            PropertyComponentType::None) {
-      _status = PropertyViewStatus::ErrorComponentTypeMismatch;
-      return;
-    }
-
-    if (classProperty.componentType &&
-        convertPropertyComponentTypeToString(
-            TypeToPropertyType<ElementType>::component) !=
-            *classProperty.componentType) {
-      _status = PropertyViewStatus::ErrorComponentTypeMismatch;
-      return;
-    }
-
-    if (classProperty.array) {
-      _status = PropertyViewStatus::ErrorArrayTypeMismatch;
+    if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.normalized) {
       _status = PropertyViewStatus::ErrorInvalidNormalization;
+      return;
     }
 
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      if (classProperty.offset) {
+    if (classProperty.offset) {
+      // Only floating point types can specify an offset.
+      switch (TypeToPropertyType<ElementType>::component) {
+      case PropertyComponentType::Float32:
+      case PropertyComponentType::Float64:
         _offset = getValue(*classProperty.offset);
-        if (!_offset) {
-          // The value was specified but something went wrong.
-          _status = PropertyViewStatus::ErrorInvalidOffset;
-          return;
+        if (_offset) {
+          break;
         }
-      }
-
-      if (classProperty.scale) {
-        _scale = getValue(*classProperty.scale);
-        if (!_scale) {
-          // The value was specified but something went wrong.
-          _status = PropertyViewStatus::ErrorInvalidScale;
-          return;
-        }
-      }
-
-      if (classProperty.max) {
-        _max = getValue(*classProperty.max);
-        if (!_scale) {
-          // The value was specified but something went wrong.
-          _status = PropertyViewStatus::ErrorInvalidMax;
-          return;
-        }
-      }
-
-      if (classProperty.min) {
-        _min = getValue(*classProperty.min);
-        if (!_scale) {
-          // The value was specified but something went wrong.
-          _status = PropertyViewStatus::ErrorInvalidMin;
-          return;
-        }
+        // If it does not break here, something went wrong.
+      default:
+        _status = PropertyViewStatus::ErrorInvalidOffset;
+        return;
       }
     }
 
-    if (!_required) {
-      if (classProperty.noData) {
-        _noData = getValue(*classProperty.noData);
-        if (!_noData) {
-          // The value was specified but something went wrong.
-          _status = PropertyViewStatus::ErrorInvalidNoDataValue;
-          return;
+    if (classProperty.scale) {
+      // Only floating point types can specify a scale.
+      switch (TypeToPropertyType<ElementType>::component) {
+      case PropertyComponentType::Float32:
+      case PropertyComponentType::Float64:
+        _scale = getValue(*classProperty.scale);
+        if (_scale) {
+          break;
         }
+        // If it does not break here, something went wrong.
+      default:
+        _status = PropertyViewStatus::ErrorInvalidScale;
+        return;
+      }
+    }
+
+    if (classProperty.max) {
+      _max = getValue(*classProperty.max);
+      if (!_scale) {
+        // The value was specified but something went wrong.
+        _status = PropertyViewStatus::ErrorInvalidMax;
+        return;
+      }
+    }
+
+    if (classProperty.min) {
+      _min = getValue(*classProperty.min);
+      if (!_scale) {
+        // The value was specified but something went wrong.
+        _status = PropertyViewStatus::ErrorInvalidMin;
+        return;
+      }
+    }
+
+    if (_required) {
+      // "noData" should not be defined if the property is required.
+      if (classProperty.noData) {
+        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
+        return;
       }
 
       if (classProperty.defaultProperty) {
-        _defaultValue = getValue(*classProperty.defaultProperty);
-        if (!_defaultValue) {
-          // The value was specified but something went wrong.
-          _status = PropertyViewStatus::ErrorInvalidDefaultValue;
-          return;
-        }
+        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        return;
+      }
+    }
+
+    if (classProperty.noData) {
+      _noData = getValue(*classProperty.noData);
+      if (!_noData) {
+        // The value was specified but something went wrong.
+        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
+        return;
+      }
+    }
+
+    if (classProperty.defaultProperty) {
+      _defaultValue = getValue(*classProperty.defaultProperty);
+      if (!_defaultValue) {
+        // The value was specified but something went wrong.
+        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        return;
       }
     }
   }
 
 protected:
+  /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _offset(std::nullopt),
+        _scale(std::nullopt),
+        _max(std::nullopt),
+        _min(std::nullopt),
+        _required(false),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {}
+
   /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
@@ -406,7 +469,7 @@ public:
    *
    * @return The status of this property view.
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
    * @brief Get the element count of the fixed-length arrays in this property.
@@ -414,14 +477,14 @@ public:
    *
    * @return The count of this property.
    */
-  virtual int64_t arrayCount() const noexcept { return 0; }
+  int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @brief Whether this property has a normalized integer type.
    *
    * @return Whether this property has a normalized integer type.
    */
-  virtual bool normalized() const noexcept { return false; }
+  bool normalized() const noexcept { return false; }
 
   /**
    * @brief Gets the offset to apply to property values. Only applicable to
@@ -430,7 +493,7 @@ public:
    *
    * @returns The property's offset, or std::nullopt if it was not specified.
    */
-  virtual std::optional<ElementType> offset() const noexcept { return _offset; }
+  std::optional<ElementType> offset() const noexcept { return _offset; }
 
   /**
    * @brief Gets the scale to apply to property values. Only applicable to
@@ -439,7 +502,7 @@ public:
    *
    * @returns The property's scale, or std::nullopt if it was not specified.
    */
-  virtual std::optional<ElementType> scale() const noexcept { return _scale; }
+  std::optional<ElementType> scale() const noexcept { return _scale; }
 
   /**
    * @brief Gets the maximum allowed value for the property. Only applicable to
@@ -450,7 +513,7 @@ public:
    * @returns The property's maximum value, or std::nullopt if it was not
    * specified.
    */
-  virtual std::optional<ElementType> max() const noexcept { return _max; }
+  std::optional<ElementType> max() const noexcept { return _max; }
 
   /**
    * @brief Gets the minimum allowed value for the property. Only applicable to
@@ -461,14 +524,14 @@ public:
    * @returns The property's minimum value, or std::nullopt if it was not
    * specified.
    */
-  virtual std::optional<ElementType> min() const noexcept { return _min; }
+  std::optional<ElementType> min() const noexcept { return _min; }
 
   /**
    * @brief Whether the property must be present in every entity conforming to
    * the class. If not required, instances of the property may include "no data"
    * values, or the entire property may be omitted.
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
    * @brief Gets the "no data" value, i.e., the value representing missing data
@@ -476,19 +539,21 @@ public:
    * is given as the plain property value, without the transforms from the
    * normalized, offset, and scale properties.
    */
-  virtual std::optional<ElementType> noData() const noexcept { return _noData; }
+  std::optional<ElementType> noData() const noexcept { return _noData; }
 
   /**
    * @brief Gets the default value to use when encountering a "no data" value or
    * an omitted property. The value is given in its final form, taking the
    * effect of normalized, offset, and scale properties into account.
    */
-  virtual std::optional<ElementType> defaultValue() const noexcept {
+  std::optional<ElementType> defaultValue() const noexcept {
     return _defaultValue;
   }
 
-private:
+protected:
   PropertyViewStatusType _status;
+
+private:
   bool _required;
 
   std::optional<ElementType> _offset;
@@ -500,13 +565,14 @@ private:
   std::optional<ElementType> _defaultValue;
 
   /**
-   * @brief Attempts to parse from the given json value.
+   * @brief Attempts to parse an ElementType from the given json value.
    *
-   * If T is a type with multiple components, e.g. a VECN or MATN type, this
-   * will return std::nullopt if one or more components could not be parsed.
-   *
-   * @return The value as an instance of T, or std::nullopt if it could not be
+   * If ElementType is a type with multiple components, e.g. a VECN or MATN
+   * type, this will return std::nullopt if one or more components could not be
    * parsed.
+   *
+   * @return The value as an instance of ElementType, or std::nullopt if it
+   * could not be parsed.
    */
   static std::optional<ElementType>
   getValue(const CesiumUtility::JsonValue& jsonValue) {
@@ -534,7 +600,8 @@ private:
  * may be overridden by individual instances of the property themselves. The
  * constructor is responsible for resolving those differences.
  *
- * @tparam ElementType The C++ type of the values in this property
+ * @tparam ElementType The C++ type of the values in this property. Must have an
+ * integer component type.
  */
 template <typename ElementType> class PropertyView<ElementType, true> {
 private:
@@ -658,6 +725,21 @@ public:
 
 protected:
   /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _offset(std::nullopt),
+        _scale(std::nullopt),
+        _max(std::nullopt),
+        _min(std::nullopt),
+        _required(false),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {}
+
+  /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
    */
@@ -768,61 +850,59 @@ public:
    *
    * @return The status of this property view.
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept { return 0; }
+  int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept { return false; }
+  bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<NormalizedType> offset() const noexcept {
-    return _offset;
-  }
+  std::optional<NormalizedType> offset() const noexcept { return _offset; }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<NormalizedType> scale() const noexcept {
-    return _scale;
-  }
+  std::optional<NormalizedType> scale() const noexcept { return _scale; }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<NormalizedType> max() const noexcept { return _max; }
+  std::optional<NormalizedType> max() const noexcept { return _max; }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<NormalizedType> min() const noexcept { return _min; }
+  std::optional<NormalizedType> min() const noexcept { return _min; }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<ElementType> noData() const noexcept { return _noData; }
+  std::optional<ElementType> noData() const noexcept { return _noData; }
 
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<NormalizedType> defaultValue() const noexcept {
+  std::optional<NormalizedType> defaultValue() const noexcept {
     return _defaultValue;
   }
 
-private:
+protected:
   PropertyViewStatusType _status;
+
+private:
   bool _required;
 
   std::optional<NormalizedType> _offset;
@@ -897,6 +977,14 @@ public:
 
 protected:
   /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status), _required(false), _defaultValue(std::nullopt) {}
+
+  /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
    */
@@ -918,57 +1006,57 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept { return 0; }
+  int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept { return false; }
+  bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<bool> offset() const noexcept { return std::nullopt; }
+  std::optional<bool> offset() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<bool> scale() const noexcept { return std::nullopt; }
+  std::optional<bool> scale() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<bool> max() const noexcept { return std::nullopt; }
+  std::optional<bool> max() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<bool> min() const noexcept { return std::nullopt; }
+  std::optional<bool> min() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<bool> noData() const noexcept { return std::nullopt; }
+  std::optional<bool> noData() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<bool> defaultValue() const noexcept {
-    return _defaultValue;
-  }
+  std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
+
+protected:
+  PropertyViewStatusType _status;
 
 private:
-  PropertyViewStatusType _status;
   bool _required;
   std::optional<bool> _defaultValue;
 
@@ -1033,6 +1121,17 @@ public:
 
 protected:
   /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _required(false),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {}
+
+  /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
    */
@@ -1054,55 +1153,51 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept { return 0; }
+  int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept { return false; }
+  bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<std::string_view> offset() const noexcept {
+  std::optional<std::string_view> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<std::string_view> scale() const noexcept {
+  std::optional<std::string_view> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<std::string_view> max() const noexcept {
-    return std::nullopt;
-  }
+  std::optional<std::string_view> max() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<std::string_view> min() const noexcept {
-    return std::nullopt;
-  }
+  std::optional<std::string_view> min() const noexcept { return std::nullopt; }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<std::string_view> noData() const noexcept {
+  std::optional<std::string_view> noData() const noexcept {
     if (_noData)
       return std::string_view(*_noData);
 
@@ -1112,15 +1207,17 @@ public:
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<std::string_view> defaultValue() const noexcept {
+  std::optional<std::string_view> defaultValue() const noexcept {
     if (_defaultValue)
       return std::string_view(*_defaultValue);
 
     return std::nullopt;
   }
 
-private:
+protected:
   PropertyViewStatusType _status;
+
+private:
   bool _required;
   std::optional<std::string> _noData;
   std::optional<std::string> _defaultValue;
@@ -1264,6 +1361,22 @@ public:
 
 protected:
   /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _count(0),
+        _offset(std::nullopt),
+        _scale(std::nullopt),
+        _max(std::nullopt),
+        _min(std::nullopt),
+        _required(false),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {}
+
+  /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
    */
@@ -1371,23 +1484,22 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept { return _count; }
+  int64_t arrayCount() const noexcept { return _count; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept { return _normalized; }
+  bool normalized() const noexcept { return _normalized; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<PropertyArrayView<ElementType>>
-  offset() const noexcept {
+  std::optional<PropertyArrayView<ElementType>> offset() const noexcept {
     if (!_offset) {
       return std::nullopt;
     }
@@ -1399,7 +1511,7 @@ public:
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<PropertyArrayView<ElementType>> scale() const noexcept {
+  std::optional<PropertyArrayView<ElementType>> scale() const noexcept {
     if (!_scale) {
       return std::nullopt;
     }
@@ -1411,7 +1523,7 @@ public:
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<PropertyArrayView<ElementType>> max() const noexcept {
+  std::optional<PropertyArrayView<ElementType>> max() const noexcept {
     if (!_max) {
       return std::nullopt;
     }
@@ -1423,7 +1535,7 @@ public:
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<PropertyArrayView<ElementType>> min() const noexcept {
+  std::optional<PropertyArrayView<ElementType>> min() const noexcept {
     if (!_min) {
       return std::nullopt;
     }
@@ -1435,13 +1547,12 @@ public:
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<PropertyArrayView<ElementType>>
-  noData() const noexcept {
+  std::optional<PropertyArrayView<ElementType>> noData() const noexcept {
     if (!_noData) {
       return std::nullopt;
     }
@@ -1453,8 +1564,7 @@ public:
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<PropertyArrayView<ElementType>>
-  defaultValue() const noexcept {
+  std::optional<PropertyArrayView<ElementType>> defaultValue() const noexcept {
     if (!_defaultValue) {
       return std::nullopt;
     }
@@ -1464,8 +1574,10 @@ public:
         _defaultValue->size()));
   }
 
-private:
+protected:
   PropertyViewStatusType _status;
+
+private:
   int64_t _count;
   bool _normalized;
 
@@ -1641,6 +1753,18 @@ public:
 
 protected:
   /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _count(0),
+        _required(false),
+        _defaultValue(),
+        _size(0) {}
+
+  /**
    * @brief Constructs a property instance from a property table property and
    * its class definition.
    */
@@ -1662,62 +1786,62 @@ public:
   /**
    * @copydoc IPropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
    * @copydoc IPropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept { return _count; }
+  int64_t arrayCount() const noexcept { return _count; }
 
   /**
    * @copydoc IPropertyView::normalized
    */
-  virtual bool normalized() const noexcept { return false; }
+  bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc IPropertyView::offset
    */
-  virtual std::optional<PropertyArrayView<bool>> offset() const noexcept {
+  std::optional<PropertyArrayView<bool>> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::scale
    */
-  virtual std::optional<PropertyArrayView<bool>> scale() const noexcept {
+  std::optional<PropertyArrayView<bool>> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::max
    */
-  virtual std::optional<PropertyArrayView<bool>> max() const noexcept {
+  std::optional<PropertyArrayView<bool>> max() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::min
    */
-  virtual std::optional<PropertyArrayView<bool>> min() const noexcept {
+  std::optional<PropertyArrayView<bool>> min() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::required
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
    * @copydoc IPropertyView::noData
    */
-  virtual std::optional<PropertyArrayView<bool>> noData() const noexcept {
+  std::optional<PropertyArrayView<bool>> noData() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc IPropertyView::defaultValue
    */
-  virtual std::optional<PropertyArrayView<bool>> defaultValue() const noexcept {
+  std::optional<PropertyArrayView<bool>> defaultValue() const noexcept {
     if (_size > 0) {
       return PropertyArrayView<bool>(
           gsl::span<const std::byte>(
@@ -1730,8 +1854,10 @@ public:
     return std::nullopt;
   }
 
-private:
+protected:
   PropertyViewStatusType _status;
+
+private:
   int64_t _count;
   bool _required;
 
@@ -1850,8 +1976,26 @@ public:
 
 protected:
   /**
-   * @brief Constructs a property instance from a property table property and
-   * its class definition.
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _count(0),
+        _required(false),
+        _noData(),
+        _noDataOffsets(),
+        _noDataOffsetType(PropertyComponentType::None),
+        _noDataSize(0),
+        _defaultValue(),
+        _defaultValueOffsets(),
+        _defaultValueOffsetType(PropertyComponentType::None),
+        _defaultValueSize(0) {}
+
+  /**
+   * @brief Constructs a property instance from a property table property
+   * and its class definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
@@ -1869,62 +2013,57 @@ protected:
 
 public:
   /**
-   * @copydoc IPropertyView::status
+   * @copydoc PropertyView::status
    */
-  virtual PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc IPropertyView::arrayCount
+   * @copydoc PropertyView::arrayCount
    */
-  virtual int64_t arrayCount() const noexcept { return _count; }
+  int64_t arrayCount() const noexcept { return _count; }
 
   /**
-   * @copydoc IPropertyView::normalized
+   * @copydoc PropertyView::normalized
    */
-  virtual bool normalized() const noexcept { return false; }
+  bool normalized() const noexcept { return false; }
 
   /**
-   * @copydoc IPropertyView::offset
+   * @copydoc PropertyView::offset
    */
-  virtual std::optional<PropertyArrayView<std::string_view>>
-  offset() const noexcept {
+  std::optional<PropertyArrayView<std::string_view>> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc IPropertyView::scale
+   * @copydoc PropertyView::scale
    */
-  virtual std::optional<PropertyArrayView<std::string_view>>
-  scale() const noexcept {
+  std::optional<PropertyArrayView<std::string_view>> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc IPropertyView::max
+   * @copydoc PropertyView::max
    */
-  virtual std::optional<PropertyArrayView<std::string_view>>
-  max() const noexcept {
+  std::optional<PropertyArrayView<std::string_view>> max() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc IPropertyView::min
+   * @copydoc PropertyView::min
    */
-  virtual std::optional<PropertyArrayView<std::string_view>>
-  min() const noexcept {
+  std::optional<PropertyArrayView<std::string_view>> min() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc IPropertyView::required
+   * @copydoc PropertyView::required
    */
-  virtual bool required() const noexcept { return _required; }
+  bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc IPropertyView::noData
+   * @copydoc PropertyView::noData
    */
-  virtual std::optional<PropertyArrayView<std::string_view>>
-  noData() const noexcept {
+  std::optional<PropertyArrayView<std::string_view>> noData() const noexcept {
     if (_noDataSize > 0) {
       return PropertyArrayView<std::string_view>(
           gsl::span<const std::byte>(_noData.data(), _noData.size()),
@@ -1939,9 +2078,9 @@ public:
   }
 
   /**
-   * @copydoc IPropertyView::defaultValue
+   * @copydoc PropertyView::defaultValue
    */
-  virtual std::optional<PropertyArrayView<std::string_view>>
+  std::optional<PropertyArrayView<std::string_view>>
   defaultValue() const noexcept {
     if (_noDataSize > 0) {
       return PropertyArrayView<std::string_view>(
@@ -1958,8 +2097,10 @@ public:
     return std::nullopt;
   }
 
-private:
+protected:
   PropertyViewStatusType _status;
+
+private:
   int64_t _count;
   bool _required;
 

@@ -523,6 +523,23 @@ TEST_CASE("TypeToPropertyType") {
   }
 }
 
+TEST_CASE("Test CanBeNormalized") {
+  REQUIRE(CanBeNormalized<uint8_t>::value);
+  REQUIRE(CanBeNormalized<int8_t>::value);
+  REQUIRE(CanBeNormalized<uint16_t>::value);
+  REQUIRE(CanBeNormalized<int16_t>::value);
+  REQUIRE(CanBeNormalized<uint32_t>::value);
+  REQUIRE(CanBeNormalized<int32_t>::value);
+  REQUIRE(CanBeNormalized<uint64_t>::value);
+  REQUIRE(CanBeNormalized<int64_t>::value);
+
+
+  REQUIRE(!CanBeNormalized<float>::value);
+  REQUIRE(!CanBeNormalized<double>::value);
+  REQUIRE(!CanBeNormalized<bool>::value);
+  REQUIRE(!CanBeNormalized<std::string_view>::value);
+}
+
 TEST_CASE("TypeToNormalizedType") {
   SECTION("Works for scalars") {
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint8_t>::type, double>);

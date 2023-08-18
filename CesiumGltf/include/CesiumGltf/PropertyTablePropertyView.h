@@ -157,7 +157,6 @@ public:
    */
   PropertyTablePropertyView()
       : PropertyView<ElementType>(),
-        _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
         _values{},
         _size{0},
         _arrayOffsets{},
@@ -165,8 +164,7 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0}
-  {}
+        _stringOffsetTypeSize{0} {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -174,8 +172,7 @@ public:
    * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
   PropertyTablePropertyView(PropertyViewStatusType status)
-      : PropertyView<ElementType>(),
-        _status{status},
+      : PropertyView<ElementType>(status),
         _values{},
         _size{0},
         _arrayOffsets{},
@@ -203,7 +200,6 @@ public:
       int64_t size,
       gsl::span<const std::byte> values) noexcept
       : PropertyView<ElementType>(classProperty, property),
-        _status{PropertyTablePropertyViewStatus::Valid},
         _values{},
         _size{},
         _arrayOffsets{},
@@ -212,7 +208,7 @@ public:
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
         _stringOffsetTypeSize{0} {
-    if (PropertyView::status() == PropertyTablePropertyViewStatus::Valid) {
+    if (_status == PropertyTablePropertyViewStatus::Valid) {
       _values = values;
       _size = size;
     }
@@ -241,7 +237,6 @@ public:
       PropertyComponentType arrayOffsetType,
       PropertyComponentType stringOffsetType) noexcept
       : PropertyView<ElementType>(classProperty, property),
-        _status{PropertyTablePropertyViewStatus::Valid},
         _values{values},
         _arrayOffsets{arrayOffsets},
         _arrayOffsetType{arrayOffsetType},
@@ -250,16 +245,11 @@ public:
         _stringOffsetType{stringOffsetType},
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
         _size{size} {
-    if (PropertyView::status() == PropertyTablePropertyViewStatus::Valid) {
+    if (_status == PropertyTablePropertyViewStatus::Valid) {
       _values = values;
       _size = size;
     }
   }
-
-  /**
-   * @copydoc IPropertyView::status
-   */
-  virtual int32_t status() const noexcept override { return _status; }
 
   /**
    * @brief Get the raw value of an element of the {@link PropertyTable},
@@ -482,7 +472,7 @@ private:
     }
   }
 
-  PropertyViewStatusType _status;
+//  PropertyViewStatusType _status;
   gsl::span<const std::byte> _values;
   int64_t _size;
 
