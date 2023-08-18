@@ -2,7 +2,7 @@
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
-#include "PropertyValue.h"
+//#include "PropertyValue.h"
 
 #include <bitset>
 #include <optional>
