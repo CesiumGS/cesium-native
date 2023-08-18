@@ -4,6 +4,7 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTilesReader/SchemaReader.h>
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -594,6 +595,17 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
+
+  const auto schemaIt = tilesetJson.FindMember("schema");
+  if (schemaIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::SchemaReader reader{};
+    Cesium3DTilesReader::SchemaReaderResult schemaResult =
+        reader.readSchema(schemaIt->value);
+    if (schemaResult.schema) {
+      pLoader->getSchema() = std::move(*schemaResult.schema);
+    }
+  }
+
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -697,7 +709,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 TilesetJsonLoader::TilesetJsonLoader(
     const std::string& baseUrl,
     CesiumGeometry::Axis upAxis)
-    : _baseUrl{baseUrl}, _upAxis{upAxis} {}
+    : _baseUrl{baseUrl}, _upAxis{upAxis}, _children{} {}
 
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(

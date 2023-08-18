@@ -1169,6 +1169,16 @@ void TilesetContentManager::finishLoading(
   updateTileContent(tile, 0.0, tilesetOptions);
 }
 
+const std::optional<Cesium3DTiles::Schema>&
+TilesetContentManager::getSchema() const noexcept {
+  static const std::optional<Cesium3DTiles::Schema> noSchema;
+  if (this->_pLoader) {
+    return this->_pLoader->getSchema();
+  } else {
+    return noSchema;
+  }
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,

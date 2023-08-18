@@ -381,6 +381,19 @@ TEST_CASE("Test creating tileset json loader") {
         std::get<CesiumGeometry::OctreeTileID>(child.getTileID()) ==
         CesiumGeometry::OctreeTileID(0, 0, 0, 0));
   }
+
+  SECTION("Tileset with metadata") {
+    auto loaderResult =
+        createLoader(testDataPath / "WithMetadata" / "tileset.json");
+
+    CHECK(!loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pLoader);
+
+    const std::optional<Cesium3DTiles::Schema>& schema =
+        loaderResult.pLoader->getSchema();
+    REQUIRE(schema);
+    CHECK(schema->id == "foo");
+  }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {

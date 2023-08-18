@@ -101,6 +101,11 @@ const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
   return this->_pTilesetContentManager->getTilesetCredits();
 }
 
+const std::optional<Cesium3DTiles::Schema>&
+Tileset::getSchema() const noexcept {
+  return this->_pTilesetContentManager->getSchema();
+}
+
 void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   this->_options.showCreditsOnScreen = showCreditsOnScreen;
 

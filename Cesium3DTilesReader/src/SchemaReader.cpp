@@ -45,4 +45,19 @@ SchemaReader::readSchema(const gsl::span<const std::byte>& data) const {
 
   return result;
 }
+
+SchemaReaderResult
+SchemaReader::readSchema(const rapidjson::Value& value) const {
+  CESIUM_TRACE("Cesium3DTilesReader::SchemaReader::readSchemaValue");
+  const CesiumJsonReader::JsonReaderOptions& context = this->getOptions();
+  SchemaJsonHandler schemaHandler(context);
+  CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Schema> jsonResult =
+      CesiumJsonReader::JsonReader::readJson(value, schemaHandler);
+
+  return SchemaReaderResult{
+      std::move(jsonResult.value),
+      std::move(jsonResult.errors),
+      std::move(jsonResult.warnings)};
+}
+
 } // namespace Cesium3DTilesReader

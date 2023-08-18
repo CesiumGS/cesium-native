@@ -7,6 +7,7 @@
 #include "TileLoadResult.h"
 #include "TilesetOptions.h"
 
+#include <Cesium3DTiles/Schema.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -135,5 +136,15 @@ public:
    * @return The {@link TileChildrenResult} that stores the tile's children
    */
   virtual TileChildrenResult createTileChildren(const Tile& tile) = 0;
+
+  std::optional<Cesium3DTiles::Schema>& getSchema() noexcept {
+    return this->_schema;
+  }
+  const std::optional<Cesium3DTiles::Schema>& getSchema() const noexcept {
+    return this->_schema;
+  }
+
+private:
+  std::optional<Cesium3DTiles::Schema> _schema;
 };
 } // namespace Cesium3DTilesSelection

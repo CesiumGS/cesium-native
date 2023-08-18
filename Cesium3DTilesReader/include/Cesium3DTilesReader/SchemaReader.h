@@ -6,6 +6,7 @@
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
 #include <gsl/span>
+#include <rapidjson/fwd.h>
 
 #include <functional>
 #include <memory>
@@ -64,6 +65,8 @@ public:
    * @return The result of reading the schame.
    */
   SchemaReaderResult readSchema(const gsl::span<const std::byte>& data) const;
+
+  SchemaReaderResult readSchema(const rapidjson::Value& value) const;
 
 private:
   CesiumJsonReader::JsonReaderOptions _context;

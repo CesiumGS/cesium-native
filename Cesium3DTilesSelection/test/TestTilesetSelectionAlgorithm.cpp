@@ -1070,6 +1070,55 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   REQUIRE(pGreatGrandchild->getChildren().empty());
 }
 
+TEST_CASE("Makes metadata available once root tile is loaded") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "WithMetadata";
+  std::vector<std::string> files{
+      "tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm"
+  };
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  const std::optional<Cesium3DTiles::Schema>& schema = tileset.getSchema();
+  REQUIRE(schema);
+  CHECK(schema->id == "foo");
+}
+
 namespace {
 
 void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
