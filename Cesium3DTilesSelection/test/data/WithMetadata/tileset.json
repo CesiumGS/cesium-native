@@ -138,6 +138,22 @@
         "content": {
           "uri": "ul.b3dm"
         }
+      },
+      {
+        "boundingVolume": {
+          "region": [
+            -1.3197209591796106,
+            0.698874,
+            -1.31968,
+            0.6989055782,
+            0,
+            20
+          ]
+        },
+        "geometricError": 35,
+        "content": {
+          "uri": "external-tileset.json"
+        }
       }
     ]
   }

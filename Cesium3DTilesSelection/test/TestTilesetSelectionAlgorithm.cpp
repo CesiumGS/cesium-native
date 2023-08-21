@@ -1098,6 +1098,7 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
   testDataPath = testDataPath / "WithMetadata";
   std::vector<std::string> files{
       "tileset.json",
+      "external-tileset.json",
       "parent.b3dm",
       "ll.b3dm",
       "lr.b3dm",
@@ -1143,6 +1144,74 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
   const std::optional<Cesium3DTiles::Schema>& schema = pExternal->schema;
   REQUIRE(schema);
   CHECK(schema->id == "foo");
+}
+
+TEST_CASE("Makes metadata available on external tilesets") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "WithMetadata";
+  std::vector<std::string> files{
+      "tileset.json",
+      "external-tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+
+  Tile* pRoot = &pTilesetJson->getChildren()[0];
+  REQUIRE(pRoot);
+  REQUIRE(pRoot->getChildren().size() == 5);
+  Tile* pExternal = &pRoot->getChildren()[4];
+
+  TileExternalContent* pExternalContent = nullptr;
+
+  for (int i = 0; i < 10 && pExternalContent == nullptr; ++i) {
+    ViewState zoomToTileViewState = zoomToTile(*pExternal);
+    tileset.updateView({zoomToTileViewState});
+    pExternalContent = pExternal->getContent().getExternalContent();
+  }
+
+  REQUIRE(pExternalContent);
+
+  REQUIRE(pExternalContent->groups.size() == 2);
+  CHECK(pExternalContent->groups[0].classProperty == "someClass");
+  CHECK(pExternalContent->groups[1].classProperty == "someClass");
 }
 
 namespace {

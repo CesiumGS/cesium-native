@@ -31,10 +31,13 @@ struct ExternalContentInitializer {
   std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
       pExternalTilesetLoaders;
   TilesetJsonLoader* tilesetJsonLoader;
+  TileExternalContent externalContent;
 
   void operator()(Tile& tile) {
-    TileContent& content = tile.getContent();
-    if (content.isExternalContent()) {
+    TileExternalContent* pExternalContent =
+        tile.getContent().getExternalContent();
+    if (pExternalContent) {
+      *pExternalContent = std::move(externalContent);
       std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
       if (pExternalRoot) {
         // propagate all the external tiles to be the children of this tile
@@ -595,19 +598,6 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
-
-  pRootTile = std::make_unique<Tile>(
-      pLoader.get(),
-      std::make_unique<TileExternalContent>());
-
-  pRootTile->setTileID("");
-  pRootTile->setTransform(parentTransform);
-  pRootTile->setBoundingVolume(CesiumGeometry::BoundingSphere(
-      glm::dvec3(0.0),
-      std::numeric_limits<float>::max()));
-  pRootTile->setGeometricError(10000000.0);
-  pRootTile->setRefine(parentRefine);
-
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -632,31 +622,39 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       ErrorList{}};
 }
 
-TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& baseUrl,
-    const gsl::span<const std::byte>& tilesetJsonBinary,
-    const glm::dmat4& parentTransform,
-    TileRefine parentRefine) {
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(
-      reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-      tilesetJsonBinary.size());
-  if (tilesetJson.HasParseError()) {
-    TilesetContentLoaderResult<TilesetJsonLoader> result;
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset()));
-    return result;
+void parseTilesetMetadata(
+    const rapidjson::Document& tilesetJson,
+    TileExternalContent& externalContent) {
+  auto schemaIt = tilesetJson.FindMember("schema");
+  if (schemaIt != tilesetJson.MemberEnd()) {
+    auto schemaResult = Cesium3DTilesReader::readSchema(schemaIt->value);
+    if (schemaResult.value) {
+      externalContent.schema = std::move(*schemaResult.value);
+    }
   }
 
-  return parseTilesetJson(
-      pLogger,
-      baseUrl,
-      tilesetJson,
-      parentTransform,
-      parentRefine);
+  auto schemaUriIt = tilesetJson.FindMember("schemaUri");
+  if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
+    externalContent.schemaUri = schemaUriIt->value.GetString();
+  }
+
+  const auto metadataIt = tilesetJson.FindMember("metadata");
+  if (metadataIt != tilesetJson.MemberEnd()) {
+    auto metadataResult =
+        Cesium3DTilesReader::readMetadataEntity(metadataIt->value);
+    if (metadataResult.value) {
+      externalContent.metadata = std::move(*metadataResult.value);
+    }
+  }
+
+  const auto groupsIt = tilesetJson.FindMember("groups");
+  if (groupsIt != tilesetJson.MemberEnd()) {
+    auto groupsResult =
+        Cesium3DTilesReader::readGroupMetadataArray(groupsIt->value);
+    if (groupsResult.value) {
+      externalContent.groups = std::move(*groupsResult.value);
+    }
+  }
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
@@ -671,6 +669,19 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   const auto& responseData = pResponse->data();
   const auto& tileUrl = pCompletedRequest->url();
 
+  rapidjson::Document tilesetJson;
+  tilesetJson.Parse(
+      reinterpret_cast<const char*>(responseData.data()),
+      responseData.size());
+  if (tilesetJson.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Error when parsing tileset JSON, error code {} at byte offset {}",
+        tilesetJson.GetParseError(),
+        tilesetJson.GetErrorOffset());
+    return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+  }
+
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
@@ -678,9 +689,12 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       parseTilesetJson(
           pLogger,
           tileUrl,
-          responseData,
+          tilesetJson,
           tileTransform,
           tileRefine);
+
+  // Populate the root tile with metadata
+  parseTilesetMetadata(tilesetJson, externalContentInitializer.externalContent);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
@@ -705,44 +719,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::move(pCompletedRequest),
       std::move(externalContentInitializer),
       TileLoadResultState::Success};
-}
-
-void parseTilesetMetadata(const rapidjson::Document& tilesetJson, Tile& tile) {
-  TileExternalContent* pExternal = tile.getContent().getExternalContent();
-  assert(pExternal);
-  if (!pExternal)
-    return;
-
-  auto schemaIt = tilesetJson.FindMember("schema");
-  if (schemaIt != tilesetJson.MemberEnd()) {
-    auto schemaResult = Cesium3DTilesReader::readSchema(schemaIt->value);
-    if (schemaResult.value) {
-      pExternal->schema = std::move(*schemaResult.value);
-    }
-  }
-
-  auto schemaUriIt = tilesetJson.FindMember("schemaUri");
-  if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
-    pExternal->schemaUri = schemaUriIt->value.GetString();
-  }
-
-  const auto metadataIt = tilesetJson.FindMember("metadata");
-  if (metadataIt != tilesetJson.MemberEnd()) {
-    auto metadataResult =
-        Cesium3DTilesReader::readMetadataEntity(metadataIt->value);
-    if (metadataResult.value) {
-      pExternal->metadata = std::move(*metadataResult.value);
-    }
-  }
-
-  const auto groupsIt = tilesetJson.FindMember("groups");
-  if (groupsIt != tilesetJson.MemberEnd()) {
-    auto groupsResult =
-        Cesium3DTilesReader::readGroupMetadataArray(groupsIt->value);
-    if (groupsResult.value) {
-      pExternal->groups = std::move(*groupsResult.value);
-    }
-  }
 }
 
 } // namespace
@@ -834,7 +810,12 @@ TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
   result.pRootTile->createChildTiles(std::move(children));
 
   // Populate the root tile with metadata
-  parseTilesetMetadata(tilesetJson, *result.pRootTile);
+  TileExternalContent* pExternal =
+      result.pRootTile->getContent().getExternalContent();
+  assert(pExternal);
+  if (pExternal) {
+    parseTilesetMetadata(tilesetJson, *pExternal);
+  }
 
   return result;
 }
