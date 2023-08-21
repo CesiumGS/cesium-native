@@ -4,10 +4,10 @@
 #include "Library.h"
 #include "RasterOverlayDetails.h"
 
+#include <Cesium3DTiles/GroupMetadata.h>
+#include <Cesium3DTiles/Schema.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
-#include <Cesium3DTiles/Schema.h>
-#include <Cesium3DTiles/GroupMetadata.h>
 
 #include <memory>
 #include <variant>
