@@ -400,18 +400,22 @@ TEST_CASE("Test creating tileset json loader") {
         CesiumGeometry::OctreeTileID(0, 0, 0, 0));
   }
 
-  // SECTION("Tileset with metadata") {
-  //   auto loaderResult =
-  //       createLoader(testDataPath / "WithMetadata" / "tileset.json");
+  SECTION("Tileset with metadata") {
+    auto loaderResult =
+        createLoader(testDataPath / "WithMetadata" / "tileset.json");
 
-  //   CHECK(!loaderResult.errors.hasErrors());
-  //   REQUIRE(loaderResult.pLoader);
+    CHECK(!loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pLoader);
+    REQUIRE(loaderResult.pRootTile);
 
-  //   const std::optional<Cesium3DTiles::Schema>& schema =
-  //       loaderResult.pLoader->getSchema();
-  //   REQUIRE(schema);
-  //   CHECK(schema->id == "foo");
-  // }
+    TileExternalContent* pExternal =
+        loaderResult.pRootTile->getContent().getExternalContent();
+    REQUIRE(pExternal);
+
+    const std::optional<Cesium3DTiles::Schema>& schema = pExternal->schema;
+    REQUIRE(schema);
+    CHECK(schema->id == "foo");
+  }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {

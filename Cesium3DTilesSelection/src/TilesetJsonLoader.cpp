@@ -706,14 +706,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::move(externalContentInitializer),
       TileLoadResultState::Success};
 }
-} // namespace
-
-TilesetJsonLoader::TilesetJsonLoader(
-    const std::string& baseUrl,
-    CesiumGeometry::Axis upAxis)
-    : _baseUrl{baseUrl}, _upAxis{upAxis}, _children{} {}
-
-namespace {
 
 void parseTilesetMetadata(const rapidjson::Document& tilesetJson, Tile& tile) {
   TileExternalContent* pExternal = tile.getContent().getExternalContent();
@@ -725,8 +717,13 @@ void parseTilesetMetadata(const rapidjson::Document& tilesetJson, Tile& tile) {
   if (schemaIt != tilesetJson.MemberEnd()) {
     auto schemaResult = Cesium3DTilesReader::readSchema(schemaIt->value);
     if (schemaResult.value) {
-      // pLoader->setSchema(std::move(*schemaResult.value));
+      pExternal->schema = std::move(*schemaResult.value);
     }
+  }
+
+  auto schemaUriIt = tilesetJson.FindMember("schemaUri");
+  if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
+    pExternal->schemaUri = schemaUriIt->value.GetString();
   }
 
   const auto metadataIt = tilesetJson.FindMember("metadata");
@@ -734,7 +731,7 @@ void parseTilesetMetadata(const rapidjson::Document& tilesetJson, Tile& tile) {
     auto metadataResult =
         Cesium3DTilesReader::readMetadataEntity(metadataIt->value);
     if (metadataResult.value) {
-      // pLoader->getSchema() = std::move(*schemaResult.value);
+      pExternal->metadata = std::move(*metadataResult.value);
     }
   }
 
@@ -743,11 +740,17 @@ void parseTilesetMetadata(const rapidjson::Document& tilesetJson, Tile& tile) {
     auto groupsResult =
         Cesium3DTilesReader::readGroupMetadataArray(groupsIt->value);
     if (groupsResult.value) {
-      // pLoader->getSchema() = std::move(*schemaResult.value);
+      pExternal->groups = std::move(*groupsResult.value);
     }
   }
 }
+
 } // namespace
+
+TilesetJsonLoader::TilesetJsonLoader(
+    const std::string& baseUrl,
+    CesiumGeometry::Axis upAxis)
+    : _baseUrl{baseUrl}, _upAxis{upAxis}, _children{} {}
 
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
