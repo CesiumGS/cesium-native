@@ -309,4 +309,40 @@ template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<glm::mat<N, N, T, Q>> {
   using type = glm::mat<N, N, double, Q>;
 };
+
+template <> struct TypeToNormalizedType<PropertyArrayView<int8_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint8_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int16_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint16_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int32_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint32_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int64_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint64_t>> {
+  using type = PropertyArrayView<double>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<PropertyArrayView<glm::vec<N, T, Q>>> {
+  using type = PropertyArrayView<glm::vec<N, double, Q>>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
+  using type = PropertyArrayView<glm::mat<N, N, double, Q>>;
+};
+
 } // namespace CesiumGltf

@@ -141,7 +141,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
     REQUIRE(uint32Property.size() > 0);
 
     for (int64_t i = 0; i < uint32Property.size(); ++i) {
-      REQUIRE(uint32Property.get(i) == values[static_cast<size_t>(i)]);
+      REQUIRE(uint32Property.getRaw(i) == values[static_cast<size_t>(i)]);
     }
   }
 
@@ -295,7 +295,7 @@ TEST_CASE("Test vecN PropertyTableProperty") {
     REQUIRE(ivec3Property.size() > 0);
 
     for (int64_t i = 0; i < ivec3Property.size(); ++i) {
-      REQUIRE(ivec3Property.get(i) == values[static_cast<size_t>(i)]);
+      REQUIRE(ivec3Property.getRaw(i) == values[static_cast<size_t>(i)]);
     }
   }
 
@@ -467,7 +467,7 @@ TEST_CASE("Test matN PropertyTableProperty") {
     REQUIRE(u32mat2x2Property.size() > 0);
 
     for (int64_t i = 0; i < u32mat2x2Property.size(); ++i) {
-      REQUIRE(u32mat2x2Property.get(i) == values[static_cast<size_t>(i)]);
+      REQUIRE(u32mat2x2Property.getRaw(i) == values[static_cast<size_t>(i)]);
     }
   }
 
@@ -641,7 +641,7 @@ TEST_CASE("Test boolean PropertyTableProperty") {
     REQUIRE(boolProperty.size() == instanceCount);
     for (int64_t i = 0; i < boolProperty.size(); ++i) {
       bool expectedValue = expected[static_cast<size_t>(i)];
-      REQUIRE(boolProperty.get(i) == expectedValue);
+      REQUIRE(boolProperty.getRaw(i) == expectedValue);
     }
   }
 
@@ -724,7 +724,7 @@ TEST_CASE("Test string PropertyTableProperty") {
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      REQUIRE(stringProperty.get(static_cast<int64_t>(i)) == expected[i]);
+      REQUIRE(stringProperty.getRaw(static_cast<int64_t>(i)) == expected[i]);
     }
   }
 
@@ -846,7 +846,7 @@ TEST_CASE("Test fixed-length scalar array") {
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      PropertyArrayView<uint32_t> member = arrayProperty.get(i);
+      PropertyArrayView<uint32_t> member = arrayProperty.getRaw(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 3 + j)]);
       }
@@ -990,7 +990,7 @@ TEST_CASE("Test variable-length scalar array") {
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<uint16_t> valueMember =
-          property.get(static_cast<int64_t>(i));
+          property.getRaw(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == valueMember[static_cast<int64_t>(j)]);
@@ -1122,7 +1122,7 @@ TEST_CASE("Test fixed-length vecN array") {
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      PropertyArrayView<glm::ivec3> member = arrayProperty.get(i);
+      PropertyArrayView<glm::ivec3> member = arrayProperty.getRaw(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
       }
@@ -1272,7 +1272,7 @@ TEST_CASE("Test variable-length vecN array") {
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<glm::ivec3> valueMember =
-          property.get(static_cast<int64_t>(i));
+          property.getRaw(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == valueMember[static_cast<int64_t>(j)]);
@@ -1423,7 +1423,7 @@ TEST_CASE("Test fixed-length matN array") {
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      PropertyArrayView<glm::i32mat2x2> member = arrayProperty.get(i);
+      PropertyArrayView<glm::i32mat2x2> member = arrayProperty.getRaw(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
       }
@@ -1594,7 +1594,7 @@ TEST_CASE("Test variable-length matN array") {
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<glm::i32mat2x2> valueMember =
-          property.get(static_cast<int64_t>(i));
+          property.getRaw(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == valueMember[static_cast<int64_t>(j)]);
@@ -1746,7 +1746,7 @@ TEST_CASE("Test fixed-length boolean array") {
     REQUIRE(boolArrayProperty.size() == propertyTable.count);
     REQUIRE(boolArrayProperty.size() > 0);
     for (int64_t i = 0; i < boolArrayProperty.size(); ++i) {
-      PropertyArrayView<bool> valueMember = boolArrayProperty.get(i);
+      PropertyArrayView<bool> valueMember = boolArrayProperty.getRaw(i);
       for (int64_t j = 0; j < valueMember.size(); ++j) {
         REQUIRE(valueMember[j] == expected[static_cast<size_t>(i * 3 + j)]);
       }
@@ -1872,7 +1872,7 @@ TEST_CASE("Test variable-length boolean array") {
         boolArrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<bool> arrayMember =
-          boolArrayProperty.get(static_cast<int64_t>(i));
+          boolArrayProperty.getRaw(static_cast<int64_t>(i));
       REQUIRE(arrayMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == arrayMember[static_cast<int64_t>(j)]);
@@ -2028,17 +2028,17 @@ TEST_CASE("Test fixed-length arrays of strings") {
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(stringProperty.size() == 3);
 
-    PropertyArrayView<std::string_view> v0 = stringProperty.get(0);
+    PropertyArrayView<std::string_view> v0 = stringProperty.getRaw(0);
     REQUIRE(v0.size() == 2);
     REQUIRE(v0[0] == "What's up");
     REQUIRE(v0[1] == "Breaking news!!! Aliens no longer attacks the US first");
 
-    PropertyArrayView<std::string_view> v1 = stringProperty.get(1);
+    PropertyArrayView<std::string_view> v1 = stringProperty.getRaw(1);
     REQUIRE(v1.size() == 2);
     REQUIRE(v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
     REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
-    PropertyArrayView<std::string_view> v2 = stringProperty.get(2);
+    PropertyArrayView<std::string_view> v2 = stringProperty.getRaw(2);
     REQUIRE(v2.size() == 2);
     REQUIRE(v2[0] == "I love you, meat bags! ❤️");
     REQUIRE(v2[1] == "Book in the freezer");
@@ -2198,7 +2198,7 @@ TEST_CASE("Test variable-length arrays of strings") {
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<std::string_view> stringArray =
-          stringProperty.get(static_cast<int64_t>(i));
+          stringProperty.getRaw(static_cast<int64_t>(i));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(stringArray[static_cast<int64_t>(j)] == expected[i][j]);
       }
@@ -2472,7 +2472,7 @@ TEST_CASE("Test callback for scalar PropertyTableProperty") {
 
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             REQUIRE(
-                static_cast<uint32_t>(propertyValue.get(i)) ==
+                static_cast<uint32_t>(propertyValue.getRaw(i)) ==
                 values[static_cast<size_t>(i)]);
           }
         } else {
@@ -2541,7 +2541,7 @@ TEST_CASE("Test callback for vecN PropertyTableProperty") {
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             REQUIRE(
-                static_cast<glm::ivec3>(propertyValue.get(i)) ==
+                static_cast<glm::ivec3>(propertyValue.getRaw(i)) ==
                 values[static_cast<size_t>(i)]);
           }
         } else {
@@ -2619,7 +2619,7 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             REQUIRE(
-                static_cast<glm::u32mat2x2>(propertyValue.get(i)) ==
+                static_cast<glm::u32mat2x2>(propertyValue.getRaw(i)) ==
                 values[static_cast<size_t>(i)]);
           }
         } else {
@@ -2702,7 +2702,7 @@ TEST_CASE("Test callback for boolean PropertyTableProperty") {
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             REQUIRE(
-                static_cast<bool>(propertyValue.get(i)) ==
+                static_cast<bool>(propertyValue.getRaw(i)) ==
                 expected[static_cast<size_t>(i)]);
           }
         } else {
@@ -2792,7 +2792,7 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             REQUIRE(
-                static_cast<std::string_view>(propertyValue.get(i)) ==
+                static_cast<std::string_view>(propertyValue.getRaw(i)) ==
                 expected[static_cast<size_t>(i)]);
           }
         } else {
@@ -2861,7 +2861,7 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty") {
                               PropertyArrayView<uint32_t>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            PropertyArrayView<uint32_t> member = propertyValue.get(i);
+            PropertyArrayView<uint32_t> member = propertyValue.getRaw(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 3 + j)]);
             }
@@ -2938,7 +2938,7 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty") {
                               PropertyArrayView<glm::ivec3>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            PropertyArrayView<glm::ivec3> member = propertyValue.get(i);
+            PropertyArrayView<glm::ivec3> member = propertyValue.getRaw(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
             }
@@ -3029,7 +3029,7 @@ TEST_CASE("Test callback for matN array PropertyTableProperty") {
                               PropertyArrayView<glm::i32mat2x2>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            PropertyArrayView<glm::i32mat2x2> member = propertyValue.get(i);
+            PropertyArrayView<glm::i32mat2x2> member = propertyValue.getRaw(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
             }
@@ -3120,7 +3120,7 @@ TEST_CASE("Test callback for boolean array PropertyTableProperty") {
                           PropertyTablePropertyView<PropertyArrayView<bool>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            PropertyArrayView<bool> member = propertyValue.get(i);
+            PropertyArrayView<bool> member = propertyValue.getRaw(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == expected[static_cast<size_t>(i * 3 + j)]);
             }
@@ -3219,20 +3219,20 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
                           PropertyTablePropertyView<
                               PropertyArrayView<std::string_view>>,
                           decltype(propertyValue)>) {
-          PropertyArrayView<std::string_view> v0 = propertyValue.get(0);
+          PropertyArrayView<std::string_view> v0 = propertyValue.getRaw(0);
           REQUIRE(v0.size() == 2);
           REQUIRE(v0[0] == "What's up");
           REQUIRE(
               v0[1] ==
               "Breaking news!!! Aliens no longer attacks the US first");
 
-          PropertyArrayView<std::string_view> v1 = propertyValue.get(1);
+          PropertyArrayView<std::string_view> v1 = propertyValue.getRaw(1);
           REQUIRE(v1.size() == 2);
           REQUIRE(
               v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
           REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
-          PropertyArrayView<std::string_view> v2 = propertyValue.get(2);
+          PropertyArrayView<std::string_view> v2 = propertyValue.getRaw(2);
           REQUIRE(v2.size() == 2);
           REQUIRE(v2[0] == "I love you, meat bags! ❤️");
           REQUIRE(v2[1] == "Book in the freezer");

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 
 namespace CesiumGltf {
 template <
@@ -56,7 +57,7 @@ template <
     std::enable_if_t<
         IsMetadataInteger<TSigned>::value && std::is_signed_v<TSigned>>>
 glm::mat<N, N, double, Q> normalize(glm::mat<N, N, TSigned, Q> value) {
-  double max = static_cast<double>(std::numeric_limits<TUnsigned>::max());
+  double max = static_cast<double>(std::numeric_limits<TSigned>::max());
   return glm::max(static_cast<glm::mat<N, N, double, Q>>(value) / max, -1.0);
 }
 

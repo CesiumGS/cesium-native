@@ -66,35 +66,6 @@ public:
     return true;
   }
 
-  PropertyArrayView<ElementType>
-  operator*(const PropertyArrayView<ElementType>& other) {
-    int64_t clampedSize = std::min(this->size(), other.size());
-    std::vector<ElementType> result(static_cast<size_t>(this->size()));
-    if constexpr (IsMetadataMatN<ElementType>::value) {
-      // Do component-wise multiplication instead of actual matrix
-      // multiplication.
-      ElementType matN;
-      constexpr glm::length_t N = ElementType::length();
-      for (int64_t i = 0; i < clampedSize; i++) {
-        for (glm::length_t j = 0; j < N; j++) {
-          matN[j] = (*this)[i][j] * other[i][j];
-        }
-        result[i] = matN;
-      }
-    } else {
-      for (int64_t i = 0; i < clampedSize; i++) {
-        result[i] = (*this)[i] * other[i];
-      }
-    }
-
-    // Copy anything that didn't have a component to multiply against.
-    for (int64_t i = clampedSize(); i < this->size(); i++) {
-      result[i] = (*this)[i];
-    }
-
-    return PropertyArrayView<ElementType>(std::move(result));
-  }
-
 private:
   using ArrayType =
       std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;

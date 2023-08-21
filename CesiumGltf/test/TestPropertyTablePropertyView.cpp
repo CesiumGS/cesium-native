@@ -34,7 +34,7 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
       gsl::span<const std::byte>(data.data(), data.size()));
 
   for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+    REQUIRE(property.getRaw(i) == expected[static_cast<size_t>(i)]);
   }
 }
 
@@ -84,7 +84,7 @@ static void checkVariableLengthArray(
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    PropertyArrayView<DataType> values = property.get(i);
+    PropertyArrayView<DataType> values = property.getRaw(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       REQUIRE(values[j] == data[expectedIdx]);
       ++expectedIdx;
@@ -131,7 +131,7 @@ static void checkFixedLengthArray(
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    PropertyArrayView<T> values = property.get(i);
+    PropertyArrayView<T> values = property.getRaw(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       REQUIRE(values[j] == data[expectedIdx]);
       ++expectedIdx;
@@ -276,7 +276,7 @@ TEST_CASE("Check boolean PropertyTablePropertyView") {
       gsl::span<const std::byte>(data.data(), data.size()));
 
   for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == bits[static_cast<size_t>(i)]);
+    REQUIRE(property.getRaw(i) == bits[static_cast<size_t>(i)]);
   }
 }
 
@@ -332,7 +332,7 @@ TEST_CASE("Check string PropertyTablePropertyView") {
       PropertyComponentType::Uint32);
 
   for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == strings[static_cast<size_t>(i)]);
+    REQUIRE(property.getRaw(i) == strings[static_cast<size_t>(i)]);
   }
 }
 
@@ -900,7 +900,7 @@ TEST_CASE("Check fixed-length array of string") {
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    PropertyArrayView<std::string_view> values = property.get(i);
+    PropertyArrayView<std::string_view> values = property.getRaw(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       std::string_view v = values[j];
       REQUIRE(v == strings[expectedIdx]);
@@ -980,7 +980,7 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
-    PropertyArrayView<std::string_view> values = property.get(i);
+    PropertyArrayView<std::string_view> values = property.getRaw(i);
     for (int64_t j = 0; j < values.size(); ++j) {
       std::string_view v = values[j];
       REQUIRE(v == strings[expectedIdx]);
@@ -1016,7 +1016,7 @@ TEST_CASE("Check fixed-length boolean array PropertyTablePropertyView") {
   REQUIRE(property.size() == 2);
   REQUIRE(property.arrayCount() == classProperty.count);
 
-  PropertyArrayView<bool> val0 = property.get(0);
+  PropertyArrayView<bool> val0 = property.getRaw(0);
   REQUIRE(val0.size() == 12);
   REQUIRE(static_cast<int>(val0[0]) == 1);
   REQUIRE(static_cast<int>(val0[1]) == 1);
@@ -1031,7 +1031,7 @@ TEST_CASE("Check fixed-length boolean array PropertyTablePropertyView") {
   REQUIRE(static_cast<int>(val0[10]) == 0);
   REQUIRE(static_cast<int>(val0[11]) == 1);
 
-  PropertyArrayView<bool> val1 = property.get(1);
+  PropertyArrayView<bool> val1 = property.getRaw(1);
   REQUIRE(static_cast<int>(val1[0]) == 1);
   REQUIRE(static_cast<int>(val1[1]) == 1);
   REQUIRE(static_cast<int>(val1[2]) == 1);
@@ -1075,13 +1075,13 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
   REQUIRE(property.size() == 3);
   REQUIRE(property.arrayCount() == 0);
 
-  PropertyArrayView<bool> val0 = property.get(0);
+  PropertyArrayView<bool> val0 = property.getRaw(0);
   REQUIRE(val0.size() == 3);
   REQUIRE(static_cast<int>(val0[0]) == 1);
   REQUIRE(static_cast<int>(val0[1]) == 1);
   REQUIRE(static_cast<int>(val0[2]) == 1);
 
-  PropertyArrayView<bool> val1 = property.get(1);
+  PropertyArrayView<bool> val1 = property.getRaw(1);
   REQUIRE(val1.size() == 9);
   REQUIRE(static_cast<int>(val1[0]) == 1);
   REQUIRE(static_cast<int>(val1[1]) == 0);
@@ -1093,7 +1093,7 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
   REQUIRE(static_cast<int>(val1[7]) == 0);
   REQUIRE(static_cast<int>(val1[8]) == 1);
 
-  PropertyArrayView<bool> val2 = property.get(2);
+  PropertyArrayView<bool> val2 = property.getRaw(2);
   REQUIRE(val2.size() == 16);
   REQUIRE(static_cast<int>(val2[0]) == 1);
   REQUIRE(static_cast<int>(val2[1]) == 1);

@@ -533,7 +533,6 @@ TEST_CASE("Test CanBeNormalized") {
   REQUIRE(CanBeNormalized<uint64_t>::value);
   REQUIRE(CanBeNormalized<int64_t>::value);
 
-
   REQUIRE(!CanBeNormalized<float>::value);
   REQUIRE(!CanBeNormalized<double>::value);
   REQUIRE(!CanBeNormalized<bool>::value);
@@ -723,5 +722,17 @@ TEST_CASE("TypeToNormalizedType") {
     REQUIRE(std::is_same_v<
             TypeToNormalizedType<glm::i64mat4x4>::type,
             ExpectedMat4Type>);
+  }
+
+  SECTION("Works for arrays") {
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<PropertyArrayView<int64_t>>::type,
+            PropertyArrayView<double>>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<PropertyArrayView<glm::u8vec4>>::type,
+            PropertyArrayView<glm::dvec4>>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<PropertyArrayView<glm::imat2x2>>::type,
+            PropertyArrayView<glm::dmat2>>);
   }
 }

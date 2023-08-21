@@ -1,7 +1,6 @@
 #include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
-#include "CesiumGltf/PropertyTransformations.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
 
 #include <bitset>

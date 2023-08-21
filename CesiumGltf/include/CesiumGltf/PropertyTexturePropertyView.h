@@ -3,8 +3,8 @@
 #include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumGltf/Sampler.h"
 #include "CesiumGltf/PropertyView.h"
+#include "CesiumGltf/Sampler.h"
 
 #include <algorithm>
 #include <cassert>
