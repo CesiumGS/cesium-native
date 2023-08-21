@@ -839,7 +839,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const glm::dmat4& tileTransform = tile.getTransform();
   TileRefine tileRefine = tile.getRefine();
 
-  ExternalContentInitializer externalContentInitializer{nullptr, this};
+  ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
 
   const auto& asyncSystem = loadInput.asyncSystem;
   const auto& pAssetAccessor = loadInput.pAssetAccessor;
