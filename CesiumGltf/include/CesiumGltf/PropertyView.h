@@ -1,7 +1,7 @@
 #include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/PropertyConversions.h"
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
+#include "CesiumGltf/PropertyTransformations.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
 
 #include <bitset>
@@ -597,6 +597,13 @@ public:
 protected:
   PropertyViewStatusType _status;
 
+  ElementType applyValueTransforms(ElementType value) {
+    if (_offset || _scale) {
+      return applyOffsetAndScale(value, _offset, _scale);
+    }
+    return value;
+  }
+
 private:
   bool _required;
 
@@ -937,6 +944,9 @@ protected:
 
   NormalizedType applyValueTransforms(ElementType value) {
     NormalizedType result = normalize(value);
+    if (_offset || _scale) {
+      return applyOffsetAndScale(result, _offset, _scale);
+    }
     return result;
   }
 
@@ -1513,7 +1523,7 @@ protected:
       case PropertyComponentType::Float64:
         _offset = getArrayValue(*property.offset);
         if (_offset &&
-            (count == 0 || _offset->size() == static_cast<size_t>(_count))) {
+            (_count == 0 || _offset->size() == static_cast<size_t>(_count))) {
           break;
         }
         // If it does not break here, something went wrong.
@@ -1531,7 +1541,7 @@ protected:
       case PropertyComponentType::Float64:
         _scale = getArrayValue(*property.scale);
         if (_scale &&
-            (count == 0 || _scale->size() == static_cast<size_t>(_count))) {
+            (_count == 0 || _scale->size() == static_cast<size_t>(_count))) {
           break;
         }
         // If it does not break here, something went wrong.
@@ -1657,6 +1667,14 @@ public:
 
 protected:
   PropertyViewStatusType _status;
+
+  PropertyArrayView<ElementType>
+  applyValueTransforms(const PropertyArrayView<ElementType>& value) {
+    if (_offset || _scale) {
+      return applyOffsetAndScale(value, _offset, _scale);
+    }
+    return value;
+  }
 
 private:
   int64_t _count;
@@ -1929,7 +1947,7 @@ protected:
     // If the property has its own values, override the class-provided values.
 
     if (property.offset) {
-      _offset = getArrayValue(*property.offset);
+      _offset = getArrayValue<NormalizedType>(*property.offset);
       if (!_offset ||
           (_count > 0 && _offset->size() != static_cast<size_t>(_count))) {
         // The value was specified but something went wrong.
@@ -1939,7 +1957,7 @@ protected:
     }
 
     if (property.scale) {
-      _scale = getArrayValue(*property.scale);
+      _scale = getArrayValue<NormalizedType>(*property.scale);
       if (!_scale ||
           (_count > 0 || _scale->size() != static_cast<size_t>(_count))) {
         // The value was specified but something went wrong.
@@ -1949,7 +1967,7 @@ protected:
     }
 
     if (property.max) {
-      _max = getArrayValue(*property.max);
+      _max = getArrayValue<NormalizedType>(*property.max);
       if (!_max ||
           (_count > 0 && _max->size() != static_cast<size_t>(_count))) {
         // The value was specified but something went wrong.
@@ -1959,7 +1977,7 @@ protected:
     }
 
     if (property.min) {
-      _min = getArrayValue(*property.min);
+      _min = getArrayValue<NormalizedType>(*property.min);
       if (!_min ||
           (_count > 0 && _min->size() != static_cast<size_t>(_count))) {
         // The value was specified but something went wrong.
@@ -2066,6 +2084,28 @@ public:
 
 protected:
   PropertyViewStatusType _status;
+
+  PropertyArrayView<NormalizedType>
+  applyValueTransforms(const PropertyArrayView<ElementType>& value) {
+    auto offset = this->offset();
+    auto scale = this->scale();
+    int64_t offsetSize = offset ? offset.size() : 0;
+    int64_t scaleSize = scale ? scale.size() : 0;
+    std::vector<NormalizedType> result(static_cast<size_t>(value.size()));
+    for (int64_t i = 0; i < value.size(); i++) {
+      result[i] = normalize(value[i]);
+
+      if (i < scaleSize) {
+        result = applyScale(result[i], scale[i]);
+      }
+
+      if (i < offsetSize) {
+        result[i] = result[i] + offset[i];
+      }
+    }
+
+    return PropertyArrayView<NormalizedType>(std::move(result));
+  }
 
 private:
   int64_t _count;
