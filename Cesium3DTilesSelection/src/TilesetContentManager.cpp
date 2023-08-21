@@ -37,8 +37,9 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
-  void operator()(TileExternalContent content) {
-    tileContent.setContentKind(content);
+  void operator()(TileExternalContent&& content) {
+    tileContent.setContentKind(
+        std::make_unique<TileExternalContent>(std::move(content)));
   }
 
   void operator()(CesiumGltf::Model&& model) {
@@ -1167,16 +1168,6 @@ void TilesetContentManager::finishLoading(
   // necessary.
   // Priority doesn't matter here since loading is complete.
   updateTileContent(tile, 0.0, tilesetOptions);
-}
-
-const std::optional<Cesium3DTiles::Schema>&
-TilesetContentManager::getSchema() const noexcept {
-  static const std::optional<Cesium3DTiles::Schema> noSchema;
-  if (this->_pLoader) {
-    return this->_pLoader->getSchema();
-  } else {
-    return noSchema;
-  }
 }
 
 void TilesetContentManager::setTileContent(

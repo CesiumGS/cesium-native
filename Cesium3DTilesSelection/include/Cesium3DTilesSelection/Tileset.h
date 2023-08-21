@@ -98,8 +98,6 @@ public:
    */
   const std::vector<Credit>& getTilesetCredits() const noexcept;
 
-  const std::optional<Cesium3DTiles::Schema>& getSchema() const noexcept;
-
   /**
    * @brief Sets whether or not the tileset's credits should be shown on screen.
    * @param showCreditsOnScreen Whether the credits should be shown on screen.

@@ -512,7 +512,7 @@ std::optional<Tile> parseTileJsonRecursively(
 
   if (implicitTilingJson) {
     // mark this tile as external
-    Tile tile{&currentLoader, TileExternalContent{}};
+    Tile tile{&currentLoader, std::make_unique<TileExternalContent>()};
     tile.setTileID("");
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
@@ -596,31 +596,17 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader = std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis);
 
-  const auto schemaIt = tilesetJson.FindMember("schema");
-  if (schemaIt != tilesetJson.MemberEnd()) {
-    auto schemaResult = Cesium3DTilesReader::readSchema(schemaIt->value);
-    if (schemaResult.value) {
-      pLoader->getSchema() = std::move(*schemaResult.value);
-    }
-  }
+  pRootTile = std::make_unique<Tile>(
+      pLoader.get(),
+      std::make_unique<TileExternalContent>());
 
-  const auto metadataIt = tilesetJson.FindMember("metadata");
-  if (metadataIt != tilesetJson.MemberEnd()) {
-    auto metadataResult =
-        Cesium3DTilesReader::readMetadataEntity(metadataIt->value);
-    if (metadataResult.value) {
-      // pLoader->getSchema() = std::move(*schemaResult.value);
-    }
-  }
-
-  const auto groupsIt = tilesetJson.FindMember("groups");
-  if (groupsIt != tilesetJson.MemberEnd()) {
-    auto groupsResult =
-        Cesium3DTilesReader::readGroupMetadataArray(groupsIt->value);
-    if (groupsResult.value) {
-      // pLoader->getSchema() = std::move(*schemaResult.value);
-    }
-  }
+  pRootTile->setTileID("");
+  pRootTile->setTransform(parentTransform);
+  pRootTile->setBoundingVolume(CesiumGeometry::BoundingSphere(
+      glm::dvec3(0.0),
+      std::numeric_limits<float>::max()));
+  pRootTile->setGeometricError(10000000.0);
+  pRootTile->setRefine(parentRefine);
 
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
@@ -727,6 +713,42 @@ TilesetJsonLoader::TilesetJsonLoader(
     CesiumGeometry::Axis upAxis)
     : _baseUrl{baseUrl}, _upAxis{upAxis}, _children{} {}
 
+namespace {
+
+void parseTilesetMetadata(const rapidjson::Document& tilesetJson, Tile& tile) {
+  TileExternalContent* pExternal = tile.getContent().getExternalContent();
+  assert(pExternal);
+  if (!pExternal)
+    return;
+
+  auto schemaIt = tilesetJson.FindMember("schema");
+  if (schemaIt != tilesetJson.MemberEnd()) {
+    auto schemaResult = Cesium3DTilesReader::readSchema(schemaIt->value);
+    if (schemaResult.value) {
+      // pLoader->setSchema(std::move(*schemaResult.value));
+    }
+  }
+
+  const auto metadataIt = tilesetJson.FindMember("metadata");
+  if (metadataIt != tilesetJson.MemberEnd()) {
+    auto metadataResult =
+        Cesium3DTilesReader::readMetadataEntity(metadataIt->value);
+    if (metadataResult.value) {
+      // pLoader->getSchema() = std::move(*schemaResult.value);
+    }
+  }
+
+  const auto groupsIt = tilesetJson.FindMember("groups");
+  if (groupsIt != tilesetJson.MemberEnd()) {
+    auto groupsResult =
+        Cesium3DTilesReader::readGroupMetadataArray(groupsIt->value);
+    if (groupsResult.value) {
+      // pLoader->getSchema() = std::move(*schemaResult.value);
+    }
+  }
+}
+} // namespace
+
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
     const TilesetExternals& externals,
@@ -759,12 +781,26 @@ TilesetJsonLoader::createLoader(
           return result;
         }
 
-        return parseTilesetJson(
+        gsl::span<const std::byte> data = pResponse->data();
+
+        rapidjson::Document tilesetJson;
+        tilesetJson.Parse(
+            reinterpret_cast<const char*>(data.data()),
+            data.size());
+        if (tilesetJson.HasParseError()) {
+          TilesetContentLoaderResult<TilesetJsonLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Error when parsing tileset JSON, error code {} at byte offset "
+              "{}",
+              tilesetJson.GetParseError(),
+              tilesetJson.GetErrorOffset()));
+          return result;
+        }
+
+        return TilesetJsonLoader::createLoader(
             pLogger,
             pCompletedRequest->url(),
-            pResponse->data(),
-            glm::dmat4(1.0),
-            TileRefine::Replace);
+            tilesetJson);
       });
 }
 
@@ -772,12 +808,32 @@ TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
     const rapidjson::Document& tilesetJson) {
-  return parseTilesetJson(
+  TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
       pLogger,
       tilesetJsonUrl,
       tilesetJson,
       glm::dmat4(1.0),
       TileRefine::Replace);
+
+  // Create a root tile to represent the tileset.json itself.
+  std::vector<Tile> children;
+  children.emplace_back(std::move(*result.pRootTile));
+
+  result.pRootTile = std::make_unique<Tile>(
+      children[0].getLoader(),
+      std::make_unique<TileExternalContent>());
+
+  result.pRootTile->setTileID("");
+  result.pRootTile->setTransform(children[0].getTransform());
+  result.pRootTile->setBoundingVolume(children[0].getBoundingVolume());
+  result.pRootTile->setUnconditionallyRefine();
+  result.pRootTile->setRefine(children[0].getRefine());
+  result.pRootTile->createChildTiles(std::move(children));
+
+  // Populate the root tile with metadata
+  parseTilesetMetadata(tilesetJson, *result.pRootTile);
+
+  return result;
 }
 
 CesiumAsync::Future<TileLoadResult>

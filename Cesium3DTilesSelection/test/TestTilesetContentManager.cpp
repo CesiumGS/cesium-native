@@ -219,8 +219,10 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
     // check root
-    const Tile* pRootTile = manager.getRootTile();
-    CHECK(pRootTile);
+    const Tile* pTilesetJson = manager.getRootTile();
+    REQUIRE(pTilesetJson);
+    REQUIRE(pTilesetJson->getChildren().size() == 1);
+    const Tile* pRootTile = &pTilesetJson->getChildren()[0];
     CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
     CHECK(pRootTile->getGeometricError() == 70.0);
     CHECK(pRootTile->getRefine() == TileRefine::Add);

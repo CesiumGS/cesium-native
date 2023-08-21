@@ -21,12 +21,12 @@ Tile::Tile(TilesetContentLoader* pLoader) noexcept
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
-    TileExternalContent externalContent) noexcept
+    std::unique_ptr<TileExternalContent>&& externalContent) noexcept
     : Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
-          externalContent) {}
+          TileContent(std::move(externalContent))) {}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,

@@ -106,8 +106,6 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  const std::optional<Cesium3DTiles::Schema>& getSchema() const noexcept;
-
 private:
   static void setTileContent(
       Tile& tile,

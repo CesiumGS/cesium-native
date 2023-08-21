@@ -101,11 +101,6 @@ const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
   return this->_pTilesetContentManager->getTilesetCredits();
 }
 
-const std::optional<Cesium3DTiles::Schema>&
-Tileset::getSchema() const noexcept {
-  return this->_pTilesetContentManager->getSchema();
-}
-
 void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   this->_options.showCreditsOnScreen = showCreditsOnScreen;
 
@@ -784,13 +779,16 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
   this->_fogCull(frameState, distances, cullResult);
 
-  if (this->_options.forbidHoles && !cullResult.shouldVisit &&
-      tile.getRefine() == TileRefine::Replace &&
-      tile.getUnconditionallyRefine()) {
+  if (!cullResult.shouldVisit && tile.getUnconditionallyRefine()) {
     // Unconditionally refined tiles must always be visited in forbidHoles
     // mode, because we need to load this tile's descendants before we can
-    // render any of its siblings.
-    cullResult.shouldVisit = true;
+    // render any of its siblings. An unconditionally refined root tile must be
+    // visited as well, otherwise we won't load anything at all.
+    if ((this->_options.forbidHoles &&
+         tile.getRefine() == TileRefine::Replace) ||
+        tile.getParent() == nullptr) {
+      cullResult.shouldVisit = true;
+    }
   }
 
   if (!cullResult.shouldVisit) {
