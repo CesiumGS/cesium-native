@@ -632,13 +632,13 @@ void parseTilesetMetadata(
     Cesium3DTilesReader::SchemaReader schemaReader;
     auto schemaResult = schemaReader.readFromJson(schemaIt->value);
     if (schemaResult.value) {
-      externalContent.schema = std::move(*schemaResult.value);
+      externalContent.metadata.schema = std::move(*schemaResult.value);
     }
   }
 
   auto schemaUriIt = tilesetJson.FindMember("schemaUri");
   if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
-    externalContent.schemaUri = schemaUriIt->value.GetString();
+    externalContent.metadata.schemaUri = schemaUriIt->value.GetString();
   }
 
   const auto metadataIt = tilesetJson.FindMember("metadata");
@@ -646,7 +646,7 @@ void parseTilesetMetadata(
     Cesium3DTilesReader::MetadataEntityReader metadataReader;
     auto metadataResult = metadataReader.readFromJson(metadataIt->value);
     if (metadataResult.value) {
-      externalContent.metadata = std::move(*metadataResult.value);
+      externalContent.metadata.metadata = std::move(*metadataResult.value);
     }
   }
 
@@ -655,7 +655,7 @@ void parseTilesetMetadata(
     Cesium3DTilesReader::GroupMetadataReader groupMetadataReader;
     auto groupsResult = groupMetadataReader.readArrayFromJson(groupsIt->value);
     if (groupsResult.value) {
-      externalContent.groups = std::move(*groupsResult.value);
+      externalContent.metadata.groups = std::move(*groupsResult.value);
     }
   }
 }

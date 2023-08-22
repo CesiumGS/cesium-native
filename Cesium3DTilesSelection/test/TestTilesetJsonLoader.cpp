@@ -412,7 +412,8 @@ TEST_CASE("Test creating tileset json loader") {
         loaderResult.pRootTile->getContent().getExternalContent();
     REQUIRE(pExternal);
 
-    const std::optional<Cesium3DTiles::Schema>& schema = pExternal->schema;
+    const TilesetMetadata& metadata = pExternal->metadata;
+    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
     REQUIRE(schema);
     CHECK(schema->id == "foo");
   }

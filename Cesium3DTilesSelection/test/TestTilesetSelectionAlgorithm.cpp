@@ -1141,7 +1141,8 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
   TileExternalContent* pExternal = pRoot->getContent().getExternalContent();
   REQUIRE(pExternal);
 
-  const std::optional<Cesium3DTiles::Schema>& schema = pExternal->schema;
+  const TilesetMetadata& metadata = pExternal->metadata;
+  const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
   REQUIRE(schema);
   CHECK(schema->id == "foo");
 }
@@ -1209,9 +1210,9 @@ TEST_CASE("Makes metadata available on external tilesets") {
 
   REQUIRE(pExternalContent);
 
-  REQUIRE(pExternalContent->groups.size() == 2);
-  CHECK(pExternalContent->groups[0].classProperty == "someClass");
-  CHECK(pExternalContent->groups[1].classProperty == "someClass");
+  REQUIRE(pExternalContent->metadata.groups.size() == 2);
+  CHECK(pExternalContent->metadata.groups[0].classProperty == "someClass");
+  CHECK(pExternalContent->metadata.groups[1].classProperty == "someClass");
 }
 
 namespace {
