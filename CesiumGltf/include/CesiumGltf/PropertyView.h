@@ -233,8 +233,7 @@ int64_t getCount(std::optional<std::vector<std::byte>>& buffer) {
 /**
  * @brief Represents a metadata property in EXT_structural_metadata.
  */
-template <typename ElementType, bool Normalized = false, typename Enable = void>
-class PropertyView;
+template <typename ElementType, bool Normalized = false> class PropertyView;
 
 /**
  * @brief Represents a non-normalized metadata property in
@@ -565,11 +564,7 @@ private:
  * @tparam ElementType The C++ type of the values in this property. Must have an
  * integer component type.
  */
-template <typename ElementType>
-class PropertyView<
-    ElementType,
-    true,
-    std::enable_if_t<CanBeNormalized<ElementType>::value>> {
+template <typename ElementType> class PropertyView<ElementType, true> {
 private:
   using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
 
@@ -1562,10 +1557,7 @@ private:
  * property. Must have an integer component type.
  */
 template <typename ElementType>
-class PropertyView<
-    PropertyArrayView<ElementType>,
-    true,
-    std::enable_if_t<CanBeNormalized<ElementType>::value>> {
+class PropertyView<PropertyArrayView<ElementType>, true> {
 private:
   using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
 

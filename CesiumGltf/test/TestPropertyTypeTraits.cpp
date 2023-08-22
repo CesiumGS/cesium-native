@@ -523,20 +523,112 @@ TEST_CASE("TypeToPropertyType") {
   }
 }
 
-TEST_CASE("Test CanBeNormalized") {
-  REQUIRE(CanBeNormalized<uint8_t>::value);
-  REQUIRE(CanBeNormalized<int8_t>::value);
-  REQUIRE(CanBeNormalized<uint16_t>::value);
-  REQUIRE(CanBeNormalized<int16_t>::value);
-  REQUIRE(CanBeNormalized<uint32_t>::value);
-  REQUIRE(CanBeNormalized<int32_t>::value);
-  REQUIRE(CanBeNormalized<uint64_t>::value);
-  REQUIRE(CanBeNormalized<int64_t>::value);
+TEST_CASE("CanBeNormalized") {
+  SECTION("Works for scalars") {
+    REQUIRE(CanBeNormalized<uint8_t>::value);
+    REQUIRE(CanBeNormalized<int8_t>::value);
+    REQUIRE(CanBeNormalized<uint16_t>::value);
+    REQUIRE(CanBeNormalized<int16_t>::value);
+    REQUIRE(CanBeNormalized<uint32_t>::value);
+    REQUIRE(CanBeNormalized<int32_t>::value);
+    REQUIRE(CanBeNormalized<uint64_t>::value);
+    REQUIRE(CanBeNormalized<int64_t>::value);
 
-  REQUIRE(!CanBeNormalized<float>::value);
-  REQUIRE(!CanBeNormalized<double>::value);
-  REQUIRE(!CanBeNormalized<bool>::value);
-  REQUIRE(!CanBeNormalized<std::string_view>::value);
+    REQUIRE(!CanBeNormalized<float>::value);
+    REQUIRE(!CanBeNormalized<double>::value);
+    REQUIRE(!CanBeNormalized<bool>::value);
+    REQUIRE(!CanBeNormalized<std::string_view>::value);
+  }
+
+  SECTION("Works for vecNs") {
+    REQUIRE(CanBeNormalized<glm::u8vec2>::value);
+    REQUIRE(CanBeNormalized<glm::u8vec3>::value);
+    REQUIRE(CanBeNormalized<glm::u8vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i8vec2>::value);
+    REQUIRE(CanBeNormalized<glm::i8vec3>::value);
+    REQUIRE(CanBeNormalized<glm::i8vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u16vec2>::value);
+    REQUIRE(CanBeNormalized<glm::u16vec3>::value);
+    REQUIRE(CanBeNormalized<glm::u16vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i16vec2>::value);
+    REQUIRE(CanBeNormalized<glm::i16vec3>::value);
+    REQUIRE(CanBeNormalized<glm::i16vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::uvec2>::value);
+    REQUIRE(CanBeNormalized<glm::uvec3>::value);
+    REQUIRE(CanBeNormalized<glm::uvec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::ivec2>::value);
+    REQUIRE(CanBeNormalized<glm::ivec3>::value);
+    REQUIRE(CanBeNormalized<glm::ivec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u64vec2>::value);
+    REQUIRE(CanBeNormalized<glm::u64vec3>::value);
+    REQUIRE(CanBeNormalized<glm::u64vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i64vec2>::value);
+    REQUIRE(CanBeNormalized<glm::i64vec3>::value);
+    REQUIRE(CanBeNormalized<glm::i64vec4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::vec2>::value);
+    REQUIRE(!CanBeNormalized<glm::vec3>::value);
+    REQUIRE(!CanBeNormalized<glm::vec4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::dvec2>::value);
+    REQUIRE(!CanBeNormalized<glm::dvec3>::value);
+    REQUIRE(!CanBeNormalized<glm::dvec4>::value);
+  }
+
+  SECTION("Works for matN") {
+    REQUIRE(CanBeNormalized<glm::u8mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::u8mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::u8mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i8mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::i8mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::i8mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u16mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::u16mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::u16mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i16mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::i16mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::i16mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::umat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::umat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::umat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::imat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::imat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::imat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u64mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::u64mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::u64mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i64mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::i64mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::i64mat4x4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::mat2>::value);
+    REQUIRE(!CanBeNormalized<glm::mat3>::value);
+    REQUIRE(!CanBeNormalized<glm::mat4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::dmat2>::value);
+    REQUIRE(!CanBeNormalized<glm::dmat3>::value);
+    REQUIRE(!CanBeNormalized<glm::dmat4>::value);
+  }
+
+  SECTION("Works for arrays") {
+    REQUIRE(CanBeNormalized<PropertyArrayView<int32_t>>::value);
+    REQUIRE(CanBeNormalized<PropertyArrayView<glm::uvec2>>::value);
+    REQUIRE(CanBeNormalized<PropertyArrayView<glm::i64mat2x2>>::value);
+  }
 }
 
 TEST_CASE("TypeToNormalizedType") {

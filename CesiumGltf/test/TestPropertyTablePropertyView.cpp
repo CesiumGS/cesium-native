@@ -10,6 +10,31 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
+
+#pragma region Utility
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+JsonValue::Array getArrayFromVecN(glm::vec<N, T, Q> vecN) {
+  JsonValue::Array values(N);
+  for (glm::length_t i = 0; i < N; i++) {
+    values[i] = vecN[i];
+  }
+
+  return values;
+}
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+JsonValue::Array getArrayFromMatN(glm::mat<N, N, T, Q> matN) {
+  JsonValue::Array values(N * N);
+  for (glm::length_t i = 0; i < N; i++) {
+    for (glm::length_t j = 0; j < N; j++) {
+      values[N * i + j] = matN[i][j];
+    }
+  }
+
+  return values;
+}
 
 template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::vector<std::byte> data;
@@ -33,6 +58,8 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
       static_cast<int64_t>(expected.size()),
       gsl::span<const std::byte>(data.data(), data.size()));
 
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == expected[static_cast<size_t>(i)]);
     REQUIRE(property.get(i));
@@ -41,7 +68,7 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
 }
 
 template <typename T>
-static void checkNumeric(
+static void checkScalar(
     const std::vector<T>& values,
     const std::vector<std::optional<T>>& expected,
     const std::optional<T> offset = std::nullopt,
@@ -58,10 +85,8 @@ static void checkNumeric(
       convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
   PropertyComponentType componentType = TypeToPropertyType<T>::component;
-  if (componentType != PropertyComponentType::None) {
-    classProperty.componentType =
-        convertPropertyComponentTypeToString(componentType);
-  }
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
 
   if (offset) {
     classProperty.offset = *offset;
@@ -85,6 +110,8 @@ static void checkNumeric(
       static_cast<int64_t>(expected.size()),
       gsl::span<const std::byte>(data.data(), data.size()));
 
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
     if constexpr (IsMetadataFloating<T>::value) {
@@ -96,14 +123,116 @@ static void checkNumeric(
   }
 }
 
-template <typename T, typename D = TypeToNormalizedType<T>::type>
-static void checkNormalizedNumeric(
+template <glm::length_t N, typename T>
+static void checkVecN(
+    const std::vector<glm::vec<N, T>>& values,
+    const std::vector<std::optional<glm::vec<N, T>>>& expected,
+    const std::optional<glm::vec<N, T>> offset = std::nullopt,
+    const std::optional<glm::vec<N, T>> scale = std::nullopt,
+    const std::optional<glm::vec<N, T>> noData = std::nullopt,
+    const std::optional<glm::vec<N, T>> defaultValue = std::nullopt) {
+  std::vector<std::byte> data;
+  data.resize(values.size() * sizeof(glm::vec<N, T>));
+  std::memcpy(data.data(), values.data(), data.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<glm::vec<N, T>>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  if (offset) {
+    classProperty.offset = getArrayFromVecN(*offset);
+  }
+
+  if (scale) {
+    classProperty.scale = getArrayFromVecN(*scale);
+  }
+
+  if (noData) {
+    classProperty.noData = getArrayFromVecN(*noData);
+  }
+
+  if (defaultValue) {
+    classProperty.defaultProperty = getArrayFromVecN(*defaultValue);
+  }
+
+  PropertyTablePropertyView<glm::vec<N, T>> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(expected.size()),
+      gsl::span<const std::byte>(data.data(), data.size()));
+
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
+  for (int64_t i = 0; i < property.size(); ++i) {
+    REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+  }
+}
+
+template <glm::length_t N, typename T>
+static void checkMatN(
+    const std::vector<glm::mat<N, N, T>>& values,
+    const std::vector<std::optional<glm::mat<N, N, T>>>& expected,
+    const std::optional<glm::mat<N, N, T>> offset = std::nullopt,
+    const std::optional<glm::mat<N, N, T>> scale = std::nullopt,
+    const std::optional<glm::mat<N, N, T>> noData = std::nullopt,
+    const std::optional<glm::mat<N, N, T>> defaultValue = std::nullopt) {
+  std::vector<std::byte> data;
+  data.resize(values.size() * sizeof(glm::mat<N, N, T>));
+  std::memcpy(data.data(), values.data(), data.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<glm::mat<N, N, T>>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  if (offset) {
+    classProperty.offset = getArrayFromMatN(*offset);
+  }
+
+  if (scale) {
+    classProperty.scale = getArrayFromMatN(*scale);
+  }
+
+  if (noData) {
+    classProperty.noData = getArrayFromMatN(*noData);
+  }
+
+  if (defaultValue) {
+    classProperty.defaultProperty = getArrayFromMatN(*defaultValue);
+  }
+
+  PropertyTablePropertyView<glm::mat<N, N, T>> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(expected.size()),
+      gsl::span<const std::byte>(data.data(), data.size()));
+
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
+  for (int64_t i = 0; i < property.size(); ++i) {
+    REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+  }
+}
+
+template <typename T>
+static void checkNormalizedScalar(
     const std::vector<T>& values,
-    const std::vector<std::optional<D>>& expected,
-    const std::optional<D> offset = std::nullopt,
-    const std::optional<D> scale = std::nullopt,
+    const std::vector<std::optional<double>>& expected,
+    const std::optional<double> offset = std::nullopt,
+    const std::optional<double> scale = std::nullopt,
     const std::optional<T> noData = std::nullopt,
-    const std::optional<D> defaultValue = std::nullopt) {
+    const std::optional<double> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(T));
   std::memcpy(data.data(), values.data(), data.size());
@@ -141,10 +270,117 @@ static void checkNormalizedNumeric(
       static_cast<int64_t>(expected.size()),
       gsl::span<const std::byte>(data.data(), data.size()));
 
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
-    REQUIRE(property.get(i));
-    REQUIRE(*property.get(i) == Approx(*expected[static_cast<size_t>(i)]));
+    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+  }
+}
+
+template <glm::length_t N, typename T>
+static void checkNormalizedVecN(
+    const std::vector<glm::vec<N, T>>& values,
+    const std::vector<std::optional<glm::vec<N, double>>>& expected,
+    const std::optional<glm::vec<N, double>> offset = std::nullopt,
+    const std::optional<glm::vec<N, double>> scale = std::nullopt,
+    const std::optional<glm::vec<N, T>> noData = std::nullopt,
+    const std::optional<glm::vec<N, double>> defaultValue = std::nullopt) {
+  std::vector<std::byte> data;
+  data.resize(values.size() * sizeof(glm::vec<N, T>));
+  std::memcpy(data.data(), values.data(), data.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<glm::vec<N, T>>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  classProperty.normalized = true;
+
+  if (offset) {
+    classProperty.offset = getArrayFromVecN(*offset);
+  }
+
+  if (scale) {
+    classProperty.scale = getArrayFromVecN(*scale);
+  }
+
+  if (noData) {
+    classProperty.noData = getArrayFromVecN(*noData);
+  }
+
+  if (defaultValue) {
+    classProperty.defaultProperty = getArrayFromVecN(*defaultValue);
+  }
+
+  PropertyTablePropertyView<glm::vec<N, T>, true> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(expected.size()),
+      gsl::span<const std::byte>(data.data(), data.size()));
+
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
+  for (int64_t i = 0; i < property.size(); ++i) {
+    REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+  }
+}
+
+template <glm::length_t N, typename T>
+static void checkNormalizedMatN(
+    const std::vector<glm::mat<N, N, T>>& values,
+    const std::vector<std::optional<glm::mat<N, N, double>>>& expected,
+    const std::optional<glm::mat<N, N, double>> offset = std::nullopt,
+    const std::optional<glm::mat<N, N, double>> scale = std::nullopt,
+    const std::optional<glm::mat<N, N, T>> noData = std::nullopt,
+    const std::optional<glm::mat<N, N, double>> defaultValue = std::nullopt) {
+  std::vector<std::byte> data;
+  data.resize(values.size() * sizeof(glm::mat<N, N, T>));
+  std::memcpy(data.data(), values.data(), data.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<glm::mat<N, N, T>>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  classProperty.normalized = true;
+
+  if (offset) {
+    classProperty.offset = getArrayFromMatN(*offset);
+  }
+
+  if (scale) {
+    classProperty.scale = getArrayFromMatN(*scale);
+  }
+
+  if (noData) {
+    classProperty.noData = getArrayFromMatN(*noData);
+  }
+
+  if (defaultValue) {
+    classProperty.defaultProperty = getArrayFromMatN(*defaultValue);
+  }
+
+  PropertyTablePropertyView<glm::mat<N, N, T>, true> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(expected.size()),
+      gsl::span<const std::byte>(data.data(), data.size()));
+
+  REQUIRE(property.size() == static_cast<int64_t>(expected.size()));
+
+  for (int64_t i = 0; i < property.size(); ++i) {
+    REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
   }
 }
 
@@ -207,11 +443,13 @@ static void checkVariableLengthArray(
 template <typename T>
 static void checkFixedLengthArray(
     const std::vector<T>& data,
-    int64_t fixedLengthArrayCount,
-    int64_t instanceCount) {
+    int64_t fixedLengthArrayCount) {
+  int64_t instanceCount =
+      static_cast<int64_t>(data.size()) / fixedLengthArrayCount;
+
   std::vector<std::byte> buffer;
   buffer.resize(data.size() * sizeof(T));
-  std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
+  std::memcpy(buffer.data(), data.data(), buffer.size());
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
@@ -250,6 +488,154 @@ static void checkFixedLengthArray(
 
   REQUIRE(expectedIdx == data.size());
 }
+template <typename T>
+static void checkFixedLengthArrayWithProperties(
+    const std::vector<T>& data,
+    int64_t fixedLengthArrayCount,
+    const std::vector<std::optional<std::vector<T>>>& expected,
+    const std::optional<JsonValue::Array> offset = std::nullopt,
+    const std::optional<JsonValue::Array> scale = std::nullopt,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+  int64_t instanceCount =
+      static_cast<int64_t>(data.size()) / fixedLengthArrayCount;
+
+  std::vector<std::byte> buffer;
+  buffer.resize(data.size() * sizeof(T));
+  std::memcpy(buffer.data(), data.data(), buffer.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  if (componentType != PropertyComponentType::None) {
+    classProperty.componentType =
+        convertPropertyComponentTypeToString(componentType);
+  }
+
+  classProperty.array = true;
+  classProperty.count = fixedLengthArrayCount;
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
+
+  PropertyTablePropertyView<PropertyArrayView<T>> property(
+      propertyTableProperty,
+      classProperty,
+      instanceCount,
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(),
+      gsl::span<const std::byte>(),
+      PropertyComponentType::None,
+      PropertyComponentType::None);
+
+  REQUIRE(property.arrayCount() == fixedLengthArrayCount);
+
+  // Check raw values first
+  size_t expectedIdx = 0;
+  for (int64_t i = 0; i < property.size(); ++i) {
+    PropertyArrayView<T> rawValues = property.getRaw(i);
+    for (int64_t j = 0; j < rawValues.size(); ++j) {
+      REQUIRE(rawValues[j] == data[expectedIdx]);
+      ++expectedIdx;
+    }
+  }
+
+  REQUIRE(expectedIdx == data.size());
+
+  // Check values with properties applied
+  for (int64_t i = 0; i < property.size(); ++i) {
+    std::optional<PropertyArrayView<T>> maybeValues = property.get(i);
+    std::optional<std::vector<T>> expectedValues =
+        expected[static_cast<size_t>(i)];
+    REQUIRE(maybeValues.has_value() == expectedValues.has_value());
+    if (!maybeValues) {
+      continue;
+    }
+
+    auto values = *maybeValues;
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE(values[j] == (*expectedValues)[static_cast<size_t>(j)]);
+    }
+  }
+}
+
+template <typename T, typename D = typename TypeToNormalizedType<T>::type>
+static void checkNormalizedFixedLengthArray(
+    const std::vector<T>& data,
+    int64_t fixedLengthArrayCount,
+    const std::vector<std::optional<std::vector<D>>>& expected,
+    const std::optional<JsonValue::Array> offset = std::nullopt,
+    const std::optional<JsonValue::Array> scale = std::nullopt,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+  int64_t instanceCount =
+      static_cast<int64_t>(data.size()) / fixedLengthArrayCount;
+
+  std::vector<std::byte> buffer;
+  buffer.resize(data.size() * sizeof(T));
+  std::memcpy(buffer.data(), data.data(), buffer.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  classProperty.array = true;
+  classProperty.count = fixedLengthArrayCount;
+  classProperty.normalized = true;
+
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
+
+  PropertyTablePropertyView<PropertyArrayView<T>, true> property(
+      propertyTableProperty,
+      classProperty,
+      instanceCount,
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(),
+      PropertyComponentType::None);
+
+  REQUIRE(property.arrayCount() == fixedLengthArrayCount);
+
+  // Check raw values first
+  size_t expectedIdx = 0;
+  for (int64_t i = 0; i < property.size(); ++i) {
+    PropertyArrayView<T> rawValues = property.getRaw(i);
+    for (int64_t j = 0; j < rawValues.size(); ++j) {
+      REQUIRE(rawValues[j] == data[expectedIdx]);
+      ++expectedIdx;
+    }
+  }
+
+  REQUIRE(expectedIdx == data.size());
+
+  // Check values with properties applied
+  for (int64_t i = 0; i < property.size(); ++i) {
+    std::optional<PropertyArrayView<D>> maybeValues = property.get(i);
+    if (!maybeValues) {
+      REQUIRE(!expected[static_cast<size_t>(i)]);
+    }
+
+    auto values = *maybeValues;
+    auto expectedValues = *expected[static_cast<size_t>(i)];
+
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
+    }
+  }
+}
+
+#pragma endregion
 
 TEST_CASE("Check scalar PropertyTablePropertyView") {
   SECTION("Uint8") {
@@ -283,7 +669,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         64.0 / 255.0,
         128.0 / 255.0,
         1.0};
-    checkNormalizedNumeric(values, expected);
+    checkNormalizedScalar(values, expected);
   }
 
   SECTION("Normalized Int16") {
@@ -293,7 +679,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         0.0,
         16384.0 / 32767.0,
         1.0};
-    checkNormalizedNumeric(values, expected);
+    checkNormalizedScalar(values, expected);
   }
 
   SECTION("Float with Offset / Scale") {
@@ -301,7 +687,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     std::optional<float> offset = 1.0f;
     std::optional<float> scale = 2.0f;
     std::vector<std::optional<float>> expected{26.0f, -24.0f, -9.0f, 14.5f};
-    checkNumeric(values, expected, offset, scale);
+    checkScalar(values, expected, offset, scale);
   }
 
   SECTION("Normalized Uint8 with Offset and Scale") {
@@ -313,7 +699,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         1 + 2 * (64.0 / 255.0),
         1 + 2 * (128.0 / 255.0),
         3.0};
-    checkNormalizedNumeric(values, expected, offset, scale);
+    checkNormalizedScalar(values, expected, offset, scale);
   }
 
   SECTION("Int16 with NoData") {
@@ -324,7 +710,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         3,
         7,
         std::nullopt};
-    checkNumeric<int16_t>(
+    checkScalar<int16_t>(
         values,
         expected,
         std::nullopt,
@@ -338,7 +724,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     std::optional<int16_t> noData = -1;
     std::optional<int16_t> defaultValue = 0;
     std::vector<std::optional<int16_t>> expected{0, 3, 7, 0};
-    checkNumeric<int16_t>(
+    checkScalar<int16_t>(
         values,
         expected,
         std::nullopt,
@@ -358,7 +744,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         1 + 2 * (64.0 / 255.0),
         1 + 2 * (128.0 / 255.0),
         3.0};
-    checkNormalizedNumeric(
+    checkNormalizedScalar(
         values,
         expected,
         offset,
@@ -440,6 +826,169 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::u8vec4(0, 0, 0, 1)};
     checkNumeric(data);
   }
+
+  SECTION("Normalized Uint8 Vec2") {
+    std::vector<glm::u8vec2> values{
+        glm::u8vec2(0, 64),
+        glm::u8vec2(128, 255),
+        glm::u8vec2(255, 0)};
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(0.0, 64.0 / 255.0),
+        glm::dvec2(128.0 / 255.0, 1.0),
+        glm::dvec2(1.0, 0.0)};
+    checkNormalizedVecN(values, expected);
+  }
+
+  SECTION("Normalized Int16 Vec2") {
+    std::vector<glm::i16vec2> values{
+        glm::i16vec2(-32768, 0),
+        glm::i16vec2(16384, 32767),
+        glm::i16vec2(32767, -32768)};
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(-1.0, 0.0),
+        glm::dvec2(16384.0 / 32767.0, 1.0),
+        glm::dvec2(1.0, -1.0),
+    };
+    checkNormalizedVecN(values, expected);
+  }
+
+  SECTION("Float Vec3 with Offset / Scale") {
+    std::vector<glm::vec3> values{
+        glm::vec3(0.0f, -1.5f, -5.0f),
+        glm::vec3(6.5f, 2.0f, 4.0f),
+        glm::vec3(8.0f, -3.0f, 1.0f),
+    };
+    std::optional<glm::vec3> offset = glm::vec3(1.0f, 2.0, 3.0f);
+    std::optional<glm::vec3> scale = glm::vec3(2.0f, 1.0f, 2.0f);
+    std::vector<std::optional<glm::vec3>> expected{
+        glm::vec3(1.0f, 0.5f, -7.0f),
+        glm::vec3(14.0f, 4.0f, 11.0f),
+        glm::vec3(17.0f, -1.0f, 5.0f),
+    };
+    checkVecN(values, expected, offset, scale);
+  }
+
+  SECTION("Normalized Uint8 Vec2 with Offset and Scale") {
+    std::vector<glm::u8vec2> values{
+        glm::u8vec2(0, 64),
+        glm::u8vec2(128, 255),
+        glm::u8vec2(255, 0)};
+    std::optional<glm::dvec2> offset = glm::dvec2(0.0, 1.0);
+    std::optional<glm::dvec2> scale = glm::dvec2(2.0, 1.0);
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(0.0, 1 + (64.0 / 255.0)),
+        glm::dvec2(2 * (128.0 / 255.0), 2.0),
+        glm::dvec2(2.0, 1.0)};
+    checkNormalizedVecN(values, expected, offset, scale);
+  }
+
+  SECTION("Int16 Vec2 with NoData") {
+    std::vector<glm::i16vec2> values{
+        glm::i16vec2(-1, 3),
+        glm::i16vec2(-1, -1),
+        glm::i16vec2(7, 0)};
+    std::optional<glm::i16vec2> noData = glm::i16vec2(-1, -1);
+    std::vector<std::optional<glm::i16vec2>> expected{
+        glm::i16vec2(-1, 3),
+        std::nullopt,
+        glm::i16vec2(7, 0)};
+    checkVecN<2, glm::i16>(
+        values,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        std::nullopt);
+  };
+
+  SECTION("Int16 Vec2 with NoData and Default") {
+    std::vector<glm::i16vec2> values{
+        glm::i16vec2(-1, 3),
+        glm::i16vec2(-1, -1),
+        glm::i16vec2(7, 0)};
+    std::optional<glm::i16vec2> noData = glm::i16vec2(-1, -1);
+    std::optional<glm::i16vec2> defaultValue = glm::i16vec2(0, 1);
+    std::vector<std::optional<glm::i16vec2>> expected{
+        glm::i16vec2(-1, 3),
+        glm::i16vec2(0, 1),
+        glm::i16vec2(7, 0)};
+    checkVecN<2, glm::i16>(
+        values,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        defaultValue);
+  };
+
+  SECTION("Normalized Uint8 Vec2 with all properties") {
+    std::vector<glm::u8vec2> values{
+        glm::u8vec2(0, 64),
+        glm::u8vec2(128, 255),
+        glm::u8vec2(255, 0),
+        glm::u8vec2(0, 0)};
+    std::optional<glm::dvec2> offset = glm::dvec2(0.0, 1.0);
+    std::optional<glm::dvec2> scale = glm::dvec2(2.0, 1.0);
+    std::optional<glm::u8vec2> noData = glm::u8vec2(0, 0);
+    std::optional<glm::dvec2> defaultValue = glm::dvec2(5.0, 15.0);
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(0.0, 1 + (64.0 / 255.0)),
+        glm::dvec2(2 * (128.0 / 255.0), 2.0),
+        glm::dvec2(2.0, 1.0),
+        glm::dvec2(5.0, 15.0)};
+    checkNormalizedVecN(values, expected, offset, scale, noData, defaultValue);
+  }
+
+  SECTION("Overrides class property values") {
+    std::vector<glm::vec2> values{
+        glm::vec2(1.0f, 3.0f),
+        glm::vec2(2.5f, 2.5f),
+        glm::vec2(2.0f, 4.0f)};
+    std::vector<std::byte> data;
+    data.resize(values.size() * sizeof(glm::vec2));
+    std::memcpy(data.data(), values.data(), data.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.offset = {0.0f, 0.0f};
+    classProperty.scale = {1.0f, 1.0f};
+    classProperty.min = {1.0f, 2.5f};
+    classProperty.max = {2.5f, 4.0f};
+
+    PropertyTableProperty propertyTableProperty;
+    propertyTableProperty.offset = {1.0f, 0.5f};
+    propertyTableProperty.scale = {2.0f, 1.0f};
+    propertyTableProperty.min = {3.0f, 3.0f};
+    propertyTableProperty.max = {6.0f, 4.5f};
+
+    PropertyTablePropertyView<glm::vec2> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(values.size()),
+        gsl::span<const std::byte>(data.data(), data.size()));
+
+    REQUIRE(property.offset());
+    REQUIRE(*property.offset() == glm::vec2(1.0f, 0.5f));
+    REQUIRE(property.scale());
+    REQUIRE(*property.scale() == glm::vec2(2.0f, 1.0f));
+    REQUIRE(property.min());
+    REQUIRE(*property.min() == glm::vec2(3.0f, 3.0f));
+    REQUIRE(property.max());
+    REQUIRE(*property.max() == glm::vec2(6.0f, 4.5f));
+
+    std::vector<glm::vec2> expected{
+        glm::vec2(3.0f, 3.5f),
+        glm::vec2(6.0f, 3.0f),
+        glm::vec2(5.0f, 4.5f)};
+    for (int64_t i = 0; i < property.size(); ++i) {
+      REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+
+      std::optional<glm::vec2> transformedValue = property.get(i);
+      REQUIRE(transformedValue);
+      REQUIRE(*transformedValue == expected[static_cast<size_t>(i)]);
+    }
+  }
 }
 
 TEST_CASE("Check matN PropertyTablePropertyView") {
@@ -502,6 +1051,192 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     // clang-format on
     checkNumeric(data);
   }
+
+  SECTION("Normalized Uint8 Mat2") {
+    std::vector<glm::u8mat2x2> values{
+        glm::u8mat2x2(0, 64, 255, 255),
+        glm::u8mat2x2(255, 0, 128, 0)};
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(0.0, 64.0 / 255.0, 1.0, 1.0),
+        glm::dmat2(1.0, 0.0, 128.0 / 255.0, 0.0)};
+    checkNormalizedMatN(values, expected);
+  }
+
+  SECTION("Normalized Int16 Mat2") {
+    std::vector<glm::i16mat2x2> values{
+        glm::i16mat2x2(-32768, 0, 16384, 32767),
+        glm::i16mat2x2(0, 32767, 32767, -32768)};
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(-1.0, 0.0, 16384.0 / 32767.0, 1.0),
+        glm::dmat2(0.0, 1.0, 1.0, -1.0),
+    };
+    checkNormalizedMatN(values, expected);
+  }
+
+  SECTION("Float Mat2 with Offset / Scale") {
+    std::vector<glm::mat2> values{
+        glm::mat2(1.0f, 3.0f, 4.0f, 2.0f),
+        glm::mat2(6.5f, 2.0f, -2.0f, 0.0f),
+        glm::mat2(8.0f, -1.0f, -3.0f, 1.0f),
+    };
+    std::optional<glm::mat2> offset = glm::mat2(1.0f, 2.0, 3.0f, 1.0f);
+    std::optional<glm::mat2> scale = glm::mat2(2.0f, 0.0f, 0.0f, 2.0f);
+    std::vector<std::optional<glm::mat2>> expected{
+        glm::mat2(3.0f, 2.0f, 3.0f, 5.0f),
+        glm::mat2(14.0f, 2.0f, 3.0f, 1.0f),
+        glm::mat2(17.0f, 2.0f, 3.0f, 3.0f),
+    };
+    checkMatN(values, expected, offset, scale);
+  }
+
+  SECTION("Normalized Uint8 Mat2 with Offset and Scale") {
+    std::vector<glm::u8mat2x2> values{
+        glm::u8mat2x2(0, 64, 255, 255),
+        glm::u8mat2x2(255, 0, 128, 0)};
+    std::optional<glm::dmat2> offset = glm::dmat2(0.0, 1.0, 1.0, 0.0);
+    std::optional<glm::dmat2> scale = glm::dmat2(2.0, 1.0, 0.0, 2.0);
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(0.0, 1 + 64.0 / 255.0, 1.0, 2.0),
+        glm::dmat2(2.0, 1.0, 1.0, 0.0)};
+    checkNormalizedMatN(values, expected, offset, scale);
+  }
+
+  SECTION("Int16 Mat3 with NoData") {
+    // clang-format off
+    std::vector<glm::i16mat3x3> values{
+        glm::i16mat3x3(
+           1,  2,  3,
+          -1, -2, -3,
+           0,  1,  0),
+        glm::i16mat3x3(
+          1, -1, 0,
+          0,  1, 2,
+          0,  4, 5),
+        glm::i16mat3x3(
+          -1, -1, -1,
+           0,  0,  0,
+           1,  1,  1)};
+    std::optional<glm::i16mat3x3> noData =
+        glm::i16mat3x3(
+          -1, -1, -1,
+          0, 0, 0,
+          1, 1, 1);
+    // clang-format on
+    std::vector<std::optional<glm::i16mat3x3>> expected{
+        values[0],
+        values[1],
+        std::nullopt};
+    checkMatN<3, glm::i16>(
+        values,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        std::nullopt);
+  };
+
+  SECTION("Int16 Mat3 with NoData") {
+    // clang-format off
+    std::vector<glm::i16mat3x3> values{
+        glm::i16mat3x3(
+           1,  2,  3,
+          -1, -2, -3,
+           0,  1,  0),
+        glm::i16mat3x3(
+          1, -1, 0,
+          0,  1, 2,
+          0,  4, 5),
+        glm::i16mat3x3(
+          -1, -1, -1,
+           0,  0,  0,
+           1,  1,  1)};
+    std::optional<glm::i16mat3x3> noData =
+        glm::i16mat3x3(
+          -1, -1, -1,
+          0, 0, 0,
+          1, 1, 1);
+    // clang-format on
+    std::optional<glm::i16mat3x3> default = glm::i16mat3x3(1);
+    std::vector<std::optional<glm::i16mat3x3>> expected{
+        values[0],
+        values[1],
+        default};
+    checkMatN<3, glm::i16>(
+        values,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        default);
+  };
+
+  SECTION("Normalized Uint8 Mat2 with all properties") {
+    std::vector<glm::u8mat2x2> values{
+        glm::u8mat2x2(0, 64, 255, 255),
+        glm::u8mat2x2(0),
+        glm::u8mat2x2(255, 0, 128, 0)};
+    std::optional<glm::dmat2> offset = glm::dmat2(0.0, 1.0, 1.0, 0.0);
+    std::optional<glm::dmat2> scale = glm::dmat2(2.0, 1.0, 0.0, 2.0);
+    std::optional<glm::u8mat2x2> noData = glm::u8mat2x2(0);
+    std::optional<glm::dmat2> defaultValue = glm::dmat2(1.0);
+
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(0.0, 1 + 64.0 / 255.0, 1.0, 2.0),
+        glm::dmat2(1.0),
+        glm::dmat2(2.0, 1.0, 1.0, 0.0)};
+    checkNormalizedMatN(values, expected, offset, scale, noData, defaultValue);
+  }
+
+  SECTION("Overrides class property values") {
+    std::vector<glm::mat2> values{
+        glm::mat2(1.0f),
+        glm::mat2(2.5f, 1.0f, 1.0f, 2.5f),
+        glm::mat2(3.0f)};
+    std::vector<std::byte> data;
+    data.resize(values.size() * sizeof(glm::mat2));
+    std::memcpy(data.data(), values.data(), data.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.offset = {0.0f, 0.0f, 0.0f, 0.0f};
+    classProperty.scale = {1.0f, 1.0f, 1.0f, 1.0f};
+    classProperty.min = {1.0f, 0.0f, 0.0f, 1.0f};
+    classProperty.max = {3.0f, 0.0f, 0.0f, 3.0f};
+
+    PropertyTableProperty propertyTableProperty;
+    propertyTableProperty.offset = {1.0f, 0.5f, 0.5f, 1.0f};
+    propertyTableProperty.scale = {2.0f, 1.0f, 0.0f, 1.0f};
+    propertyTableProperty.min = {3.0f, 0.5f, 0.5f, 2.0f};
+    propertyTableProperty.max = {7.0f, 1.5f, 0.5f, 4.0f};
+
+    PropertyTablePropertyView<glm::mat2> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(values.size()),
+        gsl::span<const std::byte>(data.data(), data.size()));
+
+    REQUIRE(property.offset());
+    REQUIRE(*property.offset() == glm::mat2(1.0f, 0.5f, 0.5f, 1.0f));
+    REQUIRE(property.scale());
+    REQUIRE(*property.scale() == glm::mat2(2.0f, 1.0f, 0.0f, 1.0f));
+    REQUIRE(property.min());
+    REQUIRE(*property.min() == glm::mat2(3.0f, 0.5f, 0.5f, 2.0f));
+    REQUIRE(property.max());
+    REQUIRE(*property.max() == glm::mat2(7.0f, 1.5f, 0.5f, 4.0f));
+
+    std::vector<glm::mat2> expected{
+        glm::mat2(3.0f, 0.5f, 0.5f, 2.0f),
+        glm::mat2(6.0f, 1.5f, 0.5f, 3.5f),
+        glm::mat2(7.0f, 0.5f, 0.5f, 4.0f)};
+    for (int64_t i = 0; i < property.size(); ++i) {
+      REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+
+      std::optional<glm::mat2> transformedValue = property.get(i);
+      REQUIRE(transformedValue);
+      REQUIRE(*transformedValue == expected[static_cast<size_t>(i)]);
+    }
+  }
 }
 
 TEST_CASE("Check boolean PropertyTablePropertyView") {
@@ -563,36 +1298,95 @@ TEST_CASE("Check string PropertyTablePropertyView") {
       &currentOffset,
       sizeof(uint32_t));
 
-  PropertyTableProperty propertyTableProperty;
-  ClassProperty classProperty;
-  classProperty.type = ClassProperty::Type::STRING;
+  SECTION("Returns correct values") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
 
-  PropertyTablePropertyView<std::string_view> property(
-      propertyTableProperty,
-      classProperty,
-      static_cast<int64_t>(strings.size()),
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-      PropertyComponentType::None,
-      PropertyComponentType::Uint32);
+    PropertyTablePropertyView<std::string_view> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(strings.size()),
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+        PropertyComponentType::None,
+        PropertyComponentType::Uint32);
 
-  for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.getRaw(i) == strings[static_cast<size_t>(i)]);
+    for (int64_t i = 0; i < property.size(); ++i) {
+      REQUIRE(property.getRaw(i) == strings[static_cast<size_t>(i)]);
+      REQUIRE(property.get(i));
+      REQUIRE(*property.get(i) == strings[static_cast<size_t>(i)]);
+    }
+  }
+
+  SECTION("Uses NoData value") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.noData = "What's going on";
+
+    PropertyTablePropertyView<std::string_view> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(strings.size()),
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+        PropertyComponentType::None,
+        PropertyComponentType::Uint32);
+
+    std::vector<std::optional<std::string_view>> expected{
+        strings[0],
+        std::nullopt,
+        strings[2]};
+
+    for (int64_t i = 0; i < property.size(); ++i) {
+      REQUIRE(property.getRaw(i) == strings[static_cast<size_t>(i)]);
+      REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+    }
+  }
+
+  SECTION("Uses NoData and Default value") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.noData = "What's going on";
+    classProperty.defaultProperty = "Hello";
+
+    PropertyTablePropertyView<std::string_view> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(strings.size()),
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+        PropertyComponentType::None,
+        PropertyComponentType::Uint32);
+
+    std::vector<std::optional<std::string_view>> expected{
+        strings[0],
+        "Hello",
+        strings[2]};
+
+    for (int64_t i = 0; i < property.size(); ++i) {
+      REQUIRE(property.getRaw(i) == strings[static_cast<size_t>(i)]);
+      REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+    }
   }
 }
 
 TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
-  SECTION("Fixed-length array of 4 uint8_ts") {
+  SECTION("Array of 4 uint8_ts") {
     // clang-format off
     std::vector<uint8_t> data{
         210, 211, 3, 42,
         122, 22, 1, 45};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 3 int8_ts") {
+  SECTION("Array of 3 int8_ts") {
     // clang-format off
     std::vector<int8_t> data{
         122, -12, 3,
@@ -600,10 +1394,10 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         5, 6, -22,
         5, 6, 1};
     // clang-format on
-    checkFixedLengthArray(data, 3, static_cast<int64_t>(data.size() / 3));
+    checkFixedLengthArray(data, 3);
   }
 
-  SECTION("Fixed-length array of 4 int16_ts") {
+  SECTION("Array of 4 int16_ts") {
     // clang-format off
     std::vector<int16_t> data{
         -122, 12, 3, 44,
@@ -611,10 +1405,10 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         119, 30, 51, 200,
         22000, -500, 6000, 1};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 6 uint32_ts") {
+  SECTION("Array of 6 uint32_ts") {
     // clang-format off
     std::vector<uint32_t> data{
         122, 12, 3, 44, 34444, 2222,
@@ -622,58 +1416,228 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         119, 30, 51, 200, 12534, 11,
         22000, 500, 6000, 1, 3, 7};
     // clang-format on
-    checkFixedLengthArray(data, 6, static_cast<int64_t>(data.size() / 6));
+    checkFixedLengthArray(data, 6);
   }
 
-  SECTION("Fixed-length array of 2 int32_ts") {
+  SECTION("Array of 2 int32_ts") {
     // clang-format off
-    std::vector<uint32_t> data{
+    std::vector<int32_t> data{
         122, 12,
-        3, 44};
+        -3, 44};
     // clang-format on
-    checkFixedLengthArray(data, 2, static_cast<int64_t>(data.size() / 2));
+    checkFixedLengthArray(data, 2);
   }
 
-  SECTION("Fixed-length array of 4 uint64_ts") {
+  SECTION("Array of 4 uint64_ts") {
     // clang-format off
     std::vector<uint64_t> data{
         10022, 120000, 2422, 1111,
         3, 440000, 333, 1455};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 4 int64_ts") {
+  SECTION("Array of 4 int64_ts") {
     // clang-format off
     std::vector<int64_t> data{
         10022, -120000, 2422, 1111,
         3, 440000, -333, 1455};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 4 floats") {
+  SECTION("Array of 4 floats") {
     // clang-format off
     std::vector<float> data{
         10.022f, -12.43f, 242.2f, 1.111f,
         3.333f, 440000.1f, -33.3f, 14.55f};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 4 double") {
+  SECTION("Array of 4 double") {
     // clang-format off
     std::vector<double> data{
         10.022, -12.43, 242.2, 1.111,
         3.333, 440000.1, -33.3, 14.55};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
+  }
+
+  SECTION("Array of 4 uint8_ts") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        210, 211, 3, 42,
+        122, 22, 1, 45};
+    // clang-format on
+    checkFixedLengthArray(data, 4);
+  }
+
+  SECTION("Array of 4 normalized uint8_ts") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        255, 64, 0, 255,
+        128, 0, 255, 0};
+    // clang-format on
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{1.0, 64.0 / 255.0, 0.0, 1.0},
+        std::vector<double>{128.0 / 255.0, 0.0, 1.0, 0.0}};
+    checkNormalizedFixedLengthArray(data, 4, expected);
+  }
+
+  SECTION("Array of 4 floats with offset / scale") {
+    // clang-format off
+    std::vector<float> data{
+      1.0f, 2.0f, 3.0f, 4.0f,
+      5.0f, -1.0f, 0.0f, 2.0f
+    };
+    // clang-format on
+
+    std::optional<JsonValue::Array> offset =
+        JsonValue::Array{1.0f, 0.0f, -1.0f, 0.0f};
+    std::optional<JsonValue::Array> scale =
+        JsonValue::Array{1.0f, 2.0f, 1.0f, 2.0f};
+
+    std::vector<std::optional<std::vector<float>>> expected{
+        std::vector<float>{2.0f, 4.0f, 2.0f, 8.0f},
+        std::vector<float>{6.0f, -2.0f, -1.0f, 4.0f}};
+    checkFixedLengthArrayWithProperties(data, 4, expected, offset, scale);
+  }
+
+  SECTION("Array of 2 int32_ts with noData value") {
+    // clang-format off
+    std::vector<int32_t> data{
+        122, 12,
+        -1, -1,
+        -3, 44};
+    // clang-format on
+    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    std::vector<std::optional<std::vector<int32_t>>> expected{
+        std::vector<int32_t>{122, 12},
+        std::nullopt,
+        std::vector<int32_t>{-3, 44}};
+    checkFixedLengthArrayWithProperties<int32_t>(
+        data,
+        2,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        std::nullopt);
+  }
+
+  SECTION("Array of 2 int32_ts with noData and default value") {
+    // clang-format off
+    std::vector<int32_t> data{
+        122, 12,
+        -1, -1,
+        -3, 44};
+    // clang-format on
+    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{0, 1};
+    std::vector<std::optional<std::vector<int32_t>>> expected{
+        std::vector<int32_t>{122, 12},
+        std::vector<int32_t>{0, 1},
+        std::vector<int32_t>{-3, 44}};
+    checkFixedLengthArrayWithProperties<int32_t>(
+        data,
+        2,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Array of 3 normalized int8_ts with all properties") {
+    // clang-format off
+    std::vector<int8_t> data{
+        -128, 0, 64,
+        -64, 127, -128,
+         0, 0, 0};
+    // clang-format on
+    std::optional<JsonValue::Array> offset = JsonValue::Array{0, 1, 1};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{1, -1, 2};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0, 0};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{10, 8, 2};
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{-1.0, 1.0, 1 + 2 * (64.0 / 127.0)},
+        std::vector<double>{-64.0 / 127.0, 0.0, -1.0},
+        std::vector<double>{10.0, 8.0, 2.0},
+    };
+    checkNormalizedFixedLengthArray(
+        data,
+        3,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Overrides class property values") {
+    // clang-format off
+    std::vector<float> data{
+        1.0f, 2.0f, 3.0f, 4.0f,
+        0.0f, -1.0f, 1.0f, -2.0f};
+    // clang-format on
+    const int64_t count = 4;
+    const int64_t instanceCount = 2;
+
+    std::vector<std::byte> buffer;
+    buffer.resize(data.size() * sizeof(float));
+    std::memcpy(buffer.data(), data.data(), buffer.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+
+    classProperty.array = true;
+    classProperty.count = count;
+    classProperty.offset = {0, 0, 0, 0};
+    classProperty.scale = {1, 1, 1, 1};
+    classProperty.min = {0.0f, -1.0f, 1.0f, -2.0f};
+    classProperty.max = {1.0f, 2.0f, 3.0f, 4.0f};
+
+    PropertyTableProperty propertyTableProperty;
+    propertyTableProperty.offset = {2, 1, 0, -1};
+    propertyTableProperty.scale = {1, 0, 1, -1};
+    propertyTableProperty.min = {0.0f, 1.0f, 1.0f, -2.0f};
+    propertyTableProperty.max = {1.0f, 1.0f, 3.0f, 4.0f};
+
+    PropertyTablePropertyView<PropertyArrayView<float>> property(
+        propertyTableProperty,
+        classProperty,
+        instanceCount,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        PropertyComponentType::None,
+        PropertyComponentType::None);
+
+    REQUIRE(property.arrayCount() == count);
+    REQUIRE(property.size() == instanceCount);
+
+    std::vector<std::vector<float>> expected{
+        {3.0f, 1.0, 3.0f, -5.0f},
+        {2.0f, 1.0f, 1.0f, 1.0f}};
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<float> rawValues = property.getRaw(i);
+      auto values = property.get(i);
+      REQUIRE(values);
+      for (int64_t j = 0; j < rawValues.size(); ++j) {
+        REQUIRE(rawValues[j] == data[expectedIdx]);
+        REQUIRE((*values)[j] == expected[i][j]);
+        ++expectedIdx;
+      }
+    }
   }
 }
 
 TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
-  SECTION("Fixed-length array of 4 u8vec2s") {
-    // clang-format off
+  SECTION("Array of 4 u8vec2s") {
     std::vector<glm::u8vec2> data{
         glm::u8vec2(10, 21),
         glm::u8vec2(3, 42),
@@ -683,12 +1647,10 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         glm::u8vec2(32, 12),
         glm::u8vec2(8, 19),
         glm::u8vec2(6, 5)};
-    // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 2 i8vec3s") {
-    // clang-format off
+  SECTION("Array of 2 i8vec3s") {
     std::vector<glm::i8vec3> data{
         glm::i8vec3(122, -12, 3),
         glm::i8vec3(44, 11, -2),
@@ -696,12 +1658,10 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         glm::i8vec3(5, 6, 1),
         glm::i8vec3(8, -7, 7),
         glm::i8vec3(-4, 36, 17)};
-    // clang-format on
-    checkFixedLengthArray(data, 2, static_cast<int64_t>(data.size() / 2));
+    checkFixedLengthArray(data, 2);
   }
 
-  SECTION("Fixed-length array of 3 vec4s") {
-    // clang-format off
+  SECTION("Array of 3 vec4s") {
     std::vector<glm::vec4> data{
         glm::vec4(40.2f, -1.2f, 8.8f, 1.0f),
         glm::vec4(1.4f, 0.11, 34.0f, 0.0f),
@@ -709,13 +1669,178 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         glm::vec4(1.0f, 2.0f, 3.0f, 6.0f),
         glm::vec4(1.08f, -3.71f, 18.0f, -7.0f),
         glm::vec4(-17.0f, 33.0f, 8.0f, -3.0f)};
+    checkFixedLengthArray(data, 3);
+  }
+
+  SECTION("Array of 2 normalized u8vec2s") {
+    std::vector<glm::u8vec2> data{
+        glm::u8vec2(255, 64),
+        glm::u8vec2(0, 255),
+        glm::u8vec2(128, 0),
+        glm::u8vec2(255, 0)};
+    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
+        std::vector<glm::dvec2>{
+            glm::dvec2(1.0, 64.0 / 255.0),
+            glm::dvec2(0.0, 1.0)},
+        std::vector<glm::dvec2>{
+            glm::dvec2(128.0 / 255.0, 0.0),
+            glm::dvec2(1.0, 0.0)}};
+    checkNormalizedFixedLengthArray(data, 2, expected);
+  }
+
+  SECTION("Array of 4 floats with offset / scale") {
+    // clang-format off
+    std::vector<float> data{
+      1.0f, 2.0f, 3.0f, 4.0f,
+      5.0f, -1.0f, 0.0f, 2.0f
+    };
     // clang-format on
-    checkFixedLengthArray(data, 3, static_cast<int64_t>(data.size() / 3));
+
+    std::optional<JsonValue::Array> offset =
+        JsonValue::Array{1.0f, 0.0f, -1.0f, 0.0f};
+    std::optional<JsonValue::Array> scale =
+        JsonValue::Array{1.0f, 2.0f, 1.0f, 2.0f};
+
+    std::vector<std::optional<std::vector<float>>> expected{
+        std::vector<float>{2.0f, 4.0f, 2.0f, 8.0f},
+        std::vector<float>{6.0f, -2.0f, -1.0f, 4.0f}};
+    checkFixedLengthArrayWithProperties(data, 4, expected, offset, scale);
+  }
+
+  SECTION("Array of 2 int32_ts with noData value") {
+    // clang-format off
+    std::vector<int32_t> data{
+        122, 12,
+        -1, -1,
+        -3, 44};
+    // clang-format on
+    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    std::vector<std::optional<std::vector<int32_t>>> expected{
+        std::vector<int32_t>{122, 12},
+        std::nullopt,
+        std::vector<int32_t>{-3, 44}};
+    checkFixedLengthArrayWithProperties<int32_t>(
+        data,
+        2,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        std::nullopt);
+  }
+
+  SECTION("Array of 2 int32_ts with noData and default value") {
+    // clang-format off
+    std::vector<int32_t> data{
+        122, 12,
+        -1, -1,
+        -3, 44};
+    // clang-format on
+    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{0, 1};
+    std::vector<std::optional<std::vector<int32_t>>> expected{
+        std::vector<int32_t>{122, 12},
+        std::vector<int32_t>{0, 1},
+        std::vector<int32_t>{-3, 44}};
+    checkFixedLengthArrayWithProperties<int32_t>(
+        data,
+        2,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Array of 3 normalized int8_ts with all properties") {
+    // clang-format off
+    std::vector<int8_t> data{
+        -128, 0, 64,
+        -64, 127, -128,
+         0, 0, 0};
+    // clang-format on
+    std::optional<JsonValue::Array> offset = JsonValue::Array{0, 1, 1};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{1, -1, 2};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0, 0};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{10, 8, 2};
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{-1.0, 1.0, 1 + 2 * (64.0 / 127.0)},
+        std::vector<double>{-64.0 / 127.0, 0.0, -1.0},
+        std::vector<double>{10.0, 8.0, 2.0},
+    };
+    checkNormalizedFixedLengthArray(
+        data,
+        3,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Overrides class property values") {
+    // clang-format off
+    std::vector<float> data{
+        1.0f, 2.0f, 3.0f, 4.0f,
+        0.0f, -1.0f, 1.0f, -2.0f};
+    // clang-format on
+    const int64_t count = 4;
+    const int64_t instanceCount = 2;
+
+    std::vector<std::byte> buffer;
+    buffer.resize(data.size() * sizeof(float));
+    std::memcpy(buffer.data(), data.data(), buffer.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+
+    classProperty.array = true;
+    classProperty.count = count;
+    classProperty.offset = {0, 0, 0, 0};
+    classProperty.scale = {1, 1, 1, 1};
+    classProperty.min = {0.0f, -1.0f, 1.0f, -2.0f};
+    classProperty.max = {1.0f, 2.0f, 3.0f, 4.0f};
+
+    PropertyTableProperty propertyTableProperty;
+    propertyTableProperty.offset = {2, 1, 0, -1};
+    propertyTableProperty.scale = {1, 0, 1, -1};
+    propertyTableProperty.min = {0.0f, 1.0f, 1.0f, -2.0f};
+    propertyTableProperty.max = {1.0f, 1.0f, 3.0f, 4.0f};
+
+    PropertyTablePropertyView<PropertyArrayView<float>> property(
+        propertyTableProperty,
+        classProperty,
+        instanceCount,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        PropertyComponentType::None,
+        PropertyComponentType::None);
+
+    REQUIRE(property.arrayCount() == count);
+    REQUIRE(property.size() == instanceCount);
+
+    std::vector<std::vector<float>> expected{
+        {3.0f, 1.0, 3.0f, -5.0f},
+        {2.0f, 1.0f, 1.0f, 1.0f}};
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<float> rawValues = property.getRaw(i);
+      auto values = property.get(i);
+      REQUIRE(values);
+      for (int64_t j = 0; j < rawValues.size(); ++j) {
+        REQUIRE(rawValues[j] == data[expectedIdx]);
+        REQUIRE((*values)[j] == expected[i][j]);
+        ++expectedIdx;
+      }
+    }
   }
 }
 
 TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
-  SECTION("Fixed-length array of 4 i8mat2x2") {
+  SECTION("Array of 4 i8mat2x2") {
     // clang-format off
     std::vector<glm::i8mat2x2> data{
         glm::i8mat2x2(
@@ -743,10 +1868,10 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           6, 16,
           2, 5)};
     // clang-format on
-    checkFixedLengthArray(data, 4, static_cast<int64_t>(data.size() / 4));
+    checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Fixed-length array of 2 dmat3s") {
+  SECTION("Array of 2 dmat3s") {
     // clang-format off
     std::vector<glm::dmat3> data{
         glm::dmat3(
@@ -774,10 +1899,10 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           5.5, 3.09, 0.301,
           4.5, 52.4, 1.05)};
     // clang-format on
-    checkFixedLengthArray(data, 2, static_cast<int64_t>(data.size() / 2));
+    checkFixedLengthArray(data, 2);
   }
 
-  SECTION("Fixed-length array of 3 u8mat4x4") {
+  SECTION("Array of 3 u8mat4x4") {
     // clang-format off
     std::vector<glm::u8mat4x4> data{
         glm::u8mat4x4(
@@ -811,7 +1936,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           8, 7, 6, 5,
           4, 3, 2, 1),};
     // clang-format on
-    checkFixedLengthArray(data, 3, static_cast<int64_t>(data.size() / 3));
+    checkFixedLengthArray(data, 3);
   }
 }
 

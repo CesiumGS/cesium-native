@@ -285,6 +285,8 @@ struct CanBeNormalized<glm::vec<n, T, P>> : CanBeNormalized<T> {};
 template <glm::length_t n, typename T, glm::qualifier P>
 struct CanBeNormalized<glm::mat<n, n, T, P>> : CanBeNormalized<T> {};
 
+template <typename T>
+struct CanBeNormalized<PropertyArrayView<T>> : CanBeNormalized<T> {};
 /**
  * @brief Convert an integer numeric type to the corresponding representation as
  * a double type. Doubles are preferred over floats to maintain more precision.

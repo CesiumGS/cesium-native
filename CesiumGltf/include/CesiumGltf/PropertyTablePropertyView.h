@@ -148,7 +148,7 @@ int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
 }
 } // namespace
 
-template <typename ElementType, bool Normalized = false, typename Enable = void>
+template <typename ElementType, bool Normalized = false>
 class PropertyTablePropertyView;
 
 /**
@@ -282,10 +282,12 @@ public:
       return this->defaultValue();
     }
 
-    if constexpr (
-        IsMetadataNumeric<ElementType>::value ||
-        IsMetadataNumericArray<ElementType>::value) {
-      value = applyOffsetAndScale(value, this->offset(), this->scale());
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
+      value = transformValue(value, this->offset(), this->scale());
+    }
+
+    if constexpr (IsMetadataNumericArray<ElementType>::value) {
+      value = transformArray(value, this->offset(), this->scale());
     }
 
     return value;
@@ -590,32 +592,50 @@ public:
       return this->defaultValue();
     }
 
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      return applyOffsetAndScale<NormalizedType>(
+    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return transformValue<NormalizedType>(
           normalize<ElementType>(value),
           this->offset(),
           this->scale());
     }
 
-    if constexpr (IsMetadataNumericArray<ElementType>::value) {
-      const auto offset = this->offset();
-      const auto scale = this->scale();
-      int64_t offsetSize = offset ? offset->size() : 0;
-      int64_t scaleSize = scale ? scale->size() : 0;
-      std::vector<NormalizedType> result(static_cast<size_t>(value.size()));
-      for (int64_t i = 0; i < value.size(); i++) {
-        result[i] = value[i];
+    if constexpr (IsMetadataVecN<ElementType>::value) {
+      constexpr glm::length_t N = ElementType::length();
+      using T = typename ElementType::value_type;
+      using NormalizedT = typename NormalizedType::value_type;
+      return transformVecN<N, NormalizedT>(
+          normalize<N, T>(value),
+          this->offset(),
+          this->scale());
+    }
 
-        if (i < scaleSize) {
-          result = applyScale(result[i], scale[i]);
-        }
+    if constexpr (IsMetadataMatN<ElementType>::value) {
+      constexpr glm::length_t N = ElementType::length();
+      using T = typename ElementType::value_type;
+      using NormalizedT = typename NormalizedType::value_type;
+      return transformMatN<N, NormalizedT>(
+          normalize<N, T>(value),
+          this->offset(),
+          this->scale());
+    }
 
-        if (i < offsetSize) {
-          result[i] = result[i] + offset[i];
-        }
+    if constexpr (IsMetadataArray<ElementType>::value) {
+      using ArrayElementType = typename MetadataArrayType<ElementType>::type;
+      if constexpr (IsMetadataScalar<ArrayElementType>::value) {
+        return transformNormalizedArray<ArrayElementType>(
+            value,
+            this->offset(),
+            this->scale());
       }
 
-      return PropertyArrayView<NormalizedType>(std::move(result));
+      if constexpr (IsMetadataVecN<ArrayElementType>::value) {
+        constexpr glm::length_t N = ArrayElementType::length();
+        using T = typename ArrayElementType::value_type;
+        return transformNormalizedVecNArray<N, T>(
+            value,
+            this->offset(),
+            this->scale());
+      }
     }
   }
 

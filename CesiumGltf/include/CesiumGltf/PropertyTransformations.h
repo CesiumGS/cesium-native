@@ -10,8 +10,7 @@
 #include <optional>
 
 namespace CesiumGltf {
-template <typename T>
-double normalize(T value) {
+template <typename T> double normalize(T value) {
   constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
   if constexpr (std::is_signed_v<T>) {
     return std::max(static_cast<double>(value) / max, -1.0);
@@ -20,44 +19,31 @@ double normalize(T value) {
   }
 }
 
-template <
-    glm::length_t N,
-    typename TSigned,
-    glm::qualifier Q,
-    std::enable_if_t<std::is_signed_v<TSigned>>>
-glm::vec<N, double, Q> normalize(glm::vec<N, TSigned, Q> value) {
-  double max = static_cast<double>(std::numeric_limits<TSigned>::max());
-  return glm::max(static_cast<glm::vec<N, double, Q>>(value) / max, -1.0);
+template <glm::length_t N, typename T>
+glm::vec<N, double> normalize(glm::vec<N, T> value) {
+  constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
+  if constexpr (std::is_signed_v<T>) {
+    return glm::max(static_cast<glm::vec<N, double>>(value) / max, -1.0);
+  } else {
+    return static_cast<glm::vec<N, double>>(value) / max;
+  }
 }
 
-template <
-    glm::length_t N,
-    typename TUnsigned,
-    glm::qualifier Q,
-    std::enable_if_t<std::is_unsigned_v<TUnsigned>>>
-glm::vec<N, double, Q> normalize(glm::vec<N, TUnsigned, Q> value) {
-  double max = static_cast<double>(std::numeric_limits<TUnsigned>::max());
-  return static_cast<glm::vec<N, double, Q>>(value) / max;
-}
-
-template <
-    glm::length_t N,
-    typename TSigned,
-    glm::qualifier Q,
-    std::enable_if_t<std::is_signed_v<TSigned>>>
-glm::mat<N, N, double, Q> normalize(glm::mat<N, N, TSigned, Q> value) {
-  double max = static_cast<double>(std::numeric_limits<TSigned>::max());
-  return glm::max(static_cast<glm::mat<N, N, double, Q>>(value) / max, -1.0);
-}
-
-template <
-    glm::length_t N,
-    typename TUnsigned,
-    glm::qualifier Q,
-    std::enable_if_t<std::is_unsigned_v<TUnsigned>>>
-glm::mat<N, N, double, Q> normalize(glm::mat<N, N, TUnsigned, Q> value) {
-  double max = static_cast<double>(std::numeric_limits<TUnsigned>::max());
-  return static_cast<glm::mat<N, N, double, Q>>(value) / max;
+template <glm::length_t N, typename T>
+glm::mat<N, N, double> normalize(glm::mat<N, N, T> value) {
+  constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
+  // No max() implementation for matrices, so we have to write our own.
+  glm::mat<N, N, double> result;
+  for (glm::length_t i = 0; i < N; i++) {
+    for (glm::length_t j = 0; j < N; j++) {
+      if constexpr (std::is_signed_v<T>) {
+        result[i][j] = glm::max(static_cast<double>(value[i][j]) / max, -1.0);
+      } else {
+        result[i][j] = static_cast<double>(value[i][j]) / max;
+      }
+    }
+  }
+  return result;
 }
 
 template <typename T> T applyScale(const T& value, const T& scale) {
@@ -76,7 +62,7 @@ template <typename T> T applyScale(const T& value, const T& scale) {
 }
 
 template <typename T>
-T applyOffsetAndScale(
+T transformValue(
     const T& value,
     const std::optional<T>& offset,
     const std::optional<T>& scale) {
@@ -92,27 +78,103 @@ T applyOffsetAndScale(
   return result;
 }
 
+template <glm::length_t N, typename T>
+glm::vec<N, T> transformVecN(
+    const glm::vec<N, T>& value,
+    const std::optional<glm::vec<N, T>>& offset,
+    const std::optional<glm::vec<N, T>>& scale) {
+  glm::vec<N, T> result = value;
+  if (scale) {
+    result = applyScale<glm::vec<N, T>>(result, *scale);
+  }
+
+  if (offset) {
+    result += *offset;
+  }
+
+  return result;
+}
+
+template <glm::length_t N, typename T>
+glm::mat<N, N, T> transformMatN(
+    const glm::mat<N, N, T>& value,
+    const std::optional<glm::mat<N, N, T>>& offset,
+    const std::optional<glm::mat<N, N, T>>& scale) {
+  glm::mat<N, N, T> result = value;
+  if (scale) {
+    result = applyScale<glm::mat<N, N, T>>(result, *scale);
+  }
+
+  if (offset) {
+    result += *offset;
+  }
+
+  return result;
+}
+
 template <typename T>
-PropertyArrayView<T> applyOffsetAndScale(
+PropertyArrayView<T> transformArray(
     const PropertyArrayView<T>& value,
     const std::optional<PropertyArrayView<T>>& offset,
     const std::optional<PropertyArrayView<T>>& scale) {
-  int64_t offsetSize = offset ? offset->size() : 0;
-  int64_t scaleSize = scale ? scale->size() : 0;
   std::vector<T> result(static_cast<size_t>(value.size()));
   for (int64_t i = 0; i < value.size(); i++) {
     result[i] = value[i];
 
-    if (i < scaleSize) {
-      result = applyScale(result[i], scale[i]);
+    if (scale) {
+      result[i] = applyScale<T>(result[i], (*scale)[i]);
     }
 
-    if (i < offsetSize) {
-      result[i] = result[i] + offset[i];
+    if (offset) {
+      result[i] = result[i] + (*offset)[i];
     }
   }
 
   return PropertyArrayView<T>(std::move(result));
+}
+
+template <
+    typename T,
+    typename NormalizedType = typename TypeToNormalizedType<T>::type>
+PropertyArrayView<NormalizedType> transformNormalizedArray(
+    const PropertyArrayView<T>& value,
+    const std::optional<PropertyArrayView<NormalizedType>>& offset,
+    const std::optional<PropertyArrayView<NormalizedType>>& scale) {
+  std::vector<NormalizedType> result(static_cast<size_t>(value.size()));
+  for (int64_t i = 0; i < value.size(); i++) {
+    result[i] = normalize<T>(value[i]);
+
+    if (scale) {
+      result[i] = applyScale<NormalizedType>(result[i], (*scale)[i]);
+    }
+
+    if (offset) {
+      result[i] = result[i] + (*offset)[i];
+    }
+  }
+
+  return PropertyArrayView<NormalizedType>(std::move(result));
+}
+
+template <glm::length_t N, typename T>
+PropertyArrayView<glm::vec<N, double>> transformNormalizedVecNArray(
+    const PropertyArrayView<glm::vec<N, T>>& value,
+    const std::optional<PropertyArrayView<glm::vec<N, double>>>& offset,
+    const std::optional<PropertyArrayView<glm::vec<N, double>>>& scale) {
+  std::vector<glm::vec<N, double>> result(static_cast<size_t>(value.size()));
+  for (int64_t i = 0; i < value.size(); i++) {
+    result[i] = normalize<N, T>(value[i]);
+
+    if (scale) {
+      result[i] = applyScale<glm::vec<N, double>>(result[i], (*scale)[i]);
+    }
+
+    if (offset) {
+      result[i] = result[i] + (*offset)[i];
+    }
+  }
+
+  return PropertyArrayView<glm::vec<N, double>>(std::move(result));
 }
 
 } // namespace CesiumGltf
