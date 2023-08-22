@@ -25,6 +25,8 @@ public:
         &std::any_cast<CesiumUtility::JsonValue&>(value));
   }
 
+  virtual IJsonHandler& getHandler() override { return *this; }
+
   virtual IJsonHandler* readNull() override {
     return JsonObjectJsonHandler::readNull();
   };
