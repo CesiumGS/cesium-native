@@ -35,6 +35,116 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
 
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == expected[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i));
+    REQUIRE(*property.get(i) == property.getRaw(i));
+  }
+}
+
+template <typename T>
+static void checkNumeric(
+    const std::vector<T>& values,
+    const std::vector<std::optional<T>>& expected,
+    const std::optional<T> offset = std::nullopt,
+    const std::optional<T> scale = std::nullopt,
+    const std::optional<T> noData = std::nullopt,
+    const std::optional<T> defaultValue = std::nullopt) {
+  std::vector<std::byte> data;
+  data.resize(values.size() * sizeof(T));
+  std::memcpy(data.data(), values.data(), data.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  if (componentType != PropertyComponentType::None) {
+    classProperty.componentType =
+        convertPropertyComponentTypeToString(componentType);
+  }
+
+  if (offset) {
+    classProperty.offset = *offset;
+  }
+
+  if (scale) {
+    classProperty.scale = *scale;
+  }
+
+  if (noData) {
+    classProperty.noData = *noData;
+  }
+
+  if (defaultValue) {
+    classProperty.defaultProperty = *defaultValue;
+  }
+
+  PropertyTablePropertyView<T> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(expected.size()),
+      gsl::span<const std::byte>(data.data(), data.size()));
+
+  for (int64_t i = 0; i < property.size(); ++i) {
+    REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+    if constexpr (IsMetadataFloating<T>::value) {
+      REQUIRE(property.get(i));
+      REQUIRE(*property.get(i) == Approx(*expected[static_cast<size_t>(i)]));
+    } else {
+      REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+    }
+  }
+}
+
+template <typename T, typename D = TypeToNormalizedType<T>::type>
+static void checkNormalizedNumeric(
+    const std::vector<T>& values,
+    const std::vector<std::optional<D>>& expected,
+    const std::optional<D> offset = std::nullopt,
+    const std::optional<D> scale = std::nullopt,
+    const std::optional<T> noData = std::nullopt,
+    const std::optional<D> defaultValue = std::nullopt) {
+  std::vector<std::byte> data;
+  data.resize(values.size() * sizeof(T));
+  std::memcpy(data.data(), values.data(), data.size());
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  classProperty.normalized = true;
+
+  if (offset) {
+    classProperty.offset = *offset;
+  }
+
+  if (scale) {
+    classProperty.scale = *scale;
+  }
+
+  if (noData) {
+    classProperty.noData = *noData;
+  }
+
+  if (defaultValue) {
+    classProperty.defaultProperty = *defaultValue;
+  }
+
+  PropertyTablePropertyView<T, true> property(
+      propertyTableProperty,
+      classProperty,
+      static_cast<int64_t>(expected.size()),
+      gsl::span<const std::byte>(data.data(), data.size()));
+
+  for (int64_t i = 0; i < property.size(); ++i) {
+    REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i));
+    REQUIRE(*property.get(i) == Approx(*expected[static_cast<size_t>(i)]));
   }
 }
 
@@ -142,28 +252,164 @@ static void checkFixedLengthArray(
 }
 
 TEST_CASE("Check scalar PropertyTablePropertyView") {
-  SECTION("Uint8 Scalar") {
+  SECTION("Uint8") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     checkNumeric(data);
   }
 
-  SECTION("Int32 Scalar") {
+  SECTION("Int32") {
     std::vector<int32_t> data{111222, -11133, -56000, 670000};
     checkNumeric(data);
   }
 
-  SECTION("Float Scalar") {
+  SECTION("Float") {
     std::vector<float> data{12.3333f, -12.44555f, -5.6111f, 6.7421f};
     checkNumeric(data);
   }
 
-  SECTION("Double Scalar") {
+  SECTION("Double") {
     std::vector<double> data{
         12222.3302121,
         -12000.44555,
         -5000.6113111,
         6.7421};
     checkNumeric(data);
+  }
+
+  SECTION("Normalized Uint8") {
+    std::vector<uint8_t> values{0, 64, 128, 255};
+    std::vector<std::optional<double>> expected{
+        0.0,
+        64.0 / 255.0,
+        128.0 / 255.0,
+        1.0};
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Normalized Int16") {
+    std::vector<int16_t> values{-32768, 0, 16384, 32767};
+    std::vector<std::optional<double>> expected{
+        -1.0,
+        0.0,
+        16384.0 / 32767.0,
+        1.0};
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Float with Offset / Scale") {
+    std::vector<float> values{12.5f, -12.5f, -5.0f, 6.75f};
+    std::optional<float> offset = 1.0f;
+    std::optional<float> scale = 2.0f;
+    std::vector<std::optional<float>> expected{26.0f, -24.0f, -9.0f, 14.5f};
+    checkNumeric(values, expected, offset, scale);
+  }
+
+  SECTION("Normalized Uint8 with Offset and Scale") {
+    std::vector<uint8_t> values{0, 64, 128, 255};
+    std::optional<double> offset = 1.0;
+    std::optional<double> scale = 2.0;
+    std::vector<std::optional<double>> expected{
+        1.0,
+        1 + 2 * (64.0 / 255.0),
+        1 + 2 * (128.0 / 255.0),
+        3.0};
+    checkNormalizedNumeric(values, expected, offset, scale);
+  }
+
+  SECTION("Int16 with NoData") {
+    std::vector<int16_t> values{-1, 3, 7, -1};
+    std::optional<int16_t> noData = -1;
+    std::vector<std::optional<int16_t>> expected{
+        std::nullopt,
+        3,
+        7,
+        std::nullopt};
+    checkNumeric<int16_t>(
+        values,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        std::nullopt);
+  };
+
+  SECTION("Int16 with NoData and Default") {
+    std::vector<int16_t> values{-1, 3, 7, -1};
+    std::optional<int16_t> noData = -1;
+    std::optional<int16_t> defaultValue = 0;
+    std::vector<std::optional<int16_t>> expected{0, 3, 7, 0};
+    checkNumeric<int16_t>(
+        values,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Normalized Uint8 with all properties") {
+    std::vector<uint8_t> values{0, 64, 128, 255};
+    std::optional<double> offset = 1.0;
+    std::optional<double> scale = 2.0;
+    std::optional<uint8_t> noData = 0;
+    std::optional<double> defaultValue = 10.0;
+    std::vector<std::optional<double>> expected{
+        10.0,
+        1 + 2 * (64.0 / 255.0),
+        1 + 2 * (128.0 / 255.0),
+        3.0};
+    checkNormalizedNumeric(
+        values,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Overrides class property values") {
+    std::vector<float> values{1.0f, 3.0f, 2.0f, 4.0f};
+    std::vector<std::byte> data;
+    data.resize(values.size() * sizeof(float));
+    std::memcpy(data.data(), values.data(), data.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.offset = 0.0f;
+    classProperty.scale = 1.0f;
+    classProperty.min = 1.0f;
+    classProperty.max = 4.0f;
+
+    PropertyTableProperty propertyTableProperty;
+    propertyTableProperty.offset = 1.0f;
+    propertyTableProperty.scale = 2.0f;
+    propertyTableProperty.min = 3.0f;
+    propertyTableProperty.max = 9.0f;
+
+    PropertyTablePropertyView<float> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(values.size()),
+        gsl::span<const std::byte>(data.data(), data.size()));
+
+    REQUIRE(property.offset());
+    REQUIRE(*property.offset() == 1.0f);
+    REQUIRE(property.scale());
+    REQUIRE(*property.scale() == 2.0f);
+    REQUIRE(property.min());
+    REQUIRE(*property.min() == 3.0f);
+    REQUIRE(property.max());
+    REQUIRE(*property.max() == 9.0f);
+
+    std::vector<float> expected{3.0, 7.0f, 5.0f, 9.0f};
+    for (int64_t i = 0; i < property.size(); ++i) {
+      REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
+
+      std::optional<float> transformedValue = property.get(i);
+      REQUIRE(transformedValue);
+      REQUIRE(*transformedValue == Approx(expected[static_cast<size_t>(i)]));
+    }
   }
 }
 

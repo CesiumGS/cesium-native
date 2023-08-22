@@ -10,30 +10,21 @@
 #include <optional>
 
 namespace CesiumGltf {
-template <
-    typename TSigned,
-    std::enable_if_t<
-        IsMetadataInteger<TSigned>::value && std::is_signed_v<TSigned>>>
-double normalize(TSigned value) {
-  double max = static_cast<double>(std::numeric_limits<TSigned>::max());
-  return std::max(static_cast<double>(value) / max, -1.0);
-}
-
-template <
-    typename TUnsigned,
-    std::enable_if_t<
-        IsMetadataInteger<TUnsigned>::value && std::is_unsigned_v<TUnsigned>>>
-double normalize(TUnsigned value) {
-  double max = static_cast<double>(std::numeric_limits<TUnsigned>::max());
-  return static_cast<double>(value) / max;
+template <typename T>
+double normalize(T value) {
+  constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
+  if constexpr (std::is_signed_v<T>) {
+    return std::max(static_cast<double>(value) / max, -1.0);
+  } else {
+    return static_cast<double>(value) / max;
+  }
 }
 
 template <
     glm::length_t N,
     typename TSigned,
     glm::qualifier Q,
-    std::enable_if_t<
-        IsMetadataInteger<TSigned>::value && std::is_signed_v<TSigned>>>
+    std::enable_if_t<std::is_signed_v<TSigned>>>
 glm::vec<N, double, Q> normalize(glm::vec<N, TSigned, Q> value) {
   double max = static_cast<double>(std::numeric_limits<TSigned>::max());
   return glm::max(static_cast<glm::vec<N, double, Q>>(value) / max, -1.0);
@@ -43,8 +34,7 @@ template <
     glm::length_t N,
     typename TUnsigned,
     glm::qualifier Q,
-    std::enable_if_t<
-        IsMetadataInteger<TUnsigned>::value && std::is_unsigned_v<TUnsigned>>>
+    std::enable_if_t<std::is_unsigned_v<TUnsigned>>>
 glm::vec<N, double, Q> normalize(glm::vec<N, TUnsigned, Q> value) {
   double max = static_cast<double>(std::numeric_limits<TUnsigned>::max());
   return static_cast<glm::vec<N, double, Q>>(value) / max;
@@ -54,8 +44,7 @@ template <
     glm::length_t N,
     typename TSigned,
     glm::qualifier Q,
-    std::enable_if_t<
-        IsMetadataInteger<TSigned>::value && std::is_signed_v<TSigned>>>
+    std::enable_if_t<std::is_signed_v<TSigned>>>
 glm::mat<N, N, double, Q> normalize(glm::mat<N, N, TSigned, Q> value) {
   double max = static_cast<double>(std::numeric_limits<TSigned>::max());
   return glm::max(static_cast<glm::mat<N, N, double, Q>>(value) / max, -1.0);
@@ -65,8 +54,7 @@ template <
     glm::length_t N,
     typename TUnsigned,
     glm::qualifier Q,
-    std::enable_if_t<
-        IsMetadataInteger<TUnsigned>::value && std::is_unsigned_v<TUnsigned>>>
+    std::enable_if_t<std::is_unsigned_v<TUnsigned>>>
 glm::mat<N, N, double, Q> normalize(glm::mat<N, N, TUnsigned, Q> value) {
   double max = static_cast<double>(std::numeric_limits<TUnsigned>::max());
   return static_cast<glm::mat<N, N, double, Q>>(value) / max;
@@ -94,11 +82,11 @@ T applyOffsetAndScale(
     const std::optional<T>& scale) {
   T result = value;
   if (scale) {
-    result = applyScale(result, scale);
+    result = applyScale<T>(result, *scale);
   }
 
   if (offset) {
-    result += offset;
+    result += *offset;
   }
 
   return result;

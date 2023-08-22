@@ -507,7 +507,7 @@ TEST_CASE("VecN PropertyView") {
     view = PropertyView<glm::i8vec2>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
 
-    classProperty.max = {10, 5};
+    classProperty.max = {0, 500};
     view = PropertyView<glm::i8vec2>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
   }
@@ -901,8 +901,8 @@ TEST_CASE("MatN PropertyView") {
 
     // clang-format off
     classProperty.min = {
-      -29, -40,
-      -55, -43};
+      -29, -240,
+      -155, -43};
     // clang-format on
     view = PropertyView<glm::i8mat2x2>(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
@@ -1424,6 +1424,7 @@ TEST_CASE("Scalar Array PropertyView") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.offset = JsonValue::Array{5.0f, 10.0f};
     classProperty.scale = JsonValue::Array{2.0f, 1.0f};
     classProperty.max = JsonValue::Array{10.0f, 20.0f};
@@ -1462,6 +1463,7 @@ TEST_CASE("Scalar Array PropertyView") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.required = false;
     classProperty.noData = {0, 1};
     classProperty.defaultProperty = {2, 3};
@@ -1483,11 +1485,36 @@ TEST_CASE("Scalar Array PropertyView") {
     REQUIRE(value[1] == 3);
   }
 
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.min = {0, 0};
+
+    PropertyView<PropertyArrayView<float>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {5, 4};
+    view = PropertyView<PropertyArrayView<float>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {1, 1};
+    view = PropertyView<PropertyArrayView<float>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {0, 2};
+    view = PropertyView<PropertyArrayView<float>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
   SECTION("Reports errors for incorrectly defined properties") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.required = true;
     classProperty.defaultProperty = {2, 3};
 
@@ -1512,6 +1539,7 @@ TEST_CASE("Scalar Array PropertyView") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.defaultProperty = {256, 256};
 
     PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
@@ -1543,6 +1571,7 @@ TEST_CASE("Scalar Array PropertyView") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.defaultProperty = "[256, 256]";
 
     PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
@@ -1643,6 +1672,7 @@ TEST_CASE("Scalar Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::INT16;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.offset = JsonValue::Array{5.0, 10.0};
     classProperty.scale = JsonValue::Array{2.0, 1.0};
@@ -1704,11 +1734,38 @@ TEST_CASE("Scalar Array PropertyView (normalized)") {
     REQUIRE(defaultValue[1] == 3.5);
   }
 
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.normalized = true;
+    classProperty.min = {0, 0};
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {5, 4};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {1, 1};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {0, 2};
+    classProperty.offset = {0, 2};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
   SECTION("Reports errors for incorrectly defined properties") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.required = true;
     classProperty.defaultProperty = {2, 3};
@@ -1726,6 +1783,7 @@ TEST_CASE("Scalar Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.noData = {-1, 0};
 
@@ -1738,6 +1796,7 @@ TEST_CASE("Scalar Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.defaultProperty = "[256, 256]";
 
@@ -1839,6 +1898,7 @@ TEST_CASE("VecN Array PropertyView") {
     classProperty.type = ClassProperty::Type::VEC3;
     classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
     classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
     classProperty.max = {{14, 28, 12}, {10, 5, 6}};
@@ -1896,6 +1956,30 @@ TEST_CASE("VecN Array PropertyView") {
     REQUIRE(value.size() == 2);
     REQUIRE(value[0] == glm::vec2(3.0f, 4.0f));
     REQUIRE(value[1] == glm::vec2(5.0f, 6.0f));
+  }
+
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.min = {{-11, -12, -13}, {-2, -4, 6}};
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{14, 28, 12}, {10, 5, 6}};
+    view = PropertyView<PropertyArrayView<glm::vec3>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
+    view = PropertyView<PropertyArrayView<glm::vec3>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
+    view = PropertyView<PropertyArrayView<glm::vec3>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -2058,6 +2142,7 @@ TEST_CASE("VecN Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::VEC3;
     classProperty.componentType = ClassProperty::ComponentType::INT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
     classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
@@ -2119,11 +2204,37 @@ TEST_CASE("VecN Array PropertyView (normalized)") {
     REQUIRE(defaultValue[1] == glm::dvec2(5.0, 6.0));
   }
 
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.normalized = true;
+    classProperty.min = {{-11, -12, -13}, {-2, -4, 6}};
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{14, 28, 12}, {10, 5, 6}};
+    view = PropertyView<PropertyArrayView<glm::ivec3>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
+    view = PropertyView<PropertyArrayView<glm::ivec3>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
+    view = PropertyView<PropertyArrayView<glm::ivec3>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
   SECTION("Reports errors for incorrectly defined properties") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::VEC2;
     classProperty.componentType = ClassProperty::ComponentType::INT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.required = true;
     classProperty.defaultProperty = {{3, 4}, {5, 6}};
@@ -2253,6 +2364,7 @@ TEST_CASE("MatN Array PropertyView") {
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
     classProperty.array = true;
+    classProperty.count = 2;
     // clang-format off
     classProperty.offset = {
       {-1,  1,
@@ -2313,6 +2425,7 @@ TEST_CASE("MatN Array PropertyView") {
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.required = false;
     // clang-format off
     classProperty.noData = {
@@ -2346,11 +2459,63 @@ TEST_CASE("MatN Array PropertyView") {
     REQUIRE(value[1] == glm::i8mat2x2(2, 2, 2, 2));
   }
 
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    // clang-format off
+    classProperty.min = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    // clang-format on
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    // clang-format off
+    classProperty.max = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::mat2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    // clang-format off
+    classProperty.scale = {
+      {1, 0,
+       0, 1},
+      {-1, 0,
+       0, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::mat2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      {2, 2,
+       1, 1},
+      {0, 2,
+       1, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::mat2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
   SECTION("Reports errors for incorrectly defined properties") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.required = true;
     // clang-format off
     classProperty.defaultProperty = {
@@ -2403,6 +2568,7 @@ TEST_CASE("MatN Array PropertyView") {
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT8;
     classProperty.array = true;
+    classProperty.count = 2;
 
     // clang-format off
     classProperty.defaultProperty = {
@@ -2474,6 +2640,7 @@ TEST_CASE("MatN Array PropertyView") {
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.defaultProperty = {4, 1, 2, 0};
 
     PropertyView<PropertyArrayView<glm::i8mat2x2>> view(classProperty);
@@ -2566,8 +2733,8 @@ TEST_CASE("MatN Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::MAT3;
     classProperty.componentType = ClassProperty::ComponentType::INT32;
     classProperty.array = true;
-    classProperty.normalized = true;
     classProperty.count = 5;
+    classProperty.normalized = true;
 
     PropertyView<PropertyArrayView<glm::imat3x3>, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
@@ -2579,6 +2746,7 @@ TEST_CASE("MatN Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
 
     // clang-format off
@@ -2641,6 +2809,7 @@ TEST_CASE("MatN Array PropertyView (normalized)") {
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT8;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.required = false;
     // clang-format off
@@ -2674,12 +2843,64 @@ TEST_CASE("MatN Array PropertyView (normalized)") {
     REQUIRE(defaultValue[0] == glm::dmat2(1, 1, 1, 1));
     REQUIRE(defaultValue[1] == glm::dmat2(2, 2, 2, 2));
   }
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.normalized = true;
+    // clang-format off
+    classProperty.min = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
 
+    // clang-format on
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    // clang-format off
+    classProperty.max = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    // clang-format off
+    classProperty.scale = {
+      {1, 0,
+       0, 1},
+      {-1, 0,
+       0, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      {2, 2,
+       1, 1},
+      {0, 2,
+       1, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
   SECTION("Reports errors for incorrectly defined properties") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::INT32;
     classProperty.array = true;
+    classProperty.count = 2;
     classProperty.normalized = true;
     classProperty.required = true;
     // clang-format off
