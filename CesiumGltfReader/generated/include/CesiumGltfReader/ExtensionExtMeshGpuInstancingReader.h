@@ -18,6 +18,9 @@ struct ExtensionExtMeshGpuInstancing;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionExtMeshGpuInstancing} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionExtMeshGpuInstancingReader {
 public:
   /**

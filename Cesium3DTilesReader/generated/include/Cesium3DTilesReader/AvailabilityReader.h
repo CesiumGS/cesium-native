@@ -18,6 +18,9 @@ struct Availability;
 
 namespace Cesium3DTilesReader {
 
+/**
+ * @brief Reads {@link Availability} instances from JSON.
+ */
 class CESIUM3DTILESREADER_API AvailabilityReader {
 public:
   /**

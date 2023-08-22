@@ -18,6 +18,9 @@ struct ExtensionCesiumTileEdges;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionCesiumTileEdges} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionCesiumTileEdgesReader {
 public:
   /**

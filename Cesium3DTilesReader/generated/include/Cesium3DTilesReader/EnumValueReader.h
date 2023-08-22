@@ -18,6 +18,9 @@ struct EnumValue;
 
 namespace Cesium3DTilesReader {
 
+/**
+ * @brief Reads {@link EnumValue} instances from JSON.
+ */
 class CESIUM3DTILESREADER_API EnumValueReader {
 public:
   /**

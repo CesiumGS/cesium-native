@@ -18,6 +18,9 @@ struct Model;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link Model} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ModelReader {
 public:
   /**

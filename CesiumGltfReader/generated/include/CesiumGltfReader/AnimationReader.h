@@ -18,6 +18,9 @@ struct Animation;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link Animation} instances from JSON.
+ */
 class CESIUMGLTFREADER_API AnimationReader {
 public:
   /**

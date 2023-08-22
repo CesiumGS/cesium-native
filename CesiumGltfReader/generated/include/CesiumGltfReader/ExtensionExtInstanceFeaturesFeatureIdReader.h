@@ -18,6 +18,9 @@ struct ExtensionExtInstanceFeaturesFeatureId;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionExtInstanceFeaturesFeatureId} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionExtInstanceFeaturesFeatureIdReader {
 public:
   /**

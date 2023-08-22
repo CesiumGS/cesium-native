@@ -18,6 +18,9 @@ struct ExtensionNodeMaxarMeshVariants;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionNodeMaxarMeshVariants} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionNodeMaxarMeshVariantsReader {
 public:
   /**

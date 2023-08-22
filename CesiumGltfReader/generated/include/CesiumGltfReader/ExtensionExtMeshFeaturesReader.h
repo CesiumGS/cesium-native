@@ -18,6 +18,9 @@ struct ExtensionExtMeshFeatures;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionExtMeshFeatures} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionExtMeshFeaturesReader {
 public:
   /**

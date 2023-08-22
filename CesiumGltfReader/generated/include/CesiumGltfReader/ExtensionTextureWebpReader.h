@@ -18,6 +18,9 @@ struct ExtensionTextureWebp;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionTextureWebp} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionTextureWebpReader {
 public:
   /**

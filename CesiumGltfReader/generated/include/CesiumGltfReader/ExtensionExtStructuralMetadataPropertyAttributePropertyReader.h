@@ -18,6 +18,9 @@ struct ExtensionExtStructuralMetadataPropertyAttributeProperty;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionExtStructuralMetadataPropertyAttributeProperty} instances from JSON.
+ */
 class CESIUMGLTFREADER_API
     ExtensionExtStructuralMetadataPropertyAttributePropertyReader {
 public:

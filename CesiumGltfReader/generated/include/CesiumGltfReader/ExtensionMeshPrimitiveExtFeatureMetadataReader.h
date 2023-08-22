@@ -18,6 +18,9 @@ struct ExtensionMeshPrimitiveExtFeatureMetadata;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionMeshPrimitiveExtFeatureMetadata} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionMeshPrimitiveExtFeatureMetadataReader {
 public:
   /**

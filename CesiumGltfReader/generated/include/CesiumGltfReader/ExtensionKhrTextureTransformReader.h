@@ -18,6 +18,9 @@ struct ExtensionKhrTextureTransform;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionKhrTextureTransform} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionKhrTextureTransformReader {
 public:
   /**

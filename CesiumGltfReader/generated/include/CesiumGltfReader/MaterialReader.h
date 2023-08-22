@@ -18,6 +18,9 @@ struct Material;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link Material} instances from JSON.
+ */
 class CESIUMGLTFREADER_API MaterialReader {
 public:
   /**

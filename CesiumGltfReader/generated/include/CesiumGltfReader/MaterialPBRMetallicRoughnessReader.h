@@ -18,6 +18,9 @@ struct MaterialPBRMetallicRoughness;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link MaterialPBRMetallicRoughness} instances from JSON.
+ */
 class CESIUMGLTFREADER_API MaterialPBRMetallicRoughnessReader {
 public:
   /**

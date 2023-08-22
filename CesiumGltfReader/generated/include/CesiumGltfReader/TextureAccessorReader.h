@@ -18,6 +18,9 @@ struct TextureAccessor;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link TextureAccessor} instances from JSON.
+ */
 class CESIUMGLTFREADER_API TextureAccessorReader {
 public:
   /**

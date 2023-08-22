@@ -18,6 +18,9 @@ struct FeatureTableProperty;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link FeatureTableProperty} instances from JSON.
+ */
 class CESIUMGLTFREADER_API FeatureTablePropertyReader {
 public:
   /**

@@ -18,6 +18,9 @@ struct ExtensionBufferExtMeshoptCompression;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionBufferExtMeshoptCompression} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionBufferExtMeshoptCompressionReader {
 public:
   /**

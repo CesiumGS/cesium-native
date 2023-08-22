@@ -18,6 +18,9 @@ struct MetadataEntity;
 
 namespace Cesium3DTilesReader {
 
+/**
+ * @brief Reads {@link MetadataEntity} instances from JSON.
+ */
 class CESIUM3DTILESREADER_API MetadataEntityReader {
 public:
   /**

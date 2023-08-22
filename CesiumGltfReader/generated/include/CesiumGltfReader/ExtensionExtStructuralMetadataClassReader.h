@@ -18,6 +18,9 @@ struct ExtensionExtStructuralMetadataClass;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ExtensionExtStructuralMetadataClass} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ExtensionExtStructuralMetadataClassReader {
 public:
   /**

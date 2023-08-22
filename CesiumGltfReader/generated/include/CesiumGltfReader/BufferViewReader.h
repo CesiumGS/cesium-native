@@ -18,6 +18,9 @@ struct BufferView;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link BufferView} instances from JSON.
+ */
 class CESIUMGLTFREADER_API BufferViewReader {
 public:
   /**

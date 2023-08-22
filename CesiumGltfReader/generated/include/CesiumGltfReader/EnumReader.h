@@ -18,6 +18,9 @@ struct Enum;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link Enum} instances from JSON.
+ */
 class CESIUMGLTFREADER_API EnumReader {
 public:
   /**

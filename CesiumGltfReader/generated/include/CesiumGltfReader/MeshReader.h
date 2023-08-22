@@ -18,6 +18,9 @@ struct Mesh;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link Mesh} instances from JSON.
+ */
 class CESIUMGLTFREADER_API MeshReader {
 public:
   /**

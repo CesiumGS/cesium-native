@@ -18,6 +18,9 @@ struct Statistics;
 
 namespace Cesium3DTilesReader {
 
+/**
+ * @brief Reads {@link Statistics} instances from JSON.
+ */
 class CESIUM3DTILESREADER_API StatisticsReader {
 public:
   /**

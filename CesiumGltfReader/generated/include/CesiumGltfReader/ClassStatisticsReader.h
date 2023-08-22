@@ -18,6 +18,9 @@ struct ClassStatistics;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link ClassStatistics} instances from JSON.
+ */
 class CESIUMGLTFREADER_API ClassStatisticsReader {
 public:
   /**

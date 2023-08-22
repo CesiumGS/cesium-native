@@ -18,6 +18,9 @@ struct AnimationSampler;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link AnimationSampler} instances from JSON.
+ */
 class CESIUMGLTFREADER_API AnimationSamplerReader {
 public:
   /**

@@ -18,6 +18,9 @@ struct ImplicitTiling;
 
 namespace Cesium3DTilesReader {
 
+/**
+ * @brief Reads {@link ImplicitTiling} instances from JSON.
+ */
 class CESIUM3DTILESREADER_API ImplicitTilingReader {
 public:
   /**

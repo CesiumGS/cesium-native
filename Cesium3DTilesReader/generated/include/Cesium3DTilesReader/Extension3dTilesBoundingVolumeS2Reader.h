@@ -18,6 +18,9 @@ struct Extension3dTilesBoundingVolumeS2;
 
 namespace Cesium3DTilesReader {
 
+/**
+ * @brief Reads {@link Extension3dTilesBoundingVolumeS2} instances from JSON.
+ */
 class CESIUM3DTILESREADER_API Extension3dTilesBoundingVolumeS2Reader {
 public:
   /**

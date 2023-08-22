@@ -18,6 +18,9 @@ struct MeshPrimitive;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link MeshPrimitive} instances from JSON.
+ */
 class CESIUMGLTFREADER_API MeshPrimitiveReader {
 public:
   /**

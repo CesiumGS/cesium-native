@@ -18,6 +18,9 @@ struct Node;
 
 namespace CesiumGltfReader {
 
+/**
+ * @brief Reads {@link Node} instances from JSON.
+ */
 class CESIUMGLTFREADER_API NodeReader {
 public:
   /**
