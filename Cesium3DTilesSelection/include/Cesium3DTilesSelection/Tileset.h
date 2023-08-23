@@ -22,6 +22,7 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
+struct TilesetMetadata;
 
 /**
  * @brief A <a
@@ -206,6 +207,24 @@ public:
    * are currently loaded.
    */
   int64_t getTotalDataBytes() const noexcept;
+
+  /**
+   * @brief Finds the {@link TilesetMetadata} associated with the main or
+   * external tileset.json that contains a given tile.
+   *
+   * If this tileset's root tile is not yet available, this method returns
+   * nullptr.
+   *
+   * If the provided tile is not the root tile of a tileset.json, this method
+   * walks up the {@link Tile::getParent} chain until it finds the closest
+   * root and then returns the metadata associated with the corresponding
+   * tileset.json.
+   *
+   * @param pTile The tile. If this parameter is nullptr, the metadata for the
+   * main tileset.json is returned.
+   * @return The found metadata, or nullptr if the root tile is not yet loaded.
+   */
+  const TilesetMetadata* findMetadata(const Tile* pTile = nullptr) const;
 
 private:
   /**

@@ -7,6 +7,7 @@
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
 #include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -451,6 +452,22 @@ void Tileset::forEachLoadedTile(
 
 int64_t Tileset::getTotalDataBytes() const noexcept {
   return this->_pTilesetContentManager->getTotalDataUsed();
+}
+
+const TilesetMetadata* Tileset::findMetadata(const Tile* pTile) const {
+  if (pTile == nullptr) {
+    pTile = this->getRootTile();
+  }
+
+  while (pTile != nullptr) {
+    const TileExternalContent* pExternal =
+        pTile->getContent().getExternalContent();
+    if (pExternal)
+      return &pExternal->metadata;
+    pTile = pTile->getParent();
+  }
+
+  return nullptr;
 }
 
 static void markTileNonRendered(

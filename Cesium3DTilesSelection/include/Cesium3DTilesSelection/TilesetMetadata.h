@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+namespace Cesium3DTilesSelection {
+
 struct CESIUM3DTILESSELECTION_API TilesetMetadata {
   /**
    * @brief An object defining the structure of metadata classes and enums. When
@@ -34,3 +36,5 @@ struct CESIUM3DTILESSELECTION_API TilesetMetadata {
    */
   std::optional<Cesium3DTiles::MetadataEntity> metadata;
 };
+
+} // namespace Cesium3DTilesSelection
