@@ -11,7 +11,7 @@ namespace CesiumJsonReader {
 
 class IExtensionJsonHandler {
 public:
-  virtual ~IExtensionJsonHandler() noexcept = 0 {}
+  virtual ~IExtensionJsonHandler() noexcept = default;
   virtual void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
