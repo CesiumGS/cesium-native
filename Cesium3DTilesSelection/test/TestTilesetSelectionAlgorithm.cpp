@@ -1306,9 +1306,8 @@ TEST_CASE("Allows access to material variants") {
   }
 
   std::vector<std::vector<std::string>> expected = {
-    { "RGB", "RRR" },
-    { "GGG", "BBB" }
-  };
+      {"RGB", "RRR"},
+      {"GGG", "BBB"}};
 
   CHECK(variantsByGroup == expected);
 }
