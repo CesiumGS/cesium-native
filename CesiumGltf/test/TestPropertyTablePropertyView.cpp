@@ -12,6 +12,15 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
+template <typename T>
+static void
+checkArrayEqual(PropertyArrayView<T> arrayView, std::vector<T> expected) {
+  REQUIRE(arrayView.size() == static_cast<int64_t>(expected.size()));
+  for (int64_t i = 0; i < arrayView.size(); i++) {
+    REQUIRE(arrayView[i] == expected[static_cast<size_t>(i)]);
+  }
+}
+
 template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::vector<std::byte> data;
   data.resize(expected.size() * sizeof(T));
@@ -1536,6 +1545,18 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     REQUIRE(property.arrayCount() == count);
     REQUIRE(property.size() == instanceCount);
 
+    REQUIRE(property.offset());
+    checkArrayEqual(*property.offset(), {2, 1, 0, -1});
+
+    REQUIRE(property.scale());
+    checkArrayEqual(*property.scale(), {1, 0, 1, -1});
+
+    REQUIRE(property.min());
+    checkArrayEqual(*property.min(), {0.0f, 1.0f, 1.0f, -2.0f});
+
+    REQUIRE(property.max());
+    checkArrayEqual(*property.max(), {1.0f, 1.0f, 3.0f, 4.0f});
+
     std::vector<std::vector<float>> expected{
         {3.0f, 1.0, 3.0f, -5.0f},
         {2.0f, 1.0f, 1.0f, 1.0f}};
@@ -1672,26 +1693,29 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Array of 3 normalized int8_ts with all properties") {
+  SECTION("Array of 2 normalized i8vec2 with all properties") {
     // clang-format off
-    std::vector<int8_t> data{
-        -128, 0, 64,
-        -64, 127, -128,
-         0, 0, 0};
+    std::vector<glm::i8vec2> data{
+      glm::i8vec2(-128, 0), glm::i8vec2(64, -64),
+      glm::i8vec2(127, -128), glm::i8vec2(0, 0),
+      glm::i8vec2(0), glm::i8vec2(0)};
     // clang-format on
-    std::optional<JsonValue::Array> offset = JsonValue::Array{0, 1, 1};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{1, -1, 2};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0, 0};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{10, 8, 2};
+    std::optional<JsonValue::Array> offset = JsonValue::Array{{0, 1}, {1, 2}};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{{1, -1}, {2, 1}};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{{0, 0}, {0, 0}};
+    std::optional<JsonValue::Array> defaultValue =
+        JsonValue::Array{{10, 2}, {4, 8}};
 
-    std::vector<std::optional<std::vector<double>>> expected{
-        std::vector<double>{-1.0, 1.0, 1 + 2 * (64.0 / 127.0)},
-        std::vector<double>{-64.0 / 127.0, 0.0, -1.0},
-        std::vector<double>{10.0, 8.0, 2.0},
+    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
+        std::vector<glm::dvec2>{
+            glm::dvec2(-1.0, 1.0),
+            glm::dvec2(1 + 2 * (64.0 / 127.0), 2 - (64.0 / 127.0))},
+        std::vector<glm::dvec2>{glm::dvec2(1, 2), glm::dvec2(1, 2)},
+        std::vector<glm::dvec2>{glm::dvec2(10, 2), glm::dvec2(4, 8)},
     };
     checkNormalizedFixedLengthArray(
         data,
-        3,
+        2,
         expected,
         offset,
         scale,
@@ -1701,35 +1725,35 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
 
   SECTION("Overrides class property values") {
     // clang-format off
-    std::vector<float> data{
-        1.0f, 2.0f, 3.0f, 4.0f,
-        0.0f, -1.0f, 1.0f, -2.0f};
+    std::vector<glm::vec2> data{
+        glm::vec2(1.0f, 2.0f), glm::vec2(3.0f, 4.0f),
+        glm::vec2(0.0f, -1.0f), glm::vec2(1.0f, -2.0f)};
     // clang-format on
-    const int64_t count = 4;
+    const int64_t count = 2;
     const int64_t instanceCount = 2;
 
     std::vector<std::byte> buffer;
-    buffer.resize(data.size() * sizeof(float));
+    buffer.resize(data.size() * sizeof(glm::vec2));
     std::memcpy(buffer.data(), data.data(), buffer.size());
 
     ClassProperty classProperty;
-    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.type = ClassProperty::Type::VEC2;
     classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
 
     classProperty.array = true;
     classProperty.count = count;
-    classProperty.offset = {0, 0, 0, 0};
-    classProperty.scale = {1, 1, 1, 1};
-    classProperty.min = {0.0f, -1.0f, 1.0f, -2.0f};
-    classProperty.max = {1.0f, 2.0f, 3.0f, 4.0f};
+    classProperty.offset = JsonValue::Array{{0, 0}, {0, 0}};
+    classProperty.scale = JsonValue::Array{{1, 1}, {1, 1}};
+    classProperty.min = JsonValue::Array{{0.0f, -1.0f}, {1.0f, -2.0f}};
+    classProperty.max = JsonValue::Array{{1.0f, 2.0f}, {3.0f, 4.0f}};
 
     PropertyTableProperty propertyTableProperty;
-    propertyTableProperty.offset = {2, 1, 0, -1};
-    propertyTableProperty.scale = {1, 0, 1, -1};
-    propertyTableProperty.min = {0.0f, 1.0f, 1.0f, -2.0f};
-    propertyTableProperty.max = {1.0f, 1.0f, 3.0f, 4.0f};
+    propertyTableProperty.offset = JsonValue::Array{{2, 1}, {0, -1}};
+    propertyTableProperty.scale = JsonValue::Array{{1, 0}, {1, -1}};
+    propertyTableProperty.min = JsonValue::Array{{0.0f, 1.0f}, {1.0f, -2.0f}};
+    propertyTableProperty.max = JsonValue::Array{{1.0f, 1.0f}, {3.0f, 4.0f}};
 
-    PropertyTablePropertyView<PropertyArrayView<float>> property(
+    PropertyTablePropertyView<PropertyArrayView<glm::vec2>> property(
         propertyTableProperty,
         classProperty,
         instanceCount,
@@ -1742,12 +1766,28 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     REQUIRE(property.arrayCount() == count);
     REQUIRE(property.size() == instanceCount);
 
-    std::vector<std::vector<float>> expected{
-        {3.0f, 1.0, 3.0f, -5.0f},
-        {2.0f, 1.0f, 1.0f, 1.0f}};
+    REQUIRE(property.offset());
+    checkArrayEqual(*property.offset(), {glm::vec2{2, 1}, glm::vec2{0, -1}});
+
+    REQUIRE(property.scale());
+    checkArrayEqual(*property.scale(), {glm::vec2{1, 0}, glm::vec2{1, -1}});
+
+    REQUIRE(property.min());
+    checkArrayEqual(
+        *property.min(),
+        {glm::vec2{0.0f, 1.0f}, glm::vec2{1.0f, -2.0f}});
+
+    REQUIRE(property.max());
+    checkArrayEqual(
+        *property.max(),
+        {glm::vec2(1.0f, 1.0f), glm::vec2(3.0f, 4.0f)});
+
+    std::vector<std::vector<glm::vec2>> expected{
+        {glm::vec2(3.0f, 1.0), glm::vec2(3.0f, -5.0f)},
+        {glm::vec2(2.0f, 1.0f), glm::vec2(1.0f, 1.0f)}};
     size_t expectedIdx = 0;
     for (int64_t i = 0; i < property.size(); ++i) {
-      PropertyArrayView<float> rawValues = property.getRaw(i);
+      PropertyArrayView<glm::vec2> rawValues = property.getRaw(i);
       auto values = property.get(i);
       REQUIRE(values);
       for (int64_t j = 0; j < rawValues.size(); ++j) {
