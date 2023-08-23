@@ -1300,7 +1300,7 @@ TEST_CASE("Allows access to material variants") {
     const JsonValue::Array& groupVariantsJson =
         found2->propertyValue.getArray();
     groupVariants.reserve(groupVariantsJson.size());
-    for (int i = 0; i < groupVariantsJson.size(); ++i) {
+    for (size_t i = 0; i < groupVariantsJson.size(); ++i) {
       groupVariants.emplace_back(groupVariantsJson[i].getStringOrDefault(""));
     }
   }
