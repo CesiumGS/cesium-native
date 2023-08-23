@@ -55,7 +55,8 @@ static void checkNonArrayProperty(
     } else if constexpr (
         std::is_same_v<PropertyViewType, float> ||
         std::is_same_v<PropertyViewType, double>) {
-      REQUIRE(propertyView.getRaw(i) == Approx(expected[static_cast<size_t>(i)]));
+      REQUIRE(
+          propertyView.getRaw(i) == Approx(expected[static_cast<size_t>(i)]));
     } else {
       REQUIRE(
           static_cast<ExpectedType>(propertyView.getRaw(i)) ==

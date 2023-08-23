@@ -78,40 +78,6 @@ T transformValue(
   return result;
 }
 
-template <glm::length_t N, typename T>
-glm::vec<N, T> transformVecN(
-    const glm::vec<N, T>& value,
-    const std::optional<glm::vec<N, T>>& offset,
-    const std::optional<glm::vec<N, T>>& scale) {
-  glm::vec<N, T> result = value;
-  if (scale) {
-    result = applyScale<glm::vec<N, T>>(result, *scale);
-  }
-
-  if (offset) {
-    result += *offset;
-  }
-
-  return result;
-}
-
-template <glm::length_t N, typename T>
-glm::mat<N, N, T> transformMatN(
-    const glm::mat<N, N, T>& value,
-    const std::optional<glm::mat<N, N, T>>& offset,
-    const std::optional<glm::mat<N, N, T>>& scale) {
-  glm::mat<N, N, T> result = value;
-  if (scale) {
-    result = applyScale<glm::mat<N, N, T>>(result, *scale);
-  }
-
-  if (offset) {
-    result += *offset;
-  }
-
-  return result;
-}
-
 template <typename T>
 PropertyArrayView<T> transformArray(
     const PropertyArrayView<T>& value,
@@ -177,4 +143,25 @@ PropertyArrayView<glm::vec<N, double>> transformNormalizedVecNArray(
   return PropertyArrayView<glm::vec<N, double>>(std::move(result));
 }
 
+
+template <glm::length_t N, typename T>
+PropertyArrayView<glm::vec<N, double>> transformNormalizedMatNArray(
+    const PropertyArrayView<glm::vec<N, T>>& value,
+    const std::optional<PropertyArrayView<glm::vec<N, double>>>& offset,
+    const std::optional<PropertyArrayView<glm::vec<N, double>>>& scale) {
+  std::vector<glm::vec<N, double>> result(static_cast<size_t>(value.size()));
+  for (int64_t i = 0; i < value.size(); i++) {
+    result[i] = normalize<N, T>(value[i]);
+
+    if (scale) {
+      result[i] = applyScale<glm::vec<N, double>>(result[i], (*scale)[i]);
+    }
+
+    if (offset) {
+      result[i] = result[i] + (*offset)[i];
+    }
+  }
+
+  return PropertyArrayView<glm::vec<N, double>>(std::move(result));
+}
 } // namespace CesiumGltf

@@ -603,7 +603,7 @@ public:
       constexpr glm::length_t N = ElementType::length();
       using T = typename ElementType::value_type;
       using NormalizedT = typename NormalizedType::value_type;
-      return transformVecN<N, NormalizedT>(
+      return transformValue<glm::vec<N, NormalizedT>>(
           normalize<N, T>(value),
           this->offset(),
           this->scale());
@@ -613,7 +613,7 @@ public:
       constexpr glm::length_t N = ElementType::length();
       using T = typename ElementType::value_type;
       using NormalizedT = typename NormalizedType::value_type;
-      return transformMatN<N, NormalizedT>(
+      return transformValue<glm::mat<N, N, NormalizedT>>(
           normalize<N, T>(value),
           this->offset(),
           this->scale());

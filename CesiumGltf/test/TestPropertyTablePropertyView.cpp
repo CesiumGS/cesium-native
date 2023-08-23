@@ -704,7 +704,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Int16 with NoData") {
     std::vector<int16_t> values{-1, 3, 7, -1};
-    std::optional<int16_t> noData = -1;
+    std::optional<int16_t> noData = static_cast<int16_t>(-1);
     std::vector<std::optional<int16_t>> expected{
         std::nullopt,
         3,
@@ -721,8 +721,8 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Int16 with NoData and Default") {
     std::vector<int16_t> values{-1, 3, 7, -1};
-    std::optional<int16_t> noData = -1;
-    std::optional<int16_t> defaultValue = 0;
+    std::optional<int16_t> noData = static_cast<int16_t>(-1);
+    std::optional<int16_t> defaultValue = static_cast<int16_t>(0);
     std::vector<std::optional<int16_t>> expected{0, 3, 7, 0};
     checkScalar<int16_t>(
         values,
@@ -737,7 +737,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     std::vector<uint8_t> values{0, 64, 128, 255};
     std::optional<double> offset = 1.0;
     std::optional<double> scale = 2.0;
-    std::optional<uint8_t> noData = 0;
+    std::optional<uint8_t> noData = static_cast<uint8_t>(0);
     std::optional<double> defaultValue = 10.0;
     std::vector<std::optional<double>> expected{
         10.0,
