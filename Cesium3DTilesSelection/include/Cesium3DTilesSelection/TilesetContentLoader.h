@@ -7,7 +7,6 @@
 #include "TileLoadResult.h"
 #include "TilesetOptions.h"
 
-#include <Cesium3DTiles/Schema.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
