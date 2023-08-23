@@ -7,6 +7,7 @@
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
 
+#include <Cesium3DTiles/MetadataQuery.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 
@@ -1213,6 +1214,103 @@ TEST_CASE("Makes metadata available on external tilesets") {
   REQUIRE(pExternalContent->metadata.groups.size() == 2);
   CHECK(pExternalContent->metadata.groups[0].classProperty == "someClass");
   CHECK(pExternalContent->metadata.groups[1].classProperty == "someClass");
+}
+
+TEST_CASE("Allows access to material variants") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "MaterialVariants";
+  std::vector<std::string> files{"tileset.json", "parent.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  const TilesetMetadata* pMetadata = tileset.findMetadata();
+  REQUIRE(pMetadata);
+  REQUIRE(pMetadata->schema);
+  REQUIRE(pMetadata->metadata);
+
+  std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
+      Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+          *pMetadata->schema,
+          *pMetadata->metadata,
+          "MATERIAL_VARIANTS");
+  REQUIRE(found1);
+  CHECK(found1->classIdentifier == "MaterialVariants");
+  CHECK(found1->classDefinition.properties.size() == 1);
+  CHECK(found1->propertyIdentifier == "material_variants");
+  CHECK(
+      found1->propertyDefinition.description ==
+      "Names of material variants to be expected in the glTF assets");
+  REQUIRE(found1->propertyValue.isArray());
+
+  const JsonValue::Array& variantsJson = found1->propertyValue.getArray();
+  std::vector<std::string> variants(variantsJson.size());
+  std::transform(
+      variantsJson.begin(),
+      variantsJson.end(),
+      variants.begin(),
+      [](const JsonValue& value) { return value.getStringOrDefault(""); });
+  REQUIRE(variants.size() == 4);
+  CHECK(variants[0] == "RGB");
+  CHECK(variants[1] == "RRR");
+  CHECK(variants[2] == "GGG");
+  CHECK(variants[3] == "BBB");
+
+  std::vector<std::vector<std::string>> variantsByGroup;
+  for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
+    std::vector<std::string>& groupVariants = variantsByGroup.emplace_back();
+
+    std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
+        Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+            *pMetadata->schema,
+            group,
+            "MATERIAL_VARIANTS");
+    REQUIRE(found2);
+    REQUIRE(found2->propertyValue.isArray());
+
+    const JsonValue::Array& groupVariantsJson =
+        found2->propertyValue.getArray();
+    groupVariants.reserve(groupVariantsJson.size());
+    for (int i = 0; i < groupVariantsJson.size(); ++i) {
+      groupVariants.emplace_back(groupVariantsJson[i].getStringOrDefault(""));
+    }
+  }
+
+  std::vector<std::vector<std::string>> expected = {
+    { "RGB", "RRR" },
+    { "GGG", "BBB" }
+  };
+
+  CHECK(variantsByGroup == expected);
 }
 
 namespace {
