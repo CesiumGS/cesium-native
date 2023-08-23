@@ -34,7 +34,7 @@ const NameFormatters = {
     }
   },
 
-  getReaderIncludeFromName: function getReaderIncludeFromName(
+  getJsonHandlerIncludeFromName: function getJsonHandlerIncludeFromName(
     name,
     readerNamespace
   ) {
@@ -54,7 +54,7 @@ const NameFormatters = {
     }
   },
 
-  getReaderName: function getReaderName(name, readerNamespace) {
+  getJsonHandlerName: function getJsonHandlerName(name, readerNamespace) {
     const pieces = name.match(qualifiedTypeNameRegex);
     if (pieces && pieces.groups && pieces.groups.namespace) {
       const namespace = NameFormatters.getReaderNamespace(

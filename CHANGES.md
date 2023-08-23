@@ -12,6 +12,7 @@
 - Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
 - Added `ValueType` type alias to `ArrayJsonHandler`, for consistency with other JSON handlers.
 - Added an overload of `JsonReader::readJson` that takes a `rapidjson::Value` instead of a byte buffer. This allows a subtree of a `rapidjson::Document` to be easily and efficiently converted into statically-typed classes via `IJsonHandler`.
+- Added `*Reader` classes to `CesiumGltfReader` and `Cesium3DTilesReader` to allow each of the classes to be individually read from JSON.
 
 ### v0.27.0 - 2023-09-01
 
