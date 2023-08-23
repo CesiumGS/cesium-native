@@ -57,6 +57,10 @@ public:
   }
 
   bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
+    if (this->size() != other.size()) {
+      return false;
+    }
+
     for (int64_t i = 0; i < size(); i++) {
       if ((*this)[i] != other[i]) {
         return false;
@@ -104,6 +108,10 @@ public:
   int64_t size() const noexcept { return _size; }
 
   bool operator==(const PropertyArrayView<bool>& other) const noexcept {
+    if (this->size() != other.size()) {
+      return false;
+    }
+
     for (int64_t i = 0; i < size(); i++) {
       if ((*this)[i] != other[i]) {
         return false;
@@ -164,6 +172,10 @@ public:
 
   bool
   operator==(const PropertyArrayView<std::string_view>& other) const noexcept {
+    if (this->size() != other.size()) {
+      return false;
+    }
+
     for (int64_t i = 0; i < size(); i++) {
       if ((*this)[i] != other[i]) {
         return false;

@@ -2269,7 +2269,7 @@ public:
    */
   std::optional<PropertyArrayView<std::string_view>>
   defaultValue() const noexcept {
-    if (_noDataSize > 0) {
+    if (_defaultValueSize > 0) {
       return PropertyArrayView<std::string_view>(
           gsl::span<const std::byte>(
               _defaultValue.data(),

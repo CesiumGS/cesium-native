@@ -111,7 +111,7 @@ PropertyArrayView<NormalizedType> transformNormalizedArray(
     result[i] = normalize<T>(value[i]);
 
     if (scale) {
-      result[i] = applyScale<NormalizedType>(result[i], (*scale)[i]);
+      result[i] = result[i] * (*scale)[i];
     }
 
     if (offset) {
@@ -132,7 +132,7 @@ PropertyArrayView<glm::vec<N, double>> transformNormalizedVecNArray(
     result[i] = normalize<N, T>(value[i]);
 
     if (scale) {
-      result[i] = applyScale<glm::vec<N, double>>(result[i], (*scale)[i]);
+      result[i] = result[i] * (*scale)[i];
     }
 
     if (offset) {
@@ -143,18 +143,17 @@ PropertyArrayView<glm::vec<N, double>> transformNormalizedVecNArray(
   return PropertyArrayView<glm::vec<N, double>>(std::move(result));
 }
 
-
 template <glm::length_t N, typename T>
-PropertyArrayView<glm::vec<N, double>> transformNormalizedMatNArray(
-    const PropertyArrayView<glm::vec<N, T>>& value,
-    const std::optional<PropertyArrayView<glm::vec<N, double>>>& offset,
-    const std::optional<PropertyArrayView<glm::vec<N, double>>>& scale) {
-  std::vector<glm::vec<N, double>> result(static_cast<size_t>(value.size()));
+PropertyArrayView<glm::mat<N, N, double>> transformNormalizedMatNArray(
+    const PropertyArrayView<glm::mat<N, N, T>>& value,
+    const std::optional<PropertyArrayView<glm::mat<N, N, double>>>& offset,
+    const std::optional<PropertyArrayView<glm::mat<N, N, double>>>& scale) {
+  std::vector<glm::mat<N, N, double>> result(static_cast<size_t>(value.size()));
   for (int64_t i = 0; i < value.size(); i++) {
     result[i] = normalize<N, T>(value[i]);
 
     if (scale) {
-      result[i] = applyScale<glm::vec<N, double>>(result[i], (*scale)[i]);
+      result[i] = applyScale<glm::mat<N, N, double>>(result[i], (*scale)[i]);
     }
 
     if (offset) {
@@ -162,6 +161,6 @@ PropertyArrayView<glm::vec<N, double>> transformNormalizedMatNArray(
     }
   }
 
-  return PropertyArrayView<glm::vec<N, double>>(std::move(result));
+  return PropertyArrayView<glm::mat<N, N, double>>(std::move(result));
 }
 } // namespace CesiumGltf

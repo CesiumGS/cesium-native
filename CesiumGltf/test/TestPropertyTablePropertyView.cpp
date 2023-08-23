@@ -306,7 +306,7 @@ static void checkNormalizedMatN(
 template <typename DataType, typename OffsetType>
 static void checkVariableLengthArray(
     const std::vector<DataType>& data,
-    const std::vector<OffsetType> offsets,
+    const std::vector<OffsetType>& offsets,
     PropertyComponentType offsetType,
     int64_t instanceCount) {
   // copy data to buffer
@@ -357,6 +357,163 @@ static void checkVariableLengthArray(
   }
 
   REQUIRE(expectedIdx == data.size());
+}
+
+template <typename DataType, typename OffsetType>
+static void checkVariableLengthArrayWithProperties(
+    const std::vector<DataType>& data,
+    const std::vector<OffsetType>& offsets,
+    PropertyComponentType offsetType,
+    int64_t instanceCount,
+    const std::vector<std::optional<std::vector<DataType>>>& expected,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+  // copy data to buffer
+  std::vector<std::byte> buffer;
+  buffer.resize(data.size() * sizeof(DataType));
+  std::memcpy(buffer.data(), data.data(), data.size() * sizeof(DataType));
+
+  // copy offset to buffer
+  std::vector<std::byte> offsetBuffer;
+  offsetBuffer.resize(offsets.size() * sizeof(OffsetType));
+  std::memcpy(
+      offsetBuffer.data(),
+      offsets.data(),
+      offsets.size() * sizeof(OffsetType));
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<DataType>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<DataType>::component;
+  if (componentType != PropertyComponentType::None) {
+    classProperty.componentType =
+        convertPropertyComponentTypeToString(componentType);
+  }
+
+  classProperty.array = true;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
+
+  PropertyTablePropertyView<PropertyArrayView<DataType>> property(
+      propertyTableProperty,
+      classProperty,
+      instanceCount,
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+      gsl::span<const std::byte>(),
+      offsetType,
+      PropertyComponentType::None);
+
+  REQUIRE(property.arrayCount() == 0);
+
+  // Check raw values first
+  size_t expectedIdx = 0;
+  for (int64_t i = 0; i < property.size(); ++i) {
+    PropertyArrayView<DataType> values = property.getRaw(i);
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE(values[j] == data[expectedIdx]);
+      ++expectedIdx;
+    }
+  }
+
+  REQUIRE(expectedIdx == data.size());
+
+  // Check values with properties applied
+  for (int64_t i = 0; i < property.size(); ++i) {
+    std::optional<PropertyArrayView<DataType>> maybeValues = property.get(i);
+    if (!maybeValues) {
+      REQUIRE(!expected[static_cast<size_t>(i)]);
+      continue;
+    }
+
+    auto values = *maybeValues;
+    auto expectedValues = *expected[static_cast<size_t>(i)];
+
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
+    }
+  }
+}
+
+template <
+    typename DataType,
+    typename OffsetType,
+    typename NormalizedType = typename TypeToNormalizedType<DataType>::type>
+static void checkNormalizedVariableLengthArray(
+    const std::vector<DataType>& data,
+    const std::vector<OffsetType> offsets,
+    PropertyComponentType offsetType,
+    int64_t instanceCount,
+    const std::vector<std::optional<std::vector<NormalizedType>>>& expected,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+  // copy data to buffer
+  std::vector<std::byte> buffer;
+  buffer.resize(data.size() * sizeof(DataType));
+  std::memcpy(buffer.data(), data.data(), data.size() * sizeof(DataType));
+
+  // copy offset to buffer
+  std::vector<std::byte> offsetBuffer;
+  offsetBuffer.resize(offsets.size() * sizeof(OffsetType));
+  std::memcpy(
+      offsetBuffer.data(),
+      offsets.data(),
+      offsets.size() * sizeof(OffsetType));
+
+  PropertyTableProperty propertyTableProperty;
+  ClassProperty classProperty;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<DataType>::value);
+
+  PropertyComponentType componentType = TypeToPropertyType<DataType>::component;
+  classProperty.componentType =
+      convertPropertyComponentTypeToString(componentType);
+
+  classProperty.array = true;
+  classProperty.normalized = true;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
+
+  PropertyTablePropertyView<PropertyArrayView<DataType>, true> property(
+      propertyTableProperty,
+      classProperty,
+      instanceCount,
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+      offsetType);
+
+  REQUIRE(property.arrayCount() == 0);
+
+  // Check raw values first
+  size_t expectedIdx = 0;
+  for (int64_t i = 0; i < property.size(); ++i) {
+    PropertyArrayView<DataType> values = property.getRaw(i);
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE(values[j] == data[expectedIdx]);
+      ++expectedIdx;
+    }
+  }
+
+  REQUIRE(expectedIdx == data.size());
+
+  // Check values with properties applied
+  for (int64_t i = 0; i < property.size(); ++i) {
+    std::optional<PropertyArrayView<NormalizedType>> maybeValues =
+        property.get(i);
+    if (!maybeValues) {
+      REQUIRE(!expected[static_cast<size_t>(i)]);
+      continue;
+    }
+
+    auto values = *maybeValues;
+    auto expectedValues = *expected[static_cast<size_t>(i)];
+
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
+    }
+  }
 }
 
 template <typename T>
@@ -468,16 +625,16 @@ static void checkFixedLengthArrayWithProperties(
   // Check values with properties applied
   for (int64_t i = 0; i < property.size(); ++i) {
     std::optional<PropertyArrayView<T>> maybeValues = property.get(i);
-    std::optional<std::vector<T>> expectedValues =
-        expected[static_cast<size_t>(i)];
-    REQUIRE(maybeValues.has_value() == expectedValues.has_value());
     if (!maybeValues) {
+      REQUIRE(!expected[static_cast<size_t>(i)]);
       continue;
     }
 
     auto values = *maybeValues;
+    auto expectedValues = *expected[static_cast<size_t>(i)];
+
     for (int64_t j = 0; j < values.size(); ++j) {
-      REQUIRE(values[j] == (*expectedValues)[static_cast<size_t>(j)]);
+      REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
     }
   }
 }
@@ -543,6 +700,7 @@ static void checkNormalizedFixedLengthArray(
     std::optional<PropertyArrayView<D>> maybeValues = property.get(i);
     if (!maybeValues) {
       REQUIRE(!expected[static_cast<size_t>(i)]);
+      continue;
     }
 
     auto values = *maybeValues;
@@ -970,55 +1128,103 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
   }
 
   SECTION("Normalized Uint8 Mat2") {
+    // clang-format off
     std::vector<glm::u8mat2x2> values{
-        glm::u8mat2x2(0, 64, 255, 255),
-        glm::u8mat2x2(255, 0, 128, 0)};
+        glm::u8mat2x2(
+          0, 64,
+          255, 255),
+        glm::u8mat2x2(
+          255, 0,
+          128, 0)};
     std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(0.0, 64.0 / 255.0, 1.0, 1.0),
-        glm::dmat2(1.0, 0.0, 128.0 / 255.0, 0.0)};
+        glm::dmat2(
+          0.0, 64.0 / 255.0,
+          1.0, 1.0),
+        glm::dmat2(
+          1.0, 0.0,
+          128.0 / 255.0, 0.0)};
+    // clang-format on
     checkNormalizedMatN(values, expected);
   }
 
   SECTION("Normalized Int16 Mat2") {
+    // clang-format off
     std::vector<glm::i16mat2x2> values{
-        glm::i16mat2x2(-32768, 0, 16384, 32767),
-        glm::i16mat2x2(0, 32767, 32767, -32768)};
+        glm::i16mat2x2(
+          -32768, 0,
+          16384, 32767),
+        glm::i16mat2x2(
+          0, 32767,
+          32767, -32768)};
     std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(-1.0, 0.0, 16384.0 / 32767.0, 1.0),
-        glm::dmat2(0.0, 1.0, 1.0, -1.0),
+        glm::dmat2(
+          -1.0, 0.0,
+          16384.0 / 32767.0, 1.0),
+        glm::dmat2(
+          0.0, 1.0,
+          1.0, -1.0),
     };
+    // clang-format on
     checkNormalizedMatN(values, expected);
   }
 
   SECTION("Float Mat2 with Offset / Scale") {
+    // clang-format off
     std::vector<glm::mat2> values{
-        glm::mat2(1.0f, 3.0f, 4.0f, 2.0f),
-        glm::mat2(6.5f, 2.0f, -2.0f, 0.0f),
-        glm::mat2(8.0f, -1.0f, -3.0f, 1.0f),
+        glm::mat2(
+          1.0f, 3.0f,
+          4.0f, 2.0f),
+        glm::mat2(
+          6.5f, 2.0f,
+          -2.0f, 0.0f),
+        glm::mat2(
+          8.0f, -1.0f,
+          -3.0f, 1.0f),
     };
-    std::optional<JsonValue::Array> offset =
-        JsonValue::Array{1.0f, 2.0f, 3.0f, 1.0f};
-    std::optional<JsonValue::Array> scale =
-        JsonValue::Array{2.0f, 0.0f, 0.0f, 2.0f};
+    std::optional<JsonValue::Array> offset = JsonValue::Array{
+      1.0f, 2.0f,
+      3.0f, 1.0f};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{
+      2.0f, 0.0f,
+      0.0f, 2.0f};
     std::vector<std::optional<glm::mat2>> expected{
-        glm::mat2(3.0f, 2.0f, 3.0f, 5.0f),
-        glm::mat2(14.0f, 2.0f, 3.0f, 1.0f),
-        glm::mat2(17.0f, 2.0f, 3.0f, 3.0f),
+        glm::mat2(
+          3.0f, 2.0f,
+          3.0f, 5.0f),
+        glm::mat2(
+          14.0f, 2.0f,
+          3.0f, 1.0f),
+        glm::mat2(
+          17.0f, 2.0f,
+          3.0f, 3.0f),
     };
+    // clang-format on
     checkMatN(values, expected, offset, scale);
   }
 
   SECTION("Normalized Uint8 Mat2 with Offset and Scale") {
+    // clang-format off
     std::vector<glm::u8mat2x2> values{
-        glm::u8mat2x2(0, 64, 255, 255),
-        glm::u8mat2x2(255, 0, 128, 0)};
-    std::optional<JsonValue::Array> offset =
-        JsonValue::Array{0.0, 1.0, 1.0, 0.0};
-    std::optional<JsonValue::Array> scale =
-        JsonValue::Array{2.0, 1.0, 0.0, 2.0};
+        glm::u8mat2x2(
+          0, 64,
+          255, 255),
+        glm::u8mat2x2(
+          255, 0,
+          128, 0)};
+    std::optional<JsonValue::Array> offset = JsonValue::Array{
+      0.0, 1.0,
+      1.0, 0.0};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{
+      2.0, 1.0,
+      0.0, 2.0};
     std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(0.0, 1 + 64.0 / 255.0, 1.0, 2.0),
-        glm::dmat2(2.0, 1.0, 1.0, 0.0)};
+        glm::dmat2(
+          0.0, 1 + 64.0 / 255.0,
+          1.0, 2.0),
+        glm::dmat2(
+          2.0, 1.0,
+          1.0, 0.0)};
+    // clang-format on
     checkNormalizedMatN(values, expected, offset, scale);
   }
 
@@ -1094,30 +1300,47 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
   };
 
   SECTION("Normalized Uint8 Mat2 with all properties") {
+    // clang-format off
     std::vector<glm::u8mat2x2> values{
-        glm::u8mat2x2(0, 64, 255, 255),
+        glm::u8mat2x2(
+          0, 64,
+          255, 255),
         glm::u8mat2x2(0),
-        glm::u8mat2x2(255, 0, 128, 0)};
-    std::optional<JsonValue::Array> offset =
-        JsonValue::Array{0.0, 1.0, 1.0, 0.0};
-    std::optional<JsonValue::Array> scale =
-        JsonValue::Array{2.0, 1.0, 0.0, 2.0};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0, 0, 0};
-    std::optional<JsonValue::Array> defaultValue =
-        JsonValue::Array{1.0, 0.0, 0.0, 1.0};
+        glm::u8mat2x2(
+          255, 0,
+          128, 0)};
+    std::optional<JsonValue::Array> offset = JsonValue::Array{
+      0.0, 1.0,
+      1.0, 0.0};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{
+      2.0, 1.0,
+      0.0, 2.0};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{
+      0, 0,
+      0, 0};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+      1.0, 0.0,
+      0.0, 1.0};
 
     std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(0.0, 1 + 64.0 / 255.0, 1.0, 2.0),
+        glm::dmat2(
+          0.0, 1 + 64.0 / 255.0,
+          1.0, 2.0),
         glm::dmat2(1.0),
-        glm::dmat2(2.0, 1.0, 1.0, 0.0)};
+        glm::dmat2(
+          2.0, 1.0,
+          1.0, 0.0)};
+    // clang-format on
     checkNormalizedMatN(values, expected, offset, scale, noData, defaultValue);
   }
 
   SECTION("Overrides class property values") {
+    // clang-fomrat off
     std::vector<glm::mat2> values{
         glm::mat2(1.0f),
         glm::mat2(2.5f, 1.0f, 1.0f, 2.5f),
         glm::mat2(3.0f)};
+    // clang-format on
     std::vector<std::byte> data;
     data.resize(values.size() * sizeof(glm::mat2));
     std::memcpy(data.data(), values.data(), data.size());
@@ -1125,16 +1348,20 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    // clang-fomrat off
     classProperty.offset = {0.0f, 0.0f, 0.0f, 0.0f};
     classProperty.scale = {1.0f, 1.0f, 1.0f, 1.0f};
     classProperty.min = {1.0f, 0.0f, 0.0f, 1.0f};
     classProperty.max = {3.0f, 0.0f, 0.0f, 3.0f};
+    // clang-fomrat on
 
     PropertyTableProperty propertyTableProperty;
+    // clang-fomrat off
     propertyTableProperty.offset = {1.0f, 0.5f, 0.5f, 1.0f};
     propertyTableProperty.scale = {2.0f, 1.0f, 0.0f, 1.0f};
     propertyTableProperty.min = {3.0f, 0.5f, 0.5f, 2.0f};
     propertyTableProperty.max = {7.0f, 1.5f, 0.5f, 4.0f};
+    // clang-fomrat on
 
     PropertyTablePropertyView<glm::mat2> property(
         propertyTableProperty,
@@ -1142,19 +1369,35 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         static_cast<int64_t>(values.size()),
         gsl::span<const std::byte>(data.data(), data.size()));
 
+    // clang-format off
     REQUIRE(property.offset());
-    REQUIRE(*property.offset() == glm::mat2(1.0f, 0.5f, 0.5f, 1.0f));
+    REQUIRE(*property.offset() == glm::mat2(
+      1.0f, 0.5f,
+      0.5f, 1.0f));
     REQUIRE(property.scale());
-    REQUIRE(*property.scale() == glm::mat2(2.0f, 1.0f, 0.0f, 1.0f));
+    REQUIRE(*property.scale() == glm::mat2(
+      2.0f, 1.0f,
+      0.0f, 1.0f));
     REQUIRE(property.min());
-    REQUIRE(*property.min() == glm::mat2(3.0f, 0.5f, 0.5f, 2.0f));
+    REQUIRE(*property.min() == glm::mat2(
+      3.0f, 0.5f,
+      0.5f, 2.0f));
     REQUIRE(property.max());
-    REQUIRE(*property.max() == glm::mat2(7.0f, 1.5f, 0.5f, 4.0f));
+    REQUIRE(*property.max() == glm::mat2(
+      7.0f, 1.5f,
+      0.5f, 4.0f));
 
     std::vector<glm::mat2> expected{
-        glm::mat2(3.0f, 0.5f, 0.5f, 2.0f),
-        glm::mat2(6.0f, 1.5f, 0.5f, 3.5f),
-        glm::mat2(7.0f, 0.5f, 0.5f, 4.0f)};
+        glm::mat2(
+          3.0f, 0.5f,
+          0.5f, 2.0f),
+        glm::mat2(
+          6.0f, 1.5f,
+          0.5f, 3.5f),
+        glm::mat2(
+          7.0f, 0.5f,
+          0.5f, 4.0f)};
+    // clang-format on
     for (int64_t i = 0; i < property.size(); ++i) {
       REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
 
@@ -1783,7 +2026,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         {glm::vec2(1.0f, 1.0f), glm::vec2(3.0f, 4.0f)});
 
     std::vector<std::vector<glm::vec2>> expected{
-        {glm::vec2(3.0f, 1.0), glm::vec2(3.0f, -5.0f)},
+        {glm::vec2(3.0f, 1.0f), glm::vec2(3.0f, -5.0f)},
         {glm::vec2(2.0f, 1.0f), glm::vec2(1.0f, 1.0f)}};
     size_t expectedIdx = 0;
     for (int64_t i = 0; i < property.size(); ++i) {
@@ -1900,10 +2143,408 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
     // clang-format on
     checkFixedLengthArray(data, 3);
   }
+
+  SECTION("Array of 2 normalized u8mat2x2s") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> data{
+        glm::u8mat2x2(
+          255, 64,
+          0, 255),
+        glm::u8mat2x2(
+          0, 255,
+          64, 128),
+        glm::u8mat2x2(
+          128, 0,
+          0, 255),
+        glm::u8mat2x2(
+          255, 32,
+          255, 0)};
+
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+        std::vector<glm::dmat2>{
+            glm::dmat2(
+              1.0, 64.0 / 255.0,
+              0.0, 1.0),
+            glm::dmat2(
+              0.0, 1.0,
+              64.0 / 255.0, 128.0 / 255.0),
+        },
+        std::vector<glm::dmat2>{
+            glm::dmat2(
+              128.0 / 255.0, 0.0,
+              0.0, 1.0),
+            glm::dmat2(
+              1.0, 32.0 / 255.0,
+              1.0, 0.0),
+        }};
+    // clang-format on
+
+    checkNormalizedFixedLengthArray(data, 2, expected);
+  }
+
+  SECTION("Array of 2 mat2s with offset / scale") {
+    // clang-format off
+    std::vector<glm::mat2> data{
+        glm::mat2(
+          1.0f, 2.0f,
+          3.0f, 4.0f),
+        glm::mat2(
+          5.0f, -1.0f,
+          0.0f, 2.0f),
+        glm::mat2(
+          -1.0f, -1.0f,
+          0.0f, -2.0f),
+        glm::mat2(
+          0.0f, -2.0f,
+          4.0f, 3.0f)};
+
+    std::optional<JsonValue::Array> offset =
+        JsonValue::Array{
+          {1.0f, 0.0f,
+           2.0f, 3.0f},
+          {-1.0f, 0.0f,
+            0.0f, 2.0f}};
+    std::optional<JsonValue::Array> scale =
+        JsonValue::Array{
+          {1.0f, 2.0f,
+           1.0f, 0.0f},
+          {1.0f, -1.0f,
+          -1.0f, 2.0f}};
+
+    std::vector<std::optional<std::vector<glm::mat2>>> expected{
+        std::vector<glm::mat2>{
+          glm::mat2(
+            2.0f, 4.0f,
+            5.0f, 3.0f),
+          glm::mat2(
+            4.0f, 1.0f,
+            0.0f, 6.0f)},
+        std::vector<glm::mat2>{
+          glm::mat2(
+            0.0f, -2.0f,
+            2.0f, 3.0f),
+          glm::mat2(
+            -1.0f, 2.0f,
+            -4.0f, 8.0f)}};
+    // clang-format on
+    checkFixedLengthArrayWithProperties(data, 2, expected, offset, scale);
+  }
+
+  SECTION("Array of 2 imat2x2 with noData value") {
+    // clang-format off
+    std::vector<glm::imat2x2> data{
+        glm::imat2x2(
+          122, 12,
+          4, 6),
+        glm::imat2x2(-1),
+        glm::imat2x2(
+          -3, 44,
+          7, 8),
+        glm::imat2x2(
+          0, 7,
+          -1, 0),
+        glm::imat2x2(-1),
+        glm::imat2x2(0)};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{
+      {-1, 0,
+       0, -1},
+      {0, 0,
+       0, 0}};
+    std::vector<std::optional<std::vector<glm::imat2x2>>> expected{
+        std::vector<glm::imat2x2>{
+          glm::imat2x2(
+            122, 12,
+            4, 6),
+          glm::imat2x2(-1)},
+        std::vector<glm::imat2x2>{
+          glm::imat2x2(
+            -3, 44,
+            7, 8),
+          glm::imat2x2(
+            0, 7,
+            -1, 0)},
+        std::nullopt};
+    // clang-format on
+    checkFixedLengthArrayWithProperties<glm::imat2x2>(
+        data,
+        2,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        std::nullopt);
+  }
+
+  SECTION("Array of 2 imat2x2 with noData and default value") {
+    // clang-format off
+    std::vector<glm::imat2x2> data{
+        glm::imat2x2(
+          122, 12,
+          4, 6),
+        glm::imat2x2(-1),
+        glm::imat2x2(
+          -3, 44,
+          7, 8),
+        glm::imat2x2(
+          0, 7,
+          -1, 0),
+        glm::imat2x2(-1),
+        glm::imat2x2(0)};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{
+      {-1, 0,
+       0, -1},
+      {0, 0,
+       0, 0}};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+      {2, 0,
+       0, 2},
+      {1, 0,
+       0, 1}
+    };
+    std::vector<std::optional<std::vector<glm::imat2x2>>> expected{
+        std::vector<glm::imat2x2>{
+          glm::imat2x2(
+            122, 12,
+            4, 6),
+          glm::imat2x2(-1)},
+        std::vector<glm::imat2x2>{
+          glm::imat2x2(
+            -3, 44,
+            7, 8),
+          glm::imat2x2(
+            0, 7,
+            -1, 0)},
+        std::vector<glm::imat2x2>{
+          glm::imat2x2(2),
+          glm::imat2x2(1)
+        }};
+    // clang-format on
+    checkFixedLengthArrayWithProperties<glm::imat2x2>(
+        data,
+        2,
+        expected,
+        std::nullopt,
+        std::nullopt,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Array of 2 normalized i8mat2x2 with all properties") {
+    // clang-format off
+    std::vector<glm::i8mat2x2> data{
+      glm::i8mat2x2(-128),
+      glm::i8mat2x2(
+        64, -64,
+        0, 255),
+      glm::i8mat2x2(
+        127, -128,
+        -128, 0),
+      glm::i8mat2x2(0),
+      glm::i8mat2x2(0),
+      glm::i8mat2x2(
+        -128, -128,
+        -128, -128)};
+    std::optional<JsonValue::Array> offset = JsonValue::Array{
+      {0, 1,
+      2, 3},
+      {1, 2,
+       0, -2}};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{
+      {1, -1,
+       0, 1},
+      {2, 1,
+      -1, 0}};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{
+      {0, 0,
+       0, 0},
+      {-128, -128,
+       -128, -128}};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+      {1, 0,
+      0, 1},
+      {2, 0,
+      0, 2}};
+
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+      std::vector<glm::dmat2>{
+        glm::dmat2(
+          -1.0, 1.0,
+           2.0, 2.0),
+        glm::dmat2(
+           1 + 2 * (64.0 / 127.0), 2 - (64.0 / 127.0),
+           0, -2)},
+      std::vector<glm::dmat2>{
+        glm::dmat2(
+          1.0, 2.0,
+          2.0, 3.0),
+        glm::dmat2(
+          1.0, 2.0,
+          0.0, -2.0)},
+      std::vector<glm::dmat2>{
+        glm::dmat2(1),
+        glm::dmat2(2)},
+    };
+    // clang-format on
+    checkNormalizedFixedLengthArray(
+        data,
+        2,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Overrides class property values") {
+    // clang-format off
+    std::vector<glm::mat2> data{
+        glm::mat2(1.0f),
+        glm::mat2(2.0f),
+        glm::mat2(3.0f),
+        glm::mat2(4.0f)};
+    // clang-format on
+    const int64_t count = 2;
+    const int64_t instanceCount = 2;
+
+    std::vector<std::byte> buffer;
+    buffer.resize(data.size() * sizeof(glm::mat2));
+    std::memcpy(buffer.data(), data.data(), buffer.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+
+    classProperty.array = true;
+    classProperty.count = count;
+    // clang-format off
+    classProperty.offset = JsonValue::Array{
+      {0, 0,
+       0, 0},
+      {0, 0,
+       0, 0}};
+    classProperty.scale = JsonValue::Array{
+      {1, 1,
+       1, 1},
+      {1, 1,
+       1, 1}};
+    classProperty.min = JsonValue::Array{
+      {1.0f, 0.0f,
+       0.0f, 1.0f},
+      {2.0f, 0.0f,
+       0.0f, 2.0f}};
+    classProperty.max = JsonValue::Array{
+      {3.0f, 0.0f,
+       0.0f, 3.0f},
+      {4.0f, 0.0f,
+       0.0f, 4.0f}};
+    // clang-format on
+
+    PropertyTableProperty propertyTableProperty;
+    // clang-format off
+    propertyTableProperty.offset = JsonValue::Array{
+      {2, 1,
+      -1, -2},
+      {0, -1,
+       4, 0}};
+    propertyTableProperty.scale = JsonValue::Array{
+      {1, 0,
+       1, 2},
+      {1, -1,
+       3, 2}};
+    propertyTableProperty.min = JsonValue::Array{
+      {2.0f, 1.0f,
+      -1.0f, 0.0f},
+      {2.0f, -1.0f,
+      -4.0f, 4.0f}};
+    propertyTableProperty.max = JsonValue::Array{
+      {5.0f, 1.0f,
+      -1.0f, 4.0f},
+      {4.0f, -1.0f,
+       4.0f, 8.0f}};
+    // clang-format on
+
+    PropertyTablePropertyView<PropertyArrayView<glm::mat2>> property(
+        propertyTableProperty,
+        classProperty,
+        instanceCount,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        PropertyComponentType::None,
+        PropertyComponentType::None);
+
+    REQUIRE(property.arrayCount() == count);
+    REQUIRE(property.size() == instanceCount);
+
+    // clang-format off
+    REQUIRE(property.offset());
+    checkArrayEqual(*property.offset(), {
+      glm::mat2(
+        2, 1,
+        -1, -2),
+      glm::mat2(
+        0, -1,
+        4, 0)});
+
+    REQUIRE(property.scale());
+    checkArrayEqual(*property.scale(), {
+      glm::mat2(
+        1, 0,
+        1, 2),
+      glm::mat2(
+        1, -1,
+        3, 2)});
+
+    REQUIRE(property.min());
+    checkArrayEqual(*property.min(), {
+      glm::mat2{
+        2.0f, 1.0f,
+        -1.0f, 0.0f},
+      glm::mat2{
+        2.0f, -1.0f,
+        -4.0f, 4.0f}});
+
+    REQUIRE(property.max());
+    checkArrayEqual( *property.max(), {
+      glm::mat2(
+        5.0f, 1.0f,
+        -1.0f, 4.0f),
+      glm::mat2(
+        4.0f, -1.0f,
+        4.0f, 8.0f)});
+
+    std::vector<std::vector<glm::mat2>> expected{
+      {glm::mat2(
+        3.0f, 1.0f,
+        -1.0f, 0.0f),
+       glm::mat2(
+        2.0f, -1.0f,
+        4.0f, 4.0f)},
+      {glm::mat2(
+        5.0f, 1.0f,
+        -1.0f, 4.0f),
+       glm::mat2(
+        4.0f, -1.0f,
+        4.0f, 8.0f)}};
+    // clang-format on
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<glm::mat2> rawValues = property.getRaw(i);
+      auto values = property.get(i);
+      REQUIRE(values);
+      for (int64_t j = 0; j < rawValues.size(); ++j) {
+        REQUIRE(rawValues[j] == data[expectedIdx]);
+        REQUIRE(
+            (*values)[j] ==
+            expected[static_cast<size_t>(i)][static_cast<size_t>(j)]);
+        ++expectedIdx;
+      }
+    }
+  }
 }
 
 TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
-  SECTION("Variable-length array of uint8_t") {
+  SECTION("Array of uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
         3, 2,
@@ -1919,7 +2560,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Variable-length array of int32_t") {
+  SECTION("Array of int32_t") {
     // clang-format off
     std::vector<int32_t> data{
         3, 200,
@@ -1936,7 +2577,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Variable-length array of double") {
+  SECTION("Array of double") {
     // clang-format off
     std::vector<double> data{
         3.333, 200.2,
@@ -1952,10 +2593,140 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
 
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
+
+  SECTION("Array of normalized uint8_t") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        255, 0,
+        0, 255, 128,
+        64,
+    };
+    std::vector<uint32_t> offsets{
+        0, 2, 5, 6
+    };
+    // clang-format on
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{1.0, 0.0},
+        std::vector<double>{0.0, 1.0, 128.0 / 255.0},
+        std::vector<double>{64.0 / 255.0},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected);
+  }
+
+  SECTION("Array of int32_t with NoData") {
+    // clang-format off
+    std::vector<int32_t> data{
+        3, 200,
+        0, 450, 200, 1, 4,
+        1, 3, 2,
+        0,
+        1, 3, 4, 1
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0,
+        2 * sizeof(int32_t),
+        7 * sizeof(int32_t),
+        10 * sizeof(int32_t),
+        11 * sizeof(int32_t),
+        15 * sizeof(int32_t)};
+
+    std::optional<JsonValue::Array> noData = JsonValue::Array{0};
+
+    std::vector<std::optional<std::vector<int32_t>>> expected{
+        std::vector<int32_t>{3, 200},
+        std::vector<int32_t>{0, 450, 200, 1, 4},
+        std::vector<int32_t>{1, 3, 2},
+        std::nullopt,
+        std::vector<int32_t>{1, 3, 4, 1}};
+    checkVariableLengthArrayWithProperties(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        5,
+        expected,
+        noData);
+  }
+
+  SECTION("Array of int32_t with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<int32_t> data{
+        3, 200,
+        0, 450, 200, 1, 4,
+        1, 3, 2,
+        0,
+        1, 3, 4, 1
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0,
+        2 * sizeof(int32_t),
+        7 * sizeof(int32_t),
+        10 * sizeof(int32_t),
+        11 * sizeof(int32_t),
+        15 * sizeof(int32_t)};
+
+    std::optional<JsonValue::Array> noData = JsonValue::Array{0};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{1};
+
+    std::vector<std::optional<std::vector<int32_t>>> expected{
+        std::vector<int32_t>{3, 200},
+        std::vector<int32_t>{0, 450, 200, 1, 4},
+        std::vector<int32_t>{1, 3, 2},
+        std::vector<int32_t>{1},
+        std::vector<int32_t>{1, 3, 4, 1}};
+    checkVariableLengthArrayWithProperties(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        5,
+        expected,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Array of normalized uint8_t with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        255, 0,
+        0, 255, 128,
+        64,
+        255, 255
+    };
+    std::vector<uint32_t> offsets{
+        0, 2, 5, 6, 8
+    };
+    // clang-format on
+
+    std::optional<JsonValue::Array> noData = JsonValue::Array{255, 255};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{-1.0};
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{1.0, 0.0},
+        std::vector<double>{0.0, 1.0, 128.0 / 255.0},
+        std::vector<double>{64.0 / 255},
+        std::vector<double>{-1.0},
+    };
+
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        4,
+        expected,
+        noData,
+        defaultValue);
+  }
 }
 
 TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
-  SECTION("Variable-length array of ivec2") {
+  SECTION("Array of ivec2") {
     // clang-format off
     std::vector<glm::ivec2> data{
         glm::ivec2(3, -2), glm::ivec2(20, 3),
@@ -1974,7 +2745,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Variable-length array of dvec3") {
+  SECTION("Array of dvec3") {
     // clang-format off
     std::vector<glm::dvec3> data{
         glm::dvec3(-0.02, 2.0, 1.0), glm::dvec3(9.92, 9.0, -8.0),
@@ -1995,7 +2766,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
 
-  SECTION("Variable-length array of u8vec4") {
+  SECTION("Array of u8vec4") {
     // clang-format off
      std::vector<glm::u8vec4> data{
          glm::u8vec4(1, 2, 3, 4), glm::u8vec4(5, 6, 7, 8),
@@ -2016,10 +2787,162 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
 
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
+
+  SECTION("Array of normalized u8vec2") {
+    // clang-format off
+    std::vector<glm::u8vec2> data{
+        glm::u8vec2(255, 0), glm::u8vec2(0, 64),
+        glm::u8vec2(0, 0),
+        glm::u8vec2(128, 255), glm::u8vec2(255, 255), glm::u8vec2(32, 64)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0 * sizeof(glm::u8vec2),
+        2 * sizeof(glm::u8vec2),
+        3 * sizeof(glm::u8vec2),
+        6 * sizeof(glm::u8vec2)};
+
+    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
+        std::vector<glm::dvec2>{
+            glm::dvec2(1.0, 0.0),
+            glm::dvec2(0.0, 64.0 / 255.0)},
+        std::vector<glm::dvec2>{glm::dvec2(0.0, 0.0)},
+        std::vector<glm::dvec2>{
+            glm::dvec2(128.0 / 255.0, 1.0),
+            glm::dvec2(1.0, 1.0),
+            glm::dvec2(32.0 / 255.0, 64.0 / 255.0)},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected);
+  }
+
+  SECTION("Array of ivec3 with NoData") {
+    // clang-format off
+    std::vector<glm::ivec3> data{
+        glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6),
+        glm::ivec3(-1, 0, -450),
+        glm::ivec3(200, 1, 4), glm::ivec3(1, 3, 2), glm::ivec3(0),
+        glm::ivec3(-1),
+        glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0,
+        2 * sizeof(glm::ivec3),
+        3 * sizeof(glm::ivec3),
+        6 * sizeof(glm::ivec3),
+        7 * sizeof(glm::ivec3),
+        9 * sizeof(glm::ivec3)};
+
+    std::optional<JsonValue::Array> noData = JsonValue::Array{};
+    noData->push_back(JsonValue::Array{-1, -1, -1});
+
+    std::vector<std::optional<std::vector<glm::ivec3>>> expected{
+        std::vector<glm::ivec3>{glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6)},
+        std::vector<glm::ivec3>{glm::ivec3(-1, 0, -450)},
+        std::vector<glm::ivec3>{
+            glm::ivec3(200, 1, 4),
+            glm::ivec3(1, 3, 2),
+            glm::ivec3(0)},
+        std::nullopt,
+        std::vector<glm::ivec3>{glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)}};
+    checkVariableLengthArrayWithProperties(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        5,
+        expected,
+        noData);
+  }
+
+  SECTION("Array of ivec3 with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<glm::ivec3> data{
+        glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6),
+        glm::ivec3(-1, 0, -450),
+        glm::ivec3(200, 1, 4), glm::ivec3(1, 3, 2), glm::ivec3(0),
+        glm::ivec3(-1),
+        glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0,
+        2 * sizeof(glm::ivec3),
+        3 * sizeof(glm::ivec3),
+        6 * sizeof(glm::ivec3),
+        7 * sizeof(glm::ivec3),
+        9 * sizeof(glm::ivec3)};
+
+    std::optional<JsonValue::Array> noData = JsonValue::Array{};
+    noData->push_back(JsonValue::Array{-1, -1, -1});
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
+    defaultValue->push_back(JsonValue::Array{0, 0, 0});
+
+    std::vector<std::optional<std::vector<glm::ivec3>>> expected{
+        std::vector<glm::ivec3>{glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6)},
+        std::vector<glm::ivec3>{glm::ivec3(-1, 0, -450)},
+        std::vector<glm::ivec3>{
+            glm::ivec3(200, 1, 4),
+            glm::ivec3(1, 3, 2),
+            glm::ivec3(0)},
+        std::vector<glm::ivec3>{glm::ivec3(0)},
+        std::vector<glm::ivec3>{glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)}};
+    checkVariableLengthArrayWithProperties(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        5,
+        expected,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Array of normalized u8vec2 with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<glm::u8vec2> data{
+        glm::u8vec2(255, 0), glm::u8vec2(0, 64),
+        glm::u8vec2(0, 0),
+        glm::u8vec2(128, 255), glm::u8vec2(255, 255), glm::u8vec2(32, 64)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0 * sizeof(glm::u8vec2),
+        2 * sizeof(glm::u8vec2),
+        3 * sizeof(glm::u8vec2),
+        6 * sizeof(glm::u8vec2)};
+
+    std::optional<JsonValue::Array> noData = JsonValue::Array{};
+    noData->push_back(JsonValue::Array{0, 0});
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
+    defaultValue->push_back(JsonValue::Array{-1.0, -1.0});
+
+    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
+        std::vector<glm::dvec2>{
+            glm::dvec2(1.0, 0.0),
+            glm::dvec2(0.0, 64.0 / 255.0)},
+        std::vector<glm::dvec2>{glm::dvec2(-1.0)},
+        std::vector<glm::dvec2>{
+            glm::dvec2(128.0 / 255.0, 1.0),
+            glm::dvec2(1.0, 1.0),
+            glm::dvec2(32.0 / 255.0, 64.0 / 255.0)},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected,
+        noData,
+        defaultValue);
+  }
 }
 
 TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
-  SECTION("Variable-length array of dmat2") {
+  SECTION("Array of dmat2") {
     // clang-format off
     std::vector<glm::dmat2> data0{
         glm::dmat2(
@@ -2063,7 +2986,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
 
-  SECTION("Variable-length array of i16mat3x3") {
+  SECTION("Array of i16mat3x3") {
     // clang-format off
     std::vector<glm::i16mat3x3> data0{
         glm::i16mat3x3(
@@ -2112,7 +3035,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
 
-  SECTION("Variable-length array of u8mat4x4") {
+  SECTION("Array of u8mat4x4") {
     // clang-format off
     std::vector<glm::u8mat4x4> data0{
         glm::u8mat4x4(
@@ -2166,6 +3089,172 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
 
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
+
+  SECTION("Array of normalized u8mat2x2") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> data{
+        glm::u8mat2x2(255), glm::u8mat2x2(64),
+        glm::u8mat2x2(0),
+        glm::u8mat2x2(128), glm::u8mat2x2(255), glm::u8mat2x2(32)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0 * sizeof(glm::u8mat2x2),
+        2 * sizeof(glm::u8mat2x2),
+        3 * sizeof(glm::u8mat2x2),
+        6 * sizeof(glm::u8mat2x2)};
+
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+        std::vector<glm::dmat2>{glm::dmat2(1.0), glm::dmat2(64.0 / 255.0)},
+        std::vector<glm::dmat2>{glm::dmat2(0.0)},
+        std::vector<glm::dmat2>{
+            glm::dmat2(128.0 / 255.0),
+            glm::dmat2(1.0),
+            glm::dmat2(32.0 / 255.0)},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected);
+  }
+
+  SECTION("Array of imat3x3 with NoData") {
+    // clang-format off
+    std::vector<glm::imat3x3> data{
+        glm::imat3x3(3), glm::imat3x3(2),
+        glm::imat3x3(-1),
+        glm::imat3x3(200), glm::imat3x3(1), glm::imat3x3(0),
+        glm::imat3x3(-1),
+        glm::imat3x3(1), glm::imat3x3(24)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0,
+        2 * sizeof(glm::imat3x3),
+        3 * sizeof(glm::imat3x3),
+        6 * sizeof(glm::imat3x3),
+        7 * sizeof(glm::imat3x3),
+        9 * sizeof(glm::imat3x3)};
+
+    // clang-format off
+    std::optional<JsonValue::Array> noData = JsonValue::Array{};
+    noData->push_back(JsonValue::Array{
+      -1, 0, 0,
+       0, -1, 0,
+       0, 0, -1});
+    // clang-format on
+
+    std::vector<std::optional<std::vector<glm::imat3x3>>> expected{
+        std::vector<glm::imat3x3>{glm::imat3x3(3), glm::imat3x3(2)},
+        std::nullopt,
+        std::vector<glm::imat3x3>{
+            glm::imat3x3(200),
+            glm::imat3x3(1),
+            glm::imat3x3(0)},
+        std::nullopt,
+        std::vector<glm::imat3x3>{glm::imat3x3(1), glm::imat3x3(24)}};
+    checkVariableLengthArrayWithProperties(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        5,
+        expected,
+        noData);
+  }
+
+  SECTION("Array of imat3x3 with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<glm::imat3x3> data{
+        glm::imat3x3(3), glm::imat3x3(2),
+        glm::imat3x3(-1),
+        glm::imat3x3(200), glm::imat3x3(1), glm::imat3x3(0),
+        glm::imat3x3(-1),
+        glm::imat3x3(1), glm::imat3x3(24)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0,
+        2 * sizeof(glm::imat3x3),
+        3 * sizeof(glm::imat3x3),
+        6 * sizeof(glm::imat3x3),
+        7 * sizeof(glm::imat3x3),
+        9 * sizeof(glm::imat3x3)};
+
+    // clang-format off
+    std::optional<JsonValue::Array> noData = JsonValue::Array{};
+    noData->push_back(JsonValue::Array{
+      -1, 0, 0,
+      0, -1, 0,
+      0, 0, -1});
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
+    defaultValue->push_back(JsonValue::Array{
+      99, 0, 0,
+      0, 99, 0,
+      0, 0, 99});
+    // clang-format on
+
+    std::vector<std::optional<std::vector<glm::imat3x3>>> expected{
+        std::vector<glm::imat3x3>{glm::imat3x3(3), glm::imat3x3(2)},
+        std::vector<glm::imat3x3>{glm::imat3x3(99)},
+        std::vector<glm::imat3x3>{
+            glm::imat3x3(200),
+            glm::imat3x3(1),
+            glm::imat3x3(0)},
+        std::vector<glm::imat3x3>{glm::imat3x3(99)},
+        std::vector<glm::imat3x3>{glm::imat3x3(1), glm::imat3x3(24)}};
+    checkVariableLengthArrayWithProperties(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        5,
+        expected,
+        noData,
+        defaultValue);
+  }
+
+  SECTION("Array of normalized u8mat2x2 with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> data{
+        glm::u8mat2x2(255), glm::u8mat2x2(64),
+        glm::u8mat2x2(0),
+        glm::u8mat2x2(128), glm::u8mat2x2(255), glm::u8mat2x2(32)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0 * sizeof(glm::u8mat2x2),
+        2 * sizeof(glm::u8mat2x2),
+        3 * sizeof(glm::u8mat2x2),
+        6 * sizeof(glm::u8mat2x2)};
+
+    // clang-format off
+    std::optional<JsonValue::Array> noData = JsonValue::Array{};
+    noData->push_back(JsonValue::Array{
+      0, 0,
+      0, 0});
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
+    defaultValue->push_back(JsonValue::Array{
+      -1.0, 0.0,
+      0.0, -1.0});
+    // clang-format on
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+        std::vector<glm::dmat2>{glm::dmat2(1.0), glm::dmat2(64.0 / 255.0)},
+        std::vector<glm::dmat2>{glm::dmat2(-1.0)},
+        std::vector<glm::dmat2>{
+            glm::dmat2(128.0 / 255.0),
+            glm::dmat2(1.0),
+            glm::dmat2(32.0 / 255.0)},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected,
+        noData,
+        defaultValue);
+  }
 }
 
 TEST_CASE("Check fixed-length array of string") {
@@ -2213,35 +3302,155 @@ TEST_CASE("Check fixed-length array of string") {
       &currentStringOffset,
       sizeof(uint32_t));
 
-  PropertyTableProperty propertyTableProperty;
-  ClassProperty classProperty;
-  classProperty.type = ClassProperty::Type::STRING;
-  classProperty.array = true;
-  classProperty.count = 3;
+  SECTION("Returns correct values") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.count = 3;
 
-  PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
-      propertyTableProperty,
-      classProperty,
-      static_cast<int64_t>(stringCount / 3),
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
-      PropertyComponentType::None,
-      PropertyComponentType::Uint32);
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(stringCount / 3),
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
+        PropertyComponentType::None,
+        PropertyComponentType::Uint32);
 
-  REQUIRE(property.arrayCount() == classProperty.count);
+    REQUIRE(property.arrayCount() == classProperty.count);
 
-  size_t expectedIdx = 0;
-  for (int64_t i = 0; i < property.size(); ++i) {
-    PropertyArrayView<std::string_view> values = property.getRaw(i);
-    for (int64_t j = 0; j < values.size(); ++j) {
-      std::string_view v = values[j];
-      REQUIRE(v == strings[expectedIdx]);
-      ++expectedIdx;
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<std::string_view> values = property.getRaw(i);
+      auto maybeValues = property.get(i);
+      REQUIRE(maybeValues);
+
+      for (int64_t j = 0; j < values.size(); ++j) {
+        REQUIRE(values[j] == strings[expectedIdx]);
+        REQUIRE((*maybeValues)[j] == strings[expectedIdx]);
+        ++expectedIdx;
+      }
+    }
+
+    REQUIRE(expectedIdx == stringCount);
+  }
+
+  SECTION("Uses NoData value") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.count = 3;
+    classProperty.noData = {"Test 1", "Test 2", "Test 3"};
+
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(stringCount / 3),
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
+        PropertyComponentType::None,
+        PropertyComponentType::Uint32);
+
+    REQUIRE(property.arrayCount() == classProperty.count);
+
+    std::vector<std::optional<std::vector<std::string_view>>> expected{
+        std::nullopt,
+        std::vector<std::string_view>{"Test 4", "Test 5", "Test 6"},
+        std::vector<std::string_view>{
+            "This is a fine test",
+            "What's going on",
+            "Good morning"}};
+
+    // Check raw values first
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<std::string_view> values = property.getRaw(i);
+      for (int64_t j = 0; j < values.size(); ++j) {
+        std::string_view v = values[j];
+        REQUIRE(v == strings[expectedIdx]);
+        ++expectedIdx;
+      }
+    }
+
+    REQUIRE(expectedIdx == stringCount);
+
+    // Check values with properties
+    for (int64_t i = 0; i < property.size(); ++i) {
+      auto maybeValues = property.get(i);
+      if (!maybeValues) {
+        REQUIRE(!expected[static_cast<size_t>(i)]);
+        continue;
+      }
+
+      auto values = *maybeValues;
+      auto expectedValues = *expected[static_cast<size_t>(i)];
+      for (int64_t j = 0; j < values.size(); ++j) {
+        REQUIRE(values[j] == expectedValues[j]);
+      }
     }
   }
 
-  REQUIRE(expectedIdx == stringCount);
+  SECTION("Uses NoData and DefaultValue") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.count = 3;
+    classProperty.noData = {"Test 1", "Test 2", "Test 3"};
+    classProperty.defaultProperty = {"Default 1", "Default 2", "Default 3"};
+
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+        propertyTableProperty,
+        classProperty,
+        static_cast<int64_t>(stringCount / 3),
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
+        PropertyComponentType::None,
+        PropertyComponentType::Uint32);
+
+    REQUIRE(property.arrayCount() == classProperty.count);
+
+    std::vector<std::optional<std::vector<std::string_view>>> expected{
+        std::vector<std::string_view>{"Default 1", "Default 2", "Default 3"},
+        std::vector<std::string_view>{"Test 4", "Test 5", "Test 6"},
+        std::vector<std::string_view>{
+            "This is a fine test",
+            "What's going on",
+            "Good morning"}};
+
+    // Check raw values first
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<std::string_view> values = property.getRaw(i);
+      for (int64_t j = 0; j < values.size(); ++j) {
+        std::string_view v = values[j];
+        REQUIRE(v == strings[expectedIdx]);
+        ++expectedIdx;
+      }
+    }
+
+    REQUIRE(expectedIdx == stringCount);
+
+    // Check values with properties
+    for (int64_t i = 0; i < property.size(); ++i) {
+      auto maybeValues = property.get(i);
+      if (!maybeValues) {
+        REQUIRE(!expected[static_cast<size_t>(i)]);
+        continue;
+      }
+
+      auto values = *maybeValues;
+      auto expectedValues = *expected[static_cast<size_t>(i)];
+      for (int64_t j = 0; j < values.size(); ++j) {
+        REQUIRE(values[j] == expectedValues[j]);
+      }
+    }
+  }
 }
 
 TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
@@ -2250,13 +3459,15 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
     0,
     4 * sizeof(uint32_t),
     7 * sizeof(uint32_t),
-    11 * sizeof(uint32_t)
+    8 * sizeof(uint32_t),
+    12 * sizeof(uint32_t)
   };
 
   std::vector<std::string> strings{
     "Test 1", "Test 2", "Test 3", "Test 4",
     "Test 5", "Test 6", "Test 7",
-    "test 8", "Test 9", "Test 10", "Test 11"
+    "Null",
+    "Test 8", "Test 9", "Test 10", "Test 11"
   };
   // clang-format on
 
@@ -2292,36 +3503,162 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
       &currentOffset,
       sizeof(uint32_t));
 
-  PropertyTableProperty propertyTableProperty;
-  ClassProperty classProperty;
-  classProperty.type = ClassProperty::Type::STRING;
-  classProperty.array = true;
+  SECTION("Returns correct values") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
 
-  PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
-      propertyTableProperty,
-      classProperty,
-      3,
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(
-          reinterpret_cast<const std::byte*>(arrayOffsets.data()),
-          arrayOffsets.size() * sizeof(uint32_t)),
-      gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
-      PropertyComponentType::Uint32,
-      PropertyComponentType::Uint32);
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+        propertyTableProperty,
+        classProperty,
+        4,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(
+            reinterpret_cast<const std::byte*>(arrayOffsets.data()),
+            arrayOffsets.size() * sizeof(uint32_t)),
+        gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
+        PropertyComponentType::Uint32,
+        PropertyComponentType::Uint32);
 
-  REQUIRE(property.arrayCount() == 0);
+    REQUIRE(property.arrayCount() == 0);
 
-  size_t expectedIdx = 0;
-  for (int64_t i = 0; i < property.size(); ++i) {
-    PropertyArrayView<std::string_view> values = property.getRaw(i);
-    for (int64_t j = 0; j < values.size(); ++j) {
-      std::string_view v = values[j];
-      REQUIRE(v == strings[expectedIdx]);
-      ++expectedIdx;
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<std::string_view> values = property.getRaw(i);
+      auto maybeValues = property.get(i);
+      REQUIRE(maybeValues);
+
+      for (int64_t j = 0; j < values.size(); ++j) {
+        REQUIRE(values[j] == strings[expectedIdx]);
+        REQUIRE((*maybeValues)[j] == strings[expectedIdx]);
+        ++expectedIdx;
+      }
+    }
+
+    REQUIRE(expectedIdx == stringCount);
+  }
+
+  SECTION("Uses NoData Value") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.noData = JsonValue::Array{"Null"};
+
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+        propertyTableProperty,
+        classProperty,
+        4,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(
+            reinterpret_cast<const std::byte*>(arrayOffsets.data()),
+            arrayOffsets.size() * sizeof(uint32_t)),
+        gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
+        PropertyComponentType::Uint32,
+        PropertyComponentType::Uint32);
+
+    REQUIRE(property.arrayCount() == 0);
+
+    std::vector<std::optional<std::vector<std::string_view>>> expected{
+        std::vector<std::string_view>{"Test 1", "Test 2", "Test 3", "Test 4"},
+        std::vector<std::string_view>{"Test 5", "Test 6", "Test 7"},
+        std::nullopt,
+        std::vector<std::string_view>{
+            "Test 8",
+            "Test 9",
+            "Test 10",
+            "Test 11"}};
+
+    // Check raw values first
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<std::string_view> values = property.getRaw(i);
+      for (int64_t j = 0; j < values.size(); ++j) {
+        std::string_view v = values[j];
+        REQUIRE(v == strings[expectedIdx]);
+        ++expectedIdx;
+      }
+    }
+
+    REQUIRE(expectedIdx == stringCount);
+
+    // Check values with properties
+    for (int64_t i = 0; i < property.size(); ++i) {
+      auto maybeValues = property.get(i);
+      if (!maybeValues) {
+        REQUIRE(!expected[static_cast<size_t>(i)]);
+        continue;
+      }
+
+      auto values = *maybeValues;
+      auto expectedValues = *expected[static_cast<size_t>(i)];
+      for (int64_t j = 0; j < values.size(); ++j) {
+        REQUIRE(values[j] == expectedValues[j]);
+      }
     }
   }
 
-  REQUIRE(expectedIdx == stringCount);
+  SECTION("Uses NoData and DefaultValue") {
+    PropertyTableProperty propertyTableProperty;
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.noData = JsonValue::Array{"Null"};
+    classProperty.defaultProperty = JsonValue::Array{"Default"};
+
+    PropertyTablePropertyView<PropertyArrayView<std::string_view>> property(
+        propertyTableProperty,
+        classProperty,
+        4,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(
+            reinterpret_cast<const std::byte*>(arrayOffsets.data()),
+            arrayOffsets.size() * sizeof(uint32_t)),
+        gsl::span<const std::byte>(stringOffsets.data(), stringOffsets.size()),
+        PropertyComponentType::Uint32,
+        PropertyComponentType::Uint32);
+
+    REQUIRE(property.arrayCount() == 0);
+
+    std::vector<std::optional<std::vector<std::string_view>>> expected{
+        std::vector<std::string_view>{"Test 1", "Test 2", "Test 3", "Test 4"},
+        std::vector<std::string_view>{"Test 5", "Test 6", "Test 7"},
+        std::vector<std::string_view>{"Default"},
+        std::vector<std::string_view>{
+            "Test 8",
+            "Test 9",
+            "Test 10",
+            "Test 11"}};
+
+    // Check raw values first
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<std::string_view> values = property.getRaw(i);
+      for (int64_t j = 0; j < values.size(); ++j) {
+        std::string_view v = values[j];
+        REQUIRE(v == strings[expectedIdx]);
+        ++expectedIdx;
+      }
+    }
+
+    REQUIRE(expectedIdx == stringCount);
+
+    // Check values with properties
+    for (int64_t i = 0; i < property.size(); ++i) {
+      auto maybeValues = property.get(i);
+      if (!maybeValues) {
+        REQUIRE(!expected[static_cast<size_t>(i)]);
+        continue;
+      }
+
+      auto values = *maybeValues;
+      auto expectedValues = *expected[static_cast<size_t>(i)];
+      for (int64_t j = 0; j < values.size(); ++j) {
+        REQUIRE(values[j] == expectedValues[j]);
+      }
+    }
+  }
 }
 
 TEST_CASE("Check fixed-length boolean array PropertyTablePropertyView") {

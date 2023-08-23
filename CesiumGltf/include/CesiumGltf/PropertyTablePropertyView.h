@@ -636,6 +636,15 @@ public:
             this->offset(),
             this->scale());
       }
+
+      if constexpr (IsMetadataMatN<ArrayElementType>::value) {
+        constexpr glm::length_t N = ArrayElementType::length();
+        using T = typename ArrayElementType::value_type;
+        return transformNormalizedMatNArray<N, T>(
+            value,
+            this->offset(),
+            this->scale());
+      }
     }
   }
 
