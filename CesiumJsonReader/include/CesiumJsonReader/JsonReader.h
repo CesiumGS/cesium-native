@@ -43,10 +43,16 @@ template <typename T> struct ReadJsonResult {
 class CESIUMJSONREADER_API JsonReader {
 public:
   /**
-   * @brief Reads JSON from a byte buffer.
+   * @brief Reads JSON from a byte buffer into a statically-type class.
    *
    * @param data The buffer from which to read JSON.
-   * @param handler The handler to receive the top-level JSON object.
+   * @param handler The handler to receive the top-level JSON object. This
+   * instance must:
+   *   - Implement {@link IJsonHandler}.
+   *   - Contain a `ValueType` type alias indicating the type of the instance to
+   * be read into.
+   *   - Have a `reset` method taking 1) a parent `IJsonHandler` pointer, and 2)
+   * and a pointer to a value of type `ValueType`.
    * @return The result of reading the JSON.
    */
   template <typename T>
@@ -73,6 +79,19 @@ public:
     return result;
   }
 
+  /**
+   * @brief Reads JSON from a `rapidjson::Value` into a statically-typed class.
+   *
+   * @param data The `rapidjson::Value` from which to read JSON.
+   * @param handler The handler to receive the top-level JSON object. This
+   * instance must:
+   *   - Implement {@link IJsonHandler}.
+   *   - Contain a `ValueType` type alias indicating the type of the instance to
+   * be read into.
+   *   - Have a `reset` method taking 1) a parent `IJsonHandler` pointer, and 2)
+   * and a pointer to a value of type `ValueType`.
+   * @return The result of reading the JSON.
+   */
   template <typename T>
   static ReadJsonResult<typename T::ValueType>
   readJson(const rapidjson::Value& jsonValue, T& handler) {
