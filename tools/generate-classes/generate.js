@@ -168,45 +168,7 @@ function generate(options, schema, writers) {
             ${thisConfig.extensionName ? `
             virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-            virtual IJsonHandler* readNull() override {
-              return ${baseReader}::readNull();
-            };
-            virtual IJsonHandler* readBool(bool b) override {
-              return ${baseReader}::readBool(b);
-            }
-            virtual IJsonHandler* readInt32(int32_t i) override {
-              return ${baseReader}::readInt32(i);
-            }
-            virtual IJsonHandler* readUint32(uint32_t i) override {
-              return ${baseReader}::readUint32(i);
-            }
-            virtual IJsonHandler* readInt64(int64_t i) override {
-              return ${baseReader}::readInt64(i);
-            }
-            virtual IJsonHandler* readUint64(uint64_t i) override {
-              return ${baseReader}::readUint64(i);
-            }
-            virtual IJsonHandler* readDouble(double d) override {
-              return ${baseReader}::readDouble(d);
-            }
-            virtual IJsonHandler* readString(const std::string_view& str) override {
-              return ${baseReader}::readString(str);
-            }
-            virtual IJsonHandler* readObjectStart() override {
-              return ${baseReader}::readObjectStart();
-            }
-            virtual IJsonHandler* readObjectEnd() override {
-              return ${baseReader}::readObjectEnd();
-            }
-            virtual IJsonHandler* readArrayStart() override {
-              return ${baseReader}::readArrayStart();
-            }
-            virtual IJsonHandler* readArrayEnd() override {
-              return ${baseReader}::readArrayEnd();
-            }
-            virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override {
-              ${baseReader}::reportWarning(warning, std::move(context));
-            }
+            virtual IJsonHandler& getHandler() override { return *this; }
             ` : ""}
 
           protected:

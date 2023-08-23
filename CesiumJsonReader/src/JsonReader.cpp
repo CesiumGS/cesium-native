@@ -154,4 +154,15 @@ void JsonReader::FinalJsonHandler::setInputStream(
     errors.emplace_back(std::move(s));
   }
 }
+
+void CesiumJsonReader::JsonReader::internalRead(
+    const rapidjson::Value& jsonValue,
+    IJsonHandler& handler,
+    FinalJsonHandler&,
+    std::vector<std::string>&,
+    std::vector<std::string>&) {
+  Dispatcher dispatcher{&handler};
+  jsonValue.Accept(dispatcher);
+}
+
 } // namespace CesiumJsonReader
