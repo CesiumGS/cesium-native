@@ -12,30 +12,6 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-#pragma region Utility
-
-template <glm::length_t N, typename T, glm::qualifier Q>
-JsonValue::Array getArrayFromVecN(glm::vec<N, T, Q> vecN) {
-  JsonValue::Array values(N);
-  for (glm::length_t i = 0; i < N; i++) {
-    values[i] = vecN[i];
-  }
-
-  return values;
-}
-
-template <glm::length_t N, typename T, glm::qualifier Q>
-JsonValue::Array getArrayFromMatN(glm::mat<N, N, T, Q> matN) {
-  JsonValue::Array values(N * N);
-  for (glm::length_t i = 0; i < N; i++) {
-    for (glm::length_t j = 0; j < N; j++) {
-      values[N * i + j] = matN[i][j];
-    }
-  }
-
-  return values;
-}
-
 template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::vector<std::byte> data;
   data.resize(expected.size() * sizeof(T));
@@ -71,10 +47,10 @@ template <typename T>
 static void checkScalar(
     const std::vector<T>& values,
     const std::vector<std::optional<T>>& expected,
-    const std::optional<T> offset = std::nullopt,
-    const std::optional<T> scale = std::nullopt,
-    const std::optional<T> noData = std::nullopt,
-    const std::optional<T> defaultValue = std::nullopt) {
+    const std::optional<JsonValue> offset = std::nullopt,
+    const std::optional<JsonValue> scale = std::nullopt,
+    const std::optional<JsonValue> noData = std::nullopt,
+    const std::optional<JsonValue> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(T));
   std::memcpy(data.data(), values.data(), data.size());
@@ -88,21 +64,10 @@ static void checkScalar(
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
-  if (offset) {
-    classProperty.offset = *offset;
-  }
-
-  if (scale) {
-    classProperty.scale = *scale;
-  }
-
-  if (noData) {
-    classProperty.noData = *noData;
-  }
-
-  if (defaultValue) {
-    classProperty.defaultProperty = *defaultValue;
-  }
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   PropertyTablePropertyView<T> property(
       propertyTableProperty,
@@ -127,10 +92,10 @@ template <glm::length_t N, typename T>
 static void checkVecN(
     const std::vector<glm::vec<N, T>>& values,
     const std::vector<std::optional<glm::vec<N, T>>>& expected,
-    const std::optional<glm::vec<N, T>> offset = std::nullopt,
-    const std::optional<glm::vec<N, T>> scale = std::nullopt,
-    const std::optional<glm::vec<N, T>> noData = std::nullopt,
-    const std::optional<glm::vec<N, T>> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array> offset = std::nullopt,
+    const std::optional<JsonValue::Array> scale = std::nullopt,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(glm::vec<N, T>));
   std::memcpy(data.data(), values.data(), data.size());
@@ -144,21 +109,10 @@ static void checkVecN(
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
-  if (offset) {
-    classProperty.offset = getArrayFromVecN(*offset);
-  }
-
-  if (scale) {
-    classProperty.scale = getArrayFromVecN(*scale);
-  }
-
-  if (noData) {
-    classProperty.noData = getArrayFromVecN(*noData);
-  }
-
-  if (defaultValue) {
-    classProperty.defaultProperty = getArrayFromVecN(*defaultValue);
-  }
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   PropertyTablePropertyView<glm::vec<N, T>> property(
       propertyTableProperty,
@@ -178,10 +132,10 @@ template <glm::length_t N, typename T>
 static void checkMatN(
     const std::vector<glm::mat<N, N, T>>& values,
     const std::vector<std::optional<glm::mat<N, N, T>>>& expected,
-    const std::optional<glm::mat<N, N, T>> offset = std::nullopt,
-    const std::optional<glm::mat<N, N, T>> scale = std::nullopt,
-    const std::optional<glm::mat<N, N, T>> noData = std::nullopt,
-    const std::optional<glm::mat<N, N, T>> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array> offset = std::nullopt,
+    const std::optional<JsonValue::Array> scale = std::nullopt,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(glm::mat<N, N, T>));
   std::memcpy(data.data(), values.data(), data.size());
@@ -195,21 +149,10 @@ static void checkMatN(
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
-  if (offset) {
-    classProperty.offset = getArrayFromMatN(*offset);
-  }
-
-  if (scale) {
-    classProperty.scale = getArrayFromMatN(*scale);
-  }
-
-  if (noData) {
-    classProperty.noData = getArrayFromMatN(*noData);
-  }
-
-  if (defaultValue) {
-    classProperty.defaultProperty = getArrayFromMatN(*defaultValue);
-  }
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   PropertyTablePropertyView<glm::mat<N, N, T>> property(
       propertyTableProperty,
@@ -229,10 +172,10 @@ template <typename T>
 static void checkNormalizedScalar(
     const std::vector<T>& values,
     const std::vector<std::optional<double>>& expected,
-    const std::optional<double> offset = std::nullopt,
-    const std::optional<double> scale = std::nullopt,
-    const std::optional<T> noData = std::nullopt,
-    const std::optional<double> defaultValue = std::nullopt) {
+    const std::optional<JsonValue> offset = std::nullopt,
+    const std::optional<JsonValue> scale = std::nullopt,
+    const std::optional<JsonValue> noData = std::nullopt,
+    const std::optional<JsonValue> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(T));
   std::memcpy(data.data(), values.data(), data.size());
@@ -248,21 +191,10 @@ static void checkNormalizedScalar(
 
   classProperty.normalized = true;
 
-  if (offset) {
-    classProperty.offset = *offset;
-  }
-
-  if (scale) {
-    classProperty.scale = *scale;
-  }
-
-  if (noData) {
-    classProperty.noData = *noData;
-  }
-
-  if (defaultValue) {
-    classProperty.defaultProperty = *defaultValue;
-  }
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   PropertyTablePropertyView<T, true> property(
       propertyTableProperty,
@@ -282,10 +214,10 @@ template <glm::length_t N, typename T>
 static void checkNormalizedVecN(
     const std::vector<glm::vec<N, T>>& values,
     const std::vector<std::optional<glm::vec<N, double>>>& expected,
-    const std::optional<glm::vec<N, double>> offset = std::nullopt,
-    const std::optional<glm::vec<N, double>> scale = std::nullopt,
-    const std::optional<glm::vec<N, T>> noData = std::nullopt,
-    const std::optional<glm::vec<N, double>> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array> offset = std::nullopt,
+    const std::optional<JsonValue::Array> scale = std::nullopt,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(glm::vec<N, T>));
   std::memcpy(data.data(), values.data(), data.size());
@@ -301,21 +233,10 @@ static void checkNormalizedVecN(
 
   classProperty.normalized = true;
 
-  if (offset) {
-    classProperty.offset = getArrayFromVecN(*offset);
-  }
-
-  if (scale) {
-    classProperty.scale = getArrayFromVecN(*scale);
-  }
-
-  if (noData) {
-    classProperty.noData = getArrayFromVecN(*noData);
-  }
-
-  if (defaultValue) {
-    classProperty.defaultProperty = getArrayFromVecN(*defaultValue);
-  }
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   PropertyTablePropertyView<glm::vec<N, T>, true> property(
       propertyTableProperty,
@@ -335,10 +256,10 @@ template <glm::length_t N, typename T>
 static void checkNormalizedMatN(
     const std::vector<glm::mat<N, N, T>>& values,
     const std::vector<std::optional<glm::mat<N, N, double>>>& expected,
-    const std::optional<glm::mat<N, N, double>> offset = std::nullopt,
-    const std::optional<glm::mat<N, N, double>> scale = std::nullopt,
-    const std::optional<glm::mat<N, N, T>> noData = std::nullopt,
-    const std::optional<glm::mat<N, N, double>> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array> offset = std::nullopt,
+    const std::optional<JsonValue::Array> scale = std::nullopt,
+    const std::optional<JsonValue::Array> noData = std::nullopt,
+    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(glm::mat<N, N, T>));
   std::memcpy(data.data(), values.data(), data.size());
@@ -354,21 +275,10 @@ static void checkNormalizedMatN(
 
   classProperty.normalized = true;
 
-  if (offset) {
-    classProperty.offset = getArrayFromMatN(*offset);
-  }
-
-  if (scale) {
-    classProperty.scale = getArrayFromMatN(*scale);
-  }
-
-  if (noData) {
-    classProperty.noData = getArrayFromMatN(*noData);
-  }
-
-  if (defaultValue) {
-    classProperty.defaultProperty = getArrayFromMatN(*defaultValue);
-  }
+  classProperty.offset = offset;
+  classProperty.scale = scale;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   PropertyTablePropertyView<glm::mat<N, N, T>, true> property(
       propertyTableProperty,
@@ -635,8 +545,6 @@ static void checkNormalizedFixedLengthArray(
   }
 }
 
-#pragma endregion
-
 TEST_CASE("Check scalar PropertyTablePropertyView") {
   SECTION("Uint8") {
     std::vector<uint8_t> data{12, 33, 56, 67};
@@ -684,16 +592,16 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Float with Offset / Scale") {
     std::vector<float> values{12.5f, -12.5f, -5.0f, 6.75f};
-    std::optional<float> offset = 1.0f;
-    std::optional<float> scale = 2.0f;
+    std::optional<JsonValue> offset = 1.0f;
+    std::optional<JsonValue> scale = 2.0f;
     std::vector<std::optional<float>> expected{26.0f, -24.0f, -9.0f, 14.5f};
     checkScalar(values, expected, offset, scale);
   }
 
   SECTION("Normalized Uint8 with Offset and Scale") {
     std::vector<uint8_t> values{0, 64, 128, 255};
-    std::optional<double> offset = 1.0;
-    std::optional<double> scale = 2.0;
+    std::optional<JsonValue> offset = 1.0;
+    std::optional<JsonValue> scale = 2.0;
     std::vector<std::optional<double>> expected{
         1.0,
         1 + 2 * (64.0 / 255.0),
@@ -704,7 +612,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Int16 with NoData") {
     std::vector<int16_t> values{-1, 3, 7, -1};
-    std::optional<int16_t> noData = static_cast<int16_t>(-1);
+    std::optional<JsonValue> noData = -1;
     std::vector<std::optional<int16_t>> expected{
         std::nullopt,
         3,
@@ -721,8 +629,8 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Int16 with NoData and Default") {
     std::vector<int16_t> values{-1, 3, 7, -1};
-    std::optional<int16_t> noData = static_cast<int16_t>(-1);
-    std::optional<int16_t> defaultValue = static_cast<int16_t>(0);
+    std::optional<JsonValue> noData = -1;
+    std::optional<JsonValue> defaultValue = 0;
     std::vector<std::optional<int16_t>> expected{0, 3, 7, 0};
     checkScalar<int16_t>(
         values,
@@ -735,10 +643,10 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Normalized Uint8 with all properties") {
     std::vector<uint8_t> values{0, 64, 128, 255};
-    std::optional<double> offset = 1.0;
-    std::optional<double> scale = 2.0;
-    std::optional<uint8_t> noData = static_cast<uint8_t>(0);
-    std::optional<double> defaultValue = 10.0;
+    std::optional<JsonValue> offset = 1.0;
+    std::optional<JsonValue> scale = 2.0;
+    std::optional<JsonValue> noData = 0;
+    std::optional<JsonValue> defaultValue = 10.0;
     std::vector<std::optional<double>> expected{
         10.0,
         1 + 2 * (64.0 / 255.0),
@@ -858,8 +766,8 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::vec3(6.5f, 2.0f, 4.0f),
         glm::vec3(8.0f, -3.0f, 1.0f),
     };
-    std::optional<glm::vec3> offset = glm::vec3(1.0f, 2.0, 3.0f);
-    std::optional<glm::vec3> scale = glm::vec3(2.0f, 1.0f, 2.0f);
+    std::optional<JsonValue::Array> offset = JsonValue::Array{1.0f, 2.0f, 3.0f};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{2.0f, 1.0f, 2.0f};
     std::vector<std::optional<glm::vec3>> expected{
         glm::vec3(1.0f, 0.5f, -7.0f),
         glm::vec3(14.0f, 4.0f, 11.0f),
@@ -873,8 +781,8 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::u8vec2(0, 64),
         glm::u8vec2(128, 255),
         glm::u8vec2(255, 0)};
-    std::optional<glm::dvec2> offset = glm::dvec2(0.0, 1.0);
-    std::optional<glm::dvec2> scale = glm::dvec2(2.0, 1.0);
+    std::optional<JsonValue::Array> offset = JsonValue::Array{0.0, 1.0};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{2.0, 1.0};
     std::vector<std::optional<glm::dvec2>> expected{
         glm::dvec2(0.0, 1 + (64.0 / 255.0)),
         glm::dvec2(2 * (128.0 / 255.0), 2.0),
@@ -887,7 +795,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::i16vec2(-1, 3),
         glm::i16vec2(-1, -1),
         glm::i16vec2(7, 0)};
-    std::optional<glm::i16vec2> noData = glm::i16vec2(-1, -1);
+    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
     std::vector<std::optional<glm::i16vec2>> expected{
         glm::i16vec2(-1, 3),
         std::nullopt,
@@ -906,8 +814,8 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::i16vec2(-1, 3),
         glm::i16vec2(-1, -1),
         glm::i16vec2(7, 0)};
-    std::optional<glm::i16vec2> noData = glm::i16vec2(-1, -1);
-    std::optional<glm::i16vec2> defaultValue = glm::i16vec2(0, 1);
+    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{0, 1};
     std::vector<std::optional<glm::i16vec2>> expected{
         glm::i16vec2(-1, 3),
         glm::i16vec2(0, 1),
@@ -927,10 +835,10 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::u8vec2(128, 255),
         glm::u8vec2(255, 0),
         glm::u8vec2(0, 0)};
-    std::optional<glm::dvec2> offset = glm::dvec2(0.0, 1.0);
-    std::optional<glm::dvec2> scale = glm::dvec2(2.0, 1.0);
-    std::optional<glm::u8vec2> noData = glm::u8vec2(0, 0);
-    std::optional<glm::dvec2> defaultValue = glm::dvec2(5.0, 15.0);
+    std::optional<JsonValue::Array> offset = JsonValue::Array{0.0, 1.0};
+    std::optional<JsonValue::Array> scale = JsonValue::Array{2.0, 1.0};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{5.0, 15.0};
     std::vector<std::optional<glm::dvec2>> expected{
         glm::dvec2(0.0, 1 + (64.0 / 255.0)),
         glm::dvec2(2 * (128.0 / 255.0), 2.0),
@@ -1079,8 +987,10 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         glm::mat2(6.5f, 2.0f, -2.0f, 0.0f),
         glm::mat2(8.0f, -1.0f, -3.0f, 1.0f),
     };
-    std::optional<glm::mat2> offset = glm::mat2(1.0f, 2.0, 3.0f, 1.0f);
-    std::optional<glm::mat2> scale = glm::mat2(2.0f, 0.0f, 0.0f, 2.0f);
+    std::optional<JsonValue::Array> offset =
+        JsonValue::Array{1.0f, 2.0f, 3.0f, 1.0f};
+    std::optional<JsonValue::Array> scale =
+        JsonValue::Array{2.0f, 0.0f, 0.0f, 2.0f};
     std::vector<std::optional<glm::mat2>> expected{
         glm::mat2(3.0f, 2.0f, 3.0f, 5.0f),
         glm::mat2(14.0f, 2.0f, 3.0f, 1.0f),
@@ -1093,8 +1003,10 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     std::vector<glm::u8mat2x2> values{
         glm::u8mat2x2(0, 64, 255, 255),
         glm::u8mat2x2(255, 0, 128, 0)};
-    std::optional<glm::dmat2> offset = glm::dmat2(0.0, 1.0, 1.0, 0.0);
-    std::optional<glm::dmat2> scale = glm::dmat2(2.0, 1.0, 0.0, 2.0);
+    std::optional<JsonValue::Array> offset =
+        JsonValue::Array{0.0, 1.0, 1.0, 0.0};
+    std::optional<JsonValue::Array> scale =
+        JsonValue::Array{2.0, 1.0, 0.0, 2.0};
     std::vector<std::optional<glm::dmat2>> expected{
         glm::dmat2(0.0, 1 + 64.0 / 255.0, 1.0, 2.0),
         glm::dmat2(2.0, 1.0, 1.0, 0.0)};
@@ -1116,11 +1028,11 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
           -1, -1, -1,
            0,  0,  0,
            1,  1,  1)};
-    std::optional<glm::i16mat3x3> noData =
-        glm::i16mat3x3(
+    std::optional<JsonValue::Array> noData =
+        JsonValue::Array{
           -1, -1, -1,
           0, 0, 0,
-          1, 1, 1);
+          1, 1, 1};
     // clang-format on
     std::vector<std::optional<glm::i16mat3x3>> expected{
         values[0],
@@ -1150,24 +1062,26 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
           -1, -1, -1,
            0,  0,  0,
            1,  1,  1)};
-    std::optional<glm::i16mat3x3> noData =
-        glm::i16mat3x3(
-          -1, -1, -1,
-          0, 0, 0,
-          1, 1, 1);
+    std::optional<JsonValue::Array> noData = JsonValue::Array{
+      -1, -1, -1,
+       0,  0,  0,
+       1,  1,  1};
+    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1};
     // clang-format on
-    std::optional<glm::i16mat3x3> default = glm::i16mat3x3(1);
     std::vector<std::optional<glm::i16mat3x3>> expected{
         values[0],
         values[1],
-        default};
+        glm::i16mat3x3(1)};
     checkMatN<3, glm::i16>(
         values,
         expected,
         std::nullopt,
         std::nullopt,
         noData,
-        default);
+        defaultValue);
   };
 
   SECTION("Normalized Uint8 Mat2 with all properties") {
@@ -1175,10 +1089,13 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         glm::u8mat2x2(0, 64, 255, 255),
         glm::u8mat2x2(0),
         glm::u8mat2x2(255, 0, 128, 0)};
-    std::optional<glm::dmat2> offset = glm::dmat2(0.0, 1.0, 1.0, 0.0);
-    std::optional<glm::dmat2> scale = glm::dmat2(2.0, 1.0, 0.0, 2.0);
-    std::optional<glm::u8mat2x2> noData = glm::u8mat2x2(0);
-    std::optional<glm::dmat2> defaultValue = glm::dmat2(1.0);
+    std::optional<JsonValue::Array> offset =
+        JsonValue::Array{0.0, 1.0, 1.0, 0.0};
+    std::optional<JsonValue::Array> scale =
+        JsonValue::Array{2.0, 1.0, 0.0, 2.0};
+    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0, 0, 0};
+    std::optional<JsonValue::Array> defaultValue =
+        JsonValue::Array{1.0, 0.0, 0.0, 1.0};
 
     std::vector<std::optional<glm::dmat2>> expected{
         glm::dmat2(0.0, 1 + 64.0 / 255.0, 1.0, 2.0),
@@ -1629,7 +1546,9 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
       REQUIRE(values);
       for (int64_t j = 0; j < rawValues.size(); ++j) {
         REQUIRE(rawValues[j] == data[expectedIdx]);
-        REQUIRE((*values)[j] == expected[i][j]);
+        REQUIRE(
+            (*values)[j] ==
+            expected[static_cast<size_t>(i)][static_cast<size_t>(j)]);
         ++expectedIdx;
       }
     }
@@ -1688,38 +1607,38 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     checkNormalizedFixedLengthArray(data, 2, expected);
   }
 
-  SECTION("Array of 4 floats with offset / scale") {
+  SECTION("Array of 2 vec2s with offset / scale") {
     // clang-format off
-    std::vector<float> data{
-      1.0f, 2.0f, 3.0f, 4.0f,
-      5.0f, -1.0f, 0.0f, 2.0f
+    std::vector<glm::vec2> data{
+      glm::vec2(1.0f, 2.0f), glm::vec2(3.0f, 4.0f),
+      glm::vec2(5.0f, -1.0f), glm::vec2(0.0f, 2.0f)
     };
     // clang-format on
 
     std::optional<JsonValue::Array> offset =
-        JsonValue::Array{1.0f, 0.0f, -1.0f, 0.0f};
+        JsonValue::Array{{1.0f, 0.0f}, {-1.0f, 0.0f}};
     std::optional<JsonValue::Array> scale =
-        JsonValue::Array{1.0f, 2.0f, 1.0f, 2.0f};
+        JsonValue::Array{{1.0f, 2.0f}, {1.0f, 2.0f}};
 
-    std::vector<std::optional<std::vector<float>>> expected{
-        std::vector<float>{2.0f, 4.0f, 2.0f, 8.0f},
-        std::vector<float>{6.0f, -2.0f, -1.0f, 4.0f}};
-    checkFixedLengthArrayWithProperties(data, 4, expected, offset, scale);
+    std::vector<std::optional<std::vector<glm::vec2>>> expected{
+        std::vector<glm::vec2>{glm::vec2(2.0f, 4.0f), glm::vec2(2.0f, 8.0f)},
+        std::vector<glm::vec2>{glm::vec2(6.0f, -2.0f), glm::vec2(-1.0f, 4.0f)}};
+    checkFixedLengthArrayWithProperties(data, 2, expected, offset, scale);
   }
 
-  SECTION("Array of 2 int32_ts with noData value") {
+  SECTION("Array of 2 ivec2 with noData value") {
     // clang-format off
-    std::vector<int32_t> data{
-        122, 12,
-        -1, -1,
-        -3, 44};
+    std::vector<glm::ivec2> data{
+        glm::ivec2(122, 12), glm::ivec2(-1, -1),
+        glm::ivec2( -3, 44), glm::ivec2(0, 7),
+        glm::ivec2(-1, -1), glm::ivec2(0, 0)};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
-    std::vector<std::optional<std::vector<int32_t>>> expected{
-        std::vector<int32_t>{122, 12},
-        std::nullopt,
-        std::vector<int32_t>{-3, 44}};
-    checkFixedLengthArrayWithProperties<int32_t>(
+    std::optional<JsonValue::Array> noData = JsonValue::Array{{-1, -1}, {0, 0}};
+    std::vector<std::optional<std::vector<glm::ivec2>>> expected{
+        std::vector<glm::ivec2>{glm::ivec2(122, 12), glm::ivec2(-1, -1)},
+        std::vector<glm::ivec2>{glm::ivec2(-3, 44), glm::ivec2(0, 7)},
+        std::nullopt};
+    checkFixedLengthArrayWithProperties<glm::ivec2>(
         data,
         2,
         expected,
@@ -1729,20 +1648,21 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         std::nullopt);
   }
 
-  SECTION("Array of 2 int32_ts with noData and default value") {
+  SECTION("Array of 2 ivec2 with noData and default value") {
     // clang-format off
-    std::vector<int32_t> data{
-        122, 12,
-        -1, -1,
-        -3, 44};
+    std::vector<glm::ivec2> data{
+        glm::ivec2(122, 12), glm::ivec2(-1, -1),
+        glm::ivec2( -3, 44), glm::ivec2(0, 7),
+        glm::ivec2(-1, -1), glm::ivec2(0, 0)};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{0, 1};
-    std::vector<std::optional<std::vector<int32_t>>> expected{
-        std::vector<int32_t>{122, 12},
-        std::vector<int32_t>{0, 1},
-        std::vector<int32_t>{-3, 44}};
-    checkFixedLengthArrayWithProperties<int32_t>(
+    std::optional<JsonValue::Array> noData = JsonValue::Array{{-1, -1}, {0, 0}};
+    std::optional<JsonValue::Array> defaultValue =
+        JsonValue::Array{{1, 1}, {1, 2}};
+    std::vector<std::optional<std::vector<glm::ivec2>>> expected{
+        std::vector<glm::ivec2>{glm::ivec2(122, 12), glm::ivec2(-1, -1)},
+        std::vector<glm::ivec2>{glm::ivec2(-3, 44), glm::ivec2(0, 7)},
+        std::vector<glm::ivec2>{glm::ivec2(1, 1), glm::ivec2(1, 2)}};
+    checkFixedLengthArrayWithProperties<glm::ivec2>(
         data,
         2,
         expected,
@@ -1832,7 +1752,9 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
       REQUIRE(values);
       for (int64_t j = 0; j < rawValues.size(); ++j) {
         REQUIRE(rawValues[j] == data[expectedIdx]);
-        REQUIRE((*values)[j] == expected[i][j]);
+        REQUIRE(
+            (*values)[j] ==
+            expected[static_cast<size_t>(i)][static_cast<size_t>(j)]);
         ++expectedIdx;
       }
     }
