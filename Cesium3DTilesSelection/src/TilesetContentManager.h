@@ -16,10 +16,6 @@
 
 #include <vector>
 
-namespace Cesium3DTiles {
-struct Schema;
-}
-
 namespace Cesium3DTilesSelection {
 
 class TilesetContentManager
