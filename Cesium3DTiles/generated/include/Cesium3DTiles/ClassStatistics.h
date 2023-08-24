@@ -13,7 +13,8 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief Statistics about entities that conform to a class.
+ * @brief Statistics about entities that conform to a class that was defined in
+ * a metadata schema.
  */
 struct CESIUM3DTILES_API ClassStatistics final
     : public CesiumUtility::ExtensibleObject {
