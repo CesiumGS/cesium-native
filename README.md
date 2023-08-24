@@ -96,7 +96,7 @@ Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, and `Cesi
 npm install
 cd tools/generate-classes
 npm install
-cd ..
+cd ../..
 ```
 
 * From the repo root directory, run `npm run generate-gltf` or `npm run generate-3d-tiles`.
