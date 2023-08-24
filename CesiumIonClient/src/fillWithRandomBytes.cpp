@@ -41,7 +41,7 @@ void fillWithRandomBytes(const gsl::span<uint8_t>& buffer) {
   }
 
   if (i < buffer.size()) {
-    assert(buffer.size() - i < 4);
+    assert(buffer.size() - i < sizeof(uint32_t));
 
     std::uint32_t extra;
     if (rand_s(&extra) != 0) {

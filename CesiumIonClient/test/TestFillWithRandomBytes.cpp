@@ -20,7 +20,9 @@ TEST_CASE("fillWithRandomBytes") {
       // In the unlikely event the value is zero, generate some new random
       // values. Repeat this up to 10 times. The chances that the random value
       // at a particular position is zero ten times in a row is vanishingly
-      // small.
+      // small. We don't care if previous positions get a zero on regeneration,
+      // we're just trying to test for the possibility of an off-by-one error
+      // making a particular position _always_ zero.
       for (int k = 0; buffer[j] == 0 && k < 10; ++k)
         fillWithRandomBytes(bufferSpan);
       CHECK(buffer[j] != 0);
