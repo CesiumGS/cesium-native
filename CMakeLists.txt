@@ -183,7 +183,10 @@ install(TARGETS modp_b64)
 
 install(TARGETS httplib)
 
-install(TARGETS csprng)
+# Don't install CSPRNG when building for Universal Windows Platform
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
+  install(TARGETS csprng)
+endif()
 
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
