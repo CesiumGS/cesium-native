@@ -17,7 +17,7 @@ namespace Cesium3DTiles {
  * destroyed or modified. Continuing to access this result in that scenario will
  * result in undefined behavior.
  */
-struct FoundMetadataProperty {
+struct CESIUM3DTILES_API FoundMetadataProperty {
   /**
    * @brief A reference to the identifier of the class that contains the found
    * property within the {@link Schema}.
