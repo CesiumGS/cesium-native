@@ -567,7 +567,6 @@ public:
         _arrayOffsetType{arrayOffsetType},
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)} {}
 
-
   /**
    * @brief Get the value of an element of the {@link PropertyTable},
    * with normalization and other value transforms applied. In other words, the

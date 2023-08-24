@@ -782,8 +782,8 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     std::optional<JsonValue> noData = -1;
     std::vector<std::optional<int16_t>> expected{
         std::nullopt,
-        3,
-        7,
+        static_cast<int16_t>(3),
+        static_cast<int16_t>(7),
         std::nullopt};
     checkScalar<int16_t>(
         values,
@@ -798,7 +798,11 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     std::vector<int16_t> values{-1, 3, 7, -1};
     std::optional<JsonValue> noData = -1;
     std::optional<JsonValue> defaultValue = 0;
-    std::vector<std::optional<int16_t>> expected{0, 3, 7, 0};
+    std::vector<std::optional<int16_t>> expected{
+        static_cast<int16_t>(0),
+        static_cast<int16_t>(3),
+        static_cast<int16_t>(7),
+        static_cast<int16_t>(0)};
     checkScalar<int16_t>(
         values,
         expected,
