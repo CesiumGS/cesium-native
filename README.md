@@ -84,3 +84,20 @@ Or, you can easily build it in Visual Studio Code with the `CMake Tools` extensi
 * Install [Doxygen](https://www.doxygen.nl/).
 * Run: `cmake --build build --target cesium-native-docs`
 * Open `build/doc/html/index.html`
+
+#### Regenerate glTF and 3D Tiles classes
+
+Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, and `Cesium3DTilesReader` is generated from the standards' JSON Schema specifications. To regenerate the code:
+
+* Make sure you have a relatively recent version of Node.js installed.
+* Install dependencies by running:
+
+```
+npm install
+cd tools/generate-classes
+npm install
+cd ../..
+```
+
+* From the repo root directory, run `npm run generate-gltf` or `npm run generate-3d-tiles`.
+* On Windows, the line endings of the generated files will be different than those checked into the repo. Just `git add` them and git will fix the line endings (no need to commit).
