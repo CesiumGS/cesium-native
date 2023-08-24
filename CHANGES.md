@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
+- When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
 
 ### v0.26.0 - 2023-08-01
 
