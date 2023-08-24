@@ -1,6 +1,10 @@
 # Change Log
 
-### v0.27.0 - 2023-09-01
+### ? - ?
+
+##### Additions :tada:
+
+- Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
 
 ##### Fixes :wrench:
 
