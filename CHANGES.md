@@ -2,10 +2,15 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
+
 ##### Fixes :wrench:
 
 - Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
 - Fixed several small build script issues to allow cesium-native to be used in Univeral Windows Platform (UWP) applications, such as those that run on Holo Lens 2.
+- When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
 
 ### v0.26.0 - 2023-08-01
 
