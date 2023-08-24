@@ -73,6 +73,42 @@ public:
       const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
   /**
+   * @brief Create a new coordinate system with a specified transformation to
+   * the Earth-Centered, Earth-Fixed frame. This is an advanced constructor and
+   * should be avoided in most cases.
+   *
+   * This constructor can be used to save/restore the state of an instance. It
+   * can also be used to create unusual coordinate systems that can't be created
+   * by the other constructors, such as coordinate systems where the axes aren't
+   * aligned with compass directions.
+   *
+   * @param localToEcef The transformation matrix from this coordinate system to
+   * the ECEF frame.
+   */
+  explicit LocalHorizontalCoordinateSystem(const glm::dmat4& localToEcef);
+
+  /**
+   * @brief Create a new coordinate system with the specified transformations
+   * between the local frame and the Earth-Centered, Earth-Fixed frame. This is
+   * an advanced constructor and should be avoided in most cases.
+   *
+   * This constructor can be used to save/restore the state of an instance. It
+   * can also be used to create unusual coordinate systems that can't be created
+   * by the other constructors, such as coordinate systems where the axes aren't
+   * aligned with compass directions.
+   *
+   * @param localToEcef The transformation matrix from this coordinate system to
+   * the ECEF frame. This must be the inverse of `ecefToLocal` or behavior is
+   * undefined, but this is not enforced.
+   * @param ecefToLocal The transformation matrix from the ECEF frame to this
+   * coordinate system. This must be the inverse of `localToEcef` or behavior is
+   * undefined, but this is not enforced.
+   */
+  LocalHorizontalCoordinateSystem(
+      const glm::dmat4& localToEcef,
+      const glm::dmat4& ecefToLocal);
+
+  /**
    * @brief Gets the transformation matrix from the local horizontal coordinate
    * system managed by this instance to the Earth-Centered, Earth-fixed
    * coordinate system.
