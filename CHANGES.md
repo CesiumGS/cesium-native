@@ -12,6 +12,7 @@
 - Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `FeatureIdTexture` in `EXT_mesh_features`. Feature ID textures from `EXT_feature_metadata` are no longer supported.
 - Renamed `FeatureIDTextureViewStatus` to `FeatureIdTextureViewStatus` for consistency.
 - Replaced `MetadataFeatureTableView` with `PropertyTableView`, which views a `PropertyTable` in `EXT_structural_metadata`.
+- Replaced `MetadataPropertyView` with `PropertyTablePropertyView`, which is a templated view of a `PropertyTableProperty` in `EXT_structural_metadata`. This takes two template parameters: a typename `T` , and a `bool` indicating whether or not the values are normalized.
 - Renamed `MetadataArrayView` to `PropertyArrayView`.
 - Replaced `FeatureTextureView` with `PropertyTextureView`, which views a `PropertyTexture` in `EXT_structural_metadata`.
 - Renamed `FeatureTextureViewStatus` to `PropertyTextureViewStatus`.
@@ -24,6 +25,7 @@
 
 - Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
 - Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
+- Added `PropertyView`, which acts as a base class for all metadata property views. This takes two template parameters: a typename `T` , and a `bool` indicating whether or not the values are normalized.
 
 ### v0.25.0 - 2023-06-01
 

@@ -382,6 +382,7 @@ private:
                 classProperty));
         break;
       }
+      [[fallthrough]];
     case PropertyComponentType::Uint16:
       if constexpr (N == 2) {
         callback(
@@ -391,6 +392,7 @@ private:
                 classProperty));
         break;
       }
+      [[fallthrough]];
     default:
       callback(
           propertyName,
@@ -593,18 +595,17 @@ private:
         classProperty.normalized);
   }
 
-  PropertyTexturePropertyViewStatus getTextureSafe(
+  PropertyViewStatusType getTextureSafe(
       const int32_t textureIndex,
       int32_t& samplerIndex,
       int32_t& imageIndex) const noexcept;
 
-  PropertyTexturePropertyViewStatus
+  PropertyViewStatusType
   checkSampler(const int32_t samplerIndex) const noexcept;
 
-  PropertyTexturePropertyViewStatus
-  checkImage(const int32_t imageIndex) const noexcept;
+  PropertyViewStatusType checkImage(const int32_t imageIndex) const noexcept;
 
-  PropertyTexturePropertyViewStatus checkChannels(
+  PropertyViewStatusType checkChannels(
       const std::vector<int64_t>& channels,
       const ImageCesium& image) const noexcept;
 

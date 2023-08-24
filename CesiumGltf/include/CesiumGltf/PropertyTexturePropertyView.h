@@ -20,73 +20,45 @@ namespace CesiumGltf {
  * corresponding property texture property. This enumeration provides the
  * reason.
  */
-enum class PropertyTexturePropertyViewStatus {
-  /**
-   * @brief This property view is valid and ready to use.
-   */
-  Valid,
-
+class PropertyTexturePropertyViewStatus : public PropertyViewStatus {
+public:
   /**
    * @brief This property view was initialized from an invalid
    * {@link PropertyTexture}.
    */
-  ErrorInvalidPropertyTexture,
-
-  /**
-   * @brief This property view is trying to view a property that does not exist
-   * in the {@link PropertyTexture}.
-   */
-  ErrorNonexistentProperty,
+  static const int ErrorInvalidPropertyTexture = 12;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  ErrorUnsupportedProperty,
-
-  /**
-   * @brief This property view's type does not match what is
-   * specified in {@link ClassProperty::type}.
-   */
-  ErrorTypeMismatch,
-
-  /**
-   * @brief This property view's component type does not match what
-   * is specified in {@link ClassProperty::componentType}.
-   */
-  ErrorComponentTypeMismatch,
-
-  /**
-   * @brief This property view differs from what is specified in
-   * {@link ClassProperty::array}.
-   */
-  ErrorArrayTypeMismatch,
+  static const int ErrorUnsupportedProperty = 13;
 
   /**
    * @brief This property view does not have a valid texture index.
    */
-  ErrorInvalidTexture,
+  static const int ErrorInvalidTexture = 14;
 
   /**
    * @brief This property view does not have a valid sampler index.
    */
-  ErrorInvalidSampler,
+  static const int ErrorInvalidSampler = 15;
 
   /**
    * @brief This property view does not have a valid image index.
    */
-  ErrorInvalidImage,
+  static const int ErrorInvalidImage = 16;
 
   /**
    * @brief This property is viewing an empty image.
    */
-  ErrorEmptyImage,
+  static const int ErrorEmptyImage = 17;
 
   /**
    * @brief This property uses an image with multi-byte channels. Only
    * single-byte channels are supported.
    */
-  ErrorInvalidBytesPerChannel,
+  static const int ErrorInvalidBytesPerChannel = 18;
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -95,15 +67,15 @@ enum class PropertyTexturePropertyViewStatus {
    * more than four channels can be defined for specialized texture
    * formats, this implementation only supports four channels max.
    */
-  ErrorInvalidChannels,
+  static const int ErrorInvalidChannels = 19;
 
   /**
-   * @brief The channels of this property texture property do not provide the
-   * exact number of bytes required by the property type. This may be because
-   * an incorrect number of channels was provided, or because the image itself
-   * has a different channel count / byte size than expected.
+   * @brief The channels of this property texture property do not provide
+   * the exact number of bytes required by the property type. This may be
+   * because an incorrect number of channels was provided, or because the
+   * image itself has a different channel count / byte size than expected.
    */
-  ErrorChannelsAndTypeMismatch,
+  static const int ErrorChannelsAndTypeMismatch = 20;
 };
 
 /**
@@ -129,9 +101,9 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
+   * @param status The code from {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
    */
-  PropertyTexturePropertyView(PropertyTexturePropertyViewStatus status) noexcept
+  PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _pSampler(nullptr),
         _pImage(nullptr),
@@ -145,7 +117,7 @@ public:
   }
 
   /**
-   * @brief Construct a valid view of the data specified by a {@link PropertyTextureProperty}.
+   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
    * @param pSampler A pointer to the sampler used by the property.
    * @param pImage A pointer to the image used by the property.
@@ -248,9 +220,7 @@ public:
    *
    * If invalid, this view cannot be sampled.
    */
-  PropertyTexturePropertyViewStatus status() const noexcept {
-    return this->_status;
-  }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @brief Get the texture coordinate set index for this property.
@@ -445,7 +415,7 @@ private:
     return std::clamp(v, 0.0, 1.0);
   }
 
-  PropertyTexturePropertyViewStatus _status;
+  PropertyViewStatusType _status;
 
   const Sampler* _pSampler;
   const ImageCesium* _pImage;

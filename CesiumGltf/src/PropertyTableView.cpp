@@ -326,6 +326,90 @@ PropertyTableView::getStringPropertyValues(
       offsetType);
 }
 
+PropertyTablePropertyView<PropertyArrayView<bool>>
+PropertyTableView::getBooleanArrayPropertyValues(
+    const ClassProperty& classProperty,
+    const PropertyTableProperty& propertyTableProperty) const {
+  if (!classProperty.array) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(
+        PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  if (classProperty.type != ClassProperty::Type::BOOLEAN) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(
+        PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  gsl::span<const std::byte> values;
+  auto status = getBufferSafe(propertyTableProperty.values, values);
+  if (status != PropertyTablePropertyViewStatus::Valid) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(status);
+  }
+
+  const int64_t fixedLengthArrayCount = classProperty.count.value_or(0);
+  if (fixedLengthArrayCount > 0 && propertyTableProperty.arrayOffsets >= 0) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(
+        PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
+  }
+
+  if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(
+        PropertyTablePropertyViewStatus::
+            ErrorArrayCountAndOffsetBufferDontExist);
+  }
+
+  // Handle fixed-length arrays
+  if (fixedLengthArrayCount > 0) {
+    size_t maxRequiredBytes = maxRequiredBytes = static_cast<size_t>(glm::ceil(
+        static_cast<double>(_pPropertyTable->count * fixedLengthArrayCount) /
+        8.0));
+
+    if (values.size() < maxRequiredBytes) {
+      return PropertyTablePropertyView<PropertyArrayView<bool>>(
+          PropertyTablePropertyViewStatus::
+              ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+    }
+
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(
+        propertyTableProperty,
+        classProperty,
+        static_cast<size_t>(_pPropertyTable->count),
+        values);
+  }
+
+  // Handle variable-length arrays
+  const PropertyComponentType arrayOffsetType =
+      convertArrayOffsetTypeStringToPropertyComponentType(
+          propertyTableProperty.arrayOffsetType);
+  if (arrayOffsetType == PropertyComponentType::None) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(
+        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
+  }
+
+  constexpr bool checkBitsSize = true;
+  gsl::span<const std::byte> arrayOffsets;
+  status = getArrayOffsetsBufferSafe(
+      propertyTableProperty.arrayOffsets,
+      arrayOffsetType,
+      values.size(),
+      static_cast<size_t>(_pPropertyTable->count),
+      checkBitsSize,
+      arrayOffsets);
+  if (status != PropertyTablePropertyViewStatus::Valid) {
+    return PropertyTablePropertyView<PropertyArrayView<bool>>(status);
+  }
+
+  return PropertyTablePropertyView<PropertyArrayView<bool>>(
+      propertyTableProperty,
+      classProperty,
+      static_cast<size_t>(_pPropertyTable->count),
+      values,
+      arrayOffsets,
+      gsl::span<const std::byte>(),
+      arrayOffsetType,
+      PropertyComponentType::None);
+}
+
 PropertyTablePropertyView<PropertyArrayView<std::string_view>>
 PropertyTableView::getStringArrayPropertyValues(
     const ClassProperty& classProperty,

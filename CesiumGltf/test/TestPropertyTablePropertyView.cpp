@@ -3389,7 +3389,7 @@ TEST_CASE("Check fixed-length array of string") {
       auto values = *maybeValues;
       auto expectedValues = *expected[static_cast<size_t>(i)];
       for (int64_t j = 0; j < values.size(); ++j) {
-        REQUIRE(values[j] == expectedValues[j]);
+        REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
       }
     }
   }
@@ -3447,7 +3447,7 @@ TEST_CASE("Check fixed-length array of string") {
       auto values = *maybeValues;
       auto expectedValues = *expected[static_cast<size_t>(i)];
       for (int64_t j = 0; j < values.size(); ++j) {
-        REQUIRE(values[j] == expectedValues[j]);
+        REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
       }
     }
   }
@@ -3594,7 +3594,7 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
       auto values = *maybeValues;
       auto expectedValues = *expected[static_cast<size_t>(i)];
       for (int64_t j = 0; j < values.size(); ++j) {
-        REQUIRE(values[j] == expectedValues[j]);
+        REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
       }
     }
   }
@@ -3655,7 +3655,7 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
       auto values = *maybeValues;
       auto expectedValues = *expected[static_cast<size_t>(i)];
       for (int64_t j = 0; j < values.size(); ++j) {
-        REQUIRE(values[j] == expectedValues[j]);
+        REQUIRE(values[j] == expectedValues[static_cast<size_t>(j)]);
       }
     }
   }

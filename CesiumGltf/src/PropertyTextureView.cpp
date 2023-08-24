@@ -45,7 +45,7 @@ PropertyTextureView::getClassProperty(const std::string& propertyName) const {
   return &propertyIter->second;
 }
 
-PropertyTexturePropertyViewStatus PropertyTextureView::getTextureSafe(
+PropertyViewStatusType PropertyTextureView::getTextureSafe(
     const int32_t textureIndex,
     int32_t& samplerIndex,
     int32_t& imageIndex) const noexcept {
@@ -61,7 +61,7 @@ PropertyTexturePropertyViewStatus PropertyTextureView::getTextureSafe(
   return PropertyTexturePropertyViewStatus::Valid;
 }
 
-PropertyTexturePropertyViewStatus
+PropertyViewStatusType
 PropertyTextureView::checkSampler(const int32_t samplerIndex) const noexcept {
   if (samplerIndex < 0 ||
       static_cast<size_t>(samplerIndex) >= _pModel->samplers.size()) {
@@ -73,7 +73,7 @@ PropertyTextureView::checkSampler(const int32_t samplerIndex) const noexcept {
   return PropertyTexturePropertyViewStatus::Valid;
 }
 
-PropertyTexturePropertyViewStatus
+PropertyViewStatusType
 PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
   if (imageIndex < 0 ||
       static_cast<size_t>(imageIndex) >= _pModel->images.size()) {
@@ -94,7 +94,7 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
   return PropertyTexturePropertyViewStatus::Valid;
 }
 
-PropertyTexturePropertyViewStatus PropertyTextureView::checkChannels(
+PropertyViewStatusType PropertyTextureView::checkChannels(
     const std::vector<int64_t>& channels,
     const ImageCesium& image) const noexcept {
   if (channels.size() <= 0 || channels.size() > 4) {

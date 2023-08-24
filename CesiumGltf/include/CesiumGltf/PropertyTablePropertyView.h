@@ -148,6 +148,10 @@ int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
 }
 } // namespace
 
+/**
+ * @brief A view on the data of the {@link PropertyTableProperty} that is created
+ * by a {@link PropertyTableView}.
+ */
 template <typename ElementType, bool Normalized = false>
 class PropertyTablePropertyView;
 
@@ -166,14 +170,14 @@ class PropertyTablePropertyView;
  * one of the aforementioned types.
  */
 template <typename ElementType>
-class PropertyTablePropertyView<ElementType>
-    : public PropertyView<ElementType> {
+class PropertyTablePropertyView<ElementType, false>
+    : public PropertyView<ElementType, false> {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTablePropertyView()
-      : PropertyView<ElementType>(),
+      : PropertyView<ElementType, false>(),
         _values{},
         _size{0},
         _arrayOffsets{},
@@ -189,7 +193,7 @@ public:
    * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
   PropertyTablePropertyView(PropertyViewStatusType status)
-      : PropertyView<ElementType>(status),
+      : PropertyView<ElementType, false>(status),
         _values{},
         _size{0},
         _arrayOffsets{},
@@ -204,7 +208,8 @@ public:
   }
 
   /**
-   * @brief Construct an instance pointing to non-array data specified by a {@link PropertyTableProperty}.
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
+   * Used for non-array or fixed-length array data.
    *
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
@@ -229,7 +234,6 @@ public:
 
   /**
    * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
-   *
    *
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
@@ -516,7 +520,8 @@ public:
   }
 
   /**
-   * @brief Construct an instance pointing to non-array data specified by a {@link PropertyTableProperty}.
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
+   * Used for non-array or fixed-length array data.
    *
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
@@ -561,6 +566,7 @@ public:
         _arrayOffsets{arrayOffsets},
         _arrayOffsetType{arrayOffsetType},
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)} {}
+
 
   /**
    * @brief Get the value of an element of the {@link PropertyTable},

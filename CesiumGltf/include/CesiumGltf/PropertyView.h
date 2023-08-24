@@ -1196,7 +1196,7 @@ private:
  * property.
  */
 template <typename ElementType>
-class PropertyView<PropertyArrayView<ElementType>> {
+class PropertyView<PropertyArrayView<ElementType>, false> {
 public:
   /**
    * @brief Constructs an empty property instance.

@@ -1,3 +1,4 @@
+#include "CesiumGltf/PropertyTablePropertyViewType.h"
 #include "CesiumGltf/PropertyTableView.h"
 
 #include <catch2/catch.hpp>
@@ -136,7 +137,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
 
   SECTION("Access correct type") {
     PropertyTablePropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
+        view.getPropertyView<uint32_t, false>("TestClassProperty");
     REQUIRE(uint32Property.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(uint32Property.size() > 0);
 
@@ -147,25 +148,25 @@ TEST_CASE("Test scalar PropertyTableProperty") {
 
   SECTION("Access wrong type") {
     PropertyTablePropertyView<glm::uvec3> uvec3Invalid =
-        view.getPropertyView<glm::uvec3>("TestClassProperty");
+        view.getPropertyView<glm::uvec3, false>("TestClassProperty");
     REQUIRE(
         uvec3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
     PropertyTablePropertyView<glm::u32mat3x3> u32mat3x3Invalid =
-        view.getPropertyView<glm::u32mat3x3>("TestClassProperty");
+        view.getPropertyView<glm::u32mat3x3, false>("TestClassProperty");
     REQUIRE(
         u32mat3x3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
     PropertyTablePropertyView<bool> boolInvalid =
-        view.getPropertyView<bool>("TestClassProperty");
+        view.getPropertyView<bool, false>("TestClassProperty");
     REQUIRE(
         boolInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
     PropertyTablePropertyView<std::string_view> stringInvalid =
-        view.getPropertyView<std::string_view>("TestClassProperty");
+        view.getPropertyView<std::string_view, false>("TestClassProperty");
     REQUIRE(
         stringInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
@@ -173,19 +174,19 @@ TEST_CASE("Test scalar PropertyTableProperty") {
 
   SECTION("Access wrong component type") {
     PropertyTablePropertyView<uint8_t> uint8Invalid =
-        view.getPropertyView<uint8_t>("TestClassProperty");
+        view.getPropertyView<uint8_t, false>("TestClassProperty");
     REQUIRE(
         uint8Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
 
     PropertyTablePropertyView<int32_t> int32Invalid =
-        view.getPropertyView<int32_t>("TestClassProperty");
+        view.getPropertyView<int32_t, false>("TestClassProperty");
     REQUIRE(
         int32Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
 
     PropertyTablePropertyView<uint64_t> uint64Invalid =
-        view.getPropertyView<uint64_t>("TestClassProperty");
+        view.getPropertyView<uint64_t, false>("TestClassProperty");
     REQUIRE(
         uint64Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
@@ -193,7 +194,8 @@ TEST_CASE("Test scalar PropertyTableProperty") {
 
   SECTION("Access incorrectly as array") {
     PropertyTablePropertyView<PropertyArrayView<uint32_t>> uint32ArrayInvalid =
-        view.getPropertyView<PropertyArrayView<uint32_t>>("TestClassProperty");
+        view.getPropertyView<PropertyArrayView<uint32_t>, false>(
+            "TestClassProperty");
     REQUIRE(
         uint32ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -202,7 +204,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
   SECTION("Wrong buffer index") {
     model.bufferViews[valueBufferViewIndex].buffer = 2;
     PropertyTablePropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
+        view.getPropertyView<uint32_t, false>("TestClassProperty");
     REQUIRE(
         uint32Property.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidValueBuffer);
@@ -211,7 +213,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
   SECTION("Wrong buffer view index") {
     propertyTableProperty.values = -1;
     PropertyTablePropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
+        view.getPropertyView<uint32_t, false>("TestClassProperty");
     REQUIRE(
         uint32Property.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidValueBufferView);
@@ -220,7 +222,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
   SECTION("Buffer view points outside of the real buffer length") {
     model.buffers[valueBufferIndex].cesium.data.resize(12);
     PropertyTablePropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
+        view.getPropertyView<uint32_t, false>("TestClassProperty");
     REQUIRE(
         uint32Property.status() ==
         PropertyTablePropertyViewStatus::ErrorBufferViewOutOfBounds);
@@ -229,7 +231,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
   SECTION("Buffer view length isn't multiple of sizeof(T)") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
     PropertyTablePropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
+        view.getPropertyView<uint32_t, false>("TestClassProperty");
     REQUIRE(
         uint32Property.status() ==
         PropertyTablePropertyViewStatus::
@@ -239,7 +241,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
   SECTION("Buffer view length doesn't match with propertyTableCount") {
     model.bufferViews[valueBufferViewIndex].byteLength = 12;
     PropertyTablePropertyView<uint32_t> uint32Property =
-        view.getPropertyView<uint32_t>("TestClassProperty");
+        view.getPropertyView<uint32_t, false>("TestClassProperty");
     REQUIRE(
         uint32Property.status() ==
         PropertyTablePropertyViewStatus::
@@ -2337,6 +2339,13 @@ TEST_CASE("Test variable-length arrays of strings") {
   }
 }
 
+template <typename T, bool Normalized>
+void testFunction(PropertyTablePropertyView<T, Normalized> view) {
+  REQUIRE(
+      propertyValue.status() ==
+      PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
+}
+
 TEST_CASE("Test callback on invalid property table view") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
@@ -2361,17 +2370,17 @@ TEST_CASE("Test callback on invalid property table view") {
   REQUIRE(!classProperty);
 
   uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        REQUIRE(
-            propertyValue.status() ==
-            PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
-        REQUIRE(propertyValue.size() == 0);
-      });
+  auto callback = [&invokedCallbackCount](
+                      const std::string& /*propertyName*/,
+                      auto property) mutable {
+    invokedCallbackCount++;
+    REQUIRE(
+        property.status() ==
+        PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
+    REQUIRE(property.size() == 0);
+  };
+
+  view.getPropertyView("TestClassProperty", callback);
 
   REQUIRE(invokedCallbackCount == 1);
 }
@@ -2476,9 +2485,8 @@ TEST_CASE("Test callback for scalar PropertyTableProperty") {
                 values[static_cast<size_t>(i)]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2545,9 +2553,8 @@ TEST_CASE("Test callback for vecN PropertyTableProperty") {
                 values[static_cast<size_t>(i)]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2623,9 +2630,8 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
                 values[static_cast<size_t>(i)]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrecttype for TestClassProperty.");
         }
         invokedCallbackCount++;
       });
@@ -2706,9 +2712,8 @@ TEST_CASE("Test callback for boolean PropertyTableProperty") {
                 expected[static_cast<size_t>(i)]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2796,9 +2801,8 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
                 expected[static_cast<size_t>(i)]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2867,9 +2871,8 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2944,9 +2947,8 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -3035,9 +3037,8 @@ TEST_CASE("Test callback for matN array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -3126,9 +3127,8 @@ TEST_CASE("Test callback for boolean array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -3237,9 +3237,8 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
           REQUIRE(v2[0] == "I love you, meat bags! ❤️");
           REQUIRE(v2[1] == "Book in the freezer");
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of incorrect "
-              "type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
