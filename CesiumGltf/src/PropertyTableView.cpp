@@ -373,7 +373,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
     return PropertyTablePropertyView<PropertyArrayView<bool>>(
         propertyTableProperty,
         classProperty,
-        static_cast<size_t>(_pPropertyTable->count),
+        _pPropertyTable->count,
         values);
   }
 
@@ -402,7 +402,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
   return PropertyTablePropertyView<PropertyArrayView<bool>>(
       propertyTableProperty,
       classProperty,
-      static_cast<size_t>(_pPropertyTable->count),
+      _pPropertyTable->count,
       values,
       arrayOffsets,
       gsl::span<const std::byte>(),

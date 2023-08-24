@@ -1209,7 +1209,7 @@ private:
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           propertyTableProperty,
           classProperty,
-          static_cast<size_t>(_pPropertyTable->count),
+          _pPropertyTable->count,
           values);
     }
 
@@ -1240,7 +1240,7 @@ private:
       return PropertyTablePropertyView<PropertyArrayView<T>, true>(
           propertyTableProperty,
           classProperty,
-          static_cast<size_t>(_pPropertyTable->count),
+          _pPropertyTable->count,
           values,
           arrayOffsets,
           arrayOffsetType);
@@ -1248,7 +1248,7 @@ private:
       return PropertyTablePropertyView<PropertyArrayView<T>, false>(
           propertyTableProperty,
           classProperty,
-          static_cast<size_t>(_pPropertyTable->count),
+          _pPropertyTable->count,
           values,
           arrayOffsets,
           gsl::span<const std::byte>(),
