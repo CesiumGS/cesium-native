@@ -77,6 +77,11 @@ public:
    * the Earth-Centered, Earth-Fixed frame. This is an advanced constructor and
    * should be avoided in most cases.
    *
+   * This constructor can be used to save/restore the state of an instance. It
+   * can also be used to create unusual coordinate systems that can't be created
+   * by the other constructors, such as coordinate systems where the axes aren't
+   * aligned with compass directions.
+   *
    * @param localToEcef The transformation matrix from this coordinate system to
    * the ECEF frame.
    */
@@ -87,10 +92,17 @@ public:
    * between the local frame and the Earth-Centered, Earth-Fixed frame. This is
    * an advanced constructor and should be avoided in most cases.
    *
+   * This constructor can be used to save/restore the state of an instance. It
+   * can also be used to create unusual coordinate systems that can't be created
+   * by the other constructors, such as coordinate systems where the axes aren't
+   * aligned with compass directions.
+   *
    * @param localToEcef The transformation matrix from this coordinate system to
-   * the ECEF frame. This must be the inverse of `ecefToLocal`.
+   * the ECEF frame. This must be the inverse of `ecefToLocal` or behavior is
+   * undefined, but this is not enforced.
    * @param ecefToLocal The transformation matrix from the ECEF frame to this
-   * coordinate system. This must be the inverse of `localToEcef`.
+   * coordinate system. This must be the inverse of `localToEcef` or behavior is
+   * undefined, but this is not enforced.
    */
   LocalHorizontalCoordinateSystem(
       const glm::dmat4& localToEcef,
