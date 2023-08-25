@@ -3970,7 +3970,7 @@ TEST_CASE("Test variable-length arrays of strings") {
   }
 }
 
-TEST_CASE("Test with property offset, scale, min, max") {
+TEST_CASE("Test with PropertyTableProperty offset, scale, min, max") {
   Model model;
   std::vector<float> values = {1.0f, 2.0f, 3.0f, 4.0f};
   const float offset = 0.5f;
@@ -4074,7 +4074,7 @@ TEST_CASE("Test with property offset, scale, min, max") {
   }
 }
 
-TEST_CASE("Test with property offset, scale, min, max (normalized)") {
+TEST_CASE("Test with PropertyTableProperty offset, scale, min, max (normalized)") {
   Model model;
   std::vector<int8_t> values = {-128, 0, 32, 127};
   const double offset = 0.5;
@@ -4180,7 +4180,7 @@ TEST_CASE("Test with property offset, scale, min, max (normalized)") {
   }
 }
 
-TEST_CASE("Test with property noData value") {
+TEST_CASE("Test with PropertyTableProperty noData value") {
   Model model;
   std::vector<int8_t> values = {-128, 0, 32, -128, 127};
   const int8_t noData = -128;
@@ -4265,7 +4265,7 @@ TEST_CASE("Test with property noData value") {
   }
 }
 
-TEST_CASE("Test with property noData value (normalized)") {
+TEST_CASE("Test with PropertyTableProperty noData value (normalized)") {
   Model model;
   std::vector<int8_t> values = {-128, 0, 32, -128, 127};
   const int8_t noData = -128;

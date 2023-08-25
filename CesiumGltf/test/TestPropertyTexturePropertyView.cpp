@@ -12,12 +12,6 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-std::vector<glm::dvec2> texCoords{
-    glm::dvec2(0, 0),
-    glm::dvec2(0.5, 0),
-    glm::dvec2(0, 0.5),
-    glm::dvec2(0.5, 0.5)};
-
 template <typename T>
 void checkTextureValues(
     const std::vector<uint8_t>& data,
@@ -48,7 +42,7 @@ void checkTextureValues(
   }
 
   PropertyTexturePropertyView<T>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   switch (sizeof(T)) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -67,6 +61,12 @@ void checkTextureValues(
   }
 
   REQUIRE(!view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
@@ -119,7 +119,7 @@ void checkTextureValues(
   }
 
   PropertyTexturePropertyView<T>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   switch (sizeof(T)) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -138,6 +138,12 @@ void checkTextureValues(
   }
 
   REQUIRE(!view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
@@ -191,7 +197,7 @@ void checkNormalizedTextureValues(
   }
 
   PropertyTexturePropertyView<T, true>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   switch (sizeof(T)) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -210,6 +216,12 @@ void checkNormalizedTextureValues(
   }
 
   REQUIRE(view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
@@ -256,7 +268,7 @@ void checkTextureArrayValues(
   }
 
   PropertyTexturePropertyView<PropertyArrayView<T>>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   switch (image.channels) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -275,6 +287,12 @@ void checkTextureArrayValues(
   }
 
   REQUIRE(!view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     const std::vector<T>& expectedValue = expected[i];
@@ -333,7 +351,7 @@ void checkTextureArrayValues(
   }
 
   PropertyTexturePropertyView<PropertyArrayView<T>>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   switch (count) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -352,6 +370,12 @@ void checkTextureArrayValues(
   }
 
   REQUIRE(!view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     auto expectedRawValue = expectedRaw[i];
@@ -424,7 +448,7 @@ void checkNormalizedTextureArrayValues(
   }
 
   PropertyTexturePropertyView<PropertyArrayView<T>, true>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   switch (image.channels) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -443,6 +467,12 @@ void checkNormalizedTextureArrayValues(
   }
 
   REQUIRE(view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     auto expectedRawValue = expectedRaw[i];
@@ -1404,7 +1434,7 @@ TEST_CASE("Check that property values override class property values") {
   property.max = std::numeric_limits<float>::max();
 
   PropertyTexturePropertyView<float>
-      view(property, classProperty, sampler, image, 0, channels);
+      view(property, classProperty, sampler, image, channels);
   CHECK(view.getSwizzle() == "rgba");
 
   REQUIRE(view.offset());
@@ -1415,6 +1445,12 @@ TEST_CASE("Check that property values override class property values") {
   REQUIRE(*view.min() == std::numeric_limits<float>::lowest());
   REQUIRE(view.max());
   REQUIRE(*view.max() == std::numeric_limits<float>::max());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
@@ -1427,6 +1463,12 @@ TEST_CASE("Check that property values override class property values") {
 }
 
 TEST_CASE("Check that non-adjacent channels resolve to expected output") {
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
+
   SECTION("single-byte scalar") {
     PropertyTextureProperty property;
     ClassProperty classProperty;
@@ -1455,7 +1497,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     std::vector<int64_t> channels{3};
 
     PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "a");
 
     std::vector<uint8_t> expected{3, 4, 0, 1};
@@ -1497,7 +1539,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     std::vector<int64_t> channels{2, 0};
 
     PropertyTexturePropertyView<uint16_t>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "br");
 
     std::vector<uint16_t> expected{2, 259, 257, 520};
@@ -1539,7 +1581,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     std::vector<int64_t> channels{3, 2, 1};
 
     PropertyTexturePropertyView<glm::u8vec3>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "abg");
 
     std::vector<glm::u8vec3> expected{
@@ -1587,7 +1629,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     std::vector<int64_t> channels{1, 0, 3, 2};
 
     PropertyTexturePropertyView<PropertyArrayView<uint8_t>>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "grab");
 
     std::vector<std::vector<uint8_t>> expected{
@@ -1639,7 +1681,7 @@ TEST_CASE("Check sampling with different sampler values") {
     sampler.wrapT = Sampler::WrapT::REPEAT;
 
     PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
@@ -1667,7 +1709,7 @@ TEST_CASE("Check sampling with different sampler values") {
     // Sampling 0.6 is equal to sampling 1.4 or -0.6.
 
     PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
@@ -1692,7 +1734,7 @@ TEST_CASE("Check sampling with different sampler values") {
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
     PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
@@ -1717,7 +1759,7 @@ TEST_CASE("Check sampling with different sampler values") {
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
     PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, 0, channels);
+        view(property, classProperty, sampler, image, channels);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{

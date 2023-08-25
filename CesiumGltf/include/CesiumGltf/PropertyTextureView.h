@@ -91,21 +91,21 @@ public:
    * @return A {@link PropertyTexturePropertyView} of the property. If no valid property is
    * found, the property view will be invalid.
    */
-  template <typename T>
-  PropertyTexturePropertyView<T>
+  template <typename T, bool Normalized = false>
+  PropertyTexturePropertyView<T, Normalized>
   getPropertyView(const std::string& propertyName) const {
     if (this->_status != PropertyTextureViewStatus::Valid) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorInvalidPropertyTexture);
     }
 
     const ClassProperty* pClassProperty = getClassProperty(propertyName);
     if (!pClassProperty) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    return getPropertyViewImpl<T>(propertyName, *pClassProperty);
+    return getPropertyViewImpl<T, Normalized>(propertyName, *pClassProperty);
   }
 
   /**
@@ -152,34 +152,68 @@ public:
       componentType =
           convertStringToPropertyComponentType(*pClassProperty->componentType);
     }
+    bool normalized = pClassProperty->normalized;
 
     if (pClassProperty->array) {
-      getArrayPropertyViewImpl(
-          propertyName,
-          *pClassProperty,
-          type,
-          componentType,
-          std::forward<Callback>(callback));
-    } else if (type == PropertyType::Scalar) {
-      getScalarPropertyViewImpl(
-          propertyName,
-          *pClassProperty,
-          componentType,
-          std::forward<Callback>(callback));
-    } else if (isPropertyTypeVecN(type)) {
-      getVecNPropertyViewImpl(
-          propertyName,
-          *pClassProperty,
-          type,
-          componentType,
-          std::forward<Callback>(callback));
-    } else {
-      callback(
-          propertyName,
-          PropertyTexturePropertyView<uint8_t>(
-              PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty));
+      if (normalized) {
+        getArrayPropertyViewImpl<Callback, true>(
+            propertyName,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getArrayPropertyViewImpl<Callback, false>(
+            propertyName,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      }
       return;
     }
+
+    if (type == PropertyType::Scalar) {
+      if (normalized) {
+        getScalarPropertyViewImpl<Callback, true>(
+            propertyName,
+            *pClassProperty,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getScalarPropertyViewImpl<Callback, false>(
+            propertyName,
+            *pClassProperty,
+            componentType,
+            std::forward<Callback>(callback));
+      }
+      return;
+    }
+
+    if (isPropertyTypeVecN(type)) {
+      if (normalized) {
+        getVecNPropertyViewImpl<Callback, true>(
+            propertyName,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getVecNPropertyViewImpl<Callback, false>(
+            propertyName,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      }
+      return;
+    }
+
+    callback(
+        propertyName,
+        PropertyTexturePropertyView<uint8_t>(
+            PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty));
+    return;
   }
 
   /**
@@ -207,14 +241,14 @@ public:
   }
 
 private:
-  template <typename T>
-  PropertyTexturePropertyView<T> getPropertyViewImpl(
+  template <typename T, bool Normalized>
+  PropertyTexturePropertyView<T, Normalized> getPropertyViewImpl(
       const std::string& propertyName,
       const ClassProperty& classProperty) const {
     auto propertyTexturePropertyIter =
         _pPropertyTexture->properties.find(propertyName);
     if (propertyTexturePropertyIter == _pPropertyTexture->properties.end()) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
     }
 
@@ -222,23 +256,25 @@ private:
         propertyTexturePropertyIter->second;
 
     if constexpr (IsMetadataScalar<T>::value) {
-      return createScalarPropertyView<T>(
+      return createScalarPropertyView<T, Normalized>(
           classProperty,
           propertyTextureProperty);
     }
 
     if constexpr (IsMetadataVecN<T>::value) {
-      return createVecNPropertyView<T>(classProperty, propertyTextureProperty);
-    }
-
-    if constexpr (IsMetadataArray<T>::value) {
-      return createArrayPropertyView<typename MetadataArrayType<T>::type>(
+      return createVecNPropertyView<T, Normalized>(
           classProperty,
           propertyTextureProperty);
     }
+
+    if constexpr (IsMetadataArray<T>::value) {
+      return createArrayPropertyView<
+          typename MetadataArrayType<T>::type,
+          Normalized>(classProperty, propertyTextureProperty);
+    }
   }
 
-  template <typename Callback>
+  template <typename Callback, bool Normalized>
   void getArrayPropertyViewImpl(
       const std::string& propertyName,
       const ClassProperty& classProperty,
@@ -267,28 +303,28 @@ private:
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<PropertyArrayView<int8_t>>(
+          getPropertyViewImpl<PropertyArrayView<int8_t>, Normalized>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<PropertyArrayView<uint8_t>>(
+          getPropertyViewImpl<PropertyArrayView<uint8_t>, Normalized>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
-          getPropertyViewImpl<PropertyArrayView<int16_t>>(
+          getPropertyViewImpl<PropertyArrayView<int16_t>, Normalized>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
-          getPropertyViewImpl<PropertyArrayView<uint16_t>>(
+          getPropertyViewImpl<PropertyArrayView<uint16_t>, Normalized>(
               propertyName,
               classProperty));
       break;
@@ -301,7 +337,7 @@ private:
     }
   }
 
-  template <typename Callback>
+  template <typename Callback, bool Normalized>
   void getScalarPropertyViewImpl(
       const std::string& propertyName,
       const ClassProperty& classProperty,
@@ -311,37 +347,47 @@ private:
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<int8_t>(propertyName, classProperty));
+          getPropertyViewImpl<int8_t, Normalized>(propertyName, classProperty));
       return;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<uint8_t>(propertyName, classProperty));
+          getPropertyViewImpl<uint8_t, Normalized>(
+              propertyName,
+              classProperty));
       return;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
-          getPropertyViewImpl<int16_t>(propertyName, classProperty));
+          getPropertyViewImpl<int16_t, Normalized>(
+              propertyName,
+              classProperty));
       return;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
-          getPropertyViewImpl<uint16_t>(propertyName, classProperty));
+          getPropertyViewImpl<uint16_t, Normalized>(
+              propertyName,
+              classProperty));
       break;
     case PropertyComponentType::Int32:
       callback(
           propertyName,
-          getPropertyViewImpl<int32_t>(propertyName, classProperty));
+          getPropertyViewImpl<int32_t, Normalized>(
+              propertyName,
+              classProperty));
       break;
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
-          getPropertyViewImpl<uint32_t>(propertyName, classProperty));
+          getPropertyViewImpl<uint32_t, Normalized>(
+              propertyName,
+              classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
-          getPropertyViewImpl<float>(propertyName, classProperty));
+          getPropertyViewImpl<float, false>(propertyName, classProperty));
       break;
     default:
       callback(
@@ -352,7 +398,7 @@ private:
     }
   }
 
-  template <typename Callback, glm::length_t N>
+  template <typename Callback, glm::length_t N, bool Normalized>
   void getVecNPropertyViewImpl(
       const std::string& propertyName,
       const ClassProperty& classProperty,
@@ -362,14 +408,14 @@ private:
     case PropertyComponentType::Int8:
       callback(
           propertyName,
-          getPropertyViewImpl<glm::vec<N, int8_t>>(
+          getPropertyViewImpl<glm::vec<N, int8_t>, Normalized>(
               propertyName,
               classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
-          getPropertyViewImpl<glm::vec<N, uint8_t>>(
+          getPropertyViewImpl<glm::vec<N, uint8_t>, Normalized>(
               propertyName,
               classProperty));
       break;
@@ -377,7 +423,7 @@ private:
       if constexpr (N == 2) {
         callback(
             propertyName,
-            getPropertyViewImpl<glm::vec<N, int16_t>>(
+            getPropertyViewImpl<glm::vec<N, int16_t>, Normalized>(
                 propertyName,
                 classProperty));
         break;
@@ -387,7 +433,7 @@ private:
       if constexpr (N == 2) {
         callback(
             propertyName,
-            getPropertyViewImpl<glm::vec<N, uint16_t>>(
+            getPropertyViewImpl<glm::vec<N, uint16_t>, Normalized>(
                 propertyName,
                 classProperty));
         break;
@@ -402,7 +448,7 @@ private:
     }
   }
 
-  template <typename Callback>
+  template <typename Callback, bool Normalized>
   void getVecNPropertyViewImpl(
       const std::string& propertyName,
       const ClassProperty& classProperty,
@@ -412,21 +458,21 @@ private:
     const glm::length_t N = getDimensionsFromPropertyType(type);
     switch (N) {
     case 2:
-      getVecNPropertyViewImpl<Callback, 2>(
+      getVecNPropertyViewImpl<Callback, 2, Normalized>(
           propertyName,
           classProperty,
           componentType,
           std::forward<Callback>(callback));
       break;
     case 3:
-      getVecNPropertyViewImpl<Callback, 3>(
+      getVecNPropertyViewImpl<Callback, 3, Normalized>(
           propertyName,
           classProperty,
           componentType,
           std::forward<Callback>(callback));
       break;
     case 4:
-      getVecNPropertyViewImpl<Callback, 4>(
+      getVecNPropertyViewImpl<Callback, 4, Normalized>(
           propertyName,
           classProperty,
           componentType,
@@ -441,18 +487,18 @@ private:
     }
   }
 
-  template <typename T>
-  PropertyTexturePropertyView<T> createScalarPropertyView(
+  template <typename T, bool Normalized>
+  PropertyTexturePropertyView<T, Normalized> createScalarPropertyView(
       const ClassProperty& classProperty,
       const PropertyTextureProperty& propertyTextureProperty) const {
     if (classProperty.array) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
 
@@ -460,31 +506,39 @@ private:
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+    }
+
+    if (classProperty.normalized != Normalized) {
+      return PropertyTexturePropertyView<T, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
     }
 
     // Only up to four bytes of image data are supported.
     if constexpr (sizeof(T) <= 4) {
-      return createPropertyViewImpl<T>(
+      return createPropertyViewImpl<T, Normalized>(
           classProperty,
           propertyTextureProperty,
           sizeof(T));
+    } else {
+      return PropertyTexturePropertyView<T, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
   }
 
-  template <typename T>
-  PropertyTexturePropertyView<T> createVecNPropertyView(
+  template <typename T, bool Normalized>
+  PropertyTexturePropertyView<T, Normalized> createVecNPropertyView(
       const ClassProperty& classProperty,
       const PropertyTextureProperty& propertyTextureProperty) const {
     if (classProperty.array) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
 
@@ -492,31 +546,40 @@ private:
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
-      return PropertyTexturePropertyView<T>(
+      return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+    }
+
+    if (classProperty.normalized != Normalized) {
+      return PropertyTexturePropertyView<T, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
     }
 
     // Only up to four bytes of image data are supported.
     if constexpr (sizeof(T) <= 4) {
-      return createPropertyViewImpl<T>(
+      return createPropertyViewImpl<T, Normalized>(
           classProperty,
           propertyTextureProperty,
           sizeof(T));
+    } else {
+      return PropertyTexturePropertyView<T, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
   }
 
-  template <typename T>
-  PropertyTexturePropertyView<PropertyArrayView<T>> createArrayPropertyView(
+  template <typename T, bool Normalized>
+  PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>
+  createArrayPropertyView(
       const ClassProperty& classProperty,
       const PropertyTextureProperty& propertyTextureProperty) const {
     if (!classProperty.array) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
+      return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
+      return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
 
@@ -524,8 +587,13 @@ private:
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
     if (TypeToPropertyType<T>::component != componentType) {
-      return PropertyTexturePropertyView<PropertyArrayView<T>>(
+      return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+    }
+
+    if (classProperty.normalized != Normalized) {
+      return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
     }
 
     // Only scalar arrays are supported. The scalar component type must not
@@ -534,24 +602,27 @@ private:
       // Only up to four elements are supported.
       int64_t count = classProperty.count.value_or(0);
       if (count <= 0 || count > 4) {
-        return PropertyTexturePropertyView<PropertyArrayView<T>>(
+        return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
       }
 
       if (count * sizeof(T) > 4) {
-        return PropertyTexturePropertyView<PropertyArrayView<T>>(
+        return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
       }
 
-      return createPropertyViewImpl<PropertyArrayView<T>>(
+      return createPropertyViewImpl<PropertyArrayView<T>, Normalized>(
           classProperty,
           propertyTextureProperty,
           count * sizeof(T));
+    } else {
+      return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
   }
 
-  template <typename T>
-  PropertyTexturePropertyView<T> createPropertyViewImpl(
+  template <typename T, bool Normalized>
+  PropertyTexturePropertyView<T, Normalized> createPropertyViewImpl(
       const ClassProperty& classProperty,
       const PropertyTextureProperty& propertyTextureProperty,
       size_t elementSize) const {
@@ -562,17 +633,17 @@ private:
         getTextureSafe(propertyTextureProperty.index, samplerIndex, imageIndex);
 
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<T>(status);
+      return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
     status = checkSampler(samplerIndex);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<T>(status);
+      return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
     status = checkImage(imageIndex);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<T>(status);
+      return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
     const ImageCesium& image = _pModel->images[imageIndex].cesium;
@@ -580,19 +651,19 @@ private:
 
     status = checkChannels(channels, image);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<T>(status);
+      return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
     if (channels.size() * image.bytesPerChannel != elementSize) {
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
-    return PropertyTexturePropertyView<T>(
+    return PropertyTexturePropertyView<T, Normalized>(
+        propertyTextureProperty,
+        classProperty,
         _pModel->samplers[samplerIndex],
         image,
-        propertyTextureProperty.texCoord,
-        channels,
-        classProperty.normalized);
+        channels);
   }
 
   PropertyViewStatusType getTextureSafe(
@@ -614,5 +685,5 @@ private:
   const Class* _pClass;
 
   PropertyTextureViewStatus _status;
-};
+}; // namespace CesiumGltf
 } // namespace CesiumGltf

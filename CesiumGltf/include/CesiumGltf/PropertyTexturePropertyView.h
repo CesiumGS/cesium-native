@@ -181,7 +181,7 @@ public:
    * @param status The code from {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
-      : PropertyView<ElementType, false>(),
+      : PropertyView<ElementType, false>(status),
         _pSampler(nullptr),
         _pImage(nullptr),
         _texCoordSetIndex(0),
@@ -208,12 +208,11 @@ public:
       const ClassProperty& classProperty,
       const Sampler& sampler,
       const ImageCesium& image,
-      int64_t texCoordSetIndex,
       const std::vector<int64_t>& channels) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         _pSampler(&sampler),
         _pImage(&image),
-        _texCoordSetIndex(texCoordSetIndex),
+        _texCoordSetIndex(property.texCoord),
         _channels(channels),
         _swizzle("") {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
@@ -500,7 +499,7 @@ public:
    * @param status The code from {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
-      : PropertyView<ElementType, true>(),
+      : PropertyView<ElementType, true>(status),
         _pSampler(nullptr),
         _pImage(nullptr),
         _texCoordSetIndex(0),
@@ -527,12 +526,11 @@ public:
       const ClassProperty& classProperty,
       const Sampler& sampler,
       const ImageCesium& image,
-      int64_t texCoordSetIndex,
       const std::vector<int64_t>& channels) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         _pSampler(&sampler),
         _pImage(&image),
-        _texCoordSetIndex(texCoordSetIndex),
+        _texCoordSetIndex(property.texCoord),
         _channels(channels),
         _swizzle("") {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
