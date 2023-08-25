@@ -46,8 +46,8 @@ TEST_CASE("Boolean PropertyView") {
     PropertyView<bool> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.defaultValue());
-    REQUIRE(!*view.defaultValue());
+    REQUIRE(view.defaultValue() == false);
+    ;
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -119,7 +119,7 @@ TEST_CASE("Scalar PropertyView") {
     classProperty.normalized = true;
 
     PropertyView<int8_t> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with offset, scale, max, and min") {
@@ -133,15 +133,10 @@ TEST_CASE("Scalar PropertyView") {
 
     PropertyView<float> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(view.max());
-    REQUIRE(view.min());
-
-    REQUIRE(*view.offset() == 5.04f);
-    REQUIRE(*view.scale() == 2.2f);
-    REQUIRE(*view.max() == 10.5f);
-    REQUIRE(*view.min() == -10.5f);
+    REQUIRE(view.offset() == 5.04f);
+    REQUIRE(view.scale() == 2.2f);
+    REQUIRE(view.max() == 10.5f);
+    REQUIRE(view.min() == -10.5f);
   }
 
   SECTION("Constructs with noData and defaultProperty") {
@@ -155,11 +150,8 @@ TEST_CASE("Scalar PropertyView") {
     PropertyView<uint8_t> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
-
-    REQUIRE(*view.noData() == 0);
-    REQUIRE(*view.defaultValue() == 1);
+    REQUIRE(view.noData() == 0);
+    REQUIRE(view.defaultValue() == 1);
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -279,7 +271,7 @@ TEST_CASE("Scalar PropertyView (normalized)") {
     classProperty.normalized = false;
 
     PropertyView<int8_t, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with offset, scale, max, and min") {
@@ -294,15 +286,10 @@ TEST_CASE("Scalar PropertyView (normalized)") {
 
     PropertyView<int32_t, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(view.max());
-    REQUIRE(view.min());
-
-    REQUIRE(*view.offset() == 5.04f);
-    REQUIRE(*view.scale() == 2.2f);
-    REQUIRE(*view.max() == 10.5f);
-    REQUIRE(*view.min() == -10.5f);
+    REQUIRE(view.offset() == 5.04f);
+    REQUIRE(view.scale() == 2.2f);
+    REQUIRE(view.max() == 10.5f);
+    REQUIRE(view.min() == -10.5f);
   }
 
   SECTION("Constructs with noData and defaultProperty") {
@@ -317,11 +304,8 @@ TEST_CASE("Scalar PropertyView (normalized)") {
     PropertyView<uint8_t, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
-
-    REQUIRE(*view.noData() == 0);
-    REQUIRE(*view.defaultValue() == 1.5);
+    REQUIRE(view.noData() == 0);
+    REQUIRE(view.defaultValue() == 1.5);
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -424,7 +408,7 @@ TEST_CASE("VecN PropertyView") {
     classProperty.normalized = true;
 
     PropertyView<glm::i8vec3> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with offset, scale, max, and min") {
@@ -438,15 +422,10 @@ TEST_CASE("VecN PropertyView") {
 
     PropertyView<glm::vec3> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(view.max());
-    REQUIRE(view.min());
-
-    REQUIRE(*view.offset() == glm::vec3(-1, 1, 2));
-    REQUIRE(*view.scale() == glm::vec3(2, 1, 3));
-    REQUIRE(*view.max() == glm::vec3(10, 5, 6));
-    REQUIRE(*view.min() == glm::vec3(-11, -12, -13));
+    REQUIRE(view.offset() == glm::vec3(-1, 1, 2));
+    REQUIRE(view.scale() == glm::vec3(2, 1, 3));
+    REQUIRE(view.max() == glm::vec3(10, 5, 6));
+    REQUIRE(view.min() == glm::vec3(-11, -12, -13));
   }
 
   SECTION("Constructs with noData and defaultProperty") {
@@ -459,12 +438,8 @@ TEST_CASE("VecN PropertyView") {
 
     PropertyView<glm::vec4> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
-
-    REQUIRE(*view.noData() == glm::vec4(0.0f));
-    REQUIRE(*view.defaultValue() == glm::vec4(1.0f, 2.0f, 3.0f, 4.0f));
+    REQUIRE(view.noData() == glm::vec4(0.0f));
+    REQUIRE(view.defaultValue() == glm::vec4(1.0f, 2.0f, 3.0f, 4.0f));
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -592,7 +567,7 @@ TEST_CASE("VecN PropertyView (normalized)") {
     classProperty.normalized = false;
 
     PropertyView<glm::u8vec3, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with offset, scale, max, and min") {
@@ -607,15 +582,10 @@ TEST_CASE("VecN PropertyView (normalized)") {
 
     PropertyView<glm::ivec3, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(view.max());
-    REQUIRE(view.min());
-
-    REQUIRE(*view.offset() == glm::dvec3(-1, 1, 2));
-    REQUIRE(*view.scale() == glm::dvec3(2, 1, 3));
-    REQUIRE(*view.max() == glm::dvec3(10, 5, 6));
-    REQUIRE(*view.min() == glm::dvec3(-11, -12, -13));
+    REQUIRE(view.offset() == glm::dvec3(-1, 1, 2));
+    REQUIRE(view.scale() == glm::dvec3(2, 1, 3));
+    REQUIRE(view.max() == glm::dvec3(10, 5, 6));
+    REQUIRE(view.min() == glm::dvec3(-11, -12, -13));
   }
 
   SECTION("Constructs with noData and defaultProperty") {
@@ -630,11 +600,8 @@ TEST_CASE("VecN PropertyView (normalized)") {
     PropertyView<glm::i8vec4, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
-
-    REQUIRE(*view.noData() == glm::i8vec4(0, 0, -1, -1));
-    REQUIRE(*view.defaultValue() == glm::dvec4(1.0, 2.0, 3.0, 4.5));
+    REQUIRE(view.noData() == glm::i8vec4(0, 0, -1, -1));
+    REQUIRE(view.defaultValue() == glm::dvec4(1.0, 2.0, 3.0, 4.5));
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -746,7 +713,7 @@ TEST_CASE("MatN PropertyView") {
     classProperty.normalized = true;
 
     PropertyView<glm::mat2> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with offset, scale, max, and min") {
@@ -774,35 +741,31 @@ TEST_CASE("MatN PropertyView") {
 
     PropertyView<glm::mat3> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(view.max());
-    REQUIRE(view.min());
 
     // clang-format off
     glm::mat3 expectedOffset(
       -1,  1, 2,
        3, -1, 4,
       -5, -5, 0);
-    REQUIRE(*view.offset() == expectedOffset);
+    REQUIRE(view.offset() == expectedOffset);
 
     glm::mat3 expectedScale(
       1, 1, 1,
       2, 2, 3,
       3, 4, 5);
-    REQUIRE(*view.scale() == expectedScale);
+    REQUIRE(view.scale() == expectedScale);
 
     glm::mat3 expectedMax(
       20,  5, 20,
       30, 22, 43,
       37,  1,  8);
-    REQUIRE(*view.max() == expectedMax);
+    REQUIRE(view.max() == expectedMax);
 
     glm::mat3 expectedMin(
       -10, -2, -3,
         0, 20,  4,
         9,  4,  5);
-    REQUIRE(*view.min() == expectedMin);
+    REQUIRE(view.min() == expectedMin);
     // clang-format on
   }
 
@@ -823,19 +786,17 @@ TEST_CASE("MatN PropertyView") {
     PropertyView<glm::mat2> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
 
     // clang-format off
     glm::mat2 expectedNoData(
       0.0f, 0.0f,
       0.0f, 0.0f);
-    REQUIRE(*view.noData() == expectedNoData);
+    REQUIRE(view.noData() == expectedNoData);
 
     glm::mat2 expectedDefaultValue(
       1.0f, 2.0f,
       3.0f, 4.5f);
-    REQUIRE(*view.defaultValue() == expectedDefaultValue);
+    REQUIRE(view.defaultValue() == expectedDefaultValue);
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -1018,7 +979,7 @@ TEST_CASE("MatN PropertyView (normalized)") {
     classProperty.normalized = false;
 
     PropertyView<glm::imat2x2, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with offset, scale, max, and min") {
@@ -1047,35 +1008,30 @@ TEST_CASE("MatN PropertyView (normalized)") {
 
     PropertyView<glm::imat3x3, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
-    REQUIRE(view.offset());
-    REQUIRE(view.scale());
-    REQUIRE(view.max());
-    REQUIRE(view.min());
-
     // clang-format off
     glm::dmat3 expectedOffset(
       -1,  1, 2,
        3, -1, 4,
       -5, -5, 0);
-    REQUIRE(*view.offset() == expectedOffset);
+    REQUIRE(view.offset() == expectedOffset);
 
     glm::dmat3 expectedScale(
       1, 1, 1,
       2, 2, 3,
       3, 4, 5);
-    REQUIRE(*view.scale() == expectedScale);
+    REQUIRE(view.scale() == expectedScale);
 
     glm::dmat3 expectedMax(
       20,  5, 20,
       30, 22, 43,
       37,  1,  8);
-    REQUIRE(*view.max() == expectedMax);
+    REQUIRE(view.max() == expectedMax);
 
     glm::dmat3 expectedMin(
       -10, -2, -3,
         0, 20,  4,
         9,  4,  5);
-    REQUIRE(*view.min() == expectedMin);
+    REQUIRE(view.min() == expectedMin);
     // clang-format on
   }
 
@@ -1097,17 +1053,15 @@ TEST_CASE("MatN PropertyView (normalized)") {
     PropertyView<glm::imat2x2, true> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
 
     glm::imat2x2 expectedNoData(0);
-    REQUIRE(*view.noData() == expectedNoData);
+    REQUIRE(view.noData() == expectedNoData);
 
     // clang-format off
     glm::dmat2 expectedDefaultValue(
       1.0, 2.0,
       3.0, 4.5);
-    REQUIRE(*view.defaultValue() == expectedDefaultValue);
+    REQUIRE(view.defaultValue() == expectedDefaultValue);
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -1233,11 +1187,9 @@ TEST_CASE("String PropertyView") {
     PropertyView<std::string_view> view(classProperty);
     REQUIRE(view.status() == PropertyViewStatus::Valid);
     REQUIRE(!view.required());
-    REQUIRE(view.noData());
-    REQUIRE(view.defaultValue());
 
-    REQUIRE(*view.noData() == "null");
-    REQUIRE(*view.defaultValue() == "default");
+    REQUIRE(view.noData() == "null");
+    REQUIRE(view.defaultValue() == "default");
   }
 
   SECTION("Reports errors for incorrectly defined properties") {
@@ -1404,7 +1356,7 @@ TEST_CASE("Scalar Array PropertyView") {
     classProperty.normalized = true;
 
     PropertyView<PropertyArrayView<int32_t>> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with count") {
@@ -1651,7 +1603,7 @@ TEST_CASE("Scalar Array PropertyView (normalized)") {
     classProperty.normalized = false;
 
     PropertyView<PropertyArrayView<int32_t>, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with count") {
@@ -1878,7 +1830,7 @@ TEST_CASE("VecN Array PropertyView") {
     classProperty.normalized = true;
 
     PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with count") {
@@ -2121,7 +2073,7 @@ TEST_CASE("VecN Array PropertyView (normalized)") {
     classProperty.normalized = false;
 
     PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with count") {
@@ -2344,7 +2296,7 @@ TEST_CASE("MatN Array PropertyView") {
     classProperty.normalized = true;
 
     PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with count") {
@@ -2725,7 +2677,7 @@ TEST_CASE("MatN Array PropertyView (normalized)") {
     classProperty.normalized = false;
 
     PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
-    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNormalization);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Constructs with count") {

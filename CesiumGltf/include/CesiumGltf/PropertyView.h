@@ -3,7 +3,6 @@
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
 
-#include <bitset>
 #include <cstring>
 #include <optional>
 
@@ -54,7 +53,7 @@ public:
   static const PropertyViewStatusType ErrorArrayTypeMismatch = 4;
 
   /**
-   * @brief This property says it is normalized, but is not of an integer
+   * @brief This property says it is normalized, but it does not have an integer
    * component type.
    */
   static const PropertyViewStatusType ErrorInvalidNormalization = 5;
@@ -283,7 +282,7 @@ public:
     }
 
     if (classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorInvalidNormalization;
+      _status = PropertyViewStatus::ErrorNormalizationMismatch;
       return;
     }
 
@@ -294,7 +293,7 @@ public:
 
     if (classProperty.noData) {
       if (!_required) {
-        // "noData" can only be defined if the property is required.
+        // "noData" can only be defined if the property is not required.
         _noData = getValue(*classProperty.noData);
       }
 
@@ -307,7 +306,7 @@ public:
 
     if (classProperty.defaultProperty) {
       if (!_required) {
-        // "default" can only be defined if the property is required.
+        // "default" can only be defined if the property is not required.
         _defaultValue = getValue(*classProperty.defaultProperty);
       }
 
@@ -323,7 +322,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of {@link PropertyViewStatus} indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -458,8 +458,49 @@ public:
 protected:
   PropertyViewStatusType _status;
 
+private:
+  bool _required;
+
+  std::optional<ElementType> _offset;
+  std::optional<ElementType> _scale;
+  std::optional<ElementType> _max;
+  std::optional<ElementType> _min;
+
+  std::optional<ElementType> _noData;
+  std::optional<ElementType> _defaultValue;
+
+  /**
+   * @brief Attempts to parse an ElementType from the given json value.
+   *
+   * If ElementType is a type with multiple components, e.g. a VECN or MATN
+   * type, this will return std::nullopt if one or more components could not be
+   * parsed.
+   *
+   * @return The value as an instance of ElementType, or std::nullopt if it
+   * could not be parsed.
+   */
+  static std::optional<ElementType>
+  getValue(const CesiumUtility::JsonValue& jsonValue) {
+    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return getScalar<ElementType>(jsonValue);
+    }
+
+    if constexpr (IsMetadataVecN<ElementType>::value) {
+      return getVecN<ElementType>(jsonValue);
+    }
+
+    if constexpr (IsMetadataMatN<ElementType>::value) {
+      return getMatN<ElementType>(jsonValue);
+    }
+  }
+
   using PropertyDefinitionType = std::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
+
+  /**
+   * @brief Attempts to parse offset, scale, min, and max properties from the
+   * given property type.
+   */
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
     std::visit(
         [this](auto property) {
@@ -517,42 +558,6 @@ protected:
         },
         inProperty);
   }
-
-private:
-  bool _required;
-
-  std::optional<ElementType> _offset;
-  std::optional<ElementType> _scale;
-  std::optional<ElementType> _max;
-  std::optional<ElementType> _min;
-
-  std::optional<ElementType> _noData;
-  std::optional<ElementType> _defaultValue;
-
-  /**
-   * @brief Attempts to parse an ElementType from the given json value.
-   *
-   * If ElementType is a type with multiple components, e.g. a VECN or MATN
-   * type, this will return std::nullopt if one or more components could not be
-   * parsed.
-   *
-   * @return The value as an instance of ElementType, or std::nullopt if it
-   * could not be parsed.
-   */
-  static std::optional<ElementType>
-  getValue(const CesiumUtility::JsonValue& jsonValue) {
-    if constexpr (IsMetadataScalar<ElementType>::value) {
-      return getScalar<ElementType>(jsonValue);
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
-      return getVecN<ElementType>(jsonValue);
-    }
-
-    if constexpr (IsMetadataMatN<ElementType>::value) {
-      return getMatN<ElementType>(jsonValue);
-    }
-  }
 };
 
 /**
@@ -603,61 +608,19 @@ public:
     }
 
     if (!classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorInvalidNormalization;
+      _status = PropertyViewStatus::ErrorNormalizationMismatch;
     }
 
-    if (classProperty.offset) {
-      _offset = getValue<NormalizedType>(*classProperty.offset);
-      if (!_offset) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidOffset;
-        return;
-      }
-    }
-
-    if (classProperty.scale) {
-      _scale = getValue<NormalizedType>(*classProperty.scale);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidScale;
-        return;
-      }
-    }
-
-    if (classProperty.max) {
-      _max = getValue<NormalizedType>(*classProperty.max);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidMax;
-        return;
-      }
-    }
-
-    if (classProperty.min) {
-      _min = getValue<NormalizedType>(*classProperty.min);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidMin;
-        return;
-      }
-    }
-
-    if (_required) {
-      // "noData" should not be defined if the property is required.
-      if (classProperty.noData) {
-        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
-        return;
-      }
-
-      // default value should not be defined if the property is required.
-      if (classProperty.defaultProperty) {
-        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
-        return;
-      }
+    getNumericPropertyValues(classProperty);
+    if (_status != PropertyViewStatus::Valid) {
+      return;
     }
 
     if (classProperty.noData) {
-      _noData = getValue<ElementType>(*classProperty.noData);
+      if (!_required) {
+        // "noData" should not be defined if the property is required.
+        _noData = getValue<ElementType>(*classProperty.noData);
+      }
       if (!_noData) {
         // The value was specified but something went wrong.
         _status = PropertyViewStatus::ErrorInvalidNoDataValue;
@@ -666,7 +629,11 @@ public:
     }
 
     if (classProperty.defaultProperty) {
-      _defaultValue = getValue<NormalizedType>(*classProperty.defaultProperty);
+      // default value should not be defined if the property is required.
+      if (!_required) {
+        _defaultValue =
+            getValue<NormalizedType>(*classProperty.defaultProperty);
+      }
       if (!_defaultValue) {
         // The value was specified but something went wrong.
         _status = PropertyViewStatus::ErrorInvalidDefaultValue;
@@ -704,42 +671,7 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-
-    if (property.offset) {
-      _offset = getValue<NormalizedType>(*property.offset);
-      if (!_offset) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidOffset;
-        return;
-      }
-    }
-
-    if (property.scale) {
-      _scale = getValue<NormalizedType>(*property.scale);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidScale;
-        return;
-      }
-    }
-
-    if (property.max) {
-      _max = getValue<NormalizedType>(*property.max);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidMax;
-        return;
-      }
-    }
-
-    if (property.min) {
-      _min = getValue<NormalizedType>(*property.min);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidMin;
-        return;
-      }
-    }
+    getNumericPropertyValues(property);
   }
 
   /**
@@ -755,42 +687,7 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-
-    if (property.offset) {
-      _offset = getValue<NormalizedType>(*property.offset);
-      if (!_offset) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidOffset;
-        return;
-      }
-    }
-
-    if (property.scale) {
-      _scale = getValue<NormalizedType>(*property.scale);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidScale;
-        return;
-      }
-    }
-
-    if (property.max) {
-      _max = getValue<NormalizedType>(*property.max);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidMax;
-        return;
-      }
-    }
-
-    if (property.min) {
-      _min = getValue<NormalizedType>(*property.min);
-      if (!_scale) {
-        // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidMin;
-        return;
-      }
-    }
+    getNumericPropertyValues(property);
   }
 
 public:
@@ -885,6 +782,55 @@ private:
     if constexpr (IsMetadataMatN<T>::value) {
       return getMatN<T>(jsonValue);
     }
+  }
+
+  using PropertyDefinitionType = std::
+      variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
+
+  /**
+   * @brief Attempts to parse offset, scale, min, and max properties from the
+   * given property type.
+   */
+  void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
+    std::visit(
+        [this](auto property) {
+          if (property.offset) {
+            _offset = getValue<NormalizedType>(*property.offset);
+            if (!_offset) {
+              // The value was specified but something went wrong.
+              _status = PropertyViewStatus::ErrorInvalidOffset;
+              return;
+            }
+          }
+
+          if (property.scale) {
+            _scale = getValue<NormalizedType>(*property.scale);
+            if (!_scale) {
+              // The value was specified but something went wrong.
+              _status = PropertyViewStatus::ErrorInvalidScale;
+              return;
+            }
+          }
+
+          if (property.max) {
+            _max = getValue<NormalizedType>(*property.max);
+            if (!_scale) {
+              // The value was specified but something went wrong.
+              _status = PropertyViewStatus::ErrorInvalidMax;
+              return;
+            }
+          }
+
+          if (property.min) {
+            _min = getValue<NormalizedType>(*property.min);
+            if (!_scale) {
+              // The value was specified but something went wrong.
+              _status = PropertyViewStatus::ErrorInvalidMin;
+              return;
+            }
+          }
+        },
+        inProperty);
   }
 };
 
@@ -1235,7 +1181,7 @@ public:
     }
 
     if (classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorInvalidNormalization;
+      _status = PropertyViewStatus::ErrorNormalizationMismatch;
       return;
     }
 
@@ -1599,7 +1545,7 @@ public:
     }
 
     if (!classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorInvalidNormalization;
+      _status = PropertyViewStatus::ErrorNormalizationMismatch;
       return;
     }
 

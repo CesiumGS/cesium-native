@@ -80,25 +80,6 @@ public:
 };
 
 template <typename ElementType>
-ElementType
-assembleValueFromChannels(const std::vector<uint8_t>& bytes) noexcept {
-  assert(bytes.size() > 0 && "Channel input must have at least one value.");
-
-  if constexpr (IsMetadataScalar<ElementType>::value) {
-    return assembleScalarValue<ElementType>(bytes);
-  }
-
-  if constexpr (IsMetadataVecN<ElementType>::value) {
-    return assembleVecNValue<ElementType>(bytes);
-  }
-
-  if constexpr (IsMetadataArray<ElementType>::value) {
-    return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
-        bytes);
-  }
-}
-
-template <typename ElementType>
 ElementType assembleScalarValue(const std::vector<uint8_t>& bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
     assert(
@@ -189,6 +170,25 @@ assembleArrayValue(const std::vector<uint8_t>& bytes) noexcept {
   }
 
   return PropertyArrayView<T>(std::move(result));
+}
+
+template <typename ElementType>
+ElementType
+assembleValueFromChannels(const std::vector<uint8_t>& bytes) noexcept {
+  assert(bytes.size() > 0 && "Channel input must have at least one value.");
+
+  if constexpr (IsMetadataScalar<ElementType>::value) {
+    return assembleScalarValue<ElementType>(bytes);
+  }
+
+  if constexpr (IsMetadataVecN<ElementType>::value) {
+    return assembleVecNValue<ElementType>(bytes);
+  }
+
+  if constexpr (IsMetadataArray<ElementType>::value) {
+    return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
+        bytes);
+  }
 }
 
 inline double applySamplerWrapS(const double u, const int32_t wrapS) {
