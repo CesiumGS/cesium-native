@@ -131,7 +131,7 @@ ElementType assembleVecNValue(const std::vector<uint8_t>& bytes) noexcept {
 
   const glm::length_t N =
       getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
-  using typename T = ElementType::value_type;
+  using T = typename ElementType::value_type;
 
   assert(
       sizeof(T) <= 2 && "Components cannot be larger than two bytes in size.");
@@ -278,7 +278,7 @@ public:
         _channels(),
         _swizzle() {
     assert(
-        _status != PropertyTexturePropertyViewStatus::Valid &&
+        this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
 
@@ -380,7 +380,7 @@ public:
 
   ElementType getRaw(double u, double v) const noexcept {
     assert(
-        _status == PropertyTexturePropertyViewStatus::Valid &&
+        this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
     double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);
@@ -498,7 +498,7 @@ public:
         _channels(),
         _swizzle() {
     assert(
-        _status != PropertyTexturePropertyViewStatus::Valid &&
+        this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
 
@@ -569,7 +569,7 @@ public:
   std::optional<NormalizedType> get(double u, double v) const noexcept {
     ElementType value = getRaw(u, v);
 
-    if (this->noData() && value == *(this->noData())) {
+    if (value == this->noData()) {
       return this->defaultValue();
     }
 
@@ -626,7 +626,7 @@ public:
 
   ElementType getRaw(double u, double v) const noexcept {
     assert(
-        _status == PropertyTexturePropertyViewStatus::Valid &&
+        this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
     double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);

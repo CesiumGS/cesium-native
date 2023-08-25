@@ -47,8 +47,7 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
 
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == expected[static_cast<size_t>(i)]);
-    REQUIRE(property.get(i));
-    REQUIRE(*property.get(i) == property.getRaw(i));
+    REQUIRE(property.get(i) == property.getRaw(i));
   }
 }
 
@@ -90,8 +89,7 @@ static void checkNumeric(
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
     if constexpr (IsMetadataFloating<T>::value) {
-      REQUIRE(property.get(i));
-      REQUIRE(*property.get(i) == Approx(*expected[static_cast<size_t>(i)]));
+      REQUIRE(property.get(i) == Approx(*expected[static_cast<size_t>(i)]));
     } else {
       REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
     }
@@ -191,6 +189,12 @@ static void checkVariableLengthArray(
     for (int64_t j = 0; j < values.size(); ++j) {
       REQUIRE(values[j] == data[expectedIdx]);
       ++expectedIdx;
+    }
+
+    auto maybeValues = property.get(i);
+    REQUIRE(maybeValues);
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE((*maybeValues)[j] == values[j]);
     }
   }
 
@@ -398,10 +402,17 @@ static void checkFixedLengthArray(
       REQUIRE(values[j] == data[expectedIdx]);
       ++expectedIdx;
     }
+
+    auto maybeValues = property.get(i);
+    REQUIRE(maybeValues);
+    for (int64_t j = 0; j < values.size(); ++j) {
+      REQUIRE((*maybeValues)[j] == values[j]);
+    }
   }
 
   REQUIRE(expectedIdx == data.size());
 }
+
 template <typename T>
 static void checkFixedLengthArrayWithProperties(
     const std::vector<T>& data,
@@ -597,16 +608,16 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Float with Offset / Scale") {
     std::vector<float> values{12.5f, -12.5f, -5.0f, 6.75f};
-    std::optional<JsonValue> offset = 1.0f;
-    std::optional<JsonValue> scale = 2.0f;
+    const float offset = 1.0f;
+    const float scale = 2.0f;
     std::vector<std::optional<float>> expected{26.0f, -24.0f, -9.0f, 14.5f};
     checkNumeric(values, expected, offset, scale);
   }
 
   SECTION("Normalized Uint8 with Offset and Scale") {
     std::vector<uint8_t> values{0, 64, 128, 255};
-    std::optional<JsonValue> offset = 1.0;
-    std::optional<JsonValue> scale = 2.0;
+    const double offset = 1.0;
+    const double scale = 2.0;
     std::vector<std::optional<double>> expected{
         1.0,
         1 + 2 * (64.0 / 255.0),
@@ -617,7 +628,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Int16 with NoData") {
     std::vector<int16_t> values{-1, 3, 7, -1};
-    std::optional<JsonValue> noData = -1;
+    const int16_t noData = -1;
     std::vector<std::optional<int16_t>> expected{
         std::nullopt,
         static_cast<int16_t>(3),
@@ -634,8 +645,8 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Int16 with NoData and Default") {
     std::vector<int16_t> values{-1, 3, 7, -1};
-    std::optional<JsonValue> noData = -1;
-    std::optional<JsonValue> defaultValue = 0;
+    const int16_t noData = -1;
+    const int16_t defaultValue = 0;
     std::vector<std::optional<int16_t>> expected{
         static_cast<int16_t>(0),
         static_cast<int16_t>(3),
@@ -652,10 +663,10 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 
   SECTION("Normalized Uint8 with all properties") {
     std::vector<uint8_t> values{0, 64, 128, 255};
-    std::optional<JsonValue> offset = 1.0;
-    std::optional<JsonValue> scale = 2.0;
-    std::optional<JsonValue> noData = 0;
-    std::optional<JsonValue> defaultValue = 10.0;
+    const double offset = 1.0;
+    const double scale = 2.0;
+    const uint8_t noData = 0;
+    const double defaultValue = 10.0;
     std::vector<std::optional<double>> expected{
         10.0,
         1 + 2 * (64.0 / 255.0),
@@ -696,22 +707,15 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         static_cast<int64_t>(values.size()),
         gsl::span<const std::byte>(data.data(), data.size()));
 
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == 1.0f);
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == 2.0f);
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == 3.0f);
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == 9.0f);
+    REQUIRE(property.offset() == 1.0f);
+    REQUIRE(property.scale() == 2.0f);
+    REQUIRE(property.min() == 3.0f);
+    REQUIRE(property.max() == 9.0f);
 
     std::vector<float> expected{3.0, 7.0f, 5.0f, 9.0f};
     for (int64_t i = 0; i < property.size(); ++i) {
       REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
-
-      std::optional<float> transformedValue = property.get(i);
-      REQUIRE(transformedValue);
-      REQUIRE(*transformedValue == Approx(expected[static_cast<size_t>(i)]));
+      REQUIRE(property.get(i) == Approx(expected[static_cast<size_t>(i)]));
     }
   }
 }
@@ -775,8 +779,8 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::vec3(6.5f, 2.0f, 4.0f),
         glm::vec3(8.0f, -3.0f, 1.0f),
     };
-    std::optional<JsonValue::Array> offset = JsonValue::Array{1.0f, 2.0f, 3.0f};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{2.0f, 1.0f, 2.0f};
+    JsonValue::Array offset{1.0f, 2.0f, 3.0f};
+    JsonValue::Array scale{2.0f, 1.0f, 2.0f};
     std::vector<std::optional<glm::vec3>> expected{
         glm::vec3(1.0f, 0.5f, -7.0f),
         glm::vec3(14.0f, 4.0f, 11.0f),
@@ -790,8 +794,8 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::u8vec2(0, 64),
         glm::u8vec2(128, 255),
         glm::u8vec2(255, 0)};
-    std::optional<JsonValue::Array> offset = JsonValue::Array{0.0, 1.0};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{2.0, 1.0};
+    JsonValue::Array offset{0.0, 1.0};
+    JsonValue::Array scale{2.0, 1.0};
     std::vector<std::optional<glm::dvec2>> expected{
         glm::dvec2(0.0, 1 + (64.0 / 255.0)),
         glm::dvec2(2 * (128.0 / 255.0), 2.0),
@@ -804,7 +808,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::i16vec2(-1, 3),
         glm::i16vec2(-1, -1),
         glm::i16vec2(7, 0)};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    JsonValue::Array noData{-1, -1};
     std::vector<std::optional<glm::i16vec2>> expected{
         glm::i16vec2(-1, 3),
         std::nullopt,
@@ -823,8 +827,8 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::i16vec2(-1, 3),
         glm::i16vec2(-1, -1),
         glm::i16vec2(7, 0)};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{0, 1};
+    JsonValue::Array noData{-1, -1};
+    JsonValue::Array defaultValue{0, 1};
     std::vector<std::optional<glm::i16vec2>> expected{
         glm::i16vec2(-1, 3),
         glm::i16vec2(0, 1),
@@ -844,10 +848,10 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::u8vec2(128, 255),
         glm::u8vec2(255, 0),
         glm::u8vec2(0, 0)};
-    std::optional<JsonValue::Array> offset = JsonValue::Array{0.0, 1.0};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{2.0, 1.0};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{5.0, 15.0};
+    JsonValue::Array offset{0.0, 1.0};
+    JsonValue::Array scale{2.0, 1.0};
+    JsonValue::Array noData{0, 0};
+    JsonValue::Array defaultValue{5.0, 15.0};
     std::vector<std::optional<glm::dvec2>> expected{
         glm::dvec2(0.0, 1 + (64.0 / 255.0)),
         glm::dvec2(2 * (128.0 / 255.0), 2.0),
@@ -891,14 +895,10 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         static_cast<int64_t>(values.size()),
         gsl::span<const std::byte>(data.data(), data.size()));
 
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == glm::vec2(1.0f, 0.5f));
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == glm::vec2(2.0f, 1.0f));
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == glm::vec2(3.0f, 3.0f));
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == glm::vec2(6.0f, 4.5f));
+    REQUIRE(property.offset() == glm::vec2(1.0f, 0.5f));
+    REQUIRE(property.scale() == glm::vec2(2.0f, 1.0f));
+    REQUIRE(property.min() == glm::vec2(3.0f, 3.0f));
+    REQUIRE(property.max() == glm::vec2(6.0f, 4.5f));
 
     std::vector<glm::vec2> expected{
         glm::vec2(3.0f, 3.5f),
@@ -906,10 +906,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::vec2(5.0f, 4.5f)};
     for (int64_t i = 0; i < property.size(); ++i) {
       REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
-
-      std::optional<glm::vec2> transformedValue = property.get(i);
-      REQUIRE(transformedValue);
-      REQUIRE(*transformedValue == expected[static_cast<size_t>(i)]);
+      REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
     }
   }
 }
@@ -1029,10 +1026,10 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
           8.0f, -1.0f,
           -3.0f, 1.0f),
     };
-    std::optional<JsonValue::Array> offset = JsonValue::Array{
+    JsonValue::Array offset{
       1.0f, 2.0f,
       3.0f, 1.0f};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{
+    JsonValue::Array scale {
       2.0f, 0.0f,
       0.0f, 2.0f};
     std::vector<std::optional<glm::mat2>> expected{
@@ -1059,10 +1056,10 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         glm::u8mat2x2(
           255, 0,
           128, 0)};
-    std::optional<JsonValue::Array> offset = JsonValue::Array{
+    JsonValue::Array offset{
       0.0, 1.0,
       1.0, 0.0};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{
+    JsonValue::Array scale{
       2.0, 1.0,
       0.0, 2.0};
     std::vector<std::optional<glm::dmat2>> expected{
@@ -1091,8 +1088,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
           -1, -1, -1,
            0,  0,  0,
            1,  1,  1)};
-    std::optional<JsonValue::Array> noData =
-        JsonValue::Array{
+    JsonValue::Array noData{
           -1, -1, -1,
           0, 0, 0,
           1, 1, 1};
@@ -1125,11 +1121,11 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
           -1, -1, -1,
            0,  0,  0,
            1,  1,  1)};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{
+    JsonValue::Array noData{
       -1, -1, -1,
        0,  0,  0,
        1,  1,  1};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+    JsonValue::Array defaultValue{
       1, 0, 0,
       0, 1, 0,
       0, 0, 1};
@@ -1157,16 +1153,16 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         glm::u8mat2x2(
           255, 0,
           128, 0)};
-    std::optional<JsonValue::Array> offset = JsonValue::Array{
+    JsonValue::Array offset{
       0.0, 1.0,
       1.0, 0.0};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{
+    JsonValue::Array scale{
       2.0, 1.0,
       0.0, 2.0};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{
+    JsonValue::Array noData{
       0, 0,
       0, 0};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+    JsonValue::Array defaultValue{
       1.0, 0.0,
       0.0, 1.0};
 
@@ -1202,20 +1198,36 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::MAT2;
     classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
-    // clang-fomrat off
-    classProperty.offset = {0.0f, 0.0f, 0.0f, 0.0f};
-    classProperty.scale = {1.0f, 1.0f, 1.0f, 1.0f};
-    classProperty.min = {1.0f, 0.0f, 0.0f, 1.0f};
-    classProperty.max = {3.0f, 0.0f, 0.0f, 3.0f};
-    // clang-fomrat on
+    // clang-format off
+    classProperty.offset = {
+      0.0f, 0.0f,
+      0.0f, 0.0f};
+    classProperty.scale = {
+      1.0f, 1.0f,
+      1.0f, 1.0f};
+    classProperty.min = {
+      1.0f, 0.0f,
+      0.0f, 1.0f};
+    classProperty.max = {
+      3.0f, 0.0f,
+      0.0f, 3.0f};
+    // clang-format on
 
     PropertyTableProperty propertyTableProperty;
-    // clang-fomrat off
-    propertyTableProperty.offset = {1.0f, 0.5f, 0.5f, 1.0f};
-    propertyTableProperty.scale = {2.0f, 1.0f, 0.0f, 1.0f};
-    propertyTableProperty.min = {3.0f, 0.5f, 0.5f, 2.0f};
-    propertyTableProperty.max = {7.0f, 1.5f, 0.5f, 4.0f};
-    // clang-fomrat on
+    // clang-format off
+    propertyTableProperty.offset = {
+      1.0f, 0.5f,
+      0.5f, 1.0f};
+    propertyTableProperty.scale = {
+      2.0f, 1.0f,
+      0.0f, 1.0f};
+    propertyTableProperty.min = {
+      3.0f, 0.5f,
+      0.5f, 2.0f};
+    propertyTableProperty.max = {
+      7.0f, 1.5f,
+      0.5f, 4.0f};
+    // clang-format on
 
     PropertyTablePropertyView<glm::mat2> property(
         propertyTableProperty,
@@ -1224,20 +1236,16 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         gsl::span<const std::byte>(data.data(), data.size()));
 
     // clang-format off
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == glm::mat2(
+    REQUIRE(property.offset() == glm::mat2(
       1.0f, 0.5f,
       0.5f, 1.0f));
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == glm::mat2(
+    REQUIRE(property.scale() == glm::mat2(
       2.0f, 1.0f,
       0.0f, 1.0f));
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == glm::mat2(
+    REQUIRE(property.min() == glm::mat2(
       3.0f, 0.5f,
       0.5f, 2.0f));
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == glm::mat2(
+    REQUIRE(property.max() == glm::mat2(
       7.0f, 1.5f,
       0.5f, 4.0f));
 
@@ -1254,10 +1262,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     // clang-format on
     for (int64_t i = 0; i < property.size(); ++i) {
       REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
-
-      std::optional<glm::mat2> transformedValue = property.get(i);
-      REQUIRE(transformedValue);
-      REQUIRE(*transformedValue == expected[static_cast<size_t>(i)]);
+      REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
     }
   }
 }
@@ -1281,6 +1286,7 @@ TEST_CASE("Check boolean PropertyTablePropertyView") {
 
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.getRaw(i) == bits[static_cast<size_t>(i)]);
+    REQUIRE(property.get(i) == property.getRaw(i));
   }
 }
 
@@ -1338,8 +1344,7 @@ TEST_CASE("Check string PropertyTablePropertyView") {
 
     for (int64_t i = 0; i < property.size(); ++i) {
       REQUIRE(property.getRaw(i) == strings[static_cast<size_t>(i)]);
-      REQUIRE(property.get(i));
-      REQUIRE(*property.get(i) == strings[static_cast<size_t>(i)]);
+      REQUIRE(property.get(i) == strings[static_cast<size_t>(i)]);
     }
   }
 
@@ -1516,10 +1521,8 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     };
     // clang-format on
 
-    std::optional<JsonValue::Array> offset =
-        JsonValue::Array{1.0f, 0.0f, -1.0f, 0.0f};
-    std::optional<JsonValue::Array> scale =
-        JsonValue::Array{1.0f, 2.0f, 1.0f, 2.0f};
+    JsonValue::Array offset{1.0f, 0.0f, -1.0f, 0.0f};
+    JsonValue::Array scale{1.0f, 2.0f, 1.0f, 2.0f};
 
     std::vector<std::optional<std::vector<float>>> expected{
         std::vector<float>{2.0f, 4.0f, 2.0f, 8.0f},
@@ -1534,7 +1537,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         -1, -1,
         -3, 44};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
+    JsonValue::Array noData{-1, -1};
     std::vector<std::optional<std::vector<int32_t>>> expected{
         std::vector<int32_t>{122, 12},
         std::nullopt,
@@ -1556,8 +1559,8 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         -1, -1,
         -3, 44};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{-1, -1};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{0, 1};
+    JsonValue::Array noData{-1, -1};
+    JsonValue::Array defaultValue{0, 1};
     std::vector<std::optional<std::vector<int32_t>>> expected{
         std::vector<int32_t>{122, 12},
         std::vector<int32_t>{0, 1},
@@ -1579,10 +1582,10 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         -64, 127, -128,
          0, 0, 0};
     // clang-format on
-    std::optional<JsonValue::Array> offset = JsonValue::Array{0, 1, 1};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{1, -1, 2};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0, 0};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{10, 8, 2};
+    JsonValue::Array offset{0, 1, 1};
+    JsonValue::Array scale{1, -1, 2};
+    JsonValue::Array noData{0, 0, 0};
+    JsonValue::Array defaultValue{10, 8, 2};
 
     std::vector<std::optional<std::vector<double>>> expected{
         std::vector<double>{-1.0, 1.0, 1 + 2 * (64.0 / 127.0)},
@@ -1733,10 +1736,8 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     };
     // clang-format on
 
-    std::optional<JsonValue::Array> offset =
-        JsonValue::Array{{1.0f, 0.0f}, {-1.0f, 0.0f}};
-    std::optional<JsonValue::Array> scale =
-        JsonValue::Array{{1.0f, 2.0f}, {1.0f, 2.0f}};
+    JsonValue::Array offset{{1.0f, 0.0f}, {-1.0f, 0.0f}};
+    JsonValue::Array scale{{1.0f, 2.0f}, {1.0f, 2.0f}};
 
     std::vector<std::optional<std::vector<glm::vec2>>> expected{
         std::vector<glm::vec2>{glm::vec2(2.0f, 4.0f), glm::vec2(2.0f, 8.0f)},
@@ -1751,7 +1752,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         glm::ivec2( -3, 44), glm::ivec2(0, 7),
         glm::ivec2(-1, -1), glm::ivec2(0, 0)};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{{-1, -1}, {0, 0}};
+    JsonValue::Array noData{{-1, -1}, {0, 0}};
     std::vector<std::optional<std::vector<glm::ivec2>>> expected{
         std::vector<glm::ivec2>{glm::ivec2(122, 12), glm::ivec2(-1, -1)},
         std::vector<glm::ivec2>{glm::ivec2(-3, 44), glm::ivec2(0, 7)},
@@ -1773,9 +1774,8 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         glm::ivec2( -3, 44), glm::ivec2(0, 7),
         glm::ivec2(-1, -1), glm::ivec2(0, 0)};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{{-1, -1}, {0, 0}};
-    std::optional<JsonValue::Array> defaultValue =
-        JsonValue::Array{{1, 1}, {1, 2}};
+    JsonValue::Array noData{{-1, -1}, {0, 0}};
+    JsonValue::Array defaultValue{{1, 1}, {1, 2}};
     std::vector<std::optional<std::vector<glm::ivec2>>> expected{
         std::vector<glm::ivec2>{glm::ivec2(122, 12), glm::ivec2(-1, -1)},
         std::vector<glm::ivec2>{glm::ivec2(-3, 44), glm::ivec2(0, 7)},
@@ -1797,11 +1797,10 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
       glm::i8vec2(127, -128), glm::i8vec2(0, 0),
       glm::i8vec2(0), glm::i8vec2(0)};
     // clang-format on
-    std::optional<JsonValue::Array> offset = JsonValue::Array{{0, 1}, {1, 2}};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{{1, -1}, {2, 1}};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{{0, 0}, {0, 0}};
-    std::optional<JsonValue::Array> defaultValue =
-        JsonValue::Array{{10, 2}, {4, 8}};
+    JsonValue::Array offset{{0, 1}, {1, 2}};
+    JsonValue::Array scale{{1, -1}, {2, 1}};
+    JsonValue::Array noData{{0, 0}, {0, 0}};
+    JsonValue::Array defaultValue{{10, 2}, {4, 8}};
 
     std::vector<std::optional<std::vector<glm::dvec2>>> expected{
         std::vector<glm::dvec2>{
@@ -2039,47 +2038,45 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
   SECTION("Array of 2 mat2s with offset / scale") {
     // clang-format off
     std::vector<glm::mat2> data{
-        glm::mat2(
-          1.0f, 2.0f,
-          3.0f, 4.0f),
-        glm::mat2(
-          5.0f, -1.0f,
-          0.0f, 2.0f),
-        glm::mat2(
-          -1.0f, -1.0f,
-          0.0f, -2.0f),
-        glm::mat2(
-          0.0f, -2.0f,
-          4.0f, 3.0f)};
+      glm::mat2(
+        1.0f, 2.0f,
+        3.0f, 4.0f),
+      glm::mat2(
+        5.0f, -1.0f,
+        0.0f, 2.0f),
+      glm::mat2(
+        -1.0f, -1.0f,
+        0.0f, -2.0f),
+      glm::mat2(
+        0.0f, -2.0f,
+        4.0f, 3.0f)};
 
-    std::optional<JsonValue::Array> offset =
-        JsonValue::Array{
-          {1.0f, 0.0f,
-           2.0f, 3.0f},
-          {-1.0f, 0.0f,
-            0.0f, 2.0f}};
-    std::optional<JsonValue::Array> scale =
-        JsonValue::Array{
-          {1.0f, 2.0f,
-           1.0f, 0.0f},
-          {1.0f, -1.0f,
-          -1.0f, 2.0f}};
+    JsonValue::Array offset{
+      {1.0f, 0.0f,
+       2.0f, 3.0f},
+      {-1.0f, 0.0f,
+        0.0f, 2.0f}};
+    JsonValue::Array scale{
+      {1.0f, 2.0f,
+       1.0f, 0.0f},
+      {1.0f, -1.0f,
+      -1.0f, 2.0f}};
 
     std::vector<std::optional<std::vector<glm::mat2>>> expected{
-        std::vector<glm::mat2>{
-          glm::mat2(
-            2.0f, 4.0f,
-            5.0f, 3.0f),
-          glm::mat2(
-            4.0f, 1.0f,
-            0.0f, 6.0f)},
-        std::vector<glm::mat2>{
-          glm::mat2(
-            0.0f, -2.0f,
-            2.0f, 3.0f),
-          glm::mat2(
-            -1.0f, 2.0f,
-            -4.0f, 8.0f)}};
+      std::vector<glm::mat2>{
+        glm::mat2(
+          2.0f, 4.0f,
+          5.0f, 3.0f),
+        glm::mat2(
+          4.0f, 1.0f,
+          0.0f, 6.0f)},
+      std::vector<glm::mat2>{
+        glm::mat2(
+          0.0f, -2.0f,
+          2.0f, 3.0f),
+        glm::mat2(
+          -1.0f, 2.0f,
+          -4.0f, 8.0f)}};
     // clang-format on
     checkFixedLengthArrayWithProperties(data, 2, expected, offset, scale);
   }
@@ -2099,7 +2096,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           -1, 0),
         glm::imat2x2(-1),
         glm::imat2x2(0)};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{
+    JsonValue::Array noData{
       {-1, 0,
        0, -1},
       {0, 0,
@@ -2144,12 +2141,12 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           -1, 0),
         glm::imat2x2(-1),
         glm::imat2x2(0)};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{
+    JsonValue::Array noData{
       {-1, 0,
        0, -1},
       {0, 0,
        0, 0}};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+    JsonValue::Array defaultValue{
       {2, 0,
        0, 2},
       {1, 0,
@@ -2198,22 +2195,22 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
       glm::i8mat2x2(
         -128, -128,
         -128, -128)};
-    std::optional<JsonValue::Array> offset = JsonValue::Array{
+    JsonValue::Array offset{
       {0, 1,
       2, 3},
       {1, 2,
        0, -2}};
-    std::optional<JsonValue::Array> scale = JsonValue::Array{
+    JsonValue::Array scale{
       {1, -1,
        0, 1},
       {2, 1,
       -1, 0}};
-    std::optional<JsonValue::Array> noData = JsonValue::Array{
+    JsonValue::Array noData{
       {0, 0,
        0, 0},
       {-128, -128,
        -128, -128}};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{
+    JsonValue::Array defaultValue{
       {1, 0,
       0, 1},
       {2, 0,
@@ -2491,7 +2488,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         11 * sizeof(int32_t),
         15 * sizeof(int32_t)};
 
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0};
+    JsonValue::Array noData{0};
 
     std::vector<std::optional<std::vector<int32_t>>> expected{
         std::vector<int32_t>{3, 200},
@@ -2526,8 +2523,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         11 * sizeof(int32_t),
         15 * sizeof(int32_t)};
 
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{1};
+    JsonValue::Array noData{0};
+    JsonValue::Array defaultValue{1};
 
     std::vector<std::optional<std::vector<int32_t>>> expected{
         std::vector<int32_t>{3, 200},
@@ -2558,8 +2555,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
     };
     // clang-format on
 
-    std::optional<JsonValue::Array> noData = JsonValue::Array{255, 255};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{-1.0};
+    JsonValue::Array noData{255, 255};
+    JsonValue::Array defaultValue{-1.0};
 
     std::vector<std::optional<std::vector<double>>> expected{
         std::vector<double>{1.0, 0.0},
@@ -2692,8 +2689,8 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         7 * sizeof(glm::ivec3),
         9 * sizeof(glm::ivec3)};
 
-    std::optional<JsonValue::Array> noData = JsonValue::Array{};
-    noData->push_back(JsonValue::Array{-1, -1, -1});
+    JsonValue::Array noData{};
+    noData.push_back(JsonValue::Array{-1, -1, -1});
 
     std::vector<std::optional<std::vector<glm::ivec3>>> expected{
         std::vector<glm::ivec3>{glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6)},
@@ -2731,10 +2728,10 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         7 * sizeof(glm::ivec3),
         9 * sizeof(glm::ivec3)};
 
-    std::optional<JsonValue::Array> noData = JsonValue::Array{};
-    noData->push_back(JsonValue::Array{-1, -1, -1});
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
-    defaultValue->push_back(JsonValue::Array{0, 0, 0});
+    JsonValue::Array noData{};
+    noData.push_back(JsonValue::Array{-1, -1, -1});
+    JsonValue::Array defaultValue{};
+    defaultValue.push_back(JsonValue::Array{0, 0, 0});
 
     std::vector<std::optional<std::vector<glm::ivec3>>> expected{
         std::vector<glm::ivec3>{glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6)},
@@ -2769,10 +2766,10 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         3 * sizeof(glm::u8vec2),
         6 * sizeof(glm::u8vec2)};
 
-    std::optional<JsonValue::Array> noData = JsonValue::Array{};
-    noData->push_back(JsonValue::Array{0, 0});
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
-    defaultValue->push_back(JsonValue::Array{-1.0, -1.0});
+    JsonValue::Array noData{};
+    noData.push_back(JsonValue::Array{0, 0});
+    JsonValue::Array defaultValue{};
+    defaultValue.push_back(JsonValue::Array{-1.0, -1.0});
 
     std::vector<std::optional<std::vector<glm::dvec2>>> expected{
         std::vector<glm::dvec2>{
@@ -2993,8 +2990,8 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         9 * sizeof(glm::imat3x3)};
 
     // clang-format off
-    std::optional<JsonValue::Array> noData = JsonValue::Array{};
-    noData->push_back(JsonValue::Array{
+    JsonValue::Array noData{};
+    noData.push_back(JsonValue::Array{
       -1, 0, 0,
        0, -1, 0,
        0, 0, -1});
@@ -3037,13 +3034,13 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         9 * sizeof(glm::imat3x3)};
 
     // clang-format off
-    std::optional<JsonValue::Array> noData = JsonValue::Array{};
-    noData->push_back(JsonValue::Array{
+    JsonValue::Array noData{};
+    noData.push_back(JsonValue::Array{
       -1, 0, 0,
       0, -1, 0,
       0, 0, -1});
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
-    defaultValue->push_back(JsonValue::Array{
+    JsonValue::Array defaultValue{};
+    defaultValue.push_back(JsonValue::Array{
       99, 0, 0,
       0, 99, 0,
       0, 0, 99});
@@ -3083,12 +3080,12 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         6 * sizeof(glm::u8mat2x2)};
 
     // clang-format off
-    std::optional<JsonValue::Array> noData = JsonValue::Array{};
-    noData->push_back(JsonValue::Array{
+    JsonValue::Array noData{};
+    noData.push_back(JsonValue::Array{
       0, 0,
       0, 0});
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{};
-    defaultValue->push_back(JsonValue::Array{
+    JsonValue::Array defaultValue{};
+    defaultValue.push_back(JsonValue::Array{
       -1.0, 0.0,
       0.0, -1.0});
     // clang-format on
@@ -3568,6 +3565,16 @@ TEST_CASE("Check fixed-length boolean array PropertyTablePropertyView") {
   REQUIRE(static_cast<int>(val1[9]) == 1);
   REQUIRE(static_cast<int>(val1[10]) == 1);
   REQUIRE(static_cast<int>(val1[11]) == 1);
+
+  for (int64_t i = 0; i < property.size(); i++) {
+    auto value = property.getRaw(i);
+    auto maybeValue = property.get(i);
+    REQUIRE(maybeValue);
+    REQUIRE(maybeValue->size() == value.size());
+    for (int64_t j = 0; j < maybeValue->size(); j++) {
+      REQUIRE((*maybeValue)[j] == value[j]);
+    }
+  }
 }
 
 TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
@@ -3635,4 +3642,14 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
   REQUIRE(static_cast<int>(val2[13]) == 1);
   REQUIRE(static_cast<int>(val2[14]) == 1);
   REQUIRE(static_cast<int>(val2[15]) == 0);
+
+  for (int64_t i = 0; i < property.size(); i++) {
+    auto value = property.getRaw(i);
+    auto maybeValue = property.get(i);
+    REQUIRE(maybeValue);
+    REQUIRE(maybeValue->size() == value.size());
+    for (int64_t j = 0; j < maybeValue->size(); j++) {
+      REQUIRE((*maybeValue)[j] == value[j]);
+    }
+  }
 }

@@ -524,7 +524,8 @@ private:
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> createScalarPropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& propertyTextureProperty) const {
+      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty)
+      const {
     if (classProperty.array) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -564,7 +565,8 @@ private:
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> createVecNPropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& propertyTextureProperty) const {
+      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty)
+      const {
     if (classProperty.array) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -605,7 +607,8 @@ private:
   PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>
   createArrayPropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& propertyTextureProperty) const {
+      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty)
+      const {
     if (!classProperty.array) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);

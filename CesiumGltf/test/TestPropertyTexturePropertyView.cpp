@@ -70,12 +70,8 @@ void checkTextureValues(
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
-    auto value = view.getRaw(uv[0], uv[1]);
-    REQUIRE(value == expected[i]);
-
-    auto maybeValue = view.get(uv[0], uv[1]);
-    REQUIRE(maybeValue);
-    REQUIRE(*maybeValue == expected[i]);
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expected[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == expected[i]);
   }
 }
 
@@ -147,11 +143,8 @@ void checkTextureValues(
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
-    auto value = view.getRaw(uv[0], uv[1]);
-    REQUIRE(value == expectedRaw[i]);
-
-    auto maybeValue = view.get(uv[0], uv[1]);
-    REQUIRE(maybeValue == expectedTransformed[i]);
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedRaw[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == expectedTransformed[i]);
   }
 }
 
@@ -225,11 +218,8 @@ void checkNormalizedTextureValues(
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
-    auto value = view.getRaw(uv[0], uv[1]);
-    REQUIRE(value == expectedRaw[i]);
-
-    auto maybeValue = view.get(uv[0], uv[1]);
-    REQUIRE(maybeValue == expectedTransformed[i]);
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedRaw[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == expectedTransformed[i]);
   }
 }
 
@@ -898,8 +888,8 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
       0, 0,
       182, 1};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0};
-    std::optional<JsonValue::Array> defaultValue = JsonValue::Array{127, 127};
+    JsonValue::Array noData{0, 0};
+    JsonValue::Array defaultValue{127, 127};
     std::vector<glm::i8vec2> expectedRaw{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -1454,11 +1444,8 @@ TEST_CASE("Check that property values override class property values") {
 
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
-    auto value = view.getRaw(uv[0], uv[1]);
-    REQUIRE(value == expectedRaw[i]);
-
-    auto maybeValue = view.get(uv[0], uv[1]);
-    REQUIRE(maybeValue == expectedTransformed[i]);
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedRaw[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == expectedTransformed[i]);
   }
 }
 
@@ -1503,12 +1490,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     std::vector<uint8_t> expected{3, 4, 0, 1};
     for (size_t i = 0; i < expected.size(); i++) {
       glm::dvec2 uv = texCoords[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expected[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == expected[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == expected[i]);
     }
   }
 
@@ -1545,12 +1528,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     std::vector<uint16_t> expected{2, 259, 257, 520};
     for (size_t i = 0; i < expected.size(); i++) {
       glm::dvec2 uv = texCoords[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expected[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == expected[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == expected[i]);
     }
   }
 
@@ -1591,12 +1570,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
         glm::u8vec3(1, 8, 3)};
     for (size_t i = 0; i < expected.size(); i++) {
       glm::dvec2 uv = texCoords[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expected[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == expected[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == expected[i]);
     }
   }
 
@@ -1691,12 +1666,8 @@ TEST_CASE("Check sampling with different sampler values") {
         glm::dvec2(1.5, -0.5)};
     for (size_t i = 0; i < uvs.size(); i++) {
       glm::dvec2 uv = uvs[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == data[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == data[i]);
     }
   }
 
@@ -1719,12 +1690,8 @@ TEST_CASE("Check sampling with different sampler values") {
         glm::dvec2(-1.25, 2.75)};
     for (size_t i = 0; i < uvs.size(); i++) {
       glm::dvec2 uv = uvs[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == data[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == data[i]);
     }
   }
 
@@ -1744,12 +1711,8 @@ TEST_CASE("Check sampling with different sampler values") {
         glm::dvec2(1.5, 1.5)};
     for (size_t i = 0; i < uvs.size(); i++) {
       glm::dvec2 uv = uvs[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == data[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == data[i]);
     }
   }
 
@@ -1769,12 +1732,8 @@ TEST_CASE("Check sampling with different sampler values") {
         glm::dvec2(1.5, 1.5)};
     for (size_t i = 0; i < uvs.size(); i++) {
       glm::dvec2 uv = uvs[i];
-      auto value = view.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = view.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == data[i]);
+      REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(view.get(uv[0], uv[1]) == data[i]);
     }
   }
 }
