@@ -609,3 +609,56 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
     }
   }
 }
+
+TEST_CASE("Can read unknown properties from a glTF") {
+  const std::string s = R"(
+    {
+      "someUnknownProperty": "test",
+      "asset": {
+        "unknownInsideKnown": "this works too"
+      }
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+
+  reader.getOptions().setCaptureUnknownProperties(true);
+
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  REQUIRE(result.model.has_value());
+
+  auto unknownIt1 = result.model->unknownProperties.find("someUnknownProperty");
+  REQUIRE(unknownIt1 != result.model->unknownProperties.end());
+  CHECK(unknownIt1->second.getStringOrDefault("") == "test");
+
+  auto unknownIt2 =
+      result.model->asset.unknownProperties.find("unknownInsideKnown");
+  REQUIRE(unknownIt2 != result.model->asset.unknownProperties.end());
+  CHECK(unknownIt2->second.getStringOrDefault("") == "this works too");
+}
+
+TEST_CASE("Ignores unknown properties if requested") {
+  const std::string s = R"(
+    {
+      "someUnknownProperty": "test",
+      "asset": {
+        "unknownInsideKnown": "this works too"
+      }
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+
+  reader.getOptions().setCaptureUnknownProperties(false);
+
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  REQUIRE(result.model.has_value());
+  CHECK(result.model->unknownProperties.empty());
+  CHECK(result.model->asset.unknownProperties.empty());
+}
