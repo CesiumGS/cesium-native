@@ -4074,7 +4074,8 @@ TEST_CASE("Test with PropertyTableProperty offset, scale, min, max") {
   }
 }
 
-TEST_CASE("Test with PropertyTableProperty offset, scale, min, max (normalized)") {
+TEST_CASE(
+    "Test with PropertyTableProperty offset, scale, min, max (normalized)") {
   Model model;
   std::vector<int8_t> values = {-128, 0, 32, 127};
   const double offset = 0.5;
