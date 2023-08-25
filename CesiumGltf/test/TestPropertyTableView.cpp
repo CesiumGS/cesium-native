@@ -144,8 +144,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
 
     for (int64_t i = 0; i < uint32Property.size(); ++i) {
       REQUIRE(uint32Property.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(uint32Property.get(i));
-      REQUIRE(*uint32Property.get(i) == uint32Property.getRaw(i));
+      REQUIRE(uint32Property.get(i) == uint32Property.getRaw(i));
     }
   }
 
@@ -200,7 +199,7 @@ TEST_CASE("Test scalar PropertyTableProperty") {
         view.getPropertyView<uint32_t, true>("TestClassProperty");
     REQUIRE(
         uint32NormalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Wrong buffer index") {
@@ -256,7 +255,6 @@ TEST_CASE("Test scalar PropertyTableProperty (normalized)") {
   std::vector<int16_t> values = {-128, 0, 32, 2340, -1234, 127};
 
   addBufferToModel(model, values);
-  size_t valueBufferIndex = model.buffers.size() - 1;
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -299,8 +297,7 @@ TEST_CASE("Test scalar PropertyTableProperty (normalized)") {
     for (int64_t i = 0; i < int16Property.size(); ++i) {
       auto value = int16Property.getRaw(i);
       REQUIRE(value == values[static_cast<size_t>(i)]);
-      REQUIRE(int16Property.get(i));
-      REQUIRE(*int16Property.get(i) == normalize(value));
+      REQUIRE(int16Property.get(i) == normalize(value));
     }
   }
 
@@ -346,7 +343,7 @@ TEST_CASE("Test scalar PropertyTableProperty (normalized)") {
         view.getPropertyView<int16_t>("TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Access incorrectly as double") {
@@ -355,52 +352,6 @@ TEST_CASE("Test scalar PropertyTableProperty (normalized)") {
     REQUIRE(
         doubleInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
-  }
-
-  SECTION("Wrong buffer index") {
-    model.bufferViews[valueBufferViewIndex].buffer = 2;
-    PropertyTablePropertyView<int16_t, true> propertyView =
-        view.getPropertyView<int16_t, true>("TestClassProperty");
-    REQUIRE(
-        propertyView.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidValueBuffer);
-  }
-
-  SECTION("Wrong buffer view index") {
-    propertyTableProperty.values = -1;
-    PropertyTablePropertyView<int16_t, true> propertyView =
-        view.getPropertyView<int16_t, true>("TestClassProperty");
-    REQUIRE(
-        propertyView.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidValueBufferView);
-  }
-
-  SECTION("Buffer view points outside of the real buffer length") {
-    model.buffers[valueBufferIndex].cesium.data.resize(4);
-    PropertyTablePropertyView<int16_t, true> propertyView =
-        view.getPropertyView<int16_t, true>("TestClassProperty");
-    REQUIRE(
-        propertyView.status() ==
-        PropertyTablePropertyViewStatus::ErrorBufferViewOutOfBounds);
-  }
-
-  SECTION("Buffer view length isn't multiple of sizeof(T)") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 7;
-    PropertyTablePropertyView<int16_t, true> propertyView =
-        view.getPropertyView<int16_t, true>("TestClassProperty");
-    REQUIRE(
-        propertyView.status() == PropertyTablePropertyViewStatus::
-                                     ErrorBufferViewSizeNotDivisibleByTypeSize);
-  }
-
-  SECTION("Buffer view length doesn't match with propertyTableCount") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 2;
-    PropertyTablePropertyView<int16_t, true> propertyView =
-        view.getPropertyView<int16_t, true>("TestClassProperty");
-    REQUIRE(
-        propertyView.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
   }
 }
 
@@ -525,7 +476,7 @@ TEST_CASE("Test vecN PropertyTableProperty") {
         view.getPropertyView<glm::ivec3, true>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Wrong buffer index") {
@@ -585,7 +536,6 @@ TEST_CASE("Test vecN PropertyTableProperty (normalized)") {
       glm::ivec3(-4, 8, -13)};
 
   addBufferToModel(model, values);
-  size_t valueBufferIndex = model.buffers.size() - 1;
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -628,8 +578,7 @@ TEST_CASE("Test vecN PropertyTableProperty (normalized)") {
     for (int64_t i = 0; i < ivec3Property.size(); ++i) {
       auto value = ivec3Property.getRaw(i);
       REQUIRE(value == values[static_cast<size_t>(i)]);
-      REQUIRE(ivec3Property.get(i));
-      REQUIRE(*ivec3Property.get(i) == normalize(value));
+      REQUIRE(ivec3Property.get(i) == normalize(value));
     }
   }
 
@@ -681,7 +630,7 @@ TEST_CASE("Test vecN PropertyTableProperty (normalized)") {
         view.getPropertyView<glm::ivec3>("TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Access incorrectly as dvec3") {
@@ -690,53 +639,6 @@ TEST_CASE("Test vecN PropertyTableProperty (normalized)") {
     REQUIRE(
         dvec3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
-  }
-
-  SECTION("Wrong buffer index") {
-    model.bufferViews[valueBufferViewIndex].buffer = 2;
-    PropertyTablePropertyView<glm::ivec3, true> ivec3Property =
-        view.getPropertyView<glm::ivec3, true>("TestClassProperty");
-    REQUIRE(
-        ivec3Property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidValueBuffer);
-  }
-
-  SECTION("Wrong buffer view index") {
-    propertyTableProperty.values = -1;
-    PropertyTablePropertyView<glm::ivec3, true> ivec3Property =
-        view.getPropertyView<glm::ivec3, true>("TestClassProperty");
-    REQUIRE(
-        ivec3Property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidValueBufferView);
-  }
-
-  SECTION("Buffer view points outside of the real buffer length") {
-    model.buffers[valueBufferIndex].cesium.data.resize(12);
-    PropertyTablePropertyView<glm::ivec3, true> ivec3Property =
-        view.getPropertyView<glm::ivec3, true>("TestClassProperty");
-    REQUIRE(
-        ivec3Property.status() ==
-        PropertyTablePropertyViewStatus::ErrorBufferViewOutOfBounds);
-  }
-
-  SECTION("Buffer view length isn't multiple of sizeof(T)") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 11;
-    PropertyTablePropertyView<glm::ivec3, true> ivec3Property =
-        view.getPropertyView<glm::ivec3, true>("TestClassProperty");
-    REQUIRE(
-        ivec3Property.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeNotDivisibleByTypeSize);
-  }
-
-  SECTION("Buffer view length doesn't match with propertyTableCount") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 12;
-    PropertyTablePropertyView<glm::ivec3, true> ivec3Property =
-        view.getPropertyView<glm::ivec3, true>("TestClassProperty");
-    REQUIRE(
-        ivec3Property.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
   }
 }
 
@@ -801,8 +703,7 @@ TEST_CASE("Test matN PropertyTableProperty") {
 
     for (int64_t i = 0; i < u32mat2x2Property.size(); ++i) {
       REQUIRE(u32mat2x2Property.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(u32mat2x2Property.get(i));
-      REQUIRE(*u32mat2x2Property.get(i) == u32mat2x2Property.getRaw(i));
+      REQUIRE(u32mat2x2Property.get(i) == u32mat2x2Property.getRaw(i));
     }
   }
 
@@ -868,13 +769,11 @@ TEST_CASE("Test matN PropertyTableProperty") {
   }
 
   SECTION("Access incorrectly as normalized") {
-    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>, true>
-        normalizedInvalid =
-            view.getPropertyView<PropertyArrayView<glm::u32mat2x2>, true>(
-                "TestClassProperty");
+    PropertyTablePropertyView<glm::u32mat2x2, true> normalizedInvalid =
+        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Wrong buffer index") {
@@ -946,7 +845,6 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
   // clang-format on
 
   addBufferToModel(model, values);
-  size_t valueBufferIndex = model.buffers.size() - 1;
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -990,8 +888,7 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
     for (int64_t i = 0; i < u32mat2x2Property.size(); ++i) {
       auto value = u32mat2x2Property.getRaw(i);
       REQUIRE(value == values[static_cast<size_t>(i)]);
-      REQUIRE(u32mat2x2Property.get(i));
-      REQUIRE(*u32mat2x2Property.get(i) == normalize(value));
+      REQUIRE(u32mat2x2Property.get(i) == normalize(value));
     }
   }
 
@@ -1044,7 +941,7 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
         view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Access incorrectly as dmat2") {
@@ -1053,55 +950,6 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
     REQUIRE(
         dmat2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
-  }
-
-  SECTION("Wrong buffer index") {
-    model.bufferViews[valueBufferViewIndex].buffer = 2;
-    PropertyTablePropertyView<glm::u32mat2x2, true> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidValueBuffer);
-  }
-
-  SECTION("Wrong buffer view index") {
-    propertyTableProperty.values = -1;
-    PropertyTablePropertyView<glm::u32mat2x2, true> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidValueBufferView);
-  }
-
-  SECTION("Buffer view points outside of the real buffer length") {
-    model.buffers[valueBufferIndex].cesium.data.resize(sizeof(glm::u32mat2x2));
-    PropertyTablePropertyView<glm::u32mat2x2, true> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() ==
-        PropertyTablePropertyViewStatus::ErrorBufferViewOutOfBounds);
-  }
-
-  SECTION("Buffer view length isn't multiple of sizeof(T)") {
-    model.bufferViews[valueBufferViewIndex].byteLength =
-        sizeof(glm::u32mat2x2) * 4 - 1;
-    PropertyTablePropertyView<glm::u32mat2x2, true> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeNotDivisibleByTypeSize);
-  }
-
-  SECTION("Buffer view length doesn't match with propertyTableCount") {
-    model.bufferViews[valueBufferViewIndex].byteLength = sizeof(glm::u32mat2x2);
-
-    PropertyTablePropertyView<glm::u32mat2x2, true> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
   }
 }
 
@@ -1421,7 +1269,7 @@ TEST_CASE("Test fixed-length scalar array") {
                 "TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Buffer size is not a multiple of type size") {
@@ -1460,7 +1308,6 @@ TEST_CASE("Test fixed-length scalar array (normalized)") {
       {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
 
   addBufferToModel(model, values);
-  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -1549,39 +1396,7 @@ TEST_CASE("Test fixed-length scalar array (normalized)") {
                 "TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Buffer size is not a multiple of type size") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<PropertyArrayView<uint32_t>, true> arrayProperty =
-        view.getPropertyView<PropertyArrayView<uint32_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeNotDivisibleByTypeSize);
-  }
-
-  SECTION("Negative count") {
-    testClassProperty.count = -1;
-    PropertyTablePropertyView<PropertyArrayView<uint32_t>, true> arrayProperty =
-        view.getPropertyView<PropertyArrayView<uint32_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() == PropertyTablePropertyViewStatus::
-                                      ErrorArrayCountAndOffsetBufferDontExist);
-  }
-
-  SECTION("Value buffer doesn't fit into property table count") {
-    testClassProperty.count = 55;
-    PropertyTablePropertyView<PropertyArrayView<uint32_t>, true> arrayProperty =
-        view.getPropertyView<PropertyArrayView<uint32_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 }
 
@@ -1663,10 +1478,11 @@ TEST_CASE("Test variable-length scalar array") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<uint16_t> array =
           property.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = property.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       REQUIRE(maybeArray->size() == array.size());
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == array[static_cast<int64_t>(j)]);
@@ -1678,9 +1494,12 @@ TEST_CASE("Test variable-length scalar array") {
   }
 
   SECTION("Incorrectly normalized") {
-    PropertyTablePropertyView<PropertyArrayView<uint16_t>> property =
-        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
-    REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>, true> property =
+        view.getPropertyView<PropertyArrayView<uint16_t>, true>(
+            "TestClassProperty");
+    REQUIRE(
+        property.status() ==
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Wrong offset type") {
@@ -1783,11 +1602,9 @@ TEST_CASE("Test variable-length scalar array (normalized)") {
   }
 
   addBufferToModel(model, values);
-  size_t valueBufferIndex = model.buffers.size() - 1;
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   addBufferToModel(model, offsets);
-  size_t offsetBufferIndex = model.buffers.size() - 1;
   size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -1834,10 +1651,11 @@ TEST_CASE("Test variable-length scalar array (normalized)") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<uint16_t> array =
           property.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = property.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       REQUIRE(maybeArray->size() == array.size());
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
@@ -1852,81 +1670,7 @@ TEST_CASE("Test variable-length scalar array (normalized)") {
         view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(
         property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Wrong offset type") {
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT8;
-    PropertyTablePropertyView<PropertyArrayView<uint16_t>, true> arrayProperty =
-        view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
-
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT16;
-    arrayProperty = view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-        "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
-
-    propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-        "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
-
-    propertyTableProperty.arrayOffsetType = "";
-    propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT64;
-    arrayProperty = view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-        "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
-  }
-
-  SECTION("Offset values are not sorted ascending") {
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT64;
-    uint64_t* offset = reinterpret_cast<uint64_t*>(
-        model.buffers[offsetBufferIndex].cesium.data.data());
-    offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<PropertyArrayView<uint16_t>, true> arrayProperty =
-        view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayOffsetsNotSorted);
-  }
-
-  SECTION("Offset value points outside of value buffer") {
-    uint64_t* offset = reinterpret_cast<uint64_t*>(
-        model.buffers[offsetBufferIndex].cesium.data.data());
-    offset[propertyTable.count] =
-        static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<PropertyArrayView<uint16_t>, true> arrayProperty =
-        view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds);
-  }
-
-  SECTION("Count and offset buffer are both present") {
-    testClassProperty.count = 3;
-    PropertyTablePropertyView<PropertyArrayView<uint16_t>, true> property =
-        view.getPropertyView<PropertyArrayView<uint16_t>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        property.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 }
 
@@ -2035,7 +1779,7 @@ TEST_CASE("Test fixed-length vecN array") {
                 "TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Buffer size is not a multiple of type size") {
@@ -2083,7 +1827,6 @@ TEST_CASE("Test fixed-length vecN array (normalized)") {
   };
 
   addBufferToModel(model, values);
-  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2176,47 +1919,13 @@ TEST_CASE("Test fixed-length vecN array (normalized)") {
   }
 
   SECTION("Incorrect non-normalization") {
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>> normalizedInvalid =
-        view.getPropertyView<PropertyArrayView<glm::ivec3>>(
-            "TestClassProperty");
-    REQUIRE(
-        normalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Buffer size is not a multiple of type size") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
+    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>>
+        nonNormalizedInvalid =
+            view.getPropertyView<PropertyArrayView<glm::ivec3>>(
                 "TestClassProperty");
     REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeNotDivisibleByTypeSize);
-  }
-
-  SECTION("Negative count") {
-    testClassProperty.count = -1;
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() == PropertyTablePropertyViewStatus::
-                                      ErrorArrayCountAndOffsetBufferDontExist);
-  }
-
-  SECTION("Value buffer doesn't fit into property table count") {
-    testClassProperty.count = 55;
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+        nonNormalizedInvalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 }
 
@@ -2300,9 +2009,10 @@ TEST_CASE("Test variable-length vecN array") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<glm::ivec3> array =
           property.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = property.get(i);
       REQUIRE(maybeArray);
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
@@ -2317,7 +2027,7 @@ TEST_CASE("Test variable-length vecN array") {
             "TestClassProperty");
     REQUIRE(
         property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Wrong offset type") {
@@ -2425,11 +2135,9 @@ TEST_CASE("Test variable-length vecN array (normalized)") {
   }
 
   addBufferToModel(model, values);
-  size_t valueBufferIndex = model.buffers.size() - 1;
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   addBufferToModel(model, offsets);
-  size_t offsetBufferIndex = model.buffers.size() - 1;
   size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -2476,9 +2184,10 @@ TEST_CASE("Test variable-length vecN array (normalized)") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<glm::ivec3> array =
           property.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = property.get(i);
       REQUIRE(maybeArray);
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
@@ -2493,84 +2202,7 @@ TEST_CASE("Test variable-length vecN array (normalized)") {
             "TestClassProperty");
     REQUIRE(
         property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Wrong offset type") {
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT8;
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
-
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT16;
-    arrayProperty = view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-        "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
-
-    propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-        "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
-
-    propertyTableProperty.arrayOffsetType = "";
-    propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT64;
-    arrayProperty = view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-        "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
-  }
-
-  SECTION("Offset values are not sorted ascending") {
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT64;
-    uint64_t* offset = reinterpret_cast<uint64_t*>(
-        model.buffers[offsetBufferIndex].cesium.data.data());
-    offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayOffsetsNotSorted);
-  }
-
-  SECTION("Offset value points outside of value buffer") {
-    uint64_t* offset = reinterpret_cast<uint64_t*>(
-        model.buffers[offsetBufferIndex].cesium.data.data());
-    offset[propertyTable.count] =
-        static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds);
-  }
-
-  SECTION("Count and offset buffer are both present") {
-    testClassProperty.count = 3;
-    PropertyTablePropertyView<PropertyArrayView<glm::ivec3>, true> property =
-        view.getPropertyView<PropertyArrayView<glm::ivec3>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        property.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 }
 
@@ -2690,7 +2322,7 @@ TEST_CASE("Test fixed-length matN array") {
                 "TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Buffer size is not a multiple of type size") {
@@ -2752,7 +2384,6 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
   // clang-format on
 
   addBufferToModel(model, values);
-  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
       model.addExtension<ExtensionModelExtStructuralMetadata>();
@@ -2850,42 +2481,7 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
                 "TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Buffer size is not a multiple of type size") {
-    model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeNotDivisibleByTypeSize);
-  }
-
-  SECTION("Negative count") {
-    testClassProperty.count = -1;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() == PropertyTablePropertyViewStatus::
-                                      ErrorArrayCountAndOffsetBufferDontExist);
-  }
-
-  SECTION("Value buffer doesn't fit into property table count") {
-    testClassProperty.count = 55;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 }
 
@@ -2989,9 +2585,10 @@ TEST_CASE("Test variable-length matN array") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<glm::i32mat2x2> array =
           property.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = property.get(i);
       REQUIRE(maybeArray);
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
@@ -3007,7 +2604,7 @@ TEST_CASE("Test variable-length matN array") {
                 "TestClassProperty");
     REQUIRE(
         property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Wrong offset type") {
@@ -3135,11 +2732,9 @@ TEST_CASE("Test variable-length matN array (normalized)") {
   }
 
   addBufferToModel(model, values);
-  size_t valueBufferIndex = model.buffers.size() - 1;
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
 
   addBufferToModel(model, offsets);
-  size_t offsetBufferIndex = model.buffers.size() - 1;
   size_t offsetBufferViewIndex = model.bufferViews.size() - 1;
 
   ExtensionModelExtStructuralMetadata& metadata =
@@ -3204,88 +2799,7 @@ TEST_CASE("Test variable-length matN array (normalized)") {
             "TestClassProperty");
     REQUIRE(
         property.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
-  }
-
-  SECTION("Wrong offset type") {
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT8;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
-
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT16;
-    arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
-
-    propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
-
-    propertyTableProperty.arrayOffsetType = "";
-    propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT64;
-    arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-            "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
-  }
-
-  SECTION("Offset values are not sorted ascending") {
-    propertyTableProperty.arrayOffsetType =
-        PropertyTableProperty::ArrayOffsetType::UINT64;
-    uint64_t* offset = reinterpret_cast<uint64_t*>(
-        model.buffers[offsetBufferIndex].cesium.data.data());
-    offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayOffsetsNotSorted);
-  }
-
-  SECTION("Offset value points outside of value buffer") {
-    uint64_t* offset = reinterpret_cast<uint64_t*>(
-        model.buffers[offsetBufferIndex].cesium.data.data());
-    offset[propertyTable.count] =
-        static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        arrayProperty.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds);
-  }
-
-  SECTION("Count and offset buffer are both present") {
-    testClassProperty.count = 3;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        property =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        property.status() ==
-        PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
   }
 }
 
@@ -3488,9 +3002,10 @@ TEST_CASE("Test variable-length boolean array") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<bool> array =
           boolArrayProperty.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = boolArrayProperty.get(i);
       REQUIRE(maybeArray);
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
@@ -3826,6 +3341,7 @@ TEST_CASE("Test variable-length arrays of strings") {
             view.getPropertyView<PropertyArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
+
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<std::string_view> stringArray =
           stringProperty.getRaw(static_cast<int64_t>(i));
@@ -4025,19 +3541,14 @@ TEST_CASE("Test with PropertyTableProperty offset, scale, min, max") {
         view.getPropertyView<float>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.offset());
-    REQUIRE(*propertyView.offset() == offset);
-    REQUIRE(propertyView.scale());
-    REQUIRE(*propertyView.scale() == scale);
-    REQUIRE(propertyView.min());
-    REQUIRE(*propertyView.min() == min);
-    REQUIRE(propertyView.max());
-    REQUIRE(*propertyView.max() == max);
+    REQUIRE(propertyView.offset() == offset);
+    REQUIRE(propertyView.scale() == scale);
+    REQUIRE(propertyView.min() == min);
+    REQUIRE(propertyView.max() == max);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(propertyView.get(i));
-      REQUIRE(*propertyView.get(i) == propertyView.getRaw(i) * scale + offset);
+      REQUIRE(propertyView.get(i) == propertyView.getRaw(i) * scale + offset);
     }
   }
 
@@ -4055,26 +3566,21 @@ TEST_CASE("Test with PropertyTableProperty offset, scale, min, max") {
         view.getPropertyView<float>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.offset());
-    REQUIRE(*propertyView.offset() == newOffset);
-    REQUIRE(propertyView.scale());
-    REQUIRE(*propertyView.scale() == newScale);
-    REQUIRE(propertyView.min());
-    REQUIRE(*propertyView.min() == newMin);
-    REQUIRE(propertyView.max());
-    REQUIRE(*propertyView.max() == newMax);
+    REQUIRE(propertyView.offset() == newOffset);
+    REQUIRE(propertyView.scale() == newScale);
+    REQUIRE(propertyView.min() == newMin);
+    REQUIRE(propertyView.max() == newMax);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(propertyView.get(i));
       REQUIRE(
-          *propertyView.get(i) ==
-          propertyView.getRaw(i) * newScale + newOffset);
+          propertyView.get(i) == propertyView.getRaw(i) * newScale + newOffset);
     }
   }
 }
 
-TEST_CASE("Test with PropertyTableProperty offset, scale, min, max (normalized)") {
+TEST_CASE(
+    "Test with PropertyTableProperty offset, scale, min, max (normalized)") {
   Model model;
   std::vector<int8_t> values = {-128, 0, 32, 127};
   const double offset = 0.5;
@@ -4129,20 +3635,15 @@ TEST_CASE("Test with PropertyTableProperty offset, scale, min, max (normalized)"
         view.getPropertyView<int8_t, true>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.offset());
-    REQUIRE(*propertyView.offset() == offset);
-    REQUIRE(propertyView.scale());
-    REQUIRE(*propertyView.scale() == scale);
-    REQUIRE(propertyView.min());
-    REQUIRE(*propertyView.min() == min);
-    REQUIRE(propertyView.max());
-    REQUIRE(*propertyView.max() == max);
+    REQUIRE(propertyView.offset() == offset);
+    REQUIRE(propertyView.scale() == scale);
+    REQUIRE(propertyView.min() == min);
+    REQUIRE(propertyView.max() == max);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(propertyView.get(i));
       REQUIRE(
-          *propertyView.get(i) ==
+          propertyView.get(i) ==
           normalize(propertyView.getRaw(i)) * scale + offset);
     }
   }
@@ -4161,20 +3662,15 @@ TEST_CASE("Test with PropertyTableProperty offset, scale, min, max (normalized)"
         view.getPropertyView<int8_t, true>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.offset());
-    REQUIRE(*propertyView.offset() == newOffset);
-    REQUIRE(propertyView.scale());
-    REQUIRE(*propertyView.scale() == newScale);
-    REQUIRE(propertyView.min());
-    REQUIRE(*propertyView.min() == newMin);
-    REQUIRE(propertyView.max());
-    REQUIRE(*propertyView.max() == newMax);
+    REQUIRE(propertyView.offset() == newOffset);
+    REQUIRE(propertyView.scale() == newScale);
+    REQUIRE(propertyView.min() == newMin);
+    REQUIRE(propertyView.max() == newMax);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(propertyView.get(i));
       REQUIRE(
-          *propertyView.get(i) ==
+          propertyView.get(i) ==
           normalize(propertyView.getRaw(i)) * newScale + newOffset);
     }
   }
@@ -4225,16 +3721,14 @@ TEST_CASE("Test with PropertyTableProperty noData value") {
         view.getPropertyView<int8_t>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.noData());
-    REQUIRE(*propertyView.noData() == noData);
+    REQUIRE(propertyView.noData() == noData);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
       if (propertyView.getRaw(i) == noData) {
         REQUIRE(!propertyView.get(i));
       } else {
-        REQUIRE(propertyView.get(i));
-        REQUIRE(*propertyView.get(i) == propertyView.getRaw(i));
+        REQUIRE(propertyView.get(i) == propertyView.getRaw(i));
       }
     }
   }
@@ -4248,18 +3742,15 @@ TEST_CASE("Test with PropertyTableProperty noData value") {
         view.getPropertyView<int8_t>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.noData());
-    REQUIRE(*propertyView.noData() == noData);
-    REQUIRE(propertyView.defaultValue());
-    REQUIRE(*propertyView.defaultValue() == defaultValue);
+    REQUIRE(propertyView.noData() == noData);
+    REQUIRE(propertyView.defaultValue() == defaultValue);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(propertyView.get(i));
       if (propertyView.getRaw(i) == noData) {
-        REQUIRE(*propertyView.get(i) == defaultValue);
+        REQUIRE(propertyView.get(i) == defaultValue);
       } else {
-        REQUIRE(*propertyView.get(i) == propertyView.getRaw(i));
+        REQUIRE(propertyView.get(i) == propertyView.getRaw(i));
       }
     }
   }
@@ -4311,16 +3802,14 @@ TEST_CASE("Test with PropertyTableProperty noData value (normalized)") {
         view.getPropertyView<int8_t, true>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.noData());
-    REQUIRE(*propertyView.noData() == noData);
+    REQUIRE(propertyView.noData() == noData);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
       if (propertyView.getRaw(i) == noData) {
         REQUIRE(!propertyView.get(i));
       } else {
-        REQUIRE(propertyView.get(i));
-        REQUIRE(*propertyView.get(i) == normalize(propertyView.getRaw(i)));
+        REQUIRE(propertyView.get(i) == normalize(propertyView.getRaw(i)));
       }
     }
   }
@@ -4335,18 +3824,15 @@ TEST_CASE("Test with PropertyTableProperty noData value (normalized)") {
         view.getPropertyView<int8_t, true>("TestClassProperty");
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() > 0);
-    REQUIRE(propertyView.noData());
-    REQUIRE(*propertyView.noData() == noData);
-    REQUIRE(propertyView.defaultValue());
-    REQUIRE(*propertyView.defaultValue() == defaultValue);
+    REQUIRE(propertyView.noData() == noData);
+    REQUIRE(propertyView.defaultValue() == defaultValue);
 
     for (int64_t i = 0; i < propertyView.size(); ++i) {
       REQUIRE(propertyView.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(propertyView.get(i));
       if (propertyView.getRaw(i) == noData) {
-        REQUIRE(*propertyView.get(i) == defaultValue);
+        REQUIRE(propertyView.get(i) == defaultValue);
       } else {
-        REQUIRE(*propertyView.get(i) == normalize(propertyView.getRaw(i)));
+        REQUIRE(propertyView.get(i) == normalize(propertyView.getRaw(i)));
       }
     }
   }
@@ -4435,6 +3921,56 @@ TEST_CASE("Test callback for invalid PropertyTableProperty") {
   REQUIRE(invokedCallbackCount == 2);
 }
 
+TEST_CASE("Test callback for invalid normalized PropertyTableProperty") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+  testClassProperty.normalized = true; // This is erroneous.
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(5);
+
+  PropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = 0;
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(
+      classProperty->componentType == ClassProperty::ComponentType::FLOAT32);
+  REQUIRE(!classProperty->array);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(classProperty->normalized);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() ==
+            PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+        REQUIRE(propertyValue.size() == 0);
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
 TEST_CASE("Test callback for scalar PropertyTableProperty") {
   Model model;
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
@@ -4491,10 +4027,7 @@ TEST_CASE("Test callback for scalar PropertyTableProperty") {
             REQUIRE(
                 static_cast<uint32_t>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expectedValue);
+            REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -4562,10 +4095,7 @@ TEST_CASE("Test callback for scalar PropertyTableProperty (normalized)") {
             REQUIRE(
                 static_cast<uint32_t>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == normalize(expectedValue));
+            REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -4636,10 +4166,7 @@ TEST_CASE("Test callback for vecN PropertyTableProperty") {
             REQUIRE(
                 static_cast<glm::ivec3>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expectedValue);
+            REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -4711,10 +4238,7 @@ TEST_CASE("Test callback for vecN PropertyTableProperty (normalized)") {
             REQUIRE(
                 static_cast<glm::ivec3>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == normalize(expectedValue));
+            REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -4794,10 +4318,7 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
             REQUIRE(
                 static_cast<glm::u32mat2x2>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expectedValue);
+            REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -4879,10 +4400,7 @@ TEST_CASE("Test callback for matN PropertyTableProperty (normalized)") {
             REQUIRE(
                 static_cast<glm::u32mat2x2>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == normalize(expectedValue));
+            REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -4965,10 +4483,7 @@ TEST_CASE("Test callback for boolean PropertyTableProperty") {
             auto expectedValue = expected[static_cast<size_t>(i)];
             REQUIRE(
                 static_cast<bool>(propertyValue.getRaw(i)) == expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expectedValue);
+            REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
@@ -5059,10 +4574,7 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
             REQUIRE(
                 static_cast<std::string_view>(propertyValue.getRaw(i)) ==
                 expectedValue);
-
-            auto maybeValue = propertyValue.get(i);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expectedValue);
+            REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "

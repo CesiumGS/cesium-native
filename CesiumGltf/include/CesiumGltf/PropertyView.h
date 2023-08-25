@@ -60,37 +60,42 @@ public:
   static const PropertyViewStatusType ErrorInvalidNormalization = 5;
 
   /**
+   * @brief This property view's normalization differs from what
+   * is specified in {@link ClassProperty::normalized}
+   */
+  static const PropertyViewStatusType ErrorNormalizationMismatch = 6;
+
+  /**
    * @brief The property provided an invalid offset value.
    */
-  static const PropertyViewStatusType ErrorInvalidOffset = 6;
+  static const PropertyViewStatusType ErrorInvalidOffset = 7;
 
   /**
    * @brief The property provided an invalid scale value.
    */
-  static const PropertyViewStatusType ErrorInvalidScale = 7;
+  static const PropertyViewStatusType ErrorInvalidScale = 8;
 
   /**
    * @brief The property provided an invalid maximum value.
    */
-  static const PropertyViewStatusType ErrorInvalidMax = 8;
+  static const PropertyViewStatusType ErrorInvalidMax = 9;
 
   /**
    * @brief The property provided an invalid minimum value.
    */
-  static const PropertyViewStatusType ErrorInvalidMin = 9;
+  static const PropertyViewStatusType ErrorInvalidMin = 10;
 
   /**
    * @brief The property provided an invalid "no data" value.
    */
-  static const PropertyViewStatusType ErrorInvalidNoDataValue = 10;
+  static const PropertyViewStatusType ErrorInvalidNoDataValue = 11;
 
   /**
    * @brief The property provided an invalid default value.
    */
-  static const PropertyViewStatusType ErrorInvalidDefaultValue = 11;
+  static const PropertyViewStatusType ErrorInvalidDefaultValue = 12;
 };
 
-namespace {
 template <typename T>
 PropertyViewStatusType
 validatePropertyType(const ClassProperty& classProperty) {
@@ -228,7 +233,6 @@ int64_t getCount(std::optional<std::vector<std::byte>>& buffer) {
 
   return static_cast<int64_t>(buffer->size() / sizeof(ElementType));
 }
-} // namespace
 
 /**
  * @brief Represents a metadata property in EXT_structural_metadata.

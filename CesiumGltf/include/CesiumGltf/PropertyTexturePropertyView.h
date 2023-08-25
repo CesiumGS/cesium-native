@@ -27,39 +27,39 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTexture}.
    */
-  static const int ErrorInvalidPropertyTexture = 12;
+  static const int ErrorInvalidPropertyTexture = 13;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 13;
+  static const int ErrorUnsupportedProperty = 14;
 
   /**
    * @brief This property view does not have a valid texture index.
    */
-  static const int ErrorInvalidTexture = 14;
+  static const int ErrorInvalidTexture = 15;
 
   /**
    * @brief This property view does not have a valid sampler index.
    */
-  static const int ErrorInvalidSampler = 15;
+  static const int ErrorInvalidSampler = 16;
 
   /**
    * @brief This property view does not have a valid image index.
    */
-  static const int ErrorInvalidImage = 16;
+  static const int ErrorInvalidImage = 17;
 
   /**
    * @brief This property is viewing an empty image.
    */
-  static const int ErrorEmptyImage = 17;
+  static const int ErrorEmptyImage = 18;
 
   /**
    * @brief This property uses an image with multi-byte channels. Only
    * single-byte channels are supported.
    */
-  static const int ErrorInvalidBytesPerChannel = 18;
+  static const int ErrorInvalidBytesPerChannel = 19;
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -68,7 +68,7 @@ public:
    * more than four channels can be defined for specialized texture
    * formats, this implementation only supports four channels max.
    */
-  static const int ErrorInvalidChannels = 19;
+  static const int ErrorInvalidChannels = 20;
 
   /**
    * @brief The channels of this property texture property do not provide
@@ -76,12 +76,30 @@ public:
    * because an incorrect number of channels was provided, or because the
    * image itself has a different channel count / byte size than expected.
    */
-  static const int ErrorChannelsAndTypeMismatch = 20;
+  static const int ErrorChannelsAndTypeMismatch = 21;
 };
 
-namespace {
 template <typename ElementType>
-ElementType assembleScalarValue(const std::vector<uint8_t>& bytes) {
+ElementType
+assembleValueFromChannels(const std::vector<uint8_t>& bytes) noexcept {
+  assert(bytes.size() > 0 && "Channel input must have at least one value.");
+
+  if constexpr (IsMetadataScalar<ElementType>::value) {
+    return assembleScalarValue<ElementType>(bytes);
+  }
+
+  if constexpr (IsMetadataVecN<ElementType>::value) {
+    return assembleVecNValue<ElementType>(bytes);
+  }
+
+  if constexpr (IsMetadataArray<ElementType>::value) {
+    return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
+        bytes);
+  }
+}
+
+template <typename ElementType>
+ElementType assembleScalarValue(const std::vector<uint8_t>& bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
     assert(
         bytes.size() == sizeof(float) &&
@@ -107,7 +125,73 @@ ElementType assembleScalarValue(const std::vector<uint8_t>& bytes) {
   }
 }
 
-double applySamplerWrapS(const double u, const int32_t wrapS) {
+template <typename ElementType>
+ElementType assembleVecNValue(const std::vector<uint8_t>& bytes) noexcept {
+  ElementType result = ElementType();
+
+  const glm::length_t N =
+      getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
+  using typename T = ElementType::value_type;
+
+  assert(
+      sizeof(T) <= 2 && "Components cannot be larger than two bytes in size.");
+
+  if constexpr (std::is_same_v<T, int16_t>) {
+    assert(N == 2 && "Only vec2s can contain two-byte integer components.");
+    uint16_t x = static_cast<uint16_t>(bytes[0]) |
+                 (static_cast<uint16_t>(bytes[1]) << 8);
+    uint16_t y = static_cast<uint16_t>(bytes[2]) |
+                 (static_cast<uint16_t>(bytes[3]) << 8);
+
+    result[0] = *reinterpret_cast<int16_t*>(&x);
+    result[1] = *reinterpret_cast<int16_t*>(&y);
+  }
+
+  if constexpr (std::is_same_v<T, uint16_t>) {
+    assert(N == 2 && "Only vec2s can contain two-byte integer components.");
+    result[0] = static_cast<uint16_t>(bytes[0]) |
+                (static_cast<uint16_t>(bytes[1]) << 8);
+    result[1] = static_cast<uint16_t>(bytes[2]) |
+                (static_cast<uint16_t>(bytes[3]) << 8);
+  }
+
+  if constexpr (std::is_same_v<T, int8_t>) {
+    for (size_t i = 0; i < bytes.size(); i++) {
+      result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
+    }
+  }
+
+  if constexpr (std::is_same_v<T, uint8_t>) {
+    for (size_t i = 0; i < bytes.size(); i++) {
+      result[i] = bytes[i];
+    }
+  }
+
+  return result;
+}
+
+template <typename T>
+PropertyArrayView<T>
+assembleArrayValue(const std::vector<uint8_t>& bytes) noexcept {
+  std::vector<T> result(bytes.size() / sizeof(T));
+
+  if constexpr (sizeof(T) == 2) {
+    for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
+      using UintType = std::make_unsigned_t<T>;
+      UintType resultAsUint = static_cast<UintType>(bytes[b]) |
+                              (static_cast<UintType>(bytes[b + 1]) << 8);
+      result[i] = *reinterpret_cast<T*>(&resultAsUint);
+    }
+  } else {
+    for (size_t i = 0; i < bytes.size(); i++) {
+      result[i] = *reinterpret_cast<const T*>(&bytes[i]);
+    }
+  }
+
+  return PropertyArrayView<T>(std::move(result));
+}
+
+inline double applySamplerWrapS(const double u, const int32_t wrapS) {
   if (wrapS == Sampler::WrapS::REPEAT) {
     double integral = 0;
     double fraction = std::modf(u, &integral);
@@ -122,10 +206,10 @@ double applySamplerWrapS(const double u, const int32_t wrapS) {
     return integer % 2 == 1 ? 1.0 - fraction : fraction;
   }
 
-  return std::clamp(u, 0.0, 1.0);
+  return glm::clamp(u, 0.0, 1.0);
 }
 
-double applySamplerWrapT(const double v, const int32_t wrapT) {
+inline double applySamplerWrapT(const double v, const int32_t wrapT) {
   if (wrapT == Sampler::WrapT::REPEAT) {
     double integral = 0;
     double fraction = std::modf(v, &integral);
@@ -140,15 +224,19 @@ double applySamplerWrapT(const double v, const int32_t wrapT) {
     return integer % 2 == 1 ? 1.0 - fraction : fraction;
   }
 
-  return std::clamp(v, 0.0, 1.0);
+  return glm::clamp(v, 0.0, 1.0);
 }
-} // namespace
 
 /**
- * @brief A view of the data specified by a {@link PropertyTextureProperty}.
+ * @brief A view of the non-normalized data specified by a {@link PropertyTextureProperty}.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
+ *
+ * @tparam ElementType The type of the elements represented in the property view
+ * @tparam Normalized Whether or not the property is normalized. If normalized,
+ * the elements can be retrieved as normalized floating-point numbers, as
+ * opposed to their integer values.
  */
 template <typename ElementType, bool Normalized = false>
 class PropertyTexturePropertyView;
@@ -159,6 +247,8 @@ class PropertyTexturePropertyView;
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
+ *
+ * @tparam ElementType The type of the elements represented in the property view
  */
 template <typename ElementType>
 class PropertyTexturePropertyView<ElementType, false>
@@ -173,7 +263,7 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle("") {}
+        _swizzle() {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -186,7 +276,7 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle("") {
+        _swizzle() {
     assert(
         _status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -197,11 +287,9 @@ public:
    *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param pSampler A pointer to the sampler used by the property.
-   * @param pImage A pointer to the image used by the property.
-   * @param texCoordSetIndex The value of {@link PropertyTextureProperty::texcoord}.
+   * @param sampler The {@link Sampler} used by the property.
+   * @param image The {@link ImageCesium} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
-   * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
@@ -214,10 +302,12 @@ public:
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
         _channels(channels),
-        _swizzle("") {
+        _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
     }
+
+    _swizzle.reserve(_channels.size());
 
     for (size_t i = 0; i < _channels.size(); ++i) {
       switch (_channels[i]) {
@@ -240,16 +330,15 @@ public:
   }
 
   /**
-   * @brief Gets the raw value of the property for the given texture
-   * coordinates with all value transforms applied. That is, if the property
-   * specifies an offset and scale, they will be applied to the value before the
-   * value is returned. The sampler's wrapping mode will be used when sampling
-   * the texture.
+   * @brief Gets the value of the property for the given texture coordinates
+   * with all value transforms applied. That is, if the property specifies an
+   * offset and scale, they will be applied to the value before the value is
+   * returned. The sampler's wrapping mode will be used when sampling the
+   * texture.
    *
-   * If this property has a specified "no data" value, and the retrieved element
-   * is equal to that value, then this will return the property's specified
-   * default value. If the property did not provide a default value, this
-   * returns std::nullopt.
+   * If this property has a specified "no data" value, this will return the
+   * property's default value for any elements that equal this "no data" value.
+   * If the property did not specify a default value, this returns std::nullopt.
    *
    * @param u The u-component of the texture coordinates.
    * @param v The v-component of the texture coordinates.
@@ -260,7 +349,7 @@ public:
   std::optional<ElementType> get(double u, double v) const noexcept {
     ElementType value = getRaw(u, v);
 
-    if (this->noData() && value == *(this->noData())) {
+    if (value == this->noData()) {
       return this->defaultValue();
     }
 
@@ -310,11 +399,11 @@ public:
     double yCoord = std::floor(wrappedV * this->_pImage->height);
 
     // Clamp to ensure no out-of-bounds data access
-    int64_t x = std::clamp(
+    int64_t x = glm::clamp(
         static_cast<int64_t>(xCoord),
         static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->width) - 1);
-    int64_t y = std::clamp(
+    int64_t y = glm::clamp(
         static_cast<int64_t>(yCoord),
         static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->height) - 1);
@@ -333,7 +422,7 @@ public:
       channelValues[i] = *(pValue + this->_channels[i]);
     }
 
-    return assembleValueFromChannels(channelValues);
+    return assembleValueFromChannels<ElementType>(channelValues);
   }
 
   /**
@@ -364,103 +453,6 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
 private:
-  ElementType
-  assembleValueFromChannels(const std::vector<uint8_t>& bytes) const noexcept {
-    assert(bytes.size() > 0 && "Channel input must have at least one value.");
-
-    if constexpr (IsMetadataScalar<ElementType>::value) {
-      return assembleScalarValue<ElementType>(bytes);
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
-      return assembleVecNValue(bytes);
-    }
-
-    if constexpr (IsMetadataArray<ElementType>::value) {
-      return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
-          bytes);
-    }
-  }
-
-  ElementType
-  assembleVecNValue(const std::vector<uint8_t>& bytes) const noexcept {
-    const glm::length_t N =
-        getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
-    switch (N) {
-    case 2:
-      return assembleVecNValueImpl<2, typename ElementType::value_type>(bytes);
-    case 3:
-      return assembleVecNValueImpl<3, typename ElementType::value_type>(bytes);
-    case 4:
-      return assembleVecNValueImpl<4, typename ElementType::value_type>(bytes);
-    default:
-      return ElementType();
-    }
-  }
-
-  template <glm::length_t N, typename T>
-  ElementType
-  assembleVecNValueImpl(const std::vector<uint8_t>& bytes) const noexcept {
-    ElementType result = ElementType();
-    assert(
-        sizeof(T) <= 2 &&
-        "Components cannot be larger than two bytes in size.");
-
-    if constexpr (std::is_same_v<T, int16_t>) {
-      assert(N == 2 && "Only vec2s can contain two-byte integer components.");
-      uint16_t x = static_cast<uint16_t>(bytes[0]) |
-                   (static_cast<uint16_t>(bytes[1]) << 8);
-      uint16_t y = static_cast<uint16_t>(bytes[2]) |
-                   (static_cast<uint16_t>(bytes[3]) << 8);
-
-      result[0] = *reinterpret_cast<int16_t*>(&x);
-      result[1] = *reinterpret_cast<int16_t*>(&y);
-    }
-
-    if constexpr (std::is_same_v<T, uint16_t>) {
-      assert(N == 2 && "Only vec2s can contain two-byte integer components.");
-      result[0] = static_cast<uint16_t>(bytes[0]) |
-                  (static_cast<uint16_t>(bytes[1]) << 8);
-      result[1] = static_cast<uint16_t>(bytes[2]) |
-                  (static_cast<uint16_t>(bytes[3]) << 8);
-    }
-
-    if constexpr (std::is_same_v<T, int8_t>) {
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
-      }
-    }
-
-    if constexpr (std::is_same_v<T, uint8_t>) {
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result[i] = bytes[i];
-      }
-    }
-
-    return result;
-  }
-
-  template <typename T>
-  PropertyArrayView<T>
-  assembleArrayValue(const std::vector<uint8_t>& bytes) const noexcept {
-    std::vector<T> result(bytes.size() / sizeof(T));
-
-    if constexpr (sizeof(T) == 2) {
-      for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
-        using UintType = std::make_unsigned_t<T>;
-        UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-                                (static_cast<UintType>(bytes[b + 1]) << 8);
-        result[i] = *reinterpret_cast<T*>(&resultAsUint);
-      }
-    } else {
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result[i] = *reinterpret_cast<const T*>(&bytes[i]);
-      }
-    }
-
-    return PropertyArrayView<T>(std::move(result));
-  }
-
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   int64_t _texCoordSetIndex;
@@ -491,7 +483,7 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle("") {}
+        _swizzle() {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -504,7 +496,7 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle("") {
+        _swizzle() {
     assert(
         _status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -515,11 +507,9 @@ public:
    *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param pSampler A pointer to the sampler used by the property.
-   * @param pImage A pointer to the image used by the property.
-   * @param texCoordSetIndex The value of {@link PropertyTextureProperty::texcoord}.
+   * @param sampler The {@link Sampler} used by the property.
+   * @param image The {@link ImageCesium} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
-   * @param normalized Whether this property has a normalized integer type.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
@@ -532,11 +522,12 @@ public:
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
         _channels(channels),
-        _swizzle("") {
+        _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
     }
 
+    _swizzle.reserve(_channels.size());
     for (size_t i = 0; i < _channels.size(); ++i) {
       switch (_channels[i]) {
       case 0:
@@ -654,11 +645,11 @@ public:
     double yCoord = std::floor(wrappedV * this->_pImage->height);
 
     // Clamp to ensure no out-of-bounds data access
-    int64_t x = std::clamp(
+    int64_t x = glm::clamp(
         static_cast<int64_t>(xCoord),
         static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->width) - 1);
-    int64_t y = std::clamp(
+    int64_t y = glm::clamp(
         static_cast<int64_t>(yCoord),
         static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->height) - 1);
@@ -677,7 +668,7 @@ public:
       channelValues[i] = *(pValue + this->_channels[i]);
     }
 
-    return assembleValueFromChannels(channelValues);
+    return assembleValueFromChannels<ElementType>(channelValues);
   }
 
   /**
@@ -708,103 +699,6 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
 private:
-  ElementType
-  assembleValueFromChannels(const std::vector<uint8_t>& bytes) const noexcept {
-    assert(bytes.size() > 0 && "Channel input must have at least one value.");
-
-    if constexpr (IsMetadataScalar<ElementType>::value) {
-      return assembleScalarValue<ElementType>(bytes);
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
-      return assembleVecNValue(bytes);
-    }
-
-    if constexpr (IsMetadataArray<ElementType>::value) {
-      return assembleArrayValue<typename MetadataArrayType<ElementType>::type>(
-          bytes);
-    }
-  }
-
-  ElementType
-  assembleVecNValue(const std::vector<uint8_t>& bytes) const noexcept {
-    const glm::length_t N =
-        getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
-    switch (N) {
-    case 2:
-      return assembleVecNValueImpl<2, typename ElementType::value_type>(bytes);
-    case 3:
-      return assembleVecNValueImpl<3, typename ElementType::value_type>(bytes);
-    case 4:
-      return assembleVecNValueImpl<4, typename ElementType::value_type>(bytes);
-    default:
-      return ElementType();
-    }
-  }
-
-  template <glm::length_t N, typename T>
-  ElementType
-  assembleVecNValueImpl(const std::vector<uint8_t>& bytes) const noexcept {
-    ElementType result = ElementType();
-    assert(
-        sizeof(T) <= 2 &&
-        "Components cannot be larger than two bytes in size.");
-
-    if constexpr (std::is_same_v<T, int16_t>) {
-      assert(N == 2 && "Only vec2s can contain two-byte integer components.");
-      uint16_t x = static_cast<uint16_t>(bytes[0]) |
-                   (static_cast<uint16_t>(bytes[1]) << 8);
-      uint16_t y = static_cast<uint16_t>(bytes[2]) |
-                   (static_cast<uint16_t>(bytes[3]) << 8);
-
-      result[0] = *reinterpret_cast<int16_t*>(&x);
-      result[1] = *reinterpret_cast<int16_t*>(&y);
-    }
-
-    if constexpr (std::is_same_v<T, uint16_t>) {
-      assert(N == 2 && "Only vec2s can contain two-byte integer components.");
-      result[0] = static_cast<uint16_t>(bytes[0]) |
-                  (static_cast<uint16_t>(bytes[1]) << 8);
-      result[1] = static_cast<uint16_t>(bytes[2]) |
-                  (static_cast<uint16_t>(bytes[3]) << 8);
-    }
-
-    if constexpr (std::is_same_v<T, int8_t>) {
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
-      }
-    }
-
-    if constexpr (std::is_same_v<T, uint8_t>) {
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result[i] = bytes[i];
-      }
-    }
-
-    return result;
-  }
-
-  template <typename T>
-  PropertyArrayView<T>
-  assembleArrayValue(const std::vector<uint8_t>& bytes) const noexcept {
-    std::vector<T> result(bytes.size() / sizeof(T));
-
-    if constexpr (sizeof(T) == 2) {
-      for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
-        using UintType = std::make_unsigned_t<T>;
-        UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-                                (static_cast<UintType>(bytes[b + 1]) << 8);
-        result[i] = *reinterpret_cast<T*>(&resultAsUint);
-      }
-    } else {
-      for (size_t i = 0; i < bytes.size(); i++) {
-        result[i] = *reinterpret_cast<const T*>(&bytes[i]);
-      }
-    }
-
-    return PropertyArrayView<T>(std::move(result));
-  }
-
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   int64_t _texCoordSetIndex;

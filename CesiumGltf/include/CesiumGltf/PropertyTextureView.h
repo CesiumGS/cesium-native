@@ -42,9 +42,10 @@ enum class PropertyTextureViewStatus {
 /**
  * @brief A view on a {@link PropertyTexture}.
  *
- * This should be used to get a {@link PropertyTexturePropertyView} of a property in the property texture.
- * It will validate the EXT_structural_metadata format and ensure {@link PropertyTexturePropertyView}
- * does not access out of bounds.
+ * This should be used to get a {@link PropertyTexturePropertyView} of a property
+ * in the property texture. It will validate the EXT_structural_metadata format
+ * and
+ * ensure {@link PropertyTexturePropertyView} does not access data out of bounds.
  */
 class PropertyTextureView {
 public:
@@ -82,14 +83,24 @@ public:
    * property stored in the {@link PropertyTexture}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTexturePropertyView} retrieves the correct data. T must be
-   * a scalar with a supported component type (uint8_t, uint16_t, uint32_t,
+   * {@link PropertyTexturePropertyView} retrieves the correct data. T must
+   * be a scalar with a supported component type (uint8_t, uint16_t, uint32_t,
    * float), a glm vecN composed of one of the scalar types, or a
-   * PropertyArrayView containing one of the scalar types
+   * PropertyArrayView containing one of the scalar types.
    *
+   * If T does not match the type specified by the class property, this returns
+   * an invalid PropertyTexturePropertyView. Likewise, if the value of
+   * Normalized
+   * does not match the value of {@ClassProperty::normalized} for that class property,
+   * this returns an invalid property view. Only types with integer components
+   * may be normalized.
+   *
+   * @tparam T The C++ type corresponding to the type of the data retrieved.
+   * @tparam Normalized Whether the property is normalized. Only applicable to
+   * types with integer components.
    * @param propertyName The name of the property to retrieve data from
-   * @return A {@link PropertyTexturePropertyView} of the property. If no valid property is
-   * found, the property view will be invalid.
+   * @return A {@link PropertyTexturePropertyView} of the property. If no valid
+   * property is found, the property view will be invalid.
    */
   template <typename T, bool Normalized = false>
   PropertyTexturePropertyView<T, Normalized>
@@ -117,10 +128,11 @@ public:
    * {@link PropertyTexturePropertyView} retrieves the correct data. T must be
    * a scalar with a supported component type (uint8_t, uint16_t, uint32_t,
    * float), a glm vecN composed of one of the scalar types, or a
-   * PropertyArrayView containing one of the scalar types. If the property is
-   * invalid, an empty {@link PropertyTexturePropertyView} with an error status
-   * will be passed to the callback. Otherwise, a valid property view will be
-   * passed to the callback.
+   * PropertyArrayView containing one of the scalar types.
+   *
+   * If the property is somehow invalid, an empty {@link PropertyTexturePropertyView}
+   * with an error status will be passed to the callback. Otherwise, a valid
+   * property view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts a property name and a
@@ -152,7 +164,28 @@ public:
       componentType =
           convertStringToPropertyComponentType(*pClassProperty->componentType);
     }
+
     bool normalized = pClassProperty->normalized;
+    if (normalized) {
+      switch (componentType) {
+      case PropertyComponentType::Int8:
+      case PropertyComponentType::Uint8:
+      case PropertyComponentType::Int16:
+      case PropertyComponentType::Uint16:
+      case PropertyComponentType::Int32:
+      case PropertyComponentType::Uint32:
+      case PropertyComponentType::Int64:
+      case PropertyComponentType::Uint64:
+        break;
+      default:
+        // Only integer components may be normalized.
+        callback(
+            propertyName,
+            PropertyTexturePropertyView<uint8_t>(
+                PropertyTexturePropertyViewStatus::ErrorInvalidNormalization));
+        return;
+      }
+    }
 
     if (pClassProperty->array) {
       if (normalized) {
@@ -225,10 +258,11 @@ public:
    * {@link PropertyTexturePropertyView} retrieves the correct data. T must be
    * a scalar with a supported component type (uint8_t, uint16_t, uint32_t,
    * float), a glm vecN composed of one of the scalar types, or a
-   * PropertyArrayView containing one of the scalar types. If the property is
-   * invalid, an empty {@link PropertyTexturePropertyView} with an error status
-   * will be passed to the callback. Otherwise, a valid property view will be
-   * passed to the callback.
+   * PropertyArrayView containing one of the scalar types.
+   *
+   * If the property is invalid, an empty {@link PropertyTexturePropertyView} with an
+   * error status will be passed to the callback. Otherwise, a valid property
+   * view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts property name and
@@ -512,7 +546,7 @@ private:
 
     if (classProperty.normalized != Normalized) {
       return PropertyTexturePropertyView<T, Normalized>(
-          PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+          PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
     // Only up to four bytes of image data are supported.
@@ -552,7 +586,7 @@ private:
 
     if (classProperty.normalized != Normalized) {
       return PropertyTexturePropertyView<T, Normalized>(
-          PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+          PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
     // Only up to four bytes of image data are supported.
@@ -593,7 +627,7 @@ private:
 
     if (classProperty.normalized != Normalized) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
-          PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+          PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
     // Only scalar arrays are supported. The scalar component type must not
@@ -685,5 +719,5 @@ private:
   const Class* _pClass;
 
   PropertyTextureViewStatus _status;
-}; // namespace CesiumGltf
+};
 } // namespace CesiumGltf

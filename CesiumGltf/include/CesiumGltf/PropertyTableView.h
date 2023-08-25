@@ -104,6 +104,16 @@ public:
    * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
    * aforementioned types.
    *
+   * If T does not match the type specified by the class property, this returns
+   * an invalid PropertyTexturePropertyView. Likewise, if the value of
+   * Normalized
+   * does not match the value of {@ClassProperty::normalized} for that class property,
+   * this returns an invalid property view. Only types with integer components
+   * may be normalized.
+   *
+   * @tparam T The C++ type corresponding to the type of the data retrieved.
+   * @tparam Normalized Whether the property is normalized. Only applicable to
+   * types with integer components.
    * @param propertyName The name of the property to retrieve data from
    * @return A {@link PropertyTablePropertyView} of the property. If no valid property is
    * found, the property view will be invalid.
@@ -136,9 +146,11 @@ public:
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
-   * aforementioned types. If the property is invalid, an empty
-   * {@link PropertyTablePropertyView} with an error status will be passed to the
-   * callback. Otherwise, a valid property view will be passed to the callback.
+   * aforementioned types.
+   *
+   * If the property is invalid, an empty {@link PropertyTablePropertyView} with an
+   * error status will be passed to the callback. Otherwise, a valid property
+   * view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts a property name and a
@@ -184,6 +196,7 @@ public:
       case PropertyComponentType::Uint64:
         break;
       default:
+        // Only integer components may be normalized.
         callback(
             propertyName,
             PropertyTablePropertyView<uint8_t>(
@@ -299,10 +312,11 @@ public:
    * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
    * the scalar types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
-   * aforementioned types. If the property is invalid, an empty
-   * {@link PropertyTablePropertyView} with an error status code will be passed to the
-   * callback. Otherwise, a valid property view will be passed to
-   * the callback.
+   * aforementioned types.
+   *
+   * If the property is invalid, an empty {@link PropertyTablePropertyView} with
+   * an error status code will be passed to the callback. Otherwise, a valid
+   * property view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts property name and
@@ -1095,7 +1109,7 @@ private:
 
     if (classProperty.normalized != Normalized) {
       return PropertyTablePropertyView<T, Normalized>(
-          PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+          PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
     gsl::span<const std::byte> values;
@@ -1166,7 +1180,7 @@ private:
 
     if (classProperty.normalized != Normalized) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
-          PropertyTablePropertyViewStatus::ErrorInvalidNormalization);
+          PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
     gsl::span<const std::byte> values;

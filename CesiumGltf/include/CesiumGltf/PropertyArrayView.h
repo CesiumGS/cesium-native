@@ -81,7 +81,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{} {}
+  PropertyArrayView() : _values{}, _bitOffset{0}, _size{0} {}
 
   /**
    * @brief Constructs an array view from a buffer.
@@ -123,8 +123,8 @@ public:
 
 private:
   gsl::span<const std::byte> _values;
-  int64_t _bitOffset = 0;
-  int64_t _size = 0;
+  int64_t _bitOffset;
+  int64_t _size;
 };
 
 template <> class PropertyArrayView<std::string_view> {
@@ -154,7 +154,7 @@ public:
       : _values{values},
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
-        _size(size) {}
+        _size{size} {}
 
   std::string_view operator[](int64_t index) const noexcept {
     const size_t currentOffset =

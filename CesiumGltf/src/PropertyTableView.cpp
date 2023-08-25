@@ -360,7 +360,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
 
   // Handle fixed-length arrays
   if (fixedLengthArrayCount > 0) {
-    size_t maxRequiredBytes = maxRequiredBytes = static_cast<size_t>(glm::ceil(
+    size_t maxRequiredBytes = static_cast<size_t>(glm::ceil(
         static_cast<double>(_pPropertyTable->count * fixedLengthArrayCount) /
         8.0));
 

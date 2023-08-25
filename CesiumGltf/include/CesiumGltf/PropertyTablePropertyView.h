@@ -18,112 +18,114 @@ namespace CesiumGltf {
  * @brief Indicates the status of a property table property view.
  *
  * The {@link PropertyTablePropertyView} constructor always completes successfully.
- * However, it may not always reflect the actual content of the {@link PropertyTableProperty},
- * but instead indicate that its {@link PropertyTablePropertyView::size} is 0.
+ * However, it may not always reflect the actual content of the
+ * {@link PropertyTableProperty}, but instead indicate that its
+ * {@link PropertyTablePropertyView::size} is 0.
  * This enumeration provides the reason.
  */
 class PropertyTablePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
-   * @brief This property view was initialized from an invalid {@link PropertyTable}.
+   * @brief This property view was initialized from an invalid
+   * {@link PropertyTable}.
    */
-  static const PropertyViewStatusType ErrorInvalidPropertyTable = 12;
+  static const PropertyViewStatusType ErrorInvalidPropertyTable = 13;
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBufferView = 13;
+  static const PropertyViewStatusType ErrorInvalidValueBufferView = 14;
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 14;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 15;
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 15;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 16;
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBuffer = 16;
+  static const PropertyViewStatusType ErrorInvalidValueBuffer = 17;
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 17;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 18;
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 18;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 19;
 
   /**
    * @brief This property view has a buffer view that points outside the bounds
    * of its target buffer.
    */
-  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 19;
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 20;
 
   /**
    * @brief This property view has an invalid buffer view; its length is not
    * a multiple of the size of its type / offset type.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeNotDivisibleByTypeSize = 20;
+      ErrorBufferViewSizeNotDivisibleByTypeSize = 21;
 
   /**
    * @brief This property view has an invalid buffer view; its length does not
    * match the size of the property table.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 21;
+      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 22;
 
   /**
    * @brief This array property view has both a fixed length and an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferCoexist =
-      22;
+      23;
 
   /**
    * @brief This array property view has neither a fixed length nor an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferDontExist =
-      23;
+      24;
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 24;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 25;
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 25;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 26;
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 26;
+  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 27;
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 27;
+  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 28;
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 28;
+  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 29;
 
   /**
    * @brief This property view has a string offset that is out of bounds.
@@ -131,8 +133,7 @@ public:
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 29;
 };
 
-namespace {
-int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
+inline int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
   switch (offsetType) {
   case PropertyComponentType::Uint8:
     return sizeof(uint8_t);
@@ -146,7 +147,6 @@ int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
     return 0;
   }
 }
-} // namespace
 
 /**
  * @brief A view on the data of the {@link PropertyTableProperty} that is created
@@ -282,7 +282,7 @@ public:
   std::optional<ElementType> get(int64_t index) const noexcept {
     ElementType value = getRaw(index);
 
-    if (this->noData() && value == *(this->noData())) {
+    if (value == this->noData()) {
       return this->defaultValue();
     }
 

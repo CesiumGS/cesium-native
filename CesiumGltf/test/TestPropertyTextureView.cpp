@@ -3,10 +3,7 @@
 #include <catch2/catch.hpp>
 #include <gsl/span>
 
-#include <bitset>
-#include <climits>
 #include <cstddef>
-#include <cstring>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -174,12 +171,8 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = uint8Property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = uint8Property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == data[i]);
+      REQUIRE(uint8Property.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == data[i]);
     }
   }
 
@@ -224,7 +217,7 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
         view.getPropertyView<uint8_t, true>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Channel and type mismatch") {
@@ -360,12 +353,8 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = uint8Property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = uint8Property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == normalize(data[i]));
+      REQUIRE(uint8Property.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == normalize(data[i]));
     }
   }
 
@@ -405,7 +394,7 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
         view.getPropertyView<uint8_t>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Access incorrectly as double") {
@@ -424,69 +413,6 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
     REQUIRE(
         uint8Property.status() ==
         PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
-  }
-
-  SECTION("Invalid channel values") {
-    propertyTextureProperty.channels = {5};
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-  }
-
-  SECTION("Zero channel values") {
-    propertyTextureProperty.channels.clear();
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-  }
-
-  SECTION("Invalid bytes per channel") {
-    model.images[imageIndex].cesium.bytesPerChannel = 2;
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
-  }
-
-  SECTION("Empty image") {
-    model.images[imageIndex].cesium.width = 0;
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorEmptyImage);
-  }
-
-  SECTION("Wrong image index") {
-    model.textures[textureIndex].source = 1;
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidImage);
-  }
-
-  SECTION("Wrong sampler index") {
-    model.textures[textureIndex].sampler = 1;
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidSampler);
-  }
-
-  SECTION("Wrong texture index") {
-    propertyTextureProperty.index = 1;
-    PropertyTexturePropertyView<uint8_t, true> uint8Property =
-        view.getPropertyView<uint8_t, true>("TestClassProperty");
-    REQUIRE(
-        uint8Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidTexture);
   }
 }
 
@@ -554,12 +480,8 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
         glm::u8vec2(30, 11)};
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = u8vec2Property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expected[i]);
-
-      auto maybeValue = u8vec2Property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == expected[i]);
+      REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(u8vec2Property.get(uv[0], uv[1]) == expected[i]);
     }
   }
 
@@ -605,7 +527,7 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
         view.getPropertyView<glm::u8vec2, true>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Channel and type mismatch") {
@@ -702,12 +624,8 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
         glm::u8vec2(30, 11)};
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = u8vec2Property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expected[i]);
-
-      auto maybeValue = u8vec2Property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == normalize(expected[i]));
+      REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(u8vec2Property.get(uv[0], uv[1]) == normalize(expected[i]));
     }
   }
 
@@ -754,7 +672,7 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
         view.getPropertyView<glm::u8vec2>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Access incorrectly as dvec2") {
@@ -773,24 +691,6 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
     REQUIRE(
         u8vec2Property.status() ==
         PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
-  }
-
-  SECTION("Invalid channel values") {
-    propertyTextureProperty.channels = {0, 4};
-    PropertyTexturePropertyView<glm::u8vec2, true> u8vec2Property =
-        view.getPropertyView<glm::u8vec2, true>("TestClassProperty");
-    REQUIRE(
-        u8vec2Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-  }
-
-  SECTION("Invalid bytes per channel") {
-    model.images[imageIndex].cesium.bytesPerChannel = 2;
-    PropertyTexturePropertyView<glm::u8vec2, true> u8vec2Property =
-        view.getPropertyView<glm::u8vec2, true>("TestClassProperty");
-    REQUIRE(
-        u8vec2Property.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
   }
 }
 
@@ -919,7 +819,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
                 "TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Channel and type mismatch") {
@@ -1080,7 +980,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SECTION("Channel and type mismatch") {
@@ -1093,28 +993,6 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
     REQUIRE(
         uint8ArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
-  }
-
-  SECTION("Invalid channel values") {
-    propertyTextureProperty.channels = {0, 4, 1};
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>, true>
-        uint8ArrayProperty =
-            view.getPropertyView<PropertyArrayView<uint8_t>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        uint8ArrayProperty.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
-  }
-
-  SECTION("Invalid bytes per channel") {
-    model.images[imageIndex].cesium.bytesPerChannel = 2;
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>, true>
-        uint8ArrayProperty =
-            view.getPropertyView<PropertyArrayView<uint8_t>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        uint8ArrayProperty.status() ==
-        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
   }
 }
 
@@ -1194,17 +1072,13 @@ TEST_CASE("Test with PropertyTextureProperty offset, scale, min, max") {
     PropertyTexturePropertyView<float> property =
         view.getPropertyView<float>("TestClassProperty");
     REQUIRE(property.status() == PropertyTexturePropertyViewStatus::Valid);
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == offset);
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == scale);
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == min);
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == max);
+    REQUIRE(property.offset() == offset);
+    REQUIRE(property.scale() == scale);
+    REQUIRE(property.min() == min);
+    REQUIRE(property.max() == max);
 
     std::vector<float> expectedRaw(expectedUint.size());
-    std::vector<std::optional<float>> expectedTransformed(expectedUint.size());
+    std::vector<float> expectedTransformed(expectedUint.size());
     for (size_t i = 0; i < expectedUint.size(); i++) {
       float value = *reinterpret_cast<float*>(&expectedUint[i]);
       expectedRaw[i] = value;
@@ -1213,11 +1087,8 @@ TEST_CASE("Test with PropertyTextureProperty offset, scale, min, max") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expectedRaw[i]);
-
-      auto maybeValue = property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue == expectedTransformed[i]);
+      REQUIRE(property.getRaw(uv[0], uv[1]) == expectedRaw[i]);
+      REQUIRE(property.get(uv[0], uv[1]) == expectedTransformed[i]);
     }
   }
 
@@ -1234,17 +1105,13 @@ TEST_CASE("Test with PropertyTextureProperty offset, scale, min, max") {
     PropertyTexturePropertyView<float> property =
         view.getPropertyView<float>("TestClassProperty");
     REQUIRE(property.status() == PropertyTexturePropertyViewStatus::Valid);
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == newOffset);
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == newScale);
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == newMin);
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == newMax);
+    REQUIRE(property.offset() == newOffset);
+    REQUIRE(property.scale() == newScale);
+    REQUIRE(property.min() == newMin);
+    REQUIRE(property.max() == newMax);
 
     std::vector<float> expectedRaw(expectedUint.size());
-    std::vector<std::optional<float>> expectedTransformed(expectedUint.size());
+    std::vector<float> expectedTransformed(expectedUint.size());
     for (size_t i = 0; i < expectedUint.size(); i++) {
       float value = *reinterpret_cast<float*>(&expectedUint[i]);
       expectedRaw[i] = value;
@@ -1253,11 +1120,8 @@ TEST_CASE("Test with PropertyTextureProperty offset, scale, min, max") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == expectedRaw[i]);
-
-      auto maybeValue = property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue == expectedTransformed[i]);
+      REQUIRE(property.getRaw(uv[0], uv[1]) == expectedRaw[i]);
+      REQUIRE(property.get(uv[0], uv[1]) == expectedTransformed[i]);
     }
   }
 }
@@ -1327,23 +1191,16 @@ TEST_CASE(
     PropertyTexturePropertyView<uint8_t, true> property =
         view.getPropertyView<uint8_t, true>("TestClassProperty");
     REQUIRE(property.status() == PropertyTexturePropertyViewStatus::Valid);
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == offset);
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == scale);
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == min);
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == max);
+    REQUIRE(property.offset() == offset);
+    REQUIRE(property.scale() == scale);
+    REQUIRE(property.min() == min);
+    REQUIRE(property.max() == max);
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == normalize(data[i]) * scale + offset);
+      REQUIRE(property.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(
+          property.get(uv[0], uv[1]) == normalize(data[i]) * scale + offset);
     }
   }
 
@@ -1360,23 +1217,17 @@ TEST_CASE(
     PropertyTexturePropertyView<uint8_t, true> property =
         view.getPropertyView<uint8_t, true>("TestClassProperty");
     REQUIRE(property.status() == PropertyTexturePropertyViewStatus::Valid);
-    REQUIRE(property.offset());
-    REQUIRE(*property.offset() == newOffset);
-    REQUIRE(property.scale());
-    REQUIRE(*property.scale() == newScale);
-    REQUIRE(property.min());
-    REQUIRE(*property.min() == newMin);
-    REQUIRE(property.max());
-    REQUIRE(*property.max() == newMax);
+    REQUIRE(property.offset() == newOffset);
+    REQUIRE(property.scale() == newScale);
+    REQUIRE(property.min() == newMin);
+    REQUIRE(property.max() == newMax);
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      auto value = property.getRaw(uv[0], uv[1]);
-      REQUIRE(value == data[i]);
-
-      auto maybeValue = property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
-      REQUIRE(*maybeValue == normalize(data[i]) * newScale + newOffset);
+      REQUIRE(property.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(
+          property.get(uv[0], uv[1]) ==
+          normalize(data[i]) * newScale + newOffset);
     }
   }
 }
@@ -1447,8 +1298,7 @@ TEST_CASE("Test with PropertyTextureProperty noData") {
       if (value == noData) {
         REQUIRE(!maybeValue);
       } else {
-        REQUIRE(maybeValue);
-        REQUIRE(*maybeValue == data[i]);
+        REQUIRE(maybeValue == data[i]);
       }
     }
   }
@@ -1467,11 +1317,10 @@ TEST_CASE("Test with PropertyTextureProperty noData") {
       REQUIRE(value == data[i]);
 
       auto maybeValue = property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
       if (value == noData) {
-        REQUIRE(*maybeValue == defaultValue);
+        REQUIRE(maybeValue == defaultValue);
       } else {
-        REQUIRE(*maybeValue == data[i]);
+        REQUIRE(maybeValue == data[i]);
       }
     }
   }
@@ -1544,8 +1393,7 @@ TEST_CASE("Test with PropertyTextureProperty noData (normalized)") {
       if (value == noData) {
         REQUIRE(!maybeValue);
       } else {
-        REQUIRE(maybeValue);
-        REQUIRE(*maybeValue == normalize(data[i]));
+        REQUIRE(maybeValue == normalize(data[i]));
       }
     }
   }
@@ -1564,11 +1412,10 @@ TEST_CASE("Test with PropertyTextureProperty noData (normalized)") {
       REQUIRE(value == data[i]);
 
       auto maybeValue = property.get(uv[0], uv[1]);
-      REQUIRE(maybeValue);
       if (value == noData) {
-        REQUIRE(*maybeValue == defaultValue);
+        REQUIRE(maybeValue == defaultValue);
       } else {
-        REQUIRE(*maybeValue == normalize(data[i]));
+        REQUIRE(maybeValue == normalize(data[i]));
       }
     }
   }
@@ -1651,6 +1498,49 @@ TEST_CASE("Test callback on invalid PropertyTextureProperty") {
   REQUIRE(invokedCallbackCount == 2);
 }
 
+TEST_CASE("Test callback on invalid normalized PropertyTextureProperty") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+  testClassProperty.normalized = true; // This is erroneous.
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(0);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0, 1};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+
+  uint32_t invokedCallbackCount = 0;
+  auto testCallback = [&invokedCallbackCount](
+                          const std::string& /*propertyName*/,
+                          auto propertyValue) mutable {
+    invokedCallbackCount++;
+    REQUIRE(
+        propertyValue.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidNormalization);
+  };
+
+  view.getPropertyView("TestClassProperty", testCallback);
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
 TEST_CASE("Test callback for scalar PropertyTextureProperty") {
   Model model;
   std::vector<uint8_t> data = {255, 255, 12, 1, 30, 2, 0, 255};
@@ -1718,12 +1608,8 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
 
           for (size_t i = 0; i < expected.size(); ++i) {
             glm::dvec2& uv = texCoords[i];
-            auto value = propertyValue.getRaw(uv[0], uv[1]);
-            REQUIRE(value == expected[i]);
-
-            auto maybeValue = propertyValue.get(uv[0], uv[1]);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expected[i]);
+            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+            REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
           }
         } else {
           FAIL("getPropertyView returned PropertyTexturePropertyView of "
@@ -1802,12 +1688,8 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
 
           for (size_t i = 0; i < expected.size(); ++i) {
             glm::dvec2& uv = texCoords[i];
-            auto value = propertyValue.getRaw(uv[0], uv[1]);
-            REQUIRE(value == expected[i]);
-
-            auto maybeValue = propertyValue.get(uv[0], uv[1]);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == normalize(expected[i]));
+            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+            REQUIRE(propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
           }
         } else {
           FAIL("getPropertyView returned PropertyTexturePropertyView of "
@@ -1896,12 +1778,8 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
 
           for (size_t i = 0; i < expected.size(); ++i) {
             glm::dvec2& uv = texCoords[i];
-            auto value = propertyValue.getRaw(uv[0], uv[1]);
-            REQUIRE(value == expected[i]);
-
-            auto maybeValue = propertyValue.get(uv[0], uv[1]);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == expected[i]);
+            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+            REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
           }
         } else {
           FAIL("getPropertyView returned PropertyTexturePropertyView of "
@@ -1991,12 +1869,8 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
 
           for (size_t i = 0; i < expected.size(); ++i) {
             glm::dvec2& uv = texCoords[i];
-            auto value = propertyValue.getRaw(uv[0], uv[1]);
-            REQUIRE(value == expected[i]);
-
-            auto maybeValue = propertyValue.get(uv[0], uv[1]);
-            REQUIRE(maybeValue);
-            REQUIRE(*maybeValue == normalize(expected[i]));
+            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+            REQUIRE(propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
           }
         } else {
           FAIL("getPropertyView returned PropertyTexturePropertyView of "
