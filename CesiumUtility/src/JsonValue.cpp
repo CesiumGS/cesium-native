@@ -1,5 +1,7 @@
 #include "CesiumUtility/JsonValue.h"
 
+#include <algorithm>
+
 namespace CesiumUtility {
 
 const JsonValue* JsonValue::getValuePtrForKey(const std::string& key) const {
@@ -31,3 +33,19 @@ JsonValue* JsonValue::getValuePtrForKey(const std::string& key) {
 }
 
 } // namespace CesiumUtility
+std::vector<std::string> CesiumUtility::JsonValue::getArrayOfStrings(
+    const std::string& defaultString) const {
+  if (!this->isArray())
+    return std::vector<std::string>();
+
+  const JsonValue::Array& array = this->getArray();
+  std::vector<std::string> result(array.size());
+  std::transform(
+      array.begin(),
+      array.end(),
+      result.begin(),
+      [&defaultString](const JsonValue& value) {
+        return value.getStringOrDefault(defaultString);
+      });
+  return result;
+}

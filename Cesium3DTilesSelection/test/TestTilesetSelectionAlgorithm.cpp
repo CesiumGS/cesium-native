@@ -1272,13 +1272,8 @@ TEST_CASE("Allows access to material variants") {
       "Names of material variants to be expected in the glTF assets");
   REQUIRE(found1->propertyValue.isArray());
 
-  const JsonValue::Array& variantsJson = found1->propertyValue.getArray();
-  std::vector<std::string> variants(variantsJson.size());
-  std::transform(
-      variantsJson.begin(),
-      variantsJson.end(),
-      variants.begin(),
-      [](const JsonValue& value) { return value.getStringOrDefault(""); });
+  std::vector<std::string> variants =
+      found1->propertyValue.getArrayOfStrings("");
   REQUIRE(variants.size() == 4);
   CHECK(variants[0] == "RGB");
   CHECK(variants[1] == "RRR");
@@ -1287,8 +1282,6 @@ TEST_CASE("Allows access to material variants") {
 
   std::vector<std::vector<std::string>> variantsByGroup;
   for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
-    std::vector<std::string>& groupVariants = variantsByGroup.emplace_back();
-
     std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
         Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
             *pMetadata->schema,
@@ -1297,12 +1290,7 @@ TEST_CASE("Allows access to material variants") {
     REQUIRE(found2);
     REQUIRE(found2->propertyValue.isArray());
 
-    const JsonValue::Array& groupVariantsJson =
-        found2->propertyValue.getArray();
-    groupVariants.reserve(groupVariantsJson.size());
-    for (size_t i = 0; i < groupVariantsJson.size(); ++i) {
-      groupVariants.emplace_back(groupVariantsJson[i].getStringOrDefault(""));
-    }
+    variantsByGroup.emplace_back(found2->propertyValue.getArrayOfStrings(""));
   }
 
   std::vector<std::vector<std::string>> expected = {
@@ -1375,15 +1363,8 @@ TEST_CASE("Allows access to material variants in an external schema") {
             "Names of material variants to be expected in the glTF assets");
         REQUIRE(found1->propertyValue.isArray());
 
-        const JsonValue::Array& variantsJson = found1->propertyValue.getArray();
-        std::vector<std::string> variants(variantsJson.size());
-        std::transform(
-            variantsJson.begin(),
-            variantsJson.end(),
-            variants.begin(),
-            [](const JsonValue& value) {
-              return value.getStringOrDefault("");
-            });
+        std::vector<std::string> variants =
+            found1->propertyValue.getArrayOfStrings("");
         REQUIRE(variants.size() == 4);
         CHECK(variants[0] == "RGB");
         CHECK(variants[1] == "RRR");
@@ -1392,9 +1373,6 @@ TEST_CASE("Allows access to material variants in an external schema") {
 
         std::vector<std::vector<std::string>> variantsByGroup;
         for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
-          std::vector<std::string>& groupVariants =
-              variantsByGroup.emplace_back();
-
           std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
               Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
                   *pMetadata->schema,
@@ -1402,14 +1380,8 @@ TEST_CASE("Allows access to material variants in an external schema") {
                   "MATERIAL_VARIANTS");
           REQUIRE(found2);
           REQUIRE(found2->propertyValue.isArray());
-
-          const JsonValue::Array& groupVariantsJson =
-              found2->propertyValue.getArray();
-          groupVariants.reserve(groupVariantsJson.size());
-          for (size_t i = 0; i < groupVariantsJson.size(); ++i) {
-            groupVariants.emplace_back(
-                groupVariantsJson[i].getStringOrDefault(""));
-          }
+          variantsByGroup.emplace_back(
+              found2->propertyValue.getArrayOfStrings(""));
         }
 
         std::vector<std::vector<std::string>> expected = {
