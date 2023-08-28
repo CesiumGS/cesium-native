@@ -22,7 +22,7 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
-struct TilesetMetadata;
+class TilesetMetadata;
 
 /**
  * @brief A <a
