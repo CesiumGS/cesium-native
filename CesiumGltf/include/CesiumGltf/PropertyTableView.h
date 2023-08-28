@@ -184,25 +184,13 @@ public:
     }
 
     bool normalized = pClassProperty->normalized;
-    if (normalized) {
-      switch (componentType) {
-      case PropertyComponentType::Int8:
-      case PropertyComponentType::Uint8:
-      case PropertyComponentType::Int16:
-      case PropertyComponentType::Uint16:
-      case PropertyComponentType::Int32:
-      case PropertyComponentType::Uint32:
-      case PropertyComponentType::Int64:
-      case PropertyComponentType::Uint64:
-        break;
-      default:
-        // Only integer components may be normalized.
-        callback(
-            propertyName,
-            PropertyTablePropertyView<uint8_t>(
-                PropertyTablePropertyViewStatus::ErrorInvalidNormalization));
-        return;
-      }
+    if (normalized && !isPropertyComponentTypeInteger(componentType)) {
+      // Only integer components may be normalized.
+      callback(
+          propertyName,
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorInvalidNormalization));
+      return;
     }
 
     if (pClassProperty->array) {

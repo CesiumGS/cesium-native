@@ -201,6 +201,17 @@ bool isPropertyTypeMatN(PropertyType type) {
          type == PropertyType::Mat4;
 }
 
+bool isPropertyComponentTypeInteger(PropertyComponentType componentType) {
+  return componentType == PropertyComponentType::Int8 ||
+         componentType == PropertyComponentType::Uint8 ||
+         componentType == PropertyComponentType::Int16 ||
+         componentType == PropertyComponentType::Uint16 ||
+         componentType == PropertyComponentType::Int32 ||
+         componentType == PropertyComponentType::Uint32 ||
+         componentType == PropertyComponentType::Int64 ||
+         componentType == PropertyComponentType::Uint64;
+}
+
 glm::length_t getDimensionsFromPropertyType(PropertyType type) {
   switch (type) {
   case PropertyType::Scalar:
