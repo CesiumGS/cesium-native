@@ -49,8 +49,7 @@ public:
       std::string _tileMatrixSetID,
       const std::optional<std::vector<std::string>> tileMatrixLabels,
       const std::optional<std::map<std::string, std::string>> dimensions,
-      const std::vector<std::string>& subdomains
-    )
+      const std::vector<std::string>& subdomains)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -74,8 +73,7 @@ public:
         _tileMatrixSetID(_tileMatrixSetID),
         _labels(tileMatrixLabels),
         _staticDimensions(dimensions),
-        _subdomains(subdomains)
-         {}
+        _subdomains(subdomains) {}
 
   virtual ~WebMapTileServiceTileProvider() {}
 
@@ -107,45 +105,44 @@ protected:
 
     if (!_useKVP) {
       urlTemplateMap.insert(
-        {
-           {"Layer", _layer},
+          {{"Layer", _layer},
            {"Style", _style},
            {"TileMatrix", tileMatrix},
            {"TileRow", std::to_string(row)},
            {"TileCol", std::to_string(col)},
            {"TileMatrixSet", _tileMatrixSetID},
-           {"s", _subdomains[(row + col + level) % _subdomains.size()]}
-        }
-      );
-      if (_staticDimensions) {
-        urlTemplateMap.insert(_staticDimensions->begin(), _staticDimensions->end());
-      }
-    } else {
-      urlTemplateMap.insert(
-        {
-          {"layer", _layer},
-          {"style", _style},
-          {"tilematrix", tileMatrix},
-          {"tilerow", std::to_string(row)},
-          {"tilecol", std::to_string(col)},
-          {"tilematrixset", _tileMatrixSetID},
-          {"format", _format}
-        }
-      ); // !! These are query parameters
+           {"s", _subdomains[(row + col + level) % _subdomains.size()]}});
       if (_staticDimensions) {
         urlTemplateMap.insert(
             _staticDimensions->begin(),
             _staticDimensions->end());
       }
-      urlTemplateMap.emplace("s", _subdomains[(col + row + level) % _subdomains.size()]);
+    } else {
+      urlTemplateMap.insert(
+          {{"layer", _layer},
+           {"style", _style},
+           {"tilematrix", tileMatrix},
+           {"tilerow", std::to_string(row)},
+           {"tilecol", std::to_string(col)},
+           {"tilematrixset", _tileMatrixSetID},
+           {"format", _format}}); // !! These are query parameters
+      if (_staticDimensions) {
+        urlTemplateMap.insert(
+            _staticDimensions->begin(),
+            _staticDimensions->end());
+      }
+      urlTemplateMap.emplace(
+          "s",
+          _subdomains[(col + row + level) % _subdomains.size()]);
 
-      urlTemplate += queryString +
+      urlTemplate +=
+          queryString +
           "request=GetTile&version=1.0.0&service=WMTS&"
-          "format={format}&layer={layer}&style={style}&tilematrixset={tilematrixset}&"
-          "tilematrix={tilematrix}&tilerow={tilerow}&tilecol={tilecol}"
-      ;
+          "format={format}&layer={layer}&style={style}&"
+          "tilematrixset={tilematrixset}&"
+          "tilematrix={tilematrix}&tilerow={tilerow}&tilecol={tilecol}";
     }
-    
+
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         urlTemplate,
         [&map = urlTemplateMap](const std::string& placeholder) {
@@ -250,7 +247,8 @@ WebMapTileServiceRasterOverlay::createTileProvider(
     useKVP = false;
   }
 
-  std::optional<std::map<std::string, std::string>> dimensions = _options.dimensions;
+  std::optional<std::map<std::string, std::string>> dimensions =
+      _options.dimensions;
 
   minimumLevel = glm::min(minimumLevel, maximumLevel);
 
@@ -271,7 +269,9 @@ WebMapTileServiceRasterOverlay::createTileProvider(
       projection = CesiumGeospatial::WebMercatorProjection();
     }
   }
-  CesiumGeometry::Rectangle coverageRectangle = _options.coverageRectangle.value_or(projectRectangleSimple(projection, tilingSchemeRectangle));
+  CesiumGeometry::Rectangle coverageRectangle =
+      _options.coverageRectangle.value_or(
+          projectRectangleSimple(projection, tilingSchemeRectangle));
   CesiumGeometry::QuadtreeTilingScheme tilingScheme(coverageRectangle, 1, 1);
 
   std::vector<std::string> subdomains;
@@ -280,7 +280,9 @@ WebMapTileServiceRasterOverlay::createTileProvider(
         _options.subdomains.value();
     if (subdomains_v.index() == 0) {
       const std::string& subdomains_s = std::get<std::string>(subdomains_v);
-      for (std::string::const_iterator it = subdomains_s.begin(); it != subdomains_s.end(); ++it) {
+      for (std::string::const_iterator it = subdomains_s.begin();
+           it != subdomains_s.end();
+           ++it) {
         subdomains.emplace_back(std::to_string(*it));
       }
     } else {
@@ -293,11 +295,12 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   }
 
   if (hasError) {
-    return asyncSystem.createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
-        nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-            RasterOverlayLoadType::TileProvider,
-            nullptr,
-            errorMessage}));
+    return asyncSystem
+        .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
+            nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                RasterOverlayLoadType::TileProvider,
+                nullptr,
+                errorMessage}));
   }
   return asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(

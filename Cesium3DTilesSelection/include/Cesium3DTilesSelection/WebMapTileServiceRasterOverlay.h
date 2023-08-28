@@ -28,9 +28,9 @@ struct WebMapTileServiceRasterOverlayOptions {
 
   /**
    * @brief The subdomains to use for the <code>{s}</code> placeholder in the URL template.
-   * 
-   * If this parameter is a single string, each character in the string is a subdomain.
-   * If it is an array, each element in the array is a subdomain.
+   *
+   * If this parameter is a single string, each character in the string is a
+   * subdomain. If it is an array, each element in the array is a subdomain.
    */
   std::optional<std::variant<std::string, std::vector<std::string>>> subdomains;
 
@@ -55,7 +55,8 @@ struct WebMapTileServiceRasterOverlayOptions {
   std::optional<std::string> tileMatrixSetID;
 
   /**
-   * @brief A list of identifiers in the TileMatrix to use for WMTS requests, one per TileMatrix level.
+   * @brief A list of identifiers in the TileMatrix to use for WMTS requests,
+   * one per TileMatrix level.
    */
   std::optional<std::vector<std::string>> tileMatrixLabels;
 
