@@ -44,8 +44,8 @@ std::vector<std::string> CesiumUtility::JsonValue::getArrayOfStrings(
       array.begin(),
       array.end(),
       result.begin(),
-      [&defaultString](const JsonValue& value) {
-        return value.getStringOrDefault(defaultString);
+      [&defaultString](const JsonValue& arrayValue) {
+        return arrayValue.getStringOrDefault(defaultString);
       });
   return result;
 }
