@@ -2784,12 +2784,12 @@ TEST_CASE("Test variable-length matN array (normalized)") {
           property.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
-      auto maybeArray = property.get(i);
+      auto maybeArray = property.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
-        REQUIRE((*maybeArray)[j] == normalize(value));
+        REQUIRE((*maybeArray)[static_cast<int64_t>(j)] == normalize(value));
       }
     }
   }
