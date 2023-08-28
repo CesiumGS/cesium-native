@@ -10,6 +10,7 @@ const PropertyViewStatusType PropertyViewStatus::ErrorTypeMismatch;
 const PropertyViewStatusType PropertyViewStatus::ErrorComponentTypeMismatch;
 const PropertyViewStatusType PropertyViewStatus::ErrorArrayTypeMismatch;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidNormalization;
+const PropertyViewStatusType PropertyViewStatus::ErrorNormalizationMismatch;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidOffset;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidScale;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidMax;
