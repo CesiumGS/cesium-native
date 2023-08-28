@@ -1428,7 +1428,7 @@ TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
            "schema.json",
            CesiumAsync::HttpHeaders{},
            std::make_unique<SimpleAssetResponse>(
-               404,
+               static_cast<uint16_t>(404),
                "doesn't matter",
                CesiumAsync::HttpHeaders{},
                std::vector<std::byte>()))});
