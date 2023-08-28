@@ -89,7 +89,7 @@ protected:
 
     uint32_t level = tileID.level;
     uint32_t col = tileID.x;
-    uint32_t row = (1 << level) - tileID.y - 1;
+    uint32_t row = (1u << level) - tileID.y - 1u;
 
     std::map<std::string, std::string> urlTemplateMap;
     std::string tileMatrix;
@@ -165,8 +165,8 @@ private:
   std::string _layer;
   std::string _style;
   std::string _tileMatrixSetID;
-  std::optional<std::map<std::string, std::string>> _staticDimensions;
   std::optional<std::vector<std::string>> _labels;
+  std::optional<std::map<std::string, std::string>> _staticDimensions;
   std::vector<std::string> _subdomains;
 };
 
@@ -244,7 +244,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   std::smatch matchBracket;
   bool hasMatch = std::regex_search(_url, matchBracket, bracket);
   if (!hasMatch ||
-      matchBracket.size() == 1 && std::regex_match(_url, bracketS)) {
+      (matchBracket.size() == 1 && std::regex_match(_url, bracketS))) {
     useKVP = true;
   } else {
     useKVP = false;
