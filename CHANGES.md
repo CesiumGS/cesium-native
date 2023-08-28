@@ -18,7 +18,7 @@
 - Added `*Reader` classes to `CesiumGltfReader` and `Cesium3DTilesReader` to allow each of the classes to be individually read from JSON.
 - Added `getExternalContent` method to the `TileContent` class.
 - `TileExternalContent` now holds the metadata (`schema`, `schemaUri`, `metadata`, and `groups`) stored in the tileset.json.
-- Added `findMetadata` method to `Cesium3DTilesSelection::Tileset`. It returns a `TilesetMetadata` instance representing the metadata associated with a tileset.json.
+- Added `loadMetadata` and `getMetadata` methods to `Cesium3DTilesSelection::Tileset`. They provide access to `TilesetMetadata` instance representing the metadata associated with a tileset.json.
 - Added `MetadataQuery` class to make it easier to find properties with specific semantics in `TilesetMetadata`.
 
 ### v0.27.0 - 2023-09-01
