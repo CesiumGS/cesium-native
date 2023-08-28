@@ -485,7 +485,7 @@ void checkNormalizedTextureArrayValues(
     auto expectedValue = *(expectedTransformed[i]);
     REQUIRE(maybeValue->size() == static_cast<int64_t>(expectedValue.size()));
     for (int64_t j = 0; j < maybeValue->size(); j++) {
-      REQUIRE((*maybeValue)[j] == expectedValue[j]);
+      REQUIRE((*maybeValue)[j] == expectedValue[static_cast<int64_t>(j)]);
     }
   }
 }
