@@ -43,9 +43,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -64,9 +61,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -85,9 +79,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -108,7 +99,7 @@ CesiumAsync::SharedFuture<void>& Tileset::getAsyncDestructionCompleteEvent() {
 }
 
 CesiumAsync::SharedFuture<void>& Tileset::getRootTileAvailableEvent() {
-  return this->_rootTileAvailableFuture;
+  return this->_pTilesetContentManager->getRootTileAvailableEvent();
 }
 
 const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {

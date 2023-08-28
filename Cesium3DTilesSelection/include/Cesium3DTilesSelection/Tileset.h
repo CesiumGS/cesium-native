@@ -494,9 +494,6 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  CesiumAsync::Promise<void> _rootTileAvailablePromise;
-  CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
-
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
