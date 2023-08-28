@@ -84,16 +84,15 @@ public:
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * {@link PropertyTexturePropertyView} retrieves the correct data. T must
-   * be a scalar with a supported component type (uint8_t, uint16_t, uint32_t,
-   * float), a glm vecN composed of one of the scalar types, or a
-   * PropertyArrayView containing one of the scalar types.
+   * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
+   * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
+   * scalar types, or a PropertyArrayView containing one of the scalar types.
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTexturePropertyView. Likewise, if the value of
-   * Normalized
-   * does not match the value of {@ClassProperty::normalized} for that class property,
-   * this returns an invalid property view. Only types with integer components
-   * may be normalized.
+   * Normalized does not match the value of {@ClassProperty::normalized} for that
+   * class property, this returns an invalid property view. Only types with
+   * integer components may be normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
    * @tparam Normalized Whether the property is normalized. Only applicable to
@@ -125,10 +124,10 @@ public:
    * of the property with the specified name.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTexturePropertyView} retrieves the correct data. T must be
-   * a scalar with a supported component type (uint8_t, uint16_t, uint32_t,
-   * float), a glm vecN composed of one of the scalar types, or a
-   * PropertyArrayView containing one of the scalar types.
+   * {@link PropertyTexturePropertyView} retrieves the correct data. . T must
+   * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
+   * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
+   * scalar types, or a PropertyArrayView containing one of the scalar types.
    *
    * If the property is somehow invalid, an empty {@link PropertyTexturePropertyView}
    * with an error status will be passed to the callback. Otherwise, a valid

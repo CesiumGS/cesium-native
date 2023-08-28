@@ -7,7 +7,6 @@
 #include "CesiumGltf/PropertyView.h"
 #include "CesiumGltf/Sampler.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -228,7 +227,7 @@ inline double applySamplerWrapT(const double v, const int32_t wrapT) {
 }
 
 /**
- * @brief A view of the non-normalized data specified by a {@link PropertyTextureProperty}.
+ * @brief A view of the data specified by a {@link PropertyTextureProperty}.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
