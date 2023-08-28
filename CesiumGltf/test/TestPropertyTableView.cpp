@@ -405,8 +405,7 @@ TEST_CASE("Test vecN PropertyTableProperty") {
 
     for (int64_t i = 0; i < ivec3Property.size(); ++i) {
       REQUIRE(ivec3Property.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(ivec3Property.get(i));
-      REQUIRE(*ivec3Property.get(i) == ivec3Property.getRaw(i));
+      REQUIRE(ivec3Property.get(i) == ivec3Property.getRaw(i));
     }
   }
 
@@ -1012,8 +1011,7 @@ TEST_CASE("Test boolean PropertyTableProperty") {
     for (int64_t i = 0; i < boolProperty.size(); ++i) {
       bool expectedValue = expected[static_cast<size_t>(i)];
       REQUIRE(boolProperty.getRaw(i) == expectedValue);
-      REQUIRE(boolProperty.get(i));
-      REQUIRE(*boolProperty.get(i) == expectedValue);
+      REQUIRE(boolProperty.get(i) == expectedValue);
     }
   }
 
@@ -1097,8 +1095,7 @@ TEST_CASE("Test string PropertyTableProperty") {
     REQUIRE(stringProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       REQUIRE(stringProperty.getRaw(static_cast<int64_t>(i)) == expected[i]);
-      REQUIRE(stringProperty.get(i));
-      REQUIRE(*stringProperty.get(i) == expected[i]);
+      REQUIRE(stringProperty.get(static_cast<int64_t>(i)) == expected[i]);
     }
   }
 
@@ -1224,6 +1221,7 @@ TEST_CASE("Test fixed-length scalar array") {
       PropertyArrayView<uint32_t> array = arrayProperty.getRaw(i);
       auto maybeArray = arrayProperty.get(i);
       REQUIRE(maybeArray);
+
       for (int64_t j = 0; j < array.size(); ++j) {
         REQUIRE(array[j] == values[static_cast<size_t>(i * 3 + j)]);
         REQUIRE((*maybeArray)[j] == array[j]);
@@ -1354,6 +1352,7 @@ TEST_CASE("Test fixed-length scalar array (normalized)") {
       PropertyArrayView<uint32_t> array = arrayProperty.getRaw(i);
       auto maybeArray = arrayProperty.get(i);
       REQUIRE(maybeArray);
+
       for (int64_t j = 0; j < array.size(); ++j) {
         REQUIRE(array[j] == values[static_cast<size_t>(i * 3 + j)]);
         REQUIRE((*maybeArray)[j] == normalize(array[j]));
@@ -2011,12 +2010,12 @@ TEST_CASE("Test variable-length vecN array") {
           property.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
-      auto maybeArray = property.get(i);
+      auto maybeArray = property.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
-        REQUIRE((*maybeArray)[j] == value);
+        REQUIRE((*maybeArray)[static_cast<int64_t>(j)] == value);
       }
     }
   }
@@ -2186,12 +2185,12 @@ TEST_CASE("Test variable-length vecN array (normalized)") {
           property.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
-      auto maybeArray = property.get(i);
+      auto maybeArray = property.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
-        REQUIRE((*maybeArray)[j] == normalize(value));
+        REQUIRE((*maybeArray)[static_cast<int64_t>(j)] == normalize(value));
       }
     }
   }
@@ -2431,6 +2430,7 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
       PropertyArrayView<glm::i32mat2x2> array = arrayProperty.getRaw(i);
       auto maybeArray = arrayProperty.get(i);
       REQUIRE(maybeArray);
+
       for (int64_t j = 0; j < array.size(); ++j) {
         REQUIRE(array[j] == values[static_cast<size_t>(i * 2 + j)]);
         REQUIRE((*maybeArray)[j] == normalize(array[j]));
@@ -2587,12 +2587,12 @@ TEST_CASE("Test variable-length matN array") {
           property.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
-      auto maybeArray = property.get(i);
+      auto maybeArray = property.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
-        REQUIRE((*maybeArray)[j] == value);
+        REQUIRE((*maybeArray)[static_cast<int64_t>(j)] == value);
       }
     }
   }
@@ -2782,9 +2782,10 @@ TEST_CASE("Test variable-length matN array (normalized)") {
     for (size_t i = 0; i < expected.size(); ++i) {
       PropertyArrayView<glm::i32mat2x2> array =
           property.getRaw(static_cast<int64_t>(i));
+      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
+
       auto maybeArray = property.get(i);
       REQUIRE(maybeArray);
-      REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
@@ -2875,6 +2876,7 @@ TEST_CASE("Test fixed-length boolean array") {
       PropertyArrayView<bool> array = boolArrayProperty.getRaw(i);
       auto maybeArray = boolArrayProperty.get(i);
       REQUIRE(maybeArray);
+
       for (int64_t j = 0; j < array.size(); ++j) {
         REQUIRE(array[j] == expected[static_cast<size_t>(i * 3 + j)]);
         REQUIRE((*maybeArray)[j] == array[j]);
@@ -3004,12 +3006,12 @@ TEST_CASE("Test variable-length boolean array") {
           boolArrayProperty.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
-      auto maybeArray = boolArrayProperty.get(i);
+      auto maybeArray = boolArrayProperty.get(static_cast<int64_t>(i));
       REQUIRE(maybeArray);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         auto value = array[static_cast<int64_t>(j)];
         REQUIRE(expected[i][j] == value);
-        REQUIRE((*maybeArray)[j] == value);
+        REQUIRE((*maybeArray)[static_cast<int64_t>(j)] == value);
       }
     }
   }
@@ -4645,6 +4647,7 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty") {
             PropertyArrayView<uint32_t> array = propertyValue.getRaw(i);
             auto maybeArray = propertyValue.get(i);
             REQUIRE(maybeArray);
+
             for (int64_t j = 0; j < array.size(); ++j) {
               REQUIRE(array[j] == values[static_cast<size_t>(i * 3 + j)]);
               REQUIRE((*maybeArray)[j] == array[j]);
@@ -4720,6 +4723,7 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty (normalized)") {
             PropertyArrayView<uint32_t> array = propertyValue.getRaw(i);
             auto maybeArray = propertyValue.get(i);
             REQUIRE(maybeArray);
+
             for (int64_t j = 0; j < array.size(); ++j) {
               REQUIRE(array[j] == values[static_cast<size_t>(i * 3 + j)]);
               REQUIRE((*maybeArray)[j] == normalize(array[j]));
@@ -5066,6 +5070,7 @@ TEST_CASE("Test callback for boolean array PropertyTableProperty") {
             PropertyArrayView<bool> array = propertyValue.getRaw(i);
             auto maybeArray = propertyValue.get(i);
             REQUIRE(maybeArray);
+
             for (int64_t j = 0; j < array.size(); ++j) {
               REQUIRE(array[j] == expected[static_cast<size_t>(i * 3 + j)]);
               REQUIRE((*maybeArray)[j] == array[j]);
