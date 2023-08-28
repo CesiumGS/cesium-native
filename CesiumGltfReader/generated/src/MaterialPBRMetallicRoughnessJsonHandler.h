@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -20,7 +20,7 @@ public:
   using ValueType = CesiumGltf::MaterialPBRMetallicRoughness;
 
   MaterialPBRMetallicRoughnessJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::MaterialPBRMetallicRoughness* pObject);

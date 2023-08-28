@@ -9,8 +9,8 @@
 #include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 
 #include <gsl/span>
 
@@ -139,16 +139,14 @@ public:
   GltfReader();
 
   /**
-   * @brief Gets the context used to control how extensions are loaded from glTF
-   * files.
+   * @brief Gets the options controlling how the JSON is read.
    */
-  CesiumJsonReader::ExtensionReaderContext& getExtensions();
+  CesiumJsonReader::JsonReaderOptions& getOptions();
 
   /**
-   * @brief Gets the context used to control how extensions are loaded from glTF
-   * files.
+   * @brief Gets the options controlling how the JSON is read.
    */
-  const CesiumJsonReader::ExtensionReaderContext& getExtensions() const;
+  const CesiumJsonReader::JsonReaderOptions& getExtensions() const;
 
   /**
    * @brief Reads a glTF or binary glTF (GLB) from a buffer.
@@ -210,7 +208,7 @@ public:
   generateMipMaps(CesiumGltf::ImageCesium& image);
 
 private:
-  CesiumJsonReader::ExtensionReaderContext _context;
+  CesiumJsonReader::JsonReaderOptions _context;
 };
 
 } // namespace CesiumGltfReader

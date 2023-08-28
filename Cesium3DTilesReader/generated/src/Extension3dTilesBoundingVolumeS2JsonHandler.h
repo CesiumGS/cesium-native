@@ -8,7 +8,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace Cesium3DTilesReader {
@@ -22,7 +22,7 @@ public:
       "3DTILES_bounding_volume_S2";
 
   Extension3dTilesBoundingVolumeS2JsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       Cesium3DTiles::Extension3dTilesBoundingVolumeS2* pObject);

@@ -1,6 +1,6 @@
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 
-#include "CesiumJsonReader/ExtensionReaderContext.h"
+#include "CesiumJsonReader/JsonReaderOptions.h"
 
 namespace CesiumJsonReader {
 void ExtensionsJsonHandler::reset(

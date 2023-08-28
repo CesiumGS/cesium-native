@@ -11,7 +11,7 @@ namespace Cesium3DTilesReader {
 namespace {
 
 SchemaReaderResult readSchemaJson(
-    const CesiumJsonReader::ExtensionReaderContext& context,
+    const CesiumJsonReader::JsonReaderOptions& context,
     const gsl::span<const std::byte>& data) {
 
   CESIUM_TRACE("Cesium3DTilesReader::SchemaReader::readSchemaJson");
@@ -30,19 +30,17 @@ SchemaReaderResult readSchemaJson(
 
 SchemaReader::SchemaReader() { registerExtensions(this->_context); }
 
-CesiumJsonReader::ExtensionReaderContext& SchemaReader::getExtensions() {
+CesiumJsonReader::JsonReaderOptions& SchemaReader::getOptions() {
   return this->_context;
 }
 
-const CesiumJsonReader::ExtensionReaderContext&
-SchemaReader::getExtensions() const {
+const CesiumJsonReader::JsonReaderOptions& SchemaReader::getOptions() const {
   return this->_context;
 }
 
 SchemaReaderResult
 SchemaReader::readSchema(const gsl::span<const std::byte>& data) const {
-  const CesiumJsonReader::ExtensionReaderContext& context =
-      this->getExtensions();
+  const CesiumJsonReader::JsonReaderOptions& context = this->getOptions();
   SchemaReaderResult result = readSchemaJson(context, data);
 
   return result;

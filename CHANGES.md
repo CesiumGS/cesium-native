@@ -2,9 +2,14 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
+
 ##### Additions :tada:
 
 - Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
+- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
 
 ##### Fixes :wrench:
 

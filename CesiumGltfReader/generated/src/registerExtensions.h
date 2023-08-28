@@ -3,9 +3,9 @@
 #pragma once
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-void registerExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+void registerExtensions(CesiumJsonReader::JsonReaderOptions& options);
 }

@@ -8,7 +8,7 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -21,7 +21,7 @@ public:
   static inline constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
 
   ExtensionExtMeshGpuInstancingJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionExtMeshGpuInstancing* pObject);
