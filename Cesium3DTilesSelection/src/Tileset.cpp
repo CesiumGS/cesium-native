@@ -43,6 +43,9 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()},
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -61,6 +64,9 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()},
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -79,6 +85,9 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()},
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -87,15 +96,19 @@ Tileset::Tileset(
           ionAccessToken,
           ionAssetEndpointUrl)} {}
 
-CesiumAsync::SharedFuture<void>& Tileset::getAsyncDestructionCompleteEvent() {
-  return this->_pTilesetContentManager->getAsyncDestructionCompleteEvent();
-}
-
 Tileset::~Tileset() noexcept {
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
+}
+
+CesiumAsync::SharedFuture<void>& Tileset::getAsyncDestructionCompleteEvent() {
+  return this->_pTilesetContentManager->getAsyncDestructionCompleteEvent();
+}
+
+CesiumAsync::SharedFuture<void>& Tileset::getRootTileAvailableEvent() {
+  return this->_rootTileAvailableFuture;
 }
 
 const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
@@ -454,7 +467,7 @@ int64_t Tileset::getTotalDataBytes() const noexcept {
   return this->_pTilesetContentManager->getTotalDataUsed();
 }
 
-const TilesetMetadata* Tileset::findMetadata(const Tile* pTile) const {
+const TilesetMetadata* Tileset::getMetadata(const Tile* pTile) const {
   if (pTile == nullptr) {
     pTile = this->getRootTile();
   }
@@ -468,6 +481,45 @@ const TilesetMetadata* Tileset::findMetadata(const Tile* pTile) const {
   }
 
   return nullptr;
+}
+
+CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
+  return this->getRootTileAvailableEvent().thenInMainThread(
+      [pManager = this->_pTilesetContentManager,
+       pAssetAccessor = this->_externals.pAssetAccessor,
+       asyncSystem =
+           this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
+        Tile* pRoot = pManager->getRootTile();
+        assert(pRoot);
+
+        TileExternalContent* pExternal =
+            pRoot->getContent().getExternalContent();
+        if (!pExternal) {
+          return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
+              nullptr);
+        }
+
+        TilesetMetadata& metadata = pExternal->metadata;
+        if (!metadata.schemaUri) {
+          // No schema URI, so the metadata is ready to go.
+          return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
+              &metadata);
+        }
+
+        return metadata.loadSchemaUri(asyncSystem, pAssetAccessor)
+            .thenInMainThread(
+                [pManager, pAssetAccessor]() -> const TilesetMetadata* {
+                  Tile* pRoot = pManager->getRootTile();
+                  assert(pRoot);
+
+                  TileExternalContent* pExternal =
+                      pRoot->getContent().getExternalContent();
+                  if (!pExternal) {
+                    return nullptr;
+                  }
+                  return &pExternal->metadata;
+                });
+      });
 }
 
 static void markTileNonRendered(

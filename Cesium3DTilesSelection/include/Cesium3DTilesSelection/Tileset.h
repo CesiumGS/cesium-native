@@ -76,13 +76,6 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
-   * @brief A future that resolves when this Tileset has been destroyed (i.e.
-   * its destructor has been called) and all async operations that it was
-   * executing have completed.
-   */
-  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
-
-  /**
    * @brief Destroys this tileset.
    *
    * Destroying the tileset will immediately (before the destructor returns)
@@ -93,6 +86,20 @@ public:
    * subscribe to {@link getAsyncDestructionCompleteEvent}.
    */
   ~Tileset() noexcept;
+
+  /**
+   * @brief A future that resolves when this Tileset has been destroyed (i.e.
+   * its destructor has been called) and all async operations that it was
+   * executing have completed.
+   */
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
+
+  /**
+   * @brief A future that resolves when the details of the root tile of this
+   * tileset are available. The root tile's content (e.g., 3D model), however,
+   * will not necessarily be loaded yet.
+   */
+  CesiumAsync::SharedFuture<void>& getRootTileAvailableEvent();
 
   /**
    * @brief Get tileset credits.
@@ -209,22 +216,47 @@ public:
   int64_t getTotalDataBytes() const noexcept;
 
   /**
-   * @brief Finds the {@link TilesetMetadata} associated with the main or
-   * external tileset.json that contains a given tile.
+   * @brief Gets the {@link TilesetMetadata} associated with the main or
+   * external tileset.json that contains a given tile. If the metadata is not
+   * yet loaded, this method returns nullptr.
    *
    * If this tileset's root tile is not yet available, this method returns
    * nullptr.
+   *
+   * If the tileset has a {@link TilesetMetadata::schemaUri}, it will not
+   * necessarily have been loaded yet.
    *
    * If the provided tile is not the root tile of a tileset.json, this method
    * walks up the {@link Tile::getParent} chain until it finds the closest
    * root and then returns the metadata associated with the corresponding
    * tileset.json.
    *
+   * Consider calling {@link loadMetadata} instead, which will return a future
+   * that only resolves after the root tile is loaded and the `schemaUri`, if
+   * any, has been resolved.
+   *
    * @param pTile The tile. If this parameter is nullptr, the metadata for the
    * main tileset.json is returned.
    * @return The found metadata, or nullptr if the root tile is not yet loaded.
    */
-  const TilesetMetadata* findMetadata(const Tile* pTile = nullptr) const;
+  const TilesetMetadata* getMetadata(const Tile* pTile = nullptr) const;
+
+  /**
+   * @brief Asynchronously loads the metadata associated with the main
+   * tileset.json.
+   *
+   * Before the returned future resolves, the root tile of this tileset will be
+   * loaded and the {@link TilesetMetadata::schemaUri} will be loaded if one
+   * has been specified.
+   *
+   * If the tileset or `schemaUri` fail to load, the returned future will
+   * reject.
+   *
+   * @return A shared future that resolves to the loaded metadata. Once this
+   * future resolves, {@link findMetadata} can be used to synchronously obtain
+   * the same metadata instance.
+   */
+  CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
 
 private:
   /**
@@ -461,6 +493,9 @@ private:
   // Holds the occlusion proxies of the children of a tile. Store them in this
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
+
+  CesiumAsync::Promise<void> _rootTileAvailablePromise;
+  CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;

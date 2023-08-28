@@ -625,6 +625,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
 }
 
 void parseTilesetMetadata(
+    const std::string& baseUrl,
     const rapidjson::Document& tilesetJson,
     TileExternalContent& externalContent) {
   auto schemaIt = tilesetJson.FindMember("schema");
@@ -638,7 +639,8 @@ void parseTilesetMetadata(
 
   auto schemaUriIt = tilesetJson.FindMember("schemaUri");
   if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
-    externalContent.metadata.schemaUri = schemaUriIt->value.GetString();
+    externalContent.metadata.schemaUri =
+        CesiumUtility::Uri::resolve(baseUrl, schemaUriIt->value.GetString());
   }
 
   const auto metadataIt = tilesetJson.FindMember("metadata");
@@ -697,7 +699,10 @@ TileLoadResult parseExternalTilesetInWorkerThread(
           tileRefine);
 
   // Populate the root tile with metadata
-  parseTilesetMetadata(tilesetJson, externalContentInitializer.externalContent);
+  parseTilesetMetadata(
+      tileUrl,
+      tilesetJson,
+      externalContentInitializer.externalContent);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
@@ -817,7 +822,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
       result.pRootTile->getContent().getExternalContent();
   assert(pExternal);
   if (pExternal) {
-    parseTilesetMetadata(tilesetJson, *pExternal);
+    parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
   }
 
   return result;

@@ -1253,7 +1253,7 @@ TEST_CASE("Allows access to material variants") {
   Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
-  const TilesetMetadata* pMetadata = tileset.findMetadata();
+  const TilesetMetadata* pMetadata = tileset.getMetadata();
   REQUIRE(pMetadata);
   REQUIRE(pMetadata->schema);
   REQUIRE(pMetadata->metadata);
