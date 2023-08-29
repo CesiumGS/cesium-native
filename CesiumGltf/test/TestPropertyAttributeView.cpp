@@ -30,7 +30,7 @@ void addAttributeToModel(
 
   Accessor& accessor = model.accessors.emplace_back();
   accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
-  accessor.count = values.size();
+  accessor.count = static_cast<int64_t>(values.size());
   accessor.byteOffset = 0;
 
   PropertyType type = TypeToPropertyType<T>::value;

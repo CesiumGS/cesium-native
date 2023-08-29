@@ -28,7 +28,7 @@ const Accessor& addValuesToModel(Model& model, const std::vector<T>& values) {
 
   Accessor& accessor = model.accessors.emplace_back();
   accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
-  accessor.count = values.size();
+  accessor.count = static_cast<int64_t>(values.size());
   accessor.byteOffset = 0;
 
   PropertyType type = TypeToPropertyType<T>::value;
@@ -817,7 +817,7 @@ TEST_CASE("Check that PropertyAttributeProperty values override class property "
 
   Accessor& accessor = model.accessors.emplace_back();
   accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
-  accessor.count = data.size();
+  accessor.count = static_cast<int64_t>(data.size());
   accessor.byteOffset = 0;
   accessor.type = Accessor::Type::SCALAR;
   accessor.componentType = Accessor::ComponentType::FLOAT;
