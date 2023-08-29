@@ -3,10 +3,8 @@
 #include <catch2/catch.hpp>
 #include <gsl/span>
 
-#include <bitset>
 #include <climits>
 #include <cstddef>
-#include <cstring>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -696,7 +694,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
   }
 
   SECTION("uint8_t with all properties") {
-    std::vector<uint8_t> data{12, 33, 56, 0, 67};
+    std::vector<uint8_t> data{12, 33, 56, 0};
     const double offset = 1.0;
     const double scale = 2.0;
     const uint8_t noData = 0;
@@ -706,7 +704,6 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
         normalize(data[1]) * scale + offset,
         normalize(data[2]) * scale + offset,
         10.0,
-        normalize(data[4]) * scale + offset,
     };
     checkNormalizedTextureValues(
         data,
@@ -857,7 +854,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
       0, 0,
       182, 1};
     // clang-format on
-    std::optional<JsonValue::Array> noData = JsonValue::Array{0, 0};
+    JsonValue::Array noData{0, 0};
     std::vector<glm::i8vec2> expectedRaw{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -1144,7 +1141,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
       0, 0, 0, 0,};
     // clang-format on
 
-    std::optional<JsonValue> noData = JsonValue::Array{0, 0, 0, 0};
+    JsonValue::Array noData{0, 0, 0, 0};
     std::vector<std::vector<uint8_t>> expectedRaw{
         {1, 2, 3, 0},
         {4, 5, 6, 11},
@@ -1167,8 +1164,8 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
       0, 0, 0, 0,};
     // clang-format on
 
-    std::optional<JsonValue> noData = JsonValue::Array{0, 0, 0, 0};
-    std::optional<JsonValue> defaultValue = JsonValue::Array{255, 8, 12, 5};
+    JsonValue::Array noData{0, 0, 0, 0};
+    JsonValue::Array defaultValue{255, 8, 12, 5};
     std::vector<std::vector<uint8_t>> expectedRaw{
         {1, 2, 3, 0},
         {4, 5, 6, 11},
@@ -1299,7 +1296,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
       0, 0, 0, 0,};
     // clang-format on
 
-    std::optional<JsonValue> noData = JsonValue::Array{0, 0, 0, 0};
+    JsonValue::Array noData{0, 0, 0, 0};
     std::vector<std::vector<uint8_t>> expectedRaw{
         {1, 2, 3, 0},
         {4, 5, 6, 11},
@@ -1340,9 +1337,8 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
 
     const std::vector<double> offset{1, 2, 0, 4};
     const std::vector<double> scale{1, -1, 3, -2};
-    std::optional<JsonValue> noData = JsonValue::Array{0, 0, 0, 0};
-    std::optional<JsonValue> defaultValue =
-        JsonValue::Array{1.0, 2.0, 3.0, 4.0};
+    JsonValue::Array noData{0, 0, 0, 0};
+    JsonValue::Array defaultValue{1.0, 2.0, 3.0, 4.0};
 
     std::vector<std::vector<uint8_t>> expectedRaw{
         {1, 2, 3, 0},
@@ -1375,7 +1371,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
   }
 }
 
-TEST_CASE("Check that property values override class property values") {
+TEST_CASE("Check that PropertyTextureProperty values override class property values") {
   ClassProperty classProperty;
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
@@ -1427,14 +1423,10 @@ TEST_CASE("Check that property values override class property values") {
       view(property, classProperty, sampler, image, channels);
   CHECK(view.getSwizzle() == "rgba");
 
-  REQUIRE(view.offset());
-  REQUIRE(*view.offset() == offset);
-  REQUIRE(view.scale());
-  REQUIRE(*view.scale() == scale);
-  REQUIRE(view.min());
-  REQUIRE(*view.min() == std::numeric_limits<float>::lowest());
-  REQUIRE(view.max());
-  REQUIRE(*view.max() == std::numeric_limits<float>::max());
+  REQUIRE(view.offset() == offset);
+  REQUIRE(view.scale() == scale);
+  REQUIRE(view.min() == std::numeric_limits<float>::lowest());
+  REQUIRE(view.max() == std::numeric_limits<float>::max());
 
   std::vector<glm::dvec2> texCoords{
       glm::dvec2(0, 0),
