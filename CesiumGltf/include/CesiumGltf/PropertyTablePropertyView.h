@@ -133,20 +133,7 @@ public:
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 29;
 };
 
-inline int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
-  switch (offsetType) {
-  case PropertyComponentType::Uint8:
-    return sizeof(uint8_t);
-  case PropertyComponentType::Uint16:
-    return sizeof(uint16_t);
-  case PropertyComponentType::Uint32:
-    return sizeof(uint32_t);
-  case PropertyComponentType::Uint64:
-    return sizeof(uint64_t);
-  default:
-    return 0;
-  }
-}
+int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
 
 /**
  * @brief A view on the data of the {@link PropertyTableProperty} that is created
