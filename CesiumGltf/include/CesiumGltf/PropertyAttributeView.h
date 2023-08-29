@@ -108,8 +108,8 @@ public:
    */
   template <typename T, bool Normalized = false>
   PropertyAttributePropertyView<T, Normalized> getPropertyView(
-      const std::string& propertyName,
-      const MeshPrimitive& primitive) const {
+      const MeshPrimitive& primitive,
+      const std::string& propertyName) const {
     if (this->_status != PropertyAttributeViewStatus::Valid) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorInvalidPropertyAttribute);
@@ -128,9 +128,9 @@ public:
     }
 
     return getPropertyViewImpl<T, Normalized>(
+        primitive,
         propertyName,
-        *pClassProperty,
-        primitive);
+        *pClassProperty);
   }
 
   /**
@@ -148,14 +148,15 @@ public:
    * with an error status will be passed to the callback. Otherwise, a valid
    * property view will be passed to the callback.
    *
+   * @param primitive The target primitive
    * @param propertyName The name of the property to retrieve data from
    * @tparam callback A callback function that accepts a property name and a
    * {@link PropertyAttributePropertyView<T>}
    */
   template <typename Callback>
   void getPropertyView(
-      const std::string& propertyName,
       const MeshPrimitive& primitive,
+      const std::string& propertyName,
       Callback&& callback) const {
     if (this->_status != PropertyAttributeViewStatus::Valid) {
       callback(
@@ -172,6 +173,14 @@ public:
           propertyName,
           PropertyAttributePropertyView<uint8_t>(
               PropertyAttributePropertyViewStatus::ErrorNonexistentProperty));
+      return;
+    }
+
+    if (pClassProperty->array) {
+      callback(
+          propertyName,
+          PropertyAttributePropertyView<uint8_t>(
+              PropertyAttributePropertyViewStatus::ErrorUnsupportedProperty));
       return;
     }
 
@@ -194,16 +203,16 @@ public:
     if (type == PropertyType::Scalar) {
       if (normalized) {
         getScalarPropertyViewImpl<Callback, true>(
+            primitive,
             propertyName,
             *pClassProperty,
-            primitive,
             componentType,
             std::forward<Callback>(callback));
       } else {
         getScalarPropertyViewImpl<Callback, false>(
+            primitive,
             propertyName,
             *pClassProperty,
-            primitive,
             componentType,
             std::forward<Callback>(callback));
       }
@@ -213,17 +222,17 @@ public:
     if (isPropertyTypeVecN(type)) {
       if (normalized) {
         getVecNPropertyViewImpl<Callback, true>(
+            primitive,
             propertyName,
             *pClassProperty,
-            primitive,
             type,
             componentType,
             std::forward<Callback>(callback));
       } else {
         getVecNPropertyViewImpl<Callback, false>(
+            primitive,
             propertyName,
             *pClassProperty,
-            primitive,
             type,
             componentType,
             std::forward<Callback>(callback));
@@ -234,17 +243,17 @@ public:
     if (isPropertyTypeMatN(type)) {
       if (normalized) {
         getMatNPropertyViewImpl<Callback, true>(
+            primitive,
             propertyName,
             *pClassProperty,
-            primitive,
             type,
             componentType,
             std::forward<Callback>(callback));
       } else {
         getMatNPropertyViewImpl<Callback, false>(
+            primitive,
             propertyName,
             *pClassProperty,
-            primitive,
             type,
             componentType,
             std::forward<Callback>(callback));
@@ -292,9 +301,9 @@ public:
 private:
   template <typename T, bool Normalized>
   PropertyAttributePropertyView<T, Normalized> getPropertyViewImpl(
+      const MeshPrimitive& primitive,
       const std::string& propertyName,
-      const ClassProperty& classProperty,
-      const MeshPrimitive& primitive) const {
+      const ClassProperty& classProperty) const {
     auto propertyAttributePropertyIter =
         _pPropertyAttribute->properties.find(propertyName);
     if (propertyAttributePropertyIter ==
@@ -307,16 +316,16 @@ private:
         propertyAttributePropertyIter->second;
 
     return createPropertyView<T, Normalized>(
+        primitive,
         classProperty,
-        propertyAttributeProperty,
-        primitive);
+        propertyAttributeProperty);
   }
 
   template <typename Callback, bool Normalized>
   void getScalarPropertyViewImpl(
+      const MeshPrimitive& primitive,
       const std::string& propertyName,
       const ClassProperty& classProperty,
-      const MeshPrimitive& primitive,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -324,49 +333,49 @@ private:
       callback(
           propertyName,
           getPropertyViewImpl<int8_t, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       return;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
           getPropertyViewImpl<uint8_t, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       return;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
           getPropertyViewImpl<int16_t, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       return;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
           getPropertyViewImpl<uint16_t, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
           getPropertyViewImpl<uint32_t, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
           getPropertyViewImpl<float, false>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     default:
       callback(
@@ -379,9 +388,9 @@ private:
 
   template <typename Callback, glm::length_t N, bool Normalized>
   void getVecNPropertyViewImpl(
+      const MeshPrimitive& primitive,
       const std::string& propertyName,
       const ClassProperty& classProperty,
-      const MeshPrimitive& primitive,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -389,50 +398,49 @@ private:
       callback(
           propertyName,
           getPropertyViewImpl<glm::vec<N, int8_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
           getPropertyViewImpl<glm::vec<N, uint8_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
           getPropertyViewImpl<glm::vec<N, int16_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
           getPropertyViewImpl<glm::vec<N, uint16_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
-    default:
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
           getPropertyViewImpl<glm::vec<N, uint32_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
           getPropertyViewImpl<glm::vec<N, float>, false>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     default:
       callback(
@@ -445,9 +453,9 @@ private:
 
   template <typename Callback, bool Normalized>
   void getVecNPropertyViewImpl(
+      const MeshPrimitive& primitive,
       const std::string& propertyName,
       const ClassProperty& classProperty,
-      const MeshPrimitive& primitive,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -455,25 +463,25 @@ private:
     switch (N) {
     case 2:
       getVecNPropertyViewImpl<Callback, 2, Normalized>(
+          primitive,
           propertyName,
           classProperty,
-          primitive,
           componentType,
           std::forward<Callback>(callback));
       break;
     case 3:
       getVecNPropertyViewImpl<Callback, 3, Normalized>(
+          primitive,
           propertyName,
           classProperty,
-          primitive,
           componentType,
           std::forward<Callback>(callback));
       break;
     case 4:
       getVecNPropertyViewImpl<Callback, 4, Normalized>(
+          primitive,
           propertyName,
           classProperty,
-          primitive,
           componentType,
           std::forward<Callback>(callback));
       break;
@@ -488,9 +496,9 @@ private:
 
   template <typename Callback, glm::length_t N, bool Normalized>
   void getMatNPropertyViewImpl(
+      const MeshPrimitive& primitive,
       const std::string& propertyName,
       const ClassProperty& classProperty,
-      const MeshPrimitive& primitive,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -498,49 +506,49 @@ private:
       callback(
           propertyName,
           getPropertyViewImpl<glm::mat<N, N, int8_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Uint8:
       callback(
           propertyName,
           getPropertyViewImpl<glm::mat<N, N, uint8_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Int16:
       callback(
           propertyName,
           getPropertyViewImpl<glm::mat<N, N, int16_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Uint16:
       callback(
           propertyName,
           getPropertyViewImpl<glm::mat<N, N, uint16_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Uint32:
       callback(
           propertyName,
           getPropertyViewImpl<glm::mat<N, N, uint32_t>, Normalized>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     case PropertyComponentType::Float32:
       callback(
           propertyName,
           getPropertyViewImpl<glm::mat<N, N, float>, false>(
+              primitive,
               propertyName,
-              classProperty,
-              primitive));
+              classProperty));
       break;
     default:
       callback(
@@ -553,9 +561,9 @@ private:
 
   template <typename Callback, bool Normalized>
   void getMatNPropertyViewImpl(
+      const MeshPrimitive& primitive,
       const std::string& propertyName,
       const ClassProperty& classProperty,
-      const MeshPrimitive& primitive,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -563,25 +571,25 @@ private:
     switch (N) {
     case 2:
       getMatNPropertyViewImpl<Callback, 2, Normalized>(
+          primitive,
           propertyName,
           classProperty,
-          primitive,
           componentType,
           std::forward<Callback>(callback));
       break;
     case 3:
       getMatNPropertyViewImpl<Callback, 3, Normalized>(
+          primitive,
           propertyName,
           classProperty,
-          primitive,
           componentType,
           std::forward<Callback>(callback));
       break;
     case 4:
       getMatNPropertyViewImpl<Callback, 4, Normalized>(
+          primitive,
           propertyName,
           classProperty,
-          primitive,
           componentType,
           std::forward<Callback>(callback));
       break;
@@ -596,9 +604,9 @@ private:
 
   template <typename T, bool Normalized>
   PropertyAttributePropertyView<T, Normalized> createPropertyView(
+      const MeshPrimitive& primitive,
       const ClassProperty& classProperty,
-      const PropertyAttributeProperty& propertyAttributeProperty,
-      const MeshPrimitive& primitive) const {
+      const PropertyAttributeProperty& propertyAttributeProperty) const {
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
       return PropertyAttributePropertyView<T, Normalized>(
@@ -683,4 +691,5 @@ private:
 
   PropertyAttributeViewStatus _status;
 };
+
 } // namespace CesiumGltf

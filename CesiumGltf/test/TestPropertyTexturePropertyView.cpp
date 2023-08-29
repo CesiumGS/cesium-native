@@ -10,6 +10,7 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
+namespace {
 template <typename T>
 void checkTextureValues(
     const std::vector<uint8_t>& data,
@@ -487,6 +488,7 @@ void checkNormalizedTextureArrayValues(
     }
   }
 }
+} // namespace
 
 TEST_CASE("Check scalar PropertyTexturePropertyView") {
   SECTION("uint8_t") {
@@ -1371,7 +1373,8 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
   }
 }
 
-TEST_CASE("Check that PropertyTextureProperty values override class property values") {
+TEST_CASE("Check that PropertyTextureProperty values override class property "
+          "values") {
   ClassProperty classProperty;
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = ClassProperty::ComponentType::FLOAT32;

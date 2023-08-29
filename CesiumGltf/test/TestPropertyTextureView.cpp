@@ -676,10 +676,10 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
   }
 
   SECTION("Access incorrectly as dvec2") {
-    PropertyTexturePropertyView<glm::dvec2> normalizedInvalid =
+    PropertyTexturePropertyView<glm::dvec2> dvec2Invalid =
         view.getPropertyView<glm::dvec2>("TestClassProperty");
     REQUIRE(
-        normalizedInvalid.status() ==
+        dvec2Invalid.status() ==
         PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
   }
 

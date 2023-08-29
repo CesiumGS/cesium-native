@@ -12,6 +12,8 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
+namespace {
+
 template <typename T>
 static void
 checkArrayEqual(PropertyArrayView<T> arrayView, std::vector<T> expected) {
@@ -560,6 +562,7 @@ static void checkNormalizedFixedLengthArray(
     }
   }
 }
+} // namespace
 
 TEST_CASE("Check scalar PropertyTablePropertyView") {
   SECTION("Uint8") {

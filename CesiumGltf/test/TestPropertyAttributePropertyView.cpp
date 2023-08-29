@@ -9,6 +9,8 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
+namespace {
+
 template <typename T, bool Normalized>
 const Accessor& addValuesToModel(Model& model, const std::vector<T>& values) {
   Buffer& buffer = model.buffers.emplace_back();
@@ -192,6 +194,7 @@ void checkNormalizedAttributeValues(
     REQUIRE(view.get(i) == expected[static_cast<size_t>(i)]);
   }
 }
+} // namespace
 
 TEST_CASE("Check scalar PropertyAttributePropertyView") {
   SECTION("Uint8") {
@@ -794,7 +797,8 @@ TEST_CASE("Check matN PropertyAttributePropertyView (normalized)") {
   }
 }
 
-TEST_CASE("Check that PropertyAttributeProperty values override class property values") {
+TEST_CASE("Check that PropertyAttributeProperty values override class property "
+          "values") {
   Model model;
   std::vector<float> data{1.0f, 2.0f, 3.0f, 4.0f};
 

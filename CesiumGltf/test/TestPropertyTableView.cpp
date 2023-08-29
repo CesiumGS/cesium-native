@@ -155,10 +155,10 @@ TEST_CASE("Test scalar PropertyTableProperty") {
         uvec3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<glm::u32mat3x3> u32mat3x3Invalid =
-        view.getPropertyView<glm::u32mat3x3>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat3x3> umat3x3Invalid =
+        view.getPropertyView<glm::umat3x3>("TestClassProperty");
     REQUIRE(
-        u32mat3x3Invalid.status() ==
+        umat3x3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
     PropertyTablePropertyView<bool> boolInvalid =
@@ -644,17 +644,17 @@ TEST_CASE("Test vecN PropertyTableProperty (normalized)") {
 TEST_CASE("Test matN PropertyTableProperty") {
   Model model;
   // clang-format off
-  std::vector<glm::u32mat2x2> values = {
-      glm::u32mat2x2(
+  std::vector<glm::umat2x2> values = {
+      glm::umat2x2(
         12, 34,
         30, 1),
-      glm::u32mat2x2(
+      glm::umat2x2(
         11, 8,
         73, 102),
-      glm::u32mat2x2(
+      glm::umat2x2(
         1, 0,
         63, 2),
-      glm::u32mat2x2(
+      glm::umat2x2(
         4, 8,
         3, 23)};
   // clang-format on
@@ -694,15 +694,14 @@ TEST_CASE("Test matN PropertyTableProperty") {
   REQUIRE(!classProperty->normalized);
 
   SECTION("Access correct type") {
-    PropertyTablePropertyView<glm::u32mat2x2> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() == PropertyTablePropertyViewStatus::Valid);
-    REQUIRE(u32mat2x2Property.size() > 0);
+    PropertyTablePropertyView<glm::umat2x2> umat2x2Property =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
+    REQUIRE(umat2x2Property.status() == PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(umat2x2Property.size() > 0);
 
-    for (int64_t i = 0; i < u32mat2x2Property.size(); ++i) {
-      REQUIRE(u32mat2x2Property.getRaw(i) == values[static_cast<size_t>(i)]);
-      REQUIRE(u32mat2x2Property.get(i) == u32mat2x2Property.getRaw(i));
+    for (int64_t i = 0; i < umat2x2Property.size(); ++i) {
+      REQUIRE(umat2x2Property.getRaw(i) == values[static_cast<size_t>(i)]);
+      REQUIRE(umat2x2Property.get(i) == umat2x2Property.getRaw(i));
     }
   }
 
@@ -719,10 +718,10 @@ TEST_CASE("Test matN PropertyTableProperty") {
         uvec2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<glm::u32mat4x4> u32mat4x4Invalid =
-        view.getPropertyView<glm::u32mat4x4>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat4x4> umat4x4Invalid =
+        view.getPropertyView<glm::umat4x4>("TestClassProperty");
     REQUIRE(
-        u32mat4x4Invalid.status() ==
+        umat4x4Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
     PropertyTablePropertyView<bool> boolInvalid =
@@ -759,8 +758,8 @@ TEST_CASE("Test matN PropertyTableProperty") {
   }
 
   SECTION("Access incorrectly as array") {
-    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>> arrayInvalid =
-        view.getPropertyView<PropertyArrayView<glm::u32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::umat2x2>> arrayInvalid =
+        view.getPropertyView<PropertyArrayView<glm::umat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayInvalid.status() ==
@@ -768,8 +767,8 @@ TEST_CASE("Test matN PropertyTableProperty") {
   }
 
   SECTION("Access incorrectly as normalized") {
-    PropertyTablePropertyView<glm::u32mat2x2, true> normalizedInvalid =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat2x2, true> normalizedInvalid =
+        view.getPropertyView<glm::umat2x2, true>("TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
@@ -777,49 +776,49 @@ TEST_CASE("Test matN PropertyTableProperty") {
 
   SECTION("Wrong buffer index") {
     model.bufferViews[valueBufferViewIndex].buffer = 2;
-    PropertyTablePropertyView<glm::u32mat2x2> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat2x2> umat2x2Property =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
     REQUIRE(
-        u32mat2x2Property.status() ==
+        umat2x2Property.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidValueBuffer);
   }
 
   SECTION("Wrong buffer view index") {
     propertyTableProperty.values = -1;
-    PropertyTablePropertyView<glm::u32mat2x2> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat2x2> umat2x2Property =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
     REQUIRE(
-        u32mat2x2Property.status() ==
+        umat2x2Property.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidValueBufferView);
   }
 
   SECTION("Buffer view points outside of the real buffer length") {
-    model.buffers[valueBufferIndex].cesium.data.resize(sizeof(glm::u32mat2x2));
-    PropertyTablePropertyView<glm::u32mat2x2> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
+    model.buffers[valueBufferIndex].cesium.data.resize(sizeof(glm::umat2x2));
+    PropertyTablePropertyView<glm::umat2x2> umat2x2Property =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
     REQUIRE(
-        u32mat2x2Property.status() ==
+        umat2x2Property.status() ==
         PropertyTablePropertyViewStatus::ErrorBufferViewOutOfBounds);
   }
 
   SECTION("Buffer view length isn't multiple of sizeof(T)") {
     model.bufferViews[valueBufferViewIndex].byteLength =
-        sizeof(glm::u32mat2x2) * 4 - 1;
-    PropertyTablePropertyView<glm::u32mat2x2> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
+        sizeof(glm::umat2x2) * 4 - 1;
+    PropertyTablePropertyView<glm::umat2x2> umat2x2Property =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
     REQUIRE(
-        u32mat2x2Property.status() ==
+        umat2x2Property.status() ==
         PropertyTablePropertyViewStatus::
             ErrorBufferViewSizeNotDivisibleByTypeSize);
   }
 
   SECTION("Buffer view length doesn't match with propertyTableCount") {
-    model.bufferViews[valueBufferViewIndex].byteLength = sizeof(glm::u32mat2x2);
+    model.bufferViews[valueBufferViewIndex].byteLength = sizeof(glm::umat2x2);
 
-    PropertyTablePropertyView<glm::u32mat2x2> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat2x2> umat2x2Property =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
     REQUIRE(
-        u32mat2x2Property.status() ==
+        umat2x2Property.status() ==
         PropertyTablePropertyViewStatus::
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
   }
@@ -828,17 +827,17 @@ TEST_CASE("Test matN PropertyTableProperty") {
 TEST_CASE("Test matN PropertyTableProperty (normalized)") {
   Model model;
   // clang-format off
-  std::vector<glm::u32mat2x2> values = {
-      glm::u32mat2x2(
+  std::vector<glm::umat2x2> values = {
+      glm::umat2x2(
         12, 34,
         30, 1),
-      glm::u32mat2x2(
+      glm::umat2x2(
         11, 8,
         73, 102),
-      glm::u32mat2x2(
+      glm::umat2x2(
         1, 0,
         63, 2),
-      glm::u32mat2x2(
+      glm::umat2x2(
         4, 8,
         3, 23)};
   // clang-format on
@@ -878,16 +877,15 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
   REQUIRE(classProperty->normalized);
 
   SECTION("Access correct type") {
-    PropertyTablePropertyView<glm::u32mat2x2, true> u32mat2x2Property =
-        view.getPropertyView<glm::u32mat2x2, true>("TestClassProperty");
-    REQUIRE(
-        u32mat2x2Property.status() == PropertyTablePropertyViewStatus::Valid);
-    REQUIRE(u32mat2x2Property.size() > 0);
+    PropertyTablePropertyView<glm::umat2x2, true> umat2x2Property =
+        view.getPropertyView<glm::umat2x2, true>("TestClassProperty");
+    REQUIRE(umat2x2Property.status() == PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(umat2x2Property.size() > 0);
 
-    for (int64_t i = 0; i < u32mat2x2Property.size(); ++i) {
-      auto value = u32mat2x2Property.getRaw(i);
+    for (int64_t i = 0; i < umat2x2Property.size(); ++i) {
+      auto value = umat2x2Property.getRaw(i);
       REQUIRE(value == values[static_cast<size_t>(i)]);
-      REQUIRE(u32mat2x2Property.get(i) == normalize(value));
+      REQUIRE(umat2x2Property.get(i) == normalize(value));
     }
   }
 
@@ -904,10 +902,10 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
         uvec2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<glm::u32mat4x4, true> u32mat4x4Invalid =
-        view.getPropertyView<glm::u32mat4x4, true>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat4x4, true> umat4x4Invalid =
+        view.getPropertyView<glm::umat4x4, true>("TestClassProperty");
     REQUIRE(
-        u32mat4x4Invalid.status() ==
+        umat4x4Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
 
@@ -926,9 +924,9 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
   }
 
   SECTION("Access incorrectly as array") {
-    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>, true>
+    PropertyTablePropertyView<PropertyArrayView<glm::umat2x2>, true>
         arrayInvalid =
-            view.getPropertyView<PropertyArrayView<glm::u32mat2x2>, true>(
+            view.getPropertyView<PropertyArrayView<glm::umat2x2>, true>(
                 "TestClassProperty");
     REQUIRE(
         arrayInvalid.status() ==
@@ -936,8 +934,8 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
   }
 
   SECTION("Access incorrectly as non-normalized") {
-    PropertyTablePropertyView<glm::u32mat2x2> nonNormalizedInvalid =
-        view.getPropertyView<glm::u32mat2x2>("TestClassProperty");
+    PropertyTablePropertyView<glm::umat2x2> nonNormalizedInvalid =
+        view.getPropertyView<glm::umat2x2>("TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
@@ -2297,12 +2295,12 @@ TEST_CASE("Test fixed-length matN array") {
   }
 
   SECTION("Wrong component type") {
-    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>>
-        u32mat2x2ArrayInvalid =
-            view.getPropertyView<PropertyArrayView<glm::u32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::umat2x2>>
+        umat2x2ArrayInvalid =
+            view.getPropertyView<PropertyArrayView<glm::umat2x2>>(
                 "TestClassProperty");
     REQUIRE(
-        u32mat2x2ArrayInvalid.status() ==
+        umat2x2ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
@@ -2457,12 +2455,12 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
   }
 
   SECTION("Wrong component type") {
-    PropertyTablePropertyView<PropertyArrayView<glm::u32mat2x2>, true>
-        u32mat2x2ArrayInvalid =
-            view.getPropertyView<PropertyArrayView<glm::u32mat2x2>, true>(
+    PropertyTablePropertyView<PropertyArrayView<glm::umat2x2>, true>
+        umat2x2ArrayInvalid =
+            view.getPropertyView<PropertyArrayView<glm::umat2x2>, true>(
                 "TestClassProperty");
     REQUIRE(
-        u32mat2x2ArrayInvalid.status() ==
+        umat2x2ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
@@ -4237,9 +4235,7 @@ TEST_CASE("Test callback for vecN PropertyTableProperty (normalized)") {
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
-            REQUIRE(
-                static_cast<glm::ivec3>(propertyValue.getRaw(i)) ==
-                expectedValue);
+            REQUIRE(propertyValue.getRaw(i) == expectedValue);
             REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
@@ -4254,17 +4250,17 @@ TEST_CASE("Test callback for vecN PropertyTableProperty (normalized)") {
 TEST_CASE("Test callback for matN PropertyTableProperty") {
   Model model;
   // clang-format off
-  std::vector<glm::u32mat2x2> values = {
-      glm::u32mat2x2(
+  std::vector<glm::umat2x2> values = {
+      glm::umat2x2(
         12, 34,
         30, 1),
-      glm::u32mat2x2(
+      glm::umat2x2(
         11, 8,
         73, 102),
-      glm::u32mat2x2(
+      glm::umat2x2(
         1, 0,
         63, 2),
-      glm::u32mat2x2(
+      glm::umat2x2(
         4, 8,
         3, 23)};
   // clang-format on
@@ -4313,13 +4309,11 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
         REQUIRE(propertyValue.size() > 0);
 
         if constexpr (std::is_same_v<
-                          PropertyTablePropertyView<glm::u32mat2x2>,
+                          PropertyTablePropertyView<glm::umat2x2>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
-            REQUIRE(
-                static_cast<glm::u32mat2x2>(propertyValue.getRaw(i)) ==
-                expectedValue);
+            REQUIRE(propertyValue.getRaw(i) == expectedValue);
             REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
@@ -4335,17 +4329,17 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
 TEST_CASE("Test callback for matN PropertyTableProperty (normalized)") {
   Model model;
   // clang-format off
-  std::vector<glm::u32mat2x2> values = {
-      glm::u32mat2x2(
+  std::vector<glm::umat2x2> values = {
+      glm::umat2x2(
         12, 34,
         30, 1),
-      glm::u32mat2x2(
+      glm::umat2x2(
         11, 8,
         73, 102),
-      glm::u32mat2x2(
+      glm::umat2x2(
         1, 0,
         63, 2),
-      glm::u32mat2x2(
+      glm::umat2x2(
         4, 8,
         3, 23)};
   // clang-format on
@@ -4395,12 +4389,12 @@ TEST_CASE("Test callback for matN PropertyTableProperty (normalized)") {
         REQUIRE(propertyValue.size() > 0);
 
         if constexpr (std::is_same_v<
-                          PropertyTablePropertyView<glm::u32mat2x2, true>,
+                          PropertyTablePropertyView<glm::umat2x2, true>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
             REQUIRE(
-                static_cast<glm::u32mat2x2>(propertyValue.getRaw(i)) ==
+                static_cast<glm::umat2x2>(propertyValue.getRaw(i)) ==
                 expectedValue);
             REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }

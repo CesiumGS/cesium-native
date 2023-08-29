@@ -620,9 +620,9 @@ public:
         static_cast<int64_t>(0),
         static_cast<int64_t>(this->_pImage->height) - 1);
 
-    int64_t pixelIndex = this->_pImage->bytesPerChannel *
-                         this->_pImage->channels *
-                         (y * this->_pImage->width + x);
+    int64_t pixelIndex = static_cast<int64_t>(this->_pImage->bytesPerChannel) *
+                         static_cast<int64_t>(this->_pImage->channels) *
+                         (y * static_cast<int64_t>(this->_pImage->width) + x);
 
     // TODO: Currently stb only outputs uint8 pixel types. If that
     // changes this should account for additional pixel byte sizes.
