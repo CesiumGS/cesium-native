@@ -1,7 +1,6 @@
 #include "CesiumGltf/PropertyTablePropertyView.h"
 
-using namespace CesiumGltf;
-
+namespace CesiumGltf {
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.
 const PropertyViewStatusType
@@ -40,3 +39,19 @@ const PropertyViewStatusType
     PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds;
 const PropertyViewStatusType
     PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds;
+
+int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
+  switch (offsetType) {
+  case PropertyComponentType::Uint8:
+    return sizeof(uint8_t);
+  case PropertyComponentType::Uint16:
+    return sizeof(uint16_t);
+  case PropertyComponentType::Uint32:
+    return sizeof(uint32_t);
+  case PropertyComponentType::Uint64:
+    return sizeof(uint64_t);
+  default:
+    return 0;
+  }
+}
+} // namespace CesiumGltf
