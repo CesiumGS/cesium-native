@@ -147,10 +147,10 @@ const TileExternalContent* TileContent::getExternalContent() const noexcept {
 }
 
 TileExternalContent* TileContent::getExternalContent() noexcept {
-  std::unique_ptr<TileExternalContent>* pRenderContent =
+  std::unique_ptr<TileExternalContent>* pExternalContent =
       std::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
-  if (pRenderContent) {
-    return pRenderContent->get();
+  if (pExternalContent) {
+    return pExternalContent->get();
   }
 
   return nullptr;
