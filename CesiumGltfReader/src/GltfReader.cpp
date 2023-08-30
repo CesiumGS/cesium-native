@@ -225,6 +225,18 @@ void postprocess(
     const GltfReaderOptions& options) {
   Model& model = readGltf.model.value();
 
+  auto extFeatureMetadataIter = std::find(
+      model.extensionsUsed.begin(),
+      model.extensionsUsed.end(),
+      "EXT_feature_metadata");
+
+  if (extFeatureMetadataIter != model.extensionsUsed.end()) {
+    readGltf.warnings.emplace_back(
+        "glTF contains EXT_feature_metadata extension, which is no longer "
+        "supported. The model will still be loaded, but views cannot be "
+        "constructed on its metadata.");
+  }
+
   if (options.decodeDataUrls) {
     decodeDataUrls(reader, readGltf, options);
   }
