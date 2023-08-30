@@ -43,7 +43,7 @@ template <typename T> struct ReadJsonResult {
 class CESIUMJSONREADER_API JsonReader {
 public:
   /**
-   * @brief Reads JSON from a byte buffer into a statically-type class.
+   * @brief Reads JSON from a byte buffer into a statically-typed class.
    *
    * @param data The buffer from which to read JSON.
    * @param handler The handler to receive the top-level JSON object. This
