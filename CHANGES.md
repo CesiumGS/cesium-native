@@ -10,16 +10,18 @@
 
 ##### Additions :tada:
 
+- Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
 - Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
 - Added `ValueType` type alias to `ArrayJsonHandler`, for consistency with other JSON handlers.
 - Added an overload of `JsonReader::readJson` that takes a `rapidjson::Value` instead of a byte buffer. This allows a subtree of a `rapidjson::Document` to be easily and efficiently converted into statically-typed classes via `IJsonHandler`.
 - Added `*Reader` classes to `CesiumGltfReader` and `Cesium3DTilesReader` to allow each of the classes to be individually read from JSON.
 
-### v0.27.0 - 2023-09-01
-
 ##### Fixes :wrench:
 
 - Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
+- Fixed several small build script issues to allow cesium-native to be used in Univeral Windows Platform (UWP) applications, such as those that run on Holo Lens 2.
+- When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
+- Fixed a bug that could cause higher-detail tiles to continue showing when zooming out quickly on a tileset that uses "additive" refinement.
 
 ### v0.26.0 - 2023-08-01
 
