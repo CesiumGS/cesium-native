@@ -1609,3 +1609,70 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
     runUnconditionallyRefinedTestCase(options);
   }
 }
+
+TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "AdditiveThreeLevels";
+  std::vector<std::string> files{"tileset.json", "content.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  // Load until complete
+  ViewUpdateResult updateResult;
+  ViewState viewState = zoomToTileset(tileset);
+  while (tileset.getNumberOfTilesLoaded() == 0 ||
+         tileset.computeLoadProgress() < 100.0f) {
+    updateResult = tileset.updateView({viewState});
+  }
+
+  // All three tiles should be rendered.
+  CHECK(updateResult.tilesToRenderThisFrame.size() == 3);
+
+  // Zoom way out
+  std::optional<Cartographic> position = viewState.getPositionCartographic();
+  REQUIRE(position);
+  position->height += 100000;
+
+  ViewState zoomedOut = ViewState::create(
+      Ellipsoid::WGS84.cartographicToCartesian(*position),
+      viewState.getDirection(),
+      viewState.getUp(),
+      viewState.getViewportSize(),
+      viewState.getHorizontalFieldOfView(),
+      viewState.getVerticalFieldOfView());
+  updateResult = tileset.updateView({zoomedOut});
+
+  // Only the root tile is visible now, and the other two are fading out.
+  CHECK(updateResult.tilesToRenderThisFrame.size() == 1);
+  CHECK(updateResult.tilesFadingOut.size() == 2);
+}

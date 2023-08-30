@@ -517,11 +517,13 @@ static void markTileNonRendered(
     TileSelectionState::Result lastResult,
     Tile& tile,
     ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Rendered) {
+  if (lastResult == TileSelectionState::Result::Rendered ||
+      (lastResult == TileSelectionState::Result::Refined &&
+       tile.getRefine() == TileRefine::Add)) {
+    result.tilesFadingOut.insert(&tile);
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);
-      result.tilesFadingOut.insert(&tile);
     }
   }
 }
@@ -1516,10 +1518,13 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const FrameState& frameState,
     const Tile& tile,
     const TileSelectionState& lastFrameSelectionState) {
+  TileSelectionState::Result lastFrameResult =
+      lastFrameSelectionState.getResult(frameState.lastFrameNumber);
   bool isRenderable = tile.isRenderable();
   bool wasRenderedLastFrame =
-      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Rendered;
+      lastFrameResult == TileSelectionState::Result::Rendered ||
+      (tile.getRefine() == TileRefine::Add &&
+       lastFrameResult == TileSelectionState::Result::Refined);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = isRenderable;

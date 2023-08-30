@@ -1,13 +1,14 @@
 #include "CesiumIonClient/Connection.h"
 
+#include "fillWithRandomBytes.h"
 #include "parseLinkHeader.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/SpanHelper.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
-#include <duthomhas/csprng.hpp>
 #include <httplib.h>
 #include <modp_b64.h>
 #include <rapidjson/document.h>
@@ -114,14 +115,13 @@ std::string createAuthorizationErrorHtml(
   std::string redirectUrl =
       Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
 
-  duthomhas::csprng rng;
   std::vector<uint8_t> stateBytes(32, 0);
-  rng(stateBytes);
+  fillWithRandomBytes(stateBytes);
 
   std::string state = encodeBase64(stateBytes);
 
   std::vector<uint8_t> codeVerifierBytes(32, 0);
-  rng(codeVerifierBytes);
+  fillWithRandomBytes(codeVerifierBytes);
 
   std::string codeVerifier = encodeBase64(codeVerifierBytes);
 
