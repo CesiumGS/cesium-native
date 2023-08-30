@@ -73,6 +73,14 @@ public:
   PropertyAttributeViewStatus status() const noexcept { return this->_status; }
 
   /**
+   * @brief Gets the name of the property attribute being viewed. Returns
+   * std::nullopt if no name was specified.
+   */
+  const std::optional<std::string>& name() const noexcept {
+    return _pPropertyAttribute->name;
+  }
+
+  /**
    * @brief Finds the {@link ClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.

@@ -258,6 +258,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -271,6 +274,9 @@ public:
    */
   PropertyView(const ClassProperty& classProperty)
       : _status(validatePropertyType<ElementType>(classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -328,6 +334,9 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -394,6 +403,30 @@ public:
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
+   * @brief Gets the name of the property being viewed. Returns std::nullopt if
+   * no description was provided.
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @brief Gets the semantic of the property being viewed. The semantic is an
+   * identifier that describes how this property should be interpreted, and
+   * cannot be used by other properties in the class. Returns std::nullopt if no
+   * semantic was specified.
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @brief Gets the description of the property being viewed. Returns
+   * std::nullopt if no name was specified.
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
+
+  /**
    * @brief Get the element count of the fixed-length arrays in this property.
    * Only applicable when the property is an array type.
    *
@@ -403,8 +436,6 @@ public:
 
   /**
    * @brief Whether this property has a normalized integer type.
-   *
-   * @return Whether this property has a normalized integer type.
    */
   bool normalized() const noexcept { return false; }
 
@@ -460,6 +491,9 @@ public:
    * in the property wherever it appears. Also known as a sentinel value. This
    * is given as the plain property value, without the transforms from the
    * normalized, offset, and scale properties.
+   *
+   * @returns The property's "no data" value, or std::nullopt if it was not
+   * specified.
    */
   std::optional<ElementType> noData() const noexcept { return _noData; }
 
@@ -467,6 +501,9 @@ public:
    * @brief Gets the default value to use when encountering a "no data" value or
    * an omitted property. The value is given in its final form, taking the
    * effect of normalized, offset, and scale properties into account.
+   *
+   * @returns The property's default value, or std::nullopt if it was not
+   * specified.
    */
   std::optional<ElementType> defaultValue() const noexcept {
     return _defaultValue;
@@ -476,6 +513,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   bool _required;
 
   std::optional<ElementType> _offset;
@@ -603,6 +644,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -616,6 +660,9 @@ public:
    */
   PropertyView(const ClassProperty& classProperty)
       : _status(validatePropertyType<ElementType>(classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -670,6 +717,9 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -728,12 +778,28 @@ protected:
 
 public:
   /**
-   * @brief Gets the status of this property view, indicating whether an error
-   * occurred.
-   *
-   * @return The status of this property view.
+   * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -786,6 +852,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   bool _required;
 
   std::optional<NormalizedType> _offset;
@@ -884,6 +954,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _required(false),
         _defaultValue(std::nullopt) {}
 
@@ -892,6 +965,9 @@ public:
    */
   PropertyView(const ClassProperty& classProperty)
       : _status(validatePropertyType<bool>(classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _required(classProperty.required),
         _defaultValue(std::nullopt) {
     if (_status != PropertyViewStatus::Valid) {
@@ -918,7 +994,12 @@ protected:
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
   PropertyView(PropertyViewStatusType status)
-      : _status(status), _required(false), _defaultValue(std::nullopt) {}
+      : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
+        _required(false),
+        _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -934,6 +1015,25 @@ public:
    * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -984,6 +1084,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   bool _required;
   std::optional<bool> _defaultValue;
 
@@ -1008,6 +1112,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _required(false),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {}
@@ -1017,6 +1124,9 @@ public:
    */
   PropertyView(const ClassProperty& classProperty)
       : _status(validatePropertyType<std::string_view>(classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {
@@ -1057,6 +1167,9 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _required(false),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {}
@@ -1075,6 +1188,25 @@ public:
    * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -1139,6 +1271,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   bool _required;
   std::optional<std::string> _noData;
   std::optional<std::string> _defaultValue;
@@ -1174,6 +1310,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -1189,6 +1328,9 @@ public:
   PropertyView(const ClassProperty& classProperty)
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
             classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _count(_count = classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -1243,6 +1385,9 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -1289,6 +1434,25 @@ public:
    * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -1382,6 +1546,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   int64_t _count;
 
   std::optional<std::vector<std::byte>> _offset;
@@ -1538,6 +1706,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -1553,6 +1724,9 @@ public:
   PropertyView(const ClassProperty& classProperty)
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
             classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _count(_count = classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -1607,6 +1781,9 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _offset(std::nullopt),
         _scale(std::nullopt),
@@ -1653,6 +1830,25 @@ public:
    * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -1747,6 +1943,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   int64_t _count;
 
   std::optional<std::vector<std::byte>> _offset;
@@ -1872,6 +2072,9 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _required(false),
         _defaultValue(),
@@ -1883,6 +2086,9 @@ public:
   PropertyView(const ClassProperty& classProperty)
       : _status(
             validateArrayPropertyType<PropertyArrayView<bool>>(classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _count(classProperty.count ? *classProperty.count : 0),
         _required(classProperty.required),
         _defaultValue(),
@@ -1912,6 +2118,9 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _required(false),
         _defaultValue(),
@@ -1931,6 +2140,25 @@ public:
    * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -2002,6 +2230,10 @@ protected:
   PropertyViewStatusType _status;
 
 private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
   int64_t _count;
   bool _required;
 
@@ -2059,16 +2291,13 @@ public:
    */
   PropertyView()
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _required(false),
         _noData(),
-        _noDataOffsets(),
-        _noDataOffsetType(PropertyComponentType::None),
-        _noDataSize(0),
-        _defaultValue(),
-        _defaultValueOffsets(),
-        _defaultValueOffsetType(PropertyComponentType::None),
-        _defaultValueSize(0) {}
+        _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -2076,30 +2305,23 @@ public:
   PropertyView(const ClassProperty& classProperty)
       : _status(validateArrayPropertyType<PropertyArrayView<std::string_view>>(
             classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
         _count(classProperty.count ? *classProperty.count : 0),
         _required(classProperty.required),
         _noData(),
-        _noDataOffsets(),
-        _noDataOffsetType(PropertyComponentType::None),
-        _noDataSize(0),
-        _defaultValue(),
-        _defaultValueOffsets(),
-        _defaultValueOffsetType(PropertyComponentType::None),
-        _defaultValueSize(0) {
+        _defaultValue() {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
       if (!_required) {
-        _noData = getStringArrayValue(
-            *classProperty.noData,
-            _noDataOffsets,
-            _noDataOffsetType,
-            _noDataSize);
+        _noData = getStringArrayValue(*classProperty.noData);
       }
 
-      if (_noDataSize == 0 || (_count > 0 && _noDataSize != _count)) {
+      if (_noData.size == 0 || (_count > 0 && _noData.size != _count)) {
         _status = PropertyViewStatus::ErrorInvalidNoDataValue;
         return;
       }
@@ -2107,14 +2329,11 @@ public:
 
     if (classProperty.defaultProperty) {
       if (!_required) {
-        _defaultValue = getStringArrayValue(
-            *classProperty.defaultProperty,
-            _defaultValueOffsets,
-            _defaultValueOffsetType,
-            _defaultValueSize);
+        _defaultValue = getStringArrayValue(*classProperty.defaultProperty);
       }
 
-      if (_defaultValueSize == 0 || (_count > 0 && _noDataSize != _count)) {
+      if (_defaultValue.size == 0 ||
+          (_count > 0 && _defaultValue.size != _count)) {
         // The value was specified but something went wrong.
         _status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
@@ -2130,16 +2349,13 @@ protected:
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
         _count(0),
         _required(false),
         _noData(),
-        _noDataOffsets(),
-        _noDataOffsetType(PropertyComponentType::None),
-        _noDataSize(0),
-        _defaultValue(),
-        _defaultValueOffsets(),
-        _defaultValueOffsetType(PropertyComponentType::None),
-        _defaultValueSize(0) {}
+        _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a property table property
@@ -2155,6 +2371,25 @@ public:
    * @copydoc PropertyView::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
 
   /**
    * @copydoc PropertyView::arrayCount
@@ -2203,14 +2438,14 @@ public:
    * @copydoc PropertyView::noData
    */
   std::optional<PropertyArrayView<std::string_view>> noData() const noexcept {
-    if (_noDataSize > 0) {
+    if (_noData.size > 0) {
       return PropertyArrayView<std::string_view>(
-          gsl::span<const std::byte>(_noData.data(), _noData.size()),
+          gsl::span<const std::byte>(_noData.data.data(), _noData.data.size()),
           gsl::span<const std::byte>(
-              _noDataOffsets.data(),
-              _noDataOffsets.size()),
-          _noDataOffsetType,
-          _noDataSize);
+              _noData.offsets.data(),
+              _noData.offsets.size()),
+          _noData.offsetType,
+          _noData.size);
     }
 
     return std::nullopt;
@@ -2221,16 +2456,16 @@ public:
    */
   std::optional<PropertyArrayView<std::string_view>>
   defaultValue() const noexcept {
-    if (_defaultValueSize > 0) {
+    if (_defaultValue.size > 0) {
       return PropertyArrayView<std::string_view>(
           gsl::span<const std::byte>(
-              _defaultValue.data(),
-              _defaultValue.size()),
+              _defaultValue.data.data(),
+              _defaultValue.data.size()),
           gsl::span<const std::byte>(
-              _defaultValueOffsets.data(),
-              _defaultValueOffsets.size()),
-          _defaultValueOffsetType,
-          _defaultValueSize);
+              _defaultValue.offsets.data(),
+              _defaultValue.offsets.size()),
+          _defaultValue.offsetType,
+          _defaultValue.size);
     }
 
     return std::nullopt;
@@ -2243,23 +2478,25 @@ private:
   int64_t _count;
   bool _required;
 
-  std::vector<std::byte> _noData;
-  std::vector<std::byte> _noDataOffsets;
-  PropertyComponentType _noDataOffsetType;
-  int64_t _noDataSize;
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
 
-  std::vector<std::byte> _defaultValue;
-  std::vector<std::byte> _defaultValueOffsets;
-  PropertyComponentType _defaultValueOffsetType;
-  int64_t _defaultValueSize;
+  struct StringArrayValue {
+    std::vector<std::byte> data;
+    std::vector<std::byte> offsets;
+    PropertyComponentType offsetType = PropertyComponentType::None;
+    int64_t size = 0;
+  };
 
-  static std::vector<std::byte> getStringArrayValue(
-      const CesiumUtility::JsonValue& jsonValue,
-      std::vector<std::byte>& offsets,
-      PropertyComponentType& offsetType,
-      int64_t& size) {
+  StringArrayValue _noData;
+  StringArrayValue _defaultValue;
+
+  static StringArrayValue
+  getStringArrayValue(const CesiumUtility::JsonValue& jsonValue) {
+    StringArrayValue result;
     if (!jsonValue.isArray()) {
-      return std::vector<std::byte>();
+      return result;
     }
 
     std::vector<std::string> strings;
@@ -2273,7 +2510,7 @@ private:
     for (size_t i = 0; i < array.size(); i++) {
       if (!array[i].isString()) {
         // The entire array is invalidated; return.
-        return std::vector<std::byte>();
+        return result;
       }
 
       const std::string& string = array[i].getString();
@@ -2282,32 +2519,35 @@ private:
     }
 
     uint64_t totalLength = stringOffsets.back();
-    std::vector<std::byte> values(totalLength);
+    result.data.resize(totalLength);
     for (size_t i = 0; i < strings.size(); ++i) {
       std::memcpy(
-          values.data() + stringOffsets[i],
+          result.data.data() + stringOffsets[i],
           strings[i].data(),
           strings[i].size());
     };
 
     if (totalLength <= std::numeric_limits<uint8_t>::max()) {
-      offsets = narrowOffsetsBuffer<uint8_t>(stringOffsets);
-      offsetType = PropertyComponentType::Uint8;
+      result.offsets = narrowOffsetsBuffer<uint8_t>(stringOffsets);
+      result.offsetType = PropertyComponentType::Uint8;
     } else if (totalLength <= std::numeric_limits<uint16_t>::max()) {
-      offsets = narrowOffsetsBuffer<uint16_t>(stringOffsets);
-      offsetType = PropertyComponentType::Uint16;
+      result.offsets = narrowOffsetsBuffer<uint16_t>(stringOffsets);
+      result.offsetType = PropertyComponentType::Uint16;
     } else if (totalLength <= std::numeric_limits<uint32_t>::max()) {
-      offsets = narrowOffsetsBuffer<uint32_t>(stringOffsets);
-      offsetType = PropertyComponentType::Uint32;
+      result.offsets = narrowOffsetsBuffer<uint32_t>(stringOffsets);
+      result.offsetType = PropertyComponentType::Uint32;
     } else {
-      offsets.resize(stringOffsets.size() * sizeof(uint64_t));
-      std::memcpy(offsets.data(), stringOffsets.data(), offsets.size());
-      offsetType = PropertyComponentType::Uint64;
+      result.offsets.resize(stringOffsets.size() * sizeof(uint64_t));
+      std::memcpy(
+          result.offsets.data(),
+          stringOffsets.data(),
+          result.offsets.size());
+      result.offsetType = PropertyComponentType::Uint64;
     }
 
-    size = static_cast<int64_t>(strings.size());
+    result.size = static_cast<int64_t>(strings.size());
 
-    return values;
+    return result;
   }
 
   template <typename T>

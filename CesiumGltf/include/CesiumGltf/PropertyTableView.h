@@ -72,6 +72,14 @@ public:
   PropertyTableViewStatus status() const noexcept { return _status; }
 
   /**
+   * @brief Gets the name of the property table being viewed. Returns
+   * std::nullopt if no name was specified.
+   */
+  const std::optional<std::string>& name() const noexcept {
+    return _pPropertyTable->name;
+  }
+
+  /**
    * @brief Get the number of elements in this PropertyTableView. If the
    * view is valid, this returns {@link PropertyTable::count}. Otherwise, this returns 0.
    *
