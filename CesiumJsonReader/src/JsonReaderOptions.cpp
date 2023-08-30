@@ -26,53 +26,6 @@ public:
   }
 
   virtual IJsonHandler& getHandler() override { return *this; }
-
-  virtual IJsonHandler* readNull() override {
-    return JsonObjectJsonHandler::readNull();
-  };
-  virtual IJsonHandler* readBool(bool b) override {
-    return JsonObjectJsonHandler::readBool(b);
-  }
-  virtual IJsonHandler* readInt32(int32_t i) override {
-    return JsonObjectJsonHandler::readInt32(i);
-  }
-  virtual IJsonHandler* readUint32(uint32_t i) override {
-    return JsonObjectJsonHandler::readUint32(i);
-  }
-  virtual IJsonHandler* readInt64(int64_t i) override {
-    return JsonObjectJsonHandler::readInt64(i);
-  }
-  virtual IJsonHandler* readUint64(uint64_t i) override {
-    return JsonObjectJsonHandler::readUint64(i);
-  }
-  virtual IJsonHandler* readDouble(double d) override {
-    return JsonObjectJsonHandler::readDouble(d);
-  }
-  virtual IJsonHandler* readString(const std::string_view& str) override {
-    return JsonObjectJsonHandler::readString(str);
-  }
-  virtual IJsonHandler* readObjectStart() override {
-    return JsonObjectJsonHandler::readObjectStart();
-  }
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
-    return JsonObjectJsonHandler::readObjectKey(str);
-  }
-  virtual IJsonHandler* readObjectEnd() override {
-    return JsonObjectJsonHandler::readObjectEnd();
-  }
-  virtual IJsonHandler* readArrayStart() override {
-    return JsonObjectJsonHandler::readArrayStart();
-  }
-  virtual IJsonHandler* readArrayEnd() override {
-    return JsonObjectJsonHandler::readArrayEnd();
-  }
-
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context =
-          std::vector<std::string>()) override {
-    JsonObjectJsonHandler::reportWarning(warning, std::move(context));
-  }
 };
 
 void JsonReaderOptions::setExtensionState(
