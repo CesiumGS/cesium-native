@@ -30,7 +30,8 @@ static void checkNonArrayProperty(
     const std::string& expectedType,
     const std::optional<std::string>& expectedComponentType,
     const std::vector<ExpectedType>& expected,
-    size_t expectedTotalInstances) {
+    size_t expectedTotalInstances,
+    const std::optional<PropertyViewType>& noDataValue = std::nullopt) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedType);
   REQUIRE(property.componentType == expectedComponentType);
@@ -61,6 +62,12 @@ static void checkNonArrayProperty(
       REQUIRE(
           static_cast<ExpectedType>(propertyView.getRaw(i)) ==
           expected[static_cast<size_t>(i)]);
+    }
+
+    if (noDataValue && propertyView.getRaw(i) == noDataValue) {
+      REQUIRE(!propertyView.get(i));
+    } else {
+      REQUIRE(propertyView.get(i) == propertyView.getRaw(i));
     }
   }
 }
@@ -108,6 +115,90 @@ static void checkArrayProperty(
       }
     }
   }
+}
+
+template <typename ExpectedType, typename PropertyViewType = ExpectedType>
+static void createTestForNonArrayJson(
+    const std::vector<ExpectedType>& expected,
+    const std::string& expectedType,
+    const std::optional<std::string>& expectedComponentType,
+    size_t totalInstances,
+    const std::optional<PropertyViewType> expectedNoData) {
+  Model model;
+
+  rapidjson::Document featureTableJson;
+  featureTableJson.SetObject();
+  rapidjson::Value batchLength(rapidjson::kNumberType);
+  batchLength.SetUint64(totalInstances);
+  featureTableJson.AddMember(
+      "BATCH_LENGTH",
+      batchLength,
+      featureTableJson.GetAllocator());
+
+  rapidjson::Document batchTableJson;
+  batchTableJson.SetObject();
+  rapidjson::Value scalarProperty(rapidjson::kArrayType);
+  for (size_t i = 0; i < expected.size(); ++i) {
+    if (static_cast<PropertyViewType>(expected[i]) == expectedNoData) {
+      rapidjson::Value nullValue;
+      nullValue.SetNull();
+      scalarProperty.PushBack(nullValue, batchTableJson.GetAllocator());
+      continue;
+    }
+
+    if constexpr (std::is_same_v<ExpectedType, std::string>) {
+      rapidjson::Value value(rapidjson::kStringType);
+      value.SetString(
+          expected[i].c_str(),
+          static_cast<rapidjson::SizeType>(expected[i].size()),
+          batchTableJson.GetAllocator());
+      scalarProperty.PushBack(value, batchTableJson.GetAllocator());
+    } else {
+      scalarProperty.PushBack(
+          ExpectedType(expected[i]),
+          batchTableJson.GetAllocator());
+    }
+  }
+
+  batchTableJson.AddMember(
+      "scalarProperty",
+      scalarProperty,
+      batchTableJson.GetAllocator());
+
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
+      featureTableJson,
+      batchTableJson,
+      gsl::span<const std::byte>(),
+      model);
+
+  const ExtensionModelExtStructuralMetadata* pMetadata =
+      model.getExtension<ExtensionModelExtStructuralMetadata>();
+  REQUIRE(pMetadata);
+
+  const std::optional<Schema> schema = pMetadata->schema;
+  REQUIRE(schema);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 1);
+
+  REQUIRE(pMetadata->propertyTables.size() == 1);
+
+  const PropertyTable& propertyTable = pMetadata->propertyTables[0];
+  checkNonArrayProperty<ExpectedType, PropertyViewType>(
+      model,
+      propertyTable,
+      defaultClass,
+      "scalarProperty",
+      expectedType,
+      expectedComponentType,
+      expected,
+      totalInstances,
+      expectedNoData);
 }
 
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
@@ -285,7 +376,7 @@ std::set<int32_t> getUniqueBufferViewIds(
   return result;
 }
 
-TEST_CASE("Converts JSON B3DM batch table to EXT_feature_metadata") {
+TEST_CASE("Converts JSON B3DM batch table to EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
 
@@ -1709,6 +1800,59 @@ TEST_CASE("Upgrade JSON values") {
   }
 }
 
+TEST_CASE("Uses sentinel values for JSON null values") {
+  SECTION("Uint32 with sentinel value 0") {
+    // Even though the values are typed uint32, they are small enough to be
+    // stored as int8s. Signed types are preferred over unsigned.
+    std::vector<uint32_t> expected{32, 45, 0, 21, 0, 65, 78};
+    createTestForNonArrayJson<uint32_t, int8_t>(
+        expected,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
+        expected.size(),
+        static_cast<int8_t>(0));
+  }
+
+  SECTION("Int32 with sentinel value 0") {
+    // Even though the values are typed int32, they are small enough to be
+    // stored as int8s. Signed types are preferred over unsigned.
+    std::vector<int32_t> expected{32, 45, -3, 0, 21, 0, -65, 78};
+    createTestForNonArrayJson<int32_t, int8_t>(
+        expected,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
+        expected.size(),
+        static_cast<int8_t>(0));
+  }
+
+  SECTION("Int32 with sentinel value -1") {
+    // Even though the values are typed int32, they are small enough to be
+    // stored as int8s. Signed types are preferred over unsigned.
+    std::vector<int32_t> expected{32, 45, -3, 0, 21, 0, -1, -65, 78};
+    createTestForNonArrayJson<int32_t, int8_t>(
+        expected,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
+        expected.size(),
+        static_cast<int8_t>(-1));
+  }
+
+  SECTION("String with 'null'") {
+    std::vector<std::string> expected{
+        "Test 0",
+        "Test 1",
+        "Test 2",
+        "null"
+        "Test 3"};
+    createTestForNonArrayJson<std::string, std::string_view>(
+        expected,
+        ClassProperty::Type::STRING,
+        std::nullopt,
+        expected.size(),
+        std::string_view("null"));
+  }
+}
+
 TEST_CASE("Cannot write past batch table length") {
   SECTION("Uint32") {
     std::vector<uint32_t> expected{32, 45, 21, 65, 78, 20, 33, 12};
@@ -1929,56 +2073,67 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   CHECK(propertyTable.classProperty == "default");
   REQUIRE(propertyTable.properties.size() == 6);
 
-  // Even though some of these properties are scalars, they become strings
-  // because not every feature has every property, and only strings can
-  // represent "null".
-  struct Expected {
+  struct ExpectedString {
     std::string name;
-    std::string type;
-    std::optional<std::string> componentType;
     std::vector<std::string> values;
+    std::optional<std::string> noDataValue;
   };
 
-  std::vector<Expected> expectedProperties{
-      {"lampStrength",
-       ClassProperty::Type::STRING,
-       std::nullopt,
-       {"10", "5", "7", "null", "null", "null", "null", "null"}},
-      {"lampColor",
-       ClassProperty::Type::STRING,
-       std::nullopt,
-       {"yellow", "white", "white", "null", "null", "null", "null", "null"}},
-      {"carType",
-       ClassProperty::Type::STRING,
-       std::nullopt,
-       {"null", "null", "null", "truck", "bus", "sedan", "null", "null"}},
-      {"carColor",
-       ClassProperty::Type::STRING,
-       std::nullopt,
-       {"null", "null", "null", "green", "blue", "red", "null", "null"}},
-      {"treeHeight",
-       ClassProperty::Type::STRING,
-       std::nullopt,
-       {"null", "null", "null", "null", "null", "null", "10", "15"}},
-      {"treeAge",
-       ClassProperty::Type::STRING,
-       std::nullopt,
-       {"null", "null", "null", "null", "null", "null", "5", "8"}}};
+  struct ExpectedScalar {
+    std::string name;
+    std::vector<int8_t> values;
+    std::optional<int8_t> noDataValue;
+  };
 
-  for (const auto& expected : expectedProperties) {
+  std::vector<ExpectedScalar> expectedScalar{
+      {"lampStrength", {10, 5, 7, 0, 0, 0, 0, 0}, 0},
+      {"treeHeight", {0, 0, 0, 0, 0, 0, 10, 15}, 0},
+      {"treeAge", {0, 0, 0, 0, 0, 0, 5, 8}, 0}};
+
+  std::vector<ExpectedString> expectedString{
+      {"lampColor",
+       {"yellow", "white", "white", "null", "null", "null", "null", "null"},
+       "null"},
+      {"carType",
+       {"null", "null", "null", "truck", "bus", "sedan", "null", "null"},
+       "null"},
+      {"carColor",
+       {"null", "null", "null", "green", "blue", "red", "null", "null"},
+       "null"}};
+
+  for (const auto& expected : expectedScalar) {
     auto it = defaultClass.properties.find(expected.name);
     REQUIRE(it != defaultClass.properties.end());
-    CHECK(it->second.type == expected.type);
+    CHECK(it->second.type == ClassProperty::Type::SCALAR);
+    CHECK(it->second.componentType == ClassProperty::ComponentType::INT8);
+
+    checkNonArrayProperty<int8_t>(
+        gltf,
+        propertyTable,
+        defaultClass,
+        expected.name,
+        ClassProperty::Type::SCALAR,
+        ClassProperty::ComponentType::INT8,
+        expected.values,
+        expected.values.size(),
+        expected.noDataValue);
+  }
+
+  for (const auto& expected : expectedString) {
+    auto it = defaultClass.properties.find(expected.name);
+    REQUIRE(it != defaultClass.properties.end());
+    CHECK(it->second.type == ClassProperty::Type::STRING);
 
     checkNonArrayProperty<std::string, std::string_view>(
         gltf,
         propertyTable,
         defaultClass,
         expected.name,
-        expected.type,
-        expected.componentType,
+        ClassProperty::Type::STRING,
+        std::nullopt,
         expected.values,
-        expected.values.size());
+        expected.values.size(),
+        expected.noDataValue);
   }
 }
 
