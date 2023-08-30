@@ -1655,8 +1655,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
     updateResult = tileset.updateView({viewState});
   }
 
-  // All three tiles should be rendered.
-  CHECK(updateResult.tilesToRenderThisFrame.size() == 3);
+  // All three tiles (plus the tileset.json) should be rendered.
+  CHECK(updateResult.tilesToRenderThisFrame.size() == 4);
 
   // Zoom way out
   std::optional<Cartographic> position = viewState.getPositionCartographic();
@@ -1672,7 +1672,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
       viewState.getVerticalFieldOfView());
   updateResult = tileset.updateView({zoomedOut});
 
-  // Only the root tile is visible now, and the other two are fading out.
-  CHECK(updateResult.tilesToRenderThisFrame.size() == 1);
+  // Only the root tile (plus the tileset.json) is visible now, and the other
+  // two are fading out.
+  CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   CHECK(updateResult.tilesFadingOut.size() == 2);
 }

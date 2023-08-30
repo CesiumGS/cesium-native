@@ -124,7 +124,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(pTilesetJson->getParent() == nullptr);
     auto pRootTile = &pTilesetJson->getChildren()[0];
     CHECK(pRootTile->getParent() == pTilesetJson);
-    CHECK(pRootTile->getChildren().size() == 4);
+    REQUIRE(pRootTile->getChildren().size() == 4);
     CHECK(pRootTile->getGeometricError() == 70.0);
     CHECK(pRootTile->getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
@@ -364,7 +364,7 @@ TEST_CASE("Test creating tileset json loader") {
     REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
     auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
     CHECK(pRootTile->isExternalContent());
-    CHECK(pRootTile->getChildren().size() == 1);
+    REQUIRE(pRootTile->getChildren().size() == 1);
     CHECK(pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
 
     const Tile& child = pRootTile->getChildren().front();
@@ -387,7 +387,7 @@ TEST_CASE("Test creating tileset json loader") {
     REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
     auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
     CHECK(pRootTile->isExternalContent());
-    CHECK(pRootTile->getChildren().size() == 1);
+    REQUIRE(pRootTile->getChildren().size() == 1);
     CHECK(pRootTile->getTransform() == glm::dmat4(glm::dmat3(2.0)));
 
     const Tile& child = pRootTile->getChildren().front();
