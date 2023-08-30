@@ -253,7 +253,7 @@ public:
    * reject.
    *
    * @return A shared future that resolves to the loaded metadata. Once this
-   * future resolves, {@link findMetadata} can be used to synchronously obtain
+   * future resolves, {@link getMetadata} can be used to synchronously obtain
    * the same metadata instance.
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
