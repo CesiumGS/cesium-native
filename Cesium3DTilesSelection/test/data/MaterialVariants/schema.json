@@ -1,0 +1,14 @@
+{
+  "classes": {
+    "MaterialVariants": {
+      "properties": {
+        "material_variants": {
+          "type": "STRING",
+          "array": true,
+          "description": "Names of material variants to be expected in the glTF assets",
+          "semantic": "MATERIAL_VARIANTS"
+        }
+      }
+    }
+  }
+}

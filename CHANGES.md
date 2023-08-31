@@ -7,6 +7,8 @@
 - Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
 - `IExtensionJsonHandler` no longer derives from `IJsonHandler`. Instead, it has a new pure virtual method, `getHandler`, that must be implemented to allow clients to obtain the `IJsonHandler`. In almost all implementations, this should simply return `*this`.
 - In `SubtreeReader`, `SchemaReader`, and `TilesetReader`, the `readSubtree`, `readSchema`, and `readTileset` methods (respectively) have been renamed to `readFromJson` and return a templated `ReadJsonResult` instead of a bespoke result class.
+- `TileExternalContent` is now heap allocated and stored in `TileContent` with a `std::unique_ptr`.
+- The root `Tile` of a `Cesium3DTilesSelection::Tileset` now represents the tileset.json itself, and the `root` tile specified in the tileset.json is its only child. This makes the shape of the tile tree consistent between a standard top-level tileset and an external tileset embedded elsewhere in the tree. In both cases, the "tile" that represents the tileset.json itself has content of type `TileExternalContent`.
 
 ##### Additions :tada:
 
@@ -15,6 +17,10 @@
 - Added `ValueType` type alias to `ArrayJsonHandler`, for consistency with other JSON handlers.
 - Added an overload of `JsonReader::readJson` that takes a `rapidjson::Value` instead of a byte buffer. This allows a subtree of a `rapidjson::Document` to be easily and efficiently converted into statically-typed classes via `IJsonHandler`.
 - Added `*Reader` classes to `CesiumGltfReader` and `Cesium3DTilesReader` to allow each of the classes to be individually read from JSON.
+- Added `getExternalContent` method to the `TileContent` class.
+- `TileExternalContent` now holds the metadata (`schema`, `schemaUri`, `metadata`, and `groups`) stored in the tileset.json.
+- Added `loadMetadata` and `getMetadata` methods to `Cesium3DTilesSelection::Tileset`. They provide access to `TilesetMetadata` instance representing the metadata associated with a tileset.json.
+- Added `MetadataQuery` class to make it easier to find properties with specific semantics in `TilesetMetadata`.
 
 ##### Fixes :wrench:
 

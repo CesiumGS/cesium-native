@@ -422,6 +422,17 @@ public:
   }
 
   /**
+   * @brief Gets an array of strings from the value.
+   *
+   * @param defaultString The default string to include in the array for an
+   * element that is not a string.
+   * @return The array of strings, or an empty array if this value is not an
+   * array at all.
+   */
+  [[nodiscard]] std::vector<std::string>
+  getArrayOfStrings(const std::string& defaultString) const;
+
+  /**
    * @brief Gets the bool from the value.
    * @return The bool.
    * @throws std::bad_variant_access if the underlying type is not a
