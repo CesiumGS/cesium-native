@@ -1831,7 +1831,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       FeatureId& featureID = extension.featureIds.emplace_back();
 
       // No fast way to count the unique feature IDs in this primitive, so
-      // subtitute the batch table length.
+      // substitute the batch table length.
       featureID.featureCount = batchLength;
       featureID.attribute = 0;
       featureID.label = "_FEATURE_ID_0";

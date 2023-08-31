@@ -681,6 +681,7 @@ TEST_CASE("Converts point cloud with batch IDs to glTF with "
   FeatureId& featureId = primitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
+  CHECK(featureId.propertyTable == 0);
 
   CHECK(gltf.materials.size() == 1);
 
@@ -760,6 +761,7 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   // Check for implicit feature IDs
   CHECK(featureId.featureCount == pointsLength);
   CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   CHECK(gltf.materials.size() == 1);
 
@@ -818,6 +820,7 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
   // Check for implicit feature IDs
   CHECK(featureId.featureCount == pointsLength);
   CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
@@ -961,6 +964,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   // Check for implicit feature IDs
   CHECK(featureId.featureCount == pointsLength);
   CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
@@ -1098,6 +1102,7 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   FeatureId& featureId = primitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
   CHECK(featureId.attribute == 0);
+  CHECK(featureId.propertyTable == 0);
 
   CHECK(gltf.materials.size() == 1);
 

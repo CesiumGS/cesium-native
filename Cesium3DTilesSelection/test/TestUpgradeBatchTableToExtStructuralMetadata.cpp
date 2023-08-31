@@ -2265,9 +2265,9 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   };
 
   std::vector<ExpectedScalar> expectedScalar{
-      {"lampStrength", {10, 5, 7, 0, 0, 0, 0, 0}, 0},
-      {"treeHeight", {0, 0, 0, 0, 0, 0, 10, 15}, 0},
-      {"treeAge", {0, 0, 0, 0, 0, 0, 5, 8}, 0}};
+      {"lampStrength", {10, 5, 7, 0, 0, 0, 0, 0}, static_cast<int8_t>(0)},
+      {"treeHeight", {0, 0, 0, 0, 0, 0, 10, 15}, static_cast<int8_t>(0)},
+      {"treeAge", {0, 0, 0, 0, 0, 0, 5, 8}, static_cast<int8_t>(0)}};
 
   std::vector<ExpectedString> expectedString{
       {"lampColor",
