@@ -6,6 +6,7 @@
 
 - Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
 - `IExtensionJsonHandler` no longer derives from `IJsonHandler`. Instead, it has a new pure virtual method, `getHandler`, that must be implemented to allow clients to obtain the `IJsonHandler`. In almost all implementations, this should simply return `*this`.
+- In `SubtreeReader`, `SchemaReader`, and `TilesetReader`, the `readSubtree`, `readSchema`, and `readTileset` methods (respectively) have been renamed to `readFromJson` and return a templated `ReadJsonResult` instead of a bespoke result class.
 
 ##### Additions :tada:
 
@@ -13,6 +14,7 @@
 - Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
 - Added `ValueType` type alias to `ArrayJsonHandler`, for consistency with other JSON handlers.
 - Added an overload of `JsonReader::readJson` that takes a `rapidjson::Value` instead of a byte buffer. This allows a subtree of a `rapidjson::Document` to be easily and efficiently converted into statically-typed classes via `IJsonHandler`.
+- Added `*Reader` classes to `CesiumGltfReader` and `Cesium3DTilesReader` to allow each of the classes to be individually read from JSON.
 
 ##### Fixes :wrench:
 
