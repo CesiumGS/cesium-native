@@ -5,11 +5,14 @@
 ##### Breaking Changes :mega:
 
 - Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
+- `IExtensionJsonHandler` no longer derives from `IJsonHandler`. Instead, it has a new pure virtual method, `getHandler`, that must be implemented to allow clients to obtain the `IJsonHandler`. In almost all implementations, this should simply return `*this`.
 
 ##### Additions :tada:
 
 - Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
 - Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
+- Added `ValueType` type alias to `ArrayJsonHandler`, for consistency with other JSON handlers.
+- Added an overload of `JsonReader::readJson` that takes a `rapidjson::Value` instead of a byte buffer. This allows a subtree of a `rapidjson::Document` to be easily and efficiently converted into statically-typed classes via `IJsonHandler`.
 
 ##### Fixes :wrench:
 
@@ -58,6 +61,7 @@
 - Added support for parsing implicit tilesets that conform to the 3D Tiles 1.1 Spec.
 
 ##### Fixes :wrench:
+
 - Fixed various `libjpeg-turbo` build errors, including ones that occurred when building for iOS.
 
 ### v0.23.0 - 2023-04-03
@@ -159,7 +163,7 @@
 ##### Breaking Changes :mega:
 
 - `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
-- Added a new parameter to `IPrepareRendererResources::prepareInLoadThread`, `rendererOptions`,  to allow passing arbitrary data from the renderer.
+- Added a new parameter to `IPrepareRendererResources::prepareInLoadThread`, `rendererOptions`, to allow passing arbitrary data from the renderer.
 
 ##### Fixes :wrench:
 
@@ -178,7 +182,7 @@
 - Removed `TileContentLoadResult`. It has been replaced by `TileContent`.
 - Removed `TileContentLoader`. It has been replaced by `TilesetContentLoader` and `GltfConverters`.
 - Removed `ImplicitTraversal`. It has been replaced by `TilesetContentLoader` and `GltfConverters`.
-- Removed many methods from the `Cesium3DTilesSelection::Tileset` class: `getUrl()`, `getIonAssetID()`, `getIonAssetToken()`, `notifyTileStartLoading`, `notifyTileDoneLoading()`, `notifyTileUnloading()`, `loadTilesFromJson()`, `requestTileContent()`,  `requestAvailabilitySubtree()`, `addContext()`, and `getGltfUpAxis()`. Most of these were already not recommended for use outside of cesium-native.
+- Removed many methods from the `Cesium3DTilesSelection::Tileset` class: `getUrl()`, `getIonAssetID()`, `getIonAssetToken()`, `notifyTileStartLoading`, `notifyTileDoneLoading()`, `notifyTileUnloading()`, `loadTilesFromJson()`, `requestTileContent()`, `requestAvailabilitySubtree()`, `addContext()`, and `getGltfUpAxis()`. Most of these were already not recommended for use outside of cesium-native.
 - Removed many methods from the `Cesium3DTilesSelection::Tile` class: `getTileset()`, `getContext()`, `setContext()`, `getContent()`, `setEmptyContent()`, `getRendererResources()`, `setState()`, `loadContent()`, `processLoadedContent()`, `unloadContent()`, `update()`, and `markPermanentlyFailed()`. Most of these were already not recommended for use outside of cesium-native.
 
 ##### Additions :tada:
@@ -221,6 +225,7 @@
 ### v0.17.0 - 2022-07-01
 
 ##### Fixes :wrench:
+
 - Fixed crash when parsing an empty copyright string in the glTF model.
 
 ### v0.16.0 - 2022-06-01
@@ -242,6 +247,7 @@
 - Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
 
 In addition to the above, this release updates the following third-party libraries used by cesium-native:
+
 - `cpp-httplib` to v0.10.3 ([changes](https://github.com/yhirose/cpp-httplib/compare/c7486ead96dad647b9783941722b5944ac1aaefa...d73395e1dc652465fa9524266cd26ad57365491f))
 - `draco` to v1.5.2 ([changes](https://github.com/google/draco/compare/9bf5d2e4833d445acc85eb95da42d715d3711c6f...bd1e8de7dd0596c2cbe5929cbe1f5d2257cd33db))
 - `earcut` to v2.2.3 ([changes](https://github.com/mapbox/earcut.hpp/compare/6d18edf0ce046023a7cb55e69c4cd9ba90e2c716...b28acde132cdb8e0ef536a96ca7ada8a651f9169))
@@ -468,7 +474,7 @@ In addition to the above, this release updates the following third-party librari
 - Fixed a bug that caused 3D Tiles content to fail to load when the status code was zero. This code is used by libcurl for successful read of `file://` URLs, so the bug prevented loading from such URLs in some environments.
 - Errors and warnings that occur while loading glTF textures are now include in the model load errors and warnings.
 - Fixes how `generate-classes` deals with reserved C++ keywords. Property names that are C++ keywords should be appended with "Property" as was already done,
-but when parsing JSONs the original property name string should be used.
+  but when parsing JSONs the original property name string should be used.
 
 ### v0.8.0 - 2021-10-01
 
