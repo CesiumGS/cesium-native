@@ -24,8 +24,9 @@ using namespace Cesium3DTilesSelection::CesiumImpl;
 namespace Cesium3DTilesSelection {
 namespace {
 /**
- * Indicates how a JSON value can be interpreted. Does not correspond one-to-one
- * with types / component types in EXT_structural_metadata.
+ * Indicates how a JSON value can be interpreted as a primitive type. Does not
+ * correspond one-to-one with types / component types in
+ * EXT_structural_metadata.
  */
 struct MaskedType {
   bool isInt8;
@@ -73,8 +74,8 @@ struct MaskedType {
   }
 
   /**
-   * Whether this is incompatible with every type. Fully-incompatible types will
-   * be treated as strings.
+   * Whether this is incompatible with every primitive type. Fully-incompatible
+   * types will be treated as strings.
    */
   bool isIncompatible() const noexcept {
     return !isInt8 && !isUint8 && !isInt16 && !isUint16 && !isInt32 &&
@@ -121,14 +122,15 @@ struct MaskedArrayType {
   }
 
   /**
-   * Whether this is incompatible with every type. Fully-incompatible types will
-   * be treated as strings.
+   * Whether this is incompatible with every primitive type. Fully-incompatible
+   * types will be treated as strings.
    */
   bool isIncompatible() const noexcept { return elementType.isIncompatible(); }
 };
 
 /**
- * Indicates a batch table property's compatibility with C++ types.
+ * Represents information about a batch table property, indicating its
+ * compatibility with C++ types and whether it has encountered any null values.
  */
 struct CompatibleTypes {
 private:
@@ -141,20 +143,28 @@ private:
   std::variant<std::monostate, MaskedType, MaskedArrayType> _type;
 
   /**
-   * Whether the type encountered a null value.
+   * Whether the property has encountered a null value. A
+   * property may contain null values even though all other values are of the
+   * same non-null type. In this case, it can simply replace the null with a
+   * "noData" value in the EXT_structural_metadata property.
    */
   bool _hasNullValue = false;
 
   /**
-   * These booleans are for possible sentinel values for the property. If a
-   * property contains null values, but all other non-null values are of the
-   * same type, then we should simply indicate the null value with a "noData"
-   * value in an EXT_structural_metadata property. We reserve several values as
-   * possible sentinel values:
+   * The following booleans track possible "noData" (sentinel) values for the
+   * property.
+   *
+   * We don't want to spend too much effort finding a "noData" value, because
+   * with any given property there can be multiple candidates. Thus, there are
+   * only a few values that are reserved as potential sentinel values:
    *
    * - 0, for signed or unsigned integers
    * - -1, for signed integers
    * - "null", for strings
+   *
+   * If a property does not contain one of these values, then it may be used as
+   * the "noData" value in the property. The sentinel value will then be copied
+   * to the buffer, instead of the null value.
    */
   bool _canUseZeroSentinel = true;
   bool _canUseNegativeOneSentinel = true;
@@ -167,17 +177,19 @@ public:
       : _type(maskedArrayType){};
 
   /**
-   * Whether this is exclusively compatible with array types.
+   * Whether this is exclusively compatible with array types. This indicates an
+   * exclusively array property, as opposed to a newly initialized one that is
+   * "compatible" with everything.
    */
   bool isExclusivelyArray() const noexcept {
     return std::holds_alternative<MaskedArrayType>(_type);
   }
 
   /**
-   * Whether this is compatible with at least one unsigned integer type. Does
-   * not count arrays.
+   * Whether this property is with at least one unsigned integer type. Does not
+   * count arrays.
    */
-  bool isUnsignedInteger() const noexcept {
+  bool isCompatibleWithUnsignedInteger() const noexcept {
     if (std::holds_alternative<MaskedArrayType>(_type)) {
       return false;
     }
@@ -191,10 +203,10 @@ public:
   }
 
   /**
-   * Whether this is compatible with at least one signed integer type. Does not
-   * count arrays.
+   * Whether this property is compatible with at least one signed integer type.
+   * Does not count arrays.
    */
-  bool isSignedInteger() const noexcept {
+  bool isCompatibleWithSignedInteger() const noexcept {
     if (std::holds_alternative<MaskedArrayType>(_type)) {
       return false;
     }
@@ -208,8 +220,8 @@ public:
   }
 
   /**
-   * Whether this is incompatible with every type. Fully-incompatible types will
-   * be treated as strings.
+   * Whether this property is incompatible with every primitive type.
+   * Fully-incompatible properties will be treated as string properties.
    */
   bool isIncompatible() const noexcept {
     if (std::holds_alternative<MaskedType>(_type)) {
@@ -225,13 +237,13 @@ public:
   }
 
   /**
-   * Marks as incompatible with every type. Fully-incompatible types will be
-   * treated as strings.
+   * Marks as incompatible with every primitive type. Fully-incompatible
+   * properties will be treated as string properties.
    */
   void makeIncompatible() noexcept { _type = MaskedType(false); }
 
   /**
-   * Merges a MaskedType into this CompatibleTypes.
+   * Merges a MaskedType into this BatchTableProperty.
    */
   void operator&=(const MaskedType& inMaskedType) noexcept {
     if (std::holds_alternative<MaskedType>(_type)) {
@@ -269,27 +281,29 @@ public:
   /**
    * Merges another CompatibleTypes into this one.
    */
-  void operator&=(const CompatibleTypes& inCompatibleTypes) noexcept {
-    if (std::holds_alternative<std::monostate>(inCompatibleTypes._type)) {
+  void operator&=(const CompatibleTypes& inTypes) noexcept {
+    if (std::holds_alternative<std::monostate>(inTypes._type)) {
       // The other CompatibleTypes is compatible with everything, so it does not
       // change this one.
-      return;
-    }
+    } else
 
-    if (std::holds_alternative<MaskedArrayType>(inCompatibleTypes._type)) {
+        if (std::holds_alternative<MaskedArrayType>(inTypes._type)) {
       const MaskedArrayType& arrayType =
-          std::get<MaskedArrayType>(inCompatibleTypes._type);
+          std::get<MaskedArrayType>(inTypes._type);
       operator&=(arrayType);
-      return;
+    } else {
+      const MaskedType& maskedType = std::get<MaskedType>(inTypes._type);
+      operator&=(maskedType);
     }
 
-    const MaskedType& maskedType =
-        std::get<MaskedType>(inCompatibleTypes._type);
-    operator&=(maskedType);
+    _hasNullValue |= inTypes._hasNullValue;
+    _canUseZeroSentinel &= inTypes._canUseZeroSentinel;
+    _canUseNegativeOneSentinel &= inTypes._canUseNegativeOneSentinel;
+    _canUseNullStringSentinel &= inTypes._canUseNullStringSentinel;
   }
 
   /**
-   * Derives MaskedType info from this CompatibleTypes. If this CompatibleTypes
+   * Derives MaskedType info from this CompatibleTypes. If this property
    * is only compatible with arrays, this will return an incompatible
    * MaskedType.
    */
@@ -304,8 +318,8 @@ public:
 
   /**
    * Derives MaskedArrayType info from this CompatibleTypes. If this
-   * CompatibleTypes is not compatible with arrays, this will return an
-   * incompatible MaskedArrayType.
+   * property is not compatible with arrays, this will return an incompatible
+   * MaskedArrayType.
    */
   MaskedArrayType toMaskedArrayType() const noexcept {
     if (std::holds_alternative<MaskedArrayType>(_type)) {
@@ -317,29 +331,29 @@ public:
   }
 
   /**
-   * Gets whether the type includes a null value.
+   * Gets whether the property of this type includes a null value.
    */
   bool hasNullValue() const noexcept { return _hasNullValue; }
 
   /**
-   * Sets whether the type includes a null value. If a null value has been
-   * encountered, a sentinel value can try to be provided.
+   * Sets whether the property includes a null value. If a null value has been
+   * encountered, a sentinel value may potentially be provided.
    */
   void setHasNullValue(bool value) noexcept { _hasNullValue = value; }
 
   /**
-   * Gets the first possible sentinel value for this type. If no sentinel value
-   * can be used, this returns std::nullopt.
+   * Gets a possible sentinel value for this type. If no value can be used, this
+   * returns std::nullopt.
    */
   const std::optional<CesiumUtility::JsonValue>
   getSentinelValue() const noexcept {
-    if (isUnsignedInteger()) {
+    if (isCompatibleWithUnsignedInteger()) {
       return _canUseZeroSentinel
                  ? std::make_optional<CesiumUtility::JsonValue>(0)
                  : std::nullopt;
     }
 
-    if (isSignedInteger()) {
+    if (isCompatibleWithSignedInteger()) {
       if (_canUseZeroSentinel) {
         return 0;
       }
@@ -359,14 +373,17 @@ public:
   }
 
   /**
-   * Removes any sentinel values that are incompatible with the given value
-   * type. This also removes the sentinel values that equal the given value.
+   * Removes any sentinel values that are incompatible with the property. This
+   * also removes the sentinel values that equal the given value.
    *
    * This is helpful for when a property contains a sentinel value as non-null
    * data; the sentinel value can then be removed from consideration.
    */
   void removeSentinelValues(CesiumUtility::JsonValue value) noexcept {
     if (value.isNumber()) {
+      _canUseNullStringSentinel = false;
+
+      // Don't try to use string as sentinels for numbers.
       if (value.isUint64()) {
         _canUseZeroSentinel &= (value.getUint64() != 0);
       }
@@ -376,17 +393,17 @@ public:
         _canUseZeroSentinel &= (intValue != 0);
         _canUseNegativeOneSentinel &= (intValue != -1);
       }
-
-      return;
     }
 
     if (value.isString()) {
+      // Don't try to use numbers as sentinels for strings.
+      _canUseZeroSentinel = false;
+      _canUseNegativeOneSentinel = false;
+
       auto stringValue = value.getString();
       if (stringValue == "null") {
         _canUseNullStringSentinel = false;
       }
-
-      return;
     }
   }
 };
@@ -618,14 +635,14 @@ CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
       continue;
     }
 
+    // If this code is reached, the value is a string or something else.
+    compatibleTypes.makeIncompatible();
+
     // If this is a string, check that the value does not equal one of the
     // possible sentinel values.
     if (it->IsString()) {
       compatibleTypes.removeSentinelValues(it->GetString());
     }
-
-    // If this code is reached, the value is a string or something else.
-    compatibleTypes.makeIncompatible();
   }
 
   return compatibleTypes;
@@ -1369,9 +1386,6 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   const CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
-  if (compatibleTypes.hasNullValue()) {
-    classProperty.noData = compatibleTypes.getSentinelValue();
-  }
 
   if (compatibleTypes.isExclusivelyArray()) {
     MaskedArrayType arrayType = compatibleTypes.toMaskedArrayType();
@@ -1383,6 +1397,11 @@ void updateExtensionWithJsonProperty(
         arrayType,
         propertyValue);
     return;
+  }
+
+  // Set the "noData" value before copying the property (to avoid copying nulls)
+  if (compatibleTypes.hasNullValue()) {
+    classProperty.noData = compatibleTypes.getSentinelValue();
   }
 
   MaskedType type = compatibleTypes.toMaskedType();

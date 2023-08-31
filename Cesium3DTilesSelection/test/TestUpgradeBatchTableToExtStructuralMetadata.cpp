@@ -36,7 +36,7 @@ static void checkNonArrayProperty(
   REQUIRE(property.type == expectedType);
   REQUIRE(property.componentType == expectedComponentType);
   REQUIRE(!property.array);
-  REQUIRE(property.count == std::nullopt);
+  REQUIRE(!property.count);
 
   PropertyTableView view(model, propertyTable);
   REQUIRE(view.status() == PropertyTableViewStatus::Valid);
@@ -1850,6 +1850,185 @@ TEST_CASE("Uses sentinel values for JSON null values") {
         std::nullopt,
         expected.size(),
         std::string_view("null"));
+  }
+}
+
+TEST_CASE("Defaults to string if no sentinel values are available") {
+  SECTION("Uint32") {
+    Model model;
+    // Even though the values are typed uint32, they are small enough to be
+    // stored as uint8s. Signed types are preferred over unsigned, but this
+    // exceeds the range for int8.
+    std::vector<std::optional<uint32_t>>
+        expected{32, 45, 0, 255, std::nullopt, 0, 65, 78};
+
+    rapidjson::Document featureTableJson;
+    featureTableJson.SetObject();
+    rapidjson::Value batchLength(rapidjson::kNumberType);
+    batchLength.SetUint64(static_cast<uint64_t>(expected.size()));
+    featureTableJson.AddMember(
+        "BATCH_LENGTH",
+        batchLength,
+        featureTableJson.GetAllocator());
+
+    rapidjson::Document batchTableJson;
+    batchTableJson.SetObject();
+    rapidjson::Value scalarProperty(rapidjson::kArrayType);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      if (!expected[i]) {
+        rapidjson::Value nullValue;
+        nullValue.SetNull();
+        scalarProperty.PushBack(nullValue, batchTableJson.GetAllocator());
+        continue;
+      }
+
+      scalarProperty.PushBack(*expected[i], batchTableJson.GetAllocator());
+    }
+
+    batchTableJson.AddMember(
+        "scalarProperty",
+        scalarProperty,
+        batchTableJson.GetAllocator());
+
+    auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
+        featureTableJson,
+        batchTableJson,
+        gsl::span<const std::byte>(),
+        model);
+
+    const ExtensionModelExtStructuralMetadata* pMetadata =
+        model.getExtension<ExtensionModelExtStructuralMetadata>();
+    REQUIRE(pMetadata);
+
+    const std::optional<Schema> schema = pMetadata->schema;
+    REQUIRE(schema);
+
+    const std::unordered_map<std::string, Class>& classes = schema->classes;
+    REQUIRE(classes.size() == 1);
+
+    const Class& defaultClass = classes.at("default");
+    const std::unordered_map<std::string, ClassProperty>& properties =
+        defaultClass.properties;
+    REQUIRE(properties.size() == 1);
+
+    REQUIRE(pMetadata->propertyTables.size() == 1);
+
+    const PropertyTable& propertyTable = pMetadata->propertyTables[0];
+    const ClassProperty& property =
+        defaultClass.properties.at("scalarProperty");
+    REQUIRE(property.type == ClassProperty::Type::STRING);
+    REQUIRE(!property.componentType);
+    REQUIRE(!property.array);
+    REQUIRE(!property.count);
+
+    PropertyTableView view(model, propertyTable);
+    REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+    REQUIRE(view.size() == propertyTable.count);
+
+    PropertyTablePropertyView<std::string_view> propertyView =
+        view.getPropertyView<std::string_view>("scalarProperty");
+    REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(propertyView.size() == propertyTable.count);
+    REQUIRE(propertyView.size() == static_cast<int64_t>(expected.size()));
+    for (int64_t i = 0; i < propertyView.size(); ++i) {
+      auto expectedValue = expected[static_cast<size_t>(i)];
+      if (expectedValue) {
+        std::string asString = std::to_string(*expectedValue);
+        REQUIRE(propertyView.getRaw(i) == asString);
+      } else {
+        REQUIRE(propertyView.getRaw(i) == "null");
+      }
+
+      REQUIRE(propertyView.get(i) == propertyView.getRaw(i));
+    }
+  }
+
+  SECTION("Int32") {
+    Model model;
+    // Even though the values are typed int32, they are small enough to be
+    // stored as int8s.
+    std::vector<std::optional<uint32_t>>
+        expected{32, 45, 0, -1, std::nullopt, 0, 65, 78};
+
+    rapidjson::Document featureTableJson;
+    featureTableJson.SetObject();
+    rapidjson::Value batchLength(rapidjson::kNumberType);
+    batchLength.SetUint64(static_cast<uint64_t>(expected.size()));
+    featureTableJson.AddMember(
+        "BATCH_LENGTH",
+        batchLength,
+        featureTableJson.GetAllocator());
+
+    rapidjson::Document batchTableJson;
+    batchTableJson.SetObject();
+    rapidjson::Value scalarProperty(rapidjson::kArrayType);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      if (!expected[i]) {
+        rapidjson::Value nullValue;
+        nullValue.SetNull();
+        scalarProperty.PushBack(nullValue, batchTableJson.GetAllocator());
+        continue;
+      }
+
+      scalarProperty.PushBack(*expected[i], batchTableJson.GetAllocator());
+    }
+
+    batchTableJson.AddMember(
+        "scalarProperty",
+        scalarProperty,
+        batchTableJson.GetAllocator());
+
+    auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
+        featureTableJson,
+        batchTableJson,
+        gsl::span<const std::byte>(),
+        model);
+
+    const ExtensionModelExtStructuralMetadata* pMetadata =
+        model.getExtension<ExtensionModelExtStructuralMetadata>();
+    REQUIRE(pMetadata);
+
+    const std::optional<Schema> schema = pMetadata->schema;
+    REQUIRE(schema);
+
+    const std::unordered_map<std::string, Class>& classes = schema->classes;
+    REQUIRE(classes.size() == 1);
+
+    const Class& defaultClass = classes.at("default");
+    const std::unordered_map<std::string, ClassProperty>& properties =
+        defaultClass.properties;
+    REQUIRE(properties.size() == 1);
+
+    REQUIRE(pMetadata->propertyTables.size() == 1);
+
+    const PropertyTable& propertyTable = pMetadata->propertyTables[0];
+    const ClassProperty& property =
+        defaultClass.properties.at("scalarProperty");
+    REQUIRE(property.type == ClassProperty::Type::STRING);
+    REQUIRE(!property.componentType);
+    REQUIRE(!property.array);
+    REQUIRE(!property.count);
+
+    PropertyTableView view(model, propertyTable);
+    REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+    REQUIRE(view.size() == propertyTable.count);
+
+    PropertyTablePropertyView<std::string_view> propertyView =
+        view.getPropertyView<std::string_view>("scalarProperty");
+    REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(propertyView.size() == propertyTable.count);
+    REQUIRE(propertyView.size() == static_cast<int64_t>(expected.size()));
+    for (int64_t i = 0; i < propertyView.size(); ++i) {
+      auto expectedValue = expected[static_cast<size_t>(i)];
+      if (expectedValue) {
+        std::string asString = std::to_string(*expectedValue);
+        REQUIRE(propertyView.getRaw(i) == asString);
+      } else {
+        REQUIRE(propertyView.getRaw(i) == "null");
+      }
+
+      REQUIRE(propertyView.get(i) == propertyView.getRaw(i));
+    }
   }
 }
 
