@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.27.0 - 2023-09-01
 
 ##### Breaking Changes :mega:
 
@@ -26,7 +26,7 @@
 
 - Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
 - Fixed several small build script issues to allow cesium-native to be used in Univeral Windows Platform (UWP) applications, such as those that run on Holo Lens 2.
-- When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
+- When KTX2 transcoding fails, the image will now be fully decompressed instead of returning an error.
 - Fixed a bug that could cause higher-detail tiles to continue showing when zooming out quickly on a tileset that uses "additive" refinement.
 - Fixed a bug that could cause a tile to never finish upsampling because its non-rendered parent never finishes loading.
 
