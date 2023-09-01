@@ -808,10 +808,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   double tilePriority =
       computeTilePriority(tile, frameState.frustums, distances);
 
-  this->_pTilesetContentManager->updateTileContent(
-      tile,
-      tilePriority,
-      _options);
+  this->_pTilesetContentManager->updateTileContent(tile, _options);
   this->_markTileVisited(tile);
 
   CullResult cullResult{};
