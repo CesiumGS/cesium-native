@@ -878,6 +878,12 @@ void TilesetContentManager::loadTileContent(
     if (pParentTile) {
       if (pParentTile->getState() != TileLoadState::Done) {
         loadTileContent(*pParentTile, tilesetOptions);
+
+        // Finalize the parent if necessary, otherwise it may never reach the
+        // Done state.
+        if (pParentTile->getState() == TileLoadState::ContentLoaded) {
+          finishLoading(*pParentTile, tilesetOptions);
+        }
         return;
       }
     } else {
@@ -970,14 +976,13 @@ void TilesetContentManager::loadTileContent(
 
 void TilesetContentManager::updateTileContent(
     Tile& tile,
-    double priority,
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::Unloading) {
     unloadTileContent(tile);
   }
 
   if (tile.getState() == TileLoadState::ContentLoaded) {
-    updateContentLoadedState(tile, priority, tilesetOptions);
+    updateContentLoadedState(tile, tilesetOptions);
   }
 
   if (tile.getState() == TileLoadState::Done) {
@@ -1188,8 +1193,7 @@ void TilesetContentManager::finishLoading(
 
   // This allows the raster tile to be updated and children to be created, if
   // necessary.
-  // Priority doesn't matter here since loading is complete.
-  updateTileContent(tile, 0.0, tilesetOptions);
+  updateTileContent(tile, tilesetOptions);
 }
 
 void TilesetContentManager::setTileContent(
@@ -1230,7 +1234,6 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
-    double /*priority*/,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();

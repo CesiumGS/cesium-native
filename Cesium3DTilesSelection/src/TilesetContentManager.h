@@ -62,10 +62,7 @@ public:
 
   void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void updateTileContent(
-      Tile& tile,
-      double priority,
-      const TilesetOptions& tilesetOptions);
+  void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
 
@@ -115,10 +112,8 @@ private:
       TileLoadResult&& result,
       void* pWorkerRenderResources);
 
-  void updateContentLoadedState(
-      Tile& tile,
-      double priority,
-      const TilesetOptions& tilesetOptions);
+  void
+  updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void updateDoneState(Tile& tile, const TilesetOptions& tilesetOptions);
 

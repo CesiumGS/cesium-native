@@ -28,6 +28,7 @@
 - Fixed several small build script issues to allow cesium-native to be used in Univeral Windows Platform (UWP) applications, such as those that run on Holo Lens 2.
 - When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
 - Fixed a bug that could cause higher-detail tiles to continue showing when zooming out quickly on a tileset that uses "additive" refinement.
+- Fixed a bug that could cause a tile to never finish upsampling because its non-rendered parent never finishes loading.
 
 ### v0.26.0 - 2023-08-01
 
