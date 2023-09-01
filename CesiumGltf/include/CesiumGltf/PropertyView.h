@@ -519,13 +519,12 @@ private:
   std::optional<std::string> _semantic;
   std::optional<std::string> _description;
 
-  bool _required;
-
   std::optional<ElementType> _offset;
   std::optional<ElementType> _scale;
   std::optional<ElementType> _max;
   std::optional<ElementType> _min;
 
+  bool _required;
   std::optional<ElementType> _noData;
   std::optional<ElementType> _defaultValue;
 
@@ -858,13 +857,12 @@ private:
   std::optional<std::string> _semantic;
   std::optional<std::string> _description;
 
-  bool _required;
-
   std::optional<NormalizedType> _offset;
   std::optional<NormalizedType> _scale;
   std::optional<NormalizedType> _max;
   std::optional<NormalizedType> _min;
 
+  bool _required;
   std::optional<ElementType> _noData;
   std::optional<NormalizedType> _defaultValue;
 
@@ -2477,12 +2475,12 @@ protected:
   PropertyViewStatusType _status;
 
 private:
-  int64_t _count;
-  bool _required;
-
   std::optional<std::string> _name;
   std::optional<std::string> _semantic;
   std::optional<std::string> _description;
+
+  int64_t _count;
+  bool _required;
 
   struct StringArrayValue {
     std::vector<std::byte> data;
