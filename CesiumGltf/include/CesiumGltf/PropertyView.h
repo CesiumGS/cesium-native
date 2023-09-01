@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/PropertyAttributeProperty.h"
 #include "CesiumGltf/PropertyTableProperty.h"
