@@ -1426,7 +1426,14 @@ void Tileset::_processMainThreadLoadQueue() {
   auto end =
       start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
   for (TileLoadTask& task : this->_mainThreadLoadQueue) {
-    this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+    // We double-check that the tile is still in the ContentLoaded state here,
+    // in case something (such as a child that needs to upsample from this
+    // parent) already pushed the tile into the Done state. Because in that
+    // case, calling finishLoading here would assert or crash.
+    if (task.pTile->getState() == TileLoadState::ContentLoaded &&
+        task.pTile->isRenderContent()) {
+      this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+    }
     auto time = std::chrono::system_clock::now();
     if (timeBudget > 0.0 && time >= end) {
       break;
