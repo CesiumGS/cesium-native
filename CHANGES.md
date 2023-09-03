@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.27.1 - 2023-09-03
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause a crash when loading tiles with a raster overlay.
+
 ### v0.27.0 - 2023-09-01
 
 ##### Breaking Changes :mega:

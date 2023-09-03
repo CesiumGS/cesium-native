@@ -880,8 +880,12 @@ void TilesetContentManager::loadTileContent(
         loadTileContent(*pParentTile, tilesetOptions);
 
         // Finalize the parent if necessary, otherwise it may never reach the
-        // Done state.
-        if (pParentTile->getState() == TileLoadState::ContentLoaded) {
+        // Done state. Also double check that we have render content in ensure
+        // we don't assert / crash in finishLoading. The latter will only ever
+        // be a problem in a pathological tileset with a non-renderable leaf
+        // tile, but that sort of thing does happen.
+        if (pParentTile->getState() == TileLoadState::ContentLoaded &&
+            pParentTile->isRenderContent()) {
           finishLoading(*pParentTile, tilesetOptions);
         }
         return;
