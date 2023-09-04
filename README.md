@@ -62,9 +62,7 @@ If you forget the `--recurse-submodules`, nothing will work because the git subm
 git submodule update --init --recursive
 ```
 
-#### Compile
-
-You can then build cesium-native on the command-line with CMake:
+#### Compile from command line
 
 ```bash
 ## Windows compilation using Visual Studio
@@ -77,7 +75,28 @@ cmake -B build -S .
 cmake --build build
 ```
 
-Or, you can easily build it in Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2017 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
+#### Compile from Visual Studio Code
+
+1) Install the `CMake Tools` extension. It should prompt you to generate project files from CMake.
+2) On Windows, choose `Visual Studio 2017 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform.
+3) Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
+
+#### Compile with any Visual Studio version using CMake generated projects
+
+1) Open the CMake UI (cmake-gui)
+2) Under "Where is the source code", point to your repo
+3) Specify your output folder in "Where to build the binaries"
+4) Click "Configure".
+5) Under "Specify the generator for this project", choose the VS version on your system
+6) Click Finish, wait for the process to finish
+7) Click Generate
+
+Look for cesium-native.sln in your output folder.
+
+Unit tests can also be run from this solution, under the cesium-native-tests project.
+
+![image](https://github.com/CesiumGS/cesium-native/assets/130494071/4d398bfc-f770-49d4-8ef5-a995096ad4a1)
+
 
 #### Generate Documentation
 
