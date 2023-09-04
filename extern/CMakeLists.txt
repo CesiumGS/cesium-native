@@ -1,6 +1,9 @@
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/Catch2/contrib")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
-add_subdirectory(Catch2)
+
+if (NOT TARGET Catch2 AND CESIUM_TESTS_ENABLED)
+  add_subdirectory(Catch2)
+endif()
 
 add_subdirectory(GSL)
 
