@@ -220,6 +220,14 @@ public:
   }
 
   /**
+   * Whether this property is compatible with every type. This only really
+   * happens when a CompatibleTypes is initialized and never modified.
+   */
+  bool isFullyCompatible() const noexcept {
+    return std::holds_alternative<std::monostate>(_type);
+  }
+
+  /**
    * Whether this property is incompatible with every primitive type.
    * Fully-incompatible properties will be treated as string properties.
    */
@@ -1386,6 +1394,11 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   const CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
+  if (compatibleTypes.isFullyCompatible()) {
+    // If this is "fully compatible", then the property contained no values (or
+    // rather, no non-null values). Exclude it from the model to avoid errors.
+    return;
+  }
 
   if (compatibleTypes.isExclusivelyArray()) {
     MaskedArrayType arrayType = compatibleTypes.toMaskedArrayType();
