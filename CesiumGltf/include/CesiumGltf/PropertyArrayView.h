@@ -70,6 +70,10 @@ public:
     return true;
   }
 
+  bool operator!=(const PropertyArrayView<ElementType>& other) const noexcept {
+    return !operator==(other);
+  }
+
 private:
   using ArrayType =
       std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
@@ -119,6 +123,10 @@ public:
     }
 
     return true;
+  }
+
+  bool operator!=(const PropertyArrayView<bool>& other) const noexcept {
+    return !operator==(other);
   }
 
 private:
@@ -183,6 +191,11 @@ public:
     }
 
     return true;
+  }
+
+  bool
+  operator!=(const PropertyArrayView<std::string_view>& other) const noexcept {
+    return !operator==(other);
   }
 
 private:
