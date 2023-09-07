@@ -7,6 +7,7 @@
 #include "CesiumGltf/PropertyView.h"
 #include "CesiumGltf/Sampler.h"
 
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -79,7 +80,7 @@ public:
 };
 
 template <typename ElementType>
-ElementType assembleScalarValue(const std::vector<uint8_t>& bytes) noexcept {
+ElementType assembleScalarValue(const gsl::span<uint8_t> bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
     assert(
         bytes.size() == sizeof(float) &&
@@ -106,7 +107,7 @@ ElementType assembleScalarValue(const std::vector<uint8_t>& bytes) noexcept {
 }
 
 template <typename ElementType>
-ElementType assembleVecNValue(const std::vector<uint8_t>& bytes) noexcept {
+ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
 
   const glm::length_t N =
@@ -152,7 +153,7 @@ ElementType assembleVecNValue(const std::vector<uint8_t>& bytes) noexcept {
 
 template <typename T>
 PropertyArrayView<T>
-assembleArrayValue(const std::vector<uint8_t>& bytes) noexcept {
+assembleArrayValue(const gsl::span<uint8_t> bytes) noexcept {
   std::vector<T> result(bytes.size() / sizeof(T));
 
   if constexpr (sizeof(T) == 2) {
@@ -172,8 +173,7 @@ assembleArrayValue(const std::vector<uint8_t>& bytes) noexcept {
 }
 
 template <typename ElementType>
-ElementType
-assembleValueFromChannels(const std::vector<uint8_t>& bytes) noexcept {
+ElementType assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
   assert(bytes.size() > 0 && "Channel input must have at least one value.");
 
   if constexpr (IsMetadataScalar<ElementType>::value) {
@@ -193,16 +193,24 @@ assembleValueFromChannels(const std::vector<uint8_t>& bytes) noexcept {
 double applySamplerWrapS(const double u, const int32_t wrapS);
 double applySamplerWrapT(const double v, const int32_t wrapT);
 
+std::array<uint8_t, 4> sampleNearestPixel(
+    const ImageCesium& image,
+    const std::vector<int64_t>& channels,
+    const double u,
+    const double v);
+
 /**
  * @brief A view of the data specified by a {@link PropertyTextureProperty}.
  *
  * Provides utilities to sample the property texture property using texture
- * coordinates.
+ * coordinates. Property values are retrieved from the NEAREST texel without
+ * additional filtering applied.
  *
- * @tparam ElementType The type of the elements represented in the property view
- * @tparam Normalized Whether or not the property is normalized. If normalized,
- * the elements can be retrieved as normalized floating-point numbers, as
- * opposed to their integer values.
+ * @tparam ElementType The type of the elements represented in the property
+ * view
+ * @tparam Normalized Whether or not the property is normalized. If
+ * normalized, the elements can be retrieved as normalized floating-point
+ * numbers, as opposed to their integer values.
  */
 template <typename ElementType, bool Normalized = false>
 class PropertyTexturePropertyView;
@@ -352,43 +360,10 @@ public:
     double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);
     double wrappedV = applySamplerWrapT(v, this->_pSampler->wrapT);
 
-    // TODO: account for sampler's filter (can be nearest or linear)
-
-    // For nearest filtering, std::floor is used instead of std::round.
-    // This is because filtering is supposed to consider the pixel centers. But
-    // memory access here acts as sampling the beginning of the pixel. Example:
-    // 0.4 * 2 = 0.8. In a 2x1 pixel image, that should be closer to the left
-    // pixel's center. But it will round to 1.0 which corresponds to the right
-    // pixel. So the right pixel has a bigger range than the left one, which is
-    // incorrect.
-    double xCoord = std::floor(wrappedU * this->_pImage->width);
-    double yCoord = std::floor(wrappedV * this->_pImage->height);
-
-    // Clamp to ensure no out-of-bounds data access
-    int64_t x = glm::clamp(
-        static_cast<int64_t>(xCoord),
-        static_cast<int64_t>(0),
-        static_cast<int64_t>(this->_pImage->width) - 1);
-    int64_t y = glm::clamp(
-        static_cast<int64_t>(yCoord),
-        static_cast<int64_t>(0),
-        static_cast<int64_t>(this->_pImage->height) - 1);
-
-    int64_t pixelIndex = this->_pImage->bytesPerChannel *
-                         this->_pImage->channels *
-                         (y * this->_pImage->width + x);
-
-    // TODO: Currently stb only outputs uint8 pixel types. If that
-    // changes this should account for additional pixel byte sizes.
-    const uint8_t* pValue = reinterpret_cast<const uint8_t*>(
-        this->_pImage->pixelData.data() + pixelIndex);
-
-    std::vector<uint8_t> channelValues(this->_channels.size());
-    for (size_t i = 0; i < this->_channels.size(); i++) {
-      channelValues[i] = *(pValue + this->_channels[i]);
-    }
-
-    return assembleValueFromChannels<ElementType>(channelValues);
+    std::array<uint8_t, 4> sample =
+        sampleNearestPixel(*this->_pImage, this->_channels, wrappedU, wrappedV);
+    return assembleValueFromChannels<ElementType>(
+        gsl::span(sample.data(), this->_channels.size()));
   }
 
   /**
@@ -598,43 +573,11 @@ public:
     double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);
     double wrappedV = applySamplerWrapT(v, this->_pSampler->wrapT);
 
-    // TODO: account for sampler's filter (can be nearest or linear)
+    std::array<uint8_t, 4> sample =
+        sampleNearestPixel(*this->_pImage, this->_channels, wrappedU, wrappedV);
 
-    // For nearest filtering, std::floor is used instead of std::round.
-    // This is because filtering is supposed to consider the pixel centers. But
-    // memory access here acts as sampling the beginning of the pixel. Example:
-    // 0.4 * 2 = 0.8. In a 2x1 pixel image, that should be closer to the left
-    // pixel's center. But it will round to 1.0 which corresponds to the right
-    // pixel. So the right pixel has a bigger range than the left one, which is
-    // incorrect.
-    double xCoord = std::floor(wrappedU * this->_pImage->width);
-    double yCoord = std::floor(wrappedV * this->_pImage->height);
-
-    // Clamp to ensure no out-of-bounds data access
-    int64_t x = glm::clamp(
-        static_cast<int64_t>(xCoord),
-        static_cast<int64_t>(0),
-        static_cast<int64_t>(this->_pImage->width) - 1);
-    int64_t y = glm::clamp(
-        static_cast<int64_t>(yCoord),
-        static_cast<int64_t>(0),
-        static_cast<int64_t>(this->_pImage->height) - 1);
-
-    int64_t pixelIndex = this->_pImage->bytesPerChannel *
-                         this->_pImage->channels *
-                         (y * this->_pImage->width + x);
-
-    // TODO: Currently stb only outputs uint8 pixel types. If that
-    // changes this should account for additional pixel byte sizes.
-    const uint8_t* pValue = reinterpret_cast<const uint8_t*>(
-        this->_pImage->pixelData.data() + pixelIndex);
-
-    std::vector<uint8_t> channelValues(this->_channels.size());
-    for (size_t i = 0; i < this->_channels.size(); i++) {
-      channelValues[i] = *(pValue + this->_channels[i]);
-    }
-
-    return assembleValueFromChannels<ElementType>(channelValues);
+    return assembleValueFromChannels<ElementType>(
+        gsl::span(sample.data(), this->_channels.size()));
   }
 
   /**
