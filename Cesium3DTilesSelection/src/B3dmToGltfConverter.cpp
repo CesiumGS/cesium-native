@@ -1,6 +1,6 @@
 #include "B3dmToGltfConverter.h"
 
-#include "BatchTableToGltfFeatureMetadata.h"
+#include "BatchTableToGltfStructuralMetadata.h"
 #include "BinaryToGltfConverter.h"
 
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -176,7 +176,7 @@ rapidjson::Document parseFeatureTableJsonData(
   return document;
 }
 
-void convertB3dmMetadataToGltfFeatureMetadata(
+void convertB3dmMetadataToGltfStructuralMetadata(
     const gsl::span<const std::byte>& b3dmBinary,
     const B3dmHeader& header,
     uint32_t headerLength,
@@ -219,8 +219,8 @@ void convertB3dmMetadataToGltfFeatureMetadata(
         return;
       }
 
-      // upgrade batch table to glTF feature metadata and append the result
-      result.errors.merge(BatchTableToGltfFeatureMetadata::convertFromB3dm(
+      // upgrade batch table to glTF structural metadata and append the result
+      result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromB3dm(
           featureTableJson,
           batchTableJson,
           batchTableBinaryData,
@@ -246,7 +246,7 @@ GltfConverterResult B3dmToGltfConverter::convert(
     return result;
   }
 
-  convertB3dmMetadataToGltfFeatureMetadata(
+  convertB3dmMetadataToGltfStructuralMetadata(
       b3dmBinary,
       header,
       headerLength,

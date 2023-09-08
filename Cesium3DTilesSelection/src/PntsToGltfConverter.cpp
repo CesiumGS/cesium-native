@@ -1,11 +1,10 @@
 #include "PntsToGltfConverter.h"
 
-#include "BatchTableToGltfFeatureMetadata.h"
+#include "BatchTableToGltfStructuralMetadata.h"
 
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 
@@ -701,7 +700,7 @@ void parseDracoExtensionFromBatchTableJson(
     const std::string name = dracoPropertyIt->name.GetString();
 
     // If there are issues with the extension, skip parsing metadata altogether.
-    // Otherwise, BatchTableToGltfFeatureMetadata will still try to parse the
+    // Otherwise, BatchTableToGltfStructuralMetadata will still try to parse the
     // invalid Draco-compressed properties.
     auto batchTablePropertyIt = batchTableJson.FindMember(name.c_str());
     if (batchTablePropertyIt == batchTableJson.MemberEnd() ||
@@ -723,7 +722,7 @@ void parseDracoExtensionFromBatchTableJson(
     }
 
     // If the batch table binary property is invalid, it will also be ignored by
-    // BatchTableToGltfFeatureMetadata, so it's fine to continue parsing the
+    // BatchTableToGltfStructuralMetadata, so it's fine to continue parsing the
     // other properties.
     const rapidjson::Value& batchTableProperty = batchTablePropertyIt->value;
     auto byteOffsetIt = batchTableProperty.FindMember("byteOffset");
@@ -1464,7 +1463,7 @@ void addBatchIdsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
         Accessor::Type::SCALAR);
 
     MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    // This will be renamed by BatchTableToGltfFeatureMetadata.
+    // This will be renamed by BatchTableToGltfStructuralMetadata.
     primitive.attributes.emplace("_BATCHID", accessorId);
   }
 }
@@ -1610,7 +1609,7 @@ void convertPntsContentToGltf(
           gsl::span<const std::byte>(parsedContent.dracoBatchTableBinary);
     }
 
-    result.errors.merge(BatchTableToGltfFeatureMetadata::convertFromPnts(
+    result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromPnts(
         featureTableJson,
         batchTableJson,
         batchTableBinaryData,

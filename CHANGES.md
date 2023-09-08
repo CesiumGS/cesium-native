@@ -1,5 +1,37 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Views of the data contained by `EXT_feature_metadata` will no longer supported by Cesium Native. The extension will still be parsed, but it will log a warning.
+- Batch tables will be converted to `EXT_structural_metadata` instead of `EXT_feature_metadata`.
+- In `CesiumGltf`, all generated classes related to `EXT_feature_metadata` are now prefixed with `ExtensionExtFeatureMetadata`. For example, `ClassProperty` has become `ExtensionExtFeatureMetadataClassProperty`. This also extends to the glTF reader and writer.
+- In `CesiumGltf`, all generated classes related to `EXT_structural_metadata` have had their `ExtensionExtStructuralMetadata` prefix removed. For example, `ExtensionExtStructuralMetadataClassProperty` has become `ClassProperty`. This also extends to the glTF reader and writer.
+- In `CesiumGltf`, `ExtensionExtMeshFeaturesFeatureId` and `ExtensionExtMeshFeaturesFeatureIdTexture` have been renamed to `FeatureId` and `FeatureIdTexture` respectively.
+- Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `FeatureIdTexture` in `EXT_mesh_features`. Feature ID textures from `EXT_feature_metadata` are no longer supported.
+- Replaced `MetadataFeatureTableView` with `PropertyTableView`, which views a `PropertyTable` in `EXT_structural_metadata`.
+- Replaced `MetadataPropertyView` with `PropertyTablePropertyView`, which is a view of a `PropertyTableProperty` in `EXT_structural_metadata`. This takes two template parameters: a typename `T` , and a `bool` indicating whether or not the values are normalized.
+- Replaced `MetadataPropertyViewStatus` with `PropertyTablePropertyViewStatus`. `PropertyTablePropertyViewStatus` is a class that inherits from `PropertyViewStatus`, defining additional error codes in the form of `static const` values.
+- Replaced `FeatureTextureView` with `PropertyTextureView`, which views a `PropertyTexture` in `EXT_structural_metadata`.
+- Replaced `FeatureTexturePropertyView` with `PropertyTexturePropertyView`, which is a view of a `PropertyTextureProperty` in `EXT_structural_metadata`. This takes two template parameters: a typename `T` , and a `bool` indicating whether or not the values are normalized.
+- Removed `FeatureTexturePropertyComponentType`, `FeatureTexturePropertyChannelOffsets`, and `FeatureTexturePropertyValue`. `PropertyTextureProperty` retrieves the values with the type indicated by its class property.
+- Replaced `FeatureTexturePropertyViewStatus` with `PropertyTexturePropertyViewStatus`. `PropertyTexturePropertyViewStatus` is a class that inherits from `PropertyViewStatus`, defining additional error codes in the form of `static const` values.
+- Renamed `FeatureIDTextureViewStatus` to `FeatureIdTextureViewStatus` for consistency.
+- Renamed `MetadataArrayView` to `PropertyArrayView`.
+- Renamed `FeatureTextureViewStatus` to `PropertyTextureViewStatus`.
+- Refactored `PropertyType` to reflect the values of `type` in a `ClassProperty` from `EXT_structural_metadata`.
+
+##### Additions :tada:
+
+- Added `PropertyView`, which acts as a base class for all metadata property views. This takes two template parameters: a type `T` , and a `bool` indicating whether or not the values are normalized.
+- Added `PropertyViewStatus`, which defines public `static const` values for various property errors.
+- Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
+- Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
+- Added `PropertyAttributeView`, which views a `PropertyAttribute` in `EXT_structural_metadata`.
+- Added `PropertyAttributePropertyView`, which views a `PropertyAttributeProperty` in `EXT_structural_metadata`.
+- Added `PropertyAttributePropertyViewStatus`, which reflects the sattus of a `PropertyAttributePropertyView`.
+
 ### v0.27.1 - 2023-09-03
 
 ##### Fixes :wrench:
