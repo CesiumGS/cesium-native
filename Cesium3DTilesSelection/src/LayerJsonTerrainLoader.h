@@ -34,8 +34,7 @@ public:
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      bool showCreditsOnScreen);
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   static CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
   createLoader(
@@ -44,7 +43,6 @@ public:
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      bool showCreditsOnScreen,
       const rapidjson::Document& layerJson);
 
   struct Layer {

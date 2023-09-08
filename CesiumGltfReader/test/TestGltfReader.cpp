@@ -3,6 +3,7 @@
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
@@ -11,6 +12,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <string>
 
 using namespace CesiumGltf;
@@ -106,6 +108,114 @@ TEST_CASE("CesiumGltfReader::GltfReader") {
   REQUIRE(model.meshes[0].primitives[0].targets.size() == 1);
   CHECK(model.meshes[0].primitives[0].targets[0]["POSITION"] == 10);
   CHECK(model.meshes[0].primitives[0].targets[0]["NORMAL"] == 11);
+}
+
+namespace {
+struct VertexAttributeRange {
+  glm::vec3 positionRange;
+  glm::vec3 normalRange;
+  glm::vec2 texCoordRange;
+};
+
+template <typename T>
+T getRange(const CesiumGltf::AccessorView<T>& accessorView) {
+  T min{std::numeric_limits<float>::max()};
+  T max{std::numeric_limits<float>::lowest()};
+  for (int32_t i = 0; i < accessorView.size(); ++i) {
+    const T& value = accessorView[i];
+    for (uint32_t j = 0; j < static_cast<uint32_t>(value.length()); ++j) {
+      min[j] = glm::min<float>(min[j], value[j]);
+      max[j] = glm::max<float>(max[j], value[j]);
+    }
+  }
+  return max - min;
+}
+
+template <typename T> T getRange(const Model& model, int32_t accessor) {
+  CesiumGltf::AccessorView<T> accessorView(model, accessor);
+  REQUIRE(accessorView.status() == CesiumGltf::AccessorViewStatus::Valid);
+  return getRange(accessorView);
+}
+
+VertexAttributeRange getVertexAttributeRange(const Model& model) {
+  VertexAttributeRange var;
+  model.forEachPrimitiveInScene(
+      -1,
+      [&var](
+          const Model& model,
+          const Node&,
+          const Mesh&,
+          const MeshPrimitive& primitive,
+          const glm::dmat4& transform) {
+        for (std::pair<const std::string, int32_t> attribute :
+             primitive.attributes) {
+          const std::string& attributeName = attribute.first;
+          if (attributeName == "POSITION") {
+            var.positionRange = glm::vec3(
+                transform *
+                glm::dvec4(getRange<glm::vec3>(model, attribute.second), 0));
+          } else if (attributeName == "NORMAL") {
+            var.normalRange =
+                glm::normalize(getRange<glm::vec3>(model, attribute.second));
+          } else if (attributeName.find("TEXCOORD") == 0) {
+            var.texCoordRange = getRange<glm::vec2>(model, attribute.second);
+          }
+        }
+      });
+  return var;
+}
+
+template <typename T>
+bool epsilonCompare(const T& v1, const T& v2, double epsilon) {
+  for (uint32_t i = 0; i < static_cast<uint32_t>(v1.length()); ++i) {
+    if (!CesiumUtility::Math::equalsEpsilon(v1[i], v2[i], epsilon)) {
+      return false;
+    }
+  }
+  return true;
+}
+} // namespace
+
+TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
+
+  VertexAttributeRange originalVar;
+  {
+    GltfReader reader;
+    GltfReaderResult result = reader.readGltf(readFile(
+        CesiumGltfReader_TEST_DATA_DIR +
+        std::string("/DucksMeshopt/Duck.glb")));
+    const Model& model = result.model.value();
+    originalVar = getVertexAttributeRange(model);
+  }
+
+  for (int n = 3; n <= 15; n += 3) {
+    std::string filename = CesiumGltfReader_TEST_DATA_DIR +
+                           std::string("/DucksMeshopt/Duck") + "-vp-" +
+                           std::to_string(n) + "-vt-" + std::to_string(n) +
+                           "-vn-" + std::to_string(n) + ".glb";
+    if (std::filesystem::exists(filename)) {
+      std::vector<std::byte> data = readFile(filename);
+      GltfReader reader;
+      GltfReaderResult result = reader.readGltf(data);
+      REQUIRE(result.model);
+      REQUIRE(result.warnings.empty());
+      const Model& model = result.model.value();
+      VertexAttributeRange compressedVar = getVertexAttributeRange(model);
+      double error = 1.0f / (pow(2, n - 1));
+      REQUIRE(epsilonCompare(
+          originalVar.positionRange,
+          compressedVar.positionRange,
+          error));
+      REQUIRE(epsilonCompare(
+          originalVar.normalRange,
+          compressedVar.normalRange,
+          error));
+      REQUIRE(epsilonCompare(
+          originalVar.texCoordRange,
+          compressedVar.texCoordRange,
+          error));
+    }
+  }
 }
 
 TEST_CASE("Read TriangleWithoutIndices") {
@@ -437,4 +547,65 @@ TEST_CASE("Can apply RTC CENTER if model uses Cesium RTC extension") {
   REQUIRE(cesiumRTC);
   std::vector<double> rtcCenter = {6378137.0, 0.0, 0.0};
   CHECK(cesiumRTC->center == rtcCenter);
+}
+
+TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
+  {
+    // This KTX2 file has a single mip level and no further mip levels should be
+    // generated. `mipPositions` should reflect this single mip level.
+    std::filesystem::path ktx2File = CesiumGltfReader_TEST_DATA_DIR;
+    ktx2File /= "ktx2/kota-onelevel.ktx2";
+    std::vector<std::byte> data = readFile(ktx2File.string());
+    ImageReaderResult imageResult =
+        GltfReader::readImage(data, Ktx2TranscodeTargets{});
+    REQUIRE(imageResult.image.has_value());
+
+    const ImageCesium& image = *imageResult.image;
+    REQUIRE(image.mipPositions.size() == 1);
+    CHECK(image.mipPositions[0].byteOffset == 0);
+    CHECK(image.mipPositions[0].byteSize > 0);
+    CHECK(
+        image.mipPositions[0].byteSize ==
+        size_t(image.width * image.height * image.channels));
+    CHECK(image.mipPositions[0].byteSize == image.pixelData.size());
+  }
+
+  {
+    // This KTX2 file has only a base image but further mip levels can be
+    // generated. This image effectively has no mip levels.
+    std::filesystem::path ktx2File = CesiumGltfReader_TEST_DATA_DIR;
+    ktx2File /= "ktx2/kota-automipmap.ktx2";
+    std::vector<std::byte> data = readFile(ktx2File.string());
+    ImageReaderResult imageResult =
+        GltfReader::readImage(data, Ktx2TranscodeTargets{});
+    REQUIRE(imageResult.image.has_value());
+
+    const ImageCesium& image = *imageResult.image;
+    REQUIRE(image.mipPositions.size() == 0);
+    CHECK(image.pixelData.size() > 0);
+  }
+
+  {
+    // This KTX2 file has a complete mip chain.
+    std::filesystem::path ktx2File = CesiumGltfReader_TEST_DATA_DIR;
+    ktx2File /= "ktx2/kota-mipmaps.ktx2";
+    std::vector<std::byte> data = readFile(ktx2File.string());
+    ImageReaderResult imageResult =
+        GltfReader::readImage(data, Ktx2TranscodeTargets{});
+    REQUIRE(imageResult.image.has_value());
+
+    const ImageCesium& image = *imageResult.image;
+    REQUIRE(image.mipPositions.size() == 9);
+    CHECK(image.mipPositions[0].byteSize > 0);
+    CHECK(
+        image.mipPositions[0].byteSize ==
+        size_t(image.width * image.height * image.channels));
+    CHECK(image.mipPositions[0].byteSize < image.pixelData.size());
+
+    size_t smallerThan = image.mipPositions[0].byteSize;
+    for (size_t i = 1; i < image.mipPositions.size(); ++i) {
+      CHECK(image.mipPositions[i].byteSize < smallerThan);
+      smallerThan = image.mipPositions[i].byteSize;
+    }
+  }
 }

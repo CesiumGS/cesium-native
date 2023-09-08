@@ -159,8 +159,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         pProvider->getTile(rectangle, glm::dvec2(256));
     pProvider->loadTile(*pTile);
 
-    for (int i = 0; pTile->getState() != RasterOverlayTile::LoadState::Loaded;
-         ++i) {
+    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
     }
 
@@ -214,8 +213,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         pProvider->getTile(tileRectangle, targetScreenPixels);
     pProvider->loadTile(*pTile);
 
-    for (int i = 0; pTile->getState() != RasterOverlayTile::LoadState::Loaded;
-         ++i) {
+    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
     }
 
