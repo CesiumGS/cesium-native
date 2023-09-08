@@ -92,7 +92,8 @@ std::array<uint8_t, 4> sampleNearestPixel(
       reinterpret_cast<const uint8_t*>(image.pixelData.data() + pixelIndex);
 
   std::array<uint8_t, 4> channelValues{0, 0, 0, 0};
-  for (size_t i = 0; i < channels.size(); i++) {
+  size_t len = glm::min(channels.size(), channelValues.size());
+  for (size_t i = 0; i < len; i++) {
     channelValues[i] = *(pValue + channels[i]);
   }
 
