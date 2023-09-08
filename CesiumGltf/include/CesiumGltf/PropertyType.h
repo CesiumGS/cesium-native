@@ -55,6 +55,8 @@ bool isPropertyTypeVecN(PropertyType type);
 
 bool isPropertyTypeMatN(PropertyType type);
 
+bool isPropertyComponentTypeInteger(PropertyComponentType componentType);
+
 glm::length_t getDimensionsFromPropertyType(PropertyType type);
 
 size_t getSizeOfComponentType(PropertyComponentType componentType);

@@ -1,4 +1,5 @@
 #include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/PropertyAttributeProperty.h"
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
@@ -367,6 +368,22 @@ protected:
     getNumericPropertyValues(property);
   }
 
+  /**
+   * @brief Constructs a property instance from a property attribute property
+   * and its class definition.
+   */
+  PropertyView(
+      const ClassProperty& classProperty,
+      const PropertyAttributeProperty& property)
+      : PropertyView(classProperty) {
+    if (_status != PropertyViewStatus::Valid) {
+      return;
+    }
+
+    // If the property has its own values, override the class-provided values.
+    getNumericPropertyValues(property);
+  }
+
 public:
   /**
    * @brief Gets the status of this property view, indicating whether an error
@@ -494,8 +511,11 @@ private:
     }
   }
 
-  using PropertyDefinitionType = std::
-      variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
+  using PropertyDefinitionType = std::variant<
+      ClassProperty,
+      PropertyTableProperty,
+      PropertyTextureProperty,
+      PropertyAttributeProperty>;
 
   /**
    * @brief Attempts to parse offset, scale, min, and max properties from the
@@ -690,6 +710,22 @@ protected:
     getNumericPropertyValues(property);
   }
 
+  /**
+   * @brief Constructs a property instance from a property attribute property
+   * and its class definition.
+   */
+  PropertyView(
+      const ClassProperty& classProperty,
+      const PropertyAttributeProperty& property)
+      : PropertyView(classProperty) {
+    if (_status != PropertyViewStatus::Valid) {
+      return;
+    }
+
+    // If the property has its own values, override the class-provided values.
+    getNumericPropertyValues(property);
+  }
+
 public:
   /**
    * @brief Gets the status of this property view, indicating whether an error
@@ -784,8 +820,11 @@ private:
     }
   }
 
-  using PropertyDefinitionType = std::
-      variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
+  using PropertyDefinitionType = std::variant<
+      ClassProperty,
+      PropertyTableProperty,
+      PropertyTextureProperty,
+      PropertyAttributeProperty>;
 
   /**
    * @brief Attempts to parse offset, scale, min, and max properties from the
@@ -888,15 +927,6 @@ protected:
   PropertyView(
       const ClassProperty& classProperty,
       const PropertyTableProperty& /*property*/)
-      : PropertyView(classProperty) {}
-
-  /**
-   * @brief Constructs a property instance from a property texture property and
-   * its class definition.
-   */
-  PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
 public:
@@ -1038,15 +1068,6 @@ protected:
   PropertyView(
       const ClassProperty& classProperty,
       const PropertyTableProperty& /*property*/)
-      : PropertyView(classProperty) {}
-
-  /**
-   * @brief Constructs a property instance from a property texture property and
-   * its class definition.
-   */
-  PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
 public:
@@ -1624,7 +1645,6 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-
     getNumericPropertyValues(property);
   }
 
@@ -1906,15 +1926,6 @@ protected:
       const PropertyTableProperty& /*property*/)
       : PropertyView(classProperty) {}
 
-  /**
-   * @brief Constructs a property instance from a property texture property
-   * and its class definition.
-   */
-  PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& /*property*/)
-      : PropertyView(classProperty) {}
-
 public:
   /**
    * @copydoc PropertyView::status
@@ -2137,15 +2148,6 @@ protected:
   PropertyView(
       const ClassProperty& classProperty,
       const PropertyTableProperty& /*property*/)
-      : PropertyView(classProperty) {}
-
-  /**
-   * @brief Constructs a property instance from a property texture property
-   * and its class definition.
-   */
-  PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& /*property*/)
       : PropertyView(classProperty) {}
 
 public:

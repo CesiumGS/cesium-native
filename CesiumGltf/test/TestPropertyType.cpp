@@ -234,6 +234,50 @@ TEST_CASE("Test convertStringOffsetTypeStringToPropertyComponentType") {
       PropertyComponentType::None);
 }
 
+TEST_CASE("Test isPropertyTypeVecN") {
+  REQUIRE(isPropertyTypeVecN(PropertyType::Vec2));
+  REQUIRE(isPropertyTypeVecN(PropertyType::Vec3));
+  REQUIRE(isPropertyTypeVecN(PropertyType::Vec4));
+
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Scalar));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Mat2));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Mat3));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Mat4));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Boolean));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Enum));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::String));
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Invalid));
+}
+
+TEST_CASE("Test isPropertyTypeMatN") {
+  REQUIRE(isPropertyTypeMatN(PropertyType::Mat2));
+  REQUIRE(isPropertyTypeMatN(PropertyType::Mat3));
+  REQUIRE(isPropertyTypeMatN(PropertyType::Mat4));
+
+  REQUIRE(!isPropertyTypeVecN(PropertyType::Scalar));
+  REQUIRE(!isPropertyTypeMatN(PropertyType::Vec2));
+  REQUIRE(!isPropertyTypeMatN(PropertyType::Vec3));
+  REQUIRE(!isPropertyTypeMatN(PropertyType::Vec4));
+  REQUIRE(!isPropertyTypeMatN(PropertyType::Boolean));
+  REQUIRE(!isPropertyTypeMatN(PropertyType::Enum));
+  REQUIRE(!isPropertyTypeMatN(PropertyType::String));
+}
+
+TEST_CASE("Test isPropertyComponentTypeInteger") {
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Int8));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Uint8));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Int16));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Uint16));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Int32));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Uint32));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Int64));
+  REQUIRE(isPropertyComponentTypeInteger(PropertyComponentType::Uint64));
+
+  REQUIRE(!isPropertyComponentTypeInteger(PropertyComponentType::None));
+  REQUIRE(!isPropertyComponentTypeInteger(PropertyComponentType::Float32));
+  REQUIRE(!isPropertyComponentTypeInteger(PropertyComponentType::Float64));
+}
+
 TEST_CASE("Test getDimensionsFromPropertyType") {
   REQUIRE(getDimensionsFromPropertyType(PropertyType::Scalar) == 1);
 

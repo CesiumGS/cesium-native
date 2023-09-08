@@ -12,6 +12,8 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
+namespace {
+
 template <typename T>
 static void
 checkArrayEqual(PropertyArrayView<T> arrayView, std::vector<T> expected) {
@@ -202,7 +204,7 @@ static void checkVariableLengthArray(
 }
 
 template <typename DataType, typename OffsetType>
-static void checkVariableLengthArrayWithProperties(
+static void checkVariableLengthArray(
     const std::vector<DataType>& data,
     const std::vector<OffsetType>& offsets,
     PropertyComponentType offsetType,
@@ -414,7 +416,7 @@ static void checkFixedLengthArray(
 }
 
 template <typename T>
-static void checkFixedLengthArrayWithProperties(
+static void checkFixedLengthArray(
     const std::vector<T>& data,
     int64_t fixedLengthArrayCount,
     const std::vector<std::optional<std::vector<T>>>& expected,
@@ -560,6 +562,7 @@ static void checkNormalizedFixedLengthArray(
     }
   }
 }
+} // namespace
 
 TEST_CASE("Check scalar PropertyTablePropertyView") {
   SECTION("Uint8") {
@@ -586,44 +589,12 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Normalized Uint8") {
-    std::vector<uint8_t> values{0, 64, 128, 255};
-    std::vector<std::optional<double>> expected{
-        0.0,
-        64.0 / 255.0,
-        128.0 / 255.0,
-        1.0};
-    checkNormalizedNumeric(values, expected);
-  }
-
-  SECTION("Normalized Int16") {
-    std::vector<int16_t> values{-32768, 0, 16384, 32767};
-    std::vector<std::optional<double>> expected{
-        -1.0,
-        0.0,
-        16384.0 / 32767.0,
-        1.0};
-    checkNormalizedNumeric(values, expected);
-  }
-
   SECTION("Float with Offset / Scale") {
     std::vector<float> values{12.5f, -12.5f, -5.0f, 6.75f};
     const float offset = 1.0f;
     const float scale = 2.0f;
     std::vector<std::optional<float>> expected{26.0f, -24.0f, -9.0f, 14.5f};
     checkNumeric(values, expected, offset, scale);
-  }
-
-  SECTION("Normalized Uint8 with Offset and Scale") {
-    std::vector<uint8_t> values{0, 64, 128, 255};
-    const double offset = 1.0;
-    const double scale = 2.0;
-    std::vector<std::optional<double>> expected{
-        1.0,
-        1 + 2 * (64.0 / 255.0),
-        1 + 2 * (128.0 / 255.0),
-        3.0};
-    checkNormalizedNumeric(values, expected, offset, scale);
   }
 
   SECTION("Int16 with NoData") {
@@ -657,26 +628,6 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         expected,
         std::nullopt,
         std::nullopt,
-        noData,
-        defaultValue);
-  }
-
-  SECTION("Normalized Uint8 with all properties") {
-    std::vector<uint8_t> values{0, 64, 128, 255};
-    const double offset = 1.0;
-    const double scale = 2.0;
-    const uint8_t noData = 0;
-    const double defaultValue = 10.0;
-    std::vector<std::optional<double>> expected{
-        10.0,
-        1 + 2 * (64.0 / 255.0),
-        1 + 2 * (128.0 / 255.0),
-        3.0};
-    checkNormalizedNumeric(
-        values,
-        expected,
-        offset,
-        scale,
         noData,
         defaultValue);
   }
@@ -720,6 +671,60 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
   }
 }
 
+TEST_CASE("Check scalar PropertyTablePropertyView (normalized)") {
+  SECTION("Uint8") {
+    std::vector<uint8_t> values{0, 64, 128, 255};
+    std::vector<std::optional<double>> expected{
+        0.0,
+        64.0 / 255.0,
+        128.0 / 255.0,
+        1.0};
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Int16") {
+    std::vector<int16_t> values{-32768, 0, 16384, 32767};
+    std::vector<std::optional<double>> expected{
+        -1.0,
+        0.0,
+        16384.0 / 32767.0,
+        1.0};
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Uint8 with Offset and Scale") {
+    std::vector<uint8_t> values{0, 64, 128, 255};
+    const double offset = 1.0;
+    const double scale = 2.0;
+    std::vector<std::optional<double>> expected{
+        1.0,
+        1 + 2 * (64.0 / 255.0),
+        1 + 2 * (128.0 / 255.0),
+        3.0};
+    checkNormalizedNumeric(values, expected, offset, scale);
+  }
+
+  SECTION("Uint8 with all properties") {
+    std::vector<uint8_t> values{0, 64, 128, 255};
+    const double offset = 1.0;
+    const double scale = 2.0;
+    const uint8_t noData = 0;
+    const double defaultValue = 10.0;
+    std::vector<std::optional<double>> expected{
+        10.0,
+        1 + 2 * (64.0 / 255.0),
+        1 + 2 * (128.0 / 255.0),
+        3.0};
+    checkNormalizedNumeric(
+        values,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+}
+
 TEST_CASE("Check vecN PropertyTablePropertyView") {
   SECTION("Float Vec2") {
     std::vector<glm::vec2> data{
@@ -748,31 +753,6 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Normalized Uint8 Vec2") {
-    std::vector<glm::u8vec2> values{
-        glm::u8vec2(0, 64),
-        glm::u8vec2(128, 255),
-        glm::u8vec2(255, 0)};
-    std::vector<std::optional<glm::dvec2>> expected{
-        glm::dvec2(0.0, 64.0 / 255.0),
-        glm::dvec2(128.0 / 255.0, 1.0),
-        glm::dvec2(1.0, 0.0)};
-    checkNormalizedNumeric(values, expected);
-  }
-
-  SECTION("Normalized Int16 Vec2") {
-    std::vector<glm::i16vec2> values{
-        glm::i16vec2(-32768, 0),
-        glm::i16vec2(16384, 32767),
-        glm::i16vec2(32767, -32768)};
-    std::vector<std::optional<glm::dvec2>> expected{
-        glm::dvec2(-1.0, 0.0),
-        glm::dvec2(16384.0 / 32767.0, 1.0),
-        glm::dvec2(1.0, -1.0),
-    };
-    checkNormalizedNumeric(values, expected);
-  }
-
   SECTION("Float Vec3 with Offset / Scale") {
     std::vector<glm::vec3> values{
         glm::vec3(0.0f, -1.5f, -5.0f),
@@ -787,20 +767,6 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         glm::vec3(17.0f, -1.0f, 5.0f),
     };
     checkNumeric(values, expected, offset, scale);
-  }
-
-  SECTION("Normalized Uint8 Vec2 with Offset and Scale") {
-    std::vector<glm::u8vec2> values{
-        glm::u8vec2(0, 64),
-        glm::u8vec2(128, 255),
-        glm::u8vec2(255, 0)};
-    JsonValue::Array offset{0.0, 1.0};
-    JsonValue::Array scale{2.0, 1.0};
-    std::vector<std::optional<glm::dvec2>> expected{
-        glm::dvec2(0.0, 1 + (64.0 / 255.0)),
-        glm::dvec2(2 * (128.0 / 255.0), 2.0),
-        glm::dvec2(2.0, 1.0)};
-    checkNormalizedNumeric(values, expected, offset, scale);
   }
 
   SECTION("Int16 Vec2 with NoData") {
@@ -841,30 +807,6 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         noData,
         defaultValue);
   };
-
-  SECTION("Normalized Uint8 Vec2 with all properties") {
-    std::vector<glm::u8vec2> values{
-        glm::u8vec2(0, 64),
-        glm::u8vec2(128, 255),
-        glm::u8vec2(255, 0),
-        glm::u8vec2(0, 0)};
-    JsonValue::Array offset{0.0, 1.0};
-    JsonValue::Array scale{2.0, 1.0};
-    JsonValue::Array noData{0, 0};
-    JsonValue::Array defaultValue{5.0, 15.0};
-    std::vector<std::optional<glm::dvec2>> expected{
-        glm::dvec2(0.0, 1 + (64.0 / 255.0)),
-        glm::dvec2(2 * (128.0 / 255.0), 2.0),
-        glm::dvec2(2.0, 1.0),
-        glm::dvec2(5.0, 15.0)};
-    checkNormalizedNumeric(
-        values,
-        expected,
-        offset,
-        scale,
-        noData,
-        defaultValue);
-  }
 
   SECTION("Overrides class property values") {
     std::vector<glm::vec2> values{
@@ -908,6 +850,71 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
       REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
       REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
     }
+  }
+}
+
+TEST_CASE("Check vecN PropertyTablePropertyView (normalized)") {
+  SECTION("Uint8 Vec2") {
+    std::vector<glm::u8vec2> values{
+        glm::u8vec2(0, 64),
+        glm::u8vec2(128, 255),
+        glm::u8vec2(255, 0)};
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(0.0, 64.0 / 255.0),
+        glm::dvec2(128.0 / 255.0, 1.0),
+        glm::dvec2(1.0, 0.0)};
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Int16 Vec2") {
+    std::vector<glm::i16vec2> values{
+        glm::i16vec2(-32768, 0),
+        glm::i16vec2(16384, 32767),
+        glm::i16vec2(32767, -32768)};
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(-1.0, 0.0),
+        glm::dvec2(16384.0 / 32767.0, 1.0),
+        glm::dvec2(1.0, -1.0),
+    };
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Uint8 Vec2 with Offset and Scale") {
+    std::vector<glm::u8vec2> values{
+        glm::u8vec2(0, 64),
+        glm::u8vec2(128, 255),
+        glm::u8vec2(255, 0)};
+    JsonValue::Array offset{0.0, 1.0};
+    JsonValue::Array scale{2.0, 1.0};
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(0.0, 1 + (64.0 / 255.0)),
+        glm::dvec2(2 * (128.0 / 255.0), 2.0),
+        glm::dvec2(2.0, 1.0)};
+    checkNormalizedNumeric(values, expected, offset, scale);
+  }
+
+  SECTION("Uint8 Vec2 with all properties") {
+    std::vector<glm::u8vec2> values{
+        glm::u8vec2(0, 64),
+        glm::u8vec2(128, 255),
+        glm::u8vec2(255, 0),
+        glm::u8vec2(0, 0)};
+    JsonValue::Array offset{0.0, 1.0};
+    JsonValue::Array scale{2.0, 1.0};
+    JsonValue::Array noData{0, 0};
+    JsonValue::Array defaultValue{5.0, 15.0};
+    std::vector<std::optional<glm::dvec2>> expected{
+        glm::dvec2(0.0, 1 + (64.0 / 255.0)),
+        glm::dvec2(2 * (128.0 / 255.0), 2.0),
+        glm::dvec2(2.0, 1.0),
+        glm::dvec2(5.0, 15.0)};
+    checkNormalizedNumeric(
+        values,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
   }
 }
 
@@ -972,47 +979,6 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Normalized Uint8 Mat2") {
-    // clang-format off
-    std::vector<glm::u8mat2x2> values{
-        glm::u8mat2x2(
-          0, 64,
-          255, 255),
-        glm::u8mat2x2(
-          255, 0,
-          128, 0)};
-    std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(
-          0.0, 64.0 / 255.0,
-          1.0, 1.0),
-        glm::dmat2(
-          1.0, 0.0,
-          128.0 / 255.0, 0.0)};
-    // clang-format on
-    checkNormalizedNumeric(values, expected);
-  }
-
-  SECTION("Normalized Int16 Mat2") {
-    // clang-format off
-    std::vector<glm::i16mat2x2> values{
-        glm::i16mat2x2(
-          -32768, 0,
-          16384, 32767),
-        glm::i16mat2x2(
-          0, 32767,
-          32767, -32768)};
-    std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(
-          -1.0, 0.0,
-          16384.0 / 32767.0, 1.0),
-        glm::dmat2(
-          0.0, 1.0,
-          1.0, -1.0),
-    };
-    // clang-format on
-    checkNormalizedNumeric(values, expected);
-  }
-
   SECTION("Float Mat2 with Offset / Scale") {
     // clang-format off
     std::vector<glm::mat2> values{
@@ -1045,32 +1011,6 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     };
     // clang-format on
     checkNumeric(values, expected, offset, scale);
-  }
-
-  SECTION("Normalized Uint8 Mat2 with Offset and Scale") {
-    // clang-format off
-    std::vector<glm::u8mat2x2> values{
-        glm::u8mat2x2(
-          0, 64,
-          255, 255),
-        glm::u8mat2x2(
-          255, 0,
-          128, 0)};
-    JsonValue::Array offset{
-      0.0, 1.0,
-      1.0, 0.0};
-    JsonValue::Array scale{
-      2.0, 1.0,
-      0.0, 2.0};
-    std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(
-          0.0, 1 + 64.0 / 255.0,
-          1.0, 2.0),
-        glm::dmat2(
-          2.0, 1.0,
-          1.0, 0.0)};
-    // clang-format on
-    checkNormalizedNumeric(values, expected, offset, scale);
   }
 
   SECTION("Int16 Mat3 with NoData") {
@@ -1106,7 +1046,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         std::nullopt);
   };
 
-  SECTION("Int16 Mat3 with NoData") {
+  SECTION("Int16 Mat3 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::i16mat3x3> values{
         glm::i16mat3x3(
@@ -1142,47 +1082,6 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         noData,
         defaultValue);
   };
-
-  SECTION("Normalized Uint8 Mat2 with all properties") {
-    // clang-format off
-    std::vector<glm::u8mat2x2> values{
-        glm::u8mat2x2(
-          0, 64,
-          255, 255),
-        glm::u8mat2x2(0),
-        glm::u8mat2x2(
-          255, 0,
-          128, 0)};
-    JsonValue::Array offset{
-      0.0, 1.0,
-      1.0, 0.0};
-    JsonValue::Array scale{
-      2.0, 1.0,
-      0.0, 2.0};
-    JsonValue::Array noData{
-      0, 0,
-      0, 0};
-    JsonValue::Array defaultValue{
-      1.0, 0.0,
-      0.0, 1.0};
-
-    std::vector<std::optional<glm::dmat2>> expected{
-        glm::dmat2(
-          0.0, 1 + 64.0 / 255.0,
-          1.0, 2.0),
-        glm::dmat2(1.0),
-        glm::dmat2(
-          2.0, 1.0,
-          1.0, 0.0)};
-    // clang-format on
-    checkNormalizedNumeric(
-        values,
-        expected,
-        offset,
-        scale,
-        noData,
-        defaultValue);
-  }
 
   SECTION("Overrides class property values") {
     // clang-fomrat off
@@ -1264,6 +1163,116 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
       REQUIRE(property.getRaw(i) == values[static_cast<size_t>(i)]);
       REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
     }
+  }
+}
+
+TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
+  SECTION("Uint8 Mat2") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> values{
+        glm::u8mat2x2(
+          0, 64,
+          255, 255),
+        glm::u8mat2x2(
+          255, 0,
+          128, 0)};
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(
+          0.0, 64.0 / 255.0,
+          1.0, 1.0),
+        glm::dmat2(
+          1.0, 0.0,
+          128.0 / 255.0, 0.0)};
+    // clang-format on
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Int16 Mat2") {
+    // clang-format off
+    std::vector<glm::i16mat2x2> values{
+        glm::i16mat2x2(
+          -32768, 0,
+          16384, 32767),
+        glm::i16mat2x2(
+          0, 32767,
+          32767, -32768)};
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(
+          -1.0, 0.0,
+          16384.0 / 32767.0, 1.0),
+        glm::dmat2(
+          0.0, 1.0,
+          1.0, -1.0),
+    };
+    // clang-format on
+    checkNormalizedNumeric(values, expected);
+  }
+
+  SECTION("Uint8 Mat2 with Offset and Scale") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> values{
+        glm::u8mat2x2(
+          0, 64,
+          255, 255),
+        glm::u8mat2x2(
+          255, 0,
+          128, 0)};
+    JsonValue::Array offset{
+      0.0, 1.0,
+      1.0, 0.0};
+    JsonValue::Array scale{
+      2.0, 1.0,
+      0.0, 2.0};
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(
+          0.0, 1 + 64.0 / 255.0,
+          1.0, 2.0),
+        glm::dmat2(
+          2.0, 1.0,
+          1.0, 0.0)};
+    // clang-format on
+    checkNormalizedNumeric(values, expected, offset, scale);
+  }
+
+  SECTION("Normalized Uint8 Mat2 with all properties") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> values{
+        glm::u8mat2x2(
+          0, 64,
+          255, 255),
+        glm::u8mat2x2(0),
+        glm::u8mat2x2(
+          255, 0,
+          128, 0)};
+    JsonValue::Array offset{
+      0.0, 1.0,
+      1.0, 0.0};
+    JsonValue::Array scale{
+      2.0, 1.0,
+      0.0, 2.0};
+    JsonValue::Array noData{
+      0, 0,
+      0, 0};
+    JsonValue::Array defaultValue{
+      1.0, 0.0,
+      0.0, 1.0};
+
+    std::vector<std::optional<glm::dmat2>> expected{
+        glm::dmat2(
+          0.0, 1 + 64.0 / 255.0,
+          1.0, 2.0),
+        glm::dmat2(1.0),
+        glm::dmat2(
+          2.0, 1.0,
+          1.0, 0.0)};
+    // clang-format on
+    checkNormalizedNumeric(
+        values,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
   }
 }
 
@@ -1501,18 +1510,6 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 4 normalized uint8_ts") {
-    // clang-format off
-    std::vector<uint8_t> data{
-        255, 64, 0, 255,
-        128, 0, 255, 0};
-    // clang-format on
-    std::vector<std::optional<std::vector<double>>> expected{
-        std::vector<double>{1.0, 64.0 / 255.0, 0.0, 1.0},
-        std::vector<double>{128.0 / 255.0, 0.0, 1.0, 0.0}};
-    checkNormalizedFixedLengthArray(data, 4, expected);
-  }
-
   SECTION("Array of 4 floats with offset / scale") {
     // clang-format off
     std::vector<float> data{
@@ -1527,7 +1524,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     std::vector<std::optional<std::vector<float>>> expected{
         std::vector<float>{2.0f, 4.0f, 2.0f, 8.0f},
         std::vector<float>{6.0f, -2.0f, -1.0f, 4.0f}};
-    checkFixedLengthArrayWithProperties(data, 4, expected, offset, scale);
+    checkFixedLengthArray(data, 4, expected, offset, scale);
   }
 
   SECTION("Array of 2 int32_ts with noData value") {
@@ -1542,7 +1539,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         std::vector<int32_t>{122, 12},
         std::nullopt,
         std::vector<int32_t>{-3, 44}};
-    checkFixedLengthArrayWithProperties<int32_t>(
+    checkFixedLengthArray<int32_t>(
         data,
         2,
         expected,
@@ -1565,39 +1562,12 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         std::vector<int32_t>{122, 12},
         std::vector<int32_t>{0, 1},
         std::vector<int32_t>{-3, 44}};
-    checkFixedLengthArrayWithProperties<int32_t>(
+    checkFixedLengthArray<int32_t>(
         data,
         2,
         expected,
         std::nullopt,
         std::nullopt,
-        noData,
-        defaultValue);
-  }
-
-  SECTION("Array of 3 normalized int8_ts with all properties") {
-    // clang-format off
-    std::vector<int8_t> data{
-        -128, 0, 64,
-        -64, 127, -128,
-         0, 0, 0};
-    // clang-format on
-    JsonValue::Array offset{0, 1, 1};
-    JsonValue::Array scale{1, -1, 2};
-    JsonValue::Array noData{0, 0, 0};
-    JsonValue::Array defaultValue{10, 8, 2};
-
-    std::vector<std::optional<std::vector<double>>> expected{
-        std::vector<double>{-1.0, 1.0, 1 + 2 * (64.0 / 127.0)},
-        std::vector<double>{-64.0 / 127.0, 0.0, -1.0},
-        std::vector<double>{10.0, 8.0, 2.0},
-    };
-    checkNormalizedFixedLengthArray(
-        data,
-        3,
-        expected,
-        offset,
-        scale,
         noData,
         defaultValue);
   }
@@ -1676,6 +1646,48 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
   }
 }
 
+TEST_CASE(
+    "Check fixed-length scalar array PropertyTablePropertyView (normalized)") {
+  SECTION("Array of 4 uint8_ts") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        255, 64, 0, 255,
+        128, 0, 255, 0};
+    // clang-format on
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{1.0, 64.0 / 255.0, 0.0, 1.0},
+        std::vector<double>{128.0 / 255.0, 0.0, 1.0, 0.0}};
+    checkNormalizedFixedLengthArray(data, 4, expected);
+  }
+
+  SECTION("Array of 3 normalized int8_ts with all properties") {
+    // clang-format off
+    std::vector<int8_t> data{
+        -128, 0, 64,
+        -64, 127, -128,
+         0, 0, 0};
+    // clang-format on
+    JsonValue::Array offset{0, 1, 1};
+    JsonValue::Array scale{1, -1, 2};
+    JsonValue::Array noData{0, 0, 0};
+    JsonValue::Array defaultValue{10, 8, 2};
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{-1.0, 1.0, 1 + 2 * (64.0 / 127.0)},
+        std::vector<double>{-64.0 / 127.0, 0.0, -1.0},
+        std::vector<double>{10.0, 8.0, 2.0},
+    };
+    checkNormalizedFixedLengthArray(
+        data,
+        3,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+}
+
 TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
   SECTION("Array of 4 u8vec2s") {
     std::vector<glm::u8vec2> data{
@@ -1712,22 +1724,6 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 3);
   }
 
-  SECTION("Array of 2 normalized u8vec2s") {
-    std::vector<glm::u8vec2> data{
-        glm::u8vec2(255, 64),
-        glm::u8vec2(0, 255),
-        glm::u8vec2(128, 0),
-        glm::u8vec2(255, 0)};
-    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
-        std::vector<glm::dvec2>{
-            glm::dvec2(1.0, 64.0 / 255.0),
-            glm::dvec2(0.0, 1.0)},
-        std::vector<glm::dvec2>{
-            glm::dvec2(128.0 / 255.0, 0.0),
-            glm::dvec2(1.0, 0.0)}};
-    checkNormalizedFixedLengthArray(data, 2, expected);
-  }
-
   SECTION("Array of 2 vec2s with offset / scale") {
     // clang-format off
     std::vector<glm::vec2> data{
@@ -1742,7 +1738,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     std::vector<std::optional<std::vector<glm::vec2>>> expected{
         std::vector<glm::vec2>{glm::vec2(2.0f, 4.0f), glm::vec2(2.0f, 8.0f)},
         std::vector<glm::vec2>{glm::vec2(6.0f, -2.0f), glm::vec2(-1.0f, 4.0f)}};
-    checkFixedLengthArrayWithProperties(data, 2, expected, offset, scale);
+    checkFixedLengthArray(data, 2, expected, offset, scale);
   }
 
   SECTION("Array of 2 ivec2 with noData value") {
@@ -1757,7 +1753,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         std::vector<glm::ivec2>{glm::ivec2(122, 12), glm::ivec2(-1, -1)},
         std::vector<glm::ivec2>{glm::ivec2(-3, 44), glm::ivec2(0, 7)},
         std::nullopt};
-    checkFixedLengthArrayWithProperties<glm::ivec2>(
+    checkFixedLengthArray<glm::ivec2>(
         data,
         2,
         expected,
@@ -1780,7 +1776,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         std::vector<glm::ivec2>{glm::ivec2(122, 12), glm::ivec2(-1, -1)},
         std::vector<glm::ivec2>{glm::ivec2(-3, 44), glm::ivec2(0, 7)},
         std::vector<glm::ivec2>{glm::ivec2(1, 1), glm::ivec2(1, 2)}};
-    checkFixedLengthArrayWithProperties<glm::ivec2>(
+    checkFixedLengthArray<glm::ivec2>(
         data,
         2,
         expected,
@@ -1790,7 +1786,103 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Array of 2 normalized i8vec2 with all properties") {
+  SECTION("Overrides class property values") {
+    // clang-format off
+    std::vector<glm::vec2> data{
+        glm::vec2(1.0f, 2.0f), glm::vec2(3.0f, 4.0f),
+        glm::vec2(0.0f, -1.0f), glm::vec2(1.0f, -2.0f)};
+    // clang-format on
+    const int64_t count = 2;
+    const int64_t instanceCount = 2;
+
+    std::vector<std::byte> buffer;
+    buffer.resize(data.size() * sizeof(glm::vec2));
+    std::memcpy(buffer.data(), data.data(), buffer.size());
+
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+
+    classProperty.array = true;
+    classProperty.count = count;
+    classProperty.offset = JsonValue::Array{{0, 0}, {0, 0}};
+    classProperty.scale = JsonValue::Array{{1, 1}, {1, 1}};
+    classProperty.min = JsonValue::Array{{0.0f, -1.0f}, {1.0f, -2.0f}};
+    classProperty.max = JsonValue::Array{{1.0f, 2.0f}, {3.0f, 4.0f}};
+
+    PropertyTableProperty propertyTableProperty;
+    propertyTableProperty.offset = JsonValue::Array{{2, 1}, {0, -1}};
+    propertyTableProperty.scale = JsonValue::Array{{1, 0}, {1, -1}};
+    propertyTableProperty.min = JsonValue::Array{{0.0f, 1.0f}, {1.0f, -2.0f}};
+    propertyTableProperty.max = JsonValue::Array{{1.0f, 1.0f}, {3.0f, 4.0f}};
+
+    PropertyTablePropertyView<PropertyArrayView<glm::vec2>> property(
+        propertyTableProperty,
+        classProperty,
+        instanceCount,
+        gsl::span<const std::byte>(buffer.data(), buffer.size()),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        PropertyComponentType::None,
+        PropertyComponentType::None);
+
+    REQUIRE(property.arrayCount() == count);
+    REQUIRE(property.size() == instanceCount);
+
+    REQUIRE(property.offset());
+    checkArrayEqual(*property.offset(), {glm::vec2{2, 1}, glm::vec2{0, -1}});
+
+    REQUIRE(property.scale());
+    checkArrayEqual(*property.scale(), {glm::vec2{1, 0}, glm::vec2{1, -1}});
+
+    REQUIRE(property.min());
+    checkArrayEqual(
+        *property.min(),
+        {glm::vec2{0.0f, 1.0f}, glm::vec2{1.0f, -2.0f}});
+
+    REQUIRE(property.max());
+    checkArrayEqual(
+        *property.max(),
+        {glm::vec2(1.0f, 1.0f), glm::vec2(3.0f, 4.0f)});
+
+    std::vector<std::vector<glm::vec2>> expected{
+        {glm::vec2(3.0f, 1.0f), glm::vec2(3.0f, -5.0f)},
+        {glm::vec2(2.0f, 1.0f), glm::vec2(1.0f, 1.0f)}};
+    size_t expectedIdx = 0;
+    for (int64_t i = 0; i < property.size(); ++i) {
+      PropertyArrayView<glm::vec2> rawValues = property.getRaw(i);
+      auto values = property.get(i);
+      REQUIRE(values);
+      for (int64_t j = 0; j < rawValues.size(); ++j) {
+        REQUIRE(rawValues[j] == data[expectedIdx]);
+        REQUIRE(
+            (*values)[j] ==
+            expected[static_cast<size_t>(i)][static_cast<size_t>(j)]);
+        ++expectedIdx;
+      }
+    }
+  }
+}
+
+TEST_CASE(
+    "Check fixed-length vecN array PropertyTablePropertyView (normalized)") {
+  SECTION("Array of 2 u8vec2s") {
+    std::vector<glm::u8vec2> data{
+        glm::u8vec2(255, 64),
+        glm::u8vec2(0, 255),
+        glm::u8vec2(128, 0),
+        glm::u8vec2(255, 0)};
+    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
+        std::vector<glm::dvec2>{
+            glm::dvec2(1.0, 64.0 / 255.0),
+            glm::dvec2(0.0, 1.0)},
+        std::vector<glm::dvec2>{
+            glm::dvec2(128.0 / 255.0, 0.0),
+            glm::dvec2(1.0, 0.0)}};
+    checkNormalizedFixedLengthArray(data, 2, expected);
+  }
+
+  SECTION("Array of 2 i8vec2 with all properties") {
     // clang-format off
     std::vector<glm::i8vec2> data{
       glm::i8vec2(-128, 0), glm::i8vec2(64, -64),
@@ -1997,44 +2089,6 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 3);
   }
 
-  SECTION("Array of 2 normalized u8mat2x2s") {
-    // clang-format off
-    std::vector<glm::u8mat2x2> data{
-        glm::u8mat2x2(
-          255, 64,
-          0, 255),
-        glm::u8mat2x2(
-          0, 255,
-          64, 128),
-        glm::u8mat2x2(
-          128, 0,
-          0, 255),
-        glm::u8mat2x2(
-          255, 32,
-          255, 0)};
-
-    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
-        std::vector<glm::dmat2>{
-            glm::dmat2(
-              1.0, 64.0 / 255.0,
-              0.0, 1.0),
-            glm::dmat2(
-              0.0, 1.0,
-              64.0 / 255.0, 128.0 / 255.0),
-        },
-        std::vector<glm::dmat2>{
-            glm::dmat2(
-              128.0 / 255.0, 0.0,
-              0.0, 1.0),
-            glm::dmat2(
-              1.0, 32.0 / 255.0,
-              1.0, 0.0),
-        }};
-    // clang-format on
-
-    checkNormalizedFixedLengthArray(data, 2, expected);
-  }
-
   SECTION("Array of 2 mat2s with offset / scale") {
     // clang-format off
     std::vector<glm::mat2> data{
@@ -2078,7 +2132,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           -1.0f, 2.0f,
           -4.0f, 8.0f)}};
     // clang-format on
-    checkFixedLengthArrayWithProperties(data, 2, expected, offset, scale);
+    checkFixedLengthArray(data, 2, expected, offset, scale);
   }
 
   SECTION("Array of 2 imat2x2 with noData value") {
@@ -2116,7 +2170,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
             -1, 0)},
         std::nullopt};
     // clang-format on
-    checkFixedLengthArrayWithProperties<glm::imat2x2>(
+    checkFixedLengthArray<glm::imat2x2>(
         data,
         2,
         expected,
@@ -2170,78 +2224,12 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
           glm::imat2x2(1)
         }};
     // clang-format on
-    checkFixedLengthArrayWithProperties<glm::imat2x2>(
+    checkFixedLengthArray<glm::imat2x2>(
         data,
         2,
         expected,
         std::nullopt,
         std::nullopt,
-        noData,
-        defaultValue);
-  }
-
-  SECTION("Array of 2 normalized i8mat2x2 with all properties") {
-    // clang-format off
-    std::vector<glm::i8mat2x2> data{
-      glm::i8mat2x2(-128),
-      glm::i8mat2x2(
-        64, -64,
-        0, 255),
-      glm::i8mat2x2(
-        127, -128,
-        -128, 0),
-      glm::i8mat2x2(0),
-      glm::i8mat2x2(0),
-      glm::i8mat2x2(
-        -128, -128,
-        -128, -128)};
-    JsonValue::Array offset{
-      {0, 1,
-      2, 3},
-      {1, 2,
-       0, -2}};
-    JsonValue::Array scale{
-      {1, -1,
-       0, 1},
-      {2, 1,
-      -1, 0}};
-    JsonValue::Array noData{
-      {0, 0,
-       0, 0},
-      {-128, -128,
-       -128, -128}};
-    JsonValue::Array defaultValue{
-      {1, 0,
-      0, 1},
-      {2, 0,
-      0, 2}};
-
-    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
-      std::vector<glm::dmat2>{
-        glm::dmat2(
-          -1.0, 1.0,
-           2.0, 2.0),
-        glm::dmat2(
-           1 + 2 * (64.0 / 127.0), 2 - (64.0 / 127.0),
-           0, -2)},
-      std::vector<glm::dmat2>{
-        glm::dmat2(
-          1.0, 2.0,
-          2.0, 3.0),
-        glm::dmat2(
-          1.0, 2.0,
-          0.0, -2.0)},
-      std::vector<glm::dmat2>{
-        glm::dmat2(1),
-        glm::dmat2(2)},
-    };
-    // clang-format on
-    checkNormalizedFixedLengthArray(
-        data,
-        2,
-        expected,
-        offset,
-        scale,
         noData,
         defaultValue);
   }
@@ -2394,6 +2382,113 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
   }
 }
 
+TEST_CASE(
+    "Check fixed-length matN array PropertyTablePropertyView (normalized)") {
+  SECTION("Array of 2 u8mat2x2s") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> data{
+        glm::u8mat2x2(
+          255, 64,
+          0, 255),
+        glm::u8mat2x2(
+          0, 255,
+          64, 128),
+        glm::u8mat2x2(
+          128, 0,
+          0, 255),
+        glm::u8mat2x2(
+          255, 32,
+          255, 0)};
+
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+        std::vector<glm::dmat2>{
+            glm::dmat2(
+              1.0, 64.0 / 255.0,
+              0.0, 1.0),
+            glm::dmat2(
+              0.0, 1.0,
+              64.0 / 255.0, 128.0 / 255.0),
+        },
+        std::vector<glm::dmat2>{
+            glm::dmat2(
+              128.0 / 255.0, 0.0,
+              0.0, 1.0),
+            glm::dmat2(
+              1.0, 32.0 / 255.0,
+              1.0, 0.0),
+        }};
+    // clang-format on
+
+    checkNormalizedFixedLengthArray(data, 2, expected);
+  }
+
+  SECTION("Array of 2 i8mat2x2 with all properties") {
+    // clang-format off
+    std::vector<glm::i8mat2x2> data{
+      glm::i8mat2x2(-128),
+      glm::i8mat2x2(
+        64, -64,
+        0, 255),
+      glm::i8mat2x2(
+        127, -128,
+        -128, 0),
+      glm::i8mat2x2(0),
+      glm::i8mat2x2(0),
+      glm::i8mat2x2(
+        -128, -128,
+        -128, -128)};
+    JsonValue::Array offset{
+      {0, 1,
+      2, 3},
+      {1, 2,
+       0, -2}};
+    JsonValue::Array scale{
+      {1, -1,
+       0, 1},
+      {2, 1,
+      -1, 0}};
+    JsonValue::Array noData{
+      {0, 0,
+       0, 0},
+      {-128, -128,
+       -128, -128}};
+    JsonValue::Array defaultValue{
+      {1, 0,
+      0, 1},
+      {2, 0,
+      0, 2}};
+
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+      std::vector<glm::dmat2>{
+        glm::dmat2(
+          -1.0, 1.0,
+           2.0, 2.0),
+        glm::dmat2(
+           1 + 2 * (64.0 / 127.0), 2 - (64.0 / 127.0),
+           0, -2)},
+      std::vector<glm::dmat2>{
+        glm::dmat2(
+          1.0, 2.0,
+          2.0, 3.0),
+        glm::dmat2(
+          1.0, 2.0,
+          0.0, -2.0)},
+      std::vector<glm::dmat2>{
+        glm::dmat2(1),
+        glm::dmat2(2)},
+    };
+    // clang-format on
+    checkNormalizedFixedLengthArray(
+        data,
+        2,
+        expected,
+        offset,
+        scale,
+        noData,
+        defaultValue);
+  }
+}
+
 TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
   SECTION("Array of uint8_t") {
     // clang-format off
@@ -2496,7 +2591,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         std::vector<int32_t>{1, 3, 2},
         std::nullopt,
         std::vector<int32_t>{1, 3, 4, 1}};
-    checkVariableLengthArrayWithProperties(
+    checkVariableLengthArray(
         data,
         offsets,
         PropertyComponentType::Uint32,
@@ -2532,7 +2627,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         std::vector<int32_t>{1, 3, 2},
         std::vector<int32_t>{1},
         std::vector<int32_t>{1, 3, 4, 1}};
-    checkVariableLengthArrayWithProperties(
+    checkVariableLengthArray(
         data,
         offsets,
         PropertyComponentType::Uint32,
@@ -2543,6 +2638,67 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
   }
 
   SECTION("Array of normalized uint8_t with NoData and DefaultValue") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        255, 0,
+        0, 255, 128,
+        64,
+        255, 255
+    };
+    std::vector<uint32_t> offsets{
+        0, 2, 5, 6, 8
+    };
+    // clang-format on
+
+    JsonValue::Array noData{255, 255};
+    JsonValue::Array defaultValue{-1.0};
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{1.0, 0.0},
+        std::vector<double>{0.0, 1.0, 128.0 / 255.0},
+        std::vector<double>{64.0 / 255},
+        std::vector<double>{-1.0},
+    };
+
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        4,
+        expected,
+        noData,
+        defaultValue);
+  }
+}
+
+TEST_CASE("Check variable-length scalar array PropertyTablePropertyView "
+          "(normalized)") {
+  SECTION("Array of uint8_t") {
+    // clang-format off
+    std::vector<uint8_t> data{
+        255, 0,
+        0, 255, 128,
+        64,
+    };
+    std::vector<uint32_t> offsets{
+        0, 2, 5, 6
+    };
+    // clang-format on
+
+    std::vector<std::optional<std::vector<double>>> expected{
+        std::vector<double>{1.0, 0.0},
+        std::vector<double>{0.0, 1.0, 128.0 / 255.0},
+        std::vector<double>{64.0 / 255.0},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected);
+  }
+
+  SECTION("Array of uint8_t with NoData and DefaultValue") {
     // clang-format off
     std::vector<uint8_t> data{
         255, 0,
@@ -2639,38 +2795,6 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
 
-  SECTION("Array of normalized u8vec2") {
-    // clang-format off
-    std::vector<glm::u8vec2> data{
-        glm::u8vec2(255, 0), glm::u8vec2(0, 64),
-        glm::u8vec2(0, 0),
-        glm::u8vec2(128, 255), glm::u8vec2(255, 255), glm::u8vec2(32, 64)
-    };
-    // clang-format on
-    std::vector<uint32_t> offsets{
-        0 * sizeof(glm::u8vec2),
-        2 * sizeof(glm::u8vec2),
-        3 * sizeof(glm::u8vec2),
-        6 * sizeof(glm::u8vec2)};
-
-    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
-        std::vector<glm::dvec2>{
-            glm::dvec2(1.0, 0.0),
-            glm::dvec2(0.0, 64.0 / 255.0)},
-        std::vector<glm::dvec2>{glm::dvec2(0.0, 0.0)},
-        std::vector<glm::dvec2>{
-            glm::dvec2(128.0 / 255.0, 1.0),
-            glm::dvec2(1.0, 1.0),
-            glm::dvec2(32.0 / 255.0, 64.0 / 255.0)},
-    };
-    checkNormalizedVariableLengthArray(
-        data,
-        offsets,
-        PropertyComponentType::Uint32,
-        3,
-        expected);
-  }
-
   SECTION("Array of ivec3 with NoData") {
     // clang-format off
     std::vector<glm::ivec3> data{
@@ -2701,7 +2825,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
             glm::ivec3(0)},
         std::nullopt,
         std::vector<glm::ivec3>{glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)}};
-    checkVariableLengthArrayWithProperties(
+    checkVariableLengthArray(
         data,
         offsets,
         PropertyComponentType::Uint32,
@@ -2742,7 +2866,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
             glm::ivec3(0)},
         std::vector<glm::ivec3>{glm::ivec3(0)},
         std::vector<glm::ivec3>{glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)}};
-    checkVariableLengthArrayWithProperties(
+    checkVariableLengthArray(
         data,
         offsets,
         PropertyComponentType::Uint32,
@@ -2750,6 +2874,41 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         expected,
         noData,
         defaultValue);
+  }
+}
+
+TEST_CASE(
+    "Check variable-length vecN array PropertyTablePropertyView (normalized)") {
+  SECTION("Array of u8vec2") {
+    // clang-format off
+    std::vector<glm::u8vec2> data{
+        glm::u8vec2(255, 0), glm::u8vec2(0, 64),
+        glm::u8vec2(0, 0),
+        glm::u8vec2(128, 255), glm::u8vec2(255, 255), glm::u8vec2(32, 64)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0 * sizeof(glm::u8vec2),
+        2 * sizeof(glm::u8vec2),
+        3 * sizeof(glm::u8vec2),
+        6 * sizeof(glm::u8vec2)};
+
+    std::vector<std::optional<std::vector<glm::dvec2>>> expected{
+        std::vector<glm::dvec2>{
+            glm::dvec2(1.0, 0.0),
+            glm::dvec2(0.0, 64.0 / 255.0)},
+        std::vector<glm::dvec2>{glm::dvec2(0.0, 0.0)},
+        std::vector<glm::dvec2>{
+            glm::dvec2(128.0 / 255.0, 1.0),
+            glm::dvec2(1.0, 1.0),
+            glm::dvec2(32.0 / 255.0, 64.0 / 255.0)},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected);
   }
 
   SECTION("Array of normalized u8vec2 with NoData and DefaultValue") {
@@ -2941,36 +3100,6 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
 
-  SECTION("Array of normalized u8mat2x2") {
-    // clang-format off
-    std::vector<glm::u8mat2x2> data{
-        glm::u8mat2x2(255), glm::u8mat2x2(64),
-        glm::u8mat2x2(0),
-        glm::u8mat2x2(128), glm::u8mat2x2(255), glm::u8mat2x2(32)
-    };
-    // clang-format on
-    std::vector<uint32_t> offsets{
-        0 * sizeof(glm::u8mat2x2),
-        2 * sizeof(glm::u8mat2x2),
-        3 * sizeof(glm::u8mat2x2),
-        6 * sizeof(glm::u8mat2x2)};
-
-    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
-        std::vector<glm::dmat2>{glm::dmat2(1.0), glm::dmat2(64.0 / 255.0)},
-        std::vector<glm::dmat2>{glm::dmat2(0.0)},
-        std::vector<glm::dmat2>{
-            glm::dmat2(128.0 / 255.0),
-            glm::dmat2(1.0),
-            glm::dmat2(32.0 / 255.0)},
-    };
-    checkNormalizedVariableLengthArray(
-        data,
-        offsets,
-        PropertyComponentType::Uint32,
-        3,
-        expected);
-  }
-
   SECTION("Array of imat3x3 with NoData") {
     // clang-format off
     std::vector<glm::imat3x3> data{
@@ -3006,7 +3135,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
             glm::imat3x3(0)},
         std::nullopt,
         std::vector<glm::imat3x3>{glm::imat3x3(1), glm::imat3x3(24)}};
-    checkVariableLengthArrayWithProperties(
+    checkVariableLengthArray(
         data,
         offsets,
         PropertyComponentType::Uint32,
@@ -3055,7 +3184,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
             glm::imat3x3(0)},
         std::vector<glm::imat3x3>{glm::imat3x3(99)},
         std::vector<glm::imat3x3>{glm::imat3x3(1), glm::imat3x3(24)}};
-    checkVariableLengthArrayWithProperties(
+    checkVariableLengthArray(
         data,
         offsets,
         PropertyComponentType::Uint32,
@@ -3064,8 +3193,41 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         noData,
         defaultValue);
   }
+}
 
-  SECTION("Array of normalized u8mat2x2 with NoData and DefaultValue") {
+TEST_CASE(
+    "Check variable-length matN array PropertyTablePropertyView (normalized)") {
+  SECTION("Array of u8mat2x2") {
+    // clang-format off
+    std::vector<glm::u8mat2x2> data{
+        glm::u8mat2x2(255), glm::u8mat2x2(64),
+        glm::u8mat2x2(0),
+        glm::u8mat2x2(128), glm::u8mat2x2(255), glm::u8mat2x2(32)
+    };
+    // clang-format on
+    std::vector<uint32_t> offsets{
+        0 * sizeof(glm::u8mat2x2),
+        2 * sizeof(glm::u8mat2x2),
+        3 * sizeof(glm::u8mat2x2),
+        6 * sizeof(glm::u8mat2x2)};
+
+    std::vector<std::optional<std::vector<glm::dmat2>>> expected{
+        std::vector<glm::dmat2>{glm::dmat2(1.0), glm::dmat2(64.0 / 255.0)},
+        std::vector<glm::dmat2>{glm::dmat2(0.0)},
+        std::vector<glm::dmat2>{
+            glm::dmat2(128.0 / 255.0),
+            glm::dmat2(1.0),
+            glm::dmat2(32.0 / 255.0)},
+    };
+    checkNormalizedVariableLengthArray(
+        data,
+        offsets,
+        PropertyComponentType::Uint32,
+        3,
+        expected);
+  }
+
+  SECTION("Array of u8mat2x2 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::u8mat2x2> data{
         glm::u8mat2x2(255), glm::u8mat2x2(64),

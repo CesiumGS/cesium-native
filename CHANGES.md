@@ -28,6 +28,9 @@
 - Added `PropertyViewStatus`, which defines public `static const` values for various property errors.
 - Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
 - Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
+- Added `PropertyAttributeView`, which views a `PropertyAttribute` in `EXT_structural_metadata`.
+- Added `PropertyAttributePropertyView`, which views a `PropertyAttributeProperty` in `EXT_structural_metadata`.
+- Added `PropertyAttributePropertyViewStatus`, which reflects the sattus of a `PropertyAttributePropertyView`.
 
 ### v0.27.0 - 2023-09-01
 
