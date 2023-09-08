@@ -261,7 +261,9 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
   this->updateView(frustums, 0.0f);
-  while (this->_pTilesetContentManager->getNumberOfTilesLoading() > 0) {
+  while (this->_pTilesetContentManager->getNumberOfTilesLoading() > 0 ||
+         this->_updateResult.mainThreadTileLoadQueueLength > 0 ||
+         this->_updateResult.workerThreadTileLoadQueueLength > 0) {
     this->_externals.pAssetAccessor->tick();
     this->updateView(frustums, 0.0f);
   }

@@ -167,8 +167,7 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
              externals,
              contentOptions,
              url,
-             requestHeaders,
-             showCreditsOnScreen)
+             requestHeaders)
       .thenImmediately([credits = std::move(credits),
                         requestHeaders,
                         ionAssetID,
