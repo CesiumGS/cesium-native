@@ -79,11 +79,11 @@ int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   double yCoord = std::floor(v * this->_pImage->height);
 
   // Clamp to ensure no out-of-bounds data access
-  int64_t x = std::clamp(
+  int64_t x = glm::clamp(
       static_cast<int64_t>(xCoord),
       static_cast<int64_t>(0),
       static_cast<int64_t>(this->_pImage->width - 1));
-  int64_t y = std::clamp(
+  int64_t y = glm::clamp(
       static_cast<int64_t>(yCoord),
       static_cast<int64_t>(0),
       static_cast<int64_t>(this->_pImage->height - 1));

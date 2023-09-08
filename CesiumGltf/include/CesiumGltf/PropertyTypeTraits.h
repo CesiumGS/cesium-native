@@ -264,4 +264,87 @@ template <> struct TypeToPropertyType<std::string_view> {
       PropertyComponentType::None;
   static constexpr PropertyType value = PropertyType::String;
 };
+
+/**
+ * @brief Check if a C++ type can be normalized.
+ */
+template <typename... T> struct CanBeNormalized;
+template <typename T> struct CanBeNormalized<T> : std::false_type {};
+template <> struct CanBeNormalized<uint8_t> : std::true_type {};
+template <> struct CanBeNormalized<int8_t> : std::true_type {};
+template <> struct CanBeNormalized<uint16_t> : std::true_type {};
+template <> struct CanBeNormalized<int16_t> : std::true_type {};
+template <> struct CanBeNormalized<uint32_t> : std::true_type {};
+template <> struct CanBeNormalized<int32_t> : std::true_type {};
+template <> struct CanBeNormalized<uint64_t> : std::true_type {};
+template <> struct CanBeNormalized<int64_t> : std::true_type {};
+
+template <glm::length_t n, typename T, glm::qualifier P>
+struct CanBeNormalized<glm::vec<n, T, P>> : CanBeNormalized<T> {};
+
+template <glm::length_t n, typename T, glm::qualifier P>
+struct CanBeNormalized<glm::mat<n, n, T, P>> : CanBeNormalized<T> {};
+
+template <typename T>
+struct CanBeNormalized<PropertyArrayView<T>> : CanBeNormalized<T> {};
+/**
+ * @brief Convert an integer numeric type to the corresponding representation as
+ * a double type. Doubles are preferred over floats to maintain more precision.
+ */
+template <typename T> struct TypeToNormalizedType;
+
+template <> struct TypeToNormalizedType<int8_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint8_t> { using type = double; };
+template <> struct TypeToNormalizedType<int16_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint16_t> { using type = double; };
+template <> struct TypeToNormalizedType<int32_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint32_t> { using type = double; };
+template <> struct TypeToNormalizedType<int64_t> { using type = double; };
+template <> struct TypeToNormalizedType<uint64_t> { using type = double; };
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<glm::vec<N, T, Q>> {
+  using type = glm::vec<N, double, Q>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<glm::mat<N, N, T, Q>> {
+  using type = glm::mat<N, N, double, Q>;
+};
+
+template <> struct TypeToNormalizedType<PropertyArrayView<int8_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint8_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int16_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint16_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int32_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint32_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int64_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint64_t>> {
+  using type = PropertyArrayView<double>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<PropertyArrayView<glm::vec<N, T, Q>>> {
+  using type = PropertyArrayView<glm::vec<N, double, Q>>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
+  using type = PropertyArrayView<glm::mat<N, N, double, Q>>;
+};
+
 } // namespace CesiumGltf

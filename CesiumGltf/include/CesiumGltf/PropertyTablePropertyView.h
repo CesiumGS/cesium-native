@@ -1,7 +1,9 @@
 #pragma once
 
 #include "CesiumGltf/PropertyArrayView.h"
+#include "CesiumGltf/PropertyTransformations.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
+#include "CesiumGltf/PropertyView.h"
 
 #include <gsl/span>
 
@@ -16,143 +18,129 @@ namespace CesiumGltf {
  * @brief Indicates the status of a property table property view.
  *
  * The {@link PropertyTablePropertyView} constructor always completes successfully.
- * However, it may not always reflect the actual content of the {@link PropertyTableProperty},
- * but instead indicate that its {@link PropertyTablePropertyView::size} is 0.
+ * However, it may not always reflect the actual content of the
+ * {@link PropertyTableProperty}, but instead indicate that its
+ * {@link PropertyTablePropertyView::size} is 0.
  * This enumeration provides the reason.
  */
-enum class PropertyTablePropertyViewStatus {
-  /**
-   * @brief This property view is valid and ready to use.
-   */
-  Valid,
-
+class PropertyTablePropertyViewStatus : public PropertyViewStatus {
+public:
   /**
    * @brief This property view was initialized from an invalid
    * {@link PropertyTable}.
    */
-  ErrorInvalidPropertyTable,
-
-  /**
-   * @brief This property view is trying to view a property that does not exist
-   * in the {@link PropertyTable}.
-   */
-  ErrorNonexistentProperty,
-
-  /**
-   * @brief This property view's type does not match what is
-   * specified in {@link ClassProperty::type}.
-   */
-  ErrorTypeMismatch,
-
-  /**
-   * @brief This property view's component type does not match what
-   * is specified in {@link ClassProperty::componentType}.
-   */
-  ErrorComponentTypeMismatch,
-
-  /**
-   * @brief This property view differs from what is specified in
-   * {@link ClassProperty::array}.
-   */
-  ErrorArrayTypeMismatch,
+  static const PropertyViewStatusType ErrorInvalidPropertyTable = 13;
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  ErrorInvalidValueBufferView,
+  static const PropertyViewStatusType ErrorInvalidValueBufferView = 14;
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  ErrorInvalidArrayOffsetBufferView,
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 15;
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  ErrorInvalidStringOffsetBufferView,
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 16;
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  ErrorInvalidValueBuffer,
+  static const PropertyViewStatusType ErrorInvalidValueBuffer = 17;
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  ErrorInvalidArrayOffsetBuffer,
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 18;
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  ErrorInvalidStringOffsetBuffer,
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 19;
 
   /**
    * @brief This property view has a buffer view that points outside the bounds
    * of its target buffer.
    */
-  ErrorBufferViewOutOfBounds,
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 20;
 
   /**
    * @brief This property view has an invalid buffer view; its length is not
    * a multiple of the size of its type / offset type.
    */
-  ErrorBufferViewSizeNotDivisibleByTypeSize,
+  static const PropertyViewStatusType
+      ErrorBufferViewSizeNotDivisibleByTypeSize = 21;
 
   /**
    * @brief This property view has an invalid buffer view; its length does not
    * match the size of the property table.
    */
-  ErrorBufferViewSizeDoesNotMatchPropertyTableCount,
+  static const PropertyViewStatusType
+      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 22;
 
   /**
    * @brief This array property view has both a fixed length and an offset
    * buffer view defined.
    */
-  ErrorArrayCountAndOffsetBufferCoexist,
+  static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferCoexist =
+      23;
 
   /**
    * @brief This array property view has neither a fixed length nor an offset
    * buffer view defined.
    */
-  ErrorArrayCountAndOffsetBufferDontExist,
+  static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferDontExist =
+      24;
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  ErrorInvalidArrayOffsetType,
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 25;
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  ErrorInvalidStringOffsetType,
+  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 26;
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  ErrorArrayOffsetsNotSorted,
+  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 27;
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  ErrorStringOffsetsNotSorted,
+  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 28;
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  ErrorArrayOffsetOutOfBounds,
+  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 29;
 
   /**
    * @brief This property view has a string offset that is out of bounds.
    */
-  ErrorStringOffsetOutOfBounds
+  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 29;
 };
+
+int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
+
+/**
+ * @brief A view on the data of the {@link PropertyTableProperty} that is created
+ * by a {@link PropertyTableView}.
+ */
+template <typename ElementType, bool Normalized = false>
+class PropertyTablePropertyView;
 
 /**
  * @brief A view on the data of the {@link PropertyTableProperty} that is created
@@ -168,104 +156,147 @@ enum class PropertyTablePropertyViewStatus {
  * the scalar types, bool, std::string_view, or PropertyArrayView<T> with T as
  * one of the aforementioned types.
  */
-template <typename ElementType> class PropertyTablePropertyView {
+template <typename ElementType>
+class PropertyTablePropertyView<ElementType, false>
+    : public PropertyView<ElementType, false> {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTablePropertyView()
-      : _status{PropertyTablePropertyViewStatus::ErrorNonexistentProperty},
+      : PropertyView<ElementType, false>(),
         _values{},
-        _arrayCount{},
-        _size{},
-        _normalized{} {}
-
-  /**
-   * @brief Constructs an invalid instance for an erroneous property.
-   *
-   * @param status The {@link PropertyTablePropertyViewStatus} indicating the error with the property.
-   */
-  PropertyTablePropertyView(PropertyTablePropertyViewStatus status)
-      : _status{status}, _values{}, _arrayCount{}, _size{}, _normalized{} {
-    assert(
-        _status != PropertyTablePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid status");
-  }
-
-  /**
-   * @brief Construct a valid instance pointing to non-array data specified by
-   * a {@link PropertyTableProperty}.
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param normalized Whether this property has a normalized integer type.
-   */
-  PropertyTablePropertyView(
-      gsl::span<const std::byte> values,
-      int64_t size,
-      bool normalized) noexcept
-      : _status{PropertyTablePropertyViewStatus::Valid},
-        _values{values},
+        _size{0},
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0},
-        _arrayCount{0},
-        _size{size},
-        _normalized{normalized} {}
+        _stringOffsetTypeSize{0} {}
 
   /**
-   * @brief Construct a valid instance pointing to the data specified by
-   * a {@link PropertyTableProperty}.
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   */
+  PropertyTablePropertyView(PropertyViewStatusType status)
+      : PropertyView<ElementType, false>(status),
+        _values{},
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0} {
+    assert(
+        this->_status != PropertyTablePropertyViewStatus::Valid &&
+        "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
+   * Used for non-array or fixed-length array data.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      gsl::span<const std::byte> values) noexcept
+      : PropertyView<ElementType>(classProperty, property),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0} {}
+
+  /**
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
    * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
-   * @param offsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
-   * @param offsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
-   * @param arrayCount The number of elements in each array value specified by {@link ClassProperty::count}
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param normalized Whether this property has a normalized integer type.
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param stringOffsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
    */
   PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
       gsl::span<const std::byte> values,
       gsl::span<const std::byte> arrayOffsets,
       gsl::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
-      PropertyComponentType stringOffsetType,
-      int64_t arrayCount,
-      int64_t size,
-      bool normalized) noexcept
-      : _status{PropertyTablePropertyViewStatus::Valid},
+      PropertyComponentType stringOffsetType) noexcept
+      : PropertyView<ElementType>(classProperty, property),
         _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
         _arrayOffsets{arrayOffsets},
         _arrayOffsetType{arrayOffsetType},
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
-        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
-        _arrayCount{arrayCount},
-        _size{size},
-        _normalized{normalized} {}
+        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
 
   /**
-   * @brief Gets the status of this property table property view.
+   * @brief Get the value of an element in the {@link PropertyTable},
+   * with all value transforms applied. That is, if the property specifies an
+   * offset and scale, they will be applied to the value before the value is
+   * returned.
    *
-   * Indicates whether the view accurately reflects the property's data, or
-   * whether an error occurred.
+   * If this property has a specified "no data" value, and the retrieved element
+   * is equal to that value, then this will return the property's specified
+   * default value. If the property did not provide a default value, this
+   * returns std::nullopt.
    *
-   * @return The status of this property view.
+   * @param index The element index
+   * @return The value of the element, or std::nullopt if it matches the "no
+   * data" value
    */
-  PropertyTablePropertyViewStatus status() const noexcept { return _status; }
+  std::optional<ElementType> get(int64_t index) const noexcept {
+    ElementType value = getRaw(index);
+
+    if (value == this->noData()) {
+      return this->defaultValue();
+    }
+
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
+      value = transformValue(value, this->offset(), this->scale());
+    }
+
+    if constexpr (IsMetadataNumericArray<ElementType>::value) {
+      value = transformArray(value, this->offset(), this->scale());
+    }
+
+    return value;
+  }
 
   /**
-   * @brief Get the value of an element of the {@link PropertyTable}.
+   * @brief Get the raw value of an element of the {@link PropertyTable},
+   * without offset or scale applied.
+   *
+   * If this property has a specified "no data" value, the raw value will still
+   * be returned, even if it equals the "no data" value.
+   *
    * @param index The element index
    * @return The value of the element
    */
-  ElementType get(int64_t index) const noexcept {
+  ElementType getRaw(int64_t index) const noexcept {
     assert(
-        _status == PropertyTablePropertyViewStatus::Valid &&
+        this->_status == PropertyTablePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
     assert(
         size() > 0 &&
@@ -307,23 +338,8 @@ public:
    * @return The number of elements in this PropertyTablePropertyView.
    */
   int64_t size() const noexcept {
-    return status() == PropertyTablePropertyViewStatus::Valid ? _size : 0;
+    return this->_status == PropertyTablePropertyViewStatus::Valid ? _size : 0;
   }
-
-  /**
-   * @brief Get the element count of the fixed-length arrays in this property.
-   * Only applicable when the property is an array type.
-   *
-   * @return The count of this property.
-   */
-  int64_t getArrayCount() const noexcept { return _arrayCount; }
-
-  /**
-   * @brief Whether this property has a normalized integer type.
-   *
-   * @return Whether this property has a normalized integer type.
-   */
-  bool isNormalized() const noexcept { return _normalized; }
 
 private:
   ElementType getNumericValue(int64_t index) const noexcept {
@@ -351,9 +367,10 @@ private:
 
   template <typename T>
   PropertyArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
-    if (_arrayCount > 0) {
-      size_t arraySize = _arrayCount * sizeof(T);
+    if (count > 0) {
+      size_t arraySize = count * sizeof(T);
       const gsl::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
@@ -373,10 +390,11 @@ private:
 
   PropertyArrayView<std::string_view>
   getStringArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
-    if (_arrayCount > 0) {
+    if (count > 0) {
       // Copy the corresponding string offsets to pass to the PropertyArrayView.
-      const size_t arraySize = _arrayCount * _stringOffsetTypeSize;
+      const size_t arraySize = count * _stringOffsetTypeSize;
       const gsl::span<const std::byte> stringOffsetValues(
           _stringOffsets.data() + index * arraySize,
           arraySize + _stringOffsetTypeSize);
@@ -384,7 +402,7 @@ private:
           _values,
           stringOffsetValues,
           _stringOffsetType,
-          _arrayCount);
+          count);
     }
 
     // Handle variable-length arrays
@@ -404,14 +422,15 @@ private:
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
-    if (_arrayCount > 0) {
-      const size_t offsetBits = _arrayCount * index;
-      const size_t nextOffsetBits = _arrayCount * (index + 1);
+    if (count > 0) {
+      const size_t offsetBits = count * index;
+      const size_t nextOffsetBits = count * (index + 1);
       const gsl::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return PropertyArrayView<bool>(buffer, offsetBits % 8, _arrayCount);
+      return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
     }
 
     // Handle variable-length arrays
@@ -426,23 +445,8 @@ private:
     return PropertyArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
-  static int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
-    switch (offsetType) {
-    case PropertyComponentType::Uint8:
-      return sizeof(uint8_t);
-    case PropertyComponentType::Uint16:
-      return sizeof(uint16_t);
-    case PropertyComponentType::Uint32:
-      return sizeof(uint32_t);
-    case PropertyComponentType::Uint64:
-      return sizeof(uint64_t);
-    default:
-      return 0;
-    }
-  }
-
-  PropertyTablePropertyViewStatus _status;
   gsl::span<const std::byte> _values;
+  int64_t _size;
 
   gsl::span<const std::byte> _arrayOffsets;
   PropertyComponentType _arrayOffsetType;
@@ -451,9 +455,266 @@ private:
   gsl::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
-
-  int64_t _arrayCount;
-  int64_t _size;
-  bool _normalized;
 };
+
+/**
+ * @brief A view on the normalized data of the {@link PropertyTableProperty}
+ * that is created by a {@link PropertyTableView}.
+ *
+ * It provides utility to retrieve the actual data stored in the
+ * {@link PropertyTableProperty::values} like an array of elements. Data of each
+ * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
+ *
+ * @param ElementType must be one of the following: an integer scalar (uint8_t,
+ * int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t), a glm vecN
+ * composed of one of the integer scalar types, a glm matN composed of one of
+ * the integer scalar types, or PropertyArrayView<T> with T as one of the
+ * aforementioned types.
+ */
+template <typename ElementType>
+class PropertyTablePropertyView<ElementType, true>
+    : public PropertyView<ElementType, true> {
+private:
+  using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
+
+public:
+  /**
+   * @brief Constructs an invalid instance for a non-existent property.
+   */
+  PropertyTablePropertyView()
+      : PropertyView<ElementType, true>(),
+        _values{},
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0} {}
+
+  /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   */
+  PropertyTablePropertyView(PropertyViewStatusType status)
+      : PropertyView<ElementType, true>(status),
+        _values{},
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0} {
+    assert(
+        this->_status != PropertyTablePropertyViewStatus::Valid &&
+        "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
+   * Used for non-array or fixed-length array data.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      gsl::span<const std::byte> values) noexcept
+      : PropertyView<ElementType, true>(classProperty, property),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0} {}
+
+  /**
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
+   *
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
+   * @param offsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      gsl::span<const std::byte> values,
+      gsl::span<const std::byte> arrayOffsets,
+      PropertyComponentType arrayOffsetType) noexcept
+      : PropertyView<ElementType, true>(classProperty, property),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{arrayOffsets},
+        _arrayOffsetType{arrayOffsetType},
+        _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)} {}
+
+  /**
+   * @brief Get the value of an element of the {@link PropertyTable},
+   * with normalization and other value transforms applied. In other words, the
+   * value will be normalized, then transformed by the property's offset
+   * and scale, if they are defined.
+   *
+   * If this property has a specified "no data" value, and the retrieved element
+   * is equal to that value, then this will return the property's specified
+   * default value. If the property did not provide a default value, this
+   * returns std::nullopt.
+   *
+   * @param index The element index
+   * @return The value of the element, or std::nullopt if it matches the "no
+   * data" value
+   */
+  std::optional<NormalizedType> get(int64_t index) const noexcept {
+    assert(
+        this->_status == PropertyTablePropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
+    assert(
+        size() > 0 &&
+        "Check the size() of the view to make sure it's not empty");
+    assert(index >= 0 && "index must be non-negative");
+    assert(index < size() && "index must be less than size");
+
+    ElementType value = getRaw(index);
+    if (this->noData() && value == *(this->noData())) {
+      return this->defaultValue();
+    }
+
+    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return transformValue<NormalizedType>(
+          normalize<ElementType>(value),
+          this->offset(),
+          this->scale());
+    }
+
+    if constexpr (IsMetadataVecN<ElementType>::value) {
+      constexpr glm::length_t N = ElementType::length();
+      using T = typename ElementType::value_type;
+      using NormalizedT = typename NormalizedType::value_type;
+      return transformValue<glm::vec<N, NormalizedT>>(
+          normalize<N, T>(value),
+          this->offset(),
+          this->scale());
+    }
+
+    if constexpr (IsMetadataMatN<ElementType>::value) {
+      constexpr glm::length_t N = ElementType::length();
+      using T = typename ElementType::value_type;
+      using NormalizedT = typename NormalizedType::value_type;
+      return transformValue<glm::mat<N, N, NormalizedT>>(
+          normalize<N, T>(value),
+          this->offset(),
+          this->scale());
+    }
+
+    if constexpr (IsMetadataArray<ElementType>::value) {
+      using ArrayElementType = typename MetadataArrayType<ElementType>::type;
+      if constexpr (IsMetadataScalar<ArrayElementType>::value) {
+        return transformNormalizedArray<ArrayElementType>(
+            value,
+            this->offset(),
+            this->scale());
+      }
+
+      if constexpr (IsMetadataVecN<ArrayElementType>::value) {
+        constexpr glm::length_t N = ArrayElementType::length();
+        using T = typename ArrayElementType::value_type;
+        return transformNormalizedVecNArray<N, T>(
+            value,
+            this->offset(),
+            this->scale());
+      }
+
+      if constexpr (IsMetadataMatN<ArrayElementType>::value) {
+        constexpr glm::length_t N = ArrayElementType::length();
+        using T = typename ArrayElementType::value_type;
+        return transformNormalizedMatNArray<N, T>(
+            value,
+            this->offset(),
+            this->scale());
+      }
+    }
+  }
+
+  /**
+   * @brief Get the raw value of an element of the {@link PropertyTable},
+   * without offset, scale, or normalization applied.
+   *
+   * If this property has a specified "no data" value, the raw value will still
+   * be returned, even if it equals the "no data" value.
+   *
+   * @param index The element index
+   * @return The value of the element
+   */
+  ElementType getRaw(int64_t index) const noexcept {
+    assert(
+        this->_status == PropertyTablePropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
+    assert(
+        size() > 0 &&
+        "Check the size() of the view to make sure it's not empty");
+    assert(index >= 0 && "index must be non-negative");
+    assert(index < size() && "index must be less than size");
+
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
+      return getValue(index);
+    }
+
+    if constexpr (IsMetadataNumericArray<ElementType>::value) {
+      return getArrayValues<typename MetadataArrayType<ElementType>::type>(
+          index);
+    }
+  }
+
+  /**
+   * @brief Get the number of elements in this
+   * PropertyTablePropertyView. If the view is valid, this returns
+   * {@link PropertyTable::count}. Otherwise, this returns 0.
+   *
+   * @return The number of elements in this PropertyTablePropertyView.
+   */
+  int64_t size() const noexcept {
+    return this->_status == PropertyTablePropertyViewStatus::Valid ? _size : 0;
+  }
+
+private:
+  ElementType getValue(int64_t index) const noexcept {
+    return reinterpret_cast<const ElementType*>(_values.data())[index];
+  }
+
+  template <typename T>
+  PropertyArrayView<T> getArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
+    // Handle fixed-length arrays
+    if (count > 0) {
+      size_t arraySize = count * sizeof(T);
+      const gsl::span<const std::byte> values(
+          _values.data() + index * arraySize,
+          arraySize);
+      return PropertyArrayView<T>{values};
+    }
+
+    // Handle variable-length arrays
+    const size_t currentOffset =
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
+    const size_t nextOffset =
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+    const gsl::span<const std::byte> values(
+        _values.data() + currentOffset,
+        nextOffset - currentOffset);
+    return PropertyArrayView<T>{values};
+  }
+
+  gsl::span<const std::byte> _values;
+  int64_t _size;
+
+  gsl::span<const std::byte> _arrayOffsets;
+  PropertyComponentType _arrayOffsetType;
+  int64_t _arrayOffsetTypeSize;
+};
+
 } // namespace CesiumGltf

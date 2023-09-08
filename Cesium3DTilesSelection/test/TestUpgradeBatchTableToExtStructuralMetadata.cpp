@@ -49,16 +49,17 @@ static void checkNonArrayProperty(
   for (int64_t i = 0; i < propertyView.size(); ++i) {
     if constexpr (std::is_same_v<PropertyViewType, glm::vec3>) {
       REQUIRE(Math::equalsEpsilon(
-          static_cast<glm::dvec3>(propertyView.get(i)),
+          static_cast<glm::dvec3>(propertyView.getRaw(i)),
           static_cast<glm::dvec3>(expected[static_cast<size_t>(i)]),
           Math::Epsilon6));
     } else if constexpr (
         std::is_same_v<PropertyViewType, float> ||
         std::is_same_v<PropertyViewType, double>) {
-      REQUIRE(propertyView.get(i) == Approx(expected[static_cast<size_t>(i)]));
+      REQUIRE(
+          propertyView.getRaw(i) == Approx(expected[static_cast<size_t>(i)]));
     } else {
       REQUIRE(
-          static_cast<ExpectedType>(propertyView.get(i)) ==
+          static_cast<ExpectedType>(propertyView.getRaw(i)) ==
           expected[static_cast<size_t>(i)]);
     }
   }
@@ -92,7 +93,7 @@ static void checkArrayProperty(
   REQUIRE(propertyView.size() == static_cast<int64_t>(expectedTotalInstances));
   for (size_t i = 0; i < expectedTotalInstances; ++i) {
     PropertyArrayView<PropertyViewType> value =
-        propertyView.get(static_cast<int64_t>(i));
+        propertyView.getRaw(static_cast<int64_t>(i));
     if (expectedCount > 0) {
       REQUIRE(value.size() == expectedCount);
     }

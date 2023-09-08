@@ -37,9 +37,7 @@ public:
 
   /**
    * @brief Constructs an array view from a vector of values. This is mainly
-   * used by PropertyTextureProperty -- since the values are swizzled from the
-   * texture, the values cannot be viewed in place, and must passed in through a
-   * correctly ordered vector.
+   * used when the values cannot be viewed in place.
    *
    * @param values The vector containing the values.
    */
@@ -56,6 +54,24 @@ public:
     return std::visit(
         [](auto const& values) { return static_cast<int64_t>(values.size()); },
         _values);
+  }
+
+  bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
+    if (this->size() != other.size()) {
+      return false;
+    }
+
+    for (int64_t i = 0; i < size(); i++) {
+      if ((*this)[i] != other[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool operator!=(const PropertyArrayView<ElementType>& other) const noexcept {
+    return !operator==(other);
   }
 
 private:
@@ -95,6 +111,24 @@ public:
 
   int64_t size() const noexcept { return _size; }
 
+  bool operator==(const PropertyArrayView<bool>& other) const noexcept {
+    if (this->size() != other.size()) {
+      return false;
+    }
+
+    for (int64_t i = 0; i < size(); i++) {
+      if ((*this)[i] != other[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool operator!=(const PropertyArrayView<bool>& other) const noexcept {
+    return !operator==(other);
+  }
+
 private:
   gsl::span<const std::byte> _values;
   int64_t _bitOffset;
@@ -107,7 +141,10 @@ public:
    * @brief Constructs an empty array view.
    */
   PropertyArrayView()
-      : _values{}, _stringOffsets{}, _stringOffsetType{}, _size{0} {}
+      : _values{},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _size{0} {}
 
   /**
    * @brief Constructs an array view from buffers and their information.
@@ -140,6 +177,26 @@ public:
   }
 
   int64_t size() const noexcept { return _size; }
+
+  bool
+  operator==(const PropertyArrayView<std::string_view>& other) const noexcept {
+    if (this->size() != other.size()) {
+      return false;
+    }
+
+    for (int64_t i = 0; i < size(); i++) {
+      if ((*this)[i] != other[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool
+  operator!=(const PropertyArrayView<std::string_view>& other) const noexcept {
+    return !operator==(other);
+  }
 
 private:
   gsl::span<const std::byte> _values;
