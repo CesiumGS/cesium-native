@@ -11,6 +11,7 @@
 #include "ImageCesium.h"
 #include "Model.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <variant>
