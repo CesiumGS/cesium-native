@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.28.0 - 2023-09-08
 
 ##### Breaking Changes :mega:
 
@@ -30,7 +30,7 @@
 - Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
 - Added `PropertyAttributeView`, which views a `PropertyAttribute` in `EXT_structural_metadata`.
 - Added `PropertyAttributePropertyView`, which views a `PropertyAttributeProperty` in `EXT_structural_metadata`.
-- Added `PropertyAttributePropertyViewStatus`, which reflects the sattus of a `PropertyAttributePropertyView`.
+- Added `PropertyAttributePropertyViewStatus`, which reflects the status of a `PropertyAttributePropertyView`.
 
 ### v0.27.1 - 2023-09-03
 
