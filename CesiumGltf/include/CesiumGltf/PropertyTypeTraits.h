@@ -293,14 +293,30 @@ struct CanBeNormalized<PropertyArrayView<T>> : CanBeNormalized<T> {};
  */
 template <typename T> struct TypeToNormalizedType;
 
-template <> struct TypeToNormalizedType<int8_t> { using type = double; };
-template <> struct TypeToNormalizedType<uint8_t> { using type = double; };
-template <> struct TypeToNormalizedType<int16_t> { using type = double; };
-template <> struct TypeToNormalizedType<uint16_t> { using type = double; };
-template <> struct TypeToNormalizedType<int32_t> { using type = double; };
-template <> struct TypeToNormalizedType<uint32_t> { using type = double; };
-template <> struct TypeToNormalizedType<int64_t> { using type = double; };
-template <> struct TypeToNormalizedType<uint64_t> { using type = double; };
+template <> struct TypeToNormalizedType<int8_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint8_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<int16_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint16_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<int32_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint32_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<int64_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint64_t> {
+  using type = double;
+};
 
 template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<glm::vec<N, T, Q>> {
