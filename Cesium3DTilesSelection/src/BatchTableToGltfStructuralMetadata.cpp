@@ -24,8 +24,9 @@ using namespace Cesium3DTilesSelection::CesiumImpl;
 namespace Cesium3DTilesSelection {
 namespace {
 /**
- * Indicates how a JSON value can be interpreted. Does not correspond one-to-one
- * with types / component types in EXT_structural_metadata.
+ * Indicates how a JSON value can be interpreted as a primitive type. Does not
+ * correspond one-to-one with types / component types in
+ * EXT_structural_metadata.
  */
 struct MaskedType {
   bool isInt8;
@@ -71,6 +72,16 @@ struct MaskedType {
     isFloat64 &= source.isFloat64;
     isBool &= source.isBool;
   }
+
+  /**
+   * Whether this is incompatible with every primitive type. Fully-incompatible
+   * types will be treated as strings.
+   */
+  bool isIncompatible() const noexcept {
+    return !isInt8 && !isUint8 && !isInt16 && !isUint16 && !isInt32 &&
+           !isUint32 && !isInt64 && !isUint64 && !isFloat32 && !isFloat64 &&
+           !isBool;
+  }
 };
 
 /**
@@ -109,43 +120,140 @@ struct MaskedArrayType {
     minArrayCount = glm::min(minArrayCount, source.minArrayCount);
     maxArrayCount = glm::max(maxArrayCount, source.maxArrayCount);
   }
+
+  /**
+   * Whether this is incompatible with every primitive type. Fully-incompatible
+   * types will be treated as strings.
+   */
+  bool isIncompatible() const noexcept { return elementType.isIncompatible(); }
 };
 
 /**
- * Indicates a batch table property's compatibility with C++ types.
+ * Represents information about a batch table property, indicating its
+ * compatibility with C++ types and whether it has encountered any null values.
  */
 struct CompatibleTypes {
-  // std::monostate represents "complete" compatibility, in that nothing has
-  // been determined to be incompatible yet. Once something is either a
-  // MaskedType or MaskedArrayType, they are considered incompatible with the
-  // other type.
 private:
+  /**
+   * std::monostate represents "complete" compatibility, in that nothing has
+   * been determined to be incompatible yet. Once something is either a
+   * MaskedType or MaskedArrayType, they are considered incompatible with the
+   * other type.
+   */
   std::variant<std::monostate, MaskedType, MaskedArrayType> _type;
+
+  /**
+   * Whether the property has encountered a null value. A
+   * property may contain null values even though all other values are of the
+   * same non-null type. In this case, it can simply replace the null with a
+   * "noData" value in the EXT_structural_metadata property.
+   */
+  bool _hasNullValue = false;
+
+  /**
+   * The following booleans track possible "noData" (sentinel) values for the
+   * property.
+   *
+   * We don't want to spend too much effort finding a "noData" value, because
+   * with any given property there can be multiple candidates. Thus, there are
+   * only a few values that are reserved as potential sentinel values:
+   *
+   * - 0, for signed or unsigned integers
+   * - -1, for signed integers
+   * - "null", for strings
+   *
+   * If a property does not contain one of these values, then it may be used as
+   * the "noData" value in the property. The sentinel value will then be copied
+   * to the buffer, instead of the null value.
+   */
+  bool _canUseZeroSentinel = true;
+  bool _canUseNegativeOneSentinel = true;
+  bool _canUseNullStringSentinel = true;
 
 public:
   CompatibleTypes() : _type(){};
-
   CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
       : _type(maskedArrayType){};
 
   /**
-   * Whether this is exclusively compatible with array types.
+   * Whether this is exclusively compatible with array types. This indicates an
+   * exclusively array property, as opposed to a newly initialized one that is
+   * "compatible" with everything.
    */
-  bool isExclusivelyArray() const {
+  bool isExclusivelyArray() const noexcept {
     return std::holds_alternative<MaskedArrayType>(_type);
   }
 
   /**
-   * Marks as incompatible with every type. Fully-incompatible types will be
-   * treated as strings.
+   * Whether this property is with at least one unsigned integer type. Does not
+   * count arrays.
    */
-  void makeIncompatible() { _type = MaskedType(false); }
+  bool isCompatibleWithUnsignedInteger() const noexcept {
+    if (std::holds_alternative<MaskedArrayType>(_type)) {
+      return false;
+    }
+
+    if (std::holds_alternative<std::monostate>(_type)) {
+      return true;
+    }
+
+    MaskedType type = std::get<MaskedType>(_type);
+    return type.isUint8 || type.isUint16 || type.isUint32 || type.isUint64;
+  }
 
   /**
-   * Merges a MaskedType into this CompatibleTypes.
+   * Whether this property is compatible with at least one signed integer type.
+   * Does not count arrays.
    */
-  void operator&=(const MaskedType& inMaskedType) {
+  bool isCompatibleWithSignedInteger() const noexcept {
+    if (std::holds_alternative<MaskedArrayType>(_type)) {
+      return false;
+    }
+
+    if (std::holds_alternative<std::monostate>(_type)) {
+      return true;
+    }
+
+    MaskedType type = std::get<MaskedType>(_type);
+    return type.isInt8 || type.isInt16 || type.isInt32 || type.isInt64;
+  }
+
+  /**
+   * Whether this property is compatible with every type. This only really
+   * happens when a CompatibleTypes is initialized and never modified.
+   */
+  bool isFullyCompatible() const noexcept {
+    return std::holds_alternative<std::monostate>(_type);
+  }
+
+  /**
+   * Whether this property is incompatible with every primitive type.
+   * Fully-incompatible properties will be treated as string properties.
+   */
+  bool isIncompatible() const noexcept {
+    if (std::holds_alternative<MaskedType>(_type)) {
+      return std::get<MaskedType>(_type).isIncompatible();
+    }
+
+    if (std::holds_alternative<MaskedArrayType>(_type)) {
+      return std::get<MaskedArrayType>(_type).isIncompatible();
+    }
+
+    // std::monostate means compatibility with all types.
+    return false;
+  }
+
+  /**
+   * Marks as incompatible with every primitive type. Fully-incompatible
+   * properties will be treated as string properties.
+   */
+  void makeIncompatible() noexcept { _type = MaskedType(false); }
+
+  /**
+   * Merges a MaskedType into this BatchTableProperty.
+   */
+  void operator&=(const MaskedType& inMaskedType) noexcept {
     if (std::holds_alternative<MaskedType>(_type)) {
       MaskedType& maskedType = std::get<MaskedType>(_type);
       maskedType &= inMaskedType;
@@ -163,7 +271,7 @@ public:
   /**
    * Merges a MaskedArrayType into this CompatibleTypes.
    */
-  void operator&=(const MaskedArrayType& inArrayType) {
+  void operator&=(const MaskedArrayType& inArrayType) noexcept {
     if (std::holds_alternative<MaskedArrayType>(_type)) {
       MaskedArrayType& arrayType = std::get<MaskedArrayType>(_type);
       arrayType &= inArrayType;
@@ -181,31 +289,33 @@ public:
   /**
    * Merges another CompatibleTypes into this one.
    */
-  void operator&=(const CompatibleTypes& inCompatibleTypes) {
-    if (std::holds_alternative<std::monostate>(inCompatibleTypes._type)) {
+  void operator&=(const CompatibleTypes& inTypes) noexcept {
+    if (std::holds_alternative<std::monostate>(inTypes._type)) {
       // The other CompatibleTypes is compatible with everything, so it does not
       // change this one.
-      return;
-    }
+    } else
 
-    if (std::holds_alternative<MaskedArrayType>(inCompatibleTypes._type)) {
+        if (std::holds_alternative<MaskedArrayType>(inTypes._type)) {
       const MaskedArrayType& arrayType =
-          std::get<MaskedArrayType>(inCompatibleTypes._type);
+          std::get<MaskedArrayType>(inTypes._type);
       operator&=(arrayType);
-      return;
+    } else {
+      const MaskedType& maskedType = std::get<MaskedType>(inTypes._type);
+      operator&=(maskedType);
     }
 
-    const MaskedType& maskedType =
-        std::get<MaskedType>(inCompatibleTypes._type);
-    operator&=(maskedType);
+    _hasNullValue |= inTypes._hasNullValue;
+    _canUseZeroSentinel &= inTypes._canUseZeroSentinel;
+    _canUseNegativeOneSentinel &= inTypes._canUseNegativeOneSentinel;
+    _canUseNullStringSentinel &= inTypes._canUseNullStringSentinel;
   }
 
   /**
-   * Derives MaskedType info from this CompatibleTypes. If this CompatibleTypes
+   * Derives MaskedType info from this CompatibleTypes. If this property
    * is only compatible with arrays, this will return an incompatible
    * MaskedType.
    */
-  MaskedType toMaskedType() const {
+  MaskedType toMaskedType() const noexcept {
     if (std::holds_alternative<MaskedType>(_type)) {
       return std::get<MaskedType>(_type);
     }
@@ -216,16 +326,93 @@ public:
 
   /**
    * Derives MaskedArrayType info from this CompatibleTypes. If this
-   * CompatibleTypes is not compatible with arrays, this will return an
-   * incompatible MaskedArrayType.
+   * property is not compatible with arrays, this will return an incompatible
+   * MaskedArrayType.
    */
-  MaskedArrayType toMaskedArrayType() const {
+  MaskedArrayType toMaskedArrayType() const noexcept {
     if (std::holds_alternative<MaskedArrayType>(_type)) {
       return std::get<MaskedArrayType>(_type);
     }
 
     bool isNonArray = std::holds_alternative<MaskedType>(_type);
     return MaskedArrayType(!isNonArray);
+  }
+
+  /**
+   * Gets whether the property of this type includes a null value.
+   */
+  bool hasNullValue() const noexcept { return _hasNullValue; }
+
+  /**
+   * Sets whether the property includes a null value. If a null value has been
+   * encountered, a sentinel value may potentially be provided.
+   */
+  void setHasNullValue(bool value) noexcept { _hasNullValue = value; }
+
+  /**
+   * Gets a possible sentinel value for this type. If no value can be used, this
+   * returns std::nullopt.
+   */
+  const std::optional<CesiumUtility::JsonValue>
+  getSentinelValue() const noexcept {
+    if (isCompatibleWithUnsignedInteger()) {
+      return _canUseZeroSentinel
+                 ? std::make_optional<CesiumUtility::JsonValue>(0)
+                 : std::nullopt;
+    }
+
+    if (isCompatibleWithSignedInteger()) {
+      if (_canUseZeroSentinel) {
+        return 0;
+      }
+
+      if (_canUseNegativeOneSentinel) {
+        return -1;
+      }
+    }
+
+    if (isIncompatible()) {
+      if (_canUseNullStringSentinel) {
+        return "null";
+      }
+    }
+
+    return std::nullopt;
+  }
+
+  /**
+   * Removes any sentinel values that are incompatible with the property. This
+   * also removes the sentinel values that equal the given value.
+   *
+   * This is helpful for when a property contains a sentinel value as non-null
+   * data; the sentinel value can then be removed from consideration.
+   */
+  void removeSentinelValues(CesiumUtility::JsonValue value) noexcept {
+    if (value.isNumber()) {
+      _canUseNullStringSentinel = false;
+
+      // Don't try to use string as sentinels for numbers.
+      if (value.isUint64()) {
+        _canUseZeroSentinel &= (value.getUint64() != 0);
+      }
+
+      if (value.isInt64()) {
+        auto intValue = value.getInt64();
+        _canUseZeroSentinel &= (intValue != 0);
+        _canUseNegativeOneSentinel &= (intValue != -1);
+      }
+    }
+
+    if (value.isString()) {
+      // Don't try to use numbers as sentinels for strings.
+      _canUseZeroSentinel = false;
+      _canUseNegativeOneSentinel = false;
+
+      auto stringValue = value.getString();
+      if (stringValue == "null") {
+        _canUseNullStringSentinel = false;
+      }
+    }
   }
 };
 
@@ -410,9 +597,24 @@ CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
       booleanType.isBool = true;
 
       compatibleTypes &= booleanType;
-    } else if (it->IsNumber()) {
+      continue;
+    }
+
+    if (it->IsNumber()) {
       compatibleTypes &= getCompatibleTypesForNumber(it);
-    } else if (it->IsArray()) {
+
+      // Check that the value does not equal one of the possible sentinel
+      // values.
+      if (it->IsInt64()) {
+        compatibleTypes.removeSentinelValues(it->GetInt64());
+      } else if (it->IsUint64()) {
+        compatibleTypes.removeSentinelValues(it->GetUint64());
+      }
+
+      continue;
+    }
+
+    if (it->IsArray()) {
       // Iterate over all of the elements in the array
       // and determine their compatible type.
       CompatibleTypes arrayElementCompatibleTypes =
@@ -425,9 +627,29 @@ CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
       MaskedArrayType arrayType(elementType, it->Size(), it->Size());
 
       compatibleTypes &= arrayType;
-    } else {
-      // A string, null, or something else.
-      compatibleTypes.makeIncompatible();
+
+      continue;
+    }
+
+    if (it->IsNull()) {
+      compatibleTypes.setHasNullValue(true);
+
+      // If the value is null, check if there is still a possible sentinel
+      // values. If none exist, default the type to string.
+      if (!compatibleTypes.getSentinelValue()) {
+        compatibleTypes.makeIncompatible();
+      }
+
+      continue;
+    }
+
+    // If this code is reached, the value is a string or something else.
+    compatibleTypes.makeIncompatible();
+
+    // If this is a string, check that the value does not equal one of the
+    // possible sentinel values.
+    if (it->IsString()) {
+      compatibleTypes.removeSentinelValues(it->GetString());
     }
   }
 
@@ -462,13 +684,18 @@ void updateExtensionWithJsonStringProperty(
   rapidjsonOffsets.reserve(static_cast<size_t>(propertyTable.count + 1));
   rapidjsonOffsets.emplace_back(0);
 
+  std::optional<std::string> noDataValue;
+  if (classProperty.noData) {
+    noDataValue = classProperty.noData->getString();
+  }
+
   auto it = propertyValue.begin();
   for (int64_t i = 0; i < propertyTable.count; ++i) {
     if (it == propertyValue.end()) {
       rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
       continue;
     }
-    if (!it->IsString()) {
+    if (!it->IsString() || (it->IsNull() && !noDataValue)) {
       // Everything else that is not string will be serialized by json
       rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
       it->Accept(writer);
@@ -476,7 +703,7 @@ void updateExtensionWithJsonStringProperty(
       // Because serialized string json will add double quotations in the
       // buffer which is not needed by us, we will manually add the string to
       // the buffer
-      const auto& rapidjsonStr = it->GetString();
+      const auto& rapidjsonStr = it->IsNull() ? *noDataValue : it->GetString();
       rapidjsonStrBuffer.Reserve(it->GetStringLength());
       for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
         rapidjsonStrBuffer.PutUnsafe(rapidjsonStr[j]);
@@ -551,8 +778,18 @@ void updateExtensionWithJsonScalarProperty(
 
   T* p = reinterpret_cast<T*>(buffer.data());
   auto it = propertyValue.begin();
+
+  std::optional<T> noDataValue;
+  if (classProperty.noData) {
+    noDataValue = classProperty.noData->getSafeNumber<T>();
+  }
+
   for (int64_t i = 0; i < propertyTable.count; ++i, ++p, ++it) {
-    *p = static_cast<T>(it->template Get<TRapidJson>());
+    if (it->IsNull()) {
+      *p = *noDataValue;
+    } else {
+      *p = static_cast<T>(it->template Get<TRapidJson>());
+    }
   }
 
   propertyTableProperty.values = addBufferToGltf(gltf, std::move(buffer));
@@ -854,8 +1091,8 @@ void updateStringArrayProperty(
 
   // Handle variable-length arrays.
   // For string arrays, arrayOffsets indexes into the stringOffsets buffer,
-  // the size of which is the number of stringElements + 1. This determines the
-  // component type of the array offsets.
+  // the size of which is the number of stringElements + 1. This determines
+  // the component type of the array offsets.
   std::vector<std::byte> arrayOffsetBuffer;
   PropertyComponentType arrayOffsetType = PropertyComponentType::None;
   if (isInRangeForUnsignedInteger<uint8_t>(stringCount + 1)) {
@@ -1157,6 +1394,12 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   const CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
+  if (compatibleTypes.isFullyCompatible()) {
+    // If this is "fully compatible", then the property contained no values (or
+    // rather, no non-null values). Exclude it from the model to avoid errors.
+    return;
+  }
+
   if (compatibleTypes.isExclusivelyArray()) {
     MaskedArrayType arrayType = compatibleTypes.toMaskedArrayType();
     updateExtensionWithArrayProperty(
@@ -1167,6 +1410,11 @@ void updateExtensionWithJsonProperty(
         arrayType,
         propertyValue);
     return;
+  }
+
+  // Set the "noData" value before copying the property (to avoid copying nulls)
+  if (compatibleTypes.hasNullValue()) {
+    classProperty.noData = compatibleTypes.getSentinelValue();
   }
 
   MaskedType type = compatibleTypes.toMaskedType();
@@ -1365,10 +1613,10 @@ void updateExtensionWithBatchTableHierarchy(
     PropertyTable& propertyTable,
     ErrorList& result,
     const rapidjson::Value& batchTableHierarchy) {
-  // EXT_structural_metadata can't support hierarchy, so we need to flatten it.
-  // It also can't support multiple classes with a single set of feature IDs,
-  // because IDs can only specify one property table. So essentially every
-  // property of every class gets added to the one class definition.
+  // EXT_structural_metadata can't support hierarchy, so we need to flatten
+  // it. It also can't support multiple classes with a single set of feature
+  // IDs, because IDs can only specify one property table. So essentially
+  // every property of every class gets added to the one class definition.
   auto classesIt = batchTableHierarchy.FindMember("classes");
   if (classesIt == batchTableHierarchy.MemberEnd()) {
     result.emplaceWarning(
@@ -1596,7 +1844,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       FeatureId& featureID = extension.featureIds.emplace_back();
 
       // No fast way to count the unique feature IDs in this primitive, so
-      // subtitute the batch table length.
+      // substitute the batch table length.
       featureID.featureCount = batchLength;
       featureID.attribute = 0;
       featureID.label = "_FEATURE_ID_0";
