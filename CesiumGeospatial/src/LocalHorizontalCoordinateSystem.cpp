@@ -86,6 +86,17 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
   this->_ecefToLocal = glm::affineInverse(this->_localToEcef);
 }
 
+CesiumGeospatial::LocalHorizontalCoordinateSystem::
+    LocalHorizontalCoordinateSystem(const glm::dmat4& localToEcef)
+    : _ecefToLocal(glm::affineInverse(localToEcef)),
+      _localToEcef(localToEcef) {}
+
+CesiumGeospatial::LocalHorizontalCoordinateSystem::
+    LocalHorizontalCoordinateSystem(
+        const glm::dmat4& localToEcef,
+        const glm::dmat4& ecefToLocal)
+    : _ecefToLocal(ecefToLocal), _localToEcef(localToEcef) {}
+
 glm::dvec3 LocalHorizontalCoordinateSystem::localPositionToEcef(
     const glm::dvec3& localPosition) const noexcept {
   return glm::dvec3(this->_localToEcef * glm::dvec4(localPosition, 1.0));

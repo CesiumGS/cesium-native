@@ -84,6 +84,7 @@ struct CESIUM3DTILES_API Tileset final
 
   /**
    * @brief Names of 3D Tiles extensions required to properly load this tileset.
+   * Each element of this array shall also be contained in `extensionsUsed`.
    */
   std::vector<std::string> extensionsRequired;
 };

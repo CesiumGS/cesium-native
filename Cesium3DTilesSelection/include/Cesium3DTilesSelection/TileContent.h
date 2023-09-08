@@ -3,12 +3,14 @@
 #include "CreditSystem.h"
 #include "Library.h"
 #include "RasterOverlayDetails.h"
+#include "TilesetMetadata.h"
 
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 
 #include <memory>
 #include <variant>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 /**
@@ -47,7 +49,12 @@ struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
  * external tileset. When this tile is loaded, all the tiles in the
  * external tileset will become children of this external content tile
  */
-struct CESIUM3DTILESSELECTION_API TileExternalContent {};
+struct CESIUM3DTILESSELECTION_API TileExternalContent {
+  /**
+   * @brief The metadata associated with this tileset.
+   */
+  TilesetMetadata metadata;
+};
 
 /**
  * @brief A content tag that indicates a tile has a glTF model content and
@@ -198,7 +205,7 @@ class CESIUM3DTILESSELECTION_API TileContent {
   using TileContentKindImpl = std::variant<
       TileUnknownContent,
       TileEmptyContent,
-      TileExternalContent,
+      std::unique_ptr<TileExternalContent>,
       std::unique_ptr<TileRenderContent>>;
 
 public:
@@ -218,7 +225,7 @@ public:
    * @brief Construct an external content for a tile whose content
    * points to an external tileset
    */
-  TileContent(TileExternalContent content);
+  TileContent(std::unique_ptr<TileExternalContent>&& content);
 
   /**
    * @brief Set an unknown content tag for a tile. This constructor
@@ -236,7 +243,7 @@ public:
    * @brief Set an external content for a tile whose content
    * points to an external tileset
    */
-  void setContentKind(TileExternalContent content);
+  void setContentKind(std::unique_ptr<TileExternalContent>&& content);
 
   /**
    * @brief Set a glTF model content for a tile
@@ -267,20 +274,26 @@ public:
   /**
    * @brief Get the {@link TileRenderContent} which stores the glTF model
    * and render resources of the tile
-   *
-   * @return The {@link TileRenderContent} which stores the glTF model
-   * and render resources of the tile
    */
   const TileRenderContent* getRenderContent() const noexcept;
 
   /**
    * @brief Get the {@link TileRenderContent} which stores the glTF model
    * and render resources of the tile
-   *
-   * @return The {@link TileRenderContent} which stores the glTF model
-   * and render resources of the tile
    */
   TileRenderContent* getRenderContent() noexcept;
+
+  /**
+   * @brief Get the {@link TileExternalContent} which stores the details of
+   * the external tileset.
+   */
+  const TileExternalContent* getExternalContent() const noexcept;
+
+  /**
+   * @brief Get the {@link TileExternalContent} which stores the details of
+   * the external tileset.
+   */
+  TileExternalContent* getExternalContent() noexcept;
 
 private:
   TileContentKindImpl _contentKind;

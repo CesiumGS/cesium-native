@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -18,8 +18,7 @@ class ClassJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = CesiumGltf::Class;
 
-  ClassJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  ClassJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Class* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

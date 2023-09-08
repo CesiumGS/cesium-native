@@ -7,6 +7,7 @@
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
 
+#include <Cesium3DTiles/MetadataQuery.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 
@@ -169,7 +170,12 @@ TEST_CASE("Test replace refinement for render") {
   initializeTileset(tileset);
 
   // check the tiles status
-  const Tile* root = tileset.getRootTile();
+  const Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+
+  const Tile* root = &pTilesetJson->getChildren()[0];
+
   REQUIRE(root->getState() == TileLoadState::ContentLoading);
   for (const auto& child : root->getChildren()) {
     REQUIRE(child.getState() == TileLoadState::Unloaded);
@@ -208,7 +214,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 1);
+      REQUIRE(result.tilesVisited == 2);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.mainThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
@@ -269,7 +275,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.workerThreadTileLoadQueueLength == 4);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -293,7 +299,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 1);
 
-      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -342,7 +348,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 6);
+      REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.workerThreadTileLoadQueueLength == 5);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -384,7 +390,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 1);
 
-      REQUIRE(result.tilesVisited == 6);
+      REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -437,7 +443,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 1);
 
-      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -467,7 +473,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.workerThreadTileLoadQueueLength == 4);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -496,7 +502,7 @@ TEST_CASE("Test replace refinement for render") {
 
       REQUIRE(result.tilesFadingOut.size() == 1);
 
-      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -551,7 +557,11 @@ TEST_CASE("Test additive refinement") {
 
   // root is external tileset. Since its content is loading, we won't know if it
   // has children or not
-  const Tile* root = tileset.getRootTile();
+  const Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+
+  const Tile* root = &pTilesetJson->getChildren()[0];
   REQUIRE(root->getState() == TileLoadState::ContentLoading);
   REQUIRE(root->getChildren().size() == 0);
 
@@ -581,11 +591,11 @@ TEST_CASE("Test additive refinement") {
       }
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+      REQUIRE(result.tilesToRenderThisFrame.front() == pTilesetJson);
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 6);
+      REQUIRE(result.tilesVisited == 7);
       REQUIRE(result.workerThreadTileLoadQueueLength == 5);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -627,13 +637,14 @@ TEST_CASE("Test additive refinement") {
         }
       }
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 2);
-      REQUIRE(result.tilesToRenderThisFrame[0] == root);
-      REQUIRE(result.tilesToRenderThisFrame[1] == &parentB3DM);
+      REQUIRE(result.tilesToRenderThisFrame.size() == 3);
+      REQUIRE(result.tilesToRenderThisFrame[0] == pTilesetJson);
+      REQUIRE(result.tilesToRenderThisFrame[1] == root);
+      REQUIRE(result.tilesToRenderThisFrame[2] == &parentB3DM);
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 7);
+      REQUIRE(result.tilesVisited == 8);
       REQUIRE(result.workerThreadTileLoadQueueLength == 1);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -643,11 +654,11 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 7);
+      REQUIRE(result.tilesToRenderThisFrame.size() == 8);
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
-      REQUIRE(result.tilesVisited == 7);
+      REQUIRE(result.tilesVisited == 8);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
@@ -700,7 +711,11 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   initializeTileset(tileset);
   ViewState viewState = zoomToTileset(tileset);
 
-  Tile* root = tileset.getRootTile();
+  Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+  Tile* root = &pTilesetJson->getChildren()[0];
+
   REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
   REQUIRE(root->getState() == TileLoadState::ContentLoading);
   REQUIRE(root->getChildren().size() == 3);
@@ -714,9 +729,9 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       CHECK(child.getState() == TileLoadState::ContentLoading);
     }
 
-    REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+    REQUIRE(result.tilesToRenderThisFrame.size() == 2);
     REQUIRE(result.tilesFadingOut.size() == 0);
-    REQUIRE(result.tilesVisited == 4);
+    REQUIRE(result.tilesVisited == 5);
     REQUIRE(result.workerThreadTileLoadQueueLength == 3);
     REQUIRE(result.tilesCulled == 0);
     REQUIRE(result.culledTilesVisited == 0);
@@ -738,9 +753,9 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
       REQUIRE(child.isRenderable());
     }
 
-    REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+    REQUIRE(result.tilesToRenderThisFrame.size() == 5);
     REQUIRE(result.tilesFadingOut.size() == 0);
-    REQUIRE(result.tilesVisited == 4);
+    REQUIRE(result.tilesVisited == 5);
     REQUIRE(result.workerThreadTileLoadQueueLength == 0);
     REQUIRE(result.tilesCulled == 0);
     REQUIRE(result.culledTilesVisited == 0);
@@ -793,7 +808,10 @@ TEST_CASE("Test multiple frustums") {
   initializeTileset(tileset);
 
   // check the tiles status
-  const Tile* root = tileset.getRootTile();
+  const Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+  const Tile* root = &pTilesetJson->getChildren()[0];
   REQUIRE(root->getState() == TileLoadState::ContentLoading);
   for (const auto& child : root->getChildren()) {
     REQUIRE(child.getState() == TileLoadState::Unloaded);
@@ -856,7 +874,7 @@ TEST_CASE("Test multiple frustums") {
       REQUIRE(result.tilesFadingOut.size() == 1);
       REQUIRE(*result.tilesFadingOut.begin() == root);
 
-      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesVisited == 6);
       REQUIRE(result.workerThreadTileLoadQueueLength == 0);
       REQUIRE(result.tilesCulled == 0);
     }
@@ -905,7 +923,7 @@ TEST_CASE("Test multiple frustums") {
       // The grand child and the second child are the only ones rendered.
       // The third and fourth children of the root are culled.
       REQUIRE(result.tilesToRenderThisFrame.size() == 2);
-      REQUIRE(result.tilesVisited == 4);
+      REQUIRE(result.tilesVisited == 5);
       REQUIRE(
           std::find(
               result.tilesToRenderThisFrame.begin(),
@@ -1028,7 +1046,11 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
     tilesetExternals.asyncSystem.dispatchMainThreadTasks();
   }
 
-  const Tile* pRoot = tileset.getRootTile();
+  const Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+  const Tile* pRoot = &pTilesetJson->getChildren()[0];
+
   const S2CellBoundingVolume* pS2 =
       std::get_if<S2CellBoundingVolume>(&pRoot->getBoundingVolume());
   REQUIRE(pS2);
@@ -1068,6 +1090,378 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   CHECK(pS2GreatGrandchild->getMaximumHeight() == 125000.0);
 
   REQUIRE(pGreatGrandchild->getChildren().empty());
+}
+
+TEST_CASE("Makes metadata available once root tile is loaded") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "WithMetadata";
+  std::vector<std::string> files{
+      "tileset.json",
+      "external-tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  Tile* pRoot = tileset.getRootTile();
+  REQUIRE(pRoot);
+
+  TileExternalContent* pExternal = pRoot->getContent().getExternalContent();
+  REQUIRE(pExternal);
+
+  const TilesetMetadata& metadata = pExternal->metadata;
+  const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+  REQUIRE(schema);
+  CHECK(schema->id == "foo");
+}
+
+TEST_CASE("Makes metadata available on external tilesets") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "WithMetadata";
+  std::vector<std::string> files{
+      "tileset.json",
+      "external-tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  Tile* pTilesetJson = tileset.getRootTile();
+  REQUIRE(pTilesetJson);
+  REQUIRE(pTilesetJson->getChildren().size() == 1);
+
+  Tile* pRoot = &pTilesetJson->getChildren()[0];
+  REQUIRE(pRoot);
+  REQUIRE(pRoot->getChildren().size() == 5);
+  Tile* pExternal = &pRoot->getChildren()[4];
+
+  TileExternalContent* pExternalContent = nullptr;
+
+  for (int i = 0; i < 10 && pExternalContent == nullptr; ++i) {
+    ViewState zoomToTileViewState = zoomToTile(*pExternal);
+    tileset.updateView({zoomToTileViewState});
+    pExternalContent = pExternal->getContent().getExternalContent();
+  }
+
+  REQUIRE(pExternalContent);
+
+  REQUIRE(pExternalContent->metadata.groups.size() == 2);
+  CHECK(pExternalContent->metadata.groups[0].classProperty == "someClass");
+  CHECK(pExternalContent->metadata.groups[1].classProperty == "someClass");
+}
+
+TEST_CASE("Allows access to material variants") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "MaterialVariants";
+  std::vector<std::string> files{"tileset.json", "parent.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  const TilesetMetadata* pMetadata = tileset.getMetadata();
+  REQUIRE(pMetadata);
+  REQUIRE(pMetadata->schema);
+  REQUIRE(pMetadata->metadata);
+
+  std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
+      Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+          *pMetadata->schema,
+          *pMetadata->metadata,
+          "MATERIAL_VARIANTS");
+  REQUIRE(found1);
+  CHECK(found1->classIdentifier == "MaterialVariants");
+  CHECK(found1->classDefinition.properties.size() == 1);
+  CHECK(found1->propertyIdentifier == "material_variants");
+  CHECK(
+      found1->propertyDefinition.description ==
+      "Names of material variants to be expected in the glTF assets");
+  REQUIRE(found1->propertyValue.isArray());
+
+  std::vector<std::string> variants =
+      found1->propertyValue.getArrayOfStrings("");
+  REQUIRE(variants.size() == 4);
+  CHECK(variants[0] == "RGB");
+  CHECK(variants[1] == "RRR");
+  CHECK(variants[2] == "GGG");
+  CHECK(variants[3] == "BBB");
+
+  std::vector<std::vector<std::string>> variantsByGroup;
+  for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
+    std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
+        Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+            *pMetadata->schema,
+            group,
+            "MATERIAL_VARIANTS");
+    REQUIRE(found2);
+    REQUIRE(found2->propertyValue.isArray());
+
+    variantsByGroup.emplace_back(found2->propertyValue.getArrayOfStrings(""));
+  }
+
+  std::vector<std::vector<std::string>> expected = {
+      {"RGB", "RRR"},
+      {"GGG", "BBB"}};
+
+  CHECK(variantsByGroup == expected);
+}
+
+TEST_CASE("Allows access to material variants in an external schema") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "MaterialVariants";
+  std::vector<std::string> files{
+      "tileset-external-schema.json",
+      "schema.json",
+      "parent.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  Tileset tileset(tilesetExternals, "tileset-external-schema.json");
+
+  // getMetadata returns nullptr before the root tile is loaded.
+  CHECK(tileset.getMetadata() == nullptr);
+
+  bool wasCalled = false;
+  tileset.loadMetadata().thenInMainThread(
+      [&wasCalled](const TilesetMetadata* pMetadata) {
+        wasCalled = true;
+        REQUIRE(pMetadata);
+        REQUIRE(pMetadata->schema);
+        REQUIRE(pMetadata->metadata);
+
+        std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
+            Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+                *pMetadata->schema,
+                *pMetadata->metadata,
+                "MATERIAL_VARIANTS");
+        REQUIRE(found1);
+        CHECK(found1->classIdentifier == "MaterialVariants");
+        CHECK(found1->classDefinition.properties.size() == 1);
+        CHECK(found1->propertyIdentifier == "material_variants");
+        CHECK(
+            found1->propertyDefinition.description ==
+            "Names of material variants to be expected in the glTF assets");
+        REQUIRE(found1->propertyValue.isArray());
+
+        std::vector<std::string> variants =
+            found1->propertyValue.getArrayOfStrings("");
+        REQUIRE(variants.size() == 4);
+        CHECK(variants[0] == "RGB");
+        CHECK(variants[1] == "RRR");
+        CHECK(variants[2] == "GGG");
+        CHECK(variants[3] == "BBB");
+
+        std::vector<std::vector<std::string>> variantsByGroup;
+        for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
+          std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
+              Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+                  *pMetadata->schema,
+                  group,
+                  "MATERIAL_VARIANTS");
+          REQUIRE(found2);
+          REQUIRE(found2->propertyValue.isArray());
+          variantsByGroup.emplace_back(
+              found2->propertyValue.getArrayOfStrings(""));
+        }
+
+        std::vector<std::vector<std::string>> expected = {
+            {"RGB", "RRR"},
+            {"GGG", "BBB"}};
+
+        CHECK(variantsByGroup == expected);
+      });
+
+  CHECK(!wasCalled);
+  initializeTileset(tileset);
+  CHECK(wasCalled);
+}
+
+TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "MaterialVariants";
+  std::vector<std::string> files{"tileset-external-schema.json", "parent.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  mockCompletedRequests.insert(
+      {"schema.json",
+       std::make_shared<SimpleAssetRequest>(
+           "GET",
+           "schema.json",
+           CesiumAsync::HttpHeaders{},
+           std::make_unique<SimpleAssetResponse>(
+               static_cast<uint16_t>(404),
+               "doesn't matter",
+               CesiumAsync::HttpHeaders{},
+               std::vector<std::byte>()))});
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  Tileset tileset(tilesetExternals, "tileset-external-schema.json");
+
+  // getMetadata returns nullptr before the root tile is loaded.
+  CHECK(tileset.getMetadata() == nullptr);
+
+  bool wasResolved = false;
+  bool wasRejected = false;
+  tileset.loadMetadata()
+      .thenInMainThread(
+          [&wasResolved](const TilesetMetadata*) { wasResolved = true; })
+      .catchInMainThread([&wasRejected](const std::exception& exception) {
+        CHECK(std::string(exception.what()).find("") != std::string::npos);
+        wasRejected = true;
+      });
+
+  CHECK(!wasResolved);
+  CHECK(!wasRejected);
+
+  initializeTileset(tileset);
+  CHECK(!wasResolved);
+  CHECK(wasRejected);
 }
 
 namespace {
@@ -1214,4 +1608,72 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
     options.forbidHoles = true;
     runUnconditionallyRefinedTestCase(options);
   }
+}
+
+TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
+  Cesium3DTilesSelection::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "AdditiveThreeLevels";
+  std::vector<std::string> files{"tileset.json", "content.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  // Load until complete
+  ViewUpdateResult updateResult;
+  ViewState viewState = zoomToTileset(tileset);
+  while (tileset.getNumberOfTilesLoaded() == 0 ||
+         tileset.computeLoadProgress() < 100.0f) {
+    updateResult = tileset.updateView({viewState});
+  }
+
+  // All three tiles (plus the tileset.json) should be rendered.
+  CHECK(updateResult.tilesToRenderThisFrame.size() == 4);
+
+  // Zoom way out
+  std::optional<Cartographic> position = viewState.getPositionCartographic();
+  REQUIRE(position);
+  position->height += 100000;
+
+  ViewState zoomedOut = ViewState::create(
+      Ellipsoid::WGS84.cartographicToCartesian(*position),
+      viewState.getDirection(),
+      viewState.getUp(),
+      viewState.getViewportSize(),
+      viewState.getHorizontalFieldOfView(),
+      viewState.getVerticalFieldOfView());
+  updateResult = tileset.updateView({zoomedOut});
+
+  // Only the root tile (plus the tileset.json) is visible now, and the other
+  // two are fading out.
+  CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
+  CHECK(updateResult.tilesFadingOut.size() == 2);
 }

@@ -1,0 +1,67 @@
+{
+  "asset": {
+    "version": "1.0",
+    "tilesetVersion": "1.2.3"
+  },
+  "extras": {
+    "name": "Sample Tileset"
+  },
+  "schema": {
+    "id": "bar",
+    "name": "Bar",
+    "description": "A description of Bar.",
+    "version": "3.2.1",
+    "classes": {
+      "someClass": {
+        "name": "Some Class!",
+        "description": "A description of Some Class.",
+        "properties": {
+          "someProperty": {
+            "name": "Some Property",
+            "description": "A description of Some Property.",
+            "type": "STRING",
+            "semantic": "GREAT"
+          }
+        }
+      }
+    }
+  },
+  "groups": [
+    {
+      "class": "someClass",
+      "properties": {
+        "someProperty": "test"
+      }
+    },
+    {
+      "class": "someClass",
+      "properties": {
+        "someProperty": "another"
+      }
+    }
+  ],
+  "metadata": {
+    "class": "someClass",
+    "properties": {
+      "someProperty": "foo"
+    }
+  },
+  "geometricError": 35,
+  "root": {
+    "boundingVolume": {
+      "region": [
+        -1.3197209591796106,
+        0.6988424218,
+        -1.3196390408203893,
+        0.6989055782,
+        0,
+        88
+      ]
+    },
+    "geometricError": 35,
+    "refine": "REPLACE",
+    "content": {
+      "uri": "parent.b3dm"
+    }
+  }
+}
