@@ -81,6 +81,14 @@ public:
   }
 
   /**
+   * @brief Gets the {@link Class} that this property attribute conforms to.
+   *
+   * @return A pointer to the {@link Class}. Returns nullptr if the
+   * PropertyAttribute did not specify a valid class.
+   */
+  const Class* getClass() const noexcept { return _pClass; }
+
+  /**
    * @brief Finds the {@link ClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.

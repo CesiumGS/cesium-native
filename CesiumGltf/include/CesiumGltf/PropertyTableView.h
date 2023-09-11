@@ -93,10 +93,10 @@ public:
   /**
    * @brief Gets the {@link Class} that this property table conforms to.
    *
-   * @return A pointer to the {@link Class}. Returns nullptr if the PropertyTable did not
-   * specify a valid class.
+   * @return A pointer to the {@link Class}. Returns nullptr if the PropertyTable
+   * did not specify a valid class.
    */
-  const Class* getClass() const;
+  const Class* getClass() const noexcept { return _pClass; }
 
   /**
    * @brief Finds the {@link ClassProperty} that
