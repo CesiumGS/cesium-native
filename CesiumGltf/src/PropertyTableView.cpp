@@ -133,6 +133,8 @@ PropertyTableView::PropertyTableView(
   _pClass = &classIter->second;
 }
 
+const Class* PropertyTableView::getClass() const { return _pClass; }
+
 const ClassProperty*
 PropertyTableView::getClassProperty(const std::string& propertyName) const {
   if (_status != PropertyTableViewStatus::Valid) {

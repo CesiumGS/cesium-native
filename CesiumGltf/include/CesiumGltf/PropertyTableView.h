@@ -91,12 +91,19 @@ public:
   }
 
   /**
+   * @brief Gets the {@link Class} that this property table conforms to.
+   *
+   * @return A pointer to the {@link Class}. Returns nullptr if the PropertyTable did not
+   * specify a valid class.
+   */
+  const Class* getClass() const;
+
+  /**
    * @brief Finds the {@link ClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
-   * @return A pointer to the {@link ClassProperty}.
-   * Return nullptr if the PropertyTableView is invalid or if no class
-   * property was found.
+   * @return A pointer to the {@link ClassProperty}. Returns nullptr if the
+   * PropertyTableView is invalid or if no class property was found.
    */
   const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
