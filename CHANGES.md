@@ -1,5 +1,16 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `getClass` to `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView`. This can be used to retrieve the metadata `Class` associated with the view.
+- Added `PropertyViewStatus::EmptyPropertyWithDefault` to indicate when a property contains no data, but has a valid default value.
+
+##### Fixes :wrench:
+
+- Fixed the handling of omitted metadata properties in `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView` instances. Previously, if a property was not `required` and omitted, it would be initialized as invalid with the `ErrorNonexistentProperty` status. Now, it will be treated as valid as long as the property defines a valid `defaultProperty`. Now, a special instance of `PropertyTablePropertyView`, `PropertyTexturePropertyView`, or `PropertyAttributePropertyView` will be constructed to allow the property's default value to be retrieved, either via `defaultValue` or `get`. `getRaw` may not be called on this special instance.
+
 ### v0.28.0 - 2023-09-08
 
 ##### Breaking Changes :mega:
