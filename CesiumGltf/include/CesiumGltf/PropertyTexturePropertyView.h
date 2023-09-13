@@ -27,39 +27,39 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTexture}.
    */
-  static const int ErrorInvalidPropertyTexture = 13;
+  static const int ErrorInvalidPropertyTexture = 14;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 14;
+  static const int ErrorUnsupportedProperty = 15;
 
   /**
    * @brief This property view does not have a valid texture index.
    */
-  static const int ErrorInvalidTexture = 15;
+  static const int ErrorInvalidTexture = 16;
 
   /**
    * @brief This property view does not have a valid sampler index.
    */
-  static const int ErrorInvalidSampler = 16;
+  static const int ErrorInvalidSampler = 17;
 
   /**
    * @brief This property view does not have a valid image index.
    */
-  static const int ErrorInvalidImage = 17;
+  static const int ErrorInvalidImage = 18;
 
   /**
    * @brief This property is viewing an empty image.
    */
-  static const int ErrorEmptyImage = 18;
+  static const int ErrorEmptyImage = 19;
 
   /**
    * @brief This property uses an image with multi-byte channels. Only
    * single-byte channels are supported.
    */
-  static const int ErrorInvalidBytesPerChannel = 19;
+  static const int ErrorInvalidBytesPerChannel = 20;
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -68,7 +68,7 @@ public:
    * more than four channels can be defined for specialized texture
    * formats, this implementation only supports four channels max.
    */
-  static const int ErrorInvalidChannels = 20;
+  static const int ErrorInvalidChannels = 21;
 
   /**
    * @brief The channels of this property texture property do not provide
@@ -76,7 +76,7 @@ public:
    * because an incorrect number of channels was provided, or because the
    * image itself has a different channel count / byte size than expected.
    */
-  static const int ErrorChannelsAndTypeMismatch = 21;
+  static const int ErrorChannelsAndTypeMismatch = 22;
 };
 
 template <typename ElementType>
@@ -257,13 +257,42 @@ public:
   }
 
   /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when {@link PropertyTexturePropertyView::get} is called. However,
+   * {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   */
+  PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
+      : PropertyView<ElementType, false>(classProperty),
+        _pSampler(nullptr),
+        _pImage(nullptr),
+        _texCoordSetIndex(0),
+        _channels(),
+        _swizzle() {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    assert(
+        classProperty.defaultProperty &&
+        "Cannot construct a valid property view for an empty property with no "
+        "default value.");
+
+    this->_status = PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault;
+  }
+
+  /**
    * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageCesium} used by the property.
-   * @param channels The value of {@link PropertyTextureProperty::channels}.
+   * @param channels The code from {@link PropertyTextureProperty::channels}.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
@@ -321,6 +350,11 @@ public:
    * data" value
    */
   std::optional<ElementType> get(double u, double v) const noexcept {
+    if (this->_status ==
+        PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
+      return this->defaultValue();
+    }
+
     ElementType value = getRaw(u, v);
 
     if (value == this->noData()) {
@@ -444,6 +478,35 @@ public:
   }
 
   /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when {@link PropertyTexturePropertyView::get} is called. However,
+   * {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   */
+  PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
+      : PropertyView<ElementType, true>(classProperty),
+        _pSampler(nullptr),
+        _pImage(nullptr),
+        _texCoordSetIndex(0),
+        _channels(),
+        _swizzle() {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    assert(
+        classProperty.defaultProperty &&
+        "Cannot construct a valid property view for an empty property with no "
+        "default value.");
+
+    this->_status = PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault;
+  }
+
+  /**
    * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
    * @param property The {@link PropertyTextureProperty}
@@ -508,6 +571,11 @@ public:
    * data" value
    */
   std::optional<NormalizedType> get(double u, double v) const noexcept {
+    if (this->_status ==
+        PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
+      return this->defaultValue();
+    }
+
     ElementType value = getRaw(u, v);
 
     if (value == this->noData()) {

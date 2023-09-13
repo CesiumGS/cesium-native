@@ -32,70 +32,79 @@ public:
   static const PropertyViewStatusType Valid = 0;
 
   /**
+   * @brief This property view does not contain any data, but specifies a
+   * default value. This happens when a class property is defined with a default
+   * value and omitted from an instance of the class's collective properties. In
+   * this case, it is not possible to retrieve the raw data from a property, but
+   * its default value will be accessible.
+   */
+  static const PropertyViewStatusType EmptyPropertyWithDefault = 1;
+
+  /**
    * @brief This property view is trying to view a property that does not
    * exist.
    */
-  static const PropertyViewStatusType ErrorNonexistentProperty = 1;
+  static const PropertyViewStatusType ErrorNonexistentProperty = 2;
 
   /**
    * @brief This property view's type does not match what is
    * specified in {@link ClassProperty::type}.
    */
-  static const PropertyViewStatusType ErrorTypeMismatch = 2;
+  static const PropertyViewStatusType ErrorTypeMismatch = 3;
 
   /**
    * @brief This property view's component type does not match what
    * is specified in {@link ClassProperty::componentType}.
    */
-  static const PropertyViewStatusType ErrorComponentTypeMismatch = 3;
+  static const PropertyViewStatusType ErrorComponentTypeMismatch = 4;
 
   /**
    * @brief This property view differs from what is specified in
    * {@link ClassProperty::array}.
    */
-  static const PropertyViewStatusType ErrorArrayTypeMismatch = 4;
+  static const PropertyViewStatusType ErrorArrayTypeMismatch = 5;
 
   /**
    * @brief This property says it is normalized, but it does not have an integer
    * component type.
    */
-  static const PropertyViewStatusType ErrorInvalidNormalization = 5;
+  static const PropertyViewStatusType ErrorInvalidNormalization = 6;
 
   /**
    * @brief This property view's normalization differs from what
    * is specified in {@link ClassProperty::normalized}
    */
-  static const PropertyViewStatusType ErrorNormalizationMismatch = 6;
+  static const PropertyViewStatusType ErrorNormalizationMismatch = 7;
 
   /**
    * @brief The property provided an invalid offset value.
    */
-  static const PropertyViewStatusType ErrorInvalidOffset = 7;
+  static const PropertyViewStatusType ErrorInvalidOffset = 8;
 
   /**
    * @brief The property provided an invalid scale value.
    */
-  static const PropertyViewStatusType ErrorInvalidScale = 8;
+  static const PropertyViewStatusType ErrorInvalidScale = 9;
 
   /**
    * @brief The property provided an invalid maximum value.
    */
-  static const PropertyViewStatusType ErrorInvalidMax = 9;
+  static const PropertyViewStatusType ErrorInvalidMax = 10;
 
   /**
    * @brief The property provided an invalid minimum value.
    */
-  static const PropertyViewStatusType ErrorInvalidMin = 10;
+  static const PropertyViewStatusType ErrorInvalidMin = 11;
 
   /**
    * @brief The property provided an invalid "no data" value.
    */
-  static const PropertyViewStatusType ErrorInvalidNoDataValue = 11;
+  static const PropertyViewStatusType ErrorInvalidNoDataValue = 12;
 
   /**
    * @brief The property provided an invalid default value.
    */
-  static const PropertyViewStatusType ErrorInvalidDefaultValue = 12;
+  static const PropertyViewStatusType ErrorInvalidDefaultValue = 13;
 };
 
 template <typename T>

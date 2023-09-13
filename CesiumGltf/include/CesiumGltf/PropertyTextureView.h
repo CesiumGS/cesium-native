@@ -285,6 +285,13 @@ private:
     auto propertyTexturePropertyIter =
         _pPropertyTexture->properties.find(propertyName);
     if (propertyTexturePropertyIter == _pPropertyTexture->properties.end()) {
+      if (!classProperty.required && classProperty.defaultProperty) {
+        // If the property was omitted from the property texture, it is still
+        // technically valid if it specifies a default value. Create a view that
+        // just returns the default value.
+        return PropertyTexturePropertyView<T, Normalized>(classProperty);
+      }
+
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
     }

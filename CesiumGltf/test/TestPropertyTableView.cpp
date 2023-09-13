@@ -3838,6 +3838,96 @@ TEST_CASE("Test with PropertyTableProperty noData value (normalized)") {
   }
 }
 
+TEST_CASE(
+    "Test nonexistent PropertyTableProperty with class property default") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT32;
+
+  const uint32_t defaultValue = 10;
+  testClassProperty.defaultProperty = defaultValue;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = 4;
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT32);
+  REQUIRE(!classProperty->array);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->normalized);
+  REQUIRE(classProperty->defaultProperty);
+
+  SECTION("Access correct type") {
+    PropertyTablePropertyView<uint32_t> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
+    REQUIRE(
+        uint32Property.status() ==
+        PropertyTablePropertyViewStatus::EmptyPropertyWithDefault);
+    REQUIRE(uint32Property.size() == propertyTable.count);
+    REQUIRE(uint32Property.defaultValue() == defaultValue);
+
+    for (int64_t i = 0; i < uint32Property.size(); ++i) {
+      REQUIRE(uint32Property.get(i) == defaultValue);
+    }
+  }
+
+  SECTION("Access wrong type") {
+    PropertyTablePropertyView<glm::uvec3> uvec3Invalid =
+        view.getPropertyView<glm::uvec3>("TestClassProperty");
+    REQUIRE(
+        uvec3Invalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Access wrong component type") {
+    PropertyTablePropertyView<uint8_t> uint8Invalid =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Invalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Access incorrectly as normalized") {
+    PropertyTablePropertyView<uint32_t, true> uint32NormalizedInvalid =
+        view.getPropertyView<uint32_t, true>("TestClassProperty");
+    REQUIRE(
+        uint32NormalizedInvalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Invalid default value") {
+    testClassProperty.defaultProperty = "not a number";
+    PropertyTablePropertyView<uint32_t> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
+    REQUIRE(
+        uint32Property.status() ==
+        PropertyTablePropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+
+  SECTION("No default value") {
+    testClassProperty.defaultProperty.reset();
+    PropertyTablePropertyView<uint32_t> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
+    REQUIRE(
+        uint32Property.status() ==
+        PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
+  }
+}
+
 TEST_CASE("Test callback on invalid property table view") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
@@ -5190,6 +5280,66 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
             for (int64_t j = 0; j < value.size(); j++) {
               REQUIRE((*maybeValue)[j] == value[j]);
             }
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
+TEST_CASE("Test callback for empty PropertyTableProperty with default value") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT32;
+
+  const uint32_t defaultValue = 10;
+  testClassProperty.defaultProperty = defaultValue;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = 4;
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT32);
+  REQUIRE(!classProperty->array);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->normalized);
+  REQUIRE(classProperty->defaultProperty);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [defaultValue, count = propertyTable.count, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<uint32_t>,
+                          decltype(propertyValue)>) {
+          REQUIRE(
+              propertyValue.status() ==
+              PropertyTablePropertyViewStatus::EmptyPropertyWithDefault);
+          REQUIRE(propertyValue.size() == count);
+          REQUIRE(propertyValue.defaultValue() == defaultValue);
+
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            REQUIRE(propertyValue.get(i) == defaultValue);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "

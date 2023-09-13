@@ -1421,6 +1421,100 @@ TEST_CASE("Test with PropertyTextureProperty noData (normalized)") {
   }
 }
 
+TEST_CASE(
+    "Test nonexistent PropertyTextureProperty with class property default") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT8;
+
+  const uint8_t defaultValue = 10;
+  testClassProperty.defaultProperty = defaultValue;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT8);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+  REQUIRE(classProperty->defaultProperty);
+
+  SECTION("Access correct type") {
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault);
+    REQUIRE(uint8Property.defaultValue() == defaultValue);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == defaultValue);
+    }
+  }
+
+  SECTION("Access wrong type") {
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Invalid =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Access wrong component type") {
+    PropertyTexturePropertyView<uint16_t> uint16Invalid =
+        view.getPropertyView<uint16_t>("TestClassProperty");
+    REQUIRE(
+        uint16Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Access incorrectly as normalized") {
+    PropertyTexturePropertyView<uint8_t, true> normalizedInvalid =
+        view.getPropertyView<uint8_t, true>("TestClassProperty");
+    REQUIRE(
+        normalizedInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Invalid default value") {
+    testClassProperty.defaultProperty = "not a number";
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+
+  SECTION("No default value") {
+    testClassProperty.defaultProperty.reset();
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty");
+    REQUIRE(
+        uint8Property.status() ==
+        PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
+  }
+}
+
 TEST_CASE("Test callback on invalid property texture view") {
   Model model;
   ExtensionModelExtStructuralMetadata& metadata =
@@ -2195,4 +2289,69 @@ TEST_CASE("Test callback on unsupported PropertyTextureProperty") {
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
       });
   REQUIRE(invokedCallbackCount == 2);
+}
+
+TEST_CASE(
+    "Test callback for empty PropertyTextureProperty with default value") {
+  Model model;
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::INT16;
+
+  const int16_t defaultValue = 10;
+  testClassProperty.defaultProperty = defaultValue;
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::INT16);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+  REQUIRE(classProperty->defaultProperty);
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [defaultValue, &texCoords, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        if constexpr (std::is_same_v<
+                          PropertyTexturePropertyView<int16_t>,
+                          decltype(propertyValue)>) {
+          REQUIRE(
+              propertyValue.status() ==
+              PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault);
+          REQUIRE(propertyValue.defaultValue() == defaultValue);
+
+          for (size_t i = 0; i < texCoords.size(); ++i) {
+            glm::dvec2& uv = texCoords[i];
+            REQUIRE(propertyValue.get(uv[0], uv[1]) == defaultValue);
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTexturePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
 }

@@ -1054,6 +1054,16 @@ private:
     auto propertyTablePropertyIter =
         _pPropertyTable->properties.find(propertyName);
     if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
+      if (!classProperty.required && classProperty.defaultProperty) {
+        // If the property was omitted from the property table, it is still
+        // technically valid if it specifies a default value. Create a view that
+        // just returns the default value.
+        return PropertyTablePropertyView<T, Normalized>(
+            classProperty,
+            _pPropertyTable->count);
+      }
+
+      // Otherwise, the property is erroneously nonexistent.
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
     }

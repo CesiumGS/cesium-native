@@ -29,108 +29,108 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTable}.
    */
-  static const PropertyViewStatusType ErrorInvalidPropertyTable = 13;
+  static const PropertyViewStatusType ErrorInvalidPropertyTable = 14;
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBufferView = 14;
+  static const PropertyViewStatusType ErrorInvalidValueBufferView = 15;
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 15;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 16;
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 16;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 17;
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBuffer = 17;
+  static const PropertyViewStatusType ErrorInvalidValueBuffer = 18;
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 18;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 19;
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 19;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 20;
 
   /**
    * @brief This property view has a buffer view that points outside the bounds
    * of its target buffer.
    */
-  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 20;
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 21;
 
   /**
    * @brief This property view has an invalid buffer view; its length is not
    * a multiple of the size of its type / offset type.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeNotDivisibleByTypeSize = 21;
+      ErrorBufferViewSizeNotDivisibleByTypeSize = 22;
 
   /**
    * @brief This property view has an invalid buffer view; its length does not
    * match the size of the property table.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 22;
+      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 23;
 
   /**
    * @brief This array property view has both a fixed length and an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferCoexist =
-      23;
+      24;
 
   /**
    * @brief This array property view has neither a fixed length nor an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferDontExist =
-      24;
+      25;
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 25;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 26;
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 26;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 27;
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 27;
+  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 28;
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 28;
+  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 29;
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 29;
+  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 30;
 
   /**
    * @brief This property view has a string offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 29;
+  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
 };
 
 int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
@@ -177,7 +177,7 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   * @param status The code from {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
   PropertyTablePropertyView(PropertyViewStatusType status)
       : PropertyView<ElementType, false>(status),
@@ -192,6 +192,40 @@ public:
     assert(
         this->_status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when {@link PropertyTablePropertyView::get} is called. However,
+   * {@link PropertyTablePropertyView::getRaw} cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   */
+  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
+      : PropertyView<ElementType, false>(classProperty),
+        _values{},
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0} {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    if (this->_status != PropertyTablePropertyViewStatus::Valid) {
+      return;
+    }
+
+    assert(
+        classProperty.defaultProperty &&
+        "Cannot construct a valid property view for an empty property with no "
+        "default value.");
+
+    this->_status = PropertyTablePropertyViewStatus::EmptyPropertyWithDefault;
+    this->_size = size;
   }
 
   /**
@@ -267,6 +301,14 @@ public:
    * data" value
    */
   std::optional<ElementType> get(int64_t index) const noexcept {
+    if (this->_status ==
+        PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
+      assert(index >= 0 && "index must be non-negative");
+      assert(index < size() && "index must be less than size");
+
+      return this->defaultValue();
+    }
+
     ElementType value = getRaw(index);
 
     if (value == this->noData()) {
@@ -337,9 +379,7 @@ public:
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */
-  int64_t size() const noexcept {
-    return this->_status == PropertyTablePropertyViewStatus::Valid ? _size : 0;
-  }
+  int64_t size() const noexcept { return _size; }
 
 private:
   ElementType getNumericValue(int64_t index) const noexcept {
@@ -507,6 +547,37 @@ public:
   }
 
   /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when {@link PropertyTablePropertyView::get} is called. However,
+   * {@link PropertyTablePropertyView::getRaw} cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   */
+  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
+      : PropertyView<ElementType, true>(classProperty),
+        _values{},
+        _size{0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0} {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    if (this->_status != PropertyTablePropertyViewStatus::Valid) {
+      return;
+    }
+
+    assert(
+        classProperty.defaultProperty &&
+        "Cannot construct a valid property view for an empty property with no "
+        "default value.");
+
+    this->_status = PropertyTablePropertyViewStatus::EmptyPropertyWithDefault;
+    this->_size = size;
+  }
+
+  /**
    * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
    * Used for non-array or fixed-length array data.
    *
@@ -570,14 +641,13 @@ public:
    * data" value
    */
   std::optional<NormalizedType> get(int64_t index) const noexcept {
-    assert(
-        this->_status == PropertyTablePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
+    if (this->_status ==
+        PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
+      assert(index >= 0 && "index must be non-negative");
+      assert(index < size() && "index must be less than size");
+
+      return this->defaultValue();
+    }
 
     ElementType value = getRaw(index);
     if (this->noData() && value == *(this->noData())) {
