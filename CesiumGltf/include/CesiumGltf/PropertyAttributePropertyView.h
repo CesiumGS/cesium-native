@@ -127,7 +127,7 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
+   * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
