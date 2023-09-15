@@ -298,13 +298,12 @@ public:
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image,
-      const std::vector<int64_t>& channels) noexcept
+      const ImageCesium& image) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         _pSampler(&sampler),
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
-        _channels(channels),
+        _channels(property.channels),
         _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
@@ -519,13 +518,12 @@ public:
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image,
-      const std::vector<int64_t>& channels) noexcept
+      const ImageCesium& image) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         _pSampler(&sampler),
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
-        _channels(channels),
+        _channels(property.channels),
         _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;

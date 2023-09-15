@@ -709,8 +709,7 @@ private:
         propertyTextureProperty,
         classProperty,
         _pModel->samplers[samplerIndex],
-        image,
-        channels);
+        image);
   }
 
   PropertyViewStatusType getTextureSafe(

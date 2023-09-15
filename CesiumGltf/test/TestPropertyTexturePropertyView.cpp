@@ -35,13 +35,12 @@ void checkTextureValues(
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels;
-  for (int32_t i = 0; i < image.channels; i++) {
-    channels.push_back(i);
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
   }
 
-  PropertyTexturePropertyView<T>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<T> view(property, classProperty, sampler, image);
   switch (sizeof(T)) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -108,13 +107,12 @@ void checkTextureValues(
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels;
-  for (int32_t i = 0; i < image.channels; i++) {
-    channels.push_back(i);
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
   }
 
-  PropertyTexturePropertyView<T>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<T> view(property, classProperty, sampler, image);
   switch (sizeof(T)) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -183,13 +181,16 @@ void checkNormalizedTextureValues(
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels;
-  for (int32_t i = 0; i < image.channels; i++) {
-    channels.push_back(i);
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
   }
 
-  PropertyTexturePropertyView<T, true>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<T, true> view(
+      property,
+      classProperty,
+      sampler,
+      image);
   switch (sizeof(T)) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -251,13 +252,16 @@ void checkTextureArrayValues(
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels;
-  for (int32_t i = 0; i < image.channels; i++) {
-    channels.push_back(i);
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
   }
 
-  PropertyTexturePropertyView<PropertyArrayView<T>>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<PropertyArrayView<T>> view(
+      property,
+      classProperty,
+      sampler,
+      image);
   switch (image.channels) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -334,13 +338,16 @@ void checkTextureArrayValues(
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels;
-  for (int32_t i = 0; i < image.channels; i++) {
-    channels.push_back(i);
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
   }
 
-  PropertyTexturePropertyView<PropertyArrayView<T>>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<PropertyArrayView<T>> view(
+      property,
+      classProperty,
+      sampler,
+      image);
   switch (count) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -431,13 +438,16 @@ void checkNormalizedTextureArrayValues(
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels;
-  for (int32_t i = 0; i < image.channels; i++) {
-    channels.push_back(i);
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
   }
 
-  PropertyTexturePropertyView<PropertyArrayView<T>, true>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<PropertyArrayView<T>, true> view(
+      property,
+      classProperty,
+      sampler,
+      image);
   switch (image.channels) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -1414,16 +1424,18 @@ TEST_CASE("Check that PropertyTextureProperty values override class property "
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels{0, 1, 2, 3};
-
   PropertyTextureProperty property;
   property.offset = offset;
   property.scale = scale;
   property.min = std::numeric_limits<float>::lowest();
   property.max = std::numeric_limits<float>::max();
+  property.channels = {0, 1, 2, 3};
 
-  PropertyTexturePropertyView<float>
-      view(property, classProperty, sampler, image, channels);
+  PropertyTexturePropertyView<float> view(
+      property,
+      classProperty,
+      sampler,
+      image);
   CHECK(view.getSwizzle() == "rgba");
 
   REQUIRE(view.offset() == offset);
@@ -1453,6 +1465,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
 
   SECTION("single-byte scalar") {
     PropertyTextureProperty property;
+    property.channels = {3};
+
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
@@ -1476,10 +1490,11 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     imageData.resize(data.size());
     std::memcpy(imageData.data(), data.data(), data.size());
 
-    std::vector<int64_t> channels{3};
-
-    PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<uint8_t> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "a");
 
     std::vector<uint8_t> expected{3, 4, 0, 1};
@@ -1492,6 +1507,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
 
   SECTION("multi-byte scalar") {
     PropertyTextureProperty property;
+    property.channels = {2, 0};
+
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT16;
@@ -1514,10 +1531,11 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     imageData.resize(data.size());
     std::memcpy(imageData.data(), data.data(), data.size());
 
-    std::vector<int64_t> channels{2, 0};
-
-    PropertyTexturePropertyView<uint16_t>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<uint16_t> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "br");
 
     std::vector<uint16_t> expected{2, 259, 257, 520};
@@ -1530,6 +1548,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
 
   SECTION("vecN") {
     PropertyTextureProperty property;
+    property.channels = {3, 2, 1};
+
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::VEC3;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
@@ -1552,10 +1572,11 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     imageData.resize(data.size());
     std::memcpy(imageData.data(), data.data(), data.size());
 
-    std::vector<int64_t> channels{3, 2, 1};
-
-    PropertyTexturePropertyView<glm::u8vec3>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<glm::u8vec3> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "abg");
 
     std::vector<glm::u8vec3> expected{
@@ -1572,6 +1593,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
 
   SECTION("array") {
     PropertyTextureProperty property;
+    property.channels = {1, 0, 3, 2};
+
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::SCALAR;
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
@@ -1596,10 +1619,11 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     imageData.resize(data.size());
     std::memcpy(imageData.data(), data.data(), data.size());
 
-    std::vector<int64_t> channels{1, 0, 3, 2};
-
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "grab");
 
     std::vector<std::vector<uint8_t>> expected{
@@ -1628,6 +1652,8 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
 
 TEST_CASE("Check sampling with different sampler values") {
   PropertyTextureProperty property;
+  property.channels = {0};
+
   ClassProperty classProperty;
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = ClassProperty::ComponentType::UINT8;
@@ -1643,15 +1669,16 @@ TEST_CASE("Check sampling with different sampler values") {
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  std::vector<int64_t> channels{0};
-
   SECTION("REPEAT") {
     Sampler sampler;
     sampler.wrapS = Sampler::WrapS::REPEAT;
     sampler.wrapT = Sampler::WrapT::REPEAT;
 
-    PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<uint8_t> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
@@ -1674,8 +1701,11 @@ TEST_CASE("Check sampling with different sampler values") {
     // MIRRORED: | 1 2 3 | 3 2 1 |
     // Sampling 0.6 is equal to sampling 1.4 or -0.6.
 
-    PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<uint8_t> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
@@ -1695,8 +1725,11 @@ TEST_CASE("Check sampling with different sampler values") {
     sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
-    PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<uint8_t> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
@@ -1716,8 +1749,11 @@ TEST_CASE("Check sampling with different sampler values") {
     sampler.wrapS = Sampler::WrapS::REPEAT;
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
-    PropertyTexturePropertyView<uint8_t>
-        view(property, classProperty, sampler, image, channels);
+    PropertyTexturePropertyView<uint8_t> view(
+        property,
+        classProperty,
+        sampler,
+        image);
     CHECK(view.getSwizzle() == "r");
 
     std::vector<glm::dvec2> uvs{
