@@ -407,6 +407,15 @@ public:
   }
 
   /**
+   * @brief Get the sampler describing how to sample the data from the
+   * property's texture.
+   *
+   * This will be nullptr if the property texture property view runs into
+   * problems during construction.
+   */
+  const Sampler* getSampler() const noexcept { return this->_pSampler; }
+
+  /**
    * @brief Get the image containing this property's data.
    *
    * This will be nullptr if the property texture property view runs into
@@ -652,6 +661,15 @@ public:
   int64_t getTexCoordSetIndex() const noexcept {
     return this->_texCoordSetIndex;
   }
+
+  /**
+   * @brief Get the sampler describing how to sample the data from the
+   * property's texture.
+   *
+   * This will be nullptr if the property texture property view runs into
+   * problems during construction.
+   */
+  const Sampler* getSampler() const noexcept { return this->_pSampler; }
 
   /**
    * @brief Get the image containing this property's data.
