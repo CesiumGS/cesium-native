@@ -5,6 +5,7 @@ using namespace CesiumGltf;
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.
 const PropertyViewStatusType PropertyViewStatus::Valid;
+const PropertyViewStatusType PropertyViewStatus::EmptyPropertyWithDefault;
 const PropertyViewStatusType PropertyViewStatus::ErrorNonexistentProperty;
 const PropertyViewStatusType PropertyViewStatus::ErrorTypeMismatch;
 const PropertyViewStatusType PropertyViewStatus::ErrorComponentTypeMismatch;

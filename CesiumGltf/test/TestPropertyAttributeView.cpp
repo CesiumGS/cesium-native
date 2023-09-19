@@ -1402,6 +1402,108 @@ TEST_CASE("Test with PropertyAttributeProperty noData (normalized)") {
   }
 }
 
+TEST_CASE(
+    "Test nonexistent PropertyAttributeProperty with class property default") {
+  Model model;
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+
+  // Add a position attribute so it can be used to substitute the property
+  // accessor size.
+  const std::string attributeName = "POSITION";
+  std::vector<glm::vec3> data = {
+      glm::vec3(0),
+      glm::vec3(1, 2, 3),
+      glm::vec3(0, 1, 0)};
+
+  addAttributeToModel(model, primitive, attributeName, data);
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::UINT16;
+
+  const uint16_t defaultValue = 10;
+  testClassProperty.defaultProperty = defaultValue;
+
+  PropertyAttribute& propertyAttribute =
+      metadata.propertyAttributes.emplace_back();
+  propertyAttribute.classProperty = "TestClass";
+
+  PropertyAttributeView view(model, propertyAttribute);
+  REQUIRE(view.status() == PropertyAttributeViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::UINT16);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+  REQUIRE(classProperty->defaultProperty);
+
+  SECTION("Access correct type") {
+    PropertyAttributePropertyView<uint16_t> uint16Property =
+        view.getPropertyView<uint16_t>(primitive, "TestClassProperty");
+    REQUIRE(
+        uint16Property.status() ==
+        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault);
+    REQUIRE(uint16Property.size() == static_cast<int64_t>(data.size()));
+    REQUIRE(uint16Property.defaultValue() == defaultValue);
+
+    for (size_t i = 0; i < data.size(); ++i) {
+      REQUIRE(uint16Property.get(static_cast<int64_t>(i)) == defaultValue);
+    }
+  }
+
+  SECTION("Access wrong type") {
+    PropertyAttributePropertyView<glm::u16vec2> u16vec2Invalid =
+        view.getPropertyView<glm::u16vec2>(primitive, "TestClassProperty");
+    REQUIRE(
+        u16vec2Invalid.status() ==
+        PropertyAttributePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Access wrong component type") {
+    PropertyAttributePropertyView<uint8_t> uint8Invalid =
+        view.getPropertyView<uint8_t>(primitive, "TestClassProperty");
+    REQUIRE(
+        uint8Invalid.status() ==
+        PropertyAttributePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Access incorrectly as normalized") {
+    PropertyAttributePropertyView<uint16_t, true> normalizedInvalid =
+        view.getPropertyView<uint16_t, true>(primitive, "TestClassProperty");
+    REQUIRE(
+        normalizedInvalid.status() ==
+        PropertyAttributePropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Invalid default value") {
+    testClassProperty.defaultProperty = "not a number";
+    PropertyAttributePropertyView<uint16_t> uint16Property =
+        view.getPropertyView<uint16_t>(primitive, "TestClassProperty");
+    REQUIRE(
+        uint16Property.status() ==
+        PropertyAttributePropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+
+  SECTION("No default value") {
+    testClassProperty.defaultProperty.reset();
+    PropertyAttributePropertyView<uint16_t> uint16Property =
+        view.getPropertyView<uint16_t>(primitive, "TestClassProperty");
+    REQUIRE(
+        uint16Property.status() ==
+        PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
+  }
+}
+
 TEST_CASE("Test callback on invalid property Attribute view") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
@@ -2063,4 +2165,76 @@ TEST_CASE("Test callback on unsupported PropertyAttributeProperty") {
             PropertyAttributePropertyViewStatus::ErrorUnsupportedProperty);
       });
   REQUIRE(invokedCallbackCount == 2);
+}
+
+TEST_CASE(
+    "Test callback for empty PropertyAttributeProperty with default value") {
+  Model model;
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+
+  // Add a position attribute so it can be used to substitute the property
+  // accessor size.
+  const std::string attributeName = "POSITION";
+  std::vector<glm::vec3> data = {
+      glm::vec3(0),
+      glm::vec3(1, 2, 3),
+      glm::vec3(0, 1, 0)};
+  addAttributeToModel(model, primitive, attributeName, data);
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::SCALAR;
+  testClassProperty.componentType = ClassProperty::ComponentType::INT16;
+
+  const int16_t defaultValue = 10;
+  testClassProperty.defaultProperty = defaultValue;
+
+  PropertyAttribute& propertyAttribute =
+      metadata.propertyAttributes.emplace_back();
+  propertyAttribute.classProperty = "TestClass";
+
+  PropertyAttributeView view(model, propertyAttribute);
+  REQUIRE(view.status() == PropertyAttributeViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::SCALAR);
+  REQUIRE(classProperty->componentType == ClassProperty::ComponentType::INT16);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+  REQUIRE(classProperty->defaultProperty);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      primitive,
+      "TestClassProperty",
+      [defaultValue, &data, &invokedCallbackCount](
+          const std::string& /*propertyName*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<int16_t>,
+                          decltype(propertyValue)>) {
+          REQUIRE(
+              propertyValue.status() ==
+              PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault);
+          REQUIRE(propertyValue.size() == static_cast<int64_t>(data.size()));
+          REQUIRE(propertyValue.defaultValue() == defaultValue);
+          for (size_t i = 0; i < data.size(); ++i) {
+            REQUIRE(propertyValue.get(static_cast<int64_t>(i)) == defaultValue);
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
 }

@@ -81,6 +81,14 @@ public:
   }
 
   /**
+   * @brief Gets the {@link Class} that this property attribute conforms to.
+   *
+   * @return A pointer to the {@link Class}. Returns nullptr if the
+   * PropertyAttribute did not specify a valid class.
+   */
+  const Class* getClass() const noexcept { return _pClass; }
+
+  /**
    * @brief Finds the {@link ClassProperty} that
    * describes the type information of the property with the specified name.
    * @param propertyName The name of the property to retrieve the class for.
@@ -308,6 +316,31 @@ public:
 
 private:
   template <typename T, bool Normalized>
+  PropertyAttributePropertyView<T, Normalized> getEmptyPropertyViewWithDefault(
+      const MeshPrimitive& primitive,
+      const ClassProperty& classProperty) const {
+    // To make the view have a nonzero size, find the POSITION attribute and get
+    // its accessor count. If it doesn't exist or is somehow erroneous, just
+    // mark the property as nonexistent.
+    if (primitive.attributes.find("POSITION") == primitive.attributes.end()) {
+      return PropertyAttributePropertyView<T, Normalized>(
+          PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
+    }
+
+    const Accessor* pAccessor = _pModel->getSafe<Accessor>(
+        &_pModel->accessors,
+        primitive.attributes.at("POSITION"));
+    if (!pAccessor) {
+      return PropertyAttributePropertyView<T, Normalized>(
+          PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
+    }
+
+    return PropertyAttributePropertyView<T, Normalized>(
+        classProperty,
+        pAccessor->count);
+  }
+
+  template <typename T, bool Normalized>
   PropertyAttributePropertyView<T, Normalized> getPropertyViewImpl(
       const MeshPrimitive& primitive,
       const std::string& propertyName,
@@ -316,6 +349,16 @@ private:
         _pPropertyAttribute->properties.find(propertyName);
     if (propertyAttributePropertyIter ==
         _pPropertyAttribute->properties.end()) {
+      if (!classProperty.required && classProperty.defaultProperty) {
+        // If the property was omitted from the property attribute, it is still
+        // technically valid if it specifies a default value. Try to create a
+        // view that just returns the default value.
+        return getEmptyPropertyViewWithDefault<T, Normalized>(
+            primitive,
+            classProperty);
+      }
+
+      // Otherwise, the property is erroneously nonexistent.
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
     }

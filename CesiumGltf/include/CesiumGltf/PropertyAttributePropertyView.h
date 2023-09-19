@@ -25,66 +25,66 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyAttribute}.
    */
-  static const int ErrorInvalidPropertyAttribute = 13;
+  static const int ErrorInvalidPropertyAttribute = 14;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 14;
+  static const int ErrorUnsupportedProperty = 15;
 
   /**
    * @brief This property view was initialized with a primitive that does not
    * contain the specified attribute.
    */
-  static const int ErrorMissingAttribute = 15;
+  static const int ErrorMissingAttribute = 16;
 
   /**
    * @brief This property view's attribute does not have a valid accessor index.
    */
-  static const int ErrorInvalidAccessor = 16;
+  static const int ErrorInvalidAccessor = 17;
 
   /**
    * @brief This property view's type does not match the type of the accessor it
    * uses.
    */
-  static const int ErrorAccessorTypeMismatch = 17;
+  static const int ErrorAccessorTypeMismatch = 18;
 
   /**
    * @brief This property view's component type does not match the type of the
    * accessor it uses.
    */
-  static const int ErrorAccessorComponentTypeMismatch = 18;
+  static const int ErrorAccessorComponentTypeMismatch = 19;
 
   /**
    * @brief This property view's normalization does not match the normalization
    * of the accessor it uses.
    */
-  static const int ErrorAccessorNormalizationMismatch = 19;
+  static const int ErrorAccessorNormalizationMismatch = 20;
 
   /**
    * @brief This property view uses an accessor that does not have a valid
    * buffer view index.
    */
-  static const int ErrorInvalidBufferView = 20;
+  static const int ErrorInvalidBufferView = 21;
 
   /**
    * @brief This property view uses a buffer view that does not have a valid
    * buffer index.
    */
-  static const int ErrorInvalidBuffer = 21;
+  static const int ErrorInvalidBuffer = 22;
 
   /**
    * @brief This property view uses an accessor that points outside the bounds
    * of its target buffer view.
    */
-  static const PropertyViewStatusType ErrorAccessorOutOfBounds = 22;
+  static const PropertyViewStatusType ErrorAccessorOutOfBounds = 23;
 
   /**
    * @brief This property view uses a buffer view that points outside the bounds
    * of its target buffer.
    */
-  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 23;
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 24;
 };
 
 /**
@@ -122,7 +122,7 @@ public:
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyAttributePropertyView() noexcept
-      : PropertyView<ElementType, false>(), _accessor{} {}
+      : PropertyView<ElementType, false>(), _accessor{}, _size{0} {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -130,10 +130,40 @@ public:
    * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
-      : PropertyView<ElementType, false>(status), _accessor{} {
+      : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
     assert(
         this->_status != PropertyAttributePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when {@link PropertyAttributePropertyView::get} is called. However,
+   * {@link PropertyAttributePropertyView::getRaw} cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the primitive's POSITION accessor.
+   * Used as a substitute since no actual accessor is defined.
+   */
+  PropertyAttributePropertyView(
+      const ClassProperty& classProperty,
+      int64_t size) noexcept
+      : PropertyView<ElementType, false>(classProperty), _accessor{}, _size{0} {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
+      return;
+    }
+
+    assert(
+        classProperty.defaultProperty &&
+        "Cannot construct a valid property view for an empty property with no "
+        "default value.");
+
+    this->_status =
+        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
+    this->_size = size;
   }
 
   /**
@@ -141,7 +171,7 @@ public:
    *
    * @param property The {@link PropertyAttributeProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param accsesorView The {@link AccessorView} for the data that this property is
+   * @param accessorView The {@link AccessorView} for the data that this property is
    * associated with.
    */
   PropertyAttributePropertyView(
@@ -149,7 +179,11 @@ public:
       const ClassProperty& classProperty,
       const AccessorView<ElementType>& accessorView) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
-        _accessor{accessorView} {}
+        _accessor{accessorView},
+        _size{
+            this->_status == PropertyAttributePropertyViewStatus::Valid
+                ? accessorView.size()
+                : 0} {}
 
   /**
    * @brief Gets the value of the property for the given texture coordinates
@@ -167,6 +201,11 @@ public:
    * it matches the "no data" value
    */
   std::optional<ElementType> get(int64_t index) const noexcept {
+    if (this->_status ==
+        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault) {
+      return this->defaultValue();
+    }
+
     ElementType value = getRaw(index);
 
     if (value == this->noData()) {
@@ -206,16 +245,11 @@ public:
    *
    * @return The number of elements in this PropertyAttributePropertyView.
    */
-  int64_t size() const noexcept {
-    if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
-      return 0;
-    }
-
-    return _accessor.size();
-  }
+  int64_t size() const noexcept { return _size; }
 
 private:
   AccessorView<ElementType> _accessor;
+  int64_t _size;
 };
 
 /**
@@ -240,7 +274,7 @@ public:
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyAttributePropertyView() noexcept
-      : PropertyView<ElementType, true>(), _accessor{} {}
+      : PropertyView<ElementType, true>(), _accessor{}, _size{0} {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -248,10 +282,40 @@ public:
    * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
-      : PropertyView<ElementType, true>(status), _accessor{} {
+      : PropertyView<ElementType, true>(status), _accessor{}, _size{0} {
     assert(
         this->_status != PropertyAttributePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when {@link PropertyAttributePropertyView::get} is called. However,
+   * {@link PropertyAttributePropertyView::getRaw} cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the primitive's POSITION accessor.
+   * Used as a substitute since no actual accessor is defined.
+   */
+  PropertyAttributePropertyView(
+      const ClassProperty& classProperty,
+      int64_t size) noexcept
+      : PropertyView<ElementType, true>(classProperty), _accessor{}, _size{0} {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
+      return;
+    }
+
+    assert(
+        classProperty.defaultProperty &&
+        "Cannot construct a valid property view for an empty property with no "
+        "default value.");
+
+    this->_status =
+        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
+    this->_size = size;
   }
 
   /**
@@ -259,7 +323,7 @@ public:
    *
    * @param property The {@link PropertyAttributeProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param accsesorView The {@link AccessorView} for the data that this property is
+   * @param accessorView The {@link AccessorView} for the data that this property is
    * associated with.
    */
   PropertyAttributePropertyView(
@@ -267,7 +331,11 @@ public:
       const ClassProperty& classProperty,
       const AccessorView<ElementType>& accessorView) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
-        _accessor{accessorView} {}
+        _accessor{accessorView},
+        _size{
+            this->_status == PropertyAttributePropertyViewStatus::Valid
+                ? accessorView.size()
+                : 0} {}
 
   /**
    * @brief Gets the value of the property for the given texture coordinates
@@ -285,6 +353,11 @@ public:
    * it matches the "no data" value
    */
   std::optional<NormalizedType> get(int64_t index) const noexcept {
+    if (this->_status ==
+        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault) {
+      return this->defaultValue();
+    }
+
     ElementType value = getRaw(index);
 
     if (value == this->noData()) {
@@ -349,16 +422,11 @@ public:
    *
    * @return The number of elements in this PropertyAttributePropertyView.
    */
-  int64_t size() const noexcept {
-    if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
-      return 0;
-    }
-
-    return _accessor.size();
-  }
+  int64_t size() const noexcept { return _size; }
 
 private:
   AccessorView<ElementType> _accessor;
+  int64_t _size;
 };
 
 } // namespace CesiumGltf
