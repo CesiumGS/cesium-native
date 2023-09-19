@@ -271,16 +271,20 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle() {
-    // Don't override the status / size if something is wrong with the class
-    // property's definition.
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      // Don't override the status / size if something is wrong with the class
+      // property's definition.
       return;
     }
 
-    assert(
-        classProperty.defaultProperty &&
-        "Cannot construct a valid property view for an empty property with no "
-        "default value.");
+    if (!classProperty.defaultProperty) {
+      // This constructor should only be called if the class property *has* a
+      // default value. But in the case that it does not, this property view
+      // becomes invalid.
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorNonexistentProperty;
+      return;
+    }
 
     this->_status = PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault;
   }
@@ -500,16 +504,20 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle() {
-    // Don't override the status / size if something is wrong with the class
-    // property's definition.
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      // Don't override the status / size if something is wrong with the class
+      // property's definition.
       return;
     }
 
-    assert(
-        classProperty.defaultProperty &&
-        "Cannot construct a valid property view for an empty property with no "
-        "default value.");
+    if (!classProperty.defaultProperty) {
+      // This constructor should only be called if the class property *has* a
+      // default value. But in the case that it does not, this property view
+      // becomes invalid.
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorNonexistentProperty;
+      return;
+    }
 
     this->_status = PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault;
   }
