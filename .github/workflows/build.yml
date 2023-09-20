@@ -27,8 +27,6 @@ jobs:
           submodules: recursive
       - name: Compile Debug Configuration
         run: |
-          cmake --version
-          mkdir build
           cmake -B build -S .
           cmake --build build --config Debug --parallel 4
       - name: Test Debug Configuration
