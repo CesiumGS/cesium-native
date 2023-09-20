@@ -143,9 +143,6 @@ jobs:
   macOS:
     runs-on: macos-latest
     steps:
-      - name: Install nasm
-        run: |
-          sudo apt-get install nasm
       - name: Check out repository code
         uses: actions/checkout@v3
         with:
