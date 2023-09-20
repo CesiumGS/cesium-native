@@ -1,0 +1,13 @@
+name: cesium-native
+on: [push, pr]
+jobs:
+  QuickChecks:
+    name: "Quick Checks"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Check source formatting
+        run: |
+          npm install
+          npm run format -- --dry-run -Werror
