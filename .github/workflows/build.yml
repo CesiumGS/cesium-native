@@ -11,3 +11,37 @@ jobs:
         run: |
           npm install
           npm run format -- --dry-run -Werror
+  VS2019:
+    name: "Windows + VS2019"
+    runs-on: windows-2019
+    steps:
+      - name: Install Doxygen
+        run: |
+          choco install -y doxygen.install --version=1.9.2
+      - name: Install nasm
+        run: |
+          choco install -y nasm
+      - name: Compile Debug Configuration
+        run: |
+          cmake -B build -S .
+          cmake --build build --config Debug --parallel 4
+      - name: Test Debug Configuration
+        run: |
+          cd build
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration
+        run: |
+          cmake --build build --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration
+        run: |
+          cd build
+          ctest -V
+      - name: Generate Documentation
+        run: |
+          cmake --build build --config Debug --target cesium-native-docs
+      - name: Publish Documentation Artifact
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ReferenceDocumentation
+          path: build/doc/html
