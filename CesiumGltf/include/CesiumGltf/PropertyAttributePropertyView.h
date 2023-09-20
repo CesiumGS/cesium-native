@@ -150,16 +150,20 @@ public:
       const ClassProperty& classProperty,
       int64_t size) noexcept
       : PropertyView<ElementType, false>(classProperty), _accessor{}, _size{0} {
-    // Don't override the status / size if something is wrong with the class
-    // property's definition.
     if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
+      // Don't override the status / size if something is wrong with the class
+      // property's definition.
       return;
     }
 
-    assert(
-        classProperty.defaultProperty &&
-        "Cannot construct a valid property view for an empty property with no "
-        "default value.");
+    if (!classProperty.defaultProperty) {
+      // This constructor should only be called if the class property *has* a
+      // default value. But in the case that it does not, this property view
+      // becomes invalid.
+      this->_status =
+          PropertyAttributePropertyViewStatus::ErrorNonexistentProperty;
+      return;
+    }
 
     this->_status =
         PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
@@ -302,16 +306,20 @@ public:
       const ClassProperty& classProperty,
       int64_t size) noexcept
       : PropertyView<ElementType, true>(classProperty), _accessor{}, _size{0} {
-    // Don't override the status / size if something is wrong with the class
-    // property's definition.
     if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
+      // Don't override the status / size if something is wrong with the class
+      // property's definition.
       return;
     }
 
-    assert(
-        classProperty.defaultProperty &&
-        "Cannot construct a valid property view for an empty property with no "
-        "default value.");
+    if (!classProperty.defaultProperty) {
+      // This constructor should only be called if the class property *has* a
+      // default value. But in the case that it does not, this property view
+      // becomes invalid.
+      this->_status =
+          PropertyAttributePropertyViewStatus::ErrorNonexistentProperty;
+      return;
+    }
 
     this->_status =
         PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
