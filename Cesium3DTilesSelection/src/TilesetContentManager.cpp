@@ -1272,6 +1272,7 @@ void TilesetContentManager::finishLoading(
           pWorkerRenderResources);
 
   pRenderContent->setRenderResources(pMainThreadRenderResources);
+  this->_tilesDataUsed += pRenderContent->getByteSize();
   tile.setState(TileLoadState::Done);
 
   // This allows the raster tile to be updated and children to be created, if
@@ -1419,10 +1420,6 @@ void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
       "There are no tile loads currently in flight");
   --this->_tilesLoadOnProgress;
   ++this->_loadedTilesCount;
-
-  if (pTile) {
-    this->_tilesDataUsed += pTile->computeByteSize();
-  }
 }
 
 void TilesetContentManager::notifyTileUnloading(const Tile* pTile) noexcept {

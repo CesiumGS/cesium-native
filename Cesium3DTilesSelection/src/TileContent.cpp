@@ -6,6 +6,7 @@ TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
       _pRenderResources{nullptr},
       _rasterOverlayDetails{},
       _credits{},
+      _byteSize(0),
       _lodTransitionFadePercentage{0.0f} {}
 
 const CesiumGltf::Model& TileRenderContent::getModel() const noexcept {
@@ -64,6 +65,12 @@ void* TileRenderContent::getRenderResources() const noexcept {
 void TileRenderContent::setRenderResources(void* pRenderResources) noexcept {
   this->_pRenderResources = pRenderResources;
 }
+
+void TileRenderContent::setByteSize(int64_t byteSize) noexcept {
+  this->_byteSize = byteSize;
+}
+
+int64_t TileRenderContent::getByteSize() const noexcept { return _byteSize; }
 
 float TileRenderContent::getLodTransitionFadePercentage() const noexcept {
   return _lodTransitionFadePercentage;

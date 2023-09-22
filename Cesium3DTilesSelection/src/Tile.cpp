@@ -152,31 +152,11 @@ double Tile::getNonZeroGeometricError() const noexcept {
 
 int64_t Tile::computeByteSize() const noexcept {
   int64_t bytes = 0;
-
   const TileContent& content = this->getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
-    const CesiumGltf::Model& model = pRenderContent->getModel();
-
-    // Add up the glTF buffers
-    for (const CesiumGltf::Buffer& buffer : model.buffers) {
-      bytes += int64_t(buffer.cesium.data.size());
-    }
-
-    const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
-    for (const CesiumGltf::Image& image : model.images) {
-      const int32_t bufferView = image.bufferView;
-      // For images loaded from buffers, subtract the buffer size before adding
-      // the decoded image size.
-      if (bufferView >= 0 &&
-          bufferView < static_cast<int32_t>(bufferViews.size())) {
-        bytes -= bufferViews[size_t(bufferView)].byteLength;
-      }
-
-      bytes += int64_t(image.cesium.pixelData.size());
-    }
+    bytes = pRenderContent->getByteSize();
   }
-
   return bytes;
 }
 

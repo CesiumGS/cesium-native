@@ -163,6 +163,20 @@ public:
   void setRenderResources(void* pRenderResources) noexcept;
 
   /**
+   * @brief Set the byte size of the render content
+   *
+   * @param byteSize The size of the render content
+   */
+  void setByteSize(int64_t byteSize) noexcept;
+
+  /**
+   * @brief Get the size in bytes of the render content
+   *
+   * @return The render content's size in bytes
+   */
+  int64_t getByteSize() const noexcept;
+
+  /**
    * @brief Get the fade percentage that this tile during an LOD transition.
    *
    * This will be used when {@link TilesetOptions::enableLodTransitionPeriod}
@@ -188,6 +202,7 @@ private:
   RasterOverlayDetails _rasterOverlayDetails;
   std::vector<Credit> _credits;
   float _lodTransitionFadePercentage;
+  int64_t _byteSize;
 };
 
 /**
