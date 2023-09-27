@@ -10,7 +10,8 @@
 ##### Fixes :wrench:
 
 - Fixed the handling of omitted metadata properties in `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView` instances. Previously, if a property was not `required` and omitted, it would be initialized as invalid with the `ErrorNonexistentProperty` status. Now, it will be treated as valid as long as the property defines a valid `defaultProperty`. A special instance of `PropertyTablePropertyView`, `PropertyTexturePropertyView`, or `PropertyAttributePropertyView` will be constructed to allow the property's default value to be retrieved, either via `defaultValue` or `get`. `getRaw` may not be called on this special instance.
-
+- Fixed corner cases where `Tileset::ComputeLoadProgress` can report done (100%) in error, before all work is actually complete in the current view
+  
 ### v0.28.0 - 2023-09-08
 
 ##### Breaking Changes :mega:
