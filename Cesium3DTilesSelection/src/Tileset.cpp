@@ -314,6 +314,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.tilesCulled = 0;
   result.tilesOccluded = 0;
   result.tilesWaitingForOcclusionResults = 0;
+  result.tilesKicked = 0;
   result.maxDepthVisited = 0;
 
   if (!_options.enableLodTransitionPeriod) {
@@ -437,8 +438,16 @@ float Tileset::computeLoadProgress() noexcept {
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  int32_t numOfTilesKicked =
+      static_cast<int32_t>(this->_updateResult.tilesKicked);
+
+  // Amount of work actively being done
   int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
-  int32_t totalNum = numOfTilesLoaded + inProgressSum;
+
+  // Total work so far. Add already loaded tiles and kicked tiles.
+  // Kicked tiles are transient, and never in progress, but are an indicator
+  // that there is more work to do next frame.
+  int32_t totalNum = inProgressSum + numOfTilesLoaded + numOfTilesKicked;
   float percentage =
       static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
   return (percentage * 100.f);
@@ -1023,11 +1032,14 @@ bool Tileset::_kickDescendantsAndRenderTile(
   }
 
   // Remove all descendants from the render list and add this tile.
+  size_t renderListStartSize = renderList.size();
   renderList.erase(
       renderList.begin() +
           static_cast<std::vector<Tile*>::iterator::difference_type>(
               firstRenderedDescendantIndex),
       renderList.end());
+  result.tilesKicked +=
+      static_cast<uint32_t>(renderListStartSize - renderList.size());
 
   if (tile.getRefine() != Cesium3DTilesSelection::TileRefine::Add) {
     renderList.push_back(&tile);
