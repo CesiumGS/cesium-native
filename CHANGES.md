@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.27.x - ?
+
+##### Additions :tada:
+
+- Added support for Cesium ion `"externalType"` assets.
+
 ### v0.27.2 - 2023-09-20
 
 ##### Additions :tada:
