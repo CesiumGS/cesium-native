@@ -10,6 +10,7 @@
 
 - Added a missing include to `FeatureTexturePropertyView.h`.
 - The CMake scripts no longer attempt to add the `Catch2` subdirectory when the tests are disabled.
+- Fixed corner cases where `Tileset::ComputeLoadProgress` can report done (100%) in error, before all work is actually complete in the current view
 
 ### v0.27.1 - 2023-09-03
 
