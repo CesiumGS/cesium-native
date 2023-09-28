@@ -284,11 +284,11 @@ mainThreadHandleEndpointResponse(
       ionResponse,
       "externalType",
       "");
-  const auto optionsIt = ionResponse.FindMember("options");
 
   if (!externalType.empty()) {
     type = externalType;
-    if (optionsIt != ionResponse.MemberEnd()) {
+    const auto optionsIt = ionResponse.FindMember("options");
+    if (optionsIt != ionResponse.MemberEnd() && optionsIt->value.IsObject()) {
       url = CesiumUtility::JsonHelpers::getStringOrDefault(
           optionsIt->value,
           "url",
