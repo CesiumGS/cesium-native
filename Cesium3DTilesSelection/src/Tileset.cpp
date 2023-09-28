@@ -314,6 +314,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.tilesCulled = 0;
   result.tilesOccluded = 0;
   result.tilesWaitingForOcclusionResults = 0;
+  result.tilesKicked = 0;
   result.maxDepthVisited = 0;
 
   if (!_options.enableLodTransitionPeriod) {
@@ -437,8 +438,16 @@ float Tileset::computeLoadProgress() noexcept {
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  int32_t numOfTilesKicked =
+      static_cast<int32_t>(this->_updateResult.tilesKicked);
+
+  // Amount of work actively being done
   int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
-  int32_t totalNum = numOfTilesLoaded + inProgressSum;
+
+  // Total work so far. Add already loaded tiles and kicked tiles.
+  // Kicked tiles are transient, and never in progress, but are an indicator
+  // that there is more work to do next frame.
+  int32_t totalNum = inProgressSum + numOfTilesLoaded + numOfTilesKicked;
   float percentage =
       static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
   return (percentage * 100.f);
@@ -1053,7 +1062,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
       traversalDetails.notYetRenderableCount >
           this->_options.loadingDescendantLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
+
     // Remove all descendants from the load queues.
+    size_t allQueueStartSize =
+        _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
     this->_workerThreadLoadQueue.erase(
         this->_workerThreadLoadQueue.begin() +
             static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
@@ -1064,6 +1076,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
             static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
                 mainThreadLoadQueueIndex),
         this->_mainThreadLoadQueue.end());
+    size_t allQueueEndSize =
+        _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
+    result.tilesKicked +=
+        static_cast<uint32_t>(allQueueStartSize - allQueueEndSize);
 
     if (!queuedForLoad) {
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
