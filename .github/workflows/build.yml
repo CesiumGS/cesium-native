@@ -112,7 +112,7 @@ jobs:
           ctest -V
   LinuxClang:
     name: "Linux + Clang"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       CC: clang-12
       CXX: clang++-12
