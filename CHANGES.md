@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Cesium Native is now only regularly tested on Visual Studio 2019+, GCC 11.x+, and Clang 12+. Other compilers - including older ones - are likely to work, but are not tested.
+
 ##### Additions :tada:
 
 - Added `getClass` to `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView`. This can be used to retrieve the metadata `Class` associated with the view.
