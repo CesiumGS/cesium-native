@@ -47,6 +47,27 @@
 - Added `PropertyAttributePropertyView`, which views a `PropertyAttributeProperty` in `EXT_structural_metadata`.
 - Added `PropertyAttributePropertyViewStatus`, which reflects the status of a `PropertyAttributePropertyView`.
 
+### v0.27.3 - 2023-10-01
+
+##### Additions :tada:
+
+- Added support for Cesium ion `"externalType"` assets.
+
+##### Fixes :wrench:
+
+- Fixed corner cases where `Tileset::ComputeLoadProgress` can incorrectly report done (100%) before all tiles are actually loaded for the current view.
+
+### v0.27.2 - 2023-09-20
+
+##### Additions :tada:
+
+- Added `CESIUM_GLM_STRICT_ENABLED` option to the CMake scripts. It is ON by default, but when set to OFF it disables the `GLM_FORCE_XYZW_ONLY`, `GLM_FORCE_EXPLICIT_CTOR`, and `GLM_FORCE_SIZE_T_LENGTH` options in the GLM library.
+
+##### Fixes :wrench:
+
+- Added a missing include to `FeatureTexturePropertyView.h`.
+- The CMake scripts no longer attempt to add the `Catch2` subdirectory when the tests are disabled.
+
 ### v0.27.1 - 2023-09-03
 
 ##### Fixes :wrench:
