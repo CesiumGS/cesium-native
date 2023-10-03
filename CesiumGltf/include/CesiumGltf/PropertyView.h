@@ -264,6 +264,8 @@ template <typename ElementType, bool Normalized = false> class PropertyView;
  */
 template <typename ElementType> class PropertyView<ElementType, false> {
 public:
+  using PropertyType = ElementType;
+
   /**
    * @brief Constructs an empty property instance.
    */
@@ -443,12 +445,12 @@ public:
    *
    * @return The count of this property.
    */
-  int64_t arrayCount() const noexcept { return 0; }
+  constexpr int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @brief Whether this property has a normalized integer type.
    */
-  bool normalized() const noexcept { return false; }
+  constexpr bool normalized() const noexcept { return false; }
 
   /**
    * @brief Gets the offset to apply to property values. Only applicable to
@@ -645,10 +647,10 @@ private:
  * integer component type.
  */
 template <typename ElementType> class PropertyView<ElementType, true> {
-private:
+public:
+  using PropertyType = ElementType;
   using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
 
-public:
   /**
    * @brief Constructs an empty property instance.
    */
@@ -814,12 +816,12 @@ public:
   /**
    * @copydoc PropertyView::arrayCount
    */
-  int64_t arrayCount() const noexcept { return 0; }
+  constexpr int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return true; }
+  constexpr bool normalized() const noexcept { return true; }
 
   /**
    * @copydoc PropertyView::offset
@@ -958,6 +960,8 @@ private:
  */
 template <> class PropertyView<bool> {
 public:
+  using PropertyType = bool;
+
   /**
    * @brief Constructs an empty property instance.
    */
@@ -1047,12 +1051,12 @@ public:
   /**
    * @copydoc PropertyView::arrayCount
    */
-  int64_t arrayCount() const noexcept { return 0; }
+  constexpr int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return false; }
+  constexpr bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc PropertyView::offset
@@ -1116,6 +1120,8 @@ private:
  */
 template <> class PropertyView<std::string_view> {
 public:
+  using PropertyType = std::string_view;
+
   /**
    * @brief Constructs an empty property instance.
    */
@@ -1220,12 +1226,12 @@ public:
   /**
    * @copydoc PropertyView::arrayCount
    */
-  int64_t arrayCount() const noexcept { return 0; }
+  constexpr int64_t arrayCount() const noexcept { return 0; }
 
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return false; }
+  constexpr bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc PropertyView::offset
@@ -1314,6 +1320,8 @@ private:
 template <typename ElementType>
 class PropertyView<PropertyArrayView<ElementType>, false> {
 public:
+  using PropertyType = PropertyArrayView<ElementType>;
+
   /**
    * @brief Constructs an empty property instance.
    */
@@ -1471,7 +1479,7 @@ public:
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return false; }
+  constexpr bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc PropertyView::offset
@@ -1706,10 +1714,10 @@ private:
  */
 template <typename ElementType>
 class PropertyView<PropertyArrayView<ElementType>, true> {
-private:
+public:
+  using PropertyType = PropertyArrayView<ElementType>;
   using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
 
-public:
   /**
    * @brief Constructs an empty property instance.
    */
@@ -1867,7 +1875,7 @@ public:
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return true; }
+  constexpr bool normalized() const noexcept { return true; }
 
   /**
    * @copydoc PropertyView::offset
@@ -2076,6 +2084,8 @@ private:
  */
 template <> class PropertyView<PropertyArrayView<bool>> {
 public:
+  using PropertyType = PropertyArrayView<bool>;
+
   /**
    * @brief Constructs an empty property instance.
    */
@@ -2177,7 +2187,7 @@ public:
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return false; }
+  constexpr bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc PropertyView::offset
@@ -2295,6 +2305,8 @@ private:
  */
 template <> class PropertyView<PropertyArrayView<std::string_view>> {
 public:
+  using PropertyType = PropertyArrayView<std::string_view>;
+
   /**
    * @brief Constructs an empty property instance.
    */
@@ -2408,7 +2420,7 @@ public:
   /**
    * @copydoc PropertyView::normalized
    */
-  bool normalized() const noexcept { return false; }
+  constexpr bool normalized() const noexcept { return false; }
 
   /**
    * @copydoc PropertyView::offset

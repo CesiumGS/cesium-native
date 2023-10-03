@@ -233,17 +233,22 @@ bool PropertyTablePropertyView<ElementType, false>::getBooleanValue(
     int64_t index) const noexcept {
   const int64_t byteIndex = index / 8;
   const int64_t bitIndex = index % 8;
-  const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+  const int bitValue =
+      static_cast<int>(_values[size_t(byteIndex)] >> bitIndex) & 1;
   return bitValue == 1;
 }
 
 template <typename ElementType>
 std::string_view PropertyTablePropertyView<ElementType, false>::getStringValue(
     int64_t index) const noexcept {
-  const size_t currentOffset =
-      getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
-  const size_t nextOffset =
-      getOffsetFromOffsetsBuffer(index + 1, _stringOffsets, _stringOffsetType);
+  const size_t currentOffset = getOffsetFromOffsetsBuffer(
+      size_t(index),
+      _stringOffsets,
+      _stringOffsetType);
+  const size_t nextOffset = getOffsetFromOffsetsBuffer(
+      size_t(index + 1),
+      _stringOffsets,
+      _stringOffsetType);
   return std::string_view(
       reinterpret_cast<const char*>(_values.data() + currentOffset),
       nextOffset - currentOffset);
@@ -259,16 +264,20 @@ PropertyTablePropertyView<ElementType, false>::getNumericArrayValues(
   if (count > 0) {
     size_t arraySize = count * sizeof(T);
     const gsl::span<const std::byte> values(
-        _values.data() + index * arraySize,
+        _values.data() + size_t(index) * arraySize,
         arraySize);
     return PropertyArrayView<T>{values};
   }
 
   // Handle variable-length arrays
-  const size_t currentOffset =
-      getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-  const size_t nextOffset =
-      getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+  const size_t currentOffset = getOffsetFromOffsetsBuffer(
+      size_t(index),
+      _arrayOffsets,
+      _arrayOffsetType);
+  const size_t nextOffset = getOffsetFromOffsetsBuffer(
+      size_t(index + 1),
+      _arrayOffsets,
+      _arrayOffsetType);
   const gsl::span<const std::byte> values(
       _values.data() + currentOffset,
       nextOffset - currentOffset);
@@ -283,31 +292,35 @@ PropertyTablePropertyView<ElementType, false>::getStringArrayValues(
   // Handle fixed-length arrays
   if (count > 0) {
     // Copy the corresponding string offsets to pass to the PropertyArrayView.
-    const size_t arraySize = count * _stringOffsetTypeSize;
+    const size_t arraySize = count * size_t(_stringOffsetTypeSize);
     const gsl::span<const std::byte> stringOffsetValues(
-        _stringOffsets.data() + index * arraySize,
-        arraySize + _stringOffsetTypeSize);
+        _stringOffsets.data() + size_t(index) * arraySize,
+        arraySize + size_t(_stringOffsetTypeSize));
     return PropertyArrayView<std::string_view>(
         _values,
         stringOffsetValues,
         _stringOffsetType,
-        count);
+        int64_t(count));
   }
 
   // Handle variable-length arrays
-  const size_t currentArrayOffset =
-      getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-  const size_t nextArrayOffset =
-      getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+  const size_t currentArrayOffset = getOffsetFromOffsetsBuffer(
+      size_t(index),
+      _arrayOffsets,
+      _arrayOffsetType);
+  const size_t nextArrayOffset = getOffsetFromOffsetsBuffer(
+      size_t(index + 1),
+      _arrayOffsets,
+      _arrayOffsetType);
   const size_t arraySize = nextArrayOffset - currentArrayOffset;
   const gsl::span<const std::byte> stringOffsetValues(
       _stringOffsets.data() + currentArrayOffset,
-      arraySize + _arrayOffsetTypeSize);
+      arraySize + size_t(_arrayOffsetTypeSize));
   return PropertyArrayView<std::string_view>(
       _values,
       stringOffsetValues,
       _stringOffsetType,
-      arraySize / _arrayOffsetTypeSize);
+      int64_t(arraySize) / _arrayOffsetTypeSize);
 }
 
 template <typename ElementType>
@@ -317,24 +330,28 @@ PropertyTablePropertyView<ElementType, false>::getBooleanArrayValues(
   size_t count = static_cast<size_t>(this->arrayCount());
   // Handle fixed-length arrays
   if (count > 0) {
-    const size_t offsetBits = count * index;
-    const size_t nextOffsetBits = count * (index + 1);
+    const size_t offsetBits = count * size_t(index);
+    const size_t nextOffsetBits = count * size_t(index + 1);
     const gsl::span<const std::byte> buffer(
         _values.data() + offsetBits / 8,
         (nextOffsetBits / 8 - offsetBits / 8 + 1));
-    return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
+    return PropertyArrayView<bool>(buffer, offsetBits % 8, int64_t(count));
   }
 
   // Handle variable-length arrays
-  const size_t currentOffset =
-      getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-  const size_t nextOffset =
-      getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+  const size_t currentOffset = getOffsetFromOffsetsBuffer(
+      size_t(index),
+      _arrayOffsets,
+      _arrayOffsetType);
+  const size_t nextOffset = getOffsetFromOffsetsBuffer(
+      size_t(index + 1),
+      _arrayOffsets,
+      _arrayOffsetType);
   const size_t totalBits = nextOffset - currentOffset;
   const gsl::span<const std::byte> buffer(
       _values.data() + currentOffset / 8,
       (nextOffset / 8 - currentOffset / 8 + 1));
-  return PropertyArrayView<bool>(buffer, currentOffset % 8, totalBits);
+  return PropertyArrayView<bool>(buffer, currentOffset % 8, int64_t(totalBits));
 }
 
 template <typename ElementType>
@@ -531,469 +548,482 @@ PropertyTablePropertyView<ElementType, true>::getArrayValues(
   if (count > 0) {
     size_t arraySize = count * sizeof(T);
     const gsl::span<const std::byte> values(
-        _values.data() + index * arraySize,
+        _values.data() + size_t(index) * arraySize,
         arraySize);
     return PropertyArrayView<T>{values};
   }
 
   // Handle variable-length arrays
-  const size_t currentOffset =
-      getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-  const size_t nextOffset =
-      getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+  const size_t currentOffset = getOffsetFromOffsetsBuffer(
+      size_t(index),
+      _arrayOffsets,
+      _arrayOffsetType);
+  const size_t nextOffset = getOffsetFromOffsetsBuffer(
+      size_t(index + 1),
+      _arrayOffsets,
+      _arrayOffsetType);
   const gsl::span<const std::byte> values(
       _values.data() + currentOffset,
       nextOffset - currentOffset);
   return PropertyArrayView<T>{values};
 }
 
-template PropertyTablePropertyView<int8_t, false>;
-template PropertyTablePropertyView<uint8_t, false>;
-template PropertyTablePropertyView<int16_t, false>;
-template PropertyTablePropertyView<uint16_t, false>;
-template PropertyTablePropertyView<int32_t, false>;
-template PropertyTablePropertyView<uint32_t, false>;
-template PropertyTablePropertyView<int64_t, false>;
-template PropertyTablePropertyView<uint64_t, false>;
-template PropertyTablePropertyView<float>;
-template PropertyTablePropertyView<double>;
-template PropertyTablePropertyView<bool>;
-template PropertyTablePropertyView<std::string_view>;
-template PropertyTablePropertyView<glm::vec<2, int8_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, uint8_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, int16_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, uint16_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, int32_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, uint32_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, int64_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, uint64_t>, false>;
-template PropertyTablePropertyView<glm::vec<2, float>>;
-template PropertyTablePropertyView<glm::vec<2, double>>;
-template PropertyTablePropertyView<glm::vec<3, int8_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, uint8_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, int16_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, uint16_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, int32_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, uint32_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, int64_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, uint64_t>, false>;
-template PropertyTablePropertyView<glm::vec<3, float>>;
-template PropertyTablePropertyView<glm::vec<3, double>>;
-template PropertyTablePropertyView<glm::vec<4, int8_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, uint8_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, int16_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, uint16_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, int32_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, uint32_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, int64_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, uint64_t>, false>;
-template PropertyTablePropertyView<glm::vec<4, float>>;
-template PropertyTablePropertyView<glm::vec<4, double>>;
-template PropertyTablePropertyView<glm::mat<2, 2, int8_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, int16_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, int32_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, int64_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, false>;
-template PropertyTablePropertyView<glm::mat<2, 2, float>>;
-template PropertyTablePropertyView<glm::mat<2, 2, double>>;
-template PropertyTablePropertyView<glm::mat<3, 3, int8_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, int16_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, int32_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, int64_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, false>;
-template PropertyTablePropertyView<glm::mat<3, 3, float>>;
-template PropertyTablePropertyView<glm::mat<3, 3, double>>;
-template PropertyTablePropertyView<glm::mat<4, 4, int8_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, int16_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, int32_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, int64_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, false>;
-template PropertyTablePropertyView<glm::mat<4, 4, float>>;
-template PropertyTablePropertyView<glm::mat<4, 4, double>>;
-template PropertyTablePropertyView<PropertyArrayView<int8_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<uint8_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<int16_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<uint16_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<int32_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<uint32_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<int64_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<uint64_t>, false>;
-template PropertyTablePropertyView<PropertyArrayView<float>>;
-template PropertyTablePropertyView<PropertyArrayView<double>>;
-template PropertyTablePropertyView<PropertyArrayView<bool>>;
-template PropertyTablePropertyView<PropertyArrayView<std::string_view>>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<int8_t, false>;
+template class PropertyTablePropertyView<uint8_t, false>;
+template class PropertyTablePropertyView<int16_t, false>;
+template class PropertyTablePropertyView<uint16_t, false>;
+template class PropertyTablePropertyView<int32_t, false>;
+template class PropertyTablePropertyView<uint32_t, false>;
+template class PropertyTablePropertyView<int64_t, false>;
+template class PropertyTablePropertyView<uint64_t, false>;
+template class PropertyTablePropertyView<float>;
+template class PropertyTablePropertyView<double>;
+template class PropertyTablePropertyView<bool>;
+template class PropertyTablePropertyView<std::string_view>;
+template class PropertyTablePropertyView<glm::vec<2, int8_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, uint8_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, int16_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, uint16_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, int32_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, uint32_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, int64_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, uint64_t>, false>;
+template class PropertyTablePropertyView<glm::vec<2, float>>;
+template class PropertyTablePropertyView<glm::vec<2, double>>;
+template class PropertyTablePropertyView<glm::vec<3, int8_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, uint8_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, int16_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, uint16_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, int32_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, uint32_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, int64_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, uint64_t>, false>;
+template class PropertyTablePropertyView<glm::vec<3, float>>;
+template class PropertyTablePropertyView<glm::vec<3, double>>;
+template class PropertyTablePropertyView<glm::vec<4, int8_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, uint8_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, int16_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, uint16_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, int32_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, uint32_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, int64_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, uint64_t>, false>;
+template class PropertyTablePropertyView<glm::vec<4, float>>;
+template class PropertyTablePropertyView<glm::vec<4, double>>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int8_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int16_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int32_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int64_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, false>;
+template class PropertyTablePropertyView<glm::mat<2, 2, float>>;
+template class PropertyTablePropertyView<glm::mat<2, 2, double>>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int8_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int16_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int32_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int64_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, false>;
+template class PropertyTablePropertyView<glm::mat<3, 3, float>>;
+template class PropertyTablePropertyView<glm::mat<3, 3, double>>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int8_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int16_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int32_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int64_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, false>;
+template class PropertyTablePropertyView<glm::mat<4, 4, float>>;
+template class PropertyTablePropertyView<glm::mat<4, 4, double>>;
+template class PropertyTablePropertyView<PropertyArrayView<int8_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<uint8_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<int16_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<uint16_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<int32_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<uint32_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<int64_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<uint64_t>, false>;
+template class PropertyTablePropertyView<PropertyArrayView<float>>;
+template class PropertyTablePropertyView<PropertyArrayView<double>>;
+template class PropertyTablePropertyView<PropertyArrayView<bool>>;
+template class PropertyTablePropertyView<PropertyArrayView<std::string_view>>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int64_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint64_t>>,
     false>;
-template PropertyTablePropertyView<PropertyArrayView<glm::vec<2, float>>>;
-template PropertyTablePropertyView<PropertyArrayView<glm::vec<2, double>>>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<PropertyArrayView<glm::vec<2, float>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, double>>>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int64_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint64_t>>,
     false>;
-template PropertyTablePropertyView<PropertyArrayView<glm::vec<3, float>>>;
-template PropertyTablePropertyView<PropertyArrayView<glm::vec<3, double>>>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<PropertyArrayView<glm::vec<3, float>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, double>>>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int64_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint64_t>>,
     false>;
-template PropertyTablePropertyView<PropertyArrayView<glm::vec<4, float>>>;
-template PropertyTablePropertyView<PropertyArrayView<glm::vec<4, double>>>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<PropertyArrayView<glm::vec<4, float>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, double>>>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int64_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint64_t>>,
     false>;
-template PropertyTablePropertyView<PropertyArrayView<glm::mat<2, 2, float>>>;
-template PropertyTablePropertyView<PropertyArrayView<glm::mat<2, 2, double>>>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, float>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, double>>>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int64_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint64_t>>,
     false>;
-template PropertyTablePropertyView<PropertyArrayView<glm::mat<3, 3, float>>>;
-template PropertyTablePropertyView<PropertyArrayView<glm::mat<3, 3, double>>>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, float>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, double>>>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint8_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint16_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint32_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int64_t>>,
     false>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint64_t>>,
     false>;
-template PropertyTablePropertyView<PropertyArrayView<glm::mat<4, 4, float>>>;
-template PropertyTablePropertyView<PropertyArrayView<glm::mat<4, 4, double>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, float>>>;
+template class PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, double>>>;
 
-template PropertyTablePropertyView<int8_t, true>;
-template PropertyTablePropertyView<uint8_t, true>;
-template PropertyTablePropertyView<int16_t, true>;
-template PropertyTablePropertyView<uint16_t, true>;
-template PropertyTablePropertyView<int32_t, true>;
-template PropertyTablePropertyView<uint32_t, true>;
-template PropertyTablePropertyView<int64_t, true>;
-template PropertyTablePropertyView<uint64_t, true>;
-template PropertyTablePropertyView<glm::vec<2, int8_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, uint8_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, int16_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, uint16_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, int32_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, uint32_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, int64_t>, true>;
-template PropertyTablePropertyView<glm::vec<2, uint64_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, int8_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, uint8_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, int16_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, uint16_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, int32_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, uint32_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, int64_t>, true>;
-template PropertyTablePropertyView<glm::vec<3, uint64_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, int8_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, uint8_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, int16_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, uint16_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, int32_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, uint32_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, int64_t>, true>;
-template PropertyTablePropertyView<glm::vec<4, uint64_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, int8_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, int16_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, int32_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, int64_t>, true>;
-template PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, int8_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, int16_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, int32_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, int64_t>, true>;
-template PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, int8_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, int16_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, int32_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, int64_t>, true>;
-template PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<int8_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<uint8_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<int16_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<uint16_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<int32_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<uint32_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<int64_t>, true>;
-template PropertyTablePropertyView<PropertyArrayView<uint64_t>, true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<int8_t, true>;
+template class PropertyTablePropertyView<uint8_t, true>;
+template class PropertyTablePropertyView<int16_t, true>;
+template class PropertyTablePropertyView<uint16_t, true>;
+template class PropertyTablePropertyView<int32_t, true>;
+template class PropertyTablePropertyView<uint32_t, true>;
+template class PropertyTablePropertyView<int64_t, true>;
+template class PropertyTablePropertyView<uint64_t, true>;
+template class PropertyTablePropertyView<glm::vec<2, int8_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, uint8_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, int16_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, uint16_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, int32_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, uint32_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, int64_t>, true>;
+template class PropertyTablePropertyView<glm::vec<2, uint64_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, int8_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, uint8_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, int16_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, uint16_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, int32_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, uint32_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, int64_t>, true>;
+template class PropertyTablePropertyView<glm::vec<3, uint64_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, int8_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, uint8_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, int16_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, uint16_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, int32_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, uint32_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, int64_t>, true>;
+template class PropertyTablePropertyView<glm::vec<4, uint64_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int8_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int16_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int32_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, int64_t>, true>;
+template class PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int8_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int16_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int32_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, int64_t>, true>;
+template class PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int8_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int16_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int32_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, int64_t>, true>;
+template class PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<int8_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<uint8_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<int16_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<uint16_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<int32_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<uint32_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<int64_t>, true>;
+template class PropertyTablePropertyView<PropertyArrayView<uint64_t>, true>;
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint8_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint16_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint32_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int64_t>>,
     true>;
-template PropertyTablePropertyView<
+template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint64_t>>,
     true>;
 

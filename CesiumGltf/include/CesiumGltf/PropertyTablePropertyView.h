@@ -415,465 +415,516 @@ private:
   int64_t _arrayOffsetTypeSize;
 };
 
-extern template PropertyTablePropertyView<int8_t, false>;
-extern template PropertyTablePropertyView<uint8_t, false>;
-extern template PropertyTablePropertyView<int16_t, false>;
-extern template PropertyTablePropertyView<uint16_t, false>;
-extern template PropertyTablePropertyView<int32_t, false>;
-extern template PropertyTablePropertyView<uint32_t, false>;
-extern template PropertyTablePropertyView<int64_t, false>;
-extern template PropertyTablePropertyView<uint64_t, false>;
-extern template PropertyTablePropertyView<float>;
-extern template PropertyTablePropertyView<double>;
-extern template PropertyTablePropertyView<bool>;
-extern template PropertyTablePropertyView<std::string_view>;
-extern template PropertyTablePropertyView<glm::vec<2, int8_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, uint8_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, int16_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, uint16_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, int32_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, uint32_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, int64_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, uint64_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<2, float>>;
-extern template PropertyTablePropertyView<glm::vec<2, double>>;
-extern template PropertyTablePropertyView<glm::vec<3, int8_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, uint8_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, int16_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, uint16_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, int32_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, uint32_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, int64_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, uint64_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<3, float>>;
-extern template PropertyTablePropertyView<glm::vec<3, double>>;
-extern template PropertyTablePropertyView<glm::vec<4, int8_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, uint8_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, int16_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, uint16_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, int32_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, uint32_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, int64_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, uint64_t>, false>;
-extern template PropertyTablePropertyView<glm::vec<4, float>>;
-extern template PropertyTablePropertyView<glm::vec<4, double>>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int8_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int16_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int32_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int64_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, float>>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, double>>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int8_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int16_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int32_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int64_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, float>>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, double>>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int8_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int16_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int32_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int64_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, false>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, float>>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, double>>;
-extern template PropertyTablePropertyView<PropertyArrayView<int8_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint8_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<int16_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint16_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<int32_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint32_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<int64_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint64_t>, false>;
-extern template PropertyTablePropertyView<PropertyArrayView<float>>;
-extern template PropertyTablePropertyView<PropertyArrayView<double>>;
-extern template PropertyTablePropertyView<PropertyArrayView<bool>>;
-extern template PropertyTablePropertyView<PropertyArrayView<std::string_view>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<int8_t, false>;
+extern template class PropertyTablePropertyView<uint8_t, false>;
+extern template class PropertyTablePropertyView<int16_t, false>;
+extern template class PropertyTablePropertyView<uint16_t, false>;
+extern template class PropertyTablePropertyView<int32_t, false>;
+extern template class PropertyTablePropertyView<uint32_t, false>;
+extern template class PropertyTablePropertyView<int64_t, false>;
+extern template class PropertyTablePropertyView<uint64_t, false>;
+extern template class PropertyTablePropertyView<float>;
+extern template class PropertyTablePropertyView<double>;
+extern template class PropertyTablePropertyView<bool>;
+extern template class PropertyTablePropertyView<std::string_view>;
+extern template class PropertyTablePropertyView<glm::vec<2, int8_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint8_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, int16_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint16_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, int32_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint32_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, int64_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint64_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<2, float>>;
+extern template class PropertyTablePropertyView<glm::vec<2, double>>;
+extern template class PropertyTablePropertyView<glm::vec<3, int8_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint8_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, int16_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint16_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, int32_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint32_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, int64_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint64_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<3, float>>;
+extern template class PropertyTablePropertyView<glm::vec<3, double>>;
+extern template class PropertyTablePropertyView<glm::vec<4, int8_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint8_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, int16_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint16_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, int32_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint32_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, int64_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint64_t>, false>;
+extern template class PropertyTablePropertyView<glm::vec<4, float>>;
+extern template class PropertyTablePropertyView<glm::vec<4, double>>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int8_t>, false>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, false>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int16_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<2, 2, uint16_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int32_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<2, 2, uint32_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int64_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<2, 2, uint64_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, float>>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, double>>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int8_t>, false>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, false>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int16_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<3, 3, uint16_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int32_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<3, 3, uint32_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int64_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<3, 3, uint64_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, float>>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, double>>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int8_t>, false>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, false>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int16_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<4, 4, uint16_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int32_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<4, 4, uint32_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int64_t>, false>;
+extern template class PropertyTablePropertyView<
+    glm::mat<4, 4, uint64_t>,
+    false>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, float>>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, double>>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int8_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint8_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int16_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint16_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int32_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint32_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int64_t>,
+    false>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint64_t>,
+    false>;
+extern template class PropertyTablePropertyView<PropertyArrayView<float>>;
+extern template class PropertyTablePropertyView<PropertyArrayView<double>>;
+extern template class PropertyTablePropertyView<PropertyArrayView<bool>>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<std::string_view>>;
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, float>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, double>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, float>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, double>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, float>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, double>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, float>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, double>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, float>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, double>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint8_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint16_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint32_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint64_t>>,
     false>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, float>>>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, double>>>;
 
-extern template PropertyTablePropertyView<int8_t, true>;
-extern template PropertyTablePropertyView<uint8_t, true>;
-extern template PropertyTablePropertyView<int16_t, true>;
-extern template PropertyTablePropertyView<uint16_t, true>;
-extern template PropertyTablePropertyView<int32_t, true>;
-extern template PropertyTablePropertyView<uint32_t, true>;
-extern template PropertyTablePropertyView<int64_t, true>;
-extern template PropertyTablePropertyView<uint64_t, true>;
-extern template PropertyTablePropertyView<glm::vec<2, int8_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, uint8_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, int16_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, uint16_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, int32_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, uint32_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, int64_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<2, uint64_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, int8_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, uint8_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, int16_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, uint16_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, int32_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, uint32_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, int64_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<3, uint64_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, int8_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, uint8_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, int16_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, uint16_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, int32_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, uint32_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, int64_t>, true>;
-extern template PropertyTablePropertyView<glm::vec<4, uint64_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int8_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int16_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int32_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, int64_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int8_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int16_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int32_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, int64_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int8_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int16_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int32_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, int64_t>, true>;
-extern template PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<int8_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint8_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<int16_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint16_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<int32_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint32_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<int64_t>, true>;
-extern template PropertyTablePropertyView<PropertyArrayView<uint64_t>, true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<int8_t, true>;
+extern template class PropertyTablePropertyView<uint8_t, true>;
+extern template class PropertyTablePropertyView<int16_t, true>;
+extern template class PropertyTablePropertyView<uint16_t, true>;
+extern template class PropertyTablePropertyView<int32_t, true>;
+extern template class PropertyTablePropertyView<uint32_t, true>;
+extern template class PropertyTablePropertyView<int64_t, true>;
+extern template class PropertyTablePropertyView<uint64_t, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, int8_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint8_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, int16_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint16_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, int32_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint32_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, int64_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<2, uint64_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, int8_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint8_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, int16_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint16_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, int32_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint32_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, int64_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<3, uint64_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, int8_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint8_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, int16_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint16_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, int32_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint32_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, int64_t>, true>;
+extern template class PropertyTablePropertyView<glm::vec<4, uint64_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int8_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int16_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int32_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, int64_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int8_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int16_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int32_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, int64_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int8_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int16_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int32_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, int64_t>, true>;
+extern template class PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int8_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint8_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int16_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint16_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int32_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint32_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<int64_t>,
+    true>;
+extern template class PropertyTablePropertyView<
+    PropertyArrayView<uint64_t>,
+    true>;
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, int64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<2, uint64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, int64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<3, uint64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, int64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::vec<4, uint64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, int64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<2, 2, uint64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, int64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<3, 3, uint64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint8_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint16_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint32_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, int64_t>>,
     true>;
-extern template PropertyTablePropertyView<
+extern template class PropertyTablePropertyView<
     PropertyArrayView<glm::mat<4, 4, uint64_t>>,
     true>;
 
