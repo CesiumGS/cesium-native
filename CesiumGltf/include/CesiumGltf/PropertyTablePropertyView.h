@@ -163,36 +163,14 @@ public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyTablePropertyView()
-      : PropertyView<ElementType, false>(),
-        _values{},
-        _size{0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0},
-        _stringOffsets{},
-        _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+  PropertyTablePropertyView();
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
    * @param status The code from {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
-  PropertyTablePropertyView(PropertyViewStatusType status)
-      : PropertyView<ElementType, false>(status),
-        _values{},
-        _size{0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0},
-        _stringOffsets{},
-        _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {
-    assert(
-        this->_status != PropertyTablePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid status");
-  }
+  PropertyTablePropertyView(PropertyViewStatusType status);
 
   /**
    * @brief Constructs an instance of an empty property that specifies a default
@@ -203,33 +181,7 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
-      : PropertyView<ElementType, false>(classProperty),
-        _values{},
-        _size{0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0},
-        _stringOffsets{},
-        _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {
-    if (this->_status != PropertyTablePropertyViewStatus::Valid) {
-      // Don't override the status / size if something is wrong with the class
-      // property's definition.
-      return;
-    }
-
-    if (!classProperty.defaultProperty) {
-      // This constructor should only be called if the class property *has* a
-      // default value. But in the case that it does not, this property view
-      // becomes invalid.
-      this->_status = PropertyTablePropertyViewStatus::ErrorNonexistentProperty;
-      return;
-    }
-
-    this->_status = PropertyTablePropertyViewStatus::EmptyPropertyWithDefault;
-    this->_size = size;
-  }
+  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size);
 
   /**
    * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
@@ -244,17 +196,7 @@ public:
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
-      gsl::span<const std::byte> values) noexcept
-      : PropertyView<ElementType>(classProperty, property),
-        _values{values},
-        _size{
-            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0},
-        _stringOffsets{},
-        _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+      gsl::span<const std::byte> values) noexcept;
 
   /**
    * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
@@ -276,17 +218,7 @@ public:
       gsl::span<const std::byte> arrayOffsets,
       gsl::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
-      PropertyComponentType stringOffsetType) noexcept
-      : PropertyView<ElementType>(classProperty, property),
-        _values{values},
-        _size{
-            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
-        _arrayOffsets{arrayOffsets},
-        _arrayOffsetType{arrayOffsetType},
-        _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
-        _stringOffsets{stringOffsets},
-        _stringOffsetType{stringOffsetType},
-        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
+      PropertyComponentType stringOffsetType) noexcept;
 
   /**
    * @brief Get the value of an element in the {@link PropertyTable},
@@ -303,31 +235,7 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<ElementType> get(int64_t index) const noexcept {
-    if (this->_status ==
-        PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
-      assert(index >= 0 && "index must be non-negative");
-      assert(index < size() && "index must be less than size");
-
-      return this->defaultValue();
-    }
-
-    ElementType value = getRaw(index);
-
-    if (value == this->noData()) {
-      return this->defaultValue();
-    }
-
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      value = transformValue(value, this->offset(), this->scale());
-    }
-
-    if constexpr (IsMetadataNumericArray<ElementType>::value) {
-      value = transformArray(value, this->offset(), this->scale());
-    }
-
-    return value;
-  }
+  std::optional<ElementType> get(int64_t index) const noexcept;
 
   /**
    * @brief Get the raw value of an element of the {@link PropertyTable},
@@ -339,41 +247,7 @@ public:
    * @param index The element index
    * @return The value of the element
    */
-  ElementType getRaw(int64_t index) const noexcept {
-    assert(
-        this->_status == PropertyTablePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
-
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      return getNumericValue(index);
-    }
-
-    if constexpr (IsMetadataBoolean<ElementType>::value) {
-      return getBooleanValue(index);
-    }
-
-    if constexpr (IsMetadataString<ElementType>::value) {
-      return getStringValue(index);
-    }
-
-    if constexpr (IsMetadataNumericArray<ElementType>::value) {
-      return getNumericArrayValues<
-          typename MetadataArrayType<ElementType>::type>(index);
-    }
-
-    if constexpr (IsMetadataBooleanArray<ElementType>::value) {
-      return getBooleanArrayValues(index);
-    }
-
-    if constexpr (IsMetadataStringArray<ElementType>::value) {
-      return getStringArrayValues(index);
-    }
-  }
+  ElementType getRaw(int64_t index) const noexcept;
 
   /**
    * @brief Get the number of elements in this
@@ -382,111 +256,22 @@ public:
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept;
 
 private:
-  ElementType getNumericValue(int64_t index) const noexcept {
-    return reinterpret_cast<const ElementType*>(_values.data())[index];
-  }
+  ElementType getNumericValue(int64_t index) const noexcept;
 
-  bool getBooleanValue(int64_t index) const noexcept {
-    const int64_t byteIndex = index / 8;
-    const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
-    return bitValue == 1;
-  }
+  bool getBooleanValue(int64_t index) const noexcept;
 
-  std::string_view getStringValue(int64_t index) const noexcept {
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
-    const size_t nextOffset = getOffsetFromOffsetsBuffer(
-        index + 1,
-        _stringOffsets,
-        _stringOffsetType);
-    return std::string_view(
-        reinterpret_cast<const char*>(_values.data() + currentOffset),
-        nextOffset - currentOffset);
-  }
+  std::string_view getStringValue(int64_t index) const noexcept;
 
   template <typename T>
-  PropertyArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
-    size_t count = static_cast<size_t>(this->arrayCount());
-    // Handle fixed-length arrays
-    if (count > 0) {
-      size_t arraySize = count * sizeof(T);
-      const gsl::span<const std::byte> values(
-          _values.data() + index * arraySize,
-          arraySize);
-      return PropertyArrayView<T>{values};
-    }
-
-    // Handle variable-length arrays
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-    const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
-    const gsl::span<const std::byte> values(
-        _values.data() + currentOffset,
-        nextOffset - currentOffset);
-    return PropertyArrayView<T>{values};
-  }
+  PropertyArrayView<T> getNumericArrayValues(int64_t index) const noexcept;
 
   PropertyArrayView<std::string_view>
-  getStringArrayValues(int64_t index) const noexcept {
-    size_t count = static_cast<size_t>(this->arrayCount());
-    // Handle fixed-length arrays
-    if (count > 0) {
-      // Copy the corresponding string offsets to pass to the PropertyArrayView.
-      const size_t arraySize = count * _stringOffsetTypeSize;
-      const gsl::span<const std::byte> stringOffsetValues(
-          _stringOffsets.data() + index * arraySize,
-          arraySize + _stringOffsetTypeSize);
-      return PropertyArrayView<std::string_view>(
-          _values,
-          stringOffsetValues,
-          _stringOffsetType,
-          count);
-    }
+  getStringArrayValues(int64_t index) const noexcept;
 
-    // Handle variable-length arrays
-    const size_t currentArrayOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-    const size_t nextArrayOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
-    const size_t arraySize = nextArrayOffset - currentArrayOffset;
-    const gsl::span<const std::byte> stringOffsetValues(
-        _stringOffsets.data() + currentArrayOffset,
-        arraySize + _arrayOffsetTypeSize);
-    return PropertyArrayView<std::string_view>(
-        _values,
-        stringOffsetValues,
-        _stringOffsetType,
-        arraySize / _arrayOffsetTypeSize);
-  }
-
-  PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
-    size_t count = static_cast<size_t>(this->arrayCount());
-    // Handle fixed-length arrays
-    if (count > 0) {
-      const size_t offsetBits = count * index;
-      const size_t nextOffsetBits = count * (index + 1);
-      const gsl::span<const std::byte> buffer(
-          _values.data() + offsetBits / 8,
-          (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
-    }
-
-    // Handle variable-length arrays
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-    const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
-    const size_t totalBits = nextOffset - currentOffset;
-    const gsl::span<const std::byte> buffer(
-        _values.data() + currentOffset / 8,
-        (nextOffset / 8 - currentOffset / 8 + 1));
-    return PropertyArrayView<bool>(buffer, currentOffset % 8, totalBits);
-  }
+  PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept;
 
   gsl::span<const std::byte> _values;
   int64_t _size;
@@ -524,30 +309,14 @@ public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyTablePropertyView()
-      : PropertyView<ElementType, true>(),
-        _values{},
-        _size{0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0} {}
+  PropertyTablePropertyView();
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
    * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
-  PropertyTablePropertyView(PropertyViewStatusType status)
-      : PropertyView<ElementType, true>(status),
-        _values{},
-        _size{0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0} {
-    assert(
-        this->_status != PropertyTablePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid status");
-  }
+  PropertyTablePropertyView(PropertyViewStatusType status);
 
   /**
    * @brief Constructs an instance of an empty property that specifies a default
@@ -558,30 +327,7 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
-      : PropertyView<ElementType, true>(classProperty),
-        _values{},
-        _size{0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0} {
-    if (this->_status != PropertyTablePropertyViewStatus::Valid) {
-      // Don't override the status / size if something is wrong with the class
-      // property's definition.
-      return;
-    }
-
-    if (!classProperty.defaultProperty) {
-      // This constructor should only be called if the class property *has* a
-      // default value. But in the case that it does not, this property view
-      // becomes invalid.
-      this->_status = PropertyTablePropertyViewStatus::ErrorNonexistentProperty;
-      return;
-    }
-
-    this->_status = PropertyTablePropertyViewStatus::EmptyPropertyWithDefault;
-    this->_size = size;
-  }
+  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size);
 
   /**
    * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
@@ -596,14 +342,7 @@ public:
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
-      gsl::span<const std::byte> values) noexcept
-      : PropertyView<ElementType, true>(classProperty, property),
-        _values{values},
-        _size{
-            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
-        _arrayOffsets{},
-        _arrayOffsetType{PropertyComponentType::None},
-        _arrayOffsetTypeSize{0} {}
+      gsl::span<const std::byte> values) noexcept;
 
   /**
    * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
@@ -622,14 +361,7 @@ public:
       int64_t size,
       gsl::span<const std::byte> values,
       gsl::span<const std::byte> arrayOffsets,
-      PropertyComponentType arrayOffsetType) noexcept
-      : PropertyView<ElementType, true>(classProperty, property),
-        _values{values},
-        _size{
-            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
-        _arrayOffsets{arrayOffsets},
-        _arrayOffsetType{arrayOffsetType},
-        _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)} {}
+      PropertyComponentType arrayOffsetType) noexcept;
 
   /**
    * @brief Get the value of an element of the {@link PropertyTable},
@@ -646,75 +378,7 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<NormalizedType> get(int64_t index) const noexcept {
-    if (this->_status ==
-        PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
-      assert(index >= 0 && "index must be non-negative");
-      assert(index < size() && "index must be less than size");
-
-      return this->defaultValue();
-    }
-
-    ElementType value = getRaw(index);
-    if (this->noData() && value == *(this->noData())) {
-      return this->defaultValue();
-    }
-
-    if constexpr (IsMetadataScalar<ElementType>::value) {
-      return transformValue<NormalizedType>(
-          normalize<ElementType>(value),
-          this->offset(),
-          this->scale());
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
-      constexpr glm::length_t N = ElementType::length();
-      using T = typename ElementType::value_type;
-      using NormalizedT = typename NormalizedType::value_type;
-      return transformValue<glm::vec<N, NormalizedT>>(
-          normalize<N, T>(value),
-          this->offset(),
-          this->scale());
-    }
-
-    if constexpr (IsMetadataMatN<ElementType>::value) {
-      constexpr glm::length_t N = ElementType::length();
-      using T = typename ElementType::value_type;
-      using NormalizedT = typename NormalizedType::value_type;
-      return transformValue<glm::mat<N, N, NormalizedT>>(
-          normalize<N, T>(value),
-          this->offset(),
-          this->scale());
-    }
-
-    if constexpr (IsMetadataArray<ElementType>::value) {
-      using ArrayElementType = typename MetadataArrayType<ElementType>::type;
-      if constexpr (IsMetadataScalar<ArrayElementType>::value) {
-        return transformNormalizedArray<ArrayElementType>(
-            value,
-            this->offset(),
-            this->scale());
-      }
-
-      if constexpr (IsMetadataVecN<ArrayElementType>::value) {
-        constexpr glm::length_t N = ArrayElementType::length();
-        using T = typename ArrayElementType::value_type;
-        return transformNormalizedVecNArray<N, T>(
-            value,
-            this->offset(),
-            this->scale());
-      }
-
-      if constexpr (IsMetadataMatN<ArrayElementType>::value) {
-        constexpr glm::length_t N = ArrayElementType::length();
-        using T = typename ArrayElementType::value_type;
-        return transformNormalizedMatNArray<N, T>(
-            value,
-            this->offset(),
-            this->scale());
-      }
-    }
-  }
+  std::optional<NormalizedType> get(int64_t index) const noexcept;
 
   /**
    * @brief Get the raw value of an element of the {@link PropertyTable},
@@ -726,25 +390,7 @@ public:
    * @param index The element index
    * @return The value of the element
    */
-  ElementType getRaw(int64_t index) const noexcept {
-    assert(
-        this->_status == PropertyTablePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
-
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      return getValue(index);
-    }
-
-    if constexpr (IsMetadataNumericArray<ElementType>::value) {
-      return getArrayValues<typename MetadataArrayType<ElementType>::type>(
-          index);
-    }
-  }
+  ElementType getRaw(int64_t index) const noexcept;
 
   /**
    * @brief Get the number of elements in this
@@ -753,37 +399,13 @@ public:
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */
-  int64_t size() const noexcept {
-    return this->_status == PropertyTablePropertyViewStatus::Valid ? _size : 0;
-  }
+  int64_t size() const noexcept;
 
 private:
-  ElementType getValue(int64_t index) const noexcept {
-    return reinterpret_cast<const ElementType*>(_values.data())[index];
-  }
+  ElementType getValue(int64_t index) const noexcept;
 
   template <typename T>
-  PropertyArrayView<T> getArrayValues(int64_t index) const noexcept {
-    size_t count = static_cast<size_t>(this->arrayCount());
-    // Handle fixed-length arrays
-    if (count > 0) {
-      size_t arraySize = count * sizeof(T);
-      const gsl::span<const std::byte> values(
-          _values.data() + index * arraySize,
-          arraySize);
-      return PropertyArrayView<T>{values};
-    }
-
-    // Handle variable-length arrays
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-    const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
-    const gsl::span<const std::byte> values(
-        _values.data() + currentOffset,
-        nextOffset - currentOffset);
-    return PropertyArrayView<T>{values};
-  }
+  PropertyArrayView<T> getArrayValues(int64_t index) const noexcept;
 
   gsl::span<const std::byte> _values;
   int64_t _size;
@@ -792,5 +414,467 @@ private:
   PropertyComponentType _arrayOffsetType;
   int64_t _arrayOffsetTypeSize;
 };
+
+extern template PropertyTablePropertyView<int8_t, false>;
+extern template PropertyTablePropertyView<uint8_t, false>;
+extern template PropertyTablePropertyView<int16_t, false>;
+extern template PropertyTablePropertyView<uint16_t, false>;
+extern template PropertyTablePropertyView<int32_t, false>;
+extern template PropertyTablePropertyView<uint32_t, false>;
+extern template PropertyTablePropertyView<int64_t, false>;
+extern template PropertyTablePropertyView<uint64_t, false>;
+extern template PropertyTablePropertyView<float>;
+extern template PropertyTablePropertyView<double>;
+extern template PropertyTablePropertyView<bool>;
+extern template PropertyTablePropertyView<std::string_view>;
+extern template PropertyTablePropertyView<glm::vec<2, int8_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, uint8_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, int16_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, uint16_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, int32_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, uint32_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, int64_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, uint64_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<2, float>>;
+extern template PropertyTablePropertyView<glm::vec<2, double>>;
+extern template PropertyTablePropertyView<glm::vec<3, int8_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, uint8_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, int16_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, uint16_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, int32_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, uint32_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, int64_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, uint64_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<3, float>>;
+extern template PropertyTablePropertyView<glm::vec<3, double>>;
+extern template PropertyTablePropertyView<glm::vec<4, int8_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, uint8_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, int16_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, uint16_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, int32_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, uint32_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, int64_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, uint64_t>, false>;
+extern template PropertyTablePropertyView<glm::vec<4, float>>;
+extern template PropertyTablePropertyView<glm::vec<4, double>>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int8_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int16_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int32_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int64_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, float>>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, double>>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int8_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int16_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int32_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int64_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, float>>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, double>>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int8_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int16_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int32_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int64_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, false>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, float>>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, double>>;
+extern template PropertyTablePropertyView<PropertyArrayView<int8_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint8_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<int16_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint16_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<int32_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint32_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<int64_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint64_t>, false>;
+extern template PropertyTablePropertyView<PropertyArrayView<float>>;
+extern template PropertyTablePropertyView<PropertyArrayView<double>>;
+extern template PropertyTablePropertyView<PropertyArrayView<bool>>;
+extern template PropertyTablePropertyView<PropertyArrayView<std::string_view>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, float>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, double>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, float>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, double>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, float>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, double>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, float>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, double>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, float>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, double>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint8_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint16_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint32_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint64_t>>,
+    false>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, float>>>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, double>>>;
+
+extern template PropertyTablePropertyView<int8_t, true>;
+extern template PropertyTablePropertyView<uint8_t, true>;
+extern template PropertyTablePropertyView<int16_t, true>;
+extern template PropertyTablePropertyView<uint16_t, true>;
+extern template PropertyTablePropertyView<int32_t, true>;
+extern template PropertyTablePropertyView<uint32_t, true>;
+extern template PropertyTablePropertyView<int64_t, true>;
+extern template PropertyTablePropertyView<uint64_t, true>;
+extern template PropertyTablePropertyView<glm::vec<2, int8_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, uint8_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, int16_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, uint16_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, int32_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, uint32_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, int64_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<2, uint64_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, int8_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, uint8_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, int16_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, uint16_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, int32_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, uint32_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, int64_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<3, uint64_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, int8_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, uint8_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, int16_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, uint16_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, int32_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, uint32_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, int64_t>, true>;
+extern template PropertyTablePropertyView<glm::vec<4, uint64_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int8_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint8_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int16_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint16_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int32_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint32_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, int64_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<2, 2, uint64_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int8_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint8_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int16_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint16_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int32_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint32_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, int64_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<3, 3, uint64_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int8_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint8_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int16_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint16_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int32_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint32_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, int64_t>, true>;
+extern template PropertyTablePropertyView<glm::mat<4, 4, uint64_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<int8_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint8_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<int16_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint16_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<int32_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint32_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<int64_t>, true>;
+extern template PropertyTablePropertyView<PropertyArrayView<uint64_t>, true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, int64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<2, uint64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, int64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<3, uint64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, int64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::vec<4, uint64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, int64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<2, 2, uint64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, int64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<3, 3, uint64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint8_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint16_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint32_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, int64_t>>,
+    true>;
+extern template PropertyTablePropertyView<
+    PropertyArrayView<glm::mat<4, 4, uint64_t>>,
+    true>;
 
 } // namespace CesiumGltf
