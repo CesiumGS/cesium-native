@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Cesium Native is now only regularly tested on Visual Studio 2019+, GCC 11.x+, and Clang 12+. Other compilers - including older ones - are likely to work, but are not tested.
+- Removed `PropertyTablePropertyViewType` and `NormalizedPropertyTablePropertyViewType`, as well as their counterparts for property textures and property attributes. When compiled with Clang, the large `std::variant` definitions would significantly stall compilation.
 
 ##### Additions :tada:
 
