@@ -68,3 +68,6 @@
 [submodule "extern/meshoptimizer"]
 	path = extern/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer
+[submodule "extern/variant"]
+	path = extern/variant
+	url = https://github.com/mpark/variant.git
