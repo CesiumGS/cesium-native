@@ -69,7 +69,7 @@ struct BoundingVolumeSubdivision {
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::OctreeTileID& tileID,
     const ImplicitOctreeBoundingVolume& rootBoundingVolume) {
-  return std::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
+  return mpark::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
 }
 
 std::vector<Tile> populateSubtree(
@@ -84,7 +84,7 @@ std::vector<Tile> populateSubtree(
   }
 
   const CesiumGeometry::OctreeTileID& octreeID =
-      std::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
+      mpark::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
 
   std::vector<Tile> children;
   children.reserve(8);
@@ -242,7 +242,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
-      std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
+      mpark::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
   if (!pOctreeID) {
     return asyncSystem.createResolvedFuture(
         TileLoadResult::createFailedResult(nullptr));
@@ -322,7 +322,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {
   const CesiumGeometry::OctreeTileID* pOctreeID =
-      std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
+      mpark::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
   assert(pOctreeID != nullptr && "This loader only serves quadtree tile");
 
   // find the subtree ID

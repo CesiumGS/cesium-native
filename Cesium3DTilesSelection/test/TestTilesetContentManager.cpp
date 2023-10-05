@@ -223,7 +223,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     REQUIRE(pTilesetJson);
     REQUIRE(pTilesetJson->getChildren().size() == 1);
     const Tile* pRootTile = &pTilesetJson->getChildren()[0];
-    CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
+    CHECK(mpark::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
     CHECK(pRootTile->getGeometricError() == 70.0);
     CHECK(pRootTile->getRefine() == TileRefine::Add);
   }
@@ -258,10 +258,10 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     const gsl::span<const Tile> children = pRootTile->getChildren();
     CHECK(
-        std::get<QuadtreeTileID>(children[0].getTileID()) ==
+        mpark::get<QuadtreeTileID>(children[0].getTileID()) ==
         QuadtreeTileID(0, 0, 0));
     CHECK(
-        std::get<QuadtreeTileID>(children[1].getTileID()) ==
+        mpark::get<QuadtreeTileID>(children[1].getTileID()) ==
         QuadtreeTileID(0, 1, 0));
   }
 
@@ -1056,7 +1056,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       // check the tile whole region which will be more fitted
       const BoundingRegion& tileRegion =
-          std::get<BoundingRegion>(tile.getBoundingVolume());
+          mpark::get<BoundingRegion>(tile.getBoundingVolume());
       CHECK(
           tileRegion.getRectangle().getWest() == Approx(beginCarto.longitude));
       CHECK(
@@ -1125,7 +1125,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       // check the tile whole region which will be more fitted
       const BoundingRegion& tileRegion =
-          std::get<BoundingRegion>(tile.getBoundingVolume());
+          mpark::get<BoundingRegion>(tile.getBoundingVolume());
       CHECK(
           tileRegion.getRectangle().getWest() == Approx(beginCarto.longitude));
       CHECK(

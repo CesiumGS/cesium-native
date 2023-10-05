@@ -8,10 +8,11 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltf/Model.h>
 
+#include <mpark/variant.hpp>
+
 #include <functional>
 #include <memory>
 #include <optional>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 
@@ -34,7 +35,7 @@ class Tile;
  *
  * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model
  */
-using TileContentKind = std::variant<
+using TileContentKind = mpark::variant<
     TileUnknownContent,
     TileEmptyContent,
     TileExternalContent,

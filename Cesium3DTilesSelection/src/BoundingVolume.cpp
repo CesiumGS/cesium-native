@@ -55,7 +55,7 @@ BoundingVolume transformBoundingVolume(
     }
   };
 
-  return std::visit(Operation{transform}, boundingVolume);
+  return mpark::visit(Operation{transform}, boundingVolume);
 }
 
 glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
@@ -82,7 +82,7 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
     }
   };
 
-  return std::visit(Operation{}, boundingVolume);
+  return mpark::visit(Operation{}, boundingVolume);
 }
 
 std::optional<GlobeRectangle>
@@ -194,15 +194,16 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
     }
   };
 
-  return std::visit(Operation{}, boundingVolume);
+  return mpark::visit(Operation{}, boundingVolume);
 }
 
 const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume) {
-  const BoundingRegion* pResult = std::get_if<BoundingRegion>(&boundingVolume);
+  const BoundingRegion* pResult =
+      mpark::get_if<BoundingRegion>(&boundingVolume);
   if (!pResult) {
     const BoundingRegionWithLooseFittingHeights* pLoose =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume);
+        mpark::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume);
     if (pLoose) {
       pResult = &pLoose->getBoundingRegion();
     }
@@ -241,7 +242,7 @@ getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume) {
     }
   };
 
-  return std::visit(Operation(), boundingVolume);
+  return mpark::visit(Operation(), boundingVolume);
 }
 
 } // namespace Cesium3DTilesSelection

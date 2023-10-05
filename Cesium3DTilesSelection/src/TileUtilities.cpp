@@ -4,7 +4,7 @@
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 
-#include <variant>
+#include <mpark/variant.hpp>
 
 using namespace CesiumGeospatial;
 

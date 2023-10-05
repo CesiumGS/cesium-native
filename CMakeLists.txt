@@ -214,3 +214,6 @@ install(TARGETS expected-lite)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/expected-lite/include/nonstd TYPE INCLUDE)
 
 install(TARGETS meshoptimizer)
+
+install(TARGETS mpark_variant)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/variant/include/mpark TYPE INCLUDE)

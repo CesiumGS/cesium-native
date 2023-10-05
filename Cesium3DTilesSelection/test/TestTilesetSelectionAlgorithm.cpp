@@ -82,7 +82,7 @@ static void initializeTileset(Tileset& tileset) {
 
 static ViewState zoomToTile(const Tile& tile) {
   const BoundingRegion* region =
-      std::get_if<BoundingRegion>(&tile.getBoundingVolume());
+      mpark::get_if<BoundingRegion>(&tile.getBoundingVolume());
   REQUIRE(region != nullptr);
 
   const GlobeRectangle& rectangle = region->getRectangle();
@@ -620,7 +620,7 @@ TEST_CASE("Test additive refinement") {
       for (const Tile& child : parentB3DM.getChildren()) {
         REQUIRE(child.getState() == TileLoadState::Done);
 
-        if (*std::get_if<std::string>(&child.getTileID()) !=
+        if (*mpark::get_if<std::string>(&child.getTileID()) !=
             "tileset3/tileset3.json") {
           REQUIRE(doesTileMeetSSE(viewState, child, tileset));
         } else {
@@ -1052,7 +1052,7 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   const Tile* pRoot = &pTilesetJson->getChildren()[0];
 
   const S2CellBoundingVolume* pS2 =
-      std::get_if<S2CellBoundingVolume>(&pRoot->getBoundingVolume());
+      mpark::get_if<S2CellBoundingVolume>(&pRoot->getBoundingVolume());
   REQUIRE(pS2);
 
   CHECK(pS2->getCellID().toToken() == "3");
@@ -1062,7 +1062,7 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   REQUIRE(pRoot->getChildren().size() == 1);
   const Tile* pChild = &pRoot->getChildren()[0];
   const S2CellBoundingVolume* pS2Child =
-      std::get_if<S2CellBoundingVolume>(&pChild->getBoundingVolume());
+      mpark::get_if<S2CellBoundingVolume>(&pChild->getBoundingVolume());
   REQUIRE(pS2Child);
 
   CHECK(pS2Child->getCellID().toToken() == "2c");
@@ -1072,7 +1072,7 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   REQUIRE(pChild->getChildren().size() == 1);
   const Tile* pGrandchild = &pChild->getChildren()[0];
   const S2CellBoundingVolume* pS2Grandchild =
-      std::get_if<S2CellBoundingVolume>(&pGrandchild->getBoundingVolume());
+      mpark::get_if<S2CellBoundingVolume>(&pGrandchild->getBoundingVolume());
   REQUIRE(pS2Grandchild);
 
   CHECK(pS2Grandchild->getCellID().toToken() == "2f");
@@ -1082,7 +1082,8 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
   REQUIRE(pGrandchild->getChildren().size() == 1);
   const Tile* pGreatGrandchild = &pGrandchild->getChildren()[0];
   const S2CellBoundingVolume* pS2GreatGrandchild =
-      std::get_if<S2CellBoundingVolume>(&pGreatGrandchild->getBoundingVolume());
+      mpark::get_if<S2CellBoundingVolume>(
+          &pGreatGrandchild->getBoundingVolume());
   REQUIRE(pS2GreatGrandchild);
 
   CHECK(pS2GreatGrandchild->getCellID().toToken() == "2ec");

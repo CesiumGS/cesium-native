@@ -74,13 +74,13 @@ void recursiveObjectWriter(
     j.Key(key);
     if (item.isArray()) {
       recursiveArrayWriter(
-          std::get<CesiumUtility::JsonValue::Array>(item.value),
+          mpark::get<CesiumUtility::JsonValue::Array>(item.value),
           j);
     }
 
     if (item.isObject()) {
       recursiveObjectWriter(
-          std::get<CesiumUtility::JsonValue::Object>(item.value),
+          mpark::get<CesiumUtility::JsonValue::Object>(item.value),
           j);
     }
 
@@ -99,11 +99,11 @@ void writeJsonValue(
 
   if (value.isArray()) {
     recursiveArrayWriter(
-        std::get<CesiumUtility::JsonValue::Array>(value.value),
+        mpark::get<CesiumUtility::JsonValue::Array>(value.value),
         jsonWriter);
   } else if (value.isObject()) {
     recursiveObjectWriter(
-        std::get<CesiumUtility::JsonValue::Object>(value.value),
+        mpark::get<CesiumUtility::JsonValue::Object>(value.value),
         jsonWriter);
   } else {
     primitiveWriter(value, jsonWriter);

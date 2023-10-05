@@ -3,12 +3,12 @@
 #include "Library.h"
 
 #include <gsl/span>
+#include <mpark/variant.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace CesiumGeometry {
@@ -28,7 +28,8 @@ struct CESIUMGEOMETRY_API SubtreeBufferView {
   uint8_t buffer;
 };
 
-typedef std::variant<ConstantAvailability, SubtreeBufferView> AvailabilityView;
+typedef mpark::variant<ConstantAvailability, SubtreeBufferView>
+    AvailabilityView;
 
 struct CESIUMGEOMETRY_API AvailabilitySubtree {
   AvailabilityView tileAvailability;

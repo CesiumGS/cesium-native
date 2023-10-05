@@ -670,7 +670,7 @@ static std::vector<std::byte> generateNormals(
 
   CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshLoader::load");
 
-  const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
+  const QuadtreeTileID& id = mpark::get<QuadtreeTileID>(tileID);
 
   QuantizedMeshLoadResult result;
 
@@ -682,10 +682,11 @@ static std::vector<std::byte> generateNormals(
   }
 
   const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&tileBoundingVolume);
+      mpark::get_if<BoundingRegion>(&tileBoundingVolume);
   if (!pRegion) {
     const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(&tileBoundingVolume);
+        mpark::get_if<BoundingRegionWithLooseFittingHeights>(
+            &tileBoundingVolume);
     if (pLooseRegion) {
       pRegion = &pLooseRegion->getBoundingRegion();
     }

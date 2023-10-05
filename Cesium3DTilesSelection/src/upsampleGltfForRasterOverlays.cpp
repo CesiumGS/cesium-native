@@ -233,7 +233,7 @@ static void copyVertexAttributes(
     }
   };
 
-  std::visit(Operation{vertexAttributes, output, skipMinMaxUpdate}, vertex);
+  mpark::visit(Operation{vertexAttributes, output, skipMinMaxUpdate}, vertex);
 }
 
 static void copyVertexAttributes(
@@ -309,7 +309,7 @@ static void copyVertexAttributes(
     }
   };
 
-  std::visit(
+  mpark::visit(
       Operation{
           vertexAttributes,
           complements,
@@ -334,7 +334,7 @@ static T getVertexValue(
     }
   };
 
-  return std::visit(Operation{accessor}, vertex);
+  return mpark::visit(Operation{accessor}, vertex);
 }
 
 template <class T>
@@ -382,7 +382,7 @@ static T getVertexValue(
     }
   };
 
-  return std::visit(Operation{accessor, complements}, vertex);
+  return mpark::visit(Operation{accessor, complements}, vertex);
 }
 
 template <class TIndex>
@@ -792,7 +792,7 @@ static uint32_t getOrCreateVertex(
     std::vector<uint32_t>& vertexMap,
     const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
     const CesiumGeometry::TriangleClipVertex& clipVertex) {
-  const int* pIndex = std::get_if<int>(&clipVertex);
+  const int* pIndex = mpark::get_if<int>(&clipVertex);
   if (pIndex) {
     if (*pIndex < 0) {
       return getOrCreateVertex(

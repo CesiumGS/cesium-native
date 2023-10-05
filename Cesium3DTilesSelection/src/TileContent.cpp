@@ -99,26 +99,26 @@ void TileContent::setContentKind(std::unique_ptr<TileRenderContent>&& content) {
 }
 
 bool TileContent::isUnknownContent() const noexcept {
-  return std::holds_alternative<TileUnknownContent>(this->_contentKind);
+  return mpark::holds_alternative<TileUnknownContent>(this->_contentKind);
 }
 
 bool TileContent::isEmptyContent() const noexcept {
-  return std::holds_alternative<TileEmptyContent>(this->_contentKind);
+  return mpark::holds_alternative<TileEmptyContent>(this->_contentKind);
 }
 
 bool TileContent::isExternalContent() const noexcept {
-  return std::holds_alternative<std::unique_ptr<TileExternalContent>>(
+  return mpark::holds_alternative<std::unique_ptr<TileExternalContent>>(
       this->_contentKind);
 }
 
 bool TileContent::isRenderContent() const noexcept {
-  return std::holds_alternative<std::unique_ptr<TileRenderContent>>(
+  return mpark::holds_alternative<std::unique_ptr<TileRenderContent>>(
       this->_contentKind);
 }
 
 const TileRenderContent* TileContent::getRenderContent() const noexcept {
   const std::unique_ptr<TileRenderContent>* pRenderContent =
-      std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
+      mpark::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
   if (pRenderContent) {
     return pRenderContent->get();
   }
@@ -128,7 +128,7 @@ const TileRenderContent* TileContent::getRenderContent() const noexcept {
 
 TileRenderContent* TileContent::getRenderContent() noexcept {
   std::unique_ptr<TileRenderContent>* pRenderContent =
-      std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
+      mpark::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);
   if (pRenderContent) {
     return pRenderContent->get();
   }
@@ -138,7 +138,7 @@ TileRenderContent* TileContent::getRenderContent() noexcept {
 
 const TileExternalContent* TileContent::getExternalContent() const noexcept {
   const std::unique_ptr<TileExternalContent>* pExternalContent =
-      std::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
+      mpark::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
   if (pExternalContent) {
     return pExternalContent->get();
   }
@@ -148,7 +148,7 @@ const TileExternalContent* TileContent::getExternalContent() const noexcept {
 
 TileExternalContent* TileContent::getExternalContent() noexcept {
   std::unique_ptr<TileExternalContent>* pExternalContent =
-      std::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
+      mpark::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
   if (pExternalContent) {
     return pExternalContent->get();
   }

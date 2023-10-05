@@ -19,7 +19,7 @@ projectPosition(const Projection& projection, const Cartographic& position) {
     }
   };
 
-  return std::visit(Operation{position}, projection);
+  return mpark::visit(Operation{position}, projection);
 }
 
 Cartographic
@@ -36,7 +36,7 @@ unprojectPosition(const Projection& projection, const glm::dvec3& position) {
     }
   };
 
-  return std::visit(Operation{position}, projection);
+  return mpark::visit(Operation{position}, projection);
 }
 
 CesiumGeometry::Rectangle projectRectangleSimple(
@@ -56,7 +56,7 @@ CesiumGeometry::Rectangle projectRectangleSimple(
     }
   };
 
-  return std::visit(Operation{rectangle}, projection);
+  return mpark::visit(Operation{rectangle}, projection);
 }
 
 GlobeRectangle unprojectRectangleSimple(
@@ -75,7 +75,7 @@ GlobeRectangle unprojectRectangleSimple(
     }
   };
 
-  return std::visit(Operation{rectangle}, projection);
+  return mpark::visit(Operation{rectangle}, projection);
 }
 
 CesiumGeometry::AxisAlignedBox projectRegionSimple(
@@ -212,6 +212,6 @@ double computeApproximateConversionFactorToMetersNearPosition(
     }
   };
 
-  return std::visit(Operation{position}, projection);
+  return mpark::visit(Operation{position}, projection);
 }
 } // namespace CesiumGeospatial

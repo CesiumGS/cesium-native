@@ -53,6 +53,7 @@ target_link_libraries(CesiumUtility
     PUBLIC
         GSL
         zlibstatic
+        mpark_variant
 )
 
 install(TARGETS CesiumUtility

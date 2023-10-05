@@ -485,7 +485,7 @@ bool SubtreeAvailability::isContentAvailable(
 bool SubtreeAvailability::isSubtreeAvailable(
     uint64_t relativeSubtreeMortonId) const noexcept {
   const SubtreeConstantAvailability* constantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
+      mpark::get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
   if (constantAvailability) {
     return constantAvailability->constant;
   }
@@ -547,7 +547,7 @@ bool SubtreeAvailability::isAvailable(
   }
 
   const SubtreeConstantAvailability* constantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&availabilityView);
+      mpark::get_if<SubtreeConstantAvailability>(&availabilityView);
   if (constantAvailability) {
     return constantAvailability->constant;
   }
@@ -570,7 +570,7 @@ bool SubtreeAvailability::isAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel + relativeTileMortonId;
 
   const SubtreeBufferViewAvailability* bufferViewAvailability =
-      std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
+      mpark::get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
   const uint64_t byteIndex = availabilityBitIndex / 8;
   if (byteIndex >= bufferViewAvailability->view.size()) {

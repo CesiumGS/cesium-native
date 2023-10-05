@@ -7,21 +7,20 @@
 #include "WebMercatorProjection.h"
 
 #include <glm/vec2.hpp>
-
-#include <variant>
+#include <mpark/variant.hpp>
 
 namespace CesiumGeospatial {
 
 /**
  * @brief A projection.
  *
- * This is a `std::variant` of different types of map projections that
+ * This is a `mpark::variant` of different types of map projections that
  * can convert between projected map coordinates and Cartographic coordinates.
  *
  * @see GeographicProjection
  * @see WebMercatorProjection
  */
-typedef std::variant<GeographicProjection, WebMercatorProjection> Projection;
+typedef mpark::variant<GeographicProjection, WebMercatorProjection> Projection;
 
 /**
  * @brief Projects a position on the globe using the given {@link Projection}.

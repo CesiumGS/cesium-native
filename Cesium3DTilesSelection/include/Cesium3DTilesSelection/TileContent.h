@@ -8,8 +8,9 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 
+#include <mpark/variant.hpp>
+
 #include <memory>
-#include <variant>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -202,7 +203,7 @@ private:
  * that is currently being owned by the tile
  */
 class CESIUM3DTILESSELECTION_API TileContent {
-  using TileContentKindImpl = std::variant<
+  using TileContentKindImpl = mpark::variant<
       TileUnknownContent,
       TileEmptyContent,
       std::unique_ptr<TileExternalContent>,

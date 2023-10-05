@@ -58,8 +58,8 @@ void AvailabilityNode::setLoadedSubtree(
 AvailabilityAccessor::AvailabilityAccessor(
     const AvailabilityView& view,
     const AvailabilitySubtree& subtree) noexcept {
-  this->pBufferView = std::get_if<SubtreeBufferView>(&view);
-  this->pConstant = std::get_if<ConstantAvailability>(&view);
+  this->pBufferView = mpark::get_if<SubtreeBufferView>(&view);
+  this->pConstant = mpark::get_if<ConstantAvailability>(&view);
 
   if (this->pBufferView) {
     if (this->pBufferView->buffer < subtree.buffers.size()) {

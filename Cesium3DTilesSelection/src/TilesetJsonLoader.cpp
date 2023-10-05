@@ -211,16 +211,17 @@ void createImplicitQuadtreeLoader(
     TilesetJsonLoader& currentLoader) {
   // Quadtree does not support bounding sphere subdivision
   const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
-  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+  if (mpark::holds_alternative<CesiumGeometry::BoundingSphere>(
+          boundingVolume)) {
     return;
   }
 
   const CesiumGeospatial::BoundingRegion* pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
+      mpark::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
   const CesiumGeometry::OrientedBoundingBox* pBox =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
+      mpark::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
   const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
-      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
+      mpark::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
 
   // the implicit loader will be the child loader of this tileset json loader
   TilesetContentLoader* pImplicitLoader = nullptr;
@@ -275,19 +276,20 @@ void createImplicitOctreeLoader(
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
   const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
-  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+  if (mpark::holds_alternative<CesiumGeometry::BoundingSphere>(
+          boundingVolume)) {
     return;
   }
 
-  if (std::holds_alternative<CesiumGeospatial::S2CellBoundingVolume>(
+  if (mpark::holds_alternative<CesiumGeospatial::S2CellBoundingVolume>(
           boundingVolume)) {
     return;
   }
 
   const CesiumGeospatial::BoundingRegion* pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
+      mpark::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
   const CesiumGeometry::OrientedBoundingBox* pBox =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
+      mpark::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
 
   // the implicit loader will be the child loader of this tileset json loader
   TilesetContentLoader* pImplicitLoader = nullptr;
@@ -838,7 +840,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   // this loader only handles Url ID
-  const std::string* url = std::get_if<std::string>(&tile.getTileID());
+  const std::string* url = mpark::get_if<std::string>(&tile.getTileID());
   if (!url) {
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createFailedResult(nullptr));

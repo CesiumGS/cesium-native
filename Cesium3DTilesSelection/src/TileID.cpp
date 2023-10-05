@@ -1,7 +1,8 @@
 #include "Cesium3DTilesSelection/TileID.h"
 
+#include <mpark/variant.hpp>
+
 #include <string>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 
@@ -37,7 +38,7 @@ TileIdUtilities::createTileIdString(const TileID& tileId) {
              std::to_string(upsampledQuadtreeNode.tileID.y);
     }
   };
-  return std::visit(Operation{}, tileId);
+  return mpark::visit(Operation{}, tileId);
 }
 
 } // namespace Cesium3DTilesSelection

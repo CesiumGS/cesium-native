@@ -6,10 +6,10 @@
 #include <CesiumUtility/SpanHelper.h>
 
 #include <gsl/span>
+#include <mpark/variant.hpp>
 
 #include <cassert>
 #include <cstddef>
-#include <variant>
 #include <vector>
 
 namespace CesiumGltf {
@@ -45,13 +45,13 @@ public:
       : _values{std::move(values)} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
-    return std::visit(
+    return mpark::visit(
         [index](auto const& values) -> auto const& { return values[index]; },
         _values);
   }
 
   int64_t size() const noexcept {
-    return std::visit(
+    return mpark::visit(
         [](auto const& values) { return static_cast<int64_t>(values.size()); },
         _values);
   }
@@ -76,7 +76,7 @@ public:
 
 private:
   using ArrayType =
-      std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
+      mpark::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
   ArrayType _values;
 };
 

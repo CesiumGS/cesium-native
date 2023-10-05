@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <gsl/narrow>
+#include <mpark/variant.hpp>
 
 #include <cmath>
 #include <cstdint>
@@ -13,7 +14,6 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <variant>
 #include <vector>
 
 namespace CesiumUtility {
@@ -222,7 +222,7 @@ public:
       return nullptr;
     }
 
-    return std::get_if<T>(&pValue->value);
+    return mpark::get_if<T>(&pValue->value);
   }
 
   /**
@@ -241,7 +241,7 @@ public:
    */
   template <typename T> T* getValuePtrForKey(const std::string& key) {
     JsonValue* pValue = this->getValuePtrForKey(key);
-    return std::get_if<T>(&pValue->value);
+    return mpark::get_if<T>(&pValue->value);
   }
 
   /**
@@ -269,7 +269,7 @@ public:
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
   [[nodiscard]] To getSafeNumericalValueForKey(const std::string& key) const {
-    const Object& pObject = std::get<Object>(this->value);
+    const Object& pObject = mpark::get<Object>(this->value);
     const auto it = pObject.find(key);
     if (it == pObject.end()) {
       throw JsonValueMissingKey(key);
@@ -302,7 +302,7 @@ public:
   [[nodiscard]] To getSafeNumericalValueOrDefaultForKey(
       const std::string& key,
       To defaultValue) const {
-    const Object& pObject = std::get<Object>(this->value);
+    const Object& pObject = mpark::get<Object>(this->value);
     const auto it = pObject.find(key);
     if (it == pObject.end()) {
       return defaultValue;
@@ -318,7 +318,7 @@ public:
    * or does not contain the given key.
    */
   [[nodiscard]] inline bool hasKey(const std::string& key) const {
-    const Object* pObject = std::get_if<Object>(&this->value);
+    const Object* pObject = mpark::get_if<Object>(&this->value);
     if (!pObject) {
       return false;
     }
@@ -341,17 +341,17 @@ public:
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
   [[nodiscard]] To getSafeNumber() const {
-    const std::uint64_t* uInt = std::get_if<std::uint64_t>(&this->value);
+    const std::uint64_t* uInt = mpark::get_if<std::uint64_t>(&this->value);
     if (uInt) {
       return gsl::narrow<To>(*uInt);
     }
 
-    const std::int64_t* sInt = std::get_if<std::int64_t>(&this->value);
+    const std::int64_t* sInt = mpark::get_if<std::int64_t>(&this->value);
     if (sInt) {
       return gsl::narrow<To>(*sInt);
     }
 
-    const double* real = std::get_if<double>(&this->value);
+    const double* real = mpark::get_if<double>(&this->value);
     if (real) {
       return gsl::narrow<To>(*real);
     }
@@ -372,17 +372,17 @@ public:
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
   [[nodiscard]] To getSafeNumberOrDefault(To defaultValue) const noexcept {
-    const std::uint64_t* uInt = std::get_if<std::uint64_t>(&this->value);
+    const std::uint64_t* uInt = mpark::get_if<std::uint64_t>(&this->value);
     if (uInt) {
       return losslessNarrowOrDefault<To>(*uInt, defaultValue);
     }
 
-    const std::int64_t* sInt = std::get_if<std::int64_t>(&this->value);
+    const std::int64_t* sInt = mpark::get_if<std::int64_t>(&this->value);
     if (sInt) {
       return losslessNarrowOrDefault<To>(*sInt, defaultValue);
     }
 
-    const double* real = std::get_if<double>(&this->value);
+    const double* real = mpark::get_if<double>(&this->value);
     if (real) {
       return losslessNarrowOrDefault<To>(*real, defaultValue);
     }
@@ -398,7 +398,7 @@ public:
    */
 
   [[nodiscard]] inline const JsonValue::Object& getObject() const {
-    return std::get<JsonValue::Object>(this->value);
+    return mpark::get<JsonValue::Object>(this->value);
   }
 
   /**
@@ -408,7 +408,7 @@ public:
    * JsonValue::String
    */
   [[nodiscard]] inline const JsonValue::String& getString() const {
-    return std::get<String>(this->value);
+    return mpark::get<String>(this->value);
   }
 
   /**
@@ -418,7 +418,7 @@ public:
    * JsonValue::Array
    */
   [[nodiscard]] inline const JsonValue::Array& getArray() const {
-    return std::get<JsonValue::Array>(this->value);
+    return mpark::get<JsonValue::Array>(this->value);
   }
 
   /**
@@ -439,7 +439,7 @@ public:
    * JsonValue::Bool
    */
   [[nodiscard]] inline bool getBool() const {
-    return std::get<bool>(this->value);
+    return mpark::get<bool>(this->value);
   }
 
   /**
@@ -448,7 +448,7 @@ public:
    * @throws std::bad_variant_access if the underlying type is not a double
    */
   [[nodiscard]] inline double getDouble() const {
-    return std::get<double>(this->value);
+    return mpark::get<double>(this->value);
   }
 
   /**
@@ -458,7 +458,7 @@ public:
    * std::uint64_t
    */
   [[nodiscard]] std::uint64_t getUint64() const {
-    return std::get<std::uint64_t>(this->value);
+    return mpark::get<std::uint64_t>(this->value);
   }
 
   /**
@@ -468,7 +468,7 @@ public:
    * std::int64_t
    */
   [[nodiscard]] std::int64_t getInt64() const {
-    return std::get<std::int64_t>(this->value);
+    return mpark::get<std::int64_t>(this->value);
   }
 
   /**
@@ -476,7 +476,7 @@ public:
    * @return The bool or defaultValue if this->value is not a bool.
    */
   [[nodiscard]] inline bool getBoolOrDefault(bool defaultValue) const noexcept {
-    const auto* v = std::get_if<bool>(&this->value);
+    const auto* v = mpark::get_if<bool>(&this->value);
     if (v) {
       return *v;
     }
@@ -490,7 +490,7 @@ public:
    */
   [[nodiscard]] inline const JsonValue::String
   getStringOrDefault(String defaultValue) const {
-    const auto* v = std::get_if<JsonValue::String>(&this->value);
+    const auto* v = mpark::get_if<JsonValue::String>(&this->value);
     if (v) {
       return *v;
     }
@@ -504,7 +504,7 @@ public:
    */
   [[nodiscard]] inline double
   getDoubleOrDefault(double defaultValue) const noexcept {
-    const auto* v = std::get_if<double>(&this->value);
+    const auto* v = mpark::get_if<double>(&this->value);
     if (v) {
       return *v;
     }
@@ -518,7 +518,7 @@ public:
    */
   [[nodiscard]] inline std::uint64_t
   getUint64OrDefault(std::uint64_t defaultValue) const noexcept {
-    const auto* v = std::get_if<std::uint64_t>(&this->value);
+    const auto* v = mpark::get_if<std::uint64_t>(&this->value);
     if (v) {
       return *v;
     }
@@ -532,7 +532,7 @@ public:
    */
   [[nodiscard]] inline std::int64_t
   getInt64OrDefault(std::int64_t defaultValue) const noexcept {
-    const auto* v = std::get_if<std::int64_t>(&this->value);
+    const auto* v = mpark::get_if<std::int64_t>(&this->value);
     if (v) {
       return *v;
     }
@@ -544,7 +544,7 @@ public:
    * @brief Returns whether this value is a `null` value.
    */
   [[nodiscard]] inline bool isNull() const noexcept {
-    return std::holds_alternative<Null>(this->value);
+    return mpark::holds_alternative<Null>(this->value);
   }
 
   /**
@@ -560,49 +560,49 @@ public:
    * @brief Returns whether this value is a `Bool` value.
    */
   [[nodiscard]] inline bool isBool() const noexcept {
-    return std::holds_alternative<Bool>(this->value);
+    return mpark::holds_alternative<Bool>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `String` value.
    */
   [[nodiscard]] inline bool isString() const noexcept {
-    return std::holds_alternative<String>(this->value);
+    return mpark::holds_alternative<String>(this->value);
   }
 
   /**
    * @brief Returns whether this value is an `Object` value.
    */
   [[nodiscard]] inline bool isObject() const noexcept {
-    return std::holds_alternative<Object>(this->value);
+    return mpark::holds_alternative<Object>(this->value);
   }
 
   /**
    * @brief Returns whether this value is an `Array` value.
    */
   [[nodiscard]] inline bool isArray() const noexcept {
-    return std::holds_alternative<Array>(this->value);
+    return mpark::holds_alternative<Array>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `double` value.
    */
   [[nodiscard]] inline bool isDouble() const noexcept {
-    return std::holds_alternative<double>(this->value);
+    return mpark::holds_alternative<double>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `std::uint64_t` value.
    */
   [[nodiscard]] inline bool isUint64() const noexcept {
-    return std::holds_alternative<std::uint64_t>(this->value);
+    return mpark::holds_alternative<std::uint64_t>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `std::int64_t` value.
    */
   [[nodiscard]] inline bool isInt64() const noexcept {
-    return std::holds_alternative<std::int64_t>(this->value);
+    return mpark::holds_alternative<std::int64_t>(this->value);
   }
 
   /**
@@ -617,7 +617,7 @@ public:
    * `Object` values, the properties may be accessed with the
    * `getValueForKey` functions.
    */
-  std::variant<
+  mpark::variant<
       Null,
       double,
       std::uint64_t,

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <mpark/variant.hpp>
 
-#include <variant>
 #include <vector>
 
 namespace CesiumGeometry {
@@ -48,7 +48,7 @@ struct InterpolatedVertex {
  * It may either be a simple index referring to an existing vertex,
  * or an interpolation between two vertices.
  */
-using TriangleClipVertex = std::variant<int, InterpolatedVertex>;
+using TriangleClipVertex = mpark::variant<int, InterpolatedVertex>;
 
 /**
  * @brief Splits a 2D triangle at given axis-aligned threshold value and returns

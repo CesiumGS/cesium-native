@@ -16,7 +16,7 @@ struct SubtreeBufferViewAvailability {
 };
 
 using AvailabilityView =
-    std::variant<SubtreeConstantAvailability, SubtreeBufferViewAvailability>;
+    mpark::variant<SubtreeConstantAvailability, SubtreeBufferViewAvailability>;
 
 class SubtreeAvailability {
 public:

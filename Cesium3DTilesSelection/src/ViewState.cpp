@@ -119,7 +119,7 @@ bool ViewState::isBoundingVolumeVisible(
     }
   };
 
-  return std::visit(Operation{*this}, boundingVolume);
+  return mpark::visit(Operation{*this}, boundingVolume);
 }
 
 double ViewState::computeDistanceSquaredToBoundingVolume(
@@ -162,7 +162,7 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
     }
   };
 
-  return std::visit(Operation{*this}, boundingVolume);
+  return mpark::visit(Operation{*this}, boundingVolume);
 }
 
 double ViewState::computeScreenSpaceError(

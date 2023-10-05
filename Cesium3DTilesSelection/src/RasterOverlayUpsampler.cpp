@@ -9,8 +9,9 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Projection.h>
 
+#include <mpark/variant.hpp>
+
 #include <cassert>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 CesiumAsync::Future<TileLoadResult>
@@ -22,7 +23,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
-      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
+      mpark::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
           &loadInput.tile.getTileID());
   if (pTileID == nullptr) {
     // this tile is not marked to be upsampled, so just fail it

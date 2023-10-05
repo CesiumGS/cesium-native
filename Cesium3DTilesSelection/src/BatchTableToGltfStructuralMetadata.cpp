@@ -140,7 +140,7 @@ private:
    * MaskedType or MaskedArrayType, they are considered incompatible with the
    * other type.
    */
-  std::variant<std::monostate, MaskedType, MaskedArrayType> _type;
+  mpark::variant<std::monostate, MaskedType, MaskedArrayType> _type;
 
   /**
    * Whether the property has encountered a null value. A
@@ -182,7 +182,7 @@ public:
    * "compatible" with everything.
    */
   bool isExclusivelyArray() const noexcept {
-    return std::holds_alternative<MaskedArrayType>(_type);
+    return mpark::holds_alternative<MaskedArrayType>(_type);
   }
 
   /**
@@ -190,15 +190,15 @@ public:
    * count arrays.
    */
   bool isCompatibleWithUnsignedInteger() const noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
+    if (mpark::holds_alternative<MaskedArrayType>(_type)) {
       return false;
     }
 
-    if (std::holds_alternative<std::monostate>(_type)) {
+    if (mpark::holds_alternative<std::monostate>(_type)) {
       return true;
     }
 
-    MaskedType type = std::get<MaskedType>(_type);
+    MaskedType type = mpark::get<MaskedType>(_type);
     return type.isUint8 || type.isUint16 || type.isUint32 || type.isUint64;
   }
 
@@ -207,15 +207,15 @@ public:
    * Does not count arrays.
    */
   bool isCompatibleWithSignedInteger() const noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
+    if (mpark::holds_alternative<MaskedArrayType>(_type)) {
       return false;
     }
 
-    if (std::holds_alternative<std::monostate>(_type)) {
+    if (mpark::holds_alternative<std::monostate>(_type)) {
       return true;
     }
 
-    MaskedType type = std::get<MaskedType>(_type);
+    MaskedType type = mpark::get<MaskedType>(_type);
     return type.isInt8 || type.isInt16 || type.isInt32 || type.isInt64;
   }
 
@@ -224,7 +224,7 @@ public:
    * happens when a CompatibleTypes is initialized and never modified.
    */
   bool isFullyCompatible() const noexcept {
-    return std::holds_alternative<std::monostate>(_type);
+    return mpark::holds_alternative<std::monostate>(_type);
   }
 
   /**
@@ -232,12 +232,12 @@ public:
    * Fully-incompatible properties will be treated as string properties.
    */
   bool isIncompatible() const noexcept {
-    if (std::holds_alternative<MaskedType>(_type)) {
-      return std::get<MaskedType>(_type).isIncompatible();
+    if (mpark::holds_alternative<MaskedType>(_type)) {
+      return mpark::get<MaskedType>(_type).isIncompatible();
     }
 
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
-      return std::get<MaskedArrayType>(_type).isIncompatible();
+    if (mpark::holds_alternative<MaskedArrayType>(_type)) {
+      return mpark::get<MaskedArrayType>(_type).isIncompatible();
     }
 
     // std::monostate means compatibility with all types.
@@ -254,13 +254,13 @@ public:
    * Merges a MaskedType into this BatchTableProperty.
    */
   void operator&=(const MaskedType& inMaskedType) noexcept {
-    if (std::holds_alternative<MaskedType>(_type)) {
-      MaskedType& maskedType = std::get<MaskedType>(_type);
+    if (mpark::holds_alternative<MaskedType>(_type)) {
+      MaskedType& maskedType = mpark::get<MaskedType>(_type);
       maskedType &= inMaskedType;
       return;
     }
 
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
+    if (mpark::holds_alternative<MaskedArrayType>(_type)) {
       makeIncompatible();
       return;
     }
@@ -272,13 +272,13 @@ public:
    * Merges a MaskedArrayType into this CompatibleTypes.
    */
   void operator&=(const MaskedArrayType& inArrayType) noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
-      MaskedArrayType& arrayType = std::get<MaskedArrayType>(_type);
+    if (mpark::holds_alternative<MaskedArrayType>(_type)) {
+      MaskedArrayType& arrayType = mpark::get<MaskedArrayType>(_type);
       arrayType &= inArrayType;
       return;
     }
 
-    if (std::holds_alternative<MaskedType>(_type)) {
+    if (mpark::holds_alternative<MaskedType>(_type)) {
       makeIncompatible();
       return;
     }
@@ -290,17 +290,17 @@ public:
    * Merges another CompatibleTypes into this one.
    */
   void operator&=(const CompatibleTypes& inTypes) noexcept {
-    if (std::holds_alternative<std::monostate>(inTypes._type)) {
+    if (mpark::holds_alternative<std::monostate>(inTypes._type)) {
       // The other CompatibleTypes is compatible with everything, so it does not
       // change this one.
     } else
 
-        if (std::holds_alternative<MaskedArrayType>(inTypes._type)) {
+        if (mpark::holds_alternative<MaskedArrayType>(inTypes._type)) {
       const MaskedArrayType& arrayType =
-          std::get<MaskedArrayType>(inTypes._type);
+          mpark::get<MaskedArrayType>(inTypes._type);
       operator&=(arrayType);
     } else {
-      const MaskedType& maskedType = std::get<MaskedType>(inTypes._type);
+      const MaskedType& maskedType = mpark::get<MaskedType>(inTypes._type);
       operator&=(maskedType);
     }
 
@@ -316,11 +316,11 @@ public:
    * MaskedType.
    */
   MaskedType toMaskedType() const noexcept {
-    if (std::holds_alternative<MaskedType>(_type)) {
-      return std::get<MaskedType>(_type);
+    if (mpark::holds_alternative<MaskedType>(_type)) {
+      return mpark::get<MaskedType>(_type);
     }
 
-    bool isArray = std::holds_alternative<MaskedArrayType>(_type);
+    bool isArray = mpark::holds_alternative<MaskedArrayType>(_type);
     return MaskedType(!isArray);
   }
 
@@ -330,11 +330,11 @@ public:
    * MaskedArrayType.
    */
   MaskedArrayType toMaskedArrayType() const noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
-      return std::get<MaskedArrayType>(_type);
+    if (mpark::holds_alternative<MaskedArrayType>(_type)) {
+      return mpark::get<MaskedArrayType>(_type);
     }
 
-    bool isNonArray = std::holds_alternative<MaskedType>(_type);
+    bool isNonArray = mpark::holds_alternative<MaskedType>(_type);
     return MaskedArrayType(!isNonArray);
   }
 

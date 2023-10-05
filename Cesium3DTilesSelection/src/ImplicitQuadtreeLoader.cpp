@@ -9,10 +9,10 @@
 #include <CesiumUtility/Uri.h>
 
 #include <libmorton/morton.h>
+#include <mpark/variant.hpp>
 #include <spdlog/logger.h>
 
 #include <type_traits>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -75,7 +75,7 @@ struct BoundingVolumeSubdivision {
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const ImplicitQuadtreeBoundingVolume& rootBoundingVolume) {
-  return std::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
+  return mpark::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
 }
 
 std::vector<Tile> populateSubtree(
@@ -90,7 +90,7 @@ std::vector<Tile> populateSubtree(
   }
 
   const CesiumGeometry::QuadtreeTileID& quadtreeID =
-      std::get<CesiumGeometry::QuadtreeTileID>(tile.getTileID());
+      mpark::get<CesiumGeometry::QuadtreeTileID>(tile.getTileID());
 
   std::vector<Tile> children;
   children.reserve(4);
@@ -260,7 +260,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // make sure the tile is a quadtree tile
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+      mpark::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createFailedResult(nullptr));
@@ -346,7 +346,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 TileChildrenResult
 ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+      mpark::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   assert(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
 
   // find the subtree ID

@@ -562,7 +562,7 @@ private:
     }
   }
 
-  using PropertyDefinitionType = std::variant<
+  using PropertyDefinitionType = mpark::variant<
       ClassProperty,
       PropertyTableProperty,
       PropertyTextureProperty,
@@ -573,7 +573,7 @@ private:
    * given property type.
    */
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
-    std::visit(
+    mpark::visit(
         [this](auto property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
@@ -899,7 +899,7 @@ private:
     }
   }
 
-  using PropertyDefinitionType = std::variant<
+  using PropertyDefinitionType = mpark::variant<
       ClassProperty,
       PropertyTableProperty,
       PropertyTextureProperty,
@@ -910,7 +910,7 @@ private:
    * given property type.
    */
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
-    std::visit(
+    mpark::visit(
         [this](auto property) {
           if (property.offset) {
             _offset = getValue<NormalizedType>(*property.offset);
@@ -1570,10 +1570,10 @@ private:
   std::optional<std::vector<std::byte>> _noData;
   std::optional<std::vector<std::byte>> _defaultValue;
 
-  using PropertyDefinitionType = std::
+  using PropertyDefinitionType = mpark::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
-    std::visit(
+    mpark::visit(
         [this](auto property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
@@ -1967,10 +1967,10 @@ private:
   std::optional<std::vector<std::byte>> _noData;
   std::optional<std::vector<std::byte>> _defaultValue;
 
-  using PropertyDefinitionType = std::
+  using PropertyDefinitionType = mpark::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
-    std::visit(
+    mpark::visit(
         [this](auto property) {
           if (property.offset) {
             if (_count > 0) {

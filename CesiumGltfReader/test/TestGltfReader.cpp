@@ -272,7 +272,8 @@ TEST_CASE("Nested extras deserializes properly") {
   REQUIRE(pC2 != nullptr);
 
   CHECK(pC2->isArray());
-  std::vector<JsonValue>& array = std::get<std::vector<JsonValue>>(pC2->value);
+  std::vector<JsonValue>& array =
+      mpark::get<std::vector<JsonValue>>(pC2->value);
   CHECK(array.size() == 5);
   CHECK(array[0].getSafeNumber<double>() == 1.0);
   CHECK(array[1].getSafeNumber<std::uint64_t>() == 2);

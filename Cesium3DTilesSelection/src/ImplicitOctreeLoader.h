@@ -7,14 +7,15 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 
+#include <mpark/variant.hpp>
+
 #include <cmath>
 #include <string>
 #include <unordered_map>
-#include <variant>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-using ImplicitOctreeBoundingVolume = std::variant<
+using ImplicitOctreeBoundingVolume = mpark::variant<
     CesiumGeospatial::BoundingRegion,
     CesiumGeometry::OrientedBoundingBox>;
 

@@ -9,7 +9,7 @@
 
 #include <CesiumUtility/Tracing.h>
 
-#include <variant>
+#include <mpark/variant.hpp>
 
 namespace CesiumAsync {
 

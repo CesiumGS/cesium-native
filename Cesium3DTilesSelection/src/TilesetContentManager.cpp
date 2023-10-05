@@ -140,10 +140,11 @@ void createQuadtreeSubdividedChildren(
   // use the standard tile bounds for the ID. But having a tile ID that reflects
   // the level and _approximate_ location is helpful for debugging.
   const CesiumGeometry::QuadtreeTileID* pRealParentTileID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&parent.getTileID());
+      mpark::get_if<CesiumGeometry::QuadtreeTileID>(&parent.getTileID());
   if (!pRealParentTileID) {
     const CesiumGeometry::UpsampledQuadtreeNode* pUpsampledID =
-        std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&parent.getTileID());
+        mpark::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
+            &parent.getTileID());
     if (pUpsampledID) {
       pRealParentTileID = &pUpsampledID->tileID;
     }
@@ -336,7 +337,7 @@ void calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
-  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
+  CesiumGltf::Model& model = mpark::get<CesiumGltf::Model>(result.contentKind);
 
   // we will use the fittest bounding volume to calculate raster overlay details
   // below
@@ -428,13 +429,13 @@ void calcRasterOverlayDetailsInWorkerThread(
 void calcFittestBoundingRegionForLooseTile(
     TileLoadResult& result,
     const TileContentLoadInfo& tileLoadInfo) {
-  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
+  CesiumGltf::Model& model = mpark::get<CesiumGltf::Model>(result.contentKind);
 
   const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
       tileLoadInfo.tileBoundingVolume,
       result.updatedBoundingVolume,
       result.updatedContentBoundingVolume);
-  if (std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
+  if (mpark::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(
           &boundingVolume) != nullptr) {
     if (result.rasterOverlayDetails) {
       // We already computed the bounding region for overlays, so use it.
@@ -453,7 +454,7 @@ void postProcessGltfInWorkerThread(
     TileLoadResult& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     const TileContentLoadInfo& tileLoadInfo) {
-  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
+  CesiumGltf::Model& model = mpark::get<CesiumGltf::Model>(result.contentKind);
 
   if (result.pCompletedRequest) {
     model.extras["Cesium3DTiles_TileUrl"] = result.pCompletedRequest->url();
@@ -489,7 +490,7 @@ postProcessContentInWorkerThread(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
-  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
+  CesiumGltf::Model& model = mpark::get<CesiumGltf::Model>(result.contentKind);
 
   // Download any external image or buffer urls in the gltf if there are any
   CesiumGltfReader::GltfReaderResult gltfResult{std::move(model), {}, {}};
@@ -871,7 +872,7 @@ void TilesetContentManager::loadTileContent(
   // the current tile. Warning: it's not thread-safe to modify the parent
   // geometry in the worker thread at the same time though
   const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
-      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID());
+      mpark::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID());
   if (pUpsampleID) {
     // We can't upsample this tile until its parent tile is done loading.
     Tile* pParentTile = tile.getParent();
@@ -943,7 +944,7 @@ void TilesetContentManager::loadTileContent(
         // related to render content. We only ever spawn a new task in the
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::Success) {
-          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
+          if (mpark::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
             auto asyncSystem = tileLoadInfo.asyncSystem;
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
@@ -1047,7 +1048,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   // Are any children currently being upsampled from this tile?
   for (const Tile& child : tile.getChildren()) {
     if (child.getState() == TileLoadState::ContentLoading &&
-        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
+        mpark::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
             child.getTileID())) {
       // Yes, a child is upsampling from this tile, so it may be using the
       // tile's content from another thread via lambda capture. We can't unload
@@ -1221,7 +1222,7 @@ void TilesetContentManager::setTileContent(
     }
 
     auto& content = tile.getContent();
-    std::visit(
+    mpark::visit(
         ContentKindSetter{
             content,
             std::move(result.rasterOverlayDetails),

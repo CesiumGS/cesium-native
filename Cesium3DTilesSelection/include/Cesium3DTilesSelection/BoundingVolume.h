@@ -9,15 +9,16 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
+#include <mpark/variant.hpp>
+
 #include <optional>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 
 /**
  * @brief A bounding volume.
  *
- * This is a `std::variant` for different types of bounding volumes.
+ * This is a `mpark::variant` for different types of bounding volumes.
  *
  * @see CesiumGeometry::BoundingSphere
  * @see CesiumGeometry::OrientedBoundingBox
@@ -25,7 +26,7 @@ namespace Cesium3DTilesSelection {
  * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
  * @see CesiumGeospatial::S2CellBoundingVolume
  */
-typedef std::variant<
+typedef mpark::variant<
     CesiumGeometry::BoundingSphere,
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeospatial::BoundingRegion,
