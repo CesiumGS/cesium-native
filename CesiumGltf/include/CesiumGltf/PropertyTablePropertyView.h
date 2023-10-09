@@ -203,7 +203,9 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size) noexcept
+  PropertyTablePropertyView(
+      const ClassProperty& classProperty,
+      int64_t size) noexcept
       : PropertyView<ElementType, false>(classProperty),
         _values{},
         _size{0},
@@ -558,7 +560,9 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size) noexcept
+  PropertyTablePropertyView(
+      const ClassProperty& classProperty,
+      int64_t size) noexcept
       : PropertyView<ElementType, true>(classProperty),
         _values{},
         _size{0},

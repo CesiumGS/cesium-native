@@ -135,12 +135,12 @@ struct MaskedArrayType {
 struct CompatibleTypes {
 private:
   /**
-   * std::monostate represents "complete" compatibility, in that nothing has
+   * mpark::monostate represents "complete" compatibility, in that nothing has
    * been determined to be incompatible yet. Once something is either a
    * MaskedType or MaskedArrayType, they are considered incompatible with the
    * other type.
    */
-  mpark::variant<std::monostate, MaskedType, MaskedArrayType> _type;
+  mpark::variant<mpark::monostate, MaskedType, MaskedArrayType> _type;
 
   /**
    * Whether the property has encountered a null value. A
@@ -194,7 +194,7 @@ public:
       return false;
     }
 
-    if (mpark::holds_alternative<std::monostate>(_type)) {
+    if (mpark::holds_alternative<mpark::monostate>(_type)) {
       return true;
     }
 
@@ -211,7 +211,7 @@ public:
       return false;
     }
 
-    if (mpark::holds_alternative<std::monostate>(_type)) {
+    if (mpark::holds_alternative<mpark::monostate>(_type)) {
       return true;
     }
 
@@ -224,7 +224,7 @@ public:
    * happens when a CompatibleTypes is initialized and never modified.
    */
   bool isFullyCompatible() const noexcept {
-    return mpark::holds_alternative<std::monostate>(_type);
+    return mpark::holds_alternative<mpark::monostate>(_type);
   }
 
   /**
@@ -240,7 +240,7 @@ public:
       return mpark::get<MaskedArrayType>(_type).isIncompatible();
     }
 
-    // std::monostate means compatibility with all types.
+    // mpark::monostate means compatibility with all types.
     return false;
   }
 
@@ -290,7 +290,7 @@ public:
    * Merges another CompatibleTypes into this one.
    */
   void operator&=(const CompatibleTypes& inTypes) noexcept {
-    if (mpark::holds_alternative<std::monostate>(inTypes._type)) {
+    if (mpark::holds_alternative<mpark::monostate>(inTypes._type)) {
       // The other CompatibleTypes is compatible with everything, so it does not
       // change this one.
     } else
