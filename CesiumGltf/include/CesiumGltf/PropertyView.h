@@ -167,7 +167,7 @@ validateArrayPropertyType(const ClassProperty& classProperty) {
 }
 
 template <typename T>
-static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
+std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
   try {
     return jsonValue.getSafeNumber<T>();
   } catch (const CesiumUtility::JsonValueNotRealValue& /*error*/) {
@@ -178,8 +178,7 @@ static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
 }
 
 template <typename VecType>
-static std::optional<VecType>
-getVecN(const CesiumUtility::JsonValue& jsonValue) {
+std::optional<VecType> getVecN(const CesiumUtility::JsonValue& jsonValue) {
   if (!jsonValue.isArray()) {
     return std::nullopt;
   }
@@ -206,8 +205,7 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
 }
 
 template <typename MatType>
-static std::optional<MatType>
-getMatN(const CesiumUtility::JsonValue& jsonValue) {
+std::optional<MatType> getMatN(const CesiumUtility::JsonValue& jsonValue) {
   if (!jsonValue.isArray()) {
     return std::nullopt;
   }
@@ -267,7 +265,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -283,7 +281,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validatePropertyType<ElementType>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -343,7 +341,7 @@ protected:
    * @param status The value of {@link PropertyViewStatus} indicating the error
    * with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -362,7 +360,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
+      const PropertyTableProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -378,7 +376,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
+      const PropertyTextureProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -394,7 +392,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyAttributeProperty& property)
+      const PropertyAttributeProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -572,9 +570,10 @@ private:
    * @brief Attempts to parse offset, scale, min, and max properties from the
    * given property type.
    */
-  void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
+  void
+  getNumericPropertyValues(const PropertyDefinitionType& inProperty) noexcept {
     mpark::visit(
-        [this](auto property) {
+        [this](const auto& property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
             switch (TypeToPropertyType<ElementType>::component) {
@@ -652,7 +651,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -668,7 +667,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validatePropertyType<ElementType>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -725,7 +724,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -744,7 +743,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
+      const PropertyTableProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -760,7 +759,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
+      const PropertyTextureProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -776,7 +775,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyAttributeProperty& property)
+      const PropertyAttributeProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -885,7 +884,8 @@ private:
    * parsed.
    */
   template <typename T>
-  static std::optional<T> getValue(const CesiumUtility::JsonValue& jsonValue) {
+  static std::optional<T>
+  getValue(const CesiumUtility::JsonValue& jsonValue) noexcept {
     if constexpr (IsMetadataScalar<T>::value) {
       return getScalar<T>(jsonValue);
     }
@@ -909,9 +909,10 @@ private:
    * @brief Attempts to parse offset, scale, min, and max properties from the
    * given property type.
    */
-  void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
+  void
+  getNumericPropertyValues(const PropertyDefinitionType& inProperty) noexcept {
     mpark::visit(
-        [this](auto property) {
+        [this](const auto& property) {
           if (property.offset) {
             _offset = getValue<NormalizedType>(*property.offset);
             if (!_offset) {
@@ -961,7 +962,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -972,7 +973,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validatePropertyType<bool>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1002,7 +1003,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1016,7 +1017,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/) noexcept
       : PropertyView(classProperty) {}
 
 public:
@@ -1101,7 +1102,7 @@ private:
   std::optional<bool> _defaultValue;
 
   static std::optional<bool>
-  getBooleanValue(const CesiumUtility::JsonValue& value) {
+  getBooleanValue(const CesiumUtility::JsonValue& value) noexcept {
     if (!value.isBool()) {
       return std::nullopt;
     }
@@ -1119,7 +1120,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1131,7 +1132,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validatePropertyType<std::string_view>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1174,7 +1175,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1189,7 +1190,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/) noexcept
       : PropertyView(classProperty) {}
 
 public:
@@ -1289,7 +1290,7 @@ private:
   std::optional<std::string> _defaultValue;
 
   static std::optional<std::string>
-  getStringValue(const CesiumUtility::JsonValue& value) {
+  getStringValue(const CesiumUtility::JsonValue& value) noexcept {
     if (!value.isString()) {
       return std::nullopt;
     }
@@ -1317,7 +1318,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1334,7 +1335,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
             classProperty)),
         _name(classProperty.name),
@@ -1392,7 +1393,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1412,7 +1413,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
+      const PropertyTableProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -1428,7 +1429,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
+      const PropertyTextureProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -1572,9 +1573,10 @@ private:
 
   using PropertyDefinitionType = mpark::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
-  void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
+  void
+  getNumericPropertyValues(const PropertyDefinitionType& inProperty) noexcept {
     mpark::visit(
-        [this](auto property) {
+        [this](const auto& property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
             switch (TypeToPropertyType<ElementType>::component) {
@@ -1643,7 +1645,7 @@ private:
   }
 
   static std::optional<std::vector<std::byte>>
-  getArrayValue(const CesiumUtility::JsonValue& jsonValue) {
+  getArrayValue(const CesiumUtility::JsonValue& jsonValue) noexcept {
     if (!jsonValue.isArray()) {
       return std::nullopt;
     }
@@ -1713,7 +1715,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1730,7 +1732,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
             classProperty)),
         _name(classProperty.name),
@@ -1788,7 +1790,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -1808,7 +1810,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
+      const PropertyTableProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -1824,7 +1826,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
+      const PropertyTextureProperty& property) noexcept
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -1969,9 +1971,10 @@ private:
 
   using PropertyDefinitionType = mpark::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
-  void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
+  void
+  getNumericPropertyValues(const PropertyDefinitionType& inProperty) noexcept {
     mpark::visit(
-        [this](auto property) {
+        [this](const auto& property) {
           if (property.offset) {
             if (_count > 0) {
               _offset = getArrayValue<NormalizedType>(*property.offset);
@@ -2021,7 +2024,7 @@ private:
 
   template <typename T>
   static std::optional<std::vector<std::byte>>
-  getArrayValue(const CesiumUtility::JsonValue& jsonValue) {
+  getArrayValue(const CesiumUtility::JsonValue& jsonValue) noexcept {
     if (!jsonValue.isArray()) {
       return std::nullopt;
     }
@@ -2079,7 +2082,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -2092,7 +2095,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(
             validateArrayPropertyType<PropertyArrayView<bool>>(classProperty)),
         _name(classProperty.name),
@@ -2125,7 +2128,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -2141,7 +2144,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/) noexcept
       : PropertyView(classProperty) {}
 
 public:
@@ -2251,7 +2254,7 @@ private:
 
   static std::vector<std::byte> getBooleanArrayValue(
       const CesiumUtility::JsonValue& jsonValue,
-      int64_t& size) {
+      int64_t& size) noexcept {
     if (!jsonValue.isArray()) {
       return std::vector<std::byte>();
     }
@@ -2298,7 +2301,7 @@ public:
   /**
    * @brief Constructs an empty property instance.
    */
-  PropertyView()
+  PropertyView() noexcept
       : _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -2311,7 +2314,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const ClassProperty& classProperty) noexcept
       : _status(validateArrayPropertyType<PropertyArrayView<std::string_view>>(
             classProperty)),
         _name(classProperty.name),
@@ -2356,7 +2359,7 @@ protected:
    *
    * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
    */
-  PropertyView(PropertyViewStatusType status)
+  PropertyView(PropertyViewStatusType status) noexcept
       : _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
@@ -2372,7 +2375,7 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/) noexcept
       : PropertyView(classProperty) {}
 
 public:
@@ -2502,7 +2505,7 @@ private:
   StringArrayValue _defaultValue;
 
   static StringArrayValue
-  getStringArrayValue(const CesiumUtility::JsonValue& jsonValue) {
+  getStringArrayValue(const CesiumUtility::JsonValue& jsonValue) noexcept {
     StringArrayValue result;
     if (!jsonValue.isArray()) {
       return result;
@@ -2561,7 +2564,7 @@ private:
 
   template <typename T>
   static std::vector<std::byte>
-  narrowOffsetsBuffer(std::vector<uint64_t> offsets) {
+  narrowOffsetsBuffer(std::vector<uint64_t> offsets) noexcept {
     std::vector<std::byte> result(offsets.size() * sizeof(T));
     size_t bufferOffset = 0;
     for (size_t i = 0; i < offsets.size(); i++, bufferOffset += sizeof(T)) {

@@ -163,7 +163,7 @@ public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyTablePropertyView()
+  PropertyTablePropertyView() noexcept
       : PropertyView<ElementType, false>(),
         _values{},
         _size{0},
@@ -179,7 +179,7 @@ public:
    *
    * @param status The code from {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
-  PropertyTablePropertyView(PropertyViewStatusType status)
+  PropertyTablePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status),
         _values{},
         _size{0},
@@ -203,7 +203,7 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
+  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size) noexcept
       : PropertyView<ElementType, false>(classProperty),
         _values{},
         _size{0},
@@ -524,7 +524,7 @@ public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyTablePropertyView()
+  PropertyTablePropertyView() noexcept
       : PropertyView<ElementType, true>(),
         _values{},
         _size{0},
@@ -537,7 +537,7 @@ public:
    *
    * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
    */
-  PropertyTablePropertyView(PropertyViewStatusType status)
+  PropertyTablePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status),
         _values{},
         _size{0},
@@ -558,7 +558,7 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
+  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size) noexcept
       : PropertyView<ElementType, true>(classProperty),
         _values{},
         _size{0},

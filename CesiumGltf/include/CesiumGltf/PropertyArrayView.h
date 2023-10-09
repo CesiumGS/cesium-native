@@ -25,7 +25,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{} {}
+  PropertyArrayView() noexcept : _values{} {}
 
   /**
    * @brief Constructs an array view from a buffer.
@@ -41,19 +41,29 @@ public:
    *
    * @param values The vector containing the values.
    */
-  PropertyArrayView(const std::vector<ElementType>&& values)
+  PropertyArrayView(std::vector<ElementType>&& values) noexcept
       : _values{std::move(values)} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
-    return mpark::visit(
-        [index](auto const& values) -> auto const& { return values[index]; },
-        _values);
+    switch (_values.index()) {
+    case 0:
+      return (*mpark::get_if<0>(&_values))[index];
+    case 1:
+      return (*mpark::get_if<1>(&_values))[index];
+    default:
+      abort();
+    }
   }
 
   int64_t size() const noexcept {
-    return mpark::visit(
-        [](auto const& values) { return static_cast<int64_t>(values.size()); },
-        _values);
+    switch (_values.index()) {
+    case 0:
+      return mpark::get_if<0>(&_values)->size();
+    case 1:
+      return mpark::get_if<1>(&_values)->size();
+    default:
+      abort();
+    }
   }
 
   bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
@@ -85,7 +95,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{}, _bitOffset{0}, _size{0} {}
+  PropertyArrayView() noexcept : _values{}, _bitOffset{0}, _size{0} {}
 
   /**
    * @brief Constructs an array view from a buffer.
@@ -140,7 +150,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView()
+  PropertyArrayView() noexcept
       : _values{},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
