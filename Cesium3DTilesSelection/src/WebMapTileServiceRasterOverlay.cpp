@@ -15,7 +15,6 @@
 #include <CesiumUtility/Uri.h>
 
 #include <cstddef>
-#include <regex>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -236,12 +235,8 @@ WebMapTileServiceRasterOverlay::createTileProvider(
 
   bool useKVP;
 
-  std::regex bracket("\\{");
-  std::regex bracketS("\\{s\\}");
-  std::smatch matchBracket;
-  bool hasMatch = std::regex_search(_url, matchBracket, bracket);
-  if (!hasMatch ||
-      (matchBracket.size() == 1 && std::regex_match(_url, bracketS))) {
+  auto countBracket = std::count(_url.begin(), _url.end(), '_');
+  if (countBracket < 1 || (countBracket == 1 && _url.find("{s}") != -1)) {
     useKVP = true;
   } else {
     useKVP = false;
