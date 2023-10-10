@@ -199,27 +199,6 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   bool hasError = false;
   std::string errorMessage;
 
-  std::string layer;
-  std::string style;
-  std::string tileMatrixSetID;
-  if (!_options.layer.has_value()) {
-    hasError = true;
-    errorMessage = "layer is required.";
-  } else {
-    layer = _options.layer.value();
-  }
-  if (!_options.style.has_value()) {
-    hasError = true;
-    errorMessage = "style is required.";
-  } else {
-    style = _options.style.value();
-  }
-  if (!_options.tileMatrixSetID.has_value()) {
-    hasError = true;
-    errorMessage = "tileMatrixSetID is required.";
-  } else {
-    tileMatrixSetID = _options.tileMatrixSetID.value();
-  }
   std::string format = _options.format.value_or("image/jpeg");
   uint32_t tileWidth = _options.tileWidth.value_or(256);
   uint32_t tileHeight = _options.tileHeight.value_or(256);
@@ -317,9 +296,9 @@ WebMapTileServiceRasterOverlay::createTileProvider(
               tileHeight,
               minimumLevel,
               maximumLevel,
-              layer,
-              style,
-              tileMatrixSetID,
+              _options.layer,
+              _options.style,
+              _options.tileMatrixSetID,
               _options.tileMatrixLabels,
               _options.dimensions,
               subdomains));

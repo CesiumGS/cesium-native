@@ -11,6 +11,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 
@@ -23,6 +24,8 @@ struct WebMapTileServiceRasterOverlayOptions {
 
   /**
    * @brief The MIME type for images to retrieve from the server.
+   *
+   * Default value is "image/jpeg"
    */
   std::optional<std::string> format;
 
@@ -42,17 +45,17 @@ struct WebMapTileServiceRasterOverlayOptions {
   /**
    * @brief The layer name for WMTS requests.
    */
-  std::optional<std::string> layer;
+  std::string layer;
 
   /**
    * @brief The style name for WMTS requests.
    */
-  std::optional<std::string> style;
+  std::string style;
 
   /**
    * @brief The identifier of the TileMatrixSet to use for WMTS requests.
    */
-  std::optional<std::string> tileMatrixSetID;
+  std::string tileMatrixSetID;
 
   /**
    * @brief A list of identifiers in the TileMatrix to use for WMTS requests,
@@ -109,11 +112,15 @@ struct WebMapTileServiceRasterOverlayOptions {
 
   /**
    * @brief Pixel width of image tiles.
+   *
+   * Default value is 256
    */
   std::optional<uint32_t> tileWidth;
 
   /**
    * @brief Pixel height of image tiles.
+   *
+   * Default value is 256
    */
   std::optional<uint32_t> tileHeight;
 };
