@@ -332,7 +332,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   // Repeat test but this time the extension should be deserialized as a
   // JsonValue.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::JsonOnly);
 
@@ -367,7 +367,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
           ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
   // Repeat test but this time the extension should not be deserialized at all.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::Disabled);
 
@@ -432,10 +432,10 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "A",
       CesiumJsonReader::ExtensionState::Disabled);
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 
@@ -608,4 +608,57 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
       smallerThan = image.mipPositions[i].byteSize;
     }
   }
+}
+
+TEST_CASE("Can read unknown properties from a glTF") {
+  const std::string s = R"(
+    {
+      "someUnknownProperty": "test",
+      "asset": {
+        "unknownInsideKnown": "this works too"
+      }
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+
+  reader.getOptions().setCaptureUnknownProperties(true);
+
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  REQUIRE(result.model.has_value());
+
+  auto unknownIt1 = result.model->unknownProperties.find("someUnknownProperty");
+  REQUIRE(unknownIt1 != result.model->unknownProperties.end());
+  CHECK(unknownIt1->second.getStringOrDefault("") == "test");
+
+  auto unknownIt2 =
+      result.model->asset.unknownProperties.find("unknownInsideKnown");
+  REQUIRE(unknownIt2 != result.model->asset.unknownProperties.end());
+  CHECK(unknownIt2->second.getStringOrDefault("") == "this works too");
+}
+
+TEST_CASE("Ignores unknown properties if requested") {
+  const std::string s = R"(
+    {
+      "someUnknownProperty": "test",
+      "asset": {
+        "unknownInsideKnown": "this works too"
+      }
+    }
+  )";
+
+  GltfReaderOptions options;
+  GltfReader reader;
+
+  reader.getOptions().setCaptureUnknownProperties(false);
+
+  GltfReaderResult result = reader.readGltf(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  REQUIRE(result.model.has_value());
+  CHECK(result.model->unknownProperties.empty());
+  CHECK(result.model->asset.unknownProperties.empty());
 }

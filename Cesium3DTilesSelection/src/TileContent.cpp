@@ -78,7 +78,8 @@ TileContent::TileContent() : _contentKind{TileUnknownContent{}} {}
 
 TileContent::TileContent(TileEmptyContent content) : _contentKind{content} {}
 
-TileContent::TileContent(TileExternalContent content) : _contentKind{content} {}
+TileContent::TileContent(std::unique_ptr<TileExternalContent>&& content)
+    : _contentKind{std::move(content)} {}
 
 void TileContent::setContentKind(TileUnknownContent content) {
   _contentKind = content;
@@ -88,8 +89,9 @@ void TileContent::setContentKind(TileEmptyContent content) {
   _contentKind = content;
 }
 
-void TileContent::setContentKind(TileExternalContent content) {
-  _contentKind = content;
+void TileContent::setContentKind(
+    std::unique_ptr<TileExternalContent>&& content) {
+  _contentKind = std::move(content);
 }
 
 void TileContent::setContentKind(std::unique_ptr<TileRenderContent>&& content) {
@@ -105,7 +107,8 @@ bool TileContent::isEmptyContent() const noexcept {
 }
 
 bool TileContent::isExternalContent() const noexcept {
-  return std::holds_alternative<TileExternalContent>(this->_contentKind);
+  return std::holds_alternative<std::unique_ptr<TileExternalContent>>(
+      this->_contentKind);
 }
 
 bool TileContent::isRenderContent() const noexcept {
@@ -132,4 +135,25 @@ TileRenderContent* TileContent::getRenderContent() noexcept {
 
   return nullptr;
 }
+
+const TileExternalContent* TileContent::getExternalContent() const noexcept {
+  const std::unique_ptr<TileExternalContent>* pExternalContent =
+      std::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
+  if (pExternalContent) {
+    return pExternalContent->get();
+  }
+
+  return nullptr;
+}
+
+TileExternalContent* TileContent::getExternalContent() noexcept {
+  std::unique_ptr<TileExternalContent>* pExternalContent =
+      std::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
+  if (pExternalContent) {
+    return pExternalContent->get();
+  }
+
+  return nullptr;
+}
+
 } // namespace Cesium3DTilesSelection

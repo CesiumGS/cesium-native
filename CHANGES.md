@@ -2,15 +2,108 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Cesium Native is now only regularly tested on Visual Studio 2019+, GCC 11.x+, and Clang 12+. Other compilers - including older ones - are likely to work, but are not tested.
+- Removed `PropertyTablePropertyViewType` and `NormalizedPropertyTablePropertyViewType`, as well as their counterparts for property textures and property attributes. When compiled with Clang, the large `std::variant` definitions would significantly stall compilation.
+
+##### Additions :tada:
+
+- Added `getClass` to `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView`. This can be used to retrieve the metadata `Class` associated with the view.
+- Added `PropertyViewStatus::EmptyPropertyWithDefault` to indicate when a property contains no data, but has a valid default value.
+
+##### Fixes :wrench:
+
+- Fixed the handling of omitted metadata properties in `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView` instances. Previously, if a property was not `required` and omitted, it would be initialized as invalid with the `ErrorNonexistentProperty` status. Now, it will be treated as valid as long as the property defines a valid `defaultProperty`. A special instance of `PropertyTablePropertyView`, `PropertyTexturePropertyView`, or `PropertyAttributePropertyView` will be constructed to allow the property's default value to be retrieved, either via `defaultValue` or `get`. `getRaw` may not be called on this special instance.
+
+### v0.28.0 - 2023-09-08
+
+##### Breaking Changes :mega:
+
+- Views of the data contained by `EXT_feature_metadata` will no longer supported by Cesium Native. The extension will still be parsed, but it will log a warning.
+- Batch tables will be converted to `EXT_structural_metadata` instead of `EXT_feature_metadata`.
+- In `CesiumGltf`, all generated classes related to `EXT_feature_metadata` are now prefixed with `ExtensionExtFeatureMetadata`. For example, `ClassProperty` has become `ExtensionExtFeatureMetadataClassProperty`. This also extends to the glTF reader and writer.
+- In `CesiumGltf`, all generated classes related to `EXT_structural_metadata` have had their `ExtensionExtStructuralMetadata` prefix removed. For example, `ExtensionExtStructuralMetadataClassProperty` has become `ClassProperty`. This also extends to the glTF reader and writer.
+- In `CesiumGltf`, `ExtensionExtMeshFeaturesFeatureId` and `ExtensionExtMeshFeaturesFeatureIdTexture` have been renamed to `FeatureId` and `FeatureIdTexture` respectively.
+- Replaced `FeatureIDTextureView` with `FeatureIdTextureView`, which views a `FeatureIdTexture` in `EXT_mesh_features`. Feature ID textures from `EXT_feature_metadata` are no longer supported.
+- Replaced `MetadataFeatureTableView` with `PropertyTableView`, which views a `PropertyTable` in `EXT_structural_metadata`.
+- Replaced `MetadataPropertyView` with `PropertyTablePropertyView`, which is a view of a `PropertyTableProperty` in `EXT_structural_metadata`. This takes two template parameters: a typename `T` , and a `bool` indicating whether or not the values are normalized.
+- Replaced `MetadataPropertyViewStatus` with `PropertyTablePropertyViewStatus`. `PropertyTablePropertyViewStatus` is a class that inherits from `PropertyViewStatus`, defining additional error codes in the form of `static const` values.
+- Replaced `FeatureTextureView` with `PropertyTextureView`, which views a `PropertyTexture` in `EXT_structural_metadata`.
+- Replaced `FeatureTexturePropertyView` with `PropertyTexturePropertyView`, which is a view of a `PropertyTextureProperty` in `EXT_structural_metadata`. This takes two template parameters: a typename `T` , and a `bool` indicating whether or not the values are normalized.
+- Removed `FeatureTexturePropertyComponentType`, `FeatureTexturePropertyChannelOffsets`, and `FeatureTexturePropertyValue`. `PropertyTextureProperty` retrieves the values with the type indicated by its class property.
+- Replaced `FeatureTexturePropertyViewStatus` with `PropertyTexturePropertyViewStatus`. `PropertyTexturePropertyViewStatus` is a class that inherits from `PropertyViewStatus`, defining additional error codes in the form of `static const` values.
+- Renamed `FeatureIDTextureViewStatus` to `FeatureIdTextureViewStatus` for consistency.
+- Renamed `MetadataArrayView` to `PropertyArrayView`.
+- Renamed `FeatureTextureViewStatus` to `PropertyTextureViewStatus`.
+- Refactored `PropertyType` to reflect the values of `type` in a `ClassProperty` from `EXT_structural_metadata`.
+
+##### Additions :tada:
+
+- Added `PropertyView`, which acts as a base class for all metadata property views. This takes two template parameters: a type `T` , and a `bool` indicating whether or not the values are normalized.
+- Added `PropertyViewStatus`, which defines public `static const` values for various property errors.
+- Added `PropertyTableViewStatus` to indicate whether a `PropertyTableView` is valid.
+- Added `PropertyComponentType` to reflect the values of `componentType` in a `ClassProperty` from `EXT_structural_metadata`.
+- Added `PropertyAttributeView`, which views a `PropertyAttribute` in `EXT_structural_metadata`.
+- Added `PropertyAttributePropertyView`, which views a `PropertyAttributeProperty` in `EXT_structural_metadata`.
+- Added `PropertyAttributePropertyViewStatus`, which reflects the status of a `PropertyAttributePropertyView`.
+
+### v0.27.3 - 2023-10-01
+
+##### Additions :tada:
+
+- Added support for Cesium ion `"externalType"` assets.
+
+##### Fixes :wrench:
+
+- Fixed corner cases where `Tileset::ComputeLoadProgress` can incorrectly report done (100%) before all tiles are actually loaded for the current view.
+
+### v0.27.2 - 2023-09-20
+
+##### Additions :tada:
+
+- Added `CESIUM_GLM_STRICT_ENABLED` option to the CMake scripts. It is ON by default, but when set to OFF it disables the `GLM_FORCE_XYZW_ONLY`, `GLM_FORCE_EXPLICIT_CTOR`, and `GLM_FORCE_SIZE_T_LENGTH` options in the GLM library.
+
+##### Fixes :wrench:
+
+- Added a missing include to `FeatureTexturePropertyView.h`.
+- The CMake scripts no longer attempt to add the `Catch2` subdirectory when the tests are disabled.
+
+### v0.27.1 - 2023-09-03
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause a crash when loading tiles with a raster overlay.
+
+### v0.27.0 - 2023-09-01
+
+##### Breaking Changes :mega:
+
+- Renamed `ExtensionReaderContext` to `JsonReaderOptions`, and the `getExtensions` method on various JSON reader classes to `getOptions`.
+- `IExtensionJsonHandler` no longer derives from `IJsonHandler`. Instead, it has a new pure virtual method, `getHandler`, that must be implemented to allow clients to obtain the `IJsonHandler`. In almost all implementations, this should simply return `*this`.
+- In `SubtreeReader`, `SchemaReader`, and `TilesetReader`, the `readSubtree`, `readSchema`, and `readTileset` methods (respectively) have been renamed to `readFromJson` and return a templated `ReadJsonResult` instead of a bespoke result class.
+- `TileExternalContent` is now heap allocated and stored in `TileContent` with a `std::unique_ptr`.
+- The root `Tile` of a `Cesium3DTilesSelection::Tileset` now represents the tileset.json itself, and the `root` tile specified in the tileset.json is its only child. This makes the shape of the tile tree consistent between a standard top-level tileset and an external tileset embedded elsewhere in the tree. In both cases, the "tile" that represents the tileset.json itself has content of type `TileExternalContent`.
+
 ##### Additions :tada:
 
 - Added new constructors to `LocalHorizontalCoordinateSystem` taking ECEF<->Local transformation matrices directly.
+- Unknown properties in objects read with a `JsonReader` are now stored in the `unknownProperties` property on `ExtensibleObject` by default. To ignore them, as was done in previous versions, call `setCaptureUnknownProperties` on `JsonReaderOptions`.
+- Added `ValueType` type alias to `ArrayJsonHandler`, for consistency with other JSON handlers.
+- Added an overload of `JsonReader::readJson` that takes a `rapidjson::Value` instead of a byte buffer. This allows a subtree of a `rapidjson::Document` to be easily and efficiently converted into statically-typed classes via `IJsonHandler`.
+- Added `*Reader` classes to `CesiumGltfReader` and `Cesium3DTilesReader` to allow each of the classes to be individually read from JSON.
+- Added `getExternalContent` method to the `TileContent` class.
+- `TileExternalContent` now holds the metadata (`schema`, `schemaUri`, `metadata`, and `groups`) stored in the tileset.json.
+- Added `loadMetadata` and `getMetadata` methods to `Cesium3DTilesSelection::Tileset`. They provide access to `TilesetMetadata` instance representing the metadata associated with a tileset.json.
+- Added `MetadataQuery` class to make it easier to find properties with specific semantics in `TilesetMetadata`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug where an empty error message would get propagated to a tileset's `loadErrorCallback`.
 - Fixed several small build script issues to allow cesium-native to be used in Univeral Windows Platform (UWP) applications, such as those that run on Holo Lens 2.
-- When KTX transcoding fails, the image will now be fully decompressed instead of returning an error.
+- When KTX2 transcoding fails, the image will now be fully decompressed instead of returning an error.
+- Fixed a bug that could cause higher-detail tiles to continue showing when zooming out quickly on a tileset that uses "additive" refinement.
+- Fixed a bug that could cause a tile to never finish upsampling because its non-rendered parent never finishes loading.
 
 ### v0.26.0 - 2023-08-01
 
@@ -52,6 +145,7 @@
 - Added support for parsing implicit tilesets that conform to the 3D Tiles 1.1 Spec.
 
 ##### Fixes :wrench:
+
 - Fixed various `libjpeg-turbo` build errors, including ones that occurred when building for iOS.
 
 ### v0.23.0 - 2023-04-03
@@ -153,7 +247,7 @@
 ##### Breaking Changes :mega:
 
 - `TileRenderContent::lodTransitionPercentage` now always goes from 0.0 --> 1.0 regardless of if the tile is fading in or out.
-- Added a new parameter to `IPrepareRendererResources::prepareInLoadThread`, `rendererOptions`,  to allow passing arbitrary data from the renderer.
+- Added a new parameter to `IPrepareRendererResources::prepareInLoadThread`, `rendererOptions`, to allow passing arbitrary data from the renderer.
 
 ##### Fixes :wrench:
 
@@ -172,7 +266,7 @@
 - Removed `TileContentLoadResult`. It has been replaced by `TileContent`.
 - Removed `TileContentLoader`. It has been replaced by `TilesetContentLoader` and `GltfConverters`.
 - Removed `ImplicitTraversal`. It has been replaced by `TilesetContentLoader` and `GltfConverters`.
-- Removed many methods from the `Cesium3DTilesSelection::Tileset` class: `getUrl()`, `getIonAssetID()`, `getIonAssetToken()`, `notifyTileStartLoading`, `notifyTileDoneLoading()`, `notifyTileUnloading()`, `loadTilesFromJson()`, `requestTileContent()`,  `requestAvailabilitySubtree()`, `addContext()`, and `getGltfUpAxis()`. Most of these were already not recommended for use outside of cesium-native.
+- Removed many methods from the `Cesium3DTilesSelection::Tileset` class: `getUrl()`, `getIonAssetID()`, `getIonAssetToken()`, `notifyTileStartLoading`, `notifyTileDoneLoading()`, `notifyTileUnloading()`, `loadTilesFromJson()`, `requestTileContent()`, `requestAvailabilitySubtree()`, `addContext()`, and `getGltfUpAxis()`. Most of these were already not recommended for use outside of cesium-native.
 - Removed many methods from the `Cesium3DTilesSelection::Tile` class: `getTileset()`, `getContext()`, `setContext()`, `getContent()`, `setEmptyContent()`, `getRendererResources()`, `setState()`, `loadContent()`, `processLoadedContent()`, `unloadContent()`, `update()`, and `markPermanentlyFailed()`. Most of these were already not recommended for use outside of cesium-native.
 
 ##### Additions :tada:
@@ -215,6 +309,7 @@
 ### v0.17.0 - 2022-07-01
 
 ##### Fixes :wrench:
+
 - Fixed crash when parsing an empty copyright string in the glTF model.
 
 ### v0.16.0 - 2022-06-01
@@ -236,6 +331,7 @@
 - Fixed a bug where upsampled quadtree tiles could have siblings with mismatching projections.
 
 In addition to the above, this release updates the following third-party libraries used by cesium-native:
+
 - `cpp-httplib` to v0.10.3 ([changes](https://github.com/yhirose/cpp-httplib/compare/c7486ead96dad647b9783941722b5944ac1aaefa...d73395e1dc652465fa9524266cd26ad57365491f))
 - `draco` to v1.5.2 ([changes](https://github.com/google/draco/compare/9bf5d2e4833d445acc85eb95da42d715d3711c6f...bd1e8de7dd0596c2cbe5929cbe1f5d2257cd33db))
 - `earcut` to v2.2.3 ([changes](https://github.com/mapbox/earcut.hpp/compare/6d18edf0ce046023a7cb55e69c4cd9ba90e2c716...b28acde132cdb8e0ef536a96ca7ada8a651f9169))
@@ -462,7 +558,7 @@ In addition to the above, this release updates the following third-party librari
 - Fixed a bug that caused 3D Tiles content to fail to load when the status code was zero. This code is used by libcurl for successful read of `file://` URLs, so the bug prevented loading from such URLs in some environments.
 - Errors and warnings that occur while loading glTF textures are now include in the model load errors and warnings.
 - Fixes how `generate-classes` deals with reserved C++ keywords. Property names that are C++ keywords should be appended with "Property" as was already done,
-but when parsing JSONs the original property name string should be used.
+  but when parsing JSONs the original property name string should be used.
 
 ### v0.8.0 - 2021-10-01
 

@@ -3,9 +3,9 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -653,8 +653,8 @@ getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
   return result;
 }
 
-TEST_CASE(
-    "Converts point cloud with batch IDs to glTF with EXT_feature_metadata") {
+TEST_CASE("Converts point cloud with batch IDs to glTF with "
+          "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
   const int32_t pointsLength = 8;
@@ -665,8 +665,8 @@ TEST_CASE(
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -675,13 +675,13 @@ TEST_CASE(
   MeshPrimitive& primitive = mesh.primitives[0];
   CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
 
-  auto primitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
-  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
-  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
-  CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
+  REQUIRE(primitiveExtension->featureIds.size() == 1);
+  FeatureId& featureId = primitiveExtension->featureIds[0];
+  CHECK(featureId.featureCount == 8);
+  CHECK(featureId.attribute == 0);
+  CHECK(featureId.propertyTable == 0);
 
   CHECK(gltf.materials.size() == 1);
 
@@ -744,8 +744,8 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -754,16 +754,14 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
   MeshPrimitive& primitive = mesh.primitives[0];
   CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
 
-  auto primitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
-  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
-  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
+  REQUIRE(primitiveExtension->featureIds.size() == 1);
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   // Check for implicit feature IDs
-  CHECK(!attribute.featureIds.attribute);
-  CHECK(attribute.featureIds.constant == 0);
-  CHECK(attribute.featureIds.divisor == 1);
+  CHECK(featureId.featureCount == pointsLength);
+  CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   CHECK(gltf.materials.size() == 1);
 
@@ -805,8 +803,8 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -815,16 +813,14 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
   MeshPrimitive& primitive = mesh.primitives[0];
   CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
 
-  auto primitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
-  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
-  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
+  REQUIRE(primitiveExtension->featureIds.size() == 1);
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   // Check for implicit feature IDs
-  CHECK(!attribute.featureIds.attribute);
-  CHECK(attribute.featureIds.constant == 0);
-  CHECK(attribute.featureIds.divisor == 1);
+  CHECK(featureId.featureCount == pointsLength);
+  CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
@@ -952,7 +948,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -961,16 +957,14 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   MeshPrimitive& primitive = mesh.primitives[0];
   CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
 
-  auto primitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
-  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
-  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
+  REQUIRE(primitiveExtension->featureIds.size() == 1);
+  FeatureId& featureId = primitiveExtension->featureIds[0];
   // Check for implicit feature IDs
-  CHECK(!attribute.featureIds.attribute);
-  CHECK(attribute.featureIds.constant == 0);
-  CHECK(attribute.featureIds.divisor == 1);
+  CHECK(featureId.featureCount == pointsLength);
+  CHECK(!featureId.attribute);
+  CHECK(featureId.propertyTable == 0);
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
@@ -1092,8 +1086,8 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   Model& gltf = *result.model;
 
   // The correctness of the model extension is thoroughly tested in
-  // TestUpgradeBatchTableToExtFeatureMetadata
-  CHECK(gltf.hasExtension<ExtensionModelExtFeatureMetadata>());
+  // TestUpgradeBatchTableToExtStructuralMetadata
+  CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
   REQUIRE(gltf.meshes.size() == 1);
@@ -1102,13 +1096,13 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
   MeshPrimitive& primitive = mesh.primitives[0];
   CHECK(primitive.mode == MeshPrimitive::Mode::POINTS);
 
-  auto primitiveExtension =
-      primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
+  auto primitiveExtension = primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(primitiveExtension);
-  REQUIRE(primitiveExtension->featureIdAttributes.size() == 1);
-  FeatureIDAttribute& attribute = primitiveExtension->featureIdAttributes[0];
-  CHECK(attribute.featureTable == "default");
-  CHECK(attribute.featureIds.attribute == "_FEATURE_ID_0");
+  REQUIRE(primitiveExtension->featureIds.size() == 1);
+  FeatureId& featureId = primitiveExtension->featureIds[0];
+  CHECK(featureId.featureCount == 8);
+  CHECK(featureId.attribute == 0);
+  CHECK(featureId.propertyTable == 0);
 
   CHECK(gltf.materials.size() == 1);
 

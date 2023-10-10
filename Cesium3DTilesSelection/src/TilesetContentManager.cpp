@@ -37,8 +37,9 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
-  void operator()(TileExternalContent content) {
-    tileContent.setContentKind(content);
+  void operator()(TileExternalContent&& content) {
+    tileContent.setContentKind(
+        std::make_unique<TileExternalContent>(std::move(content)));
   }
 
   void operator()(CesiumGltf::Model&& model) {
@@ -598,7 +599,12 @@ TilesetContentManager::TilesetContentManager(
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()} {}
+          this->_destructionCompletePromise.getFuture().share()},
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()} {
+  this->_rootTileAvailablePromise.resolve();
+}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -622,7 +628,10 @@ TilesetContentManager::TilesetContentManager(
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()} {
+          this->_destructionCompletePromise.getFuture().share()},
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -720,13 +729,16 @@ TilesetContentManager::TilesetContentManager(
                   TilesetLoadType::TilesetJson,
                   errorCallback,
                   std::move(result));
+              thiz->_rootTileAvailablePromise.resolve();
             })
         .catchInMainThread([thiz](std::exception&& e) {
           thiz->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
               thiz->_externals.pLogger,
-              "An unexpected error occurs when loading tile: {}",
+              "An unexpected error occurred when loading tile: {}",
               e.what());
+          thiz->_rootTileAvailablePromise.reject(
+              std::runtime_error("Root tile failed to load."));
         });
   }
 }
@@ -755,7 +767,10 @@ TilesetContentManager::TilesetContentManager(
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()} {
+          this->_destructionCompletePromise.getFuture().share()},
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -792,13 +807,16 @@ TilesetContentManager::TilesetContentManager(
                   TilesetLoadType::CesiumIon,
                   errorCallback,
                   std::move(result));
+              thiz->_rootTileAvailablePromise.resolve();
             })
         .catchInMainThread([thiz](std::exception&& e) {
           thiz->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
               thiz->_externals.pLogger,
-              "An unexpected error occurs when loading tile: {}",
+              "An unexpected error occurred when loading tile: {}",
               e.what());
+          thiz->_rootTileAvailablePromise.reject(
+              std::runtime_error("Root tile failed to load."));
         });
   }
 }
@@ -806,6 +824,11 @@ TilesetContentManager::TilesetContentManager(
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteFuture;
+}
+
+CesiumAsync::SharedFuture<void>&
+TilesetContentManager::getRootTileAvailableEvent() {
+  return this->_rootTileAvailableFuture;
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
@@ -855,6 +878,16 @@ void TilesetContentManager::loadTileContent(
     if (pParentTile) {
       if (pParentTile->getState() != TileLoadState::Done) {
         loadTileContent(*pParentTile, tilesetOptions);
+
+        // Finalize the parent if necessary, otherwise it may never reach the
+        // Done state. Also double check that we have render content in ensure
+        // we don't assert / crash in finishLoading. The latter will only ever
+        // be a problem in a pathological tileset with a non-renderable leaf
+        // tile, but that sort of thing does happen.
+        if (pParentTile->getState() == TileLoadState::ContentLoaded &&
+            pParentTile->isRenderContent()) {
+          finishLoading(*pParentTile, tilesetOptions);
+        }
         return;
       }
     } else {
@@ -947,14 +980,13 @@ void TilesetContentManager::loadTileContent(
 
 void TilesetContentManager::updateTileContent(
     Tile& tile,
-    double priority,
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::Unloading) {
     unloadTileContent(tile);
   }
 
   if (tile.getState() == TileLoadState::ContentLoaded) {
-    updateContentLoadedState(tile, priority, tilesetOptions);
+    updateContentLoadedState(tile, tilesetOptions);
   }
 
   if (tile.getState() == TileLoadState::Done) {
@@ -1165,8 +1197,7 @@ void TilesetContentManager::finishLoading(
 
   // This allows the raster tile to be updated and children to be created, if
   // necessary.
-  // Priority doesn't matter here since loading is complete.
-  updateTileContent(tile, 0.0, tilesetOptions);
+  updateTileContent(tile, tilesetOptions);
 }
 
 void TilesetContentManager::setTileContent(
@@ -1207,7 +1238,6 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
-    double /*priority*/,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();

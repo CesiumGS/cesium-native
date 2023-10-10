@@ -1,589 +1,3038 @@
-#include "CesiumGltf/MetadataPropertyView.h"
+#include "CesiumGltf/PropertyView.h"
 
 #include <catch2/catch.hpp>
-#include <gsl/span>
 
-#include <bitset>
-#include <climits>
-#include <cstddef>
-#include <cstring>
-#include <vector>
+using namespace CesiumGltf;
+using namespace CesiumUtility;
 
-template <typename T> static void checkNumeric(const std::vector<T>& expected) {
-  std::vector<std::byte> data;
-  data.resize(expected.size() * sizeof(T));
-  std::memcpy(data.data(), expected.data(), data.size());
+TEST_CASE("Boolean PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<bool> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
 
-  CesiumGltf::MetadataPropertyView<T> property(
-      CesiumGltf::MetadataPropertyViewStatus::Valid,
-      gsl::span<const std::byte>(data.data(), data.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      CesiumGltf::PropertyType::None,
-      0,
-      static_cast<int64_t>(expected.size()),
-      false);
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
 
-  for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
+    PropertyView<bool> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+
+    PropertyView<bool> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Constructs with defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.required = false;
+    classProperty.defaultProperty = false;
+
+    PropertyView<bool> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.defaultValue() == false);
+    ;
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.required = true;
+    classProperty.defaultProperty = false;
+
+    PropertyView<bool> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+
+  SECTION("Reports default value invalid type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.defaultProperty = 1;
+
+    PropertyView<bool> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
   }
 }
 
-template <typename T, typename E>
-static void checkDynamicArray(
-    const std::vector<T>& data,
-    const std::vector<E> offset,
-    CesiumGltf::PropertyType offsetType,
-    int64_t instanceCount) {
-  // copy data to buffer
-  std::vector<std::byte> buffer;
-  buffer.resize(data.size() * sizeof(T));
-  std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
-
-  // copy offset to buffer
-  std::vector<std::byte> offsetBuffer;
-  offsetBuffer.resize(offset.size() * sizeof(E));
-  std::memcpy(offsetBuffer.data(), offset.data(), offset.size() * sizeof(E));
-
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<T>> property(
-      CesiumGltf::MetadataPropertyViewStatus::Valid,
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-      gsl::span<const std::byte>(),
-      offsetType,
-      0,
-      instanceCount,
-      false);
-
-  size_t expectedIdx = 0;
-  for (int64_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetadataArrayView<T> vals = property.get(i);
-    for (int64_t j = 0; j < vals.size(); ++j) {
-      REQUIRE(vals[j] == data[expectedIdx]);
-      ++expectedIdx;
-    }
+TEST_CASE("Scalar PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<uint8_t> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
   }
 
-  REQUIRE(expectedIdx == data.size());
-}
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
 
-template <typename T>
-static void checkFixedArray(
-    const std::vector<T>& data,
-    int64_t componentCount,
-    int64_t instanceCount) {
-  std::vector<std::byte> buffer;
-  buffer.resize(data.size() * sizeof(T));
-  std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
-
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<T>> property(
-      CesiumGltf::MetadataPropertyViewStatus::Valid,
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      CesiumGltf::PropertyType::None,
-      componentCount,
-      instanceCount,
-      false);
-
-  size_t expectedIdx = 0;
-  for (int64_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetadataArrayView<T> vals = property.get(i);
-    for (int64_t j = 0; j < vals.size(); ++j) {
-      REQUIRE(vals[j] == data[expectedIdx]);
-      ++expectedIdx;
-    }
+    PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
   }
 
-  REQUIRE(expectedIdx == data.size());
-}
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
 
-TEST_CASE("Check create numeric property view") {
-  SECTION("Uint8") {
-    std::vector<uint8_t> data{12, 33, 56, 67};
-    checkNumeric(data);
+    PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
-  SECTION("Int32") {
-    std::vector<int32_t> data{111222, -11133, -56000, 670000};
-    checkNumeric(data);
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+
+    PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
-  SECTION("Float") {
-    std::vector<float> data{12.3333f, -12.44555f, -5.6111f, 6.7421f};
-    checkNumeric(data);
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+
+    PropertyView<int8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
-  SECTION("Double") {
-    std::vector<double> data{
-        12222.3302121,
-        -12000.44555,
-        -5000.6113111,
-        6.7421};
-    checkNumeric(data);
-  }
-}
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.offset = 5.04f;
+    classProperty.scale = 2.2f;
+    classProperty.max = 10.5f;
+    classProperty.min = -10.5f;
 
-TEST_CASE("Check boolean value") {
-  std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
-  unsigned long val = bits.to_ulong();
-  std::vector<std::byte> data(sizeof(val));
-  std::memcpy(data.data(), &val, sizeof(val));
-
-  size_t instanceCount = sizeof(unsigned long) * CHAR_BIT;
-  CesiumGltf::MetadataPropertyView<bool> property(
-      CesiumGltf::MetadataPropertyViewStatus::Valid,
-      gsl::span<const std::byte>(data.data(), data.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      CesiumGltf::PropertyType::None,
-      0,
-      static_cast<int64_t>(instanceCount),
-      false);
-  for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == bits[static_cast<size_t>(i)]);
-  }
-}
-
-TEST_CASE("Check string value") {
-  std::vector<std::string> strings{
-      "This is a fine test",
-      "What's going on",
-      "Good morning"};
-  size_t totalSize = 0;
-  for (const auto& s : strings) {
-    totalSize += s.size();
+    PropertyView<float> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset() == 5.04f);
+    REQUIRE(view.scale() == 2.2f);
+    REQUIRE(view.max() == 10.5f);
+    REQUIRE(view.min() == -10.5f);
   }
 
-  uint32_t currentOffset = 0;
-  std::vector<std::byte> buffer;
-  buffer.resize(totalSize);
-  for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(
-        buffer.data() + currentOffset,
-        strings[i].data(),
-        strings[i].size());
-    currentOffset += static_cast<uint32_t>(strings[i].size());
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.required = false;
+    classProperty.noData = 0;
+    classProperty.defaultProperty = 1;
+
+    PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData() == 0);
+    REQUIRE(view.defaultValue() == 1);
   }
 
-  // copy offset to buffer
-  std::vector<std::byte> offsetBuffer;
-  offsetBuffer.resize((strings.size() + 1) * sizeof(uint32_t));
-  currentOffset = 0;
-  for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(
-        offsetBuffer.data() + i * sizeof(uint32_t),
-        &currentOffset,
-        sizeof(uint32_t));
-    currentOffset += static_cast<uint32_t>(strings[i].size());
-  }
-  std::memcpy(
-      offsetBuffer.data() + strings.size() * sizeof(uint32_t),
-      &currentOffset,
-      sizeof(uint32_t));
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.required = true;
+    classProperty.defaultProperty = 1;
 
-  CesiumGltf::MetadataPropertyView<std::string_view> property(
-      CesiumGltf::MetadataPropertyViewStatus::Valid,
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-      CesiumGltf::PropertyType::Uint32,
-      0,
-      static_cast<int64_t>(strings.size()),
-      false);
-  for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == strings[static_cast<size_t>(i)]);
+    PropertyView<int8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = 0;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = 200;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = 1234;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.defaultProperty = 2000;
+
+    PropertyView<int8_t> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = -129;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = -1000;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = 1000;
+    view = PropertyView<int8_t>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.defaultProperty = JsonValue::Array{1};
+
+    PropertyView<float> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = "0";
+    view = PropertyView<float>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = false;
+    view = PropertyView<float>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = JsonValue::Array{};
+    view = PropertyView<float>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 }
 
-TEST_CASE("Check fixed numeric array") {
-  SECTION("Fixed array of 4 uint8_ts") {
-    // clang-format off
-    std::vector<uint8_t> data{
-        210, 211, 3, 42, 
-        122, 22, 1, 45};
-    // clang-format on
-    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
+TEST_CASE("Scalar PropertyView (normalized)") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<uint8_t, true> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
   }
 
-  SECTION("Fixed array of 3 int8_ts") {
-    // clang-format off
-    std::vector<int8_t> data{
-        122, -12, 3, 
-        44, 11, -2, 
-        5, 6, -22, 
-        5, 6, 1};
-    // clang-format on
-    checkFixedArray(data, 3, static_cast<int64_t>(data.size() / 3));
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+
+    PropertyView<uint8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
   }
 
-  SECTION("Fixed array of 4 int16_ts") {
-    // clang-format off
-    std::vector<int16_t> data{
-        -122, 12, 3, 44, 
-        11, 2, 5, -6000, 
-        119, 30, 51, 200, 
-        22000, -500, 6000, 1};
-    // clang-format on
-    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    PropertyView<uint8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
-  SECTION("Fixed array of 6 uint32_ts") {
-    // clang-format off
-    std::vector<uint32_t> data{
-        122, 12, 3, 44, 34444, 2222,
-        11, 2, 5, 6000, 1111, 2222,
-        119, 30, 51, 200, 12534, 11,
-        22000, 500, 6000, 1, 3, 7};
-    // clang-format on
-    checkFixedArray(data, 6, static_cast<int64_t>(data.size() / 6));
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+
+    PropertyView<uint8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
-  SECTION("Fixed array of 2 int32_ts") {
-    // clang-format off
-    std::vector<uint32_t> data{
-        122, 12, 
-        3, 44};
-    // clang-format on
-    checkFixedArray(data, 2, static_cast<int64_t>(data.size() / 2));
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = false;
+
+    PropertyView<int8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
   }
 
-  SECTION("Fixed array of 4 uint64_ts") {
-    // clang-format off
-    std::vector<uint64_t> data{
-        10022, 120000, 2422, 1111, 
-        3, 440000, 333, 1455};
-    // clang-format on
-    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    classProperty.offset = 5.04f;
+    classProperty.scale = 2.2f;
+    classProperty.max = 10.5f;
+    classProperty.min = -10.5f;
+
+    PropertyView<int32_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset() == 5.04f);
+    REQUIRE(view.scale() == 2.2f);
+    REQUIRE(view.max() == 10.5f);
+    REQUIRE(view.min() == -10.5f);
   }
 
-  SECTION("Fixed array of 4 int64_ts") {
-    // clang-format off
-    std::vector<int64_t> data{
-        10022, -120000, 2422, 1111, 
-        3, 440000, -333, 1455};
-    // clang-format on
-    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.normalized = true;
+    classProperty.required = false;
+    classProperty.noData = 0;
+    classProperty.defaultProperty = 1.5;
+
+    PropertyView<uint8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData() == 0);
+    REQUIRE(view.defaultValue() == 1.5);
   }
 
-  SECTION("Fixed array of 4 floats") {
-    // clang-format off
-    std::vector<float> data{
-        10.022f, -12.43f, 242.2f, 1.111f, 
-        3.333f, 440000.1f, -33.3f, 14.55f};
-    // clang-format on
-    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = 1.0;
+
+    PropertyView<int8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = 0;
+    view = PropertyView<int8_t, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
   }
 
-  SECTION("Fixed array of 4 double") {
-    // clang-format off
-    std::vector<double> data{
-        10.022, -12.43, 242.2, 1.111, 
-        3.333, 440000.1, -33.3, 14.55};
-    // clang-format on
-    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.noData = -129;
+
+    PropertyView<int8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.defaultProperty = JsonValue::Array{1};
+
+    PropertyView<int8_t, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = "0";
+    view = PropertyView<int8_t, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = false;
+    view = PropertyView<int8_t, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = JsonValue::Array{};
+    view = PropertyView<int8_t, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 }
 
-TEST_CASE("Check numeric dynamic array") {
-  SECTION("array of uint8_t") {
+TEST_CASE("VecN PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<glm::vec3> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+
+    PropertyView<glm::vec3> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    PropertyView<glm::vec3> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+
+    PropertyView<glm::vec3> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+
+    PropertyView<glm::i8vec3> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.offset = {-1, 1, 2};
+    classProperty.scale = {2, 1, 3};
+    classProperty.max = {10, 5, 6};
+    classProperty.min = {-11, -12, -13};
+
+    PropertyView<glm::vec3> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset() == glm::vec3(-1, 1, 2));
+    REQUIRE(view.scale() == glm::vec3(2, 1, 3));
+    REQUIRE(view.max() == glm::vec3(10, 5, 6));
+    REQUIRE(view.min() == glm::vec3(-11, -12, -13));
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC4;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.required = false;
+    classProperty.noData = {0.0f, 0.0f, 0.0f, 0.0f};
+    classProperty.defaultProperty = {1.0f, 2.0f, 3.0f, 4.0f};
+
+    PropertyView<glm::vec4> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.noData() == glm::vec4(0.0f));
+    REQUIRE(view.defaultValue() == glm::vec4(1.0f, 2.0f, 3.0f, 4.0f));
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.required = true;
+    classProperty.defaultProperty = {1, 2};
+
+    PropertyView<glm::i8vec2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {0, 0};
+    view = PropertyView<glm::i8vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = {3, 2};
+    view = PropertyView<glm::i8vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {12, 8};
+    view = PropertyView<glm::i8vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.defaultProperty = {128, 129};
+
+    PropertyView<glm::i8vec2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {-128, -129};
+    view = PropertyView<glm::i8vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {-200, 0};
+    view = PropertyView<glm::i8vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {0, 500};
+    view = PropertyView<glm::i8vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.defaultProperty = true;
+
+    PropertyView<glm::vec2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = "0";
+    view = PropertyView<glm::vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = JsonValue::Array{-10};
+    view = PropertyView<glm::vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {10, 20, 30, 40};
+    view = PropertyView<glm::vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 1;
+    view = PropertyView<glm::vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "(1, 2, 3)";
+    view = PropertyView<glm::vec2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("VecN PropertyView (normalized)") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<glm::i8vec2, true> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+
+    PropertyView<glm::u8vec3, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    PropertyView<glm::u8vec3, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+
+    PropertyView<glm::u8vec3, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.normalized = false;
+
+    PropertyView<glm::u8vec3, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    classProperty.offset = {-1, 1, 2};
+    classProperty.scale = {2, 1, 3};
+    classProperty.max = {10, 5, 6};
+    classProperty.min = {-11, -12, -13};
+
+    PropertyView<glm::ivec3, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset() == glm::dvec3(-1, 1, 2));
+    REQUIRE(view.scale() == glm::dvec3(2, 1, 3));
+    REQUIRE(view.max() == glm::dvec3(10, 5, 6));
+    REQUIRE(view.min() == glm::dvec3(-11, -12, -13));
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC4;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.required = false;
+    classProperty.noData = {0, 0, -1, -1};
+    classProperty.defaultProperty = {1.0, 2.0, 3.0, 4.5};
+
+    PropertyView<glm::i8vec4, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData() == glm::i8vec4(0, 0, -1, -1));
+    REQUIRE(view.defaultValue() == glm::dvec4(1.0, 2.0, 3.0, 4.5));
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = {1, 2};
+
+    PropertyView<glm::i8vec2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {0, 0};
+    view = PropertyView<glm::i8vec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.noData = {-128, -129};
+
+    PropertyView<glm::i8vec2, true> view(classProperty);
+    view = PropertyView<glm::i8vec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    classProperty.defaultProperty = true;
+
+    PropertyView<glm::ivec2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = "0";
+    view = PropertyView<glm::ivec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = JsonValue::Array{-10};
+    view = PropertyView<glm::ivec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {10, 20, 30, 40};
+    view = PropertyView<glm::ivec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 1;
+    view = PropertyView<glm::ivec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "(1, 2, 3)";
+    view = PropertyView<glm::ivec2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("MatN PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<glm::mat2> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT4;
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.normalized = true;
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
     // clang-format off
-    std::vector<uint8_t> data{
-        3, 2,
-        0, 45, 2, 1, 4,
-        1, 3, 2,
-        1, 3, 4, 1
+    classProperty.offset = {
+      -1,  1, 2,
+       3, -1, 4,
+      -5, -5, 0};
+    classProperty.scale = {
+      1, 1, 1,
+      2, 2, 3,
+      3, 4, 5};
+    classProperty.max = {
+      20,  5, 20,
+      30, 22, 43,
+      37,  1,  8};
+    classProperty.min = {
+      -10, -2, -3,
+        0, 20,  4,
+        9,  4,  5};
+    // clang-format on
+
+    PropertyView<glm::mat3> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+
+    // clang-format off
+    glm::mat3 expectedOffset(
+      -1,  1, 2,
+       3, -1, 4,
+      -5, -5, 0);
+    REQUIRE(view.offset() == expectedOffset);
+
+    glm::mat3 expectedScale(
+      1, 1, 1,
+      2, 2, 3,
+      3, 4, 5);
+    REQUIRE(view.scale() == expectedScale);
+
+    glm::mat3 expectedMax(
+      20,  5, 20,
+      30, 22, 43,
+      37,  1,  8);
+    REQUIRE(view.max() == expectedMax);
+
+    glm::mat3 expectedMin(
+      -10, -2, -3,
+        0, 20,  4,
+        9,  4,  5);
+    REQUIRE(view.min() == expectedMin);
+    // clang-format on
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.required = false;
+    // clang-format off
+    classProperty.noData = {
+      0.0f, 0.0f,
+      0.0f, 0.0f};
+    classProperty.defaultProperty = {
+      1.0f, 2.0f,
+      3.0f, 4.5f};
+    // clang-format on
+
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+
+    // clang-format off
+    glm::mat2 expectedNoData(
+      0.0f, 0.0f,
+      0.0f, 0.0f);
+    REQUIRE(view.noData() == expectedNoData);
+
+    glm::mat2 expectedDefaultValue(
+      1.0f, 2.0f,
+      3.0f, 4.5f);
+    REQUIRE(view.defaultValue() == expectedDefaultValue);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.required = true;
+    
+    // clang-format off
+    classProperty.defaultProperty = {
+      1, 2,
+      3, 4};
+    // clang-format on
+    PropertyView<glm::i8mat2x2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      0, 0,
+      0, 0};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    // clang-format off
+    classProperty.scale = {
+      1, 1,
+      -1, 1};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      0, 0,
+      2, 1};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    // clang-format off
+    classProperty.defaultProperty = {
+      999, 1,
+      2, 0};
+    // clang-format on
+
+    PropertyView<glm::i8mat2x2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      0, 0,
+       1, -129};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    // clang-format off
+    classProperty.min = {
+      -29, -240,
+      -155, -43};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    // clang-format off
+    classProperty.max = {
+      10, 240,
+       1,   8};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    //clang-format off
+    classProperty.scale = {1, 197, 4, 6};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+       -1,  2,
+      129, -2};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    // clang-format off
+    classProperty.defaultProperty =
+        JsonValue::Array{JsonValue::Array{999, 1, 2, 0}};
+    // clang-format on
+
+    PropertyView<glm::i8mat2x2> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      0.45, 0.0,
+       1.0, -1.4};
+    // clang-format on
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {0, 0};
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {10, 20, 30, 40, 50};
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 1;
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "(1, 2, 3, 4)";
+    view = PropertyView<glm::i8mat2x2>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("MatN PropertyView (normalized)") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<glm::imat2x2, true> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT4;
+
+    PropertyView<glm::imat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+
+    PropertyView<glm::imat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+
+    PropertyView<glm::imat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = false;
+
+    PropertyView<glm::imat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    // clang-format off
+    classProperty.offset = {
+      -1,  1, 2,
+       3, -1, 4,
+      -5, -5, 0};
+    classProperty.scale = {
+      1, 1, 1,
+      2, 2, 3,
+      3, 4, 5};
+    classProperty.max = {
+      20,  5, 20,
+      30, 22, 43,
+      37,  1,  8};
+    classProperty.min = {
+      -10, -2, -3,
+        0, 20,  4,
+        9,  4,  5};
+    // clang-format on
+
+    PropertyView<glm::imat3x3, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    // clang-format off
+    glm::dmat3 expectedOffset(
+      -1,  1, 2,
+       3, -1, 4,
+      -5, -5, 0);
+    REQUIRE(view.offset() == expectedOffset);
+
+    glm::dmat3 expectedScale(
+      1, 1, 1,
+      2, 2, 3,
+      3, 4, 5);
+    REQUIRE(view.scale() == expectedScale);
+
+    glm::dmat3 expectedMax(
+      20,  5, 20,
+      30, 22, 43,
+      37,  1,  8);
+    REQUIRE(view.max() == expectedMax);
+
+    glm::dmat3 expectedMin(
+      -10, -2, -3,
+        0, 20,  4,
+        9,  4,  5);
+    REQUIRE(view.min() == expectedMin);
+    // clang-format on
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    classProperty.required = false;
+    // clang-format off
+    classProperty.noData = {
+      0, 0,
+      0, 0};
+    classProperty.defaultProperty = {
+      1.0, 2.0,
+      3.0, 4.5};
+    // clang-format on
+
+    PropertyView<glm::imat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+
+    glm::imat2x2 expectedNoData(0);
+    REQUIRE(view.noData() == expectedNoData);
+
+    // clang-format off
+    glm::dmat2 expectedDefaultValue(
+      1.0, 2.0,
+      3.0, 4.5);
+    REQUIRE(view.defaultValue() == expectedDefaultValue);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.normalized = true;
+    classProperty.required = true;
+    // clang-format off
+    classProperty.defaultProperty = {
+      1.0, 2.0,
+      3.0, 4.5};
+    // clang-format on
+
+    PropertyView<glm::imat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      0, 0,
+      0, 0};
+    // clang-format on
+    view = PropertyView<glm::imat2x2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    // clang-format off
+    classProperty.noData = {
+      0, 0,
+       1, -129};
+    // clang-format on
+
+    PropertyView<glm::i8mat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+
+    // clang-format off
+    classProperty.defaultProperty = JsonValue::Array{
+      JsonValue::Array{4, 1, 2, 0},
+      JsonValue::Array{2, 3, 1, 1}
     };
-    std::vector<uint32_t> offset{
-        0, 2, 7, 10, 14
-    };
     // clang-format on
 
-    checkDynamicArray(data, offset, CesiumGltf::PropertyType::Uint32, 4);
-  }
+    PropertyView<glm::i8mat2x2, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
 
-  SECTION("array of int32_t") {
     // clang-format off
-    std::vector<int32_t> data{
-        3, 200,
-        0, 450, 200, 1, 4,
-        1, 3, 2,
-        1, 3, 4, 1
-    };
-    std::vector<uint32_t> offset{
-        0, 2 * sizeof(int32_t), 7 * sizeof(int32_t), 10 * sizeof(int32_t), 14 * sizeof(int32_t)
-    };
+    classProperty.noData = {
+      0.45, 0.0,
+       1.0, -1.4};
     // clang-format on
+    view = PropertyView<glm::i8mat2x2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
 
-    checkDynamicArray(data, offset, CesiumGltf::PropertyType::Uint32, 4);
+    classProperty.min = {0, 0};
+    view = PropertyView<glm::i8mat2x2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {10, 20, 30, 40, 50};
+    view = PropertyView<glm::i8mat2x2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 1;
+    view = PropertyView<glm::i8mat2x2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "(1, 2, 3, 4)";
+    view = PropertyView<glm::i8mat2x2, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("String PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<std::string_view> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
   }
 
-  SECTION("array of double") {
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.required = false;
+    classProperty.noData = "null";
+    classProperty.defaultProperty = "default";
+
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+
+    REQUIRE(view.noData() == "null");
+    REQUIRE(view.defaultValue() == "default");
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.required = true;
+    classProperty.defaultProperty = "default";
+
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = "null";
+    view = PropertyView<std::string_view>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.defaultProperty = true;
+
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = JsonValue::Array{"null"};
+    view = PropertyView<std::string_view>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+}
+
+TEST_CASE("Boolean Array PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<bool>> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == 5);
+  }
+
+  SECTION("Constructs with defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+    classProperty.required = false;
+    classProperty.defaultProperty = JsonValue::Array{false, true};
+
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<bool> defaultValue = *view.defaultValue();
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(!defaultValue[0]);
+    REQUIRE(defaultValue[1]);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = JsonValue::Array{false, true};
+
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+    classProperty.defaultProperty = true;
+
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+}
+
+TEST_CASE("Scalar Array PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<uint8_t>> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.normalized = true;
+
+    PropertyView<PropertyArrayView<int32_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == *classProperty.count);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.offset = JsonValue::Array{5.0f, 10.0f};
+    classProperty.scale = JsonValue::Array{2.0f, 1.0f};
+    classProperty.max = JsonValue::Array{10.0f, 20.0f};
+    classProperty.min = JsonValue::Array{-10.0f, -1.0f};
+
+    PropertyView<PropertyArrayView<float>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    PropertyArrayView<float> value = *view.offset();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 5.0f);
+    REQUIRE(value[1] == 10.0f);
+
+    value = *view.scale();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 2.0f);
+    REQUIRE(value[1] == 1.0f);
+
+    value = *view.max();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 10.0f);
+    REQUIRE(value[1] == 20.0f);
+
+    value = *view.min();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == -10.0f);
+    REQUIRE(value[1] == -1.0f);
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.required = false;
+    classProperty.noData = {0, 1};
+    classProperty.defaultProperty = {2, 3};
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<uint8_t> value = view.noData().value();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 0);
+    REQUIRE(value[1] == 1);
+
+    value = *view.defaultValue();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 2);
+    REQUIRE(value[1] == 3);
+  }
+
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.min = {0, 0};
+
+    PropertyView<PropertyArrayView<float>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {5, 4};
+    view = PropertyView<PropertyArrayView<float>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {1, 1};
+    view = PropertyView<PropertyArrayView<float>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {0, 2};
+    view = PropertyView<PropertyArrayView<float>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.required = true;
+    classProperty.defaultProperty = {2, 3};
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {0, 1};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = {1, 1};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {0, 2};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.defaultProperty = {256, 256};
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {-1, 0};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {0, -1};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {256, 255};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {20, 300};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {2, -100};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.defaultProperty = "[256, 256]";
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = 0;
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = false;
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = JsonValue::Array{10.4, 30.0};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = JsonValue::Array{JsonValue::Array{2.3, 3.04}};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "10";
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("Scalar Array PropertyView (normalized)") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<uint8_t>, true> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.normalized = false;
+
+    PropertyView<PropertyArrayView<int32_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.normalized = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == *classProperty.count);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::INT16;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.offset = JsonValue::Array{5.0, 10.0};
+    classProperty.scale = JsonValue::Array{2.0, 1.0};
+    classProperty.max = JsonValue::Array{10.0, 20.0};
+    classProperty.min = JsonValue::Array{-10.0, -1.0};
+
+    PropertyView<PropertyArrayView<int16_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    PropertyArrayView<double> value = *view.offset();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 5.0);
+    REQUIRE(value[1] == 10.0);
+
+    value = *view.scale();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 2.0);
+    REQUIRE(value[1] == 1.0);
+
+    value = *view.max();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == 10.0);
+    REQUIRE(value[1] == 20.0);
+
+    value = *view.min();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == -10.0);
+    REQUIRE(value[1] == -1.0);
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.normalized = true;
+    classProperty.required = false;
+    classProperty.noData = {0, 1};
+    classProperty.defaultProperty = {2.5, 3.5};
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<uint8_t> noData(*view.noData());
+    REQUIRE(noData.size() == 2);
+    REQUIRE(noData[0] == 0);
+    REQUIRE(noData[1] == 1);
+
+    PropertyArrayView<double> defaultValue(*view.defaultValue());
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(defaultValue[0] == 2.5);
+    REQUIRE(defaultValue[1] == 3.5);
+  }
+
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.normalized = true;
+    classProperty.min = {0, 0};
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {5, 4};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {1, 1};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {0, 2};
+    classProperty.offset = {0, 2};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = {2, 3};
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {0, 1};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.noData = {-1, 0};
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.componentType = ClassProperty::ComponentType::UINT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.defaultProperty = "[256, 256]";
+
+    PropertyView<PropertyArrayView<uint8_t>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = 0;
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = false;
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = JsonValue::Array{10.4, "30.0"};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale =
+        JsonValue::Array{JsonValue::Array{2.3}, JsonValue::Array{1.3}};
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "10";
+    view = PropertyView<PropertyArrayView<uint8_t>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("VecN Array PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<glm::vec3>> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.normalized = true;
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT16;
+    classProperty.array = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<glm::i16vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
+    classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
+    classProperty.max = {{14, 28, 12}, {10, 5, 6}};
+    classProperty.min = {{-11, -12, -13}, {-2, -4, 6}};
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    PropertyArrayView<glm::vec3> value = *view.offset();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::vec3(-1, 1, 2));
+    REQUIRE(value[1] == glm::vec3(4, 4, 0));
+
+    value = *view.scale();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::vec3(2, 1, 3));
+    REQUIRE(value[1] == glm::vec3(8, 2, 3));
+
+    value = *view.max();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::vec3(14, 28, 12));
+    REQUIRE(value[1] == glm::vec3(10, 5, 6));
+
+    value = *view.min();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::vec3(-11, -12, -13));
+    REQUIRE(value[1] == glm::vec3(-2, -4, 6));
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.required = false;
+    classProperty.noData = {{0.0f, 0.0f}, {1.0f, 2.0f}};
+    classProperty.defaultProperty = {{3.0f, 4.0f}, {5.0f, 6.0f}};
+
+    PropertyView<PropertyArrayView<glm::vec2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<glm::vec2> value = *view.noData();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::vec2(0.0f, 0.0f));
+    REQUIRE(value[1] == glm::vec2(1.0f, 2.0f));
+
+    value = *view.defaultValue();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::vec2(3.0f, 4.0f));
+    REQUIRE(value[1] == glm::vec2(5.0f, 6.0f));
+  }
+
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.min = {{-11, -12, -13}, {-2, -4, 6}};
+
+    PropertyView<PropertyArrayView<glm::vec3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{14, 28, 12}, {10, 5, 6}};
+    view = PropertyView<PropertyArrayView<glm::vec3>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
+    view = PropertyView<PropertyArrayView<glm::vec3>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
+    view = PropertyView<PropertyArrayView<glm::vec3>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = {{3, 4}, {5, 6}};
+
+    PropertyView<PropertyArrayView<glm::ivec2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {{0, 0}, {1, 2}};
+    view = PropertyView<PropertyArrayView<glm::ivec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.scale = {{1, 1}, {-1, -1}};
+    view = PropertyView<PropertyArrayView<glm::ivec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {{0, 0}, {-4, 7}};
+    view = PropertyView<PropertyArrayView<glm::ivec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.defaultProperty = {{128, 129}, {0, 2}};
+
+    PropertyView<PropertyArrayView<glm::i8vec2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {{0, 0}, {-128, -129}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {{-2, -3}, {-200, 0}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{10, 5}, {808, 3}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {{1, 128}, {2, 2}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {{0, 0}, {-1, -222}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.defaultProperty = {1, 20};
+
+    PropertyView<PropertyArrayView<glm::i8vec2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = JsonValue::Array{{2.0f, 5.4f}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {{-10, -1, 4}, {0, 0, 0}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{10, 20, 30, 40}, {1, 2, 3, 4}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 2;
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "(1, 2)";
+    view = PropertyView<PropertyArrayView<glm::i8vec2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("VecN Array PropertyView (normalized)") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<glm::ivec2>, true> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.normalized = false;
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 5;
+    classProperty.normalized = true;
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
+    classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
+    classProperty.max = {{14, 28, 12}, {10, 5, 6}};
+    classProperty.min = {{-11, -12, -13}, {-2, -4, 6}};
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    PropertyArrayView<glm::dvec3> value = *view.offset();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dvec3(-1, 1, 2));
+    REQUIRE(value[1] == glm::dvec3(4, 4, 0));
+
+    value = *view.scale();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dvec3(2, 1, 3));
+    REQUIRE(value[1] == glm::dvec3(8, 2, 3));
+
+    value = *view.max();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dvec3(14, 28, 12));
+    REQUIRE(value[1] == glm::dvec3(10, 5, 6));
+
+    value = *view.min();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dvec3(-11, -12, -13));
+    REQUIRE(value[1] == glm::dvec3(-2, -4, 6));
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.normalized = true;
+    classProperty.required = false;
+    classProperty.noData = {{0, 0}, {1, 2}};
+    classProperty.defaultProperty = {{3.5, 4.5}, {5.0, 6.0}};
+
+    PropertyView<PropertyArrayView<glm::ivec2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<glm::ivec2> noData = *view.noData();
+    REQUIRE(noData.size() == 2);
+    REQUIRE(noData[0] == glm::ivec2(0, 0));
+    REQUIRE(noData[1] == glm::ivec2(1, 2));
+
+    PropertyArrayView<glm::dvec2> defaultValue = *view.defaultValue();
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(defaultValue[0] == glm::dvec2(3.5, 4.5));
+    REQUIRE(defaultValue[1] == glm::dvec2(5.0, 6.0));
+  }
+
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.normalized = true;
+    classProperty.min = {{-11, -12, -13}, {-2, -4, 6}};
+
+    PropertyView<PropertyArrayView<glm::ivec3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{14, 28, 12}, {10, 5, 6}};
+    view = PropertyView<PropertyArrayView<glm::ivec3>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = {{2, 1, 3}, {8, 2, 3}};
+    view = PropertyView<PropertyArrayView<glm::ivec3>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = {{-1, 1, 2}, {4, 4, 0}};
+    view = PropertyView<PropertyArrayView<glm::ivec3>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = {{3, 4}, {5, 6}};
+
+    PropertyView<PropertyArrayView<glm::ivec2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {{0, 0}, {1, 2}};
+    view = PropertyView<PropertyArrayView<glm::ivec2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.normalized = true;
+    classProperty.array = true;
+    classProperty.noData = {{0, 0}, {-128, -129}};
+
+    PropertyView<PropertyArrayView<glm::i8vec2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.normalized = true;
+    classProperty.defaultProperty = {1, 20};
+
+    PropertyView<PropertyArrayView<glm::i8vec2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = JsonValue::Array{{2.0f, 5.4f}, "not a vec2"};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {{-10, -1, 4}, {0, 0, 0}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{10, 20, 30, 40}, {1, 2, 3, 4}};
+    view = PropertyView<PropertyArrayView<glm::i8vec2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 2;
+    view = PropertyView<PropertyArrayView<glm::i8vec2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "(1, 2)";
+    view = PropertyView<PropertyArrayView<glm::i8vec2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+}
+
+TEST_CASE("MatN Array PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<glm::mat2>> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT4;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.normalized = true;
+
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<glm::imat3x3>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 2;
     // clang-format off
-    std::vector<double> data{
-        3.333, 200.2,
-        0.1122, 4.50, 2.30, 1.22, 4.444,
-        1.4, 3.3, 2.2,
-        1.11, 3.2, 4.111, 1.44
+    classProperty.offset = {
+      {-1,  1,
+        0,  2},
+      {2, 40,
+       6, -8},
     };
-    std::vector<uint32_t> offset{
-        0, 2 * sizeof(double), 7 * sizeof(double), 10 * sizeof(double), 14 * sizeof(double)
+    classProperty.scale = {
+      {1, 1,
+       1, 0},
+      {-2, 5,
+       7, 1}
+    };
+    classProperty.max = {
+      {2, 4,
+       8, 0},
+      {-7, 8,
+       4, 4},
+    };
+    classProperty.min = {
+      {-1, -6,
+       -1, 2},
+      {0, 1,
+       2, 3},
     };
     // clang-format on
 
-    checkDynamicArray(data, offset, CesiumGltf::PropertyType::Uint32, 4);
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    PropertyArrayView<glm::mat2> value = *view.offset();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::mat2(-1, 1, 0, 2));
+    REQUIRE(value[1] == glm::mat2(2, 40, 6, -8));
+
+    value = *view.scale();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::mat2(1, 1, 1, 0));
+    REQUIRE(value[1] == glm::mat2(-2, 5, 7, 1));
+
+    value = *view.max();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::mat2(2, 4, 8, 0));
+    REQUIRE(value[1] == glm::mat2(-7, 8, 4, 4));
+
+    value = *view.min();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::mat2(-1, -6, -1, 2));
+    REQUIRE(value[1] == glm::mat2(0, 1, 2, 3));
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.required = false;
+    // clang-format off
+    classProperty.noData = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    classProperty.defaultProperty = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+
+    PropertyView<PropertyArrayView<glm::i8mat2x2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<glm::i8mat2x2> value = *view.noData();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::i8mat2x2(0, 0, 0, 0));
+    REQUIRE(value[1] == glm::i8mat2x2(-1, -1, -1, -1));
+
+    value = view.defaultValue().value();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::i8mat2x2(1, 1, 1, 1));
+    REQUIRE(value[1] == glm::i8mat2x2(2, 2, 2, 2));
+  }
+
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    // clang-format off
+    classProperty.min = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    // clang-format on
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    // clang-format off
+    classProperty.max = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::mat2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    // clang-format off
+    classProperty.scale = {
+      {1, 0,
+       0, 1},
+      {-1, 0,
+       0, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::mat2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      {2, 2,
+       1, 1},
+      {0, 2,
+       1, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::mat2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.required = true;
+    // clang-format off
+    classProperty.defaultProperty = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+
+    PropertyView<PropertyArrayView<glm::imat2x2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    // clang-format off
+    classProperty.scale = {
+      {1, 0,
+       0, 1},
+      {-1, 0,
+       0, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      {2, 2,
+       1, 1},
+      {0, 2,
+       1, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+
+    // clang-format off
+    classProperty.defaultProperty = {
+      {1, 1,
+       1, 290},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+
+    PropertyView<PropertyArrayView<glm::i8mat2x2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      {0, 0,
+       0, 0},
+      {-140, -1,
+       -1, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    // clang-format off
+    classProperty.min = {
+      {-129, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    // clang-format off
+    classProperty.max = {
+      {-128, 189,
+         20,   2},
+      {10, 12,
+       8, 4},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    //clang-format off
+    classProperty.scale = {
+        {1, 2, 3, 4},
+        {256, 80, 9, 52},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      {129, 0,
+       0, 2},
+      {4, 0,
+       0, 8},};
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.defaultProperty = {4, 1, 2, 0};
+
+    PropertyView<PropertyArrayView<glm::i8mat2x2>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      {0.45, 0.0,
+       1.0, -1.4}
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {{0, 1, 2, 3, 4, 5, 6}};
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{0, 1, 2, 3}, false};
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 1;
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "[(1, 2, 3, 4)]";
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
   }
 }
 
-TEST_CASE("Check fixed array of string") {
-  std::vector<std::string> strings{
-      "Test 1",
-      "Test 2",
-      "Test 3",
-      "Test 4",
-      "Test 5",
-      "Test 6",
-      "This is a fine test",
-      "What's going on",
-      "Good morning"};
-  size_t totalSize = 0;
-  for (const auto& s : strings) {
-    totalSize += s.size();
+TEST_CASE("MatN Array PropertyView (normalized)") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
   }
 
-  uint32_t currentOffset = 0;
-  std::vector<std::byte> buffer;
-  buffer.resize(totalSize);
-  for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(
-        buffer.data() + currentOffset,
-        strings[i].data(),
-        strings[i].size());
-    currentOffset += static_cast<uint32_t>(strings[i].size());
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT4;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
   }
 
-  // copy offset to buffer
-  std::vector<std::byte> offsetBuffer;
-  offsetBuffer.resize((strings.size() + 1) * sizeof(uint32_t));
-  currentOffset = 0;
-  for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(
-        offsetBuffer.data() + i * sizeof(uint32_t),
-        &currentOffset,
-        sizeof(uint32_t));
-    currentOffset += static_cast<uint32_t>(strings[i].size());
-  }
-  std::memcpy(
-      offsetBuffer.data() + strings.size() * sizeof(uint32_t),
-      &currentOffset,
-      sizeof(uint32_t));
+  SECTION("Reports component type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
 
-  CesiumGltf::MetadataPropertyView<
-      CesiumGltf::MetadataArrayView<std::string_view>>
-      property(
-          CesiumGltf::MetadataPropertyViewStatus::Valid,
-          gsl::span<const std::byte>(buffer.data(), buffer.size()),
-          gsl::span<const std::byte>(),
-          gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-          CesiumGltf::PropertyType::Uint32,
-          3,
-          static_cast<int64_t>(strings.size() / 3),
-          false);
-
-  size_t expectedIdx = 0;
-  for (int64_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetadataArrayView<std::string_view> vals = property.get(i);
-    for (int64_t j = 0; j < vals.size(); ++j) {
-      std::string_view v = vals[j];
-      REQUIRE(v == strings[expectedIdx]);
-      ++expectedIdx;
-    }
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
-  REQUIRE(expectedIdx == strings.size());
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SECTION("Reports invalid normalization") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.normalized = false;
+
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNormalizationMismatch);
+  }
+
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT3;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 5;
+    classProperty.normalized = true;
+
+    PropertyView<PropertyArrayView<glm::imat3x3>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
+
+  SECTION("Constructs with offset, scale, max, and min") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+
+    // clang-format off
+    classProperty.offset = {
+      {-1,  1,
+        0,  2},
+      {2, 40,
+       6, -8},
+    };
+    classProperty.scale = {
+      {1, 1,
+       1, 0},
+      {-2, 5,
+       7, 1}
+    };
+    classProperty.max = {
+      {2, 4,
+       8, 0},
+      {-7, 8,
+       4, 4},
+    };
+    classProperty.min = {
+      {-1, -6,
+       -1, 2},
+      {0, 1,
+       2, 3},
+    };
+    // clang-format on
+
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.offset());
+    REQUIRE(view.scale());
+    REQUIRE(view.max());
+    REQUIRE(view.min());
+
+    PropertyArrayView<glm::dmat2> value = *view.offset();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dmat2(-1, 1, 0, 2));
+    REQUIRE(value[1] == glm::dmat2(2, 40, 6, -8));
+
+    value = *view.scale();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dmat2(1, 1, 1, 0));
+    REQUIRE(value[1] == glm::dmat2(-2, 5, 7, 1));
+
+    value = *view.max();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dmat2(2, 4, 8, 0));
+    REQUIRE(value[1] == glm::dmat2(-7, 8, 4, 4));
+
+    value = *view.min();
+    REQUIRE(value.size() == 2);
+    REQUIRE(value[0] == glm::dmat2(-1, -6, -1, 2));
+    REQUIRE(value[1] == glm::dmat2(0, 1, 2, 3));
+  }
+
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.required = false;
+    // clang-format off
+    classProperty.noData = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    classProperty.defaultProperty = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+
+    PropertyView<PropertyArrayView<glm::i8mat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    PropertyArrayView<glm::i8mat2x2> noData = *view.noData();
+    REQUIRE(noData.size() == 2);
+    REQUIRE(noData[0] == glm::i8mat2x2(0, 0, 0, 0));
+    REQUIRE(noData[1] == glm::i8mat2x2(-1, -1, -1, -1));
+
+    PropertyArrayView<glm::dmat2> defaultValue = *view.defaultValue();
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(defaultValue[0] == glm::dmat2(1, 1, 1, 1));
+    REQUIRE(defaultValue[1] == glm::dmat2(2, 2, 2, 2));
+  }
+  SECTION("Reports errors for defined properties on variable-length arrays") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 0;
+    classProperty.normalized = true;
+    // clang-format off
+    classProperty.min = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+
+    // clang-format on
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    // clang-format off
+    classProperty.max = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    // clang-format off
+    classProperty.scale = {
+      {1, 0,
+       0, 1},
+      {-1, 0,
+       0, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    // clang-format off
+    classProperty.offset = {
+      {2, 2,
+       1, 1},
+      {0, 2,
+       1, 2},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT32;
+    classProperty.array = true;
+    classProperty.count = 2;
+    classProperty.normalized = true;
+    classProperty.required = true;
+    // clang-format off
+    classProperty.defaultProperty = {
+      {1, 1,
+       1, 1},
+      {2, 2,
+       2, 2},
+    };
+    // clang-format on
+
+    PropertyView<PropertyArrayView<glm::imat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      {0, 0,
+       0, 0},
+      {-1, -1,
+       -1, -1},
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::imat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+    ;
+  }
+
+  SECTION("Reports errors for out-of-bounds values") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.normalized = true;
+
+    // clang-format off
+    classProperty.noData = {
+      {0, 0,
+       0, 0},
+      {-140, -1,
+       -1, -1},
+    };
+    // clang-format on
+    PropertyView<PropertyArrayView<glm::i8mat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.componentType = ClassProperty::ComponentType::INT8;
+    classProperty.array = true;
+    classProperty.normalized = true;
+    classProperty.defaultProperty = {4, 1, 2, 0};
+
+    PropertyView<PropertyArrayView<glm::i8mat2x2>, true> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    // clang-format off
+    classProperty.noData = {
+      {0.45, 0.0,
+       1.0, -1.4},
+       "not a matrix"
+    };
+    // clang-format on
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.min = {{0, 1, 2, 3, 4, 5, 6}};
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMin);
+
+    classProperty.max = {{0, 1, 2, 3}, false};
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidMax);
+
+    classProperty.scale = 1;
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidScale);
+
+    classProperty.offset = "[(1, 2, 3, 4)]";
+    view = PropertyView<PropertyArrayView<glm::i8mat2x2>, true>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidOffset);
+  }
 }
 
-TEST_CASE("Check dynamic array of string") {
-  // clang-format off
-  std::vector<uint32_t> arrayOffset{
-    0, 
-    4 * sizeof(uint32_t),
-    7 * sizeof(uint32_t),
-    11 * sizeof(uint32_t)
-  };
-
-  std::vector<std::string> strings{
-    "Test 1", "Test 2", "Test 3", "Test 4",
-    "Test 5", "Test 6", "Test 7",
-    "test 8", "Test 9", "Test 10", "Test 11"
-  };
-  // clang-format on
-
-  size_t totalSize = 0;
-  for (const auto& s : strings) {
-    totalSize += s.size();
+TEST_CASE("String Array PropertyView") {
+  SECTION("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<std::string_view>> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
   }
 
-  uint32_t currentOffset = 0;
-  std::vector<std::byte> buffer;
-  buffer.resize(totalSize);
-  for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(
-        buffer.data() + currentOffset,
-        strings[i].data(),
-        strings[i].size());
-    currentOffset += static_cast<uint32_t>(strings[i].size());
+  SECTION("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
   }
 
-  std::vector<std::byte> offsetBuffer;
-  offsetBuffer.resize((strings.size() + 1) * sizeof(uint32_t));
-  currentOffset = 0;
-  for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(
-        offsetBuffer.data() + i * sizeof(uint32_t),
-        &currentOffset,
-        sizeof(uint32_t));
-    currentOffset += static_cast<uint32_t>(strings[i].size());
-  }
-  std::memcpy(
-      offsetBuffer.data() + strings.size() * sizeof(uint32_t),
-      &currentOffset,
-      sizeof(uint32_t));
+  SECTION("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = false;
 
-  CesiumGltf::MetadataPropertyView<
-      CesiumGltf::MetadataArrayView<std::string_view>>
-      property(
-          CesiumGltf::MetadataPropertyViewStatus::Valid,
-          gsl::span<const std::byte>(buffer.data(), buffer.size()),
-          gsl::span<const std::byte>(
-              reinterpret_cast<const std::byte*>(arrayOffset.data()),
-              arrayOffset.size() * sizeof(uint32_t)),
-          gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-          CesiumGltf::PropertyType::Uint32,
-          0,
-          3,
-          false);
-
-  size_t expectedIdx = 0;
-  for (int64_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetadataArrayView<std::string_view> vals = property.get(i);
-    for (int64_t j = 0; j < vals.size(); ++j) {
-      std::string_view v = vals[j];
-      REQUIRE(v == strings[expectedIdx]);
-      ++expectedIdx;
-    }
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
-  REQUIRE(expectedIdx == strings.size());
-}
+  SECTION("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.count = 5;
 
-TEST_CASE("Check fixed array of boolean") {
-  std::vector<std::byte> buffer{
-      static_cast<std::byte>(0b10101111),
-      static_cast<std::byte>(0b11111010),
-      static_cast<std::byte>(0b11100111)};
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<bool>>
-      property(
-          CesiumGltf::MetadataPropertyViewStatus::Valid,
-          gsl::span<const std::byte>(buffer.data(), buffer.size()),
-          gsl::span<const std::byte>(),
-          gsl::span<const std::byte>(),
-          CesiumGltf::PropertyType::Uint32,
-          12,
-          2,
-          false);
+  SECTION("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.required = false;
+    classProperty.noData = {"null", "0"};
+    classProperty.defaultProperty = {"default1", "default2"};
 
-  REQUIRE(property.size() == 2);
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
 
-  CesiumGltf::MetadataArrayView<bool> val0 = property.get(0);
-  REQUIRE(val0.size() == 12);
-  REQUIRE(static_cast<int>(val0[0]) == 1);
-  REQUIRE(static_cast<int>(val0[1]) == 1);
-  REQUIRE(static_cast<int>(val0[2]) == 1);
-  REQUIRE(static_cast<int>(val0[3]) == 1);
-  REQUIRE(static_cast<int>(val0[4]) == 0);
-  REQUIRE(static_cast<int>(val0[5]) == 1);
-  REQUIRE(static_cast<int>(val0[6]) == 0);
-  REQUIRE(static_cast<int>(val0[7]) == 1);
-  REQUIRE(static_cast<int>(val0[8]) == 0);
-  REQUIRE(static_cast<int>(val0[9]) == 1);
-  REQUIRE(static_cast<int>(val0[10]) == 0);
-  REQUIRE(static_cast<int>(val0[11]) == 1);
+    const auto noData = *view.noData();
+    REQUIRE(noData.size() == 2);
+    REQUIRE(noData[0] == "null");
+    REQUIRE(noData[1] == "0");
 
-  CesiumGltf::MetadataArrayView<bool> val1 = property.get(1);
-  REQUIRE(static_cast<int>(val1[0]) == 1);
-  REQUIRE(static_cast<int>(val1[1]) == 1);
-  REQUIRE(static_cast<int>(val1[2]) == 1);
-  REQUIRE(static_cast<int>(val1[3]) == 1);
-  REQUIRE(static_cast<int>(val1[4]) == 1);
-  REQUIRE(static_cast<int>(val1[5]) == 1);
-  REQUIRE(static_cast<int>(val1[6]) == 1);
-  REQUIRE(static_cast<int>(val1[7]) == 0);
-  REQUIRE(static_cast<int>(val1[8]) == 0);
-  REQUIRE(static_cast<int>(val1[9]) == 1);
-  REQUIRE(static_cast<int>(val1[10]) == 1);
-  REQUIRE(static_cast<int>(val1[11]) == 1);
-}
+    const auto defaultValue = *view.defaultValue();
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(defaultValue[0] == "default1");
+    REQUIRE(defaultValue[1] == "default2");
+  }
 
-TEST_CASE("Check dynamic array of boolean") {
-  std::vector<std::byte> buffer{
-      static_cast<std::byte>(0b10101111),
-      static_cast<std::byte>(0b11111010),
-      static_cast<std::byte>(0b11100111),
-      static_cast<std::byte>(0b11110110)};
+  SECTION("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = {"default1", "default2"};
 
-  std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<bool>>
-      property(
-          CesiumGltf::MetadataPropertyViewStatus::Valid,
-          gsl::span<const std::byte>(buffer.data(), buffer.size()),
-          gsl::span<const std::byte>(
-              reinterpret_cast<const std::byte*>(offsetBuffer.data()),
-              offsetBuffer.size() * sizeof(uint32_t)),
-          gsl::span<const std::byte>(),
-          CesiumGltf::PropertyType::Uint32,
-          0,
-          3,
-          false);
+    classProperty.noData = {"null", "0"};
+    view = PropertyView<PropertyArrayView<std::string_view>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
 
-  REQUIRE(property.size() == 3);
+  SECTION("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    classProperty.defaultProperty = true;
 
-  CesiumGltf::MetadataArrayView<bool> val0 = property.get(0);
-  REQUIRE(val0.size() == 3);
-  REQUIRE(static_cast<int>(val0[0]) == 1);
-  REQUIRE(static_cast<int>(val0[1]) == 1);
-  REQUIRE(static_cast<int>(val0[2]) == 1);
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
 
-  CesiumGltf::MetadataArrayView<bool> val1 = property.get(1);
-  REQUIRE(val1.size() == 9);
-  REQUIRE(static_cast<int>(val1[0]) == 1);
-  REQUIRE(static_cast<int>(val1[1]) == 0);
-  REQUIRE(static_cast<int>(val1[2]) == 1);
-  REQUIRE(static_cast<int>(val1[3]) == 0);
-  REQUIRE(static_cast<int>(val1[4]) == 1);
-  REQUIRE(static_cast<int>(val1[5]) == 0);
-  REQUIRE(static_cast<int>(val1[6]) == 1);
-  REQUIRE(static_cast<int>(val1[7]) == 0);
-  REQUIRE(static_cast<int>(val1[8]) == 1);
-
-  CesiumGltf::MetadataArrayView<bool> val2 = property.get(2);
-  REQUIRE(val2.size() == 16);
-  REQUIRE(static_cast<int>(val2[0]) == 1);
-  REQUIRE(static_cast<int>(val2[1]) == 1);
-  REQUIRE(static_cast<int>(val2[2]) == 1);
-  REQUIRE(static_cast<int>(val2[3]) == 1);
-  REQUIRE(static_cast<int>(val2[4]) == 1);
-  REQUIRE(static_cast<int>(val2[5]) == 1);
-  REQUIRE(static_cast<int>(val2[6]) == 1);
-  REQUIRE(static_cast<int>(val2[7]) == 0);
-  REQUIRE(static_cast<int>(val2[8]) == 0);
-  REQUIRE(static_cast<int>(val2[9]) == 1);
-  REQUIRE(static_cast<int>(val2[10]) == 1);
-  REQUIRE(static_cast<int>(val2[11]) == 1);
-  REQUIRE(static_cast<int>(val2[12]) == 0);
-  REQUIRE(static_cast<int>(val2[13]) == 1);
-  REQUIRE(static_cast<int>(val2[14]) == 1);
-  REQUIRE(static_cast<int>(val2[15]) == 0);
+    classProperty.noData = JsonValue::Array{"null", 0};
+    view = PropertyView<PropertyArrayView<std::string_view>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
 }

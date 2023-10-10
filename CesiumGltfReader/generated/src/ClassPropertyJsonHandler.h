@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -20,7 +20,7 @@ public:
   using ValueType = CesiumGltf::ClassProperty;
 
   ClassPropertyJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::ClassProperty* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
@@ -36,14 +36,18 @@ private:
   CesiumJsonReader::StringJsonHandler _name;
   CesiumJsonReader::StringJsonHandler _description;
   CesiumJsonReader::StringJsonHandler _type;
-  CesiumJsonReader::StringJsonHandler _enumType;
   CesiumJsonReader::StringJsonHandler _componentType;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _componentCount;
+  CesiumJsonReader::StringJsonHandler _enumType;
+  CesiumJsonReader::BoolJsonHandler _array;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
   CesiumJsonReader::BoolJsonHandler _normalized;
+  CesiumJsonReader::JsonObjectJsonHandler _offset;
+  CesiumJsonReader::JsonObjectJsonHandler _scale;
   CesiumJsonReader::JsonObjectJsonHandler _max;
   CesiumJsonReader::JsonObjectJsonHandler _min;
+  CesiumJsonReader::BoolJsonHandler _required;
+  CesiumJsonReader::JsonObjectJsonHandler _noData;
   CesiumJsonReader::JsonObjectJsonHandler _defaultProperty;
-  CesiumJsonReader::BoolJsonHandler _optional;
   CesiumJsonReader::StringJsonHandler _semantic;
 };
 } // namespace CesiumGltfReader

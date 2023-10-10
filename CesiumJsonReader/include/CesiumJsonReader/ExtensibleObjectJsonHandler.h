@@ -1,9 +1,9 @@
 #pragma once
 
 #include "DictionaryJsonHandler.h"
-#include "ExtensionReaderContext.h"
 #include "ExtensionsJsonHandler.h"
 #include "JsonObjectJsonHandler.h"
+#include "JsonReaderOptions.h"
 #include "ObjectJsonHandler.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
@@ -14,7 +14,7 @@ namespace CesiumJsonReader {
 class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
   explicit ExtensibleObjectJsonHandler(
-      const ExtensionReaderContext& context) noexcept;
+      const JsonReaderOptions& context) noexcept;
 
 protected:
   void reset(IJsonHandler* pParent, CesiumUtility::ExtensibleObject* pObject);
@@ -29,5 +29,7 @@ private:
       CesiumJsonReader::JsonObjectJsonHandler>
       _extras;
   ExtensionsJsonHandler _extensions;
+  JsonObjectJsonHandler _unknownProperties;
+  bool _captureUnknownProperties;
 };
 } // namespace CesiumJsonReader

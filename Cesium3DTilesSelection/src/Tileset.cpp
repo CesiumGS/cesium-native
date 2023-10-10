@@ -7,6 +7,7 @@
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
 #include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -86,15 +87,19 @@ Tileset::Tileset(
           ionAccessToken,
           ionAssetEndpointUrl)} {}
 
-CesiumAsync::SharedFuture<void>& Tileset::getAsyncDestructionCompleteEvent() {
-  return this->_pTilesetContentManager->getAsyncDestructionCompleteEvent();
-}
-
 Tileset::~Tileset() noexcept {
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
+}
+
+CesiumAsync::SharedFuture<void>& Tileset::getAsyncDestructionCompleteEvent() {
+  return this->_pTilesetContentManager->getAsyncDestructionCompleteEvent();
+}
+
+CesiumAsync::SharedFuture<void>& Tileset::getRootTileAvailableEvent() {
+  return this->_pTilesetContentManager->getRootTileAvailableEvent();
 }
 
 const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
@@ -309,6 +314,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.tilesCulled = 0;
   result.tilesOccluded = 0;
   result.tilesWaitingForOcclusionResults = 0;
+  result.tilesKicked = 0;
   result.maxDepthVisited = 0;
 
   if (!_options.enableLodTransitionPeriod) {
@@ -432,8 +438,16 @@ float Tileset::computeLoadProgress() noexcept {
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  int32_t numOfTilesKicked =
+      static_cast<int32_t>(this->_updateResult.tilesKicked);
+
+  // Amount of work actively being done
   int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
-  int32_t totalNum = numOfTilesLoaded + inProgressSum;
+
+  // Total work so far. Add already loaded tiles and kicked tiles.
+  // Kicked tiles are transient, and never in progress, but are an indicator
+  // that there is more work to do next frame.
+  int32_t totalNum = inProgressSum + numOfTilesLoaded + numOfTilesKicked;
   float percentage =
       static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
   return (percentage * 100.f);
@@ -453,15 +467,72 @@ int64_t Tileset::getTotalDataBytes() const noexcept {
   return this->_pTilesetContentManager->getTotalDataUsed();
 }
 
+const TilesetMetadata* Tileset::getMetadata(const Tile* pTile) const {
+  if (pTile == nullptr) {
+    pTile = this->getRootTile();
+  }
+
+  while (pTile != nullptr) {
+    const TileExternalContent* pExternal =
+        pTile->getContent().getExternalContent();
+    if (pExternal)
+      return &pExternal->metadata;
+    pTile = pTile->getParent();
+  }
+
+  return nullptr;
+}
+
+CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
+  return this->getRootTileAvailableEvent().thenInMainThread(
+      [pManager = this->_pTilesetContentManager,
+       pAssetAccessor = this->_externals.pAssetAccessor,
+       asyncSystem =
+           this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
+        Tile* pRoot = pManager->getRootTile();
+        assert(pRoot);
+
+        TileExternalContent* pExternal =
+            pRoot->getContent().getExternalContent();
+        if (!pExternal) {
+          return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
+              nullptr);
+        }
+
+        TilesetMetadata& metadata = pExternal->metadata;
+        if (!metadata.schemaUri) {
+          // No schema URI, so the metadata is ready to go.
+          return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
+              &metadata);
+        }
+
+        return metadata.loadSchemaUri(asyncSystem, pAssetAccessor)
+            .thenInMainThread(
+                [pManager, pAssetAccessor]() -> const TilesetMetadata* {
+                  Tile* pRoot = pManager->getRootTile();
+                  assert(pRoot);
+
+                  TileExternalContent* pExternal =
+                      pRoot->getContent().getExternalContent();
+                  if (!pExternal) {
+                    return nullptr;
+                  }
+                  return &pExternal->metadata;
+                });
+      });
+}
+
 static void markTileNonRendered(
     TileSelectionState::Result lastResult,
     Tile& tile,
     ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Rendered) {
+  if (lastResult == TileSelectionState::Result::Rendered ||
+      (lastResult == TileSelectionState::Result::Refined &&
+       tile.getRefine() == TileRefine::Add)) {
+    result.tilesFadingOut.insert(&tile);
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);
-      result.tilesFadingOut.insert(&tile);
     }
   }
 }
@@ -746,10 +817,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   double tilePriority =
       computeTilePriority(tile, frameState.frustums, distances);
 
-  this->_pTilesetContentManager->updateTileContent(
-      tile,
-      tilePriority,
-      _options);
+  this->_pTilesetContentManager->updateTileContent(tile, _options);
   this->_markTileVisited(tile);
 
   CullResult cullResult{};
@@ -779,13 +847,16 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   this->_frustumCull(tile, frameState, cullWithChildrenBounds, cullResult);
   this->_fogCull(frameState, distances, cullResult);
 
-  if (this->_options.forbidHoles && !cullResult.shouldVisit &&
-      tile.getRefine() == TileRefine::Replace &&
-      tile.getUnconditionallyRefine()) {
+  if (!cullResult.shouldVisit && tile.getUnconditionallyRefine()) {
     // Unconditionally refined tiles must always be visited in forbidHoles
     // mode, because we need to load this tile's descendants before we can
-    // render any of its siblings.
-    cullResult.shouldVisit = true;
+    // render any of its siblings. An unconditionally refined root tile must be
+    // visited as well, otherwise we won't load anything at all.
+    if ((this->_options.forbidHoles &&
+         tile.getRefine() == TileRefine::Replace) ||
+        tile.getParent() == nullptr) {
+      cullResult.shouldVisit = true;
+    }
   }
 
   if (!cullResult.shouldVisit) {
@@ -991,7 +1062,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
       traversalDetails.notYetRenderableCount >
           this->_options.loadingDescendantLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
+
     // Remove all descendants from the load queues.
+    size_t allQueueStartSize =
+        _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
     this->_workerThreadLoadQueue.erase(
         this->_workerThreadLoadQueue.begin() +
             static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
@@ -1002,6 +1076,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
             static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
                 mainThreadLoadQueueIndex),
         this->_mainThreadLoadQueue.end());
+    size_t allQueueEndSize =
+        _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
+    result.tilesKicked +=
+        static_cast<uint32_t>(allQueueStartSize - allQueueEndSize);
 
     if (!queuedForLoad) {
       addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
@@ -1364,7 +1442,14 @@ void Tileset::_processMainThreadLoadQueue() {
   auto end =
       start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
   for (TileLoadTask& task : this->_mainThreadLoadQueue) {
-    this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+    // We double-check that the tile is still in the ContentLoaded state here,
+    // in case something (such as a child that needs to upsample from this
+    // parent) already pushed the tile into the Done state. Because in that
+    // case, calling finishLoading here would assert or crash.
+    if (task.pTile->getState() == TileLoadState::ContentLoaded &&
+        task.pTile->isRenderContent()) {
+      this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+    }
     auto time = std::chrono::system_clock::now();
     if (timeBudget > 0.0 && time >= end) {
       break;
@@ -1453,10 +1538,13 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const FrameState& frameState,
     const Tile& tile,
     const TileSelectionState& lastFrameSelectionState) {
+  TileSelectionState::Result lastFrameResult =
+      lastFrameSelectionState.getResult(frameState.lastFrameNumber);
   bool isRenderable = tile.isRenderable();
   bool wasRenderedLastFrame =
-      lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
-      TileSelectionState::Result::Rendered;
+      lastFrameResult == TileSelectionState::Result::Rendered ||
+      (tile.getRefine() == TileRefine::Add &&
+       lastFrameResult == TileSelectionState::Result::Refined);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = isRenderable;

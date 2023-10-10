@@ -413,13 +413,24 @@ public:
 
   /**
    * @brief Gets the array from the value.
-   * @return The arrayj.
+   * @return The array.
    * @throws std::bad_variant_access if the underlying type is not a
    * JsonValue::Array
    */
   [[nodiscard]] inline const JsonValue::Array& getArray() const {
     return std::get<JsonValue::Array>(this->value);
   }
+
+  /**
+   * @brief Gets an array of strings from the value.
+   *
+   * @param defaultString The default string to include in the array for an
+   * element that is not a string.
+   * @return The array of strings, or an empty array if this value is not an
+   * array at all.
+   */
+  [[nodiscard]] std::vector<std::string>
+  getArrayOfStrings(const std::string& defaultString) const;
 
   /**
    * @brief Gets the bool from the value.
