@@ -257,7 +257,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
       for (std::string::const_iterator it = subdomains_s.begin();
            it != subdomains_s.end();
            ++it) {
-        subdomains.emplace_back(std::to_string(*it));
+        subdomains.emplace_back(1, *it);
       }
     } else {
       subdomains = std::get<std::vector<std::string>>(subdomains_v);
