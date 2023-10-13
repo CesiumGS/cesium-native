@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/IPropertyTableViewVisitor.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/PropertyTablePropertyView.h"
 #include "CesiumGltf/PropertyType.h"
@@ -15,9 +16,9 @@ namespace CesiumGltf {
  * @brief Indicates the status of a property table view.
  *
  * The {@link PropertyTableView} constructor always completes successfully.
- * However, it may not always reflect the actual content of the {@link PropertyTable},
- * but instead indicate that its {@link PropertyTableView::size} is 0.
- * This enumeration provides the reason.
+ * However, it may not always reflect the actual content of the {@link
+ * PropertyTable}, but instead indicate that its {@link PropertyTableView::size}
+ * is 0. This enumeration provides the reason.
  */
 enum class PropertyTableViewStatus {
   /**
@@ -47,12 +48,17 @@ enum class PropertyTableViewStatus {
 /**
  * @brief Utility to retrieve the data of {@link PropertyTable}.
  *
- * This should be used to get a {@link PropertyTablePropertyView} of a property in the property table.
- * It will validate the EXT_structural_metadata format and ensure {@link PropertyTablePropertyView}
- * does not access out of bounds.
+ * This should be used to get a {@link PropertyTablePropertyView} of a property
+ * in the property table. It will validate the EXT_structural_metadata format
+ * and ensure {@link PropertyTablePropertyView} does not access out of bounds.
  */
 class PropertyTableView {
 public:
+  /**
+   * @brief Creates an invalid instance of a PropertyTableView.
+   */
+  PropertyTableView();
+
   /**
    * @brief Creates an instance of PropertyTableView.
    * @param model The glTF Model that contains the property table data.
@@ -81,7 +87,8 @@ public:
 
   /**
    * @brief Get the number of elements in this PropertyTableView. If the
-   * view is valid, this returns {@link PropertyTable::count}. Otherwise, this returns 0.
+   * view is valid, this returns {@link PropertyTable::count}. Otherwise, this
+   * returns 0.
    *
    * @return The number of elements in this PropertyTableView.
    */
@@ -93,8 +100,8 @@ public:
   /**
    * @brief Gets the {@link Class} that this property table conforms to.
    *
-   * @return A pointer to the {@link Class}. Returns nullptr if the PropertyTable
-   * did not specify a valid class.
+   * @return A pointer to the {@link Class}. Returns nullptr if the
+   * PropertyTable did not specify a valid class.
    */
   const Class* getClass() const noexcept { return _pClass; }
 
@@ -108,30 +115,30 @@ public:
   const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
   /**
-   * @brief Gets a {@link PropertyTablePropertyView} that views the data of a property stored
-   * in the {@link PropertyTable}.
+   * @brief Gets a {@link PropertyTablePropertyView} that views the data of a
+   * property stored in the {@link PropertyTable}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
-   * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
-   * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
-   * types, a glm matN composed of one of the scalar types, bool,
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one
+   * of the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
+   * the scalar types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
    * aforementioned types.
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTexturePropertyView. Likewise, if the value of
    * Normalized
-   * does not match the value of {@ClassProperty::normalized} for that class property,
-   * this returns an invalid property view. Only types with integer components
-   * may be normalized.
+   * does not match the value of {@ClassProperty::normalized} for that class
+   * property, this returns an invalid property view. Only types with integer
+   * components may be normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
    * @tparam Normalized Whether the property is normalized. Only applicable to
    * types with integer components.
    * @param propertyName The name of the property to retrieve data from
-   * @return A {@link PropertyTablePropertyView} of the property. If no valid property is
-   * found, the property view will be invalid.
+   * @return A {@link PropertyTablePropertyView} of the property. If no valid
+   * property is found, the property view will be invalid.
    */
   template <typename T, bool Normalized = false>
   PropertyTablePropertyView<T, Normalized>
@@ -150,21 +157,230 @@ public:
     return getPropertyViewImpl<T, Normalized>(propertyName, *pClassProperty);
   }
 
+  struct PropertyId {
+  public:
+    PropertyId()
+        : _pClassProperty(nullptr),
+          _name(),
+          _type(PropertyType::Invalid),
+          _componentType(PropertyComponentType::None) {}
+
+    const ClassProperty* getClassProperty() const {
+      return this->_pClassProperty;
+    }
+
+  private:
+    friend class PropertyTableView;
+
+    PropertyId(
+        const ClassProperty* pClassProperty,
+        const std::string& name,
+        PropertyType type,
+        PropertyComponentType componentType)
+        : _pClassProperty(pClassProperty),
+          _name(name),
+          _type(type),
+          _componentType(componentType) {}
+
+    const ClassProperty* _pClassProperty;
+    std::string _name;
+    PropertyType _type;
+    PropertyComponentType _componentType;
+  };
+
+  PropertyId findProperty(const std::string& propertyName) const {
+    const ClassProperty* pClassProperty = getClassProperty(propertyName);
+    if (!pClassProperty) {
+      return PropertyId(
+          nullptr,
+          propertyName,
+          PropertyType::Scalar,
+          PropertyComponentType::None);
+    }
+
+    PropertyType type = convertStringToPropertyType(pClassProperty->type);
+    PropertyComponentType componentType = PropertyComponentType::None;
+    if (pClassProperty->componentType) {
+      componentType =
+          convertStringToPropertyComponentType(*pClassProperty->componentType);
+    }
+
+    return PropertyId(pClassProperty, propertyName, type, componentType);
+  }
+
+  void getPropertyViewDynamic(
+      const PropertyId& propertyId,
+      IPropertyTableViewVisitor& visitor) const {
+    this->getPropertyView(
+        propertyId,
+        [&visitor](const std::string& propertyName, const auto& view) {
+          visitor.visit(view);
+        });
+  }
+
   /**
-   * @brief Gets a {@link PropertyTablePropertyView} through a callback that accepts a
-   * property name and a {@link PropertyTablePropertyView<T>} that views the data
-   * of the property with the specified name.
+   * @brief Gets a {@link PropertyTablePropertyView} through a callback that
+   * accepts a property name and a {@link PropertyTablePropertyView<T>} that
+   * views the data of the property with the specified name.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
-   * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
-   * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
-   * types, a glm matN composed of one of the scalar types, bool,
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one
+   * of the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
+   * the scalar types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
    * aforementioned types.
    *
-   * If the property is invalid, an empty {@link PropertyTablePropertyView} with an
-   * error status will be passed to the callback. Otherwise, a valid property
+   * If the property is invalid, an empty {@link PropertyTablePropertyView} with
+   * an error status will be passed to the callback. Otherwise, a valid property
+   * view will be passed to the callback.
+   *
+   * @param propertyName The name of the property to retrieve data from
+   * @tparam callback A callback function that accepts a property name and a
+   * {@link PropertyTablePropertyView<T>}
+   */
+  template <typename Callback>
+  void
+  getPropertyView(const PropertyId& propertyId, Callback&& callback) const {
+    const std::string& name = propertyId._name;
+    const ClassProperty* pClassProperty = propertyId._pClassProperty;
+    PropertyType type = propertyId._type;
+    PropertyComponentType componentType = propertyId._componentType;
+
+    if (this->size() <= 0) {
+      callback(
+          name,
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable));
+      return;
+    }
+
+    if (!pClassProperty) {
+      callback(
+          name,
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorNonexistentProperty));
+      return;
+    }
+
+    bool normalized = pClassProperty->normalized;
+    if (normalized &&
+        !isPropertyComponentTypeInteger(propertyId._componentType)) {
+      // Only integer components may be normalized.
+      callback(
+          name,
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorInvalidNormalization));
+      return;
+    }
+
+    if (pClassProperty->array) {
+      if (normalized) {
+        getArrayPropertyViewImpl<Callback, true>(
+            name,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getArrayPropertyViewImpl<Callback, false>(
+            name,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      }
+      return;
+    }
+
+    if (type == PropertyType::Scalar) {
+      if (normalized) {
+        getScalarPropertyViewImpl<Callback, true>(
+            name,
+            *pClassProperty,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getScalarPropertyViewImpl<Callback, false>(
+            name,
+            *pClassProperty,
+            componentType,
+            std::forward<Callback>(callback));
+      }
+      return;
+    }
+
+    if (isPropertyTypeVecN(type)) {
+      if (normalized) {
+        getVecNPropertyViewImpl<Callback, true>(
+            name,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getVecNPropertyViewImpl<Callback, false>(
+            name,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      }
+      return;
+    }
+
+    if (isPropertyTypeMatN(type)) {
+      if (normalized) {
+        getMatNPropertyViewImpl<Callback, true>(
+            name,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      } else {
+        getMatNPropertyViewImpl<Callback, false>(
+            name,
+            *pClassProperty,
+            type,
+            componentType,
+            std::forward<Callback>(callback));
+      }
+      return;
+    }
+
+    if (type == PropertyType::String) {
+      callback(
+          name,
+          getPropertyViewImpl<std::string_view, false>(name, *pClassProperty));
+      return;
+    }
+
+    if (type == PropertyType::Boolean) {
+      callback(name, getPropertyViewImpl<bool, false>(name, *pClassProperty));
+      return;
+    }
+
+    callback(
+        name,
+        PropertyTablePropertyView<uint8_t>(
+            PropertyTablePropertyViewStatus::ErrorTypeMismatch));
+  }
+
+  /**
+   * @brief Gets a {@link PropertyTablePropertyView} through a callback that
+   * accepts a property name and a {@link PropertyTablePropertyView<T>} that
+   * views the data of the property with the specified name.
+   *
+   * This method will validate the EXT_structural_metadata format to ensure
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one
+   * of the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
+   * the scalar types, a glm matN composed of one of the scalar types, bool,
+   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
+   * aforementioned types.
+   *
+   * If the property is invalid, an empty {@link PropertyTablePropertyView} with
+   * an error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
    * @param propertyName The name of the property to retrieve data from
@@ -182,136 +398,19 @@ public:
       return;
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyName);
-    if (!pClassProperty) {
-      callback(
-          propertyName,
-          PropertyTablePropertyView<uint8_t>(
-              PropertyTablePropertyViewStatus::ErrorNonexistentProperty));
-      return;
-    }
-
-    PropertyType type = convertStringToPropertyType(pClassProperty->type);
-    PropertyComponentType componentType = PropertyComponentType::None;
-    if (pClassProperty->componentType) {
-      componentType =
-          convertStringToPropertyComponentType(*pClassProperty->componentType);
-    }
-
-    bool normalized = pClassProperty->normalized;
-    if (normalized && !isPropertyComponentTypeInteger(componentType)) {
-      // Only integer components may be normalized.
-      callback(
-          propertyName,
-          PropertyTablePropertyView<uint8_t>(
-              PropertyTablePropertyViewStatus::ErrorInvalidNormalization));
-      return;
-    }
-
-    if (pClassProperty->array) {
-      if (normalized) {
-        getArrayPropertyViewImpl<Callback, true>(
-            propertyName,
-            *pClassProperty,
-            type,
-            componentType,
-            std::forward<Callback>(callback));
-      } else {
-        getArrayPropertyViewImpl<Callback, false>(
-            propertyName,
-            *pClassProperty,
-            type,
-            componentType,
-            std::forward<Callback>(callback));
-      }
-      return;
-    }
-
-    if (type == PropertyType::Scalar) {
-      if (normalized) {
-        getScalarPropertyViewImpl<Callback, true>(
-            propertyName,
-            *pClassProperty,
-            componentType,
-            std::forward<Callback>(callback));
-      } else {
-        getScalarPropertyViewImpl<Callback, false>(
-            propertyName,
-            *pClassProperty,
-            componentType,
-            std::forward<Callback>(callback));
-      }
-      return;
-    }
-
-    if (isPropertyTypeVecN(type)) {
-      if (normalized) {
-        getVecNPropertyViewImpl<Callback, true>(
-            propertyName,
-            *pClassProperty,
-            type,
-            componentType,
-            std::forward<Callback>(callback));
-      } else {
-        getVecNPropertyViewImpl<Callback, false>(
-            propertyName,
-            *pClassProperty,
-            type,
-            componentType,
-            std::forward<Callback>(callback));
-      }
-      return;
-    }
-
-    if (isPropertyTypeMatN(type)) {
-      if (normalized) {
-        getMatNPropertyViewImpl<Callback, true>(
-            propertyName,
-            *pClassProperty,
-            type,
-            componentType,
-            std::forward<Callback>(callback));
-      } else {
-        getMatNPropertyViewImpl<Callback, false>(
-            propertyName,
-            *pClassProperty,
-            type,
-            componentType,
-            std::forward<Callback>(callback));
-      }
-      return;
-    }
-
-    if (type == PropertyType::String) {
-      callback(
-          propertyName,
-          getPropertyViewImpl<std::string_view, false>(
-              propertyName,
-              *pClassProperty));
-      return;
-    }
-
-    if (type == PropertyType::Boolean) {
-      callback(
-          propertyName,
-          getPropertyViewImpl<bool, false>(propertyName, *pClassProperty));
-      return;
-    }
-
-    callback(
-        propertyName,
-        PropertyTablePropertyView<uint8_t>(
-            PropertyTablePropertyViewStatus::ErrorTypeMismatch));
+    PropertyId propertyId = this->findProperty(propertyName);
+    return this->getPropertyView(propertyId, std::forward<Callback>(callback));
   }
 
   /**
-   * @brief Iterates over each property in the {@link PropertyTable} with a callback
-   * that accepts a property name and a {@link PropertyTablePropertyView<T>} to view
-   * the data stored in the {@link PropertyTableProperty}.
+   * @brief Iterates over each property in the {@link PropertyTable} with a
+   * callback that accepts a property name and a {@link
+   * PropertyTablePropertyView<T>} to view the data stored in the {@link
+   * PropertyTableProperty}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
-   * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one
+   * of the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
    * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
    * the scalar types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or {@link PropertyArrayView<T>} with T as one of the

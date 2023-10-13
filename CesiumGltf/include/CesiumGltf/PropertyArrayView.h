@@ -49,6 +49,12 @@ public:
   bool operator==(const PropertyArrayView<ElementType>& other) const noexcept;
   bool operator!=(const PropertyArrayView<ElementType>& other) const noexcept;
 
+  ~PropertyArrayView() noexcept;
+  PropertyArrayView(const PropertyArrayView& rhs) noexcept;
+  PropertyArrayView(PropertyArrayView&& rhs) noexcept;
+  PropertyArrayView& operator=(const PropertyArrayView& rhs) noexcept;
+  PropertyArrayView& operator=(PropertyArrayView&& rhs) noexcept;
+
 private:
   using ArrayType =
       mpark::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
@@ -114,6 +120,21 @@ bool PropertyArrayView<ElementType>::operator!=(
     const PropertyArrayView<ElementType>& other) const noexcept {
   return !operator==(other);
 }
+
+template <typename ElementType>
+PropertyArrayView<ElementType>::~PropertyArrayView() noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView(
+    const PropertyArrayView<ElementType>& rhs) noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView(
+    PropertyArrayView<ElementType>&& rhs) noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>& PropertyArrayView<ElementType>::operator=(
+    const PropertyArrayView<ElementType>& rhs) noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>& PropertyArrayView<ElementType>::operator=(
+    PropertyArrayView<ElementType>&& rhs) noexcept = default;
 
 template <> class PropertyArrayView<bool> {
 public:

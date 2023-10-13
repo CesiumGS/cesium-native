@@ -104,6 +104,12 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
   }
 }
 
+PropertyTableView::PropertyTableView()
+    : _pModel(nullptr),
+      _pPropertyTable(nullptr),
+      _pClass(nullptr),
+      _status(PropertyTableViewStatus::ErrorMissingMetadataExtension) {}
+
 PropertyTableView::PropertyTableView(
     const Model& model,
     const PropertyTable& propertyTable)

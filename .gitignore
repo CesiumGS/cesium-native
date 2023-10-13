@@ -10,3 +10,4 @@ CMakeSettings.json
 test.db
 build-wsl
 build-android
+build-linux
