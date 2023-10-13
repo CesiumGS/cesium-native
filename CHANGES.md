@@ -15,6 +15,7 @@
 ##### Fixes :wrench:
 
 - Fixed the handling of omitted metadata properties in `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView` instances. Previously, if a property was not `required` and omitted, it would be initialized as invalid with the `ErrorNonexistentProperty` status. Now, it will be treated as valid as long as the property defines a valid `defaultProperty`. A special instance of `PropertyTablePropertyView`, `PropertyTexturePropertyView`, or `PropertyAttributePropertyView` will be constructed to allow the property's default value to be retrieved, either via `defaultValue` or `get`. `getRaw` may not be called on this special instance.
+- Updated the Cesium ion OAuth2 URL from `https://cesium.com/ion/oauth` to `https://ion.cesium.com/oauth`, avoiding a redirect.
 
 ### v0.28.0 - 2023-09-08
 
