@@ -214,7 +214,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
 
   bool useKVP;
 
-  auto countBracket = std::count(_url.begin(), _url.end(), '_');
+  auto countBracket = std::count(_url.begin(), _url.end(), '{');
   if (countBracket < 1 || (countBracket == 1 && _url.find("{s}") != -1)) {
     useKVP = true;
   } else {
