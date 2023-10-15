@@ -11,10 +11,11 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/Uri.h>
 
 #include <cstddef>
+#include <variant>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -93,7 +94,7 @@ protected:
     if (_labels && level < _labels.value().size()) {
       tileMatrix = _labels.value()[level];
     } else {
-      tileMatrix = std::to_string(level);
+      tileMatrix = _tileMatrixSetID + ":" + std::to_string(level);
     }
 
     std::string queryString = "?";
@@ -229,12 +230,17 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   minimumLevel = _options.minimumLevel.value_or(minimumLevel);
   maximumLevel = _options.maximumLevel.value_or(maximumLevel);
 
-  CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
-      CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
   CesiumGeospatial::Projection projection;
-
+  CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
+      CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+  uint32_t rootTilesX = 1;
   if (_options.projection) {
     projection = _options.projection.value();
+    if (std::get_if<CesiumGeospatial::GeographicProjection>(&projection)) {
+      tilingSchemeRectangle =
+          CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+      rootTilesX = 2;
+    }
   } else {
     if (_options.ellipsoid) {
       projection =
@@ -246,7 +252,12 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   CesiumGeometry::Rectangle coverageRectangle =
       _options.coverageRectangle.value_or(
           projectRectangleSimple(projection, tilingSchemeRectangle));
-  CesiumGeometry::QuadtreeTilingScheme tilingScheme(coverageRectangle, 1, 1);
+
+  CesiumGeometry::QuadtreeTilingScheme tilingScheme =
+      _options.tilingScheme.value_or(CesiumGeometry::QuadtreeTilingScheme(
+          coverageRectangle,
+          rootTilesX,
+          1));
 
   std::vector<std::string> subdomains;
   if (_options.subdomains) {
