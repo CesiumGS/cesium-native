@@ -77,6 +77,18 @@ PropertyAttributeView::PropertyAttributeView(
   this->_pClass = &classIt->second;
 }
 
+PropertyAttributeViewStatus PropertyAttributeView::status() const noexcept {
+  return this->_status;
+}
+
+const std::optional<std::string>& PropertyAttributeView::name() const noexcept {
+  return _pPropertyAttribute->name;
+}
+
+const Class* PropertyAttributeView::getClass() const noexcept {
+  return _pClass;
+}
+
 const ClassProperty*
 PropertyAttributeView::getClassProperty(const std::string& propertyName) const {
   if (_status != PropertyAttributeViewStatus::Valid) {
