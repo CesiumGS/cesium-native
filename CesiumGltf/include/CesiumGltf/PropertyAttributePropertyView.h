@@ -121,20 +121,14 @@ public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyAttributePropertyView() noexcept
-      : PropertyView<ElementType, false>(), _accessor{}, _size{0} {}
+  PropertyAttributePropertyView() noexcept;
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
    * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
    */
-  PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
-      : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
-    assert(
-        this->_status != PropertyAttributePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid status");
-  }
+  PropertyAttributePropertyView(PropertyViewStatusType status) noexcept;
 
   /**
    * @brief Constructs an instance of an empty property that specifies a default
@@ -148,27 +142,7 @@ public:
    */
   PropertyAttributePropertyView(
       const ClassProperty& classProperty,
-      int64_t size) noexcept
-      : PropertyView<ElementType, false>(classProperty), _accessor{}, _size{0} {
-    if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
-      // Don't override the status / size if something is wrong with the class
-      // property's definition.
-      return;
-    }
-
-    if (!classProperty.defaultProperty) {
-      // This constructor should only be called if the class property *has* a
-      // default value. But in the case that it does not, this property view
-      // becomes invalid.
-      this->_status =
-          PropertyAttributePropertyViewStatus::ErrorNonexistentProperty;
-      return;
-    }
-
-    this->_status =
-        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
-    this->_size = size;
-  }
+      int64_t size) noexcept;
 
   /**
    * @brief Construct a view of the data specified by a {@link PropertyAttributeProperty}.
@@ -181,13 +155,7 @@ public:
   PropertyAttributePropertyView(
       const PropertyAttributeProperty& property,
       const ClassProperty& classProperty,
-      const AccessorView<ElementType>& accessorView) noexcept
-      : PropertyView<ElementType, false>(classProperty, property),
-        _accessor{accessorView},
-        _size{
-            this->_status == PropertyAttributePropertyViewStatus::Valid
-                ? accessorView.size()
-                : 0} {}
+      const AccessorView<ElementType>& accessorView) noexcept;
 
   /**
    * @brief Gets the value of the property for the given texture coordinates
@@ -204,20 +172,7 @@ public:
    * @return The value of the property for the given vertex, or std::nullopt if
    * it matches the "no data" value
    */
-  std::optional<ElementType> get(int64_t index) const noexcept {
-    if (this->_status ==
-        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault) {
-      return this->defaultValue();
-    }
-
-    ElementType value = getRaw(index);
-
-    if (value == this->noData()) {
-      return this->defaultValue();
-    }
-
-    return transformValue(value, this->offset(), this->scale());
-  }
+  std::optional<ElementType> get(int64_t index) const noexcept;
 
   /**
    * @brief Gets the raw value of the property for the given vertex index.
@@ -229,18 +184,7 @@ public:
    *
    * @return The value of the property for the given vertex.
    */
-  ElementType getRaw(int64_t index) const noexcept {
-    assert(
-        this->_status == PropertyAttributePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
-
-    return _accessor[index];
-  }
+  ElementType getRaw(int64_t index) const noexcept;
 
   /**
    * @brief Get the number of elements in this PropertyAttributePropertyView.
@@ -249,12 +193,135 @@ public:
    *
    * @return The number of elements in this PropertyAttributePropertyView.
    */
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept;
+
+  ~PropertyAttributePropertyView() noexcept;
+  PropertyAttributePropertyView(
+      const PropertyAttributePropertyView<ElementType, false>& rhs) noexcept;
+  PropertyAttributePropertyView(
+      PropertyAttributePropertyView<ElementType, false>&& rhs) noexcept;
+  PropertyAttributePropertyView<ElementType, false>& operator=(
+      const PropertyAttributePropertyView<ElementType, false>& rhs) noexcept;
+  PropertyAttributePropertyView<ElementType, false>&
+  operator=(PropertyAttributePropertyView<ElementType, false>&& rhs) noexcept;
 
 private:
   AccessorView<ElementType> _accessor;
   int64_t _size;
 };
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    PropertyAttributePropertyView() noexcept
+    : PropertyView<ElementType, false>(), _accessor{}, _size{0} {}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
+    : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
+  assert(
+      this->_status != PropertyAttributePropertyViewStatus::Valid &&
+      "An empty property view should not be constructed with a valid status");
+}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    PropertyAttributePropertyView(
+        const ClassProperty& classProperty,
+        int64_t size) noexcept
+    : PropertyView<ElementType, false>(classProperty), _accessor{}, _size{0} {
+  if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    return;
+  }
+
+  if (!classProperty.defaultProperty) {
+    // This constructor should only be called if the class property *has* a
+    // default value. But in the case that it does not, this property view
+    // becomes invalid.
+    this->_status =
+        PropertyAttributePropertyViewStatus::ErrorNonexistentProperty;
+    return;
+  }
+
+  this->_status = PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
+  this->_size = size;
+}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    PropertyAttributePropertyView(
+        const PropertyAttributeProperty& property,
+        const ClassProperty& classProperty,
+        const AccessorView<ElementType>& accessorView) noexcept
+    : PropertyView<ElementType, false>(classProperty, property),
+      _accessor{accessorView},
+      _size{
+          this->_status == PropertyAttributePropertyViewStatus::Valid
+              ? accessorView.size()
+              : 0} {}
+
+template <typename ElementType>
+std::optional<ElementType>
+PropertyAttributePropertyView<ElementType, false>::get(
+    int64_t index) const noexcept {
+  if (this->_status ==
+      PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault) {
+    return this->defaultValue();
+  }
+
+  ElementType value = getRaw(index);
+
+  if (value == this->noData()) {
+    return this->defaultValue();
+  }
+
+  return transformValue(value, this->offset(), this->scale());
+}
+
+template <typename ElementType>
+ElementType PropertyAttributePropertyView<ElementType, false>::getRaw(
+    int64_t index) const noexcept {
+  assert(
+      this->_status == PropertyAttributePropertyViewStatus::Valid &&
+      "Check the status() first to make sure view is valid");
+  assert(
+      size() > 0 && "Check the size() of the view to make sure it's not empty");
+  assert(index >= 0 && "index must be non-negative");
+  assert(index < size() && "index must be less than size");
+
+  return _accessor[index];
+}
+
+template <typename ElementType>
+int64_t
+PropertyAttributePropertyView<ElementType, false>::size() const noexcept {
+  return _size;
+}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    ~PropertyAttributePropertyView() noexcept = default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    PropertyAttributePropertyView(
+        const PropertyAttributePropertyView<ElementType, false>& rhs) noexcept =
+        default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>::
+    PropertyAttributePropertyView(
+        PropertyAttributePropertyView<ElementType, false>&& rhs) noexcept =
+        default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>&
+PropertyAttributePropertyView<ElementType, false>::operator=(
+    const PropertyAttributePropertyView<ElementType, false>& rhs) noexcept =
+    default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, false>&
+PropertyAttributePropertyView<ElementType, false>::operator=(
+    PropertyAttributePropertyView<ElementType, false>&& rhs) noexcept = default;
 
 /**
  * @brief A view of the normalized data specified by a
@@ -277,20 +344,14 @@ public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
-  PropertyAttributePropertyView() noexcept
-      : PropertyView<ElementType, true>(), _accessor{}, _size{0} {}
+  PropertyAttributePropertyView() noexcept;
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
    * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
    */
-  PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
-      : PropertyView<ElementType, true>(status), _accessor{}, _size{0} {
-    assert(
-        this->_status != PropertyAttributePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid status");
-  }
+  PropertyAttributePropertyView(PropertyViewStatusType status) noexcept;
 
   /**
    * @brief Constructs an instance of an empty property that specifies a default
@@ -304,27 +365,7 @@ public:
    */
   PropertyAttributePropertyView(
       const ClassProperty& classProperty,
-      int64_t size) noexcept
-      : PropertyView<ElementType, true>(classProperty), _accessor{}, _size{0} {
-    if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
-      // Don't override the status / size if something is wrong with the class
-      // property's definition.
-      return;
-    }
-
-    if (!classProperty.defaultProperty) {
-      // This constructor should only be called if the class property *has* a
-      // default value. But in the case that it does not, this property view
-      // becomes invalid.
-      this->_status =
-          PropertyAttributePropertyViewStatus::ErrorNonexistentProperty;
-      return;
-    }
-
-    this->_status =
-        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
-    this->_size = size;
-  }
+      int64_t size) noexcept;
 
   /**
    * @brief Construct a view of the data specified by a {@link PropertyAttributeProperty}.
@@ -337,13 +378,7 @@ public:
   PropertyAttributePropertyView(
       const PropertyAttributeProperty& property,
       const ClassProperty& classProperty,
-      const AccessorView<ElementType>& accessorView) noexcept
-      : PropertyView<ElementType, true>(classProperty, property),
-        _accessor{accessorView},
-        _size{
-            this->_status == PropertyAttributePropertyViewStatus::Valid
-                ? accessorView.size()
-                : 0} {}
+      const AccessorView<ElementType>& accessorView) noexcept;
 
   /**
    * @brief Gets the value of the property for the given texture coordinates
@@ -360,45 +395,7 @@ public:
    * @return The value of the property for the given vertex, or std::nullopt if
    * it matches the "no data" value
    */
-  std::optional<NormalizedType> get(int64_t index) const noexcept {
-    if (this->_status ==
-        PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault) {
-      return this->defaultValue();
-    }
-
-    ElementType value = getRaw(index);
-
-    if (value == this->noData()) {
-      return this->defaultValue();
-    }
-
-    if constexpr (IsMetadataScalar<ElementType>::value) {
-      return transformValue<NormalizedType>(
-          normalize<ElementType>(value),
-          this->offset(),
-          this->scale());
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
-      constexpr glm::length_t N = ElementType::length();
-      using T = typename ElementType::value_type;
-      using NormalizedT = typename NormalizedType::value_type;
-      return transformValue<glm::vec<N, NormalizedT>>(
-          normalize<N, T>(value),
-          this->offset(),
-          this->scale());
-    }
-
-    if constexpr (IsMetadataMatN<ElementType>::value) {
-      constexpr glm::length_t N = ElementType::length();
-      using T = typename ElementType::value_type;
-      using NormalizedT = typename NormalizedType::value_type;
-      return transformValue<glm::mat<N, N, NormalizedT>>(
-          normalize<N, T>(value),
-          this->offset(),
-          this->scale());
-    }
-  }
+  std::optional<NormalizedType> get(int64_t index) const noexcept;
 
   /**
    * @brief Gets the raw value of the property for the given vertex index.
@@ -410,18 +407,7 @@ public:
    *
    * @return The value of the property for the given vertex.
    */
-  ElementType getRaw(int64_t index) const noexcept {
-    assert(
-        this->_status == PropertyAttributePropertyViewStatus::Valid &&
-        "Check the status() first to make sure view is valid");
-    assert(
-        size() > 0 &&
-        "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
-
-    return _accessor[index];
-  }
+  ElementType getRaw(int64_t index) const noexcept;
 
   /**
    * @brief Get the number of elements in this PropertyAttributePropertyView.
@@ -430,11 +416,155 @@ public:
    *
    * @return The number of elements in this PropertyAttributePropertyView.
    */
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept;
+
+  ~PropertyAttributePropertyView() noexcept;
+  PropertyAttributePropertyView(
+      const PropertyAttributePropertyView<ElementType, true>& rhs) noexcept;
+  PropertyAttributePropertyView(
+      PropertyAttributePropertyView<ElementType, true>&& rhs) noexcept;
+  PropertyAttributePropertyView<ElementType, true>& operator=(
+      const PropertyAttributePropertyView<ElementType, true>& rhs) noexcept;
+  PropertyAttributePropertyView<ElementType, true>&
+  operator=(PropertyAttributePropertyView<ElementType, true>&& rhs) noexcept;
 
 private:
   AccessorView<ElementType> _accessor;
   int64_t _size;
 };
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::
+    PropertyAttributePropertyView() noexcept
+    : PropertyView<ElementType, true>(), _accessor{}, _size{0} {}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::PropertyAttributePropertyView(
+    PropertyViewStatusType status) noexcept
+    : PropertyView<ElementType, true>(status), _accessor{}, _size{0} {
+  assert(
+      this->_status != PropertyAttributePropertyViewStatus::Valid &&
+      "An empty property view should not be constructed with a valid status");
+}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::PropertyAttributePropertyView(
+    const ClassProperty& classProperty,
+    int64_t size) noexcept
+    : PropertyView<ElementType, true>(classProperty), _accessor{}, _size{0} {
+  if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
+    // Don't override the status / size if something is wrong with the class
+    // property's definition.
+    return;
+  }
+
+  if (!classProperty.defaultProperty) {
+    // This constructor should only be called if the class property *has* a
+    // default value. But in the case that it does not, this property view
+    // becomes invalid.
+    this->_status =
+        PropertyAttributePropertyViewStatus::ErrorNonexistentProperty;
+    return;
+  }
+
+  this->_status = PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault;
+  this->_size = size;
+}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::PropertyAttributePropertyView(
+    const PropertyAttributeProperty& property,
+    const ClassProperty& classProperty,
+    const AccessorView<ElementType>& accessorView) noexcept
+    : PropertyView<ElementType, true>(classProperty, property),
+      _accessor{accessorView},
+      _size{
+          this->_status == PropertyAttributePropertyViewStatus::Valid
+              ? accessorView.size()
+              : 0} {}
+
+template <typename ElementType>
+std::optional<
+    typename PropertyAttributePropertyView<ElementType, true>::NormalizedType>
+PropertyAttributePropertyView<ElementType, true>::get(
+    int64_t index) const noexcept {
+  if (this->_status ==
+      PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault) {
+    return this->defaultValue();
+  }
+
+  ElementType value = getRaw(index);
+
+  if (value == this->noData()) {
+    return this->defaultValue();
+  }
+
+  if constexpr (IsMetadataScalar<ElementType>::value) {
+    return transformValue<NormalizedType>(
+        normalize<ElementType>(value),
+        this->offset(),
+        this->scale());
+  }
+
+  if constexpr (IsMetadataVecN<ElementType>::value) {
+    constexpr glm::length_t N = ElementType::length();
+    using T = typename ElementType::value_type;
+    using NormalizedT = typename NormalizedType::value_type;
+    return transformValue<glm::vec<N, NormalizedT>>(
+        normalize<N, T>(value),
+        this->offset(),
+        this->scale());
+  }
+
+  if constexpr (IsMetadataMatN<ElementType>::value) {
+    constexpr glm::length_t N = ElementType::length();
+    using T = typename ElementType::value_type;
+    using NormalizedT = typename NormalizedType::value_type;
+    return transformValue<glm::mat<N, N, NormalizedT>>(
+        normalize<N, T>(value),
+        this->offset(),
+        this->scale());
+  }
+}
+
+template <typename ElementType>
+ElementType PropertyAttributePropertyView<ElementType, true>::getRaw(
+    int64_t index) const noexcept {
+  assert(
+      this->_status == PropertyAttributePropertyViewStatus::Valid &&
+      "Check the status() first to make sure view is valid");
+  assert(
+      size() > 0 && "Check the size() of the view to make sure it's not empty");
+  assert(index >= 0 && "index must be non-negative");
+  assert(index < size() && "index must be less than size");
+
+  return _accessor[index];
+}
+
+template <typename ElementType>
+int64_t
+PropertyAttributePropertyView<ElementType, true>::size() const noexcept {
+  return _size;
+}
+
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::
+    ~PropertyAttributePropertyView() noexcept = default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::PropertyAttributePropertyView(
+    const PropertyAttributePropertyView<ElementType, true>& rhs) noexcept =
+    default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>::PropertyAttributePropertyView(
+    PropertyAttributePropertyView<ElementType, true>&& rhs) noexcept = default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>&
+PropertyAttributePropertyView<ElementType, true>::operator=(
+    const PropertyAttributePropertyView<ElementType, true>& rhs) noexcept =
+    default;
+template <typename ElementType>
+PropertyAttributePropertyView<ElementType, true>&
+PropertyAttributePropertyView<ElementType, true>::operator=(
+    PropertyAttributePropertyView<ElementType, true>&& rhs) noexcept = default;
 
 } // namespace CesiumGltf
