@@ -25,15 +25,14 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{} {}
+  PropertyArrayView() noexcept;
 
   /**
    * @brief Constructs an array view from a buffer.
    *
    * @param buffer The buffer containing the values.
    */
-  PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
-      : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
+  PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept;
 
   /**
    * @brief Constructs an array view from a vector of values. This is mainly
@@ -41,38 +40,20 @@ public:
    *
    * @param values The vector containing the values.
    */
-  PropertyArrayView(const std::vector<ElementType>&& values)
-      : _values{std::move(values)} {}
+  PropertyArrayView(std::vector<ElementType>&& values) noexcept;
 
-  const ElementType& operator[](int64_t index) const noexcept {
-    return std::visit(
-        [index](auto const& values) -> auto const& { return values[index]; },
-        _values);
-  }
+  const ElementType& operator[](int64_t index) const noexcept;
 
-  int64_t size() const noexcept {
-    return std::visit(
-        [](auto const& values) { return static_cast<int64_t>(values.size()); },
-        _values);
-  }
+  int64_t size() const noexcept;
 
-  bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
-    if (this->size() != other.size()) {
-      return false;
-    }
+  bool operator==(const PropertyArrayView<ElementType>& other) const noexcept;
+  bool operator!=(const PropertyArrayView<ElementType>& other) const noexcept;
 
-    for (int64_t i = 0; i < size(); i++) {
-      if ((*this)[i] != other[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  bool operator!=(const PropertyArrayView<ElementType>& other) const noexcept {
-    return !operator==(other);
-  }
+  ~PropertyArrayView() noexcept;
+  PropertyArrayView(const PropertyArrayView& rhs) noexcept;
+  PropertyArrayView(PropertyArrayView&& rhs) noexcept;
+  PropertyArrayView& operator=(const PropertyArrayView& rhs) noexcept;
+  PropertyArrayView& operator=(PropertyArrayView&& rhs) noexcept;
 
 private:
   using ArrayType =
@@ -80,12 +61,77 @@ private:
   ArrayType _values;
 };
 
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView() noexcept : _values{} {}
+
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView(
+    const gsl::span<const std::byte>& buffer) noexcept
+    : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
+
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView(
+    std::vector<ElementType>&& values) noexcept
+    : _values{std::move(values)} {}
+
+template <typename ElementType>
+const ElementType&
+PropertyArrayView<ElementType>::operator[](int64_t index) const noexcept {
+  return std::visit(
+      [index](auto const& values) -> auto const& { return values[index]; },
+      _values);
+}
+
+template <typename ElementType>
+int64_t PropertyArrayView<ElementType>::size() const noexcept {
+  return std::visit(
+      [](auto const& values) { return static_cast<int64_t>(values.size()); },
+      _values);
+}
+
+template <typename ElementType>
+bool PropertyArrayView<ElementType>::operator==(
+    const PropertyArrayView<ElementType>& other) const noexcept {
+  if (this->size() != other.size()) {
+    return false;
+  }
+
+  for (int64_t i = 0; i < size(); i++) {
+    if ((*this)[i] != other[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template <typename ElementType>
+bool PropertyArrayView<ElementType>::operator!=(
+    const PropertyArrayView<ElementType>& other) const noexcept {
+  return !operator==(other);
+}
+
+template <typename ElementType>
+PropertyArrayView<ElementType>::~PropertyArrayView() noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView(
+    const PropertyArrayView<ElementType>& rhs) noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>::PropertyArrayView(
+    PropertyArrayView<ElementType>&& rhs) noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>& PropertyArrayView<ElementType>::operator=(
+    const PropertyArrayView<ElementType>& rhs) noexcept = default;
+template <typename ElementType>
+PropertyArrayView<ElementType>& PropertyArrayView<ElementType>::operator=(
+    PropertyArrayView<ElementType>&& rhs) noexcept = default;
+
 template <> class PropertyArrayView<bool> {
 public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{}, _bitOffset{0}, _size{0} {}
+  PropertyArrayView() noexcept;
 
   /**
    * @brief Constructs an array view from a buffer.
@@ -98,36 +144,21 @@ public:
   PropertyArrayView(
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
-      int64_t size) noexcept
-      : _values{buffer}, _bitOffset{bitOffset}, _size{size} {}
+      int64_t size) noexcept;
 
-  bool operator[](int64_t index) const noexcept {
-    index += _bitOffset;
-    const int64_t byteIndex = index / 8;
-    const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
-    return bitValue == 1;
-  }
+  bool operator[](int64_t index) const noexcept;
 
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept;
 
-  bool operator==(const PropertyArrayView<bool>& other) const noexcept {
-    if (this->size() != other.size()) {
-      return false;
-    }
+  bool operator==(const PropertyArrayView<bool>& other) const noexcept;
+  bool operator!=(const PropertyArrayView<bool>& other) const noexcept;
 
-    for (int64_t i = 0; i < size(); i++) {
-      if ((*this)[i] != other[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  bool operator!=(const PropertyArrayView<bool>& other) const noexcept {
-    return !operator==(other);
-  }
+  ~PropertyArrayView() noexcept;
+  PropertyArrayView(const PropertyArrayView<bool>& rhs) noexcept;
+  PropertyArrayView(PropertyArrayView<bool>&& rhs) noexcept;
+  PropertyArrayView<bool>&
+  operator=(const PropertyArrayView<bool>& rhs) noexcept;
+  PropertyArrayView<bool>& operator=(PropertyArrayView<bool>&& rhs) noexcept;
 
 private:
   gsl::span<const std::byte> _values;
@@ -140,11 +171,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView()
-      : _values{},
-        _stringOffsets{},
-        _stringOffsetType{PropertyComponentType::None},
-        _size{0} {}
+  PropertyArrayView() noexcept;
 
   /**
    * @brief Constructs an array view from buffers and their information.
@@ -158,45 +185,24 @@ public:
       const gsl::span<const std::byte>& values,
       const gsl::span<const std::byte>& stringOffsets,
       PropertyComponentType stringOffsetType,
-      int64_t size) noexcept
-      : _values{values},
-        _stringOffsets{stringOffsets},
-        _stringOffsetType{stringOffsetType},
-        _size{size} {}
+      int64_t size) noexcept;
 
-  std::string_view operator[](int64_t index) const noexcept {
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
-    const size_t nextOffset = getOffsetFromOffsetsBuffer(
-        index + 1,
-        _stringOffsets,
-        _stringOffsetType);
-    return std::string_view(
-        reinterpret_cast<const char*>(_values.data() + currentOffset),
-        (nextOffset - currentOffset));
-  }
+  std::string_view operator[](int64_t index) const noexcept;
 
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept;
 
   bool
-  operator==(const PropertyArrayView<std::string_view>& other) const noexcept {
-    if (this->size() != other.size()) {
-      return false;
-    }
-
-    for (int64_t i = 0; i < size(); i++) {
-      if ((*this)[i] != other[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
+  operator==(const PropertyArrayView<std::string_view>& other) const noexcept;
   bool
-  operator!=(const PropertyArrayView<std::string_view>& other) const noexcept {
-    return !operator==(other);
-  }
+  operator!=(const PropertyArrayView<std::string_view>& other) const noexcept;
+
+  ~PropertyArrayView() noexcept;
+  PropertyArrayView(const PropertyArrayView<std::string_view>& rhs) noexcept;
+  PropertyArrayView(PropertyArrayView<std::string_view>&& rhs) noexcept;
+  PropertyArrayView<std::string_view>&
+  operator=(const PropertyArrayView<std::string_view>& rhs) noexcept;
+  PropertyArrayView<std::string_view>&
+  operator=(PropertyArrayView<std::string_view>&& rhs) noexcept;
 
 private:
   gsl::span<const std::byte> _values;
