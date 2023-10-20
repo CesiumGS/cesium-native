@@ -34,7 +34,7 @@ add_subdirectory(libwebp)
 
 option(URIPARSER_BUILD_TESTS "" off)
 option(URIPARSER_BUILD_DOCS "" off)
-option(URIPARSER_ENABLE_INSTALL "" on)
+option(URIPARSER_ENABLE_INSTALL "" off)
 option(URIPARSER_BUILD_TOOLS "" off)
 add_subdirectory(uriparser)
 
