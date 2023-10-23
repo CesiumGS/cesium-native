@@ -102,23 +102,19 @@ std::string Uri::addQuery(
 
 std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
   UriUriA uri;
-  auto err = uriParseSingleUriA(&uri, url.c_str(), nullptr);
-
-  if (err != URI_SUCCESS) {
+  if (uriParseSingleUriA(&uri, url.c_str(), nullptr) != URI_SUCCESS) {
     return "";
   }
   UriQueryListA* queryList;
   int itemCount;
-  err = uriDissectQueryMallocA(
-      &queryList,
-      &itemCount,
-      uri.query.first,
-      uri.query.afterLast);
-  if (err != URI_SUCCESS) {
+  if (uriDissectQueryMallocA(
+          &queryList,
+          &itemCount,
+          uri.query.first,
+          uri.query.afterLast) != URI_SUCCESS) {
     uriFreeUriMembersA(&uri);
     return "";
   }
-
   UriQueryListA* p = queryList;
   while (p) {
     if (p->key && std::strcmp(p->key, key.c_str()) == 0) {
@@ -130,7 +126,6 @@ std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
     }
     p = p->next;
   }
-
   uriFreeQueryListA(queryList);
   uriFreeUriMembersA(&uri);
   return "";
