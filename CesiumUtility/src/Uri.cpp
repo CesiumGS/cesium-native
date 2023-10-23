@@ -100,6 +100,42 @@ std::string Uri::addQuery(
   // uriFreeUriMembersA(&baseUri);
 }
 
+std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
+  UriUriA uri;
+  auto err = uriParseSingleUriA(&uri, url.c_str(), nullptr);
+
+  if (err != URI_SUCCESS) {
+    return "";
+  }
+  UriQueryListA* queryList;
+  int itemCount;
+  err = uriDissectQueryMallocA(
+      &queryList,
+      &itemCount,
+      uri.query.first,
+      uri.query.afterLast);
+  if (err != URI_SUCCESS) {
+    uriFreeUriMembersA(&uri);
+    return "";
+  }
+
+  UriQueryListA* p = queryList;
+  while (p) {
+    if (p->key && std::strcmp(p->key, key.c_str()) == 0) {
+      std::string value = p->value ? p->value : "";
+      uriUnescapeInPlaceA(value.data());
+      uriFreeQueryListA(queryList);
+      uriFreeUriMembersA(&uri);
+      return value;
+    }
+    p = p->next;
+  }
+
+  uriFreeQueryListA(queryList);
+  uriFreeUriMembersA(&uri);
+  return "";
+}
+
 std::string Uri::substituteTemplateParameters(
     const std::string& templateUri,
     const std::function<SubstitutionCallbackSignature>& substitutionCallback) {
