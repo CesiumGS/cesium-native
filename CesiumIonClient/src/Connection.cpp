@@ -15,6 +15,7 @@
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <uriparser/Uri.h>
 
 #include <thread>
 
@@ -372,6 +373,43 @@ Asset jsonToAsset(const rapidjson::Value& item) {
 }
 
 } // namespace
+
+CesiumAsync::Future<std::optional<std::string>>
+CesiumIonClient::Connection::getApiUrl(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& ionUrl) {
+  std::string configUrl = Uri::resolve(ionUrl, "config.json");
+  if (configUrl == "config.json") {
+    return asyncSystem.createResolvedFuture<std::optional<std::string>>(
+        std::nullopt);
+  }
+  return pAssetAccessor->get(asyncSystem, configUrl)
+      .thenImmediately([ionUrl](std::shared_ptr<IAssetRequest>&& pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
+        if (pResponse && pResponse->statusCode() >= 200 &&
+            pResponse->statusCode() < 300) {
+          rapidjson::Document d;
+          if (parseJsonObject(pResponse, d) && d.IsObject()) {
+            const auto itr = d.FindMember("apiHostname");
+            if (itr != d.MemberEnd() && itr->value.IsString()) {
+              return std::make_optional<std::string>(itr->value.GetString());
+            }
+          }
+        }
+
+        UriUriA newUri;
+        if (uriParseSingleUriA(&newUri, ionUrl.c_str(), nullptr) !=
+            URI_SUCCESS) {
+          return std::optional<std::string>();
+        }
+        std::string hostName =
+            std::string(newUri.hostText.first, newUri.hostText.afterLast);
+        std::string scheme =
+            std::string(newUri.scheme.first, newUri.scheme.afterLast);
+        return std::make_optional<std::string>(scheme + "://api." + hostName);
+      });
+}
 
 CesiumAsync::Future<Response<Assets>> Connection::assets() const {
   return this->_pAssetAccessor
