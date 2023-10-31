@@ -403,11 +403,19 @@ CesiumIonClient::Connection::getApiUrl(
             URI_SUCCESS) {
           return std::optional<std::string>();
         }
+
         std::string hostName =
             std::string(newUri.hostText.first, newUri.hostText.afterLast);
         std::string scheme =
             std::string(newUri.scheme.first, newUri.scheme.afterLast);
-        return std::make_optional<std::string>(scheme + "://api." + hostName);
+
+        uriFreeUriMembersA(&newUri);
+
+        return std::make_optional<std::string>(
+            scheme + "://api." + hostName + '/');
+      })
+      .catchImmediately([](std::exception&&) {
+        return std::optional<std::string>(std::nullopt);
       });
 }
 
