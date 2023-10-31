@@ -94,7 +94,7 @@ protected:
     if (_labels && level < _labels.value().size()) {
       tileMatrix = _labels.value()[level];
     } else {
-      tileMatrix = _tileMatrixSetID + ":" + std::to_string(level);
+      tileMatrix = std::to_string(level);
     }
 
     std::string queryString = "?";
