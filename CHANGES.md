@@ -1,11 +1,20 @@
 # Change Log
 
-### ? - ?
+### v0.29.0 - 2023-11-01
+
+##### Breaking Changes :mega:
+
+- Removed `PropertyTablePropertyViewType` and `NormalizedPropertyTablePropertyViewType`, as well as their counterparts for property textures and property attributes. When compiled with Clang, the large `std::variant` definitions would significantly stall compilation.
+
+##### Fixes :wrench:
+
+- Updated the Cesium ion OAuth2 URL from `https://cesium.com/ion/oauth` to `https://ion.cesium.com/oauth`, avoiding a redirect.
+
+### v0.28.1 - 2023-10-02
 
 ##### Breaking Changes :mega:
 
 - Cesium Native is now only regularly tested on Visual Studio 2019+, GCC 11.x+, and Clang 12+. Other compilers - including older ones - are likely to work, but are not tested.
-- Removed `PropertyTablePropertyViewType` and `NormalizedPropertyTablePropertyViewType`, as well as their counterparts for property textures and property attributes. When compiled with Clang, the large `std::variant` definitions would significantly stall compilation.
 
 ##### Additions :tada:
 
@@ -15,7 +24,6 @@
 ##### Fixes :wrench:
 
 - Fixed the handling of omitted metadata properties in `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView` instances. Previously, if a property was not `required` and omitted, it would be initialized as invalid with the `ErrorNonexistentProperty` status. Now, it will be treated as valid as long as the property defines a valid `defaultProperty`. A special instance of `PropertyTablePropertyView`, `PropertyTexturePropertyView`, or `PropertyAttributePropertyView` will be constructed to allow the property's default value to be retrieved, either via `defaultValue` or `get`. `getRaw` may not be called on this special instance.
-- Updated the Cesium ion OAuth2 URL from `https://cesium.com/ion/oauth` to `https://ion.cesium.com/oauth`, avoiding a redirect.
 
 ### v0.28.0 - 2023-09-08
 
