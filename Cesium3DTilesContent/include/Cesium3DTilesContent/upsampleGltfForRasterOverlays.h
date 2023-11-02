@@ -3,7 +3,7 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGltf/Model.h>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 std::optional<CesiumGltf::Model> upsampleGltfForRasterOverlays(
     const CesiumGltf::Model& parentModel,

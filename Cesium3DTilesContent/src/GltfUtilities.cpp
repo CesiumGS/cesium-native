@@ -8,7 +8,7 @@
 
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 /*static*/ glm::dmat4x4 GltfUtilities::applyRtcCenter(
     const CesiumGltf::Model& gltf,
     const glm::dmat4x4& rootTransform) {
@@ -150,4 +150,4 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   return result;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

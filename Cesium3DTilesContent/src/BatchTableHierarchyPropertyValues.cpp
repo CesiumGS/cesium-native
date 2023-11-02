@@ -2,7 +2,7 @@
 
 #include <glm/common.hpp>
 
-using namespace Cesium3DTilesSelection::CesiumImpl;
+using namespace Cesium3DTilesContent::CesiumImpl;
 
 namespace {
 

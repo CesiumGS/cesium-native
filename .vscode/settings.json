@@ -114,7 +114,8 @@
       "ktxint.h": "c",
       "texture.h": "c",
       "gl_format.h": "c",
-      "complex": "cpp"
+      "complex": "cpp",
+      "expected": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

@@ -1,9 +1,8 @@
-#include "SimpleAssetAccessor.h"
-#include "SimpleTaskProcessor.h"
-#include "SubtreeAvailability.h"
-
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
 
 #include <catch2/catch.hpp>
 #include <libmorton/morton.h>
@@ -14,7 +13,8 @@
 #include <cstddef>
 #include <vector>
 
-using namespace Cesium3DTilesSelection;
+using namespace Cesium3DTilesContent;
+using namespace CesiumNativeTests;
 
 namespace {
 struct SubtreeHeader {

@@ -3,7 +3,7 @@
 
 #include <spdlog/fmt/fmt.h>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 namespace {
 struct CmptHeader {
   char magic[4];
@@ -110,4 +110,4 @@ GltfConverterResult CmptToGltfConverter::convert(
 
   return result;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

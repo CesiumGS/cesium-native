@@ -8,7 +8,7 @@
 
 #include <cstddef>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct BatchTableToGltfStructuralMetadata {
   static CesiumUtility::ErrorList convertFromB3dm(
       const rapidjson::Document& featureTableJson,
@@ -22,4 +22,4 @@ struct BatchTableToGltfStructuralMetadata {
       const gsl::span<const std::byte>& batchTableBinaryData,
       CesiumGltf::Model& gltf);
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

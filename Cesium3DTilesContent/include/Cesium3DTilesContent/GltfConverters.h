@@ -11,7 +11,7 @@
 #include <string>
 #include <string_view>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 /**
  * @brief Creates {@link GltfConverterResult} objects from a
  * a binary content.
@@ -166,4 +166,4 @@ private:
   static std::unordered_map<std::string, ConverterFunction>
       _loadersByFileExtension;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

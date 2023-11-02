@@ -5,7 +5,7 @@
 
 #include <optional>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct SubtreeConstantAvailability {
   bool constant;
 };
@@ -63,4 +63,4 @@ private:
   std::vector<AvailabilityView> _contentAvailability;
   std::vector<std::vector<std::byte>> _buffers;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

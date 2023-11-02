@@ -1,12 +1,12 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 
 #include <catch2/catch.hpp>
@@ -17,6 +17,8 @@
 
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumNativeTests;
+using namespace CesiumNativeTests;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -109,7 +111,7 @@ TileLoadResult loadTileContent(
 } // namespace
 
 TEST_CASE("Test creating tileset json loader") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   SECTION("Create valid tileset json with REPLACE refinement") {
     auto loaderResult =
@@ -420,7 +422,7 @@ TEST_CASE("Test creating tileset json loader") {
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   SECTION("Load tile that has render content") {
     auto loaderResult =

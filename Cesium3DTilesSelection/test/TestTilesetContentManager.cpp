@@ -1,5 +1,4 @@
 #include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
 #include "TilesetContentManager.h"
 
 #include <Cesium3DTilesContent/GltfUtilities.h>
@@ -14,6 +13,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
@@ -28,6 +28,7 @@ using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -181,7 +182,7 @@ CesiumGltf::Model createGlobeGrid(
 } // namespace
 
 TEST_CASE("Test the manager can be initialized with correct loaders") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -294,7 +295,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 }
 
 TEST_CASE("Test tile state machine") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -708,7 +709,7 @@ TEST_CASE("Test tile state machine") {
 }
 
 TEST_CASE("Test the tileset content manager's post processing for gltf") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(

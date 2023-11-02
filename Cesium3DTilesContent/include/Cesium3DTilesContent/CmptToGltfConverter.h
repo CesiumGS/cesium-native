@@ -7,10 +7,10 @@
 
 #include <cstddef>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct CmptToGltfConverter {
   static GltfConverterResult convert(
       const gsl::span<const std::byte>& cmptBinary,
       const CesiumGltfReader::GltfReaderOptions& options);
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

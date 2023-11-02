@@ -18,10 +18,10 @@
 #include <unordered_set>
 
 using namespace CesiumGltf;
-using namespace Cesium3DTilesSelection::CesiumImpl;
+using namespace Cesium3DTilesContent::CesiumImpl;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 namespace {
 /**
  * Indicates how a JSON value can be interpreted as a primitive type. Does not
@@ -1932,4 +1932,4 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
   return result;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

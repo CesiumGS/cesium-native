@@ -7,7 +7,7 @@
 #include <rapidjson/document.h>
 #include <spdlog/fmt/fmt.h>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 namespace {
 struct B3dmHeader {
   unsigned char magic[4];
@@ -253,4 +253,4 @@ GltfConverterResult B3dmToGltfConverter::convert(
 
   return result;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

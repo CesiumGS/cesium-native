@@ -17,7 +17,7 @@
 #include <set>
 
 using namespace CesiumGltf;
-using namespace Cesium3DTilesSelection;
+using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
 
 template <typename Type>

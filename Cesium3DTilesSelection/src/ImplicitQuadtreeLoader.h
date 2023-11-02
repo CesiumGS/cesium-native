@@ -52,7 +52,7 @@ public:
 
   void addSubtreeAvailability(
       const CesiumGeometry::QuadtreeTileID& subtreeID,
-      SubtreeAvailability&& subtreeAvailability);
+      Cesium3DTilesContent::SubtreeAvailability&& subtreeAvailability);
 
 private:
   static std::string resolveUrl(
@@ -66,7 +66,8 @@ private:
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitQuadtreeBoundingVolume _boundingVolume;
-  std::vector<std::unordered_map<uint64_t, SubtreeAvailability>>
+  std::vector<
+      std::unordered_map<uint64_t, Cesium3DTilesContent::SubtreeAvailability>>
       _loadedSubtrees;
 };
 } // namespace Cesium3DTilesSelection

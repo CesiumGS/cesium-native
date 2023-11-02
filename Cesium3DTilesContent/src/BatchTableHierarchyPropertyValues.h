@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 namespace CesiumImpl {
 
 /**
@@ -104,4 +104,4 @@ private:
 };
 
 } // namespace CesiumImpl
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

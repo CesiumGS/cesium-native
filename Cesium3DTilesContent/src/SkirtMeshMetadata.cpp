@@ -6,7 +6,7 @@
 
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 std::optional<SkirtMeshMetadata>
 SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
   auto skirtIt = extras.find("skirtMeshMetadata");
@@ -112,4 +112,4 @@ JsonValue::Object SkirtMeshMetadata::createGltfExtras(
            {"skirtEastHeight", skirtMeshMetadata.skirtEastHeight},
            {"skirtNorthHeight", skirtMeshMetadata.skirtNorthHeight}}}};
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

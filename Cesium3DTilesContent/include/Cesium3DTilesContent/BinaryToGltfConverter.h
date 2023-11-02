@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct BinaryToGltfConverter {
 public:
   static GltfConverterResult convert(
@@ -17,4 +17,4 @@ public:
 private:
   static CesiumGltfReader::GltfReader _gltfReader;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

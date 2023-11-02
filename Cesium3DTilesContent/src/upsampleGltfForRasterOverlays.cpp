@@ -15,7 +15,7 @@
 
 using namespace CesiumGltf;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct EdgeVertex {
   uint32_t index;
   glm::vec2 uv;
@@ -1261,4 +1261,4 @@ static void copyMetadataTables(const Model& parentModel, Model& result) {
   }
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

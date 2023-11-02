@@ -5,7 +5,7 @@
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 void registerAllTileContentTypes() {
   GltfConverters::registerMagic("glTF", BinaryToGltfConverter::convert);
@@ -19,4 +19,4 @@ void registerAllTileContentTypes() {
   GltfConverters::registerFileExtension(".glb", BinaryToGltfConverter::convert);
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

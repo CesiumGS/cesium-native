@@ -14,6 +14,8 @@
 #include <type_traits>
 #include <variant>
 
+using namespace Cesium3DTilesContent;
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct BoundingVolumeSubdivision {

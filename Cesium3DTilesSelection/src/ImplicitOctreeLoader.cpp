@@ -10,6 +10,8 @@
 #include <libmorton/morton.h>
 #include <spdlog/logger.h>
 
+using namespace Cesium3DTilesContent;
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct BoundingVolumeSubdivision {

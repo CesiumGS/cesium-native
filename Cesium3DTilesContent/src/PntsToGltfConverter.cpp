@@ -29,7 +29,7 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 namespace {
 struct PntsHeader {
   unsigned char magic[4];
@@ -1631,4 +1631,4 @@ GltfConverterResult PntsToGltfConverter::convert(
   convertPntsContentToGltf(pntsBinary, header, headerLength, result);
   return result;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

@@ -7,7 +7,7 @@
 
 #include <optional>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 /**
  * @brief The result of converting a binary content to gltf model.
  *
@@ -28,4 +28,4 @@ struct CESIUM3DTILESCONTENT_API GltfConverterResult {
    */
   CesiumUtility::ErrorList errors;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

@@ -20,7 +20,7 @@ namespace CesiumAsync {
 class IAssetRequest;
 }
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 struct QuantizedMeshLoadResult {
   /**
@@ -92,4 +92,4 @@ public:
       uint32_t startingLevel);
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

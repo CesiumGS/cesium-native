@@ -1,7 +1,6 @@
 #include "LayerJsonTerrainLoader.h"
 #include "MockTilesetContentManager.h"
 #include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -9,6 +8,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
@@ -21,6 +21,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 using namespace CesiumAsync;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -70,7 +71,7 @@ Future<TileLoadResult> loadTile(
 } // namespace
 
 TEST_CASE("Test create layer json terrain loader") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -393,7 +394,7 @@ TEST_CASE("Test create layer json terrain loader") {
 }
 
 TEST_CASE("Test load layer json tile content") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -683,7 +684,7 @@ TEST_CASE("Test load layer json tile content") {
 }
 
 TEST_CASE("Test creating tile children for layer json") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});

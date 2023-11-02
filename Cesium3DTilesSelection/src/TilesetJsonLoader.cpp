@@ -25,6 +25,7 @@
 #include <cctype>
 
 using namespace CesiumUtility;
+using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {
 namespace {

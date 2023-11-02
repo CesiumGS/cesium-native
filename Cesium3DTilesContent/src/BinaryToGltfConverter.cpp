@@ -1,6 +1,6 @@
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 CesiumGltfReader::GltfReader BinaryToGltfConverter::_gltfReader;
 
 GltfConverterResult BinaryToGltfConverter::convert(
@@ -15,4 +15,4 @@ GltfConverterResult BinaryToGltfConverter::convert(
   result.errors.warnings = std::move(loadedGltf.warnings);
   return result;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

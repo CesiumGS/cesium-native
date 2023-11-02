@@ -6,7 +6,7 @@
 
 #include <filesystem>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 class ConvertTileToGltf {
 public:
@@ -18,4 +18,4 @@ public:
     return PntsToGltfConverter::convert(readFile(filePath), {});
   }
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

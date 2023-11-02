@@ -1,6 +1,5 @@
-#include "SkirtMeshMetadata.h"
-#include "upsampleGltfForRasterOverlays.h"
-
+#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
+#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
@@ -12,7 +11,7 @@
 #include <cstring>
 #include <vector>
 
-using namespace Cesium3DTilesSelection;
+using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;

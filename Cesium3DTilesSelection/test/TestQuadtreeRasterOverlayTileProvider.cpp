@@ -12,6 +12,7 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 

@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 namespace {
 constexpr const char* const SUBTREE_MAGIC = "subt";
 
@@ -582,4 +582,4 @@ bool SubtreeAvailability::isAvailableUsingBufferView(
 
   return bitValue == 1;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

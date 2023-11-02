@@ -13,6 +13,7 @@
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
+using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

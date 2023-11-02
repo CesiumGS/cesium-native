@@ -12,7 +12,7 @@
 
 #include <vector>
 
-using namespace Cesium3DTilesSelection;
+using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;

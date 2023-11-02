@@ -4,7 +4,7 @@
 
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 std::unordered_map<std::string, GltfConverters::ConverterFunction>
     GltfConverters::_loadersByMagic;
 
@@ -128,4 +128,4 @@ GltfConverters::ConverterFunction GltfConverters::getConverterByMagic(
 
   return nullptr;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

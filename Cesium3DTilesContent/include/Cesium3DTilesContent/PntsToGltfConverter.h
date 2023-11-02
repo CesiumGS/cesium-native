@@ -9,10 +9,10 @@
 
 #include <optional>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct PntsToGltfConverter {
   static GltfConverterResult convert(
       const gsl::span<const std::byte>& pntsBinary,
       const CesiumGltfReader::GltfReaderOptions& options);
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

@@ -22,6 +22,8 @@
 
 #include <chrono>
 
+using namespace Cesium3DTilesContent;
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct RegionAndCenter {

@@ -4,7 +4,7 @@
 
 #include <optional>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 struct SkirtMeshMetadata {
   SkirtMeshMetadata() noexcept
       : noSkirtIndicesBegin{0},
@@ -33,4 +33,4 @@ struct SkirtMeshMetadata {
   double skirtEastHeight;
   double skirtNorthHeight;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent

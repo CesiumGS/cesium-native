@@ -11,6 +11,8 @@
 #include <cassert>
 #include <variant>
 
+using namespace Cesium3DTilesContent;
+
 namespace Cesium3DTilesSelection {
 CesiumAsync::Future<TileLoadResult>
 RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {

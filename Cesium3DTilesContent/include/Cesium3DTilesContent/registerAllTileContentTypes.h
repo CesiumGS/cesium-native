@@ -1,6 +1,6 @@
 #include "Library.h"
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 /**
  * @brief Register all {@link Tile} content types that can be loaded.
@@ -11,4 +11,4 @@ namespace Cesium3DTilesSelection {
  */
 CESIUM3DTILESCONTENT_API void registerAllTileContentTypes();
 
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTilesContent
