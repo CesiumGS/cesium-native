@@ -92,7 +92,7 @@ struct CESIUM3DTILESSELECTION_API GltfUtilities {
    * @param projections The projections for which to generate texture
    * coordinates. There is a linear relationship between the coordinates of this
    * projection and the generated texture coordinates.
-   * @return The detailed of the generated texture coordinates.
+   * @return The details of the generated texture coordinates.
    */
   static std::optional<RasterOverlayDetails>
   createRasterOverlayTextureCoordinates(

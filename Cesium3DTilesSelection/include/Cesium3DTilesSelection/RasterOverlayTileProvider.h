@@ -302,7 +302,7 @@ public:
   /**
    * @brief Loads a tile immediately, without throttling requests.
    *
-   * If the tile is not in the `Tile::LoadState::Unloading` state, this method
+   * If the tile is not in the `Tile::LoadState::Unloaded` state, this method
    * returns without doing anything. Otherwise, it puts the tile into the
    * `Tile::LoadState::Loading` state and begins the asynchronous process
    * to load the tile. When the process completes, the tile will be in the
