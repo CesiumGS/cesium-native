@@ -1,20 +1,20 @@
 #pragma once
 
 #include "Library.h"
-
-#include <CesiumUtility/joinToString.h>
+#include "joinToString.h"
 
 #include <spdlog/spdlog.h>
 
 #include <string>
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumUtility {
+
 /**
  * @brief The container to store the error and warning list when loading a tile
  * or glTF content
  */
-struct CESIUM3DTILESSELECTION_API ErrorList {
+struct CESIUMUTILITY_API ErrorList {
   /**
    * @brief Merge the errors and warnings from other ErrorList together
    *
@@ -107,4 +107,5 @@ struct CESIUM3DTILESSELECTION_API ErrorList {
    */
   std::vector<std::string> warnings;
 };
-} // namespace Cesium3DTilesSelection
+
+} // namespace CesiumUtility

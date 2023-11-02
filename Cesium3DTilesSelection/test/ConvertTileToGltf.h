@@ -1,8 +1,9 @@
 #pragma once
 
-#include "B3dmToGltfConverter.h"
-#include "PntsToGltfConverter.h"
 #include "readFile.h"
+
+#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/PntsToGltfConverter.h>
 
 #include <filesystem>
 

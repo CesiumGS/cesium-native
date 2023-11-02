@@ -1,7 +1,6 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
@@ -20,6 +19,7 @@
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesSelection::CesiumImpl;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {

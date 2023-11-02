@@ -1,7 +1,6 @@
-#include "PntsToGltfConverter.h"
-
 #include "BatchTableToGltfStructuralMetadata.h"
 
+#include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
@@ -228,7 +227,7 @@ struct PntsContent {
   std::map<std::string, DracoMetadataSemantic> dracoMetadataSemantics;
   std::vector<std::byte> dracoBatchTableBinary;
 
-  Cesium3DTilesSelection::ErrorList errors;
+  ErrorList errors;
   bool dracoMetadataHasErrors = false;
 };
 

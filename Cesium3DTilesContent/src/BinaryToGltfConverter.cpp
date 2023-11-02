@@ -1,4 +1,4 @@
-#include "BinaryToGltfConverter.h"
+#include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 
 namespace Cesium3DTilesSelection {
 CesiumGltfReader::GltfReader BinaryToGltfConverter::_gltfReader;

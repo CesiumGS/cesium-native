@@ -1,5 +1,7 @@
 #include "logTileLoadResult.h"
 
+using namespace CesiumUtility;
+
 namespace Cesium3DTilesSelection {
 void logTileLoadResult(
     const std::shared_ptr<spdlog::logger>& pLogger,

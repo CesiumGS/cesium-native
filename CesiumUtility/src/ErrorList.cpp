@@ -1,6 +1,7 @@
-#include <Cesium3DTilesSelection/ErrorList.h>
+#include <CesiumUtility/ErrorList.h>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumUtility {
+
 void ErrorList::merge(const ErrorList& errorList) {
   errors.insert(errors.end(), errorList.errors.begin(), errorList.errors.end());
   warnings.insert(
@@ -24,4 +25,5 @@ void ErrorList::merge(ErrorList&& errorList) {
 bool ErrorList::hasErrors() const noexcept { return !errors.empty(); }
 
 ErrorList::operator bool() const noexcept { return hasErrors(); }
-} // namespace Cesium3DTilesSelection
+
+} // namespace CesiumUtility

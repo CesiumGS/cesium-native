@@ -24,6 +24,8 @@
 
 #include <cctype>
 
+using namespace CesiumUtility;
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct ExternalContentInitializer {

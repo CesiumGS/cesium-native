@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/ErrorList.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <memory>
 #include <type_traits>
@@ -24,7 +24,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
       std::unique_ptr<Tile>&& pRootTile_,
       std::vector<LoaderCreditResult>&& credits_,
       std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders_,
-      ErrorList&& errors_)
+      CesiumUtility::ErrorList&& errors_)
       : pLoader{std::move(pLoader_)},
         pRootTile{std::move(pRootTile_)},
         credits{std::move(credits_)},
@@ -85,7 +85,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 
-  ErrorList errors;
+  CesiumUtility::ErrorList errors;
 
   uint16_t statusCode{200};
 };

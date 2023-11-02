@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
-#include <Cesium3DTilesSelection/ErrorList.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <rapidjson/document.h>
 
@@ -52,12 +52,12 @@ struct QuantizedMeshLoadResult {
    */
   std::shared_ptr<CesiumAsync::IAssetRequest> pRequest;
 
-  ErrorList errors;
+  CesiumUtility::ErrorList errors;
 };
 
 struct QuantizedMeshMetadataResult {
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange> availability;
-  ErrorList errors;
+  CesiumUtility::ErrorList errors;
 };
 
 /**

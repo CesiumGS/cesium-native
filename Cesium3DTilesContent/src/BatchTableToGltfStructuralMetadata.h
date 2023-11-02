@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/ErrorList.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <gsl/span>
 #include <rapidjson/document.h>
@@ -10,13 +10,13 @@
 
 namespace Cesium3DTilesSelection {
 struct BatchTableToGltfStructuralMetadata {
-  static ErrorList convertFromB3dm(
+  static CesiumUtility::ErrorList convertFromB3dm(
       const rapidjson::Document& featureTableJson,
       const rapidjson::Document& batchTableJson,
       const gsl::span<const std::byte>& batchTableBinaryData,
       CesiumGltf::Model& gltf);
 
-  static ErrorList convertFromPnts(
+  static CesiumUtility::ErrorList convertFromPnts(
       const rapidjson::Document& featureTableJson,
       const rapidjson::Document& batchTableJson,
       const gsl::span<const std::byte>& batchTableBinaryData,

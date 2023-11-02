@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/ErrorList.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <spdlog/spdlog.h>
 
@@ -11,5 +11,5 @@ namespace Cesium3DTilesSelection {
 void logTileLoadResult(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
-    const ErrorList& errorLists);
+    const CesiumUtility::ErrorList& errorLists);
 }

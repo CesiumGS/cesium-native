@@ -1,8 +1,8 @@
-#include "B3dmToGltfConverter.h"
-#include "BinaryToGltfConverter.h"
 #include "CmptToGltfConverter.h"
-#include "PntsToGltfConverter.h"
 
+#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 

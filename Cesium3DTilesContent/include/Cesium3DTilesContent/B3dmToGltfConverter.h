@@ -1,20 +1,18 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/GltfConverterResult.h>
+#include "GltfConverterResult.h"
+
+#include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <gsl/span>
 
-#include <cstddef>
+#include <optional>
 
 namespace Cesium3DTilesSelection {
-struct BinaryToGltfConverter {
-public:
+struct B3dmToGltfConverter {
   static GltfConverterResult convert(
-      const gsl::span<const std::byte>& gltfBinary,
+      const gsl::span<const std::byte>& b3dmBinary,
       const CesiumGltfReader::GltfReaderOptions& options);
-
-private:
-  static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesSelection

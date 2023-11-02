@@ -2,6 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
+using namespace CesiumUtility;
+
 namespace Cesium3DTilesSelection {
 std::unordered_map<std::string, GltfConverters::ConverterFunction>
     GltfConverters::_loadersByMagic;

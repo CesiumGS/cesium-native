@@ -1,8 +1,7 @@
-#include "B3dmToGltfConverter.h"
-
 #include "BatchTableToGltfStructuralMetadata.h"
-#include "BinaryToGltfConverter.h"
 
+#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 
 #include <rapidjson/document.h>
