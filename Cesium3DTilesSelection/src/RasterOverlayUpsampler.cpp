@@ -1,7 +1,6 @@
 #include "RasterOverlayUpsampler.h"
 
-#include "upsampleGltfForRasterOverlays.h"
-
+#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlay.h>
 #include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>

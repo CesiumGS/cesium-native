@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @brief Classes that support the 3D Tiles tile content types.
+ * @brief Classes that support loading and converting 3D Tiles tile content.
  */
 namespace Cesium3DTilesContent {}
 

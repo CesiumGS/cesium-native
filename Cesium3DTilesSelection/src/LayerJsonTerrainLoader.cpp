@@ -1,11 +1,11 @@
 #include "LayerJsonTerrainLoader.h"
 
-#include "QuantizedMeshLoader.h"
-#include "calcQuadtreeMaxGeometricError.h"
-#include "upsampleGltfForRasterOverlays.h"
-
-#include <Cesium3DTilesSelection/GltfUtilities.h>
+#include <Cesium3DTilesContent/GltfUtilities.h>
+#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
+#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
+#include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 
@@ -210,7 +210,7 @@ void generateRasterOverlayUVs(
       std::get_if<CesiumGltf::Model>(&result.contentKind);
   if (pModel) {
     result.rasterOverlayDetails =
-        GltfUtilities::createRasterOverlayTextureCoordinates(
+        RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
             *pModel,
             tileTransform,
             0,
@@ -636,14 +636,14 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const QuadtreeTileID& tileID,
-    const BoundingVolume& boundingVolume,
+    const BoundingRegion& boundingRegion,
     const LayerJsonTerrainLoader::Layer& layer,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     bool enableWaterMask) {
   std::string url = resolveTileUrl(tileID, layer);
   return pAssetAccessor->get(asyncSystem, url, requestHeaders)
       .thenInWorkerThread(
-          [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
+          [asyncSystem, pLogger, tileID, boundingRegion, enableWaterMask](
               std::shared_ptr<IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -669,7 +669,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
 
             return QuantizedMeshLoader::load(
                 tileID,
-                boundingVolume,
+                boundingRegion,
                 pRequest->url(),
                 pResponse->data(),
                 enableWaterMask);
@@ -780,6 +780,14 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     ++it;
   }
 
+  const BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(tile.getBoundingVolume());
+  if (!pRegion) {
+    // This tile does not have the required bounding volume type.
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
+  }
+
   // Start the actual content request.
   auto& currentLayer = *firstAvailableIt;
   Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
@@ -787,7 +795,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       asyncSystem,
       pAssetAccessor,
       *pQuadtreeTileID,
-      tile.getBoundingVolume(),
+      *pRegion,
       currentLayer,
       requestHeaders,
       contentOptions.enableWaterMask);

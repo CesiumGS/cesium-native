@@ -1,4 +1,4 @@
-#include "readFile.h"
+#include <CesiumNativeTests/readFile.h>
 
 #include <catch2/catch.hpp>
 

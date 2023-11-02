@@ -1,8 +1,8 @@
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "SimpleAssetAccessor.h"
 
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
 
 #include <catch2/catch.hpp>
 

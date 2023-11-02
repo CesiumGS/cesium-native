@@ -4,7 +4,8 @@
 
 namespace Cesium3DTilesSelection {
 
-Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
+Credit
+CreditSystem::createCredit(const std::string_view& html, bool showOnScreen) {
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
@@ -14,7 +15,7 @@ Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
     }
   }
 
-  _credits.push_back({html, showOnScreen, -1, 0});
+  _credits.push_back({std::string(html), showOnScreen, -1, 0});
 
   return Credit(_credits.size() - 1);
 }

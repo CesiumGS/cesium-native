@@ -1,14 +1,9 @@
-#include "QuantizedMeshLoader.h"
-
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "SkirtMeshMetadata.h"
-#include "calcQuadtreeMaxGeometricError.h"
-
+#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
+#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
@@ -19,6 +14,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 
@@ -662,15 +658,13 @@ static std::vector<std::byte> generateNormals(
 }
 
 /*static*/ QuantizedMeshLoadResult QuantizedMeshLoader::load(
-    const TileID& tileID,
-    const BoundingVolume& tileBoundingVolume,
+    const QuadtreeTileID& tileID,
+    const BoundingRegion& tileBoundingVolume,
     const std::string& url,
     const gsl::span<const std::byte>& data,
     bool enableWaterMask) {
 
   CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshLoader::load");
-
-  const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
   QuantizedMeshLoadResult result;
 
@@ -678,23 +672,6 @@ static std::vector<std::byte> generateNormals(
       parseQuantizedMesh(data, enableWaterMask);
   if (!meshView) {
     result.errors.emplaceError("Unable to parse quantized-mesh-1.0 tile.");
-    return result;
-  }
-
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&tileBoundingVolume);
-  if (!pRegion) {
-    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(&tileBoundingVolume);
-    if (pLooseRegion) {
-      pRegion = &pLooseRegion->getBoundingRegion();
-    }
-  }
-
-  if (!pRegion) {
-    result.errors.emplaceError(
-        "Unable to create quantized-mesh-1.0 tile because the tile's bounding "
-        "volume is not a bounding region.");
     return result;
   }
 
@@ -735,7 +712,8 @@ static std::vector<std::byte> generateNormals(
   double maxZ = std::numeric_limits<double>::lowest();
 
   const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
-  const CesiumGeospatial::GlobeRectangle& rectangle = pRegion->getRectangle();
+  const CesiumGeospatial::GlobeRectangle& rectangle =
+      tileBoundingVolume.getRectangle();
   const double west = rectangle.getWest();
   const double south = rectangle.getSouth();
   const double east = rectangle.getEast();
@@ -797,7 +775,7 @@ static std::vector<std::byte> generateNormals(
   // decode metadata
   if (meshView->metadataJsonLength > 0) {
     QuantizedMeshMetadataResult metadata =
-        processMetadata(id, meshView->metadataJsonBuffer);
+        processMetadata(tileID, meshView->metadataJsonBuffer);
     result.availableTileRectangles = std::move(metadata.availability);
     result.errors.merge(std::move(metadata.errors));
   }

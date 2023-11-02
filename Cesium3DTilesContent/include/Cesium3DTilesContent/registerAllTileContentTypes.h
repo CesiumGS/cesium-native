@@ -9,6 +9,6 @@ namespace Cesium3DTilesSelection {
  * any {@link Tileset} is loaded. It will register loaders for the
  * different types of tiles that can be encountered.
  */
-CESIUM3DTILESSELECTION_API void registerAllTileContentTypes();
+CESIUM3DTILESCONTENT_API void registerAllTileContentTypes();
 
 } // namespace Cesium3DTilesSelection

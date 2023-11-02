@@ -1,6 +1,5 @@
-#include "CmptToGltfConverter.h"
-
-#include <Cesium3DTilesSelection/GltfConverters.h>
+#include <Cesium3DTilesContent/CmptToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 
 #include <spdlog/fmt/fmt.h>
 

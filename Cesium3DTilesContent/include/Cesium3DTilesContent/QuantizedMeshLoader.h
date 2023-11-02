@@ -1,12 +1,14 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
-#include <Cesium3DTilesSelection/Library.h>
-#include <Cesium3DTilesSelection/TileID.h>
+#include "Library.h"
+
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/ErrorList.h>
 
+#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
@@ -31,12 +33,12 @@ struct QuantizedMeshLoadResult {
   std::optional<CesiumGltf::Model> model;
 
   /**
-   * @brief An improved bounding volume for this tile.
+   * @brief An improved bounding region for this tile.
    *
    * If this is available, then it is more accurate than the one the tile used
    * originally.
    */
-  std::optional<BoundingVolume> updatedBoundingVolume{};
+  std::optional<CesiumGeospatial::BoundingRegion> updatedBoundingVolume{};
 
   /**
    * @brief Available quadtree tiles discovered as a result of loading this
@@ -63,7 +65,7 @@ struct QuantizedMeshMetadataResult {
 /**
  * @brief Loads `quantized-mesh-1.0` terrain data.
  */
-class CESIUM3DTILESSELECTION_API QuantizedMeshLoader final {
+class CESIUM3DTILESCONTENT_API QuantizedMeshLoader final {
 public:
   /**
    * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
@@ -75,8 +77,8 @@ public:
    * @return The {@link QuantizedMeshLoadResult}
    */
   static QuantizedMeshLoadResult load(
-      const TileID& tileID,
-      const BoundingVolume& tileBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeospatial::BoundingRegion& tileBoundingVolume,
       const std::string& url,
       const gsl::span<const std::byte>& data,
       bool enableWaterMask);

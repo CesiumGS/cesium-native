@@ -55,8 +55,10 @@ target_link_libraries(Cesium3DTilesContent
     PUBLIC
         CesiumAsync
         CesiumGeometry
+        CesiumGeospatial
         CesiumGltf
         CesiumGltfReader
+        CesiumUtility
 )
 
 install(TARGETS Cesium3DTilesContent

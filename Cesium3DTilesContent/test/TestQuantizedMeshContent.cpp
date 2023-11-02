@@ -1,7 +1,5 @@
-#include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "QuantizedMeshLoader.h"
-
+#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/GeographicProjection.h>

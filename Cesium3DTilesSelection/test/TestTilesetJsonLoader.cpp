@@ -1,13 +1,13 @@
 #include "ImplicitQuadtreeLoader.h"
-#include "SimpleAssetAccessor.h"
-#include "SimpleAssetRequest.h"
-#include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
 #include "TilesetJsonLoader.h"
-#include "readFile.h"
 
-#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/readFile.h>
 
 #include <catch2/catch.hpp>
 

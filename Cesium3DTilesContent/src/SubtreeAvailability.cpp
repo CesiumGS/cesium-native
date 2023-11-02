@@ -1,5 +1,4 @@
-#include "SubtreeAvailability.h"
-
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 

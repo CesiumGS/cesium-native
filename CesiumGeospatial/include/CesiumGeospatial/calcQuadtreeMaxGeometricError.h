@@ -1,9 +1,10 @@
 #pragma once
 
-#include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumGeospatial/Ellipsoid.h>
+#include "Ellipsoid.h"
 
-namespace Cesium3DTilesSelection {
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+
+namespace CesiumGeospatial {
 /**
  * @brief Computes the maximum geometric error per radian of a quadtree with
  * certain assumptions.
@@ -20,4 +21,4 @@ namespace Cesium3DTilesSelection {
  */
 double calcQuadtreeMaxGeometricError(
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept;
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeospatial

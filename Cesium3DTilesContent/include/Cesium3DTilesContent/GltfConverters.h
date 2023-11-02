@@ -26,7 +26,7 @@ namespace Cesium3DTilesSelection {
  * header. Based on this header or the file extension of the network response,
  * the loader that will be used for processing the input can be looked up.
  */
-class CESIUM3DTILESSELECTION_API GltfConverters {
+class CESIUM3DTILESCONTENT_API GltfConverters {
 public:
   /**
    * @brief A function pointer that can create a {@link GltfConverterResult} from a

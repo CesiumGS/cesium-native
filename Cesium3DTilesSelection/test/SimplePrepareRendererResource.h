@@ -4,6 +4,8 @@
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/Tile.h"
 
+#include <catch2/catch.hpp>
+
 #include <atomic>
 
 namespace Cesium3DTilesSelection {

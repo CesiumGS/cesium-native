@@ -1,5 +1,4 @@
-#include "SkirtMeshMetadata.h"
-
+#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <optional>

@@ -1,20 +1,20 @@
-#include "SimpleAssetAccessor.h"
-#include "SimpleAssetRequest.h"
-#include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
 #include "TilesetContentManager.h"
-#include "readFile.h"
 
+#include <Cesium3DTilesContent/GltfUtilities.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/DebugColorizeTilesRasterOverlay.h>
-#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 

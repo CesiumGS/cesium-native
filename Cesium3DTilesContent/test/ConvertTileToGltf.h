@@ -1,9 +1,8 @@
 #pragma once
 
-#include "readFile.h"
-
 #include <Cesium3DTilesContent/B3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
+#include <CesiumNativeTests/readFile.h>
 
 #include <filesystem>
 
