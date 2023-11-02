@@ -5,6 +5,13 @@
 ##### Breaking Changes :mega:
 
 - Moved `ErrorList` from `Cesium3DTilesSelection` to `CesiumUtility`.
+- Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
+- Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `Cesium3DTilesSelection` library.
+- `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
+
+##### Additions :tada:
+
+- Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
 
 ### v0.29.0 - 2023-11-01
 

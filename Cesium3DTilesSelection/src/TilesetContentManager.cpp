@@ -1197,7 +1197,7 @@ void TilesetContentManager::finishLoading(
 
     for (const std::string_view& creditString : creditStrings) {
       credits.emplace_back(pCreditSystem->createCredit(
-          creditString,
+          std::string(creditString),
           tilesetOptions.showCreditsOnScreen));
     }
 

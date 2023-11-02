@@ -3,7 +3,6 @@
 #include "Library.h"
 
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -45,7 +44,15 @@ public:
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    */
-  Credit createCredit(const std::string_view& html, bool showOnScreen = false);
+  Credit createCredit(std::string&& html, bool showOnScreen = false);
+
+  /**
+   * @brief Inserts a credit string
+   *
+   * @return If this string already exists, returns a Credit handle to the
+   * existing entry. Otherwise returns a Credit handle to a new entry.
+   */
+  Credit createCredit(const std::string& html, bool showOnScreen = false);
 
   /**
    * @brief Gets whether or not the credit should be shown on screen.
