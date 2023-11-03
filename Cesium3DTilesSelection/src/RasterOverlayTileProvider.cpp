@@ -110,11 +110,6 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
     return true;
   }
 
-  if (this->_throttledTilesCurrentlyLoading >=
-      this->getOwner().getOptions().maximumSimultaneousTileLoads) {
-    return false;
-  }
-
   this->doLoad(tile, true);
   return true;
 }

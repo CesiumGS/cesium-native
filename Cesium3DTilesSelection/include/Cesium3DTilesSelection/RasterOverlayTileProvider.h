@@ -282,6 +282,10 @@ public:
     return this->_totalTilesCurrentlyLoading;
   }
 
+  int32_t getNumberOfThrottledTilesLoading() const noexcept {
+    return this->_throttledTilesCurrentlyLoading;
+  }
+
   /**
    * @brief Removes a no-longer-referenced tile from this provider's cache and
    * deletes it.

@@ -1410,13 +1410,11 @@ void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
 #if 1 // New path
-  int32_t maximumSimultaneousTileLoads =
+  int32_t maxTileLoads =
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
-  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-      maximumSimultaneousTileLoads) {
+  if (_pTilesetContentManager->getNumberOfTilesLoading() >= maxTileLoads)
     return;
-  }
 
   std::vector<TileLoadTask>& inputQueue = this->_workerThreadLoadQueue;
 
@@ -1457,37 +1455,47 @@ void Tileset::_processWorkerThreadLoadQueue() {
 
   std::sort(allLoadUnits.begin(), allLoadUnits.end());
 
-  /*
-    for (TileLoadUnit& work : allLoadUnits) {
+  for (TileLoadUnit& work : allLoadUnits) {
 
-      this->_pTilesetContentManager->doTileContentWork(*task.pTile, _options);
-      if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumSimultaneousTileLoads) {
-        break;
-      }
+    Tile* pTile = std::get<Tile*>(work.workRef);
 
-      if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumSimultaneousTileLoads) {
-        return;
-      }
+    if (pTile) {
+      if (_pTilesetContentManager->getNumberOfTilesLoading() >= maxTileLoads)
+        continue;
+      this->_pTilesetContentManager->doTileContentWork(
+          *pTile,
+          work.projections,
+          _options);
+    } else {
+      RasterMappedTo3DTile* pRasterTile =
+          std::get<RasterMappedTo3DTile*>(work.workRef);
+      assert(pRasterTile);
+
+      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
+      if (!pLoading)
+        continue;
+
+      RasterOverlayTileProvider& provider = pLoading->getTileProvider();
+      if (provider.getNumberOfThrottledTilesLoading() >= maxTileLoads)
+        continue;
+
+      pRasterTile->loadThrottled();
     }
+  }
 
-    /*
-       THIS CODE NEEDS TO BE PUT BACK
+  /*
+     THIS CODE NEEDS TO BE PUT BACK
 
-      // Finalize the parent if necessary, otherwise it may never reach the
-      // Done state. Also double check that we have render content in ensure
-      // we don't assert / crash in finishLoading. The latter will only ever
-      // be a problem in a pathological tileset with a non-renderable leaf
-      // tile, but that sort of thing does happen.
-      if (pParentTile->getState() == TileLoadState::ContentLoaded &&
-        pParentTile->isRenderContent()) {
-        finishLoading(*pParentTile, tilesetOptions);
-      }
-
-      for (RasterMappedTo3DTile& rasterTile : startTile.getMappedRasterTiles())
-      { rasterTile.loadThrottled();
-    */
+    // Finalize the parent if necessary, otherwise it may never reach the
+    // Done state. Also double check that we have render content in ensure
+    // we don't assert / crash in finishLoading. The latter will only ever
+    // be a problem in a pathological tileset with a non-renderable leaf
+    // tile, but that sort of thing does happen.
+    if (pParentTile->getState() == TileLoadState::ContentLoaded &&
+      pParentTile->isRenderContent()) {
+      finishLoading(*pParentTile, tilesetOptions);
+    }
+  */
 
 #else
   int32_t maximumSimultaneousTileLoads =
