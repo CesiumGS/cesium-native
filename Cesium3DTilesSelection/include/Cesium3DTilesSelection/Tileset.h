@@ -481,6 +481,21 @@ private:
     }
   };
 
+  typedef std::variant<Tile*, RasterMappedTo3DTile*> TileWorkRef;
+
+  struct ParsedTileWork {
+    TileWorkRef workRef;
+    Tileset::TileLoadPriorityGroup group;
+    double priority;
+
+    bool operator<(const ParsedTileWork& rhs) const noexcept {
+      if (this->group == rhs.group)
+        return this->priority < rhs.priority;
+      else
+        return this->group > rhs.group;
+    }
+  };
+
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
 

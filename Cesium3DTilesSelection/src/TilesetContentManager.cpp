@@ -838,24 +838,21 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   this->_destructionCompletePromise.resolve();
 }
 
-void TilesetContentManager::loadTileContent(
-    Tile& tile,
-    const TilesetOptions& tilesetOptions) {
-  CESIUM_TRACE("TilesetContentManager::loadTileContent");
+void TilesetContentManager::calculateTileWork(
+    Tile* startTile,
+    std::vector<TileWorkRef>& outWork) {
+  CESIUM_TRACE("TilesetContentManager::calculateTileWork");
 
-  if (tile.getState() == TileLoadState::Unloading) {
-    // We can't load a tile that is unloading; it has to finish unloading first.
+  // We can't load a tile that is unloading; it has to finish unloading first.
+  if (startTile->getState() == TileLoadState::Unloading)
     return;
-  }
 
-  if (tile.getState() != TileLoadState::Unloaded &&
-      tile.getState() != TileLoadState::FailedTemporarily) {
+  if (startTile->getState() != TileLoadState::Unloaded &&
+      startTile->getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& rasterTile : tile.getMappedRasterTiles()) {
-      rasterTile.loadThrottled();
-    }
-
+    for (RasterMappedTo3DTile& rasterTile : startTile->getMappedRasterTiles())
+      outWork.push_back(&rasterTile);
     return;
   }
 
@@ -871,30 +868,34 @@ void TilesetContentManager::loadTileContent(
   // the current tile. Warning: it's not thread-safe to modify the parent
   // geometry in the worker thread at the same time though
   const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
-      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID());
+      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
+          &startTile->getTileID());
   if (pUpsampleID) {
     // We can't upsample this tile until its parent tile is done loading.
-    Tile* pParentTile = tile.getParent();
-    if (pParentTile) {
-      if (pParentTile->getState() != TileLoadState::Done) {
-        loadTileContent(*pParentTile, tilesetOptions);
-
-        // Finalize the parent if necessary, otherwise it may never reach the
-        // Done state. Also double check that we have render content in ensure
-        // we don't assert / crash in finishLoading. The latter will only ever
-        // be a problem in a pathological tileset with a non-renderable leaf
-        // tile, but that sort of thing does happen.
-        if (pParentTile->getState() == TileLoadState::ContentLoaded &&
-            pParentTile->isRenderContent()) {
-          finishLoading(*pParentTile, tilesetOptions);
-        }
-        return;
-      }
-    } else {
+    Tile* pParentTile = startTile->getParent();
+    if (!pParentTile) {
       // we cannot upsample this tile if it doesn't have parent
       return;
+    } else {
+      if (pParentTile->getState() == TileLoadState::Done) {
+        // Parent is already loaded, just add this tile
+        outWork.push_back(startTile);
+      } else {
+        // Parent isn't loaded. Get the tile work required for it first
+        calculateTileWork(pParentTile, outWork);
+        outWork.push_back(startTile);
+      }
     }
+  } else {
+    // No upsample ID, just add this tile
+    outWork.push_back(startTile);
   }
+}
+
+void TilesetContentManager::doTileContentWork(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) {
+  CESIUM_TRACE("TilesetContentManager::doTileContentWork");
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =

@@ -1409,6 +1409,64 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
+#if 1 // New path
+  std::vector<TileLoadTask>& inputQueue = this->_workerThreadLoadQueue;
+
+  std::vector<ParsedTileWork> allParsedWork;
+
+  for (TileLoadTask& inputTask : inputQueue) {
+    std::vector<TileWorkRef> tileWork;
+    this->_pTilesetContentManager->calculateTileWork(inputTask.pTile, tileWork);
+
+    // There could be no actionable work for this input tile, ignore it
+    if (tileWork.empty())
+      continue;
+
+    // Add any parent tasks at highest priority
+    for (size_t workIndex = 0; workIndex < tileWork.size() - 1; ++workIndex) {
+      TileWorkRef& workRef = tileWork[workIndex];
+
+      ParsedTileWork newTask = {workRef, TileLoadPriorityGroup::Urgent, 0};
+      allParsedWork.push_back(newTask);
+    }
+
+    // Add the last task at same as input priority
+    ParsedTileWork newTask = {
+        tileWork[tileWork.size() - 1],
+        inputTask.group,
+        inputTask.priority};
+    allParsedWork.push_back(newTask);
+  }
+
+  std::sort(allParsedWork.begin(), allParsedWork.end());
+
+  /* TODO
+  for (ParsedTileWork& work : allParsedWork) {
+    this->_pTilesetContentManager->doTileContentWork(*task.pTile, _options);
+    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
+      maximumSimultaneousTileLoads) {
+      break;
+    }
+  }*/
+
+  /*
+     THIS CODE NEEDS TO BE PUT BACK
+
+    // Finalize the parent if necessary, otherwise it may never reach the
+    // Done state. Also double check that we have render content in ensure
+    // we don't assert / crash in finishLoading. The latter will only ever
+    // be a problem in a pathological tileset with a non-renderable leaf
+    // tile, but that sort of thing does happen.
+    if (pParentTile->getState() == TileLoadState::ContentLoaded &&
+      pParentTile->isRenderContent()) {
+      finishLoading(*pParentTile, tilesetOptions);
+    }
+
+    for (RasterMappedTo3DTile& rasterTile : startTile.getMappedRasterTiles())
+    { rasterTile.loadThrottled();
+  */
+
+#else
   int32_t maximumSimultaneousTileLoads =
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
@@ -1427,6 +1485,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
       break;
     }
   }
+#endif
 }
 void Tileset::_processMainThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
@@ -1465,8 +1524,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
-  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
-  // the end time to the max time_point in that case.
+  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So
+  // set the end time to the max time_point in that case.
   auto start = std::chrono::system_clock::now();
   auto end = (timeBudget <= 0.0)
                  ? std::chrono::time_point<std::chrono::system_clock>::max()

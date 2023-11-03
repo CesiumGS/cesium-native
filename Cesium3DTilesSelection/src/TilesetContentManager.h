@@ -18,6 +18,8 @@
 
 namespace Cesium3DTilesSelection {
 
+typedef std::variant<Tile*, RasterMappedTo3DTile*> TileWorkRef;
+
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           TilesetContentManager> {
@@ -60,7 +62,9 @@ public:
 
   ~TilesetContentManager() noexcept;
 
-  void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
+  void calculateTileWork(Tile* startTile, std::vector<TileWorkRef>& outWork);
+
+  void doTileContentWork(Tile& tile, const TilesetOptions& tilesetOptions);
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
