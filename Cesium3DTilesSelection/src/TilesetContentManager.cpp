@@ -259,7 +259,8 @@ void createQuadtreeSubdividedChildren(
 std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     Tile& tile,
     RasterOverlayCollection& overlays,
-    const TilesetOptions& tilesetOptions) {
+    double maximumScreenSpaceError,
+    std::vector<TilesetContentManager::ParsedTileWork>& outWork) {
   // when tile fails temporarily, it may still have mapped raster tiles, so
   // clear it here
   tile.getMappedRasterTiles().clear();
@@ -276,7 +277,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     RasterOverlayTileProvider& placeholder = *placeholders[i];
 
     RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
-        tilesetOptions.maximumScreenSpaceError,
+        maximumScreenSpaceError,
         tileProvider,
         placeholder,
         tile,
@@ -284,7 +285,8 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     if (pMapped) {
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
-      pMapped->loadThrottled();
+      TilesetContentManager::ParsedTileWork newWork = {pMapped};
+      outWork.push_back(newWork);
     }
   }
 
@@ -838,10 +840,11 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   this->_destructionCompletePromise.resolve();
 }
 
-void TilesetContentManager::calculateTileWork(
+void TilesetContentManager::parseTileWork(
     Tile* startTile,
-    std::vector<TileWorkRef>& outWork) {
-  CESIUM_TRACE("TilesetContentManager::calculateTileWork");
+    double maximumScreenSpaceError,
+    std::vector<ParsedTileWork>& outWork) {
+  CESIUM_TRACE("TilesetContentManager::parseTileWork");
 
   // We can't load a tile that is unloading; it has to finish unloading first.
   if (startTile->getState() == TileLoadState::Unloading)
@@ -851,8 +854,10 @@ void TilesetContentManager::calculateTileWork(
       startTile->getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& rasterTile : startTile->getMappedRasterTiles())
-      outWork.push_back(&rasterTile);
+    for (RasterMappedTo3DTile& rasterTile : startTile->getMappedRasterTiles()) {
+      ParsedTileWork newWork = {&rasterTile};
+      outWork.push_back(newWork);
+    }
     return;
   }
 
@@ -877,29 +882,31 @@ void TilesetContentManager::calculateTileWork(
       // we cannot upsample this tile if it doesn't have parent
       return;
     } else {
-      if (pParentTile->getState() == TileLoadState::Done) {
-        // Parent is already loaded, just add this tile
-        outWork.push_back(startTile);
-      } else {
+      if (pParentTile->getState() != TileLoadState::Done) {
         // Parent isn't loaded. Get the tile work required for it first
-        calculateTileWork(pParentTile, outWork);
-        outWork.push_back(startTile);
+        parseTileWork(pParentTile, maximumScreenSpaceError, outWork);
       }
     }
   } else {
     // No upsample ID, just add this tile
-    outWork.push_back(startTile);
   }
+
+  // map raster overlay to tile
+  std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
+      *startTile,
+      this->_overlayCollection,
+      maximumScreenSpaceError,
+      outWork);
+
+  ParsedTileWork newWork = {startTile, projections};
+  outWork.push_back(newWork);
 }
 
 void TilesetContentManager::doTileContentWork(
     Tile& tile,
+    std::vector<CesiumGeospatial::Projection>& projections,
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::doTileContentWork");
-
-  // map raster overlay to tile
-  std::vector<CesiumGeospatial::Projection> projections =
-      mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(&tile);

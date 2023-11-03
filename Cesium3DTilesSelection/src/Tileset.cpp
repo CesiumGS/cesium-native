@@ -1410,61 +1410,84 @@ void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
 #if 1 // New path
+  int32_t maximumSimultaneousTileLoads =
+      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
+
+  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
+      maximumSimultaneousTileLoads) {
+    return;
+  }
+
   std::vector<TileLoadTask>& inputQueue = this->_workerThreadLoadQueue;
 
-  std::vector<ParsedTileWork> allParsedWork;
+  std::vector<TileLoadUnit> allLoadUnits;
 
   for (TileLoadTask& inputTask : inputQueue) {
-    std::vector<TileWorkRef> tileWork;
-    this->_pTilesetContentManager->calculateTileWork(inputTask.pTile, tileWork);
+    std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
+    this->_pTilesetContentManager->parseTileWork(
+        inputTask.pTile,
+        this->_options.maximumScreenSpaceError,
+        parsedTileWork);
 
     // There could be no actionable work for this input tile, ignore it
-    if (tileWork.empty())
+    if (parsedTileWork.empty())
       continue;
 
-    // Add any parent tasks at highest priority
-    for (size_t workIndex = 0; workIndex < tileWork.size() - 1; ++workIndex) {
-      TileWorkRef& workRef = tileWork[workIndex];
+    // Add any parent tasks. Same priority group, but move to the front
+    for (size_t workIndex = 0; workIndex < parsedTileWork.size() - 1;
+         ++workIndex) {
+      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
 
-      ParsedTileWork newTask = {workRef, TileLoadPriorityGroup::Urgent, 0};
-      allParsedWork.push_back(newTask);
+      TileLoadUnit newWorkUnit =
+          {work.workRef, work.projections, inputTask.group, 0};
+      allLoadUnits.push_back(newWorkUnit);
     }
 
     // Add the last task at same as input priority
-    ParsedTileWork newTask = {
-        tileWork[tileWork.size() - 1],
+    TilesetContentManager::ParsedTileWork& lastWork =
+        parsedTileWork[parsedTileWork.size() - 1];
+
+    TileLoadUnit newWorkUnit = {
+        lastWork.workRef,
+        lastWork.projections,
         inputTask.group,
         inputTask.priority};
-    allParsedWork.push_back(newTask);
+    allLoadUnits.push_back(newWorkUnit);
   }
 
-  std::sort(allParsedWork.begin(), allParsedWork.end());
-
-  /* TODO
-  for (ParsedTileWork& work : allParsedWork) {
-    this->_pTilesetContentManager->doTileContentWork(*task.pTile, _options);
-    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-      maximumSimultaneousTileLoads) {
-      break;
-    }
-  }*/
+  std::sort(allLoadUnits.begin(), allLoadUnits.end());
 
   /*
-     THIS CODE NEEDS TO BE PUT BACK
+    for (TileLoadUnit& work : allLoadUnits) {
 
-    // Finalize the parent if necessary, otherwise it may never reach the
-    // Done state. Also double check that we have render content in ensure
-    // we don't assert / crash in finishLoading. The latter will only ever
-    // be a problem in a pathological tileset with a non-renderable leaf
-    // tile, but that sort of thing does happen.
-    if (pParentTile->getState() == TileLoadState::ContentLoaded &&
-      pParentTile->isRenderContent()) {
-      finishLoading(*pParentTile, tilesetOptions);
+      this->_pTilesetContentManager->doTileContentWork(*task.pTile, _options);
+      if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
+        maximumSimultaneousTileLoads) {
+        break;
+      }
+
+      if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
+        maximumSimultaneousTileLoads) {
+        return;
+      }
     }
 
-    for (RasterMappedTo3DTile& rasterTile : startTile.getMappedRasterTiles())
-    { rasterTile.loadThrottled();
-  */
+    /*
+       THIS CODE NEEDS TO BE PUT BACK
+
+      // Finalize the parent if necessary, otherwise it may never reach the
+      // Done state. Also double check that we have render content in ensure
+      // we don't assert / crash in finishLoading. The latter will only ever
+      // be a problem in a pathological tileset with a non-renderable leaf
+      // tile, but that sort of thing does happen.
+      if (pParentTile->getState() == TileLoadState::ContentLoaded &&
+        pParentTile->isRenderContent()) {
+        finishLoading(*pParentTile, tilesetOptions);
+      }
+
+      for (RasterMappedTo3DTile& rasterTile : startTile.getMappedRasterTiles())
+      { rasterTile.loadThrottled();
+    */
 
 #else
   int32_t maximumSimultaneousTileLoads =

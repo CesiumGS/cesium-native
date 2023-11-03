@@ -62,9 +62,20 @@ public:
 
   ~TilesetContentManager() noexcept;
 
-  void calculateTileWork(Tile* startTile, std::vector<TileWorkRef>& outWork);
+  struct ParsedTileWork {
+    TileWorkRef workRef;
+    std::vector<CesiumGeospatial::Projection> projections;
+  };
 
-  void doTileContentWork(Tile& tile, const TilesetOptions& tilesetOptions);
+  void parseTileWork(
+      Tile* startTile,
+      double maximumScreenSpaceError,
+      std::vector<ParsedTileWork>& outWork);
+
+  void doTileContentWork(
+      Tile& tile,
+      std::vector<CesiumGeospatial::Projection>& projections,
+      const TilesetOptions& tilesetOptions);
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
