@@ -891,6 +891,17 @@ void TilesetContentManager::parseTileWork(
     // No upsample ID, just add this tile
   }
 
+  // Parse any content fetch work
+  TilesetContentLoader* pLoader;
+  if (startTile->getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
+  } else {
+    pLoader = this->_pLoader.get();
+  }
+
+  std::string requestUrl;
+  pLoader->getRequestWork(startTile, requestUrl);
+
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
       *startTile,
@@ -898,7 +909,7 @@ void TilesetContentManager::parseTileWork(
       maximumScreenSpaceError,
       outWork);
 
-  ParsedTileWork newWork = {startTile, projections};
+  ParsedTileWork newWork = {startTile, requestUrl, projections};
   outWork.push_back(newWork);
 }
 

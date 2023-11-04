@@ -1437,7 +1437,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
       TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
 
       TileLoadUnit newWorkUnit =
-          {work.workRef, work.projections, inputTask.group, 0};
+          {work.workRef, work.requestUrl, work.projections, inputTask.group, 0};
       allLoadUnits.push_back(newWorkUnit);
     }
 
@@ -1447,11 +1447,15 @@ void Tileset::_processWorkerThreadLoadQueue() {
 
     TileLoadUnit newWorkUnit = {
         lastWork.workRef,
+        lastWork.requestUrl,
         lastWork.projections,
         inputTask.group,
         inputTask.priority};
     allLoadUnits.push_back(newWorkUnit);
   }
+
+  // Work broken down into load units. Either Tile content work or Raster work.
+  // TODO issue Tile url request work here and remove from doTileContentWork
 
   std::sort(allLoadUnits.begin(), allLoadUnits.end());
 

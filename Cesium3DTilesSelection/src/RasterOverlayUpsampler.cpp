@@ -87,6 +87,11 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
+bool RasterOverlayUpsampler::getRequestWork(Tile*, std::string&) {
+  // This doesn't require request work
+  return false;
+}
+
 TileChildrenResult
 RasterOverlayUpsampler::createTileChildren([[maybe_unused]] const Tile& tile) {
   return {{}, TileLoadResultState::Failed};

@@ -391,6 +391,14 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
+bool CesiumIonTilesetLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+  if (this->_refreshTokenState == TokenRefreshState::Loading)
+    return false;
+  else if (this->_refreshTokenState == TokenRefreshState::Failed)
+    return false;
+  return this->_pAggregatedLoader->getRequestWork(pTile, outUrl);
+}
+
 TileChildrenResult
 CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
   auto pLoader = tile.getLoader();

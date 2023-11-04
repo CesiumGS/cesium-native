@@ -485,6 +485,7 @@ private:
 
   struct TileLoadUnit {
     TileWorkRef workRef;
+    std::string requestUrl;
     std::vector<CesiumGeospatial::Projection> projections;
     Tileset::TileLoadPriorityGroup group;
     double priority;

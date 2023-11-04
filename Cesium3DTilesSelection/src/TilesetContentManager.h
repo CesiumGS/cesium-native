@@ -64,6 +64,7 @@ public:
 
   struct ParsedTileWork {
     TileWorkRef workRef;
+    std::string requestUrl;
     std::vector<CesiumGeospatial::Projection> projections;
   };
 

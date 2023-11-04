@@ -343,6 +343,54 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets);
 }
 
+bool ImplicitQuadtreeLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+
+  // make sure the tile is a quadtree tile
+  const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&pTile->getTileID());
+  if (!pQuadtreeID)
+    return false;
+
+  // find the subtree ID
+  uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
+  if (subtreeLevelIdx >= _loadedSubtrees.size())
+    return false;
+
+  uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
+  uint32_t subtreeLevel = this->_subtreeLevels * subtreeLevelIdx;
+  uint32_t subtreeX = pQuadtreeID->x >> levelLeft;
+  uint32_t subtreeY = pQuadtreeID->y >> levelLeft;
+  CesiumGeometry::QuadtreeTileID subtreeID{subtreeLevel, subtreeX, subtreeY};
+
+  // the below morton index hash to the subtree assumes that tileID's components
+  // x and y never exceed 32-bit. In other words, the max levels this loader can
+  // support is 33 which will have 4^32 tiles in the level 32th. The 64-bit
+  // morton index below can support that much tiles without overflow. More than
+  // 33 levels, this loader will fail. One solution for that is to create
+  // multiple new ImplicitQuadtreeLoaders and assign them to any tiles that have
+  // levels exceeding the maximum 33. Those new loaders will be added to the
+  // current loader, and thus, create a hierarchical tree of loaders where each
+  // loader will serve up to 33 levels with the level 0 being relative to the
+  // parent loader. The solution isn't implemented at the moment, as implicit
+  // tilesets that exceeds 33 levels are expected to be very rare
+  uint64_t subtreeMortonIdx = libmorton::morton2D_64_encode(subtreeX, subtreeY);
+  auto subtreeIt =
+      this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
+  if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
+    // subtree is not loaded, so load it now.
+    outUrl = resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
+    return true;
+  }
+
+  // subtree is available, so check if tile has content or not. If it has, then
+  // request it
+  if (!isTileContentAvailable(subtreeID, *pQuadtreeID, subtreeIt->second))
+    return false;
+
+  outUrl = resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
+  return true;
+}
+
 TileChildrenResult
 ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
