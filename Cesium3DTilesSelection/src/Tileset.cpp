@@ -1457,9 +1457,10 @@ void Tileset::_processWorkerThreadLoadQueue() {
 
   for (TileLoadUnit& work : allLoadUnits) {
 
-    Tile* pTile = std::get<Tile*>(work.workRef);
+    if (std::holds_alternative<Tile*>(work.workRef)) {
+      Tile* pTile = std::get<Tile*>(work.workRef);
+      assert(pTile);
 
-    if (pTile) {
       if (_pTilesetContentManager->getNumberOfTilesLoading() >= maxTileLoads)
         continue;
       this->_pTilesetContentManager->doTileContentWork(
