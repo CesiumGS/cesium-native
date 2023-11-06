@@ -331,10 +331,6 @@ public:
    * completes, the tile will be in the `Tile::LoadState::Loaded` or
    * `Tile::LoadState::Failed` state.
    *
-   * The number of allowable simultaneous tile requests is provided in the
-   * {@link RasterOverlayOptions::maximumSimultaneousTileLoads} property of
-   * {@link RasterOverlay::getOptions}.
-   *
    * @param tile The tile to load.
    * @returns True if the tile load process is started or is already complete,
    * false if the load could not be started because too many loads are already
