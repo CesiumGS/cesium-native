@@ -1418,72 +1418,71 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
-#if 1 // New path
   // TODO
-  // -) Take out old maximumSimultaneousTileLoads throttling
-  // -) Remove setState(TileLoadState::ContentLoading) loading everywhere else
   // -) Check on Unreal asset accessor (or leave it and make sure there is no
   // network activity
-  // -) Dispatch normal doTileContentWork based on dispatcher output
   // -) Modify doTileContentWork to not do CachingAccessor, or leave it
   // -) go over TODOS
   // -) Use worker thread not thread pool?
 
-  int32_t maxTileLoads =
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
-
-  // TODO, do we need to move this now?
-  if (_pTilesetContentManager->getNumberOfTilesLoading() >= maxTileLoads)
-    return;
-
-  std::vector<TileLoadWork> newLoadWork;
-  discoverLoadWork(this->_workerThreadLoadQueue, newLoadWork);
+  std::vector<TileLoadWork> newRequestWork;
+  std::vector<TileLoadWork> newProcessingWork;
+  discoverLoadWork(
+      this->_workerThreadLoadQueue,
+      newRequestWork,
+      newProcessingWork);
 
   // Add all content requests to Request queue
-  addLoadWorkToRequestDispatcher(newLoadWork);
-
-  _pRequestDispatcher->SetRequestHeaders(
-      this->_pTilesetContentManager->getRequestHeaders());
+  addLoadWorkToRequestDispatcher(newRequestWork);
 
   // Wake up the network request dispatcher
   _pRequestDispatcher->WakeIfNeeded();
 
-  // Work broken down into load units. Either Tile content work or Raster work.
-  // TODO issue Tile url request work here and remove from doTileContentWork
+  //
+  // We have two input streams of processing work
+  // - Work that came in from update view this frame
+  // - Work that had a response that just completed
+  //
+  // Give preference to responses that just came in, these are older
+  //
+  std::vector<TileLoadWork> workToDispatch;
 
-  std::sort(newLoadWork.begin(), newLoadWork.end());
+  int32_t numberOfTilesLoading =
+      this->_pTilesetContentManager->getNumberOfTilesLoading();
+  int32_t maximumSimultaneousTileLoads =
+      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
-  for (TileLoadWork& work : newLoadWork) {
+  // TODO, how to figure in raster tiles, getNumberOfThrottledTilesLoading?
+  // Currently raster tile work dispatches, but doesn't take a slot
+  int32_t availableSlots = maximumSimultaneousTileLoads - numberOfTilesLoading;
+  assert(availableSlots >= 0);
+  if (availableSlots == 0)
+    return;
 
-    if (std::holds_alternative<Tile*>(work.workRef)) {
-      Tile* pTile = std::get<Tile*>(work.workRef);
-      assert(pTile);
+  // Add completed request work
+  _pRequestDispatcher->TakeCompletedWork(availableSlots, workToDispatch);
+  availableSlots -= (int32_t)workToDispatch.size();
+  assert(availableSlots >= 0);
 
-      if (_pTilesetContentManager->getNumberOfTilesLoading() >= maxTileLoads)
-        continue;
-      this->_pTilesetContentManager->doTileContentWork(
-          *pTile,
-          work.projections,
-          _options);
-    } else {
-      RasterMappedTo3DTile* pRasterTile =
-          std::get<RasterMappedTo3DTile*>(work.workRef);
-      assert(pRasterTile);
-
-      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
-      if (!pLoading)
-        continue;
-
-      RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-      if (provider.getNumberOfThrottledTilesLoading() >= maxTileLoads)
-        continue;
-
-      pRasterTile->loadThrottled();
-    }
+  // Add processing work
+  if (availableSlots > 0) {
+    std::sort(newProcessingWork.begin(), newProcessingWork.end());
+    int countToAdd =
+        std::min((int32_t)newProcessingWork.size(), availableSlots);
+    workToDispatch.insert(
+        workToDispatch.end(),
+        newProcessingWork.begin(),
+        newProcessingWork.begin() + countToAdd);
   }
+
+  // Dispatch it
+  dispatchProcessingWork(workToDispatch);
 
   /*
      THIS CODE NEEDS TO BE PUT BACK
+      RasterOverlayTileProvider& provider = pLoading->getTileProvider();
+      if (provider.getNumberOfThrottledTilesLoading() >= maxTileLoads)
+        continue;
 
     // Finalize the parent if necessary, otherwise it may never reach the
     // Done state. Also double check that we have render content in ensure
@@ -1495,28 +1494,8 @@ void Tileset::_processWorkerThreadLoadQueue() {
       finishLoading(*pParentTile, tilesetOptions);
     }
   */
-
-#else
-  int32_t maximumSimultaneousTileLoads =
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
-
-  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-      maximumSimultaneousTileLoads) {
-    return;
-  }
-
-  std::vector<TileLoadTask>& queue = this->_workerThreadLoadQueue;
-  std::sort(queue.begin(), queue.end());
-
-  for (TileLoadTask& task : queue) {
-    this->_pTilesetContentManager->loadTileContent(*task.pTile, _options);
-    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumSimultaneousTileLoads) {
-      break;
-    }
-  }
-#endif
 }
+
 void Tileset::_processMainThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
   // Process deferred main-thread load tasks with a time budget.
@@ -1645,8 +1624,9 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
 }
 
 void Tileset::discoverLoadWork(
-    std::vector<TileLoadRequest> requests,
-    std::vector<TileLoadWork>& out) {
+    std::vector<TileLoadRequest>& requests,
+    std::vector<TileLoadWork>& outRequests,
+    std::vector<TileLoadWork>& outProcessing) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->_pTilesetContentManager->parseTileWork(
@@ -1669,7 +1649,11 @@ void Tileset::discoverLoadWork(
           work.projections,
           loadRequest.group,
           0};
-      out.push_back(newWorkUnit);
+
+      if (work.requestUrl.empty())
+        outProcessing.push_back(newWorkUnit);
+      else
+        outRequests.push_back(newWorkUnit);
     }
 
     // Add the last task at same as input priority
@@ -1683,7 +1667,10 @@ void Tileset::discoverLoadWork(
         loadRequest.group,
         loadRequest.priority};
 
-    out.push_back(newWorkUnit);
+    if (lastWork.requestUrl.empty())
+      outProcessing.push_back(newWorkUnit);
+    else
+      outRequests.push_back(newWorkUnit);
   }
 }
 
@@ -1702,19 +1689,48 @@ void Tileset::addLoadWorkToRequestDispatcher(
     assert(pTile);
 
     // Mark this tile as loading now so it doesn't get queued next frame
-    // TODO, what about raster tiles?
     pTile->setState(TileLoadState::ContentLoading);
 
     workToAdd.push_back(work);
   }
 
-  _pRequestDispatcher->QueueLoadWork(workToAdd);
+  _pRequestDispatcher->QueueRequestWork(
+      workToAdd,
+      this->_pTilesetContentManager->getRequestHeaders());
 }
 
-void RequestDispatcher::QueueLoadWork(std::vector<TileLoadWork>& work) {
+void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
+  for (TileLoadWork& work : workVector) {
+    if (std::holds_alternative<Tile*>(work.workRef)) {
+      Tile* pTile = std::get<Tile*>(work.workRef);
+      assert(pTile);
+
+      this->_pTilesetContentManager->doTileContentWork(
+          *pTile,
+          work.projections,
+          _options);
+    } else {
+      RasterMappedTo3DTile* pRasterTile =
+          std::get<RasterMappedTo3DTile*>(work.workRef);
+      assert(pRasterTile);
+
+      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
+      if (!pLoading)
+        continue;
+
+      pRasterTile->loadThrottled();
+    }
+  }
+}
+
+void RequestDispatcher::QueueRequestWork(
+    std::vector<TileLoadWork>& work,
+    std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   // TODO, assert tile is not already loading? or already post-processing?
   std::lock_guard<std::mutex> lock(_requestsLock);
   _queuedRequests.insert(_queuedRequests.end(), work.begin(), work.end());
+
+  _requestHeaders = requestHeaders;
 }
 
 void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
@@ -1790,6 +1806,26 @@ bool RequestDispatcher::stageRequestWork(
   }
 
   return _queuedRequests.empty();
+}
+
+void RequestDispatcher::TakeCompletedWork(
+    size_t maxCount,
+    std::vector<TileLoadWork>& out) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  size_t count = _doneRequests.size();
+  if (count == 0)
+    return;
+
+  // Populate our output
+  size_t numberToTake = std::min(count, maxCount);
+  out = std::vector<TileLoadWork>(
+      _doneRequests.begin(),
+      _doneRequests.begin() + numberToTake);
+
+  // Remove these entries from the source
+  _doneRequests = std::vector<TileLoadWork>(
+      _doneRequests.begin() + numberToTake,
+      _doneRequests.end());
 }
 
 void RequestDispatcher::WakeIfNeeded() {

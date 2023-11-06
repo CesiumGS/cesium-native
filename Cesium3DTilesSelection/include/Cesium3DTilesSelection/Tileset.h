@@ -77,14 +77,13 @@ public:
         _pAssetAccessor(pAssetAccessor) {}
   ~RequestDispatcher() noexcept {}
 
-  void SetRequestHeaders(
-      std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-    _requestHeaders = requestHeaders;
-  }
-
-  void QueueLoadWork(std::vector<TileLoadWork>& work);
+  void QueueRequestWork(
+      std::vector<TileLoadWork>& work,
+      std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   void WakeIfNeeded();
+
+  void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
 
 private:
   void dispatchRequest(TileLoadWork& request);
@@ -570,10 +569,13 @@ private:
       double priority);
 
   void discoverLoadWork(
-      std::vector<TileLoadRequest> requests,
-      std::vector<TileLoadWork>& out);
+      std::vector<TileLoadRequest>& requests,
+      std::vector<TileLoadWork>& outRequests,
+      std::vector<TileLoadWork>& outProcessing);
 
   void addLoadWorkToRequestDispatcher(std::vector<TileLoadWork>& newLoadWork);
+
+  void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
