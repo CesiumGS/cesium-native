@@ -1432,11 +1432,9 @@ void Tileset::_processWorkerThreadLoadQueue() {
       newRequestWork,
       newProcessingWork);
 
-  // Add all content requests to Request queue
-  addLoadWorkToRequestDispatcher(newRequestWork);
-
-  // Wake up the network request dispatcher
-  _pRequestDispatcher->WakeIfNeeded();
+  // Add all content requests to the dispatcher
+  if (newRequestWork.size() > 0)
+    addWorkToRequestDispatcher(newRequestWork);
 
   //
   // We have two input streams of processing work
@@ -1465,7 +1463,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
   assert(availableSlots >= 0);
 
   // Add processing work
-  if (availableSlots > 0) {
+  if (newProcessingWork.size () > 0 && availableSlots > 0) {
     std::sort(newProcessingWork.begin(), newProcessingWork.end());
     int countToAdd =
         std::min((int32_t)newProcessingWork.size(), availableSlots);
@@ -1476,7 +1474,8 @@ void Tileset::_processWorkerThreadLoadQueue() {
   }
 
   // Dispatch it
-  dispatchProcessingWork(workToDispatch);
+  if (workToDispatch.size () > 0)
+    dispatchProcessingWork(workToDispatch);
 
   /*
      THIS CODE NEEDS TO BE PUT BACK
@@ -1674,15 +1673,11 @@ void Tileset::discoverLoadWork(
   }
 }
 
-void Tileset::addLoadWorkToRequestDispatcher(
-    std::vector<TileLoadWork>& inLoadWork) {
+void Tileset::addWorkToRequestDispatcher(
+    std::vector<TileLoadWork>& workVector) {
 
-  std::vector<TileLoadWork> workToAdd;
-
-  for (TileLoadWork& work : inLoadWork) {
-    if (work.requestUrl.empty())
-      continue;
-
+  for (TileLoadWork& work : workVector) {
+    assert(!work.requestUrl.empty());
     assert(std::holds_alternative<Tile*>(work.workRef));
 
     Tile* pTile = std::get<Tile*>(work.workRef);
@@ -1690,13 +1685,13 @@ void Tileset::addLoadWorkToRequestDispatcher(
 
     // Mark this tile as loading now so it doesn't get queued next frame
     pTile->setState(TileLoadState::ContentLoading);
-
-    workToAdd.push_back(work);
   }
 
   _pRequestDispatcher->QueueRequestWork(
-      workToAdd,
+      workVector,
       this->_pTilesetContentManager->getRequestHeaders());
+
+  _pRequestDispatcher->WakeIfNeeded();
 }
 
 void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
@@ -1714,12 +1709,15 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
           std::get<RasterMappedTo3DTile*>(work.workRef);
       assert(pRasterTile);
 
-      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
-      if (!pLoading)
-        continue;
-
       pRasterTile->loadThrottled();
     }
+  }
+}
+
+RequestDispatcher::~RequestDispatcher() noexcept {
+  {
+    std::lock_guard<std::mutex> lock(_requestsLock);
+    _exitSignaled = true;
   }
 }
 
@@ -1769,14 +1767,14 @@ void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
       });
 }
 
-bool RequestDispatcher::stageRequestWork(
+void RequestDispatcher::stageRequestWork(
     size_t availableSlotCount,
     std::vector<TileLoadWork*>& stagedWork) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   size_t queueCount = _queuedRequests.size();
   if (queueCount == 0)
-    return true;
+    return;
 
   // Sort our incoming request queue by priority
   // Sort descending so highest priority is at back of vector
@@ -1804,8 +1802,6 @@ bool RequestDispatcher::stageRequestWork(
 
     stagedWork.push_back(&returnPair.first->second);
   }
-
-  return _queuedRequests.empty();
 }
 
 void RequestDispatcher::TakeCompletedWork(
@@ -1852,16 +1848,18 @@ void RequestDispatcher::WakeIfNeeded() {
 
       // We are able to dispatch a request
       std::vector<TileLoadWork*> stagedWork;
-      bool queueEmpty = stageRequestWork(slotsAvailable, stagedWork);
+      stageRequestWork(slotsAvailable, stagedWork);
 
       for (TileLoadWork* requestWork : stagedWork)
         dispatchRequest(*requestWork);
 
       // We dispatched as much as possible
-      // Continue loop until our queue is empty
-      // TODO, add break condition for app exit or similar
-      if (queueEmpty)
-        break;
+      // Continue loop until our queue is empty or exit is signaled
+      {
+        std::lock_guard<std::mutex> lock(_requestsLock);
+        if (_queuedRequests.empty() || _exitSignaled)
+          break;
+      }
     }
 
     // All work is queued. Exit and let caller wake us later

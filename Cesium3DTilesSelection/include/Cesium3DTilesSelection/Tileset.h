@@ -72,10 +72,10 @@ public:
   RequestDispatcher(
       CesiumAsync::AsyncSystem asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor)
-      : _asyncSystem(asyncSystem),
-        _requestThreadPool(1),
+      : _requestThreadPool(1),
+        _asyncSystem(asyncSystem),
         _pAssetAccessor(pAssetAccessor) {}
-  ~RequestDispatcher() noexcept {}
+  ~RequestDispatcher() noexcept;
 
   void QueueRequestWork(
       std::vector<TileLoadWork>& work,
@@ -87,13 +87,14 @@ public:
 
 private:
   void dispatchRequest(TileLoadWork& request);
-  bool stageRequestWork(
+  void stageRequestWork(
       size_t dispatchCount,
       std::vector<TileLoadWork*>& stagedWork);
 
   // Thread safe members
   std::mutex _requestsLock;
   bool _requestDispatcherIdle = true;
+  bool _exitSignaled = false;
   std::vector<TileLoadWork> _queuedRequests;
   std::vector<TileLoadWork> _doneRequests;
 
@@ -573,7 +574,7 @@ private:
       std::vector<TileLoadWork>& outRequests,
       std::vector<TileLoadWork>& outProcessing);
 
-  void addLoadWorkToRequestDispatcher(std::vector<TileLoadWork>& newLoadWork);
+  void addWorkToRequestDispatcher(std::vector<TileLoadWork>& workVector);
 
   void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 
