@@ -15,6 +15,7 @@
 - Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
 - Added `transform` method to `CesiumGeometry::BoundingSphere`.
 - Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
+- Added `TileTransform` class to `Cesium3DTilesContent`, making it easier to create a `glm::dmat4` from the `transform` property of a `Cesium3DTiles::Tile`.
 
 ##### Fixes :wrench:
 
