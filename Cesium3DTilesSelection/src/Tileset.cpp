@@ -44,8 +44,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pRequestDispatcher(
-          new RequestDispatcher(_asyncSystem, _externals.pAssetAccessor)),
+      _requestDispatcher(_asyncSystem, _externals.pAssetAccessor),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -64,8 +63,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pRequestDispatcher(
-          new RequestDispatcher(_asyncSystem, _externals.pAssetAccessor)),
+      _requestDispatcher(_asyncSystem, _externals.pAssetAccessor),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -84,8 +82,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pRequestDispatcher(
-          new RequestDispatcher(_asyncSystem, _externals.pAssetAccessor)),
+      _requestDispatcher(_asyncSystem, _externals.pAssetAccessor),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -1458,12 +1455,12 @@ void Tileset::_processWorkerThreadLoadQueue() {
     return;
 
   // Add completed request work
-  _pRequestDispatcher->TakeCompletedWork(availableSlots, workToDispatch);
+  _requestDispatcher.TakeCompletedWork(availableSlots, workToDispatch);
   availableSlots -= (int32_t)workToDispatch.size();
   assert(availableSlots >= 0);
 
   // Add processing work
-  if (newProcessingWork.size () > 0 && availableSlots > 0) {
+  if (newProcessingWork.size() > 0 && availableSlots > 0) {
     std::sort(newProcessingWork.begin(), newProcessingWork.end());
     int countToAdd =
         std::min((int32_t)newProcessingWork.size(), availableSlots);
@@ -1474,7 +1471,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
   }
 
   // Dispatch it
-  if (workToDispatch.size () > 0)
+  if (workToDispatch.size() > 0)
     dispatchProcessingWork(workToDispatch);
 
   /*
@@ -1687,11 +1684,11 @@ void Tileset::addWorkToRequestDispatcher(
     pTile->setState(TileLoadState::ContentLoading);
   }
 
-  _pRequestDispatcher->QueueRequestWork(
+  _requestDispatcher.QueueRequestWork(
       workVector,
       this->_pTilesetContentManager->getRequestHeaders());
 
-  _pRequestDispatcher->WakeIfNeeded();
+  _requestDispatcher.WakeIfNeeded();
 }
 
 void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
@@ -1827,9 +1824,9 @@ void RequestDispatcher::TakeCompletedWork(
 void RequestDispatcher::WakeIfNeeded() {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
-    if (!_requestDispatcherIdle)
+    if (!_dispatcherIdle)
       return;
-    _requestDispatcherIdle = false;
+    _dispatcherIdle = false;
   }
 
   _asyncSystem.runInThreadPool(this->_requestThreadPool, [this]() {
@@ -1857,15 +1854,11 @@ void RequestDispatcher::WakeIfNeeded() {
       // Continue loop until our queue is empty or exit is signaled
       {
         std::lock_guard<std::mutex> lock(_requestsLock);
-        if (_queuedRequests.empty() || _exitSignaled)
+        if (_queuedRequests.empty() || _exitSignaled) {
+          this->_dispatcherIdle = true;
           break;
+        }
       }
-    }
-
-    // All work is queued. Exit and let caller wake us later
-    {
-      std::lock_guard<std::mutex> lock(_requestsLock);
-      this->_requestDispatcherIdle = true;
     }
   });
 }

@@ -65,8 +65,7 @@ struct TileLoadWork {
   }
 };
 
-class RequestDispatcher
-    : public CesiumUtility::ReferenceCountedNonThreadSafe<RequestDispatcher> {
+class RequestDispatcher {
 
 public:
   RequestDispatcher(
@@ -93,7 +92,7 @@ private:
 
   // Thread safe members
   std::mutex _requestsLock;
-  bool _requestDispatcherIdle = true;
+  bool _dispatcherIdle = true;
   bool _exitSignaled = false;
   std::vector<TileLoadWork> _queuedRequests;
   std::vector<TileLoadWork> _doneRequests;
@@ -559,7 +558,7 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  CesiumUtility::IntrusivePointer<RequestDispatcher> _pRequestDispatcher;
+  RequestDispatcher _requestDispatcher;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
