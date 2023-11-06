@@ -30,12 +30,6 @@ class RasterOverlayCollection;
  */
 struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
   /**
-   * @brief The maximum number of overlay tiles that may simultaneously be in
-   * the process of loading.
-   */
-  int32_t maximumSimultaneousTileLoads = 20;
-
-  /**
    * @brief The maximum number of bytes to use to cache sub-tiles in memory.
    *
    * This is used by provider types, such as
