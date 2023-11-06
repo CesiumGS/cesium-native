@@ -53,6 +53,7 @@ target_include_directories(
 
 target_link_libraries(Cesium3DTilesContent
     PUBLIC
+        Cesium3DTiles
         CesiumAsync
         CesiumGeometry
         CesiumGeospatial

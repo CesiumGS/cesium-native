@@ -3,6 +3,7 @@
 #include "CesiumGeometry/Plane.h"
 
 #include <glm/geometric.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace CesiumGeometry {
 
@@ -32,6 +33,20 @@ double BoundingSphere::computeDistanceSquaredToPosition(
     return 0;
   }
   return distance * distance;
+}
+
+BoundingSphere
+BoundingSphere::transform(const glm::dmat4& transformation) const noexcept {
+  const glm::dvec3 center =
+      glm::dvec3(transformation * glm::dvec4(this->getCenter(), 1.0));
+
+  const double uniformScale = glm::max(
+      glm::max(
+          glm::length(glm::dvec3(transformation[0])),
+          glm::length(glm::dvec3(transformation[1]))),
+      glm::length(glm::dvec3(transformation[2])));
+
+  return BoundingSphere(center, this->getRadius() * uniformScale);
 }
 
 } // namespace CesiumGeometry

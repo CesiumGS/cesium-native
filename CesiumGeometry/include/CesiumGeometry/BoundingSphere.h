@@ -3,6 +3,7 @@
 #include "CullingResult.h"
 #include "Library.h"
 
+#include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
 namespace CesiumGeometry {
@@ -60,6 +61,18 @@ public:
    */
   double
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
+
+  /**
+   * @brief Transforms this bounding sphere to another coordinate system using a
+   * 4x4 matrix.
+   *
+   * If the transformation has non-uniform scale, the bounding sphere's radius
+   * is scaled by the scale of the transformation's axis with the largest scale.
+   *
+   * @param transformation The transformation.
+   * @return The bounding sphere in the new coordinate system.
+   */
+  BoundingSphere transform(const glm::dmat4& transformation) const noexcept;
 
 private:
   glm::dvec3 _center;
