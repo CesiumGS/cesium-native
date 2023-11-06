@@ -1,3 +1,4 @@
+#include "CesiumAsync/IAssetResponse.h"
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
@@ -43,6 +44,8 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _pRequestDispatcher(
+          new RequestDispatcher(_asyncSystem, _externals.pAssetAccessor)),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -61,6 +64,8 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _pRequestDispatcher(
+          new RequestDispatcher(_asyncSystem, _externals.pAssetAccessor)),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -79,6 +84,8 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _pRequestDispatcher(
+          new RequestDispatcher(_asyncSystem, _externals.pAssetAccessor)),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -1068,12 +1075,14 @@ bool Tileset::_kickDescendantsAndRenderTile(
         _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
     this->_workerThreadLoadQueue.erase(
         this->_workerThreadLoadQueue.begin() +
-            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
+            static_cast<
+                std::vector<TileLoadRequest>::iterator::difference_type>(
                 workerThreadLoadQueueIndex),
         this->_workerThreadLoadQueue.end());
     this->_mainThreadLoadQueue.erase(
         this->_mainThreadLoadQueue.begin() +
-            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
+            static_cast<
+                std::vector<TileLoadRequest>::iterator::difference_type>(
                 mainThreadLoadQueueIndex),
         this->_mainThreadLoadQueue.end());
     size_t allQueueEndSize =
@@ -1410,56 +1419,41 @@ void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
 #if 1 // New path
+  // TODO
+  // -) Take out old maximumSimultaneousTileLoads throttling
+  // -) Remove setState(TileLoadState::ContentLoading) loading everywhere else
+  // -) Check on Unreal asset accessor (or leave it and make sure there is no
+  // network activity
+  // -) Dispatch normal doTileContentWork based on dispatcher output
+  // -) Modify doTileContentWork to not do CachingAccessor, or leave it
+  // -) go over TODOS
+  // -) Use worker thread not thread pool?
+
   int32_t maxTileLoads =
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
+  // TODO, do we need to move this now?
   if (_pTilesetContentManager->getNumberOfTilesLoading() >= maxTileLoads)
     return;
 
-  std::vector<TileLoadTask>& inputQueue = this->_workerThreadLoadQueue;
+  std::vector<TileLoadWork> newLoadWork;
+  discoverLoadWork(this->_workerThreadLoadQueue, newLoadWork);
 
-  std::vector<TileLoadUnit> allLoadUnits;
+  // Add all content requests to Request queue
+  addLoadWorkToRequestDispatcher(newLoadWork);
 
-  for (TileLoadTask& inputTask : inputQueue) {
-    std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
-    this->_pTilesetContentManager->parseTileWork(
-        inputTask.pTile,
-        this->_options.maximumScreenSpaceError,
-        parsedTileWork);
+  _pRequestDispatcher->SetRequestHeaders(
+      this->_pTilesetContentManager->getRequestHeaders());
 
-    // There could be no actionable work for this input tile, ignore it
-    if (parsedTileWork.empty())
-      continue;
-
-    // Add any parent tasks. Same priority group, but move to the front
-    for (size_t workIndex = 0; workIndex < parsedTileWork.size() - 1;
-         ++workIndex) {
-      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
-
-      TileLoadUnit newWorkUnit =
-          {work.workRef, work.requestUrl, work.projections, inputTask.group, 0};
-      allLoadUnits.push_back(newWorkUnit);
-    }
-
-    // Add the last task at same as input priority
-    TilesetContentManager::ParsedTileWork& lastWork =
-        parsedTileWork[parsedTileWork.size() - 1];
-
-    TileLoadUnit newWorkUnit = {
-        lastWork.workRef,
-        lastWork.requestUrl,
-        lastWork.projections,
-        inputTask.group,
-        inputTask.priority};
-    allLoadUnits.push_back(newWorkUnit);
-  }
+  // Wake up the network request dispatcher
+  _pRequestDispatcher->WakeIfNeeded();
 
   // Work broken down into load units. Either Tile content work or Raster work.
   // TODO issue Tile url request work here and remove from doTileContentWork
 
-  std::sort(allLoadUnits.begin(), allLoadUnits.end());
+  std::sort(newLoadWork.begin(), newLoadWork.end());
 
-  for (TileLoadUnit& work : allLoadUnits) {
+  for (TileLoadWork& work : newLoadWork) {
 
     if (std::holds_alternative<Tile*>(work.workRef)) {
       Tile* pTile = std::get<Tile*>(work.workRef);
@@ -1536,7 +1530,7 @@ void Tileset::_processMainThreadLoadQueue() {
   auto start = std::chrono::system_clock::now();
   auto end =
       start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
-  for (TileLoadTask& task : this->_mainThreadLoadQueue) {
+  for (TileLoadRequest& task : this->_mainThreadLoadQueue) {
     // We double-check that the tile is still in the ContentLoaded state here,
     // in case something (such as a child that needs to upsample from this
     // parent) already pushed the tile into the Done state. Because in that
@@ -1613,13 +1607,13 @@ void Tileset::addTileToLoadQueue(
       std::find_if(
           this->_workerThreadLoadQueue.begin(),
           this->_workerThreadLoadQueue.end(),
-          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
+          [&](const TileLoadRequest& task) { return task.pTile == &tile; }) ==
       this->_workerThreadLoadQueue.end());
   assert(
       std::find_if(
           this->_mainThreadLoadQueue.begin(),
           this->_mainThreadLoadQueue.end(),
-          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
+          [&](const TileLoadRequest& task) { return task.pTile == &tile; }) ==
       this->_mainThreadLoadQueue.end());
 
   if (this->_pTilesetContentManager->tileNeedsWorkerThreadLoading(tile)) {
@@ -1648,6 +1642,198 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
 
   return traversalDetails;
+}
+
+void Tileset::discoverLoadWork(
+    std::vector<TileLoadRequest> requests,
+    std::vector<TileLoadWork>& out) {
+  for (TileLoadRequest& loadRequest : requests) {
+    std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
+    this->_pTilesetContentManager->parseTileWork(
+        loadRequest.pTile,
+        this->_options.maximumScreenSpaceError,
+        parsedTileWork);
+
+    // There could be no actionable work for this input tile, ignore it
+    if (parsedTileWork.empty())
+      continue;
+
+    // Add any parent tasks. Same priority group, but move to the front
+    for (size_t workIndex = 0; workIndex < parsedTileWork.size() - 1;
+         ++workIndex) {
+      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
+
+      TileLoadWork newWorkUnit = {
+          work.workRef,
+          work.requestUrl,
+          work.projections,
+          loadRequest.group,
+          0};
+      out.push_back(newWorkUnit);
+    }
+
+    // Add the last task at same as input priority
+    TilesetContentManager::ParsedTileWork& lastWork =
+        parsedTileWork[parsedTileWork.size() - 1];
+
+    TileLoadWork newWorkUnit = {
+        lastWork.workRef,
+        lastWork.requestUrl,
+        lastWork.projections,
+        loadRequest.group,
+        loadRequest.priority};
+
+    out.push_back(newWorkUnit);
+  }
+}
+
+void Tileset::addLoadWorkToRequestDispatcher(
+    std::vector<TileLoadWork>& inLoadWork) {
+
+  std::vector<TileLoadWork> workToAdd;
+
+  for (TileLoadWork& work : inLoadWork) {
+    if (work.requestUrl.empty())
+      continue;
+
+    assert(std::holds_alternative<Tile*>(work.workRef));
+
+    Tile* pTile = std::get<Tile*>(work.workRef);
+    assert(pTile);
+
+    // Mark this tile as loading now so it doesn't get queued next frame
+    // TODO, what about raster tiles?
+    pTile->setState(TileLoadState::ContentLoading);
+
+    workToAdd.push_back(work);
+  }
+
+  _pRequestDispatcher->QueueLoadWork(workToAdd);
+}
+
+void RequestDispatcher::QueueLoadWork(std::vector<TileLoadWork>& work) {
+  // TODO, assert tile is not already loading? or already post-processing?
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  _queuedRequests.insert(_queuedRequests.end(), work.begin(), work.end());
+}
+
+void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
+
+  // TODO. This uses the externals asset accessor (unreal, gunzip, etc)
+  // Use one that only fetches from SQLite cache and network
+  this->_pAssetAccessor
+      ->get(this->_asyncSystem, request.requestUrl, this->_requestHeaders)
+      .thenImmediately([inFlightMap = &_requestsInFlight,
+                        doneRequests = &_doneRequests,
+                        requestsLock = &_requestsLock,
+                        _request = request](
+                           std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
+        // Find this request from in-flight, copy it, then remove it
+        std::map<Tile*, TileLoadWork>::iterator foundIt =
+            inFlightMap->find(std::get<Tile*>(_request.workRef));
+        TileLoadWork doneWork = foundIt->second;
+        assert(foundIt != inFlightMap->end());
+        inFlightMap->erase(foundIt);
+
+        // Add payload to this work
+        const IAssetResponse* pResponse = pCompletedRequest->response();
+        if (pResponse) {
+          doneWork.responseData = pResponse->data();
+        } else {
+          // TODO, what's the proper error handling here?
+        }
+
+        // Put in done requests
+        {
+          std::lock_guard<std::mutex> lock(*requestsLock);
+          doneRequests->push_back(doneWork);
+        }
+
+        return pResponse != NULL;
+      });
+}
+
+bool RequestDispatcher::stageRequestWork(
+    size_t availableSlotCount,
+    std::vector<TileLoadWork*>& stagedWork) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+
+  size_t queueCount = _queuedRequests.size();
+  if (queueCount == 0)
+    return true;
+
+  // Sort our incoming request queue by priority
+  // Sort descending so highest priority is at back of vector
+  std::sort(_queuedRequests.rbegin(), _queuedRequests.rend());
+
+  // Stage amount of work specified by caller, or whatever is left
+  size_t dispatchCount = std::min(queueCount, availableSlotCount);
+
+  for (size_t index = 0; index < dispatchCount; ++index) {
+
+    // Take from back of queue (highest priority).
+    assert(_queuedRequests.size() > 0);
+    TileLoadWork request = _queuedRequests.back();
+    _queuedRequests.pop_back();
+
+    // Move to in flight and our output vector
+    assert(std::holds_alternative<Tile*>(request.workRef));
+    Tile* pTile = std::get<Tile*>(request.workRef);
+
+    std::pair<std::map<Tile*, TileLoadWork>::iterator, bool> returnPair;
+    std::pair<Tile*, TileLoadWork> insertPair(pTile, request);
+
+    returnPair = _requestsInFlight.insert(insertPair);
+    assert(returnPair.second == true);
+
+    stagedWork.push_back(&returnPair.first->second);
+  }
+
+  return _queuedRequests.empty();
+}
+
+void RequestDispatcher::WakeIfNeeded() {
+  {
+    std::lock_guard<std::mutex> lock(_requestsLock);
+    if (!_requestDispatcherIdle)
+      return;
+    _requestDispatcherIdle = false;
+  }
+
+  _asyncSystem.runInThreadPool(this->_requestThreadPool, [this]() {
+    const int throttleTimeInMs = 50;
+    auto sleepForValue = std::chrono::milliseconds(throttleTimeInMs);
+
+    while (1) {
+      // If completely busy, wait a bit, then check again
+      int slotsAvailable =
+          _maxSimultaneousRequests - (int)_requestsInFlight.size();
+      assert(slotsAvailable >= 0);
+      if (slotsAvailable == 0) {
+        std::this_thread::sleep_for(sleepForValue);
+        continue;
+      }
+
+      // We are able to dispatch a request
+      std::vector<TileLoadWork*> stagedWork;
+      bool queueEmpty = stageRequestWork(slotsAvailable, stagedWork);
+
+      for (TileLoadWork* requestWork : stagedWork)
+        dispatchRequest(*requestWork);
+
+      // We dispatched as much as possible
+      // Continue loop until our queue is empty
+      // TODO, add break condition for app exit or similar
+      if (queueEmpty)
+        break;
+    }
+
+    // All work is queued. Exit and let caller wake us later
+    {
+      std::lock_guard<std::mutex> lock(_requestsLock);
+      this->_requestDispatcherIdle = true;
+    }
+  });
 }
 
 } // namespace Cesium3DTilesSelection

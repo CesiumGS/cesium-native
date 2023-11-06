@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/ThreadPool.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
@@ -23,6 +24,91 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
+
+typedef std::variant<Tile*, RasterMappedTo3DTile*> TileWorkRef;
+
+enum class TileLoadPriorityGroup {
+  /**
+   * @brief Low priority tiles that aren't needed right now, but
+   * are being preloaded for the future.
+   */
+  Preload = 0,
+
+  /**
+   * @brief Medium priority tiles that are needed to render the current view
+   * the appropriate level-of-detail.
+   */
+  Normal = 1,
+
+  /**
+   * @brief High priority tiles that are causing extra detail to be rendered
+   * in the scene, potentially creating a performance problem and aliasing
+   * artifacts.
+   */
+  Urgent = 2
+};
+
+struct TileLoadWork {
+  TileWorkRef workRef;
+  std::string requestUrl;
+  std::vector<CesiumGeospatial::Projection> projections;
+  TileLoadPriorityGroup group;
+  double priority;
+
+  gsl::span<const std::byte> responseData;
+
+  bool operator<(const TileLoadWork& rhs) const noexcept {
+    if (this->group == rhs.group)
+      return this->priority < rhs.priority;
+    else
+      return this->group > rhs.group;
+  }
+};
+
+class RequestDispatcher
+    : public CesiumUtility::ReferenceCountedNonThreadSafe<RequestDispatcher> {
+
+public:
+  RequestDispatcher(
+      CesiumAsync::AsyncSystem asyncSystem,
+      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor)
+      : _asyncSystem(asyncSystem),
+        _requestThreadPool(1),
+        _pAssetAccessor(pAssetAccessor) {}
+  ~RequestDispatcher() noexcept {}
+
+  void SetRequestHeaders(
+      std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+    _requestHeaders = requestHeaders;
+  }
+
+  void QueueLoadWork(std::vector<TileLoadWork>& work);
+
+  void WakeIfNeeded();
+
+private:
+  void dispatchRequest(TileLoadWork& request);
+  bool stageRequestWork(
+      size_t dispatchCount,
+      std::vector<TileLoadWork*>& stagedWork);
+
+  // Thread safe members
+  std::mutex _requestsLock;
+  bool _requestDispatcherIdle = true;
+  std::vector<TileLoadWork> _queuedRequests;
+  std::vector<TileLoadWork> _doneRequests;
+
+  int _maxSimultaneousRequests = 8;
+  std::map<Tile*, TileLoadWork> _requestsInFlight;
+
+  CesiumAsync::ThreadPool _requestThreadPool;
+
+  CesiumAsync::AsyncSystem _asyncSystem;
+
+  std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
+
+  std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
+};
 
 /**
  * @brief A <a
@@ -430,28 +516,7 @@ private:
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
 
-  enum class TileLoadPriorityGroup {
-    /**
-     * @brief Low priority tiles that aren't needed right now, but
-     * are being preloaded for the future.
-     */
-    Preload = 0,
-
-    /**
-     * @brief Medium priority tiles that are needed to render the current view
-     * the appropriate level-of-detail.
-     */
-    Normal = 1,
-
-    /**
-     * @brief High priority tiles that are causing extra detail to be rendered
-     * in the scene, potentially creating a performance problem and aliasing
-     * artifacts.
-     */
-    Urgent = 2
-  };
-
-  struct TileLoadTask {
+  struct TileLoadRequest {
     /**
      * @brief The tile to be loaded.
      */
@@ -473,7 +538,7 @@ private:
      */
     double priority;
 
-    bool operator<(const TileLoadTask& rhs) const noexcept {
+    bool operator<(const TileLoadRequest& rhs) const noexcept {
       if (this->group == rhs.group)
         return this->priority < rhs.priority;
       else
@@ -481,25 +546,8 @@ private:
     }
   };
 
-  typedef std::variant<Tile*, RasterMappedTo3DTile*> TileWorkRef;
-
-  struct TileLoadUnit {
-    TileWorkRef workRef;
-    std::string requestUrl;
-    std::vector<CesiumGeospatial::Projection> projections;
-    Tileset::TileLoadPriorityGroup group;
-    double priority;
-
-    bool operator<(const TileLoadUnit& rhs) const noexcept {
-      if (this->group == rhs.group)
-        return this->priority < rhs.priority;
-      else
-        return this->group > rhs.group;
-    }
-  };
-
-  std::vector<TileLoadTask> _mainThreadLoadQueue;
-  std::vector<TileLoadTask> _workerThreadLoadQueue;
+  std::vector<TileLoadRequest> _mainThreadLoadQueue;
+  std::vector<TileLoadRequest> _workerThreadLoadQueue;
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -511,6 +559,8 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
+  CesiumUtility::IntrusivePointer<RequestDispatcher> _pRequestDispatcher;
+
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
@@ -518,6 +568,12 @@ private:
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
+
+  void discoverLoadWork(
+      std::vector<TileLoadRequest> requests,
+      std::vector<TileLoadWork>& out);
+
+  void addLoadWorkToRequestDispatcher(std::vector<TileLoadWork>& newLoadWork);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
