@@ -87,7 +87,7 @@ private:
   void dispatchRequest(TileLoadWork& request);
   void stageRequestWork(
       size_t dispatchCount,
-      std::vector<TileLoadWork*>& stagedWork);
+      std::vector<TileLoadWork>& stagedWork);
   void onRequestFinished(gsl::span<const std::byte>* pResponseData, const TileLoadWork& request);
 
   // Thread safe members
@@ -95,10 +95,10 @@ private:
   bool _dispatcherIdle = true;
   bool _exitSignaled = false;
   std::vector<TileLoadWork> _queuedRequests;
+  std::map<std::string, std::vector<TileLoadWork>> _requestsInFlight;
   std::vector<TileLoadWork> _doneRequests;
 
-  int _maxSimultaneousRequests = 8;
-  std::map<Tile*, TileLoadWork> _requestsInFlight;
+  int _maxSimultaneousRequests = 16;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 

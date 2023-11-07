@@ -1479,16 +1479,6 @@ void Tileset::_processWorkerThreadLoadQueue() {
       RasterOverlayTileProvider& provider = pLoading->getTileProvider();
       if (provider.getNumberOfThrottledTilesLoading() >= maxTileLoads)
         continue;
-
-    // Finalize the parent if necessary, otherwise it may never reach the
-    // Done state. Also double check that we have render content in ensure
-    // we don't assert / crash in finishLoading. The latter will only ever
-    // be a problem in a pathological tileset with a non-renderable leaf
-    // tile, but that sort of thing does happen.
-    if (pParentTile->getState() == TileLoadState::ContentLoaded &&
-      pParentTile->isRenderContent()) {
-      finishLoading(*pParentTile, tilesetOptions);
-    }
   */
 }
 
@@ -1619,6 +1609,14 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   return traversalDetails;
 }
 
+void checkNotAdded(TileLoadWork& newWork, std::vector<TileLoadWork>& allWork) {
+  for (TileLoadWork& existingWork : allWork) {
+    bool effectivelyEqual = existingWork.workRef == newWork.workRef &&
+                            existingWork.requestUrl == newWork.requestUrl;
+    assert(!effectivelyEqual);
+  }
+}
+
 void Tileset::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
     std::vector<TileLoadWork>& outRequests,
@@ -1639,12 +1637,31 @@ void Tileset::discoverLoadWork(
          ++workIndex) {
       TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
 
+      // Finalize the parent if necessary, otherwise it may never reach the
+      // Done state. Also double check that we have render content in ensure
+      // we don't assert / crash in finishLoading. The latter will only ever
+      // be a problem in a pathological tileset with a non-renderable leaf
+      // tile, but that sort of thing does happen.
+      /* TODO, is this the best place for this?
+      if (std::holds_alternative<Tile*>(work.workRef)) {
+        Tile* pTile = std::get<Tile*>(work.workRef);
+        assert(pTile);
+
+        if (pTile->getState() == TileLoadState::ContentLoaded &&
+        pTile->isRenderContent()) _pTilesetContentManager->finishLoading(*pTile,
+        _options);
+      }
+      */
+
       TileLoadWork newWorkUnit = {
           work.workRef,
           work.requestUrl,
           work.projections,
           loadRequest.group,
           0};
+
+      checkNotAdded(newWorkUnit, outProcessing);
+      checkNotAdded(newWorkUnit, outRequests);
 
       if (work.requestUrl.empty())
         outProcessing.push_back(newWorkUnit);
@@ -1663,6 +1680,9 @@ void Tileset::discoverLoadWork(
         loadRequest.group,
         loadRequest.priority};
 
+    checkNotAdded(newWorkUnit, outProcessing);
+    checkNotAdded(newWorkUnit, outRequests);
+
     if (lastWork.requestUrl.empty())
       outProcessing.push_back(newWorkUnit);
     else
@@ -1675,13 +1695,22 @@ void Tileset::addWorkToRequestDispatcher(
 
   for (TileLoadWork& work : workVector) {
     assert(!work.requestUrl.empty());
-    assert(std::holds_alternative<Tile*>(work.workRef));
-
-    Tile* pTile = std::get<Tile*>(work.workRef);
-    assert(pTile);
 
     // Mark this tile as loading now so it doesn't get queued next frame
-    pTile->setState(TileLoadState::ContentLoading);
+    if (std::holds_alternative<Tile*>(work.workRef)) {
+      Tile* pTile = std::get<Tile*>(work.workRef);
+      assert(pTile);
+      pTile->setState(TileLoadState::ContentLoading);
+    } else {
+      RasterMappedTo3DTile* pRasterTile =
+          std::get<RasterMappedTo3DTile*>(work.workRef);
+      assert(pRasterTile);
+
+      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
+      assert(pLoading);
+
+      pLoading->setState(RasterOverlayTile::LoadState::Loading);
+    }
   }
 
   _requestDispatcher.QueueRequestWork(
@@ -1736,19 +1765,22 @@ void RequestDispatcher::onRequestFinished(
   if (_exitSignaled)
     return;
 
-  // Find this request from in-flight, copy it, then remove it
-  std::map<Tile*, TileLoadWork>::iterator foundIt =
-      _requestsInFlight.find(std::get<Tile*>(request.workRef));
+  // Find this request from in-flight
+  std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
+  foundIt = _requestsInFlight.find(request.requestUrl);
   assert(foundIt != _requestsInFlight.end());
 
-  TileLoadWork doneWork = foundIt->second;
-  if (pResponseData)
-    doneWork.responseData = *pResponseData;
+  // Put it done work
+  std::vector<TileLoadWork>& doneWorkVec = foundIt->second;
+  for (TileLoadWork& doneWork : doneWorkVec) {
+    if (pResponseData)
+      doneWork.responseData = *pResponseData;
+    // Put in done requests
+    _doneRequests.push_back(doneWork);
+  }
 
+  // Remove it
   _requestsInFlight.erase(foundIt);
-
-  // Put in done requests
-  _doneRequests.push_back(doneWork);
 }
 
 void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
@@ -1757,8 +1789,7 @@ void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
   // Use one that only fetches from SQLite cache and network
   this->_pAssetAccessor
       ->get(this->_asyncSystem, request.requestUrl, this->_requestHeaders)
-      .thenImmediately([_this = this,
-                        _request = request](
+      .thenImmediately([_this = this, _request = request](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
         // Add payload to this work
         const IAssetResponse* pResponse = pCompletedRequest->response();
@@ -1777,7 +1808,7 @@ void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
 
 void RequestDispatcher::stageRequestWork(
     size_t availableSlotCount,
-    std::vector<TileLoadWork*>& stagedWork) {
+    std::vector<TileLoadWork>& stagedWork) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   size_t queueCount = _queuedRequests.size();
@@ -1798,17 +1829,21 @@ void RequestDispatcher::stageRequestWork(
     TileLoadWork request = _queuedRequests.back();
     _queuedRequests.pop_back();
 
-    // Move to in flight and our output vector
-    assert(std::holds_alternative<Tile*>(request.workRef));
-    Tile* pTile = std::get<Tile*>(request.workRef);
+    // Move to in flight registry
+    std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
+    foundIt = _requestsInFlight.find(request.requestUrl);
+    if (foundIt == _requestsInFlight.end()) {
+      // Request doesn't exist, set up a new one
+      std::vector<TileLoadWork> newWorkVec;
+      newWorkVec.push_back(request);
+      _requestsInFlight[request.requestUrl] = newWorkVec;
 
-    std::pair<std::map<Tile*, TileLoadWork>::iterator, bool> returnPair;
-    std::pair<Tile*, TileLoadWork> insertPair(pTile, request);
-
-    returnPair = _requestsInFlight.insert(insertPair);
-    assert(returnPair.second == true);
-
-    stagedWork.push_back(&returnPair.first->second);
+      // Copy to our output vector
+      stagedWork.push_back(request);
+    } else {
+      // Tag on to an existing request. Don't bother staging it. Already is.
+      foundIt->second.push_back(request);
+    }
   }
 }
 
@@ -1846,16 +1881,20 @@ void RequestDispatcher::WakeIfNeeded() {
 
     while (1) {
       // If slots available, we can dispatch some work
-      int slotsAvailable =
-          _maxSimultaneousRequests - (int)_requestsInFlight.size();
+      int slotsAvailable;
+      {
+        std::lock_guard<std::mutex> lock(_requestsLock);
+        slotsAvailable =
+            _maxSimultaneousRequests - (int)_requestsInFlight.size();
+      }
       assert(slotsAvailable >= 0);
 
       if (slotsAvailable > 0) {
-        std::vector<TileLoadWork*> stagedWork;
+        std::vector<TileLoadWork> stagedWork;
         stageRequestWork(slotsAvailable, stagedWork);
 
-        for (TileLoadWork* requestWork : stagedWork)
-          dispatchRequest(*requestWork);
+        for (TileLoadWork& requestWork : stagedWork)
+          dispatchRequest(requestWork);
       }
 
       // We dispatched as much as possible
