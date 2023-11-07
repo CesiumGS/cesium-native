@@ -3,7 +3,7 @@
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/ImplicitTiling.h>
+#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -148,20 +148,6 @@ std::vector<Tile> populateSubtree(
   return children;
 }
 
-bool isTileContentAvailable(
-    const CesiumGeometry::QuadtreeTileID& subtreeID,
-    const CesiumGeometry::QuadtreeTileID& quadtreeID,
-    const SubtreeAvailability& subtreeAvailability) {
-  uint32_t relativeTileLevel = quadtreeID.level - subtreeID.level;
-  uint64_t relativeTileMortonIdx = libmorton::morton2D_64_encode(
-      quadtreeID.x - (subtreeID.x << relativeTileLevel),
-      quadtreeID.y - (subtreeID.y << relativeTileLevel));
-  return subtreeAvailability.isContentAvailable(
-      relativeTileLevel,
-      relativeTileMortonIdx,
-      0);
-}
-
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -298,7 +284,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
     // subtree is not loaded, so load it now.
-    std::string subtreeUrl = ImplicitTiling::resolveUrl(
+    std::string subtreeUrl = ImplicitTilingUtilities::resolveUrl(
         this->_baseUrl,
         this->_subtreeUrlTemplate,
         subtreeID);
@@ -324,7 +310,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
-  if (!isTileContentAvailable(subtreeID, *pQuadtreeID, subtreeIt->second)) {
+  if (!subtreeIt->second.isContentAvailable(subtreeID, *pQuadtreeID, 0)) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
@@ -337,7 +323,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResultState::Success});
   }
 
-  std::string tileUrl = ImplicitTiling::resolveUrl(
+  std::string tileUrl = ImplicitTilingUtilities::resolveUrl(
       this->_baseUrl,
       this->_contentUrlTemplate,
       *pQuadtreeID);

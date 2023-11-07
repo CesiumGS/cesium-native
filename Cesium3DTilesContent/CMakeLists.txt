@@ -60,6 +60,8 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGltf
         CesiumGltfReader
         CesiumUtility
+    PRIVATE
+        libmorton
 )
 
 install(TARGETS Cesium3DTilesContent

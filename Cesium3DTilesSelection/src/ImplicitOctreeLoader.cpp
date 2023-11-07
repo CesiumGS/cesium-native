@@ -3,7 +3,7 @@
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/ImplicitTiling.h>
+#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
@@ -147,21 +147,6 @@ std::vector<Tile> populateSubtree(
   return children;
 }
 
-bool isTileContentAvailable(
-    const CesiumGeometry::OctreeTileID& subtreeID,
-    const CesiumGeometry::OctreeTileID& octreeID,
-    const SubtreeAvailability& subtreeAvailability) {
-  uint32_t relativeTileLevel = octreeID.level - subtreeID.level;
-  uint64_t relativeTileMortonIdx = libmorton::morton3D_64_encode(
-      octreeID.x - (subtreeID.x << relativeTileLevel),
-      octreeID.y - (subtreeID.y << relativeTileLevel),
-      octreeID.z - (subtreeID.z << relativeTileLevel));
-  return subtreeAvailability.isContentAvailable(
-      relativeTileLevel,
-      relativeTileMortonIdx,
-      0);
-}
-
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -275,7 +260,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
     // subtree is not loaded, so load it now.
-    std::string subtreeUrl = ImplicitTiling::resolveUrl(
+    std::string subtreeUrl = ImplicitTilingUtilities::resolveUrl(
         this->_baseUrl,
         this->_subtreeUrlTemplate,
         subtreeID);
@@ -301,7 +286,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
-  if (!isTileContentAvailable(subtreeID, *pOctreeID, subtreeIt->second)) {
+  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID, 0)) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
@@ -314,7 +299,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResultState::Success});
   }
 
-  std::string tileUrl = ImplicitTiling::resolveUrl(
+  std::string tileUrl = ImplicitTilingUtilities::resolveUrl(
       this->_baseUrl,
       this->_contentUrlTemplate,
       *pOctreeID);
