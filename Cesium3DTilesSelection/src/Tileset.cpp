@@ -1728,36 +1728,47 @@ void RequestDispatcher::QueueRequestWork(
   _requestHeaders = requestHeaders;
 }
 
+void RequestDispatcher::onRequestFinished(
+    gsl::span<const std::byte>* pResponseData,
+    const TileLoadWork& request) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+
+  if (_exitSignaled)
+    return;
+
+  // Find this request from in-flight, copy it, then remove it
+  std::map<Tile*, TileLoadWork>::iterator foundIt =
+      _requestsInFlight.find(std::get<Tile*>(request.workRef));
+  assert(foundIt != _requestsInFlight.end());
+
+  TileLoadWork doneWork = foundIt->second;
+  if (pResponseData)
+    doneWork.responseData = *pResponseData;
+
+  _requestsInFlight.erase(foundIt);
+
+  // Put in done requests
+  _doneRequests.push_back(doneWork);
+}
+
 void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
 
   // TODO. This uses the externals asset accessor (unreal, gunzip, etc)
   // Use one that only fetches from SQLite cache and network
   this->_pAssetAccessor
       ->get(this->_asyncSystem, request.requestUrl, this->_requestHeaders)
-      .thenImmediately([inFlightMap = &_requestsInFlight,
-                        doneRequests = &_doneRequests,
-                        requestsLock = &_requestsLock,
+      .thenImmediately([_this = this,
                         _request = request](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
-        // Find this request from in-flight, copy it, then remove it
-        std::map<Tile*, TileLoadWork>::iterator foundIt =
-            inFlightMap->find(std::get<Tile*>(_request.workRef));
-        TileLoadWork doneWork = foundIt->second;
-        assert(foundIt != inFlightMap->end());
-        inFlightMap->erase(foundIt);
-
         // Add payload to this work
         const IAssetResponse* pResponse = pCompletedRequest->response();
-        if (pResponse) {
-          doneWork.responseData = pResponse->data();
-        } else {
-          // TODO, what's the proper error handling here?
-        }
 
-        // Put in done requests
-        {
-          std::lock_guard<std::mutex> lock(*requestsLock);
-          doneRequests->push_back(doneWork);
+        if (pResponse) {
+          gsl::span<const std::byte> data = pResponse->data();
+          _this->onRequestFinished(&data, _request);
+        } else {
+          // TODO, how will the consumer of the done request know the error?
+          _this->onRequestFinished(NULL, _request);
         }
 
         return pResponse != NULL;
@@ -1834,21 +1845,18 @@ void RequestDispatcher::WakeIfNeeded() {
     auto sleepForValue = std::chrono::milliseconds(throttleTimeInMs);
 
     while (1) {
-      // If completely busy, wait a bit, then check again
+      // If slots available, we can dispatch some work
       int slotsAvailable =
           _maxSimultaneousRequests - (int)_requestsInFlight.size();
       assert(slotsAvailable >= 0);
-      if (slotsAvailable == 0) {
-        std::this_thread::sleep_for(sleepForValue);
-        continue;
+
+      if (slotsAvailable > 0) {
+        std::vector<TileLoadWork*> stagedWork;
+        stageRequestWork(slotsAvailable, stagedWork);
+
+        for (TileLoadWork* requestWork : stagedWork)
+          dispatchRequest(*requestWork);
       }
-
-      // We are able to dispatch a request
-      std::vector<TileLoadWork*> stagedWork;
-      stageRequestWork(slotsAvailable, stagedWork);
-
-      for (TileLoadWork* requestWork : stagedWork)
-        dispatchRequest(*requestWork);
 
       // We dispatched as much as possible
       // Continue loop until our queue is empty or exit is signaled
@@ -1859,6 +1867,9 @@ void RequestDispatcher::WakeIfNeeded() {
           break;
         }
       }
+
+      // Wait a bit to be friendly to other threads
+      std::this_thread::sleep_for(sleepForValue);
     }
   });
 }

@@ -89,6 +89,7 @@ private:
   void stageRequestWork(
       size_t dispatchCount,
       std::vector<TileLoadWork*>& stagedWork);
+  void onRequestFinished(gsl::span<const std::byte>* pResponseData, const TileLoadWork& request);
 
   // Thread safe members
   std::mutex _requestsLock;
