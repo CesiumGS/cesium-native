@@ -1840,7 +1840,7 @@ void RequestDispatcher::WakeIfNeeded() {
     _dispatcherIdle = false;
   }
 
-  _asyncSystem.runInThreadPool(this->_requestThreadPool, [this]() {
+  _asyncSystem.runInWorkerThread([this]() {
     const int throttleTimeInMs = 50;
     auto sleepForValue = std::chrono::milliseconds(throttleTimeInMs);
 

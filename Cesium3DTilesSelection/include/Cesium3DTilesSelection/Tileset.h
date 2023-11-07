@@ -71,8 +71,7 @@ public:
   RequestDispatcher(
       CesiumAsync::AsyncSystem asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor)
-      : _requestThreadPool(1),
-        _asyncSystem(asyncSystem),
+      : _asyncSystem(asyncSystem),
         _pAssetAccessor(pAssetAccessor) {}
   ~RequestDispatcher() noexcept;
 
@@ -100,8 +99,6 @@ private:
 
   int _maxSimultaneousRequests = 8;
   std::map<Tile*, TileLoadWork> _requestsInFlight;
-
-  CesiumAsync::ThreadPool _requestThreadPool;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
