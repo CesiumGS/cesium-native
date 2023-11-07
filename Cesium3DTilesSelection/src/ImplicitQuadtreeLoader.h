@@ -55,11 +55,6 @@ public:
       Cesium3DTilesContent::SubtreeAvailability&& subtreeAvailability);
 
 private:
-  static std::string resolveUrl(
-      const std::string& baseUrl,
-      const std::string& urlTemplate,
-      const CesiumGeometry::QuadtreeTileID& quadtreeID);
-
   std::string _baseUrl;
   std::string _contentUrlTemplate;
   std::string _subtreeUrlTemplate;

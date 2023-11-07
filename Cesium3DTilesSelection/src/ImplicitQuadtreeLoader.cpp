@@ -3,6 +3,7 @@
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/ImplicitTiling.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -297,8 +298,10 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
     // subtree is not loaded, so load it now.
-    std::string subtreeUrl =
-        resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
+    std::string subtreeUrl = ImplicitTiling::resolveUrl(
+        this->_baseUrl,
+        this->_subtreeUrlTemplate,
+        subtreeID);
     return SubtreeAvailability::loadSubtree(
                2,
                asyncSystem,
@@ -334,8 +337,10 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResultState::Success});
   }
 
-  std::string tileUrl =
-      resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
+  std::string tileUrl = ImplicitTiling::resolveUrl(
+      this->_baseUrl,
+      this->_contentUrlTemplate,
+      *pQuadtreeID);
   return requestTileContent(
       pLogger,
       asyncSystem,
@@ -409,28 +414,5 @@ void ImplicitQuadtreeLoader::addSubtreeAvailability(
   this->_loadedSubtrees[levelIndex].insert_or_assign(
       subtreeMortonID,
       std::move(subtreeAvailability));
-}
-
-std::string ImplicitQuadtreeLoader::resolveUrl(
-    const std::string& baseUrl,
-    const std::string& urlTemplate,
-    const CesiumGeometry::QuadtreeTileID& quadtreeID) {
-  std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-      urlTemplate,
-      [&quadtreeID](const std::string& placeholder) {
-        if (placeholder == "level") {
-          return std::to_string(quadtreeID.level);
-        }
-        if (placeholder == "x") {
-          return std::to_string(quadtreeID.x);
-        }
-        if (placeholder == "y") {
-          return std::to_string(quadtreeID.y);
-        }
-
-        return placeholder;
-      });
-
-  return CesiumUtility::Uri::resolve(baseUrl, url);
 }
 } // namespace Cesium3DTilesSelection
