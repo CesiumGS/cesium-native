@@ -274,13 +274,13 @@ QuadtreeChildren::iterator& QuadtreeChildren::iterator::operator++() {
 
   // Set the tile coordinates based on the new value.
   // Bit 0 in value replaces bit 0 of the X coordinate.
-  this->_current.x = (this->_current.x & ~1) | (value & 1);
+  this->_current.x = (this->_current.x & ~1UL) | (value & 1);
 
   // Value is then shifted right one bit, so it will be 0, 1, or 2.
   // 0 and 1 are the bottom or top children, while 2 indicates "end" (one past
   // the last child). So we just clear the low bit of the current Y coordinate
   // and add this shifted value to produce the new Y coordinate.
-  this->_current.y = (this->_current.y & ~1) + (value >> 1);
+  this->_current.y = (this->_current.y & ~1UL) + (value >> 1);
 
   return *this;
 }
@@ -329,14 +329,14 @@ OctreeChildren::iterator& OctreeChildren::iterator::operator++() {
   // Set the tile coordinates based on the new value.
   // Bit 0 in value replaces bit 0 of the X coordinate.
   // Bit 1 in the value replaces bit 0 of the Y coordinate.
-  this->_current.x = (this->_current.x & ~1) | (value & 1);
-  this->_current.y = (this->_current.y & ~1) | ((value >> 1) & 1);
+  this->_current.x = (this->_current.x & ~1UL) | (value & 1);
+  this->_current.y = (this->_current.y & ~1UL) | ((value >> 1) & 1);
 
   // Value is then shifted right one bit, so it will be 0, 1, or 2.
   // 0 and 1 are the bottom or top children, while 2 indicates "end" (one past
   // the last child). So we just clear the low bit of the current Z coordinate
   // and add this shifted value to produce the new Z coordinate.
-  this->_current.z = (this->_current.z & ~1) + (value >> 2);
+  this->_current.z = (this->_current.z & ~1UL) + (value >> 2);
 
   return *this;
 }
