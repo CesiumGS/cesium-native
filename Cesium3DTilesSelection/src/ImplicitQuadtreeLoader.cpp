@@ -13,7 +13,7 @@
 #include <spdlog/logger.h>
 
 #include <type_traits>
-#include <variant>
+#include <utility>
 
 using namespace Cesium3DTilesContent;
 

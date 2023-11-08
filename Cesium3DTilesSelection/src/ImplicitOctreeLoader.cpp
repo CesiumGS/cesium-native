@@ -78,68 +78,59 @@ BoundingVolume subdivideBoundingVolume(
 std::vector<Tile> populateSubtree(
     const SubtreeAvailability& subtreeAvailability,
     uint32_t subtreeLevels,
-    uint32_t relativeTileLevel,
-    uint64_t relativeTileMortonID,
+    const CesiumGeometry::OctreeTileID& subtreeRootID,
     const Tile& tile,
     ImplicitOctreeLoader& loader) {
+  const CesiumGeometry::OctreeTileID& octreeID =
+      std::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
+
+  uint32_t relativeTileLevel = octreeID.level - subtreeRootID.level;
   if (relativeTileLevel >= subtreeLevels) {
     return {};
   }
 
-  const CesiumGeometry::OctreeTileID& octreeID =
-      std::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
+  OctreeChildren childIDs = ImplicitTilingUtilities::getChildren(octreeID);
 
   std::vector<Tile> children;
-  children.reserve(8);
-  for (uint16_t y = 0; y < 2; ++y) {
-    uint32_t childY = (octreeID.y << 1) | y;
-    for (uint16_t z = 0; z < 2; ++z) {
-      uint32_t childZ = (octreeID.z << 1) | z;
-      for (uint16_t x = 0; x < 2; ++x) {
-        uint32_t childX = (octreeID.x << 1) | x;
+  children.reserve(childIDs.size());
 
-        CesiumGeometry::OctreeTileID childID{
-            octreeID.level + 1,
-            childX,
-            childY,
-            childZ};
+  for (const CesiumGeometry::OctreeTileID& childID : childIDs) {
+    uint64_t relativeChildMortonID =
+        ImplicitTilingUtilities::computeRelativeMortonIndex(
+            subtreeRootID,
+            childID);
 
-        uint32_t childIndex =
-            static_cast<uint32_t>(libmorton::morton3D_32_encode(x, y, z));
-        uint64_t relativeChildMortonID = relativeTileMortonID << 3 | childIndex;
-        uint32_t relativeChildLevel = relativeTileLevel + 1;
-        if (relativeChildLevel == subtreeLevels) {
-          if (subtreeAvailability.isSubtreeAvailable(relativeChildMortonID)) {
-            Tile& child = children.emplace_back(&loader);
-            child.setTransform(tile.getTransform());
-            child.setBoundingVolume(
-                subdivideBoundingVolume(childID, loader.getBoundingVolume()));
-            child.setGeometricError(tile.getGeometricError() * 0.5);
-            child.setRefine(tile.getRefine());
-            child.setTileID(childID);
-          }
+    uint32_t relativeChildLevel = relativeTileLevel + 1;
+    if (relativeChildLevel == subtreeLevels) {
+      if (subtreeAvailability.isSubtreeAvailable(relativeChildMortonID)) {
+        Tile& child = children.emplace_back(&loader);
+        child.setTransform(tile.getTransform());
+        child.setBoundingVolume(
+            subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+        child.setGeometricError(tile.getGeometricError() * 0.5);
+        child.setRefine(tile.getRefine());
+        child.setTileID(childID);
+      }
+    } else {
+      if (subtreeAvailability.isTileAvailable(
+              relativeChildLevel,
+              relativeChildMortonID)) {
+        if (subtreeAvailability.isContentAvailable(
+                relativeChildLevel,
+                relativeChildMortonID,
+                0)) {
+          children.emplace_back(&loader);
         } else {
-          if (subtreeAvailability.isTileAvailable(
-                  relativeChildLevel,
-                  relativeChildMortonID)) {
-            if (subtreeAvailability.isContentAvailable(
-                    relativeChildLevel,
-                    relativeChildMortonID,
-                    0)) {
-              children.emplace_back(&loader);
-            } else {
-              children.emplace_back(&loader, TileEmptyContent{});
-            }
-
-            Tile& child = children.back();
-            child.setTransform(tile.getTransform());
-            child.setBoundingVolume(
-                subdivideBoundingVolume(childID, loader.getBoundingVolume()));
-            child.setGeometricError(tile.getGeometricError() * 0.5);
-            child.setRefine(tile.getRefine());
-            child.setTileID(childID);
-          }
+          children.emplace_back(&loader, TileEmptyContent{});
         }
+
+        Tile& child = children.back();
+        child.setTransform(tile.getTransform());
+        child.setBoundingVolume(
+            subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+        child.setGeometricError(tile.getGeometricError() * 0.5);
+        child.setRefine(tile.getRefine());
+        child.setTileID(childID);
       }
     }
   }
@@ -237,25 +228,18 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   // find the subtree ID
-  uint32_t subtreeLevelIdx = pOctreeID->level / this->_subtreeLevels;
-  if (subtreeLevelIdx >= this->_loadedSubtrees.size()) {
-    return asyncSystem.createResolvedFuture(
+  CesiumGeometry::OctreeTileID subtreeID =
+      ImplicitTilingUtilities::getSubtreeRootID(
+          this->_subtreeLevels,
+          *pOctreeID);
+  uint32_t subtreeLevelIdx = subtreeID.level / this->_subtreeLevels;
+  if (subtreeLevelIdx >= _loadedSubtrees.size()) {
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createFailedResult(nullptr));
   }
 
-  uint64_t levelLeft = pOctreeID->level % this->_subtreeLevels;
-  uint32_t subtreeLevel = this->_subtreeLevels * subtreeLevelIdx;
-  uint32_t subtreeX = pOctreeID->x >> levelLeft;
-  uint32_t subtreeY = pOctreeID->y >> levelLeft;
-  uint32_t subtreeZ = pOctreeID->z >> levelLeft;
-  CesiumGeometry::OctreeTileID subtreeID{
-      subtreeLevel,
-      subtreeX,
-      subtreeY,
-      subtreeZ};
-
   uint64_t subtreeMortonIdx =
-      libmorton::morton3D_64_encode(subtreeX, subtreeY, subtreeZ);
+      ImplicitTilingUtilities::computeMortonIndex(subtreeID);
   auto subtreeIt =
       this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
@@ -315,33 +299,29 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {
   const CesiumGeometry::OctreeTileID* pOctreeID =
       std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
-  assert(pOctreeID != nullptr && "This loader only serves quadtree tile");
+  assert(pOctreeID != nullptr && "This loader only serves octree tile");
 
   // find the subtree ID
-  uint32_t subtreeLevelIdx = pOctreeID->level / this->_subtreeLevels;
+  CesiumGeometry::OctreeTileID subtreeID =
+      ImplicitTilingUtilities::getSubtreeRootID(
+          this->_subtreeLevels,
+          *pOctreeID);
+
+  uint32_t subtreeLevelIdx = subtreeID.level / this->_subtreeLevels;
   if (subtreeLevelIdx >= this->_loadedSubtrees.size()) {
     return {{}, TileLoadResultState::Failed};
   }
 
-  uint64_t levelLeft = pOctreeID->level % this->_subtreeLevels;
-  uint32_t subtreeX = pOctreeID->x >> levelLeft;
-  uint32_t subtreeY = pOctreeID->y >> levelLeft;
-  uint32_t subtreeZ = pOctreeID->z >> levelLeft;
-
   uint64_t subtreeMortonIdx =
-      libmorton::morton3D_64_encode(subtreeX, subtreeY, subtreeZ);
+      ImplicitTilingUtilities::computeMortonIndex(subtreeID);
+
   auto subtreeIt =
       this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt != this->_loadedSubtrees[subtreeLevelIdx].end()) {
-    uint64_t relativeTileMortonIdx = libmorton::morton3D_64_encode(
-        pOctreeID->x - (subtreeX << levelLeft),
-        pOctreeID->y - (subtreeY << levelLeft),
-        pOctreeID->z - (subtreeZ << levelLeft));
     auto children = populateSubtree(
         subtreeIt->second,
         this->_subtreeLevels,
-        static_cast<std::uint32_t>(levelLeft),
-        relativeTileMortonIdx,
+        subtreeID,
         tile,
         *this);
 
@@ -373,7 +353,7 @@ void ImplicitOctreeLoader::addSubtreeAvailability(
   }
 
   uint64_t subtreeMortonID =
-      libmorton::morton3D_64_encode(subtreeID.x, subtreeID.y, subtreeID.z);
+      ImplicitTilingUtilities::computeMortonIndex(subtreeID);
 
   this->_loadedSubtrees[levelIndex].insert_or_assign(
       subtreeMortonID,
