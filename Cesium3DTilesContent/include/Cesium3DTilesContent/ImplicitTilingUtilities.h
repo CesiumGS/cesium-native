@@ -4,6 +4,7 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <array>
+#include <iterator>
 #include <string>
 
 namespace CesiumGeometry {
@@ -13,58 +14,96 @@ struct OctreeTileID;
 
 namespace Cesium3DTilesContent {
 
-class QuadtreeChildIterator {
+/**
+ * @brief A lightweight virtual container enumerating the quadtree IDs of the
+ * children of a given quadtree tile.
+ */
+class QuadtreeChildren {
 public:
-  using iterator_category = std::forward_iterator_tag;
-  using value_type = CesiumGeometry::QuadtreeTileID;
-  using pointer = CesiumGeometry::QuadtreeTileID*;
-  using reference = CesiumGeometry::QuadtreeTileID&;
+  class iterator {
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = CesiumGeometry::QuadtreeTileID;
+    using difference_type = void;
+    using pointer = CesiumGeometry::QuadtreeTileID*;
+    using reference = CesiumGeometry::QuadtreeTileID&;
 
-  explicit QuadtreeChildIterator(
-      const CesiumGeometry::QuadtreeTileID& parentTileID,
-      bool isFirst) noexcept;
+    explicit iterator(
+        const CesiumGeometry::QuadtreeTileID& parentTileID,
+        bool isFirst) noexcept;
 
-  const CesiumGeometry::QuadtreeTileID& operator*() const {
-    return this->_current;
-  }
-  const CesiumGeometry::QuadtreeTileID* operator->() const {
-    return &this->_current;
-  }
-  QuadtreeChildIterator& operator++();
-  QuadtreeChildIterator operator++(int);
+    const CesiumGeometry::QuadtreeTileID& operator*() const {
+      return this->_current;
+    }
+    const CesiumGeometry::QuadtreeTileID* operator->() const {
+      return &this->_current;
+    }
+    iterator& operator++();
+    iterator operator++(int);
 
-  bool operator==(const QuadtreeChildIterator& rhs) const noexcept;
-  bool operator!=(const QuadtreeChildIterator& rhs) const noexcept;
+    bool operator==(const iterator& rhs) const noexcept;
+    bool operator!=(const iterator& rhs) const noexcept;
+
+  private:
+    CesiumGeometry::QuadtreeTileID _current;
+  };
+
+  using const_iterator = iterator;
+
+  QuadtreeChildren(const CesiumGeometry::QuadtreeTileID& tileID) noexcept
+      : _tileID(tileID) {}
+  iterator begin() const noexcept;
+  iterator end() const noexcept;
+  constexpr int64_t size() const noexcept { return 4; }
 
 private:
-  CesiumGeometry::QuadtreeTileID _current;
+  CesiumGeometry::QuadtreeTileID _tileID;
 };
 
-class OctreeChildIterator {
+/**
+ * @brief A lightweight virtual container enumerating the octree IDs of the
+ * children of a given octree tile.
+ */
+class OctreeChildren {
 public:
-  using iterator_category = std::forward_iterator_tag;
-  using value_type = CesiumGeometry::OctreeTileID;
-  using pointer = CesiumGeometry::OctreeTileID*;
-  using reference = CesiumGeometry::OctreeTileID&;
+  class iterator {
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = CesiumGeometry::OctreeTileID;
+    using difference_type = void;
+    using pointer = CesiumGeometry::OctreeTileID*;
+    using reference = CesiumGeometry::OctreeTileID&;
 
-  explicit OctreeChildIterator(
-      const CesiumGeometry::OctreeTileID& parentTileID,
-      bool isFirst) noexcept;
+    explicit iterator(
+        const CesiumGeometry::OctreeTileID& parentTileID,
+        bool isFirst) noexcept;
 
-  const CesiumGeometry::OctreeTileID& operator*() const {
-    return this->_current;
-  }
-  const CesiumGeometry::OctreeTileID* operator->() const {
-    return &this->_current;
-  }
-  OctreeChildIterator& operator++();
-  OctreeChildIterator operator++(int);
+    const CesiumGeometry::OctreeTileID& operator*() const {
+      return this->_current;
+    }
+    const CesiumGeometry::OctreeTileID* operator->() const {
+      return &this->_current;
+    }
+    iterator& operator++();
+    iterator operator++(int);
 
-  bool operator==(const OctreeChildIterator& rhs) const noexcept;
-  bool operator!=(const OctreeChildIterator& rhs) const noexcept;
+    bool operator==(const iterator& rhs) const noexcept;
+    bool operator!=(const iterator& rhs) const noexcept;
+
+  private:
+    CesiumGeometry::OctreeTileID _current;
+  };
+
+  using const_iterator = iterator;
+
+  OctreeChildren(const CesiumGeometry::OctreeTileID& tileID) noexcept
+      : _tileID(tileID) {}
+  iterator begin() const noexcept;
+  iterator end() const noexcept;
+  constexpr int64_t size() const noexcept { return 8; }
 
 private:
-  CesiumGeometry::OctreeTileID _current;
+  CesiumGeometry::OctreeTileID _tileID;
 };
 
 /**
@@ -103,8 +142,27 @@ public:
       const CesiumGeometry::OctreeTileID& octreeID);
 
   /**
+   * @brief Computes the Morton index for a given quadtree tile within its
+   * level.
+   *
+   * @param tileID The ID of the tile.
+   * @return The Morton index.
+   */
+  static uint64_t
+  computeMortonIndex(const CesiumGeometry::QuadtreeTileID& tileID);
+
+  /**
+   * @brief Computes the Morton index for a given octree tile within its level.
+   *
+   * @param tileID The ID of the tile.
+   * @return The Morton index.
+   */
+  static uint64_t
+  computeMortonIndex(const CesiumGeometry::OctreeTileID& tileID);
+
+  /**
    * @brief Computes the relative Morton index for a given quadtree tile within
-   * a subtree with the given quadtree ID.
+   * its level of a subtree root at the tile with the given quadtree ID.
    *
    * @param subtreeID The ID of the subtree the contains the tile.
    * @param tileID The ID of the tile.
@@ -116,45 +174,101 @@ public:
 
   /**
    * @brief Computes the relative Morton index for a given octree tile within
-   * a subtree with the given octree ID.
+   * its level of a subtree rooted at the tile with the given octree ID.
    *
    * @param subtreeID The ID of the subtree the contains the tile.
    * @param tileID The ID of the tile.
    * @return The relative Morton index.
    */
   static uint64_t computeRelativeMortonIndex(
-      const CesiumGeometry::OctreeTileID& subtreeID,
+      const CesiumGeometry::OctreeTileID& subtreeRootID,
       const CesiumGeometry::OctreeTileID& tileID);
 
-  static QuadtreeChildIterator
-  childrenBegin(const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
-  static QuadtreeChildIterator
-  childrenEnd(const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
-
-  static OctreeChildIterator
-  childrenBegin(const CesiumGeometry::OctreeTileID& tileID) noexcept;
-  static OctreeChildIterator
-  childrenEnd(const CesiumGeometry::OctreeTileID& tileID) noexcept;
-
   /**
-   * @brief Gets the quadtree tile IDs of the four children of a given quadtree
+   * @brief Gets the ID of the root tile of the subtree that contains a given
    * tile.
    *
-   * @param parentTileID The ID of the parent tile.
-   * @return The IDs of the four children.
+   * @param subtreeLevels The number of levels in each sub-tree. For example, if
+   * this parameter is 4, then the first subtree starts at level 0 and
+   * contains tiles in levels 0 through 3, and the next subtree starts at
+   * level 4 and contains tiles in levels 4 through 7.
+   * @param tileID The tile ID for each to find the subtree root.
+   * @return The ID of the root tile of the subtree.
    */
-  static std::array<CesiumGeometry::QuadtreeTileID, 4>
-  getChildTileIDs(const CesiumGeometry::QuadtreeTileID& parentTileID);
+  static CesiumGeometry::QuadtreeTileID getSubtreeRootID(
+      uint32_t subtreeLevels,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
 
   /**
-   * @brief Gets the octree tile IDs of the eight children of a given octree
+   * @brief Gets the ID of the root tile of the subtree that contains a given
    * tile.
    *
-   * @param parentTileID The ID of the parent tile.
-   * @return The IDs of the four children.
+   * @param subtreeLevels The number of levels in each sub-tree. For example, if
+   * this parameter is 4, then the first subtree starts at level 0 and
+   * contains tiles in levels 0 through 3, and the next subtree starts at
+   * level 4 and contains tiles in levels 4 through 7.
+   * @param tileID The tile ID for each to find the subtree root.
+   * @return The ID of the root tile of the subtree.
    */
-  static std::array<CesiumGeometry::OctreeTileID, 8>
-  getChildTileIDs(const CesiumGeometry::OctreeTileID& parentTileID);
+  static CesiumGeometry::OctreeTileID getSubtreeRootID(
+      uint32_t subtreeLevels,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Converts an absolute tile ID to a tile ID relative to a given root
+   * tile.
+   *
+   * For example, if `rootID` and `tileID` are the same, this method returns
+   * `QuadtreeTileID(0, 0, 0)`.
+   *
+   * @param rootID The ID of the root tile that the returned ID should be
+   * relative to.
+   * @param tileID The absolute ID of the tile to compute a relative ID for.
+   * @return The relative tile ID.
+   */
+  static CesiumGeometry::QuadtreeTileID absoluteTileIDToRelative(
+      const CesiumGeometry::QuadtreeTileID& rootID,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Converts an absolute tile ID to a tile ID relative to a given root
+   * tile.
+   *
+   * For example, if `rootID` and `tileID` are the same, this method returns
+   * `OctreeTileID(0, 0, 0, 0)`.
+   *
+   * @param rootID The ID of the root tile that the returned ID should be
+   * relative to.
+   * @param tileID The absolute ID of the tile to compute a relative ID for.
+   * @return The relative tile ID.
+   */
+  static CesiumGeometry::OctreeTileID absoluteTileIDToRelative(
+      const CesiumGeometry::OctreeTileID& rootID,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Gets a lightweight virtual container for enumerating the quadtree
+   * IDs of the children of a given quadtree tile.
+   *
+   * @param tileID The tile ID of the parent tile for which to get children.
+   * @return The children.
+   */
+  static QuadtreeChildren
+  getChildren(const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+    return QuadtreeChildren{tileID};
+  }
+
+  /**
+   * @brief Gets a lightweight virtual container for enumerating the octree
+   * IDs of the children of a given octree tile.
+   *
+   * @param tileID The tile ID of the parent tile for which to get children.
+   * @return The children.
+   */
+  static OctreeChildren
+  getChildren(const CesiumGeometry::OctreeTileID& tileID) noexcept {
+    return OctreeChildren{tileID};
+  }
 };
 
 } // namespace Cesium3DTilesContent

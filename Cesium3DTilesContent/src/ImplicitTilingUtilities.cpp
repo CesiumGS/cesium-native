@@ -9,7 +9,7 @@ using namespace CesiumGeometry;
 
 namespace Cesium3DTilesContent {
 
-/*static*/ std::string ImplicitTilingUtilities::resolveUrl(
+std::string ImplicitTilingUtilities::resolveUrl(
     const std::string& baseUrl,
     const std::string& urlTemplate,
     const QuadtreeTileID& quadtreeID) {
@@ -32,7 +32,7 @@ namespace Cesium3DTilesContent {
   return CesiumUtility::Uri::resolve(baseUrl, url);
 }
 
-/*static*/ std::string ImplicitTilingUtilities::resolveUrl(
+std::string ImplicitTilingUtilities::resolveUrl(
     const std::string& baseUrl,
     const std::string& urlTemplate,
     const OctreeTileID& octreeID) {
@@ -58,26 +58,73 @@ namespace Cesium3DTilesContent {
   return CesiumUtility::Uri::resolve(baseUrl, url);
 }
 
-/*static*/ uint64_t ImplicitTilingUtilities::computeRelativeMortonIndex(
+uint64_t ImplicitTilingUtilities::computeMortonIndex(
+    const CesiumGeometry::QuadtreeTileID& tileID) {
+  return libmorton::morton2D_64_encode(tileID.x, tileID.y);
+}
+
+uint64_t ImplicitTilingUtilities::computeMortonIndex(
+    const CesiumGeometry::OctreeTileID& tileID) {
+  return libmorton::morton3D_64_encode(tileID.x, tileID.y, tileID.z);
+}
+
+uint64_t ImplicitTilingUtilities::computeRelativeMortonIndex(
     const QuadtreeTileID& subtreeID,
     const QuadtreeTileID& tileID) {
-  uint32_t relativeTileLevel = tileID.level - subtreeID.level;
-  return libmorton::morton2D_64_encode(
-      tileID.x - (subtreeID.x << relativeTileLevel),
-      tileID.y - (subtreeID.y << relativeTileLevel));
+  return computeMortonIndex(absoluteTileIDToRelative(subtreeID, tileID));
 }
 
-/*static*/ uint64_t ImplicitTilingUtilities::computeRelativeMortonIndex(
+uint64_t ImplicitTilingUtilities::computeRelativeMortonIndex(
     const OctreeTileID& subtreeID,
     const OctreeTileID& tileID) {
-  uint32_t relativeTileLevel = tileID.level - subtreeID.level;
-  return libmorton::morton3D_64_encode(
-      tileID.x - (subtreeID.x << relativeTileLevel),
-      tileID.y - (subtreeID.y << relativeTileLevel),
-      tileID.z - (subtreeID.z << relativeTileLevel));
+  return computeMortonIndex(absoluteTileIDToRelative(subtreeID, tileID));
 }
 
-QuadtreeChildIterator::QuadtreeChildIterator(
+CesiumGeometry::QuadtreeTileID ImplicitTilingUtilities::getSubtreeRootID(
+    uint32_t subtreeLevels,
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  uint32_t subtreeLevel = tileID.level / subtreeLevels;
+  uint32_t levelsLeft = tileID.level % subtreeLevels;
+  return QuadtreeTileID(
+      subtreeLevel,
+      tileID.x >> levelsLeft,
+      tileID.y >> levelsLeft);
+}
+
+CesiumGeometry::OctreeTileID ImplicitTilingUtilities::getSubtreeRootID(
+    uint32_t subtreeLevels,
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  uint32_t subtreeLevel = tileID.level / subtreeLevels;
+  uint32_t levelsLeft = tileID.level % subtreeLevels;
+  return OctreeTileID(
+      subtreeLevel,
+      tileID.x >> levelsLeft,
+      tileID.y >> levelsLeft,
+      tileID.z >> levelsLeft);
+}
+
+QuadtreeTileID ImplicitTilingUtilities::absoluteTileIDToRelative(
+    const QuadtreeTileID& rootID,
+    const QuadtreeTileID& tileID) noexcept {
+  uint32_t relativeTileLevel = tileID.level - rootID.level;
+  return QuadtreeTileID(
+      relativeTileLevel,
+      tileID.x - (rootID.x << relativeTileLevel),
+      tileID.y - (rootID.y << relativeTileLevel));
+}
+
+OctreeTileID ImplicitTilingUtilities::absoluteTileIDToRelative(
+    const OctreeTileID& rootID,
+    const OctreeTileID& tileID) noexcept {
+  uint32_t relativeTileLevel = tileID.level - rootID.level;
+  return OctreeTileID(
+      relativeTileLevel,
+      tileID.x - (rootID.x << relativeTileLevel),
+      tileID.y - (rootID.y << relativeTileLevel),
+      tileID.z - (rootID.z << relativeTileLevel));
+}
+
+QuadtreeChildren::iterator::iterator(
     const CesiumGeometry::QuadtreeTileID& parentTileID,
     bool isEnd) noexcept
     : _current(
@@ -89,7 +136,7 @@ QuadtreeChildIterator::QuadtreeChildIterator(
   }
 }
 
-QuadtreeChildIterator& QuadtreeChildIterator::operator++() {
+QuadtreeChildren::iterator& QuadtreeChildren::iterator::operator++() {
   // Put an indication of the child in the two low bits of `value`.
   // Bit 0 indicates left child (0) or right child (1).
   // Bit 1 indicates front child (0) or back child (1).
@@ -112,23 +159,23 @@ QuadtreeChildIterator& QuadtreeChildIterator::operator++() {
   return *this;
 }
 
-QuadtreeChildIterator QuadtreeChildIterator::operator++(int) {
-  QuadtreeChildIterator copy = *this;
+QuadtreeChildren::iterator QuadtreeChildren::iterator::operator++(int) {
+  iterator copy = *this;
   ++copy;
   return copy;
 }
 
-bool QuadtreeChildIterator::operator==(
-    const QuadtreeChildIterator& rhs) const noexcept {
+bool QuadtreeChildren::iterator::operator==(
+    const iterator& rhs) const noexcept {
   return this->_current == rhs._current;
 }
 
-bool QuadtreeChildIterator::operator!=(
-    const QuadtreeChildIterator& rhs) const noexcept {
+bool QuadtreeChildren::iterator::operator!=(
+    const iterator& rhs) const noexcept {
   return this->_current != rhs._current;
 }
 
-OctreeChildIterator::OctreeChildIterator(
+OctreeChildren::iterator::iterator(
     const CesiumGeometry::OctreeTileID& parentTileID,
     bool isEnd) noexcept
     : _current(
@@ -141,7 +188,7 @@ OctreeChildIterator::OctreeChildIterator(
   }
 }
 
-OctreeChildIterator& OctreeChildIterator::operator++() {
+OctreeChildren::iterator& OctreeChildren::iterator::operator++() {
   // Put an indication of the child in the three low bits of `value`.
   // Bit 0 indicates left child (0) or right child (1).
   // Bit 1 indicates front child (0) or back child (1).
@@ -168,69 +215,36 @@ OctreeChildIterator& OctreeChildIterator::operator++() {
   return *this;
 }
 
-OctreeChildIterator OctreeChildIterator::operator++(int) {
-  OctreeChildIterator copy = *this;
+OctreeChildren::iterator OctreeChildren::iterator::operator++(int) {
+  iterator copy = *this;
   ++copy;
   return copy;
 }
 
-bool OctreeChildIterator::operator==(
-    const OctreeChildIterator& rhs) const noexcept {
+bool OctreeChildren::iterator::operator==(const iterator& rhs) const noexcept {
   return this->_current == rhs._current;
 }
 
-bool OctreeChildIterator::operator!=(
-    const OctreeChildIterator& rhs) const noexcept {
+bool OctreeChildren::iterator::operator!=(const iterator& rhs) const noexcept {
   return this->_current != rhs._current;
 }
 
-QuadtreeChildIterator ImplicitTilingUtilities::childrenBegin(
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
-  return QuadtreeChildIterator(tileID, false);
+QuadtreeChildren::const_iterator
+Cesium3DTilesContent::QuadtreeChildren::begin() const noexcept {
+  return const_iterator(this->_tileID, false);
 }
 
-QuadtreeChildIterator ImplicitTilingUtilities::childrenEnd(
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
-  return QuadtreeChildIterator(tileID, true);
+QuadtreeChildren::const_iterator QuadtreeChildren::end() const noexcept {
+  return const_iterator(this->_tileID, true);
 }
 
-OctreeChildIterator ImplicitTilingUtilities::childrenBegin(
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
-  return OctreeChildIterator(tileID, false);
+OctreeChildren::const_iterator
+Cesium3DTilesContent::OctreeChildren::begin() const noexcept {
+  return const_iterator(this->_tileID, false);
 }
 
-OctreeChildIterator ImplicitTilingUtilities::childrenEnd(
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
-  return OctreeChildIterator(tileID, true);
-}
-
-std::array<QuadtreeTileID, 4>
-ImplicitTilingUtilities::getChildTileIDs(const QuadtreeTileID& parentTileID) {
-  uint32_t level = parentTileID.level + 1;
-  uint32_t x = parentTileID.x << 1;
-  uint32_t y = parentTileID.y << 1;
-  return std::array<QuadtreeTileID, 4>{
-      QuadtreeTileID(level, x, y),
-      QuadtreeTileID(level, x + 1, y),
-      QuadtreeTileID(level, x, y + 1),
-      QuadtreeTileID(level, x + 1, y + 1)};
-}
-
-std::array<OctreeTileID, 8>
-ImplicitTilingUtilities::getChildTileIDs(const OctreeTileID& parentTileID) {
-  uint32_t level = parentTileID.level + 1;
-  uint32_t x = parentTileID.x << 1;
-  uint32_t y = parentTileID.y << 1;
-  uint32_t z = parentTileID.z << 1;
-  return std::array<OctreeTileID, 8>{
-      OctreeTileID(level, x, y, z),
-      OctreeTileID(level, x + 1, y, z),
-      OctreeTileID(level, x, y + 1, z),
-      OctreeTileID(level, x + 1, y + 1, z),
-      OctreeTileID(level, x, y, z + 1),
-      OctreeTileID(level, x + 1, y, z + 1),
-      OctreeTileID(level, x, y + 1, z + 1),
-      OctreeTileID(level, x + 1, y + 1, z + 1)};
+OctreeChildren::const_iterator OctreeChildren::end() const noexcept {
+  return const_iterator(this->_tileID, true);
 }
 
 } // namespace Cesium3DTilesContent
