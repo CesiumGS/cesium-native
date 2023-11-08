@@ -11,59 +11,19 @@
 #include <libmorton/morton.h>
 #include <spdlog/logger.h>
 
+#include <variant>
+
 using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {
 namespace {
 struct BoundingVolumeSubdivision {
   BoundingVolume operator()(const CesiumGeospatial::BoundingRegion& region) {
-    const CesiumGeospatial::GlobeRectangle& globeRect = region.getRectangle();
-    double denominator = static_cast<double>(1 << tileID.level);
-    double latSize =
-        (globeRect.getNorth() - globeRect.getSouth()) / denominator;
-    double longSize = (globeRect.getEast() - globeRect.getWest()) / denominator;
-    double heightSize =
-        (region.getMaximumHeight() - region.getMinimumHeight()) / denominator;
-
-    double childWest = globeRect.getWest() + longSize * tileID.x;
-    double childEast = globeRect.getWest() + longSize * (tileID.x + 1);
-
-    double childSouth = globeRect.getSouth() + latSize * tileID.y;
-    double childNorth = globeRect.getSouth() + latSize * (tileID.y + 1);
-
-    double childMinHeight = region.getMinimumHeight() + heightSize * tileID.z;
-    double childMaxHeight =
-        region.getMinimumHeight() + heightSize * (tileID.z + 1);
-
-    return CesiumGeospatial::BoundingRegion{
-        CesiumGeospatial::GlobeRectangle(
-            childWest,
-            childSouth,
-            childEast,
-            childNorth),
-        childMinHeight,
-        childMaxHeight};
+    return ImplicitTilingUtilities::computeBoundingVolume(region, this->tileID);
   }
 
   BoundingVolume operator()(const CesiumGeometry::OrientedBoundingBox& obb) {
-    const glm::dmat3& halfAxes = obb.getHalfAxes();
-    const glm::dvec3& center = obb.getCenter();
-
-    double denominator = static_cast<double>(1 << tileID.level);
-    glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
-
-    glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
-    glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
-    glm::dvec3 zDim = halfAxes[2] * 2.0 / denominator;
-    glm::dvec3 childMin = min + xDim * double(tileID.x) +
-                          yDim * double(tileID.y) + zDim * double(tileID.z);
-    glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
-                          yDim * double(tileID.y + 1) +
-                          zDim * double(tileID.z + 1);
-
-    return CesiumGeometry::OrientedBoundingBox(
-        (childMin + childMax) / 2.0,
-        glm::dmat3{xDim / 2.0, yDim / 2.0, zDim / 2.0});
+    return ImplicitTilingUtilities::computeBoundingVolume(obb, this->tileID);
   }
 
   const CesiumGeometry::OctreeTileID& tileID;

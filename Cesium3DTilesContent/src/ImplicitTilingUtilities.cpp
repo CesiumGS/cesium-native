@@ -1,6 +1,9 @@
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumUtility/Uri.h>
 
 #include <libmorton/morton.h>
@@ -124,6 +127,124 @@ OctreeTileID ImplicitTilingUtilities::absoluteTileIDToRelative(
       tileID.z - (rootID.z << relativeTileLevel));
 }
 
+namespace {
+
+CesiumGeospatial::GlobeRectangle subdivideRectangle(
+    const CesiumGeospatial::GlobeRectangle& rootRectangle,
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    double denominator) {
+  double latSize =
+      (rootRectangle.getNorth() - rootRectangle.getSouth()) / denominator;
+  double longSize =
+      (rootRectangle.getEast() - rootRectangle.getWest()) / denominator;
+
+  double childWest = rootRectangle.getWest() + longSize * tileID.x;
+  double childEast = rootRectangle.getWest() + longSize * (tileID.x + 1);
+
+  double childSouth = rootRectangle.getSouth() + latSize * tileID.y;
+  double childNorth = rootRectangle.getSouth() + latSize * (tileID.y + 1);
+
+  return CesiumGeospatial::GlobeRectangle(
+      childWest,
+      childSouth,
+      childEast,
+      childNorth);
+}
+
+} // namespace
+
+CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  double denominator = static_cast<double>(1 << tileID.level);
+  return CesiumGeospatial::BoundingRegion{
+      subdivideRectangle(
+          rootBoundingVolume.getRectangle(),
+          tileID,
+          denominator),
+      rootBoundingVolume.getMinimumHeight(),
+      rootBoundingVolume.getMaximumHeight()};
+}
+
+CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  double denominator = static_cast<double>(1 << tileID.level);
+  double heightSize = (rootBoundingVolume.getMaximumHeight() -
+                       rootBoundingVolume.getMinimumHeight()) /
+                      denominator;
+
+  double childMinHeight =
+      rootBoundingVolume.getMinimumHeight() + heightSize * tileID.z;
+  double childMaxHeight =
+      rootBoundingVolume.getMinimumHeight() + heightSize * (tileID.z + 1);
+
+  return CesiumGeospatial::BoundingRegion{
+      subdivideRectangle(
+          rootBoundingVolume.getRectangle(),
+          QuadtreeTileID(tileID.level, tileID.x, tileID.y),
+          denominator),
+      childMinHeight,
+      childMaxHeight};
+}
+
+CesiumGeometry::OrientedBoundingBox
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::OrientedBoundingBox& rootBoundingVolume,
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  const glm::dmat3& halfAxes = rootBoundingVolume.getHalfAxes();
+  const glm::dvec3& center = rootBoundingVolume.getCenter();
+
+  double denominator = static_cast<double>(1 << tileID.level);
+  glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
+
+  glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
+  glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
+  glm::dvec3 childMin = min + xDim * double(tileID.x) + yDim * double(tileID.y);
+  glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
+                        yDim * double(tileID.y + 1) + halfAxes[2] * 2.0;
+
+  return CesiumGeometry::OrientedBoundingBox(
+      (childMin + childMax) / 2.0,
+      glm::dmat3{xDim / 2.0, yDim / 2.0, halfAxes[2]});
+}
+
+CesiumGeometry::OrientedBoundingBox
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::OrientedBoundingBox& rootBoundingVolume,
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  const glm::dmat3& halfAxes = rootBoundingVolume.getHalfAxes();
+  const glm::dvec3& center = rootBoundingVolume.getCenter();
+
+  double denominator = static_cast<double>(1 << tileID.level);
+  glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
+
+  glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
+  glm::dvec3 yDim = halfAxes[1] * 2.0 / denominator;
+  glm::dvec3 zDim = halfAxes[2] * 2.0 / denominator;
+  glm::dvec3 childMin = min + xDim * double(tileID.x) +
+                        yDim * double(tileID.y) + zDim * double(tileID.z);
+  glm::dvec3 childMax = min + xDim * double(tileID.x + 1) +
+                        yDim * double(tileID.y + 1) +
+                        zDim * double(tileID.z + 1);
+
+  return CesiumGeometry::OrientedBoundingBox(
+      (childMin + childMax) / 2.0,
+      glm::dmat3{xDim / 2.0, yDim / 2.0, zDim / 2.0});
+}
+
+CesiumGeospatial::S2CellBoundingVolume
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  return CesiumGeospatial::S2CellBoundingVolume(
+      CesiumGeospatial::S2CellID::fromQuadtreeTileID(
+          rootBoundingVolume.getCellID().getFace(),
+          tileID),
+      rootBoundingVolume.getMinimumHeight(),
+      rootBoundingVolume.getMaximumHeight());
+}
+
 QuadtreeChildren::iterator::iterator(
     const CesiumGeometry::QuadtreeTileID& parentTileID,
     bool isEnd) noexcept
@@ -150,7 +271,7 @@ QuadtreeChildren::iterator& QuadtreeChildren::iterator::operator++() {
   // Bit 0 in value replaces bit 0 of the X coordinate.
   this->_current.x = (this->_current.x & ~1) | (value & 1);
 
-  // Value is then shifted right one bit, so its value will be 0, 1, or 2.
+  // Value is then shifted right one bit, so it will be 0, 1, or 2.
   // 0 and 1 are the bottom or top children, while 2 indicates "end" (one past
   // the last child). So we just clear the low bit of the current Y coordinate
   // and add this shifted value to produce the new Y coordinate.
@@ -206,10 +327,10 @@ OctreeChildren::iterator& OctreeChildren::iterator::operator++() {
   this->_current.x = (this->_current.x & ~1) | (value & 1);
   this->_current.y = (this->_current.y & ~1) | ((value >> 1) & 1);
 
-  // Value is then shifted right one bit, so its value will be 0, 1, or 2.
+  // Value is then shifted right one bit, so it will be 0, 1, or 2.
   // 0 and 1 are the bottom or top children, while 2 indicates "end" (one past
-  // the last child). So we just clear the low bit of the current Y coordinate
-  // and add this shifted value to produce the new Y coordinate.
+  // the last child). So we just clear the low bit of the current Z coordinate
+  // and add this shifted value to produce the new Z coordinate.
   this->_current.z = (this->_current.z & ~1) + (value >> 2);
 
   return *this;

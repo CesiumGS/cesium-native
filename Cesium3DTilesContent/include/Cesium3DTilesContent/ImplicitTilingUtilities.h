@@ -7,10 +7,14 @@
 #include <iterator>
 #include <string>
 
+namespace CesiumGeospatial {
+class BoundingRegion;
+class S2CellBoundingVolume;
+} // namespace CesiumGeospatial
+
 namespace CesiumGeometry {
-struct QuadtreeTileID;
-struct OctreeTileID;
-} // namespace CesiumGeometry
+class OrientedBoundingBox;
+}
 
 namespace Cesium3DTilesContent {
 
@@ -269,6 +273,61 @@ public:
   getChildren(const CesiumGeometry::OctreeTileID& tileID) noexcept {
     return OctreeChildren{tileID};
   }
+
+  /**
+   * @brief Computes the bounding volume for an implicit tile with the given ID.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for each to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static CesiumGeospatial::BoundingRegion computeBoundingVolume(
+      const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit tile with the given ID.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for each to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static CesiumGeospatial::BoundingRegion computeBoundingVolume(
+      const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit tile with the given ID.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for each to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static CesiumGeometry::OrientedBoundingBox computeBoundingVolume(
+      const CesiumGeometry::OrientedBoundingBox& rootBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit tile with the given ID.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for each to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static CesiumGeometry::OrientedBoundingBox computeBoundingVolume(
+      const CesiumGeometry::OrientedBoundingBox& rootBoundingVolume,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit tile with the given ID.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for each to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static CesiumGeospatial::S2CellBoundingVolume computeBoundingVolume(
+      const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
 };
 
 } // namespace Cesium3DTilesContent
