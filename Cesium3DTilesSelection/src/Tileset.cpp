@@ -442,16 +442,17 @@ float Tileset::computeLoadProgress() noexcept {
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  int32_t numOfTilesKicked =
-      static_cast<int32_t>(this->_updateResult.tilesKicked);
+  int32_t numOfRequestsPending =
+      (int32_t)this->_requestDispatcher.GetNumberOfRequestsPending();
 
   // Amount of work actively being done
-  int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
+  int32_t inProgressSum =
+      queueSizeSum + numOfRequestsPending + numOfTilesLoading;
 
   // Total work so far. Add already loaded tiles and kicked tiles.
   // Kicked tiles are transient, and never in progress, but are an indicator
   // that there is more work to do next frame.
-  int32_t totalNum = inProgressSum + numOfTilesLoaded + numOfTilesKicked;
+  int32_t totalNum = inProgressSum + numOfTilesLoaded;
   float percentage =
       static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
   return (percentage * 100.f);
@@ -1621,7 +1622,7 @@ void Tileset::discoverLoadWork(
     size_t workIndex, endIndex = parsedTileWork.size();
     for (workIndex = 0; workIndex < endIndex; ++workIndex) {
       TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
-      maxDepth = std::max (maxDepth, work.depthIndex);
+      maxDepth = std::max(maxDepth, work.depthIndex);
     }
 
     // Add all the work, biasing priority by depth
@@ -1635,7 +1636,7 @@ void Tileset::discoverLoadWork(
           work.requestUrl,
           work.projections,
           loadRequest.group,
-          loadRequest.priority + priorityBias };
+          loadRequest.priority + priorityBias};
 
       checkNotAdded(newWorkUnit, outRequests);
 
@@ -1816,6 +1817,12 @@ void RequestDispatcher::stageRequestWork(
       foundIt->second.push_back(request);
     }
   }
+}
+
+size_t RequestDispatcher::GetNumberOfRequestsPending() {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  return _queuedRequests.size() + _requestsInFlight.size() +
+         _doneRequests.size();
 }
 
 void RequestDispatcher::TakeCompletedWork(

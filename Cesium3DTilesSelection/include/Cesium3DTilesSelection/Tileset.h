@@ -83,6 +83,8 @@ public:
 
   void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
 
+  size_t GetNumberOfRequestsPending();
+
 private:
   void dispatchRequest(TileLoadWork& request);
   void stageRequestWork(
