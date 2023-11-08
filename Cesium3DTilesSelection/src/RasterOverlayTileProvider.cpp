@@ -105,13 +105,11 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
   this->doLoad(tile, false);
 }
 
-bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
-    return true;
-  }
+CesiumAsync::Future<bool> RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
+  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
+    return this->_asyncSystem.createResolvedFuture<bool>(true);
 
-  this->doLoad(tile, true);
-  return true;
+  return this->doLoad(tile, true);
 }
 
 void RasterOverlayTileProvider::getLoadTileThrottledWork(
@@ -301,12 +299,13 @@ static LoadResult createLoadResultFromLoadedImage(
 
 } // namespace
 
-void RasterOverlayTileProvider::doLoad(
+CesiumAsync::Future<bool>
+ RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     // Already loading or loaded, do nothing.
-    return;
+    return this->_asyncSystem.createResolvedFuture<bool>(true);
   }
 
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
@@ -321,7 +320,7 @@ void RasterOverlayTileProvider::doLoad(
   IntrusivePointer<RasterOverlayTile> pTile = &tile;
   IntrusivePointer<RasterOverlayTileProvider> thiz = this;
 
-  this->loadTileImage(tile)
+  return this->loadTileImage(tile)
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger = this->getLogger(),
@@ -348,7 +347,8 @@ void RasterOverlayTileProvider::doLoad(
             thiz->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
 
             thiz->finalizeTileLoad(isThrottledLoad);
-          })
+            return thiz->_asyncSystem.createResolvedFuture<bool>(true);
+        })
       .catchInMainThread(
           [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
             pTile->_pRendererResources = nullptr;
@@ -359,7 +359,9 @@ void RasterOverlayTileProvider::doLoad(
             pTile->setState(RasterOverlayTile::LoadState::Failed);
 
             thiz->finalizeTileLoad(isThrottledLoad);
-          });
+
+            return thiz->_asyncSystem.createResolvedFuture<bool>(false);
+        });
 }
 
 void RasterOverlayTileProvider::beginTileLoad(bool isThrottledLoad) noexcept {

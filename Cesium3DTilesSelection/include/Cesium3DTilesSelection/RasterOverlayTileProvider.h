@@ -336,7 +336,7 @@ public:
    * false if the load could not be started because too many loads are already
    * in progress.
    */
-  bool loadTileThrottled(RasterOverlayTile& tile);
+  CesiumAsync::Future<bool> loadTileThrottled(RasterOverlayTile& tile);
 
   void getLoadTileThrottledWork(RasterOverlayTile& tile, std::vector<std::string>& outUrls);
 
@@ -368,7 +368,7 @@ protected:
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  CesiumAsync::Future<bool> doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
   /**
    * @brief Begins the process of loading of a tile.

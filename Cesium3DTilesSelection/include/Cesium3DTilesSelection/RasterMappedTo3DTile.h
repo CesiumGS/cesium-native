@@ -182,7 +182,7 @@ public:
    * false. Otherwise, it begins the asynchronous process to load the tile and
    * returns true.
    */
-  bool loadThrottled() noexcept;
+  CesiumAsync::Future<bool> loadThrottled(CesiumAsync::AsyncSystem& callerAsync) noexcept;
 
   void getLoadThrottledWork(std::vector<std::string>& outUrls);
 

@@ -209,11 +209,11 @@ void RasterMappedTo3DTile::detachFromTile(
   this->_state = AttachmentState::Unattached;
 }
 
-bool RasterMappedTo3DTile::loadThrottled() noexcept {
+CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(CesiumAsync::AsyncSystem& callerAsync) noexcept {
   CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading) {
-    return true;
+    return callerAsync.createResolvedFuture<bool>(false);
   }
 
   RasterOverlayTileProvider& provider = pLoading->getTileProvider();

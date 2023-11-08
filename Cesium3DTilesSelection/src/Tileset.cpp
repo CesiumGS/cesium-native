@@ -267,6 +267,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   std::vector<Tile*> tilesSelectedPrevFrame =
       this->_updateResult.tilesToRenderThisFrame;
 
+  // TODO, refactor "is busy" logic
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
   this->updateView(frustums, 0.0f);
@@ -440,21 +441,27 @@ float Tileset::computeLoadProgress() noexcept {
       this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size());
   int32_t numOfTilesLoading =
       this->_pTilesetContentManager->getNumberOfTilesLoading();
+  int32_t numOfRastersLoading =
+    this->_pTilesetContentManager->getNumberOfRastersLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  int32_t numOfRastersLoaded =
+    this->_pTilesetContentManager->getNumberOfRastersLoaded();
   int32_t numOfRequestsPending =
       (int32_t)this->_requestDispatcher.GetNumberOfRequestsPending();
 
   // Amount of work actively being done
   int32_t inProgressSum =
-      queueSizeSum + numOfRequestsPending + numOfTilesLoading;
+      queueSizeSum + numOfRequestsPending + numOfTilesLoading + numOfRastersLoading;
 
   // Total work so far. Add already loaded tiles and kicked tiles.
   // Kicked tiles are transient, and never in progress, but are an indicator
   // that there is more work to do next frame.
-  int32_t totalNum = inProgressSum + numOfTilesLoaded;
+  int32_t completedSum = numOfTilesLoaded + numOfRastersLoaded;
+
+  int32_t totalNum = inProgressSum + completedSum;
   float percentage =
-      static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
+      static_cast<float>(completedSum) / static_cast<float>(totalNum);
   return (percentage * 100.f);
 }
 
@@ -1436,12 +1443,12 @@ void Tileset::_processWorkerThreadLoadQueue() {
 
   int32_t numberOfTilesLoading =
       this->_pTilesetContentManager->getNumberOfTilesLoading();
-  int32_t maximumSimultaneousTileLoads =
+  int32_t numberOfRastersLoading =
+    this->_pTilesetContentManager->getNumberOfRastersLoading();
+  int32_t maxTileLoads =
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
-  // TODO, how to figure in raster tiles, getNumberOfThrottledTilesLoading?
-  // Currently raster tile work dispatches, but doesn't take a slot
-  int32_t availableSlots = maximumSimultaneousTileLoads - numberOfTilesLoading;
+  int32_t availableSlots = maxTileLoads - numberOfTilesLoading - numberOfRastersLoading;
   assert(availableSlots >= 0);
   if (availableSlots == 0)
     return;
@@ -1454,13 +1461,6 @@ void Tileset::_processWorkerThreadLoadQueue() {
   // Dispatch it
   if (workToDispatch.size() > 0)
     dispatchProcessingWork(workToDispatch);
-
-  /*
-     THIS CODE NEEDS TO BE PUT BACK
-      RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-      if (provider.getNumberOfThrottledTilesLoading() >= maxTileLoads)
-        continue;
-  */
 }
 
 void Tileset::_processMainThreadLoadQueue() {
@@ -1590,14 +1590,6 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   return traversalDetails;
 }
 
-void checkNotAdded(TileLoadWork& newWork, std::vector<TileLoadWork>& allWork) {
-  for (TileLoadWork& existingWork : allWork) {
-    bool effectivelyEqual = existingWork.workRef == newWork.workRef &&
-                            existingWork.requestUrl == newWork.requestUrl;
-    assert(!effectivelyEqual);
-  }
-}
-
 void Tileset::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
     std::vector<TileLoadWork>& outRequests) {
@@ -1637,8 +1629,6 @@ void Tileset::discoverLoadWork(
           work.projections,
           loadRequest.group,
           loadRequest.priority + priorityBias};
-
-      checkNotAdded(newWorkUnit, outRequests);
 
       assert(!work.requestUrl.empty());
       outRequests.push_back(newWorkUnit);
@@ -1698,16 +1688,40 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
       Tile* pTile = std::get<Tile*>(work.workRef);
       assert(pTile);
 
-      this->_pTilesetContentManager->doTileContentWork(
-          *pTile,
-          work.projections,
-          _options);
+      // begin loading tile
+      this->_pTilesetContentManager->notifyTileStartLoading(pTile);
+
+      this->_pTilesetContentManager
+          ->doTileContentWork(*pTile, work.projections, _options)
+          .thenInMainThread([_pTile = pTile, _this = this](
+                                TileLoadResultAndRenderResources&& pair) {
+            _this->_pTilesetContentManager->setTileContent(
+                *_pTile,
+                std::move(pair.result),
+                pair.pRenderResources);
+
+            _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
+          })
+          .catchInMainThread(
+              [_pTile = pTile, _this = this, pLogger = this->_externals.pLogger](
+                  std::exception&& e) {
+                _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
+                SPDLOG_LOGGER_ERROR(
+                    pLogger,
+                    "An unexpected error occurs when loading tile: {}",
+                    e.what());
+              });
     } else {
       RasterMappedTo3DTile* pRasterTile =
           std::get<RasterMappedTo3DTile*>(work.workRef);
       assert(pRasterTile);
 
-      pRasterTile->loadThrottled();
+      this->_pTilesetContentManager->notifyRasterStartLoading();
+
+      pRasterTile->loadThrottled(_asyncSystem).thenInMainThread([_this = this](
+        bool) {
+          _this->_pTilesetContentManager->notifyRasterDoneLoading();
+        });
     }
   }
 }

@@ -79,7 +79,8 @@ public:
       double maximumScreenSpaceError,
       std::vector<ParsedTileWork>& outWork);
 
-  void doTileContentWork(
+  CesiumAsync::Future<TileLoadResultAndRenderResources>
+  doTileContentWork(
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& projections,
       const TilesetOptions& tilesetOptions);
@@ -122,17 +123,26 @@ public:
 
   int64_t getTotalDataUsed() const noexcept;
 
+  int32_t getNumberOfRastersLoading() const noexcept;
+
+  int32_t getNumberOfRastersLoaded() const noexcept;
+
   bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
   bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
 
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
-private:
   static void setTileContent(
       Tile& tile,
       TileLoadResult&& result,
       void* pWorkerRenderResources);
+  void notifyTileStartLoading(const Tile* pTile) noexcept;
+  void notifyTileDoneLoading(const Tile* pTile) noexcept;
+
+  void notifyRasterStartLoading() noexcept;
+  void notifyRasterDoneLoading() noexcept;
+private:
 
   void
   updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
@@ -142,10 +152,6 @@ private:
   void unloadContentLoadedState(Tile& tile);
 
   void unloadDoneState(Tile& tile);
-
-  void notifyTileStartLoading(const Tile* pTile) noexcept;
-
-  void notifyTileDoneLoading(const Tile* pTile) noexcept;
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
 
@@ -167,6 +173,9 @@ private:
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+
+  int32_t _rasterLoadsInProgress;
+  int32_t _loadedRastersCount;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;

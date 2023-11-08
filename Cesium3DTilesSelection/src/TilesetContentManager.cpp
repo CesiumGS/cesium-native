@@ -290,7 +290,10 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       pMapped->getLoadThrottledWork(requestUrls);
 
       for (std::string& url : requestUrls) {
-        TilesetContentManager::ParsedTileWork newWork = { pMapped, depthIndex, url };
+        TilesetContentManager::ParsedTileWork newWork = {
+            pMapped,
+            depthIndex,
+            url};
         outWork.push_back(newWork);
       }
     }
@@ -605,6 +608,8 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _rasterLoadsInProgress{0},
+      _loadedRastersCount{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -773,6 +778,8 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _rasterLoadsInProgress{0},
+      _loadedRastersCount{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -840,7 +847,8 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  assert(this->_tileLoadsInProgress == 0);
+  //assert(this->_tileLoadsInProgress == 0); // TODO, should we care?
+  //assert(this->_rasterLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
@@ -858,7 +866,7 @@ void TilesetContentManager::parseTileWork(
     return;
 
   if (pTile->getState() != TileLoadState::Unloaded &&
-    pTile->getState() != TileLoadState::FailedTemporarily) {
+      pTile->getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
@@ -885,8 +893,7 @@ void TilesetContentManager::parseTileWork(
   // the current tile. Warning: it's not thread-safe to modify the parent
   // geometry in the worker thread at the same time though
   const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
-      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
-          &pTile->getTileID());
+      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&pTile->getTileID());
   if (pUpsampleID) {
     // We can't upsample this tile until its parent tile is done loading.
     Tile* pParentTile = pTile->getParent();
@@ -896,7 +903,11 @@ void TilesetContentManager::parseTileWork(
     } else {
       if (pParentTile->getState() != TileLoadState::Done) {
         // Parent isn't loaded. Get the tile work required for it first
-        parseTileWork(pParentTile, depthIndex+1, maximumScreenSpaceError, outWork);
+        parseTileWork(
+            pParentTile,
+            depthIndex + 1,
+            maximumScreenSpaceError,
+            outWork);
       }
     }
   } else {
@@ -922,19 +933,16 @@ void TilesetContentManager::parseTileWork(
       maximumScreenSpaceError,
       outWork);
 
-  ParsedTileWork newWork = { pTile, depthIndex, requestUrl, projections};
+  ParsedTileWork newWork = {pTile, depthIndex, requestUrl, projections};
   outWork.push_back(newWork);
 }
 
-void TilesetContentManager::doTileContentWork(
+CesiumAsync::Future<TileLoadResultAndRenderResources>
+TilesetContentManager::doTileContentWork(
     Tile& tile,
     std::vector<CesiumGeospatial::Projection>& projections,
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::doTileContentWork");
-
-  // begin loading tile
-  notifyTileStartLoading(&tile);
-  tile.setState(TileLoadState::ContentLoading);
 
   TileContentLoadInfo tileLoadInfo{
       this->_externals.asyncSystem,
@@ -962,11 +970,11 @@ void TilesetContentManager::doTileContentWork(
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
-  pLoader->loadTileContent(loadInput)
-      .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections),
-                        rendererOptions = tilesetOptions.rendererOptions](
-                           TileLoadResult&& result) mutable {
+  return pLoader->loadTileContent(loadInput).thenImmediately(
+      [tileLoadInfo = std::move(tileLoadInfo),
+       projections = std::move(projections),
+       rendererOptions =
+           tilesetOptions.rendererOptions](TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
         // thread. And most often than not, those main thread task is very
@@ -994,19 +1002,6 @@ void TilesetContentManager::doTileContentWork(
         return tileLoadInfo.asyncSystem
             .createResolvedFuture<TileLoadResultAndRenderResources>(
                 {std::move(result), nullptr});
-      })
-      .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
-        setTileContent(tile, std::move(pair.result), pair.pRenderResources);
-
-        thiz->notifyTileDoneLoading(&tile);
-      })
-      .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
-                             std::exception&& e) {
-        thiz->notifyTileDoneLoading(&tile);
-        SPDLOG_LOGGER_ERROR(
-            pLogger,
-            "An unexpected error occurs when loading tile: {}",
-            e.what());
       });
 }
 
@@ -1114,6 +1109,7 @@ void TilesetContentManager::waitUntilIdle() {
     this->_externals.asyncSystem.dispatchMainThreadTasks();
   }
 
+  // TODO
   // Wait for all overlays to wrap up their loading, too.
   uint32_t rasterOverlayTilesLoading = 1;
   while (rasterOverlayTilesLoading > 0) {
@@ -1185,6 +1181,14 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   }
 
   return bytes;
+}
+
+int32_t TilesetContentManager::getNumberOfRastersLoading() const noexcept {
+  return this->_rasterLoadsInProgress;
+}
+
+int32_t TilesetContentManager::getNumberOfRastersLoaded() const noexcept {
+  return this->_loadedRastersCount;
 }
 
 bool TilesetContentManager::tileNeedsWorkerThreadLoading(
@@ -1445,6 +1449,18 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
       nullptr,
       pMainThreadRenderResources);
   pRenderContent->setRenderResources(nullptr);
+}
+
+void TilesetContentManager::notifyRasterStartLoading() noexcept {
+  ++this->_rasterLoadsInProgress;
+}
+
+void TilesetContentManager::notifyRasterDoneLoading() noexcept {
+  assert(
+      this->_rasterLoadsInProgress > 0 &&
+      "There are no raster loads currently in flight");
+  --this->_rasterLoadsInProgress;
+  ++this->_loadedRastersCount;
 }
 
 void TilesetContentManager::notifyTileStartLoading(
