@@ -60,6 +60,10 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGltf
         CesiumGltfReader
         CesiumUtility
+)
+
+target_link_libraries_system(
+    Cesium3DTilesContent
     PRIVATE
         libmorton
 )

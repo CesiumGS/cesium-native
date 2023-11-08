@@ -9,7 +9,6 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Uri.h>
 
-#include <libmorton/morton.h>
 #include <spdlog/logger.h>
 
 #include <type_traits>

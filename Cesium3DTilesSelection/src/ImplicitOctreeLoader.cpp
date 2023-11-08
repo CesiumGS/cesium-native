@@ -8,7 +8,6 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 
-#include <libmorton/morton.h>
 #include <spdlog/logger.h>
 
 #include <variant>
