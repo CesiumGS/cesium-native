@@ -252,6 +252,11 @@ void postprocess(
         continue;
       }
 
+      // Image has already been decoded
+      if (!image.cesium.pixelData.empty()) {
+        continue;
+      }
+
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
       const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);

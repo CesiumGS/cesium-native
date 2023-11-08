@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.30.0 - 2023-12-01
+
+##### Fixes :wrench:
+
+- Fixed crash when loading glTFs with data uri images.
+
 ### v0.29.0 - 2023-11-01
 
 ##### Breaking Changes :mega:
