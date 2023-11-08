@@ -89,7 +89,7 @@ CesiumGeometry::QuadtreeTileID ImplicitTilingUtilities::getSubtreeRootID(
   uint32_t subtreeLevel = tileID.level / subtreeLevels;
   uint32_t levelsLeft = tileID.level % subtreeLevels;
   return QuadtreeTileID(
-      subtreeLevel,
+      subtreeLevel * subtreeLevels,
       tileID.x >> levelsLeft,
       tileID.y >> levelsLeft);
 }
@@ -100,7 +100,7 @@ CesiumGeometry::OctreeTileID ImplicitTilingUtilities::getSubtreeRootID(
   uint32_t subtreeLevel = tileID.level / subtreeLevels;
   uint32_t levelsLeft = tileID.level % subtreeLevels;
   return OctreeTileID(
-      subtreeLevel,
+      subtreeLevel * subtreeLevels,
       tileID.x >> levelsLeft,
       tileID.y >> levelsLeft,
       tileID.z >> levelsLeft);
