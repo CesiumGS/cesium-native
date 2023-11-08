@@ -1420,25 +1420,16 @@ void Tileset::_processWorkerThreadLoadQueue() {
   // network activity
   // -) Modify doTileContentWork to not do CachingAccessor, or leave it
   // -) go over TODOS
-  // -) Use worker thread not thread pool?
 
   std::vector<TileLoadWork> newRequestWork;
-  std::vector<TileLoadWork> newProcessingWork;
-  discoverLoadWork(
-      this->_workerThreadLoadQueue,
-      newRequestWork,
-      newProcessingWork);
+  discoverLoadWork(this->_workerThreadLoadQueue, newRequestWork);
 
   // Add all content requests to the dispatcher
   if (newRequestWork.size() > 0)
     addWorkToRequestDispatcher(newRequestWork);
 
   //
-  // We have two input streams of processing work
-  // - Work that came in from update view this frame
-  // - Work that had a response that just completed
-  //
-  // Give preference to responses that just came in, these are older
+  // We have a request input stream of processing work
   //
   std::vector<TileLoadWork> workToDispatch;
 
@@ -1458,17 +1449,6 @@ void Tileset::_processWorkerThreadLoadQueue() {
   _requestDispatcher.TakeCompletedWork(availableSlots, workToDispatch);
   availableSlots -= (int32_t)workToDispatch.size();
   assert(availableSlots >= 0);
-
-  // Add processing work
-  if (newProcessingWork.size() > 0 && availableSlots > 0) {
-    std::sort(newProcessingWork.begin(), newProcessingWork.end());
-    int countToAdd =
-        std::min((int32_t)newProcessingWork.size(), availableSlots);
-    workToDispatch.insert(
-        workToDispatch.end(),
-        newProcessingWork.begin(),
-        newProcessingWork.begin() + countToAdd);
-  }
 
   // Dispatch it
   if (workToDispatch.size() > 0)
@@ -1619,12 +1599,12 @@ void checkNotAdded(TileLoadWork& newWork, std::vector<TileLoadWork>& allWork) {
 
 void Tileset::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
-    std::vector<TileLoadWork>& outRequests,
-    std::vector<TileLoadWork>& outProcessing) {
+    std::vector<TileLoadWork>& outRequests) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->_pTilesetContentManager->parseTileWork(
         loadRequest.pTile,
+        0,
         this->_options.maximumScreenSpaceError,
         parsedTileWork);
 
@@ -1632,61 +1612,52 @@ void Tileset::discoverLoadWork(
     if (parsedTileWork.empty())
       continue;
 
-    // Add any parent tasks. Same priority group, but move to the front
-    for (size_t workIndex = 0; workIndex < parsedTileWork.size() - 1;
-         ++workIndex) {
+    // Sort by depth, which should bubble parent tasks up to the top
+    // We want these to get processed first
+    std::sort(parsedTileWork.begin(), parsedTileWork.end());
+
+    // Find max depth
+    size_t maxDepth = 0;
+    size_t workIndex, endIndex = parsedTileWork.size();
+    for (workIndex = 0; workIndex < endIndex; ++workIndex) {
+      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
+      maxDepth = std::max (maxDepth, work.depthIndex);
+    }
+
+    // Add all the work, biasing priority by depth
+    for (workIndex = 0; workIndex < endIndex; ++workIndex) {
       TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
 
-      // Finalize the parent if necessary, otherwise it may never reach the
-      // Done state. Also double check that we have render content in ensure
-      // we don't assert / crash in finishLoading. The latter will only ever
-      // be a problem in a pathological tileset with a non-renderable leaf
-      // tile, but that sort of thing does happen.
-      /* TODO, is this the best place for this?
-      if (std::holds_alternative<Tile*>(work.workRef)) {
-        Tile* pTile = std::get<Tile*>(work.workRef);
-        assert(pTile);
-
-        if (pTile->getState() == TileLoadState::ContentLoaded &&
-        pTile->isRenderContent()) _pTilesetContentManager->finishLoading(*pTile,
-        _options);
-      }
-      */
+      double priorityBias = double(maxDepth - work.depthIndex);
 
       TileLoadWork newWorkUnit = {
           work.workRef,
           work.requestUrl,
           work.projections,
           loadRequest.group,
-          0};
+          loadRequest.priority + priorityBias };
 
-      checkNotAdded(newWorkUnit, outProcessing);
       checkNotAdded(newWorkUnit, outRequests);
 
-      if (work.requestUrl.empty())
-        outProcessing.push_back(newWorkUnit);
-      else
-        outRequests.push_back(newWorkUnit);
+      assert(!work.requestUrl.empty());
+      outRequests.push_back(newWorkUnit);
     }
 
-    // Add the last task at same as input priority
-    TilesetContentManager::ParsedTileWork& lastWork =
-        parsedTileWork[parsedTileWork.size() - 1];
+    // Finalize the parent if necessary, otherwise it may never reach the
+    // Done state. Also double check that we have render content in ensure
+    // we don't assert / crash in finishLoading. The latter will only ever
+    // be a problem in a pathological tileset with a non-renderable leaf
+    // tile, but that sort of thing does happen.
+    /* TODO, is this the best place for this?
+    if (std::holds_alternative<Tile*>(work.workRef)) {
+      Tile* pTile = std::get<Tile*>(work.workRef);
+      assert(pTile);
 
-    TileLoadWork newWorkUnit = {
-        lastWork.workRef,
-        lastWork.requestUrl,
-        lastWork.projections,
-        loadRequest.group,
-        loadRequest.priority};
-
-    checkNotAdded(newWorkUnit, outProcessing);
-    checkNotAdded(newWorkUnit, outRequests);
-
-    if (lastWork.requestUrl.empty())
-      outProcessing.push_back(newWorkUnit);
-    else
-      outRequests.push_back(newWorkUnit);
+      if (pTile->getState() == TileLoadState::ContentLoaded &&
+      pTile->isRenderContent()) _pTilesetContentManager->finishLoading(*pTile,
+      _options);
+    }
+    */
   }
 }
 

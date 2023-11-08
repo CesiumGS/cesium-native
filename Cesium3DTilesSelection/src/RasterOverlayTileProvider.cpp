@@ -114,6 +114,15 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
   return true;
 }
 
+void RasterOverlayTileProvider::getLoadTileThrottledWork(
+    RasterOverlayTile& tile,
+    std::vector<std::string>& outUrls) {
+  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
+    return;
+
+  getLoadTileImageWork(tile, outUrls);
+}
+
 CesiumAsync::Future<LoadedRasterOverlayImage>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,

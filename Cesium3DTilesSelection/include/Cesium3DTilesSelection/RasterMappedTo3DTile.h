@@ -184,6 +184,8 @@ public:
    */
   bool loadThrottled() noexcept;
 
+  void getLoadThrottledWork(std::vector<std::string>& outUrls);
+
   /**
    * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.
    *

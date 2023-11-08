@@ -240,6 +240,7 @@ public:
 
 private:
   friend class RasterOverlayTileProvider;
+  friend class Tileset;
 
   void setState(LoadState newState) noexcept;
 

@@ -220,6 +220,15 @@ bool RasterMappedTo3DTile::loadThrottled() noexcept {
   return provider.loadTileThrottled(*pLoading);
 }
 
+void RasterMappedTo3DTile::getLoadThrottledWork(std::vector<std::string>& outUrls) {
+  RasterOverlayTile* pLoading = this->getLoadingTile();
+  if (!pLoading)
+    return;
+
+  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
+  provider.getLoadTileThrottledWork(*pLoading, outUrls);
+}
+
 namespace {
 
 IntrusivePointer<RasterOverlayTile>

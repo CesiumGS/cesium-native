@@ -64,12 +64,18 @@ public:
 
   struct ParsedTileWork {
     TileWorkRef workRef;
+    size_t depthIndex;
     std::string requestUrl;
     std::vector<CesiumGeospatial::Projection> projections;
+
+    bool operator<(const ParsedTileWork& rhs) const noexcept {
+      return this->depthIndex > rhs.depthIndex;
+    }
   };
 
   void parseTileWork(
-      Tile* startTile,
+      Tile* pTile,
+      size_t depthIndex,
       double maximumScreenSpaceError,
       std::vector<ParsedTileWork>& outWork);
 

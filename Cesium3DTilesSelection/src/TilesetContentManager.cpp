@@ -258,6 +258,7 @@ void createQuadtreeSubdividedChildren(
 
 std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     Tile& tile,
+    size_t depthIndex,
     RasterOverlayCollection& overlays,
     double maximumScreenSpaceError,
     std::vector<TilesetContentManager::ParsedTileWork>& outWork) {
@@ -285,8 +286,13 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     if (pMapped) {
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
-      TilesetContentManager::ParsedTileWork newWork = {pMapped};
-      outWork.push_back(newWork);
+      std::vector<std::string> requestUrls;
+      pMapped->getLoadThrottledWork(requestUrls);
+
+      for (std::string& url : requestUrls) {
+        TilesetContentManager::ParsedTileWork newWork = { pMapped, depthIndex, url };
+        outWork.push_back(newWork);
+      }
     }
   }
 
@@ -841,22 +847,28 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 }
 
 void TilesetContentManager::parseTileWork(
-    Tile* startTile,
+    Tile* pTile,
+    size_t depthIndex,
     double maximumScreenSpaceError,
     std::vector<ParsedTileWork>& outWork) {
   CESIUM_TRACE("TilesetContentManager::parseTileWork");
 
   // We can't load a tile that is unloading; it has to finish unloading first.
-  if (startTile->getState() == TileLoadState::Unloading)
+  if (pTile->getState() == TileLoadState::Unloading)
     return;
 
-  if (startTile->getState() != TileLoadState::Unloaded &&
-      startTile->getState() != TileLoadState::FailedTemporarily) {
+  if (pTile->getState() != TileLoadState::Unloaded &&
+    pTile->getState() != TileLoadState::FailedTemporarily) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& rasterTile : startTile->getMappedRasterTiles()) {
-      ParsedTileWork newWork = {&rasterTile};
-      outWork.push_back(newWork);
+    for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
+      std::vector<std::string> requestUrls;
+      rasterTile.getLoadThrottledWork(requestUrls);
+
+      for (std::string& url : requestUrls) {
+        ParsedTileWork newWork = {&rasterTile, depthIndex, url};
+        outWork.push_back(newWork);
+      }
     }
     return;
   }
@@ -874,17 +886,17 @@ void TilesetContentManager::parseTileWork(
   // geometry in the worker thread at the same time though
   const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
       std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
-          &startTile->getTileID());
+          &pTile->getTileID());
   if (pUpsampleID) {
     // We can't upsample this tile until its parent tile is done loading.
-    Tile* pParentTile = startTile->getParent();
+    Tile* pParentTile = pTile->getParent();
     if (!pParentTile) {
       // we cannot upsample this tile if it doesn't have parent
       return;
     } else {
       if (pParentTile->getState() != TileLoadState::Done) {
         // Parent isn't loaded. Get the tile work required for it first
-        parseTileWork(pParentTile, maximumScreenSpaceError, outWork);
+        parseTileWork(pParentTile, depthIndex+1, maximumScreenSpaceError, outWork);
       }
     }
   } else {
@@ -893,23 +905,24 @@ void TilesetContentManager::parseTileWork(
 
   // Parse any content fetch work
   TilesetContentLoader* pLoader;
-  if (startTile->getLoader() == &this->_upsampler) {
+  if (pTile->getLoader() == &this->_upsampler) {
     pLoader = &this->_upsampler;
   } else {
     pLoader = this->_pLoader.get();
   }
 
   std::string requestUrl;
-  pLoader->getRequestWork(startTile, requestUrl);
+  pLoader->getRequestWork(pTile, requestUrl);
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
-      *startTile,
+      *pTile,
+      depthIndex,
       this->_overlayCollection,
       maximumScreenSpaceError,
       outWork);
 
-  ParsedTileWork newWork = {startTile, requestUrl, projections};
+  ParsedTileWork newWork = { pTile, depthIndex, requestUrl, projections};
   outWork.push_back(newWork);
 }
 

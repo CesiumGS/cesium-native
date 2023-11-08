@@ -23,6 +23,8 @@ public:
     return this->getAsyncSystem()
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
+
+  virtual void getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {}
 };
 } // namespace
 
