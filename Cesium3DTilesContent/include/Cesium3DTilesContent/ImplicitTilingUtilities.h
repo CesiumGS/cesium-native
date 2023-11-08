@@ -328,6 +328,19 @@ public:
   static CesiumGeospatial::S2CellBoundingVolume computeBoundingVolume(
       const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
       const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the denominator for a given implicit tile level.
+   *
+   * Divide the root tile's geometric error by this value to get the standard
+   * geometric error for tiles on the level. Or divide each component of a
+   * bounding volume by this factor to get the size of the bounding volume along
+   * that axis for tiles of this level.
+   *
+   * @param level The tile level.
+   * @return The denominator for the level.
+   */
+  static double computeLevelDenominator(uint32_t level) noexcept;
 };
 
 } // namespace Cesium3DTilesContent

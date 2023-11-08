@@ -156,7 +156,7 @@ CesiumGeospatial::GlobeRectangle subdivideRectangle(
 CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
     const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
-  double denominator = static_cast<double>(1 << tileID.level);
+  double denominator = computeLevelDenominator(tileID.level);
   return CesiumGeospatial::BoundingRegion{
       subdivideRectangle(
           rootBoundingVolume.getRectangle(),
@@ -169,7 +169,7 @@ CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
 CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
     const CesiumGeometry::OctreeTileID& tileID) noexcept {
-  double denominator = static_cast<double>(1 << tileID.level);
+  double denominator = computeLevelDenominator(tileID.level);
   double heightSize = (rootBoundingVolume.getMaximumHeight() -
                        rootBoundingVolume.getMinimumHeight()) /
                       denominator;
@@ -195,7 +195,7 @@ ImplicitTilingUtilities::computeBoundingVolume(
   const glm::dmat3& halfAxes = rootBoundingVolume.getHalfAxes();
   const glm::dvec3& center = rootBoundingVolume.getCenter();
 
-  double denominator = static_cast<double>(1 << tileID.level);
+  double denominator = computeLevelDenominator(tileID.level);
   glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
 
   glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
@@ -216,7 +216,7 @@ ImplicitTilingUtilities::computeBoundingVolume(
   const glm::dmat3& halfAxes = rootBoundingVolume.getHalfAxes();
   const glm::dvec3& center = rootBoundingVolume.getCenter();
 
-  double denominator = static_cast<double>(1 << tileID.level);
+  double denominator = computeLevelDenominator(tileID.level);
   glm::dvec3 min = center - halfAxes[0] - halfAxes[1] - halfAxes[2];
 
   glm::dvec3 xDim = halfAxes[0] * 2.0 / denominator;
@@ -243,6 +243,11 @@ ImplicitTilingUtilities::computeBoundingVolume(
           tileID),
       rootBoundingVolume.getMinimumHeight(),
       rootBoundingVolume.getMaximumHeight());
+}
+
+double
+ImplicitTilingUtilities::computeLevelDenominator(uint32_t level) noexcept {
+  return static_cast<double>(1 << level);
 }
 
 QuadtreeChildren::iterator::iterator(
