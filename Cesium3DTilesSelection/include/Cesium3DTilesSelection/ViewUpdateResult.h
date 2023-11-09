@@ -60,6 +60,8 @@ public:
   //! @endcond
 
   int32_t frameNumber = 0;
+
+  float loadProgress = 0;
 };
 
 } // namespace Cesium3DTilesSelection

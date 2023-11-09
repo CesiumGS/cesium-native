@@ -100,7 +100,7 @@ private:
   std::map<std::string, std::vector<TileLoadWork>> _requestsInFlight;
   std::vector<TileLoadWork> _doneRequests;
 
-  int _maxSimultaneousRequests = 16;
+  int _maxSimultaneousRequests = 28;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
@@ -506,6 +506,8 @@ private:
       const FrameState& frameState,
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
+
+  float _calculateLoadProgress() noexcept;
 
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;

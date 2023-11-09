@@ -377,6 +377,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
+  result.loadProgress = _calculateLoadProgress();
+
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       this->_externals.pCreditSystem;
@@ -432,11 +434,16 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   return result;
 }
+
 int32_t Tileset::getNumberOfTilesLoaded() const {
   return this->_pTilesetContentManager->getNumberOfTilesLoaded();
 }
 
 float Tileset::computeLoadProgress() noexcept {
+  return _updateResult.loadProgress;
+}
+
+float Tileset::_calculateLoadProgress() noexcept {
   int32_t queueSizeSum = static_cast<int32_t>(
       this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size());
   int32_t numOfTilesLoading =
@@ -452,17 +459,24 @@ float Tileset::computeLoadProgress() noexcept {
 
   // Amount of work actively being done
   int32_t inProgressSum =
-      queueSizeSum + numOfRequestsPending + numOfTilesLoading + numOfRastersLoading;
+    queueSizeSum + numOfRequestsPending + numOfTilesLoading + numOfRastersLoading;
 
-  // Total work so far. Add already loaded tiles and kicked tiles.
-  // Kicked tiles are transient, and never in progress, but are an indicator
-  // that there is more work to do next frame.
   int32_t completedSum = numOfTilesLoaded + numOfRastersLoaded;
 
   int32_t totalNum = inProgressSum + completedSum;
   float percentage =
       static_cast<float>(completedSum) / static_cast<float>(totalNum);
-  return (percentage * 100.f);
+
+  // TODO does this need to go away?
+  // If we are complete, do one last check if any tiles were kicked.
+  // If kick is momentary (not persistent from last frame), give another frame
+  // to see if more tiles load
+  if (percentage == 1.0f) {
+    if (this->_updateResult.tilesKicked > 0)
+      percentage = 0.99f;
+  }
+
+  return percentage * 100.0f;
 }
 
 void Tileset::forEachLoadedTile(
@@ -1675,6 +1689,8 @@ void Tileset::addWorkToRequestDispatcher(
     }
   }
 
+  SPDLOG_LOGGER_INFO(this->_externals.pLogger, "Sending work to dispatcher: {} entries", workVector.size ());
+
   _requestDispatcher.QueueRequestWork(
       workVector,
       this->_pTilesetContentManager->getRequestHeaders());
@@ -1730,6 +1746,8 @@ RequestDispatcher::~RequestDispatcher() noexcept {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
     _exitSignaled = true;
+
+    // TODO, we can crash here if there are still requests in flight
   }
 }
 
