@@ -1,0 +1,722 @@
+#pragma once
+
+#include "PropertyTypeTraits.h"
+
+#include <CesiumUtility/JsonValue.h>
+
+#include <glm/common.hpp>
+#include <glm/gtx/string_cast.hpp>
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+
+namespace CesiumGltf {
+/**
+ * @brief Default conversion between two types. No actual conversion is defined;
+ * this simply returns the default value.
+ */
+template <typename TTo, typename TFrom, typename Enable = void>
+struct MetadataConversions {
+  static TTo convert(TFrom /*from*/, TTo defaultValue) { return defaultValue; }
+};
+
+/**
+ * @brief Trivially converts any type to itself.
+ */
+template <typename T> struct MetadataConversions<T, T> {
+  static T convert(T from, T /* defaultValue*/) { return from; }
+};
+
+#pragma region Conversions to boolean
+/**
+ * @brief Converts from a scalar to a bool.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    bool,
+    TFrom,
+    std::enable_if_t<CesiumGltf::IsMetadataScalar<TFrom>::value>> {
+  /**
+   * @brief Converts a scalar to a boolean. Zero is converted to false, while
+   * nonzero values are converted to true.
+   *
+   * @param from The scalar to convert from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static bool convert(TFrom from, bool /*defaultValue*/) {
+    return from != static_cast<TFrom>(0);
+  }
+};
+
+/**
+ * @brief Converts from std::string_view to a bool.
+ */
+template <> struct MetadataConversions<bool, std::string_view> {
+private:
+  static bool
+  isEqualCaseInsensitive(const std::string_view& a, const std::string_view& b) {
+    if (a.size() != b.size()) {
+      return false;
+    }
+
+    for (size_t i = 0; i < a.size(); i++) {
+      if (std::tolower(a[i]) != std::tolower(b[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+public:
+  /**
+   * @brief Converts the contents of a std::string_view to a boolean.
+   *
+   * "0", "false", and "no" (case-insensitive) are converted to false, while
+   * "1", "true", and "yes" are converted to true. All other strings will return
+   * the default value.
+   *
+   * @param from The std::string_view to convert from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static bool convert(const std::string_view& from, bool defaultValue) {
+    if (isEqualCaseInsensitive(from, "1") ||
+        isEqualCaseInsensitive(from, "true") ||
+        isEqualCaseInsensitive(from, "yes")) {
+      return true;
+    }
+
+    if (isEqualCaseInsensitive(from, "0") ||
+        isEqualCaseInsensitive(from, "false") ||
+        isEqualCaseInsensitive(from, "no")) {
+      return false;
+    }
+
+    return defaultValue;
+  }
+};
+
+#pragma endregion
+
+#pragma region Conversions to integer
+/**
+ * @brief Converts from one integer type to another.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataInteger<TTo>::value &&
+        CesiumGltf::IsMetadataInteger<TFrom>::value &&
+        !std::is_same_v<TTo, TFrom>>> {
+  /**
+   * @brief Converts a value of the given integer to another integer type. If
+   * the integer cannot be losslessly converted to the desired type, the default
+   * value is returned.
+   *
+   * @param from The integer value to convert from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(TFrom from, TTo defaultValue) {
+    return CesiumUtility::losslessNarrowOrDefault(from, defaultValue);
+  }
+};
+
+/**
+ * @brief Converts from a floating-point type to an integer.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataInteger<TTo>::value &&
+        CesiumGltf::IsMetadataFloating<TFrom>::value>> {
+  /**
+   * @brief Converts a floating-point value to an integer type. This truncates
+   * the floating-point value, rounding it towards zero.
+   *
+   * If the value is outside the range of the integer type, the default value is
+   * returned.
+   *
+   * @param from The floating-point value to convert from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(TFrom from, TTo defaultValue) {
+    if (double(std::numeric_limits<TTo>::max()) < from ||
+        double(std::numeric_limits<TTo>::lowest()) > from) {
+      // Floating-point number is outside the range of this integer type.
+      return defaultValue;
+    }
+
+    return static_cast<TTo>(from);
+  }
+};
+
+/**
+ * @brief Converts from std::string_view to a signed integer.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    std::string_view,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataInteger<TTo>::value && std::is_signed_v<TTo>>> {
+  /**
+   * @brief Converts the contents of a std::string_view to a signed integer.
+   * This assumes that the entire std::string_view represents the number, not
+   * just a part of it.
+   *
+   * This returns the default value if no number is parsed from the string.
+   *
+   * @param from The std::string_view to parse from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(const std::string_view& from, TTo defaultValue) {
+    // Amazingly, C++ has no* string parsing functions that work with strings
+    // that might not be null-terminated. So we have to copy to a std::string
+    // (which _is_ guaranteed to be null terminated) before parsing.
+    // * except std::from_chars, but compiler/library support for the
+    //   floating-point version of that method is spotty at best.
+    std::string temp(from);
+
+    char* pLastUsed;
+    int64_t parsedValue = std::strtoll(temp.c_str(), &pLastUsed, 10);
+    if (pLastUsed == temp.c_str() + temp.size()) {
+      // Successfully parsed the entire string as an integer of this type.
+      return CesiumUtility::losslessNarrowOrDefault(parsedValue, defaultValue);
+    }
+
+    // Failed to parse as an integer. Maybe we can parse as a double and
+    // truncate it?
+    double parsedDouble = std::strtod(temp.c_str(), &pLastUsed);
+    if (pLastUsed == temp.c_str() + temp.size()) {
+      // Successfully parsed the entire string as a double.
+      // Convert it to an integer if we can.
+      double truncated = glm::trunc(parsedDouble);
+
+      int64_t asInteger = static_cast<int64_t>(truncated);
+      double roundTrip = static_cast<double>(asInteger);
+      if (roundTrip == truncated) {
+        return CesiumUtility::losslessNarrowOrDefault(asInteger, defaultValue);
+      }
+    }
+
+    return defaultValue;
+  }
+};
+
+/**
+ * @brief Converts from std::string_view to an unsigned integer.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    std::string_view,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataInteger<TTo>::value && !std::is_signed_v<TTo>>> {
+  /**
+   * @brief Converts the contents of a std::string_view to an signed integer.
+   * This assumes that the entire std::string_view represents the number, not
+   * just a part of it.
+   *
+   * This returns the default value if no number is parsed from the string.
+   *
+   * @param from The std::string_view to parse from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(const std::string_view& from, TTo defaultValue) {
+    // Amazingly, C++ has no* string parsing functions that work with strings
+    // that might not be null-terminated. So we have to copy to a std::string
+    // (which _is_ guaranteed to be null terminated) before parsing.
+    // * except std::from_chars, but compiler/library support for the
+    //   floating-point version of that method is spotty at best.
+    std::string temp(from);
+
+    char* pLastUsed;
+    uint64_t parsedValue = std::strtoull(temp.c_str(), &pLastUsed, 10);
+    if (pLastUsed == temp.c_str() + temp.size()) {
+      // Successfully parsed the entire string as an integer of this type.
+      return CesiumUtility::losslessNarrowOrDefault(parsedValue, defaultValue);
+    }
+
+    // Failed to parse as an integer. Maybe we can parse as a double and
+    // truncate it?
+    double parsedDouble = std::strtod(temp.c_str(), &pLastUsed);
+    if (pLastUsed == temp.c_str() + temp.size()) {
+      // Successfully parsed the entire string as a double.
+      // Convert it to an integer if we can.
+      double truncated = glm::trunc(parsedDouble);
+
+      uint64_t asInteger = static_cast<uint64_t>(truncated);
+      double roundTrip = static_cast<double>(asInteger);
+      if (roundTrip == truncated) {
+        return CesiumUtility::losslessNarrowOrDefault(asInteger, defaultValue);
+      }
+    }
+
+    return defaultValue;
+  }
+};
+
+/**
+ * @brief Converts from a boolean to an integer type.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    bool,
+    std::enable_if_t<CesiumGltf::IsMetadataInteger<TTo>::value>> {
+  /**
+   * @brief Converts a boolean to an integer. This returns 1 for true, 0 for
+   * false.
+   *
+   * @param from The boolean value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(bool from, TTo /*defaultValue*/) { return from ? 1 : 0; }
+};
+#pragma endregion
+
+#pragma region Conversions to float
+/**
+ * @brief Converts from a boolean to a float.
+ */
+template <> struct MetadataConversions<float, bool> {
+  /**
+   * @brief Converts a boolean to a float. This returns 1.0f for true, 0.0f for
+   * false.
+   *
+   * @param from The boolean value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static float convert(bool from, float /*defaultValue*/) {
+    return from ? 1.0f : 0.0f;
+  }
+};
+
+/**
+ * @brief Converts from an integer type to a float.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    float,
+    TFrom,
+    std::enable_if_t<CesiumGltf::IsMetadataInteger<TFrom>::value>> {
+  /**
+   * @brief Converts an integer to a float. The value may lose precision during
+   * conversion.
+   *
+   * @param from The integer value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static float convert(TFrom from, float /*defaultValue*/) {
+    return static_cast<float>(from);
+  }
+};
+
+/**
+ * @brief Converts from a double to a float.
+ */
+template <> struct MetadataConversions<float, double> {
+  /**
+   * @brief Converts a double to a float. The value may lose precision during
+   * conversion.
+   *
+   * If the value is outside the range of a float, the default value is
+   * returned.
+   *
+   * @param from The double value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static float convert(double from, float defaultValue) {
+    if (from > std::numeric_limits<float>::max() ||
+        from < std::numeric_limits<float>::lowest()) {
+      return defaultValue;
+    }
+    return static_cast<float>(from);
+  }
+};
+
+/**
+ * @brief Converts from a std::string_view to a float.
+ */
+template <> struct MetadataConversions<float, std::string_view> {
+  /**
+   * @brief Converts a std::string_view to a float. This assumes that the entire
+   * std::string_view represents the number, not just a part of it.
+   *
+   * This returns the default value if no number is parsed from the string.
+   *
+   * @param from The std::string_view to parse from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static float convert(const std::string_view& from, float defaultValue) {
+    // Amazingly, C++ has no* string parsing functions that work with strings
+    // that might not be null-terminated. So we have to copy to a std::string
+    // (which _is_ guaranteed to be null terminated) before parsing.
+    // * except std::from_chars, but compiler/library support for the
+    //   floating-point version of that method is spotty at best.
+    std::string temp(from);
+
+    char* pLastUsed;
+    float parsedValue = std::strtof(temp.c_str(), &pLastUsed);
+    if (pLastUsed == temp.c_str() + temp.size() && !std::isinf(parsedValue)) {
+      // Successfully parsed the entire string as a float.
+      return parsedValue;
+    }
+    return defaultValue;
+  }
+};
+#pragma endregion
+
+#pragma region Conversions to double
+/**
+ * @brief Converts from a boolean to a double.
+ */
+template <> struct MetadataConversions<double, bool> {
+  /**
+   * @brief Converts a boolean to a double. This returns 1.0 for true, 0.0 for
+   * false.
+   *
+   * @param from The boolean value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static double convert(bool from, double /*defaultValue*/) {
+    return from ? 1.0 : 0.0;
+  }
+};
+
+/**
+ * @brief Converts from any integer type to a double.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    double,
+    TFrom,
+    std::enable_if_t<CesiumGltf::IsMetadataInteger<TFrom>::value>> {
+  /**
+   * @brief Converts any integer type to a double. The value may lose precision
+   * during conversion.
+   *
+   * @param from The boolean value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static double convert(TFrom from, double /*defaultValue*/) {
+    return static_cast<double>(from);
+  }
+};
+
+/**
+ * @brief Converts from a float to a double.
+ */
+template <> struct MetadataConversions<double, float> {
+  /**
+   * @brief Converts from a float to a double.
+   *
+   * @param from The float value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static double convert(float from, double /*defaultValue*/) {
+    return static_cast<double>(from);
+  }
+};
+
+/**
+ * @brief Converts from std::string_view to a double.
+ */
+template <> struct MetadataConversions<double, std::string_view> {
+  /**
+   * Converts a std::string_view to a double. This assumes that the entire
+   * std::string_view represents the number, not just a part of it.
+   *
+   * This returns the default value if no number is parsed from the string.
+   *
+   * @param from The std::string_view to parse from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static double convert(const std::string_view& from, double defaultValue) {
+    // Amazingly, C++ has no* string parsing functions that work with strings
+    // that might not be null-terminated. So we have to copy to a std::string
+    // (which _is_ guaranteed to be null terminated) before parsing.
+    // * except std::from_chars, but compiler/library support for the
+    //   floating-point version of that method is spotty at best.
+    std::string temp(from);
+
+    char* pLastUsed;
+    double parsedValue = std::strtod(temp.c_str(), &pLastUsed);
+    if (pLastUsed == temp.c_str() + temp.size() && !std::isinf(parsedValue)) {
+      // Successfully parsed the entire string as a double.
+      return parsedValue;
+    }
+    return defaultValue;
+  }
+};
+#pragma endregion
+
+#pragma region Conversions to string
+/**
+ * @brief Converts from a boolean to a string.
+ */
+template <> struct MetadataConversions<std::string, bool> {
+  /**
+   * @brief Converts a boolean to a FString. Returns "true" for true and "false"
+   * for false.
+   *
+   * @param from The boolean to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static std::string convert(bool from, const std::string& /*defaultValue*/) {
+    return from ? "true" : "false";
+  }
+};
+
+/**
+ * @brief Converts from a scalar to a string.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    std::string,
+    TFrom,
+    std::enable_if_t<IsMetadataScalar<TFrom>::value>> {
+  /**
+   * @brief Converts a scalar to a FString.
+   *
+   * @param from The scalar to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static std::string convert(TFrom from, const std::string& /*defaultValue*/) {
+    return std::to_string(from);
+  }
+};
+
+/**
+ * @brief Converts from a glm::vecN to a string.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    std::string,
+    TFrom,
+    std::enable_if_t<IsMetadataVecN<TFrom>::value>> {
+  /**
+   * @brief Converts a glm::vecN to a FString. This uses the format that
+   * glm::to_string() outputs for vecNs,
+   *
+   * @param from The glm::vecN to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static std::string
+  convert(const TFrom& from, const std::string& /*defaultValue*/) {
+    return glm::to_string(from);
+  }
+};
+
+/**
+ * @brief Converts from a glm::matN to a string.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    std::string,
+    TFrom,
+    std::enable_if_t<IsMetadataMatN<TFrom>::value>> {
+  /**
+   * @brief Converts a glm::matN to a FString. This uses the format that
+   * glm::to_string() outputs for matNs.
+   *
+   * @param from The glm::matN to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static std::string
+  convert(const TFrom& from, const std::string& /*defaultValue*/) {
+    return glm::to_string(from);
+  }
+};
+
+/**
+ * @brief Converts from a std::string_view to a std::string.
+ */
+template <> struct MetadataConversions<std::string, std::string_view> {
+  /**
+   * @brief Converts from a std::string_view to a std::string.
+   */
+  static std::string
+  convert(const std::string_view& from, const std::string& /*defaultValue*/) {
+    return std::string(from.data(), from.size());
+  }
+};
+
+#pragma endregion
+
+#pragma region Conversions to glm::vecN
+/**
+ * Converts from a boolean to a vecN.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    bool,
+    std::enable_if_t<IsMetadataVecN<TTo>::value>> {
+  /**
+   * Converts a boolean to a vecN. The boolean is converted to an integer
+   * value of 1 for true or 0 for false. The returned vector is initialized with
+   * this value in both of its components.
+   *
+   * @param from The boolean to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(bool from, const TTo& /*defaultValue*/) {
+    return from ? TTo(1) : TTo(0);
+  }
+};
+
+/**
+ * Converts from a signed integer type to a vecN.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataVecN<TTo>::value &&
+        CesiumGltf::IsMetadataInteger<TFrom>::value &&
+        std::is_signed_v<TFrom>>> {
+  /**
+   * Converts a signed integer to a vecN. The returned vector is initialized
+   * with the value in all of its components. If the integer cannot be
+   * reasonably converted to the component type of the vecN, the default value
+   * is returned.
+   *
+   * @param from The signed integer value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(TFrom from, const TTo& defaultValue) {
+    using ToValueType = typename TTo::value_type;
+    ToValueType max = std::numeric_limits<ToValueType>::max();
+
+    if constexpr (std::is_signed_v<TFrom>) {
+      ToValueType min = std::numeric_limits<ToValueType>::lowest();
+      if (from > max || from < min) {
+        return defaultValue;
+      }
+    } else {
+      if (from > static_cast<uint64_t>(max)) {
+        return defaultValue;
+      }
+    }
+    return TTo(MetadataConversions<ToValueType, TFrom>::convert(from, 0));
+  }
+};
+
+/**
+ * Converts from an unsigned integer type to a vecN.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataVecN<TTo>::value &&
+        CesiumGltf::IsMetadataInteger<TFrom>::value &&
+        std::is_unsigned_v<TFrom>>> {
+  /**
+   * Converts an unsigned integer to a vecN. The returned vector is initialized
+   * with the value in all of its components. If the integer cannot be
+   * reasonably converted to the component type of the vecN, the default value
+   * is returned.
+   *
+   * @param from The unsigned integer value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(TFrom from, const TTo& defaultValue) {
+    using ToValueType = typename TTo::value_type;
+    ToValueType max = std::numeric_limits<ToValueType>::max();
+
+    if (from > static_cast<uint64_t>(max)) {
+      return defaultValue;
+    }
+    return TTo(MetadataConversions<ToValueType, TFrom>::convert(from, 0));
+  }
+};
+
+/**
+ * Converts from a floating-point scalar type to a vecN.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataVecN<TTo>::value &&
+        CesiumGltf::IsMetadataFloating<TFrom>::value>> {
+  /**
+   * Converts a floating-point scalar to a vecN. The returned vector is
+   * initialized with the value in all of its components. If the scalar cannot
+   * be reasonably converted to the component type of the vecN, the default
+   * value is returned. The value may lose precision during conversion.
+   *
+   * @param from The floating-point scalar value to be converted.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(TFrom from, const TTo& defaultValue) {
+    using ToValueType = typename TTo::value_type;
+    ToValueType max = std::numeric_limits<ToValueType>::max();
+    ToValueType min = std::numeric_limits<ToValueType>::lowest();
+    if (from > static_cast<double>(max) || from < static_cast<double>(min)) {
+      return defaultValue;
+    }
+    return TTo(MetadataConversions<ToValueType, TFrom>::convert(from, 0));
+  }
+};
+
+/**
+ * @brief Converts from a vecN type to another vecN type.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataVecN<TTo>::value &&
+        CesiumGltf::IsMetadataVecN<TFrom>::value &&
+        !std::is_same_v<TTo, TFrom>>> {
+  /**
+   * @brief Converts a value of the given vecN to another vecN type. If the
+   * given vector has more components than the target vecN type, then only its
+   * first N components will be used. Otherwise, if the target vecN type has
+   * more components, the extra components will be initialized to zero.
+   *
+   * If any of the relevant components cannot be converted to the target vecN
+   * component type, the default value is returned.
+   *
+   * @param from The vecN value to convert from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static TTo convert(TFrom from, TTo defaultValue) {
+    TTo result = TTo(0);
+
+    constexpr glm::length_t toLength = TTo::length();
+    constexpr glm::length_t fromLength = TFrom::length();
+
+    constexpr glm::length_t validLength = glm::min(toLength, fromLength);
+
+    using ToValueType = typename TTo::value_type;
+    ToValueType max = std::numeric_limits<ToValueType>::max();
+    ToValueType min = std::numeric_limits<ToValueType>::lowest();
+
+    using FromValueType = typename TFrom::value_type;
+
+    for (glm::length_t i = 0; i < validLength; i++) {
+      if (from[i] > max || from[i] < min) {
+        return defaultValue;
+      }
+      result[i] =
+          MetadataConversions<ToValueType, FromValueType>::convert(from[i], 0);
+    }
+
+    return result;
+  }
+};
+#pragma endregion
+
+} // namespace CesiumGltf
