@@ -70,8 +70,9 @@ class RequestDispatcher {
 public:
   RequestDispatcher(
       CesiumAsync::AsyncSystem asyncSystem,
-      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor)
+      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor, std::shared_ptr<spdlog::logger> pLogger)
       : _asyncSystem(asyncSystem),
+        _pLogger(pLogger),
         _pAssetAccessor(pAssetAccessor) {}
   ~RequestDispatcher() noexcept;
 
@@ -83,7 +84,9 @@ public:
 
   void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
 
-  size_t GetNumberOfRequestsPending();
+  size_t GetPendingCount();
+
+  void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
 
 private:
   void dispatchRequest(TileLoadWork& request);
@@ -96,15 +99,17 @@ private:
   std::mutex _requestsLock;
   bool _dispatcherIdle = true;
   bool _exitSignaled = false;
-  std::vector<TileLoadWork> _queuedRequests;
-  std::map<std::string, std::vector<TileLoadWork>> _requestsInFlight;
-  std::vector<TileLoadWork> _doneRequests;
+  std::vector<TileLoadWork> _queuedWork;
+  std::map<std::string, std::vector<TileLoadWork>> _inFlightWork;
+  std::vector<TileLoadWork> _doneWork;
 
   int _maxSimultaneousRequests = 28;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
+
+  std::shared_ptr<spdlog::logger> _pLogger;
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
 };
@@ -575,6 +580,8 @@ private:
   void addWorkToRequestDispatcher(std::vector<TileLoadWork>& workVector);
 
   void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
+
+  void assertViewResults();
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,

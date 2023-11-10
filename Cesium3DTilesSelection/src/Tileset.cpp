@@ -44,7 +44,10 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _requestDispatcher(_asyncSystem, _externals.pAssetAccessor),
+      _requestDispatcher(
+          externals.asyncSystem,
+          externals.pAssetAccessor,
+          externals.pLogger),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -63,7 +66,10 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _requestDispatcher(_asyncSystem, _externals.pAssetAccessor),
+      _requestDispatcher(
+          externals.asyncSystem,
+          externals.pAssetAccessor,
+          externals.pLogger),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -82,7 +88,10 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _requestDispatcher(_asyncSystem, _externals.pAssetAccessor),
+      _requestDispatcher(
+          externals.asyncSystem,
+          externals.pAssetAccessor,
+          externals.pLogger),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -297,6 +306,34 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
+void Tileset::assertViewResults() {
+  int32_t inProgressSum = static_cast<uint32_t>(_updateResult.requestsPending) +
+    _updateResult.tilesLoading +
+    _updateResult.rastersLoading;
+  int32_t completedSum =
+    _updateResult.tilesLoaded + _updateResult.rastersLoaded;
+
+  if (inProgressSum == 0 && completedSum > 0) {
+    // We should be done right?
+    // If we have tiles kicked, we're not done, but there's nothing in progress?
+    assert(this->_updateResult.tilesKicked == 0);
+  }
+
+  if (inProgressSum > 0) {
+    size_t queued, inFlight, done;
+    this->_requestDispatcher.GetRequestsStats(queued, inFlight, done);
+
+    SPDLOG_LOGGER_INFO(
+      this->_externals.pLogger,
+      "{} in flight, {} tiles, {} rasters. ReqQueue {} DoneQueue {}",
+      inFlight,
+      _updateResult.tilesLoading,
+      _updateResult.rastersLoading,
+      queued,
+      done);
+  }
+}
+
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -372,11 +409,16 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
-  result.tilesLoading = this->_pTilesetContentManager->getNumberOfTilesLoading();
+  result.tilesLoading =
+      this->_pTilesetContentManager->getNumberOfTilesLoading();
   result.tilesLoaded = this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  result.rastersLoading = this->_pTilesetContentManager->getNumberOfRastersLoading();
-  result.rastersLoaded = this->_pTilesetContentManager->getNumberOfRastersLoaded();
-  result.requestsPending = this->_requestDispatcher.GetNumberOfRequestsPending();
+  result.rastersLoading =
+      this->_pTilesetContentManager->getNumberOfRastersLoading();
+  result.rastersLoaded =
+      this->_pTilesetContentManager->getNumberOfRastersLoaded();
+  result.requestsPending = this->_requestDispatcher.GetPendingCount();
+
+  assertViewResults ();
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -440,11 +482,15 @@ int32_t Tileset::getNumberOfTilesLoaded() const {
 
 float Tileset::computeLoadProgress() noexcept {
   // Amount of work actively being done
-  size_t queueLengthsSum = _updateResult.mainThreadTileLoadQueueLength + _updateResult.workerThreadTileLoadQueueLength;
-  int32_t inProgressSum =
-    static_cast<uint32_t>(queueLengthsSum) + static_cast<uint32_t>(_updateResult.requestsPending) + _updateResult.tilesLoading + _updateResult.rastersLoading;
+  size_t queueLengthsSum = _updateResult.mainThreadTileLoadQueueLength +
+                           _updateResult.workerThreadTileLoadQueueLength;
+  int32_t inProgressSum = static_cast<uint32_t>(queueLengthsSum) +
+                          static_cast<uint32_t>(_updateResult.requestsPending) +
+                          _updateResult.tilesLoading +
+                          _updateResult.rastersLoading;
 
-  int32_t completedSum = _updateResult.tilesLoaded + _updateResult.rastersLoaded;
+  int32_t completedSum =
+      _updateResult.tilesLoaded + _updateResult.rastersLoaded;
 
   int32_t totalNum = inProgressSum + completedSum;
   float percentage =
@@ -1441,11 +1487,12 @@ void Tileset::_processWorkerThreadLoadQueue() {
   int32_t numberOfTilesLoading =
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numberOfRastersLoading =
-    this->_pTilesetContentManager->getNumberOfRastersLoading();
+      this->_pTilesetContentManager->getNumberOfRastersLoading();
   int32_t maxTileLoads =
       static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
 
-  int32_t availableSlots = maxTileLoads - numberOfTilesLoading - numberOfRastersLoading;
+  int32_t availableSlots =
+      maxTileLoads - numberOfTilesLoading - numberOfRastersLoading;
   assert(availableSlots >= 0);
   if (availableSlots == 0)
     return;
@@ -1672,7 +1719,10 @@ void Tileset::addWorkToRequestDispatcher(
     }
   }
 
-  SPDLOG_LOGGER_INFO(this->_externals.pLogger, "Sending work to dispatcher: {} entries", workVector.size ());
+  SPDLOG_LOGGER_INFO(
+      this->_externals.pLogger,
+      "Sending work to dispatcher: {} entries",
+      workVector.size());
 
   _requestDispatcher.QueueRequestWork(
       workVector,
@@ -1739,7 +1789,7 @@ void RequestDispatcher::QueueRequestWork(
     std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   // TODO, assert tile is not already loading? or already post-processing?
   std::lock_guard<std::mutex> lock(_requestsLock);
-  _queuedRequests.insert(_queuedRequests.end(), work.begin(), work.end());
+  _queuedWork.insert(_queuedWork.end(), work.begin(), work.end());
 
   _requestHeaders = requestHeaders;
 }
@@ -1752,10 +1802,9 @@ void RequestDispatcher::onRequestFinished(
   if (_exitSignaled)
     return;
 
-  // Find this request from in-flight
   std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _requestsInFlight.find(request.requestUrl);
-  assert(foundIt != _requestsInFlight.end());
+  foundIt = _inFlightWork.find(request.requestUrl);
+  assert(foundIt != _inFlightWork.end());
 
   // Put it done work
   std::vector<TileLoadWork>& doneWorkVec = foundIt->second;
@@ -1763,14 +1812,18 @@ void RequestDispatcher::onRequestFinished(
     if (pResponseData)
       doneWork.responseData = *pResponseData;
     // Put in done requests
-    _doneRequests.push_back(doneWork);
+    _doneWork.push_back(doneWork);
   }
 
+  //SPDLOG_LOGGER_INFO(_pLogger, "Received network request: {}", request.requestUrl);
+
   // Remove it
-  _requestsInFlight.erase(foundIt);
+  _inFlightWork.erase(foundIt);
 }
 
 void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
+
+  //SPDLOG_LOGGER_INFO(_pLogger, "Send network request: {}", request.requestUrl);
 
   // TODO. This uses the externals asset accessor (unreal, gunzip, etc)
   // Use one that only fetches from SQLite cache and network
@@ -1798,13 +1851,13 @@ void RequestDispatcher::stageRequestWork(
     std::vector<TileLoadWork>& stagedWork) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
-  size_t queueCount = _queuedRequests.size();
+  size_t queueCount = _queuedWork.size();
   if (queueCount == 0)
     return;
 
   // Sort our incoming request queue by priority
   // Sort descending so highest priority is at back of vector
-  std::sort(_queuedRequests.rbegin(), _queuedRequests.rend());
+  std::sort(_queuedWork.rbegin(), _queuedWork.rend());
 
   // Stage amount of work specified by caller, or whatever is left
   size_t dispatchCount = std::min(queueCount, availableSlotCount);
@@ -1812,18 +1865,18 @@ void RequestDispatcher::stageRequestWork(
   for (size_t index = 0; index < dispatchCount; ++index) {
 
     // Take from back of queue (highest priority).
-    assert(_queuedRequests.size() > 0);
-    TileLoadWork request = _queuedRequests.back();
-    _queuedRequests.pop_back();
+    assert(_queuedWork.size() > 0);
+    TileLoadWork request = _queuedWork.back();
+    _queuedWork.pop_back();
 
     // Move to in flight registry
     std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-    foundIt = _requestsInFlight.find(request.requestUrl);
-    if (foundIt == _requestsInFlight.end()) {
+    foundIt = _inFlightWork.find(request.requestUrl);
+    if (foundIt == _inFlightWork.end()) {
       // Request doesn't exist, set up a new one
       std::vector<TileLoadWork> newWorkVec;
       newWorkVec.push_back(request);
-      _requestsInFlight[request.requestUrl] = newWorkVec;
+      _inFlightWork[request.requestUrl] = newWorkVec;
 
       // Copy to our output vector
       stagedWork.push_back(request);
@@ -1834,30 +1887,40 @@ void RequestDispatcher::stageRequestWork(
   }
 }
 
-size_t RequestDispatcher::GetNumberOfRequestsPending() {
+size_t RequestDispatcher::GetPendingCount()
+{
   std::lock_guard<std::mutex> lock(_requestsLock);
-  return _queuedRequests.size() + _requestsInFlight.size() +
-         _doneRequests.size();
+  return _queuedWork.size() + _inFlightWork.size() + _doneWork.size();
+}
+
+void RequestDispatcher::GetRequestsStats(
+    size_t& queued,
+    size_t& inFlight,
+    size_t& done) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  queued = _queuedWork.size();
+  inFlight = _inFlightWork.size();
+  done = _doneWork.size();
 }
 
 void RequestDispatcher::TakeCompletedWork(
     size_t maxCount,
     std::vector<TileLoadWork>& out) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  size_t count = _doneRequests.size();
+  size_t count = _doneWork.size();
   if (count == 0)
     return;
 
   // Populate our output
   size_t numberToTake = std::min(count, maxCount);
   out = std::vector<TileLoadWork>(
-      _doneRequests.begin(),
-      _doneRequests.begin() + numberToTake);
+    _doneWork.begin(),
+    _doneWork.begin() + numberToTake);
 
   // Remove these entries from the source
-  _doneRequests = std::vector<TileLoadWork>(
-      _doneRequests.begin() + numberToTake,
-      _doneRequests.end());
+  _doneWork = std::vector<TileLoadWork>(
+    _doneWork.begin() + numberToTake,
+    _doneWork.end());
 }
 
 void RequestDispatcher::WakeIfNeeded() {
@@ -1878,7 +1941,7 @@ void RequestDispatcher::WakeIfNeeded() {
       {
         std::lock_guard<std::mutex> lock(_requestsLock);
         slotsAvailable =
-            _maxSimultaneousRequests - (int)_requestsInFlight.size();
+            _maxSimultaneousRequests - (int)_inFlightWork.size();
       }
       assert(slotsAvailable >= 0);
 
@@ -1894,7 +1957,7 @@ void RequestDispatcher::WakeIfNeeded() {
       // Continue loop until our queue is empty or exit is signaled
       {
         std::lock_guard<std::mutex> lock(_requestsLock);
-        if (_queuedRequests.empty() || _exitSignaled) {
+        if (_queuedWork.empty() || _exitSignaled) {
           this->_dispatcherIdle = true;
           break;
         }
