@@ -2,13 +2,15 @@
 
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesSelection/GltfConverters.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 
 #include <libmorton/morton.h>
 #include <spdlog/logger.h>
+
+using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {
 namespace {

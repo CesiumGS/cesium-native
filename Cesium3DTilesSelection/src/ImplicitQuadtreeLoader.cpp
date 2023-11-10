@@ -2,7 +2,7 @@
 
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesSelection/GltfConverters.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -13,6 +13,8 @@
 
 #include <type_traits>
 #include <variant>
+
+using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {
 namespace {

@@ -47,6 +47,7 @@ target_link_libraries_system(
     PUBLIC
         glm
         uriparser
+        spdlog
 )
 
 target_link_libraries(CesiumUtility

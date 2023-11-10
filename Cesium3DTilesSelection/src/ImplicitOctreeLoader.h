@@ -1,7 +1,6 @@
 #pragma once
 
-#include "SubtreeAvailability.h"
-
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
@@ -51,7 +50,7 @@ public:
 
   void addSubtreeAvailability(
       const CesiumGeometry::OctreeTileID& subtreeID,
-      SubtreeAvailability&& subtreeAvailability);
+      Cesium3DTilesContent::SubtreeAvailability&& subtreeAvailability);
 
 private:
   static std::string resolveUrl(
@@ -65,7 +64,8 @@ private:
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitOctreeBoundingVolume _boundingVolume;
-  std::vector<std::unordered_map<uint64_t, SubtreeAvailability>>
+  std::vector<
+      std::unordered_map<uint64_t, Cesium3DTilesContent::SubtreeAvailability>>
       _loadedSubtrees;
 };
 } // namespace Cesium3DTilesSelection

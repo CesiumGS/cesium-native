@@ -44,6 +44,14 @@ public:
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    */
+  Credit createCredit(std::string&& html, bool showOnScreen = false);
+
+  /**
+   * @brief Inserts a credit string
+   *
+   * @return If this string already exists, returns a Credit handle to the
+   * existing entry. Otherwise returns a Credit handle to a new entry.
+   */
   Credit createCredit(const std::string& html, bool showOnScreen = false);
 
   /**
