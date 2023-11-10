@@ -39,17 +39,10 @@ public:
    */
   std::unordered_set<Tile*> tilesFadingOut;
 
-  /**
-   * @brief The number of tiles in the worker thread load queue.
-   */
-  int32_t workerThreadTileLoadQueueLength = 0;
-
-  /**
-   * @brief The number of tiles in the main thread load queue.
-   */
-  int32_t mainThreadTileLoadQueueLength = 0;
-
   //! @cond Doxygen_Suppress
+  size_t workerThreadTileLoadQueueLength = 0;
+  size_t mainThreadTileLoadQueueLength = 0;
+
   uint32_t tilesVisited = 0;
   uint32_t culledTilesVisited = 0;
   uint32_t tilesCulled = 0;
@@ -57,11 +50,34 @@ public:
   uint32_t tilesWaitingForOcclusionResults = 0;
   uint32_t tilesKicked = 0;
   uint32_t maxDepthVisited = 0;
+
+  uint32_t tilesLoading = 0;
+  uint32_t tilesLoaded = 0;
+  uint32_t rastersLoading = 0;
+  uint32_t rastersLoaded = 0;
+  size_t requestsPending = 0;
+
+  void resetStats() {
+    workerThreadTileLoadQueueLength = 0;
+    mainThreadTileLoadQueueLength = 0;
+
+    tilesVisited = 0;
+    culledTilesVisited = 0;
+    tilesCulled = 0;
+    tilesOccluded = 0;
+    tilesWaitingForOcclusionResults = 0;
+    tilesKicked = 0;
+    maxDepthVisited = 0;
+
+    tilesLoading = 0;
+    tilesLoaded = 0;
+    rastersLoading = 0;
+    rastersLoaded = 0;
+    requestsPending = 0;
+  }
   //! @endcond
 
   int32_t frameNumber = 0;
-
-  float loadProgress = 0;
 };
 
 } // namespace Cesium3DTilesSelection

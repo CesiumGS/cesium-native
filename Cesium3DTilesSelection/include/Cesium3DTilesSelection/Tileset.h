@@ -507,8 +507,6 @@ private:
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
 
-  float _calculateLoadProgress() noexcept;
-
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 

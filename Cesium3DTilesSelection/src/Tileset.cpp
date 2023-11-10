@@ -314,13 +314,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   ViewUpdateResult& result = this->_updateResult;
   result.frameNumber = currentFrameNumber;
   result.tilesToRenderThisFrame.clear();
-  result.tilesVisited = 0;
-  result.culledTilesVisited = 0;
-  result.tilesCulled = 0;
-  result.tilesOccluded = 0;
-  result.tilesWaitingForOcclusionResults = 0;
-  result.tilesKicked = 0;
-  result.maxDepthVisited = 0;
+  result.resetStats();
+
+  result.workerThreadTileLoadQueueLength = this->_workerThreadLoadQueue.size();
+  result.mainThreadTileLoadQueueLength = this->_mainThreadLoadQueue.size();
 
   if (!_options.enableLodTransitionPeriod) {
     result.tilesFadingOut.clear();
@@ -361,10 +358,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  result.workerThreadTileLoadQueueLength =
-      static_cast<int32_t>(this->_workerThreadLoadQueue.size());
-  result.mainThreadTileLoadQueueLength =
-      static_cast<int32_t>(this->_mainThreadLoadQueue.size());
+  result.workerThreadTileLoadQueueLength = this->_workerThreadLoadQueue.size();
+  result.mainThreadTileLoadQueueLength = this->_mainThreadLoadQueue.size();
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->getExternals().pTileOcclusionProxyPool;
@@ -377,7 +372,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
-  result.loadProgress = _calculateLoadProgress();
+  result.tilesLoading = this->_pTilesetContentManager->getNumberOfTilesLoading();
+  result.tilesLoaded = this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  result.rastersLoading = this->_pTilesetContentManager->getNumberOfRastersLoading();
+  result.rastersLoaded = this->_pTilesetContentManager->getNumberOfRastersLoaded();
+  result.requestsPending = this->_requestDispatcher.GetNumberOfRequestsPending();
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -440,28 +439,12 @@ int32_t Tileset::getNumberOfTilesLoaded() const {
 }
 
 float Tileset::computeLoadProgress() noexcept {
-  return _updateResult.loadProgress;
-}
-
-float Tileset::_calculateLoadProgress() noexcept {
-  int32_t queueSizeSum = static_cast<int32_t>(
-      this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size());
-  int32_t numOfTilesLoading =
-      this->_pTilesetContentManager->getNumberOfTilesLoading();
-  int32_t numOfRastersLoading =
-    this->_pTilesetContentManager->getNumberOfRastersLoading();
-  int32_t numOfTilesLoaded =
-      this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  int32_t numOfRastersLoaded =
-    this->_pTilesetContentManager->getNumberOfRastersLoaded();
-  int32_t numOfRequestsPending =
-      (int32_t)this->_requestDispatcher.GetNumberOfRequestsPending();
-
   // Amount of work actively being done
+  size_t queueLengthsSum = _updateResult.mainThreadTileLoadQueueLength + _updateResult.workerThreadTileLoadQueueLength;
   int32_t inProgressSum =
-    queueSizeSum + numOfRequestsPending + numOfTilesLoading + numOfRastersLoading;
+    static_cast<uint32_t>(queueLengthsSum) + static_cast<uint32_t>(_updateResult.requestsPending) + _updateResult.tilesLoading + _updateResult.rastersLoading;
 
-  int32_t completedSum = numOfTilesLoaded + numOfRastersLoaded;
+  int32_t completedSum = _updateResult.tilesLoaded + _updateResult.rastersLoaded;
 
   int32_t totalNum = inProgressSum + completedSum;
   float percentage =
