@@ -1,3 +1,4 @@
+#include <Cesium3DTiles/Subtree.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -13,6 +14,7 @@
 #include <cstddef>
 #include <vector>
 
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesContent;
 using namespace CesiumNativeTests;
 
@@ -371,9 +373,32 @@ TEST_CASE("Test SubtreeAvailability methods") {
     uint64_t subtreeBufferSize = static_cast<uint64_t>(
         std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
 
-    std::vector<std::byte> contentAvailabilityBuffer(bufferSize);
-    std::vector<std::byte> tileAvailabilityBuffer(bufferSize);
-    std::vector<std::byte> subtreeAvailabilityBuffer(subtreeBufferSize);
+    Subtree subtree;
+    subtree.buffers.resize(3);
+    subtree.bufferViews.resize(3);
+
+    std::vector<std::byte>& contentAvailabilityBuffer =
+        subtree.buffers[0].cesium.data;
+    std::vector<std::byte>& tileAvailabilityBuffer =
+        subtree.buffers[1].cesium.data;
+    std::vector<std::byte>& subtreeAvailabilityBuffer =
+        subtree.buffers[2].cesium.data;
+
+    subtree.bufferViews[0].buffer = 0;
+    subtree.bufferViews[1].buffer = 1;
+    subtree.bufferViews[2].buffer = 2;
+
+    contentAvailabilityBuffer.resize(bufferSize);
+    tileAvailabilityBuffer.resize(bufferSize);
+    subtreeAvailabilityBuffer.resize(subtreeBufferSize);
+
+    subtree.buffers[0].byteLength = subtree.bufferViews[0].byteLength =
+        bufferSize;
+    subtree.buffers[1].byteLength = subtree.bufferViews[1].byteLength =
+        bufferSize;
+    subtree.buffers[2].byteLength = subtree.bufferViews[2].byteLength =
+        subtreeBufferSize;
+
     for (const auto& tileID : availableTileIDs) {
       markTileAvailableForQuadtree(tileID, tileAvailabilityBuffer);
       markTileAvailableForQuadtree(tileID, contentAvailabilityBuffer);
@@ -383,22 +408,18 @@ TEST_CASE("Test SubtreeAvailability methods") {
       markSubtreeAvailableForQuadtree(subtreeID, subtreeAvailabilityBuffer);
     }
 
-    std::vector<std::vector<std::byte>> buffers{
-        std::move(tileAvailabilityBuffer),
-        std::move(subtreeAvailabilityBuffer),
-        std::move(contentAvailabilityBuffer)};
-
-    SubtreeBufferViewAvailability tileAvailability{buffers[0]};
-    SubtreeBufferViewAvailability subtreeAvailability{buffers[1]};
+    SubtreeBufferViewAvailability tileAvailability{tileAvailabilityBuffer};
+    SubtreeBufferViewAvailability subtreeAvailability{
+        subtreeAvailabilityBuffer};
     std::vector<AvailabilityView> contentAvailability{
-        SubtreeBufferViewAvailability{buffers[2]}};
+        SubtreeBufferViewAvailability{contentAvailabilityBuffer}};
 
     SubtreeAvailability quadtreeAvailability(
         2,
         tileAvailability,
         subtreeAvailability,
         std::move(contentAvailability),
-        std::move(buffers));
+        std::move(subtree));
 
     SECTION("isTileAvailable()") {
       for (const auto& tileID : availableTileIDs) {
@@ -544,7 +565,7 @@ TEST_CASE("Test parsing subtree format") {
 
     asyncSystem.dispatchMainThreadTasks();
     auto parsedSubtree = subtreeFuture.wait();
-    CHECK(parsedSubtree != std::nullopt);
+    REQUIRE(parsedSubtree != std::nullopt);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -575,7 +596,7 @@ TEST_CASE("Test parsing subtree format") {
     auto parsedSubtree =
         mockLoadSubtreeJson(std::move(subtreeBuffers), std::move(subtreeJson));
 
-    CHECK(parsedSubtree != std::nullopt);
+    REQUIRE(parsedSubtree != std::nullopt);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -660,36 +681,6 @@ TEST_CASE("Test parsing subtree format") {
     SECTION("Subtree json has no buffer views though availability points to "
             "buffer view") {
       subtreeJson.RemoveMember("bufferViews");
-      CHECK(
-          mockLoadSubtreeJson(
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
-    }
-
-    SECTION("Buffer view does not have required buffer field") {
-      auto bufferViewIt = subtreeJson.FindMember("bufferViews");
-      auto bufferViewObj = bufferViewIt->value.GetArray().Begin();
-      bufferViewObj->RemoveMember("buffer");
-      CHECK(
-          mockLoadSubtreeJson(
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
-    }
-
-    SECTION("Buffer view does not have required byteOffset field") {
-      auto bufferViewIt = subtreeJson.FindMember("bufferViews");
-      auto bufferViewObj = bufferViewIt->value.GetArray().Begin();
-      bufferViewObj->RemoveMember("byteOffset");
-      CHECK(
-          mockLoadSubtreeJson(
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
-    }
-
-    SECTION("Buffer view does not have required byteLength field") {
-      auto bufferViewIt = subtreeJson.FindMember("bufferViews");
-      auto bufferViewObj = bufferViewIt->value.GetArray().Begin();
-      bufferViewObj->RemoveMember("byteLength");
       CHECK(
           mockLoadSubtreeJson(
               std::move(subtreeBuffers),

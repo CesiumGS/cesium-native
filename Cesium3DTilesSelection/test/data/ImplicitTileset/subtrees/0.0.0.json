@@ -2,9 +2,9 @@
   "tileAvailability": {
     "constant": 1
   },
-  "contentAvailability": {
+  "contentAvailability": [{
     "constant": 1
-  },
+  }],
   "childSubtreeAvailability": {
     "constant": 0
   }

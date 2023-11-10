@@ -1,5 +1,6 @@
 #include <Cesium3DTilesReader/SubtreeFileReader.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Uri.h>
 
 using namespace Cesium3DTiles;
 using namespace CesiumAsync;
@@ -49,8 +50,15 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  return this
-      ->load(asyncSystem, pAssetAccessor, pRequest->url(), pResponse->data());
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders(
+      pRequest->headers().begin(),
+      pRequest->headers().end());
+  return this->load(
+      asyncSystem,
+      pAssetAccessor,
+      pRequest->url(),
+      requestHeaders,
+      pResponse->data());
 }
 
 namespace {
@@ -61,6 +69,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const gsl::span<const std::byte>& data) const noexcept {
   if (data.size() < 4) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
@@ -80,9 +89,11 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
   }
 
   if (isBinarySubtree) {
-    return this->loadBinary(asyncSystem, pAssetAccessor, url, data);
+    return this
+        ->loadBinary(asyncSystem, pAssetAccessor, url, requestHeaders, data);
   } else {
-    return this->loadJson(asyncSystem, pAssetAccessor, url, data);
+    return this
+        ->loadJson(asyncSystem, pAssetAccessor, url, requestHeaders, data);
   }
 }
 
@@ -101,6 +112,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const gsl::span<const std::byte>& data) const noexcept {
   if (data.size() < sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
@@ -167,23 +179,116 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
         binaryChunk.begin() + buffer.byteLength);
   }
 
-  return postprocess(asyncSystem, pAssetAccessor, url, std::move(result));
+  return postprocess(
+      asyncSystem,
+      pAssetAccessor,
+      url,
+      requestHeaders,
+      std::move(result));
 }
 
 CesiumAsync::Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadJson(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const gsl::span<const std::byte>& data) const noexcept {
   ReadJsonResult<Subtree> result = this->_reader.readFromJson(data);
-  return postprocess(asyncSystem, pAssetAccessor, url, std::move(result));
+  return postprocess(
+      asyncSystem,
+      pAssetAccessor,
+      url,
+      requestHeaders,
+      std::move(result));
 }
+
+namespace {
+
+struct RequestedSubtreeBuffer {
+  size_t index;
+  std::vector<std::byte> data;
+};
+
+CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    size_t bufferIdx,
+    std::string&& subtreeUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+  return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
+      .thenInWorkerThread(
+          [bufferIdx](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
+            const CesiumAsync::IAssetResponse* pResponse =
+                pCompletedRequest->response();
+            if (!pResponse) {
+              return RequestedSubtreeBuffer{bufferIdx, {}};
+            }
+
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              return RequestedSubtreeBuffer{bufferIdx, {}};
+            }
+
+            const gsl::span<const std::byte>& data = pResponse->data();
+            return RequestedSubtreeBuffer{
+                bufferIdx,
+                std::vector<std::byte>(data.begin(), data.end())};
+          });
+}
+
+} // namespace
 
 Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
     const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& /* pAssetAccessor */,
-    const std::string& /* url */,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     ReadJsonResult<Subtree>&& loaded) const noexcept {
+  if (!loaded.value) {
+    return asyncSystem.createResolvedFuture(std::move(loaded));
+  }
+
+  // Load any external buffers
+  std::vector<Future<RequestedSubtreeBuffer>> bufferRequests;
+  const std::vector<Buffer>& buffers = loaded.value->buffers;
+  for (size_t i = 0; i < buffers.size(); ++i) {
+    const Buffer& buffer = buffers[i];
+    if (buffer.uri && !buffer.uri->empty()) {
+      std::string bufferUrl = CesiumUtility::Uri::resolve(url, *buffer.uri);
+      bufferRequests.emplace_back(requestBuffer(
+          pAssetAccessor,
+          asyncSystem,
+          i,
+          std::move(bufferUrl),
+          requestHeaders));
+    }
+  }
+
+  if (!bufferRequests.empty()) {
+    return asyncSystem.all(std::move(bufferRequests))
+        .thenInMainThread(
+            [loaded = std::move(loaded)](std::vector<RequestedSubtreeBuffer>&&
+                                             completedBuffers) mutable {
+              for (RequestedSubtreeBuffer& completedBuffer : completedBuffers) {
+                Buffer& buffer = loaded.value->buffers[completedBuffer.index];
+                if (buffer.byteLength >
+                    static_cast<int64_t>(completedBuffer.data.size())) {
+                  loaded.warnings.emplace_back(fmt::format(
+                      "Buffer byteLength ({}) is greater than the size of the "
+                      "downloaded resource ({} bytes). The byteLength will be "
+                      "updated to match.",
+                      buffer.byteLength,
+                      completedBuffer.data.size()));
+                  buffer.byteLength = completedBuffer.data.size();
+                }
+                buffer.cesium.data = std::move(completedBuffer.data);
+              }
+
+              return std::move(loaded);
+            });
+  }
+
   return asyncSystem.createResolvedFuture(std::move(loaded));
 }
 

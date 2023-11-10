@@ -70,6 +70,7 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const gsl::span<const std::byte>& data) const noexcept;
 
 private:
@@ -78,18 +79,21 @@ private:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const gsl::span<const std::byte>& data) const noexcept;
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   loadJson(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const gsl::span<const std::byte>& data) const noexcept;
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   postprocess(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>&& loaded)
       const noexcept;
 
