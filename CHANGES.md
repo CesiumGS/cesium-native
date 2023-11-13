@@ -12,6 +12,7 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Added `MetadataConversions`, which enables metadata values to be converted to different types for better usability in runtime engines.
 
 ##### Fixes :wrench:
 
