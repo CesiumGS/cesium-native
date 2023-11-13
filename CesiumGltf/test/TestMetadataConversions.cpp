@@ -4,7 +4,7 @@
 
 using namespace CesiumGltf;
 
-TEST_CASE("Test PropertyConversions for boolean") {
+TEST_CASE("Test MetadataConversions for boolean") {
   SECTION("converts from boolean") {
     REQUIRE(MetadataConversions<bool, bool>::convert(true) == true);
     REQUIRE(MetadataConversions<bool, bool>::convert(false) == false);
@@ -70,7 +70,7 @@ TEST_CASE("Test PropertyConversions for boolean") {
   }
 }
 
-TEST_CASE("Test PropertyConversions for integer") {
+TEST_CASE("Test MetadataConversions for integer") {
   SECTION("converts from in-range integer") {
     // same type
     REQUIRE(MetadataConversions<int32_t, int32_t>::convert(50) == 50);
@@ -144,7 +144,7 @@ TEST_CASE("Test PropertyConversions for integer") {
   }
 }
 
-TEST_CASE("Test PropertyConversions for float") {
+TEST_CASE("Test MetadataConversions for float") {
   SECTION("converts from in-range floating point number") {
     REQUIRE(MetadataConversions<float, float>::convert(123.45f) == 123.45f);
     REQUIRE(
@@ -205,7 +205,7 @@ TEST_CASE("Test PropertyConversions for float") {
   }
 }
 
-TEST_CASE("Test PropertyConversions for double") {
+TEST_CASE("Test MetadataConversions for double") {
   SECTION("converts from floating point number") {
     REQUIRE(
         MetadataConversions<double, float>::convert(123.45f) ==
@@ -260,7 +260,7 @@ TEST_CASE("Test PropertyConversions for double") {
   }
 }
 
-TEST_CASE("Test PropertyConversions for vec2") {
+TEST_CASE("Test MetadataConversions for vec2") {
   SECTION("converts from same vec2 type") {
     // int-to-int
     REQUIRE(
@@ -396,7 +396,7 @@ TEST_CASE("Test PropertyConversions for vec2") {
   };
 }
 
-TEST_CASE("Test PropertyConversions for vec3") {
+TEST_CASE("Test MetadataConversions for vec3") {
   SECTION("converts from same vec3 type") {
     // int-to-int
     REQUIRE(
@@ -531,7 +531,7 @@ TEST_CASE("Test PropertyConversions for vec3") {
   };
 }
 
-TEST_CASE("Test PropertyConversions for vec4") {
+TEST_CASE("Test MetadataConversions for vec4") {
   SECTION("converts from same vec4 type") {
     // int-to-int
     REQUIRE(
@@ -665,5 +665,614 @@ TEST_CASE("Test PropertyConversions for vec4") {
     PropertyArrayView<glm::ivec4> arrayView;
     REQUIRE(!MetadataConversions<glm::ivec4, PropertyArrayView<glm::ivec4>>::
                 convert(arrayView));
+  };
+}
+
+TEST_CASE("Test MetadataConversions for mat2") {
+  SECTION("converts from same mat2 type") {
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::imat2x2, glm::imat2x2>::convert(
+            glm::imat2x2(12, 76, -1, 1)) == glm::imat2x2(12, 76, -1, 1));
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::mat2, glm::mat2>::convert(
+            glm::mat2(-3.5f, 1.234f, 1.0f, 1.0f)) ==
+        glm::mat2(-3.5f, 1.234f, 1.0f, 1.0f));
+  }
+
+  SECTION("converts from other mat2 types") {
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::imat2x2, glm::u8mat2x2>::convert(
+            glm::u8mat2x2(12, 76, 1, 1)) == glm::imat2x2(12, 76, 1, 1));
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::mat2, glm::imat2x2>::convert(
+            glm::imat2x2(12, 76, 1, 1)) == glm::mat2(12, 76, 1, 1));
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat2x2, glm::dmat2>::convert(
+            glm::dmat2(-3.5, 1.23456, -1.40, 1.0)) ==
+        glm::i8mat2x2(-3, 1, -1, 1));
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat2, glm::mat2>::convert(
+            glm::mat2(-3.5f, 1.234f, 2.4f, 1.0f)) ==
+        glm::dmat2(-3.5f, 1.234f, 2.4f, 1.0f));
+  }
+
+  SECTION("converts from mat3 types") {
+    // clang-format off
+    glm::imat3x3 imat3x3(
+      1, 2, 3,
+      4, 5, 6,
+      7, 8, 9);
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat2x2, glm::imat3x3>::convert(imat3x3) ==
+        glm::i8mat2x2(1, 2, 4, 5));
+
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat2, glm::imat3x3>::convert(imat3x3) ==
+        glm::dmat2(1, 2, 4, 5));
+
+    // clang-format off
+    glm::mat3 mat3(
+      1.0f, 2.5f, 3.0f,
+      4.5f, 5.0f, 6.0f,
+      -7.8f, 8.9f, -9.99f
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat2x2, glm::mat3>::convert(mat3) ==
+        glm::u8mat2x2(1, 2, 4, 5));
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat2, glm::mat3>::convert(mat3) ==
+        glm::dmat2(mat3[0][0], mat3[0][1], mat3[1][0], mat3[1][1]));
+  }
+
+  SECTION("converts from mat4 types") {
+    // clang-format off
+    glm::imat4x4 imat4x4(
+      1, 2, 3, 0,
+      4, 5, 6, 0,
+      7, 8, 9, 0,
+      0, 0, 0, 1);
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat2x2, glm::imat4x4>::convert(imat4x4) ==
+        glm::u8mat2x2(1, 2, 4, 5));
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat2, glm::imat4x4>::convert(imat4x4) ==
+        glm::dmat2(1, 2, 4, 5));
+
+    // clang-format off
+    glm::dmat4 dmat4(
+      1.0, 2.5, 3.0, 0.0,
+      4.5, 5.0, 6.0, 0.0,
+      -7.8, 8.9, -9.99, 0.0,
+      0.0, 0.0, 0.0, 1.0
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat2x2, glm::dmat4>::convert(dmat4) ==
+        glm::i8mat2x2(1, 2, 4, 5));
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::mat2, glm::dmat4>::convert(dmat4) ==
+        glm::mat2(1.0, 2.5, 4.5, 5.0));
+  }
+
+  SECTION("converts from boolean") {
+    REQUIRE(
+        MetadataConversions<glm::dmat2, bool>::convert(true) ==
+        glm ::dmat2(1.0));
+  }
+
+  SECTION("converts from integer") {
+    // int to int
+    REQUIRE(
+        MetadataConversions<glm::u16mat2x2, int32_t>::convert(45) ==
+        glm::u16mat2x2(45));
+    REQUIRE(
+        MetadataConversions<glm::i64mat2x2, uint32_t>::convert(45) ==
+        glm::i64mat2x2(45));
+    // int to float
+    REQUIRE(
+        MetadataConversions<glm::dmat2, int32_t>::convert(-12345) ==
+        glm::dmat2(-12345));
+    REQUIRE(
+        MetadataConversions<glm::mat2, uint8_t>::convert(12) == glm::mat2(12));
+  }
+
+  SECTION("converts from float") {
+    // float to int
+    REQUIRE(
+        MetadataConversions<glm::u8mat2x2, float>::convert(45.4f) ==
+        glm::u8mat2x2(45));
+    REQUIRE(
+        MetadataConversions<glm::i16mat2x2, double>::convert(-1.0111) ==
+        glm::i16mat2x2(-1));
+    // float to float
+    REQUIRE(
+        MetadataConversions<glm::dmat2, float>::convert(-1234.5f) ==
+        glm::dmat2(-1234.5f));
+    REQUIRE(
+        MetadataConversions<glm::mat2, double>::convert(12.0) ==
+        glm::mat2(12.0));
+  }
+
+  SECTION("returns std::nullopt if not all components can be converted") {
+    // scalar
+    REQUIRE(!MetadataConversions<glm::u8mat2x2, int16_t>::convert(-1));
+    // int
+    REQUIRE(!MetadataConversions<glm::u16mat2x2, glm::imat2x2>::convert(
+        glm::imat2x2(0, -1, 2, 1)));
+    REQUIRE(!MetadataConversions<glm::i8mat2x2, glm::u8mat2x2>::convert(
+        glm::u8mat2x2(0, 255, 2, 1)));
+    // float
+    REQUIRE(!MetadataConversions<glm::i8mat2x2, glm::mat2>::convert(
+        glm::mat2(129.0f)));
+    REQUIRE(!MetadataConversions<glm::mat2, glm::dmat2>::convert(
+        glm::dmat2(std::numeric_limits<double>::max())));
+  };
+
+  SECTION("returns std::nullopt for incompatible types") {
+    // vecN
+    REQUIRE(!MetadataConversions<glm::dmat2, glm::dvec4>::convert(
+        glm::dvec4(1.0, 2.0, 3.0, 4.0)));
+    // array
+    PropertyArrayView<glm::mat2> arrayView;
+    REQUIRE(
+        !MetadataConversions<glm::mat2, PropertyArrayView<glm::mat2>>::convert(
+            arrayView));
+  };
+}
+
+TEST_CASE("Test MetadataConversions for mat3") {
+  SECTION("converts from same mat3 type") {
+    // clang-format off
+    glm::imat3x3 imat3x3(
+      0, 1, 2,
+      3, 4, 5,
+      6, 7, 8
+    );
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::imat3x3, glm::imat3x3>::convert(imat3x3) ==
+        imat3x3);
+
+    // clang-format off
+    glm::mat3 mat3(
+      1.0f, 2.4f, 3.0f,
+      4.0f, 5.55f, 6.0f,
+      -7.0f, 8.0f, -9.01f
+    );
+    // clang-format on
+    // float-to-float
+    REQUIRE(MetadataConversions<glm::mat3, glm::mat3>::convert(mat3) == mat3);
+  }
+
+  SECTION("converts from other mat3 types") {
+    // clang-format off
+    glm::u8mat3x3 u8mat3x3(
+      0, 1, 2,
+      3, 4, 5,
+      6, 7, 8
+    );
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat3x3, glm::u8mat3x3>::convert(u8mat3x3) ==
+        glm::i8mat3x3(0, 1, 2, 3, 4, 5, 6, 7, 8));
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::mat3, glm::u8mat3x3>::convert(u8mat3x3) ==
+        glm::mat3(0, 1, 2, 3, 4, 5, 6, 7, 8));
+
+    // clang-format off
+    glm::mat3 mat3(
+      1.0f, 2.4f, 3.0f,
+      4.0f, -5.0f, 6.0f,
+      7.7f, 8.01f, -9.3f
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat3x3, glm::mat3>::convert(mat3) ==
+        glm::i8mat3x3(1, 2, 3, 4, -5, 6, 7, 8, -9));
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, glm::mat3>::convert(mat3) ==
+        glm::dmat3(mat3[0], mat3[1], mat3[2]));
+  }
+
+  SECTION("converts from mat2 types") {
+    // clang-format off
+    glm::imat2x2 imat2x2(
+      1, 2,
+      3, 4);
+    glm::u8mat3x3 expectedIntMat(
+      1, 2, 0,
+      3, 4, 0,
+      0, 0, 0);
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat3x3, glm::imat2x2>::convert(imat2x2) ==
+        expectedIntMat);
+
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, glm::imat2x2>::convert(imat2x2) ==
+        glm::dmat3(expectedIntMat[0], expectedIntMat[1], expectedIntMat[2]));
+
+    // clang-format off
+    glm::mat2 mat2(
+      1.0f, 2.5f,
+      3.0f, 4.5f
+    );
+    glm::dmat3 expectedDoubleMat(
+      1.0f, 2.5f, 0,
+      3.0f, 4.5f, 0,
+      0, 0, 0
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat3x3, glm::mat2>::convert(mat2) ==
+        expectedIntMat);
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, glm::mat2>::convert(mat2) ==
+        expectedDoubleMat);
+  }
+
+  SECTION("converts from mat4 types") {
+    // clang-format off
+    glm::imat4x4 imat4x4(
+      1, 2, 3, 4,
+      4, 5, 6, 7,
+      7, 8, 9, 10,
+      0, 0, 0, 1);
+    glm::u8mat3x3 expectedIntMat(
+      1, 2, 3,
+      4, 5, 6,
+      7, 8, 9);
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat3x3, glm::imat4x4>::convert(imat4x4) ==
+        expectedIntMat);
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, glm::imat4x4>::convert(imat4x4) ==
+        glm::dmat3(expectedIntMat[0], expectedIntMat[1], expectedIntMat[2]));
+
+    // clang-format off
+    glm::mat4 mat4(
+      1.0f, 2.5f, 3.0f, -4.0f,
+      4.5f, 5.0f, 6.0f, 7.0f,
+      7.8f, 8.9f, 9.99f, 10.1f,
+      0.0f, 0.0f, 0.0f, 1.0f
+    );
+    glm::dmat3 expectedDoubleMat(
+      1.0f, 2.5f, 3.0f, 
+      4.5f, 5.0f, 6.0f,
+      7.8f, 8.9f, 9.99f
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat3x3, glm::mat4>::convert(mat4) ==
+        expectedIntMat);
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, glm::mat4>::convert(mat4) ==
+        expectedDoubleMat);
+  }
+
+  SECTION("converts from boolean") {
+    REQUIRE(
+        MetadataConversions<glm::dmat3, bool>::convert(true) ==
+        glm ::dmat3(1.0));
+  }
+
+  SECTION("converts from integer") {
+    // int to int
+    REQUIRE(
+        MetadataConversions<glm::u16mat3x3, int32_t>::convert(45) ==
+        glm::u16mat3x3(45));
+    REQUIRE(
+        MetadataConversions<glm::i64mat3x3, uint32_t>::convert(45) ==
+        glm::i64mat3x3(45));
+    // int to float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, int32_t>::convert(-12345) ==
+        glm::dmat3(-12345));
+    REQUIRE(
+        MetadataConversions<glm::mat3, uint8_t>::convert(12) == glm::mat3(12));
+  }
+
+  SECTION("converts from float") {
+    // float to int
+    REQUIRE(
+        MetadataConversions<glm::u8mat3x3, float>::convert(45.4f) ==
+        glm::u8mat3x3(45));
+    REQUIRE(
+        MetadataConversions<glm::i16mat3x3, double>::convert(-1.0111) ==
+        glm::i16mat3x3(-1));
+    // float to float
+    REQUIRE(
+        MetadataConversions<glm::dmat3, float>::convert(-1234.5f) ==
+        glm::dmat3(-1234.5f));
+    REQUIRE(
+        MetadataConversions<glm::mat3, double>::convert(12.0) ==
+        glm::mat3(12.0));
+  }
+
+  SECTION("returns std::nullopt if not all components can be converted") {
+    // scalar
+    REQUIRE(!MetadataConversions<glm::u8mat3x3, int16_t>::convert(-1));
+    // int
+    REQUIRE(!MetadataConversions<glm::u16mat3x3, glm::imat2x2>::convert(
+        glm::imat2x2(0, -1, 2, 1)));
+    REQUIRE(!MetadataConversions<glm::i8mat3x3, glm::u8mat2x2>::convert(
+        glm::u8mat2x2(0, 255, 2, 1)));
+    // float
+    REQUIRE(!MetadataConversions<glm::i8mat3x3, glm::mat2>::convert(
+        glm::mat2(129.0f)));
+    REQUIRE(!MetadataConversions<glm::mat3, glm::dmat2>::convert(
+        glm::dmat2(std::numeric_limits<double>::max())));
+  };
+
+  SECTION("returns std::nullopt for incompatible types") {
+    // vecN
+    REQUIRE(!MetadataConversions<glm::dmat3, glm::dvec3>::convert(
+        glm::dvec3(1.0, 2.0, 3.0)));
+    // array
+    PropertyArrayView<glm::mat3> arrayView;
+    REQUIRE(
+        !MetadataConversions<glm::mat3, PropertyArrayView<glm::mat3>>::convert(
+            arrayView));
+  };
+}
+
+TEST_CASE("Test MetadataConversions for mat4") {
+  SECTION("converts from same mat4 type") {
+    // clang-format off
+    glm::imat4x4 imat4x4(
+      0, 1, 2, 3,
+      4, 5, 6, 7,
+      8, 9, -1, 1,
+      0, 0, 0, 1
+    );
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::imat4x4, glm::imat4x4>::convert(imat4x4) ==
+        imat4x4);
+
+    // clang-format off
+    glm::mat4 mat4(
+      1.0f, 2.4f, 3.0f, 0.0f,
+      4.0f, 5.55f, 6.0f, 0.0f,
+      -7.0f, 8.0f, -9.01f, 0.0f,
+      0.0f, 0.0f, 0.0f, 1.0f
+    );
+    // clang-format on
+    // float-to-float
+    REQUIRE(MetadataConversions<glm::mat4, glm::mat4>::convert(mat4) == mat4);
+  }
+
+  SECTION("converts from other mat4 types") {
+    // clang-format off
+    glm::u8mat4x4 u8mat4x4(
+      0, 1, 2, 0,
+      3, 4, 5, 0,
+      6, 7, 8, 0,
+      0, 0, 0, 1
+    );
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat4x4, glm::u8mat4x4>::convert(u8mat4x4) ==
+        glm::i8mat4x4(u8mat4x4[0], u8mat4x4[1], u8mat4x4[2], u8mat4x4[3]));
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::mat4, glm::u8mat4x4>::convert(u8mat4x4) ==
+        glm::mat4(u8mat4x4[0], u8mat4x4[1], u8mat4x4[2], u8mat4x4[3]));
+
+    // clang-format off
+    glm::mat4 mat4(
+      1.0f, 2.4f, 3.0f, 0.0f,
+      4.0f, -5.0f, 6.0f, 0.0f,
+      7.7f, 8.01f, -9.3f, 0.0f,
+      0.0f, 0.0f, 0.0f, 1.0f
+    );
+    glm::i8mat4x4 expected(
+      1, 2, 3, 0,
+      4, -5, 6, 0,
+      7, 8, -9, 0,
+      0, 0, 0, 1
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::i8mat4x4, glm::mat4>::convert(mat4) ==
+        expected);
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, glm::mat4>::convert(mat4) ==
+        glm::dmat4(mat4[0], mat4[1], mat4[2], mat4[3]));
+  }
+
+  SECTION("converts from mat2 types") {
+    // clang-format off
+    glm::imat2x2 imat2x2(
+      1, 2,
+      3, 4);
+    glm::u8mat4x4 expectedIntMat(
+      1, 2, 0, 0,
+      3, 4, 0, 0,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat4x4, glm::imat2x2>::convert(imat2x2) ==
+        expectedIntMat);
+
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, glm::imat2x2>::convert(imat2x2) ==
+        glm::dmat4(
+            expectedIntMat[0],
+            expectedIntMat[1],
+            expectedIntMat[2],
+            expectedIntMat[3]));
+
+    // clang-format off
+    glm::mat2 mat2(
+      1.0f, 2.5f,
+      3.0f, 4.5f
+    );
+    glm::dmat4 expectedDoubleMat(
+      1.0f, 2.5f, 0, 0,
+      3.0f, 4.5f, 0, 0,
+      0, 0, 0, 0,
+      0, 0, 0, 0
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat4x4, glm::mat2>::convert(mat2) ==
+        expectedIntMat);
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, glm::mat2>::convert(mat2) ==
+        expectedDoubleMat);
+  }
+
+  SECTION("converts from mat3 types") {
+    // clang-format off
+    glm::imat3x3 imat3x3(
+      1, 2, 3,
+      4, 5, 6,
+      7, 8, 9);
+    glm::u8mat4x4 expectedIntMat(
+      1, 2, 3, 0,
+      4, 5, 6, 0,
+      7, 8, 9, 0,
+      0, 0, 0, 0);
+    // clang-format on
+    // int-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat4x4, glm::imat3x3>::convert(imat3x3) ==
+        expectedIntMat);
+    // int-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, glm::imat3x3>::convert(imat3x3) ==
+        glm::dmat4(
+            expectedIntMat[0],
+            expectedIntMat[1],
+            expectedIntMat[2],
+            expectedIntMat[3]));
+
+    // clang-format off
+    glm::mat3 mat3(
+      1.0f, 2.5f, 3.0f,
+      4.5f, 5.0f, 6.0f, 
+      7.8f, 8.9f, 9.99f
+    );
+    glm::dmat4 expectedDoubleMat(
+      1.0f, 2.5f, 3.0f, 0.0f,
+      4.5f, 5.0f, 6.0f, 0.0f,
+      7.8f, 8.9f, 9.99f, 0.0f,
+      0.0f, 0.0f, 0.0f, 0.0f
+    );
+    // clang-format on
+    // float-to-int
+    REQUIRE(
+        MetadataConversions<glm::u8mat4x4, glm::mat3>::convert(mat3) ==
+        expectedIntMat);
+    // float-to-float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, glm::mat3>::convert(mat3) ==
+        expectedDoubleMat);
+  }
+
+  SECTION("converts from boolean") {
+    REQUIRE(
+        MetadataConversions<glm::dmat4, bool>::convert(true) ==
+        glm ::dmat4(1.0));
+  }
+
+  SECTION("converts from integer") {
+    // int to int
+    REQUIRE(
+        MetadataConversions<glm::u16mat4x4, int32_t>::convert(45) ==
+        glm::u16mat4x4(45));
+    REQUIRE(
+        MetadataConversions<glm::i64mat4x4, uint32_t>::convert(45) ==
+        glm::i64mat4x4(45));
+    // int to float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, int32_t>::convert(-12345) ==
+        glm::dmat4(-12345));
+    REQUIRE(
+        MetadataConversions<glm::mat4, uint8_t>::convert(12) == glm::mat4(12));
+  }
+
+  SECTION("converts from float") {
+    // float to int
+    REQUIRE(
+        MetadataConversions<glm::u8mat4x4, float>::convert(45.4f) ==
+        glm::u8mat4x4(45));
+    REQUIRE(
+        MetadataConversions<glm::i16mat4x4, double>::convert(-1.0111) ==
+        glm::i16mat4x4(-1));
+    // float to float
+    REQUIRE(
+        MetadataConversions<glm::dmat4, float>::convert(-1234.5f) ==
+        glm::dmat4(-1234.5f));
+    REQUIRE(
+        MetadataConversions<glm::mat4, double>::convert(12.0) ==
+        glm::mat4(12.0));
+  }
+
+  SECTION("returns std::nullopt if not all components can be converted") {
+    // scalar
+    REQUIRE(!MetadataConversions<glm::u8mat4x4, int16_t>::convert(-1));
+    // int
+    REQUIRE(!MetadataConversions<glm::u16mat4x4, glm::imat2x2>::convert(
+        glm::imat2x2(0, -1, 2, 1)));
+    REQUIRE(!MetadataConversions<glm::i8mat4x4, glm::u8mat2x2>::convert(
+        glm::u8mat2x2(0, 255, 2, 1)));
+    // float
+    REQUIRE(!MetadataConversions<glm::i8mat4x4, glm::mat2>::convert(
+        glm::mat2(129.0f)));
+    REQUIRE(!MetadataConversions<glm::mat4, glm::dmat2>::convert(
+        glm::dmat2(std::numeric_limits<double>::max())));
+  };
+
+  SECTION("returns std::nullopt for incompatible types") {
+    // vecN
+    REQUIRE(!MetadataConversions<glm::dmat4, glm::dvec4>::convert(
+        glm::dvec4(1.0, 2.0, 3.0, 4.0)));
+    // array
+    PropertyArrayView<glm::mat4> arrayView;
+    REQUIRE(
+        !MetadataConversions<glm::mat4, PropertyArrayView<glm::mat4>>::convert(
+            arrayView));
   };
 }

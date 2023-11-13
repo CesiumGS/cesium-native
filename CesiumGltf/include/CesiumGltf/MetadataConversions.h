@@ -246,7 +246,7 @@ struct MetadataConversions<
     uint64_t parsedValue = std::strtoull(temp.c_str(), &pLastUsed, 10);
     if (pLastUsed == temp.c_str() + temp.size()) {
       // Successfully parsed the entire string as an integer of this type.
-      return CesiumUtility::losslessNarrow(parsedValue);
+      return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
     }
 
     // Failed to parse as an integer. Maybe we can parse as a double and
@@ -260,7 +260,7 @@ struct MetadataConversions<
       uint64_t asInteger = static_cast<uint64_t>(truncated);
       double roundTrip = static_cast<double>(asInteger);
       if (roundTrip == truncated) {
-        return CesiumUtility::losslessNarrow(asInteger);
+        return CesiumUtility::losslessNarrow<TTo, uint64_t>(asInteger);
       }
     }
 
@@ -530,7 +530,7 @@ template <> struct MetadataConversions<std::string, std::string_view> {
 
 #pragma region Conversions to glm::vecN
 /**
- * Converts from a boolean to a vecN.
+ * @brief Converts from a boolean to a vecN.
  */
 template <typename TTo>
 struct MetadataConversions<
@@ -538,7 +538,7 @@ struct MetadataConversions<
     bool,
     std::enable_if_t<IsMetadataVecN<TTo>::value>> {
   /**
-   * Converts a boolean to a vecN. The boolean is converted to an integer
+   * @brief Converts a boolean to a vecN. The boolean is converted to an integer
    * value of 1 for true or 0 for false. The returned vector is initialized with
    * this value in both of its components.
    *
@@ -550,7 +550,7 @@ struct MetadataConversions<
 };
 
 /**
- * Converts from a scalar type to a vecN.
+ * @brief Converts from a scalar type to a vecN.
  */
 template <typename TTo, typename TFrom>
 struct MetadataConversions<
@@ -560,10 +560,13 @@ struct MetadataConversions<
         CesiumGltf::IsMetadataVecN<TTo>::value &&
         CesiumGltf::IsMetadataScalar<TFrom>::value>> {
   /**
-   * Converts a scalar to a vecN. The returned vector is initialized
-   * with the value in all of its components. If the scalar cannot be
-   * reasonably converted to the component type of the vecN, std::nullopt is
-   * returned.
+   * @brief Converts a scalar to a vecN. The returned vector is initialized
+   * with the value in all of its components. The value may lose precision
+   * during conversion depending on the type of the scalar and the component
+   * type of the matrix.
+   *
+   * If the scalar cannot be reasonably converted to the component type of the
+   * vecN, std::nullopt is returned.
    *
    * @param from The scalar value to be converted.
    */
@@ -622,6 +625,113 @@ struct MetadataConversions<
       }
 
       result[i] = *maybeValue;
+    }
+
+    return result;
+  }
+};
+#pragma endregion
+
+#pragma region Conversions to glm::matN
+/**
+ * @brief Converts from a boolean to a matN.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    bool,
+    std::enable_if_t<IsMetadataMatN<TTo>::value>> {
+  /**
+   * @brief Converts a boolean to a matN. The boolean is converted to an integer
+   * value of 1 for true or 0 for false. The returned matrix is initialized with
+   * this value in all of its components.
+   *
+   * @param from The boolean to be converted.
+   */
+  static std::optional<TTo> convert(bool from) {
+    return from ? TTo(1) : TTo(0);
+  }
+};
+
+/**
+ * Converts from a scalar type to a matN.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataMatN<TTo>::value &&
+        CesiumGltf::IsMetadataScalar<TFrom>::value>> {
+  /**
+   * Converts a scalar to a matN. The returned vector is initialized
+   * with the value in all components. The value may lose precision during
+   * conversion depending on the type of the scalar and the component type of
+   * the matrix.
+   *
+   * If the scalar cannot be reasonably converted to the component type of the
+   * matN, std::nullopt is returned.
+   *
+   * @param from The scalar value to be converted.
+   */
+  static std::optional<TTo> convert(TFrom from) {
+    using ToValueType = typename TTo::value_type;
+
+    std::optional<ToValueType> maybeValue =
+        MetadataConversions<ToValueType, TFrom>::convert(from);
+    if (!maybeValue) {
+      return std::nullopt;
+    }
+
+    ToValueType value = *maybeValue;
+    return TTo(value);
+  }
+};
+
+/**
+ * @brief Converts from a matN type to another matN type.
+ */
+template <typename TTo, typename TFrom>
+struct MetadataConversions<
+    TTo,
+    TFrom,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataMatN<TTo>::value &&
+        CesiumGltf::IsMetadataMatN<TFrom>::value &&
+        !std::is_same_v<TTo, TFrom>>> {
+  /**
+   * @brief Converts a value of the given matN to another matN type.
+   *
+   * Let M be the length of the given matN, and N be the length of the target
+   * matN. If M > N, then only the first N components of the first N columns
+   * will be used. Otherwise, if M < N, all other elements in the N x N matrix
+   * will be initialized to zero.
+   *
+   * If any of the relevant components cannot be converted to the target matN
+   * component type, std::nullopt is returned.
+   *
+   * @param from The matN value to convert from.
+   */
+  static std::optional<TTo> convert(TFrom from) {
+    TTo result = TTo(0);
+
+    constexpr glm::length_t validLength =
+        glm::min(TTo::length(), TFrom::length());
+
+    using ToValueType = typename TTo::value_type;
+    using FromValueType = typename TFrom::value_type;
+
+    for (glm::length_t c = 0; c < validLength; c++) {
+      for (glm::length_t r = 0; r < validLength; r++) {
+        auto maybeValue =
+            MetadataConversions<ToValueType, FromValueType>::convert(
+                from[c][r]);
+        if (!maybeValue) {
+          return std::nullopt;
+        }
+
+        result[c][r] = *maybeValue;
+      }
     }
 
     return result;
