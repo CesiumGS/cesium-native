@@ -181,11 +181,11 @@ SubtreeAvailability::SubtreeAvailability(
     std::vector<AvailabilityView>&& contentAvailability,
     Cesium3DTiles::Subtree&& subtree)
     : _powerOf2{subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U : 3U},
+      _levelsInSubtree{levelsInSubtree},
+      _subtree{std::move(subtree)},
       _childCount{
           subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 4U
                                                                        : 8U},
-      _levelsInSubtree{levelsInSubtree},
-      _subtree{std::move(subtree)},
       _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
       _contentAvailability{std::move(contentAvailability)} {
