@@ -29,9 +29,9 @@ struct SubtreeHeader {
 
 struct SubtreeBuffers {
   std::vector<std::byte> buffers;
-  SubtreeBufferViewAvailability tileAvailability;
-  SubtreeBufferViewAvailability subtreeAvailability;
-  SubtreeBufferViewAvailability contentAvailability;
+  SubtreeAvailability::SubtreeBufferViewAvailability tileAvailability;
+  SubtreeAvailability::SubtreeBufferViewAvailability subtreeAvailability;
+  SubtreeAvailability::SubtreeBufferViewAvailability contentAvailability;
 };
 
 uint64_t calculateTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels) {
@@ -96,9 +96,12 @@ SubtreeBuffers createSubtreeBuffers(
     markSubtreeAvailableForQuadtree(subtreeID, subtreeAvailabilityBuffer);
   }
 
-  SubtreeBufferViewAvailability tileAvailability{tileAvailabilityBuffer};
-  SubtreeBufferViewAvailability subtreeAvailability{subtreeAvailabilityBuffer};
-  SubtreeBufferViewAvailability contentAvailability{contentAvailabilityBuffer};
+  SubtreeAvailability::SubtreeBufferViewAvailability tileAvailability{
+      tileAvailabilityBuffer};
+  SubtreeAvailability::SubtreeBufferViewAvailability subtreeAvailability{
+      subtreeAvailabilityBuffer};
+  SubtreeAvailability::SubtreeBufferViewAvailability contentAvailability{
+      contentAvailabilityBuffer};
 
   return {
       std::move(availabilityBuffer),
@@ -285,7 +288,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
   CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
   auto subtreeFuture = SubtreeAvailability::loadSubtree(
-      2,
+      ImplicitTileSubdivisionScheme::Quadtree,
       levelsInSubtree,
       asyncSystem,
       pMockAssetAccessor,
@@ -301,11 +304,11 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
 TEST_CASE("Test SubtreeAvailability methods") {
   SECTION("Availability stored in constant") {
     SubtreeAvailability subtreeAvailability{
-        2,
+        ImplicitTileSubdivisionScheme::Quadtree,
         5,
-        SubtreeConstantAvailability{true},
-        SubtreeConstantAvailability{false},
-        {SubtreeConstantAvailability{false}},
+        SubtreeAvailability::SubtreeConstantAvailability{true},
+        SubtreeAvailability::SubtreeConstantAvailability{false},
+        {SubtreeAvailability::SubtreeConstantAvailability{false}},
         {}};
 
     SECTION("isTileAvailable()") {
@@ -412,14 +415,16 @@ TEST_CASE("Test SubtreeAvailability methods") {
       markSubtreeAvailableForQuadtree(subtreeID, subtreeAvailabilityBuffer);
     }
 
-    SubtreeBufferViewAvailability tileAvailability{tileAvailabilityBuffer};
-    SubtreeBufferViewAvailability subtreeAvailability{
+    SubtreeAvailability::SubtreeBufferViewAvailability tileAvailability{
+        tileAvailabilityBuffer};
+    SubtreeAvailability::SubtreeBufferViewAvailability subtreeAvailability{
         subtreeAvailabilityBuffer};
-    std::vector<AvailabilityView> contentAvailability{
-        SubtreeBufferViewAvailability{contentAvailabilityBuffer}};
+    std::vector<SubtreeAvailability::AvailabilityView> contentAvailability{
+        SubtreeAvailability::SubtreeBufferViewAvailability{
+            contentAvailabilityBuffer}};
 
     SubtreeAvailability quadtreeAvailability(
-        2,
+        ImplicitTileSubdivisionScheme::Quadtree,
         static_cast<uint32_t>(maxSubtreeLevels),
         tileAvailability,
         subtreeAvailability,
@@ -561,7 +566,7 @@ TEST_CASE("Test parsing subtree format") {
     CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
-        2,
+        ImplicitTileSubdivisionScheme::Quadtree,
         maxSubtreeLevels,
         asyncSystem,
         pMockAssetAccessor,
@@ -706,7 +711,9 @@ TEST_CASE("Test parsing subtree format") {
 
 TEST_CASE("SubtreeAvailability modifications") {
   std::optional<SubtreeAvailability> maybeAvailability =
-      SubtreeAvailability::createEmpty(2, 5);
+      SubtreeAvailability::createEmpty(
+          ImplicitTileSubdivisionScheme::Quadtree,
+          5);
   REQUIRE(maybeAvailability);
 
   SubtreeAvailability& availability = *maybeAvailability;

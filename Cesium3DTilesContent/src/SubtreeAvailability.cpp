@@ -24,12 +24,13 @@ namespace Cesium3DTilesContent {
 
 namespace {
 
-std::optional<AvailabilityView> parseAvailabilityView(
+std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
     const Cesium3DTiles::Availability& availability,
     std::vector<Cesium3DTiles::Buffer>& buffers,
     std::vector<Cesium3DTiles::BufferView>& bufferViews) {
   if (availability.constant) {
-    return SubtreeConstantAvailability{*availability.constant == 1};
+    return SubtreeAvailability::SubtreeConstantAvailability{
+        *availability.constant == 1};
   }
 
   int64_t bufferViewIndex = -1;
@@ -57,9 +58,10 @@ std::optional<AvailabilityView> parseAvailabilityView(
       int64_t bufferSize =
           std::min(static_cast<int64_t>(data.size()), buffer.byteLength);
       if (bufferView.byteOffset + bufferView.byteLength <= bufferSize) {
-        return SubtreeBufferViewAvailability{gsl::span<std::byte>(
-            data.data() + bufferView.byteOffset,
-            bufferView.byteLength)};
+        return SubtreeAvailability::SubtreeBufferViewAvailability{
+            gsl::span<std::byte>(
+                data.data() + bufferView.byteOffset,
+                bufferView.byteLength)};
       }
     }
   }
@@ -70,18 +72,19 @@ std::optional<AvailabilityView> parseAvailabilityView(
 } // namespace
 
 /*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::fromSubtree(
-    uint32_t powerOfTwo,
+    ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
     Cesium3DTiles::Subtree&& subtree) noexcept {
-  std::optional<AvailabilityView> maybeTileAvailability = parseAvailabilityView(
-      subtree.tileAvailability,
-      subtree.buffers,
-      subtree.bufferViews);
+  std::optional<SubtreeAvailability::AvailabilityView> maybeTileAvailability =
+      parseAvailabilityView(
+          subtree.tileAvailability,
+          subtree.buffers,
+          subtree.bufferViews);
   if (!maybeTileAvailability)
     return std::nullopt;
 
-  std::optional<AvailabilityView> maybeChildSubtreeAvailability =
-      parseAvailabilityView(
+  std::optional<SubtreeAvailability::AvailabilityView>
+      maybeChildSubtreeAvailability = parseAvailabilityView(
           subtree.childSubtreeAvailability,
           subtree.buffers,
           subtree.bufferViews);
@@ -92,7 +95,7 @@ std::optional<AvailabilityView> parseAvailabilityView(
   if (subtree.contentAvailability.empty())
     return std::nullopt;
 
-  std::vector<AvailabilityView> contentAvailability;
+  std::vector<SubtreeAvailability::AvailabilityView> contentAvailability;
   contentAvailability.reserve(subtree.contentAvailability.size());
 
   for (const auto& availabilityDesc : subtree.contentAvailability) {
@@ -106,7 +109,7 @@ std::optional<AvailabilityView> parseAvailabilityView(
   }
 
   return SubtreeAvailability(
-      powerOfTwo,
+      subdivisionScheme,
       levelsInSubtree,
       *maybeTileAvailability,
       *maybeChildSubtreeAvailability,
@@ -115,7 +118,7 @@ std::optional<AvailabilityView> parseAvailabilityView(
 }
 
 /*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::createEmpty(
-    uint32_t powerOfTwo,
+    ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree) noexcept {
   Subtree subtree;
   subtree.tileAvailability.constant = true;
@@ -123,14 +126,14 @@ std::optional<AvailabilityView> parseAvailabilityView(
   subtree.childSubtreeAvailability.constant = false;
 
   return SubtreeAvailability::fromSubtree(
-      powerOfTwo,
+      subdivisionScheme,
       levelsInSubtree,
       std::move(subtree));
 }
 
 /*static*/ CesiumAsync::Future<std::optional<SubtreeAvailability>>
 SubtreeAvailability::loadSubtree(
-    uint32_t powerOf2,
+    ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -140,7 +143,7 @@ SubtreeAvailability::loadSubtree(
   SubtreeFileReader reader;
   return reader.load(asyncSystem, pAssetAccessor, subtreeUrl, requestHeaders)
       .thenInMainThread(
-          [pLogger, subtreeUrl, powerOf2, levelsInSubtree](
+          [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree](
               ReadJsonResult<Subtree>&& subtree)
               -> std::optional<SubtreeAvailability> {
             if (!subtree.value) {
@@ -162,21 +165,23 @@ SubtreeAvailability::loadSubtree(
             }
 
             return SubtreeAvailability::fromSubtree(
-                powerOf2,
+                subdivisionScheme,
                 levelsInSubtree,
                 std::move(*subtree.value));
           });
 }
 
 SubtreeAvailability::SubtreeAvailability(
-    uint32_t powerOf2,
+    ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
     AvailabilityView tileAvailability,
     AvailabilityView subtreeAvailability,
     std::vector<AvailabilityView>&& contentAvailability,
     Cesium3DTiles::Subtree&& subtree)
-    : _powerOf2{powerOf2},
-      _childCount{1U << powerOf2},
+    : _powerOf2{subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U : 3U},
+      _childCount{
+          subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 4U
+                                                                       : 8U},
       _levelsInSubtree{levelsInSubtree},
       _subtree{std::move(subtree)},
       _tileAvailability{tileAvailability},
@@ -360,9 +365,11 @@ namespace {
 void convertConstantAvailabilityToBitstream(
     Subtree& subtree,
     uint64_t numberOfTiles,
-    AvailabilityView& availabilityView) {
-  const SubtreeConstantAvailability* pConstantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&availabilityView);
+    SubtreeAvailability::AvailabilityView& availabilityView) {
+  const SubtreeAvailability::SubtreeConstantAvailability*
+      pConstantAvailability =
+          std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
+              &availabilityView);
   if (!pConstantAvailability)
     return;
 
@@ -399,7 +406,7 @@ void convertConstantAvailabilityToBitstream(
   gsl::span<std::byte> view(
       buffer.cesium.data.data() + start,
       buffer.cesium.data.data() + end);
-  availabilityView = SubtreeBufferViewAvailability{view};
+  availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};
 }
 
 } // namespace

@@ -247,7 +247,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         this->_subtreeUrlTemplate,
         subtreeID);
     return SubtreeAvailability::loadSubtree(
-               2,
+               ImplicitTileSubdivisionScheme::Quadtree,
                this->_subtreeLevels,
                asyncSystem,
                pAssetAccessor,
