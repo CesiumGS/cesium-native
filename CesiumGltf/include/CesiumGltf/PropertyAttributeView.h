@@ -308,8 +308,8 @@ public:
   forEachProperty(const MeshPrimitive& primitive, Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {
       getPropertyView(
-          property.first,
           primitive,
+          property.first,
           std::forward<Callback>(callback));
     }
   }
