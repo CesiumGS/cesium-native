@@ -400,11 +400,11 @@ TEST_CASE("Test SubtreeAvailability methods") {
     subtreeAvailabilityBuffer.resize(subtreeBufferSize);
 
     subtree.buffers[0].byteLength = subtree.bufferViews[0].byteLength =
-        bufferSize;
+        int64_t(bufferSize);
     subtree.buffers[1].byteLength = subtree.bufferViews[1].byteLength =
-        bufferSize;
+        int64_t(bufferSize);
     subtree.buffers[2].byteLength = subtree.bufferViews[2].byteLength =
-        subtreeBufferSize;
+        int64_t(subtreeBufferSize);
 
     for (const auto& tileID : availableTileIDs) {
       markTileAvailableForQuadtree(tileID, tileAvailabilityBuffer);
