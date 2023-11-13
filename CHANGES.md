@@ -13,6 +13,10 @@
 
 - Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
 
+##### Fixes :wrench:
+
+- Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
+
 ### v0.29.0 - 2023-11-01
 
 ##### Breaking Changes :mega:
