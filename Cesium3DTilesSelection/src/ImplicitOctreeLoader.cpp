@@ -209,6 +209,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         subtreeID);
     return SubtreeAvailability::loadSubtree(
                3,
+               this->_subtreeLevels,
                asyncSystem,
                pAssetAccessor,
                pLogger,

@@ -69,6 +69,7 @@ TEST_CASE("Test implicit quadtree loader") {
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{false}},
@@ -104,6 +105,7 @@ TEST_CASE("Test implicit quadtree loader") {
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -156,6 +158,7 @@ TEST_CASE("Test implicit quadtree loader") {
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -221,6 +224,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -362,6 +366,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -496,6 +501,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},

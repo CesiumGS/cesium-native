@@ -69,6 +69,7 @@ TEST_CASE("Test implicit octree loader") {
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
             3,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{false}},
@@ -104,6 +105,7 @@ TEST_CASE("Test implicit octree loader") {
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -156,6 +158,7 @@ TEST_CASE("Test implicit octree loader") {
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
             2,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -245,6 +248,7 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
             3,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
@@ -445,6 +449,7 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
             3,
+            5,
             SubtreeConstantAvailability{true},
             SubtreeConstantAvailability{false},
             {SubtreeConstantAvailability{true}},
