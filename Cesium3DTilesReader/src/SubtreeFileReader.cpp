@@ -280,7 +280,8 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
                       "updated to match.",
                       buffer.byteLength,
                       completedBuffer.data.size()));
-                  buffer.byteLength = completedBuffer.data.size();
+                  buffer.byteLength =
+                      static_cast<int64_t>(completedBuffer.data.size());
                 }
                 buffer.cesium.data = std::move(completedBuffer.data);
               }
