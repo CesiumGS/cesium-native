@@ -49,19 +49,21 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
 
   if (bufferViewIndex >= 0 &&
       bufferViewIndex < static_cast<int64_t>(bufferViews.size())) {
-    const Cesium3DTiles::BufferView& bufferView = bufferViews[bufferViewIndex];
+    const Cesium3DTiles::BufferView& bufferView =
+        bufferViews[size_t(bufferViewIndex)];
 
     if (bufferView.buffer >= 0 &&
         bufferView.buffer < static_cast<int64_t>(buffers.size())) {
-      Cesium3DTiles::Buffer& buffer = buffers[bufferView.buffer];
+      Cesium3DTiles::Buffer& buffer = buffers[size_t(bufferView.buffer)];
       std::vector<std::byte>& data = buffer.cesium.data;
       int64_t bufferSize =
           std::min(static_cast<int64_t>(data.size()), buffer.byteLength);
-      if (bufferView.byteOffset + bufferView.byteLength <= bufferSize) {
+      if (bufferView.byteLength >= 0 &&
+          bufferView.byteOffset + bufferView.byteLength <= bufferSize) {
         return SubtreeAvailability::SubtreeBufferViewAvailability{
             gsl::span<std::byte>(
                 data.data() + bufferView.byteOffset,
-                bufferView.byteLength)};
+                size_t(bufferView.byteLength))};
       }
     }
   }
@@ -381,7 +383,7 @@ void convertConstantAvailabilityToBitstream(
 
   BufferView& bufferView = subtree.bufferViews.emplace_back();
   bufferView.buffer = 0;
-  bufferView.byteLength = numberOfBytes;
+  bufferView.byteLength = int64_t(numberOfBytes);
 
   Buffer& buffer = !subtree.buffers.empty() ? subtree.buffers[0]
                                             : subtree.buffers.emplace_back();
@@ -394,13 +396,13 @@ void convertConstantAvailabilityToBitstream(
     start += 8 - paddingRemainder;
   }
 
-  int64_t end = start + numberOfBytes;
+  int64_t end = start + int64_t(numberOfBytes);
 
   bufferView.byteOffset = start;
   buffer.byteLength = end;
 
   buffer.cesium.data.resize(
-      buffer.byteLength,
+      size_t(buffer.byteLength),
       oldValue ? std::byte(0xFF) : std::byte(0x00));
 
   gsl::span<std::byte> view(
