@@ -8,6 +8,8 @@
 - Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
 - Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `Cesium3DTilesSelection` library.
 - `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
+- The `SubtreeAvailability` constructor and `loadSubtree` static method now take an `ImplicitTileSubdivisionScheme` enumeration parameter instead of a `powerOf2` parameter. They also now require a `levelsInSubtree` parameter, which is needed when switching from constant to bitstream availability. Lastly, the constructor now takes a `Subtree` parameter instead of a `std::vector<std::vector<std::byte>>` representing the buffers.
+- `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
 
 ##### Additions :tada:
 
@@ -17,7 +19,10 @@
 - Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
 - Added `TileTransform` class to `Cesium3DTilesContent`, making it easier to create a `glm::dmat4` from the `transform` property of a `Cesium3DTiles::Tile`.
 - Added `ImplicitTilingUtilities` class to `Cesium3DTilesContent`.
-- Added overloads of `isTileAvailable` and `isContentAvailable` on the `SubtreeAvailability` class that take the subtree root tile ID and the tile ID of interest, instead of a relative level and Morton index.
+- Added overloads of `isTileAvailable`, `isContentAvailable`, and `isSubtreeAvailable` on the `SubtreeAvailability` class that take the subtree root tile ID and the tile ID of interest, instead of a relative level and Morton index.
+- Added `fromSubtree` and `createEmpty` static methods to `SubtreeAvailability`.
+- Added new `set` methods to `SubtreeAvailability`, allowing the availability information to be modified.
+- Added `SubtreeFileReader` class, used to read `Cesium3DTiles::Subtree` from a binary or JSON subtree file.
 
 ##### Fixes :wrench:
 
