@@ -314,7 +314,8 @@ public:
    *
    * @param tile The tile to load.
    */
-  void loadTile(RasterOverlayTile& tile);
+  CesiumAsync::Future<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  loadTile(RasterOverlayTile& tile);
 
   /**
    * @brief Loads a tile, unless there are too many tile loads already in
@@ -365,7 +366,8 @@ protected:
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  CesiumAsync::Future<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
   /**
    * @brief Begins the process of loading of a tile.
