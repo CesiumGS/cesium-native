@@ -20,6 +20,21 @@ struct CountFromAccessor {
 };
 
 /**
+ * @brief Visitor that retrieves the status from the given accessor. Returns an
+ * invalid status for a std::monostate (interpreted as a nonexistent accessor).
+ */
+struct StatusFromAccessor {
+  AccessorViewStatus operator()(std::monostate) {
+    return AccessorViewStatus::InvalidAccessorIndex;
+  }
+
+  template <typename T>
+  AccessorViewStatus operator()(const AccessorView<T>& value) {
+    return value.status();
+  }
+};
+
+/**
  * Type definition for all kinds of feature ID attribute accessors.
  */
 typedef std::variant<
