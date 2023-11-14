@@ -46,6 +46,100 @@ TEST_CASE("Test CountFromAccessor") {
   }
 }
 
+TEST_CASE("Test GetFeatureIdAccessorView") {
+  Model model;
+  std::vector<uint8_t> featureIds0{1, 2, 3, 4};
+
+  // First _FEATURE_ID set
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(featureIds0.size() * sizeof(uint8_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        featureIds0.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = buffer.cesium.data.size();
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = 0;
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = 0;
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count = bufferView.byteLength / sizeof(uint8_t);
+  }
+
+  std::vector<uint16_t> featureIds1{5, 6, 7, 8};
+
+  // Second _FEATURE_ID set
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(featureIds1.size() * sizeof(uint16_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        featureIds1.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = buffer.cesium.data.size();
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = 1;
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = 1;
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count = bufferView.byteLength / sizeof(uint16_t);
+  }
+
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive primitive = mesh.primitives.emplace_back();
+
+  primitive.attributes.insert({"_FEATURE_ID_0", 0});
+  primitive.attributes.insert({"_FEATURE_ID_1", 1});
+
+  SECTION("Handles invalid feature ID set index") {
+    FeatureIdAccessorType featureIDAccessor =
+        GetFeatureIdAccessorView(model, primitive, 2);
+    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+  }
+
+  SECTION("Handles invalid accessor type") {
+    model.accessors[0].type = Accessor::Type::VEC2;
+
+    FeatureIdAccessorType featureIDAccessor =
+        GetFeatureIdAccessorView(model, primitive, 0);
+    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+
+    model.accessors[0].type = Accessor::Type::SCALAR;
+  }
+
+  SECTION("Handles invalid normalized accessor") {
+    model.accessors[1].normalized = true;
+
+    FeatureIdAccessorType featureIDAccessor =
+        GetFeatureIdAccessorView(model, primitive, 1);
+    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+
+    model.accessors[1].normalized = false;
+  }
+
+  SECTION("Creates from valid feature ID sets") {
+    FeatureIdAccessorType featureIDAccessor =
+        GetFeatureIdAccessorView(model, primitive, 0);
+    REQUIRE(
+        std::visit(CountFromAccessor{}, featureIDAccessor) ==
+        static_cast<int64_t>(featureIds0.size()));
+
+    featureIDAccessor = GetFeatureIdAccessorView(model, primitive, 1);
+    REQUIRE(
+        std::visit(CountFromAccessor{}, featureIDAccessor) ==
+        static_cast<int64_t>(featureIds1.size()));
+  }
+}
+
 TEST_CASE("FeatureIdFromAccessor") {
   Model model;
   std::vector<int8_t> featureIds{1, 2, 3, 4};
@@ -84,6 +178,76 @@ TEST_CASE("FeatureIdFromAccessor") {
           featureIdAccessor);
       REQUIRE(featureID == featureIds[i]);
     }
+  }
+}
+
+TEST_CASE("Test GetIndexAccessorView") {
+  Model model;
+  std::vector<uint8_t> indices{0, 1, 2, 0, 2, 3};
+
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(indices.size() * sizeof(uint8_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        indices.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = buffer.cesium.data.size();
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = 0;
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = 0;
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count = bufferView.byteLength / sizeof(uint8_t);
+  }
+
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive primitive = mesh.primitives.emplace_back();
+  primitive.indices = 0;
+
+  SECTION("Handles invalid accessor type") {
+    model.accessors[0].type = Accessor::Type::VEC2;
+
+    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    REQUIRE(std::visit(CountFromAccessor{}, indexAccessor) == 0);
+
+    model.accessors[0].type = Accessor::Type::SCALAR;
+  }
+
+  SECTION("Handles unsupported accessor component type") {
+    model.accessors[0].componentType = Accessor::ComponentType::BYTE;
+
+    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    REQUIRE(std::visit(CountFromAccessor{}, indexAccessor) == 0);
+
+    model.accessors[0].componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+  }
+
+  SECTION("Handles invalid normalized accessor") {
+    model.accessors[0].normalized = true;
+
+    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    REQUIRE(std::visit(CountFromAccessor{}, indexAccessor) == 0);
+
+    model.accessors[0].normalized = false;
+  }
+
+  SECTION("Creates from valid accessor") {
+    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    REQUIRE(
+        std::visit(CountFromAccessor{}, indexAccessor) ==
+        static_cast<int64_t>(indices.size()));
+  }
+
+  SECTION("Creates from nonexistent accessor") {
+    primitive.indices = -1;
+
+    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    REQUIRE(std::get_if<std::monostate>(&indexAccessor));
   }
 }
 

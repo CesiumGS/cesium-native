@@ -8,11 +8,6 @@
 
 namespace CesiumGltf {
 /**
- * @brief Type definition for a position accessor.
- */
-typedef AccessorView<AccessorTypes::VEC3<float>> PositionAccessorType;
-
-/**
  * @brief Visitor that retrieves the count of elements in the given accessor
  * type as an int64_t.
  */
@@ -35,6 +30,16 @@ typedef std::variant<
     AccessorView<uint32_t>,
     AccessorView<float>>
     FeatureIdAccessorType;
+
+/**
+ * Retrieves an accessor view for the specified feature ID attribute from the
+ * given glTF primitive and model. This verifies that the accessor is of a valid
+ * type. If not, the returned accessor view will be invalid.
+ */
+FeatureIdAccessorType GetFeatureIdAccessorView(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    int32_t featureIdAttributeIndex);
 
 /**
  * Visitor that retrieves the feature ID from the given accessor type as an
@@ -73,6 +78,14 @@ typedef std::variant<
     AccessorView<uint16_t>,
     AccessorView<uint32_t>>
     IndexAccessorType;
+
+/**
+ * Retrieves an accessor view for the indices of the given glTF primitive from
+ * the model. The primitive may not specify any indices; if so, std::monostate
+ * is returned.
+ */
+IndexAccessorType
+GetIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
  * Visitor that retrieves the vertex indices from the given accessor type

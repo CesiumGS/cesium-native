@@ -13,6 +13,12 @@
 
 - Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
 - Added `MetadataConversions`, which enables metadata values to be converted to different types for better usability in runtime engines.
+- Added various `typedef`s to catch all possible types of `AccessorView`s for an attribute, including `FeatureIdAccessorType` for feature ID attribute accessors, `IndexAccessorType` for index accessors, and `TexCoordAccessorType` for texture coordinate attribute accessors.
+- Added `GetFeatureIdAccessorView`, `GetIndexAccessorView`, and `GetTexCoordAccessorView` to retrieve the `AccessorView` as a `FeatureIdAccessorType`, `IndexAccessorType`, or `TexCoordAccessorType` respectively.
+- Added `CountFromAccessor` to retrieve the accessor size from a `FeatureIdAccessorType`, `IndexAccessorType`, or `TexCoordAccessorType`.
+- Added `FeatureIdFromAccessor` to retrieve feature IDs from a `FeatureIdAccessorType`.
+- Added `IndicesForFaceFromAccessor` to retrieve the indices of the vertices that make up a face, as supplied by `IndexAccessorType`.
+- Added `TexCoordFromAccessor` to retrieve the texture coordinates from a `TexCoordAccessorType`.
 
 ##### Fixes :wrench:
 
