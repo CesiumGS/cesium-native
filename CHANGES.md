@@ -4,12 +4,13 @@
 
 ##### Breaking Changes :mega:
 
-- Moved `ErrorList` from `Cesium3DTilesSelection` to `CesiumUtility`.
+- Moved `ErrorList`, `CreditSystem`, and `Credit` from `Cesium3DTilesSelection` to `CesiumUtility`.
 - Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
 - Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `Cesium3DTilesSelection` library.
 - `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
 - The `SubtreeAvailability` constructor and `loadSubtree` static method now take an `ImplicitTileSubdivisionScheme` enumeration parameter instead of a `powerOf2` parameter. They also now require a `levelsInSubtree` parameter, which is needed when switching from constant to bitstream availability. Lastly, the constructor now takes a `Subtree` parameter instead of a `std::vector<std::vector<std::byte>>` representing the buffers.
 - `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
+- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
 
 ##### Additions :tada:
 
@@ -23,6 +24,9 @@
 - Added `fromSubtree` and `createEmpty` static methods to `SubtreeAvailability`.
 - Added new `set` methods to `SubtreeAvailability`, allowing the availability information to be modified.
 - Added `SubtreeFileReader` class, used to read `Cesium3DTiles::Subtree` from a binary or JSON subtree file.
+- Added `pointInTriangle2D` static method to `CesiumGeometry::IntersectionTests`.
+- Added `rectangleIsWithinPolygons` and `rectangleIsOutsidePolygons` static methods to `CartographicPolygon`.
+- Raster overlays now use `IPrepareRasterOverlayRendererResources`, which contains only overlay-related methods, instead of `IPrepareRendererResources`, which contains tileset-related methods as well. `IPrepareRendererResources` derives from `IPrepareRasterOverlayRendererResources` so existing code should continue to work without modification.
 
 ##### Fixes :wrench:
 
