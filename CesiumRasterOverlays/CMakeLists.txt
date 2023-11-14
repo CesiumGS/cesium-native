@@ -45,6 +45,10 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGltf
         CesiumGltfReader
         CesiumUtility
+)
+
+target_link_libraries_system(
+    Cesium3DTilesContent
     PRIVATE
         expected-lite
         tinyxml2
