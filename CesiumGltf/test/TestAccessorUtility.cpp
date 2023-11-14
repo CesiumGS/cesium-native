@@ -2,6 +2,8 @@
 
 #include <catch2/catch.hpp>
 
+#include <cstring>
+
 using namespace CesiumGltf;
 
 TEST_CASE("Test CountFromAccessor") {
@@ -14,7 +16,7 @@ TEST_CASE("Test CountFromAccessor") {
       buffer.cesium.data.data(),
       featureIds.data(),
       buffer.cesium.data.size());
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -24,7 +26,7 @@ TEST_CASE("Test CountFromAccessor") {
   accessor.bufferView = 0;
   accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
   accessor.type = Accessor::Type::SCALAR;
-  accessor.count = bufferView.byteLength / sizeof(uint8_t);
+  accessor.count = bufferView.byteLength;
 
   SECTION("Handles invalid accessor") {
     // Wrong type
@@ -67,7 +69,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
         buffer.cesium.data.data(),
         featureIds0.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -77,7 +79,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::SCALAR;
-    accessor.count = bufferView.byteLength / sizeof(uint8_t);
+    accessor.count = bufferView.byteLength;
   }
 
   std::vector<uint16_t> featureIds1{5, 6, 7, 8};
@@ -90,7 +92,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
         buffer.cesium.data.data(),
         featureIds1.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 1;
@@ -100,7 +102,8 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
     accessor.bufferView = 1;
     accessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
     accessor.type = Accessor::Type::SCALAR;
-    accessor.count = bufferView.byteLength / sizeof(uint16_t);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(uint16_t));
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -174,7 +177,7 @@ TEST_CASE("FeatureIdFromAccessor") {
       buffer.cesium.data.data(),
       featureIds.data(),
       buffer.cesium.data.size());
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -184,7 +187,7 @@ TEST_CASE("FeatureIdFromAccessor") {
   accessor.bufferView = 0;
   accessor.componentType = Accessor::ComponentType::BYTE;
   accessor.type = Accessor::Type::SCALAR;
-  accessor.count = bufferView.byteLength / sizeof(int8_t);
+  accessor.count = bufferView.byteLength;
 
   SECTION("Handles invalid accessor") {
     // Wrong component type
@@ -216,7 +219,7 @@ TEST_CASE("Test GetIndexAccessorView") {
         buffer.cesium.data.data(),
         indices.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -226,7 +229,7 @@ TEST_CASE("Test GetIndexAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::SCALAR;
-    accessor.count = bufferView.byteLength / sizeof(uint8_t);
+    accessor.count = bufferView.byteLength;
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -298,7 +301,7 @@ TEST_CASE("Test FaceVertexIndicesFromAccessor") {
       buffer.cesium.data.data(),
       indices.data(),
       buffer.cesium.data.size());
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -308,7 +311,8 @@ TEST_CASE("Test FaceVertexIndicesFromAccessor") {
   accessor.bufferView = 0;
   accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
   accessor.type = Accessor::Type::SCALAR;
-  accessor.count = bufferView.byteLength / sizeof(uint32_t);
+  accessor.count =
+      bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
 
   SECTION("Handles invalid accessor") {
     // Wrong component type
@@ -397,7 +401,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
         buffer.cesium.data.data(),
         texCoords0.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -407,7 +411,8 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::FLOAT;
     accessor.type = Accessor::Type::VEC2;
-    accessor.count = bufferView.byteLength / sizeof(glm::vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::vec2));
   }
 
   std::vector<glm::u8vec2> texCoords1{
@@ -424,7 +429,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
         buffer.cesium.data.data(),
         texCoords1.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 1;
@@ -435,7 +440,8 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::VEC2;
     accessor.normalized = true;
-    accessor.count = bufferView.byteLength / sizeof(glm::u8vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::u8vec2));
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -528,7 +534,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
         buffer.cesium.data.data(),
         texCoords0.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -538,7 +544,8 @@ TEST_CASE("Test TexCoordFromAccessor") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::FLOAT;
     accessor.type = Accessor::Type::VEC2;
-    accessor.count = bufferView.byteLength / sizeof(glm::vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::vec2));
   }
 
   std::vector<glm::u8vec2> texCoords1{
@@ -555,7 +562,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
         buffer.cesium.data.data(),
         texCoords1.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 1;
@@ -566,7 +573,8 @@ TEST_CASE("Test TexCoordFromAccessor") {
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::VEC2;
     accessor.normalized = true;
-    accessor.count = bufferView.byteLength / sizeof(glm::u8vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::u8vec2));
   }
 
   Mesh& mesh = model.meshes.emplace_back();
