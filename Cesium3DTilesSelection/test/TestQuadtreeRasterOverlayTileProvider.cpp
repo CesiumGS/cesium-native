@@ -1,8 +1,8 @@
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "SimpleAssetAccessor.h"
 
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
 
 #include <catch2/catch.hpp>
 
@@ -12,6 +12,7 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 
