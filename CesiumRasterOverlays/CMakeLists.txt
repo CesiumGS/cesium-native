@@ -48,7 +48,7 @@ target_link_libraries(CesiumRasterOverlays
 )
 
 target_link_libraries_system(
-    Cesium3DTilesContent
+    CesiumRasterOverlays
     PRIVATE
         expected-lite
         tinyxml2
