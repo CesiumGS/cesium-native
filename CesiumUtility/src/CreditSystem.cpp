@@ -1,8 +1,8 @@
-#include "Cesium3DTilesSelection/CreditSystem.h"
+#include <CesiumUtility/CreditSystem.h>
 
 #include <algorithm>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumUtility {
 
 Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
   return this->createCredit(std::string(html), showOnScreen);
@@ -96,4 +96,4 @@ const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
       });
   return _creditsToShowThisFrame;
 }
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumUtility

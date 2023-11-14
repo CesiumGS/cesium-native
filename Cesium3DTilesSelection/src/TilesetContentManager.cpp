@@ -7,13 +7,13 @@
 
 #include <Cesium3DTilesContent/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterOverlay.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -23,6 +23,8 @@
 #include <chrono>
 
 using namespace Cesium3DTilesContent;
+using namespace CesiumRasterOverlays;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {

@@ -30,4 +30,32 @@ IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
 
   return ray.getOrigin() + ray.getDirection() * t;
 }
+
+bool IntersectionTests::pointInTriangle2D(
+    const glm::dvec2& point,
+    const glm::dvec2& triangleVertA,
+    const glm::dvec2& triangleVertB,
+    const glm::dvec2& triangleVertC) noexcept {
+
+  const glm::dvec2 ab = triangleVertB - triangleVertA;
+  const glm::dvec2 ab_perp(-ab.y, ab.x);
+  const glm::dvec2 bc = triangleVertC - triangleVertB;
+  const glm::dvec2 bc_perp(-bc.y, bc.x);
+  const glm::dvec2 ca = triangleVertA - triangleVertC;
+  const glm::dvec2 ca_perp(-ca.y, ca.x);
+
+  const glm::dvec2 av = point - triangleVertA;
+  const glm::dvec2 cv = point - triangleVertC;
+
+  const double v_proj_ab_perp = glm::dot(av, ab_perp);
+  const double v_proj_bc_perp = glm::dot(cv, bc_perp);
+  const double v_proj_ca_perp = glm::dot(cv, ca_perp);
+
+  // This will determine in or out, irrespective of winding.
+  return (v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
+          v_proj_bc_perp >= 0.0) ||
+         (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
+          v_proj_bc_perp <= 0.0);
+}
+
 } // namespace CesiumGeometry

@@ -17,18 +17,20 @@
 #include <optional>
 #include <string>
 
-namespace Cesium3DTilesSelection {
-
+namespace CesiumUtility {
 struct Credit;
 class CreditSystem;
-class IPrepareRendererResources;
+} // namespace CesiumUtility
+
+namespace CesiumRasterOverlays {
+
+class IPrepareRasterOverlayRendererResources;
 class RasterOverlayTileProvider;
-class RasterOverlayCollection;
 
 /**
  * @brief Options for loading raster overlays.
  */
-struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
+struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
   /**
    * @brief The maximum number of overlay tiles that may simultaneously be in
    * the process of loading.
@@ -166,14 +168,16 @@ public:
   /**
    * @brief Gets the credits for this overlay.
    */
-  const std::vector<Credit>& getCredits() const noexcept {
+  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept {
     return this->_credits;
   }
 
   /**
    * @brief Gets the credits for this overlay.
    */
-  std::vector<Credit>& getCredits() noexcept { return this->_credits; }
+  std::vector<CesiumUtility::Credit>& getCredits() noexcept {
+    return this->_credits;
+  }
 
   /**
    * @brief Create a placeholder tile provider can be used in place of the real
@@ -213,8 +217,8 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const = 0;
@@ -228,8 +232,8 @@ private:
 
   std::string _name;
   RasterOverlayOptions _options;
-  std::vector<Credit> _credits;
+  std::vector<CesiumUtility::Credit> _credits;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

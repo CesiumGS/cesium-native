@@ -1,17 +1,14 @@
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/ITaskProcessor.h>
+#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/joinToString.h>
 
 using namespace CesiumAsync;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 RasterOverlayTile::RasterOverlayTile(
     RasterOverlayTileProvider& tileProvider) noexcept
@@ -42,8 +39,8 @@ RasterOverlayTile::~RasterOverlayTile() {
 
   tileProvider.removeTile(this);
 
-  const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources =
-      tileProvider.getPrepareRendererResources();
+  const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+      pPrepareRendererResources = tileProvider.getPrepareRendererResources();
 
   if (pPrepareRendererResources) {
     void* pLoadThreadResult =
@@ -92,4 +89,4 @@ void RasterOverlayTile::setState(LoadState newState) noexcept {
   this->_state = newState;
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

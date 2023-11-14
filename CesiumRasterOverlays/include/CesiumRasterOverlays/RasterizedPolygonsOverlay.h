@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
-class CESIUM3DTILESSELECTION_API RasterizedPolygonsOverlay final
+class CESIUMRASTEROVERLAYS_API RasterizedPolygonsOverlay final
     : public RasterOverlay {
 
 public:
@@ -33,8 +33,8 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
@@ -53,4 +53,4 @@ private:
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

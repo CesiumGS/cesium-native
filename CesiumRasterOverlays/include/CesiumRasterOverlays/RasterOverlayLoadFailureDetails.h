@@ -9,7 +9,7 @@ namespace CesiumAsync {
 class IAssetRequest;
 }
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 class RasterOverlay;
 
@@ -52,4 +52,4 @@ public:
   std::string message = "";
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

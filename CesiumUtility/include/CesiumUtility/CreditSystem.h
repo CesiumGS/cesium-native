@@ -7,14 +7,14 @@
 #include <utility>
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumUtility {
 
 /**
  * @brief Represents an HTML string that should be shown on screen to attribute
  * third parties for used data, imagery, etc. Acts as a handle into a
  * {@link CreditSystem} object that actually holds the credit string.
  */
-struct CESIUM3DTILESSELECTION_API Credit {
+struct CESIUMUTILITY_API Credit {
 public:
   /**
    * @brief Returns `true` if two credit objects have the same ID.
@@ -36,7 +36,7 @@ private:
  * tracks which credits should be shown and which credits should be removed this
  * frame.
  */
-class CESIUM3DTILESSELECTION_API CreditSystem final {
+class CESIUMUTILITY_API CreditSystem final {
 public:
   /**
    * @brief Inserts a credit string
@@ -111,4 +111,4 @@ private:
   std::vector<Credit> _creditsToShowThisFrame;
   std::vector<Credit> _creditsToNoLongerShowThisFrame;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumUtility

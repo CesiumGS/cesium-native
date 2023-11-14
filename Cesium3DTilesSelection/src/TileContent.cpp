@@ -1,5 +1,7 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 
+using namespace CesiumUtility;
+
 namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},

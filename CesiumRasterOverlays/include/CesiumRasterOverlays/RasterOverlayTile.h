@@ -9,9 +9,12 @@
 
 #include <vector>
 
-namespace Cesium3DTilesSelection {
-
+namespace CesiumUtility {
 struct Credit;
+}
+
+namespace CesiumRasterOverlays {
+
 class RasterOverlay;
 class RasterOverlayTileProvider;
 
@@ -177,7 +180,7 @@ public:
   /**
    * @brief Returns the list of {@link Credit}s needed for this tile.
    */
-  const std::vector<Credit>& getCredits() const noexcept {
+  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept {
     return this->_tileCredits;
   }
 
@@ -251,10 +254,10 @@ private:
   RasterOverlayTileProvider* _pTileProvider;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
-  std::vector<Credit> _tileCredits;
+  std::vector<CesiumUtility::Credit> _tileCredits;
   LoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
   MoreDetailAvailable _moreDetailAvailable;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

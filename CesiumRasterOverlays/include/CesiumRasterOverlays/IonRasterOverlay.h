@@ -9,14 +9,12 @@
 #include <functional>
 #include <memory>
 
-namespace Cesium3DTilesSelection {
-
-class CreditSystem;
+namespace CesiumRasterOverlays {
 
 /**
  * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
  */
-class CESIUM3DTILESSELECTION_API IonRasterOverlay final : public RasterOverlay {
+class CESIUMRASTEROVERLAYS_API IonRasterOverlay final : public RasterOverlay {
 public:
   /**
    * @brief Creates a new instance.
@@ -41,8 +39,8 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
@@ -74,11 +72,11 @@ private:
       const ExternalAssetEndpoint& endpoint,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

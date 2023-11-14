@@ -1,12 +1,11 @@
 #pragma once
 
-#include "CreditSystem.h"
 #include "Library.h"
-#include "RasterMappedTo3DTile.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 #include <CesiumUtility/Tracing.h>
@@ -16,16 +15,16 @@
 #include <cassert>
 #include <optional>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 class RasterOverlay;
 class RasterOverlayTile;
-class IPrepareRendererResources;
+class IPrepareRasterOverlayRendererResources;
 
 /**
  * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
  */
-struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
+struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   /**
    * @brief The loaded image.
    *
@@ -46,7 +45,7 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
    * @brief The {@link Credit} objects that decribe the attributions that
    * are required when using the image.
    */
-  std::vector<Credit> credits{};
+  std::vector<CesiumUtility::Credit> credits{};
 
   /**
    * @brief Error messages from loading the image.
@@ -86,7 +85,7 @@ struct LoadTileImageFromUrlOptions {
    * This property is copied verbatim to the
    * {@link LoadedRasterOverlayImage::credits} property.
    */
-  std::vector<Credit> credits{};
+  std::vector<CesiumUtility::Credit> credits{};
 
   /**
    * @brief Whether more detailed data, beyond this image, is available within
@@ -120,7 +119,7 @@ struct LoadTileImageFromUrlOptions {
  * Instances of this class must be allocated on the heap, and their lifetimes
  * must be managed with {@link CesiumUtility::IntrusivePointer}.
  */
-class CESIUM3DTILESSELECTION_API RasterOverlayTileProvider
+class CESIUMRASTEROVERLAYS_API RasterOverlayTileProvider
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           RasterOverlayTileProvider> {
 public:
@@ -160,8 +159,8 @@ public:
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRendererResources>&
+      std::optional<CesiumUtility::Credit> credit,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
@@ -218,7 +217,7 @@ public:
    * @brief Gets the interface used to prepare raster overlay images for
    * rendering.
    */
-  const std::shared_ptr<IPrepareRendererResources>&
+  const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
   getPrepareRendererResources() const noexcept {
     return this->_pPrepareRendererResources;
   }
@@ -297,7 +296,9 @@ public:
   /**
    * @brief Get the per-TileProvider {@link Credit} if one exists.
    */
-  const std::optional<Credit>& getCredit() const noexcept { return _credit; }
+  const std::optional<CesiumUtility::Credit>& getCredit() const noexcept {
+    return _credit;
+  }
 
   /**
    * @brief Loads a tile immediately, without throttling requests.
@@ -389,8 +390,9 @@ private:
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  std::optional<Credit> _credit;
-  std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
+  std::optional<CesiumUtility::Credit> _credit;
+  std::shared_ptr<IPrepareRasterOverlayRendererResources>
+      _pPrepareRendererResources;
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
   CesiumGeometry::Rectangle _coverageRectangle;
@@ -404,4 +406,4 @@ private:
 
   static CesiumGltfReader::GltfReader _gltfReader;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays
