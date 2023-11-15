@@ -67,7 +67,7 @@ public:
    * 4x4 matrix.
    *
    * If the transformation has non-uniform scale, the bounding sphere's radius
-   * is scaled by the scale of the transformation's axis with the largest scale.
+   * is scaled by the largest scale value among the transformation's axes.
    *
    * @param transformation The transformation.
    * @return The bounding sphere in the new coordinate system.
