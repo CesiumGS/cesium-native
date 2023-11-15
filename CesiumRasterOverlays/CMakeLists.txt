@@ -43,6 +43,7 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGeospatial
         CesiumGeometry
         CesiumGltf
+        CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
 )

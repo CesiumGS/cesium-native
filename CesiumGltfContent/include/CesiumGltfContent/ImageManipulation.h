@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltfReader/Library.h"
+#include "Library.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -10,7 +10,7 @@ namespace CesiumGltf {
 struct ImageCesium;
 }
 
-namespace CesiumGltfReader {
+namespace CesiumGltfContent {
 
 /**
  * @brief Specifies a rectangle of pixels in an image.
@@ -37,7 +37,7 @@ struct PixelRectangle {
   int32_t height;
 };
 
-class CESIUMGLTFREADER_API ImageManipulation {
+class CESIUMGLTFCONTENT_API ImageManipulation {
 public:
   /**
    * @brief Directly copies pixels from a source to a target, without validating
@@ -97,4 +97,4 @@ public:
       const PixelRectangle& sourcePixels);
 };
 
-} // namespace CesiumGltfReader
+} // namespace CesiumGltfContent

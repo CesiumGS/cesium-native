@@ -1,6 +1,5 @@
-#include "CesiumGltfReader/ImageManipulation.h"
-
 #include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltfContent/ImageManipulation.h>
 
 #include <cassert>
 #include <cstring>
@@ -8,7 +7,7 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
-namespace CesiumGltfReader {
+namespace CesiumGltfContent {
 
 void ImageManipulation::unsafeBlitImage(
     std::byte* pTarget,
@@ -114,4 +113,4 @@ bool ImageManipulation::blitImage(
 
   return true;
 }
-} // namespace CesiumGltfReader
+} // namespace CesiumGltfContent

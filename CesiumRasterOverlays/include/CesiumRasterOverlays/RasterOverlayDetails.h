@@ -8,12 +8,12 @@
 
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 /**
  * @brief Holds details of the {@link TileRenderContent} that are useful
  * for raster overlays.
  */
-struct CESIUM3DTILESSELECTION_API RasterOverlayDetails {
+struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
   /**
    * @brief Construct an empty RasterOverlayDetails.
    */
@@ -76,4 +76,4 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayDetails {
    */
   CesiumGeospatial::BoundingRegion boundingRegion;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

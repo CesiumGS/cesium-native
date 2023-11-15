@@ -5,15 +5,15 @@
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesContent/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -22,7 +22,7 @@
 
 #include <chrono>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfContent;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 

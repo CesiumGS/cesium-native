@@ -1,14 +1,14 @@
-#include <Cesium3DTilesContent/GltfUtilities.h>
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 
 #include <vector>
 
-namespace Cesium3DTilesContent {
+namespace CesiumGltfContent {
 /*static*/ glm::dmat4x4 GltfUtilities::applyRtcCenter(
     const CesiumGltf::Model& gltf,
     const glm::dmat4x4& rootTransform) {
@@ -150,4 +150,4 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   return result;
 }
-} // namespace Cesium3DTilesContent
+} // namespace CesiumGltfContent

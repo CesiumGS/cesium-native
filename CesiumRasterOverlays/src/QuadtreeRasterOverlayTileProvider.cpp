@@ -1,5 +1,5 @@
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumGltfReader/ImageManipulation.h>
+#include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -10,6 +10,7 @@ using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumGltfContent;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 

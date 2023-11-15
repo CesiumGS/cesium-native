@@ -14,12 +14,12 @@ namespace CesiumGltf {
 struct Model;
 }
 
-namespace Cesium3DTilesContent {
+namespace CesiumGltfContent {
 /**
  * A collection of utility functions that are used to process and transform a
  * gltf model
  */
-struct CESIUM3DTILESCONTENT_API GltfUtilities {
+struct CESIUMGLTFCONTENT_API GltfUtilities {
   /**
    * @brief Applies the glTF's RTC_CENTER, if any, to the given transform.
    *
@@ -93,4 +93,4 @@ struct CESIUM3DTILESCONTENT_API GltfUtilities {
   static std::vector<std::string_view>
   parseGltfCopyright(const CesiumGltf::Model& gltf);
 };
-} // namespace Cesium3DTilesContent
+} // namespace CesiumGltfContent

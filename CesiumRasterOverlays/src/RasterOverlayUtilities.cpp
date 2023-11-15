@@ -1,13 +1,13 @@
-#include <Cesium3DTilesContent/GltfUtilities.h>
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
-#include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfContent;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 /*static*/ std::optional<RasterOverlayDetails>
 RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
@@ -265,4 +265,4 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
       computedBounds.toRegion()};
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

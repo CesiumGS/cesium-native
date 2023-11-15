@@ -14,12 +14,12 @@ namespace CesiumGltf {
 struct Model;
 }
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
-struct CESIUM3DTILESSELECTION_API RasterOverlayUtilities {
+struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
   /**
    * @brief Creates texture coordinates for mapping {@link RasterOverlay} tiles
-   * to {@link Tileset} tiles.
+   * to a glTF model.
    *
    * Generates new texture coordinates for the `gltf` using the given
    * `projections`. The first new texture coordinate (`u` or `s`) will be 0.0 at
@@ -63,4 +63,4 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayUtilities {
       std::vector<CesiumGeospatial::Projection>&& projections);
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays
