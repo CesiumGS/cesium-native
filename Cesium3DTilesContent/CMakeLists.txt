@@ -62,6 +62,12 @@ target_link_libraries(Cesium3DTilesContent
         CesiumUtility
 )
 
+target_link_libraries_system(
+    Cesium3DTilesContent
+    PRIVATE
+        libmorton
+)
+
 install(TARGETS Cesium3DTilesContent
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesContent

@@ -5,6 +5,11 @@
 
 #include <optional>
 
+namespace CesiumGeometry {
+struct QuadtreeTileID;
+struct OctreeTileID;
+} // namespace CesiumGeometry
+
 namespace Cesium3DTilesContent {
 struct SubtreeConstantAvailability {
   bool constant;
@@ -27,8 +32,26 @@ public:
       std::vector<std::vector<std::byte>>&& buffers);
 
   bool isTileAvailable(
+      const CesiumGeometry::QuadtreeTileID& subtreeID,
+      const CesiumGeometry::QuadtreeTileID& tileID) const noexcept;
+
+  bool isTileAvailable(
+      const CesiumGeometry::OctreeTileID& subtreeID,
+      const CesiumGeometry::OctreeTileID& tileID) const noexcept;
+
+  bool isTileAvailable(
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId) const noexcept;
+
+  bool isContentAvailable(
+      const CesiumGeometry::QuadtreeTileID& subtreeID,
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      uint64_t contentId) const noexcept;
+
+  bool isContentAvailable(
+      const CesiumGeometry::OctreeTileID& subtreeID,
+      const CesiumGeometry::OctreeTileID& tileID,
+      uint64_t contentId) const noexcept;
 
   bool isContentAvailable(
       uint32_t relativeTileLevel,
