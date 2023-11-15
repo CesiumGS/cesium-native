@@ -113,6 +113,19 @@ struct LoadTileImageFromUrlOptions {
   bool allowEmptyImages = false;
 };
 
+class RasterOverlayTileProvider;
+
+/**
+ * @brief Holds a tile and its corresponding tile provider. Used as the return
+ * value of {@link RasterOverlayTileProvider::loadTile}.
+ */
+struct TileProviderAndTile {
+  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
+
+  ~TileProviderAndTile() noexcept;
+};
+
 /**
  * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
  *
@@ -314,8 +327,7 @@ public:
    *
    * @param tile The tile to load.
    */
-  CesiumAsync::Future<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
-  loadTile(RasterOverlayTile& tile);
+  CesiumAsync::Future<TileProviderAndTile> loadTile(RasterOverlayTile& tile);
 
   /**
    * @brief Loads a tile, unless there are too many tile loads already in
@@ -366,7 +378,7 @@ protected:
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  CesiumAsync::Future<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  CesiumAsync::Future<TileProviderAndTile>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
   /**

@@ -6,6 +6,8 @@
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 
 using namespace CesiumGltfContent;
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 
 namespace CesiumRasterOverlays {
 
@@ -263,6 +265,50 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
       std::move(projections),
       std::move(rectangles),
       computedBounds.toRegion()};
+}
+
+/*static*/ glm::dvec2 RasterOverlayUtilities::computeDesiredScreenPixels(
+    double geometricError,
+    double maximumScreenSpaceError,
+    const CesiumGeospatial::Projection& projection,
+    const CesiumGeometry::Rectangle& rectangle,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  // We're aiming to estimate the maximum number of pixels (in each projected
+  // direction) the tile will occupy on the screen. The will be determined by
+  // the tile's geometric error, because when less error is needed (i.e. the
+  // viewer moved closer), the LOD will switch to show the tile's children
+  // instead of this tile.
+  //
+  // It works like this:
+  // * Estimate the size of the projected rectangle in world coordinates.
+  // * Compute the distance at which tile will switch to its children, based on
+  // its geometric error and the tileset SSE.
+  // * Compute the on-screen size of the projected rectangle at that distance.
+  //
+  // For the two compute steps, we use the usual perspective projection SSE
+  // equation:
+  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
+  //
+  // Conveniently a bunch of terms cancel out, so the screen pixel size at the
+  // switch distance is not actually dependent on the screen dimensions or
+  // field-of-view angle.
+
+  // We can get a more accurate estimate of the real-world size of the projected
+  // rectangle if we consider the rectangle at the true height of the geometry
+  // rather than assuming it's on the ellipsoid. This will make basically no
+  // difference for small tiles (because surface normals on opposite ends of
+  // tiles are effectively identical), and only a small difference for large
+  // ones (because heights will be small compared to the total size of a large
+  // tile). So we're skipping this complexity for now and estimating geometry
+  // width/height as if it's on the ellipsoid surface.
+  const double heightForSizeEstimation = 0.0;
+
+  glm::dvec2 diameters = computeProjectedRectangleSize(
+      projection,
+      rectangle,
+      heightForSizeEstimation,
+      ellipsoid);
+  return diameters * maximumScreenSpaceError / geometricError;
 }
 
 } // namespace CesiumRasterOverlays

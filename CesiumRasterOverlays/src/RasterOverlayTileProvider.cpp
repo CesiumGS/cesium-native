@@ -94,12 +94,12 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 }
 
-CesiumAsync::Future<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+CesiumAsync::Future<TileProviderAndTile>
 RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
   if (this->_pPlaceholder) {
     // Refuse to load placeholders.
-    return this->getAsyncSystem()
-        .createResolvedFuture<IntrusivePointer<RasterOverlayTile>>(nullptr);
+    return this->getAsyncSystem().createResolvedFuture(
+        TileProviderAndTile{this, nullptr});
   }
 
   return this->doLoad(tile, false);
@@ -298,14 +298,13 @@ static LoadResult createLoadResultFromLoadedImage(
 
 } // namespace
 
-CesiumAsync::Future<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
-RasterOverlayTileProvider::doLoad(
+CesiumAsync::Future<TileProviderAndTile> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     // Already loading or loaded, do nothing.
-    return this->getAsyncSystem()
-        .createResolvedFuture<IntrusivePointer<RasterOverlayTile>>(nullptr);
+    return this->getAsyncSystem().createResolvedFuture(
+        TileProviderAndTile{this, nullptr});
   }
 
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
@@ -348,7 +347,7 @@ RasterOverlayTileProvider::doLoad(
 
             thiz->finalizeTileLoad(isThrottledLoad);
 
-            return pTile;
+            return TileProviderAndTile{thiz, pTile};
           })
       .catchInMainThread(
           [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
@@ -361,7 +360,7 @@ RasterOverlayTileProvider::doLoad(
 
             thiz->finalizeTileLoad(isThrottledLoad);
 
-            return pTile;
+            return TileProviderAndTile{thiz, pTile};
           });
 }
 
@@ -379,4 +378,11 @@ void RasterOverlayTileProvider::finalizeTileLoad(
     --this->_throttledTilesCurrentlyLoading;
   }
 }
+
+TileProviderAndTile::~TileProviderAndTile() noexcept {
+  // Ensure the tile is released before the tile provider.
+  pTile = nullptr;
+  pTileProvider = nullptr;
+}
+
 } // namespace CesiumRasterOverlays

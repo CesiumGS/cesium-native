@@ -3,6 +3,7 @@
 #include "Library.h"
 #include "RasterOverlayDetails.h"
 
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
 
 #include <glm/fwd.hpp>
@@ -61,6 +62,52 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
       int32_t firstTextureCoordinateID,
       const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
       std::vector<CesiumGeospatial::Projection>&& projections);
+
+  /**
+   * @brief Computes the desired screen pixels for a raster overlay texture.
+   *
+   * This method is used to determine the appropriate number of "screen pixels"
+   * to use for a raster overlay texture to be attached to a glTF (which is
+   * usually a 3D Tiles tile). In other words, how detailed should the texture
+   * be? The answer depends, of course, on how close we'll get to the model. If
+   * we're going to get very close, we'll need a higher-resolution raster
+   * overlay texture than if we will stay far away from it.
+   *
+   * In 3D Tiles, we can only get so close to a model before it switches to the
+   * next higher level-of-detail by showing its children instead. The switch
+   * distance is controlled by the `geometric error` of the tile, as well as by
+   * the `maximum screen space error` of the tileset. So this method requires
+   * both of those parameters.
+   *
+   * The answer also depends on the size of the model on the screen at this
+   * switch distance. To determine that, this method takes a projection and a
+   * rectangle that bounds the tile, expressed in that projection. This
+   * rectangle is projected onto the screen at the switch distance, and the size
+   * of that rectangle on the screen is the `target screen pixels` returned by
+   * this method.
+   *
+   * The `target screen pixels` returned here may be further modified by the
+   * raster overlay's {@link RasterOverlay::getTile} method. In particular, it
+   * will usually be divided by the raster overlay's `maximum screen space
+   * error` of the raster overlay (not to be confused with the `maximum screen
+   * space error` of the tileset, mentioned above).
+   *
+   * @param geometricError The geometric error of the tile.
+   * @param maximumScreenSpaceError The maximum screen-space error used to
+   * render the tileset.
+   * @param projection The projection in which the `rectangle` parameter is
+   * provided.
+   * @param rectangle The 2D extent of the tile, expressed in the `projection`.
+   * @param ellipsoid The ellipsoid with which computations are performed.
+   * @return The desired screen pixels.
+   */
+  static glm::dvec2 computeDesiredScreenPixels(
+      double geometricError,
+      double maximumScreenSpaceError,
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::Rectangle& rectangle,
+      const CesiumGeospatial::Ellipsoid& ellipsoid =
+          CesiumGeospatial::Ellipsoid::WGS84);
 };
 
 } // namespace CesiumRasterOverlays
