@@ -22,9 +22,6 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
-
-##### Fixes :wrench:
-
 - Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
 
 ### v0.29.0 - 2023-11-01
