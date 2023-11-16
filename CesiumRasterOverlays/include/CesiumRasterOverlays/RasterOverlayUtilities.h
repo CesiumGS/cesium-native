@@ -59,9 +59,10 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
   createRasterOverlayTextureCoordinates(
       CesiumGltf::Model& gltf,
       const glm::dmat4& modelToEcefTransform,
-      int32_t firstTextureCoordinateID,
       const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
-      std::vector<CesiumGeospatial::Projection>&& projections);
+      std::vector<CesiumGeospatial::Projection>&& projections,
+      const std::string& textureCoordinateAttributeBaseName = "TEXCOORD_",
+      int32_t firstTextureCoordinateID = 0);
 
   /**
    * @brief Computes the desired screen pixels for a raster overlay texture.

@@ -8,6 +8,8 @@
 
 #include <vector>
 
+using namespace CesiumGltf;
+
 namespace CesiumGltfContent {
 /*static*/ glm::dmat4x4 GltfUtilities::applyRtcCenter(
     const CesiumGltf::Model& gltf,
@@ -150,4 +152,42 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   return result;
 }
+
+/*static*/ void GltfUtilities::mergeBuffers(CesiumGltf::Model& gltf) {
+  if (gltf.buffers.empty())
+    return;
+
+  Buffer& mainBuffer = gltf.buffers[0];
+
+  // Copy all other buffers into the main one, and keep track of where we put
+  // them.
+  std::vector<size_t> oldBufferStarts;
+
+  for (size_t i = 1; i < gltf.buffers.size(); ++i) {
+    const Buffer& otherBuffer = gltf.buffers[i];
+
+    oldBufferStarts.emplace_back(mainBuffer.cesium.data.size());
+
+    mainBuffer.cesium.data.insert(
+        mainBuffer.cesium.data.end(),
+        otherBuffer.cesium.data.begin(),
+        otherBuffer.cesium.data.end());
+  }
+
+  mainBuffer.byteLength = mainBuffer.cesium.data.size();
+
+  // Update all the bufferViews to refer to the main buffer.
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer <= 0 || bufferView.buffer >= gltf.buffers.size())
+      continue;
+
+    size_t oldBufferStart = oldBufferStarts[bufferView.buffer - 1];
+    bufferView.buffer = 0;
+    bufferView.byteOffset += oldBufferStart;
+  }
+
+  // Remove all the old buffers
+  gltf.buffers.resize(1);
+}
+
 } // namespace CesiumGltfContent

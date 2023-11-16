@@ -15,9 +15,10 @@ namespace CesiumRasterOverlays {
 RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& model,
     const glm::dmat4& modelToEcefTransform,
-    int32_t firstTextureCoordinateID,
     const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
-    std::vector<CesiumGeospatial::Projection>&& projections) {
+    std::vector<CesiumGeospatial::Projection>&& projections,
+    const std::string& textureCoordinateAttributeBaseName,
+    int32_t firstTextureCoordinateID) {
   if (projections.empty()) {
     return std::nullopt;
   }
@@ -79,7 +80,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           // them.
           for (size_t i = 0; i < projections.size(); ++i) {
             std::string attributeName =
-                "_CESIUMOVERLAY_" +
+                textureCoordinateAttributeBaseName +
                 std::to_string(firstTextureCoordinateID + int32_t(i));
             primitive.attributes[attributeName] =
                 firstTextureCoordinateAccessorIndex + int32_t(i);
@@ -154,13 +155,15 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
           uvAccessor.count = int64_t(positionView.size());
           uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
+          uvAccessor.min = {0.0, 0.0};
+          uvAccessor.max = {1.0, 1.0};
 
           [[maybe_unused]] CesiumGltf::AccessorWriter<glm::vec2>& uvWriter =
               uvWriters.emplace_back(gltf, uvAccessorId);
           assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
           std::string attributeName =
-              "_CESIUMOVERLAY_" +
+              textureCoordinateAttributeBaseName +
               std::to_string(firstTextureCoordinateID + int32_t(i));
           primitive.attributes[attributeName] = uvAccessorId;
         }
@@ -249,8 +252,10 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
                     0.0,
                     1.0),
                 CesiumUtility::Math::clamp(
-                    (projectedPosition.y - rectangle.minimumY) /
-                        rectangle.computeHeight(),
+                    // TODO: this "1.0 minus" will break existing shaders in
+                    // game engines!
+                    1.0 - (projectedPosition.y - rectangle.minimumY) /
+                              rectangle.computeHeight(),
                     0.0,
                     1.0));
 

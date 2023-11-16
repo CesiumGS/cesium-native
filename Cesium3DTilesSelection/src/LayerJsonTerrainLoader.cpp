@@ -215,11 +215,12 @@ void generateRasterOverlayUVs(
         RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
             *pModel,
             tileTransform,
-            0,
             pParentRegion ? std::make_optional<GlobeRectangle>(
                                 pParentRegion->getRectangle())
                           : std::nullopt,
-            {projection});
+            {projection},
+            "_CESIUMOVERLAY_",
+            0);
   }
 }
 

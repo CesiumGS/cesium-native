@@ -92,5 +92,14 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    */
   static std::vector<std::string_view>
   parseGltfCopyright(const CesiumGltf::Model& gltf);
+
+  /**
+   * @brief Merges all of the glTF's buffers into a single buffer.
+   *
+   * This is useful when writing the glTF as a GLB.
+   *
+   * @param gltf The glTF in which to merge buffers.
+   */
+  static void mergeBuffers(CesiumGltf::Model& gltf);
 };
 } // namespace CesiumGltfContent

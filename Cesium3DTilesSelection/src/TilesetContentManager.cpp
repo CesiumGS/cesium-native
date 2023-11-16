@@ -382,9 +382,10 @@ void calcRasterOverlayDetailsInWorkerThread(
       RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           model,
           tileLoadInfo.tileTransform,
-          firstRasterOverlayTexCoord,
           pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
-          std::move(projections));
+          std::move(projections),
+          "_CESIUMOVERLAY_",
+          firstRasterOverlayTexCoord);
 
   if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.
