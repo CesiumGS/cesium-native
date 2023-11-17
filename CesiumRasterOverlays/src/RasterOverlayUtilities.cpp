@@ -321,4 +321,22 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
   return diameters * maximumScreenSpaceError / geometricError;
 }
 
+/*static*/ glm::dvec4 RasterOverlayUtilities::computeTranslationAndScale(
+    const Rectangle& geometryRectangle,
+    const Rectangle& overlayRectangle) {
+  const double geometryWidth = geometryRectangle.computeWidth();
+  const double geometryHeight = geometryRectangle.computeHeight();
+
+  const double scaleX = geometryWidth / overlayRectangle.computeWidth();
+  const double scaleY = geometryHeight / overlayRectangle.computeHeight();
+  glm::dvec2 translation = glm::dvec2(
+      (scaleX * (geometryRectangle.minimumX - overlayRectangle.minimumX)) /
+          geometryWidth,
+      (scaleY * (geometryRectangle.minimumY - overlayRectangle.minimumY)) /
+          geometryHeight);
+  glm::dvec2 scale = glm::dvec2(scaleX, scaleY);
+
+  return glm::dvec4(translation, scale);
+}
+
 } // namespace CesiumRasterOverlays

@@ -393,17 +393,13 @@ void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   const CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 
-  const double terrainWidth = geometryRectangle.computeWidth();
-  const double terrainHeight = geometryRectangle.computeHeight();
+  glm::dvec4 translationAndScale =
+      RasterOverlayUtilities::computeTranslationAndScale(
+          geometryRectangle,
+          imageryRectangle);
 
-  const double scaleX = terrainWidth / imageryRectangle.computeWidth();
-  const double scaleY = terrainHeight / imageryRectangle.computeHeight();
-  this->_translation = glm::dvec2(
-      (scaleX * (geometryRectangle.minimumX - imageryRectangle.minimumX)) /
-          terrainWidth,
-      (scaleY * (geometryRectangle.minimumY - imageryRectangle.minimumY)) /
-          terrainHeight);
-  this->_scale = glm::dvec2(scaleX, scaleY);
+  this->_translation = glm::dvec2(translationAndScale.x, translationAndScale.y);
+  this->_scale = glm::dvec2(translationAndScale.z, translationAndScale.w);
 }
 
 } // namespace Cesium3DTilesSelection

@@ -117,6 +117,19 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
       const CesiumGeometry::Rectangle& rectangle,
       const CesiumGeospatial::Ellipsoid& ellipsoid =
           CesiumGeospatial::Ellipsoid::WGS84);
+
+  /**
+   * @brief Computes the texture translation and scale necessary to align a
+   * raster overlay with the given rectangle on geometry whose texture
+   * coordinates were computed using a different rectangle.
+   *
+   * @param geometryRectangle The geometry rectangle used to the compute the texture coordinates.
+   * @param overlayRectangle The rectangle covered by the raster overlay texture.
+   * @return The translation in X and Y, and the scale in Z and W.
+   */
+  static glm::dvec4 computeTranslationAndScale(
+      const CesiumGeometry::Rectangle& geometryRectangle,
+      const CesiumGeometry::Rectangle& overlayRectangle);
 };
 
 } // namespace CesiumRasterOverlays
