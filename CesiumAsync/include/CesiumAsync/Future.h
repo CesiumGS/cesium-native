@@ -202,6 +202,30 @@ public:
   }
 
   /**
+   * @brief Passes through one or more additional values to the next
+   * continuation.
+   *
+   * The next continuation will receive a tuple with each of the provided
+   * values, followed by the result of the current Future.
+   *
+   * @tparam TPassThrough The types to pass through to the next continuation.
+   * @param value The values to pass through to the next continuation.
+   * @return A new Future that resolves to a tuple with the pass-through values,
+   * followed by the result of the last Future.
+   */
+  template <typename... TPassThrough>
+  Future<std::tuple<TPassThrough..., T>>
+  thenPassThrough(TPassThrough&&... values) && {
+    return std::move(*this).thenImmediately(
+        [values = std::tuple(std::forward<TPassThrough>(values)...)](
+            T&& result) mutable {
+          return std::tuple_cat(
+              std::move(values),
+              std::make_tuple(std::move(result)));
+        });
+  }
+
+  /**
    * @brief Waits for the future to resolve or reject and returns the result.
    *
    * This method must not be called from the main thread, the one that calls

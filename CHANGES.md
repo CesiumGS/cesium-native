@@ -27,6 +27,7 @@
 - Added `pointInTriangle2D` static method to `CesiumGeometry::IntersectionTests`.
 - Added `rectangleIsWithinPolygons` and `rectangleIsOutsidePolygons` static methods to `CartographicPolygon`.
 - Raster overlays now use `IPrepareRasterOverlayRendererResources`, which contains only overlay-related methods, instead of `IPrepareRendererResources`, which contains tileset-related methods as well. `IPrepareRendererResources` derives from `IPrepareRasterOverlayRendererResources` so existing code should continue to work without modification.
+- Added `Future<T>::thenPassThrough`, used to easily pass additional values through to the next continuation.
 
 ##### Fixes :wrench:
 
