@@ -18,7 +18,6 @@
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumNativeTests;
-using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 
 namespace {
