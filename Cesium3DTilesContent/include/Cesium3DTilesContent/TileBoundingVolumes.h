@@ -36,7 +36,7 @@ public:
    *
    * @param boundingVolume The bounding volume from which to get the region.
    * @return The region, or `std::nullopt` if the bounding volume does not
-   * define a region. The box is defined in geographic coordinates.
+   * define a region. The region is defined in geographic coordinates.
    */
   static std::optional<CesiumGeospatial::BoundingRegion>
   getBoundingRegion(const Cesium3DTiles::BoundingVolume& boundingVolume);

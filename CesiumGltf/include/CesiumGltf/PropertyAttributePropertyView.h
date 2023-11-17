@@ -16,7 +16,7 @@ namespace CesiumGltf {
  *
  * The {@link PropertyAttributePropertyView} constructor always completes
  * successfully. However it may not always reflect the actual content of the
- * corresponding property texture property. This enumeration provides the
+ * corresponding property attribute property. This enumeration provides the
  * reason.
  */
 class PropertyAttributePropertyViewStatus : public PropertyViewStatus {
@@ -190,7 +190,7 @@ public:
                 : 0} {}
 
   /**
-   * @brief Gets the value of the property for the given texture coordinates
+   * @brief Gets the value of the property for the given vertex index
    * with all value transforms applied. That is, if the property specifies an
    * offset and scale, they will be applied to the value before the value is
    * returned.
@@ -346,7 +346,7 @@ public:
                 : 0} {}
 
   /**
-   * @brief Gets the value of the property for the given texture coordinates
+   * @brief Gets the value of the property for the given vertex index
    * with all value transforms applied. That is, if the property specifies an
    * offset and scale, they will be applied to the value before the value is
    * returned.

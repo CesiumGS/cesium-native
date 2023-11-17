@@ -31,6 +31,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
+- Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
 
 ### v0.29.0 - 2023-11-01
 
@@ -52,6 +53,7 @@
 
 - Added `getClass` to `PropertyTableView`, `PropertyTextureView`, and `PropertyAttributeView`. This can be used to retrieve the metadata `Class` associated with the view.
 - Added `PropertyViewStatus::EmptyPropertyWithDefault` to indicate when a property contains no data, but has a valid default value.
+- A glTF `bufferView` with a `byteStride` of zero is now treated as if the `byteStride` is not defined at all. Such a glTF technically violates the spec (the minimum value is 4), but the new behavior is sensible enough and consistent with CesiumJS.
 
 ##### Fixes :wrench:
 
