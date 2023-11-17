@@ -114,7 +114,7 @@ TEST_CASE("Add raster overlay to glTF") {
             REQUIRE(tileProviderResult);
 
             IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
-                tileProviderResult.value();
+                *tileProviderResult;
 
             std::optional<RasterOverlayDetails> details =
                 RasterOverlayUtilities::createRasterOverlayTextureCoordinates(

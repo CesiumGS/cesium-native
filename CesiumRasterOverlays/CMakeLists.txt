@@ -50,8 +50,13 @@ target_link_libraries(CesiumRasterOverlays
 
 target_link_libraries_system(
     CesiumRasterOverlays
-    PRIVATE
+    PUBLIC
         expected-lite
+)
+
+target_link_libraries_system(
+    CesiumRasterOverlays
+    PRIVATE
         tinyxml2
 )
 
