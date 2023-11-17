@@ -45,14 +45,21 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * @param gltf The glTF model.
    * @param modelToEcefTransform The transformation of this glTF to ECEF
    * coordinates.
-   * @param firstTextureCoordinateID The texture coordinate ID of the first
-   * projection.
    * @param globeRectangle The rectangle that all projected vertex positions are
    * expected to lie within. If this parameter is std::nullopt, it is computed
    * from the vertices.
    * @param projections The projections for which to generate texture
    * coordinates. There is a linear relationship between the coordinates of this
    * projection and the generated texture coordinates.
+   * @param invertVCoordinate True if the V texture coordinate should be
+   * inverted so that it is 1.0 at the Southern end of the rectangle and 0.0 at
+   * the Northern end. This is useful with images that use the typical North-up
+   * orientation.
+   * @param textureCoordinateAttributeBaseName The base name to use for the
+   * texture coordinate attributes, without a number on the end. Defaults to
+   * "TEXCOORD_0".
+   * @param firstTextureCoordinateID The texture coordinate ID of the first
+   * projection.
    * @return The details of the generated texture coordinates.
    */
   static std::optional<RasterOverlayDetails>
@@ -61,6 +68,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
       const glm::dmat4& modelToEcefTransform,
       const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
       std::vector<CesiumGeospatial::Projection>&& projections,
+      bool invertVCoordinate = false,
       const std::string& textureCoordinateAttributeBaseName = "TEXCOORD_",
       int32_t firstTextureCoordinateID = 0);
 

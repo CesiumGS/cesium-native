@@ -384,6 +384,7 @@ void calcRasterOverlayDetailsInWorkerThread(
           tileLoadInfo.tileTransform,
           pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
           std::move(projections),
+          false,
           "_CESIUMOVERLAY_",
           firstRasterOverlayTexCoord);
 

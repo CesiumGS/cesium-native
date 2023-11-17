@@ -153,41 +153,64 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   return result;
 }
 
-/*static*/ void GltfUtilities::mergeBuffers(CesiumGltf::Model& gltf) {
+/*static*/ void GltfUtilities::collapseToSingleBuffer(CesiumGltf::Model& gltf) {
   if (gltf.buffers.empty())
     return;
 
-  Buffer& mainBuffer = gltf.buffers[0];
-
-  // Copy all other buffers into the main one, and keep track of where we put
-  // them.
-  std::vector<size_t> oldBufferStarts;
+  Buffer& destinationBuffer = gltf.buffers[0];
 
   for (size_t i = 1; i < gltf.buffers.size(); ++i) {
-    const Buffer& otherBuffer = gltf.buffers[i];
-
-    oldBufferStarts.emplace_back(mainBuffer.cesium.data.size());
-
-    mainBuffer.cesium.data.insert(
-        mainBuffer.cesium.data.end(),
-        otherBuffer.cesium.data.begin(),
-        otherBuffer.cesium.data.end());
-  }
-
-  mainBuffer.byteLength = mainBuffer.cesium.data.size();
-
-  // Update all the bufferViews to refer to the main buffer.
-  for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer <= 0 || bufferView.buffer >= gltf.buffers.size())
-      continue;
-
-    size_t oldBufferStart = oldBufferStarts[bufferView.buffer - 1];
-    bufferView.buffer = 0;
-    bufferView.byteOffset += oldBufferStart;
+    Buffer& sourceBuffer = gltf.buffers[i];
+    GltfUtilities::moveBufferContent(gltf, destinationBuffer, sourceBuffer);
   }
 
   // Remove all the old buffers
   gltf.buffers.resize(1);
+}
+
+/*static*/ void GltfUtilities::moveBufferContent(
+    CesiumGltf::Model& gltf,
+    CesiumGltf::Buffer& destination,
+    CesiumGltf::Buffer& source) {
+  // Assert that the byteLength and the size of the cesium data vector are in
+  // sync.
+  assert(source.byteLength == int64_t(source.cesium.data.size()));
+  assert(destination.byteLength == int64_t(destination.cesium.data.size()));
+
+  int64_t sourceIndex = &source - &gltf.buffers[0];
+  int64_t destinationIndex = &destination - &gltf.buffers[0];
+
+  // Both buffers must exist in the glTF.
+  if (sourceIndex < 0 || sourceIndex >= int64_t(gltf.buffers.size()) ||
+      destinationIndex < 0 ||
+      destinationIndex >= int64_t(gltf.buffers.size())) {
+    assert(false);
+    return;
+  }
+
+  // Copy the data to the destination and keep track of where we put it.
+  size_t start = destination.cesium.data.size();
+
+  destination.cesium.data.insert(
+      destination.cesium.data.end(),
+      source.cesium.data.begin(),
+      source.cesium.data.end());
+
+  source.byteLength = 0;
+  source.cesium.data.clear();
+  source.cesium.data.shrink_to_fit();
+
+  destination.byteLength = destination.cesium.data.size();
+
+  // Update all the bufferViews that previously referred to the source Buffer to
+  // refer to the destination Buffer instead.
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer != sourceIndex)
+      continue;
+
+    bufferView.buffer = int32_t(destinationIndex);
+    bufferView.byteOffset += start;
+  }
 }
 
 } // namespace CesiumGltfContent

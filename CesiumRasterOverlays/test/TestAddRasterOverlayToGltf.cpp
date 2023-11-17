@@ -2,6 +2,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumGltfReader/GltfReader.h>
@@ -121,6 +122,7 @@ TEST_CASE("Add raster overlay to glTF") {
                     modelToEcef,
                     std::nullopt,
                     {pTileProvider->getProjection()},
+                    true,
                     "TEXCOORD_",
                     textureCoordinateIndex);
             REQUIRE(details);
@@ -153,7 +155,6 @@ TEST_CASE("Add raster overlay to glTF") {
                                 TileProviderAndTile&& loadResult) {
             // Create the image, sampler, and texture for the raster overlay
             Image& image = gltf.images.emplace_back();
-            image.cesium = loadResult.pTile->getImage();
             image.mimeType = Image::MimeType::image_png;
 
             Sampler& sampler = gltf.samplers.emplace_back();
@@ -173,7 +174,9 @@ TEST_CASE("Add raster overlay to glTF") {
 
             // PNG-encode the raster overlay image and store it in the main
             // buffer.
-            ImageManipulation::savePng(image.cesium, buffer.cesium.data);
+            ImageManipulation::savePng(
+                loadResult.pTile->getImage(),
+                buffer.cesium.data);
 
             BufferView& bufferView = gltf.bufferViews.emplace_back();
             bufferView.buffer = 0;
@@ -219,13 +222,17 @@ TEST_CASE("Add raster overlay to glTF") {
                     *material.pbrMetallicRoughness->baseColorTexture;
                 colorTexture.index = int32_t(gltf.textures.size() - 1);
                 colorTexture.texCoord = textureCoordinateIndex;
+
+                // ExtensionKhrTextureTransform& textureTransform =
+                //     colorTexture.addExtension<ExtensionKhrTextureTransform>();
+                // textureTransform.scale = {1.0, 1.0};
               }
             }
           });
 
   waitForFuture(asyncSystem, std::move(future));
 
-  GltfUtilities::mergeBuffers(gltf);
+  GltfUtilities::collapseToSingleBuffer(gltf);
 
   GltfWriterOptions options;
   options.prettyPrint = true;

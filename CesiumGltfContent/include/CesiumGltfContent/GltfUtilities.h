@@ -11,8 +11,9 @@
 #include <vector>
 
 namespace CesiumGltf {
+struct Buffer;
 struct Model;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfContent {
 /**
@@ -94,12 +95,31 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   parseGltfCopyright(const CesiumGltf::Model& gltf);
 
   /**
-   * @brief Merges all of the glTF's buffers into a single buffer.
+   * @brief Merges all of the glTF's buffers into a single buffer (the first
+   * one).
    *
-   * This is useful when writing the glTF as a GLB.
+   * This is useful when writing the glTF as a GLB, which supports only a single
+   * embedded buffer.
    *
    * @param gltf The glTF in which to merge buffers.
    */
-  static void mergeBuffers(CesiumGltf::Model& gltf);
+  static void collapseToSingleBuffer(CesiumGltf::Model& gltf);
+
+  /**
+   * @brief Copies the content of one {@link Buffer} to the end of another,
+   * updates all {@link BufferView} instances to refer to the destination
+   * buffer, and clears the contents of the original buffer.
+   *
+   * The source buffer is not removed, but it has a `byteLength` of zero after
+   * this function completes.
+   *
+   * @param gltf The glTF model to modify.
+   * @param destination The destination Buffer into which to move content.
+   * @param source The source Buffer from which to move content.
+   */
+  static void moveBufferContent(
+      CesiumGltf::Model& gltf,
+      CesiumGltf::Buffer& destination,
+      CesiumGltf::Buffer& source);
 };
 } // namespace CesiumGltfContent

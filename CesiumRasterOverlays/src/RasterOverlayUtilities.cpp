@@ -17,6 +17,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
     const glm::dmat4& modelToEcefTransform,
     const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
     std::vector<CesiumGeospatial::Projection>&& projections,
+    bool invertVCoordinate,
     const std::string& textureCoordinateAttributeBaseName,
     int32_t firstTextureCoordinateID) {
   if (projections.empty()) {
@@ -140,6 +141,8 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           uvBuffer.cesium.data.resize(
               size_t(positionView.size()) * 2 * sizeof(float));
 
+          uvBuffer.byteLength = uvBuffer.cesium.data.size();
+
           CesiumGltf::BufferView& uvBufferView =
               gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
           uvBufferView.buffer = uvBufferId;
@@ -252,12 +255,14 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
                     0.0,
                     1.0),
                 CesiumUtility::Math::clamp(
-                    // TODO: this "1.0 minus" will break existing shaders in
-                    // game engines!
-                    1.0 - (projectedPosition.y - rectangle.minimumY) /
-                              rectangle.computeHeight(),
+                    (projectedPosition.y - rectangle.minimumY) /
+                        rectangle.computeHeight(),
                     0.0,
                     1.0));
+
+            if (invertVCoordinate) {
+              uv.y = 1.0f - uv.y;
+            }
 
             uvWriters[projectionIndex][positionIndex] = uv;
           }
