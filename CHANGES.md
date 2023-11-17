@@ -6,15 +6,19 @@
 
 - Moved `ErrorList`, `CreditSystem`, and `Credit` from `Cesium3DTilesSelection` to `CesiumUtility`.
 - Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
-- Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `Cesium3DTilesSelection` library.
+- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, `RasterOverlayDetails`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
+- Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `CesiumRasterOverlays` library.
 - `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
 - The `SubtreeAvailability` constructor and `loadSubtree` static method now take an `ImplicitTileSubdivisionScheme` enumeration parameter instead of a `powerOf2` parameter. They also now require a `levelsInSubtree` parameter, which is needed when switching from constant to bitstream availability. Lastly, the constructor now takes a `Subtree` parameter instead of a `std::vector<std::vector<std::byte>>` representing the buffers.
 - `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
-- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
+- Moved `ImageManipulation` from `CesiumGltfReader` to `CesiumGltfContent`.
+- Added some new parameters to `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` and changed the order of some existing parameters.
 
 ##### Additions :tada:
 
-- Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Added new `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Added new `CesiumGltfContent` library and namespace. It has classes for manipulating in-memory glTF files.
+- Added new `CesiumRasterOverlays` library and namespace. It has classes for working with massive textures draped over glTFs and 3D Tiles.
 - Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
 - Added `transform` method to `CesiumGeometry::BoundingSphere`.
 - Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
@@ -28,6 +32,10 @@
 - Added `rectangleIsWithinPolygons` and `rectangleIsOutsidePolygons` static methods to `CartographicPolygon`.
 - Raster overlays now use `IPrepareRasterOverlayRendererResources`, which contains only overlay-related methods, instead of `IPrepareRendererResources`, which contains tileset-related methods as well. `IPrepareRendererResources` derives from `IPrepareRasterOverlayRendererResources` so existing code should continue to work without modification.
 - Added `Future<T>::thenPassThrough`, used to easily pass additional values through to the next continuation.
+- Added `collapseToSingleBuffer` and `moveBufferContent` methods to `GltfUtilities`.
+- Added `savePng` method to `ImageManipulation`.
+- `RasterOverlayTileProvider::loadTile` now returns a future that resolves when the tile is done loading.
+- Added `computeDesiredScreenPixels` and `computeTranslationAndScale` methods to `RasterOverlayUtilities`.
 
 ##### Fixes :wrench:
 
