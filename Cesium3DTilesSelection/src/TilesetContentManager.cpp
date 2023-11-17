@@ -1173,8 +1173,6 @@ bool TilesetContentManager::tileNeedsMainThreadLoading(
          tile.isRenderContent();
 }
 
-namespace {}
-
 void TilesetContentManager::finishLoading(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
