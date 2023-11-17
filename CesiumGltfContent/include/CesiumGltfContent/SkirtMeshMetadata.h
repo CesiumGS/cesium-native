@@ -33,4 +33,4 @@ struct SkirtMeshMetadata {
   double skirtEastHeight;
   double skirtNorthHeight;
 };
-} // namespace Cesium3DTilesContent
+} // namespace CesiumGltfContent
