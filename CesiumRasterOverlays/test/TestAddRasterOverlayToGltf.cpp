@@ -157,93 +157,93 @@ TEST_CASE("Add raster overlay to glTF") {
             return pTileProvider->loadTile(*pRasterTile)
                 .thenPassThrough(std::move(textureTranslationAndScale));
           })
-          .thenInMainThread(
-              [&gltf, textureCoordinateIndex](
-                  std::tuple<glm::dvec4, TileProviderAndTile>&& tuple) {
-                auto& [textureTranslationAndScale, loadResult] = tuple;
+          .thenInMainThread([&gltf, textureCoordinateIndex](
+                                std::tuple<glm::dvec4, TileProviderAndTile>&&
+                                    tuple) {
+            auto& [textureTranslationAndScale, loadResult] = tuple;
 
-                // Create the image, sampler, and texture for the raster overlay
-                Image& image = gltf.images.emplace_back();
-                image.mimeType = Image::MimeType::image_png;
+            // Create the image, sampler, and texture for the raster overlay
+            Image& image = gltf.images.emplace_back();
+            image.mimeType = Image::MimeType::image_png;
 
-                Sampler& sampler = gltf.samplers.emplace_back();
-                sampler.magFilter = Sampler::MagFilter::LINEAR;
-                sampler.minFilter = Sampler::MinFilter::LINEAR_MIPMAP_LINEAR;
-                sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
-                sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
+            Sampler& sampler = gltf.samplers.emplace_back();
+            sampler.magFilter = Sampler::MagFilter::LINEAR;
+            sampler.minFilter = Sampler::MinFilter::LINEAR_MIPMAP_LINEAR;
+            sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
+            sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
-                Texture& texture = gltf.textures.emplace_back();
-                texture.sampler = int32_t(gltf.samplers.size() - 1);
-                texture.source = int32_t(gltf.images.size() - 1);
+            Texture& texture = gltf.textures.emplace_back();
+            texture.sampler = int32_t(gltf.samplers.size() - 1);
+            texture.source = int32_t(gltf.images.size() - 1);
 
-                Buffer& buffer = !gltf.buffers.empty()
-                                     ? gltf.buffers.front()
-                                     : gltf.buffers.emplace_back();
-                size_t imageStart = buffer.cesium.data.size();
+            Buffer& buffer = !gltf.buffers.empty()
+                                 ? gltf.buffers.front()
+                                 : gltf.buffers.emplace_back();
+            size_t imageStart = buffer.cesium.data.size();
 
-                // PNG-encode the raster overlay image and store it in the main
-                // buffer.
-                ImageManipulation::savePng(
-                    loadResult.pTile->getImage(),
-                    buffer.cesium.data);
+            // PNG-encode the raster overlay image and store it in the main
+            // buffer.
+            ImageManipulation::savePng(
+                loadResult.pTile->getImage(),
+                buffer.cesium.data);
 
-                BufferView& bufferView = gltf.bufferViews.emplace_back();
-                bufferView.buffer = 0;
-                bufferView.byteOffset = imageStart;
-                bufferView.byteLength = buffer.cesium.data.size() - imageStart;
+            BufferView& bufferView = gltf.bufferViews.emplace_back();
+            bufferView.buffer = 0;
+            bufferView.byteOffset = int64_t(imageStart);
+            bufferView.byteLength =
+                int64_t(buffer.cesium.data.size() - imageStart);
 
-                buffer.byteLength = buffer.cesium.data.size();
+            buffer.byteLength = int64_t(buffer.cesium.data.size());
 
-                image.bufferView = int32_t(gltf.bufferViews.size() - 1);
+            image.bufferView = int32_t(gltf.bufferViews.size() - 1);
 
-                // TODO: the below will replace any existing color texture with
-                // the raster overlay, because glTF only allows one color
-                // texture. However, it doesn't clean up previous textures or
-                // texture coordinates, leaving the model bigger than it needs
-                // to be.
+            // TODO: the below will replace any existing color texture with
+            // the raster overlay, because glTF only allows one color
+            // texture. However, it doesn't clean up previous textures or
+            // texture coordinates, leaving the model bigger than it needs
+            // to be.
 
-                int32_t newMaterialIndex = -1;
+            int32_t newMaterialIndex = -1;
 
-                for (Mesh& mesh : gltf.meshes) {
-                  for (MeshPrimitive& primitive : mesh.primitives) {
-                    if (primitive.material < 0 ||
-                        primitive.material >= gltf.materials.size()) {
-                      // This primitive didn't previous have a material so
-                      // assign one (creating it if needed).
-                      if (newMaterialIndex < 0) {
-                        newMaterialIndex = int32_t(gltf.materials.size());
-                        Material& material = gltf.materials.emplace_back();
-                        MaterialPBRMetallicRoughness& pbr =
-                            material.pbrMetallicRoughness.emplace();
-                        pbr.metallicFactor = 0.0;
-                        pbr.roughnessFactor = 1.0;
-                      }
-                      primitive.material = newMaterialIndex;
-                    }
-
-                    Material& material = gltf.materials[primitive.material];
-                    if (!material.pbrMetallicRoughness)
-                      material.pbrMetallicRoughness.emplace();
-                    if (!material.pbrMetallicRoughness->baseColorTexture)
-                      material.pbrMetallicRoughness->baseColorTexture.emplace();
-
-                    TextureInfo& colorTexture =
-                        *material.pbrMetallicRoughness->baseColorTexture;
-                    colorTexture.index = int32_t(gltf.textures.size() - 1);
-                    colorTexture.texCoord = textureCoordinateIndex;
-
-                    ExtensionKhrTextureTransform& textureTransform =
-                        colorTexture
-                            .addExtension<ExtensionKhrTextureTransform>();
-                    textureTransform.offset = {
-                        textureTranslationAndScale.x,
-                        textureTranslationAndScale.y};
-                    textureTransform.scale = {
-                        textureTranslationAndScale.z,
-                        textureTranslationAndScale.w};
+            for (Mesh& mesh : gltf.meshes) {
+              for (MeshPrimitive& primitive : mesh.primitives) {
+                if (primitive.material < 0 ||
+                    size_t(primitive.material) >= gltf.materials.size()) {
+                  // This primitive didn't previous have a material so
+                  // assign one (creating it if needed).
+                  if (newMaterialIndex < 0) {
+                    newMaterialIndex = int32_t(gltf.materials.size());
+                    Material& material = gltf.materials.emplace_back();
+                    MaterialPBRMetallicRoughness& pbr =
+                        material.pbrMetallicRoughness.emplace();
+                    pbr.metallicFactor = 0.0;
+                    pbr.roughnessFactor = 1.0;
                   }
+                  primitive.material = newMaterialIndex;
                 }
-              });
+
+                Material& material = gltf.materials[size_t(primitive.material)];
+                if (!material.pbrMetallicRoughness)
+                  material.pbrMetallicRoughness.emplace();
+                if (!material.pbrMetallicRoughness->baseColorTexture)
+                  material.pbrMetallicRoughness->baseColorTexture.emplace();
+
+                TextureInfo& colorTexture =
+                    *material.pbrMetallicRoughness->baseColorTexture;
+                colorTexture.index = int32_t(gltf.textures.size() - 1);
+                colorTexture.texCoord = textureCoordinateIndex;
+
+                ExtensionKhrTextureTransform& textureTransform =
+                    colorTexture.addExtension<ExtensionKhrTextureTransform>();
+                textureTransform.offset = {
+                    textureTranslationAndScale.x,
+                    textureTranslationAndScale.y};
+                textureTransform.scale = {
+                    textureTranslationAndScale.z,
+                    textureTranslationAndScale.w};
+              }
+            }
+          });
 
   waitForFuture(asyncSystem, std::move(future));
 
@@ -263,5 +263,5 @@ TEST_CASE("Add raster overlay to glTF") {
 
   outputFile.write(
       reinterpret_cast<char*>(writeResult.gltfBytes.data()),
-      writeResult.gltfBytes.size());
+      int64_t(writeResult.gltfBytes.size()));
 }
