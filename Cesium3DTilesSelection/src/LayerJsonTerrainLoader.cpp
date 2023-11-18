@@ -219,6 +219,7 @@ void generateRasterOverlayUVs(
                                 pParentRegion->getRectangle())
                           : std::nullopt,
             {projection},
+            false,
             "_CESIUMOVERLAY_",
             0);
   }
