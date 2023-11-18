@@ -209,7 +209,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
       continue;
 
     bufferView.buffer = int32_t(destinationIndex);
-    bufferView.byteOffset += start;
+    bufferView.byteOffset += int64_t(start);
   }
 }
 
