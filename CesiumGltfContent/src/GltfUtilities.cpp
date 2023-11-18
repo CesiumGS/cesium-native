@@ -200,7 +200,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   source.cesium.data.clear();
   source.cesium.data.shrink_to_fit();
 
-  destination.byteLength = destination.cesium.data.size();
+  destination.byteLength = int64_t(destination.cesium.data.size());
 
   // Update all the bufferViews that previously referred to the source Buffer to
   // refer to the destination Buffer instead.

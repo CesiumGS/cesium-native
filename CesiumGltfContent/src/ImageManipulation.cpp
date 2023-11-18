@@ -121,8 +121,8 @@ void writePngToVector(void* context, void* data, int size) {
   std::vector<std::byte>* pVector =
       reinterpret_cast<std::vector<std::byte>*>(context);
   size_t previousSize = pVector->size();
-  pVector->resize(previousSize + size);
-  std::memcpy(pVector->data() + previousSize, data, size);
+  pVector->resize(previousSize + size_t(size));
+  std::memcpy(pVector->data() + previousSize, data, size_t(size));
 }
 } // namespace
 
