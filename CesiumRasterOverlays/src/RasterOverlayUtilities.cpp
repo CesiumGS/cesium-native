@@ -141,7 +141,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           uvBuffer.cesium.data.resize(
               size_t(positionView.size()) * 2 * sizeof(float));
 
-          uvBuffer.byteLength = uvBuffer.cesium.data.size();
+          uvBuffer.byteLength = int64_t(uvBuffer.cesium.data.size());
 
           CesiumGltf::BufferView& uvBufferView =
               gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
