@@ -1,5 +1,8 @@
+#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Uri.h>
 
 #include <gsl/span>
@@ -463,12 +466,56 @@ SubtreeAvailability::SubtreeAvailability(
 }
 
 bool SubtreeAvailability::isTileAvailable(
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
+    const CesiumGeometry::QuadtreeTileID& tileID) const noexcept {
+  uint64_t relativeTileMortonIdx =
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+  return this->isTileAvailable(
+      tileID.level - subtreeID.level,
+      relativeTileMortonIdx);
+}
+
+bool SubtreeAvailability::isTileAvailable(
+    const CesiumGeometry::OctreeTileID& subtreeID,
+    const CesiumGeometry::OctreeTileID& tileID) const noexcept {
+  uint64_t relativeTileMortonIdx =
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+  return this->isTileAvailable(
+      tileID.level - subtreeID.level,
+      relativeTileMortonIdx);
+}
+
+bool SubtreeAvailability::isTileAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId) const noexcept {
   return isAvailable(
       relativeTileLevel,
       relativeTileMortonId,
       this->_tileAvailability);
+}
+
+bool SubtreeAvailability::isContentAvailable(
+    const CesiumGeometry::QuadtreeTileID& subtreeID,
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    uint64_t contentId) const noexcept {
+  uint64_t relativeTileMortonIdx =
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+  return this->isContentAvailable(
+      tileID.level - subtreeID.level,
+      relativeTileMortonIdx,
+      contentId);
+}
+
+bool SubtreeAvailability::isContentAvailable(
+    const CesiumGeometry::OctreeTileID& subtreeID,
+    const CesiumGeometry::OctreeTileID& tileID,
+    uint64_t contentId) const noexcept {
+  uint64_t relativeTileMortonIdx =
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+  return this->isContentAvailable(
+      tileID.level - subtreeID.level,
+      relativeTileMortonIdx,
+      contentId);
 }
 
 bool SubtreeAvailability::isContentAvailable(

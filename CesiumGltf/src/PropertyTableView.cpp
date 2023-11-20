@@ -134,12 +134,12 @@ PropertyTableView::PropertyTableView(
 }
 
 const ClassProperty*
-PropertyTableView::getClassProperty(const std::string& propertyName) const {
+PropertyTableView::getClassProperty(const std::string& propertyId) const {
   if (_status != PropertyTableViewStatus::Valid) {
     return nullptr;
   }
 
-  auto propertyIter = _pClass->properties.find(propertyName);
+  auto propertyIter = _pClass->properties.find(propertyId);
   if (propertyIter == _pClass->properties.end()) {
     return nullptr;
   }
