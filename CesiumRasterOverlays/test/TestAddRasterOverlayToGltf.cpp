@@ -139,7 +139,7 @@ TEST_CASE("Add raster overlay to glTF") {
             glm::dvec2 targetScreenPixels =
                 RasterOverlayUtilities::computeDesiredScreenPixels(
                     geometricError,
-                    16.0,
+                    16.0, // the Max SSE used to render the geometry
                     details->rasterOverlayProjections[0],
                     details->rasterOverlayRectangles[0]);
 
