@@ -105,6 +105,11 @@ public:
       const std::string& ionApiUrl = "https://api.cesium.com/",
       const std::string& ionAuthorizeUrl = "https://ion.cesium.com/oauth");
 
+  static CesiumAsync::Future<std::optional<std::string>> getApiUrl(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& ionUrl);
+
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
    *
