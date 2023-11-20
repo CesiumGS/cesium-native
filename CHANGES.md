@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.27.4 - ?
+
+##### Fixes :wrench:
+
+- Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2022 v17.8.
+
 ### v0.27.3 - 2023-10-01
 
 ##### Additions :tada:
