@@ -662,3 +662,22 @@ TEST_CASE("Ignores unknown properties if requested") {
   CHECK(result.model->unknownProperties.empty());
   CHECK(result.model->asset.unknownProperties.empty());
 }
+
+TEST_CASE("Decodes images with data uris") {
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(readFile(
+      CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf")));
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.empty());
+
+  const Model& model = result.model.value();
+
+  REQUIRE(model.images.size() == 1);
+
+  const ImageCesium& image = model.images.front().cesium;
+
+  CHECK(image.width == 256);
+  CHECK(image.height == 256);
+  CHECK(!image.pixelData.empty());
+}
