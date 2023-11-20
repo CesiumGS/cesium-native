@@ -77,7 +77,7 @@ public:
    * @param asyncSystem The async system with which to do background work.
    * @param pAssetAccessor The asset accessor to use to retrieve the subtree
    * resource from the URL.
-   * @param pLogger The logger to which to load errors and warnings and occur
+   * @param pLogger The logger to which to load errors and warnings that occur
    * during subtree load.
    * @param subtreeUrl The URL from which to retrieve the subtree file.
    * @param requestHeaders HTTP headers to include in the request for the
@@ -95,19 +95,19 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   /**
-   * @brief An AvailibilityView that indicates all tiles are either available or
-   * all tiles are unavailable.
+   * @brief An AvailibilityView that indicates that either all tiles are
+   * available or all tiles are unavailable.
    */
   struct SubtreeConstantAvailability {
     /**
-     * @brief True if all tiles are availability, false if all tiles are
+     * @brief True if all tiles are availabile, false if all tiles are
      * unavailable.
      */
     bool constant;
   };
 
   /**
-   * @brief An AvailabilityView that access availability information from a
+   * @brief An AvailabilityView that accesses availability information from a
    * bitstream.
    */
   struct SubtreeBufferViewAvailability {
@@ -148,7 +148,7 @@ public:
       Cesium3DTiles::Subtree&& subtree);
 
   /**
-   * @brief Determines if a given tile in the subtree is available.
+   * @brief Determines if a given tile in the quadtree is available.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile to query.
@@ -159,7 +159,7 @@ public:
       const CesiumGeometry::QuadtreeTileID& tileID) const noexcept;
 
   /**
-   * @brief Determines if a given tile in the subtree is available.
+   * @brief Determines if a given tile in the octree is available.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile to query.
@@ -183,7 +183,7 @@ public:
       uint64_t relativeTileMortonId) const noexcept;
 
   /**
-   * @brief Sets the availability state of a given tile in the subtree.
+   * @brief Sets the availability state of a given tile in the quadtree.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile for which to set availability.
@@ -195,7 +195,7 @@ public:
       bool isAvailable) noexcept;
 
   /**
-   * @brief Sets the availability state of a given tile in the subtree.
+   * @brief Sets the availability state of a given tile in the octree.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile for which to set availability.
@@ -222,10 +222,11 @@ public:
       bool isAvailable) noexcept;
 
   /**
-   * @brief Determines if content for a given tile in the subtree is available.
+   * @brief Determines if content for a given tile in the quadtree is available.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile to query.
+   * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
@@ -234,10 +235,11 @@ public:
       uint64_t contentId) const noexcept;
 
   /**
-   * @brief Determines if content for a given tile in the subtree is available.
+   * @brief Determines if content for a given tile in the octree is available.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile to query.
+   * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
@@ -252,6 +254,7 @@ public:
    * root of the subtree.
    * @param relativeTileMortonId The Morton ID of the tile to query. See
    * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
@@ -261,10 +264,11 @@ public:
 
   /**
    * @brief Sets the availability state of the content for a given tile in the
-   * subtree.
+   * quadtree.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile for which to set content availability.
+   * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
@@ -275,10 +279,11 @@ public:
 
   /**
    * @brief Sets the availability state of the content for a given tile in the
-   * subtree.
+   * octree.
    *
    * @param subtreeID The ID of the root tile of the subtree.
    * @param tileID The ID of the tile for which to set content availability.
+   * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
@@ -296,6 +301,7 @@ public:
    * @param relativeTileMortonId The Morton ID of the tile for which to set
    * content availability. See
    * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
@@ -313,7 +319,7 @@ public:
    * @param thisSubtreeID The ID of the root tile of this subtree.
    * @param checkSubtreeID The ID of the tile to query to see if its subtree is
    * available.
-   * @return True if the tile's content is available; otherwise, false.
+   * @return True if the subtree is available; otherwise, false.
    */
   bool isSubtreeAvailable(
       const CesiumGeometry::QuadtreeTileID& thisSubtreeID,
@@ -328,7 +334,7 @@ public:
    * @param thisSubtreeID The ID of the root tile of this subtree.
    * @param checkSubtreeID The ID of the tile to query to see if its subtree is
    * available.
-   * @return True if the tile's content is available; otherwise, false.
+   * @return True if the subtree is available; otherwise, false.
    */
   bool isSubtreeAvailable(
       const CesiumGeometry::OctreeTileID& thisSubtreeID,
@@ -343,13 +349,13 @@ public:
    * @param relativeTileMortonId The Morton ID of the tile for which to check
    * subtree availability. See
    * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
-   * @return True if the tile's subtree is available; otherwise, false.
+   * @return True if the subtree is available; otherwise, false.
    */
   bool isSubtreeAvailable(uint64_t relativeSubtreeMortonId) const noexcept;
 
   /**
-   * @brief Sets the availability state of the child subtree rooted at the given
-   * tile.
+   * @brief Sets the availability state of the child quadtree rooted at the
+   * given tile.
    *
    * The provided `setSubtreeID` must be a child of the leaves of this
    * subtree.
@@ -357,7 +363,7 @@ public:
    * @param thisSubtreeID The ID of the root tile of this subtree.
    * @param setSubtreeID The ID of the tile to query to see if its subtree is
    * available.
-   * @return True if the tile's subtree is available; otherwise, false.
+   * @param isAvailable The new availability state for the subtree.
    */
   void setSubtreeAvailable(
       const CesiumGeometry::QuadtreeTileID& thisSubtreeID,
@@ -365,7 +371,7 @@ public:
       bool isAvailable) noexcept;
 
   /**
-   * @brief Sets the availability state of the child subtree rooted at the given
+   * @brief Sets the availability state of the child octree rooted at the given
    * tile.
    *
    * The provided `setSubtreeID` must be a child of the leaves of this
@@ -374,7 +380,7 @@ public:
    * @param thisSubtreeID The ID of the root tile of this subtree.
    * @param setSubtreeID The ID of the tile to query to see if its subtree is
    * available.
-   * @return True if the tile's subtree is available; otherwise, false.
+   * @param isAvailable The new availability state for the subtree.
    */
   void setSubtreeAvailable(
       const CesiumGeometry::OctreeTileID& thisSubtreeID,
