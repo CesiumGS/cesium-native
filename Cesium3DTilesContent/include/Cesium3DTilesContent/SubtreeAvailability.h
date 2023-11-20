@@ -150,24 +150,24 @@ public:
   /**
    * @brief Determines if a given tile in the quadtree is available.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile to query.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile to query.
    * @return True if the tile is available; otherwise, false.
    */
   bool isTileAvailable(
-      const CesiumGeometry::QuadtreeTileID& subtreeID,
-      const CesiumGeometry::QuadtreeTileID& tileID) const noexcept;
+      const CesiumGeometry::QuadtreeTileID& subtreeId,
+      const CesiumGeometry::QuadtreeTileID& tileId) const noexcept;
 
   /**
    * @brief Determines if a given tile in the octree is available.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile to query.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile to query.
    * @return True if the tile is available; otherwise, false.
    */
   bool isTileAvailable(
-      const CesiumGeometry::OctreeTileID& subtreeID,
-      const CesiumGeometry::OctreeTileID& tileID) const noexcept;
+      const CesiumGeometry::OctreeTileID& subtreeId,
+      const CesiumGeometry::OctreeTileID& tileId) const noexcept;
 
   /**
    * @brief Determines if a given tile in the subtree is available.
@@ -185,25 +185,25 @@ public:
   /**
    * @brief Sets the availability state of a given tile in the quadtree.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile for which to set availability.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile for which to set availability.
    * @param isAvailable The new availability state for the tile.
    */
   void setTileAvailable(
-      const CesiumGeometry::QuadtreeTileID& subtreeID,
-      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeometry::QuadtreeTileID& subtreeId,
+      const CesiumGeometry::QuadtreeTileID& tileId,
       bool isAvailable) noexcept;
 
   /**
    * @brief Sets the availability state of a given tile in the octree.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile for which to set availability.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile for which to set availability.
    * @param isAvailable The new availability state for the tile.
    */
   void setTileAvailable(
-      const CesiumGeometry::OctreeTileID& subtreeID,
-      const CesiumGeometry::OctreeTileID& tileID,
+      const CesiumGeometry::OctreeTileID& subtreeId,
+      const CesiumGeometry::OctreeTileID& tileId,
       bool isAvailable) noexcept;
 
   /**
@@ -224,27 +224,27 @@ public:
   /**
    * @brief Determines if content for a given tile in the quadtree is available.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile to query.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile to query.
    * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
-      const CesiumGeometry::QuadtreeTileID& subtreeID,
-      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeometry::QuadtreeTileID& subtreeId,
+      const CesiumGeometry::QuadtreeTileID& tileId,
       uint64_t contentId) const noexcept;
 
   /**
    * @brief Determines if content for a given tile in the octree is available.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile to query.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile to query.
    * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
-      const CesiumGeometry::OctreeTileID& subtreeID,
-      const CesiumGeometry::OctreeTileID& tileID,
+      const CesiumGeometry::OctreeTileID& subtreeId,
+      const CesiumGeometry::OctreeTileID& tileId,
       uint64_t contentId) const noexcept;
 
   /**
@@ -266,14 +266,14 @@ public:
    * @brief Sets the availability state of the content for a given tile in the
    * quadtree.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile for which to set content availability.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile for which to set content availability.
    * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
-      const CesiumGeometry::QuadtreeTileID& subtreeID,
-      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeometry::QuadtreeTileID& subtreeId,
+      const CesiumGeometry::QuadtreeTileID& tileId,
       uint64_t contentId,
       bool isAvailable) noexcept;
 
@@ -281,14 +281,14 @@ public:
    * @brief Sets the availability state of the content for a given tile in the
    * octree.
    *
-   * @param subtreeID The ID of the root tile of the subtree.
-   * @param tileID The ID of the tile for which to set content availability.
+   * @param subtreeId The ID of the root tile of the subtree.
+   * @param tileId The ID of the tile for which to set content availability.
    * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
-      const CesiumGeometry::OctreeTileID& subtreeID,
-      const CesiumGeometry::OctreeTileID& tileID,
+      const CesiumGeometry::OctreeTileID& subtreeId,
+      const CesiumGeometry::OctreeTileID& tileId,
       uint64_t contentId,
       bool isAvailable) noexcept;
 

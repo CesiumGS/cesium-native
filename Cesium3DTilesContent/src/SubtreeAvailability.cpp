@@ -195,22 +195,22 @@ SubtreeAvailability::SubtreeAvailability(
 }
 
 bool SubtreeAvailability::isTileAvailable(
-    const CesiumGeometry::QuadtreeTileID& subtreeID,
-    const CesiumGeometry::QuadtreeTileID& tileID) const noexcept {
+    const CesiumGeometry::QuadtreeTileID& subtreeId,
+    const CesiumGeometry::QuadtreeTileID& tileId) const noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isTileAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx);
 }
 
 bool SubtreeAvailability::isTileAvailable(
-    const CesiumGeometry::OctreeTileID& subtreeID,
-    const CesiumGeometry::OctreeTileID& tileID) const noexcept {
+    const CesiumGeometry::OctreeTileID& subtreeId,
+    const CesiumGeometry::OctreeTileID& tileId) const noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isTileAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx);
 }
 
@@ -224,25 +224,25 @@ bool SubtreeAvailability::isTileAvailable(
 }
 
 void SubtreeAvailability::setTileAvailable(
-    const CesiumGeometry::QuadtreeTileID& subtreeID,
-    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeometry::QuadtreeTileID& subtreeId,
+    const CesiumGeometry::QuadtreeTileID& tileId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   this->setTileAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx,
       isAvailable);
 }
 
 void SubtreeAvailability::setTileAvailable(
-    const CesiumGeometry::OctreeTileID& subtreeID,
-    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeometry::OctreeTileID& subtreeId,
+    const CesiumGeometry::OctreeTileID& tileId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   this->setTileAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx,
       isAvailable);
 }
@@ -259,25 +259,25 @@ void SubtreeAvailability::setTileAvailable(
 }
 
 bool SubtreeAvailability::isContentAvailable(
-    const CesiumGeometry::QuadtreeTileID& subtreeID,
-    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeometry::QuadtreeTileID& subtreeId,
+    const CesiumGeometry::QuadtreeTileID& tileId,
     uint64_t contentId) const noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isContentAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx,
       contentId);
 }
 
 bool SubtreeAvailability::isContentAvailable(
-    const CesiumGeometry::OctreeTileID& subtreeID,
-    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeometry::OctreeTileID& subtreeId,
+    const CesiumGeometry::OctreeTileID& tileId,
     uint64_t contentId) const noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isContentAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx,
       contentId);
 }
@@ -293,28 +293,28 @@ bool SubtreeAvailability::isContentAvailable(
 }
 
 void SubtreeAvailability::setContentAvailable(
-    const CesiumGeometry::QuadtreeTileID& subtreeID,
-    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeometry::QuadtreeTileID& subtreeId,
+    const CesiumGeometry::QuadtreeTileID& tileId,
     uint64_t contentId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   this->setContentAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx,
       contentId,
       isAvailable);
 }
 
 void SubtreeAvailability::setContentAvailable(
-    const CesiumGeometry::OctreeTileID& subtreeID,
-    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeometry::OctreeTileID& subtreeId,
+    const CesiumGeometry::OctreeTileID& tileId,
     uint64_t contentId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
-      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeID, tileID);
+      ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   this->setContentAvailable(
-      tileID.level - subtreeID.level,
+      tileId.level - subtreeId.level,
       relativeTileMortonIdx,
       contentId,
       isAvailable);
