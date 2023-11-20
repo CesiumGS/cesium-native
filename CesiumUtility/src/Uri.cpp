@@ -2,6 +2,7 @@
 
 #include <uriparser/Uri.h>
 
+#include <cstring>
 #include <stdexcept>
 
 namespace CesiumUtility {
