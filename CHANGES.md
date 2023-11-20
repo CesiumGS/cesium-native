@@ -12,6 +12,7 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Added `MetadataConversions`, which enables metadata values to be converted to different types for better usability in runtime engines.
 - Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
 - Added `transform` method to `CesiumGeometry::BoundingSphere`.
 - Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
