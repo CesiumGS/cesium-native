@@ -2,6 +2,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
+#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/ImageManipulation.h>
@@ -282,5 +283,17 @@ TEST_CASE("Add raster overlay to glTF") {
   REQUIRE(!gltfBack.meshes[0].primitives.empty());
 
   const MeshPrimitive& primitive = gltfBack.meshes[0].primitives[0];
-  CHECK(primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end());
+
+  auto texCoordIt = primitive.attributes.find("TEXCOORD_0");
+  REQUIRE(texCoordIt != primitive.attributes.end());
+
+  AccessorView<glm::vec2> texCoordView(gltfBack, texCoordIt->second);
+  CHECK(texCoordView.size() > 0);
+
+  for (int64_t i = 0; i < texCoordView.size(); ++i) {
+    CHECK(texCoordView[i].x >= 0.0);
+    CHECK(texCoordView[i].x <= 1.0);
+    CHECK(texCoordView[i].y >= 0.0);
+    CHECK(texCoordView[i].y <= 1.0);
+  }
 }
