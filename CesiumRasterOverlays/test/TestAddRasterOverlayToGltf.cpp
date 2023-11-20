@@ -257,21 +257,8 @@ TEST_CASE("Add raster overlay to glTF") {
   GltfWriterResult writeResult =
       writer.writeGlb(gltf, gltf.buffers[0].cesium.data, options);
 
-  std::filesystem::path outputFilename =
-      std::filesystem::temp_directory_path() / "Shadow_Tester_overlays.glb";
-
-  std::ofstream outputFile(outputFilename, std::ios::binary | std::ios::ate);
-  REQUIRE(outputFile);
-
-  outputFile.write(
-      reinterpret_cast<char*>(writeResult.gltfBytes.data()),
-      int64_t(writeResult.gltfBytes.size()));
-
-  outputFile.close();
-
   // Read it back and verify everything still looks good.
-  std::vector<std::byte> bytesBack = readFile(outputFilename);
-  GltfReaderResult resultBack = reader.readGltf(bytesBack);
+  GltfReaderResult resultBack = reader.readGltf(writeResult.gltfBytes);
   REQUIRE(resultBack.model);
 
   const Model& gltfBack = *resultBack.model;
