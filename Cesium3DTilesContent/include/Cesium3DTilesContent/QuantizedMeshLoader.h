@@ -70,10 +70,10 @@ public:
   /**
    * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
    *
-   * @param tileID The tile ID
-   * @param tileBoundingVoume The tile bounding volume
-   * @param url The URL
-   * @param data The actual input data
+   * @param tileID The tile ID.
+   * @param tileBoundingVoume The tile bounding volume.
+   * @param url The URL from which the data was loaded.
+   * @param data The actual tile data.
    * @return The {@link QuantizedMeshLoadResult}
    */
   static QuantizedMeshLoadResult load(
@@ -83,12 +83,32 @@ public:
       const gsl::span<const std::byte>& data,
       bool enableWaterMask);
 
+  /**
+   * @brief Parses the metadata (tile availability) from the given
+   * quantized-mesh terrain tile data.
+   *
+   * @param data The actual tile data.
+   * @param tileID The tile ID.
+   * @return The parsed metadata.
+   */
   static QuantizedMeshMetadataResult loadMetadata(
       const gsl::span<const std::byte>& data,
       const CesiumGeometry::QuadtreeTileID& tileID);
 
+  /**
+   * @brief Extracts tile availability information from a parsed layer.json
+   * or tile metadata extension.
+   *
+   * The actual availability information will be found in a property called
+   * `available`.
+   *
+   * @param layerJson The RapidJSON document containing the layer.json.
+   * @param startingLevel The first tile level number to which the availability
+   * information applies.
+   * @return The availability.
+   */
   static QuantizedMeshMetadataResult loadAvailabilityRectangles(
-      const rapidjson::Document& metadata,
+      const rapidjson::Document& layerJson,
       uint32_t startingLevel);
 };
 

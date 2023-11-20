@@ -19,9 +19,16 @@
 - Added `FeatureIdFromAccessor` to retrieve feature IDs from a `FeatureIdAccessorType`.
 - Added `IndicesForFaceFromAccessor` to retrieve the indices of the vertices that make up a face, as supplied by `IndexAccessorType`.
 - Added `TexCoordFromAccessor` to retrieve the texture coordinates from a `TexCoordAccessorType`.
+- Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
+- Added `transform` method to `CesiumGeometry::BoundingSphere`.
+- Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
+- Added `TileTransform` class to `Cesium3DTilesContent`, making it easier to create a `glm::dmat4` from the `transform` property of a `Cesium3DTiles::Tile`.
+- Added `ImplicitTilingUtilities` class to `Cesium3DTilesContent`.
+- Added overloads of `isTileAvailable` and `isContentAvailable` on the `SubtreeAvailability` class that take the subtree root tile ID and the tile ID of interest, instead of a relative level and Morton index.
 
 ##### Fixes :wrench:
 
+- Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
 - Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
 
 ### v0.29.0 - 2023-11-01

@@ -53,12 +53,19 @@ target_include_directories(
 
 target_link_libraries(Cesium3DTilesContent
     PUBLIC
+        Cesium3DTiles
         CesiumAsync
         CesiumGeometry
         CesiumGeospatial
         CesiumGltf
         CesiumGltfReader
         CesiumUtility
+)
+
+target_link_libraries_system(
+    Cesium3DTilesContent
+    PRIVATE
+        libmorton
 )
 
 install(TARGETS Cesium3DTilesContent
