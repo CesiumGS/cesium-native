@@ -3,7 +3,7 @@
 #include "CesiumGltf/Model.h"
 
 namespace CesiumGltf {
-FeatureIdAccessorType GetFeatureIdAccessorView(
+FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
     int32_t featureIdAttributeIndex) {
@@ -38,7 +38,7 @@ FeatureIdAccessorType GetFeatureIdAccessorView(
 }
 
 IndexAccessorType
-GetIndexAccessorView(const Model& model, const MeshPrimitive& primitive) {
+getIndexAccessorView(const Model& model, const MeshPrimitive& primitive) {
   if (primitive.indices < 0) {
     return IndexAccessorType();
   }
@@ -62,7 +62,7 @@ GetIndexAccessorView(const Model& model, const MeshPrimitive& primitive) {
   }
 }
 
-TexCoordAccessorType GetTexCoordAccessorView(
+TexCoordAccessorType getTexCoordAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
     int32_t textureCoordinateSetIndex) {
