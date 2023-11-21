@@ -32,12 +32,12 @@ PropertyTextureView::PropertyTextureView(
 }
 
 const ClassProperty*
-PropertyTextureView::getClassProperty(const std::string& propertyName) const {
+PropertyTextureView::getClassProperty(const std::string& propertyId) const {
   if (_status != PropertyTextureViewStatus::Valid) {
     return nullptr;
   }
 
-  auto propertyIter = _pClass->properties.find(propertyName);
+  auto propertyIter = _pClass->properties.find(propertyId);
   if (propertyIter == _pClass->properties.end()) {
     return nullptr;
   }

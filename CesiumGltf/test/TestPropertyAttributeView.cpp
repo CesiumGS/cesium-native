@@ -1534,7 +1534,7 @@ TEST_CASE("Test callback on invalid property Attribute view") {
       primitive,
       "TestClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -1578,7 +1578,7 @@ TEST_CASE("Test callback on invalid PropertyAttributeProperty") {
 
   uint32_t invokedCallbackCount = 0;
   auto testCallback = [&invokedCallbackCount](
-                          const std::string& /*propertyName*/,
+                          const std::string& /*propertyId*/,
                           auto propertyValue) mutable {
     invokedCallbackCount++;
     REQUIRE(
@@ -1623,7 +1623,7 @@ TEST_CASE("Test callback on invalid normalized PropertyAttributeProperty") {
 
   uint32_t invokedCallbackCount = 0;
   auto testCallback = [&invokedCallbackCount](
-                          const std::string& /*propertyName*/,
+                          const std::string& /*propertyId*/,
                           auto propertyValue) mutable {
     invokedCallbackCount++;
     REQUIRE(
@@ -1680,7 +1680,7 @@ TEST_CASE("Test callback for scalar PropertyAttributeProperty") {
       primitive,
       "TestClassProperty",
       [&data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1748,7 +1748,7 @@ TEST_CASE("Test callback for scalar PropertyAttributeProperty (normalized)") {
       primitive,
       "TestClassProperty",
       [&data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1821,7 +1821,7 @@ TEST_CASE("Test callback for vecN PropertyAttributeProperty") {
       primitive,
       "TestClassProperty",
       [&data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1893,7 +1893,7 @@ TEST_CASE("Test callback for vecN PropertyAttributeProperty (normalized)") {
       primitive,
       "TestClassProperty",
       [&data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1976,7 +1976,7 @@ TEST_CASE("Test callback for matN PropertyAttributeProperty") {
       primitive,
       "TestClassProperty",
       [&data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -2062,7 +2062,7 @@ TEST_CASE("Test callback for matN PropertyAttributeProperty (normalized)") {
       primitive,
       "TestClassProperty",
       [&data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -2144,7 +2144,7 @@ TEST_CASE("Test callback on unsupported PropertyAttributeProperty") {
       primitive,
       "DoubleClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -2157,7 +2157,7 @@ TEST_CASE("Test callback on unsupported PropertyAttributeProperty") {
       primitive,
       "ArrayClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -2216,7 +2216,7 @@ TEST_CASE(
       primitive,
       "TestClassProperty",
       [defaultValue, &data, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<

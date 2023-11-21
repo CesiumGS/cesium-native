@@ -198,6 +198,30 @@ TEST_CASE("Test implicit octree loader") {
   }
 }
 
+namespace {
+
+const Tile&
+findTile(const gsl::span<const Tile>& children, const OctreeTileID& tileID) {
+  auto it = std::find_if(
+      children.begin(),
+      children.end(),
+      [tileID](const Tile& tile) {
+        const OctreeTileID* pID = std::get_if<OctreeTileID>(&tile.getTileID());
+        if (!pID)
+          return false;
+        return *pID == tileID;
+      });
+  REQUIRE(it != children.end());
+  return *it;
+}
+
+const Tile&
+findTile(const std::vector<Tile>& children, const OctreeTileID& tileID) {
+  return findTile(gsl::span<const Tile>(children), tileID);
+}
+
+} // namespace
+
 TEST_CASE("Test tile subdivision for implicit octree loader") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
@@ -238,10 +262,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
-      const auto& tile_1_0_0_0 = tileChildren[0];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_0_0_0.getTileID()) ==
-          OctreeTileID(1, 0, 0, 0));
+      const auto& tile_1_0_0_0 =
+          findTile(tileChildren, OctreeTileID(1, 0, 0, 0));
       const auto& box_1_0_0_0 =
           std::get<OrientedBoundingBox>(tile_1_0_0_0.getBoundingVolume());
       CHECK(box_1_0_0_0.getCenter() == glm::dvec3(-10.0, -10.0, -10.0));
@@ -249,10 +271,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_0_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_0_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_1_0_0 = tileChildren[1];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_1_0_0.getTileID()) ==
-          OctreeTileID(1, 1, 0, 0));
+      const auto& tile_1_1_0_0 =
+          findTile(tileChildren, OctreeTileID(1, 1, 0, 0));
       const auto& box_1_1_0_0 =
           std::get<OrientedBoundingBox>(tile_1_1_0_0.getBoundingVolume());
       CHECK(box_1_1_0_0.getCenter() == glm::dvec3(10.0, -10.0, -10.0));
@@ -260,10 +280,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_1_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_1_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_0_0_1 = tileChildren[2];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_0_0_1.getTileID()) ==
-          OctreeTileID(1, 0, 0, 1));
+      const auto& tile_1_0_0_1 =
+          findTile(tileChildren, OctreeTileID(1, 0, 0, 1));
       const auto& box_1_0_0_1 =
           std::get<OrientedBoundingBox>(tile_1_0_0_1.getBoundingVolume());
       CHECK(box_1_0_0_1.getCenter() == glm::dvec3(-10.0, -10.0, 10.0));
@@ -271,10 +289,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_0_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_0_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_1_0_1 = tileChildren[3];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_1_0_1.getTileID()) ==
-          OctreeTileID(1, 1, 0, 1));
+      const auto& tile_1_1_0_1 =
+          findTile(tileChildren, OctreeTileID(1, 1, 0, 1));
       const auto& box_1_1_0_1 =
           std::get<OrientedBoundingBox>(tile_1_1_0_1.getBoundingVolume());
       CHECK(box_1_1_0_1.getCenter() == glm::dvec3(10.0, -10.0, 10.0));
@@ -282,10 +298,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_1_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_1_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_0_1_0 = tileChildren[4];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_0_1_0.getTileID()) ==
-          OctreeTileID(1, 0, 1, 0));
+      const auto& tile_1_0_1_0 =
+          findTile(tileChildren, OctreeTileID(1, 0, 1, 0));
       const auto& box_1_0_1_0 =
           std::get<OrientedBoundingBox>(tile_1_0_1_0.getBoundingVolume());
       CHECK(box_1_0_1_0.getCenter() == glm::dvec3(-10.0, 10.0, -10.0));
@@ -293,10 +307,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_0_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_0_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_1_1_0 = tileChildren[5];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_1_1_0.getTileID()) ==
-          OctreeTileID(1, 1, 1, 0));
+      const auto& tile_1_1_1_0 =
+          findTile(tileChildren, OctreeTileID(1, 1, 1, 0));
       const auto& box_1_1_1_0 =
           std::get<OrientedBoundingBox>(tile_1_1_1_0.getBoundingVolume());
       CHECK(box_1_1_1_0.getCenter() == glm::dvec3(10.0, 10.0, -10.0));
@@ -304,10 +316,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_1_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_1_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_0_1_1 = tileChildren[6];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_0_1_1.getTileID()) ==
-          OctreeTileID(1, 0, 1, 1));
+      const auto& tile_1_0_1_1 =
+          findTile(tileChildren, OctreeTileID(1, 0, 1, 1));
       const auto& box_1_0_1_1 =
           std::get<OrientedBoundingBox>(tile_1_0_1_1.getBoundingVolume());
       CHECK(box_1_0_1_1.getCenter() == glm::dvec3(-10.0, 10.0, 10.0));
@@ -315,10 +325,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_1_0_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
       CHECK(box_1_0_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 10.0));
 
-      const auto& tile_1_1_1_1 = tileChildren[7];
-      CHECK(
-          std::get<OctreeTileID>(tile_1_1_1_1.getTileID()) ==
-          OctreeTileID(1, 1, 1, 1));
+      const auto& tile_1_1_1_1 =
+          findTile(tileChildren, OctreeTileID(1, 1, 1, 1));
       const auto& box_1_1_1_1 =
           std::get<OrientedBoundingBox>(tile_1_1_1_1.getBoundingVolume());
       CHECK(box_1_1_1_1.getCenter() == glm::dvec3(10.0, 10.0, 10.0));
@@ -331,7 +339,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
 
     // check subdivide one of the root children
     {
-      auto& tile_1_1_0_0 = tile.getChildren()[1];
+      const auto& tile_1_1_0_0 =
+          findTile(tile.getChildren(), OctreeTileID(1, 1, 0, 0));
 
       auto tileChildrenResult = loader.createTileChildren(tile_1_1_0_0);
       CHECK(tileChildrenResult.state == TileLoadResultState::Success);
@@ -339,10 +348,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
-      const auto& tile_2_2_0_0 = tileChildren[0];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_2_0_0.getTileID()) ==
-          OctreeTileID(2, 2, 0, 0));
+      const auto& tile_2_2_0_0 =
+          findTile(tileChildren, OctreeTileID(2, 2, 0, 0));
       const auto& box_2_2_0_0 =
           std::get<OrientedBoundingBox>(tile_2_2_0_0.getBoundingVolume());
       CHECK(box_2_2_0_0.getCenter() == glm::dvec3(5.0, -15.0, -15.0));
@@ -350,10 +357,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_2_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_2_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_3_0_0 = tileChildren[1];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_3_0_0.getTileID()) ==
-          OctreeTileID(2, 3, 0, 0));
+      const auto& tile_2_3_0_0 =
+          findTile(tileChildren, OctreeTileID(2, 3, 0, 0));
       const auto& box_2_3_0_0 =
           std::get<OrientedBoundingBox>(tile_2_3_0_0.getBoundingVolume());
       CHECK(box_2_3_0_0.getCenter() == glm::dvec3(15.0, -15.0, -15.0));
@@ -361,10 +366,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_3_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_3_0_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_2_0_1 = tileChildren[2];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_2_0_1.getTileID()) ==
-          OctreeTileID(2, 2, 0, 1));
+      const auto& tile_2_2_0_1 =
+          findTile(tileChildren, OctreeTileID(2, 2, 0, 1));
       const auto& box_2_2_0_1 =
           std::get<OrientedBoundingBox>(tile_2_2_0_1.getBoundingVolume());
       CHECK(box_2_2_0_1.getCenter() == glm::dvec3(5.0, -15.0, -5.0));
@@ -372,10 +375,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_2_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_2_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_3_0_1 = tileChildren[3];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_3_0_1.getTileID()) ==
-          OctreeTileID(2, 3, 0, 1));
+      const auto& tile_2_3_0_1 =
+          findTile(tileChildren, OctreeTileID(2, 3, 0, 1));
       const auto& box_2_3_0_1 =
           std::get<OrientedBoundingBox>(tile_2_3_0_1.getBoundingVolume());
       CHECK(box_2_3_0_1.getCenter() == glm::dvec3(15.0, -15.0, -5.0));
@@ -383,10 +384,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_3_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_3_0_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_2_1_0 = tileChildren[4];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_2_1_0.getTileID()) ==
-          OctreeTileID(2, 2, 1, 0));
+      const auto& tile_2_2_1_0 =
+          findTile(tileChildren, OctreeTileID(2, 2, 1, 0));
       const auto& box_2_2_1_0 =
           std::get<OrientedBoundingBox>(tile_2_2_1_0.getBoundingVolume());
       CHECK(box_2_2_1_0.getCenter() == glm::dvec3(5.0, -5.0, -15.0));
@@ -394,10 +393,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_2_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_2_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_3_1_0 = tileChildren[5];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_3_1_0.getTileID()) ==
-          OctreeTileID(2, 3, 1, 0));
+      const auto& tile_2_3_1_0 =
+          findTile(tileChildren, OctreeTileID(2, 3, 1, 0));
       const auto& box_2_3_1_0 =
           std::get<OrientedBoundingBox>(tile_2_3_1_0.getBoundingVolume());
       CHECK(box_2_3_1_0.getCenter() == glm::dvec3(15.0, -5.0, -15.0));
@@ -405,10 +402,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_3_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_3_1_0.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_2_1_1 = tileChildren[6];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_2_1_1.getTileID()) ==
-          OctreeTileID(2, 2, 1, 1));
+      const auto& tile_2_2_1_1 =
+          findTile(tileChildren, OctreeTileID(2, 2, 1, 1));
       const auto& box_2_2_1_1 =
           std::get<OrientedBoundingBox>(tile_2_2_1_1.getBoundingVolume());
       CHECK(box_2_2_1_1.getCenter() == glm::dvec3(5.0, -5.0, -5.0));
@@ -416,10 +411,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(box_2_2_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
       CHECK(box_2_2_1_1.getHalfAxes()[2] == glm::dvec3(0.0, 0.0, 5.0));
 
-      const auto& tile_2_3_1_1 = tileChildren[7];
-      CHECK(
-          std::get<OctreeTileID>(tile_2_3_1_1.getTileID()) ==
-          OctreeTileID(2, 3, 1, 1));
+      const auto& tile_2_3_1_1 =
+          findTile(tileChildren, OctreeTileID(2, 3, 1, 1));
       const auto& box_2_3_1_1 =
           std::get<OrientedBoundingBox>(tile_2_3_1_1.getBoundingVolume());
       CHECK(box_2_3_1_1.getCenter() == glm::dvec3(15.0, -5.0, -5.0));
@@ -469,7 +462,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
-      const auto& tile_1_0_0_0 = tileChildren[0];
+      const auto& tile_1_0_0_0 =
+          findTile(tileChildren, OctreeTileID(1, 0, 0, 0));
       const auto& region_1_0_0_0 =
           std::get<BoundingRegion>(tile_1_0_0_0.getBoundingVolume());
       CHECK(region_1_0_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
@@ -480,7 +474,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_0_0_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_1_0_0_0.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_1_1_0_0 = tileChildren[1];
+      const auto& tile_1_1_0_0 =
+          findTile(tileChildren, OctreeTileID(1, 1, 0, 0));
       const auto& region_1_1_0_0 =
           std::get<BoundingRegion>(tile_1_1_0_0.getBoundingVolume());
       CHECK(region_1_1_0_0.getRectangle().getWest() == Approx(0.0));
@@ -491,7 +486,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_1_0_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_1_1_0_0.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_1_0_0_1 = tileChildren[2];
+      const auto& tile_1_0_0_1 =
+          findTile(tileChildren, OctreeTileID(1, 0, 0, 1));
       const auto& region_1_0_0_1 =
           std::get<BoundingRegion>(tile_1_0_0_1.getBoundingVolume());
       CHECK(region_1_0_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
@@ -502,7 +498,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_0_0_1.getMinimumHeight() == Approx(50.0));
       CHECK(region_1_0_0_1.getMaximumHeight() == Approx(100.0));
 
-      const auto& tile_1_1_0_1 = tileChildren[3];
+      const auto& tile_1_1_0_1 =
+          findTile(tileChildren, OctreeTileID(1, 1, 0, 1));
       const auto& region_1_1_0_1 =
           std::get<BoundingRegion>(tile_1_1_0_1.getBoundingVolume());
       CHECK(region_1_1_0_0.getRectangle().getWest() == Approx(0.0));
@@ -513,7 +510,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_1_0_1.getMinimumHeight() == Approx(50.0));
       CHECK(region_1_1_0_1.getMaximumHeight() == Approx(100.0));
 
-      const auto& tile_1_0_1_0 = tileChildren[4];
+      const auto& tile_1_0_1_0 =
+          findTile(tileChildren, OctreeTileID(1, 0, 1, 0));
       const auto& region_1_0_1_0 =
           std::get<BoundingRegion>(tile_1_0_1_0.getBoundingVolume());
       CHECK(region_1_0_1_0.getRectangle().getWest() == Approx(-Math::OnePi));
@@ -524,7 +522,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_0_1_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_1_0_1_0.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_1_1_1_0 = tileChildren[5];
+      const auto& tile_1_1_1_0 =
+          findTile(tileChildren, OctreeTileID(1, 1, 1, 0));
       const auto& region_1_1_1_0 =
           std::get<BoundingRegion>(tile_1_1_1_0.getBoundingVolume());
       CHECK(region_1_1_1_0.getRectangle().getWest() == Approx(0.0));
@@ -535,7 +534,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_1_1_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_1_1_1_0.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_1_0_1_1 = tileChildren[6];
+      const auto& tile_1_0_1_1 =
+          findTile(tileChildren, OctreeTileID(1, 0, 1, 1));
       const auto& region_1_0_1_1 =
           std::get<BoundingRegion>(tile_1_0_1_1.getBoundingVolume());
       CHECK(region_1_0_1_1.getRectangle().getWest() == Approx(-Math::OnePi));
@@ -546,7 +546,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_1_0_1_1.getMinimumHeight() == Approx(50.0));
       CHECK(region_1_0_1_1.getMaximumHeight() == Approx(100.0));
 
-      const auto& tile_1_1_1_1 = tileChildren[7];
+      const auto& tile_1_1_1_1 =
+          findTile(tileChildren, OctreeTileID(1, 1, 1, 1));
       const auto& region_1_1_1_1 =
           std::get<BoundingRegion>(tile_1_1_1_1.getBoundingVolume());
       CHECK(region_1_1_1_1.getRectangle().getWest() == Approx(0.0));
@@ -562,14 +563,16 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
 
     // check subdivide one of the root children
     {
-      auto& tile_1_1_0_0 = tile.getChildren()[1];
+      auto& tile_1_1_0_0 =
+          findTile(tile.getChildren(), OctreeTileID(1, 1, 0, 0));
       auto tileChildrenResult = loader.createTileChildren(tile_1_1_0_0);
       CHECK(tileChildrenResult.state == TileLoadResultState::Success);
 
       const auto& tileChildren = tileChildrenResult.children;
       CHECK(tileChildren.size() == 8);
 
-      const auto& tile_2_2_0_0 = tileChildren[0];
+      const auto& tile_2_2_0_0 =
+          findTile(tileChildren, OctreeTileID(2, 2, 0, 0));
       const auto& region_2_2_0_0 =
           std::get<BoundingRegion>(tile_2_2_0_0.getBoundingVolume());
       CHECK(region_2_2_0_0.getRectangle().getWest() == Approx(0.0));
@@ -582,7 +585,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_2_0_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_2_2_0_0.getMaximumHeight() == Approx(25.0));
 
-      const auto& tile_2_3_0_0 = tileChildren[1];
+      const auto& tile_2_3_0_0 =
+          findTile(tileChildren, OctreeTileID(2, 3, 0, 0));
       const auto& region_2_3_0_0 =
           std::get<BoundingRegion>(tile_2_3_0_0.getBoundingVolume());
       CHECK(region_2_3_0_0.getRectangle().getWest() == Approx(Math::PiOverTwo));
@@ -595,7 +599,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_3_0_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_2_3_0_0.getMaximumHeight() == Approx(25.0));
 
-      const auto& tile_2_2_0_1 = tileChildren[2];
+      const auto& tile_2_2_0_1 =
+          findTile(tileChildren, OctreeTileID(2, 2, 0, 1));
       const auto& region_2_2_0_1 =
           std::get<BoundingRegion>(tile_2_2_0_1.getBoundingVolume());
       CHECK(region_2_2_0_1.getRectangle().getWest() == Approx(0.0));
@@ -608,7 +613,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_2_0_1.getMinimumHeight() == Approx(25.0));
       CHECK(region_2_2_0_1.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_2_3_0_1 = tileChildren[3];
+      const auto& tile_2_3_0_1 =
+          findTile(tileChildren, OctreeTileID(2, 3, 0, 1));
       const auto& region_2_3_0_1 =
           std::get<BoundingRegion>(tile_2_3_0_1.getBoundingVolume());
       CHECK(region_2_3_0_1.getRectangle().getWest() == Approx(Math::PiOverTwo));
@@ -621,7 +627,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_3_0_1.getMinimumHeight() == Approx(25.0));
       CHECK(region_2_3_0_1.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_2_2_1_0 = tileChildren[4];
+      const auto& tile_2_2_1_0 =
+          findTile(tileChildren, OctreeTileID(2, 2, 1, 0));
       const auto& region_2_2_1_0 =
           std::get<BoundingRegion>(tile_2_2_1_0.getBoundingVolume());
       CHECK(region_2_2_1_0.getRectangle().getWest() == Approx(0.0));
@@ -634,7 +641,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_2_1_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_2_2_1_0.getMaximumHeight() == Approx(25.0));
 
-      const auto& tile_2_3_1_0 = tileChildren[5];
+      const auto& tile_2_3_1_0 =
+          findTile(tileChildren, OctreeTileID(2, 3, 1, 0));
       const auto& region_2_3_1_0 =
           std::get<BoundingRegion>(tile_2_3_1_0.getBoundingVolume());
       CHECK(region_2_3_1_0.getRectangle().getWest() == Approx(Math::PiOverTwo));
@@ -646,7 +654,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_3_1_0.getMinimumHeight() == Approx(0.0));
       CHECK(region_2_3_1_0.getMaximumHeight() == Approx(25.0));
 
-      const auto& tile_2_2_1_1 = tileChildren[6];
+      const auto& tile_2_2_1_1 =
+          findTile(tileChildren, OctreeTileID(2, 2, 1, 1));
       const auto& region_2_2_1_1 =
           std::get<BoundingRegion>(tile_2_2_1_1.getBoundingVolume());
       CHECK(region_2_2_1_1.getRectangle().getWest() == Approx(0.0));
@@ -659,7 +668,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
       CHECK(region_2_2_1_1.getMinimumHeight() == Approx(25.0));
       CHECK(region_2_2_1_1.getMaximumHeight() == Approx(50.0));
 
-      const auto& tile_2_3_1_1 = tileChildren[7];
+      const auto& tile_2_3_1_1 =
+          findTile(tileChildren, OctreeTileID(2, 3, 1, 1));
       const auto& region_2_3_1_1 =
           std::get<BoundingRegion>(tile_2_3_1_1.getBoundingVolume());
       CHECK(region_2_3_1_1.getRectangle().getWest() == Approx(Math::PiOverTwo));
