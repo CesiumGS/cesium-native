@@ -24,6 +24,7 @@
 
 - Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
 - Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
+- Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2002 v17.8.
 
 ### v0.29.0 - 2023-11-01
 
