@@ -204,7 +204,6 @@ TEST_CASE("Check scalar PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-
   SECTION("float") {
     std::vector<float> data{12.3333f, -12.44555f, -5.6111f, 6.7421f};
     checkAttributeValues(data);
