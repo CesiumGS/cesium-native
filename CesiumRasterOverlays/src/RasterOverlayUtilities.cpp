@@ -284,7 +284,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
     const CesiumGeometry::Rectangle& rectangle,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   // We're aiming to estimate the maximum number of pixels (in each projected
-  // direction) the tile will occupy on the screen. The will be determined by
+  // direction) the tile will occupy on the screen. They will be determined by
   // the tile's geometric error, because when less error is needed (i.e. the
   // viewer moved closer), the LOD will switch to show the tile's children
   // instead of this tile.
