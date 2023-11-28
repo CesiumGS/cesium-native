@@ -718,7 +718,7 @@ TEST_CASE("SubtreeAvailability modifications") {
 
   SubtreeAvailability& availability = *maybeAvailability;
 
-  SECTION("initially has all tiles available, and no content or subtress "
+  SECTION("initially has all tiles available, and no content or subtrees "
           "available") {
     CHECK(availability.isTileAvailable(
         QuadtreeTileID(0, 0, 0),
