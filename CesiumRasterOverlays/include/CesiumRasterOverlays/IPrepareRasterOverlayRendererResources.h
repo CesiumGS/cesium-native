@@ -54,8 +54,10 @@ public:
   /**
    * @brief Frees previously-prepared renderer resources for a raster tile.
    *
-   * This method is always called from the thread that called
-   * {@link Tileset::updateView} or deleted the tileset.
+   * This method is always called from the thread that destroyed the
+   * {@link RasterOverlayTile}. When raster overlays are used with tilesets,
+   * this is the thread that called {@link Tileset::updateView} or deleted the
+   * tileset.
    *
    * @param rasterTile The tile for which to free renderer resources.
    * @param pLoadThreadResult The result returned by
