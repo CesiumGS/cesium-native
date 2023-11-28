@@ -290,6 +290,8 @@ bool SubtreeAvailability::isContentAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     uint64_t contentId) const noexcept {
+  if (contentId >= this->_contentAvailability.size())
+    return false;
   return isAvailable(
       relativeTileLevel,
       relativeTileMortonId,
@@ -329,11 +331,13 @@ void SubtreeAvailability::setContentAvailable(
     uint64_t relativeTileMortonId,
     uint64_t contentId,
     bool isAvailable) noexcept {
-  this->setAvailable(
-      relativeTileLevel,
-      relativeTileMortonId,
-      this->_contentAvailability[contentId],
-      isAvailable);
+  if (contentId < this->_contentAvailability.size()) {
+    this->setAvailable(
+        relativeTileLevel,
+        relativeTileMortonId,
+        this->_contentAvailability[contentId],
+        isAvailable);
+  }
 }
 
 bool SubtreeAvailability::isSubtreeAvailable(
