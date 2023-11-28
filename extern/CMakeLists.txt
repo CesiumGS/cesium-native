@@ -68,6 +68,7 @@ add_subdirectory(asyncplusplus)
 
 set(SPDLOG_BUILD_TESTING OFF CACHE INTERNAL "Disable SPDLOG Testing")
 add_subdirectory(spdlog)
+target_compile_definitions(spdlog PUBLIC _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
 
 if (NOT TARGET sqlite3)
   add_subdirectory(sqlite3)

@@ -14,6 +14,7 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Added `MetadataConversions`, which enables metadata values to be converted to different types for better usability in runtime engines.
 - Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
 - Added `transform` method to `CesiumGeometry::BoundingSphere`.
 - Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
@@ -23,11 +24,14 @@
 - Added `fromSubtree` and `createEmpty` static methods to `SubtreeAvailability`.
 - Added new `set` methods to `SubtreeAvailability`, allowing the availability information to be modified.
 - Added `SubtreeFileReader` class, used to read `Cesium3DTiles::Subtree` from a binary or JSON subtree file.
+- Added `Future<T>::thenPassThrough`, used to easily pass additional values through to the next continuation.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
 - Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
+- Fixed crash when loading glTFs with data uri images.
+- Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2002 v17.8.
 
 ### v0.29.0 - 2023-11-01
 
