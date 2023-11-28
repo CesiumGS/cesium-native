@@ -30,7 +30,8 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
     std::vector<Cesium3DTiles::BufferView>& bufferViews) {
   if (availability.constant) {
     return SubtreeAvailability::SubtreeConstantAvailability{
-        *availability.constant == 1};
+        *availability.constant ==
+        Cesium3DTiles::Availability::Constant::AVAILABLE};
   }
 
   int64_t bufferViewIndex = -1;
@@ -123,9 +124,12 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
     ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree) noexcept {
   Subtree subtree;
-  subtree.tileAvailability.constant = true;
-  subtree.contentAvailability.emplace_back().constant = false;
-  subtree.childSubtreeAvailability.constant = false;
+  subtree.tileAvailability.constant =
+      Cesium3DTiles::Availability::Constant::AVAILABLE;
+  subtree.contentAvailability.emplace_back().constant =
+      Cesium3DTiles::Availability::Constant::UNAVAILABLE;
+  subtree.childSubtreeAvailability.constant =
+      Cesium3DTiles::Availability::Constant::UNAVAILABLE;
 
   return SubtreeAvailability::fromSubtree(
       subdivisionScheme,
