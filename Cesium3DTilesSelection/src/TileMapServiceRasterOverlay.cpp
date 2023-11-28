@@ -104,19 +104,20 @@ protected:
     }
   }
 
-  virtual bool getLoadQuadtreeTileImageWork(const CesiumGeometry::QuadtreeTileID& tileID, std::string& outUrl) override {
+  virtual bool getLoadQuadtreeTileImageWork(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      std::string& outUrl) override {
     uint32_t level = tileID.level - this->getMinimumLevel();
 
     if (level < _tileSets.size()) {
       const TileMapServiceTileset& tileset = _tileSets[level];
       outUrl = CesiumUtility::Uri::resolve(
-        this->_url,
-        tileset.url + "/" + std::to_string(tileID.x) + "/" +
-        std::to_string(tileID.y) + this->_fileExtension,
-        true);
+          this->_url,
+          tileset.url + "/" + std::to_string(tileID.x) + "/" +
+              std::to_string(tileID.y) + this->_fileExtension,
+          true);
       return true;
-    }
-    else {
+    } else {
       return false;
     }
   }

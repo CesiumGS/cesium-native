@@ -79,8 +79,7 @@ public:
       double maximumScreenSpaceError,
       std::vector<ParsedTileWork>& outWork);
 
-  CesiumAsync::Future<TileLoadResultAndRenderResources>
-  doTileContentWork(
+  CesiumAsync::Future<TileLoadResultAndRenderResources> doTileContentWork(
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& projections,
       const TilesetOptions& tilesetOptions);
@@ -142,8 +141,8 @@ public:
 
   void notifyRasterStartLoading() noexcept;
   void notifyRasterDoneLoading() noexcept;
-private:
 
+private:
   void
   updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
 

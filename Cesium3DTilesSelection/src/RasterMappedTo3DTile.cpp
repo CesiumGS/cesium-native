@@ -209,7 +209,8 @@ void RasterMappedTo3DTile::detachFromTile(
   this->_state = AttachmentState::Unattached;
 }
 
-CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(CesiumAsync::AsyncSystem& callerAsync) noexcept {
+CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(
+    CesiumAsync::AsyncSystem& callerAsync) noexcept {
   CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading) {
@@ -220,7 +221,8 @@ CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(CesiumAsync::Async
   return provider.loadTileThrottled(*pLoading);
 }
 
-void RasterMappedTo3DTile::getLoadThrottledWork(std::vector<std::string>& outUrls) {
+void RasterMappedTo3DTile::getLoadThrottledWork(
+    std::vector<std::string>& outUrls) {
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading)
     return;

@@ -193,7 +193,9 @@ public:
         _polygons(polygons),
         _invertSelection(invertSelection) {}
 
-  virtual void getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {}
+  virtual void
+  getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {
+  }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {

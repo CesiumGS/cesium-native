@@ -111,24 +111,23 @@ void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
   //     tileRectangle.getSouth() >= -WebMercatorProjection::MAXIMUM_LATITUDE;
 
   const CesiumGeometry::Rectangle& providerRectangle =
-    this->getCoverageRectangle();
+      this->getCoverageRectangle();
   const CesiumGeometry::Rectangle& tilingSchemeRectangle =
-    imageryTilingScheme.getRectangle();
+      imageryTilingScheme.getRectangle();
 
   // Compute the rectangle of the imagery from this raster tile provider that
   // overlaps the geometry tile.  The RasterOverlayTileProvider and its tiling
   // scheme both have the opportunity to constrain the rectangle.
   CesiumGeometry::Rectangle imageryRectangle =
-    tilingSchemeRectangle.computeIntersection(providerRectangle)
-    .value_or(tilingSchemeRectangle);
+      tilingSchemeRectangle.computeIntersection(providerRectangle)
+          .value_or(tilingSchemeRectangle);
 
   CesiumGeometry::Rectangle intersection(0.0, 0.0, 0.0, 0.0);
   std::optional<CesiumGeometry::Rectangle> maybeIntersection =
-    geometryRectangle.computeIntersection(imageryRectangle);
+      geometryRectangle.computeIntersection(imageryRectangle);
   if (maybeIntersection) {
     intersection = maybeIntersection.value();
-  }
-  else {
+  } else {
     // There is no overlap between this terrain tile and this imagery
     // provider.  Unless this is the base layer, no skeletons need to be
     // created. We stretch texels at the edge of the base layer over the entire
@@ -140,42 +139,38 @@ void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
     // }
     if (geometryRectangle.minimumY >= imageryRectangle.maximumY) {
       intersection.minimumY = intersection.maximumY = imageryRectangle.maximumY;
-    }
-    else if (geometryRectangle.maximumY <= imageryRectangle.minimumY) {
+    } else if (geometryRectangle.maximumY <= imageryRectangle.minimumY) {
       intersection.minimumY = intersection.maximumY = imageryRectangle.minimumY;
-    }
-    else {
+    } else {
       intersection.minimumY =
-        glm::max(geometryRectangle.minimumY, imageryRectangle.minimumY);
+          glm::max(geometryRectangle.minimumY, imageryRectangle.minimumY);
 
       intersection.maximumY =
-        glm::min(geometryRectangle.maximumY, imageryRectangle.maximumY);
+          glm::min(geometryRectangle.maximumY, imageryRectangle.maximumY);
     }
 
     if (geometryRectangle.minimumX >= imageryRectangle.maximumX) {
       intersection.minimumX = intersection.maximumX = imageryRectangle.maximumX;
-    }
-    else if (geometryRectangle.maximumX <= imageryRectangle.minimumX) {
+    } else if (geometryRectangle.maximumX <= imageryRectangle.minimumX) {
       intersection.minimumX = intersection.maximumX = imageryRectangle.minimumX;
-    }
-    else {
+    } else {
       intersection.minimumX =
-        glm::max(geometryRectangle.minimumX, imageryRectangle.minimumX);
+          glm::max(geometryRectangle.minimumX, imageryRectangle.minimumX);
 
       intersection.maximumX =
-        glm::min(geometryRectangle.maximumX, imageryRectangle.maximumX);
+          glm::min(geometryRectangle.maximumX, imageryRectangle.maximumX);
     }
   }
 
   // Compute the required level in the imagery tiling scheme.
   uint32_t level = this->computeLevelFromTargetScreenPixels(
-    geometryRectangle,
-    targetScreenPixels);
+      geometryRectangle,
+      targetScreenPixels);
 
   std::optional<QuadtreeTileID> southwestTileCoordinatesOpt =
-    imageryTilingScheme.positionToTile(intersection.getLowerLeft(), level);
+      imageryTilingScheme.positionToTile(intersection.getLowerLeft(), level);
   std::optional<QuadtreeTileID> northeastTileCoordinatesOpt =
-    imageryTilingScheme.positionToTile(intersection.getUpperRight(), level);
+      imageryTilingScheme.positionToTile(intersection.getUpperRight(), level);
 
   // Because of the intersection, we should always have valid tile coordinates.
   // But give up if we don't.
@@ -197,44 +192,44 @@ void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
   const double veryCloseY = geometryRectangle.computeHeight() / 512.0;
 
   const CesiumGeometry::Rectangle southwestTileRectangle =
-    imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
+      imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
 
   if (glm::abs(southwestTileRectangle.maximumY - geometryRectangle.minimumY) <
-    veryCloseY &&
-    southwestTileCoordinates.y < northeastTileCoordinates.y) {
+          veryCloseY &&
+      southwestTileCoordinates.y < northeastTileCoordinates.y) {
     ++southwestTileCoordinates.y;
   }
 
   if (glm::abs(southwestTileRectangle.maximumX - geometryRectangle.minimumX) <
-    veryCloseX &&
-    southwestTileCoordinates.x < northeastTileCoordinates.x) {
+          veryCloseX &&
+      southwestTileCoordinates.x < northeastTileCoordinates.x) {
     ++southwestTileCoordinates.x;
   }
 
   const CesiumGeometry::Rectangle northeastTileRectangle =
-    imageryTilingScheme.tileToRectangle(northeastTileCoordinates);
+      imageryTilingScheme.tileToRectangle(northeastTileCoordinates);
 
   if (glm::abs(northeastTileRectangle.maximumY - geometryRectangle.minimumY) <
-    veryCloseY &&
-    northeastTileCoordinates.y > southwestTileCoordinates.y) {
+          veryCloseY &&
+      northeastTileCoordinates.y > southwestTileCoordinates.y) {
     --northeastTileCoordinates.y;
   }
 
   if (glm::abs(northeastTileRectangle.minimumX - geometryRectangle.maximumX) <
-    veryCloseX &&
-    northeastTileCoordinates.x > southwestTileCoordinates.x) {
+          veryCloseX &&
+      northeastTileCoordinates.x > southwestTileCoordinates.x) {
     --northeastTileCoordinates.x;
   }
 
   // If we're mapping too many tiles, reduce the level until it's sane.
   uint32_t maxTextureSize =
-    uint32_t(this->getOwner().getOptions().maximumTextureSize);
+      uint32_t(this->getOwner().getOptions().maximumTextureSize);
 
   uint32_t tilesX = northeastTileCoordinates.x - southwestTileCoordinates.x + 1;
   uint32_t tilesY = northeastTileCoordinates.y - southwestTileCoordinates.y + 1;
 
   while (level > 0U && (tilesX * this->getWidth() > maxTextureSize ||
-    tilesY * this->getHeight() > maxTextureSize)) {
+                        tilesY * this->getHeight() > maxTextureSize)) {
     --level;
     northeastTileCoordinates = northeastTileCoordinates.getParent();
     southwestTileCoordinates = southwestTileCoordinates.getParent();
@@ -247,28 +242,28 @@ void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
   // provider's projection.
   const CesiumGeometry::Rectangle imageryBounds = intersection;
   std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
-    std::nullopt;
+      std::nullopt;
 
   for (uint32_t i = southwestTileCoordinates.x; i <= northeastTileCoordinates.x;
-    ++i) {
+       ++i) {
 
     imageryRectangle = imageryTilingScheme.tileToRectangle(
-      QuadtreeTileID(level, i, southwestTileCoordinates.y));
+        QuadtreeTileID(level, i, southwestTileCoordinates.y));
     clippedImageryRectangle =
-      imageryRectangle.computeIntersection(imageryBounds);
+        imageryRectangle.computeIntersection(imageryBounds);
 
     if (!clippedImageryRectangle) {
       continue;
     }
 
     for (uint32_t j = southwestTileCoordinates.y;
-      j <= northeastTileCoordinates.y;
-      ++j) {
+         j <= northeastTileCoordinates.y;
+         ++j) {
 
       imageryRectangle =
-        imageryTilingScheme.tileToRectangle(QuadtreeTileID(level, i, j));
+          imageryTilingScheme.tileToRectangle(QuadtreeTileID(level, i, j));
       clippedImageryRectangle =
-        imageryRectangle.computeIntersection(imageryBounds);
+          imageryRectangle.computeIntersection(imageryBounds);
 
       if (!clippedImageryRectangle) {
         continue;
@@ -284,7 +279,7 @@ void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
 
       std::string imageWorkUrl;
       if (getLoadQuadtreeTileImageWork(tileId, imageWorkUrl))
-        outUrls.push_back (imageWorkUrl);
+        outUrls.push_back(imageWorkUrl);
     }
   }
 }
@@ -639,7 +634,7 @@ void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
   this->getMapRasterTilesToGeometryTileWork(
       overlayTile.getRectangle(),
       overlayTile.getTargetScreenPixels(),
-    outUrls);
+      outUrls);
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

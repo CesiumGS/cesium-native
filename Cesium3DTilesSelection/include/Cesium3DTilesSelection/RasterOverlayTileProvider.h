@@ -338,7 +338,9 @@ public:
    */
   CesiumAsync::Future<bool> loadTileThrottled(RasterOverlayTile& tile);
 
-  void getLoadTileThrottledWork(RasterOverlayTile& tile, std::vector<std::string>& outUrls);
+  void getLoadTileThrottledWork(
+      RasterOverlayTile& tile,
+      std::vector<std::string>& outUrls);
 
 protected:
   /**
@@ -350,7 +352,9 @@ protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) = 0;
 
-  virtual void getLoadTileImageWork(RasterOverlayTile& overlayTile, std::vector<std::string>& outUrls) = 0;
+  virtual void getLoadTileImageWork(
+      RasterOverlayTile& overlayTile,
+      std::vector<std::string>& outUrls) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -368,7 +372,8 @@ protected:
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  CesiumAsync::Future<bool> doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  CesiumAsync::Future<bool>
+  doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
   /**
    * @brief Begins the process of loading of a tile.

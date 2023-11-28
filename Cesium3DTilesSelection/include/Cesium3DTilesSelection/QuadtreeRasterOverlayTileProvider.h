@@ -108,13 +108,17 @@ protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
-  virtual bool getLoadQuadtreeTileImageWork(const CesiumGeometry::QuadtreeTileID& tileID, std::string& outUrl) = 0;
+  virtual bool getLoadQuadtreeTileImageWork(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      std::string& outUrl) = 0;
 
 private:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override final;
 
-  virtual void getLoadTileImageWork(RasterOverlayTile& overlayTile, std::vector<std::string>& outUrls) override;
+  virtual void getLoadTileImageWork(
+      RasterOverlayTile& overlayTile,
+      std::vector<std::string>& outUrls) override;
 
   struct LoadedQuadtreeImage {
     std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;

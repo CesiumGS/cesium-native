@@ -24,7 +24,9 @@ public:
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
 
-  virtual void getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {}
+  virtual void
+  getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {
+  }
 };
 } // namespace
 

@@ -31,7 +31,9 @@ public:
             GeographicProjection(),
             GeographicProjection::computeMaximumProjectedRectangle()) {}
 
-  virtual void getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {}
+  virtual void
+  getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {
+  }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {

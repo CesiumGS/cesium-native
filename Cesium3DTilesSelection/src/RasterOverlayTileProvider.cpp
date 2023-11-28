@@ -105,7 +105,8 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
   this->doLoad(tile, false);
 }
 
-CesiumAsync::Future<bool> RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
+CesiumAsync::Future<bool>
+RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
     return this->_asyncSystem.createResolvedFuture<bool>(true);
 
@@ -299,8 +300,7 @@ static LoadResult createLoadResultFromLoadedImage(
 
 } // namespace
 
-CesiumAsync::Future<bool>
- RasterOverlayTileProvider::doLoad(
+CesiumAsync::Future<bool> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
@@ -348,7 +348,7 @@ CesiumAsync::Future<bool>
 
             thiz->finalizeTileLoad(isThrottledLoad);
             return thiz->_asyncSystem.createResolvedFuture<bool>(true);
-        })
+          })
       .catchInMainThread(
           [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
             pTile->_pRendererResources = nullptr;
@@ -361,7 +361,7 @@ CesiumAsync::Future<bool>
             thiz->finalizeTileLoad(isThrottledLoad);
 
             return thiz->_asyncSystem.createResolvedFuture<bool>(false);
-        });
+          });
 }
 
 void RasterOverlayTileProvider::beginTileLoad(bool isThrottledLoad) noexcept {

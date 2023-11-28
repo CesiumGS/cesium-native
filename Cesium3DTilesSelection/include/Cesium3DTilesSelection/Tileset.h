@@ -70,7 +70,8 @@ class RequestDispatcher {
 public:
   RequestDispatcher(
       CesiumAsync::AsyncSystem asyncSystem,
-      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor, std::shared_ptr<spdlog::logger> pLogger)
+      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+      std::shared_ptr<spdlog::logger> pLogger)
       : _asyncSystem(asyncSystem),
         _pLogger(pLogger),
         _pAssetAccessor(pAssetAccessor) {}
@@ -90,10 +91,11 @@ public:
 
 private:
   void dispatchRequest(TileLoadWork& request);
-  void stageRequestWork(
-      size_t dispatchCount,
-      std::vector<TileLoadWork>& stagedWork);
-  void onRequestFinished(gsl::span<const std::byte>* pResponseData, const TileLoadWork& request);
+  void
+  stageRequestWork(size_t dispatchCount, std::vector<TileLoadWork>& stagedWork);
+  void onRequestFinished(
+      gsl::span<const std::byte>* pResponseData,
+      const TileLoadWork& request);
 
   // Thread safe members
   std::mutex _requestsLock;

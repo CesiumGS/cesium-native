@@ -201,24 +201,24 @@ protected:
   }
 
   virtual bool getLoadQuadtreeTileImageWork(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    std::string& outUrl) override {
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      std::string& outUrl) override {
     outUrl = CesiumUtility::Uri::substituteTemplateParameters(
-      this->_urlTemplate,
-      [this, &tileID](const std::string& key) {
-        if (key == "quadkey") {
-          return BingMapsTileProvider::tileXYToQuadKey(
-            tileID.level,
-            tileID.x,
-            tileID.computeInvertedY(this->getTilingScheme()));
-        }
-        if (key == "subdomain") {
-          const size_t subdomainIndex =
-            (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
-          return this->_subdomains[subdomainIndex];
-        }
-        return key;
-      });
+        this->_urlTemplate,
+        [this, &tileID](const std::string& key) {
+          if (key == "quadkey") {
+            return BingMapsTileProvider::tileXYToQuadKey(
+                tileID.level,
+                tileID.x,
+                tileID.computeInvertedY(this->getTilingScheme()));
+          }
+          if (key == "subdomain") {
+            const size_t subdomainIndex =
+                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
+            return this->_subdomains[subdomainIndex];
+          }
+          return key;
+        });
 
     return true;
   }
