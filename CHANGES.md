@@ -10,7 +10,7 @@
 - `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
 - The `SubtreeAvailability` constructor and `loadSubtree` static method now take an `ImplicitTileSubdivisionScheme` enumeration parameter instead of a `powerOf2` parameter. They also now require a `levelsInSubtree` parameter, which is needed when switching from constant to bitstream availability. Lastly, the constructor now takes a `Subtree` parameter instead of a `std::vector<std::vector<std::byte>>` representing the buffers.
 - `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
-- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
+- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, `RasterOverlayLoadFailure`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
 
 ##### Additions :tada:
 
