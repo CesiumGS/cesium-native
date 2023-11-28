@@ -198,11 +198,12 @@ TEST_CASE("Add raster overlay to glTF") {
 
             image.bufferView = int32_t(gltf.bufferViews.size() - 1);
 
-            // TODO: the below will replace any existing color texture with
+            // The below will replace any existing color texture with
             // the raster overlay, because glTF only allows one color
             // texture. However, it doesn't clean up previous textures or
             // texture coordinates, leaving the model bigger than it needs
-            // to be.
+            // to be. If this were production code (not just a test/demo), we
+            // would want to address this.
 
             int32_t newMaterialIndex = -1;
 
