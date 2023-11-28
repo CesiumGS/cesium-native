@@ -326,6 +326,8 @@ public:
    * performance. Consider using {@link loadTileThrottled} instead.
    *
    * @param tile The tile to load.
+   * @return A future that, when the tile is loaded, resolves to the loaded tile
+   * and the tile provider that loaded it.
    */
   CesiumAsync::Future<TileProviderAndTile> loadTile(RasterOverlayTile& tile);
 
