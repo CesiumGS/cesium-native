@@ -307,11 +307,14 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 }
 
 void Tileset::assertViewResults() {
-  int32_t inProgressSum = static_cast<uint32_t>(_updateResult.requestsPending) +
-    _updateResult.tilesLoading +
-    _updateResult.rastersLoading;
-  int32_t completedSum =
-    _updateResult.tilesLoaded + _updateResult.rastersLoaded;
+  uint32_t inProgressSum =
+      static_cast<uint32_t>(_updateResult.requestsPending) +
+      _updateResult.tilesLoading + _updateResult.rastersLoading +
+      static_cast<uint32_t>(_updateResult.mainThreadTileLoadQueueLength) +
+      static_cast<uint32_t>(_updateResult.workerThreadTileLoadQueueLength);
+
+  uint32_t completedSum =
+      _updateResult.tilesLoaded + _updateResult.rastersLoaded;
 
   if (inProgressSum == 0 && completedSum > 0) {
     // We should be done right?
@@ -324,13 +327,13 @@ void Tileset::assertViewResults() {
     this->_requestDispatcher.GetRequestsStats(queued, inFlight, done);
 
     SPDLOG_LOGGER_INFO(
-      this->_externals.pLogger,
-      "{} in flight, {} tiles, {} rasters. ReqQueue {} DoneQueue {}",
-      inFlight,
-      _updateResult.tilesLoading,
-      _updateResult.rastersLoading,
-      queued,
-      done);
+        this->_externals.pLogger,
+        "{} in flight, {} tiles, {} rasters. ReqQueue {} DoneQueue {}",
+        inFlight,
+        _updateResult.tilesLoading,
+        _updateResult.rastersLoading,
+        queued,
+        done);
   }
 }
 
@@ -418,7 +421,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       this->_pTilesetContentManager->getNumberOfRastersLoaded();
   result.requestsPending = this->_requestDispatcher.GetPendingCount();
 
-  assertViewResults ();
+  assertViewResults();
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -495,15 +498,6 @@ float Tileset::computeLoadProgress() noexcept {
   int32_t totalNum = inProgressSum + completedSum;
   float percentage =
       static_cast<float>(completedSum) / static_cast<float>(totalNum);
-
-  // TODO does this need to go away?
-  // If we are complete, do one last check if any tiles were kicked.
-  // If kick is momentary (not persistent from last frame), give another frame
-  // to see if more tiles load
-  if (percentage == 1.0f) {
-    if (this->_updateResult.tilesKicked > 0)
-      percentage = 0.99f;
-  }
 
   return percentage * 100.0f;
 }
@@ -1112,10 +1106,12 @@ bool Tileset::_kickDescendantsAndRenderTile(
       TileSelectionState::Result::Rendered;
   const bool wasReallyRenderedLastFrame =
       wasRenderedLastFrame && tile.isRenderable();
+  const bool descendantsOverLimit = traversalDetails.notYetRenderableCount >
+                                    this->_options.loadingDescendantLimit;
+  const bool thisTileNotDone = tile.getState() != TileLoadState::Done &&
+                               tile.getState() != TileLoadState::Failed;
 
-  if (!wasReallyRenderedLastFrame &&
-      traversalDetails.notYetRenderableCount >
-          this->_options.loadingDescendantLimit &&
+  if (thisTileNotDone && !wasReallyRenderedLastFrame && descendantsOverLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     // Remove all descendants from the load queues.
@@ -1752,8 +1748,9 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
             _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
           })
           .catchInMainThread(
-              [_pTile = pTile, _this = this, pLogger = this->_externals.pLogger](
-                  std::exception&& e) {
+              [_pTile = pTile,
+               _this = this,
+               pLogger = this->_externals.pLogger](std::exception&& e) {
                 _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
                 SPDLOG_LOGGER_ERROR(
                     pLogger,
@@ -1767,10 +1764,10 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
 
       this->_pTilesetContentManager->notifyRasterStartLoading();
 
-      pRasterTile->loadThrottled(_asyncSystem).thenInMainThread([_this = this](
-        bool) {
-          _this->_pTilesetContentManager->notifyRasterDoneLoading();
-        });
+      pRasterTile->loadThrottled(_asyncSystem)
+          .thenInMainThread([_this = this](bool) {
+            _this->_pTilesetContentManager->notifyRasterDoneLoading();
+          });
     }
   }
 }
@@ -1887,8 +1884,7 @@ void RequestDispatcher::stageRequestWork(
   }
 }
 
-size_t RequestDispatcher::GetPendingCount()
-{
+size_t RequestDispatcher::GetPendingCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
   return _queuedWork.size() + _inFlightWork.size() + _doneWork.size();
 }
@@ -1914,13 +1910,13 @@ void RequestDispatcher::TakeCompletedWork(
   // Populate our output
   size_t numberToTake = std::min(count, maxCount);
   out = std::vector<TileLoadWork>(
-    _doneWork.begin(),
-    _doneWork.begin() + numberToTake);
+      _doneWork.begin(),
+      _doneWork.begin() + numberToTake);
 
   // Remove these entries from the source
   _doneWork = std::vector<TileLoadWork>(
-    _doneWork.begin() + numberToTake,
-    _doneWork.end());
+      _doneWork.begin() + numberToTake,
+      _doneWork.end());
 }
 
 void RequestDispatcher::WakeIfNeeded() {
@@ -1940,8 +1936,7 @@ void RequestDispatcher::WakeIfNeeded() {
       int slotsAvailable;
       {
         std::lock_guard<std::mutex> lock(_requestsLock);
-        slotsAvailable =
-            _maxSimultaneousRequests - (int)_inFlightWork.size();
+        slotsAvailable = _maxSimultaneousRequests - (int)_inFlightWork.size();
       }
       assert(slotsAvailable >= 0);
 
