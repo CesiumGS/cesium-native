@@ -68,10 +68,11 @@ TEST_CASE("Test implicit octree loader") {
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
-            3,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{false}},
+            ImplicitTileSubdivisionScheme::Octree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{false}},
             {}});
 
     // check that this tile will have empty content
@@ -103,10 +104,11 @@ TEST_CASE("Test implicit octree loader") {
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // mock tile content b3dm
@@ -155,10 +157,11 @@ TEST_CASE("Test implicit octree loader") {
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // mock random tile content
@@ -244,10 +247,11 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
-            3,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Octree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // check subdivide root tile first
@@ -444,10 +448,11 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},
         SubtreeAvailability{
-            3,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Octree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // check subdivide root tile first

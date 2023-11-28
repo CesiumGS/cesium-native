@@ -68,10 +68,11 @@ TEST_CASE("Test implicit quadtree loader") {
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{false}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{false}},
             {}});
 
     // check that this tile will have empty content
@@ -103,10 +104,11 @@ TEST_CASE("Test implicit quadtree loader") {
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // mock tile content b3dm
@@ -155,10 +157,11 @@ TEST_CASE("Test implicit quadtree loader") {
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // mock tile content b3dm
@@ -245,10 +248,11 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // check subdivide root tile first
@@ -362,10 +366,11 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     // check subdivide root tile first
@@ -496,10 +501,11 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
         SubtreeAvailability{
-            2,
-            SubtreeConstantAvailability{true},
-            SubtreeConstantAvailability{false},
-            {SubtreeConstantAvailability{true}},
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            {SubtreeAvailability::SubtreeConstantAvailability{true}},
             {}});
 
     Tile tile(&loader);

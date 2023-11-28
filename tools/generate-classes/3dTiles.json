@@ -18,6 +18,9 @@
     },
     "Metadata Entity": {
       "isBaseClass": true
+    },
+    "Buffer": {
+      "toBeInherited": true
     }
   },
   "extensions": [

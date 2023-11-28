@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
  * @brief A buffer is a binary blob. It is either the binary chunk of the
  * subtree file, or an external buffer referenced by a URI.
  */
-struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
+struct CESIUM3DTILES_API BufferSpec : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Buffer";
 
   /**
@@ -36,5 +36,12 @@ struct CESIUM3DTILES_API Buffer final : public CesiumUtility::ExtensibleObject {
    * @brief The name of the buffer.
    */
   std::optional<std::string> name;
+
+private:
+  /**
+   * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
+   */
+  BufferSpec() = default;
+  friend struct Buffer;
 };
 } // namespace Cesium3DTiles

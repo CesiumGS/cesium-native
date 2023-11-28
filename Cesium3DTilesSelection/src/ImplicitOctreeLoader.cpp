@@ -208,7 +208,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         this->_subtreeUrlTemplate,
         subtreeID);
     return SubtreeAvailability::loadSubtree(
-               3,
+               ImplicitTileSubdivisionScheme::Octree,
+               this->_subtreeLevels,
                asyncSystem,
                pAssetAccessor,
                pLogger,
