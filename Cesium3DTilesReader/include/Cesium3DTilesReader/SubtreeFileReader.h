@@ -8,8 +8,6 @@
 
 namespace Cesium3DTilesReader {
 
-struct SubtreeReadOptions {};
-
 /**
  * @brief Reads 3D Tiles subtrees from a binary or JSON subtree file.
  *

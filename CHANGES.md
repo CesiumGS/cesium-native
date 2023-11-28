@@ -13,12 +13,14 @@
 - `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
 - Moved `ImageManipulation` from `CesiumGltfReader` to `CesiumGltfContent`.
 - Added some new parameters to `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` and changed the order of some existing parameters.
+- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, `RasterOverlayLoadFailure`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
 
 ##### Additions :tada:
 
 - Added new `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
 - Added new `CesiumGltfContent` library and namespace. It has classes for manipulating in-memory glTF files.
 - Added new `CesiumRasterOverlays` library and namespace. It has classes for working with massive textures draped over glTFs and 3D Tiles.
+- Added `MetadataConversions`, which enables metadata values to be converted to different types for better usability in runtime engines.
 - Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
 - Added `transform` method to `CesiumGeometry::BoundingSphere`.
 - Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
@@ -31,16 +33,18 @@
 - Added `pointInTriangle2D` static method to `CesiumGeometry::IntersectionTests`.
 - Added `rectangleIsWithinPolygons` and `rectangleIsOutsidePolygons` static methods to `CartographicPolygon`.
 - Raster overlays now use `IPrepareRasterOverlayRendererResources`, which contains only overlay-related methods, instead of `IPrepareRendererResources`, which contains tileset-related methods as well. `IPrepareRendererResources` derives from `IPrepareRasterOverlayRendererResources` so existing code should continue to work without modification.
-- Added `Future<T>::thenPassThrough`, used to easily pass additional values through to the next continuation.
 - Added `collapseToSingleBuffer` and `moveBufferContent` methods to `GltfUtilities`.
 - Added `savePng` method to `ImageManipulation`.
 - `RasterOverlayTileProvider::loadTile` now returns a future that resolves when the tile is done loading.
 - Added `computeDesiredScreenPixels` and `computeTranslationAndScale` methods to `RasterOverlayUtilities`.
+- Added `Future<T>::thenPassThrough`, used to easily pass additional values through to the next continuation.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
 - Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
+- Fixed crash when loading glTFs with data uri images.
+- Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2002 v17.8.
 
 ### v0.29.0 - 2023-11-01
 
