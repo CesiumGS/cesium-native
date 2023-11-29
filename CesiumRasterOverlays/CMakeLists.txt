@@ -43,14 +43,20 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGeospatial
         CesiumGeometry
         CesiumGltf
+        CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
 )
 
 target_link_libraries_system(
     CesiumRasterOverlays
-    PRIVATE
+    PUBLIC
         expected-lite
+)
+
+target_link_libraries_system(
+    CesiumRasterOverlays
+    PRIVATE
         tinyxml2
 )
 

@@ -1,14 +1,15 @@
-#include "CesiumGltfReader/ImageManipulation.h"
-
 #include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltfContent/ImageManipulation.h>
 
 #include <cassert>
 #include <cstring>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
-namespace CesiumGltfReader {
+namespace CesiumGltfContent {
 
 void ImageManipulation::unsafeBlitImage(
     std::byte* pTarget,
@@ -114,4 +115,40 @@ bool ImageManipulation::blitImage(
 
   return true;
 }
-} // namespace CesiumGltfReader
+
+namespace {
+void writePngToVector(void* context, void* data, int size) {
+  std::vector<std::byte>* pVector =
+      reinterpret_cast<std::vector<std::byte>*>(context);
+  size_t previousSize = pVector->size();
+  pVector->resize(previousSize + size_t(size));
+  std::memcpy(pVector->data() + previousSize, data, size_t(size));
+}
+} // namespace
+
+/*static*/ void ImageManipulation::savePng(
+    const CesiumGltf::ImageCesium& image,
+    std::vector<std::byte>& output) {
+  if (image.bytesPerChannel != 1) {
+    // Only 8-bit images can be written.
+    return;
+  }
+
+  stbi_write_png_to_func(
+      writePngToVector,
+      &output,
+      image.width,
+      image.height,
+      image.channels,
+      image.pixelData.data(),
+      0);
+}
+
+/*static*/ std::vector<std::byte>
+ImageManipulation::savePng(const CesiumGltf::ImageCesium& image) {
+  std::vector<std::byte> result;
+  savePng(image, result);
+  return result;
+}
+
+} // namespace CesiumGltfContent

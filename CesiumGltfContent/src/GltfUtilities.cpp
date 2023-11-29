@@ -1,14 +1,16 @@
-#include <Cesium3DTilesContent/GltfUtilities.h>
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 
 #include <vector>
 
-namespace Cesium3DTilesContent {
+using namespace CesiumGltf;
+
+namespace CesiumGltfContent {
 /*static*/ glm::dmat4x4 GltfUtilities::applyRtcCenter(
     const CesiumGltf::Model& gltf,
     const glm::dmat4x4& rootTransform) {
@@ -150,4 +152,65 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   return result;
 }
-} // namespace Cesium3DTilesContent
+
+/*static*/ void GltfUtilities::collapseToSingleBuffer(CesiumGltf::Model& gltf) {
+  if (gltf.buffers.empty())
+    return;
+
+  Buffer& destinationBuffer = gltf.buffers[0];
+
+  for (size_t i = 1; i < gltf.buffers.size(); ++i) {
+    Buffer& sourceBuffer = gltf.buffers[i];
+    GltfUtilities::moveBufferContent(gltf, destinationBuffer, sourceBuffer);
+  }
+
+  // Remove all the old buffers
+  gltf.buffers.resize(1);
+}
+
+/*static*/ void GltfUtilities::moveBufferContent(
+    CesiumGltf::Model& gltf,
+    CesiumGltf::Buffer& destination,
+    CesiumGltf::Buffer& source) {
+  // Assert that the byteLength and the size of the cesium data vector are in
+  // sync.
+  assert(source.byteLength == int64_t(source.cesium.data.size()));
+  assert(destination.byteLength == int64_t(destination.cesium.data.size()));
+
+  int64_t sourceIndex = &source - &gltf.buffers[0];
+  int64_t destinationIndex = &destination - &gltf.buffers[0];
+
+  // Both buffers must exist in the glTF.
+  if (sourceIndex < 0 || sourceIndex >= int64_t(gltf.buffers.size()) ||
+      destinationIndex < 0 ||
+      destinationIndex >= int64_t(gltf.buffers.size())) {
+    assert(false);
+    return;
+  }
+
+  // Copy the data to the destination and keep track of where we put it.
+  size_t start = destination.cesium.data.size();
+
+  destination.cesium.data.insert(
+      destination.cesium.data.end(),
+      source.cesium.data.begin(),
+      source.cesium.data.end());
+
+  source.byteLength = 0;
+  source.cesium.data.clear();
+  source.cesium.data.shrink_to_fit();
+
+  destination.byteLength = int64_t(destination.cesium.data.size());
+
+  // Update all the bufferViews that previously referred to the source Buffer to
+  // refer to the destination Buffer instead.
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer != sourceIndex)
+      continue;
+
+    bufferView.buffer = int32_t(destinationIndex);
+    bufferView.byteOffset += int64_t(start);
+  }
+}
+
+} // namespace CesiumGltfContent

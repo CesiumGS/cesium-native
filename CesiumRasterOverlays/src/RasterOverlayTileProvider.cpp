@@ -94,13 +94,15 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 }
 
-void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
+CesiumAsync::Future<TileProviderAndTile>
+RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
   if (this->_pPlaceholder) {
     // Refuse to load placeholders.
-    return;
+    return this->getAsyncSystem().createResolvedFuture(
+        TileProviderAndTile{this, nullptr});
   }
 
-  this->doLoad(tile, false);
+  return this->doLoad(tile, false);
 }
 
 bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
@@ -296,12 +298,13 @@ static LoadResult createLoadResultFromLoadedImage(
 
 } // namespace
 
-void RasterOverlayTileProvider::doLoad(
+CesiumAsync::Future<TileProviderAndTile> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     // Already loading or loaded, do nothing.
-    return;
+    return this->getAsyncSystem().createResolvedFuture(
+        TileProviderAndTile{this, nullptr});
   }
 
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
@@ -316,7 +319,7 @@ void RasterOverlayTileProvider::doLoad(
   IntrusivePointer<RasterOverlayTile> pTile = &tile;
   IntrusivePointer<RasterOverlayTileProvider> thiz = this;
 
-  this->loadTileImage(tile)
+  return this->loadTileImage(tile)
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger = this->getLogger(),
@@ -343,6 +346,8 @@ void RasterOverlayTileProvider::doLoad(
             thiz->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
 
             thiz->finalizeTileLoad(isThrottledLoad);
+
+            return TileProviderAndTile{thiz, pTile};
           })
       .catchInMainThread(
           [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
@@ -354,6 +359,8 @@ void RasterOverlayTileProvider::doLoad(
             pTile->setState(RasterOverlayTile::LoadState::Failed);
 
             thiz->finalizeTileLoad(isThrottledLoad);
+
+            return TileProviderAndTile{thiz, pTile};
           });
 }
 
@@ -371,4 +378,11 @@ void RasterOverlayTileProvider::finalizeTileLoad(
     --this->_throttledTilesCurrentlyLoading;
   }
 }
+
+TileProviderAndTile::~TileProviderAndTile() noexcept {
+  // Ensure the tile is released before the tile provider.
+  pTile = nullptr;
+  pTileProvider = nullptr;
+}
+
 } // namespace CesiumRasterOverlays

@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltfReader/Library.h"
+#include "Library.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -10,7 +10,7 @@ namespace CesiumGltf {
 struct ImageCesium;
 }
 
-namespace CesiumGltfReader {
+namespace CesiumGltfContent {
 
 /**
  * @brief Specifies a rectangle of pixels in an image.
@@ -37,7 +37,7 @@ struct PixelRectangle {
   int32_t height;
 };
 
-class CESIUMGLTFREADER_API ImageManipulation {
+class CESIUMGLTFCONTENT_API ImageManipulation {
 public:
   /**
    * @brief Directly copies pixels from a source to a target, without validating
@@ -95,6 +95,26 @@ public:
       const PixelRectangle& targetPixels,
       const CesiumGltf::ImageCesium& source,
       const PixelRectangle& sourcePixels);
+
+  /**
+   * @brief Saves an image to a new byte buffer in PNG format.
+   *
+   * @param image The image to save.
+   * @return The byte buffer containing the image. If the buffer is empty, the
+   * image could not be written.
+   */
+  static std::vector<std::byte> savePng(const CesiumGltf::ImageCesium& image);
+
+  /**
+   * @brief Saves an image to an existing byte buffer in PNG format.
+   *
+   * @param image The image to save.
+   * @param output The buffer in which to store the PNG. The image is written to
+   * the end of the buffer. If the buffer size is unchanged on return the image
+   * could not be written.
+   */
+  static void
+  savePng(const CesiumGltf::ImageCesium& image, std::vector<std::byte>& output);
 };
 
-} // namespace CesiumGltfReader
+} // namespace CesiumGltfContent

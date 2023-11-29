@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Library.h"
-#include "RasterOverlayDetails.h"
 #include "TilesetMetadata.h"
 
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
@@ -102,29 +102,32 @@ public:
    *
    * @return The {@link RasterOverlayDetails} that is owned by this content
    */
-  const RasterOverlayDetails& getRasterOverlayDetails() const noexcept;
+  const CesiumRasterOverlays::RasterOverlayDetails&
+  getRasterOverlayDetails() const noexcept;
 
   /**
    * @brief Get the {@link RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
    *
    * @return The {@link RasterOverlayDetails} that is owned by this content
    */
-  RasterOverlayDetails& getRasterOverlayDetails() noexcept;
+  CesiumRasterOverlays::RasterOverlayDetails&
+  getRasterOverlayDetails() noexcept;
 
   /**
    * @brief Set the {@link RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
    *
    * @param rasterOverlayDetails The {@link RasterOverlayDetails} that will be owned by this content
    */
-  void
-  setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
+  void setRasterOverlayDetails(
+      const CesiumRasterOverlays::RasterOverlayDetails& rasterOverlayDetails);
 
   /**
    * @brief Set the {@link RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
    *
    * @param rasterOverlayDetails The {@link RasterOverlayDetails} that will be owned by this content
    */
-  void setRasterOverlayDetails(RasterOverlayDetails&& rasterOverlayDetails);
+  void setRasterOverlayDetails(
+      CesiumRasterOverlays::RasterOverlayDetails&& rasterOverlayDetails);
 
   /**
    * @brief Get the list of {@link Credit} of the content
@@ -192,7 +195,7 @@ public:
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
-  RasterOverlayDetails _rasterOverlayDetails;
+  CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;
 };

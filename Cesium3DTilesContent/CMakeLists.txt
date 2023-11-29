@@ -59,6 +59,7 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGeometry
         CesiumGeospatial
         CesiumGltf
+        CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
 )

@@ -1,9 +1,9 @@
-#include <Cesium3DTilesSelection/RasterOverlayDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
 #include <algorithm>
 #include <limits>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 RasterOverlayDetails::RasterOverlayDetails()
     : boundingRegion{
           CesiumGeospatial::GlobeRectangle::EMPTY,
@@ -52,4 +52,4 @@ void RasterOverlayDetails::merge(const RasterOverlayDetails& other) {
 
   boundingRegion.computeUnion(other.boundingRegion);
 }
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

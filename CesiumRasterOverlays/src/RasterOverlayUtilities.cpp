@@ -1,21 +1,25 @@
-#include <Cesium3DTilesContent/GltfUtilities.h>
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
-#include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfContent;
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 /*static*/ std::optional<RasterOverlayDetails>
 RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& model,
     const glm::dmat4& modelToEcefTransform,
-    int32_t firstTextureCoordinateID,
     const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
-    std::vector<CesiumGeospatial::Projection>&& projections) {
+    std::vector<CesiumGeospatial::Projection>&& projections,
+    bool invertVCoordinate,
+    const std::string& textureCoordinateAttributeBaseName,
+    int32_t firstTextureCoordinateID) {
   if (projections.empty()) {
     return std::nullopt;
   }
@@ -77,7 +81,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           // them.
           for (size_t i = 0; i < projections.size(); ++i) {
             std::string attributeName =
-                "_CESIUMOVERLAY_" +
+                textureCoordinateAttributeBaseName +
                 std::to_string(firstTextureCoordinateID + int32_t(i));
             primitive.attributes[attributeName] =
                 firstTextureCoordinateAccessorIndex + int32_t(i);
@@ -137,6 +141,8 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           uvBuffer.cesium.data.resize(
               size_t(positionView.size()) * 2 * sizeof(float));
 
+          uvBuffer.byteLength = int64_t(uvBuffer.cesium.data.size());
+
           CesiumGltf::BufferView& uvBufferView =
               gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
           uvBufferView.buffer = uvBufferId;
@@ -152,13 +158,15 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
           uvAccessor.count = int64_t(positionView.size());
           uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
+          uvAccessor.min = {0.0, 0.0};
+          uvAccessor.max = {1.0, 1.0};
 
           [[maybe_unused]] CesiumGltf::AccessorWriter<glm::vec2>& uvWriter =
               uvWriters.emplace_back(gltf, uvAccessorId);
           assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
           std::string attributeName =
-              "_CESIUMOVERLAY_" +
+              textureCoordinateAttributeBaseName +
               std::to_string(firstTextureCoordinateID + int32_t(i));
           primitive.attributes[attributeName] = uvAccessorId;
         }
@@ -252,6 +260,10 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
                     0.0,
                     1.0));
 
+            if (invertVCoordinate) {
+              uv.y = 1.0f - uv.y;
+            }
+
             uvWriters[projectionIndex][positionIndex] = uv;
           }
         }
@@ -265,4 +277,66 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
       computedBounds.toRegion()};
 }
 
-} // namespace Cesium3DTilesSelection
+/*static*/ glm::dvec2 RasterOverlayUtilities::computeDesiredScreenPixels(
+    double geometricError,
+    double maximumScreenSpaceError,
+    const CesiumGeospatial::Projection& projection,
+    const CesiumGeometry::Rectangle& rectangle,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  // We're aiming to estimate the maximum number of pixels (in each projected
+  // direction) the tile will occupy on the screen. They will be determined by
+  // the tile's geometric error, because when less error is needed (i.e. the
+  // viewer moved closer), the LOD will switch to show the tile's children
+  // instead of this tile.
+  //
+  // It works like this:
+  // * Estimate the size of the projected rectangle in world coordinates.
+  // * Compute the distance at which tile will switch to its children, based on
+  // its geometric error and the tileset SSE.
+  // * Compute the on-screen size of the projected rectangle at that distance.
+  //
+  // For the two compute steps, we use the usual perspective projection SSE
+  // equation:
+  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
+  //
+  // Conveniently a bunch of terms cancel out, so the screen pixel size at the
+  // switch distance is not actually dependent on the screen dimensions or
+  // field-of-view angle.
+
+  // We can get a more accurate estimate of the real-world size of the projected
+  // rectangle if we consider the rectangle at the true height of the geometry
+  // rather than assuming it's on the ellipsoid. This will make basically no
+  // difference for small tiles (because surface normals on opposite ends of
+  // tiles are effectively identical), and only a small difference for large
+  // ones (because heights will be small compared to the total size of a large
+  // tile). So we're skipping this complexity for now and estimating geometry
+  // width/height as if it's on the ellipsoid surface.
+  const double heightForSizeEstimation = 0.0;
+
+  glm::dvec2 diameters = computeProjectedRectangleSize(
+      projection,
+      rectangle,
+      heightForSizeEstimation,
+      ellipsoid);
+  return diameters * maximumScreenSpaceError / geometricError;
+}
+
+/*static*/ glm::dvec4 RasterOverlayUtilities::computeTranslationAndScale(
+    const Rectangle& geometryRectangle,
+    const Rectangle& overlayRectangle) {
+  const double geometryWidth = geometryRectangle.computeWidth();
+  const double geometryHeight = geometryRectangle.computeHeight();
+
+  const double scaleX = geometryWidth / overlayRectangle.computeWidth();
+  const double scaleY = geometryHeight / overlayRectangle.computeHeight();
+  glm::dvec2 translation = glm::dvec2(
+      (scaleX * (geometryRectangle.minimumX - overlayRectangle.minimumX)) /
+          geometryWidth,
+      (scaleY * (geometryRectangle.minimumY - overlayRectangle.minimumY)) /
+          geometryHeight);
+  glm::dvec2 scale = glm::dvec2(scaleX, scaleY);
+
+  return glm::dvec4(translation, scale);
+}
+
+} // namespace CesiumRasterOverlays
