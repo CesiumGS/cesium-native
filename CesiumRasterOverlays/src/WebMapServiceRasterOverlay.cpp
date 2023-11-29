@@ -1,19 +1,16 @@
-#include "Cesium3DTilesSelection/WebMapServiceRasterOverlay.h"
-
-#include "Cesium3DTilesSelection/CreditSystem.h"
-#include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "Cesium3DTilesSelection/tinyxml-cesium.h"
-
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/WebMapServiceRasterOverlay.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Uri.h>
+
+#include <tinyxml2.h>
 
 #include <cstddef>
 #include <sstream>
@@ -23,7 +20,7 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 class WebMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
@@ -33,7 +30,7 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
@@ -247,7 +244,8 @@ WebMapServiceRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
 
@@ -365,4 +363,4 @@ WebMapServiceRasterOverlay::createTileProvider(
           });
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

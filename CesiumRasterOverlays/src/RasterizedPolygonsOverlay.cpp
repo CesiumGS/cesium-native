@@ -1,14 +1,12 @@
-#include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
-
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "TileUtilities.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterizedPolygonsOverlay.h>
 #include <CesiumUtility/IntrusivePointer.h>
+
+#include <spdlog/fwd.h>
 
 #include <memory>
 #include <string>
@@ -17,7 +15,7 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 namespace {
 void rasterizePolygons(
     LoadedRasterOverlayImage& loaded,
@@ -40,7 +38,7 @@ void rasterizePolygons(
   }
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
-  if (Cesium3DTilesSelection::CesiumImpl::withinPolygons(
+  if (CartographicPolygon::rectangleIsWithinPolygons(
           rectangle,
           cartographicPolygons)) {
     loaded.moreDetailAvailable = false;
@@ -156,7 +154,7 @@ void rasterizePolygons(
 }
 } // namespace
 
-class CESIUM3DTILESSELECTION_API RasterizedPolygonsTileProvider final
+class CESIUMRASTEROVERLAYS_API RasterizedPolygonsTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
@@ -168,7 +166,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
@@ -246,7 +244,8 @@ RasterizedPolygonsOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
 
@@ -265,4 +264,4 @@ RasterizedPolygonsOverlay::createTileProvider(
               this->_invertSelection)));
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

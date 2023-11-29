@@ -5,9 +5,11 @@
 
 #include <CesiumUtility/IntrusivePointer.h>
 
-namespace Cesium3DTilesSelection {
-
+namespace CesiumRasterOverlays {
 class RasterizedPolygonsOverlay;
+}
+
+namespace Cesium3DTilesSelection {
 
 /**
  * @brief When provided to {@link TilesetOptions::excluders}, uses the polygons
@@ -24,7 +26,8 @@ public:
    * @param overlay The overlay definining the polygons.
    */
   RasterizedPolygonsTileExcluder(
-      const CesiumUtility::IntrusivePointer<const RasterizedPolygonsOverlay>&
+      const CesiumUtility::IntrusivePointer<
+          const CesiumRasterOverlays::RasterizedPolygonsOverlay>&
           pOverlay) noexcept;
 
   /**
@@ -40,10 +43,12 @@ public:
   /**
    * @brief Gets the overlay defining the polygons.
    */
-  const RasterizedPolygonsOverlay& getOverlay() const;
+  const CesiumRasterOverlays::RasterizedPolygonsOverlay& getOverlay() const;
 
 private:
-  CesiumUtility::IntrusivePointer<const RasterizedPolygonsOverlay> _pOverlay;
+  CesiumUtility::IntrusivePointer<
+      const CesiumRasterOverlays::RasterizedPolygonsOverlay>
+      _pOverlay;
 };
 
 } // namespace Cesium3DTilesSelection

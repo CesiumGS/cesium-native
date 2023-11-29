@@ -1,18 +1,14 @@
-#include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
-
-#include "Cesium3DTilesSelection/CreditSystem.h"
-#include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
+#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
@@ -25,27 +21,27 @@
 #include <utility>
 #include <vector>
 
+using namespace CesiumAsync;
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
+using namespace CesiumUtility;
+
 namespace {
 struct CoverageArea {
-  CesiumGeospatial::GlobeRectangle rectangle;
+  GlobeRectangle rectangle;
   uint32_t zoomMin;
   uint32_t zoomMax;
 };
 
 struct CreditAndCoverageAreas {
-  Cesium3DTilesSelection::Credit credit;
+  Credit credit;
   std::vector<CoverageArea> coverageAreas;
 };
 
 std::unordered_map<std::string, std::vector<std::byte>> sessionCache;
 } // namespace
 
-using namespace CesiumAsync;
-using namespace CesiumGeometry;
-using namespace CesiumGeospatial;
-using namespace CesiumUtility;
-
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 const std::string BingMapsStyle::AERIAL = "Aerial";
 const std::string BingMapsStyle::AERIAL_WITH_LABELS = "AerialWithLabels";
@@ -93,7 +89,7 @@ public:
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       Credit bingCredit,
       const std::vector<CreditAndCoverageAreas>& perTileCredits,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& baseUrl,
@@ -339,7 +335,8 @@ BingMapsRasterOverlay::createTileProvider(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     IntrusivePointer<const RasterOverlay> pOwner) const {
   std::string metadataUrl = CesiumUtility::Uri::resolve(
@@ -477,4 +474,4 @@ BingMapsRasterOverlay::createTileProvider(
           });
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

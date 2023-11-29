@@ -1,23 +1,22 @@
 #pragma once
 
-#include "CreditSystem.h"
-#include "IPrepareRendererResources.h"
+#include "IPrepareRasterOverlayRendererResources.h"
 #include "Library.h"
 #include "RasterOverlayTileProvider.h"
-#include "TileID.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumUtility/CreditSystem.h>
 
 #include <list>
 #include <memory>
 #include <optional>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
-class CESIUM3DTILESSELECTION_API QuadtreeRasterOverlayTileProvider
+class CESIUMRASTEROVERLAYS_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 
 public:
@@ -44,8 +43,8 @@ public:
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRendererResources>&
+      std::optional<CesiumUtility::Credit> credit,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
@@ -178,4 +177,4 @@ private:
 
   std::atomic<int64_t> _cachedBytes;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

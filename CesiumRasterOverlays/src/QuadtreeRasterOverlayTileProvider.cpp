@@ -1,9 +1,8 @@
-#include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
-
-#include "Cesium3DTilesSelection/RasterOverlay.h"
-
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGltfReader/ImageManipulation.h>
+#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/SpanHelper.h>
 
@@ -22,14 +21,15 @@ constexpr double pixelTolerance = 0.01;
 
 } // namespace
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     const IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -732,4 +732,4 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   return result;
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

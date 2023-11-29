@@ -1,12 +1,11 @@
-#include "Cesium3DTilesSelection/RasterOverlay.h"
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include <spdlog/fwd.h>
 
 using namespace CesiumAsync;
-using namespace Cesium3DTilesSelection;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace {

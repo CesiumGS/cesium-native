@@ -1,12 +1,12 @@
 #pragma once
 
-#include "CreditSystem.h"
 #include "Library.h"
 #include "RasterOverlayDetails.h"
 #include "TilesetMetadata.h"
 
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
 #include <variant>
@@ -131,28 +131,28 @@ public:
    *
    * @return The list of {@link Credit} of the content
    */
-  const std::vector<Credit>& getCredits() const noexcept;
+  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept;
 
   /**
    * @brief Get the list of {@link Credit} of the content
    *
    * @return The list of {@link Credit} of the content
    */
-  std::vector<Credit>& getCredits() noexcept;
+  std::vector<CesiumUtility::Credit>& getCredits() noexcept;
 
   /**
    * @brief Set the list of {@link Credit} for the content
    *
    * @param credits The list of {@link Credit} to be owned by the content
    */
-  void setCredits(std::vector<Credit>&& credits);
+  void setCredits(std::vector<CesiumUtility::Credit>&& credits);
 
   /**
    * @brief Set the list of {@link Credit} for the content
    *
    * @param credits The list of {@link Credit} to be owned by the content
    */
-  void setCredits(const std::vector<Credit>& credits);
+  void setCredits(const std::vector<CesiumUtility::Credit>& credits);
 
   /**
    * @brief Get the render resources created for the glTF model of the content
@@ -193,7 +193,7 @@ private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
   RasterOverlayDetails _rasterOverlayDetails;
-  std::vector<Credit> _credits;
+  std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;
 };
 

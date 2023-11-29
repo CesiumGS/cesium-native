@@ -1,24 +1,21 @@
-#include "Cesium3DTilesSelection/IonRasterOverlay.h"
-
-#include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
-#include "Cesium3DTilesSelection/RasterOverlayLoadFailureDetails.h"
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/TileMapServiceRasterOverlay.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
+#include <CesiumRasterOverlays/IonRasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
+#include <spdlog/fwd.h>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
@@ -42,7 +39,8 @@ IonRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
   IntrusivePointer<RasterOverlay> pOverlay = nullptr;
@@ -84,7 +82,8 @@ IonRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
   std::string ionUrl = this->_ionAssetEndpointUrl + "v1/assets/" +
@@ -231,4 +230,4 @@ IonRasterOverlay::createTileProvider(
             }
           });
 }
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

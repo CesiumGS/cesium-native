@@ -9,12 +9,9 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 
-#include <functional>
 #include <memory>
 
-namespace Cesium3DTilesSelection {
-
-class CreditSystem;
+namespace CesiumRasterOverlays {
 
 /**
  * @brief Options for Web Map Service (WMS) overlays.
@@ -70,7 +67,7 @@ struct WebMapServiceRasterOverlayOptions {
 /**
  * @brief A {@link RasterOverlay} accessing images from a Web Map Service (WMS) server.
  */
-class CESIUM3DTILESSELECTION_API WebMapServiceRasterOverlay final
+class CESIUMRASTEROVERLAYS_API WebMapServiceRasterOverlay final
     : public RasterOverlay {
 public:
   /**
@@ -94,8 +91,8 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
@@ -107,4 +104,4 @@ private:
   WebMapServiceRasterOverlayOptions _options;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

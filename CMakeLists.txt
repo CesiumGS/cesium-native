@@ -149,6 +149,7 @@ add_subdirectory(Cesium3DTiles)
 add_subdirectory(Cesium3DTilesReader)
 add_subdirectory(Cesium3DTilesWriter)
 add_subdirectory(Cesium3DTilesContent)
+add_subdirectory(CesiumRasterOverlays)
 add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
 

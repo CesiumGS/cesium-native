@@ -1,11 +1,10 @@
-#include "Cesium3DTilesSelection/DebugColorizeTilesRasterOverlay.h"
-
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-
 #include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/SpanHelper.h>
 
-using namespace Cesium3DTilesSelection;
+using namespace CesiumRasterOverlays;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumUtility;
@@ -18,7 +17,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger)
       : RasterOverlayTileProvider(
@@ -74,7 +73,8 @@ DebugColorizeTilesRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
   pOwner = pOwner ? pOwner : this;

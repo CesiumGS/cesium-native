@@ -9,9 +9,7 @@
 #include <functional>
 #include <memory>
 
-namespace Cesium3DTilesSelection {
-
-class CreditSystem;
+namespace CesiumRasterOverlays {
 
 /**
  * @brief Styles of Bing Maps overlays.
@@ -81,7 +79,7 @@ struct BingMapsStyle final {
  * @brief A {@link RasterOverlay} that uses Bing Maps as the source for the
  * imagery data.
  */
-class CESIUM3DTILESSELECTION_API BingMapsRasterOverlay final
+class CESIUMRASTEROVERLAYS_API BingMapsRasterOverlay final
     : public RasterOverlay {
 public:
   /**
@@ -116,8 +114,8 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
@@ -133,4 +131,4 @@ private:
   CesiumGeospatial::Ellipsoid _ellipsoid;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

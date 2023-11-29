@@ -2,14 +2,14 @@
 
 #include "RasterOverlay.h"
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 /**
  * @brief A raster overlay that gives each tile to which it is attached a random
  * color with 50% opacity. This is useful for debugging a tileset, to visualize
  * how it is divided into tiles.
  */
-class CESIUM3DTILESSELECTION_API DebugColorizeTilesRasterOverlay
+class CESIUMRASTEROVERLAYS_API DebugColorizeTilesRasterOverlay
     : public RasterOverlay {
 public:
   /**
@@ -25,12 +25,12 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
       const override;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays
