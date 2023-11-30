@@ -102,14 +102,18 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
     return;
   }
 
+  // Already loading or loaded, do nothing.
+  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
+    return;
+
+  // Don't let this tile be destroyed while it's loading.
+  tile.setState(RasterOverlayTile::LoadState::Loading);
+
   this->doLoad(tile, false);
 }
 
 CesiumAsync::Future<bool>
 RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
-    return this->_asyncSystem.createResolvedFuture<bool>(true);
-
   return this->doLoad(tile, true);
 }
 
@@ -303,15 +307,7 @@ static LoadResult createLoadResultFromLoadedImage(
 CesiumAsync::Future<bool> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
-  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
-    // Already loading or loaded, do nothing.
-    return this->_asyncSystem.createResolvedFuture<bool>(true);
-  }
-
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-
-  // Don't let this tile be destroyed while it's loading.
-  tile.setState(RasterOverlayTile::LoadState::Loading);
 
   this->beginTileLoad(isThrottledLoad);
 

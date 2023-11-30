@@ -1469,34 +1469,49 @@ void Tileset::_processWorkerThreadLoadQueue() {
   // -) go over TODOS
 
   std::vector<TileLoadWork> newRequestWork;
-  discoverLoadWork(this->_workerThreadLoadQueue, newRequestWork);
+  std::vector<TileLoadWork> newImmediateWork;
+  discoverLoadWork(
+      this->_workerThreadLoadQueue,
+      newRequestWork,
+      newImmediateWork);
 
   // Add all content requests to the dispatcher
   if (newRequestWork.size() > 0)
     addWorkToRequestDispatcher(newRequestWork);
 
   //
-  // We have a request input stream of processing work
+  // Define a queue of work to dispatch
   //
-  std::vector<TileLoadWork> workToDispatch;
+  // Add all immediate processing work. Ignore max tile loads.
+  // There is no url to process here
+  std::vector<TileLoadWork> workToDispatch = newImmediateWork;
 
+  // Calculate how much processing work we can do right now
   int32_t numberOfTilesLoading =
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numberOfRastersLoading =
       this->_pTilesetContentManager->getNumberOfRastersLoading();
-  int32_t maxTileLoads =
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
+  assert(numberOfTilesLoading >= 0);
+  assert(numberOfRastersLoading >= 0);
+  size_t totalLoads = static_cast<size_t>(numberOfTilesLoading) +
+                      static_cast<size_t>(numberOfRastersLoading);
+  size_t maxTileLoads =
+      static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
 
-  int32_t availableSlots =
-      maxTileLoads - numberOfTilesLoading - numberOfRastersLoading;
-  assert(availableSlots >= 0);
-  if (availableSlots == 0)
-    return;
+  // If there are slots available, add some completed request work
+  if (totalLoads < maxTileLoads) {
+    size_t availableSlots = maxTileLoads - totalLoads;
+    assert(availableSlots > 0);
 
-  // Add completed request work
-  _requestDispatcher.TakeCompletedWork(availableSlots, workToDispatch);
-  availableSlots -= (int32_t)workToDispatch.size();
-  assert(availableSlots >= 0);
+    std::vector<TileLoadWork> completedRequestWork;
+    _requestDispatcher.TakeCompletedWork(availableSlots, completedRequestWork);
+    assert(completedRequestWork.size() <= availableSlots);
+
+    workToDispatch.insert(
+        workToDispatch.begin(),
+        completedRequestWork.begin(),
+        completedRequestWork.end());
+  }
 
   // Dispatch it
   if (workToDispatch.size() > 0)
@@ -1632,7 +1647,8 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
 
 void Tileset::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
-    std::vector<TileLoadWork>& outRequests) {
+    std::vector<TileLoadWork>& outRequestWork,
+    std::vector<TileLoadWork>& outImmediateWork) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->_pTilesetContentManager->parseTileWork(
@@ -1670,8 +1686,10 @@ void Tileset::discoverLoadWork(
           loadRequest.group,
           loadRequest.priority + priorityBias};
 
-      assert(!work.requestUrl.empty());
-      outRequests.push_back(newWorkUnit);
+      if (work.requestUrl.empty())
+        outImmediateWork.push_back(newWorkUnit);
+      else
+        outRequestWork.push_back(newWorkUnit);
     }
 
     // Finalize the parent if necessary, otherwise it may never reach the

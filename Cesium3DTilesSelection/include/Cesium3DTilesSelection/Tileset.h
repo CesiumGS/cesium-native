@@ -577,7 +577,8 @@ private:
 
   void discoverLoadWork(
       std::vector<TileLoadRequest>& requests,
-      std::vector<TileLoadWork>& outRequests);
+      std::vector<TileLoadWork>& outRequestWork,
+      std::vector<TileLoadWork>& outImmediateWork);
 
   void addWorkToRequestDispatcher(std::vector<TileLoadWork>& workVector);
 
