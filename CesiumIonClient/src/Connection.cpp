@@ -372,6 +372,22 @@ Asset jsonToAsset(const rapidjson::Value& item) {
   return result;
 }
 
+std::optional<std::string> generateApiUrl(const std::string& ionUrl) {
+  UriUriA newUri;
+  if (uriParseSingleUriA(&newUri, ionUrl.c_str(), nullptr) != URI_SUCCESS) {
+    return std::optional<std::string>();
+  }
+
+  std::string hostName =
+      std::string(newUri.hostText.first, newUri.hostText.afterLast);
+  std::string scheme =
+      std::string(newUri.scheme.first, newUri.scheme.afterLast);
+
+  uriFreeUriMembersA(&newUri);
+
+  return std::make_optional<std::string>(scheme + "://api." + hostName + '/');
+}
+
 } // namespace
 
 CesiumAsync::Future<std::optional<std::string>>
@@ -397,26 +413,10 @@ CesiumIonClient::Connection::getApiUrl(
             }
           }
         }
-
-        UriUriA newUri;
-        if (uriParseSingleUriA(&newUri, ionUrl.c_str(), nullptr) !=
-            URI_SUCCESS) {
-          return std::optional<std::string>();
-        }
-
-        std::string hostName =
-            std::string(newUri.hostText.first, newUri.hostText.afterLast);
-        std::string scheme =
-            std::string(newUri.scheme.first, newUri.scheme.afterLast);
-
-        uriFreeUriMembersA(&newUri);
-
-        return std::make_optional<std::string>(
-            scheme + "://api." + hostName + '/');
+        return generateApiUrl(ionUrl);
       })
-      .catchImmediately([](std::exception&&) {
-        return std::optional<std::string>(std::nullopt);
-      });
+      .catchImmediately(
+          [ionUrl](std::exception&&) { return generateApiUrl(ionUrl); });
 }
 
 CesiumAsync::Future<Response<Assets>> Connection::assets() const {
