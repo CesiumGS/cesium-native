@@ -1108,10 +1108,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
       wasRenderedLastFrame && tile.isRenderable();
   const bool descendantsOverLimit = traversalDetails.notYetRenderableCount >
                                     this->_options.loadingDescendantLimit;
-  const bool thisTileNotDone = tile.getState() != TileLoadState::Done &&
-                               tile.getState() != TileLoadState::Failed;
 
-  if (thisTileNotDone && !wasReallyRenderedLastFrame && descendantsOverLimit &&
+  if (!wasReallyRenderedLastFrame && descendantsOverLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     // Remove all descendants from the load queues.
