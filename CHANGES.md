@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.30.0 - 2023-12-01
 
 ##### Breaking Changes :mega:
 
@@ -8,7 +8,7 @@
 - Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
 - Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, `RasterOverlayLoadFailure`, `RasterOverlayDetails`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
 - Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `CesiumRasterOverlays` library.
-- `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
+- `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of `std::string_view` instances. Previously it took a `CreditSystem` and created credits directly.
 - The `SubtreeAvailability` constructor and `loadSubtree` static method now take an `ImplicitTileSubdivisionScheme` enumeration parameter instead of a `powerOf2` parameter. They also now require a `levelsInSubtree` parameter, which is needed when switching from constant to bitstream availability. Lastly, the constructor now takes a `Subtree` parameter instead of a `std::vector<std::vector<std::byte>>` representing the buffers.
 - `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
 - Moved `ImageManipulation` from `CesiumGltfReader` to `CesiumGltfContent`.
