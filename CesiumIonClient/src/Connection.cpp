@@ -419,6 +419,111 @@ CesiumIonClient::Connection::getApiUrl(
           [ionUrl](std::exception&&) { return generateApiUrl(ionUrl); });
 }
 
+namespace {
+
+QuickAddRasterOverlay
+jsonToQuickAddRasterOverlay(const rapidjson::Value& json) {
+  QuickAddRasterOverlay result;
+
+  result.name = JsonHelpers::getStringOrDefault(json, "name", std::string());
+  result.assetId = JsonHelpers::getInt64OrDefault(json, "assetId", -1);
+  result.subscribed = JsonHelpers::getBoolOrDefault(json, "subscribed", false);
+
+  return result;
+}
+
+QuickAddAsset jsonToQuickAddAsset(const rapidjson::Value& json) {
+  QuickAddAsset result;
+
+  result.name = JsonHelpers::getStringOrDefault(json, "name", std::string());
+  result.objectName =
+      JsonHelpers::getStringOrDefault(json, "objectName", std::string());
+  result.description =
+      JsonHelpers::getStringOrDefault(json, "description", std::string());
+  result.assetId = JsonHelpers::getInt64OrDefault(json, "assetId", -1);
+  result.type = JsonHelpers::getStringOrDefault(json, "type", std::string());
+  result.subscribed = JsonHelpers::getBoolOrDefault(json, "subscribed", false);
+
+  auto overlaysIt = json.FindMember("rasterOverlays");
+  if (overlaysIt != json.MemberEnd() && overlaysIt->value.IsArray()) {
+    const rapidjson::Value& items = overlaysIt->value;
+    result.rasterOverlays.resize(items.Size());
+    std::transform(
+        items.Begin(),
+        items.End(),
+        result.rasterOverlays.begin(),
+        jsonToQuickAddRasterOverlay);
+  }
+
+  return result;
+}
+
+Defaults defaultsFromJson(const rapidjson::Document& json) {
+  Defaults defaults;
+
+  auto defaultAssetsIt = json.FindMember("defaultAssets");
+  if (defaultAssetsIt != json.MemberEnd() &&
+      defaultAssetsIt->value.IsObject()) {
+    defaults.defaultAssets.imagery =
+        JsonHelpers::getInt64OrDefault(defaultAssetsIt->value, "imagery", -1);
+    defaults.defaultAssets.terrain =
+        JsonHelpers::getInt64OrDefault(defaultAssetsIt->value, "terrain", -1);
+    defaults.defaultAssets.buildings =
+        JsonHelpers::getInt64OrDefault(defaultAssetsIt->value, "buildings", -1);
+  }
+
+  auto quickAddAssetsIt = json.FindMember("quickAddAssets");
+  if (quickAddAssetsIt != json.MemberEnd() &&
+      quickAddAssetsIt->value.IsArray()) {
+    const rapidjson::Value& items = quickAddAssetsIt->value;
+    defaults.quickAddAssets.resize(items.Size());
+    std::transform(
+        items.Begin(),
+        items.End(),
+        defaults.quickAddAssets.begin(),
+        jsonToQuickAddAsset);
+  }
+
+  return defaults;
+}
+
+} // namespace
+
+Future<Response<Defaults>> Connection::defaults() const {
+  return this->_pAssetAccessor
+      ->get(
+          this->_asyncSystem,
+          CesiumUtility::Uri::resolve(this->_apiUrl, "v1/defaults"),
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return createEmptyResponse<Defaults>();
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<Defaults>(pResponse);
+            }
+
+            rapidjson::Document d;
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Defaults>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<Defaults>(pResponse, "object");
+            }
+
+            return Response<Defaults>(
+                defaultsFromJson(d),
+                pResponse->statusCode(),
+                std::string(),
+                std::string());
+          });
+}
+
 CesiumAsync::Future<Response<Assets>> Connection::assets() const {
   return this->_pAssetAccessor
       ->get(
@@ -507,7 +612,7 @@ TokenList tokenListFromJson(const rapidjson::Value& json) {
   TokenList result;
 
   const auto itemsIt = json.FindMember("items");
-  if (itemsIt != json.MemberEnd() || !itemsIt->value.IsArray()) {
+  if (itemsIt != json.MemberEnd() && itemsIt->value.IsArray()) {
     const rapidjson::Value& items = itemsIt->value;
 
     for (auto it = items.Begin(); it != items.End(); ++it) {
