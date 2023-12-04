@@ -105,7 +105,7 @@ public:
    * This method will validate the EXT_structural_metadata format to ensure
    * {@link PropertyAttributePropertyView} retrieves the correct data. T must
    * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, uint32_t, float), a glm vecN composed of one of the scalar types,
+   * uint16_t, float), a glm vecN composed of one of the scalar types,
    * or a glm matN containing one of the scalar types.
    *
    * If T does not match the type specified by the class property, this returns
@@ -157,7 +157,7 @@ public:
    * This method will validate the EXT_structural_metadata format to ensure
    * {@link PropertyAttributePropertyView} retrieves the correct data. T must
    * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, uint32_t, float), a glm vecN composed of one of the scalar types,
+   * uint16_t, float), a glm vecN composed of one of the scalar types,
    * or a glm matN containing one of the scalar types.
    *
    * If the property is somehow invalid, an empty {@link PropertyAttributePropertyView}
@@ -292,7 +292,7 @@ public:
    * This method will validate the EXT_structural_metadata format to ensure
    * {@link PropertyAttributePropertyView} retrieves the correct data. T must be
    * a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, uint32_t, float), a glm vecN composed of one of the scalar types,
+   * uint16_t, float), a glm vecN composed of one of the scalar types,
    * or a PropertyArrayView containing one of the scalar types.
    *
    * If the property is invalid, an empty {@link PropertyAttributePropertyView} with an
@@ -412,14 +412,6 @@ private:
               propertyId,
               classProperty));
       break;
-    case PropertyComponentType::Uint32:
-      callback(
-          propertyId,
-          getPropertyViewImpl<uint32_t, Normalized>(
-              primitive,
-              propertyId,
-              classProperty));
-      break;
     case PropertyComponentType::Float32:
       callback(
           propertyId,
@@ -473,14 +465,6 @@ private:
       callback(
           propertyId,
           getPropertyViewImpl<glm::vec<N, uint16_t>, Normalized>(
-              primitive,
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Uint32:
-      callback(
-          propertyId,
-          getPropertyViewImpl<glm::vec<N, uint32_t>, Normalized>(
               primitive,
               propertyId,
               classProperty));
@@ -581,14 +565,6 @@ private:
       callback(
           propertyId,
           getPropertyViewImpl<glm::mat<N, N, uint16_t>, Normalized>(
-              primitive,
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Uint32:
-      callback(
-          propertyId,
-          getPropertyViewImpl<glm::mat<N, N, uint32_t>, Normalized>(
               primitive,
               propertyId,
               classProperty));

@@ -126,9 +126,12 @@ void decodeDataUrls(
 
     ImageReaderResult imageResult =
         reader.readImage(decoded.value().data, options.ktx2TranscodeTargets);
-    if (imageResult.image) {
-      image.cesium = std::move(imageResult.image.value());
+
+    if (!imageResult.image) {
+      continue;
     }
+
+    image.cesium = std::move(imageResult.image.value());
 
     if (options.clearDecodedDataUrls) {
       image.uri.reset();

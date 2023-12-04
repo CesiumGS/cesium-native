@@ -1,9 +1,8 @@
 #include "SimplePrepareRendererResource.h"
 #include "TilesetContentManager.h"
 
-#include <Cesium3DTilesContent/GltfUtilities.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
-#include <Cesium3DTilesSelection/DebugColorizeTilesRasterOverlay.h>
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -15,6 +14,7 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 
@@ -29,6 +29,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
+using namespace CesiumRasterOverlays;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;

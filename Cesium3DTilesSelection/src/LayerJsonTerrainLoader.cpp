@@ -1,11 +1,11 @@
 #include "LayerJsonTerrainLoader.h"
 
-#include <Cesium3DTilesContent/GltfUtilities.h>
 #include <Cesium3DTilesContent/QuantizedMeshLoader.h>
 #include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
-#include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 
@@ -17,6 +17,7 @@ using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace {
@@ -214,11 +215,13 @@ void generateRasterOverlayUVs(
         RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
             *pModel,
             tileTransform,
-            0,
             pParentRegion ? std::make_optional<GlobeRectangle>(
                                 pParentRegion->getRectangle())
                           : std::nullopt,
-            {projection});
+            {projection},
+            false,
+            "_CESIUMOVERLAY_",
+            0);
   }
 }
 

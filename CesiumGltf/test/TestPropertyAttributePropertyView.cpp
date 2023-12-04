@@ -73,9 +73,6 @@ const Accessor& addValuesToModel(Model& model, const std::vector<T>& values) {
   case PropertyComponentType::Uint16:
     accessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
     break;
-  case PropertyComponentType::Uint32:
-    accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
-    break;
   case PropertyComponentType::Float32:
     accessor.componentType = Accessor::ComponentType::FLOAT;
     break;
@@ -207,11 +204,6 @@ TEST_CASE("Check scalar PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-  SECTION("uint32_t") {
-    std::vector<uint32_t> data{16777216, 65545, 131604, 16777480};
-    checkAttributeValues(data);
-  }
-
   SECTION("float") {
     std::vector<float> data{12.3333f, -12.44555f, -5.6111f, 6.7421f};
     checkAttributeValues(data);
@@ -284,16 +276,6 @@ TEST_CASE("Check scalar PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("Uint32") {
-    std::vector<uint32_t> data{16777216, 65545, 131604, 16777480};
-    std::vector<std::optional<double>> expected{
-        normalize(data[0]),
-        normalize(data[1]),
-        normalize(data[2]),
-        normalize(data[3])};
-    checkNormalizedAttributeValues(data, expected);
-  }
-
   SECTION("Uint8 with offset / scale") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     const double offset = 1.0;
@@ -346,15 +328,6 @@ TEST_CASE("Check vecN PropertyAttributePropertyView") {
         glm::vec3(4.12f, -5.008f, 6.0f),
         glm::vec3(7.0f, 8.0f, 9.01f),
         glm::vec3(-0.28f, 5.0f, 1.2f)};
-    checkAttributeValues(data);
-  }
-
-  SECTION("glm::uvec4") {
-    std::vector<glm::uvec4> data{
-        glm::uvec4(0, 12, 324, 256),
-        glm::uvec4(9234, 12, 7, 1),
-        glm::uvec4(532, 2, 88, 16),
-        glm::uvec4(264, 256, 22, 101)};
     checkAttributeValues(data);
   }
 
@@ -445,20 +418,6 @@ TEST_CASE("Check vecN PropertyAttributePropertyView (normalized)") {
         glm::u8vec3(7, 8, 9),
         glm::u8vec3(0, 5, 2)};
     std::vector<std::optional<glm::dvec3>> expected{
-        normalize(data[0]),
-        normalize(data[1]),
-        normalize(data[2]),
-        normalize(data[3])};
-    checkNormalizedAttributeValues(data, expected);
-  }
-
-  SECTION("glm::uvec4") {
-    std::vector<glm::uvec4> data{
-        glm::uvec4(123, 20, 13, 0),
-        glm::uvec4(43, 5, 86, 11),
-        glm::uvec4(7345, 448, 3219, 83),
-        glm::uvec4(0, 775, 12, 27)};
-    std::vector<std::optional<glm::dvec4>> expected{
         normalize(data[0]),
         normalize(data[1]),
         normalize(data[2]),
