@@ -106,7 +106,7 @@ private:
   std::map<std::string, std::vector<TileLoadWork>> _inFlightWork;
   std::vector<TileLoadWork> _doneWork;
 
-  int _maxSimultaneousRequests = 28;
+  int _maxSimultaneousRequests = 20;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
