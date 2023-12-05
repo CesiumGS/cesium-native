@@ -87,8 +87,20 @@ struct QuickAddAsset {
   std::vector<QuickAddRasterOverlay> rasterOverlays{};
 };
 
+/**
+ * @brief The data returned by Cesium ion's `v1/defaults` service. It includes
+ * information about default imagery, terrain and building assets along with
+ * quick add assets that can be useful to use within other applications.
+ */
 struct Defaults {
+  /**
+   * @brief The default assets
+   */
   DefaultAssets defaultAssets{};
+
+  /**
+   * @brief The quick add assets
+   */
   std::vector<QuickAddAsset> quickAddAssets{};
 };
 
