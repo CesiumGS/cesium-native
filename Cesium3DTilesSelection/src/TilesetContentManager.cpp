@@ -504,6 +504,8 @@ postProcessContentInWorkerThread(
   CesiumGltfReader::GltfReaderOptions gltfOptions;
   gltfOptions.ktx2TranscodeTargets =
       tileLoadInfo.contentOptions.ktx2TranscodeTargets;
+  gltfOptions.applyTextureTransform =
+      tileLoadInfo.contentOptions.applyTextureTransform;
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
   auto pAssetAccessor = tileLoadInfo.pAssetAccessor;
