@@ -85,7 +85,8 @@ public:
 
   void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
 
-  size_t GetPendingCount();
+  size_t GetPendingRequestsCount();
+  size_t GetTotalPendingCount();
 
   void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
 
@@ -580,7 +581,7 @@ private:
       std::vector<TileLoadWork>& outRequestWork,
       std::vector<TileLoadWork>& outImmediateWork);
 
-  void addWorkToRequestDispatcher(std::vector<TileLoadWork>& workVector);
+  void addWorkToRequestDispatcher(const std::vector<TileLoadWork>& workVector, size_t maxSimultaneousRequests);
 
   void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 

@@ -419,7 +419,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       this->_pTilesetContentManager->getNumberOfRastersLoading();
   result.rastersLoaded =
       this->_pTilesetContentManager->getNumberOfRastersLoaded();
-  result.requestsPending = this->_requestDispatcher.GetPendingCount();
+  result.requestsPending = this->_requestDispatcher.GetTotalPendingCount();
 
   assertViewResults();
 
@@ -1474,8 +1474,11 @@ void Tileset::_processWorkerThreadLoadQueue() {
       newImmediateWork);
 
   // Add all content requests to the dispatcher
-  if (newRequestWork.size() > 0)
-    addWorkToRequestDispatcher(newRequestWork);
+  size_t maxTileLoads =
+    static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
+  if (newRequestWork.size() > 0) {
+    addWorkToRequestDispatcher(newRequestWork, maxTileLoads);
+}
 
   //
   // Define a queue of work to dispatch
@@ -1493,8 +1496,6 @@ void Tileset::_processWorkerThreadLoadQueue() {
   assert(numberOfRastersLoading >= 0);
   size_t totalLoads = static_cast<size_t>(numberOfTilesLoading) +
                       static_cast<size_t>(numberOfRastersLoading);
-  size_t maxTileLoads =
-      static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
 
   // If there are slots available, add some completed request work
   if (totalLoads < maxTileLoads) {
@@ -1708,10 +1709,31 @@ void Tileset::discoverLoadWork(
   }
 }
 
-void Tileset::addWorkToRequestDispatcher(
-    std::vector<TileLoadWork>& workVector) {
+void Tileset::addWorkToRequestDispatcher(const std::vector<TileLoadWork>& workVector, size_t maxSimultaneousRequests) {
 
-  for (TileLoadWork& work : workVector) {
+  // Determine how much incoming work we will accept
+  // Don't exceed our the max count passed in
+  size_t pendingRequestCount = this->_requestDispatcher.GetPendingRequestsCount();
+  assert(pendingRequestCount <= maxSimultaneousRequests);
+
+  size_t slotsOpen = maxSimultaneousRequests - pendingRequestCount;
+  if (slotsOpen == 0)
+    return;
+
+  std::vector<TileLoadWork> workToSubmit;
+  if (slotsOpen >= workVector.size ()) {
+    // We can take all incoming work
+    workToSubmit = workVector;
+  }
+  else {
+    // We can only take part of the incoming work
+    // Just submit the highest priority
+    workToSubmit = workVector;
+    std::sort(workToSubmit.begin(), workToSubmit.end());
+    workToSubmit.resize(slotsOpen);
+  }
+
+  for (TileLoadWork& work : workToSubmit) {
     assert(!work.requestUrl.empty());
 
     // Mark this tile as loading now so it doesn't get queued next frame
@@ -1737,7 +1759,7 @@ void Tileset::addWorkToRequestDispatcher(
       workVector.size());
 
   _requestDispatcher.QueueRequestWork(
-      workVector,
+    workToSubmit,
       this->_pTilesetContentManager->getRequestHeaders());
 
   _requestDispatcher.WakeIfNeeded();
@@ -1900,7 +1922,12 @@ void RequestDispatcher::stageRequestWork(
   }
 }
 
-size_t RequestDispatcher::GetPendingCount() {
+size_t RequestDispatcher::GetPendingRequestsCount() {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  return _queuedWork.size() + _inFlightWork.size();
+}
+
+size_t RequestDispatcher::GetTotalPendingCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
   return _queuedWork.size() + _inFlightWork.size() + _doneWork.size();
 }
