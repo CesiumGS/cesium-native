@@ -45,6 +45,12 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * the ideal target gpu-compressed pixel format to transcode to.
    */
   CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+
+  /**
+   * @brief Whether or not the native side will transform texture coordinates
+   * when textures have the KHR_texture_transform extension.
+   */
+  bool applyTextureTransform = true;
 };
 
 /**
