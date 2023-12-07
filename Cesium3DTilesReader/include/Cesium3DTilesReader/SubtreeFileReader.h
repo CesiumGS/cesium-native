@@ -40,6 +40,12 @@ public:
   /**
    * @brief Asynchronously loads a subtree from a URL.
    *
+   * Please note that the `SubtreeFileReader` instance must remain valid until
+   * the returned future resolves or rejects. Destroying it earlier will result
+   * in undefined behavior. One easy way to achieve this is to construct the
+   * reader with `std::make_shared` and capture the `std::shared_ptr` in the
+   * continuation lambda.
+   *
    * @param asyncSystem The AsyncSystem used to do asynchronous work.
    * @param pAssetAccessor The accessor used to retrieve the URL and any other
    * required resources.

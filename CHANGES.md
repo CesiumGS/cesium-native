@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a crash in `SubtreeAvailability::loadSubtree`.
+
 ### v0.30.0 - 2023-12-01
 
 ##### Breaking Changes :mega:
