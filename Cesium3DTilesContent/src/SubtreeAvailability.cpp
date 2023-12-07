@@ -146,10 +146,10 @@ SubtreeAvailability::loadSubtree(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& subtreeUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  SubtreeFileReader reader;
-  return reader.load(asyncSystem, pAssetAccessor, subtreeUrl, requestHeaders)
+  auto pReader = std::make_shared<SubtreeFileReader>();
+  return pReader->load(asyncSystem, pAssetAccessor, subtreeUrl, requestHeaders)
       .thenInMainThread(
-          [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree](
+          [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree, pReader](
               ReadJsonResult<Subtree>&& subtree)
               -> std::optional<SubtreeAvailability> {
             if (!subtree.value) {

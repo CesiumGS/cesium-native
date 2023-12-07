@@ -4,6 +4,8 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/ThreadTaskProcessor.h>
+#include <CesiumNativeTests/waitForFuture.h>
 
 #include <catch2/catch.hpp>
 #include <libmorton/morton.h>
@@ -284,7 +286,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
   // mock async system
-  auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
+  auto pMockTaskProcessor = std::make_shared<ThreadTaskProcessor>();
   CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
   auto subtreeFuture = SubtreeAvailability::loadSubtree(
@@ -296,8 +298,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       "test",
       {});
 
-  asyncSystem.dispatchMainThreadTasks();
-  return subtreeFuture.wait();
+  return waitForFuture(asyncSystem, std::move(subtreeFuture));
 }
 } // namespace
 
