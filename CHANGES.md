@@ -6,10 +6,6 @@
 
 - Add `defaults` method to `CesiumIonClient::Connection`.
 
-##### Additions :tada:
-
-- Add `defaults` method to `CesiumIonClient::Connection`.
-
 ##### Fixes :wrench:
 
 - Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2022 v17.8.
