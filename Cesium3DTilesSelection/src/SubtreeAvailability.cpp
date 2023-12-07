@@ -32,28 +32,13 @@ struct SubtreeBufferView {
 };
 
 CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const CesiumAsync::AsyncSystem& asyncSystem,
     size_t bufferIdx,
-    std::string&& subtreeUrl,
-    size_t bufferLength,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
-      .thenInWorkerThread(
-          [bufferIdx, bufferLength](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            if (!pResponse) {
-              return RequestedSubtreeBuffer{bufferIdx, {}};
-            }
-
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              return RequestedSubtreeBuffer{bufferIdx, {}};
-            }
-
-            auto data = pResponse->data();
+    const gsl::span<const std::byte>& requestData,
+    size_t bufferLength) {
+  return asyncSystem.runInWorkerThread(
+          [bufferIdx, bufferLength, requestData = requestData]() {
+            auto data = requestData;
             if (data.size() < bufferLength) {
               return RequestedSubtreeBuffer{bufferIdx, {}};
             }
@@ -210,10 +195,8 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
 CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
-    const std::string& baseUrl,
+    const gsl::span<const std::byte>& requestData,
     rapidjson::Document&& subtreeJson,
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
@@ -250,15 +233,11 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
                   std::nullopt);
         }
 
-        std::string bufferUrl =
-            CesiumUtility::Uri::resolve(baseUrl, uriIt->value.GetString());
         requestBuffers.emplace_back(requestBuffer(
-            pAssetAccessor,
             asyncSystem,
             i,
-            std::move(bufferUrl),
-            byteLength,
-            requestHeaders));
+            requestData,
+            byteLength));
       } else if (
           !internalBuffer.empty() && internalBuffer.size() >= byteLength) {
         resolvedBuffers[i] = std::move(internalBuffer);
@@ -296,12 +275,9 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
 CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders) {
-  const auto* pResponse = pCompletedRequest->response();
-  gsl::span<const std::byte> data = pResponse->data();
+    const gsl::span<const std::byte>& requestData) {
+  const gsl::span<const std::byte>& data = requestData;
 
   rapidjson::Document subtreeJson;
   subtreeJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -319,10 +295,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
   return parseJsonSubtree(
       powerOf2,
       std::move(asyncSystem),
-      std::move(pAssetAccessor),
       std::move(pLogger),
-      std::move(requestHeaders),
-      pCompletedRequest->url(),
+      requestData,
       std::move(subtreeJson),
       {});
 }
@@ -331,12 +305,9 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>>
 parseBinarySubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders) {
-  const auto* pResponse = pCompletedRequest->response();
-  gsl::span<const std::byte> data = pResponse->data();
+    const gsl::span<const std::byte>& requestData) {
+  const gsl::span<const std::byte>& data = requestData;
 
   size_t headerLength = sizeof(SubtreeHeader);
   if (data.size() < headerLength) {
@@ -397,10 +368,8 @@ parseBinarySubtreeRequest(
   return parseJsonSubtree(
       powerOf2,
       std::move(asyncSystem),
-      std::move(pAssetAccessor),
       std::move(pLogger),
-      std::move(requestHeaders),
-      pCompletedRequest->url(),
+      requestData,
       std::move(subtreeJson),
       std::move(internalBuffer));
 }
@@ -408,12 +377,9 @@ parseBinarySubtreeRequest(
 CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<CesiumAsync::IAssetAccessor>&& pAssetAccessor,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders) {
-  const auto* pResponse = pCompletedRequest->response();
-  gsl::span<const std::byte> data = pResponse->data();
+    const gsl::span<const std::byte>& responseData) {
+  const gsl::span<const std::byte>& data = responseData;
 
   // check if this is binary subtree
   bool isBinarySubtree = true;
@@ -430,18 +396,14 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
     return parseBinarySubtreeRequest(
         powerOf2,
         std::move(asyncSystem),
-        std::move(pAssetAccessor),
         std::move(pLogger),
-        std::move(pCompletedRequest),
-        std::move(requestHeaders));
+        std::move(responseData));
   } else {
     return parseJsonSubtreeRequest(
         powerOf2,
         std::move(asyncSystem),
-        std::move(pAssetAccessor),
         std::move(pLogger),
-        std::move(pCompletedRequest),
-        std::move(requestHeaders));
+        std::move(responseData));
   }
 }
 } // namespace
@@ -500,39 +462,17 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>>
 SubtreeAvailability::loadSubtree(
     uint32_t powerOf2,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& subtreeUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
-      .thenInWorkerThread([powerOf2,
+    const gsl::span<const std::byte>& responseData) {
+  return asyncSystem.runInWorkerThread([powerOf2,
                            asyncSystem = asyncSystem,
-                           pAssetAccessor = pAssetAccessor,
                            pLogger = pLogger,
-                           requestHeaders = requestHeaders](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                  pCompletedRequest) mutable {
-        const auto* pResponse = pCompletedRequest->response();
-        if (!pResponse) {
-          return asyncSystem
-              .createResolvedFuture<std::optional<SubtreeAvailability>>(
-                  std::nullopt);
-        }
-
-        uint16_t statusCode = pResponse->statusCode();
-        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          return asyncSystem
-              .createResolvedFuture<std::optional<SubtreeAvailability>>(
-                  std::nullopt);
-        }
-
+                           responseData = responseData]() mutable {
         return parseSubtreeRequest(
             powerOf2,
             std::move(asyncSystem),
-            std::move(pAssetAccessor),
             std::move(pLogger),
-            std::move(pCompletedRequest),
-            std::move(requestHeaders));
+            std::move(responseData));
       });
 }
 

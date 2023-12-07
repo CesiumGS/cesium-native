@@ -23,6 +23,14 @@
 namespace Cesium3DTilesSelection {
 class Tile;
 
+// Response data
+struct ResponseData {
+  uint16_t statusCode;
+  std::vector<std::byte> bytes;
+};
+typedef std::map<std::string, ResponseData> ResponseDataMap;
+
+
 /**
  * @brief Store the parameters that are needed to load a tile
  */
@@ -42,9 +50,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const Tile& tile,
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const ResponseDataMap& responseDataByUrl);
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -62,20 +69,11 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   const CesiumAsync::AsyncSystem& asyncSystem;
 
   /**
-   * @brief The asset accessor to make requests for the tile content over the
-   * wire.
-   */
-  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor;
-
-  /**
    * @brief The logger that receives details of loading errors and warnings.
    */
   const std::shared_ptr<spdlog::logger>& pLogger;
 
-  /**
-   * @brief The request headers that will be attached to the request.
-   */
-  const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+  const ResponseDataMap responseDataByUrl;
 };
 
 /**

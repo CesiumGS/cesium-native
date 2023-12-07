@@ -667,24 +667,21 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     CesiumGeometry::Axis upAxis,
     TileRefine tileRefine,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
+    const std::string& tileUrl,
+    const gsl::span<const std::byte>& responseBytes,
     ExternalContentInitializer&& externalContentInitializer) {
   // create external tileset
-  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
-  const auto& responseData = pResponse->data();
-  const auto& tileUrl = pCompletedRequest->url();
-
   rapidjson::Document tilesetJson;
   tilesetJson.Parse(
-      reinterpret_cast<const char*>(responseData.data()),
-      responseData.size());
+      reinterpret_cast<const char*>(responseBytes.data()),
+    responseBytes.size());
   if (tilesetJson.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tilesetJson.GetParseError(),
         tilesetJson.GetErrorOffset());
-    return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+    return TileLoadResult::createFailedResult(NULL);
   }
 
   // Save the parsed external tileset into custom data.
@@ -710,7 +707,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     logTileLoadResult(pLogger, tileUrl, errors);
 
     // since the json cannot be parsed, we don't know the content of this tile
-    return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+    return TileLoadResult::createFailedResult(NULL);
   }
 
   externalContentInitializer.pExternalTilesetLoaders =
@@ -724,7 +721,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      std::move(pCompletedRequest),
+      NULL,
       std::move(externalContentInitializer),
       TileLoadResultState::Success};
 }
@@ -850,47 +847,27 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
 
   const auto& asyncSystem = loadInput.asyncSystem;
-  const auto& pAssetAccessor = loadInput.pAssetAccessor;
   const auto& pLogger = loadInput.pLogger;
-  const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
-  std::string resolvedUrl =
-      CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
-  return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
-      .thenInWorkerThread(
+  const auto& responseDataByUrl = loadInput.responseDataByUrl;
+
+  assert(responseDataByUrl.size() == 1);
+  const std::string& tileUrl = responseDataByUrl.begin()->first;
+  const ResponseData& responseData = responseDataByUrl.begin()->second;
+  const gsl::span<const std::byte>& responseBytes = responseData.bytes;
+
+  return asyncSystem.runInWorkerThread(
           [pLogger,
            contentOptions,
+           tileUrl,
+           responseBytes,
            tileTransform,
            tileRefine,
            upAxis = _upAxis,
-           externalContentInitializer = std::move(externalContentInitializer)](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                  pCompletedRequest) mutable {
-            auto pResponse = pCompletedRequest->response();
-            const std::string& tileUrl = pCompletedRequest->url();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  tileUrl);
-              return TileLoadResult::createFailedResult(
-                  std::move(pCompletedRequest));
-            }
-
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Received status code {} for tile content {}",
-                  statusCode,
-                  tileUrl);
-              return TileLoadResult::createFailedResult(
-                  std::move(pCompletedRequest));
-            }
+           externalContentInitializer = std::move(externalContentInitializer)]() mutable {
 
             // find gltf converter
-            const auto& responseData = pResponse->data();
-            auto converter = GltfConverters::getConverterByMagic(responseData);
+            auto converter = GltfConverters::getConverterByMagic(responseBytes);
             if (!converter) {
               converter = GltfConverters::getConverterByFileExtension(tileUrl);
             }
@@ -900,13 +877,12 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               CesiumGltfReader::GltfReaderOptions gltfOptions;
               gltfOptions.ktx2TranscodeTargets =
                   contentOptions.ktx2TranscodeTargets;
-              GltfConverterResult result = converter(responseData, gltfOptions);
+              GltfConverterResult result = converter(responseBytes, gltfOptions);
 
               // Report any errors if there are any
               logTileLoadResult(pLogger, tileUrl, result.errors);
               if (result.errors) {
-                return TileLoadResult::createFailedResult(
-                    std::move(pCompletedRequest));
+                return TileLoadResult::createFailedResult(NULL);
               }
 
               return TileLoadResult{
@@ -915,7 +891,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   std::nullopt,
                   std::nullopt,
                   std::nullopt,
-                  std::move(pCompletedRequest),
+                  NULL,
                   {},
                   TileLoadResultState::Success};
             } else {
@@ -925,7 +901,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   upAxis,
                   tileRefine,
                   pLogger,
-                  std::move(pCompletedRequest),
+                  tileUrl,
+                  responseBytes,
                   std::move(externalContentInitializer));
             }
           });

@@ -1775,7 +1775,7 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
       this->_pTilesetContentManager->notifyTileStartLoading(pTile);
 
       this->_pTilesetContentManager
-          ->doTileContentWork(*pTile, work.projections, _options)
+          ->doTileContentWork(*pTile, work.responseDataByUrl, work.projections, _options)
           .thenInMainThread([_pTile = pTile, _this = this](
                                 TileLoadResultAndRenderResources&& pair) {
             _this->_pTilesetContentManager->setTileContent(
@@ -1830,7 +1830,8 @@ void RequestDispatcher::QueueRequestWork(
 }
 
 void RequestDispatcher::onRequestFinished(
-    gsl::span<const std::byte>* pResponseData,
+    uint16_t responseStatusCode,
+    const gsl::span<const std::byte>* pResponseData,
     const TileLoadWork& request) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
@@ -1844,8 +1845,13 @@ void RequestDispatcher::onRequestFinished(
   // Put it done work
   std::vector<TileLoadWork>& doneWorkVec = foundIt->second;
   for (TileLoadWork& doneWork : doneWorkVec) {
-    if (pResponseData)
-      doneWork.responseData = *pResponseData;
+    if (pResponseData) {
+      ResponseData responseData;
+      responseData.bytes.resize (pResponseData->size ());
+      std::copy(pResponseData->begin(), pResponseData->end(), responseData.bytes.begin());
+      responseData.statusCode = responseStatusCode;
+      doneWork.responseDataByUrl.emplace(doneWork.requestUrl, responseData);
+    }
     // Put in done requests
     _doneWork.push_back(doneWork);
   }
@@ -1871,10 +1877,10 @@ void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
 
         if (pResponse) {
           gsl::span<const std::byte> data = pResponse->data();
-          _this->onRequestFinished(&data, _request);
+          _this->onRequestFinished(pResponse->statusCode(), &data, _request);
         } else {
           // TODO, how will the consumer of the done request know the error?
-          _this->onRequestFinished(NULL, _request);
+          _this->onRequestFinished(NULL, 0, _request);
         }
 
         return pResponse != NULL;

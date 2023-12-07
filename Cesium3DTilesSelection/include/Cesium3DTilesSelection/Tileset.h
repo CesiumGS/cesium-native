@@ -50,12 +50,14 @@ enum class TileLoadPriorityGroup {
 
 struct TileLoadWork {
   TileWorkRef workRef;
-  std::string requestUrl;
+
+  // Pre-request data
+  std::string requestUrl; // TODO, this should be an array of requests
   std::vector<CesiumGeospatial::Projection> projections;
   TileLoadPriorityGroup group;
   double priority;
 
-  gsl::span<const std::byte> responseData;
+  ResponseDataMap responseDataByUrl;
 
   bool operator<(const TileLoadWork& rhs) const noexcept {
     if (this->group == rhs.group)
@@ -95,7 +97,8 @@ private:
   void
   stageRequestWork(size_t dispatchCount, std::vector<TileLoadWork>& stagedWork);
   void onRequestFinished(
-      gsl::span<const std::byte>* pResponseData,
+      uint16_t responseStatusCode,
+      const gsl::span<const std::byte>* pResponseData,
       const TileLoadWork& request);
 
   // Thread safe members

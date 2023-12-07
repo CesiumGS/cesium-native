@@ -162,43 +162,14 @@ bool isTileContentAvailable(
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const gsl::span<const std::byte>& responseData,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
-  return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([pLogger, ktx2TranscodeTargets](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                  pCompletedRequest) mutable {
-        const CesiumAsync::IAssetResponse* pResponse =
-            pCompletedRequest->response();
-        const std::string& tileUrl = pCompletedRequest->url();
-        if (!pResponse) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Did not receive a valid response for tile content {}",
-              tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
-        }
-
-        uint16_t statusCode = pResponse->statusCode();
-        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Received status code {} for tile content {}",
-              statusCode,
-              tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
-        }
-
+  return asyncSystem.runInWorkerThread([pLogger, ktx2TranscodeTargets, tileUrl = tileUrl, responseData = responseData]() mutable {
         // find gltf converter
-        const auto& responseData = pResponse->data();
         auto converter = GltfConverters::getConverterByMagic(responseData);
         if (!converter) {
-          converter = GltfConverters::getConverterByFileExtension(
-              pCompletedRequest->url());
+          converter = GltfConverters::getConverterByFileExtension(tileUrl);
         }
 
         if (converter) {
@@ -210,8 +181,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           // Report any errors if there are any
           logTileLoadResult(pLogger, tileUrl, result.errors);
           if (result.errors || !result.model) {
-            return TileLoadResult::createFailedResult(
-                std::move(pCompletedRequest));
+            return TileLoadResult::createFailedResult(NULL);
           }
 
           return TileLoadResult{
@@ -220,13 +190,13 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               std::nullopt,
               std::nullopt,
               std::nullopt,
-              std::move(pCompletedRequest),
+              NULL,
               {},
               TileLoadResultState::Success};
         }
 
         // content type is not supported
-        return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+        return TileLoadResult::createFailedResult(NULL);
       });
 }
 } // namespace
@@ -235,10 +205,9 @@ CesiumAsync::Future<TileLoadResult>
 ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& tile = loadInput.tile;
   const auto& asyncSystem = loadInput.asyncSystem;
-  const auto& pAssetAccessor = loadInput.pAssetAccessor;
   const auto& pLogger = loadInput.pLogger;
-  const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+  const auto& responseDataByUrl = loadInput.responseDataByUrl;
 
   // Ensure CesiumGeometry::QuadtreeTileID only has 32-bit components. There are
   // solutions below if the ID has more than 32-bit components.
@@ -297,13 +266,15 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     // subtree is not loaded, so load it now.
     std::string subtreeUrl =
         resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
+
+    ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(subtreeUrl);
+    assert(foundIt != responseDataByUrl.end());
+
     return SubtreeAvailability::loadSubtree(
                2,
                asyncSystem,
-               pAssetAccessor,
                pLogger,
-               subtreeUrl,
-               requestHeaders)
+               foundIt->second.bytes)
         .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
                                                 subtreeAvailability) mutable {
           if (subtreeAvailability) {
@@ -334,12 +305,15 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   std::string tileUrl =
       resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
+
+  ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(tileUrl);
+  assert(foundIt != responseDataByUrl.end());
+
   return requestTileContent(
       pLogger,
       asyncSystem,
-      pAssetAccessor,
       tileUrl,
-      requestHeaders,
+      foundIt->second.bytes,
       contentOptions.ktx2TranscodeTargets);
 }
 

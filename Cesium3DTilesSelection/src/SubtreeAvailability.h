@@ -41,10 +41,8 @@ public:
   static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
       uint32_t powerOf2,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::string& subtreeUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const gsl::span<const std::byte>& responseData);
 
 private:
   bool isAvailable(

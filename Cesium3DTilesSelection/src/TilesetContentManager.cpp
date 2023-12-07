@@ -923,24 +923,25 @@ void TilesetContentManager::parseTileWork(
   }
 
   std::string requestUrl;
-  pLoader->getRequestWork(pTile, requestUrl);
+  if (pLoader->getRequestWork(pTile, requestUrl)) {
+    // map raster overlay to tile
+    std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
+        *pTile,
+        depthIndex,
+        this->_overlayCollection,
+        maximumScreenSpaceError,
+        outWork);
 
-  // map raster overlay to tile
-  std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
-      *pTile,
-      depthIndex,
-      this->_overlayCollection,
-      maximumScreenSpaceError,
-      outWork);
-
-  ParsedTileWork newWork = {pTile, depthIndex, requestUrl, projections};
-  outWork.push_back(newWork);
+    ParsedTileWork newWork = {pTile, depthIndex, requestUrl, projections};
+    outWork.push_back(newWork);
+  }
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
 TilesetContentManager::doTileContentWork(
     Tile& tile,
-    std::vector<CesiumGeospatial::Projection>& projections,
+    const ResponseDataMap& responsesByUrl,
+    const std::vector<CesiumGeospatial::Projection>& projections,
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::doTileContentWork");
 
@@ -963,9 +964,8 @@ TilesetContentManager::doTileContentWork(
       tile,
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
-      this->_externals.pAssetAccessor,
       this->_externals.pLogger,
-      this->_requestHeaders};
+      responsesByUrl };
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
