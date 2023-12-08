@@ -17,7 +17,7 @@ TEST_CASE("Test MetadataConversions for boolean") {
     REQUIRE(MetadataConversions<bool, int8_t>::convert(0) == false);
   }
 
-  SECTION("converts from string") {
+  SECTION("converts from string view") {
     std::string_view stringView("true");
     REQUIRE(
         MetadataConversions<bool, std::string_view>::convert(stringView) ==
@@ -49,7 +49,16 @@ TEST_CASE("Test MetadataConversions for boolean") {
         false);
   }
 
-  SECTION("returns std::nullopt for incompatible strings") {
+  SECTION("converts from string") {
+    REQUIRE(MetadataConversions<bool, std::string>::convert("true") == true);
+    REQUIRE(MetadataConversions<bool, std::string>::convert("yes") == true);
+    REQUIRE(MetadataConversions<bool, std::string>::convert("1") == true);
+    REQUIRE(MetadataConversions<bool, std::string>::convert("false") == false);
+    REQUIRE(MetadataConversions<bool, std::string>::convert("no") == false);
+    REQUIRE(MetadataConversions<bool, std::string>::convert("0") == false);
+  }
+
+  SECTION("returns std::nullopt for incompatible string views") {
     std::string_view stringView("11");
     // invalid number
     REQUIRE(!MetadataConversions<bool, std::string_view>::convert(stringView));
@@ -57,6 +66,15 @@ TEST_CASE("Test MetadataConversions for boolean") {
     stringView = std::string_view("this is true");
     // invalid word
     REQUIRE(!MetadataConversions<bool, std::string_view>::convert(stringView));
+  }
+
+  SECTION("returns std::nullopt for incompatible strings") {
+    // invalid number
+    REQUIRE(!MetadataConversions<bool, std::string_view>::convert("11"));
+
+    // invalid word
+    REQUIRE(
+        !MetadataConversions<bool, std::string_view>::convert("this is true"));
   }
 
   SECTION("returns std::nullopt for incompatible types") {
@@ -90,7 +108,7 @@ TEST_CASE("Test MetadataConversions for integer") {
     REQUIRE(MetadataConversions<int32_t, bool>::convert(false) == 0);
   }
 
-  SECTION("converts from string") {
+  SECTION("converts from string view") {
     // integer string
     std::string_view value("-123");
     REQUIRE(
@@ -99,6 +117,17 @@ TEST_CASE("Test MetadataConversions for integer") {
     value = std::string_view("123.456");
     REQUIRE(
         MetadataConversions<int32_t, std::string_view>::convert(value) == 123);
+  }
+
+  SECTION("converts from string") {
+    // integer string
+    REQUIRE(
+        MetadataConversions<int32_t, std::string_view>::convert("-123") ==
+        -123);
+    // double string
+    REQUIRE(
+        MetadataConversions<int32_t, std::string_view>::convert("123.456") ==
+        123);
   }
 
   SECTION("returns std::nullopt for out-of-range numbers") {
@@ -115,19 +144,31 @@ TEST_CASE("Test MetadataConversions for integer") {
         std::numeric_limits<double>::max()));
   }
 
-  SECTION("returns std::nullopt for invalid strings") {
+  SECTION("returns std::nullopt for invalid string views") {
     // out-of-range number
-    REQUIRE(!MetadataConversions<int8_t, std::string_view>::convert(
-        std::string_view("-255")));
+    REQUIRE(!MetadataConversions<uint64_t, std::string_view>::convert(
+        std::string_view("-1")));
     // mixed number and non-number input
     REQUIRE(!MetadataConversions<int8_t, std::string_view>::convert(
         std::string_view("10 hello")));
     // non-number input
-    REQUIRE(!MetadataConversions<int8_t, std::string_view>::convert(
+    REQUIRE(!MetadataConversions<uint8_t, std::string_view>::convert(
         std::string_view("not a number")));
     // empty input
     REQUIRE(!MetadataConversions<int8_t, std::string_view>::convert(
         std::string_view()));
+  }
+
+  SECTION("returns std::nullopt for invalid strings") {
+    // out-of-range number
+    REQUIRE(!MetadataConversions<uint64_t, std::string>::convert("-1"));
+    // mixed number and non-number input
+    REQUIRE(!MetadataConversions<int8_t, std::string>::convert("10 hello"));
+    // non-number input
+    REQUIRE(
+        !MetadataConversions<uint8_t, std::string>::convert("not a number"));
+    // empty input
+    REQUIRE(!MetadataConversions<int8_t, std::string>::convert(""));
   }
 
   SECTION("returns std::nullopt for incompatible types") {
@@ -168,7 +209,7 @@ TEST_CASE("Test MetadataConversions for float") {
     REQUIRE(MetadataConversions<float, bool>::convert(false) == 0.0f);
   }
 
-  SECTION("converts from string") {
+  SECTION("converts from string view") {
     REQUIRE(
         MetadataConversions<float, std::string_view>::convert(
             std::string_view("123")) == static_cast<float>(123));
@@ -177,7 +218,16 @@ TEST_CASE("Test MetadataConversions for float") {
             std::string_view("123.456")) == static_cast<float>(123.456));
   }
 
-  SECTION("returns std::nullopt for invalid strings") {
+  SECTION("converts from string") {
+    REQUIRE(
+        MetadataConversions<float, std::string>::convert("123") ==
+        static_cast<float>(123));
+    REQUIRE(
+        MetadataConversions<float, std::string>::convert("123.456") ==
+        static_cast<float>(123.456));
+  }
+
+  SECTION("returns std::nullopt for invalid string views") {
     // out-of-range number
     REQUIRE(!MetadataConversions<float, std::string_view>::convert(
         std::string_view(std::to_string(std::numeric_limits<double>::max()))));
@@ -190,6 +240,18 @@ TEST_CASE("Test MetadataConversions for float") {
     // empty input
     REQUIRE(!MetadataConversions<float, std::string_view>::convert(
         std::string_view()));
+  }
+
+  SECTION("returns std::nullopt for invalid strings") {
+    // out-of-range number
+    REQUIRE(!MetadataConversions<float, std::string>::convert(
+        std::to_string(std::numeric_limits<double>::max())));
+    // mixed number and non-number input
+    REQUIRE(!MetadataConversions<float, std::string>::convert("10.00f hello"));
+    // non-number input
+    REQUIRE(!MetadataConversions<float, std::string>::convert("not a number"));
+    // empty input
+    REQUIRE(!MetadataConversions<float, std::string>::convert(""));
   }
 
   SECTION("returns std::nullopt for incompatible types") {

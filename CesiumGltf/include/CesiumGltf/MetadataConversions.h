@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 
 namespace CesiumGltf {
 /**
@@ -196,17 +197,19 @@ struct MetadataConversions<
       return std::nullopt;
     }
 
+    errno = 0;
     char* pLastUsed;
     int64_t parsedValue = std::strtoll(from.c_str(), &pLastUsed, 10);
-    if (pLastUsed == from.c_str() + from.size()) {
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as an integer of this type.
       return CesiumUtility::losslessNarrow<TTo, int64_t>(parsedValue);
     }
 
+    errno = 0;
     // Failed to parse as an integer. Maybe we can parse as a double and
     // truncate it?
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (pLastUsed == from.c_str() + from.size()) {
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as a double.
       // Convert it to an integer if we can.
       double truncated = glm::trunc(parsedDouble);
@@ -218,6 +221,7 @@ struct MetadataConversions<
       }
     }
 
+    errno = 0;
     return std::nullopt;
   }
 };
@@ -248,17 +252,22 @@ struct MetadataConversions<
       return std::nullopt;
     }
 
+    errno = 0;
     char* pLastUsed;
     uint64_t parsedValue = std::strtoull(from.c_str(), &pLastUsed, 10);
-    if (pLastUsed == from.c_str() + from.size()) {
+    if (errno == ERANGE) {
+      return std::nullopt;
+    }
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as an integer of this type.
       return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
     }
 
+    errno = 0;
     // Failed to parse as an integer. Maybe we can parse as a double and
     // truncate it?
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (pLastUsed == from.c_str() + from.size()) {
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as a double.
       // Convert it to an integer if we can.
       double truncated = glm::trunc(parsedDouble);
@@ -270,6 +279,7 @@ struct MetadataConversions<
       }
     }
 
+    errno = 0;
     return std::nullopt;
   }
 };
