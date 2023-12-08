@@ -380,6 +380,35 @@ template <> struct MetadataConversions<float, double> {
 };
 
 /**
+ * @brief Converts from a std::string to a float.
+ */
+template <> struct MetadataConversions<float, std::string> {
+  /**
+   * @brief Converts a std::string to a float. This assumes that the entire
+   * std::string represents the number, not just a part of it.
+   *
+   * This returns std::nullopt if no number is parsed from the string.
+   *
+   * @param from The std::string to parse from.
+   */
+  static std::optional<float> convert(const std::string& from) {
+    if (from.size() == 0) {
+      // Return early. Otherwise, empty strings will be parsed as 0, which is
+      // misleading.
+      return std::nullopt;
+    }
+
+    char* pLastUsed;
+    float parsedValue = std::strtof(from.c_str(), &pLastUsed);
+    if (pLastUsed == from.c_str() + from.size() && !std::isinf(parsedValue)) {
+      // Successfully parsed the entire string as a float.
+      return parsedValue;
+    }
+    return std::nullopt;
+  }
+};
+
+/**
  * @brief Converts from a std::string_view to a float.
  */
 template <> struct MetadataConversions<float, std::string_view> {
@@ -402,15 +431,8 @@ template <> struct MetadataConversions<float, std::string_view> {
     // (which _is_ guaranteed to be null terminated) before parsing.
     // * except std::from_chars, but compiler/library support for the
     //   floating-point version of that method is spotty at best.
-    std::string temp(from);
-
-    char* pLastUsed;
-    float parsedValue = std::strtof(temp.c_str(), &pLastUsed);
-    if (pLastUsed == temp.c_str() + temp.size() && !std::isinf(parsedValue)) {
-      // Successfully parsed the entire string as a float.
-      return parsedValue;
-    }
-    return std::nullopt;
+    return MetadataConversions<float, std::string>::convert(
+        std::string(from.data(), from.size()));
   }
 };
 #pragma endregion
@@ -463,6 +485,35 @@ template <> struct MetadataConversions<double, float> {
 };
 
 /**
+ * @brief Converts from std::string to a double.
+ */
+template <> struct MetadataConversions<double, std::string> {
+  /**
+   * Converts a std::string to a double. This assumes that the entire
+   * std::string represents the number, not just a part of it.
+   *
+   * This returns std::nullopt if no number is parsed from the string.
+   *
+   * @param from The std::string to parse from.
+   */
+  static std::optional<double> convert(const std::string& from) {
+    if (from.size() == 0) {
+      // Return early. Otherwise, empty strings will be parsed as 0, which is
+      // misleading.
+      return std::nullopt;
+    }
+
+    char* pLastUsed;
+    double parsedValue = std::strtod(from.c_str(), &pLastUsed);
+    if (pLastUsed == from.c_str() + from.size() && !std::isinf(parsedValue)) {
+      // Successfully parsed the entire string as a double.
+      return parsedValue;
+    }
+    return std::nullopt;
+  }
+};
+
+/**
  * @brief Converts from std::string_view to a double.
  */
 template <> struct MetadataConversions<double, std::string_view> {
@@ -480,20 +531,13 @@ template <> struct MetadataConversions<double, std::string_view> {
       // misleading.
       return std::nullopt;
     }
+
     // Amazingly, C++ has no* string parsing functions that work with strings
     // that might not be null-terminated. So we have to copy to a std::string
     // (which _is_ guaranteed to be null terminated) before parsing.
     // * except std::from_chars, but compiler/library support for the
     //   floating-point version of that method is spotty at best.
-    std::string temp(from);
-
-    char* pLastUsed;
-    double parsedValue = std::strtod(temp.c_str(), &pLastUsed);
-    if (pLastUsed == temp.c_str() + temp.size() && !std::isinf(parsedValue)) {
-      // Successfully parsed the entire string as a double.
-      return parsedValue;
-    }
-    return std::nullopt;
+    return MetadataConversions<double, std::string>::convert(std::string(from));
   }
 };
 #pragma endregion
