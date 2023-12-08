@@ -95,6 +95,26 @@ public:
   }
 };
 
+/**
+ * @brief Converts from std::string to a bool.
+ */
+template <> struct MetadataConversions<bool, std::string> {
+public:
+  /**
+   * @brief Converts the contents of a std::string to a boolean.
+   *
+   * "0", "false", and "no" (case-insensitive) are converted to false, while
+   * "1", "true", and "yes" are converted to true. All other strings will return
+   * std::nullopt.
+   *
+   * @param from The std::string to convert from.
+   */
+  static std::optional<bool> convert(const std::string& from) {
+    return MetadataConversions<bool, std::string_view>::convert(
+        std::string_view(from.data(), from.size()));
+  }
+};
+
 #pragma endregion
 
 #pragma region Conversions to integer
@@ -152,48 +172,41 @@ struct MetadataConversions<
 };
 
 /**
- * @brief Converts from std::string_view to a signed integer.
+ * @brief Converts from std::string to a signed integer.
  */
 template <typename TTo>
 struct MetadataConversions<
     TTo,
-    std::string_view,
+    std::string,
     std::enable_if_t<
         CesiumGltf::IsMetadataInteger<TTo>::value && std::is_signed_v<TTo>>> {
   /**
-   * @brief Converts the contents of a std::string_view to a signed integer.
-   * This assumes that the entire std::string_view represents the number, not
+   * @brief Converts the contents of a std::string to a signed integer.
+   * This assumes that the entire std::string represents the number, not
    * just a part of it.
    *
    * This returns std::nullopt if no number is parsed from the string.
    *
-   * @param from The std::string_view to parse from.
+   * @param from The std::string to parse from.
    */
-  static std::optional<TTo> convert(const std::string_view& from) {
+  static std::optional<TTo> convert(const std::string& from) {
     if (from.size() == 0) {
       // Return early. Otherwise, empty strings will be parsed as 0, which is
       // misleading.
       return std::nullopt;
     }
 
-    // Amazingly, C++ has no* string parsing functions that work with strings
-    // that might not be null-terminated. So we have to copy to a std::string
-    // (which _is_ guaranteed to be null terminated) before parsing.
-    // * except std::from_chars, but compiler/library support for the
-    //   floating-point version of that method is spotty at best.
-    std::string temp(from);
-
     char* pLastUsed;
-    int64_t parsedValue = std::strtoll(temp.c_str(), &pLastUsed, 10);
-    if (pLastUsed == temp.c_str() + temp.size()) {
+    int64_t parsedValue = std::strtoll(from.c_str(), &pLastUsed, 10);
+    if (pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as an integer of this type.
       return CesiumUtility::losslessNarrow<TTo, int64_t>(parsedValue);
     }
 
     // Failed to parse as an integer. Maybe we can parse as a double and
     // truncate it?
-    double parsedDouble = std::strtod(temp.c_str(), &pLastUsed);
-    if (pLastUsed == temp.c_str() + temp.size()) {
+    double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
+    if (pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as a double.
       // Convert it to an integer if we can.
       double truncated = glm::trunc(parsedDouble);
@@ -210,23 +223,73 @@ struct MetadataConversions<
 };
 
 /**
- * @brief Converts from std::string_view to an unsigned integer.
+ * @brief Converts from std::string to an unsigned integer.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    std::string,
+    std::enable_if_t<
+        CesiumGltf::IsMetadataInteger<TTo>::value && !std::is_signed_v<TTo>>> {
+  /**
+   * @brief Converts the contents of a std::string to an signed integer.
+   * This assumes that the entire std::string represents the number, not
+   * just a part of it.
+   *
+   * This returns std::nullopt if no number is parsed from the string.
+   *
+   * @param from The std::string to parse from.
+   * @param defaultValue The default value to be returned if conversion fails.
+   */
+  static std::optional<TTo> convert(const std::string& from) {
+    if (from.size() == 0) {
+      // Return early. Otherwise, empty strings will be parsed as 0, which is
+      // misleading.
+      return std::nullopt;
+    }
+
+    char* pLastUsed;
+    uint64_t parsedValue = std::strtoull(from.c_str(), &pLastUsed, 10);
+    if (pLastUsed == from.c_str() + from.size()) {
+      // Successfully parsed the entire string as an integer of this type.
+      return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
+    }
+
+    // Failed to parse as an integer. Maybe we can parse as a double and
+    // truncate it?
+    double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
+    if (pLastUsed == from.c_str() + from.size()) {
+      // Successfully parsed the entire string as a double.
+      // Convert it to an integer if we can.
+      double truncated = glm::trunc(parsedDouble);
+
+      uint64_t asInteger = static_cast<uint64_t>(truncated);
+      double roundTrip = static_cast<double>(asInteger);
+      if (roundTrip == truncated) {
+        return CesiumUtility::losslessNarrow<TTo, uint64_t>(asInteger);
+      }
+    }
+
+    return std::nullopt;
+  }
+};
+
+/**
+ * @brief Converts from std::string_view to an integer.
  */
 template <typename TTo>
 struct MetadataConversions<
     TTo,
     std::string_view,
-    std::enable_if_t<
-        CesiumGltf::IsMetadataInteger<TTo>::value && !std::is_signed_v<TTo>>> {
+    std::enable_if_t<CesiumGltf::IsMetadataInteger<TTo>::value>> {
   /**
-   * @brief Converts the contents of a std::string_view to an signed integer.
+   * @brief Converts the contents of a std::string_view to an integer.
    * This assumes that the entire std::string_view represents the number, not
    * just a part of it.
    *
    * This returns std::nullopt if no number is parsed from the string.
    *
    * @param from The std::string_view to parse from.
-   * @param defaultValue The default value to be returned if conversion fails.
    */
   static std::optional<TTo> convert(const std::string_view& from) {
     if (from.size() == 0) {
@@ -240,31 +303,7 @@ struct MetadataConversions<
     // (which _is_ guaranteed to be null terminated) before parsing.
     // * except std::from_chars, but compiler/library support for the
     //   floating-point version of that method is spotty at best.
-    std::string temp(from);
-
-    char* pLastUsed;
-    uint64_t parsedValue = std::strtoull(temp.c_str(), &pLastUsed, 10);
-    if (pLastUsed == temp.c_str() + temp.size()) {
-      // Successfully parsed the entire string as an integer of this type.
-      return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
-    }
-
-    // Failed to parse as an integer. Maybe we can parse as a double and
-    // truncate it?
-    double parsedDouble = std::strtod(temp.c_str(), &pLastUsed);
-    if (pLastUsed == temp.c_str() + temp.size()) {
-      // Successfully parsed the entire string as a double.
-      // Convert it to an integer if we can.
-      double truncated = glm::trunc(parsedDouble);
-
-      uint64_t asInteger = static_cast<uint64_t>(truncated);
-      double roundTrip = static_cast<double>(asInteger);
-      if (roundTrip == truncated) {
-        return CesiumUtility::losslessNarrow<TTo, uint64_t>(asInteger);
-      }
-    }
-
-    return std::nullopt;
+    return MetadataConversions<TTo, std::string>::convert(std::string(from));
   }
 };
 
