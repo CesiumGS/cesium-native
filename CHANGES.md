@@ -4,6 +4,7 @@
 
 ##### Fixes :wrench:
 
+- Fixed a crash in `SubtreeAvailability::loadSubtree`.
 - Fixed a bug where the `getApiUrl` method of `CesiumIonClient::Connection` would not return the default API URL if the attempt to access `config.json` failed in a more serious way, such as because of an invalid hostname.
 
 ### v0.30.0 - 2023-12-01
