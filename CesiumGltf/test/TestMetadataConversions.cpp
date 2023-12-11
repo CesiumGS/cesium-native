@@ -144,9 +144,31 @@ TEST_CASE("Test MetadataConversions for integer") {
         std::numeric_limits<double>::max()));
   }
 
+  SECTION("returns std::nullopt for invalid strings") {
+    // out-of-range number
+    REQUIRE(!MetadataConversions<uint8_t, std::string>::convert("-1"));
+    // mixed number and non-number input
+    REQUIRE(!MetadataConversions<int8_t, std::string>::convert("10 hello"));
+    // non-number input
+    REQUIRE(
+        !MetadataConversions<uint8_t, std::string>::convert("not a number"));
+    // empty input
+    REQUIRE(!MetadataConversions<int8_t, std::string>::convert(""));
+
+    // extra tests for proper string parsing
+    REQUIRE(!MetadataConversions<uint64_t, std::string>::convert("-1"));
+    REQUIRE(!MetadataConversions<uint64_t, std::string>::convert(
+        "184467440737095515000"));
+
+    REQUIRE(!MetadataConversions<int64_t, std::string>::convert(
+        "-111111111111111111111111111111111"));
+    REQUIRE(!MetadataConversions<int64_t, std::string>::convert(
+        "111111111111111111111111111111111"));
+  }
+
   SECTION("returns std::nullopt for invalid string views") {
     // out-of-range number
-    REQUIRE(!MetadataConversions<uint64_t, std::string_view>::convert(
+    REQUIRE(!MetadataConversions<uint8_t, std::string_view>::convert(
         std::string_view("-1")));
     // mixed number and non-number input
     REQUIRE(!MetadataConversions<int8_t, std::string_view>::convert(
@@ -157,18 +179,6 @@ TEST_CASE("Test MetadataConversions for integer") {
     // empty input
     REQUIRE(!MetadataConversions<int8_t, std::string_view>::convert(
         std::string_view()));
-  }
-
-  SECTION("returns std::nullopt for invalid strings") {
-    // out-of-range number
-    REQUIRE(!MetadataConversions<uint64_t, std::string>::convert("-1"));
-    // mixed number and non-number input
-    REQUIRE(!MetadataConversions<int8_t, std::string>::convert("10 hello"));
-    // non-number input
-    REQUIRE(
-        !MetadataConversions<uint8_t, std::string>::convert("not a number"));
-    // empty input
-    REQUIRE(!MetadataConversions<int8_t, std::string>::convert(""));
   }
 
   SECTION("returns std::nullopt for incompatible types") {
