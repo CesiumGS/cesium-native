@@ -409,7 +409,8 @@ CesiumIonClient::Connection::getApiUrl(
           if (parseJsonObject(pResponse, d) && d.IsObject()) {
             const auto itr = d.FindMember("apiHostname");
             if (itr != d.MemberEnd() && itr->value.IsString()) {
-              return std::make_optional<std::string>(itr->value.GetString());
+              return std::make_optional<std::string>(
+                  std::string("https://") + itr->value.GetString() + "/");
             }
           }
         }
