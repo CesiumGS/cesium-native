@@ -636,40 +636,45 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const AsyncSystem& asyncSystem,
     const std::string& requestUrl,
     const uint16_t responseStatusCode,
-    const gsl::span<const std::byte>& responseData,
+    const std::vector<std::byte>& responseData,
     const QuadtreeTileID& tileID,
     const BoundingVolume& boundingVolume,
     bool enableWaterMask) {
-  return asyncSystem.runInWorkerThread(
-          [asyncSystem, pLogger, requestUrl, responseStatusCode, responseData, tileID, boundingVolume, enableWaterMask]() {
-            if (responseData.empty()) {
-              QuantizedMeshLoadResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Did not receive a valid response for tile content {}",
-                requestUrl));
-              result.pRequest = NULL;
-              return result;
-            }
+  return asyncSystem.runInWorkerThread([asyncSystem,
+                                        pLogger,
+                                        requestUrl,
+                                        responseStatusCode,
+                                        responseData,
+                                        tileID,
+                                        boundingVolume,
+                                        enableWaterMask]() {
+    if (responseData.empty()) {
+      QuantizedMeshLoadResult result;
+      result.errors.emplaceError(fmt::format(
+          "Did not receive a valid response for tile content {}",
+          requestUrl));
+      result.pRequest = NULL;
+      return result;
+    }
 
-            if (responseStatusCode != 0 &&
-                (responseStatusCode < 200 ||
-                  responseStatusCode >= 300)) {
-              QuantizedMeshLoadResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Receive status code {} for tile content {}",
-                  responseStatusCode,
-                requestUrl));
-              result.pRequest = NULL;
-              return result;
-            }
+    if (responseStatusCode != 0 &&
+        (responseStatusCode < 200 || responseStatusCode >= 300)) {
+      QuantizedMeshLoadResult result;
+      result.errors.emplaceError(fmt::format(
+          "Receive status code {} for tile content {}",
+          responseStatusCode,
+          requestUrl));
+      result.pRequest = NULL;
+      return result;
+    }
 
-            return QuantizedMeshLoader::load(
-                tileID,
-                boundingVolume,
-              requestUrl,
-              responseData,
-                enableWaterMask);
-          });
+    return QuantizedMeshLoader::load(
+        tileID,
+        boundingVolume,
+        requestUrl,
+        responseData,
+        enableWaterMask);
+  });
 }
 
 Future<int> loadTileAvailability(
@@ -679,22 +684,25 @@ Future<int> loadTileAvailability(
     LayerJsonTerrainLoader::Layer& layer,
     const std::string& requestUrl,
     const uint16_t responseStatusCode,
-    const gsl::span<const std::byte>& responseData) {
-  return asyncSystem.runInWorkerThread([pLogger, tileID, requestUrl, responseStatusCode, responseData]() {
-        if (!responseData.empty()) {
-          uint16_t statusCode = responseStatusCode;
+    const std::vector<std::byte>& responseData) {
+  return asyncSystem
+      .runInWorkerThread(
+          [pLogger, tileID, requestUrl, responseStatusCode, responseData]() {
+            if (!responseData.empty()) {
+              uint16_t statusCode = responseStatusCode;
 
-          if (!(statusCode != 0 && (statusCode < 200 || statusCode >= 300))) {
-            return QuantizedMeshLoader::loadMetadata(responseData, tileID);
-          }
-        }
+              if (!(statusCode != 0 &&
+                    (statusCode < 200 || statusCode >= 300))) {
+                return QuantizedMeshLoader::loadMetadata(responseData, tileID);
+              }
+            }
 
-        SPDLOG_LOGGER_ERROR(
-            pLogger,
-            "Failed to load availability data from {}",
-          requestUrl);
-        return QuantizedMeshMetadataResult();
-      })
+            SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "Failed to load availability data from {}",
+                requestUrl);
+            return QuantizedMeshMetadataResult();
+          })
       .thenInMainThread([&layer,
                          tileID](QuantizedMeshMetadataResult&& metadata) {
         addRectangleAvailabilityToLayer(layer, tileID, metadata.availability);
@@ -763,6 +771,11 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::string url = resolveTileUrl(*pQuadtreeTileID, *it);
         ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(url);
         assert(foundIt != responseDataByUrl.end());
+
+        // TODO, put availability request logic in the discover work phases
+        // Also, don't do the loadTileContent part until all the requests are
+        // complete
+        // TODO, Copy or xfer ownership of bytres, std::move? could be large
 
         availabilityRequests.emplace_back(loadTileAvailability(
             pLogger,

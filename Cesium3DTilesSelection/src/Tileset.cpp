@@ -1467,25 +1467,12 @@ void Tileset::_processWorkerThreadLoadQueue() {
   // -) go over TODOS
 
   std::vector<TileLoadWork> newRequestWork;
-  std::vector<TileLoadWork> newImmediateWork;
-  discoverLoadWork(
-      this->_workerThreadLoadQueue,
-      newRequestWork,
-      newImmediateWork);
+  discoverLoadWork(this->_workerThreadLoadQueue, newRequestWork);
 
   // Add all content requests to the dispatcher
   size_t maxTileLoads =
-    static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
-  if (newRequestWork.size() > 0) {
-    addWorkToRequestDispatcher(newRequestWork, maxTileLoads);
-}
-
-  //
-  // Define a queue of work to dispatch
-  //
-  // Add all immediate processing work. Ignore max tile loads.
-  // There is no url to process here
-  std::vector<TileLoadWork> workToDispatch = newImmediateWork;
+      static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
+  addWorkToRequestDispatcher(newRequestWork, maxTileLoads);
 
   // Calculate how much processing work we can do right now
   int32_t numberOfTilesLoading =
@@ -1506,15 +1493,8 @@ void Tileset::_processWorkerThreadLoadQueue() {
     _requestDispatcher.TakeCompletedWork(availableSlots, completedRequestWork);
     assert(completedRequestWork.size() <= availableSlots);
 
-    workToDispatch.insert(
-        workToDispatch.begin(),
-        completedRequestWork.begin(),
-        completedRequestWork.end());
+    dispatchProcessingWork(completedRequestWork);
   }
-
-  // Dispatch it
-  if (workToDispatch.size() > 0)
-    dispatchProcessingWork(workToDispatch);
 }
 
 void Tileset::_processMainThreadLoadQueue() {
@@ -1646,8 +1626,7 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
 
 void Tileset::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
-    std::vector<TileLoadWork>& outRequestWork,
-    std::vector<TileLoadWork>& outImmediateWork) {
+    std::vector<TileLoadWork>& outRequestWork) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->_pTilesetContentManager->parseTileWork(
@@ -1685,10 +1664,7 @@ void Tileset::discoverLoadWork(
           loadRequest.group,
           loadRequest.priority + priorityBias};
 
-      if (work.requestUrl.empty())
-        outImmediateWork.push_back(newWorkUnit);
-      else
-        outRequestWork.push_back(newWorkUnit);
+      outRequestWork.push_back(newWorkUnit);
     }
 
     // Finalize the parent if necessary, otherwise it may never reach the
@@ -1709,34 +1685,68 @@ void Tileset::discoverLoadWork(
   }
 }
 
-void Tileset::addWorkToRequestDispatcher(const std::vector<TileLoadWork>& workVector, size_t maxSimultaneousRequests) {
+void Tileset::addWorkToRequestDispatcher(
+    std::vector<TileLoadWork>& requestWork,
+    size_t maxSimultaneousRequests) {
+  if (requestWork.empty())
+    return;
 
-  // Determine how much incoming work we will accept
-  // Don't exceed our the max count passed in
-  size_t pendingRequestCount = this->_requestDispatcher.GetPendingRequestsCount();
+  // Split work into those that have a url, and those that don't
+  // Requests without urls will pass through to the done queue
+  std::vector<TileLoadWork> urlWork;
+  std::vector<TileLoadWork> noUrlWork;
+  for (TileLoadWork& work : requestWork) {
+    if (work.requestUrl.empty())
+      noUrlWork.push_back(work);
+    else
+      urlWork.push_back(work);
+  }
+
+  // We're always going to process no-url work. Mark it as loading
+  markWorkTilesAsLoading(noUrlWork);
+
+  // Figure out how much url work we will accept
+  size_t pendingRequestCount =
+      this->_requestDispatcher.GetPendingRequestsCount();
   assert(pendingRequestCount <= maxSimultaneousRequests);
 
   size_t slotsOpen = maxSimultaneousRequests - pendingRequestCount;
-  if (slotsOpen == 0)
-    return;
+  if (slotsOpen == 0) {
+    // No request slots open, we can at least insert our no url work
+    _requestDispatcher.PassThroughWork(noUrlWork);
+  } else {
+    std::vector<TileLoadWork> workToSubmit;
+    if (slotsOpen >= urlWork.size()) {
+      // We can take all incoming work
+      workToSubmit = urlWork;
+    } else {
+      // We can only take part of the incoming work
+      // Just submit the highest priority
+      workToSubmit = urlWork;
+      std::sort(workToSubmit.begin(), workToSubmit.end());
+      workToSubmit.resize(slotsOpen);
+    }
 
-  std::vector<TileLoadWork> workToSubmit;
-  if (slotsOpen >= workVector.size ()) {
-    // We can take all incoming work
-    workToSubmit = workVector;
+    markWorkTilesAsLoading(workToSubmit);
+
+    SPDLOG_LOGGER_INFO(
+        this->_externals.pLogger,
+        "Sending work to dispatcher: {} entries",
+        workToSubmit.size());
+
+    // TODO, assert tile is not already loading? or already post-processing?
+
+    _requestDispatcher.QueueRequestWork(
+        workToSubmit,
+        noUrlWork,
+        this->_pTilesetContentManager->getRequestHeaders());
+
+    _requestDispatcher.WakeIfNeeded();
   }
-  else {
-    // We can only take part of the incoming work
-    // Just submit the highest priority
-    workToSubmit = workVector;
-    std::sort(workToSubmit.begin(), workToSubmit.end());
-    workToSubmit.resize(slotsOpen);
-  }
+}
 
-  for (TileLoadWork& work : workToSubmit) {
-    assert(!work.requestUrl.empty());
-
-    // Mark this tile as loading now so it doesn't get queued next frame
+void Tileset::markWorkTilesAsLoading(std::vector<TileLoadWork>& workVector) {
+  for (TileLoadWork& work : workVector) {
     if (std::holds_alternative<Tile*>(work.workRef)) {
       Tile* pTile = std::get<Tile*>(work.workRef);
       assert(pTile);
@@ -1752,17 +1762,6 @@ void Tileset::addWorkToRequestDispatcher(const std::vector<TileLoadWork>& workVe
       pLoading->setState(RasterOverlayTile::LoadState::Loading);
     }
   }
-
-  SPDLOG_LOGGER_INFO(
-      this->_externals.pLogger,
-      "Sending work to dispatcher: {} entries",
-      workVector.size());
-
-  _requestDispatcher.QueueRequestWork(
-    workToSubmit,
-      this->_pTilesetContentManager->getRequestHeaders());
-
-  _requestDispatcher.WakeIfNeeded();
 }
 
 void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
@@ -1775,7 +1774,11 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
       this->_pTilesetContentManager->notifyTileStartLoading(pTile);
 
       this->_pTilesetContentManager
-          ->doTileContentWork(*pTile, work.responseDataByUrl, work.projections, _options)
+          ->doTileContentWork(
+              *pTile,
+              work.responseDataByUrl,
+              work.projections,
+              _options)
           .thenInMainThread([_pTile = pTile, _this = this](
                                 TileLoadResultAndRenderResources&& pair) {
             _this->_pTilesetContentManager->setTileContent(
@@ -1820,13 +1823,28 @@ RequestDispatcher::~RequestDispatcher() noexcept {
 }
 
 void RequestDispatcher::QueueRequestWork(
-    std::vector<TileLoadWork>& work,
-    std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  // TODO, assert tile is not already loading? or already post-processing?
+    const std::vector<TileLoadWork>& work,
+    const std::vector<TileLoadWork>& passThroughWork,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+  if (work.empty() && passThroughWork.empty())
+    return;
+
   std::lock_guard<std::mutex> lock(_requestsLock);
   _queuedWork.insert(_queuedWork.end(), work.begin(), work.end());
 
+  _doneWork.insert(
+      _doneWork.end(),
+      passThroughWork.begin(),
+      passThroughWork.end());
+
   _requestHeaders = requestHeaders;
+}
+
+void RequestDispatcher::PassThroughWork(const std::vector<TileLoadWork>& work) {
+  if (work.empty())
+    return;
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  _doneWork.insert(_doneWork.end(), work.begin(), work.end());
 }
 
 void RequestDispatcher::onRequestFinished(
@@ -1838,25 +1856,33 @@ void RequestDispatcher::onRequestFinished(
   if (_exitSignaled)
     return;
 
+  // Find this request
   std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
   foundIt = _inFlightWork.find(request.requestUrl);
   assert(foundIt != _inFlightWork.end());
 
-  // Put it done work
+  // Copy the results to done work
   std::vector<TileLoadWork>& doneWorkVec = foundIt->second;
   for (TileLoadWork& doneWork : doneWorkVec) {
     if (pResponseData) {
-      ResponseData responseData;
-      responseData.bytes.resize (pResponseData->size ());
-      std::copy(pResponseData->begin(), pResponseData->end(), responseData.bytes.begin());
+      // Add new entry
+      assert(
+          doneWork.responseDataByUrl.find(doneWork.requestUrl) ==
+          doneWork.responseDataByUrl.end());
+      ResponseData& responseData =
+          doneWork.responseDataByUrl[doneWork.requestUrl];
+
+      // Copy our results
+      responseData.bytes.resize(pResponseData->size());
+      std::copy(
+          pResponseData->begin(),
+          pResponseData->end(),
+          responseData.bytes.begin());
       responseData.statusCode = responseStatusCode;
-      doneWork.responseDataByUrl.emplace(doneWork.requestUrl, responseData);
     }
     // Put in done requests
-    _doneWork.push_back(doneWork);
+    _doneWork.push_back(std::move(doneWork));
   }
-
-  //SPDLOG_LOGGER_INFO(_pLogger, "Received network request: {}", request.requestUrl);
 
   // Remove it
   _inFlightWork.erase(foundIt);
@@ -1956,16 +1982,20 @@ void RequestDispatcher::TakeCompletedWork(
   if (count == 0)
     return;
 
-  // Populate our output
   size_t numberToTake = std::min(count, maxCount);
-  out = std::vector<TileLoadWork>(
-      _doneWork.begin(),
-      _doneWork.begin() + numberToTake);
+
+  // If not taking everything, sort so more important work goes first
+  if (numberToTake < count)
+    std::sort(_doneWork.begin(), _doneWork.end());
+
+  // Move work to output
+  for (auto workIt = _doneWork.begin();
+       workIt != _doneWork.begin() + numberToTake;
+       ++workIt)
+    out.push_back(std::move(*workIt));
 
   // Remove these entries from the source
-  _doneWork = std::vector<TileLoadWork>(
-      _doneWork.begin() + numberToTake,
-      _doneWork.end());
+  _doneWork.erase(_doneWork.begin(), _doneWork.begin() + numberToTake);
 }
 
 void RequestDispatcher::WakeIfNeeded() {

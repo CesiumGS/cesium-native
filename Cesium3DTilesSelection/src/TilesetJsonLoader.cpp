@@ -668,13 +668,13 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     TileRefine tileRefine,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tileUrl,
-    const gsl::span<const std::byte>& responseBytes,
+    const std::vector<std::byte>& responseBytes,
     ExternalContentInitializer&& externalContentInitializer) {
   // create external tileset
   rapidjson::Document tilesetJson;
   tilesetJson.Parse(
       reinterpret_cast<const char*>(responseBytes.data()),
-    responseBytes.size());
+      responseBytes.size());
   if (tilesetJson.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -851,61 +851,60 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& contentOptions = loadInput.contentOptions;
   const auto& responseDataByUrl = loadInput.responseDataByUrl;
 
-  assert(responseDataByUrl.size() == 1);
-  const std::string& tileUrl = responseDataByUrl.begin()->first;
-  const ResponseData& responseData = responseDataByUrl.begin()->second;
-  const gsl::span<const std::byte>& responseBytes = responseData.bytes;
-
   return asyncSystem.runInWorkerThread(
-          [pLogger,
-           contentOptions,
-           tileUrl,
-           responseBytes,
-           tileTransform,
-           tileRefine,
-           upAxis = _upAxis,
-           externalContentInitializer = std::move(externalContentInitializer)]() mutable {
+      [pLogger,
+       contentOptions,
+       responseDataByUrl,
+       tileTransform,
+       tileRefine,
+       upAxis = _upAxis,
+       externalContentInitializer =
+           std::move(externalContentInitializer)]() mutable {
+        assert(responseDataByUrl.size() == 1);
+        const std::string& tileUrl = responseDataByUrl.begin()->first;
+        const ResponseData& responseData = responseDataByUrl.begin()->second;
+        const std::vector<std::byte>& responseBytes = responseData.bytes;
 
-            // find gltf converter
-            auto converter = GltfConverters::getConverterByMagic(responseBytes);
-            if (!converter) {
-              converter = GltfConverters::getConverterByFileExtension(tileUrl);
-            }
+        // find gltf converter
+        auto converter = GltfConverters::getConverterByMagic(responseBytes);
+        if (!converter) {
+          converter = GltfConverters::getConverterByFileExtension(tileUrl);
+        }
 
-            if (converter) {
-              // Convert to gltf
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets =
-                  contentOptions.ktx2TranscodeTargets;
-              GltfConverterResult result = converter(responseBytes, gltfOptions);
+        if (converter) {
+          // Convert to gltf
+          CesiumGltfReader::GltfReaderOptions gltfOptions;
+          gltfOptions.ktx2TranscodeTargets =
+              contentOptions.ktx2TranscodeTargets;
+          GltfConverterResult result = converter(responseBytes, gltfOptions);
 
-              // Report any errors if there are any
-              logTileLoadResult(pLogger, tileUrl, result.errors);
-              if (result.errors) {
-                return TileLoadResult::createFailedResult(NULL);
-              }
+          // Report any errors if there are any
+          logTileLoadResult(pLogger, tileUrl, result.errors);
+          if (result.errors) {
+            return TileLoadResult::createFailedResult(NULL);
+          }
 
-              return TileLoadResult{
-                  std::move(*result.model),
-                  upAxis,
-                  std::nullopt,
-                  std::nullopt,
-                  std::nullopt,
-                  NULL,
-                  {},
-                  TileLoadResultState::Success};
-            } else {
-              // not a renderable content, then it must be external tileset
-              return parseExternalTilesetInWorkerThread(
-                  tileTransform,
-                  upAxis,
-                  tileRefine,
-                  pLogger,
-                  tileUrl,
-                  responseBytes,
-                  std::move(externalContentInitializer));
-            }
-          });
+          return TileLoadResult{
+              std::move(*result.model),
+              upAxis,
+              std::nullopt,
+              std::nullopt,
+              std::nullopt,
+              NULL,
+              {},
+              TileLoadResultState::Success};
+        } else {
+          // not a renderable content, then it must be external tileset
+          return parseExternalTilesetInWorkerThread(
+              tileTransform,
+              upAxis,
+              tileRefine,
+              pLogger,
+              tileUrl,
+              responseBytes,
+              std::move(externalContentInitializer));
+        }
+      });
 }
 
 bool TilesetJsonLoader::getRequestWork(Tile* pTile, std::string& outUrl) {

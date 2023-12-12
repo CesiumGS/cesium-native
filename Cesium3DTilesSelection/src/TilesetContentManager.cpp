@@ -965,7 +965,7 @@ TilesetContentManager::doTileContentWork(
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
       this->_externals.pLogger,
-      responsesByUrl };
+      std::move(responsesByUrl)};
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;

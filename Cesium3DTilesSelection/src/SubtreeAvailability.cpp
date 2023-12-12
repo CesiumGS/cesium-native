@@ -34,22 +34,22 @@ struct SubtreeBufferView {
 CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
     const CesiumAsync::AsyncSystem& asyncSystem,
     size_t bufferIdx,
-    const gsl::span<const std::byte>& requestData,
+    const std::vector<std::byte>& responseData,
     size_t bufferLength) {
   return asyncSystem.runInWorkerThread(
-          [bufferIdx, bufferLength, requestData = requestData]() {
-            auto data = requestData;
-            if (data.size() < bufferLength) {
-              return RequestedSubtreeBuffer{bufferIdx, {}};
-            }
+      [bufferIdx, bufferLength, responseData = responseData]() {
+        auto data = responseData;
+        if (data.size() < bufferLength) {
+          return RequestedSubtreeBuffer{bufferIdx, {}};
+        }
 
-            using vector_diff_type =
-                typename std::vector<std::byte>::difference_type;
-            std::vector<std::byte> buffer(
-                data.begin(),
-                data.begin() + static_cast<vector_diff_type>(bufferLength));
-            return RequestedSubtreeBuffer{bufferIdx, std::move(buffer)};
-          });
+        using vector_diff_type =
+            typename std::vector<std::byte>::difference_type;
+        std::vector<std::byte> buffer(
+            data.begin(),
+            data.begin() + static_cast<vector_diff_type>(bufferLength));
+        return RequestedSubtreeBuffer{bufferIdx, std::move(buffer)};
+      });
 }
 
 std::optional<AvailabilityView> parseAvailabilityView(
@@ -196,7 +196,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& requestData,
+    const std::vector<std::byte>&& responseData,
     rapidjson::Document&& subtreeJson,
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
@@ -233,11 +233,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
                   std::nullopt);
         }
 
-        requestBuffers.emplace_back(requestBuffer(
-            asyncSystem,
-            i,
-            requestData,
-            byteLength));
+        requestBuffers.emplace_back(
+            requestBuffer(asyncSystem, i, responseData, byteLength));
       } else if (
           !internalBuffer.empty() && internalBuffer.size() >= byteLength) {
         resolvedBuffers[i] = std::move(internalBuffer);
@@ -276,8 +273,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& requestData) {
-  const gsl::span<const std::byte>& data = requestData;
+    const std::vector<std::byte>&& responseData) {
+  const std::vector<std::byte>& data = responseData;
 
   rapidjson::Document subtreeJson;
   subtreeJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -296,7 +293,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
       powerOf2,
       std::move(asyncSystem),
       std::move(pLogger),
-      requestData,
+      std::move(responseData),
       std::move(subtreeJson),
       {});
 }
@@ -306,8 +303,8 @@ parseBinarySubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& requestData) {
-  const gsl::span<const std::byte>& data = requestData;
+    const std::vector<std::byte>&& responseData) {
+  const std::vector<std::byte>& data = responseData;
 
   size_t headerLength = sizeof(SubtreeHeader);
   if (data.size() < headerLength) {
@@ -369,7 +366,7 @@ parseBinarySubtreeRequest(
       powerOf2,
       std::move(asyncSystem),
       std::move(pLogger),
-      requestData,
+      std::move(responseData),
       std::move(subtreeJson),
       std::move(internalBuffer));
 }
@@ -378,8 +375,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& responseData) {
-  const gsl::span<const std::byte>& data = responseData;
+    const std::vector<std::byte>&& responseData) {
+  const std::vector<std::byte>& data = responseData;
 
   // check if this is binary subtree
   bool isBinarySubtree = true;
@@ -463,17 +460,17 @@ SubtreeAvailability::loadSubtree(
     uint32_t powerOf2,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const gsl::span<const std::byte>& responseData) {
+    const std::vector<std::byte>& responseData) {
   return asyncSystem.runInWorkerThread([powerOf2,
-                           asyncSystem = asyncSystem,
-                           pLogger = pLogger,
-                           responseData = responseData]() mutable {
-        return parseSubtreeRequest(
-            powerOf2,
-            std::move(asyncSystem),
-            std::move(pLogger),
-            std::move(responseData));
-      });
+                                        asyncSystem = asyncSystem,
+                                        pLogger = pLogger,
+                                        responseData = responseData]() mutable {
+    return parseSubtreeRequest(
+        powerOf2,
+        std::move(asyncSystem),
+        std::move(pLogger),
+        std::move(responseData));
+  });
 }
 
 bool SubtreeAvailability::isAvailable(

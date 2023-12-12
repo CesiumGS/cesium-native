@@ -163,41 +163,44 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::string& tileUrl,
-    const gsl::span<const std::byte>& responseData,
+    const std::vector<std::byte>& responseData,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
-  return asyncSystem.runInWorkerThread([pLogger, ktx2TranscodeTargets, tileUrl = tileUrl, responseData = responseData]() mutable {
-        // find gltf converter
-        auto converter = GltfConverters::getConverterByMagic(responseData);
-        if (!converter) {
-          converter = GltfConverters::getConverterByFileExtension(tileUrl);
-        }
+  return asyncSystem.runInWorkerThread([pLogger,
+                                        ktx2TranscodeTargets,
+                                        tileUrl = tileUrl,
+                                        responseData = responseData]() mutable {
+    // find gltf converter
+    auto converter = GltfConverters::getConverterByMagic(responseData);
+    if (!converter) {
+      converter = GltfConverters::getConverterByFileExtension(tileUrl);
+    }
 
-        if (converter) {
-          // Convert to gltf
-          CesiumGltfReader::GltfReaderOptions gltfOptions;
-          gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
-          GltfConverterResult result = converter(responseData, gltfOptions);
+    if (converter) {
+      // Convert to gltf
+      CesiumGltfReader::GltfReaderOptions gltfOptions;
+      gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
+      GltfConverterResult result = converter(responseData, gltfOptions);
 
-          // Report any errors if there are any
-          logTileLoadResult(pLogger, tileUrl, result.errors);
-          if (result.errors || !result.model) {
-            return TileLoadResult::createFailedResult(NULL);
-          }
-
-          return TileLoadResult{
-              std::move(*result.model),
-              CesiumGeometry::Axis::Y,
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              NULL,
-              {},
-              TileLoadResultState::Success};
-        }
-
-        // content type is not supported
+      // Report any errors if there are any
+      logTileLoadResult(pLogger, tileUrl, result.errors);
+      if (result.errors || !result.model) {
         return TileLoadResult::createFailedResult(NULL);
-      });
+      }
+
+      return TileLoadResult{
+          std::move(*result.model),
+          CesiumGeometry::Axis::Y,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          NULL,
+          {},
+          TileLoadResultState::Success};
+    }
+
+    // content type is not supported
+    return TileLoadResult::createFailedResult(NULL);
+  });
 }
 } // namespace
 

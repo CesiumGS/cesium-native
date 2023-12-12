@@ -54,9 +54,9 @@ public:
 private:
   void refreshTokenInMainThread(
       const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& requestUrl,
-    const uint16_t responseStatusCode,
-    const gsl::span<const std::byte>& responseData);
+      const std::string& requestUrl,
+      const uint16_t responseStatusCode,
+      const std::vector<std::byte>& responseData);
 
   TokenRefreshState _refreshTokenState;
   int64_t _ionAssetID;

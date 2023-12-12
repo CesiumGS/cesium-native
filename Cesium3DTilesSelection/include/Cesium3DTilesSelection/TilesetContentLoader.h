@@ -30,7 +30,6 @@ struct ResponseData {
 };
 typedef std::map<std::string, ResponseData> ResponseDataMap;
 
-
 /**
  * @brief Store the parameters that are needed to load a tile
  */
@@ -73,7 +72,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    */
   const std::shared_ptr<spdlog::logger>& pLogger;
 
-  const ResponseDataMap responseDataByUrl;
+  const ResponseDataMap& responseDataByUrl;
 };
 
 /**

@@ -80,8 +80,11 @@ public:
   ~RequestDispatcher() noexcept;
 
   void QueueRequestWork(
-      std::vector<TileLoadWork>& work,
-      std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const std::vector<TileLoadWork>& work,
+      const std::vector<TileLoadWork>& passThroughWork,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+
+  void PassThroughWork(const std::vector<TileLoadWork>& work);
 
   void WakeIfNeeded();
 
@@ -581,10 +584,13 @@ private:
 
   void discoverLoadWork(
       std::vector<TileLoadRequest>& requests,
-      std::vector<TileLoadWork>& outRequestWork,
-      std::vector<TileLoadWork>& outImmediateWork);
+      std::vector<TileLoadWork>& outRequestWork);
 
-  void addWorkToRequestDispatcher(const std::vector<TileLoadWork>& workVector, size_t maxSimultaneousRequests);
+  void addWorkToRequestDispatcher(
+      std::vector<TileLoadWork>& requestWork,
+      size_t maxSimultaneousRequests);
+
+  void markWorkTilesAsLoading(std::vector<TileLoadWork>& workVector);
 
   void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 

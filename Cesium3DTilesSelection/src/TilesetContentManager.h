@@ -6,8 +6,8 @@
 #include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
