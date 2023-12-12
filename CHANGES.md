@@ -2,6 +2,11 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
+- Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
+
 ##### Fixes :wrench:
 
 - Fixed a crash in `SubtreeAvailability::loadSubtree`.

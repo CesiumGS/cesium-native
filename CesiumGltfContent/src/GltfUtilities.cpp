@@ -1,4 +1,6 @@
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/Ray.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
@@ -210,6 +212,128 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
     bufferView.buffer = int32_t(destinationIndex);
     bufferView.byteOffset += int64_t(start);
+  }
+}
+
+namespace {
+template <class T>
+static void intersectRayPrimitive(
+    const CesiumGeometry::Ray& ray,
+    const CesiumGltf::Model& model,
+    const CesiumGltf::MeshPrimitive& primitive,
+    bool cullBackFaces,
+    double& tMin) {
+
+  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
+    return;
+  }
+
+  auto positionAccessorIt = primitive.attributes.find("POSITION");
+  if (positionAccessorIt == primitive.attributes.end()) {
+    return;
+  }
+
+  int positionAccessorID = positionAccessorIt->second;
+  const Accessor* pPositionAccessor =
+      Model::getSafe(&model.accessors, positionAccessorID);
+  if (!pPositionAccessor) {
+    return;
+  }
+
+  AccessorView<T> indicesView(model, primitive.indices);
+  AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
+  double tCurr;
+
+  if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
+    for (int32_t i = 0; i < indicesView.size(); i += 3) {
+      if (CesiumGeometry::IntersectionTests::rayTriangleParametric(
+              ray,
+              glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
+              glm::dvec3(
+                  positionView[static_cast<int32_t>(indicesView[i + 1])]),
+              glm::dvec3(
+                  positionView[static_cast<int32_t>(indicesView[i + 2])]),
+              tCurr,
+              cullBackFaces)) {
+        if (tCurr < tMin) {
+          tMin = tCurr;
+        }
+      }
+    }
+  } else {
+    for (int32_t i = 0; i < indicesView.size() - 2; ++i) {
+      if (i % 2) {
+        CesiumGeometry::IntersectionTests::rayTriangleParametric(
+            ray,
+            glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
+            glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 2])]),
+            glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 1])]),
+            tCurr,
+            true);
+      } else {
+        CesiumGeometry::IntersectionTests::rayTriangleParametric(
+            ray,
+            glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
+            glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 1])]),
+            glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 2])]),
+            tCurr,
+            true);
+      }
+    }
+  }
+}
+} // namespace
+
+std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
+    const CesiumGeometry::Ray& ray,
+    CesiumGltf::Model& gltf,
+    bool cullBackFaces) {
+  double t = DBL_MAX;
+  gltf.forEachPrimitiveInScene(
+      -1,
+      [ray, cullBackFaces, &t](
+          const CesiumGltf::Model& model,
+          const CesiumGltf::Node& /*node*/,
+          const CesiumGltf::Mesh& /*mesh*/,
+          const CesiumGltf::MeshPrimitive& primitive,
+          const glm::dmat4& /*nodeTransform*/) {
+        if (primitive.mode < CesiumGltf::MeshPrimitive::Mode::TRIANGLES)
+          return;
+
+        switch (model.accessors[primitive.indices].componentType) {
+        case Accessor::ComponentType::UNSIGNED_BYTE:
+          intersectRayPrimitive<uint8_t>(
+              ray,
+              model,
+              primitive,
+              cullBackFaces,
+              t);
+          break;
+        case Accessor::ComponentType::UNSIGNED_SHORT:
+          intersectRayPrimitive<uint16_t>(
+              ray,
+              model,
+              primitive,
+              cullBackFaces,
+              t);
+          break;
+        case Accessor::ComponentType::UNSIGNED_INT:
+          intersectRayPrimitive<uint32_t>(
+              ray,
+              model,
+              primitive,
+              cullBackFaces,
+              t);
+          break;
+        }
+      });
+
+  if (t != DBL_MAX) {
+    return std::make_optional<glm::dvec3>(
+        ray.getOrigin() + t * ray.getDirection());
+  } else {
+    return std::optional<glm::dvec3>();
   }
 }
 
