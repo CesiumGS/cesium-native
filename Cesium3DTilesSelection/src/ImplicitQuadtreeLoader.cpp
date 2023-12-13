@@ -270,7 +270,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     std::string subtreeUrl =
         resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
 
-    ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(subtreeUrl);
+    ResponseDataMap::const_iterator foundIt =
+        responseDataByUrl.find(subtreeUrl);
     assert(foundIt != responseDataByUrl.end());
 
     return SubtreeAvailability::loadSubtree(
