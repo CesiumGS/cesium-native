@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 class CreditSystem;
 
@@ -128,7 +128,7 @@ struct WebMapTileServiceRasterOverlayOptions {
 /**
  * @brief A {@link RasterOverlay} based on tile map service imagery.
  */
-class CESIUM3DTILESSELECTION_API WebMapTileServiceRasterOverlay final
+class CESIUMRASTEROVERLAYS_API WebMapTileServiceRasterOverlay final
     : public RasterOverlay {
 public:
   /**
@@ -152,8 +152,8 @@ public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRendererResources>&
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
@@ -165,4 +165,4 @@ private:
   WebMapTileServiceRasterOverlayOptions _options;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays
