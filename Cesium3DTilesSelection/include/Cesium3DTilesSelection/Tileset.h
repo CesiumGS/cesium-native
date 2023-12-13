@@ -82,11 +82,10 @@ public:
   void QueueRequestWork(
       const std::vector<TileLoadWork>& work,
       const std::vector<TileLoadWork>& passThroughWork,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      size_t maxSimultaneousRequests);
 
   void PassThroughWork(const std::vector<TileLoadWork>& work);
-
-  void WakeIfNeeded(size_t maxSimultaneousRequests);
 
   void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
 
@@ -96,18 +95,17 @@ public:
   void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
 
 private:
+  void transitionQueuedWork();
   void dispatchRequest(TileLoadWork& request);
   void stageQueuedWork(std::vector<TileLoadWork>& workNeedingDispatch);
 
   void onRequestFinished(
       uint16_t responseStatusCode,
       const gsl::span<const std::byte>* pResponseData,
-      const TileLoadWork& request,
-      std::vector<TileLoadWork>& workNeedingDispatch);
+      const TileLoadWork& request);
 
   // Thread safe members
   std::mutex _requestsLock;
-  bool _dispatcherIdle = true;
   bool _exitSignaled = false;
   std::vector<TileLoadWork> _queuedWork;
   std::map<std::string, std::vector<TileLoadWork>> _inFlightWork;
@@ -120,6 +118,8 @@ private:
   std::shared_ptr<spdlog::logger> _pLogger;
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
+
+  size_t _maxSimultaneousRequests;
 };
 
 /**
