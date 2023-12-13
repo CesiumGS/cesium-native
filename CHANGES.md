@@ -2,9 +2,14 @@
 
 ### v0.27.4 - ?
 
+##### Additions :tada:
+
+- Add `defaults` method to `CesiumIonClient::Connection`.
+
 ##### Fixes :wrench:
 
 - Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2022 v17.8.
+- Fixed a bug where the `getApiUrl` method of `CesiumIonClient::Connection` would not return the default API URL if the attempt to access `config.json` failed in a more serious way, such as because of an invalid hostname.
 
 ### v0.27.3 - 2023-10-01
 
