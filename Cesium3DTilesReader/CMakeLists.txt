@@ -54,6 +54,7 @@ target_include_directories(
 target_link_libraries(Cesium3DTilesReader
     PUBLIC
         Cesium3DTiles
+        CesiumAsync
         CesiumJsonReader
         GSL
 )

@@ -3,7 +3,6 @@
 #include "RasterOverlayUpsampler.h"
 #include "TilesetContentLoaderResult.h"
 
-#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -12,6 +11,7 @@
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
 
 #include <vector>
@@ -90,9 +90,9 @@ public:
 
   RasterOverlayCollection& getRasterOverlayCollection() noexcept;
 
-  const Credit* getUserCredit() const noexcept;
+  const CesiumUtility::Credit* getUserCredit() const noexcept;
 
-  const std::vector<Credit>& getTilesetCredits() const noexcept;
+  const std::vector<CesiumUtility::Credit>& getTilesetCredits() const noexcept;
 
   int32_t getNumberOfTilesLoading() const noexcept;
 
@@ -138,8 +138,8 @@ private:
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
   std::unique_ptr<Tile> _pRootTile;
-  std::optional<Credit> _userCredit;
-  std::vector<Credit> _tilesetCredits;
+  std::optional<CesiumUtility::Credit> _userCredit;
+  std::vector<CesiumUtility::Credit> _tilesetCredits;
   RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection _overlayCollection;
   int32_t _tileLoadsInProgress;

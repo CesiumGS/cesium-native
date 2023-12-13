@@ -415,7 +415,7 @@ public:
 
   /**
    * @brief Gets the name of the property being viewed. Returns std::nullopt if
-   * no description was provided.
+   * no name was specified.
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
@@ -431,7 +431,7 @@ public:
 
   /**
    * @brief Gets the description of the property being viewed. Returns
-   * std::nullopt if no name was specified.
+   * std::nullopt if no description was specified.
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
@@ -1596,7 +1596,7 @@ private:
           }
 
           if (property.scale) {
-            // Only floating point types can specify an offset.
+            // Only floating point types can specify a scale.
             switch (TypeToPropertyType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:

@@ -5,14 +5,15 @@
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterOverlay.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -20,6 +21,10 @@
 #include <spdlog/logger.h>
 
 #include <chrono>
+
+using namespace CesiumGltfContent;
+using namespace CesiumRasterOverlays;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -373,12 +378,15 @@ void calcRasterOverlayDetailsInWorkerThread(
 
   // generate the overlay details from the rest of projections and merge it with
   // the existing one
-  auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
-      model,
-      tileLoadInfo.tileTransform,
-      firstRasterOverlayTexCoord,
-      pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
-      std::move(projections));
+  auto overlayDetails =
+      RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
+          model,
+          tileLoadInfo.tileTransform,
+          pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
+          std::move(projections),
+          false,
+          "_CESIUMOVERLAY_",
+          firstRasterOverlayTexCoord);
 
   if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.
@@ -1181,10 +1189,22 @@ void TilesetContentManager::finishLoading(
   assert(pRenderContent != nullptr);
 
   // add copyright
-  pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-      *this->_externals.pCreditSystem,
-      pRenderContent->getModel(),
-      tilesetOptions.showCreditsOnScreen));
+  CreditSystem* pCreditSystem = this->_externals.pCreditSystem.get();
+  if (pCreditSystem) {
+    std::vector<std::string_view> creditStrings =
+        GltfUtilities::parseGltfCopyright(pRenderContent->getModel());
+
+    std::vector<Credit> credits;
+    credits.reserve(creditStrings.size());
+
+    for (const std::string_view& creditString : creditStrings) {
+      credits.emplace_back(pCreditSystem->createCredit(
+          std::string(creditString),
+          tilesetOptions.showCreditsOnScreen));
+    }
+
+    pRenderContent->setCredits(credits);
+  }
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   void* pMainThreadRenderResources =

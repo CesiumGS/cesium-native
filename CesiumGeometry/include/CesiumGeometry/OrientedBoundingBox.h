@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxisAlignedBox.h"
+#include "BoundingSphere.h"
 #include "CullingResult.h"
 #include "Library.h"
 
@@ -117,7 +118,27 @@ public:
   OrientedBoundingBox
   transform(const glm::dmat4& transformation) const noexcept;
 
+  /**
+   * @brief Converts this oriented bounding box to an axis-aligned bounding box.
+   */
   AxisAlignedBox toAxisAligned() const noexcept;
+
+  /**
+   * @brief Converts this oriented bounding box to a bounding sphere.
+   */
+  BoundingSphere toSphere() const noexcept;
+
+  /**
+   * @brief Creates an oriented bounding box from the given axis-aligned
+   * bounding box.
+   */
+  static OrientedBoundingBox
+  fromAxisAligned(const AxisAlignedBox& axisAligned) noexcept;
+
+  /**
+   * @brief Creates an oriented bounding box from the given bounding sphere.
+   */
+  static OrientedBoundingBox fromSphere(const BoundingSphere& sphere) noexcept;
 
 private:
   glm::dvec3 _center;
