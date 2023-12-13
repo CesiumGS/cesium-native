@@ -97,12 +97,13 @@ public:
 
 private:
   void dispatchRequest(TileLoadWork& request);
-  void
-  stageRequestWork(size_t dispatchCount, std::vector<TileLoadWork>& stagedWork);
+  void stageQueuedWork(std::vector<TileLoadWork>& workNeedingDispatch);
+
   void onRequestFinished(
       uint16_t responseStatusCode,
       const gsl::span<const std::byte>* pResponseData,
-      const TileLoadWork& request);
+      const TileLoadWork& request,
+      std::vector<TileLoadWork>& workNeedingDispatch);
 
   // Thread safe members
   std::mutex _requestsLock;
