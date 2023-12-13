@@ -26,6 +26,8 @@
 #include <limits>
 #include <unordered_set>
 
+#define LOG_REQUEST_STATS 1
+
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -307,6 +309,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 }
 
 void Tileset::assertViewResults() {
+#ifndef NDEBUG
   uint32_t inProgressSum =
       static_cast<uint32_t>(_updateResult.requestsPending) +
       _updateResult.tilesLoading + _updateResult.rastersLoading +
@@ -321,20 +324,28 @@ void Tileset::assertViewResults() {
     // If we have tiles kicked, we're not done, but there's nothing in progress?
     assert(this->_updateResult.tilesKicked == 0);
   }
+#endif
+}
 
-  if (inProgressSum > 0) {
+void Tileset::logRequestStats(const std::string& tag) {
+#if LOG_REQUEST_STATS
+  float progress = computeLoadProgress();
+  if (progress > 0 && progress < 100) {
     size_t queued, inFlight, done;
     this->_requestDispatcher.GetRequestsStats(queued, inFlight, done);
 
     SPDLOG_LOGGER_INFO(
         this->_externals.pLogger,
-        "{} in flight, {} tiles, {} rasters. ReqQueue {} DoneQueue {}",
-        inFlight,
-        _updateResult.tilesLoading,
-        _updateResult.rastersLoading,
+        "{}: {} queued -> {} in flight -> {} done. Processing: {} tiles, {} "
+        "rasters",
+        tag,
         queued,
-        done);
+        inFlight,
+        done,
+        _updateResult.tilesLoading,
+        _updateResult.rastersLoading);
   }
+#endif
 }
 
 const ViewUpdateResult&
@@ -350,6 +361,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
   const int32_t currentFrameNumber = previousFrameNumber + 1;
+
+  logRequestStats("BegTraverse");
 
   ViewUpdateResult& result = this->_updateResult;
   result.frameNumber = currentFrameNumber;
@@ -422,6 +435,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.requestsPending = this->_requestDispatcher.GetTotalPendingCount();
 
   assertViewResults();
+
+  logRequestStats("EndTraverse");
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -1741,7 +1756,7 @@ void Tileset::addWorkToRequestDispatcher(
         noUrlWork,
         this->_pTilesetContentManager->getRequestHeaders());
 
-    _requestDispatcher.WakeIfNeeded();
+    _requestDispatcher.WakeIfNeeded(maxSimultaneousRequests);
   }
 }
 
@@ -1998,7 +2013,7 @@ void RequestDispatcher::TakeCompletedWork(
   _doneWork.erase(_doneWork.begin(), _doneWork.begin() + numberToTake);
 }
 
-void RequestDispatcher::WakeIfNeeded() {
+void RequestDispatcher::WakeIfNeeded(size_t maxSimultaneousRequests) {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
     if (!_dispatcherIdle)
@@ -2006,16 +2021,17 @@ void RequestDispatcher::WakeIfNeeded() {
     _dispatcherIdle = false;
   }
 
-  _asyncSystem.runInWorkerThread([this]() {
+  _asyncSystem.runInWorkerThread([this, maxSimultaneousRequests]() {
     const int throttleTimeInMs = 50;
     auto sleepForValue = std::chrono::milliseconds(throttleTimeInMs);
 
     while (1) {
       // If slots available, we can dispatch some work
-      int slotsAvailable;
+      size_t slotsAvailable;
       {
         std::lock_guard<std::mutex> lock(_requestsLock);
-        slotsAvailable = _maxSimultaneousRequests - (int)_inFlightWork.size();
+        assert(_inFlightWork.size() <= maxSimultaneousRequests);
+        slotsAvailable = maxSimultaneousRequests - _inFlightWork.size();
       }
       assert(slotsAvailable >= 0);
 

@@ -75,8 +75,8 @@ public:
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
       std::shared_ptr<spdlog::logger> pLogger)
       : _asyncSystem(asyncSystem),
-        _pLogger(pLogger),
-        _pAssetAccessor(pAssetAccessor) {}
+        _pAssetAccessor(pAssetAccessor),
+        _pLogger(pLogger) {}
   ~RequestDispatcher() noexcept;
 
   void QueueRequestWork(
@@ -86,7 +86,7 @@ public:
 
   void PassThroughWork(const std::vector<TileLoadWork>& work);
 
-  void WakeIfNeeded();
+  void WakeIfNeeded(size_t maxSimultaneousRequests);
 
   void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
 
@@ -111,8 +111,6 @@ private:
   std::vector<TileLoadWork> _queuedWork;
   std::map<std::string, std::vector<TileLoadWork>> _inFlightWork;
   std::vector<TileLoadWork> _doneWork;
-
-  int _maxSimultaneousRequests = 20;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
@@ -595,6 +593,7 @@ private:
   void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 
   void assertViewResults();
+  void logRequestStats(const std::string& tag);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
