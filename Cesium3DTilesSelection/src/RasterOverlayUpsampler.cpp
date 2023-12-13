@@ -1,16 +1,18 @@
 #include "RasterOverlayUpsampler.h"
 
-#include "upsampleGltfForRasterOverlays.h"
-
+#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
-#include <Cesium3DTilesSelection/RasterOverlay.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 
 #include <cassert>
 #include <variant>
+
+using namespace Cesium3DTilesContent;
+using namespace CesiumRasterOverlays;
 
 namespace Cesium3DTilesSelection {
 CesiumAsync::Future<TileLoadResult>

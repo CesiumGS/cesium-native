@@ -142,12 +142,15 @@ add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
 add_subdirectory(CesiumJsonReader)
 add_subdirectory(CesiumJsonWriter)
+add_subdirectory(CesiumGltfContent)
 add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumGltfWriter)
 add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)
 add_subdirectory(Cesium3DTilesReader)
 add_subdirectory(Cesium3DTilesWriter)
+add_subdirectory(Cesium3DTilesContent)
+add_subdirectory(CesiumRasterOverlays)
 add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
 
@@ -162,7 +165,7 @@ endif()
 add_subdirectory(doc)
 
 # Installation of third-party libraries required to use cesium-native
-install(TARGETS uriparser OPTIONAL) # Skips headers
+install(TARGETS uriparser OPTIONAL PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/uriparser")
 
 install(DIRECTORY extern/glm/glm
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

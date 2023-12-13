@@ -1,14 +1,14 @@
+#include "Cesium3DTilesContent/registerAllTileContentTypes.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/ViewState.h"
-#include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
-#include "SimpleAssetAccessor.h"
-#include "SimpleAssetRequest.h"
-#include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
 
 #include <Cesium3DTiles/MetadataQuery.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -23,6 +23,7 @@ using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 static std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
@@ -117,7 +118,7 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 }
 
 TEST_CASE("Test replace refinement for render") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // initialize REPLACE tileset
   //
@@ -511,7 +512,7 @@ TEST_CASE("Test replace refinement for render") {
 }
 
 TEST_CASE("Test additive refinement") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "AddTileset";
@@ -668,7 +669,7 @@ TEST_CASE("Test additive refinement") {
 
 TEST_CASE("Render any tiles even when one of children can't be rendered for "
           "additive refinement") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "ErrorChildrenAddTileset";
@@ -763,7 +764,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 }
 
 TEST_CASE("Test multiple frustums") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "ReplaceTileset";
@@ -1093,7 +1094,7 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
 }
 
 TEST_CASE("Makes metadata available once root tile is loaded") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "WithMetadata";
@@ -1149,7 +1150,7 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
 }
 
 TEST_CASE("Makes metadata available on external tilesets") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "WithMetadata";
@@ -1217,7 +1218,7 @@ TEST_CASE("Makes metadata available on external tilesets") {
 }
 
 TEST_CASE("Allows access to material variants") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "MaterialVariants";
@@ -1301,7 +1302,7 @@ TEST_CASE("Allows access to material variants") {
 }
 
 TEST_CASE("Allows access to material variants in an external schema") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "MaterialVariants";
@@ -1397,7 +1398,7 @@ TEST_CASE("Allows access to material variants in an external schema") {
 }
 
 TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "MaterialVariants";
@@ -1611,7 +1612,7 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
 }
 
 TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "AdditiveThreeLevels";
