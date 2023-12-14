@@ -201,12 +201,9 @@ struct MetadataConversions<
 
     char* pLastUsed;
     int64_t parsedValue = std::strtoll(from.c_str(), &pLastUsed, 10);
-    if (errno != ERANGE) {
-      // Check if the entire string was parsed.
-      if (pLastUsed == from.c_str() + from.size()) {
-        // Successfully parsed the entire string as an integer of this type.
-        return CesiumUtility::losslessNarrow<TTo, int64_t>(parsedValue);
-      }
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+      // Successfully parsed the entire string as an integer of this type.
+      return CesiumUtility::losslessNarrow<TTo, int64_t>(parsedValue);
     }
 
     errno = 0;
@@ -214,24 +211,21 @@ struct MetadataConversions<
     // Failed to parse as an integer. Maybe we can parse as a double and
     // truncate it?
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (errno != ERANGE) {
-      // Check if the entire string was parsed.
-      if (pLastUsed == from.c_str() + from.size()) {
-        // Successfully parsed the entire string as a double.
-        // Convert it to an integer if we can.
-        double truncated = glm::trunc(parsedDouble);
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+      // Successfully parsed the entire string as a double.
+      // Convert it to an integer if we can.
+      double truncated = glm::trunc(parsedDouble);
 
-        int64_t asInteger = static_cast<int64_t>(truncated);
-        double roundTrip = static_cast<double>(asInteger);
-        if (roundTrip == truncated) {
-          return CesiumUtility::losslessNarrow<TTo, int64_t>(asInteger);
-        }
+      int64_t asInteger = static_cast<int64_t>(truncated);
+      double roundTrip = static_cast<double>(asInteger);
+      if (roundTrip == truncated) {
+        return CesiumUtility::losslessNarrow<TTo, int64_t>(asInteger);
       }
     }
 
     return std::nullopt;
   }
-};
+}; // namespace CesiumGltf
 
 /**
  * @brief Converts from std::string to an unsigned integer.
@@ -270,12 +264,9 @@ struct MetadataConversions<
 
     char* pLastUsed;
     uint64_t parsedValue = std::strtoull(from.c_str(), &pLastUsed, 10);
-    if (errno != ERANGE) {
-      // Check if the entire string was parsed.
-      if (pLastUsed == from.c_str() + from.size()) {
-        // Successfully parsed the entire string as an integer of this type.
-        return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
-      }
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+      // Successfully parsed the entire string as an integer of this type.
+      return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
     }
 
     // Failed to parse as an integer. Maybe we can parse as a double and
@@ -283,18 +274,15 @@ struct MetadataConversions<
     errno = 0;
 
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (errno != ERANGE) {
-      // Check if the entire string was parsed.
-      if (pLastUsed == from.c_str() + from.size()) {
-        // Successfully parsed the entire string as a double.
-        // Convert it to an integer if we can.
-        double truncated = glm::trunc(parsedDouble);
+    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+      // Successfully parsed the entire string as a double.
+      // Convert it to an integer if we can.
+      double truncated = glm::trunc(parsedDouble);
 
-        uint64_t asInteger = static_cast<uint64_t>(truncated);
-        double roundTrip = static_cast<double>(asInteger);
-        if (roundTrip == truncated) {
-          return CesiumUtility::losslessNarrow<TTo, uint64_t>(asInteger);
-        }
+      uint64_t asInteger = static_cast<uint64_t>(truncated);
+      double roundTrip = static_cast<double>(asInteger);
+      if (roundTrip == truncated) {
+        return CesiumUtility::losslessNarrow<TTo, uint64_t>(asInteger);
       }
     }
 
