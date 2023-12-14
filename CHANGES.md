@@ -1,28 +1,66 @@
 # Change Log
 
-### ? - ?
-
-##### Breaking Changes :mega:
-
-- Moved `ErrorList` from `Cesium3DTilesSelection` to `CesiumUtility`.
-- Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
-- Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `Cesium3DTilesSelection` library.
-- `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of string_views. Previously it took a `CreditSystem` and created credits directly.
+### v0.31.0 - 2023-12-14
 
 ##### Additions :tada:
 
-- Added `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Add `defaults` method to `CesiumIonClient::Connection`.
+
+##### Fixes :wrench:
+
+- Fixed a crash in `SubtreeAvailability::loadSubtree`.
+- Fixed a bug where the `getApiUrl` method of `CesiumIonClient::Connection` would not return the default API URL if the attempt to access `config.json` failed in a more serious way, such as because of an invalid hostname.
+
+### v0.30.0 - 2023-12-01
+
+##### Breaking Changes :mega:
+
+- Moved `ErrorList`, `CreditSystem`, and `Credit` from `Cesium3DTilesSelection` to `CesiumUtility`.
+- Moved `GltfUtilities` from `Cesium3DTilesSelection` to `Cesium3DTilesContent`.
+- Moved `RasterOverlay`, `RasterOverlayTileProvider`, `RasterOverlayTile`, `QuadtreeRasterOverlayTileProvider`, `RasterOverlayLoadFailure`, `RasterOverlayDetails`, and all of the `RasterOverlay`-derived types to a new `CesiumRasterOverlays` library and namespace.
+- Moved `createRasterOverlayTextureCoordinates` method from `GltfUtilities` to a new `RasterOverlayUtilities` class in the `CesiumRasterOverlays` library.
+- `GltfUtilities::parseGltfCopyright` now returns the credits as a vector of `std::string_view` instances. Previously it took a `CreditSystem` and created credits directly.
+- The `SubtreeAvailability` constructor and `loadSubtree` static method now take an `ImplicitTileSubdivisionScheme` enumeration parameter instead of a `powerOf2` parameter. They also now require a `levelsInSubtree` parameter, which is needed when switching from constant to bitstream availability. Lastly, the constructor now takes a `Subtree` parameter instead of a `std::vector<std::vector<std::byte>>` representing the buffers.
+- `SubtreeConstantAvailability`, `SubtreeBufferViewAvailability`, and `AvailabilityView` are now members of `SubtreeAvailability`.
+- Moved `ImageManipulation` from `CesiumGltfReader` to `CesiumGltfContent`.
+- Added some new parameters to `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` and changed the order of some existing parameters.
+
+##### Additions :tada:
+
+- Added new `Cesium3DTilesContent` library and namespace. It has classes for loading, converting, and manipulating 3D Tiles tile content.
+- Added new `CesiumGltfContent` library and namespace. It has classes for manipulating in-memory glTF files.
+- Added new `CesiumRasterOverlays` library and namespace. It has classes for working with massive textures draped over glTFs and 3D Tiles.
 - Added `MetadataConversions`, which enables metadata values to be converted to different types for better usability in runtime engines.
 - Added various `typedef`s to catch all possible types of `AccessorView`s for an attribute, including `FeatureIdAccessorType` for feature ID attribute accessors, `IndexAccessorType` for index accessors, and `TexCoordAccessorType` for texture coordinate attribute accessors.
-- Added `GetFeatureIdAccessorView`, `GetIndexAccessorView`, and `GetTexCoordAccessorView` to retrieve the `AccessorView` as a `FeatureIdAccessorType`, `IndexAccessorType`, or `TexCoordAccessorType` respectively.
+- Added `getFeatureIdAccessorView`, `getIndexAccessorView`, and `getTexCoordAccessorView` to retrieve the `AccessorView` as a `FeatureIdAccessorType`, `IndexAccessorType`, or `TexCoordAccessorType` respectively.
 - Added `StatusFromAccessor` and `CountFromAccessor` visitors to retrieve the accessor status and size respectively. This can be used with `FeatureIdAccessorType`, `IndexAccessorType`, or `TexCoordAccessorType`.
 - Added `FeatureIdFromAccessor` to retrieve feature IDs from a `FeatureIdAccessorType`.
 - Added `IndicesForFaceFromAccessor` to retrieve the indices of the vertices that make up a face, as supplied by `IndexAccessorType`.
 - Added `TexCoordFromAccessor` to retrieve the texture coordinates from a `TexCoordAccessorType`.
+- Added `TileBoundingVolumes` class to `Cesium3DTilesContent`, making it easier to create the rich bounding volume types in `CesiumGeometry` and `CesiumGeospatial` from the simple vector representations in `Cesium3DTiles`.
+- Added `transform` method to `CesiumGeometry::BoundingSphere`.
+- Added `toSphere`, `fromSphere`, and `fromAxisAligned` methods to `CesiumGeometry::OrientedBoundingBox`.
+- Added `TileTransform` class to `Cesium3DTilesContent`, making it easier to create a `glm::dmat4` from the `transform` property of a `Cesium3DTiles::Tile`.
+- Added `ImplicitTilingUtilities` class to `Cesium3DTilesContent`.
+- Added overloads of `isTileAvailable`, `isContentAvailable`, and `isSubtreeAvailable` on the `SubtreeAvailability` class that take the subtree root tile ID and the tile ID of interest, instead of a relative level and Morton index.
+- Added `fromSubtree` and `createEmpty` static methods to `SubtreeAvailability`.
+- Added new `set` methods to `SubtreeAvailability`, allowing the availability information to be modified.
+- Added `SubtreeFileReader` class, used to read `Cesium3DTiles::Subtree` from a binary or JSON subtree file.
+- Added `pointInTriangle2D` static method to `CesiumGeometry::IntersectionTests`.
+- Added `rectangleIsWithinPolygons` and `rectangleIsOutsidePolygons` static methods to `CartographicPolygon`.
+- Raster overlays now use `IPrepareRasterOverlayRendererResources`, which contains only overlay-related methods, instead of `IPrepareRendererResources`, which contains tileset-related methods as well. `IPrepareRendererResources` derives from `IPrepareRasterOverlayRendererResources` so existing code should continue to work without modification.
+- Added `collapseToSingleBuffer` and `moveBufferContent` methods to `GltfUtilities`.
+- Added `savePng` method to `ImageManipulation`.
+- `RasterOverlayTileProvider::loadTile` now returns a future that resolves when the tile is done loading.
+- Added `computeDesiredScreenPixels` and `computeTranslationAndScale` methods to `RasterOverlayUtilities`.
+- Added `Future<T>::thenPassThrough`, used to easily pass additional values through to the next continuation.
 
 ##### Fixes :wrench:
 
+- Fixed a bug in `OrientedBoundingBox::contains` where it didn't account for the bounding box's center.
 - Fixed compiler error when calling `PropertyAttributeView::forEachProperty`.
+- Fixed crash when loading glTFs with data uri images.
+- Fixed WD4996 warnings-as-errors when compiling with Visual Studio 2002 v17.8.
 
 ### v0.29.0 - 2023-11-01
 

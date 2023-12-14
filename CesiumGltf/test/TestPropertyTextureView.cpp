@@ -1540,7 +1540,7 @@ TEST_CASE("Test callback on invalid property texture view") {
   view.getPropertyView(
       "TestClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -1580,7 +1580,7 @@ TEST_CASE("Test callback on invalid PropertyTextureProperty") {
 
   uint32_t invokedCallbackCount = 0;
   auto testCallback = [&invokedCallbackCount](
-                          const std::string& /*propertyName*/,
+                          const std::string& /*propertyId*/,
                           auto propertyValue) mutable {
     invokedCallbackCount++;
     REQUIRE(propertyValue.status() != PropertyTexturePropertyViewStatus::Valid);
@@ -1622,7 +1622,7 @@ TEST_CASE("Test callback on invalid normalized PropertyTextureProperty") {
 
   uint32_t invokedCallbackCount = 0;
   auto testCallback = [&invokedCallbackCount](
-                          const std::string& /*propertyName*/,
+                          const std::string& /*propertyId*/,
                           auto propertyValue) mutable {
     invokedCallbackCount++;
     REQUIRE(
@@ -1690,7 +1690,7 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1770,7 +1770,7 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1860,7 +1860,7 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -1951,7 +1951,7 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -2043,7 +2043,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -2153,7 +2153,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (
@@ -2269,7 +2269,7 @@ TEST_CASE("Test callback on unsupported PropertyTextureProperty") {
   view.getPropertyView(
       "DoubleClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -2281,7 +2281,7 @@ TEST_CASE("Test callback on unsupported PropertyTextureProperty") {
   view.getPropertyView(
       "ArrayClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -2332,7 +2332,7 @@ TEST_CASE(
   view.getPropertyView(
       "TestClassProperty",
       [defaultValue, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<

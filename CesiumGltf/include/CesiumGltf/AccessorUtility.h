@@ -51,7 +51,7 @@ typedef std::variant<
  * given glTF primitive and model. This verifies that the accessor is of a valid
  * type. If not, the returned accessor view will be invalid.
  */
-FeatureIdAccessorType GetFeatureIdAccessorView(
+FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
     int32_t featureIdAttributeIndex);
@@ -100,7 +100,7 @@ typedef std::variant<
  * is returned.
  */
 IndexAccessorType
-GetIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
+getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
  * Visitor that retrieves the vertex indices from the given accessor type
@@ -165,7 +165,7 @@ typedef std::variant<
  * given glTF primitive and model. This verifies that the accessor is of a valid
  * type. If not, the returned accessor view will be invalid.,
  */
-TexCoordAccessorType GetTexCoordAccessorView(
+TexCoordAccessorType getTexCoordAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
     int32_t textureCoordinateSetIndex);

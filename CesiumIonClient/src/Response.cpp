@@ -1,6 +1,7 @@
 #include "CesiumIonClient/Response.h"
 
 #include "CesiumIonClient/Assets.h"
+#include "CesiumIonClient/Defaults.h"
 #include "CesiumIonClient/Profile.h"
 #include "CesiumIonClient/TokenList.h"
 #include "parseLinkHeader.h"
@@ -73,6 +74,7 @@ Response<T>::Response(
 // Explicit instantiations
 template struct Response<Asset>;
 template struct Response<Assets>;
+template struct Response<Defaults>;
 template struct Response<NoValue>;
 template struct Response<Profile>;
 template struct Response<Token>;

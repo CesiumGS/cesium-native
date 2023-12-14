@@ -18,6 +18,7 @@
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumNativeTests;
+using namespace CesiumUtility;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;

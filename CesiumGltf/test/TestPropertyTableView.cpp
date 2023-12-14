@@ -3953,7 +3953,7 @@ TEST_CASE("Test callback on invalid property table view") {
 
   uint32_t invokedCallbackCount = 0;
   auto callback = [&invokedCallbackCount](
-                      const std::string& /*propertyName*/,
+                      const std::string& /*propertyId*/,
                       auto property) mutable {
     invokedCallbackCount++;
     REQUIRE(
@@ -3998,7 +3998,7 @@ TEST_CASE("Test callback for invalid PropertyTableProperty") {
 
   uint32_t invokedCallbackCount = 0;
   auto testCallback = [&invokedCallbackCount](
-                          const std::string& /*propertyName*/,
+                          const std::string& /*propertyId*/,
                           auto propertyValue) mutable {
     invokedCallbackCount++;
     REQUIRE(propertyValue.status() != PropertyTablePropertyViewStatus::Valid);
@@ -4049,7 +4049,7 @@ TEST_CASE("Test callback for invalid normalized PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -4102,7 +4102,7 @@ TEST_CASE("Test callback for scalar PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -4170,7 +4170,7 @@ TEST_CASE("Test callback for scalar PropertyTableProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<
@@ -4241,7 +4241,7 @@ TEST_CASE("Test callback for vecN PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -4313,7 +4313,7 @@ TEST_CASE("Test callback for vecN PropertyTableProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -4392,7 +4392,7 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         REQUIRE(
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
@@ -4472,7 +4472,7 @@ TEST_CASE("Test callback for matN PropertyTableProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         REQUIRE(
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
@@ -4554,7 +4554,7 @@ TEST_CASE("Test callback for boolean PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
 
@@ -4645,7 +4645,7 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         REQUIRE(
@@ -4716,7 +4716,7 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -4792,7 +4792,7 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -4873,7 +4873,7 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -4955,7 +4955,7 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty (normalized)") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -5049,7 +5049,7 @@ TEST_CASE("Test callback for matN array PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&values, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -5140,7 +5140,7 @@ TEST_CASE("Test callback for boolean array PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&expected, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -5242,7 +5242,7 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
   view.getPropertyView(
       "TestClassProperty",
       [&invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) {
         invokedCallbackCount++;
         REQUIRE(
@@ -5326,7 +5326,7 @@ TEST_CASE("Test callback for empty PropertyTableProperty with default value") {
   view.getPropertyView(
       "TestClassProperty",
       [defaultValue, count = propertyTable.count, &invokedCallbackCount](
-          const std::string& /*propertyName*/,
+          const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
         if constexpr (std::is_same_v<

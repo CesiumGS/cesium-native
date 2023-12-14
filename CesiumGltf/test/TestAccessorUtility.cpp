@@ -2,6 +2,8 @@
 
 #include <catch2/catch.hpp>
 
+#include <cstring>
+
 using namespace CesiumGltf;
 
 TEST_CASE("Test CountFromAccessor") {
@@ -14,7 +16,7 @@ TEST_CASE("Test CountFromAccessor") {
       buffer.cesium.data.data(),
       featureIds.data(),
       buffer.cesium.data.size());
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -24,7 +26,7 @@ TEST_CASE("Test CountFromAccessor") {
   accessor.bufferView = 0;
   accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
   accessor.type = Accessor::Type::SCALAR;
-  accessor.count = bufferView.byteLength / sizeof(uint8_t);
+  accessor.count = bufferView.byteLength;
 
   SECTION("Handles invalid accessor") {
     // Wrong type
@@ -55,7 +57,7 @@ TEST_CASE("Test CountFromAccessor") {
   }
 }
 
-TEST_CASE("Test GetFeatureIdAccessorView") {
+TEST_CASE("Test getFeatureIdAccessorView") {
   Model model;
   std::vector<uint8_t> featureIds0{1, 2, 3, 4};
 
@@ -67,7 +69,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
         buffer.cesium.data.data(),
         featureIds0.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -77,7 +79,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::SCALAR;
-    accessor.count = bufferView.byteLength / sizeof(uint8_t);
+    accessor.count = bufferView.byteLength;
   }
 
   std::vector<uint16_t> featureIds1{5, 6, 7, 8};
@@ -90,7 +92,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
         buffer.cesium.data.data(),
         featureIds1.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 1;
@@ -100,7 +102,8 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
     accessor.bufferView = 1;
     accessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
     accessor.type = Accessor::Type::SCALAR;
-    accessor.count = bufferView.byteLength / sizeof(uint16_t);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(uint16_t));
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -111,7 +114,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
 
   SECTION("Handles invalid feature ID set index") {
     FeatureIdAccessorType featureIDAccessor =
-        GetFeatureIdAccessorView(model, primitive, 2);
+        getFeatureIdAccessorView(model, primitive, 2);
     REQUIRE(
         std::visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
@@ -122,7 +125,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
     model.accessors[0].type = Accessor::Type::VEC2;
 
     FeatureIdAccessorType featureIDAccessor =
-        GetFeatureIdAccessorView(model, primitive, 0);
+        getFeatureIdAccessorView(model, primitive, 0);
     REQUIRE(
         std::visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
@@ -135,7 +138,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
     model.accessors[1].normalized = true;
 
     FeatureIdAccessorType featureIDAccessor =
-        GetFeatureIdAccessorView(model, primitive, 1);
+        getFeatureIdAccessorView(model, primitive, 1);
     REQUIRE(
         std::visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
@@ -146,7 +149,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
 
   SECTION("Creates from valid feature ID sets") {
     FeatureIdAccessorType featureIDAccessor =
-        GetFeatureIdAccessorView(model, primitive, 0);
+        getFeatureIdAccessorView(model, primitive, 0);
     REQUIRE(
         std::visit(StatusFromAccessor{}, featureIDAccessor) ==
         AccessorViewStatus::Valid);
@@ -154,7 +157,7 @@ TEST_CASE("Test GetFeatureIdAccessorView") {
         std::visit(CountFromAccessor{}, featureIDAccessor) ==
         static_cast<int64_t>(featureIds0.size()));
 
-    featureIDAccessor = GetFeatureIdAccessorView(model, primitive, 1);
+    featureIDAccessor = getFeatureIdAccessorView(model, primitive, 1);
     REQUIRE(
         std::visit(StatusFromAccessor{}, featureIDAccessor) ==
         AccessorViewStatus::Valid);
@@ -174,7 +177,7 @@ TEST_CASE("FeatureIdFromAccessor") {
       buffer.cesium.data.data(),
       featureIds.data(),
       buffer.cesium.data.size());
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -184,7 +187,7 @@ TEST_CASE("FeatureIdFromAccessor") {
   accessor.bufferView = 0;
   accessor.componentType = Accessor::ComponentType::BYTE;
   accessor.type = Accessor::Type::SCALAR;
-  accessor.count = bufferView.byteLength / sizeof(int8_t);
+  accessor.count = bufferView.byteLength;
 
   SECTION("Handles invalid accessor") {
     // Wrong component type
@@ -205,7 +208,7 @@ TEST_CASE("FeatureIdFromAccessor") {
   }
 }
 
-TEST_CASE("Test GetIndexAccessorView") {
+TEST_CASE("Test getIndexAccessorView") {
   Model model;
   std::vector<uint8_t> indices{0, 1, 2, 0, 2, 3};
 
@@ -216,7 +219,7 @@ TEST_CASE("Test GetIndexAccessorView") {
         buffer.cesium.data.data(),
         indices.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -226,7 +229,7 @@ TEST_CASE("Test GetIndexAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::SCALAR;
-    accessor.count = bufferView.byteLength / sizeof(uint8_t);
+    accessor.count = bufferView.byteLength;
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -236,7 +239,7 @@ TEST_CASE("Test GetIndexAccessorView") {
   SECTION("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::VEC2;
 
-    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
         std::visit(StatusFromAccessor{}, indexAccessor) !=
         AccessorViewStatus::Valid);
@@ -248,7 +251,7 @@ TEST_CASE("Test GetIndexAccessorView") {
   SECTION("Handles unsupported accessor component type") {
     model.accessors[0].componentType = Accessor::ComponentType::BYTE;
 
-    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
         std::visit(StatusFromAccessor{}, indexAccessor) !=
         AccessorViewStatus::Valid);
@@ -260,7 +263,7 @@ TEST_CASE("Test GetIndexAccessorView") {
   SECTION("Handles invalid normalized accessor") {
     model.accessors[0].normalized = true;
 
-    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
         std::visit(StatusFromAccessor{}, indexAccessor) !=
         AccessorViewStatus::Valid);
@@ -270,7 +273,7 @@ TEST_CASE("Test GetIndexAccessorView") {
   }
 
   SECTION("Creates from valid accessor") {
-    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
         std::visit(StatusFromAccessor{}, indexAccessor) ==
         AccessorViewStatus::Valid);
@@ -282,7 +285,7 @@ TEST_CASE("Test GetIndexAccessorView") {
   SECTION("Creates from nonexistent accessor") {
     primitive.indices = -1;
 
-    IndexAccessorType indexAccessor = GetIndexAccessorView(model, primitive);
+    IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(std::get_if<std::monostate>(&indexAccessor));
   }
 }
@@ -298,7 +301,7 @@ TEST_CASE("Test FaceVertexIndicesFromAccessor") {
       buffer.cesium.data.data(),
       indices.data(),
       buffer.cesium.data.size());
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -308,7 +311,8 @@ TEST_CASE("Test FaceVertexIndicesFromAccessor") {
   accessor.bufferView = 0;
   accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
   accessor.type = Accessor::Type::SCALAR;
-  accessor.count = bufferView.byteLength / sizeof(uint32_t);
+  accessor.count =
+      bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
 
   SECTION("Handles invalid accessor") {
     // Wrong component type
@@ -381,7 +385,7 @@ TEST_CASE("Test FaceVertexIndicesFromAccessor") {
   }
 }
 
-TEST_CASE("Test GetTexCoordAccessorView") {
+TEST_CASE("Test getTexCoordAccessorView") {
   Model model;
   std::vector<glm::vec2> texCoords0{
       glm::vec2(0, 0),
@@ -397,7 +401,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
         buffer.cesium.data.data(),
         texCoords0.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -407,7 +411,8 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::FLOAT;
     accessor.type = Accessor::Type::VEC2;
-    accessor.count = bufferView.byteLength / sizeof(glm::vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::vec2));
   }
 
   std::vector<glm::u8vec2> texCoords1{
@@ -424,7 +429,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
         buffer.cesium.data.data(),
         texCoords1.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 1;
@@ -435,7 +440,8 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::VEC2;
     accessor.normalized = true;
-    accessor.count = bufferView.byteLength / sizeof(glm::u8vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::u8vec2));
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -446,7 +452,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
 
   SECTION("Handles invalid texture coordinate set index") {
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 2);
+        getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(
         std::visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
@@ -457,7 +463,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     model.accessors[0].type = Accessor::Type::SCALAR;
 
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 0);
+        getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
         std::visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
@@ -470,7 +476,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     model.accessors[0].componentType = Accessor::ComponentType::BYTE;
 
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 0);
+        getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
         std::visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
@@ -483,7 +489,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
     model.accessors[1].normalized = false;
 
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 2);
+        getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(
         std::visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
@@ -494,7 +500,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
 
   SECTION("Creates from valid texture coordinate sets") {
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 0);
+        getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
         std::visit(StatusFromAccessor{}, texCoordAccessor) ==
         AccessorViewStatus::Valid);
@@ -502,7 +508,7 @@ TEST_CASE("Test GetTexCoordAccessorView") {
         std::visit(CountFromAccessor{}, texCoordAccessor) ==
         static_cast<int64_t>(texCoords0.size()));
 
-    texCoordAccessor = GetTexCoordAccessorView(model, primitive, 1);
+    texCoordAccessor = getTexCoordAccessorView(model, primitive, 1);
     REQUIRE(
         std::visit(StatusFromAccessor{}, texCoordAccessor) ==
         AccessorViewStatus::Valid);
@@ -528,7 +534,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
         buffer.cesium.data.data(),
         texCoords0.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
@@ -538,7 +544,8 @@ TEST_CASE("Test TexCoordFromAccessor") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::FLOAT;
     accessor.type = Accessor::Type::VEC2;
-    accessor.count = bufferView.byteLength / sizeof(glm::vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::vec2));
   }
 
   std::vector<glm::u8vec2> texCoords1{
@@ -555,7 +562,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
         buffer.cesium.data.data(),
         texCoords1.data(),
         buffer.cesium.data.size());
-    buffer.byteLength = buffer.cesium.data.size();
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
     BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 1;
@@ -566,7 +573,8 @@ TEST_CASE("Test TexCoordFromAccessor") {
     accessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
     accessor.type = Accessor::Type::VEC2;
     accessor.normalized = true;
-    accessor.count = bufferView.byteLength / sizeof(glm::u8vec2);
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(glm::u8vec2));
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -577,20 +585,20 @@ TEST_CASE("Test TexCoordFromAccessor") {
 
   SECTION("Handles invalid accessor") {
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 2);
+        getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(!std::visit(TexCoordFromAccessor{0}, texCoordAccessor));
   }
 
   SECTION("Handles invalid index") {
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 0);
+        getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(!std::visit(TexCoordFromAccessor{-1}, texCoordAccessor));
     REQUIRE(!std::visit(TexCoordFromAccessor{10}, texCoordAccessor));
   }
 
   SECTION("Retrieves from valid accessor and index") {
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 0);
+        getTexCoordAccessorView(model, primitive, 0);
     for (size_t i = 0; i < texCoords0.size(); i++) {
       auto maybeTexCoord = std::visit(
           TexCoordFromAccessor{static_cast<int64_t>(i)},
@@ -603,7 +611,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
   }
   SECTION("Retrieves from valid normalized accessor and index") {
     TexCoordAccessorType texCoordAccessor =
-        GetTexCoordAccessorView(model, primitive, 1);
+        getTexCoordAccessorView(model, primitive, 1);
     for (size_t i = 0; i < texCoords1.size(); i++) {
       auto maybeTexCoord = std::visit(
           TexCoordFromAccessor{static_cast<int64_t>(i)},

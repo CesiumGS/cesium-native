@@ -2,6 +2,7 @@
 
 #include <uriparser/Uri.h>
 
+#include <cstring>
 #include <stdexcept>
 
 namespace CesiumUtility {
@@ -98,6 +99,37 @@ std::string Uri::addQuery(
   //}
 
   // uriFreeUriMembersA(&baseUri);
+}
+
+std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
+  UriUriA uri;
+  if (uriParseSingleUriA(&uri, url.c_str(), nullptr) != URI_SUCCESS) {
+    return "";
+  }
+  UriQueryListA* queryList;
+  int itemCount;
+  if (uriDissectQueryMallocA(
+          &queryList,
+          &itemCount,
+          uri.query.first,
+          uri.query.afterLast) != URI_SUCCESS) {
+    uriFreeUriMembersA(&uri);
+    return "";
+  }
+  UriQueryListA* p = queryList;
+  while (p) {
+    if (p->key && std::strcmp(p->key, key.c_str()) == 0) {
+      std::string value = p->value ? p->value : "";
+      uriUnescapeInPlaceA(value.data());
+      uriFreeQueryListA(queryList);
+      uriFreeUriMembersA(&uri);
+      return value;
+    }
+    p = p->next;
+  }
+  uriFreeQueryListA(queryList);
+  uriFreeUriMembersA(&uri);
+  return "";
 }
 
 std::string Uri::substituteTemplateParameters(

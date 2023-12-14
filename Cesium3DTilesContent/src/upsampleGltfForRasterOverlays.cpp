@@ -1,10 +1,10 @@
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
 #include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -14,6 +14,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumGltfContent;
 
 namespace Cesium3DTilesContent {
 struct EdgeVertex {

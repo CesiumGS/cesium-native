@@ -17,11 +17,7 @@ BoundingVolume transformBoundingVolume(
     const glm::dmat4x4& transform;
 
     BoundingVolume operator()(const OrientedBoundingBox& boundingBox) {
-      const glm::dvec3 center =
-          glm::dvec3(transform * glm::dvec4(boundingBox.getCenter(), 1.0));
-      const glm::dmat3 halfAxes =
-          glm::dmat3(transform) * boundingBox.getHalfAxes();
-      return OrientedBoundingBox(center, halfAxes);
+      return boundingBox.transform(transform);
     }
 
     BoundingVolume operator()(const BoundingRegion& boundingRegion) noexcept {
@@ -30,16 +26,7 @@ BoundingVolume transformBoundingVolume(
     }
 
     BoundingVolume operator()(const BoundingSphere& boundingSphere) {
-      const glm::dvec3 center =
-          glm::dvec3(transform * glm::dvec4(boundingSphere.getCenter(), 1.0));
-
-      const double uniformScale = glm::max(
-          glm::max(
-              glm::length(glm::dvec3(transform[0])),
-              glm::length(glm::dvec3(transform[1]))),
-          glm::length(glm::dvec3(transform[2])));
-
-      return BoundingSphere(center, boundingSphere.getRadius() * uniformScale);
+      return boundingSphere.transform(transform);
     }
 
     BoundingVolume operator()(
@@ -214,9 +201,7 @@ OrientedBoundingBox
 getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume) {
   struct Operation {
     OrientedBoundingBox operator()(const BoundingSphere& sphere) const {
-      glm::dvec3 center = sphere.getCenter();
-      glm::dmat3 halfAxes = glm::dmat3(sphere.getRadius());
-      return OrientedBoundingBox(center, halfAxes);
+      return OrientedBoundingBox::fromSphere(sphere);
     }
 
     OrientedBoundingBox

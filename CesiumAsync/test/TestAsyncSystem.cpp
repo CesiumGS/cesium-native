@@ -539,4 +539,37 @@ TEST_CASE("AsyncSystem") {
     CHECK(future.isReady());
     future.wait();
   }
+
+  SECTION("thenPassThrough") {
+    bool checksCompleted = false;
+
+    asyncSystem.createResolvedFuture(3.1)
+        .thenPassThrough(std::string("foo"), 4)
+        .thenImmediately([&](std::tuple<std::string, int, double>&& tuple) {
+          auto& [s, i, d] = tuple;
+          CHECK(s == "foo");
+          CHECK(i == 4);
+          CHECK(d == 3.1);
+          checksCompleted = true;
+        });
+
+    CHECK(checksCompleted);
+  }
+
+  SECTION("thenPassThrough on a SharedFuture") {
+    bool checksCompleted = false;
+
+    asyncSystem.createResolvedFuture(3.1)
+        .share()
+        .thenPassThrough(std::string("foo"), 4)
+        .thenImmediately([&](std::tuple<std::string, int, double>&& tuple) {
+          auto& [s, i, d] = tuple;
+          CHECK(s == "foo");
+          CHECK(i == 4);
+          CHECK(d == 3.1);
+          checksCompleted = true;
+        });
+
+    CHECK(checksCompleted);
+  }
 }

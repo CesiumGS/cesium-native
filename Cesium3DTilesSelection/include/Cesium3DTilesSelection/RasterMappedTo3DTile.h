@@ -1,10 +1,10 @@
 #pragma once
 
 #include "IPrepareRendererResources.h"
-#include "RasterOverlayTile.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
@@ -53,7 +53,8 @@ public:
    * with this mapped raster overlay.
    */
   RasterMappedTo3DTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
+      const CesiumUtility::IntrusivePointer<
+          CesiumRasterOverlays::RasterOverlayTile>& pRasterTile,
       int32_t textureCoordinateIndex);
 
   /**
@@ -64,12 +65,13 @@ public:
    *
    * @return The tile that is loading, or `nullptr`.
    */
-  RasterOverlayTile* getLoadingTile() noexcept {
+  CesiumRasterOverlays::RasterOverlayTile* getLoadingTile() noexcept {
     return this->_pLoadingTile.get();
   }
 
   /** @copydoc getLoadingTile */
-  const RasterOverlayTile* getLoadingTile() const noexcept {
+  const CesiumRasterOverlays::RasterOverlayTile*
+  getLoadingTile() const noexcept {
     return this->_pLoadingTile.get();
   }
 
@@ -81,10 +83,12 @@ public:
    *
    * @return The tile, or `nullptr`.
    */
-  RasterOverlayTile* getReadyTile() noexcept { return this->_pReadyTile.get(); }
+  CesiumRasterOverlays::RasterOverlayTile* getReadyTile() noexcept {
+    return this->_pReadyTile.get();
+  }
 
   /** @copydoc getReadyTile */
-  const RasterOverlayTile* getReadyTile() const noexcept {
+  const CesiumRasterOverlays::RasterOverlayTile* getReadyTile() const noexcept {
     return this->_pReadyTile.get();
   }
 
@@ -158,7 +162,7 @@ public:
    * @param tile The owner tile.
    * @return The {@link MoreDetailAvailable} state.
    */
-  RasterOverlayTile::MoreDetailAvailable
+  CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable
   update(IPrepareRendererResources& prepareRendererResources, Tile& tile);
 
   bool isMoreDetailAvailable() const noexcept;
@@ -216,16 +220,18 @@ public:
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
       double maximumScreenSpaceError,
-      RasterOverlayTileProvider& tileProvider,
-      RasterOverlayTileProvider& placeholder,
+      CesiumRasterOverlays::RasterOverlayTileProvider& tileProvider,
+      CesiumRasterOverlays::RasterOverlayTileProvider& placeholder,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections);
 
 private:
   void computeTranslationAndScale(const Tile& tile);
 
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
+  CesiumUtility::IntrusivePointer<CesiumRasterOverlays::RasterOverlayTile>
+      _pLoadingTile;
+  CesiumUtility::IntrusivePointer<CesiumRasterOverlays::RasterOverlayTile>
+      _pReadyTile;
   int32_t _textureCoordinateID;
   glm::dvec2 _translation;
   glm::dvec2 _scale;

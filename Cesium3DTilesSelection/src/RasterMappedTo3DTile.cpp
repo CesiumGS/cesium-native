@@ -3,15 +3,17 @@
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 
+using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace Cesium3DTilesSelection;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace {
@@ -256,41 +258,6 @@ int32_t addProjectionToList(
   }
 }
 
-glm::dvec2 computeDesiredScreenPixels(
-    const Tile& tile,
-    const Projection& projection,
-    const Rectangle& rectangle,
-    double maxHeight,
-    double maximumScreenSpaceError,
-    const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
-  // We're aiming to estimate the maximum number of pixels (in each projected
-  // direction) the tile will occupy on the screen. The will be determined by
-  // the tile's geometric error, because when less error is needed (i.e. the
-  // viewer moved closer), the LOD will switch to show the tile's children
-  // instead of this tile.
-  //
-  // It works like this:
-  // * Estimate the size of the projected rectangle in world coordinates.
-  // * Compute the distance at which tile will switch to its children, based on
-  // its geometric error and the tileset SSE.
-  // * Compute the on-screen size of the projected rectangle at that distance.
-  //
-  // For the two compute steps, we use the usual perspective projection SSE
-  // equation:
-  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
-  //
-  // Conveniently a bunch of terms cancel out, so the screen pixel size at the
-  // switch distance is not actually dependent on the screen dimensions or
-  // field-of-view angle.
-  double geometryError = tile.getNonZeroGeometricError();
-  glm::dvec2 diameters = computeProjectedRectangleSize(
-      projection,
-      rectangle,
-      maxHeight,
-      ellipsoid);
-  return diameters * maximumScreenSpaceError / geometryError;
-}
-
 RasterMappedTo3DTile* addRealTile(
     Tile& tile,
     RasterOverlayTileProvider& provider,
@@ -321,16 +288,6 @@ RasterMappedTo3DTile* addRealTile(
         RasterMappedTo3DTile(getPlaceholderTile(placeholder), -1));
   }
 
-  // We can get a more accurate estimate of the real-world size of the projected
-  // rectangle if we consider the rectangle at the true height of the geometry
-  // rather than assuming it's on the ellipsoid. This will make basically no
-  // difference for small tiles (because surface normals on opposite ends of
-  // tiles are effectively identical), and only a small difference for large
-  // ones (because heights will be small compared to the total size of a large
-  // tile). So we're skipping this complexity for now and estimating geometry
-  // width/height as if it's on the ellipsoid surface.
-  const double heightForSizeEstimation = 0.0;
-
   const Projection& projection = tileProvider.getProjection();
 
   // If the tile is loaded, use the precise rectangle computed from the content.
@@ -345,13 +302,13 @@ RasterMappedTo3DTile* addRealTile(
       // We have a rectangle and texture coordinates for this projection.
       int32_t index =
           int32_t(pRectangle - &overlayDetails.rasterOverlayRectangles[0]);
-      const glm::dvec2 screenPixels = computeDesiredScreenPixels(
-          tile,
-          projection,
-          *pRectangle,
-          heightForSizeEstimation,
-          maximumScreenSpaceError,
-          Ellipsoid::WGS84);
+      const glm::dvec2 screenPixels =
+          RasterOverlayUtilities::computeDesiredScreenPixels(
+              tile.getNonZeroGeometricError(),
+              maximumScreenSpaceError,
+              projection,
+              *pRectangle,
+              Ellipsoid::WGS84);
       return addRealTile(tile, tileProvider, *pRectangle, screenPixels, index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
@@ -375,13 +332,13 @@ RasterMappedTo3DTile* addRealTile(
           tileProvider.getProjection(),
           tile.getBoundingVolume());
   if (maybeRectangle) {
-    const glm::dvec2 screenPixels = computeDesiredScreenPixels(
-        tile,
-        projection,
-        *maybeRectangle,
-        heightForSizeEstimation,
-        maximumScreenSpaceError,
-        Ellipsoid::WGS84);
+    const glm::dvec2 screenPixels =
+        RasterOverlayUtilities::computeDesiredScreenPixels(
+            tile.getNonZeroGeometricError(),
+            maximumScreenSpaceError,
+            projection,
+            *maybeRectangle,
+            Ellipsoid::WGS84);
     return addRealTile(
         tile,
         tileProvider,
@@ -436,17 +393,13 @@ void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   const CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 
-  const double terrainWidth = geometryRectangle.computeWidth();
-  const double terrainHeight = geometryRectangle.computeHeight();
+  glm::dvec4 translationAndScale =
+      RasterOverlayUtilities::computeTranslationAndScale(
+          geometryRectangle,
+          imageryRectangle);
 
-  const double scaleX = terrainWidth / imageryRectangle.computeWidth();
-  const double scaleY = terrainHeight / imageryRectangle.computeHeight();
-  this->_translation = glm::dvec2(
-      (scaleX * (geometryRectangle.minimumX - imageryRectangle.minimumX)) /
-          terrainWidth,
-      (scaleY * (geometryRectangle.minimumY - imageryRectangle.minimumY)) /
-          terrainHeight);
-  this->_scale = glm::dvec2(scaleX, scaleY);
+  this->_translation = glm::dvec2(translationAndScale.x, translationAndScale.y);
+  this->_scale = glm::dvec2(translationAndScale.z, translationAndScale.w);
 }
 
 } // namespace Cesium3DTilesSelection

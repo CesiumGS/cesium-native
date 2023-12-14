@@ -1,8 +1,8 @@
-#include "Cesium3DTilesSelection/CreditSystem.h"
+#include "CesiumUtility/CreditSystem.h"
 
 #include <catch2/catch.hpp>
 
-using namespace Cesium3DTilesSelection;
+using namespace CesiumUtility;
 
 TEST_CASE("Test basic credit handling") {
 

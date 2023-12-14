@@ -1,9 +1,9 @@
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {

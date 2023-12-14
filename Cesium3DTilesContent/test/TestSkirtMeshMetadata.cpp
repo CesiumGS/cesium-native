@@ -1,9 +1,9 @@
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfContent;
 using namespace CesiumUtility;
 
 TEST_CASE("Test converting skirt mesh metadata to gltf extras") {

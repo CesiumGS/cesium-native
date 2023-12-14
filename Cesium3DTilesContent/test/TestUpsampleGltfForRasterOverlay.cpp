@@ -1,8 +1,8 @@
-#include <Cesium3DTilesContent/SkirtMeshMetadata.h>
 #include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -15,6 +15,7 @@ using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumGltfContent;
 
 static void checkSkirt(
     const Ellipsoid& ellipsoid,

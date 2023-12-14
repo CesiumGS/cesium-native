@@ -2,7 +2,6 @@
 
 #include "BoundingVolume.h"
 #include "Library.h"
-#include "RasterOverlayDetails.h"
 #include "TileContent.h"
 #include "TileLoadResult.h"
 #include "TilesetOptions.h"
@@ -12,6 +11,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
 #include <spdlog/logger.h>
 

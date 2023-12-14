@@ -5,15 +5,15 @@
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesContent/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterOverlay.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
-#include <Cesium3DTilesSelection/RasterOverlayUtilities.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -22,7 +22,9 @@
 
 #include <chrono>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfContent;
+using namespace CesiumRasterOverlays;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -380,9 +382,11 @@ void calcRasterOverlayDetailsInWorkerThread(
       RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           model,
           tileLoadInfo.tileTransform,
-          firstRasterOverlayTexCoord,
           pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
-          std::move(projections));
+          std::move(projections),
+          false,
+          "_CESIUMOVERLAY_",
+          firstRasterOverlayTexCoord);
 
   if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.

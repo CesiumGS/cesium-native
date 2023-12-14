@@ -100,9 +100,9 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
   return distanceSquared;
 }
 
-// TODO: add test for this
 bool OrientedBoundingBox::contains(const glm::dvec3& position) const noexcept {
-  glm::dvec3 localPosition = this->_inverseHalfAxes * position;
+  glm::dvec3 localPosition = position - this->_center;
+  localPosition = this->_inverseHalfAxes * localPosition;
   return glm::abs(localPosition.x) <= 1.0 && glm::abs(localPosition.y) <= 1.0 &&
          glm::abs(localPosition.z) <= 1.0;
 }
@@ -122,6 +122,30 @@ AxisAlignedBox OrientedBoundingBox::toAxisAligned() const noexcept {
   glm::dvec3 ll = center - extent;
   glm::dvec3 ur = center + extent;
   return AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z);
+}
+
+BoundingSphere OrientedBoundingBox::toSphere() const noexcept {
+  const glm::dmat3& halfAxes = this->_halfAxes;
+  glm::dvec3 corner = halfAxes[0] + halfAxes[1] + halfAxes[2];
+  double sphereRadius = glm::length(corner);
+  return BoundingSphere(this->_center, sphereRadius);
+}
+
+/*static*/ OrientedBoundingBox OrientedBoundingBox::fromAxisAligned(
+    const AxisAlignedBox& axisAligned) noexcept {
+  return OrientedBoundingBox(
+      axisAligned.center,
+      glm::dmat3(
+          glm::dvec3(axisAligned.lengthX * 0.5, 0.0, 0.0),
+          glm::dvec3(0.0, axisAligned.lengthY * 0.5, 0.0),
+          glm::dvec3(0.0, 0.0, axisAligned.lengthZ * 0.5)));
+}
+
+/*static*/ OrientedBoundingBox
+OrientedBoundingBox::fromSphere(const BoundingSphere& sphere) noexcept {
+  glm::dvec3 center = sphere.getCenter();
+  glm::dmat3 halfAxes = glm::dmat3(sphere.getRadius());
+  return OrientedBoundingBox(center, halfAxes);
 }
 
 } // namespace CesiumGeometry
