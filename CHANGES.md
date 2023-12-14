@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Add `defaults` method to `CesiumIonClient::Connection`.
+
 ##### Fixes :wrench:
 
 - Fixed a crash in `SubtreeAvailability::loadSubtree`.
