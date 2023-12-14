@@ -9,7 +9,6 @@
 
 #include <cerrno>
 #include <cstdint>
-#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -202,7 +201,7 @@ struct MetadataConversions<
 
     char* pLastUsed;
     int64_t parsedValue = std::strtoll(from.c_str(), &pLastUsed, 10);
-    if (errno != EINVAL && errno != ERANGE) {
+    if (errno != ERANGE) {
       // Check if the entire string was parsed.
       if (pLastUsed == from.c_str() + from.size()) {
         // Successfully parsed the entire string as an integer of this type.
@@ -215,7 +214,7 @@ struct MetadataConversions<
     // Failed to parse as an integer. Maybe we can parse as a double and
     // truncate it?
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (errno != EINVAL && errno != ERANGE) {
+    if (errno != ERANGE) {
       // Check if the entire string was parsed.
       if (pLastUsed == from.c_str() + from.size()) {
         // Successfully parsed the entire string as a double.
@@ -244,7 +243,7 @@ struct MetadataConversions<
     std::enable_if_t<
         CesiumGltf::IsMetadataInteger<TTo>::value && !std::is_signed_v<TTo>>> {
   /**
-   * @brief Converts the contents of a std::string to an signed integer.
+   * @brief Converts the contents of a std::string to an unsigned integer.
    * This assumes that the entire std::string represents the number, not
    * just a part of it.
    *
@@ -271,7 +270,7 @@ struct MetadataConversions<
 
     char* pLastUsed;
     uint64_t parsedValue = std::strtoull(from.c_str(), &pLastUsed, 10);
-    if (errno != EINVAL && errno != ERANGE) {
+    if (errno != ERANGE) {
       // Check if the entire string was parsed.
       if (pLastUsed == from.c_str() + from.size()) {
         // Successfully parsed the entire string as an integer of this type.
@@ -284,7 +283,7 @@ struct MetadataConversions<
     errno = 0;
 
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (errno != EINVAL && errno != ERANGE) {
+    if (errno != ERANGE) {
       // Check if the entire string was parsed.
       if (pLastUsed == from.c_str() + from.size()) {
         // Successfully parsed the entire string as a double.
