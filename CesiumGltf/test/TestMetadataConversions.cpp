@@ -2,8 +2,6 @@
 
 #include <catch2/catch.hpp>
 
-#include <unordered_map>
-
 using namespace CesiumGltf;
 
 void testStringToBooleanConversion(
