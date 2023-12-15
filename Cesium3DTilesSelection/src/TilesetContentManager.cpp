@@ -847,8 +847,8 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  // assert(this->_tileLoadsInProgress == 0); // TODO, should we care?
-  // assert(this->_rasterLoadsInProgress == 0);
+  assert(this->_tileLoadsInProgress == 0);
+  assert(this->_rasterLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
