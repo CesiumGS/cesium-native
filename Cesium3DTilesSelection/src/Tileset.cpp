@@ -1648,10 +1648,6 @@ void Tileset::discoverLoadWork(
         this->_options.maximumScreenSpaceError,
         parsedTileWork);
 
-    // There could be no actionable work for this input tile, ignore it
-    if (parsedTileWork.empty())
-      continue;
-
     // Sort by depth, which should bubble parent tasks up to the top
     // We want these to get processed first
     std::sort(parsedTileWork.begin(), parsedTileWork.end());

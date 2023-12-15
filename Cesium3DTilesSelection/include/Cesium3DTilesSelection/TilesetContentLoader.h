@@ -117,7 +117,7 @@ public:
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
 
-  virtual bool getRequestWork(Tile* pTile, std::string& outUrl) = 0;
+  virtual void getRequestWork(Tile* pTile, std::string& outUrl) = 0;
 
   /**
    * @brief Create the tile's children.

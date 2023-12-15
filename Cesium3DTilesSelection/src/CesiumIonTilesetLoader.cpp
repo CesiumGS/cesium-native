@@ -412,7 +412,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   return this->_pAggregatedLoader->loadTileContent(loadInput);
 }
 
-bool CesiumIonTilesetLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+void CesiumIonTilesetLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
 
   // If token in failure state, queue a refresh
   if (this->_refreshTokenState == TokenRefreshState::Failed) {
@@ -422,16 +422,16 @@ bool CesiumIonTilesetLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
         this->_ionAssetID,
         this->_ionAccessToken,
         this->_ionAssetEndpointUrl);
-    return true;
+    return;
   }
 
   // If token refresh is already in progress. Cannot queue work for this tile
   // yet
   if (this->_refreshTokenState == TokenRefreshState::Queued ||
       this->_refreshTokenState == TokenRefreshState::Loading)
-    return false;
+    return;
 
-  return this->_pAggregatedLoader->getRequestWork(pTile, outUrl);
+  this->_pAggregatedLoader->getRequestWork(pTile, outUrl);
 }
 
 TileChildrenResult

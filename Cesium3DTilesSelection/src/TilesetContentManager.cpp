@@ -928,18 +928,18 @@ void TilesetContentManager::parseTileWork(
   }
 
   std::string requestUrl;
-  if (pLoader->getRequestWork(pTile, requestUrl)) {
-    // map raster overlay to tile
-    std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
-        *pTile,
-        depthIndex,
-        this->_overlayCollection,
-        maximumScreenSpaceError,
-        outWork);
+  pLoader->getRequestWork(pTile, requestUrl);
 
-    ParsedTileWork newWork = {pTile, depthIndex, requestUrl, projections};
-    outWork.push_back(newWork);
-  }
+  // map raster overlay to tile
+  std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
+      *pTile,
+      depthIndex,
+      this->_overlayCollection,
+      maximumScreenSpaceError,
+      outWork);
+
+  ParsedTileWork newWork = {pTile, depthIndex, requestUrl, projections};
+  outWork.push_back(newWork);
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>

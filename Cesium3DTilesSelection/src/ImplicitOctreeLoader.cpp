@@ -297,18 +297,18 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets);
 }
 
-bool ImplicitOctreeLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+void ImplicitOctreeLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
       std::get_if<CesiumGeometry::OctreeTileID>(&pTile->getTileID());
   if (!pOctreeID)
-    return false;
+    return;
 
   // find the subtree ID
   uint32_t subtreeLevelIdx = pOctreeID->level / this->_subtreeLevels;
   if (subtreeLevelIdx >= this->_loadedSubtrees.size())
-    return false;
+    return;
 
   uint64_t levelLeft = pOctreeID->level % this->_subtreeLevels;
   uint32_t subtreeLevel = this->_subtreeLevels * subtreeLevelIdx;
@@ -328,16 +328,15 @@ bool ImplicitOctreeLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
   if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
     // subtree is not loaded, so load it now.
     outUrl = resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
-    return true;
+    return;
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
   if (!isTileContentAvailable(subtreeID, *pOctreeID, subtreeIt->second))
-    return false;
+    return;
 
   outUrl = resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pOctreeID);
-  return true;
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {

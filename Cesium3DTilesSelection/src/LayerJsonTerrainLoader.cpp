@@ -899,13 +899,13 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-bool LayerJsonTerrainLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+void LayerJsonTerrainLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&pTile->getTileID());
   if (!pQuadtreeTileID) {
     // Upsampling tiles do not request work
-    return false;
+    return;
   }
 
   // Always request the tile from the first layer in which this tile ID is
@@ -918,12 +918,11 @@ bool LayerJsonTerrainLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
   }
 
   if (firstAvailableIt == this->_layers.end())
-    return false; // No layer has this tile available.
+    return; // No layer has this tile available.
 
   // Start the actual content request.
   auto& currentLayer = *firstAvailableIt;
   outUrl = resolveTileUrl(*pQuadtreeTileID, currentLayer);
-  return true;
 }
 
 TileChildrenResult
