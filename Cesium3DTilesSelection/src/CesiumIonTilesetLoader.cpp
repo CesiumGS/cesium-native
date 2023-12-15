@@ -355,7 +355,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   // For all responses, determine if our token needs a refresh
   // 401 - Unauthorized response
   bool staleTokenDetected = false;
-  for (auto responseData : loadInput.responseDataByUrl) {
+  for (auto responseData : loadInput.responsesByUrl) {
     if (responseData.second.statusCode == 401) {
       staleTokenDetected = true;
       break;
@@ -384,10 +384,9 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // If queued token refresh has arrived, refresh it
   if (this->_refreshTokenState == TokenRefreshState::Queued) {
-    assert(loadInput.responseDataByUrl.size() == 1);
-    const std::string& requestUrl = loadInput.responseDataByUrl.begin()->first;
-    const ResponseData& responseData =
-        loadInput.responseDataByUrl.begin()->second;
+    assert(loadInput.responsesByUrl.size() == 1);
+    const std::string& requestUrl = loadInput.responsesByUrl.begin()->first;
+    const ResponseData& responseData = loadInput.responsesByUrl.begin()->second;
 
     this->refreshTokenInMainThread(
         loadInput.pLogger,

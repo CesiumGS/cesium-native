@@ -1499,17 +1499,21 @@ void Tileset::_processWorkerThreadLoadQueue() {
   size_t totalLoads = static_cast<size_t>(numberOfTilesLoading) +
                       static_cast<size_t>(numberOfRastersLoading);
 
-  // If there are slots available, add some completed request work
-  if (totalLoads < maxTileLoads) {
-    size_t availableSlots = maxTileLoads - totalLoads;
-    assert(availableSlots > 0);
+  size_t availableSlots = 0;
+  if (totalLoads < maxTileLoads)
+    availableSlots = maxTileLoads - totalLoads;
 
-    std::vector<TileLoadWork> completedRequestWork;
-    _requestDispatcher.TakeCompletedWork(availableSlots, completedRequestWork);
-    assert(completedRequestWork.size() <= availableSlots);
+  std::vector<TileLoadWork> completedWork;
+  std::vector<TileLoadWork> failedWork;
+  _requestDispatcher.TakeCompletedWork(
+      availableSlots,
+      completedWork,
+      failedWork);
+  assert(completedWork.size() <= availableSlots);
 
-    dispatchProcessingWork(completedRequestWork);
-  }
+  handleFailedRequestWork(failedWork);
+
+  dispatchProcessingWork(completedWork);
 }
 
 void Tileset::_processMainThreadLoadQueue() {
@@ -1782,6 +1786,31 @@ void Tileset::markWorkTilesAsLoading(std::vector<TileLoadWork>& workVector) {
   }
 }
 
+void Tileset::handleFailedRequestWork(std::vector<TileLoadWork>& workVector) {
+  for (TileLoadWork& work : workVector) {
+
+    SPDLOG_LOGGER_ERROR(
+        this->_externals.pLogger,
+        "Request unexpectedly failed to complete for url: {}",
+        work.requestUrl);
+
+    if (std::holds_alternative<Tile*>(work.workRef)) {
+      Tile* pTile = std::get<Tile*>(work.workRef);
+      assert(pTile);
+      pTile->setState(TileLoadState::Failed);
+    } else {
+      RasterMappedTo3DTile* pRasterTile =
+          std::get<RasterMappedTo3DTile*>(work.workRef);
+      assert(pRasterTile);
+
+      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
+      assert(pLoading);
+
+      pLoading->setState(RasterOverlayTile::LoadState::Failed);
+    }
+  }
+}
+
 void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
   for (TileLoadWork& work : workVector) {
     if (std::holds_alternative<Tile*>(work.workRef)) {
@@ -1794,7 +1823,7 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
       this->_pTilesetContentManager
           ->doTileContentWork(
               *pTile,
-              work.responseDataByUrl,
+              work.responsesByUrl,
               work.projections,
               _options)
           .thenInMainThread([_pTile = pTile, _this = this](
@@ -1863,7 +1892,7 @@ void RequestDispatcher::QueueRequestWork(
     _maxSimultaneousRequests = maxSimultaneousRequests;
   }
 
-  transitionQueuedWork ();
+  transitionQueuedWork();
 }
 
 void RequestDispatcher::PassThroughWork(const std::vector<TileLoadWork>& work) {
@@ -1875,7 +1904,7 @@ void RequestDispatcher::PassThroughWork(const std::vector<TileLoadWork>& work) {
 
 void RequestDispatcher::onRequestFinished(
     uint16_t responseStatusCode,
-    const gsl::span<const std::byte>* pResponseData,
+    gsl::span<const std::byte> responseBytes,
     const TileLoadWork& request) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
@@ -1887,27 +1916,38 @@ void RequestDispatcher::onRequestFinished(
   foundIt = _inFlightWork.find(request.requestUrl);
   assert(foundIt != _inFlightWork.end());
 
-  // Copy the results to done work
-  std::vector<TileLoadWork>& doneWorkVec = foundIt->second;
-  for (TileLoadWork& doneWork : doneWorkVec) {
-    if (pResponseData) {
-      // Add new entry
-      assert(
-          doneWork.responseDataByUrl.find(doneWork.requestUrl) ==
-          doneWork.responseDataByUrl.end());
-      ResponseData& responseData =
-          doneWork.responseDataByUrl[doneWork.requestUrl];
+  // Handle results
+  std::vector<TileLoadWork>& requestWorkVec = foundIt->second;
+  for (TileLoadWork& requestWork : requestWorkVec) {
 
-      // Copy our results
-      responseData.bytes.resize(pResponseData->size());
-      std::copy(
-          pResponseData->begin(),
-          pResponseData->end(),
-          responseData.bytes.begin());
-      responseData.statusCode = responseStatusCode;
+    if (responseStatusCode == 0) {
+      // A response code of 0 is not a valid HTTP code
+      // and probably indicates a non-network error.
+      // Put this work in a failed queue to be handled later
+      _failedWork.push_back(std::move(requestWork));
+      continue;
     }
+
+    // Add new entry
+    assert(
+        requestWork.responsesByUrl.find(requestWork.requestUrl) ==
+        requestWork.responsesByUrl.end());
+    ResponseData& responseData =
+        requestWork.responsesByUrl[requestWork.requestUrl];
+
+    // Copy our results
+    size_t byteCount = responseBytes.size();
+    if (byteCount > 0) {
+      responseData.bytes.resize(byteCount);
+      std::copy(
+          responseBytes.begin(),
+          responseBytes.end(),
+          responseData.bytes.begin());
+    }
+    responseData.statusCode = responseStatusCode;
+
     // Put in done requests
-    _doneWork.push_back(std::move(doneWork));
+    _doneWork.push_back(std::move(requestWork));
   }
 
   // Remove it
@@ -1915,24 +1955,19 @@ void RequestDispatcher::onRequestFinished(
 }
 
 void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
-  //SPDLOG_LOGGER_INFO(_pLogger, "Send network request: {}", request.requestUrl);
-
-  // TODO. This uses the externals asset accessor (unreal, gunzip, etc)
-  // Use one that only fetches from SQLite cache and network
   this->_pAssetAccessor
       ->get(this->_asyncSystem, request.requestUrl, this->_requestHeaders)
       .thenImmediately([_this = this, _request = request](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
         // Add payload to this work
         const IAssetResponse* pResponse = pCompletedRequest->response();
-
-        if (pResponse) {
-          gsl::span<const std::byte> data = pResponse->data();
-          _this->onRequestFinished(pResponse->statusCode(), &data, _request);
-        } else {
-          // TODO, how will the consumer of the done request know the error?
-          _this->onRequestFinished(NULL, 0, _request);
-        }
+        if (pResponse)
+          _this->onRequestFinished(
+              pResponse->statusCode(),
+              pResponse->data(),
+              _request);
+        else
+          _this->onRequestFinished(0, gsl::span<const std::byte>(), _request);
 
         _this->transitionQueuedWork();
 
@@ -1971,7 +2006,8 @@ size_t RequestDispatcher::GetPendingRequestsCount() {
 
 size_t RequestDispatcher::GetTotalPendingCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  return _queuedWork.size() + _inFlightWork.size() + _doneWork.size();
+  return _queuedWork.size() + _inFlightWork.size() + _doneWork.size() +
+         _failedWork.size();
 }
 
 void RequestDispatcher::GetRequestsStats(
@@ -1981,28 +2017,37 @@ void RequestDispatcher::GetRequestsStats(
   std::lock_guard<std::mutex> lock(_requestsLock);
   queued = _queuedWork.size();
   inFlight = _inFlightWork.size();
-  done = _doneWork.size();
+  done = _doneWork.size() + _failedWork.size();
 }
 
 void RequestDispatcher::TakeCompletedWork(
     size_t maxCount,
-    std::vector<TileLoadWork>& out) {
+    std::vector<TileLoadWork>& outCompleted,
+    std::vector<TileLoadWork>& outFailed) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  size_t count = _doneWork.size();
-  if (count == 0)
+
+  // All failed requests go out
+  if (_failedWork.empty()) {
+    outFailed = _failedWork;
+    _failedWork.clear();
+  }
+
+  // Return completed work, up to the count specified
+  size_t doneCount = _doneWork.size();
+  if (doneCount == 0)
     return;
 
-  size_t numberToTake = std::min(count, maxCount);
+  size_t numberToTake = std::min(doneCount, maxCount);
 
   // If not taking everything, sort so more important work goes first
-  if (numberToTake < count)
+  if (numberToTake < doneCount)
     std::sort(_doneWork.begin(), _doneWork.end());
 
   // Move work to output
   for (auto workIt = _doneWork.begin();
        workIt != _doneWork.begin() + numberToTake;
        ++workIt)
-    out.push_back(std::move(*workIt));
+    outCompleted.push_back(std::move(*workIt));
 
   // Remove these entries from the source
   _doneWork.erase(_doneWork.begin(), _doneWork.begin() + numberToTake);

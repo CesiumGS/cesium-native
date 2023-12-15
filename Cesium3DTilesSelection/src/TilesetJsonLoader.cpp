@@ -849,20 +849,20 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& asyncSystem = loadInput.asyncSystem;
   const auto& pLogger = loadInput.pLogger;
   const auto& contentOptions = loadInput.contentOptions;
-  const auto& responseDataByUrl = loadInput.responseDataByUrl;
+  const auto& responsesByUrl = loadInput.responsesByUrl;
 
   return asyncSystem.runInWorkerThread(
       [pLogger,
        contentOptions,
-       responseDataByUrl,
+       responsesByUrl,
        tileTransform,
        tileRefine,
        upAxis = _upAxis,
        externalContentInitializer =
            std::move(externalContentInitializer)]() mutable {
-        assert(responseDataByUrl.size() == 1);
-        const std::string& tileUrl = responseDataByUrl.begin()->first;
-        const ResponseData& responseData = responseDataByUrl.begin()->second;
+        assert(responsesByUrl.size() == 1);
+        const std::string& tileUrl = responsesByUrl.begin()->first;
+        const ResponseData& responseData = responsesByUrl.begin()->second;
         const std::vector<std::byte>& responseBytes = responseData.bytes;
 
         // find gltf converter

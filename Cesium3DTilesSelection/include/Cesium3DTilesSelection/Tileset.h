@@ -57,7 +57,7 @@ struct TileLoadWork {
   TileLoadPriorityGroup group;
   double priority;
 
-  ResponseDataMap responseDataByUrl;
+  ResponseDataMap responsesByUrl;
 
   bool operator<(const TileLoadWork& rhs) const noexcept {
     if (this->group == rhs.group)
@@ -87,7 +87,10 @@ public:
 
   void PassThroughWork(const std::vector<TileLoadWork>& work);
 
-  void TakeCompletedWork(size_t maxCount, std::vector<TileLoadWork>& out);
+  void TakeCompletedWork(
+      size_t maxCount,
+      std::vector<TileLoadWork>& outCompleted,
+      std::vector<TileLoadWork>& outFailed);
 
   size_t GetPendingRequestsCount();
   size_t GetTotalPendingCount();
@@ -101,7 +104,7 @@ private:
 
   void onRequestFinished(
       uint16_t responseStatusCode,
-      const gsl::span<const std::byte>* pResponseData,
+      gsl::span<const std::byte> responseBytes,
       const TileLoadWork& request);
 
   // Thread safe members
@@ -110,6 +113,7 @@ private:
   std::vector<TileLoadWork> _queuedWork;
   std::map<std::string, std::vector<TileLoadWork>> _inFlightWork;
   std::vector<TileLoadWork> _doneWork;
+  std::vector<TileLoadWork> _failedWork;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
@@ -590,6 +594,8 @@ private:
       size_t maxSimultaneousRequests);
 
   void markWorkTilesAsLoading(std::vector<TileLoadWork>& workVector);
+
+  void handleFailedRequestWork(std::vector<TileLoadWork>& workVector);
 
   void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 

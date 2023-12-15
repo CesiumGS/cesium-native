@@ -717,7 +717,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& asyncSystem = loadInput.asyncSystem;
   const auto& pLogger = loadInput.pLogger;
   const auto& contentOptions = loadInput.contentOptions;
-  const auto& responseDataByUrl = loadInput.responseDataByUrl;
+  const auto& responsesByUrl = loadInput.responsesByUrl;
 
   // This type of loader should never have child loaders.
   assert(tile.getLoader() == this);
@@ -769,8 +769,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       if (!isSubtreeLoadedInLayer(*pQuadtreeTileID, *it)) {
 
         std::string url = resolveTileUrl(*pQuadtreeTileID, *it);
-        ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(url);
-        assert(foundIt != responseDataByUrl.end());
+        ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
+        assert(foundIt != responsesByUrl.end());
 
         // TODO, put availability request logic in the discover work phases
         // Also, don't do the loadTileContent part until all the requests are
@@ -796,8 +796,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   std::string url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 
-  ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(url);
-  assert(foundIt != responseDataByUrl.end());
+  ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
+  assert(foundIt != responsesByUrl.end());
 
   Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
       pLogger,

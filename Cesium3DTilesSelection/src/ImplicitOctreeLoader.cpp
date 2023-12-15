@@ -210,7 +210,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& asyncSystem = loadInput.asyncSystem;
   const auto& pLogger = loadInput.pLogger;
   const auto& contentOptions = loadInput.contentOptions;
-  const auto& responseDataByUrl = loadInput.responseDataByUrl;
+  const auto& responsesByUrl = loadInput.responsesByUrl;
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
@@ -247,9 +247,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     std::string subtreeUrl =
         resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
 
-    ResponseDataMap::const_iterator foundIt =
-        responseDataByUrl.find(subtreeUrl);
-    assert(foundIt != responseDataByUrl.end());
+    ResponseDataMap::const_iterator foundIt = responsesByUrl.find(subtreeUrl);
+    assert(foundIt != responsesByUrl.end());
 
     return SubtreeAvailability::loadSubtree(
                3,
@@ -287,8 +286,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   std::string tileUrl =
       resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pOctreeID);
 
-  ResponseDataMap::const_iterator foundIt = responseDataByUrl.find(tileUrl);
-  assert(foundIt != responseDataByUrl.end());
+  ResponseDataMap::const_iterator foundIt = responsesByUrl.find(tileUrl);
+  assert(foundIt != responsesByUrl.end());
 
   return requestTileContent(
       pLogger,

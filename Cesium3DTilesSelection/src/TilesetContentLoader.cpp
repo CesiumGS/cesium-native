@@ -6,12 +6,12 @@ TileLoadInput::TileLoadInput(
     const TilesetContentOptions& contentOptions_,
     const CesiumAsync::AsyncSystem& asyncSystem_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const ResponseDataMap& responseDataByUrl_)
+    const ResponseDataMap& responsesByUrl_)
     : tile{tile_},
       contentOptions{contentOptions_},
       asyncSystem{asyncSystem_},
       pLogger{pLogger_},
-      responseDataByUrl{responseDataByUrl_} {}
+      responsesByUrl{responsesByUrl_} {}
 
 TileLoadResult TileLoadResult::createFailedResult(
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {

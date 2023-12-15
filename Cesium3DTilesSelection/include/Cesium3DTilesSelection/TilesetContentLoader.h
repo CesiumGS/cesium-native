@@ -50,7 +50,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const ResponseDataMap& responseDataByUrl);
+      const ResponseDataMap& responsesByUrl);
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -72,7 +72,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    */
   const std::shared_ptr<spdlog::logger>& pLogger;
 
-  const ResponseDataMap& responseDataByUrl;
+  const ResponseDataMap& responsesByUrl;
 };
 
 /**
