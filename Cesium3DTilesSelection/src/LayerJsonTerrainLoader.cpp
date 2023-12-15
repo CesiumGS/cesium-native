@@ -773,9 +773,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         assert(foundIt != responsesByUrl.end());
 
         // TODO, put availability request logic in the discover work phases
-        // Also, don't do the loadTileContent part until all the requests are
-        // complete
-        // TODO, Copy or xfer ownership of bytres, std::move? could be large
+        // Also, don't do the loadTileContent part until all requests done
 
         availabilityRequests.emplace_back(loadTileAvailability(
             pLogger,
