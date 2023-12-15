@@ -474,7 +474,7 @@ private:
       std::vector<TileLoadRequest>& requests,
       std::vector<TileLoadWork>& outRequestWork);
 
-  void addWorkToRequestDispatcher(
+  void addWorkToManager(
       std::vector<TileLoadWork>& requestWork,
       size_t maxSimultaneousRequests);
 

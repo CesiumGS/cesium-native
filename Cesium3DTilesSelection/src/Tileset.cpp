@@ -1458,7 +1458,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
   // Add all content requests to the dispatcher
   size_t maxTileLoads =
       static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
-  addWorkToRequestDispatcher(newRequestWork, maxTileLoads);
+  addWorkToManager(newRequestWork, maxTileLoads);
 
   // Calculate how much processing work we can do right now
   int32_t numberOfTilesLoading =
@@ -1652,7 +1652,7 @@ void Tileset::discoverLoadWork(
   }
 }
 
-void Tileset::addWorkToRequestDispatcher(
+void Tileset::addWorkToManager(
     std::vector<TileLoadWork>& requestWork,
     size_t maxSimultaneousRequests) {
   if (requestWork.empty())
