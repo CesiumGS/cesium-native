@@ -46,7 +46,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _requestDispatcher(
+      _tileWorkManager(
           externals.asyncSystem,
           externals.pAssetAccessor,
           externals.pLogger),
@@ -68,7 +68,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _requestDispatcher(
+      _tileWorkManager(
           externals.asyncSystem,
           externals.pAssetAccessor,
           externals.pLogger),
@@ -90,7 +90,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _requestDispatcher(
+      _tileWorkManager(
           externals.asyncSystem,
           externals.pAssetAccessor,
           externals.pLogger),
@@ -332,7 +332,7 @@ void Tileset::logRequestStats(const std::string& tag) {
   float progress = computeLoadProgress();
   if (progress > 0 && progress < 100) {
     size_t queued, inFlight, done;
-    this->_requestDispatcher.GetRequestsStats(queued, inFlight, done);
+    this->_tileWorkManager.GetRequestsStats(queued, inFlight, done);
 
     SPDLOG_LOGGER_INFO(
         this->_externals.pLogger,
@@ -432,7 +432,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       this->_pTilesetContentManager->getNumberOfRastersLoading();
   result.rastersLoaded =
       this->_pTilesetContentManager->getNumberOfRastersLoaded();
-  result.requestsPending = this->_requestDispatcher.GetTotalPendingCount();
+  result.requestsPending = this->_tileWorkManager.GetTotalPendingCount();
 
   assertViewResults();
 
@@ -1499,10 +1499,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
 
   std::vector<TileLoadWork> completedWork;
   std::vector<TileLoadWork> failedWork;
-  _requestDispatcher.TakeCompletedWork(
-      availableSlots,
-      completedWork,
-      failedWork);
+  _tileWorkManager.TakeCompletedWork(availableSlots, completedWork, failedWork);
   assert(completedWork.size() <= availableSlots);
 
   handleFailedRequestWork(failedWork);
@@ -1703,14 +1700,13 @@ void Tileset::addWorkToRequestDispatcher(
   // so the dispatcher doesn't starve while we wait for a tick
   size_t betweenFrameBuffer = 10;
   size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
-  size_t pendingRequestCount =
-      this->_requestDispatcher.GetPendingRequestsCount();
+  size_t pendingRequestCount = this->_tileWorkManager.GetPendingRequestsCount();
   assert(pendingRequestCount <= maxCountToQueue);
 
   size_t slotsOpen = maxCountToQueue - pendingRequestCount;
   if (slotsOpen == 0) {
     // No request slots open, we can at least insert our no url work
-    _requestDispatcher.PassThroughWork(noUrlWork);
+    _tileWorkManager.PassThroughWork(noUrlWork);
   } else {
     std::vector<TileLoadWork> workToSubmit;
     if (slotsOpen >= urlWork.size()) {
@@ -1733,7 +1729,7 @@ void Tileset::addWorkToRequestDispatcher(
 
     // TODO, assert tile is not already loading? or already post-processing?
 
-    _requestDispatcher.QueueRequestWork(
+    _tileWorkManager.QueueRequestWork(
         workToSubmit,
         noUrlWork,
         this->_pTilesetContentManager->getRequestHeaders(),
@@ -1834,7 +1830,7 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
   }
 }
 
-RequestDispatcher::~RequestDispatcher() noexcept {
+TileWorkManager::~TileWorkManager() noexcept {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
     _exitSignaled = true;
@@ -1843,7 +1839,7 @@ RequestDispatcher::~RequestDispatcher() noexcept {
   }
 }
 
-void RequestDispatcher::QueueRequestWork(
+void TileWorkManager::QueueRequestWork(
     const std::vector<TileLoadWork>& work,
     const std::vector<TileLoadWork>& passThroughWork,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
@@ -1869,14 +1865,14 @@ void RequestDispatcher::QueueRequestWork(
   transitionQueuedWork();
 }
 
-void RequestDispatcher::PassThroughWork(const std::vector<TileLoadWork>& work) {
+void TileWorkManager::PassThroughWork(const std::vector<TileLoadWork>& work) {
   if (work.empty())
     return;
   std::lock_guard<std::mutex> lock(_requestsLock);
   _doneWork.insert(_doneWork.end(), work.begin(), work.end());
 }
 
-void RequestDispatcher::onRequestFinished(
+void TileWorkManager::onRequestFinished(
     uint16_t responseStatusCode,
     gsl::span<const std::byte> responseBytes,
     const TileLoadWork& request) {
@@ -1928,7 +1924,7 @@ void RequestDispatcher::onRequestFinished(
   _inFlightWork.erase(foundIt);
 }
 
-void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
+void TileWorkManager::dispatchRequest(TileLoadWork& request) {
   this->_pAssetAccessor
       ->get(this->_asyncSystem, request.requestUrl, this->_requestHeaders)
       .thenImmediately([_this = this, _request = request](
@@ -1949,7 +1945,7 @@ void RequestDispatcher::dispatchRequest(TileLoadWork& request) {
       });
 }
 
-void RequestDispatcher::stageQueuedWork(
+void TileWorkManager::stageQueuedWork(
     std::vector<TileLoadWork>& workNeedingDispatch) {
   // Take from back of queue (highest priority).
   assert(_queuedWork.size() > 0);
@@ -1973,18 +1969,18 @@ void RequestDispatcher::stageQueuedWork(
   }
 }
 
-size_t RequestDispatcher::GetPendingRequestsCount() {
+size_t TileWorkManager::GetPendingRequestsCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
   return _queuedWork.size() + _inFlightWork.size();
 }
 
-size_t RequestDispatcher::GetTotalPendingCount() {
+size_t TileWorkManager::GetTotalPendingCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
   return _queuedWork.size() + _inFlightWork.size() + _doneWork.size() +
          _failedWork.size();
 }
 
-void RequestDispatcher::GetRequestsStats(
+void TileWorkManager::GetRequestsStats(
     size_t& queued,
     size_t& inFlight,
     size_t& done) {
@@ -1994,7 +1990,7 @@ void RequestDispatcher::GetRequestsStats(
   done = _doneWork.size() + _failedWork.size();
 }
 
-void RequestDispatcher::TakeCompletedWork(
+void TileWorkManager::TakeCompletedWork(
     size_t maxCount,
     std::vector<TileLoadWork>& outCompleted,
     std::vector<TileLoadWork>& outFailed) {
@@ -2027,7 +2023,7 @@ void RequestDispatcher::TakeCompletedWork(
   _doneWork.erase(_doneWork.begin(), _doneWork.begin() + numberToTake);
 }
 
-void RequestDispatcher::transitionQueuedWork() {
+void TileWorkManager::transitionQueuedWork() {
   std::vector<TileLoadWork> workNeedingDispatch;
   {
     std::lock_guard<std::mutex> lock(_requestsLock);

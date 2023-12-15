@@ -67,17 +67,17 @@ struct TileLoadWork {
   }
 };
 
-class RequestDispatcher {
+class TileWorkManager {
 
 public:
-  RequestDispatcher(
+  TileWorkManager(
       CesiumAsync::AsyncSystem asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
       std::shared_ptr<spdlog::logger> pLogger)
       : _asyncSystem(asyncSystem),
         _pAssetAccessor(pAssetAccessor),
         _pLogger(pLogger) {}
-  ~RequestDispatcher() noexcept;
+  ~TileWorkManager() noexcept;
 
   void QueueRequestWork(
       const std::vector<TileLoadWork>& work,
@@ -575,7 +575,7 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  RequestDispatcher _requestDispatcher;
+  TileWorkManager _tileWorkManager;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
