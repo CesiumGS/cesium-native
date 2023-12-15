@@ -895,23 +895,28 @@ void TilesetContentManager::parseTileWork(
   const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
       std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&pTile->getTileID());
   if (pUpsampleID) {
-    // We can't upsample this tile until its parent tile is done loading.
+    // We can't upsample this tile if no parent
     Tile* pParentTile = pTile->getParent();
-    if (!pParentTile) {
-      // we cannot upsample this tile if it doesn't have parent
+    if (!pParentTile)
       return;
-    } else {
-      if (pParentTile->getState() != TileLoadState::Done) {
-        // Parent isn't loaded. Get the tile work required for it first
-        parseTileWork(
-            pParentTile,
-            depthIndex + 1,
-            maximumScreenSpaceError,
-            outWork);
-      }
+
+    TileLoadState parentState = pParentTile->getState();
+
+    // If not currently loading, queue some work
+    if (parentState < TileLoadState::ContentLoading) {
+      parseTileWork(
+          pParentTile,
+          depthIndex + 1,
+          maximumScreenSpaceError,
+          outWork);
+      return;
     }
-  } else {
-    // No upsample ID, just add this tile
+
+    // We can't proceed until our parent is done. Wait another tick
+    if (parentState != TileLoadState::Done)
+      return;
+
+    // Parent is done, continue adding work for this tile
   }
 
   // Parse any content fetch work

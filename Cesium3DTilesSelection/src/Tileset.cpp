@@ -1475,12 +1475,6 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
-  // TODO
-  // -) Check on Unreal asset accessor (or leave it and make sure there is no
-  // network activity
-  // -) Modify doTileContentWork to not do CachingAccessor, or leave it
-  // -) go over TODOS
-
   std::vector<TileLoadWork> newRequestWork;
   discoverLoadWork(this->_workerThreadLoadQueue, newRequestWork);
 
@@ -1685,22 +1679,6 @@ void Tileset::discoverLoadWork(
 
       outRequestWork.push_back(newWorkUnit);
     }
-
-    // Finalize the parent if necessary, otherwise it may never reach the
-    // Done state. Also double check that we have render content in ensure
-    // we don't assert / crash in finishLoading. The latter will only ever
-    // be a problem in a pathological tileset with a non-renderable leaf
-    // tile, but that sort of thing does happen.
-    /* TODO, is this the best place for this?
-    if (std::holds_alternative<Tile*>(work.workRef)) {
-      Tile* pTile = std::get<Tile*>(work.workRef);
-      assert(pTile);
-
-      if (pTile->getState() == TileLoadState::ContentLoaded &&
-      pTile->isRenderContent()) _pTilesetContentManager->finishLoading(*pTile,
-      _options);
-    }
-    */
   }
 }
 
