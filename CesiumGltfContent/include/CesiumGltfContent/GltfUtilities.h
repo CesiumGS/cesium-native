@@ -141,7 +141,12 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    */
   static std::optional<glm::dvec3> intersectRayGltfModel(
       const CesiumGeometry::Ray& ray,
-      CesiumGltf::Model& gltf,
+      const CesiumGltf::Model& gltf,
+      bool cullBackFaces = true);
+
+  static double intersectRayGltfModelParametric(
+      const CesiumGeometry::Ray& ray,
+      const CesiumGltf::Model& gltf,
       bool cullBackFaces = true);
 };
 } // namespace CesiumGltfContent

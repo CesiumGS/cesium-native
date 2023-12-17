@@ -10,6 +10,9 @@
 namespace CesiumGeometry {
 class Ray;
 class Plane;
+struct AxisAlignedBox;
+class OrientedBoundingBox;
+class BoundingSphere;
 
 /**
  * @brief Functions for computing the intersection between geometries such as
@@ -36,7 +39,8 @@ public:
    * @param p1 The second vertex of the triangle.
    * @param p2 The third vertex of the triangle.
    * @param cullBackFaces Whether to cull back faces or not.
-   * @return The hit point, if any.
+   * @return The point of intersection, or `std::nullopt` if there is no
+   * intersection.
    */
   static std::optional<glm::dvec3> rayTriangle(
       const Ray& ray,
@@ -45,26 +49,53 @@ public:
       const glm::dvec3& p2,
       bool cullBackFaces = false);
 
-  /**
-   * @brief Tests if a ray hits a triangle and outputs the distance to the hit
-   * point, if any.
-   *
-   * @param ray The ray.
-   * @param p0 The first vertex of the triangle.
-   * @param p1 The second vertex of the triangle.
-   * @param p2 The third vertex of the triangle.
-   * @param cullBackFaces Whether to cull back faces or not.
-   * @param[out] t The distance from the ray origin to the intersection point,
-   * if any.
-   * @return Whether the ray intersects the triangle.
-   */
-  static bool rayTriangleParametric(
+  static double rayTriangleParametric(
       const Ray& ray,
       const glm::dvec3& p0,
       const glm::dvec3& p1,
       const glm::dvec3& p2,
-      double& t,
       bool cullBackFaces = false);
+
+  /**
+   * @brief Computes the intersection of a ray and an axis aligned bounding box.
+   *
+   * @param ray The ray.
+   * @param aabb The axis aligned bounding box.
+   * @return The point of intersection, or `std::nullopt` if there is no
+   * intersection.
+   */
+  static std::optional<glm::dvec3>
+  rayAABB(const Ray& ray, const AxisAlignedBox& aabb);
+
+  static double rayAABBParametric(const Ray& ray, const AxisAlignedBox& aabb);
+
+  /**
+   * @brief Computes the intersection of a ray and an oriented bounding box.
+   *
+   * @param ray The ray.
+   * @param obb The oriented bounding box.
+   * @return The point of intersection, or `std::nullopt` if there is no
+   * intersection.
+   */
+  static std::optional<glm::dvec3>
+  rayOBB(const Ray& ray, const OrientedBoundingBox& obb);
+
+  static double
+  rayOBBParametric(const Ray& ray, const OrientedBoundingBox& obb);
+
+  /**
+   * @brief Computes the intersection of a ray and a bounding sphere.
+   *
+   * @param ray The ray.
+   * @param sphere The bounding sphere.
+   * @return The point of intersection, or `std::nullopt` if there is no
+   * intersection.
+   */
+  static std::optional<glm::dvec3>
+  raySphere(const Ray& ray, const BoundingSphere& sphere);
+
+  static double
+  raySphereParametric(const Ray& ray, const BoundingSphere& sphere);
 
   /**
    * @brief Determines whether the point is completely inside the triangle.

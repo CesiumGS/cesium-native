@@ -218,9 +218,10 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 namespace {
 template <class T>
 static void intersectRayPrimitive(
-    const CesiumGeometry::Ray& ray,
+    CesiumGeometry::Ray ray,
     const CesiumGltf::Model& model,
     const CesiumGltf::MeshPrimitive& primitive,
+    const glm::dmat4& nodeTransform,
     bool cullBackFaces,
     double& tMin) {
 
@@ -245,49 +246,48 @@ static void intersectRayPrimitive(
   AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
   double tCurr;
 
+  ray = ray.transform(glm::inverse(nodeTransform));
+
   if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
     for (int32_t i = 0; i < indicesView.size(); i += 3) {
-      if (CesiumGeometry::IntersectionTests::rayTriangleParametric(
-              ray,
-              glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
-              glm::dvec3(
-                  positionView[static_cast<int32_t>(indicesView[i + 1])]),
-              glm::dvec3(
-                  positionView[static_cast<int32_t>(indicesView[i + 2])]),
-              tCurr,
-              cullBackFaces)) {
-        if (tCurr < tMin) {
-          tMin = tCurr;
-        }
+      tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+          ray,
+          glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
+          glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 1])]),
+          glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 2])]),
+          cullBackFaces);
+      if (tCurr >= 0 && tCurr < tMin) {
+        tMin = tCurr;
       }
     }
   } else {
     for (int32_t i = 0; i < indicesView.size() - 2; ++i) {
       if (i % 2) {
-        CesiumGeometry::IntersectionTests::rayTriangleParametric(
+        tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
             ray,
             glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
             glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 2])]),
             glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 1])]),
-            tCurr,
             true);
       } else {
-        CesiumGeometry::IntersectionTests::rayTriangleParametric(
+        tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
             ray,
             glm::dvec3(positionView[static_cast<int32_t>(indicesView[i])]),
             glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 1])]),
             glm::dvec3(positionView[static_cast<int32_t>(indicesView[i + 2])]),
-            tCurr,
             true);
+      }
+      if (tCurr >= 0 && tCurr < tMin) {
+        tMin = tCurr;
       }
     }
   }
 }
 } // namespace
 
-std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
+double GltfUtilities::intersectRayGltfModelParametric(
     const CesiumGeometry::Ray& ray,
-    CesiumGltf::Model& gltf,
+    const CesiumGltf::Model& gltf,
     bool cullBackFaces) {
   double t = DBL_MAX;
   gltf.forEachPrimitiveInScene(
@@ -297,7 +297,7 @@ std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
           const CesiumGltf::MeshPrimitive& primitive,
-          const glm::dmat4& /*nodeTransform*/) {
+          const glm::dmat4& nodeTransform) {
         if (primitive.mode < CesiumGltf::MeshPrimitive::Mode::TRIANGLES)
           return;
 
@@ -307,6 +307,7 @@ std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
               ray,
               model,
               primitive,
+              nodeTransform,
               cullBackFaces,
               t);
           break;
@@ -315,6 +316,7 @@ std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
               ray,
               model,
               primitive,
+              nodeTransform,
               cullBackFaces,
               t);
           break;
@@ -323,18 +325,22 @@ std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
               ray,
               model,
               primitive,
+              nodeTransform,
               cullBackFaces,
               t);
           break;
         }
       });
 
-  if (t != DBL_MAX) {
-    return std::make_optional<glm::dvec3>(
-        ray.getOrigin() + t * ray.getDirection());
-  } else {
-    return std::optional<glm::dvec3>();
-  }
+  return t != DBL_MAX ? t : -1;
+}
+
+std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
+    const CesiumGeometry::Ray& ray,
+    const CesiumGltf::Model& gltf,
+    bool cullBackFaces) {
+  return ray.getPointAlongRay(
+      intersectRayGltfModelParametric(ray, gltf, cullBackFaces));
 }
 
 } // namespace CesiumGltfContent

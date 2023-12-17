@@ -37,14 +37,21 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
   GltfReader reader;
   Model cube = *reader
                     .readGltf(readFile(
-                        std::filesystem::path(CesiumGeometry_TEST_DATA_DIR) /
+                        std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
                         "cube.glb"))
                     .model;
-  Model sphere = *reader
-                      .readGltf(readFile(
-                          std::filesystem::path(CesiumGeometry_TEST_DATA_DIR) /
-                          "sphere.glb"))
-                      .model;
+  Model translatedCube =
+      *reader
+           .readGltf(readFile(
+               std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
+               "translated_cube.glb"))
+           .model;
+  Model sphere =
+      *reader
+           .readGltf(readFile(
+               std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
+               "sphere.glb"))
+           .model;
 
   // intersects the top side of the cube
   std::optional<glm::dvec3> intersectionPoint =
@@ -58,7 +65,22 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(2.0, 2.0, 0.0),
           glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
       cube);
-  CHECK(intersectionPoint == glm::dvec3(1.0, 1.0, 0.0));
+  CHECK(glm::all(glm::lessThan(
+      glm::abs(
+          *intersectionPoint -
+          glm::dvec3(1.0, 1.0, 0.0)),
+      glm::dvec3(CesiumUtility::Math::Epsilon6))));
+
+  // works with a translated/rotated gltf
+  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+      Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
+      translatedCube,
+      false);
+  CHECK(glm::all(glm::lessThan(
+      glm::abs(
+          *intersectionPoint -
+          glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2))),
+      glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // avoids backface triangles
   intersectionPoint = GltfUtilities::intersectRayGltfModel(
