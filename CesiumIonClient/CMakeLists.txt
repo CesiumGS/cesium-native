@@ -12,6 +12,7 @@ set_target_properties(CesiumIonClient
     PROPERTIES
         TEST_SOURCES "${CESIUM_ION_CLIENT_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_ION_CLIENT_TEST_HEADERS}"
+        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
 )
 
 set_target_properties(CesiumIonClient
