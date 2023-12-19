@@ -115,7 +115,7 @@ public:
    */
   Tile(
       TilesetContentLoader* pLoader,
-      TileExternalContent externalContent) noexcept;
+      std::unique_ptr<TileExternalContent>&& externalContent) noexcept;
 
   /**
    * @brief Construct a tile with an empty content and a loader that is

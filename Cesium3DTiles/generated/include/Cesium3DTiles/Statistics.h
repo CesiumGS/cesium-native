@@ -19,8 +19,9 @@ struct CESIUM3DTILES_API Statistics final
 
   /**
    * @brief A dictionary, where each key corresponds to a class ID in the
-   * `classes` dictionary and each value is an object containing statistics
-   * about entities that conform to the class.
+   * `classes` dictionary of the metatata schema that was defined for the
+   * tileset that contains these statistics. Each value is an object containing
+   * statistics about entities that conform to the class.
    */
   std::unordered_map<std::string, Cesium3DTiles::ClassStatistics> classes;
 };

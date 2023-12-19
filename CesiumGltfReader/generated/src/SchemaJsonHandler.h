@@ -11,7 +11,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -20,7 +20,7 @@ public:
   using ValueType = CesiumGltf::Schema;
 
   SchemaJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Schema* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
@@ -33,6 +33,7 @@ protected:
 
 private:
   CesiumGltf::Schema* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _id;
   CesiumJsonReader::StringJsonHandler _name;
   CesiumJsonReader::StringJsonHandler _description;
   CesiumJsonReader::StringJsonHandler _version;

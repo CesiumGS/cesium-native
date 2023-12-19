@@ -2,7 +2,6 @@
 
 #include "TilesetContentLoaderResult.h"
 
-#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/Future.h>
@@ -34,8 +33,7 @@ public:
       const TilesetExternals& externals,
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      bool showCreditsOnScreen);
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   static CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
   createLoader(
@@ -44,7 +42,6 @@ public:
       const TilesetContentOptions& contentOptions,
       const std::string& layerJsonUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      bool showCreditsOnScreen,
       const rapidjson::Document& layerJson);
 
   struct Layer {

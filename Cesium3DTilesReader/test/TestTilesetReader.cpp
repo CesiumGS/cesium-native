@@ -1,6 +1,5 @@
-#include "Cesium3DTilesReader/TilesetReader.h"
-
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 
 #include <catch2/catch.hpp>
@@ -34,10 +33,10 @@ TEST_CASE("Reads tileset JSON") {
   tilesetFile /= "tileset.json";
   std::vector<std::byte> data = readFile(tilesetFile);
   Cesium3DTilesReader::TilesetReader reader;
-  Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(data);
-  REQUIRE(result.tileset);
+  auto result = reader.readFromJson(data);
+  REQUIRE(result.value);
 
-  const Cesium3DTiles::Tileset& tileset = result.tileset.value();
+  const Cesium3DTiles::Tileset& tileset = result.value.value();
 
   REQUIRE(tileset.asset.version == "1.0");
   REQUIRE(tileset.geometricError == 494.50961650991815);
@@ -146,13 +145,13 @@ TEST_CASE("Reads extras") {
   )";
 
   Cesium3DTilesReader::TilesetReader reader;
-  Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(
+  auto result = reader.readFromJson(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   REQUIRE(result.errors.empty());
   REQUIRE(result.warnings.empty());
-  REQUIRE(result.tileset.has_value());
+  REQUIRE(result.value.has_value());
 
-  Cesium3DTiles::Tileset& tileset = result.tileset.value();
+  Cesium3DTiles::Tileset& tileset = result.value.value();
 
   auto ait = tileset.extras.find("A");
   REQUIRE(ait != tileset.extras.end());
@@ -224,13 +223,13 @@ TEST_CASE("Reads 3DTILES_content_gltf") {
   )";
 
   Cesium3DTilesReader::TilesetReader reader;
-  Cesium3DTilesReader::TilesetReaderResult result = reader.readTileset(
+  auto result = reader.readFromJson(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   REQUIRE(result.errors.empty());
   REQUIRE(result.warnings.empty());
-  REQUIRE(result.tileset.has_value());
+  REQUIRE(result.value.has_value());
 
-  Cesium3DTiles::Tileset& tileset = result.tileset.value();
+  Cesium3DTiles::Tileset& tileset = result.value.value();
   CHECK(tileset.asset.version == "1.0");
 
   const std::vector<std::string> tilesetExtensionUsed{
@@ -274,17 +273,15 @@ TEST_CASE("Reads custom extension") {
   )";
 
   Cesium3DTilesReader::TilesetReader reader;
-  Cesium3DTilesReader::TilesetReaderResult withCustomExt = reader.readTileset(
+  auto withCustomExt = reader.readFromJson(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   REQUIRE(withCustomExt.errors.empty());
-  REQUIRE(withCustomExt.tileset.has_value());
+  REQUIRE(withCustomExt.value.has_value());
 
-  REQUIRE(withCustomExt.tileset->extensions.size() == 2);
+  REQUIRE(withCustomExt.value->extensions.size() == 2);
 
-  CesiumUtility::JsonValue* pA =
-      withCustomExt.tileset->getGenericExtension("A");
-  CesiumUtility::JsonValue* pB =
-      withCustomExt.tileset->getGenericExtension("B");
+  CesiumUtility::JsonValue* pA = withCustomExt.value->getGenericExtension("A");
+  CesiumUtility::JsonValue* pB = withCustomExt.value->getGenericExtension("B");
   REQUIRE(pA != nullptr);
   REQUIRE(pB != nullptr);
 
@@ -296,17 +293,98 @@ TEST_CASE("Reads custom extension") {
       pB->getValuePtrForKey("another")->getStringOrDefault("") == "Goodbye");
 
   // Repeat test but this time the extension should be skipped.
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "A",
       CesiumJsonReader::ExtensionState::Disabled);
-  reader.getExtensions().setExtensionState(
+  reader.getOptions().setExtensionState(
       "B",
       CesiumJsonReader::ExtensionState::Disabled);
 
-  Cesium3DTilesReader::TilesetReaderResult withoutCustomExt =
-      reader.readTileset(
-          gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  auto withoutCustomExt = reader.readFromJson(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
-  auto& zeroExtensions = withoutCustomExt.tileset->extensions;
+  auto& zeroExtensions = withoutCustomExt.value->extensions;
   REQUIRE(zeroExtensions.empty());
+}
+
+TEST_CASE("Reads tileset JSON with unknown properties") {
+  using namespace std::string_literals;
+
+  std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
+  tilesetFile /= "tileset-with-unsupported-properties.json";
+  std::vector<std::byte> data = readFile(tilesetFile);
+  Cesium3DTilesReader::TilesetReader reader;
+  auto result = reader.readFromJson(data);
+  CHECK(result.errors.empty());
+  CHECK(result.warnings.empty());
+  REQUIRE(result.value);
+
+  const CesiumUtility::JsonValue::Object& unknownProperties =
+      result.value->asset.unknownProperties;
+
+  auto itString = unknownProperties.find("someString");
+  REQUIRE(itString != unknownProperties.end());
+  REQUIRE(itString->second.isString());
+  REQUIRE(itString->second.getString() == "A");
+
+  auto itDouble = unknownProperties.find("someDouble");
+  REQUIRE(itDouble != unknownProperties.end());
+  REQUIRE(itDouble->second.isDouble());
+  REQUIRE(itDouble->second.getDouble() == 2.1);
+
+  auto itInt = unknownProperties.find("someInt");
+  REQUIRE(itInt != unknownProperties.end());
+  REQUIRE(itInt->second.isUint64());
+  REQUIRE(itInt->second.getUint64() == 5);
+
+  auto itSignedInt = unknownProperties.find("someSignedInt");
+  REQUIRE(itSignedInt != unknownProperties.end());
+  REQUIRE(itSignedInt->second.isInt64());
+  REQUIRE(itSignedInt->second.getInt64() == -5);
+
+  auto itBool = unknownProperties.find("someBool");
+  REQUIRE(itBool != unknownProperties.end());
+  REQUIRE(itBool->second.isBool());
+  REQUIRE(itBool->second.getBool() == true);
+
+  auto itArray = unknownProperties.find("someArray");
+  REQUIRE(itArray != unknownProperties.end());
+  REQUIRE(itArray->second.isArray());
+  const CesiumUtility::JsonValue::Array& array = itArray->second.getArray();
+  REQUIRE(array.size() == 1);
+  REQUIRE(array[0].isString());
+  REQUIRE(array[0].getString() == "hi");
+
+  auto itObject = unknownProperties.find("someObject");
+  REQUIRE(itObject != unknownProperties.end());
+  REQUIRE(itObject->second.isObject());
+  const CesiumUtility::JsonValue::Object& o = itObject->second.getObject();
+  REQUIRE(o.size() == 1);
+  auto itObjectValue = o.find("value");
+  REQUIRE(itObjectValue != o.end());
+  REQUIRE(itObjectValue->second.isString());
+  REQUIRE(itObjectValue->second.getString() == "test");
+
+  auto itNull = unknownProperties.find("someNull");
+  REQUIRE(itNull != unknownProperties.end());
+  REQUIRE(itNull->second.isNull());
+}
+
+TEST_CASE("Reads tileset JSON with unknown properties and ignores them when "
+          "requested") {
+  using namespace std::string_literals;
+
+  std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
+  tilesetFile /= "tileset-with-unsupported-properties.json";
+  std::vector<std::byte> data = readFile(tilesetFile);
+  Cesium3DTilesReader::TilesetReader reader;
+  reader.getOptions().setCaptureUnknownProperties(false);
+  auto result = reader.readFromJson(data);
+  CHECK(result.errors.empty());
+  CHECK(result.warnings.empty());
+  REQUIRE(result.value);
+
+  const CesiumUtility::JsonValue::Object& unknownProperties =
+      result.value->asset.unknownProperties;
+  CHECK(unknownProperties.empty());
 }

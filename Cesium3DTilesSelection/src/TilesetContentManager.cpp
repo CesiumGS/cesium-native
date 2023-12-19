@@ -5,14 +5,15 @@
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesSelection/GltfUtilities.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterOverlay.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
-#include <Cesium3DTilesSelection/RasterOverlayTileProvider.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -20,6 +21,10 @@
 #include <spdlog/logger.h>
 
 #include <chrono>
+
+using namespace CesiumGltfContent;
+using namespace CesiumRasterOverlays;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -37,8 +42,9 @@ struct ContentKindSetter {
     tileContent.setContentKind(content);
   }
 
-  void operator()(TileExternalContent content) {
-    tileContent.setContentKind(content);
+  void operator()(TileExternalContent&& content) {
+    tileContent.setContentKind(
+        std::make_unique<TileExternalContent>(std::move(content)));
   }
 
   void operator()(CesiumGltf::Model&& model) {
@@ -372,12 +378,15 @@ void calcRasterOverlayDetailsInWorkerThread(
 
   // generate the overlay details from the rest of projections and merge it with
   // the existing one
-  auto overlayDetails = GltfUtilities::createRasterOverlayTextureCoordinates(
-      model,
-      tileLoadInfo.tileTransform,
-      firstRasterOverlayTexCoord,
-      pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
-      std::move(projections));
+  auto overlayDetails =
+      RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
+          model,
+          tileLoadInfo.tileTransform,
+          pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
+          std::move(projections),
+          false,
+          "_CESIUMOVERLAY_",
+          firstRasterOverlayTexCoord);
 
   if (pRegion && overlayDetails) {
     // If the original bounding region was wrong, report it.
@@ -598,7 +607,12 @@ TilesetContentManager::TilesetContentManager(
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()} {}
+          this->_destructionCompletePromise.getFuture().share()},
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()} {
+  this->_rootTileAvailablePromise.resolve();
+}
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
@@ -622,7 +636,10 @@ TilesetContentManager::TilesetContentManager(
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()} {
+          this->_destructionCompletePromise.getFuture().share()},
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()} {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -634,8 +651,7 @@ TilesetContentManager::TilesetContentManager(
             [pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
-             contentOptions = tilesetOptions.contentOptions,
-             showCreditsOnScreen = tilesetOptions.showCreditsOnScreen](
+             contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
               // Check if request is successful
@@ -702,7 +718,6 @@ TilesetContentManager::TilesetContentManager(
                              contentOptions,
                              url,
                              flatHeaders,
-                             showCreditsOnScreen,
                              tilesetJson)
                       .thenImmediately(
                           [](TilesetContentLoaderResult<TilesetContentLoader>&&
@@ -722,13 +737,16 @@ TilesetContentManager::TilesetContentManager(
                   TilesetLoadType::TilesetJson,
                   errorCallback,
                   std::move(result));
+              thiz->_rootTileAvailablePromise.resolve();
             })
         .catchInMainThread([thiz](std::exception&& e) {
           thiz->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
               thiz->_externals.pLogger,
-              "An unexpected error occurs when loading tile: {}",
+              "An unexpected error occurred when loading tile: {}",
               e.what());
+          thiz->_rootTileAvailablePromise.reject(
+              std::runtime_error("Root tile failed to load."));
         });
   }
 }
@@ -757,7 +775,10 @@ TilesetContentManager::TilesetContentManager(
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()} {
+          this->_destructionCompletePromise.getFuture().share()},
+      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
+      _rootTileAvailableFuture{
+          this->_rootTileAvailablePromise.getFuture().share()} {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -794,13 +815,16 @@ TilesetContentManager::TilesetContentManager(
                   TilesetLoadType::CesiumIon,
                   errorCallback,
                   std::move(result));
+              thiz->_rootTileAvailablePromise.resolve();
             })
         .catchInMainThread([thiz](std::exception&& e) {
           thiz->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
               thiz->_externals.pLogger,
-              "An unexpected error occurs when loading tile: {}",
+              "An unexpected error occurred when loading tile: {}",
               e.what());
+          thiz->_rootTileAvailablePromise.reject(
+              std::runtime_error("Root tile failed to load."));
         });
   }
 }
@@ -808,6 +832,11 @@ TilesetContentManager::TilesetContentManager(
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteFuture;
+}
+
+CesiumAsync::SharedFuture<void>&
+TilesetContentManager::getRootTileAvailableEvent() {
+  return this->_rootTileAvailableFuture;
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
@@ -857,6 +886,16 @@ void TilesetContentManager::loadTileContent(
     if (pParentTile) {
       if (pParentTile->getState() != TileLoadState::Done) {
         loadTileContent(*pParentTile, tilesetOptions);
+
+        // Finalize the parent if necessary, otherwise it may never reach the
+        // Done state. Also double check that we have render content in ensure
+        // we don't assert / crash in finishLoading. The latter will only ever
+        // be a problem in a pathological tileset with a non-renderable leaf
+        // tile, but that sort of thing does happen.
+        if (pParentTile->getState() == TileLoadState::ContentLoaded &&
+            pParentTile->isRenderContent()) {
+          finishLoading(*pParentTile, tilesetOptions);
+        }
         return;
       }
     } else {
@@ -949,14 +988,13 @@ void TilesetContentManager::loadTileContent(
 
 void TilesetContentManager::updateTileContent(
     Tile& tile,
-    double priority,
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::Unloading) {
     unloadTileContent(tile);
   }
 
   if (tile.getState() == TileLoadState::ContentLoaded) {
-    updateContentLoadedState(tile, priority, tilesetOptions);
+    updateContentLoadedState(tile, tilesetOptions);
   }
 
   if (tile.getState() == TileLoadState::Done) {
@@ -1151,10 +1189,22 @@ void TilesetContentManager::finishLoading(
   assert(pRenderContent != nullptr);
 
   // add copyright
-  pRenderContent->setCredits(GltfUtilities::parseGltfCopyright(
-      *this->_externals.pCreditSystem,
-      pRenderContent->getModel(),
-      tilesetOptions.showCreditsOnScreen));
+  CreditSystem* pCreditSystem = this->_externals.pCreditSystem.get();
+  if (pCreditSystem) {
+    std::vector<std::string_view> creditStrings =
+        GltfUtilities::parseGltfCopyright(pRenderContent->getModel());
+
+    std::vector<Credit> credits;
+    credits.reserve(creditStrings.size());
+
+    for (const std::string_view& creditString : creditStrings) {
+      credits.emplace_back(pCreditSystem->createCredit(
+          std::string(creditString),
+          tilesetOptions.showCreditsOnScreen));
+    }
+
+    pRenderContent->setCredits(credits);
+  }
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   void* pMainThreadRenderResources =
@@ -1167,8 +1217,7 @@ void TilesetContentManager::finishLoading(
 
   // This allows the raster tile to be updated and children to be created, if
   // necessary.
-  // Priority doesn't matter here since loading is complete.
-  updateTileContent(tile, 0.0, tilesetOptions);
+  updateTileContent(tile, tilesetOptions);
 }
 
 void TilesetContentManager::setTileContent(
@@ -1209,7 +1258,6 @@ void TilesetContentManager::setTileContent(
 
 void TilesetContentManager::updateContentLoadedState(
     Tile& tile,
-    double /*priority*/,
     const TilesetOptions& tilesetOptions) {
   // initialize this tile content first
   TileContent& content = tile.getContent();
@@ -1418,6 +1466,15 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     const std::function<void(const TilesetLoadFailureDetails&)>&
         loadErrorCallback,
     TilesetContentLoaderResult<TilesetContentLoaderType>&& result) {
+
+  result.errors.logError(
+      this->_externals.pLogger,
+      "Errors when loading tileset");
+
+  result.errors.logWarning(
+      this->_externals.pLogger,
+      "Warnings when loading tileset");
+
   if (result.errors) {
     if (loadErrorCallback) {
       loadErrorCallback(TilesetLoadFailureDetails{
@@ -1425,16 +1482,10 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
           type,
           result.statusCode,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
-    } else {
-      result.errors.logError(
-          this->_externals.pLogger,
-          "Errors when loading tileset");
-
-      result.errors.logWarning(
-          this->_externals.pLogger,
-          "Warnings when loading tileset");
     }
-  } else {
+  }
+
+  if (!result.errors) {
     this->_tilesetCredits.reserve(
         this->_tilesetCredits.size() + result.credits.size());
     for (const auto& creditResult : result.credits) {

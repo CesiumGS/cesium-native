@@ -1,20 +1,20 @@
-#include "SimpleAssetAccessor.h"
-#include "SimpleAssetRequest.h"
-#include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
 #include "TilesetContentManager.h"
-#include "readFile.h"
 
-#include <Cesium3DTilesSelection/DebugColorizeTilesRasterOverlay.h>
-#include <Cesium3DTilesSelection/GltfUtilities.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 
@@ -28,6 +28,8 @@ using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
+using namespace CesiumRasterOverlays;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -181,7 +183,7 @@ CesiumGltf::Model createGlobeGrid(
 } // namespace
 
 TEST_CASE("Test the manager can be initialized with correct loaders") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -219,8 +221,10 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
     // check root
-    const Tile* pRootTile = manager.getRootTile();
-    CHECK(pRootTile);
+    const Tile* pTilesetJson = manager.getRootTile();
+    REQUIRE(pTilesetJson);
+    REQUIRE(pTilesetJson->getChildren().size() == 1);
+    const Tile* pRootTile = &pTilesetJson->getChildren()[0];
     CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
     CHECK(pRootTile->getGeometricError() == 70.0);
     CHECK(pRootTile->getRefine() == TileRefine::Add);
@@ -292,7 +296,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 }
 
 TEST_CASE("Test tile state machine") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -370,7 +374,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoaded -> Done
       // update tile content to move from ContentLoaded -> Done
-      pManager->updateTileContent(tile, 0.0, options);
+      pManager->updateTileContent(tile, options);
       CHECK(tile.getState() == TileLoadState::Done);
       CHECK(tile.getChildren().size() == 1);
       CHECK(tile.getChildren().front().getContent().isEmptyContent());
@@ -471,7 +475,7 @@ TEST_CASE("Test tile state machine") {
 
     // FailedTemporarily -> FailedTemporarily
     // tile is failed temporarily but the loader can still add children to it
-    pManager->updateTileContent(tile, 0.0, options);
+    pManager->updateTileContent(tile, options);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
@@ -546,7 +550,7 @@ TEST_CASE("Test tile state machine") {
 
     // Failed -> Failed
     // tile is failed but the loader can still add children to it
-    pManager->updateTileContent(tile, 0.0, options);
+    pManager->updateTileContent(tile, options);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().size() == 1);
     CHECK(tile.getChildren().front().isEmptyContent());
@@ -646,7 +650,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
 
     // parent moves from ContentLoaded -> Done
-    pManager->updateTileContent(tile, 0.0, options);
+    pManager->updateTileContent(tile, options);
     CHECK(tile.getState() == TileLoadState::Done);
     CHECK(tile.getChildren().size() == 1);
     CHECK(&tile.getChildren().back() == &upsampledTile);
@@ -706,7 +710,7 @@ TEST_CASE("Test tile state machine") {
 }
 
 TEST_CASE("Test the tileset content manager's post processing for gltf") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(

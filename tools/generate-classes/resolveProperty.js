@@ -115,9 +115,9 @@ function resolveProperty(
         NameFormatters.getIncludeFromName(type, namespace),
         ...(makeOptional ? ["<optional>"] : []),
       ],
-      readerType: NameFormatters.getReaderName(type, readerNamespace),
+      readerType: NameFormatters.getJsonHandlerName(type, readerNamespace),
       readerHeaders: [
-        NameFormatters.getReaderIncludeFromName(type, readerNamespace),
+        NameFormatters.getJsonHandlerIncludeFromName(type, readerNamespace),
       ],
       schemas: [schema],
     };
@@ -198,9 +198,9 @@ function resolveProperty(
             NameFormatters.getIncludeFromName(type, namespace),
             ...(makeOptional ? ["<optional>"] : []),
           ],
-          readerType: NameFormatters.getReaderName(type, readerNamespace),
+          readerType: NameFormatters.getJsonHandlerName(type, readerNamespace),
           readerHeaders: [
-            NameFormatters.getReaderIncludeFromName(type, readerNamespace),
+            NameFormatters.getJsonHandlerIncludeFromName(type, readerNamespace),
           ],
           schemas: [itemSchema],
         };

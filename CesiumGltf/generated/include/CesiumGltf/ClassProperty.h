@@ -20,45 +20,33 @@ struct CESIUMGLTF_API ClassProperty final
   static inline constexpr const char* TypeName = "ClassProperty";
 
   /**
-   * @brief Known values for The property type. If `ENUM` is used, then
-   * `enumType` must also be specified. If `ARRAY` is used, then `componentType`
-   * must also be specified. `ARRAY` is a fixed-length array when
-   * `componentCount` is defined, and variable-length otherwise.
+   * @brief Known values for The element type.
    */
   struct Type {
-    inline static const std::string INT8 = "INT8";
+    inline static const std::string SCALAR = "SCALAR";
 
-    inline static const std::string UINT8 = "UINT8";
+    inline static const std::string VEC2 = "VEC2";
 
-    inline static const std::string INT16 = "INT16";
+    inline static const std::string VEC3 = "VEC3";
 
-    inline static const std::string UINT16 = "UINT16";
+    inline static const std::string VEC4 = "VEC4";
 
-    inline static const std::string INT32 = "INT32";
+    inline static const std::string MAT2 = "MAT2";
 
-    inline static const std::string UINT32 = "UINT32";
+    inline static const std::string MAT3 = "MAT3";
 
-    inline static const std::string INT64 = "INT64";
-
-    inline static const std::string UINT64 = "UINT64";
-
-    inline static const std::string FLOAT32 = "FLOAT32";
-
-    inline static const std::string FLOAT64 = "FLOAT64";
-
-    inline static const std::string BOOLEAN = "BOOLEAN";
+    inline static const std::string MAT4 = "MAT4";
 
     inline static const std::string STRING = "STRING";
 
-    inline static const std::string ENUM = "ENUM";
+    inline static const std::string BOOLEAN = "BOOLEAN";
 
-    inline static const std::string ARRAY = "ARRAY";
+    inline static const std::string ENUM = "ENUM";
   };
 
   /**
-   * @brief Known values for When `type` is `ARRAY` this indicates the type of
-   * each component of the array. If `ENUM` is used, then `enumType` must also
-   * be specified.
+   * @brief Known values for The datatype of the element's components. Only
+   * applicable to `SCALAR`, `VECN`, and `MATN` types.
    */
   struct ComponentType {
     inline static const std::string INT8 = "INT8";
@@ -80,12 +68,6 @@ struct CESIUMGLTF_API ClassProperty final
     inline static const std::string FLOAT32 = "FLOAT32";
 
     inline static const std::string FLOAT64 = "FLOAT64";
-
-    inline static const std::string BOOLEAN = "BOOLEAN";
-
-    inline static const std::string STRING = "STRING";
-
-    inline static const std::string ENUM = "ENUM";
   };
 
   /**
@@ -99,25 +81,16 @@ struct CESIUMGLTF_API ClassProperty final
   std::optional<std::string> description;
 
   /**
-   * @brief The property type. If `ENUM` is used, then `enumType` must also be
-   * specified. If `ARRAY` is used, then `componentType` must also be specified.
-   * `ARRAY` is a fixed-length array when `componentCount` is defined, and
-   * variable-length otherwise.
+   * @brief The element type.
    *
    * Known values are defined in {@link Type}.
    *
    */
-  std::string type = Type::INT8;
+  std::string type = Type::SCALAR;
 
   /**
-   * @brief An enum ID as declared in the `enums` dictionary. This value must be
-   * specified when `type` or `componentType` is `ENUM`.
-   */
-  std::optional<std::string> enumType;
-
-  /**
-   * @brief When `type` is `ARRAY` this indicates the type of each component of
-   * the array. If `ENUM` is used, then `enumType` must also be specified.
+   * @brief The datatype of the element's components. Only applicable to
+   * `SCALAR`, `VECN`, and `MATN` types.
    *
    * Known values are defined in {@link ComponentType}.
    *
@@ -125,52 +98,89 @@ struct CESIUMGLTF_API ClassProperty final
   std::optional<std::string> componentType;
 
   /**
-   * @brief The number of components per element for `ARRAY` elements.
+   * @brief Enum ID as declared in the `enums` dictionary. Required when `type`
+   * is `ENUM`.
    */
-  std::optional<int64_t> componentCount;
+  std::optional<std::string> enumType;
 
   /**
-   * @brief Specifies whether integer values are normalized. This applies both
-   * when `type` is an integer type, or when `type` is `ARRAY` with a
-   * `componentType` that is an integer type. For unsigned integer types, values
-   * are normalized between `[0.0, 1.0]`. For signed integer types, values are
-   * normalized between `[-1.0, 1.0]`. For all other types, this property is
-   * ignored.
+   * @brief Whether the property is an array. When `count` is defined the
+   * property is a fixed-length array. Otherwise the property is a
+   * variable-length array.
+   */
+  bool array = false;
+
+  /**
+   * @brief The number of array elements. May only be defined when `array` is
+   * true.
+   */
+  std::optional<int64_t> count;
+
+  /**
+   * @brief Specifies whether integer values are normalized. Only applicable to
+   * `SCALAR`, `VECN`, and `MATN` types with integer component types. For
+   * unsigned integer component types, values are normalized between
+   * `[0.0, 1.0]`. For signed integer component types, values are normalized
+   * between `[-1.0, 1.0]`. For all other component types, this property must be
+   * false.
    */
   bool normalized = false;
 
   /**
-   * @brief Maximum allowed values for property values. Only applicable for
-   * numeric types and fixed-length arrays of numeric types. For numeric types
-   * this is a single number. For fixed-length arrays this is an array with
-   * `componentCount` number of elements. The `normalized` property has no
-   * effect on these values: they always correspond to the integer values.
+   * @brief An offset to apply to property values. Only applicable to `SCALAR`,
+   * `VECN`, and `MATN` types when the component type is `FLOAT32` or `FLOAT64`,
+   * or when the property is `normalized`.
+   */
+  std::optional<CesiumUtility::JsonValue> offset;
+
+  /**
+   * @brief A scale to apply to property values. Only applicable to `SCALAR`,
+   * `VECN`, and `MATN` types when the component type is `FLOAT32` or `FLOAT64`,
+   * or when the property is `normalized`.
+   */
+  std::optional<CesiumUtility::JsonValue> scale;
+
+  /**
+   * @brief Maximum allowed value for the property. Only applicable to `SCALAR`,
+   * `VECN`, and `MATN` types. This is the maximum of all property values, after
+   * the transforms based on the `normalized`, `offset`, and `scale` properties
+   * have been applied.
    */
   std::optional<CesiumUtility::JsonValue> max;
 
   /**
-   * @brief Minimum allowed values for property values. Only applicable for
-   * numeric types and fixed-length arrays of numeric types. For numeric types
-   * this is a single number. For fixed-length arrays this is an array with
-   * `componentCount` number of elements. The `normalized` property has no
-   * effect on these values: they always correspond to the integer values.
+   * @brief Minimum allowed value for the property. Only applicable to `SCALAR`,
+   * `VECN`, and `MATN` types. This is the minimum of all property values, after
+   * the transforms based on the `normalized`, `offset`, and `scale` properties
+   * have been applied.
    */
   std::optional<CesiumUtility::JsonValue> min;
 
   /**
-   * @brief A default value to use when the property value is not defined. If
-   * used, `optional` must be set to true. The type of the default value must
-   * match the property definition: For `BOOLEAN` use `true` or `false`. For
-   * `STRING` use a JSON string. For a numeric type use a JSON number. For
-   * `ENUM` use the enum `name`, not the integer value. For `ARRAY` use a JSON
-   * array containing values matching the `componentType`.
+   * @brief If required, the property must be present in every entity conforming
+   * to the class. If not required, individual entities may include `noData`
+   * values, or the entire property may be omitted. As a result, `noData` has no
+   * effect on a required property. Client implementations may use required
+   * properties to make performance optimizations.
    */
-  std::optional<CesiumUtility::JsonValue> defaultProperty;
+  bool required = false;
 
   /**
-   * @brief If true, this property is optional.
+   * @brief A `noData` value represents missing data — also known as a sentinel
+   * value — wherever it appears. `BOOLEAN` properties may not specify `noData`
+   * values. This is given as the plain property value, without the transforms
+   * from the `normalized`, `offset`, and `scale` properties. Must not be
+   * defined if `required` is true.
    */
-  bool optional = false;
+  std::optional<CesiumUtility::JsonValue> noData;
+
+  /**
+   * @brief A default value to use when encountering a `noData` value or an
+   * omitted property. The value is given in its final form, taking the effect
+   * of `normalized`, `offset`, and `scale` properties into account. Must not be
+   * defined if `required` is true.
+   */
+  std::optional<CesiumUtility::JsonValue> defaultProperty;
 
   /**
    * @brief An identifier that describes how this property should be

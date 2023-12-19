@@ -1,9 +1,9 @@
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
@@ -124,13 +124,11 @@ void RasterOverlayCollection::add(
           // Report error creating the tile provider.
           const RasterOverlayLoadFailureDetails& failureDetails =
               result.error();
+          SPDLOG_LOGGER_ERROR(pLogger, failureDetails.message);
           if (pOverlay->getOptions().loadErrorCallback) {
             pOverlay->getOptions().loadErrorCallback(failureDetails);
-          } else {
-            SPDLOG_LOGGER_ERROR(pLogger, failureDetails.message);
           }
         }
-
         // CESIUM_TRACE_END_IN_TRACK("createTileProvider");
       });
 }

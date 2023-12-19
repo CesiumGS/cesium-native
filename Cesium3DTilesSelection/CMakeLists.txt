@@ -43,19 +43,33 @@ target_include_directories(
 
 target_link_libraries(Cesium3DTilesSelection
     PUBLIC
+        Cesium3DTiles
+        Cesium3DTilesContent
+        Cesium3DTilesReader
         CesiumAsync
         CesiumGeospatial
         CesiumGeometry
         CesiumGltf
         CesiumGltfReader
+        CesiumRasterOverlays
         CesiumUtility
         spdlog
     # PRIVATE
-        tinyxml2
         uriparser
         libmorton
-        expected-lite
 	${CESIUM_NATIVE_DRACO_LIBRARY}
+)
+
+target_link_libraries_system(
+  Cesium3DTilesSelection
+    PUBLIC
+        expected-lite
+)
+
+target_link_libraries_system(
+  Cesium3DTilesSelection
+    PRIVATE
+        tinyxml2
 )
 
 install(TARGETS Cesium3DTilesSelection

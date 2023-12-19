@@ -9,7 +9,7 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -17,8 +17,7 @@ class SceneJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
 public:
   using ValueType = CesiumGltf::Scene;
 
-  SceneJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  SceneJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Scene* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

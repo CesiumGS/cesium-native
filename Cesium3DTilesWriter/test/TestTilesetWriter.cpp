@@ -11,15 +11,14 @@
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {
   Cesium3DTilesReader::TilesetReader reader;
-  Cesium3DTilesReader::TilesetReaderResult readResult =
-      reader.readTileset(gsl::span(
-          reinterpret_cast<const std::byte*>(input.c_str()),
-          input.size()));
+  auto readResult = reader.readFromJson(gsl::span(
+      reinterpret_cast<const std::byte*>(input.c_str()),
+      input.size()));
   REQUIRE(readResult.errors.empty());
   REQUIRE(readResult.warnings.empty());
-  REQUIRE(readResult.tileset.has_value());
+  REQUIRE(readResult.value.has_value());
 
-  Cesium3DTiles::Tileset& tileset = readResult.tileset.value();
+  Cesium3DTiles::Tileset& tileset = readResult.value.value();
 
   Cesium3DTilesWriter::TilesetWriter writer;
   Cesium3DTilesWriter::TilesetWriterResult writeResult =

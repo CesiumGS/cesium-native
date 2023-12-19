@@ -1,0 +1,63 @@
+{
+  "asset": {
+    "version": "1.0",
+    "tilesetVersion": "1.2.3"
+  },
+  "extras": {
+    "name": "AdditiveThreeLevels"
+  },
+  "geometricError": 240,
+  "root": {
+    "boundingVolume": {
+      "region": [
+        -1.3197209591796106,
+        0.6988424218,
+        -1.3196390408203893,
+        0.6989055782,
+        0,
+        88
+      ]
+    },
+    "geometricError": 120,
+    "refine": "ADD",
+    "content": {
+      "uri": "content.b3dm"
+    },
+    "children": [
+      {
+        "boundingVolume": {
+          "region": [
+            -1.3197209591796106,
+            0.6988424218,
+            -1.3196390408203893,
+            0.6989055782,
+            0,
+            88
+          ]
+        },
+        "geometricError": 60,
+        "content": {
+          "uri": "content.b3dm"
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "region": [
+                -1.3197209591796106,
+                0.6988424218,
+                -1.3196390408203893,
+                0.6989055782,
+                0,
+                88
+              ]
+            },
+            "geometricError": 30,
+            "content": {
+              "uri": "content.b3dm"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

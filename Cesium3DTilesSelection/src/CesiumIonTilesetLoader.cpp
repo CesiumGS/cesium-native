@@ -167,8 +167,7 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
              externals,
              contentOptions,
              url,
-             requestHeaders,
-             showCreditsOnScreen)
+             requestHeaders)
       .thenImmediately([credits = std::move(credits),
                         requestHeaders,
                         ionAssetID,
@@ -273,18 +272,33 @@ mainThreadHandleEndpointResponse(
     }
   }
 
+  std::string type =
+      CesiumUtility::JsonHelpers::getStringOrDefault(ionResponse, "type", "");
   std::string url =
       CesiumUtility::JsonHelpers::getStringOrDefault(ionResponse, "url", "");
   std::string accessToken = CesiumUtility::JsonHelpers::getStringOrDefault(
       ionResponse,
       "accessToken",
       "");
+  std::string externalType = CesiumUtility::JsonHelpers::getStringOrDefault(
+      ionResponse,
+      "externalType",
+      "");
 
-  std::string type =
-      CesiumUtility::JsonHelpers::getStringOrDefault(ionResponse, "type", "");
+  if (!externalType.empty()) {
+    type = externalType;
+    const auto optionsIt = ionResponse.FindMember("options");
+    if (optionsIt != ionResponse.MemberEnd() && optionsIt->value.IsObject()) {
+      url = CesiumUtility::JsonHelpers::getStringOrDefault(
+          optionsIt->value,
+          "url",
+          url);
+    }
+  }
+
   if (type == "TERRAIN") {
-    // For terrain resources, we need to append `/layer.json` to the end of the
-    // URL.
+    // For terrain resources, we need to append `/layer.json` to the end of
+    // the URL.
     url = CesiumUtility::Uri::resolve(url, "layer.json", true);
     endpoint.type = type;
     endpoint.url = url;

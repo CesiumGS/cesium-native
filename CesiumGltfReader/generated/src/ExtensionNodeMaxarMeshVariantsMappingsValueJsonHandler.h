@@ -9,7 +9,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
@@ -19,7 +19,7 @@ public:
   using ValueType = CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue;
 
   ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue* pObject);

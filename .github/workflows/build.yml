@@ -1,0 +1,165 @@
+name: cesium-native
+on: [push, pull_request]
+jobs:
+  QuickChecks:
+    name: "Quick Checks"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Check source formatting
+        run: |
+          npm install
+          npm run format -- --dry-run -Werror
+  Documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Doxygen
+        run: |
+          sudo apt install -y doxygen
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Generate Documentation
+        run: |
+          cmake -B build -S .
+          cmake --build build --target cesium-native-docs
+      - name: Publish Documentation Artifact
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ReferenceDocumentation
+          path: build/doc/html
+  VS2019:
+    name: "Windows + VS2019"
+    runs-on: windows-2019
+    steps:
+      - name: Install nasm
+        run: |
+          choco install -y nasm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Compile Debug Configuration
+        run: |
+          cmake -B build -S .
+          cmake --build build --config Debug --parallel 4
+      - name: Test Debug Configuration
+        run: |
+          cd build
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration
+        run: |
+          cmake --build build --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration
+        run: |
+          cd build
+          ctest -V
+  VS2022:
+    name: "Windows + VS2022"
+    runs-on: windows-2022
+    steps:
+      - name: Install nasm
+        run: |
+          choco install -y nasm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Compile Debug Configuration
+        run: |
+          cmake -B build -S .
+          cmake --build build --config Debug --parallel 4
+      - name: Test Debug Configuration
+        run: |
+          cd build
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration
+        run: |
+          cmake --build build --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration
+        run: |
+          cd build
+          ctest -V
+  LinuxGCC:
+    name: "Linux + GCC"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install nasm
+        run: |
+          sudo apt-get install nasm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Compile Debug Configuration
+        run: |
+          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
+          cmake --build build-debug --parallel 4
+      - name: Test Debug Configuration
+        run: |
+          cd build-debug
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration
+        run: |
+          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
+          cmake --build build-release --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration
+        run: |
+          cd build-release
+          ctest -V
+  LinuxClang:
+    name: "Linux + Clang"
+    runs-on: ubuntu-20.04
+    env:
+      CC: clang-12
+      CXX: clang++-12
+    steps:
+      - name: Install nasm
+        run: |
+          sudo apt-get install nasm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Compile Debug Configuration
+        run: |
+          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
+          cmake --build build-debug --parallel 4
+      - name: Test Debug Configuration
+        run: |
+          cd build-debug
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration
+        run: |
+          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
+          cmake --build build-release --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration
+        run: |
+          cd build-release
+          ctest -V
+  macOS:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Compile Debug Configuration
+        run: |
+          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
+          cmake --build build-debug --parallel 4
+      - name: Test Debug Configuration
+        run: |
+          cd build-debug
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration
+        run: |
+          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
+          cmake --build build-release --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration
+        run: |
+          cd build-release
+          ctest -V

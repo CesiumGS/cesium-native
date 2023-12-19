@@ -9,8 +9,8 @@
 #include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 
 #include <gsl/span>
 
@@ -102,6 +102,26 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool decodeDraco = true;
 
   /**
+   * @brief Whether the mesh data are decompressed as part of the load process,
+   * or left in the compressed format according to the EXT_meshopt_compression
+   * extension
+   */
+  bool decodeMeshOptData = true;
+
+  /**
+   * @brief Whether the quantized mesh data are dequantized and converted to
+   * floating-point values when loading, according to the KHR_mesh_quantization
+   * extension.
+   */
+  bool dequantizeMeshData = true;
+
+  /**
+   * @brief  Whether the texture coordinates of a texture are transformed or
+   * not, according to the KHR_texture_transform extension
+   */
+  bool applyTextureTransform = true;
+
+  /**
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
    */
@@ -119,16 +139,14 @@ public:
   GltfReader();
 
   /**
-   * @brief Gets the context used to control how extensions are loaded from glTF
-   * files.
+   * @brief Gets the options controlling how the JSON is read.
    */
-  CesiumJsonReader::ExtensionReaderContext& getExtensions();
+  CesiumJsonReader::JsonReaderOptions& getOptions();
 
   /**
-   * @brief Gets the context used to control how extensions are loaded from glTF
-   * files.
+   * @brief Gets the options controlling how the JSON is read.
    */
-  const CesiumJsonReader::ExtensionReaderContext& getExtensions() const;
+  const CesiumJsonReader::JsonReaderOptions& getExtensions() const;
 
   /**
    * @brief Reads a glTF or binary glTF (GLB) from a buffer.
@@ -208,7 +226,7 @@ public:
   generateMipMaps(CesiumGltf::ImageCesium& image);
 
 private:
-  CesiumJsonReader::ExtensionReaderContext _context;
+  CesiumJsonReader::JsonReaderOptions _context;
 };
 
 } // namespace CesiumGltfReader

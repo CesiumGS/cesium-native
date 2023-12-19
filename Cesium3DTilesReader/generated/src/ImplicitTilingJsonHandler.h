@@ -10,7 +10,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace Cesium3DTilesReader {
@@ -20,7 +20,7 @@ public:
   using ValueType = Cesium3DTiles::ImplicitTiling;
 
   ImplicitTilingJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, Cesium3DTiles::ImplicitTiling* pObject);
 

@@ -1,13 +1,14 @@
 #include "Cesium3DTilesSelection/RasterizedPolygonsTileExcluder.h"
 
-#include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/Tile.h"
+#include "CesiumRasterOverlays/RasterizedPolygonsOverlay.h"
 #include "TileUtilities.h"
 
 using namespace Cesium3DTilesSelection;
 
 RasterizedPolygonsTileExcluder::RasterizedPolygonsTileExcluder(
-    const CesiumUtility::IntrusivePointer<const RasterizedPolygonsOverlay>&
+    const CesiumUtility::IntrusivePointer<
+        const CesiumRasterOverlays::RasterizedPolygonsOverlay>&
         pOverlay) noexcept
     : _pOverlay(pOverlay) {}
 

@@ -39,8 +39,9 @@ public:
       bool accessControlPublic,
       bool accessControlPrivate,
       bool proxyRevalidate,
-      int maxAge,
-      int sharedMaxAge);
+      std::optional<int> maxAge,
+      std::optional<int> sharedMaxAge,
+      std::optional<int> staleWhileRevalidate);
 
   /**
    * @brief Must-Revalidate directive that appears in the Cache-Control header.
@@ -82,14 +83,43 @@ public:
   inline bool proxyRevalidate() const noexcept { return _proxyRevalidate; }
 
   /**
-   * @brief Max-Age directive that appears in the Cache-Control header.
+   * @brief Existence of Max-Age directive that appears in the Cache-Control
+   * header.
    */
-  int maxAge() const noexcept { return _maxAge; }
+  bool maxAgeExists() const noexcept { return _maxAge.has_value(); }
 
   /**
-   * @brief S-Maxage directive that appears in the Cache-Control header.
+   * @brief Value of Max-Age directive that appears in the Cache-Control header.
    */
-  int sharedMaxAge() const noexcept { return _sharedMaxAge; }
+  int maxAgeValue() const noexcept { return *_maxAge; }
+
+  /**
+   * @brief Existence of S-Maxage directive that appears in the Cache-Control
+   * header.
+   */
+  bool sharedMaxAgeExists() const noexcept { return _sharedMaxAge.has_value(); }
+
+  /**
+   * @brief Value of S-Maxage directive that appears in the Cache-Control
+   * header.
+   */
+  int sharedMaxAgeValue() const noexcept { return *_sharedMaxAge; }
+
+  /**
+   * @brief Existence of Stale-While-Revalidate directive that appears in the
+   * Cache-Control header.
+   */
+  bool staleWhileRevalidateExists() const noexcept {
+    return _staleWhileRevalidate.has_value();
+  }
+
+  /**
+   * @brief Value of Stale-While-Revalidate directive that appears in the
+   * Cache-Control header.
+   */
+  int staleWhileRevalidateValue() const noexcept {
+    return *_staleWhileRevalidate;
+  }
 
   /**
    * @brief Parse response cache control from the response's headers.
@@ -105,7 +135,9 @@ private:
   bool _accessControlPublic;
   bool _accessControlPrivate;
   bool _proxyRevalidate;
-  int _maxAge;
-  int _sharedMaxAge;
+
+  std::optional<int> _maxAge;
+  std::optional<int> _sharedMaxAge;
+  std::optional<int> _staleWhileRevalidate;
 };
 } // namespace CesiumAsync

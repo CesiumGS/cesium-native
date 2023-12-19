@@ -12,6 +12,7 @@ set_target_properties(CesiumIonClient
     PROPERTIES
         TEST_SOURCES "${CESIUM_ION_CLIENT_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_ION_CLIENT_TEST_HEADERS}"
+        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
 )
 
 set_target_properties(CesiumIonClient
@@ -39,10 +40,13 @@ target_link_libraries(CesiumIonClient
         CesiumAsync
         CesiumUtility
     PRIVATE
-        csprng
         modp_b64
         PicoSHA2
 )
+
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
+  target_link_libraries(CesiumIonClient PRIVATE csprng)
+endif()
 
 # httplib erroneously does not declare its include a `SYSTEM` include, so
 # we must extract its include_directories using this function and manually

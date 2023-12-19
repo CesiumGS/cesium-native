@@ -11,14 +11,24 @@ namespace CesiumImpl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
-template <typename T> struct RemoveFuture { typedef T type; };
-template <typename T> struct RemoveFuture<Future<T>> { typedef T type; };
-template <typename T> struct RemoveFuture<const Future<T>> { typedef T type; };
-template <typename T> struct RemoveFuture<SharedFuture<T>> { typedef T type; };
+template <typename T> struct RemoveFuture {
+  typedef T type;
+};
+template <typename T> struct RemoveFuture<Future<T>> {
+  typedef T type;
+};
+template <typename T> struct RemoveFuture<const Future<T>> {
+  typedef T type;
+};
+template <typename T> struct RemoveFuture<SharedFuture<T>> {
+  typedef T type;
+};
 template <typename T> struct RemoveFuture<const SharedFuture<T>> {
   typedef T type;
 };
-template <typename T> struct RemoveFuture<async::task<T>> { typedef T type; };
+template <typename T> struct RemoveFuture<async::task<T>> {
+  typedef T type;
+};
 template <typename T> struct RemoveFuture<const async::task<T>> {
   typedef T type;
 };

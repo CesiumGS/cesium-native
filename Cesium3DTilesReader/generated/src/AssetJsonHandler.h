@@ -7,7 +7,7 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace Cesium3DTilesReader {
@@ -15,8 +15,7 @@ class AssetJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Cesium3DTiles::Asset;
 
-  AssetJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  AssetJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Asset* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

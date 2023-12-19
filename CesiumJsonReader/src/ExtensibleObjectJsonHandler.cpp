@@ -2,12 +2,16 @@
 
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 #include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/JsonReaderOptions.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 
 namespace CesiumJsonReader {
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
-    const ExtensionReaderContext& context) noexcept
-    : ObjectJsonHandler(), _extras(), _extensions(context) {}
+    const JsonReaderOptions& context) noexcept
+    : ObjectJsonHandler(),
+      _extras(),
+      _extensions(context),
+      _captureUnknownProperties(context.getCaptureUnknownProperties()) {}
 
 void ExtensibleObjectJsonHandler::reset(
     IJsonHandler* pParent,
@@ -29,6 +33,17 @@ IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     return &this->_extensions;
   }
 
-  return this->ignoreAndContinue();
+  if (this->_captureUnknownProperties) {
+    // Add this unknown property to unknownProperties.
+    auto it =
+        o.unknownProperties.emplace(str, CesiumUtility::JsonValue()).first;
+    this->setCurrentKey(it->first.c_str());
+    CesiumUtility::JsonValue& value = it->second;
+    this->_unknownProperties.reset(this, &value);
+    return &this->_unknownProperties;
+  } else {
+    // Ignore this unknown property.
+    return this->ignoreAndContinue();
+  }
 }
 } // namespace CesiumJsonReader

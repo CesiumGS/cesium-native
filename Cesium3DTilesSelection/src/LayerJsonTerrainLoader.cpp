@@ -1,11 +1,11 @@
 #include "LayerJsonTerrainLoader.h"
 
-#include "QuantizedMeshLoader.h"
-#include "calcQuadtreeMaxGeometricError.h"
-#include "upsampleGltfForRasterOverlays.h"
-
-#include <Cesium3DTilesSelection/GltfUtilities.h>
+#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
+#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 
@@ -13,9 +13,11 @@
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
+using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace {
@@ -210,14 +212,16 @@ void generateRasterOverlayUVs(
       std::get_if<CesiumGltf::Model>(&result.contentKind);
   if (pModel) {
     result.rasterOverlayDetails =
-        GltfUtilities::createRasterOverlayTextureCoordinates(
+        RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
             *pModel,
             tileTransform,
-            0,
             pParentRegion ? std::make_optional<GlobeRectangle>(
                                 pParentRegion->getRectangle())
                           : std::nullopt,
-            {projection});
+            {projection},
+            false,
+            "_CESIUMOVERLAY_",
+            0);
   }
 }
 
@@ -257,7 +261,6 @@ Future<LoadLayersResult> loadLayersRecursive(
     const rapidjson::Document& layerJson,
     const QuadtreeTilingScheme& tilingScheme,
     bool useWaterMask,
-    bool showCreditsOnScreen,
     LoadLayersResult&& loadLayersResult) {
   std::string version;
   const auto tilesetVersionIt = layerJson.FindMember("version");
@@ -350,7 +353,6 @@ Future<LoadLayersResult> loadLayersRecursive(
              pAssetAccessor,
              tilingScheme,
              useWaterMask,
-             showCreditsOnScreen,
              loadLayersResult = std::move(loadLayersResult)](
                 std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               const CesiumAsync::IAssetResponse* pResponse =
@@ -403,7 +405,6 @@ Future<LoadLayersResult> loadLayersRecursive(
                   layerJson,
                   tilingScheme,
                   useWaterMask,
-                  showCreditsOnScreen,
                   std::move(loadLayersResult));
             });
   }
@@ -417,8 +418,7 @@ Future<LoadLayersResult> loadLayerJson(
     const std::string& baseUrl,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     const rapidjson::Document& layerJson,
-    bool useWaterMask,
-    bool showCreditsOnScreen) {
+    bool useWaterMask) {
   // Use the projection and tiling scheme of the main layer.
   // Any underlying layers must use the same.
   std::string projectionString =
@@ -472,7 +472,6 @@ Future<LoadLayersResult> loadLayerJson(
       layerJson,
       tilingScheme,
       useWaterMask,
-      showCreditsOnScreen,
       std::move(loadLayersResult));
 }
 
@@ -482,8 +481,7 @@ Future<LoadLayersResult> loadLayerJson(
     const std::string& baseUrl,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     const gsl::span<const std::byte>& layerJsonBinary,
-    bool useWaterMask,
-    bool showCreditsOnScreen) {
+    bool useWaterMask) {
   rapidjson::Document layerJson;
   layerJson.Parse(
       reinterpret_cast<const char*>(layerJsonBinary.data()),
@@ -503,8 +501,7 @@ Future<LoadLayersResult> loadLayerJson(
       baseUrl,
       requestHeaders,
       layerJson,
-      useWaterMask,
-      showCreditsOnScreen);
+      useWaterMask);
 }
 } // namespace
 
@@ -514,8 +511,7 @@ LayerJsonTerrainLoader::createLoader(
     const TilesetExternals& externals,
     const TilesetContentOptions& contentOptions,
     const std::string& layerJsonUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    bool showCreditsOnScreen) {
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   bool useWaterMask = contentOptions.enableWaterMask;
 
   return externals.pAssetAccessor
@@ -523,8 +519,7 @@ LayerJsonTerrainLoader::createLoader(
       .thenInWorkerThread(
           [asyncSystem = externals.asyncSystem,
            pAssetAccessor = externals.pAssetAccessor,
-           useWaterMask,
-           showCreditsOnScreen](
+           useWaterMask](
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
             const CesiumAsync::IAssetResponse* pResponse =
                 pCompletedRequest->response();
@@ -560,8 +555,7 @@ LayerJsonTerrainLoader::createLoader(
                 pCompletedRequest->url(),
                 flatHeaders,
                 pResponse->data(),
-                useWaterMask,
-                showCreditsOnScreen);
+                useWaterMask);
           })
       .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(std::move(loadLayersResult));
@@ -575,7 +569,6 @@ Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
     const TilesetContentOptions& contentOptions,
     const std::string& layerJsonUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    bool showCreditsOnScreen,
     const rapidjson::Document& layerJson) {
   return loadLayerJson(
              asyncSystem,
@@ -583,8 +576,7 @@ Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
              layerJsonUrl,
              requestHeaders,
              layerJson,
-             contentOptions.enableWaterMask,
-             showCreditsOnScreen)
+             contentOptions.enableWaterMask)
       .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(std::move(loadLayersResult));
       });
@@ -648,14 +640,14 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const QuadtreeTileID& tileID,
-    const BoundingVolume& boundingVolume,
+    const BoundingRegion& boundingRegion,
     const LayerJsonTerrainLoader::Layer& layer,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     bool enableWaterMask) {
   std::string url = resolveTileUrl(tileID, layer);
   return pAssetAccessor->get(asyncSystem, url, requestHeaders)
       .thenInWorkerThread(
-          [asyncSystem, pLogger, tileID, boundingVolume, enableWaterMask](
+          [asyncSystem, pLogger, tileID, boundingRegion, enableWaterMask](
               std::shared_ptr<IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -681,7 +673,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
 
             return QuantizedMeshLoader::load(
                 tileID,
-                boundingVolume,
+                boundingRegion,
                 pRequest->url(),
                 pResponse->data(),
                 enableWaterMask);
@@ -792,6 +784,14 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     ++it;
   }
 
+  const BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(tile.getBoundingVolume());
+  if (!pRegion) {
+    // This tile does not have the required bounding volume type.
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(nullptr));
+  }
+
   // Start the actual content request.
   auto& currentLayer = *firstAvailableIt;
   Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
@@ -799,7 +799,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       asyncSystem,
       pAssetAccessor,
       *pQuadtreeTileID,
-      tile.getBoundingVolume(),
+      *pRegion,
       currentLayer,
       requestHeaders,
       contentOptions.enableWaterMask);

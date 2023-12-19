@@ -4,7 +4,10 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesSelection/GltfConverters.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesReader/GroupMetadataReader.h>
+#include <Cesium3DTilesReader/MetadataEntityReader.h>
+#include <Cesium3DTilesReader/SchemaReader.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -21,6 +24,9 @@
 
 #include <cctype>
 
+using namespace CesiumUtility;
+using namespace Cesium3DTilesContent;
+
 namespace Cesium3DTilesSelection {
 namespace {
 struct ExternalContentInitializer {
@@ -30,10 +36,13 @@ struct ExternalContentInitializer {
   std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
       pExternalTilesetLoaders;
   TilesetJsonLoader* tilesetJsonLoader;
+  TileExternalContent externalContent;
 
   void operator()(Tile& tile) {
-    TileContent& content = tile.getContent();
-    if (content.isExternalContent()) {
+    TileExternalContent* pExternalContent =
+        tile.getContent().getExternalContent();
+    if (pExternalContent) {
+      *pExternalContent = std::move(externalContent);
       std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
       if (pExternalRoot) {
         // propagate all the external tiles to be the children of this tile
@@ -511,7 +520,7 @@ std::optional<Tile> parseTileJsonRecursively(
 
   if (implicitTilingJson) {
     // mark this tile as external
-    Tile tile{&currentLoader, TileExternalContent{}};
+    Tile tile{&currentLoader, std::make_unique<TileExternalContent>()};
     tile.setTileID("");
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
@@ -618,31 +627,42 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       ErrorList{}};
 }
 
-TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
-    const std::shared_ptr<spdlog::logger>& pLogger,
+void parseTilesetMetadata(
     const std::string& baseUrl,
-    const gsl::span<const std::byte>& tilesetJsonBinary,
-    const glm::dmat4& parentTransform,
-    TileRefine parentRefine) {
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(
-      reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-      tilesetJsonBinary.size());
-  if (tilesetJson.HasParseError()) {
-    TilesetContentLoaderResult<TilesetJsonLoader> result;
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset()));
-    return result;
+    const rapidjson::Document& tilesetJson,
+    TileExternalContent& externalContent) {
+  auto schemaIt = tilesetJson.FindMember("schema");
+  if (schemaIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::SchemaReader schemaReader;
+    auto schemaResult = schemaReader.readFromJson(schemaIt->value);
+    if (schemaResult.value) {
+      externalContent.metadata.schema = std::move(*schemaResult.value);
+    }
   }
 
-  return parseTilesetJson(
-      pLogger,
-      baseUrl,
-      tilesetJson,
-      parentTransform,
-      parentRefine);
+  auto schemaUriIt = tilesetJson.FindMember("schemaUri");
+  if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
+    externalContent.metadata.schemaUri =
+        CesiumUtility::Uri::resolve(baseUrl, schemaUriIt->value.GetString());
+  }
+
+  const auto metadataIt = tilesetJson.FindMember("metadata");
+  if (metadataIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::MetadataEntityReader metadataReader;
+    auto metadataResult = metadataReader.readFromJson(metadataIt->value);
+    if (metadataResult.value) {
+      externalContent.metadata.metadata = std::move(*metadataResult.value);
+    }
+  }
+
+  const auto groupsIt = tilesetJson.FindMember("groups");
+  if (groupsIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::GroupMetadataReader groupMetadataReader;
+    auto groupsResult = groupMetadataReader.readArrayFromJson(groupsIt->value);
+    if (groupsResult.value) {
+      externalContent.metadata.groups = std::move(*groupsResult.value);
+    }
+  }
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
@@ -657,6 +677,19 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   const auto& responseData = pResponse->data();
   const auto& tileUrl = pCompletedRequest->url();
 
+  rapidjson::Document tilesetJson;
+  tilesetJson.Parse(
+      reinterpret_cast<const char*>(responseData.data()),
+      responseData.size());
+  if (tilesetJson.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Error when parsing tileset JSON, error code {} at byte offset {}",
+        tilesetJson.GetParseError(),
+        tilesetJson.GetErrorOffset());
+    return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+  }
+
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
@@ -664,9 +697,15 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       parseTilesetJson(
           pLogger,
           tileUrl,
-          responseData,
+          tilesetJson,
           tileTransform,
           tileRefine);
+
+  // Populate the root tile with metadata
+  parseTilesetMetadata(
+      tileUrl,
+      tilesetJson,
+      externalContentInitializer.externalContent);
 
   // check and log any errors
   const auto& errors = externalTilesetLoader.errors;
@@ -692,12 +731,13 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::move(externalContentInitializer),
       TileLoadResultState::Success};
 }
+
 } // namespace
 
 TilesetJsonLoader::TilesetJsonLoader(
     const std::string& baseUrl,
     CesiumGeometry::Axis upAxis)
-    : _baseUrl{baseUrl}, _upAxis{upAxis} {}
+    : _baseUrl{baseUrl}, _upAxis{upAxis}, _children{} {}
 
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
@@ -731,12 +771,26 @@ TilesetJsonLoader::createLoader(
           return result;
         }
 
-        return parseTilesetJson(
+        gsl::span<const std::byte> data = pResponse->data();
+
+        rapidjson::Document tilesetJson;
+        tilesetJson.Parse(
+            reinterpret_cast<const char*>(data.data()),
+            data.size());
+        if (tilesetJson.HasParseError()) {
+          TilesetContentLoaderResult<TilesetJsonLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Error when parsing tileset JSON, error code {} at byte offset "
+              "{}",
+              tilesetJson.GetParseError(),
+              tilesetJson.GetErrorOffset()));
+          return result;
+        }
+
+        return TilesetJsonLoader::createLoader(
             pLogger,
             pCompletedRequest->url(),
-            pResponse->data(),
-            glm::dmat4(1.0),
-            TileRefine::Replace);
+            tilesetJson);
       });
 }
 
@@ -744,12 +798,37 @@ TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
     const rapidjson::Document& tilesetJson) {
-  return parseTilesetJson(
+  TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
       pLogger,
       tilesetJsonUrl,
       tilesetJson,
       glm::dmat4(1.0),
       TileRefine::Replace);
+
+  // Create a root tile to represent the tileset.json itself.
+  std::vector<Tile> children;
+  children.emplace_back(std::move(*result.pRootTile));
+
+  result.pRootTile = std::make_unique<Tile>(
+      children[0].getLoader(),
+      std::make_unique<TileExternalContent>());
+
+  result.pRootTile->setTileID("");
+  result.pRootTile->setTransform(children[0].getTransform());
+  result.pRootTile->setBoundingVolume(children[0].getBoundingVolume());
+  result.pRootTile->setUnconditionallyRefine();
+  result.pRootTile->setRefine(children[0].getRefine());
+  result.pRootTile->createChildTiles(std::move(children));
+
+  // Populate the root tile with metadata
+  TileExternalContent* pExternal =
+      result.pRootTile->getContent().getExternalContent();
+  assert(pExternal);
+  if (pExternal) {
+    parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
+  }
+
+  return result;
 }
 
 CesiumAsync::Future<TileLoadResult>
@@ -771,7 +850,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const glm::dmat4& tileTransform = tile.getTransform();
   TileRefine tileRefine = tile.getRefine();
 
-  ExternalContentInitializer externalContentInitializer{nullptr, this};
+  ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
 
   const auto& asyncSystem = loadInput.asyncSystem;
   const auto& pAssetAccessor = loadInput.pAssetAccessor;

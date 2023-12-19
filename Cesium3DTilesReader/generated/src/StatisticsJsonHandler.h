@@ -9,7 +9,7 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+class JsonReaderOptions;
 }
 
 namespace Cesium3DTilesReader {
@@ -19,7 +19,7 @@ public:
   using ValueType = Cesium3DTiles::Statistics;
 
   StatisticsJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Statistics* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

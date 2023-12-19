@@ -1,14 +1,16 @@
 #pragma once
 
-#include "CreditSystem.h"
 #include "Library.h"
-#include "RasterOverlayDetails.h"
+#include "TilesetMetadata.h"
 
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
 #include <variant>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 /**
@@ -47,7 +49,12 @@ struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
  * external tileset. When this tile is loaded, all the tiles in the
  * external tileset will become children of this external content tile
  */
-struct CESIUM3DTILESSELECTION_API TileExternalContent {};
+struct CESIUM3DTILESSELECTION_API TileExternalContent {
+  /**
+   * @brief The metadata associated with this tileset.
+   */
+  TilesetMetadata metadata;
+};
 
 /**
  * @brief A content tag that indicates a tile has a glTF model content and
@@ -95,57 +102,60 @@ public:
    *
    * @return The {@link RasterOverlayDetails} that is owned by this content
    */
-  const RasterOverlayDetails& getRasterOverlayDetails() const noexcept;
+  const CesiumRasterOverlays::RasterOverlayDetails&
+  getRasterOverlayDetails() const noexcept;
 
   /**
    * @brief Get the {@link RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
    *
    * @return The {@link RasterOverlayDetails} that is owned by this content
    */
-  RasterOverlayDetails& getRasterOverlayDetails() noexcept;
+  CesiumRasterOverlays::RasterOverlayDetails&
+  getRasterOverlayDetails() noexcept;
 
   /**
    * @brief Set the {@link RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
    *
    * @param rasterOverlayDetails The {@link RasterOverlayDetails} that will be owned by this content
    */
-  void
-  setRasterOverlayDetails(const RasterOverlayDetails& rasterOverlayDetails);
+  void setRasterOverlayDetails(
+      const CesiumRasterOverlays::RasterOverlayDetails& rasterOverlayDetails);
 
   /**
    * @brief Set the {@link RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
    *
    * @param rasterOverlayDetails The {@link RasterOverlayDetails} that will be owned by this content
    */
-  void setRasterOverlayDetails(RasterOverlayDetails&& rasterOverlayDetails);
+  void setRasterOverlayDetails(
+      CesiumRasterOverlays::RasterOverlayDetails&& rasterOverlayDetails);
 
   /**
    * @brief Get the list of {@link Credit} of the content
    *
    * @return The list of {@link Credit} of the content
    */
-  const std::vector<Credit>& getCredits() const noexcept;
+  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept;
 
   /**
    * @brief Get the list of {@link Credit} of the content
    *
    * @return The list of {@link Credit} of the content
    */
-  std::vector<Credit>& getCredits() noexcept;
+  std::vector<CesiumUtility::Credit>& getCredits() noexcept;
 
   /**
    * @brief Set the list of {@link Credit} for the content
    *
    * @param credits The list of {@link Credit} to be owned by the content
    */
-  void setCredits(std::vector<Credit>&& credits);
+  void setCredits(std::vector<CesiumUtility::Credit>&& credits);
 
   /**
    * @brief Set the list of {@link Credit} for the content
    *
    * @param credits The list of {@link Credit} to be owned by the content
    */
-  void setCredits(const std::vector<Credit>& credits);
+  void setCredits(const std::vector<CesiumUtility::Credit>& credits);
 
   /**
    * @brief Get the render resources created for the glTF model of the content
@@ -185,8 +195,8 @@ public:
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
-  RasterOverlayDetails _rasterOverlayDetails;
-  std::vector<Credit> _credits;
+  CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
+  std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;
 };
 
@@ -198,7 +208,7 @@ class CESIUM3DTILESSELECTION_API TileContent {
   using TileContentKindImpl = std::variant<
       TileUnknownContent,
       TileEmptyContent,
-      TileExternalContent,
+      std::unique_ptr<TileExternalContent>,
       std::unique_ptr<TileRenderContent>>;
 
 public:
@@ -218,7 +228,7 @@ public:
    * @brief Construct an external content for a tile whose content
    * points to an external tileset
    */
-  TileContent(TileExternalContent content);
+  TileContent(std::unique_ptr<TileExternalContent>&& content);
 
   /**
    * @brief Set an unknown content tag for a tile. This constructor
@@ -236,7 +246,7 @@ public:
    * @brief Set an external content for a tile whose content
    * points to an external tileset
    */
-  void setContentKind(TileExternalContent content);
+  void setContentKind(std::unique_ptr<TileExternalContent>&& content);
 
   /**
    * @brief Set a glTF model content for a tile
@@ -267,20 +277,26 @@ public:
   /**
    * @brief Get the {@link TileRenderContent} which stores the glTF model
    * and render resources of the tile
-   *
-   * @return The {@link TileRenderContent} which stores the glTF model
-   * and render resources of the tile
    */
   const TileRenderContent* getRenderContent() const noexcept;
 
   /**
    * @brief Get the {@link TileRenderContent} which stores the glTF model
    * and render resources of the tile
-   *
-   * @return The {@link TileRenderContent} which stores the glTF model
-   * and render resources of the tile
    */
   TileRenderContent* getRenderContent() noexcept;
+
+  /**
+   * @brief Get the {@link TileExternalContent} which stores the details of
+   * the external tileset.
+   */
+  const TileExternalContent* getExternalContent() const noexcept;
+
+  /**
+   * @brief Get the {@link TileExternalContent} which stores the details of
+   * the external tileset.
+   */
+  TileExternalContent* getExternalContent() noexcept;
 
 private:
   TileContentKindImpl _contentKind;

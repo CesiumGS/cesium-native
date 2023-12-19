@@ -1,15 +1,15 @@
 #include "LayerJsonTerrainLoader.h"
 #include "MockTilesetContentManager.h"
-#include "SimpleAssetAccessor.h"
-#include "SimpleAssetRequest.h"
-#include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
-#include "SimpleTaskProcessor.h"
-#include "readFile.h"
 
-#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -21,6 +21,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 using namespace CesiumAsync;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -70,7 +71,7 @@ Future<TileLoadResult> loadTile(
 } // namespace
 
 TEST_CASE("Test create layer json terrain loader") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -94,12 +95,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -183,12 +180,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -207,12 +200,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -231,12 +220,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -264,12 +249,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -311,12 +292,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"./Parent/layer.json", createMockAssetRequest(parentJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -349,12 +326,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -376,12 +349,8 @@ TEST_CASE("Test create layer json terrain loader") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
-        externals,
-        {},
-        "layer.json",
-        {},
-        true);
+    auto loaderFuture =
+        LayerJsonTerrainLoader::createLoader(externals, {}, "layer.json", {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -406,8 +375,7 @@ TEST_CASE("Test create layer json terrain loader") {
         externals,
         options,
         "layer.json",
-        {},
-        true);
+        {});
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -426,7 +394,7 @@ TEST_CASE("Test create layer json terrain loader") {
 }
 
 TEST_CASE("Test load layer json tile content") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -716,7 +684,7 @@ TEST_CASE("Test load layer json tile content") {
 }
 
 TEST_CASE("Test creating tile children for layer json") {
-  Cesium3DTilesSelection::registerAllTileContentTypes();
+  Cesium3DTilesContent::registerAllTileContentTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
