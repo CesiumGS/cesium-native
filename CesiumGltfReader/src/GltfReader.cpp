@@ -374,39 +374,50 @@ GltfReaderResult GltfReader::readGltf(
 }
 
 CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
-    CesiumAsync::AsyncSystem asyncSystem,
+    const CesiumAsync::AsyncSystem& asyncSystem,
     const std::string& uri,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
-    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const GltfReaderOptions& options) const {
   return pAssetAccessor->get(asyncSystem, uri, headers)
       .thenInWorkerThread(
-          [=](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+          [this, options, asyncSystem, pAssetAccessor, uri](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
             const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
-            GltfReaderResult result;
+
             if (!pResponse) {
-              result.errors.push_back("Request for " + uri + "failed.");
-            } else if (pResponse->data().empty()) {
-              result.errors.push_back(
-                  "Request for " + uri + "failed with code " +
-                  std::to_string(pResponse->statusCode()));
+              return asyncSystem.createResolvedFuture(GltfReaderResult{
+                  std::nullopt,
+                  {fmt::format("Request for {} failed.", uri)},
+                  {}});
             }
-            if (!result.errors.empty()) {
-              return asyncSystem.createResolvedFuture(std::move(result));
+
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              return asyncSystem.createResolvedFuture(GltfReaderResult{
+                  std::nullopt,
+                  {fmt::format(
+                      "Request for {} failed with code {}",
+                      uri,
+                      pResponse->statusCode())},
+                  {}});
             }
-            const CesiumJsonReader::ExtensionReaderContext& context =
+
+            const CesiumJsonReader::JsonReaderOptions& context =
                 this->getExtensions();
-            result = isBinaryGltf(pResponse->data())
-                         ? readBinaryGltf(context, pResponse->data())
-                         : readJsonGltf(context, pResponse->data());
+            GltfReaderResult result =
+                isBinaryGltf(pResponse->data())
+                    ? readBinaryGltf(context, pResponse->data())
+                    : readJsonGltf(context, pResponse->data());
+
             if (!result.model) {
               return asyncSystem.createResolvedFuture(std::move(result));
             }
-            CesiumAsync::HttpHeaders requestHeaders = pRequest->headers();
+
             return resolveExternalData(
                 asyncSystem,
                 uri,
-                requestHeaders,
+                pRequest->headers(),
                 pAssetAccessor,
                 options,
                 std::move(result));
