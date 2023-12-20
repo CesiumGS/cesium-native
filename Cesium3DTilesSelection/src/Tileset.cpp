@@ -1786,6 +1786,9 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
               [_pTile = pTile,
                _this = this,
                pLogger = this->_externals.pLogger](std::exception&& e) {
+
+                _pTile->setState(TileLoadState::Failed);
+
                 _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
                 SPDLOG_LOGGER_ERROR(
                     pLogger,
