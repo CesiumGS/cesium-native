@@ -47,7 +47,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
   if (loadResult.errors || !loadResult.model) {
-    return TileLoadResult::createFailedResult(loadResult.pRequest);
+    return TileLoadResult::createFailedResult();
   }
 
   return TileLoadResult{
@@ -56,7 +56,7 @@ TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
-      nullptr,
+      std::string(),
       {},
       TileLoadResultState::Success};
 }
@@ -731,7 +731,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     if (!pUpsampleTileID) {
       // This loader only handles QuadtreeTileIDs and UpsampledQuadtreeNode.
       return asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult());
     }
 
     // now do upsampling
@@ -750,7 +750,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (firstAvailableIt == this->_layers.end()) {
     // No layer has this tile available.
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // Also load the same tile in any underlying layers for which this tile
@@ -1134,7 +1134,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
       parentContent.getRenderContent();
   if (!pParentRenderContent) {
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   const UpsampledQuadtreeNode* pUpsampledTileID =
@@ -1171,7 +1171,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             tileID,
             textureCoordinateIndex);
         if (!model) {
-          return TileLoadResult::createFailedResult(nullptr);
+          return TileLoadResult::createFailedResult();
         }
 
         return TileLoadResult{
@@ -1180,7 +1180,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            nullptr,
+            std::string(),
             {},
             TileLoadResultState::Success};
       });

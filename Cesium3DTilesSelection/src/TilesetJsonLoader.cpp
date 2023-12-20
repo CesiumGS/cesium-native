@@ -681,7 +681,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
         "Error when parsing tileset JSON, error code {} at byte offset {}",
         tilesetJson.GetParseError(),
         tilesetJson.GetErrorOffset());
-    return TileLoadResult::createFailedResult(NULL);
+    return TileLoadResult::createFailedResult();
   }
 
   // Save the parsed external tileset into custom data.
@@ -707,7 +707,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     logTileLoadResult(pLogger, tileUrl, errors);
 
     // since the json cannot be parsed, we don't know the content of this tile
-    return TileLoadResult::createFailedResult(NULL);
+    return TileLoadResult::createFailedResult();
   }
 
   externalContentInitializer.pExternalTilesetLoaders =
@@ -721,7 +721,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      NULL,
+      tileUrl,
       std::move(externalContentInitializer),
       TileLoadResultState::Success};
 }
@@ -838,7 +838,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const std::string* url = std::get_if<std::string>(&tile.getTileID());
   if (!url) {
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   const glm::dmat4& tileTransform = tile.getTransform();
@@ -881,7 +881,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
           // Report any errors if there are any
           logTileLoadResult(pLogger, tileUrl, result.errors);
           if (result.errors) {
-            return TileLoadResult::createFailedResult(NULL);
+            return TileLoadResult::createFailedResult();
           }
 
           return TileLoadResult{
@@ -890,7 +890,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               std::nullopt,
               std::nullopt,
               std::nullopt,
-              NULL,
+              tileUrl,
               {},
               TileLoadResultState::Success};
         } else {

@@ -103,7 +103,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief The request that is created to download the tile content.
    */
-  std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
+  std::string requestUrl;
 
   /**
    * @brief A callback that is invoked in the main thread immediately when the
@@ -123,18 +123,14 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief Create a result with Failed state
    *
-   * @param pCompletedRequest The failed request
    */
-  static TileLoadResult createFailedResult(
-      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
+  static TileLoadResult createFailedResult();
 
   /**
    * @brief Create a result with RetryLater state
    *
-   * @param pCompletedRequest The failed request
    */
-  static TileLoadResult createRetryLaterResult(
-      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
+  static TileLoadResult createRetryLaterResult();
 };
 
 } // namespace Cesium3DTilesSelection

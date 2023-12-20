@@ -18,7 +18,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   const Tile* pParent = loadInput.tile.getParent();
   if (pParent == nullptr) {
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
@@ -27,7 +27,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   if (pTileID == nullptr) {
     // this tile is not marked to be upsampled, so just fail it
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // The tile content manager guarantees that the parent tile is already loaded
@@ -42,7 +42,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   if (!pParentRenderContent) {
     // parent doesn't have mesh, so it's not possible to upsample
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   int32_t index = 0;
@@ -72,7 +72,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             TileID,
             textureCoordinateIndex);
         if (!model) {
-          return TileLoadResult::createFailedResult(nullptr);
+          return TileLoadResult::createFailedResult();
         }
 
         return TileLoadResult{
@@ -81,7 +81,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            nullptr,
+            std::string(),
             {},
             TileLoadResultState::Success};
       });

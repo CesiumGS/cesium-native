@@ -466,8 +466,8 @@ void postProcessGltfInWorkerThread(
     const TileContentLoadInfo& tileLoadInfo) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
-  if (result.pCompletedRequest) {
-    model.extras["Cesium3DTiles_TileUrl"] = result.pCompletedRequest->url();
+  if (!result.requestUrl.empty()) {
+    model.extras["Cesium3DTiles_TileUrl"] = result.requestUrl;
   }
 
   // have to pass the up axis to extra for backward compatibility
@@ -495,6 +495,8 @@ postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
+    const std::string& requestBaseUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const std::any& rendererOptions) {
   assert(
       result.state == TileLoadResultState::Success &&
@@ -505,11 +507,10 @@ postProcessContentInWorkerThread(
   // Download any external image or buffer urls in the gltf if there are any
   CesiumGltfReader::GltfReaderResult gltfResult{std::move(model), {}, {}};
 
-  CesiumAsync::HttpHeaders requestHeaders;
-  std::string baseUrl;
-  if (result.pCompletedRequest) {
-    requestHeaders = result.pCompletedRequest->headers();
-    baseUrl = result.pCompletedRequest->url();
+  CesiumAsync::HttpHeaders httpHeaders;
+  if (!requestBaseUrl.empty()) {
+    for (auto pair : requestHeaders)
+      httpHeaders.emplace(pair.first, pair.second);
   }
 
   CesiumGltfReader::GltfReaderOptions gltfOptions;
@@ -520,8 +521,8 @@ postProcessContentInWorkerThread(
   auto pAssetAccessor = tileLoadInfo.pAssetAccessor;
   return CesiumGltfReader::GltfReader::resolveExternalData(
              asyncSystem,
-             baseUrl,
-             requestHeaders,
+             requestBaseUrl,
+             httpHeaders,
              pAssetAccessor,
              gltfOptions,
              std::move(gltfResult))
@@ -529,14 +530,15 @@ postProcessContentInWorkerThread(
           [result = std::move(result),
            projections = std::move(projections),
            tileLoadInfo = std::move(tileLoadInfo),
+           requestBaseUrl,
            rendererOptions](
               CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
             if (!gltfResult.errors.empty()) {
-              if (result.pCompletedRequest) {
+              if (!requestBaseUrl.empty()) {
                 SPDLOG_LOGGER_ERROR(
                     tileLoadInfo.pLogger,
                     "Failed resolving external glTF buffers from {}:\n- {}",
-                    result.pCompletedRequest->url(),
+                    requestBaseUrl,
                     CesiumUtility::joinToString(gltfResult.errors, "\n- "));
               } else {
                 SPDLOG_LOGGER_ERROR(
@@ -547,12 +549,12 @@ postProcessContentInWorkerThread(
             }
 
             if (!gltfResult.warnings.empty()) {
-              if (result.pCompletedRequest) {
+              if (!requestBaseUrl.empty()) {
                 SPDLOG_LOGGER_WARN(
                     tileLoadInfo.pLogger,
                     "Warning when resolving external gltf buffers from "
                     "{}:\n- {}",
-                    result.pCompletedRequest->url(),
+                    requestBaseUrl,
                     CesiumUtility::joinToString(gltfResult.errors, "\n- "));
               } else {
                 SPDLOG_LOGGER_ERROR(
@@ -565,7 +567,7 @@ postProcessContentInWorkerThread(
             if (!gltfResult.model) {
               return tileLoadInfo.asyncSystem.createResolvedFuture(
                   TileLoadResultAndRenderResources{
-                      TileLoadResult::createFailedResult(nullptr),
+                      TileLoadResult::createFailedResult(),
                       nullptr});
             }
 
@@ -976,7 +978,8 @@ TilesetContentManager::doTileContentWork(
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
   return pLoader->loadTileContent(loadInput).thenImmediately(
-      [tileLoadInfo = std::move(tileLoadInfo),
+      [requestHeaders = this->_requestHeaders,
+       tileLoadInfo = std::move(tileLoadInfo),
        projections = std::move(projections),
        rendererOptions =
            tilesetOptions.rendererOptions](TileLoadResult&& result) mutable {
@@ -994,11 +997,14 @@ TilesetContentManager::doTileContentWork(
                 [result = std::move(result),
                  projections = std::move(projections),
                  tileLoadInfo = std::move(tileLoadInfo),
+                 requestHeaders = std::move(requestHeaders),
                  rendererOptions]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
                       std::move(tileLoadInfo),
+                      result.requestUrl,
+                      requestHeaders,
                       rendererOptions);
                 });
           }

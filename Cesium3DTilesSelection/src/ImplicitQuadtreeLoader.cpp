@@ -184,7 +184,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
       // Report any errors if there are any
       logTileLoadResult(pLogger, tileUrl, result.errors);
       if (result.errors || !result.model) {
-        return TileLoadResult::createFailedResult(NULL);
+        return TileLoadResult::createFailedResult();
       }
 
       return TileLoadResult{
@@ -193,13 +193,13 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           std::nullopt,
           std::nullopt,
           std::nullopt,
-          NULL,
+          tileUrl,
           {},
           TileLoadResultState::Success};
     }
 
     // content type is not supported
-    return TileLoadResult::createFailedResult(NULL);
+    return TileLoadResult::createFailedResult();
   });
 }
 } // namespace
@@ -235,14 +235,14 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // find the subtree ID
   uint32_t subtreeLevelIdx = pQuadtreeID->level / this->_subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   uint64_t levelLeft = pQuadtreeID->level % this->_subtreeLevels;
@@ -287,7 +287,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
           }
 
           // tell client to retry later
-          return TileLoadResult::createRetryLaterResult(nullptr);
+          return TileLoadResult::createRetryLaterResult();
         });
   }
 
@@ -301,7 +301,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        std::string(),
         {},
         TileLoadResultState::Success});
   }

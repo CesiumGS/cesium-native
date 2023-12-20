@@ -184,7 +184,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
       // Report any errors if there are any
       logTileLoadResult(pLogger, tileUrl, result.errors);
       if (result.errors || !result.model) {
-        return TileLoadResult::createFailedResult(NULL);
+        return TileLoadResult::createFailedResult();
       }
 
       return TileLoadResult{
@@ -193,13 +193,13 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           std::nullopt,
           std::nullopt,
           std::nullopt,
-          NULL,
+          tileUrl,
           {},
           TileLoadResultState::Success};
     }
 
     // content type is not supported
-    return TileLoadResult::createFailedResult(NULL);
+    return TileLoadResult::createFailedResult();
   });
 }
 } // namespace
@@ -217,14 +217,14 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
   if (!pOctreeID) {
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // find the subtree ID
   uint32_t subtreeLevelIdx = pOctreeID->level / this->_subtreeLevels;
   if (subtreeLevelIdx >= this->_loadedSubtrees.size()) {
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   uint64_t levelLeft = pOctreeID->level % this->_subtreeLevels;
@@ -264,7 +264,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
           }
 
           // tell client to retry later
-          return TileLoadResult::createRetryLaterResult(nullptr);
+          return TileLoadResult::createRetryLaterResult();
         });
   }
 
@@ -278,7 +278,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        std::string(),
         {},
         TileLoadResultState::Success});
   }

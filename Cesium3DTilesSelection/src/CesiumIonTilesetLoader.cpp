@@ -379,7 +379,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
 
     // Let this tile retry
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createRetryLaterResult(nullptr));
+        TileLoadResult::createRetryLaterResult());
   }
 
   // If queued token refresh has arrived, refresh it
@@ -395,7 +395,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
         responseData.bytes);
 
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createRetryLaterResult(nullptr));
+        TileLoadResult::createRetryLaterResult());
   }
 
   // If token is being refresh from another tile, try again later
@@ -403,7 +403,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (this->_refreshTokenState == TokenRefreshState::Loading ||
       this->_refreshTokenState == TokenRefreshState::Failed)
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createRetryLaterResult(nullptr));
+        TileLoadResult::createRetryLaterResult());
 
   assert(
       this->_refreshTokenState == TokenRefreshState::None ||

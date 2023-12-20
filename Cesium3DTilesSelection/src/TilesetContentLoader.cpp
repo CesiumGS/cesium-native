@@ -13,28 +13,26 @@ TileLoadInput::TileLoadInput(
       pLogger{pLogger_},
       responsesByUrl{responsesByUrl_} {}
 
-TileLoadResult TileLoadResult::createFailedResult(
-    std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
+TileLoadResult TileLoadResult::createFailedResult() {
   return TileLoadResult{
       TileUnknownContent{},
       CesiumGeometry::Axis::Y,
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      std::move(pCompletedRequest),
+      std::string(),
       {},
       TileLoadResultState::Failed};
 }
 
-TileLoadResult TileLoadResult::createRetryLaterResult(
-    std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
+TileLoadResult TileLoadResult::createRetryLaterResult() {
   return TileLoadResult{
       TileUnknownContent{},
       CesiumGeometry::Axis::Y,
       std::nullopt,
       std::nullopt,
       std::nullopt,
-      std::move(pCompletedRequest),
+      std::string(),
       {},
       TileLoadResultState::RetryLater};
 }
