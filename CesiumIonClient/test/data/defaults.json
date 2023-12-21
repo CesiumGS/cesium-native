@@ -1,0 +1,90 @@
+{
+  "defaultAssets": { "imagery": 2, "terrain": 1, "buildings": 624 },
+  "quickAddAssets": [
+    {
+      "name": "Cesium World Terrain",
+      "objectName": "Cesium World Terrain",
+      "description": "High-resolution global terrain tileset curated from several data sources.  See the official [Cesium World Terrain](https://cesium.com/content/cesium-world-terrain/) page for details.",
+      "assetId": 1,
+      "type": "TERRAIN",
+      "subscribed": true
+    },
+    {
+      "name": "Bing Maps Aerial",
+      "objectName": "Bing Maps Aerial",
+      "description": "Aerial imagery.",
+      "assetId": 2,
+      "type": "IMAGERY",
+      "subscribed": true
+    },
+    {
+      "name": "Bing Maps Aerial with Labels",
+      "objectName": "Bing Maps Aerial with Labels",
+      "description": "Bing Maps Aerial with Labels",
+      "assetId": 23,
+      "type": "IMAGERY",
+      "subscribed": false
+    },
+    {
+      "name": "Sentinel-2",
+      "objectName": "Sentinel-2",
+      "description": "Sentinel-2 cloudless imagery of the entire world down to zoom level 13.",
+      "assetId": 623,
+      "type": "IMAGERY",
+      "subscribed": false
+    },
+    {
+      "name": "Cesium OSM Buildings",
+      "objectName": "Cesium OSM Buildings",
+      "description": "A 3D buildings layer derived from OpenStreetMap covering the entire world. It contains over 350 million buildings with per-feature data like name, address, whether a building is commercial or residential, and more.\n\nSee the [Cesium OSM Buildings page](https://cesium.com/content/cesium-osm-buildings/) to learn about the available properties and what you can do with this asset.\n\nThis tileset is updated monthly. For the latest news, visit our [community forum thread](https://community.cesium.com/t/weve-just-updated-cesium-osm-buildings/10764/last).",
+      "assetId": 624,
+      "type": "3DTILES",
+      "subscribed": true
+    },
+    {
+      "name": "Google Photorealistic 3D Tiles",
+      "objectName": "Google Photorealistic 3D Tiles",
+      "description": "Photorealistic 3D Tiles from Google Maps Platform. \n\nYour use of this asset is subject to the current versions of these documents:\n\n- Google Maps Platform Service Specific Terms at https://cloud.google.com/maps-platform/terms/maps-service-terms \n- The Google Maps/Google Earth Additional Terms of Service at https://maps.google.com/help/terms_maps.html \n- The Map Tiles API Policy at https://developers.google.com/maps/documentation/tile/policies \n- The Google Privacy Policy at https://www.google.com/policies/privacy/ ",
+      "assetId": 823,
+      "type": "3DTILES",
+      "subscribed": true
+    },
+    {
+      "name": "Cesium World Terrain + Bing Maps Aerial",
+      "objectName": "Cesium World Terrain",
+      "description": "High-resolution global terrain tileset curated from several data sources.  See the official [Cesium World Terrain](https://cesium.com/content/cesium-world-terrain/) page for details. textured with Aerial imagery.",
+      "assetId": 1,
+      "type": "TERRAIN",
+      "subscribed": true,
+      "rasterOverlays": [
+        { "name": "Bing Maps Aerial", "assetId": 2, "subscribed": true }
+      ]
+    },
+    {
+      "name": "Cesium World Terrain + Bing Maps Aerial with Labels",
+      "objectName": "Cesium World Terrain",
+      "description": "High-resolution global terrain tileset curated from several data sources.  See the official [Cesium World Terrain](https://cesium.com/content/cesium-world-terrain/) page for details. textured with Bing Maps Aerial with Labels",
+      "assetId": 1,
+      "type": "TERRAIN",
+      "subscribed": true,
+      "rasterOverlays": [
+        {
+          "name": "Bing Maps Aerial with Labels",
+          "assetId": 23,
+          "subscribed": false
+        }
+      ]
+    },
+    {
+      "name": "Cesium World Terrain + Sentinel-2",
+      "objectName": "Cesium World Terrain",
+      "description": "High-resolution global terrain tileset curated from several data sources.  See the official [Cesium World Terrain](https://cesium.com/content/cesium-world-terrain/) page for details. textured with Sentinel-2 cloudless imagery of the entire world down to zoom level 13.",
+      "assetId": 1,
+      "type": "TERRAIN",
+      "subscribed": true,
+      "rasterOverlays": [
+        { "name": "Sentinel-2", "assetId": 623, "subscribed": false }
+      ]
+    }
+  ]
+}
