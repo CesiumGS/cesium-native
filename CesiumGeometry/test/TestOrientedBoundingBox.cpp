@@ -389,3 +389,93 @@ TEST_CASE("OrientedBoundingBox::toAxisAligned") {
     CHECK(Math::equalsEpsilon(aabb.maximumZ, 3.0 + glm::sqrt(2.0), 0.0, 1e-14));
   }
 }
+
+TEST_CASE("OrientedBoundingBox::toSphere") {
+  SECTION("axis-aligned box with identity half-axes") {
+    OrientedBoundingBox obb(
+        glm::dvec3(1.0, 2.0, 3.0),
+        glm::dmat3(
+            glm::dvec3(1.0, 0.0, 0.0),
+            glm::dvec3(0.0, 1.0, 0.0),
+            glm::dvec3(0.0, 0.0, 1.0)));
+
+    BoundingSphere sphere = obb.toSphere();
+    CHECK(sphere.getCenter().x == Approx(1.0));
+    CHECK(sphere.getCenter().y == Approx(2.0));
+    CHECK(sphere.getCenter().z == Approx(3.0));
+
+    CHECK(sphere.getRadius() == Approx(glm::sqrt(3.0)));
+  }
+
+  SECTION("rotating the box does not change the bounding sphere") {
+    // Rotate the OBB 45 degrees around the Y-axis.
+    // This shouldn't change the bounding sphere at all.
+    double fortyFiveDegrees = Math::OnePi / 4.0;
+    glm::dmat3 rotation = glm::dmat3(glm::eulerAngleY(fortyFiveDegrees));
+    OrientedBoundingBox obb(glm::dvec3(1.0, 2.0, 3.0), rotation);
+
+    BoundingSphere sphere = obb.toSphere();
+    CHECK(sphere.getCenter().x == Approx(1.0));
+    CHECK(sphere.getCenter().y == Approx(2.0));
+    CHECK(sphere.getCenter().z == Approx(3.0));
+
+    CHECK(sphere.getRadius() == Approx(glm::sqrt(3.0)));
+  }
+
+  SECTION("a scaled axis-aligned box") {
+    OrientedBoundingBox obb(
+        glm::dvec3(1.0, 2.0, 3.0),
+        glm::dmat3(
+            glm::dvec3(10.0, 0.0, 0.0),
+            glm::dvec3(0.0, 20.0, 0.0),
+            glm::dvec3(0.0, 0.0, 30.0)));
+
+    BoundingSphere sphere = obb.toSphere();
+    CHECK(sphere.getCenter().x == Approx(1.0));
+    CHECK(sphere.getCenter().y == Approx(2.0));
+    CHECK(sphere.getCenter().z == Approx(3.0));
+
+    CHECK(
+        sphere.getRadius() ==
+        Approx(glm::sqrt(10.0 * 10.0 + 20.0 * 20.0 + 30.0 * 30.0)));
+  }
+}
+
+TEST_CASE("OrientedBoundingBox::contains") {
+  SECTION("axis-aligned") {
+    OrientedBoundingBox obb(
+        glm::dvec3(10.0, 20.0, 30.0),
+        glm::dmat3(
+            glm::dvec3(2.0, 0.0, 0.0),
+            glm::dvec3(0.0, 3.0, 0.0),
+            glm::dvec3(0.0, 0.0, 4.0)));
+    CHECK(!obb.contains(glm::dvec3(0.0, 0.0, 0.0)));
+    CHECK(obb.contains(glm::dvec3(10.0, 20.0, 30.0)));
+    CHECK(obb.contains(glm::dvec3(12.0, 23.0, 34.0)));
+    CHECK(obb.contains(glm::dvec3(8.0, 17.0, 26.0)));
+    CHECK(!obb.contains(glm::dvec3(13.0, 20.0, 30.0)));
+    CHECK(!obb.contains(glm::dvec3(10.0, 24.0, 30.0)));
+    CHECK(!obb.contains(glm::dvec3(10.0, 20.0, 35.0)));
+  }
+
+  SECTION("rotated") {
+    // Rotate the OBB 45 degrees around the Y-axis
+    double fortyFiveDegrees = Math::OnePi / 4.0;
+    glm::dmat3 halfAngles(
+        glm::dvec3(2.0, 0.0, 0.0),
+        glm::dvec3(0.0, 3.0, 0.0),
+        glm::dvec3(0.0, 0.0, 4.0));
+    glm::dmat3 rotation = glm::dmat3(glm::eulerAngleY(fortyFiveDegrees));
+    glm::dmat3 transformed = rotation * halfAngles;
+    glm::dvec3 center(10.0, 20.0, 30.0);
+    OrientedBoundingBox obb(center, transformed);
+
+    CHECK(!obb.contains(glm::dvec3(0.0, 0.0, 0.0)));
+    CHECK(obb.contains(center));
+    CHECK(obb.contains(center + rotation * glm::dvec3(2.0, 3.0, 4.0)));
+    CHECK(obb.contains(center + rotation * glm::dvec3(-2.0, -3.0, -4.0)));
+    CHECK(!obb.contains(center + rotation * glm::dvec3(3.0, 0.0, 0.0)));
+    CHECK(!obb.contains(center + rotation * glm::dvec3(0.0, 4.0, 0.0)));
+    CHECK(!obb.contains(center + rotation * glm::dvec3(0.0, 0.0, 5.0)));
+  }
+}

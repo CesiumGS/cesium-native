@@ -1,9 +1,7 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
-#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
-#include <Cesium3DTilesSelection/RasterOverlayTile.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
 #include <Cesium3DTilesSelection/Tileset.h>
@@ -12,6 +10,8 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Tracing.h>
@@ -28,6 +28,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {

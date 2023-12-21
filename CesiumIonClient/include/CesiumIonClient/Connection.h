@@ -104,7 +104,12 @@ public:
       const std::vector<std::string>& scopes,
       std::function<void(const std::string&)>&& openUrlCallback,
       const std::string& ionApiUrl = "https://api.cesium.com/",
-      const std::string& ionAuthorizeUrl = "https://cesium.com/ion/oauth");
+      const std::string& ionAuthorizeUrl = "https://ion.cesium.com/oauth");
+
+  static CesiumAsync::Future<std::optional<std::string>> getApiUrl(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& ionUrl);
 
   static CesiumAsync::Future<std::optional<std::string>> getApiUrl(
       const CesiumAsync::AsyncSystem& asyncSystem,

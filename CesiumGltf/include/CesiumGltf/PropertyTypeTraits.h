@@ -1,27 +1,29 @@
 #pragma once
 
-#include "CesiumGltf/MetadataArrayView.h"
+#include "CesiumGltf/PropertyArrayView.h"
 #include "CesiumGltf/PropertyType.h"
+
+#include <glm/glm.hpp>
 
 #include <cstdint>
 #include <type_traits>
 
 namespace CesiumGltf {
 /**
- * @brief Check if a C++ type can be represented as a numeric property type
+ * @brief Check if a C++ type can be represented as a scalar property type
  */
-template <typename... T> struct IsMetadataNumeric;
-template <typename T> struct IsMetadataNumeric<T> : std::false_type {};
-template <> struct IsMetadataNumeric<uint8_t> : std::true_type {};
-template <> struct IsMetadataNumeric<int8_t> : std::true_type {};
-template <> struct IsMetadataNumeric<uint16_t> : std::true_type {};
-template <> struct IsMetadataNumeric<int16_t> : std::true_type {};
-template <> struct IsMetadataNumeric<uint32_t> : std::true_type {};
-template <> struct IsMetadataNumeric<int32_t> : std::true_type {};
-template <> struct IsMetadataNumeric<uint64_t> : std::true_type {};
-template <> struct IsMetadataNumeric<int64_t> : std::true_type {};
-template <> struct IsMetadataNumeric<float> : std::true_type {};
-template <> struct IsMetadataNumeric<double> : std::true_type {};
+template <typename... T> struct IsMetadataScalar;
+template <typename T> struct IsMetadataScalar<T> : std::false_type {};
+template <> struct IsMetadataScalar<uint8_t> : std::true_type {};
+template <> struct IsMetadataScalar<int8_t> : std::true_type {};
+template <> struct IsMetadataScalar<uint16_t> : std::true_type {};
+template <> struct IsMetadataScalar<int16_t> : std::true_type {};
+template <> struct IsMetadataScalar<uint32_t> : std::true_type {};
+template <> struct IsMetadataScalar<int32_t> : std::true_type {};
+template <> struct IsMetadataScalar<uint64_t> : std::true_type {};
+template <> struct IsMetadataScalar<int64_t> : std::true_type {};
+template <> struct IsMetadataScalar<float> : std::true_type {};
+template <> struct IsMetadataScalar<double> : std::true_type {};
 
 /**
  * @brief Check if a C++ type can be represented as an integer property type
@@ -39,12 +41,39 @@ template <> struct IsMetadataInteger<int64_t> : std::true_type {};
 
 /**
  * @brief Check if a C++ type can be represented as a floating-point property
- * type
+ * type.
  */
 template <typename... T> struct IsMetadataFloating;
 template <typename T> struct IsMetadataFloating<T> : std::false_type {};
 template <> struct IsMetadataFloating<float> : std::true_type {};
 template <> struct IsMetadataFloating<double> : std::true_type {};
+
+/**
+ * @brief Check if a C++ type can be represented as a vecN type.
+ */
+template <typename... T> struct IsMetadataVecN;
+template <typename T> struct IsMetadataVecN<T> : std::false_type {};
+template <glm::length_t n, typename T, glm::qualifier P>
+struct IsMetadataVecN<glm::vec<n, T, P>> : IsMetadataScalar<T> {};
+
+/**
+ * @brief Check if a C++ type can be represented as a matN type.
+ */
+template <typename... T> struct IsMetadataMatN;
+template <typename T> struct IsMetadataMatN<T> : std::false_type {};
+template <glm::length_t n, typename T, glm::qualifier P>
+struct IsMetadataMatN<glm::mat<n, n, T, P>> : IsMetadataScalar<T> {};
+
+/**
+ * @brief Check if a C++ type can be represented as a numeric property, i.e.
+ * a scalar / vecN / matN type.
+ */
+template <typename... T> struct IsMetadataNumeric;
+template <typename T> struct IsMetadataNumeric<T> {
+  static constexpr bool value = IsMetadataScalar<T>::value ||
+                                IsMetadataVecN<T>::value ||
+                                IsMetadataMatN<T>::value;
+};
 
 /**
  * @brief Check if a C++ type can be represented as a boolean property type
@@ -66,35 +95,35 @@ template <> struct IsMetadataString<std::string_view> : std::true_type {};
 template <typename... T> struct IsMetadataArray;
 template <typename T> struct IsMetadataArray<T> : std::false_type {};
 template <typename T>
-struct IsMetadataArray<MetadataArrayView<T>> : std::true_type {};
+struct IsMetadataArray<PropertyArrayView<T>> : std::true_type {};
 
 /**
- * @brief Check if a C++ type can be represented as an array of number property
- * type
+ * @brief Check if a C++ type can be represented as an array of numeric elements
+ * property type
  */
 template <typename... T> struct IsMetadataNumericArray;
 template <typename T> struct IsMetadataNumericArray<T> : std::false_type {};
-template <typename T> struct IsMetadataNumericArray<MetadataArrayView<T>> {
+template <typename T> struct IsMetadataNumericArray<PropertyArrayView<T>> {
   static constexpr bool value = IsMetadataNumeric<T>::value;
 };
 
 /**
- * @brief Check if a C++ type can be represented as an array of boolean property
- * type
+ * @brief Check if a C++ type can be represented as an array of booleans
+ * property type
  */
 template <typename... T> struct IsMetadataBooleanArray;
 template <typename T> struct IsMetadataBooleanArray<T> : std::false_type {};
 template <>
-struct IsMetadataBooleanArray<MetadataArrayView<bool>> : std::true_type {};
+struct IsMetadataBooleanArray<PropertyArrayView<bool>> : std::true_type {};
 
 /**
- * @brief Check if a C++ type can be represented as an array of string property
+ * @brief Check if a C++ type can be represented as an array of strings property
  * type
  */
 template <typename... T> struct IsMetadataStringArray;
 template <typename T> struct IsMetadataStringArray<T> : std::false_type {};
 template <>
-struct IsMetadataStringArray<MetadataArrayView<std::string_view>>
+struct IsMetadataStringArray<PropertyArrayView<std::string_view>>
     : std::true_type {};
 
 /**
@@ -102,79 +131,236 @@ struct IsMetadataStringArray<MetadataArrayView<std::string_view>>
  */
 template <typename T> struct MetadataArrayType;
 template <typename T>
-struct MetadataArrayType<CesiumGltf::MetadataArrayView<T>> {
+struct MetadataArrayType<CesiumGltf::PropertyArrayView<T>> {
   using type = T;
 };
 
 /**
- * @brief Convert a C++ type to PropertyType
+ * @brief Convert a C++ type to PropertyType and PropertyComponentType
  */
 template <typename T> struct TypeToPropertyType;
 
+#pragma region Scalar Property Types
+
 template <> struct TypeToPropertyType<uint8_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Uint8;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Uint8;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<int8_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Int8;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Int8;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<uint16_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Uint16;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Uint16;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<int16_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Int16;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Int16;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<uint32_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Uint32;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Uint32;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<int32_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Int32;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Int32;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<uint64_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Uint64;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Uint64;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<int64_t> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Int64;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Int64;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<float> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Float32;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Float32;
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
 template <> struct TypeToPropertyType<double> {
-  static constexpr PropertyType component = PropertyType::None;
-  static constexpr PropertyType value = PropertyType::Float64;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::Float64;
+  static constexpr PropertyType value = PropertyType::Scalar;
+};
+#pragma endregion
+
+#pragma region Vector Property Types
+
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::vec<2, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Vec2;
 };
 
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::vec<3, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Vec3;
+};
+
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::vec<4, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Vec4;
+};
+
+#pragma endregion
+
+#pragma region Matrix Property Types
+
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::mat<2, 2, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Mat2;
+};
+
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::mat<3, 3, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Mat3;
+};
+
+template <typename T, glm::qualifier P>
+struct TypeToPropertyType<glm::mat<4, 4, T, P>> {
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  static constexpr PropertyType value = PropertyType::Mat4;
+};
+
+#pragma endregion
+
 template <> struct TypeToPropertyType<bool> {
-  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::None;
   static constexpr PropertyType value = PropertyType::Boolean;
 };
 
 template <> struct TypeToPropertyType<std::string_view> {
-  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::None;
   static constexpr PropertyType value = PropertyType::String;
 };
 
+/**
+ * @brief Check if a C++ type can be normalized.
+ */
+template <typename... T> struct CanBeNormalized;
+template <typename T> struct CanBeNormalized<T> : std::false_type {};
+template <> struct CanBeNormalized<uint8_t> : std::true_type {};
+template <> struct CanBeNormalized<int8_t> : std::true_type {};
+template <> struct CanBeNormalized<uint16_t> : std::true_type {};
+template <> struct CanBeNormalized<int16_t> : std::true_type {};
+template <> struct CanBeNormalized<uint32_t> : std::true_type {};
+template <> struct CanBeNormalized<int32_t> : std::true_type {};
+template <> struct CanBeNormalized<uint64_t> : std::true_type {};
+template <> struct CanBeNormalized<int64_t> : std::true_type {};
+
+template <glm::length_t n, typename T, glm::qualifier P>
+struct CanBeNormalized<glm::vec<n, T, P>> : CanBeNormalized<T> {};
+
+template <glm::length_t n, typename T, glm::qualifier P>
+struct CanBeNormalized<glm::mat<n, n, T, P>> : CanBeNormalized<T> {};
+
 template <typename T>
-struct TypeToPropertyType<CesiumGltf::MetadataArrayView<T>> {
-  static constexpr PropertyType component = TypeToPropertyType<T>::value;
-  static constexpr PropertyType value = PropertyType::Array;
+struct CanBeNormalized<PropertyArrayView<T>> : CanBeNormalized<T> {};
+/**
+ * @brief Convert an integer numeric type to the corresponding representation as
+ * a double type. Doubles are preferred over floats to maintain more precision.
+ */
+template <typename T> struct TypeToNormalizedType;
+
+template <> struct TypeToNormalizedType<int8_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint8_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<int16_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint16_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<int32_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint32_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<int64_t> {
+  using type = double;
+};
+template <> struct TypeToNormalizedType<uint64_t> {
+  using type = double;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<glm::vec<N, T, Q>> {
+  using type = glm::vec<N, double, Q>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<glm::mat<N, N, T, Q>> {
+  using type = glm::mat<N, N, double, Q>;
+};
+
+template <> struct TypeToNormalizedType<PropertyArrayView<int8_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint8_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int16_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint16_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int32_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint32_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<int64_t>> {
+  using type = PropertyArrayView<double>;
+};
+template <> struct TypeToNormalizedType<PropertyArrayView<uint64_t>> {
+  using type = PropertyArrayView<double>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<PropertyArrayView<glm::vec<N, T, Q>>> {
+  using type = PropertyArrayView<glm::vec<N, double, Q>>;
+};
+
+template <glm::length_t N, typename T, glm::qualifier Q>
+struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
+  using type = PropertyArrayView<glm::mat<N, N, double, Q>>;
 };
 
 } // namespace CesiumGltf

@@ -1,17 +1,15 @@
-#include "../../Cesium3DTilesSelection/test/SimpleAssetAccessor.h"
-#include "../../Cesium3DTilesSelection/test/SimpleTaskProcessor.h"
-#include "../../Cesium3DTilesSelection/test/readFile.h"
-#include "../../Cesium3DTilesSelection/test/waitForFuture.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumIonClient/Connection.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/readFile.h>
+#include <CesiumNativeTests/waitForFuture.h>
 
 #include <catch2/catch.hpp>
 
 using namespace CesiumAsync;
 using namespace CesiumIonClient;
 using namespace CesiumNativeTests;
-using namespace Cesium3DTilesSelection;
 
 TEST_CASE("CesiumIonClient::Connection") {
   std::shared_ptr<SimpleAssetAccessor> pAssetAccessor =

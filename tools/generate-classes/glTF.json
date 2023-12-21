@@ -43,49 +43,49 @@
       "overrideName": "ExtensionMeshPrimitiveExtFeatureMetadata"
     },
     "Class Property in EXT_feature_metadata": {
-      "overrideName": "ClassProperty"
+      "overrideName": "ExtensionExtFeatureMetadataClassProperty"
     },
     "Class in EXT_feature_metadata": {
-      "overrideName": "Class"
+      "overrideName": "ExtensionExtFeatureMetadataClass"
     },
     "Enum in EXT_feature_metadata": {
-      "overrideName": "Enum"
+      "overrideName": "ExtensionExtFeatureMetadataEnum"
     },
     "Enum Value in EXT_feature_metadata": {
-      "overrideName": "EnumValue"
+      "overrideName": "ExtensionExtFeatureMetadataEnumValue"
     },
     "Feature IDs in EXT_feature_metadata": {
-      "overrideName": "FeatureIDs"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureIDs"
     },
     "Feature ID Attribute in EXT_feature_metadata": {
-      "overrideName": "FeatureIDAttribute"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureIDAttribute"
     },
     "Feature ID Texture in EXT_feature_metadata": {
-      "overrideName": "FeatureIDTexture"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureIDTexture"
     },
     "Feature Table Property in EXT_feature_metadata": {
-      "overrideName": "FeatureTableProperty"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureTableProperty"
     },
     "Feature Table in EXT_feature_metadata": {
-      "overrideName": "FeatureTable"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureTable"
     },
     "Feature Texture in EXT_feature_metadata": {
-      "overrideName": "FeatureTexture"
+      "overrideName": "ExtensionExtFeatureMetadataFeatureTexture"
     },
     "Schema in EXT_feature_metadata": {
-      "overrideName": "Schema"
+      "overrideName": "ExtensionExtFeatureMetadataSchema"
     },
     "Class Property Statistics in EXT_feature_metadata": {
-      "overrideName": "PropertyStatistics"
+      "overrideName": "ExtensionExtFeatureMetadataPropertyStatistics"
     },
     "Class Statistics in EXT_feature_metadata": {
-      "overrideName": "ClassStatistics"
+      "overrideName": "ExtensionExtFeatureMetadataClassStatistics"
     },
     "Statistics in EXT_feature_metadata": {
-      "overrideName": "Statistics"
+      "overrideName": "ExtensionExtFeatureMetadataStatistics"
     },
     "Texture Accessor in EXT_feature_metadata": {
-      "overrideName": "TextureAccessor"
+      "overrideName": "ExtensionExtFeatureMetadataTextureAccessor"
     },
     "EXT_instance_features glTF Node extension": {
       "overrideName": "ExtensionExtInstanceFeatures"
@@ -97,10 +97,10 @@
       "overrideName": "ExtensionExtMeshFeatures"
     },
     "Feature ID in EXT_mesh_features": {
-      "overrideName": "ExtensionExtMeshFeaturesFeatureId"
+      "overrideName": "FeatureId"
     },
     "Feature ID Texture in EXT_mesh_features": {
-      "overrideName": "ExtensionExtMeshFeaturesFeatureIdTexture"
+      "overrideName": "FeatureIdTexture"
     },
     "EXT_mesh_gpu_instancing glTF extension": {
       "overrideName": "ExtensionExtMeshGpuInstancing"
@@ -118,37 +118,37 @@
       "overrideName": "ExtensionMeshPrimitiveExtStructuralMetadata"
     },
     "Class Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataClassProperty"
+      "overrideName": "ClassProperty"
     },
     "Class in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataClass"
+      "overrideName": "Class"
     },
     "Enum in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataEnum"
+      "overrideName": "Enum"
     },
     "Enum Value in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataEnumValue"
+      "overrideName": "EnumValue"
     },
     "Property Attribute Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyAttributeProperty"
+      "overrideName": "PropertyAttributeProperty"
     },
     "Property Attribute in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyAttribute"
+      "overrideName": "PropertyAttribute"
     },
     "Property Table Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTableProperty"
+      "overrideName": "PropertyTableProperty"
     },
     "Property Table in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTable"
+      "overrideName": "PropertyTable"
     },
     "Property Texture Property in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTextureProperty"
+      "overrideName": "PropertyTextureProperty"
     },
     "Property Texture in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataPropertyTexture"
+      "overrideName": "PropertyTexture"
     },
     "Schema in EXT_structural_metadata": {
-      "overrideName": "ExtensionExtStructuralMetadataSchema"
+      "overrideName": "Schema"
     },
     "Any Value": {
       "overrideName": "CesiumUtility::JsonValue"

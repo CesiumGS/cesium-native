@@ -403,7 +403,7 @@ createAccessorView(
   }
   // TODO Print a warning here???
   return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(
-      AccessorViewStatus::InvalidComponentType));
+      AccessorViewStatus::InvalidType));
 }
 } // namespace CesiumImpl
 

@@ -29,6 +29,21 @@ struct JsonValueNotRealValue : public std::runtime_error {
 };
 
 template <typename T, typename U>
+constexpr std::optional<T> losslessNarrow(U u) noexcept {
+  constexpr const bool is_different_signedness =
+      (std::is_signed<T>::value != std::is_signed<U>::value);
+
+  const T t = gsl::narrow_cast<T>(u);
+
+  if (static_cast<U>(t) != u ||
+      (is_different_signedness && ((t < T{}) != (u < U{})))) {
+    return std::nullopt;
+  }
+
+  return t;
+}
+
+template <typename T, typename U>
 constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
   constexpr const bool is_different_signedness =
       (std::is_signed<T>::value != std::is_signed<U>::value);
@@ -413,7 +428,7 @@ public:
 
   /**
    * @brief Gets the array from the value.
-   * @return The arrayj.
+   * @return The array.
    * @throws std::bad_variant_access if the underlying type is not a
    * JsonValue::Array
    */

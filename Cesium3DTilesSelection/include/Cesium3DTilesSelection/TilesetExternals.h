@@ -13,8 +13,11 @@ class IAssetAccessor;
 class ITaskProcessor;
 } // namespace CesiumAsync
 
-namespace Cesium3DTilesSelection {
+namespace CesiumUtility {
 class CreditSystem;
+}
+
+namespace Cesium3DTilesSelection {
 class IPrepareRendererResources;
 
 /**
@@ -48,7 +51,7 @@ public:
    * strings and track which which credits to show and remove from the screen
    * each frame.
    */
-  std::shared_ptr<CreditSystem> pCreditSystem;
+  std::shared_ptr<CesiumUtility::CreditSystem> pCreditSystem;
 
   /**
    * @brief A spdlog logger that will receive log messages.

@@ -42,8 +42,8 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 
 ### ⭐Prerequisites
 
-* Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
-* CMake
+* Visual Studio 2019 (or newer), GCC v11.x+, Clang 12+. Other compilers are likely to work but are not regularly tested.
+* CMake 3.15+
 * For best JPEG-decoding performance, you must have [nasm](https://www.nasm.us/) installed so that CMake can find it. Everything will work fine without it, just slower.
 
 ### :rocket:Getting Started
