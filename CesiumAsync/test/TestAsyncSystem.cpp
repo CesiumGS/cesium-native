@@ -1,4 +1,6 @@
-#include "CesiumAsync/AsyncSystem.h"
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/ThrottlingGroup.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
 
 #include <catch2/catch.hpp>
 
@@ -7,6 +9,8 @@
 #include <thread>
 
 using namespace CesiumAsync;
+using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 
@@ -19,6 +23,14 @@ public:
     std::thread(f).detach();
   }
 };
+
+bool doSomeCpuWorkOnResponse(const gsl::span<const std::byte>& /*data*/) {
+  return true;
+}
+
+bool doSomeMoreCpuWork(const gsl::span<const std::byte>& /*data*/) {
+  return true;
+}
 
 } // namespace
 
@@ -571,5 +583,77 @@ TEST_CASE("AsyncSystem") {
         });
 
     CHECK(checksCompleted);
+  }
+
+  SECTION("throttling") {
+    auto pAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+        std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+
+    // These global (or maybe per-tileset?) throttling groups control how many
+    // tasks assigned to them can run simultaneously.
+    IntrusivePointer<ThrottlingGroup> pNetworkRequests =
+        new ThrottlingGroup(asyncSystem, 20);
+    IntrusivePointer<ThrottlingGroup> pCpuProcessing =
+        new ThrottlingGroup(asyncSystem, 10);
+
+    // Here we create a new throttled/prioritized task controller. This would
+    // correspond to a Tile.
+    IntrusivePointer<TaskController> pController =
+        new TaskController(PriorityGroup::Normal, 1.0f);
+
+    Future<std::shared_ptr<IAssetRequest>> future =
+        pNetworkRequests->runInAnyThread(
+            pController,
+            [asyncSystem, pAssetAccessor]() {
+              return pAssetAccessor->get(
+                  asyncSystem,
+                  "https://example.com/whatever.json",
+                  {});
+            });
+
+    pCpuProcessing->continueInWorkerThread(
+        std::move(future),
+        pController,
+        [asyncSystem, pController, pNetworkRequests, pAssetAccessor](
+            std::shared_ptr<IAssetRequest>&& pRequest) {
+          if (doSomeCpuWorkOnResponse(pRequest->response()->data())) {
+            return pNetworkRequests
+                ->runInAnyThread(
+                    pController,
+                    [pAssetAccessor, asyncSystem]() {
+                      return pAssetAccessor->get(
+                          asyncSystem,
+                          "https://example.com/image.jpg",
+                          {});
+                    })
+                .thenInMainThread(
+                    [](std::shared_ptr<IAssetRequest>&& pRequest) {
+                      doSomeMoreCpuWork(pRequest->response()->data());
+                      return 4;
+                    });
+          }
+          // TODO: support void return
+          return asyncSystem.createResolvedFuture(4);
+        });
+
+    // asyncSystem
+    //     .prioritizeAndThrottle(
+    //         pNetworkRequests,
+    //         pController,
+    //         [asyncSystem, pAssetAccessor]() {
+    //           return pAssetAccessor->get(
+    //               asyncSystem,
+    //               "https://example.com/whatever.json",
+    //               {});
+    //         })
+    //     .prioritizeAndThrottle(
+    //         pCpuProcessing,
+    //         pController,
+    //         [asyncSystem](std::shared_ptr<IAssetRequest>&& pRequest) {
+    //           return asyncSystem.runInWorkerThread(
+    //               [pRequest = std::move(pRequest)]() {
+    //                 doSomeCpuWorkOnResponse(pRequest->response()->data());
+    //               });
+    //         });
   }
 }

@@ -32,6 +32,19 @@ public:
   void resolve(const T& value) const { this->_pEvent->set(value); }
 
   /**
+   * @brief Will be called when the task completed successfully with future.
+   *
+   * This promise (and its attached future) will only be completed after the
+   * provided future resolves or rejects.
+   *
+   * @param value The future that resulted from the completed operation.
+   */
+  void resolve(Future<T>&& value) const {
+    std::move(value).thenImmediately(
+        [pEvent = this->_pEvent](T&& value) { pEvent->set(std::move(value)); });
+  }
+
+  /**
    * @brief Will be called when the task failed.
    *
    * @param error The error that caused the task to fail.
