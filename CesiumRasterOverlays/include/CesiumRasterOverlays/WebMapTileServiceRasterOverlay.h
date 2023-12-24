@@ -33,7 +33,7 @@ struct WebMapTileServiceRasterOverlayOptions {
    * If this parameter is a single string, each character in the string is a
    * subdomain. If it is an array, each element in the array is a subdomain.
    */
-  std::optional<std::variant<std::string, std::vector<std::string>>> subdomains;
+  std::vector<std::string> subdomains;
 
   /**
    * @brief A credit for the data source, which is displayed on the canvas.

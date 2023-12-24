@@ -245,26 +245,6 @@ WebMapTileServiceRasterOverlay::createTileProvider(
           rootTilesX,
           1));
 
-  std::vector<std::string> subdomains;
-  if (_options.subdomains) {
-    const std::variant<std::string, std::vector<std::string>>& subdomains_v =
-        _options.subdomains.value();
-    if (subdomains_v.index() == 0) {
-      const std::string& subdomains_s = std::get<std::string>(subdomains_v);
-      for (std::string::const_iterator it = subdomains_s.begin();
-           it != subdomains_s.end();
-           ++it) {
-        subdomains.emplace_back(1, *it);
-      }
-    } else {
-      subdomains = std::get<std::vector<std::string>>(subdomains_v);
-    }
-  } else {
-    subdomains.emplace_back("a");
-    subdomains.emplace_back("b");
-    subdomains.emplace_back("c");
-  }
-
   if (hasError) {
     return asyncSystem
         .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
@@ -298,7 +278,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
               _options.tileMatrixSetID,
               _options.tileMatrixLabels,
               _options.dimensions,
-              subdomains));
+              _options.subdomains));
 }
 
 } // namespace CesiumRasterOverlays
