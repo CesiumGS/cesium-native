@@ -200,14 +200,11 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   uint32_t tileWidth = _options.tileWidth.value_or(256);
   uint32_t tileHeight = _options.tileHeight.value_or(256);
 
-  uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
-  uint32_t maximumLevel = 0;
+  uint32_t minimumLevel = _options.minimumLevel.value_or(0);
+  uint32_t maximumLevel = _options.maximumLevel.value_or(25);
 
-  if (maximumLevel < minimumLevel && maximumLevel == 0) {
-    // Min and max levels unknown, so use defaults.
-    minimumLevel = 0;
-    maximumLevel = 25;
-  }
+  std::optional<std::map<std::string, std::string>> dimensions =
+      _options.dimensions;
 
   bool useKVP;
 
@@ -218,14 +215,6 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   } else {
     useKVP = false;
   }
-
-  std::optional<std::map<std::string, std::string>> dimensions =
-      _options.dimensions;
-
-  minimumLevel = glm::min(minimumLevel, maximumLevel);
-
-  minimumLevel = _options.minimumLevel.value_or(minimumLevel);
-  maximumLevel = _options.maximumLevel.value_or(maximumLevel);
 
   CesiumGeospatial::Projection projection;
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =

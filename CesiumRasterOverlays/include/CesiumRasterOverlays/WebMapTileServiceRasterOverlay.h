@@ -67,13 +67,14 @@ struct WebMapTileServiceRasterOverlayOptions {
    * Take care when specifying this that the number of tiles at the minimum
    * level is small, such as four or less. A larger number is likely to
    * result in rendering problems.
+   * Default value is 0.
    */
   std::optional<uint32_t> minimumLevel;
 
   /**
    * @brief The maximum level-of-detail supported by the imagery provider.
    *
-   * This will be `std::nullopt` if there is no limit.
+   * Default value is 25.
    */
   std::optional<uint32_t> maximumLevel;
 
