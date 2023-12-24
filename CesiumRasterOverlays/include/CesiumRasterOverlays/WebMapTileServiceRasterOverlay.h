@@ -15,8 +15,6 @@
 
 namespace CesiumRasterOverlays {
 
-class CreditSystem;
-
 /**
  * @brief Options for tile map service accesses.
  */
@@ -35,7 +33,7 @@ struct WebMapTileServiceRasterOverlayOptions {
    * If this parameter is a single string, each character in the string is a
    * subdomain. If it is an array, each element in the array is a subdomain.
    */
-  std::optional<std::variant<std::string, std::vector<std::string>>> subdomains;
+  std::vector<std::string> subdomains;
 
   /**
    * @brief A credit for the data source, which is displayed on the canvas.
@@ -69,13 +67,14 @@ struct WebMapTileServiceRasterOverlayOptions {
    * Take care when specifying this that the number of tiles at the minimum
    * level is small, such as four or less. A larger number is likely to
    * result in rendering problems.
+   * Default value is 0.
    */
   std::optional<uint32_t> minimumLevel;
 
   /**
    * @brief The maximum level-of-detail supported by the imagery provider.
    *
-   * This will be `std::nullopt` if there is no limit.
+   * Default value is 25.
    */
   std::optional<uint32_t> maximumLevel;
 

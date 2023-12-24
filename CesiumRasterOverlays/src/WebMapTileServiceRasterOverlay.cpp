@@ -105,8 +105,12 @@ protected:
            {"TileMatrix", tileMatrix},
            {"TileRow", std::to_string(row)},
            {"TileCol", std::to_string(col)},
-           {"TileMatrixSet", _tileMatrixSetID},
-           {"s", _subdomains[(row + col + level) % _subdomains.size()]}});
+           {"TileMatrixSet", _tileMatrixSetID}});
+      if (_subdomains.size() > 0) {
+        urlTemplateMap.emplace(
+            "s",
+            _subdomains[(col + row + level) % _subdomains.size()]);
+      }
       if (_staticDimensions) {
         urlTemplateMap.insert(
             _staticDimensions->begin(),
@@ -126,9 +130,11 @@ protected:
             _staticDimensions->begin(),
             _staticDimensions->end());
       }
-      urlTemplateMap.emplace(
-          "s",
-          _subdomains[(col + row + level) % _subdomains.size()]);
+      if (_subdomains.size() > 0) {
+        urlTemplateMap.emplace(
+            "s",
+            _subdomains[(col + row + level) % _subdomains.size()]);
+      }
 
       urlTemplate +=
           queryString +
@@ -200,14 +206,11 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   uint32_t tileWidth = _options.tileWidth.value_or(256);
   uint32_t tileHeight = _options.tileHeight.value_or(256);
 
-  uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
-  uint32_t maximumLevel = 0;
+  uint32_t minimumLevel = _options.minimumLevel.value_or(0);
+  uint32_t maximumLevel = _options.maximumLevel.value_or(25);
 
-  if (maximumLevel < minimumLevel && maximumLevel == 0) {
-    // Min and max levels unknown, so use defaults.
-    minimumLevel = 0;
-    maximumLevel = 25;
-  }
+  std::optional<std::map<std::string, std::string>> dimensions =
+      _options.dimensions;
 
   bool useKVP;
 
@@ -218,14 +221,6 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   } else {
     useKVP = false;
   }
-
-  std::optional<std::map<std::string, std::string>> dimensions =
-      _options.dimensions;
-
-  minimumLevel = glm::min(minimumLevel, maximumLevel);
-
-  minimumLevel = _options.minimumLevel.value_or(minimumLevel);
-  maximumLevel = _options.maximumLevel.value_or(maximumLevel);
 
   CesiumGeospatial::Projection projection;
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
@@ -255,26 +250,6 @@ WebMapTileServiceRasterOverlay::createTileProvider(
           coverageRectangle,
           rootTilesX,
           1));
-
-  std::vector<std::string> subdomains;
-  if (_options.subdomains) {
-    const std::variant<std::string, std::vector<std::string>>& subdomains_v =
-        _options.subdomains.value();
-    if (subdomains_v.index() == 0) {
-      const std::string& subdomains_s = std::get<std::string>(subdomains_v);
-      for (std::string::const_iterator it = subdomains_s.begin();
-           it != subdomains_s.end();
-           ++it) {
-        subdomains.emplace_back(1, *it);
-      }
-    } else {
-      subdomains = std::get<std::vector<std::string>>(subdomains_v);
-    }
-  } else {
-    subdomains.emplace_back("a");
-    subdomains.emplace_back("b");
-    subdomains.emplace_back("c");
-  }
 
   if (hasError) {
     return asyncSystem
@@ -309,7 +284,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
               _options.tileMatrixSetID,
               _options.tileMatrixLabels,
               _options.dimensions,
-              subdomains));
+              _options.subdomains));
 }
 
 } // namespace CesiumRasterOverlays
