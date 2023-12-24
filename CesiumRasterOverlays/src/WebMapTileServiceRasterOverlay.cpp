@@ -105,8 +105,12 @@ protected:
            {"TileMatrix", tileMatrix},
            {"TileRow", std::to_string(row)},
            {"TileCol", std::to_string(col)},
-           {"TileMatrixSet", _tileMatrixSetID},
-           {"s", _subdomains[(row + col + level) % _subdomains.size()]}});
+           {"TileMatrixSet", _tileMatrixSetID}});
+      if (_subdomains.size() > 0) {
+        urlTemplateMap.emplace(
+            "s",
+            _subdomains[(col + row + level) % _subdomains.size()]);
+      }
       if (_staticDimensions) {
         urlTemplateMap.insert(
             _staticDimensions->begin(),
@@ -126,9 +130,11 @@ protected:
             _staticDimensions->begin(),
             _staticDimensions->end());
       }
-      urlTemplateMap.emplace(
-          "s",
-          _subdomains[(col + row + level) % _subdomains.size()]);
+      if (_subdomains.size() > 0) {
+        urlTemplateMap.emplace(
+            "s",
+            _subdomains[(col + row + level) % _subdomains.size()]);
+      }
 
       urlTemplate +=
           queryString +
