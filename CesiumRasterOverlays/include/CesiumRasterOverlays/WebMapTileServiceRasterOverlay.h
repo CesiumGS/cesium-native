@@ -15,8 +15,6 @@
 
 namespace CesiumRasterOverlays {
 
-class CreditSystem;
-
 /**
  * @brief Options for tile map service accesses.
  */
