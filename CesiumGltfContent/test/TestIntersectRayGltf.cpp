@@ -66,9 +66,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
           glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
       cube);
   CHECK(glm::all(glm::lessThan(
-      glm::abs(
-          *intersectionPoint -
-          glm::dvec3(1.0, 1.0, 0.0)),
+      glm::abs(*intersectionPoint - glm::dvec3(1.0, 1.0, 0.0)),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // works with a translated/rotated gltf

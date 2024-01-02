@@ -32,6 +32,28 @@ public:
   rayPlane(const Ray& ray, const Plane& plane) noexcept;
 
   /**
+   * @brief Determines whether the point is completely inside the triangle.
+   *
+   * @param point The point to check.
+   * @param triangleVertA The first vertex of the triangle.
+   * @param triangleVertB The second vertex of the triangle.
+   * @param triangleVertC The third vertex of the triangle.
+   * @return Whether the point is within the triangle.
+   */
+  static bool pointInTriangle2D(
+      const glm::dvec2& point,
+      const glm::dvec2& triangleVertA,
+      const glm::dvec2& triangleVertB,
+      const glm::dvec2& triangleVertC) noexcept;
+
+  /**
+   * The parametric functions below return a boolean value indicating whether a
+   * ray and a volume intersect and take a parameter t by reference. The
+   * parameter t is positive if the intersection point is in front of the ray
+   * origin, negative if it is behind it, or zero if the two points coincide.
+   */
+
+  /**
    * @brief Tests if a ray hits a triangle and returns the hit point, if any.
    *
    * @param ray The ray.
@@ -49,11 +71,12 @@ public:
       const glm::dvec3& p2,
       bool cullBackFaces = false);
 
-  static double rayTriangleParametric(
+  static bool rayTriangleParametric(
       const Ray& ray,
       const glm::dvec3& p0,
       const glm::dvec3& p1,
       const glm::dvec3& p2,
+      double& t,
       bool cullBackFaces = false);
 
   /**
@@ -67,7 +90,8 @@ public:
   static std::optional<glm::dvec3>
   rayAABB(const Ray& ray, const AxisAlignedBox& aabb);
 
-  static double rayAABBParametric(const Ray& ray, const AxisAlignedBox& aabb);
+  static bool
+  rayAABBParametric(const Ray& ray, const AxisAlignedBox& aabb, double& t);
 
   /**
    * @brief Computes the intersection of a ray and an oriented bounding box.
@@ -80,8 +104,8 @@ public:
   static std::optional<glm::dvec3>
   rayOBB(const Ray& ray, const OrientedBoundingBox& obb);
 
-  static double
-  rayOBBParametric(const Ray& ray, const OrientedBoundingBox& obb);
+  static bool
+  rayOBBParametric(const Ray& ray, const OrientedBoundingBox& obb, double& t);
 
   /**
    * @brief Computes the intersection of a ray and a bounding sphere.
@@ -94,23 +118,8 @@ public:
   static std::optional<glm::dvec3>
   raySphere(const Ray& ray, const BoundingSphere& sphere);
 
-  static double
-  raySphereParametric(const Ray& ray, const BoundingSphere& sphere);
-
-  /**
-   * @brief Determines whether the point is completely inside the triangle.
-   *
-   * @param point The point to check.
-   * @param triangleVertA The first vertex of the triangle.
-   * @param triangleVertB The second vertex of the triangle.
-   * @param triangleVertC The third vertex of the triangle.
-   * @return Whether the point is within the triangle.
-   */
-  static bool pointInTriangle2D(
-      const glm::dvec2& point,
-      const glm::dvec2& triangleVertA,
-      const glm::dvec2& triangleVertB,
-      const glm::dvec2& triangleVertC) noexcept;
+  static bool
+  raySphereParametric(const Ray& ray, const BoundingSphere& sphere, double& t);
 };
 
 } // namespace CesiumGeometry
