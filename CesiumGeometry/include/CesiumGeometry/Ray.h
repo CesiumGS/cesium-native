@@ -5,8 +5,6 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
-#include <optional>
-
 namespace CesiumGeometry {
 
 /**
@@ -37,12 +35,12 @@ public:
 
   /**
    * @brief Calculates the point on the ray that corresponds to the given
-   * parameter `t`. If `t` is negative, the function returns std::nullopt.
+   * parameter `t`.
    *
    * @param t The parameter value used in the ray equation.
-   * @return The point along the ray, or std::nullopt if t is negative.
+   * @return The point along the ray.
    */
-  std::optional<glm::dvec3> getPointAlongRay(double t) const noexcept;
+  glm::dvec3 getPointAlongRay(double t) const noexcept;
 
   /**
    * @brief Transforms the ray using a given 4x4 transformation matrix.
@@ -51,7 +49,6 @@ public:
    * ray.
    * @return The transformed ray.
    */
-
   Ray transform(const glm::dmat4x4& transformation) const noexcept;
 
   /**

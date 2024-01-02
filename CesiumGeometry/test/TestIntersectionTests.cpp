@@ -312,9 +312,10 @@ TEST_CASE("IntersectionTests::raySphere") {
           BoundingSphere(glm::dvec3(200.0, 0.0, 0.0), 1.0),
           -1.0});
 
-  double t =
-      IntersectionTests::raySphereParametric(testCase.ray, testCase.sphere);
-
+  double t;
+  t = IntersectionTests::raySphereParametric(testCase.ray, testCase.sphere, t)
+          ? t < 0 ? -1.0 : t
+          : -1.0;
   CHECK(CesiumUtility::Math::equalsEpsilon(
       t,
       testCase.t,

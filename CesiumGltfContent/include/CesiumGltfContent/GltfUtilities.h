@@ -136,17 +136,28 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * @param ray The ray.
    * @param gltf The glTF model.
    * @param cullBackFaces An optional boolean flag to indicate whether to cull
+   * @param modelToWorld An optional 4x4 matrix to transform from model to world
+   * space. If this parameter is not provided, the ray is assumed to be already
+   * in model space.
    * backfaces or not. Defaults to true.
    * @param return The intersection point along the ray, if any.
    */
   static std::optional<glm::dvec3> intersectRayGltfModel(
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
-      bool cullBackFaces = true);
+      bool cullBackFaces = true,
+      const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
 
-  static double intersectRayGltfModelParametric(
+  static bool intersectRayGltfModelParametric(
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
-      bool cullBackFaces = true);
+      double& t,
+      bool cullBackFaces = true,
+      const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
+
+  static bool rayIntersectsGltfPrimitiveAABBs(
+      const CesiumGeometry::Ray& ray,
+      const CesiumGltf::Model& gltf,
+      const glm::dmat4x4& modelToWorld);
 };
 } // namespace CesiumGltfContent

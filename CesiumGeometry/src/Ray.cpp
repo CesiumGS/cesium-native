@@ -20,9 +20,8 @@ Ray::Ray(const glm::dvec3& origin, const glm::dvec3& direction)
   //>>includeEnd('debug');
 }
 
-std::optional<glm::dvec3> Ray::getPointAlongRay(double t) const noexcept {
-  return t < 0 ? std::optional<glm::dvec3>()
-               : std::make_optional<glm::dvec3>(_origin + t * _direction);
+glm::dvec3 Ray::getPointAlongRay(double t) const noexcept {
+  return _origin + t * _direction;
 }
 
 Ray Ray::transform(const glm::dmat4x4& transformation) const noexcept {

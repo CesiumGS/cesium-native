@@ -11,6 +11,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 
+#include <limits>
+
 using namespace CesiumUtility;
 
 namespace CesiumGeometry {
@@ -41,15 +43,18 @@ std::optional<glm::dvec3> IntersectionTests::rayTriangle(
     const glm::dvec3& v1,
     const glm::dvec3& v2,
     bool cullBackFaces) {
-  return ray.getPointAlongRay(
-      rayTriangleParametric(ray, v0, v1, v2, cullBackFaces));
+  double t;
+  return rayTriangleParametric(ray, v0, v1, v2, t, cullBackFaces) && t >= 0
+             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             : std::nullopt;
 }
 
-double IntersectionTests::rayTriangleParametric(
+bool IntersectionTests::rayTriangleParametric(
     const Ray& ray,
     const glm::dvec3& p0,
     const glm::dvec3& p1,
     const glm::dvec3& p2,
+    double& t,
     bool cullBackFaces) {
 
   const glm::dvec3& origin = ray.getOrigin();
@@ -62,60 +67,66 @@ double IntersectionTests::rayTriangleParametric(
   double det = glm::dot(edge0, p);
   if (cullBackFaces) {
     if (det < Math::Epsilon6)
-      return -1.0;
+      return false;
 
     glm::dvec3 tvec = origin - p0;
     double u = glm::dot(tvec, p);
     if (u < 0.0 || u > det)
-      return -1.0;
+      return false;
 
     glm::dvec3 q = glm::cross(tvec, edge0);
     double v = glm::dot(direction, q);
     if (v < 0.0 || u + v > det)
-      return -1.0;
+      return false;
 
-    return glm::dot(edge1, q) / det;
+    t = glm::dot(edge1, q) / det;
+    return true;
 
   } else {
 
-    if (std::abs(det) < Math::Epsilon6)
-      return -1.0;
+    if (glm::abs(det) < Math::Epsilon6)
+      return false;
 
     double invDet = 1.0 / det;
 
     glm::dvec3 tvec = origin - p0;
     double u = glm::dot(tvec, p) * invDet;
     if (u < 0.0 || u > 1.0)
-      return -1.0;
+      return false;
 
     glm::dvec3 q = glm::cross(tvec, edge0);
     double v = glm::dot(direction, q) * invDet;
     if (v < 0.0 || u + v > 1.0)
-      return -1.0;
+      return false;
 
-    return glm::dot(edge1, q) * invDet;
+    t = glm::dot(edge1, q) * invDet;
+    return true;
   }
 }
 
 std::optional<glm::dvec3>
 IntersectionTests::rayAABB(const Ray& ray, const AxisAlignedBox& aabb) {
-  return ray.getPointAlongRay(rayAABBParametric(ray, aabb));
+  double t;
+  return rayAABBParametric(ray, aabb, t) && t >= 0
+             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             : std::nullopt;
 }
 
-double IntersectionTests::rayAABBParametric(
+bool IntersectionTests::rayAABBParametric(
     const Ray& ray,
-    const AxisAlignedBox& aabb) {
+    const AxisAlignedBox& aabb,
+    double& t) {
   const glm::dvec3& dir = ray.getDirection();
   const glm::dvec3& origin = ray.getOrigin();
   const glm::dvec3* min = reinterpret_cast<const glm::dvec3*>(&aabb.minimumX);
   const glm::dvec3* max = reinterpret_cast<const glm::dvec3*>(&aabb.maximumX);
-  double greatestMin = -DBL_MAX;
-  double smallestMax = DBL_MAX;
-  double tmin = -DBL_MAX;
-  double tmax = DBL_MAX;
+  double greatestMin = -std::numeric_limits<double>::max();
+  double smallestMax = std::numeric_limits<double>::max();
+  double tmin = greatestMin;
+  double tmax = smallestMax;
 
-  for (int i = 0; i < 3; ++i) {
-    if (abs(dir[i]) < Math::Epsilon6) {
+  for (uint32_t i = 0; i < 3; ++i) {
+    if (glm::abs(dir[i]) < Math::Epsilon6) {
       continue;
     } else {
       tmin = ((*min)[i] - origin[i]) / dir[i];
@@ -128,19 +139,24 @@ double IntersectionTests::rayAABBParametric(
     smallestMax = glm::min(tmax, smallestMax);
   }
   if (smallestMax < 0.0 || greatestMin > smallestMax) {
-    return -1.0;
+    return false;
   }
-  return greatestMin < 0.0 ? smallestMax : greatestMin;
+  t = greatestMin < 0.0 ? smallestMax : greatestMin;
+  return true;
 }
 
 std::optional<glm::dvec3>
 IntersectionTests::rayOBB(const Ray& ray, const OrientedBoundingBox& obb) {
-  return ray.getPointAlongRay(rayOBBParametric(ray, obb));
+  double t;
+  return rayOBBParametric(ray, obb, t) && t >= 0
+             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             : std::nullopt;
 }
 
-double IntersectionTests::rayOBBParametric(
+bool IntersectionTests::rayOBBParametric(
     const Ray& ray,
-    const OrientedBoundingBox& obb) {
+    const OrientedBoundingBox& obb,
+    double& t) {
 
   const glm::dmat3x3& inverseHalfAxis = obb.getInverseHalfAxes();
   glm::dmat4x4 transformation(
@@ -157,12 +173,16 @@ double IntersectionTests::rayOBBParametric(
 
   return rayAABBParametric(
       ray.transform(transformation),
-      AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z));
+      AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z),
+      t);
 }
 
 std::optional<glm::dvec3>
 IntersectionTests::raySphere(const Ray& ray, const BoundingSphere& sphere) {
-  return ray.getPointAlongRay(raySphereParametric(ray, sphere));
+  double t;
+  return raySphereParametric(ray, sphere, t) && t >= 0
+             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             : std::nullopt;
 }
 
 namespace {
@@ -197,9 +217,10 @@ bool solveQuadratic(
 }
 } // namespace
 
-double IntersectionTests::raySphereParametric(
+bool IntersectionTests::raySphereParametric(
     const Ray& ray,
-    const BoundingSphere& sphere) {
+    const BoundingSphere& sphere,
+    double& t) {
   const glm::dvec3& origin = ray.getOrigin();
   const glm::dvec3& direction = ray.getDirection();
 
@@ -212,13 +233,11 @@ double IntersectionTests::raySphereParametric(
   const double c = glm::dot(diff, diff) - radiusSquared;
 
   double t0, t1;
-  solveQuadratic(1.0, b, c, t0, t1);
-
-  if (t0 >= 0) {
-    return t1 < 0 ? t0 : t0 < t1 ? t0 : t1;
-  } else {
-    return t1 >= 0 ? t1 : -1;
+  if (solveQuadratic(1.0, b, c, t0, t1)) {
+    t = t0 < 0 ? t1 : t0;
+    return true;
   }
+  return false;
 }
 
 bool IntersectionTests::pointInTriangle2D(
