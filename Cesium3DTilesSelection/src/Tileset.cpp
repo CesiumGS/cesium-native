@@ -1,5 +1,6 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
+#include "TilesetHeightFinder.h"
 
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -44,13 +45,17 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
-          _externals,
-          _options,
-          RasterOverlayCollection{_loadedTiles, externals},
-          std::vector<CesiumAsync::IAssetAccessor::THeader>{},
-          std::move(pCustomLoader),
-          std::move(pRootTile))} {}
+      _pTilesetContentManager{
+          new TilesetContentManager(
+              _externals,
+              _options,
+              RasterOverlayCollection{_loadedTiles, externals},
+              std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+              std::move(pCustomLoader),
+              std::move(pRootTile)),
+      },
+      _pTilesetHeightFinder{
+          new TilesetHeightFinder(this, _pTilesetContentManager)} {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -62,11 +67,15 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
-          _externals,
-          _options,
-          RasterOverlayCollection{_loadedTiles, externals},
-          url)} {}
+      _pTilesetContentManager{
+          new TilesetContentManager(
+              _externals,
+              _options,
+              RasterOverlayCollection{_loadedTiles, externals},
+              url),
+      },
+      _pTilesetHeightFinder{
+          new TilesetHeightFinder(this, _pTilesetContentManager)} {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -86,7 +95,9 @@ Tileset::Tileset(
           RasterOverlayCollection{_loadedTiles, externals},
           ionAssetID,
           ionAccessToken,
-          ionAssetEndpointUrl)} {}
+          ionAssetEndpointUrl)},
+      _pTilesetHeightFinder{
+          new TilesetHeightFinder(this, _pTilesetContentManager)} {}
 
 Tileset::~Tileset() noexcept {
   this->_pTilesetContentManager->unloadAll();
@@ -327,6 +338,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     return result;
   }
 
+  if (_pTilesetHeightFinder->_heightRequests.size() != 0) {
+    _pTilesetHeightFinder->_processHeightRequests();
+  }
+
   for (const std::shared_ptr<ITileExcluder>& pExcluder :
        this->_options.excluders) {
     pExcluder->startNewFrame();
@@ -521,6 +536,11 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
                   return &pExternal->metadata;
                 });
       });
+}
+
+CesiumAsync::Future<std::vector<double>>
+Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
+  return _pTilesetHeightFinder->_getHeightsAtCoordinates(coordinates);
 }
 
 static void markTileNonRendered(

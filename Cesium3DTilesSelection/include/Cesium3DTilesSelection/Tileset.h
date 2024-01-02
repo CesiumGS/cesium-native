@@ -23,6 +23,7 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
+class TilesetHeightFinder;
 
 /**
  * @brief A <a
@@ -257,6 +258,9 @@ public:
    * the same metadata instance.
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
+
+  CesiumAsync::Future<std::vector<double>> getHeightsAtCoordinates(
+      const std::vector<CesiumGeospatial::Cartographic>& coordinates);
 
 private:
   /**
@@ -496,6 +500,8 @@ private:
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
+
+  std::unique_ptr<TilesetHeightFinder> _pTilesetHeightFinder;
 
   void addTileToLoadQueue(
       Tile& tile,
