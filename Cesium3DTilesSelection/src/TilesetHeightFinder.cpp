@@ -2,9 +2,9 @@
 
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
+
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-
 #include <CesiumGltfContent/GltfUtilities.h>
 
 using namespace Cesium3DTilesSelection;
@@ -38,7 +38,8 @@ bool boundingVolumeContainsCoordinate(
 
     bool operator()(
         const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
-      return boundingRegion.getBoundingRegion().getRectangle().contains(coordinate);
+      return boundingRegion.getBoundingRegion().getRectangle().contains(
+          coordinate);
     }
 
     bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
@@ -164,26 +165,21 @@ void TilesetHeightFinder::_processHeightRequests() {
   }
 }
 
-Future<std::vector<double>>
-TilesetHeightFinder::_getHeightsAtCoordinates(
+Future<std::vector<double>> TilesetHeightFinder::_getHeightsAtCoordinates(
     std::vector<CesiumGeospatial::Cartographic> coordinates) {
   Tile* pRoot = _pTilesetContentManager->getRootTile();
   if (pRoot == nullptr || coordinates.empty()) {
     return _pTileset->getAsyncSystem()
-        .createResolvedFuture<std::vector<double>>(std::vector<double>(coordinates.size(), -9999.0));
+        .createResolvedFuture<std::vector<double>>(
+            std::vector<double>(coordinates.size(), -9999.0));
   }
   Promise promise =
       _pTileset->getAsyncSystem().createPromise<std::vector<double>>();
-  _heightRequests.emplace_back(
-      HeightRequests{
-        RayInfo{
-          createRay(coordinates[0]),
-          coordinates[0],
-          -1.0,
-          {pRoot}},
-       0,
-       coordinates,
-       std::vector<double>(coordinates.size()),
-       promise});
+  _heightRequests.emplace_back(HeightRequests{
+      RayInfo{createRay(coordinates[0]), coordinates[0], -1.0, {pRoot}},
+      0,
+      coordinates,
+      std::vector<double>(coordinates.size()),
+      promise});
   return promise.getFuture();
 }

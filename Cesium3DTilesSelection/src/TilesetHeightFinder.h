@@ -47,7 +47,7 @@ class TilesetHeightFinder {
 
   void _processHeightRequests();
 
-  std::vector <HeightRequests> _heightRequests;
+  std::vector<HeightRequests> _heightRequests;
   Cesium3DTilesSelection::Tileset* _pTileset;
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
