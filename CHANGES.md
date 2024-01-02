@@ -1,6 +1,10 @@
 # Change Log
 
-### ? - ?
+### v0.31.0 - 2023-12-14
+
+##### Additions :tada:
+
+- Add `defaults` method to `CesiumIonClient::Connection`.
 
 ##### Additions :tada:
 
@@ -10,6 +14,7 @@
 ##### Fixes :wrench:
 
 - Fixed a crash in `SubtreeAvailability::loadSubtree`.
+- Fixed a bug where the `getApiUrl` method of `CesiumIonClient::Connection` would not return the default API URL if the attempt to access `config.json` failed in a more serious way, such as because of an invalid hostname.
 
 ### v0.30.0 - 2023-12-01
 
