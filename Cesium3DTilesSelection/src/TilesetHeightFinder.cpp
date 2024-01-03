@@ -59,7 +59,8 @@ Ray createRay(Cartographic cartographic) {
 } // namespace
 
 bool TilesetHeightFinder::_loadTileIfNeeded(Tile* pTile) {
-  if (pTile->getChildren().size() != 0) {
+  if (pTile->getChildren().size() != 0 &&
+      pTile->getRefine() != TileRefine::Add) {
     return false;
   }
   const TilesetOptions& options = _pTileset->getOptions();
@@ -74,6 +75,12 @@ bool TilesetHeightFinder::_loadTileIfNeeded(Tile* pTile) {
   case TileLoadState::Unloading:
     return true;
   case TileLoadState::ContentLoaded:
+    if (!_pTilesetContentManager->getRasterOverlayCollection()
+             .getOverlays()
+             .empty()) {
+      _pTilesetContentManager->updateTileContent(*pTile, options);
+    }
+    return false;
   case TileLoadState::Done:
   case TileLoadState::Failed:
     return false;
@@ -81,7 +88,7 @@ bool TilesetHeightFinder::_loadTileIfNeeded(Tile* pTile) {
   return false;
 }
 
-void TilesetHeightFinder::_intersectLeafTile(Tile* pTile, RayInfo& rayInfo) {
+void TilesetHeightFinder::_intersectVisibleTile(Tile* pTile, RayInfo& rayInfo) {
   const Ray& ray = rayInfo.ray;
   double& tMin = rayInfo.tMin;
 
@@ -101,26 +108,36 @@ void TilesetHeightFinder::_intersectLeafTile(Tile* pTile, RayInfo& rayInfo) {
   }
 }
 
-void TilesetHeightFinder::_findAndIntersectLeafTiles(
+void TilesetHeightFinder::_findAndIntersectVisibleTiles(
     Tile* pTile,
     RayInfo& rayInfo,
     std::vector<Tile*>& newTilesToLoad) {
   if (pTile->getState() == TileLoadState::Failed) {
     return;
   }
+
   if (pTile->getChildren().empty()) {
-    _intersectLeafTile(pTile, rayInfo);
+    _intersectVisibleTile(pTile, rayInfo);
   } else {
+    if (pTile->getRefine() == TileRefine::Add) {
+      _intersectVisibleTile(pTile, rayInfo);
+    }
     for (Tile& child : pTile->getChildren()) {
-      if (!boundingVolumeContainsCoordinate(
-              child.getBoundingVolume(),
-              rayInfo.ray,
-              rayInfo.coordinate))
+      if (child.getContentBoundingVolume()) {
+        if (!boundingVolumeContainsCoordinate(
+                *child.getContentBoundingVolume(),
+                rayInfo.ray,
+                rayInfo.coordinate))
+          continue;
+      } else if (!boundingVolumeContainsCoordinate(
+                     child.getBoundingVolume(),
+                     rayInfo.ray,
+                     rayInfo.coordinate))
         continue;
       if (_loadTileIfNeeded(&child)) {
         newTilesToLoad.push_back(&child);
       } else {
-        _findAndIntersectLeafTiles(&child, rayInfo, newTilesToLoad);
+        _findAndIntersectVisibleTiles(&child, rayInfo, newTilesToLoad);
       }
     }
   }
@@ -135,7 +152,7 @@ void TilesetHeightFinder::_processTilesLoadingQueue(RayInfo& rayInfo) {
       ++it;
     } else {
       it = rayInfo.tilesLoading.erase(it);
-      _findAndIntersectLeafTiles(pTile, rayInfo, newTilesToLoad);
+      _findAndIntersectVisibleTiles(pTile, rayInfo, newTilesToLoad);
     }
   }
   rayInfo.tilesLoading.insert(
@@ -156,7 +173,7 @@ void TilesetHeightFinder::_processHeightRequests() {
       current.ray = createRay(current.coordinate);
       current.tMin = -1.0;
       Tile* pRoot = _pTilesetContentManager->getRootTile();
-      _findAndIntersectLeafTiles(pRoot, current, current.tilesLoading);
+      _findAndIntersectVisibleTiles(pRoot, current, current.tilesLoading);
     } else {
       requests.promise.resolve(std::move(requests.heights));
       _heightRequests.erase(_heightRequests.begin());

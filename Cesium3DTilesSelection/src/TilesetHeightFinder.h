@@ -36,9 +36,9 @@ class TilesetHeightFinder {
 
   bool _loadTileIfNeeded(Tile* pTile);
 
-  void _intersectLeafTile(Tile* pTile, RayInfo& rayInfo);
+  void _intersectVisibleTile(Tile* pTile, RayInfo& rayInfo);
 
-  void _findAndIntersectLeafTiles(
+  void _findAndIntersectVisibleTiles(
       Tile* pTile,
       RayInfo& rayInfo,
       std::vector<Tile*>& newTilesToLoad);
