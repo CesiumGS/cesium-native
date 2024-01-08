@@ -30,6 +30,7 @@ public:
 
     CesiumUtility::IntrusivePointer<ThrottlingGroup> that = this;
     auto runFunction = [that,
+                        pController,
                         promise = std::move(promise),
                         f = std::forward<Func>(f)]() mutable {
       try {
@@ -38,6 +39,7 @@ public:
         promise.reject(std::current_exception());
       }
 
+      pController->_groupStack.pop();
       that->onTaskComplete();
     };
 
