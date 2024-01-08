@@ -119,11 +119,11 @@ RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
 
 void RasterOverlayTileProvider::getLoadTileThrottledWork(
     RasterOverlayTile& tile,
-    std::vector<std::string>& outUrls) {
+    RequestDataVec& outRequests) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
     return;
 
-  getLoadTileImageWork(tile, outUrls);
+  getLoadTileImageWork(tile, outRequests);
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

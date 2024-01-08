@@ -66,7 +66,7 @@ public:
   struct ParsedTileWork {
     TileWorkRef workRef;
     size_t depthIndex;
-    std::string requestUrl;
+    RequestData requestData;
     std::vector<CesiumGeospatial::Projection> projections;
 
     bool operator<(const ParsedTileWork& rhs) const noexcept {

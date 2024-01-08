@@ -118,7 +118,7 @@ private:
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile& overlayTile,
-      std::vector<std::string>& outUrls) override;
+      RequestDataVec& outRequests) override;
 
   struct LoadedQuadtreeImage {
     std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
@@ -146,7 +146,7 @@ private:
   void getMapRasterTilesToGeometryTileWork(
       const CesiumGeometry::Rectangle& geometryRectangle,
       const glm::dvec2 targetScreenPixels,
-      std::vector<std::string>& outUrls);
+      RequestDataVec& outRequests);
 
   void unloadCachedTiles();
 

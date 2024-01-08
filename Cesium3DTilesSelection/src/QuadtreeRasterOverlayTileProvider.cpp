@@ -98,7 +98,7 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
 void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
     const CesiumGeometry::Rectangle& geometryRectangle,
     const glm::dvec2 targetScreenPixels,
-    std::vector<std::string>& outUrls) {
+    RequestDataVec& outRequests) {
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> result;
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
@@ -279,7 +279,7 @@ void QuadtreeRasterOverlayTileProvider::getMapRasterTilesToGeometryTileWork(
 
       std::string imageWorkUrl;
       if (getLoadQuadtreeTileImageWork(tileId, imageWorkUrl))
-        outUrls.push_back(imageWorkUrl);
+        outRequests.push_back(RequestData{imageWorkUrl});
     }
   }
 }
@@ -630,11 +630,11 @@ void blitImage(
 
 void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
     RasterOverlayTile& overlayTile,
-    std::vector<std::string>& outUrls) {
+    RequestDataVec& outRequests) {
   this->getMapRasterTilesToGeometryTileWork(
       overlayTile.getRectangle(),
       overlayTile.getTargetScreenPixels(),
-      outUrls);
+      outRequests);
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

@@ -23,7 +23,13 @@
 namespace Cesium3DTilesSelection {
 class Tile;
 
-// Response data
+struct RequestData {
+  std::string url;
+  std::vector<CesiumAsync::IAssetAccessor::THeader> headers;
+};
+
+typedef std::vector<RequestData> RequestDataVec;
+
 struct ResponseData {
   uint16_t statusCode;
   std::vector<std::byte> bytes;
@@ -117,7 +123,7 @@ public:
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
 
-  virtual void getRequestWork(Tile* pTile, std::string& outUrl) = 0;
+  virtual void getRequestWork(Tile* pTile, RequestData& outRequest) = 0;
 
   /**
    * @brief Create the tile's children.

@@ -340,7 +340,7 @@ public:
 
   void getLoadTileThrottledWork(
       RasterOverlayTile& tile,
-      std::vector<std::string>& outUrls);
+      RequestDataVec& outRequests);
 
 protected:
   /**
@@ -354,7 +354,7 @@ protected:
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile& overlayTile,
-      std::vector<std::string>& outUrls) = 0;
+      RequestDataVec& outRequests) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.

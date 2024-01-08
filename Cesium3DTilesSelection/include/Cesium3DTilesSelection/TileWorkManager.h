@@ -33,8 +33,8 @@ enum class TileLoadPriorityGroup {
 struct TileLoadWork {
   TileWorkRef workRef;
 
-  // Pre-request data
-  std::string requestUrl; // TODO, this should be an array of requests
+  RequestData requestData;
+
   std::vector<CesiumGeospatial::Projection> projections;
   TileLoadPriorityGroup group;
   double priority;
@@ -64,7 +64,6 @@ public:
   void QueueRequestWork(
       const std::vector<TileLoadWork>& work,
       const std::vector<TileLoadWork>& passThroughWork,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       size_t maxSimultaneousRequests);
 
   void PassThroughWork(const std::vector<TileLoadWork>& work);
@@ -102,8 +101,6 @@ private:
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
 
   std::shared_ptr<spdlog::logger> _pLogger;
-
-  std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
 
   size_t _maxSimultaneousRequests;
 };

@@ -1642,7 +1642,7 @@ void Tileset::discoverLoadWork(
 
       TileLoadWork newWorkUnit = {
           work.workRef,
-          work.requestUrl,
+          work.requestData,
           work.projections,
           loadRequest.group,
           loadRequest.priority + priorityBias};
@@ -1663,7 +1663,7 @@ void Tileset::addWorkToManager(
   std::vector<TileLoadWork> urlWork;
   std::vector<TileLoadWork> noUrlWork;
   for (TileLoadWork& work : requestWork) {
-    if (work.requestUrl.empty())
+    if (work.requestData.url.empty())
       noUrlWork.push_back(work);
     else
       urlWork.push_back(work);
@@ -1709,7 +1709,6 @@ void Tileset::addWorkToManager(
     _tileWorkManager.QueueRequestWork(
         workToSubmit,
         noUrlWork,
-        this->_pTilesetContentManager->getRequestHeaders(),
         maxSimultaneousRequests);
   }
 }
@@ -1739,7 +1738,7 @@ void Tileset::handleFailedRequestWork(std::vector<TileLoadWork>& workVector) {
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
         "Request unexpectedly failed to complete for url: {}",
-        work.requestUrl);
+        work.requestData.url);
 
     if (std::holds_alternative<Tile*>(work.workRef)) {
       Tile* pTile = std::get<Tile*>(work.workRef);
@@ -1786,7 +1785,6 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
               [_pTile = pTile,
                _this = this,
                pLogger = this->_externals.pLogger](std::exception&& e) {
-
                 _pTile->setState(TileLoadState::Failed);
 
                 _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);

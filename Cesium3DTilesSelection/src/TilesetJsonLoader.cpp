@@ -907,11 +907,11 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-void TilesetJsonLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+void TilesetJsonLoader::getRequestWork(Tile* pTile, RequestData& outRequest) {
   // check if this tile belongs to a child loader
   auto currentLoader = pTile->getLoader();
   if (currentLoader != this) {
-    currentLoader->getRequestWork(pTile, outUrl);
+    currentLoader->getRequestWork(pTile, outRequest);
     return;
   }
 
@@ -920,7 +920,7 @@ void TilesetJsonLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
   if (!url)
     return;
 
-  outUrl = CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
+  outRequest.url = CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
 }
 
 TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {

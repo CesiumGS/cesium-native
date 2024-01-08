@@ -18,7 +18,6 @@ TileWorkManager::~TileWorkManager() noexcept {
 void TileWorkManager::QueueRequestWork(
     const std::vector<TileLoadWork>& work,
     const std::vector<TileLoadWork>& passThroughWork,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     size_t maxSimultaneousRequests) {
   if (work.empty() && passThroughWork.empty())
     return;
@@ -31,8 +30,6 @@ void TileWorkManager::QueueRequestWork(
         _doneWork.end(),
         passThroughWork.begin(),
         passThroughWork.end());
-
-    _requestHeaders = requestHeaders;
 
     assert(maxSimultaneousRequests > 0);
     _maxSimultaneousRequests = maxSimultaneousRequests;
@@ -59,7 +56,7 @@ void TileWorkManager::onRequestFinished(
 
   // Find this request
   std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _inFlightWork.find(request.requestUrl);
+  foundIt = _inFlightWork.find(request.requestData.url);
   assert(foundIt != _inFlightWork.end());
 
   // Handle results
@@ -76,10 +73,10 @@ void TileWorkManager::onRequestFinished(
 
     // Add new entry
     assert(
-        requestWork.responsesByUrl.find(requestWork.requestUrl) ==
+        requestWork.responsesByUrl.find(requestWork.requestData.url) ==
         requestWork.responsesByUrl.end());
     ResponseData& responseData =
-        requestWork.responsesByUrl[requestWork.requestUrl];
+        requestWork.responsesByUrl[requestWork.requestData.url];
 
     // Copy our results
     size_t byteCount = responseBytes.size();
@@ -102,7 +99,10 @@ void TileWorkManager::onRequestFinished(
 
 void TileWorkManager::dispatchRequest(TileLoadWork& request) {
   this->_pAssetAccessor
-      ->get(this->_asyncSystem, request.requestUrl, this->_requestHeaders)
+      ->get(
+          this->_asyncSystem,
+          request.requestData.url,
+          request.requestData.headers)
       .thenImmediately([_this = this, _request = request](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
         // Add payload to this work
@@ -130,12 +130,12 @@ void TileWorkManager::stageQueuedWork(
 
   // Move to in flight registry
   std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _inFlightWork.find(request.requestUrl);
+  foundIt = _inFlightWork.find(request.requestData.url);
   if (foundIt == _inFlightWork.end()) {
     // Request doesn't exist, set up a new one
     std::vector<TileLoadWork> newWorkVec;
     newWorkVec.push_back(request);
-    _inFlightWork[request.requestUrl] = newWorkVec;
+    _inFlightWork[request.requestData.url] = newWorkVec;
 
     // Copy to our output vector
     workNeedingDispatch.push_back(request);

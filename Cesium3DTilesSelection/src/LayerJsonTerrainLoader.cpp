@@ -897,7 +897,9 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-void LayerJsonTerrainLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
+void LayerJsonTerrainLoader::getRequestWork(
+    Tile* pTile,
+    RequestData& outRequest) {
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&pTile->getTileID());
@@ -920,7 +922,7 @@ void LayerJsonTerrainLoader::getRequestWork(Tile* pTile, std::string& outUrl) {
 
   // Start the actual content request.
   auto& currentLayer = *firstAvailableIt;
-  outUrl = resolveTileUrl(*pQuadtreeTileID, currentLayer);
+  outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 }
 
 TileChildrenResult

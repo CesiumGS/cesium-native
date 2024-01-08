@@ -221,14 +221,13 @@ CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(
   return provider.loadTileThrottled(*pLoading);
 }
 
-void RasterMappedTo3DTile::getLoadThrottledWork(
-    std::vector<std::string>& outUrls) {
+void RasterMappedTo3DTile::getLoadThrottledWork(RequestDataVec& outRequests) {
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading)
     return;
 
   RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  provider.getLoadTileThrottledWork(*pLoading, outUrls);
+  provider.getLoadTileThrottledWork(*pLoading, outRequests);
 }
 
 namespace {

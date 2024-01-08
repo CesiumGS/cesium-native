@@ -25,8 +25,7 @@ public:
   }
 
   virtual void
-  getLoadTileImageWork(RasterOverlayTile&, std::vector<std::string>&) override {
-  }
+  getLoadTileImageWork(RasterOverlayTile&, RequestDataVec&) override {}
 };
 } // namespace
 

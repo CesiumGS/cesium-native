@@ -261,6 +261,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     size_t depthIndex,
     RasterOverlayCollection& overlays,
     double maximumScreenSpaceError,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& defaultHeaders,
     std::vector<TilesetContentManager::ParsedTileWork>& outWork) {
   // when tile fails temporarily, it may still have mapped raster tiles, so
   // clear it here
@@ -286,14 +287,17 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     if (pMapped) {
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
-      std::vector<std::string> requestUrls;
-      pMapped->getLoadThrottledWork(requestUrls);
+      RequestDataVec requests;
+      pMapped->getLoadThrottledWork(requests);
 
-      for (std::string& url : requestUrls) {
+      for (RequestData& request : requests) {
+        // If loader doesn't specify headers, use content manager as default
         TilesetContentManager::ParsedTileWork newWork = {
             pMapped,
             depthIndex,
-            url};
+            RequestData{
+                request.url,
+                request.headers.empty() ? defaultHeaders : request.headers}};
         outWork.push_back(newWork);
       }
     }
@@ -872,11 +876,18 @@ void TilesetContentManager::parseTileWork(
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
-      std::vector<std::string> requestUrls;
-      rasterTile.getLoadThrottledWork(requestUrls);
+      RequestDataVec requests;
+      rasterTile.getLoadThrottledWork(requests);
 
-      for (std::string& url : requestUrls) {
-        ParsedTileWork newWork = {&rasterTile, depthIndex, url};
+      for (RequestData& request : requests) {
+        // If loader doesn't specify headers, use content manager as default
+        ParsedTileWork newWork = {
+            &rasterTile,
+            depthIndex,
+            RequestData{
+                request.url,
+                request.headers.empty() ? this->_requestHeaders
+                                        : request.headers}};
         outWork.push_back(newWork);
       }
     }
@@ -929,8 +940,11 @@ void TilesetContentManager::parseTileWork(
     pLoader = this->_pLoader.get();
   }
 
-  std::string requestUrl;
-  pLoader->getRequestWork(pTile, requestUrl);
+  // Default headers come from the this. Loader can override if needed
+  RequestData requestData;
+  requestData.headers = this->_requestHeaders;
+
+  pLoader->getRequestWork(pTile, requestData);
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
@@ -938,9 +952,10 @@ void TilesetContentManager::parseTileWork(
       depthIndex,
       this->_overlayCollection,
       maximumScreenSpaceError,
+      this->_requestHeaders,
       outWork);
 
-  ParsedTileWork newWork = {pTile, depthIndex, requestUrl, projections};
+  ParsedTileWork newWork = {pTile, depthIndex, requestData, projections};
   outWork.push_back(newWork);
 }
 

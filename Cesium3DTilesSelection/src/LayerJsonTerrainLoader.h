@@ -70,7 +70,7 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  void getRequestWork(Tile* pTile, std::string& outUrl) override;
+  void getRequestWork(Tile* pTile, RequestData& outRequest) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 

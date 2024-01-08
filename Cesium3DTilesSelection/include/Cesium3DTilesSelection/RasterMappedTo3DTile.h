@@ -2,6 +2,7 @@
 
 #include "IPrepareRendererResources.h"
 #include "RasterOverlayTile.h"
+#include "TilesetContentLoader.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
@@ -185,7 +186,7 @@ public:
   CesiumAsync::Future<bool>
   loadThrottled(CesiumAsync::AsyncSystem& callerAsync) noexcept;
 
-  void getLoadThrottledWork(std::vector<std::string>& outUrls);
+  void getLoadThrottledWork(RequestDataVec& outRequests);
 
   /**
    * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.
