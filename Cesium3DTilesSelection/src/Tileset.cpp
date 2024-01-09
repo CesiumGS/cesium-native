@@ -1452,13 +1452,12 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
-  std::vector<TileLoadWork> newRequestWork;
-  discoverLoadWork(this->_workerThreadLoadQueue, newRequestWork);
+  std::vector<TileLoadWork> newLoadWork;
+  discoverLoadWork(this->_workerThreadLoadQueue, newLoadWork);
 
-  // Add all content requests to the dispatcher
   size_t maxTileLoads =
       static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
-  addWorkToManager(newRequestWork, maxTileLoads);
+  addWorkToManager(newLoadWork, maxTileLoads);
 
   // Calculate how much processing work we can do right now
   int32_t numberOfTilesLoading =
@@ -1476,7 +1475,10 @@ void Tileset::_processWorkerThreadLoadQueue() {
 
   std::vector<TileLoadWork> completedWork;
   std::vector<TileLoadWork> failedWork;
-  _tileWorkManager.TakeCompletedWork(availableSlots, completedWork, failedWork);
+  _tileWorkManager.TakeProcessingWork(
+      availableSlots,
+      completedWork,
+      failedWork);
   assert(completedWork.size() <= availableSlots);
 
   handleFailedRequestWork(failedWork);
@@ -1613,7 +1615,7 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
 
 void Tileset::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
-    std::vector<TileLoadWork>& outRequestWork) {
+    std::vector<TileLoadWork>& outLoadWork) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->_pTilesetContentManager->parseTileWork(
@@ -1649,30 +1651,32 @@ void Tileset::discoverLoadWork(
           loadRequest.group,
           loadRequest.priority + priorityBias};
 
-      outRequestWork.push_back(newWorkUnit);
+      outLoadWork.push_back(newWorkUnit);
     }
   }
 }
 
 void Tileset::addWorkToManager(
-    std::vector<TileLoadWork>& requestWork,
+    std::vector<TileLoadWork>& loadWork,
     size_t maxSimultaneousRequests) {
-  if (requestWork.empty())
+  if (loadWork.empty())
     return;
 
-  // Split work into those that have a url, and those that don't
-  // Requests without urls will pass through to the done queue
-  std::vector<TileLoadWork> urlWork;
-  std::vector<TileLoadWork> noUrlWork;
-  for (TileLoadWork& work : requestWork) {
-    if (work.requestData.url.empty())
-      noUrlWork.push_back(work);
-    else
-      urlWork.push_back(work);
+  // Request work will always go to that queue first
+  // Work with only processing can bypass it
+  std::vector<TileLoadWork*> requestWork;
+  std::vector<TileLoadWork*> processingWork;
+  for (TileLoadWork& work : loadWork) {
+    if (work.requestData.url.empty()) {
+      assert(work.tileCallback || work.rasterCallback);
+      processingWork.push_back(&work);
+    } else {
+      requestWork.push_back(&work);
+    }
   }
 
-  // We're always going to process no-url work. Mark it as loading
-  markWorkTilesAsLoading(noUrlWork);
+  // We're always going to do available processing work. Mark it as loading
+  markWorkTilesAsLoading(processingWork);
 
   // Figure out how much url work we will accept.
   // We want some work to be ready to go in between frames
@@ -1684,17 +1688,17 @@ void Tileset::addWorkToManager(
 
   size_t slotsOpen = maxCountToQueue - pendingRequestCount;
   if (slotsOpen == 0) {
-    // No request slots open, we can at least insert our no url work
-    _tileWorkManager.PassThroughWork(noUrlWork);
+    // No request slots open, we can at least insert our processing work
+    _tileWorkManager.QueueProcessingWork(processingWork);
   } else {
-    std::vector<TileLoadWork> workToSubmit;
-    if (slotsOpen >= urlWork.size()) {
+    std::vector<TileLoadWork*> workToSubmit;
+    if (slotsOpen >= requestWork.size()) {
       // We can take all incoming work
-      workToSubmit = urlWork;
+      workToSubmit = requestWork;
     } else {
       // We can only take part of the incoming work
       // Just submit the highest priority
-      workToSubmit = urlWork;
+      workToSubmit = requestWork;
       std::sort(workToSubmit.begin(), workToSubmit.end());
       workToSubmit.resize(slotsOpen);
     }
@@ -1708,22 +1712,22 @@ void Tileset::addWorkToManager(
 
     // TODO, assert tile is not already loading? or already post-processing?
 
-    _tileWorkManager.QueueRequestWork(
+    _tileWorkManager.QueueWork(
         workToSubmit,
-        noUrlWork,
+        processingWork,
         maxSimultaneousRequests);
   }
 }
 
-void Tileset::markWorkTilesAsLoading(std::vector<TileLoadWork>& workVector) {
-  for (TileLoadWork& work : workVector) {
-    if (std::holds_alternative<Tile*>(work.workRef)) {
-      Tile* pTile = std::get<Tile*>(work.workRef);
+void Tileset::markWorkTilesAsLoading(std::vector<TileLoadWork*>& workVector) {
+  for (TileLoadWork* work : workVector) {
+    if (std::holds_alternative<Tile*>(work->workRef)) {
+      Tile* pTile = std::get<Tile*>(work->workRef);
       assert(pTile);
       pTile->setState(TileLoadState::ContentLoading);
     } else {
       RasterMappedTo3DTile* pRasterTile =
-          std::get<RasterMappedTo3DTile*>(work.workRef);
+          std::get<RasterMappedTo3DTile*>(work->workRef);
       assert(pRasterTile);
 
       RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();

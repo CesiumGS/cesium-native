@@ -15,21 +15,21 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-void TileWorkManager::QueueRequestWork(
-    const std::vector<TileLoadWork>& work,
-    const std::vector<TileLoadWork>& passThroughWork,
+void TileWorkManager::QueueWork(
+    const std::vector<TileLoadWork*>& requestWork,
+    const std::vector<TileLoadWork*>& processingWork,
     size_t maxSimultaneousRequests) {
-  if (work.empty() && passThroughWork.empty())
+  if (requestWork.empty() && processingWork.empty())
     return;
 
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
-    _queuedWork.insert(_queuedWork.end(), work.begin(), work.end());
 
-    _doneWork.insert(
-        _doneWork.end(),
-        passThroughWork.begin(),
-        passThroughWork.end());
+    for (TileLoadWork* element : requestWork)
+      _requestQueue.push_back(std::move(*element));
+
+    for (TileLoadWork* element : processingWork)
+      _processingQueue.push_back(std::move(*element));
 
     assert(maxSimultaneousRequests > 0);
     _maxSimultaneousRequests = maxSimultaneousRequests;
@@ -38,11 +38,13 @@ void TileWorkManager::QueueRequestWork(
   transitionQueuedWork();
 }
 
-void TileWorkManager::PassThroughWork(const std::vector<TileLoadWork>& work) {
-  if (work.empty())
+void TileWorkManager::QueueProcessingWork(
+    const std::vector<TileLoadWork*>& processingWork) {
+  if (processingWork.empty())
     return;
   std::lock_guard<std::mutex> lock(_requestsLock);
-  _doneWork.insert(_doneWork.end(), work.begin(), work.end());
+  for (TileLoadWork* element : processingWork)
+    _processingQueue.push_back(std::move(*element));
 }
 
 void TileWorkManager::onRequestFinished(
@@ -56,8 +58,8 @@ void TileWorkManager::onRequestFinished(
 
   // Find this request
   std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _inFlightWork.find(request.requestData.url);
-  assert(foundIt != _inFlightWork.end());
+  foundIt = _inFlightRequests.find(request.requestData.url);
+  assert(foundIt != _inFlightRequests.end());
 
   // Handle results
   std::vector<TileLoadWork>& requestWorkVec = foundIt->second;
@@ -89,12 +91,12 @@ void TileWorkManager::onRequestFinished(
     }
     responseData.statusCode = responseStatusCode;
 
-    // Put in done requests
-    _doneWork.push_back(std::move(requestWork));
+    // Put in processing queue
+    _processingQueue.push_back(std::move(requestWork));
   }
 
   // Remove it
-  _inFlightWork.erase(foundIt);
+  _inFlightRequests.erase(foundIt);
 }
 
 void TileWorkManager::dispatchRequest(TileLoadWork& request) {
@@ -124,18 +126,18 @@ void TileWorkManager::dispatchRequest(TileLoadWork& request) {
 void TileWorkManager::stageQueuedWork(
     std::vector<TileLoadWork>& workNeedingDispatch) {
   // Take from back of queue (highest priority).
-  assert(_queuedWork.size() > 0);
-  TileLoadWork request = _queuedWork.back();
-  _queuedWork.pop_back();
+  assert(_requestQueue.size() > 0);
+  TileLoadWork request = _requestQueue.back();
+  _requestQueue.pop_back();
 
   // Move to in flight registry
   std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _inFlightWork.find(request.requestData.url);
-  if (foundIt == _inFlightWork.end()) {
+  foundIt = _inFlightRequests.find(request.requestData.url);
+  if (foundIt == _inFlightRequests.end()) {
     // Request doesn't exist, set up a new one
     std::vector<TileLoadWork> newWorkVec;
     newWorkVec.push_back(request);
-    _inFlightWork[request.requestData.url] = newWorkVec;
+    _inFlightRequests[request.requestData.url] = newWorkVec;
 
     // Copy to our output vector
     workNeedingDispatch.push_back(request);
@@ -147,13 +149,13 @@ void TileWorkManager::stageQueuedWork(
 
 size_t TileWorkManager::GetPendingRequestsCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  return _queuedWork.size() + _inFlightWork.size();
+  return _requestQueue.size() + _inFlightRequests.size();
 }
 
 size_t TileWorkManager::GetTotalPendingCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  return _queuedWork.size() + _inFlightWork.size() + _doneWork.size() +
-         _failedWork.size();
+  return _requestQueue.size() + _inFlightRequests.size() +
+         _processingQueue.size() + _failedWork.size();
 }
 
 void TileWorkManager::GetRequestsStats(
@@ -161,12 +163,12 @@ void TileWorkManager::GetRequestsStats(
     size_t& inFlight,
     size_t& done) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  queued = _queuedWork.size();
-  inFlight = _inFlightWork.size();
-  done = _doneWork.size() + _failedWork.size();
+  queued = _requestQueue.size();
+  inFlight = _inFlightRequests.size();
+  done = _processingQueue.size() + _failedWork.size();
 }
 
-void TileWorkManager::TakeCompletedWork(
+void TileWorkManager::TakeProcessingWork(
     size_t maxCount,
     std::vector<TileLoadWork>& outCompleted,
     std::vector<TileLoadWork>& outFailed) {
@@ -179,24 +181,26 @@ void TileWorkManager::TakeCompletedWork(
   }
 
   // Return completed work, up to the count specified
-  size_t doneCount = _doneWork.size();
-  if (doneCount == 0)
+  size_t processingCount = _processingQueue.size();
+  if (processingCount == 0)
     return;
 
-  size_t numberToTake = std::min(doneCount, maxCount);
+  size_t numberToTake = std::min(processingCount, maxCount);
 
   // If not taking everything, sort so more important work goes first
-  if (numberToTake < doneCount)
-    std::sort(_doneWork.begin(), _doneWork.end());
+  if (numberToTake < processingCount)
+    std::sort(_processingQueue.begin(), _processingQueue.end());
 
   // Move work to output
-  for (auto workIt = _doneWork.begin();
-       workIt != _doneWork.begin() + numberToTake;
+  for (auto workIt = _processingQueue.begin();
+       workIt != _processingQueue.begin() + numberToTake;
        ++workIt)
     outCompleted.push_back(std::move(*workIt));
 
   // Remove these entries from the source
-  _doneWork.erase(_doneWork.begin(), _doneWork.begin() + numberToTake);
+  _processingQueue.erase(
+      _processingQueue.begin(),
+      _processingQueue.begin() + numberToTake);
 }
 
 void TileWorkManager::transitionQueuedWork() {
@@ -204,12 +208,12 @@ void TileWorkManager::transitionQueuedWork() {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
-    size_t queueCount = _queuedWork.size();
+    size_t queueCount = _requestQueue.size();
     if (queueCount > 0) {
       // We have work to do
 
       size_t slotsTotal = _maxSimultaneousRequests;
-      size_t slotsUsed = _inFlightWork.size();
+      size_t slotsUsed = _inFlightRequests.size();
       if (slotsUsed < slotsTotal) {
         // There are free slots
         size_t slotsAvailable = slotsTotal - slotsUsed;
@@ -217,7 +221,7 @@ void TileWorkManager::transitionQueuedWork() {
         // Sort our incoming request queue by priority
         // Sort descending so highest priority is at back of vector
         if (queueCount > 1)
-          std::sort(_queuedWork.rbegin(), _queuedWork.rend());
+          std::sort(_requestQueue.rbegin(), _requestQueue.rend());
 
         // Stage amount of work specified by caller, or whatever is left
         size_t dispatchCount = std::min(queueCount, slotsAvailable);

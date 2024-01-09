@@ -63,14 +63,14 @@ public:
         _pLogger(pLogger) {}
   ~TileWorkManager() noexcept;
 
-  void QueueRequestWork(
-      const std::vector<TileLoadWork>& work,
-      const std::vector<TileLoadWork>& passThroughWork,
+  void QueueWork(
+      const std::vector<TileLoadWork*>& requestWork,
+      const std::vector<TileLoadWork*>& processingWork,
       size_t maxSimultaneousRequests);
 
-  void PassThroughWork(const std::vector<TileLoadWork>& work);
+  void QueueProcessingWork(const std::vector<TileLoadWork*>& processingWork);
 
-  void TakeCompletedWork(
+  void TakeProcessingWork(
       size_t maxCount,
       std::vector<TileLoadWork>& outCompleted,
       std::vector<TileLoadWork>& outFailed);
@@ -93,9 +93,9 @@ private:
   // Thread safe members
   std::mutex _requestsLock;
   bool _exitSignaled = false;
-  std::vector<TileLoadWork> _queuedWork;
-  std::map<std::string, std::vector<TileLoadWork>> _inFlightWork;
-  std::vector<TileLoadWork> _doneWork;
+  std::vector<TileLoadWork> _requestQueue;
+  std::map<std::string, std::vector<TileLoadWork>> _inFlightRequests;
+  std::vector<TileLoadWork> _processingQueue;
   std::vector<TileLoadWork> _failedWork;
 
   CesiumAsync::AsyncSystem _asyncSystem;

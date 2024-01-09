@@ -478,7 +478,7 @@ private:
       std::vector<TileLoadWork>& requestWork,
       size_t maxSimultaneousRequests);
 
-  void markWorkTilesAsLoading(std::vector<TileLoadWork>& workVector);
+  void markWorkTilesAsLoading(std::vector<TileLoadWork*>& workVector);
 
   void handleFailedRequestWork(std::vector<TileLoadWork>& workVector);
 
