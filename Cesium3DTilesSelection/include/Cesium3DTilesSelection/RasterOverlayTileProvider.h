@@ -336,11 +336,14 @@ public:
    * false if the load could not be started because too many loads are already
    * in progress.
    */
-  CesiumAsync::Future<bool> loadTileThrottled(RasterOverlayTile& tile);
+  CesiumAsync::Future<bool> loadTileThrottled(
+      RasterOverlayTile& tile,
+      RasterProcessingCallback rasterCallback);
 
   void getLoadTileThrottledWork(
       RasterOverlayTile& tile,
-      RequestDataVec& outRequests);
+      RequestDataVec& outRequests,
+      RasterProcessingCallback& outCallback);
 
 protected:
   /**
@@ -354,7 +357,8 @@ protected:
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile& overlayTile,
-      RequestDataVec& outRequests) = 0;
+      RequestDataVec& outRequests,
+      RasterProcessingCallback& outCallback) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -372,8 +376,10 @@ protected:
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  CesiumAsync::Future<bool>
-  doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  CesiumAsync::Future<bool> doLoad(
+      RasterOverlayTile& tile,
+      bool isThrottledLoad,
+      RasterProcessingCallback rasterCallback);
 
   /**
    * @brief Begins the process of loading of a tile.

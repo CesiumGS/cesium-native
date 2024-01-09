@@ -13,6 +13,12 @@
 namespace Cesium3DTilesSelection {
 
 class Tile;
+struct LoadedRasterOverlayImage;
+
+typedef std::function<CesiumAsync::Future<LoadedRasterOverlayImage>(
+    RasterOverlayTile&,
+    RasterOverlayTileProvider*)>
+    RasterProcessingCallback;
 
 /**
  * @brief The result of applying a {@link RasterOverlayTile} to geometry.
@@ -183,10 +189,13 @@ public:
    * false. Otherwise, it begins the asynchronous process to load the tile and
    * returns true.
    */
-  CesiumAsync::Future<bool>
-  loadThrottled(CesiumAsync::AsyncSystem& callerAsync) noexcept;
+  CesiumAsync::Future<bool> loadThrottled(
+      CesiumAsync::AsyncSystem& callerAsync,
+      RasterProcessingCallback rasterCallback) noexcept;
 
-  void getLoadThrottledWork(RequestDataVec& outRequests);
+  void getLoadThrottledWork(
+      RequestDataVec& outRequests,
+      RasterProcessingCallback& outCallback);
 
   /**
    * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.

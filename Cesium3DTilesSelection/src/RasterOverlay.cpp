@@ -24,8 +24,10 @@ public:
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
 
-  virtual void
-  getLoadTileImageWork(RasterOverlayTile&, RequestDataVec&) override {}
+  virtual void getLoadTileImageWork(
+      RasterOverlayTile&,
+      RequestDataVec&,
+      RasterProcessingCallback&) override {}
 };
 } // namespace
 

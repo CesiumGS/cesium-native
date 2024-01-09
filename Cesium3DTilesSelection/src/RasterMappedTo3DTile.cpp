@@ -210,7 +210,8 @@ void RasterMappedTo3DTile::detachFromTile(
 }
 
 CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(
-    CesiumAsync::AsyncSystem& callerAsync) noexcept {
+    CesiumAsync::AsyncSystem& callerAsync,
+    RasterProcessingCallback rasterCallback) noexcept {
   CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading) {
@@ -218,16 +219,18 @@ CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(
   }
 
   RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  return provider.loadTileThrottled(*pLoading);
+  return provider.loadTileThrottled(*pLoading, rasterCallback);
 }
 
-void RasterMappedTo3DTile::getLoadThrottledWork(RequestDataVec& outRequests) {
+void RasterMappedTo3DTile::getLoadThrottledWork(
+    RequestDataVec& outRequests,
+    RasterProcessingCallback& outCallback) {
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading)
     return;
 
   RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  provider.getLoadTileThrottledWork(*pLoading, outRequests);
+  provider.getLoadTileThrottledWork(*pLoading, outRequests, outCallback);
 }
 
 namespace {

@@ -118,7 +118,8 @@ private:
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile& overlayTile,
-      RequestDataVec& outRequests) override;
+      RequestDataVec& outRequests,
+      RasterProcessingCallback& outCallback) override;
 
   struct LoadedQuadtreeImage {
     std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
@@ -166,6 +167,10 @@ private:
       const CesiumGeometry::Rectangle& targetRectangle,
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);
+
+  static CesiumAsync::Future<LoadedRasterOverlayImage> doProcessing(
+      RasterOverlayTile& overlayTile,
+      RasterOverlayTileProvider* provider);
 
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;

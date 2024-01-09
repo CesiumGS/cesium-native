@@ -193,8 +193,10 @@ public:
         _polygons(polygons),
         _invertSelection(invertSelection) {}
 
-  virtual void
-  getLoadTileImageWork(RasterOverlayTile&, RequestDataVec&) override {}
+  virtual void getLoadTileImageWork(
+      RasterOverlayTile&,
+      RequestDataVec&,
+      RasterProcessingCallback&) override {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {

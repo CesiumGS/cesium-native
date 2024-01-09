@@ -109,21 +109,24 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
-  this->doLoad(tile, false);
+  // TODO, this needs a real callback passed in
+  this->doLoad(tile, false, nullptr);
 }
 
-CesiumAsync::Future<bool>
-RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  return this->doLoad(tile, true);
+CesiumAsync::Future<bool> RasterOverlayTileProvider::loadTileThrottled(
+    RasterOverlayTile& tile,
+    RasterProcessingCallback rasterCallback) {
+  return this->doLoad(tile, true, rasterCallback);
 }
 
 void RasterOverlayTileProvider::getLoadTileThrottledWork(
     RasterOverlayTile& tile,
-    RequestDataVec& outRequests) {
+    RequestDataVec& outRequests,
+    RasterProcessingCallback& outCallback) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
     return;
 
-  getLoadTileImageWork(tile, outRequests);
+  getLoadTileImageWork(tile, outRequests, outCallback);
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -306,7 +309,8 @@ static LoadResult createLoadResultFromLoadedImage(
 
 CesiumAsync::Future<bool> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
-    bool isThrottledLoad) {
+    bool isThrottledLoad,
+    RasterProcessingCallback rasterCallback) {
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   this->beginTileLoad(isThrottledLoad);
@@ -316,7 +320,9 @@ CesiumAsync::Future<bool> RasterOverlayTileProvider::doLoad(
   IntrusivePointer<RasterOverlayTile> pTile = &tile;
   IntrusivePointer<RasterOverlayTileProvider> thiz = this;
 
-  return this->loadTileImage(tile)
+  assert(rasterCallback);
+
+  return rasterCallback(tile, this)
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger = this->getLogger(),

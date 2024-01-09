@@ -69,7 +69,8 @@ public:
 
     RequestData requestData;
 
-    TileProcessingCallback processingCallback;
+    TileProcessingCallback tileCallback;
+    RasterProcessingCallback rasterCallback;
 
     std::vector<CesiumGeospatial::Projection> projections;
 

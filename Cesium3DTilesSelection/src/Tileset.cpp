@@ -1643,7 +1643,8 @@ void Tileset::discoverLoadWork(
       TileLoadWork newWorkUnit = {
           work.workRef,
           work.requestData,
-          work.processingCallback,
+          work.tileCallback,
+          work.rasterCallback,
           work.projections,
           loadRequest.group,
           loadRequest.priority + priorityBias};
@@ -1770,7 +1771,7 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
       this->_pTilesetContentManager
           ->doTileContentWork(
               *pTile,
-              work.processingCallback,
+              work.tileCallback,
               work.responsesByUrl,
               work.projections,
               _options)
@@ -1802,7 +1803,7 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
 
       this->_pTilesetContentManager->notifyRasterStartLoading();
 
-      pRasterTile->loadThrottled(_asyncSystem)
+      pRasterTile->loadThrottled(_asyncSystem, work.rasterCallback)
           .thenInMainThread([_this = this](bool) {
             _this->_pTilesetContentManager->notifyRasterDoneLoading();
           });

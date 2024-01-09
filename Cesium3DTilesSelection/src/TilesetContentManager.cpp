@@ -288,8 +288,8 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
       RequestDataVec requests;
-      TileProcessingCallback processingCallback;
-      pMapped->getLoadThrottledWork(requests);
+      RasterProcessingCallback rasterCallback;
+      pMapped->getLoadThrottledWork(requests, rasterCallback);
 
       for (RequestData& request : requests) {
         // If loader doesn't specify headers, use content manager as default
@@ -299,7 +299,8 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
             RequestData{
                 request.url,
                 request.headers.empty() ? defaultHeaders : request.headers},
-            processingCallback };
+            nullptr,
+            rasterCallback};
         outWork.push_back(newWork);
       }
     }
@@ -879,8 +880,8 @@ void TilesetContentManager::parseTileWork(
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
       RequestDataVec requests;
-      TileProcessingCallback processingCallback;
-      rasterTile.getLoadThrottledWork(requests);
+      RasterProcessingCallback rasterCallback;
+      rasterTile.getLoadThrottledWork(requests, rasterCallback);
 
       for (RequestData& request : requests) {
         // If loader doesn't specify headers, use content manager as default
@@ -891,7 +892,8 @@ void TilesetContentManager::parseTileWork(
                 request.url,
                 request.headers.empty() ? this->_requestHeaders
                                         : request.headers},
-            processingCallback};
+            nullptr,
+            rasterCallback};
         outWork.push_back(newWork);
       }
     }
@@ -947,9 +949,9 @@ void TilesetContentManager::parseTileWork(
   // Default headers come from the this. Loader can override if needed
   RequestData requestData;
   requestData.headers = this->_requestHeaders;
-  TileProcessingCallback processingCallback;
+  TileProcessingCallback tileCallback;
 
-  pLoader->getLoadWork(pTile, requestData, processingCallback);
+  pLoader->getLoadWork(pTile, requestData, tileCallback);
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
@@ -961,7 +963,7 @@ void TilesetContentManager::parseTileWork(
       outWork);
 
   ParsedTileWork newWork =
-      {pTile, depthIndex, requestData, processingCallback, projections};
+      {pTile, depthIndex, requestData, tileCallback, nullptr, projections};
   outWork.push_back(newWork);
 }
 
