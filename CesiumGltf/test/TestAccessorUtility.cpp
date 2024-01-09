@@ -418,7 +418,8 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
-    const size_t numFaces = std::visit(CountFromAccessor{}, indexAccessor) / 3;
+    const size_t numFaces =
+        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) / 3);
 
     for (size_t i = 0; i < numFaces; i++) {
       auto indicesForFace = std::visit(
@@ -439,7 +440,8 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     REQUIRE(model.accessors.size() > 1);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[1]);
-    const size_t numFaces = std::visit(CountFromAccessor{}, indexAccessor) - 2;
+    const size_t numFaces =
+        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) - 2);
     for (size_t i = 0; i < numFaces; i++) {
       auto indicesForFace = std::visit(
           IndicesForFaceFromAccessor{
@@ -459,7 +461,8 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     REQUIRE(model.accessors.size() > 1);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[1]);
-    const size_t numFaces = std::visit(CountFromAccessor{}, indexAccessor) - 2;
+    const size_t numFaces =
+        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) - 2);
     for (size_t i = 0; i < numFaces; i++) {
       auto indicesForFace = std::visit(
           IndicesForFaceFromAccessor{
