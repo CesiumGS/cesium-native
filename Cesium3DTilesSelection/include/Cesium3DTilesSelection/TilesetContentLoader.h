@@ -24,6 +24,27 @@ namespace Cesium3DTilesSelection {
 class Tile;
 class TilesetContentLoader;
 
+enum class TileLoadPriorityGroup {
+  /**
+   * @brief Low priority tiles that aren't needed right now, but
+   * are being preloaded for the future.
+   */
+  Preload = 0,
+
+  /**
+   * @brief Medium priority tiles that are needed to render the current view
+   * the appropriate level-of-detail.
+   */
+  Normal = 1,
+
+  /**
+   * @brief High priority tiles that are causing extra detail to be rendered
+   * in the scene, potentially creating a performance problem and aliasing
+   * artifacts.
+   */
+  Urgent = 2
+};
+
 struct RequestData {
   std::string url;
   std::vector<CesiumAsync::IAssetAccessor::THeader> headers;

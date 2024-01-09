@@ -23,10 +23,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _tileWorkManager(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -45,10 +41,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _tileWorkManager(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -67,10 +59,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _tileWorkManager(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -309,7 +297,7 @@ void Tileset::logRequestStats(const std::string& tag) {
   float progress = computeLoadProgress();
   if (progress > 0 && progress < 100) {
     size_t queued, inFlight, done;
-    this->_tileWorkManager.GetRequestsStats(queued, inFlight, done);
+    this->_pTilesetContentManager->getRequestsStats(queued, inFlight, done);
 
     SPDLOG_LOGGER_INFO(
         this->_externals.pLogger,
@@ -409,7 +397,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       this->_pTilesetContentManager->getNumberOfRastersLoading();
   result.rastersLoaded =
       this->_pTilesetContentManager->getNumberOfRastersLoaded();
-  result.requestsPending = this->_tileWorkManager.GetTotalPendingCount();
+  result.requestsPending =
+      this->_pTilesetContentManager->getTotalPendingCount();
 
   assertViewResults();
 
@@ -1451,39 +1440,9 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
-
-  std::vector<TileLoadWork> newLoadWork;
-  discoverLoadWork(this->_workerThreadLoadQueue, newLoadWork);
-
-  size_t maxTileLoads =
-      static_cast<size_t>(this->_options.maximumSimultaneousTileLoads);
-  addWorkToManager(newLoadWork, maxTileLoads);
-
-  // Calculate how much processing work we can do right now
-  int32_t numberOfTilesLoading =
-      this->_pTilesetContentManager->getNumberOfTilesLoading();
-  int32_t numberOfRastersLoading =
-      this->_pTilesetContentManager->getNumberOfRastersLoading();
-  assert(numberOfTilesLoading >= 0);
-  assert(numberOfRastersLoading >= 0);
-  size_t totalLoads = static_cast<size_t>(numberOfTilesLoading) +
-                      static_cast<size_t>(numberOfRastersLoading);
-
-  size_t availableSlots = 0;
-  if (totalLoads < maxTileLoads)
-    availableSlots = maxTileLoads - totalLoads;
-
-  std::vector<TileLoadWork> completedWork;
-  std::vector<TileLoadWork> failedWork;
-  _tileWorkManager.TakeProcessingWork(
-      availableSlots,
-      completedWork,
-      failedWork);
-  assert(completedWork.size() <= availableSlots);
-
-  handleFailedRequestWork(failedWork);
-
-  dispatchProcessingWork(completedWork);
+  this->_pTilesetContentManager->processLoadRequests(
+      this->_workerThreadLoadQueue,
+      _options);
 }
 
 void Tileset::_processMainThreadLoadQueue() {
@@ -1611,208 +1570,6 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
 
   return traversalDetails;
-}
-
-void Tileset::discoverLoadWork(
-    std::vector<TileLoadRequest>& requests,
-    std::vector<TileLoadWork>& outLoadWork) {
-  for (TileLoadRequest& loadRequest : requests) {
-    std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
-    this->_pTilesetContentManager->parseTileWork(
-        loadRequest.pTile,
-        0,
-        this->_options.maximumScreenSpaceError,
-        parsedTileWork);
-
-    // Sort by depth, which should bubble parent tasks up to the top
-    // We want these to get processed first
-    std::sort(parsedTileWork.begin(), parsedTileWork.end());
-
-    // Find max depth
-    size_t maxDepth = 0;
-    size_t workIndex, endIndex = parsedTileWork.size();
-    for (workIndex = 0; workIndex < endIndex; ++workIndex) {
-      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
-      maxDepth = std::max(maxDepth, work.depthIndex);
-    }
-
-    // Add all the work, biasing priority by depth
-    for (workIndex = 0; workIndex < endIndex; ++workIndex) {
-      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
-
-      double priorityBias = double(maxDepth - work.depthIndex);
-
-      TileLoadWork newWorkUnit = {
-          work.workRef,
-          work.requestData,
-          work.tileCallback,
-          work.rasterCallback,
-          work.projections,
-          loadRequest.group,
-          loadRequest.priority + priorityBias};
-
-      outLoadWork.push_back(newWorkUnit);
-    }
-  }
-}
-
-void Tileset::addWorkToManager(
-    std::vector<TileLoadWork>& loadWork,
-    size_t maxSimultaneousRequests) {
-  if (loadWork.empty())
-    return;
-
-  // Request work will always go to that queue first
-  // Work with only processing can bypass it
-  std::vector<TileLoadWork*> requestWork;
-  std::vector<TileLoadWork*> processingWork;
-  for (TileLoadWork& work : loadWork) {
-    if (work.requestData.url.empty()) {
-      assert(work.tileCallback || work.rasterCallback);
-      processingWork.push_back(&work);
-    } else {
-      requestWork.push_back(&work);
-    }
-  }
-
-  // We're always going to do available processing work. Mark it as loading
-  markWorkTilesAsLoading(processingWork);
-
-  // Figure out how much url work we will accept.
-  // We want some work to be ready to go in between frames
-  // so the dispatcher doesn't starve while we wait for a tick
-  size_t betweenFrameBuffer = 10;
-  size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
-  size_t pendingRequestCount = this->_tileWorkManager.GetPendingRequestsCount();
-  assert(pendingRequestCount <= maxCountToQueue);
-
-  size_t slotsOpen = maxCountToQueue - pendingRequestCount;
-  if (slotsOpen == 0) {
-    // No request slots open, we can at least insert our processing work
-    _tileWorkManager.QueueProcessingWork(processingWork);
-  } else {
-    std::vector<TileLoadWork*> workToSubmit;
-    if (slotsOpen >= requestWork.size()) {
-      // We can take all incoming work
-      workToSubmit = requestWork;
-    } else {
-      // We can only take part of the incoming work
-      // Just submit the highest priority
-      workToSubmit = requestWork;
-      std::sort(workToSubmit.begin(), workToSubmit.end());
-      workToSubmit.resize(slotsOpen);
-    }
-
-    markWorkTilesAsLoading(workToSubmit);
-
-    SPDLOG_LOGGER_INFO(
-        this->_externals.pLogger,
-        "Sending work to dispatcher: {} entries",
-        workToSubmit.size());
-
-    // TODO, assert tile is not already loading? or already post-processing?
-
-    _tileWorkManager.QueueWork(
-        workToSubmit,
-        processingWork,
-        maxSimultaneousRequests);
-  }
-}
-
-void Tileset::markWorkTilesAsLoading(std::vector<TileLoadWork*>& workVector) {
-  for (TileLoadWork* work : workVector) {
-    if (std::holds_alternative<Tile*>(work->workRef)) {
-      Tile* pTile = std::get<Tile*>(work->workRef);
-      assert(pTile);
-      pTile->setState(TileLoadState::ContentLoading);
-    } else {
-      RasterMappedTo3DTile* pRasterTile =
-          std::get<RasterMappedTo3DTile*>(work->workRef);
-      assert(pRasterTile);
-
-      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
-      assert(pLoading);
-
-      pLoading->setState(RasterOverlayTile::LoadState::Loading);
-    }
-  }
-}
-
-void Tileset::handleFailedRequestWork(std::vector<TileLoadWork>& workVector) {
-  for (TileLoadWork& work : workVector) {
-
-    SPDLOG_LOGGER_ERROR(
-        this->_externals.pLogger,
-        "Request unexpectedly failed to complete for url: {}",
-        work.requestData.url);
-
-    if (std::holds_alternative<Tile*>(work.workRef)) {
-      Tile* pTile = std::get<Tile*>(work.workRef);
-      assert(pTile);
-      pTile->setState(TileLoadState::Failed);
-    } else {
-      RasterMappedTo3DTile* pRasterTile =
-          std::get<RasterMappedTo3DTile*>(work.workRef);
-      assert(pRasterTile);
-
-      RasterOverlayTile* pLoading = pRasterTile->getLoadingTile();
-      assert(pLoading);
-
-      pLoading->setState(RasterOverlayTile::LoadState::Failed);
-    }
-  }
-}
-
-void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
-  for (TileLoadWork& work : workVector) {
-    if (std::holds_alternative<Tile*>(work.workRef)) {
-      Tile* pTile = std::get<Tile*>(work.workRef);
-      assert(pTile);
-
-      // begin loading tile
-      this->_pTilesetContentManager->notifyTileStartLoading(pTile);
-
-      this->_pTilesetContentManager
-          ->doTileContentWork(
-              *pTile,
-              work.tileCallback,
-              work.responsesByUrl,
-              work.projections,
-              _options)
-          .thenInMainThread([_pTile = pTile, _this = this](
-                                TileLoadResultAndRenderResources&& pair) {
-            _this->_pTilesetContentManager->setTileContent(
-                *_pTile,
-                std::move(pair.result),
-                pair.pRenderResources);
-
-            _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
-          })
-          .catchInMainThread(
-              [_pTile = pTile,
-               _this = this,
-               pLogger = this->_externals.pLogger](std::exception&& e) {
-                _pTile->setState(TileLoadState::Failed);
-
-                _this->_pTilesetContentManager->notifyTileDoneLoading(_pTile);
-                SPDLOG_LOGGER_ERROR(
-                    pLogger,
-                    "An unexpected error occurs when loading tile: {}",
-                    e.what());
-              });
-    } else {
-      RasterMappedTo3DTile* pRasterTile =
-          std::get<RasterMappedTo3DTile*>(work.workRef);
-      assert(pRasterTile);
-
-      this->_pTilesetContentManager->notifyRasterStartLoading();
-
-      pRasterTile->loadThrottled(_asyncSystem, work.rasterCallback)
-          .thenInMainThread([_this = this](bool) {
-            _this->_pTilesetContentManager->notifyRasterDoneLoading();
-          });
-    }
-  }
 }
 
 } // namespace Cesium3DTilesSelection

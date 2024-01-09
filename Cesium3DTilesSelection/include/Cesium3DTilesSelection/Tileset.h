@@ -2,7 +2,6 @@
 
 #include "Library.h"
 #include "RasterOverlayCollection.h"
-#include "TileWorkManager.h"
 #include "TilesetExternals.h"
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
@@ -10,6 +9,36 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
+
+struct TileLoadRequest {
+  /**
+   * @brief The tile to be loaded.
+   */
+  Tile* pTile;
+
+  /**
+   * @brief The priority group (low / medium / high) in which to load this
+   * tile.
+   *
+   * All tiles in a higher priority group are given a chance to load before
+   * any tiles in a lower priority group.
+   */
+  TileLoadPriorityGroup group;
+
+  /**
+   * @brief The priority of this tile within its priority group.
+   *
+   * Tiles with a _lower_ value for this property load sooner!
+   */
+  double priority;
+
+  bool operator<(const TileLoadRequest& rhs) const noexcept {
+    if (this->group == rhs.group)
+      return this->priority < rhs.priority;
+    else
+      return this->group > rhs.group;
+  }
+};
 
 /**
  * @brief A <a
@@ -417,36 +446,6 @@ private:
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
 
-  struct TileLoadRequest {
-    /**
-     * @brief The tile to be loaded.
-     */
-    Tile* pTile;
-
-    /**
-     * @brief The priority group (low / medium / high) in which to load this
-     * tile.
-     *
-     * All tiles in a higher priority group are given a chance to load before
-     * any tiles in a lower priority group.
-     */
-    TileLoadPriorityGroup group;
-
-    /**
-     * @brief The priority of this tile within its priority group.
-     *
-     * Tiles with a _lower_ value for this property load sooner!
-     */
-    double priority;
-
-    bool operator<(const TileLoadRequest& rhs) const noexcept {
-      if (this->group == rhs.group)
-        return this->priority < rhs.priority;
-      else
-        return this->group > rhs.group;
-    }
-  };
-
   std::vector<TileLoadRequest> _mainThreadLoadQueue;
   std::vector<TileLoadRequest> _workerThreadLoadQueue;
 
@@ -460,8 +459,6 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  TileWorkManager _tileWorkManager;
-
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
@@ -469,20 +466,6 @@ private:
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
-
-  void discoverLoadWork(
-      std::vector<TileLoadRequest>& requests,
-      std::vector<TileLoadWork>& outRequestWork);
-
-  void addWorkToManager(
-      std::vector<TileLoadWork>& requestWork,
-      size_t maxSimultaneousRequests);
-
-  void markWorkTilesAsLoading(std::vector<TileLoadWork*>& workVector);
-
-  void handleFailedRequestWork(std::vector<TileLoadWork>& workVector);
-
-  void dispatchProcessingWork(std::vector<TileLoadWork>& workVector);
 
   void assertViewResults();
   void logRequestStats(const std::string& tag);

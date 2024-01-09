@@ -241,6 +241,7 @@ public:
 private:
   friend class RasterOverlayTileProvider;
   friend class Tileset;
+  friend class TilesetContentManager;
 
   void setState(LoadState newState) noexcept;
 

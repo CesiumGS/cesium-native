@@ -7,6 +7,7 @@
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileWorkManager.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
@@ -18,8 +19,6 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-
-typedef std::variant<Tile*, RasterMappedTo3DTile*> TileWorkRef;
 
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
@@ -64,13 +63,11 @@ public:
   ~TilesetContentManager() noexcept;
 
   struct ParsedTileWork {
-    TileWorkRef workRef;
     size_t depthIndex;
 
     RequestData requestData;
 
-    TileProcessingCallback tileCallback;
-    RasterProcessingCallback rasterCallback;
+    ProcessingData processingData;
 
     std::vector<CesiumGeospatial::Projection> projections;
 
@@ -78,6 +75,10 @@ public:
       return this->depthIndex > rhs.depthIndex;
     }
   };
+
+  void processLoadRequests(
+      std::vector<TileLoadRequest>& requests,
+      TilesetOptions& options);
 
   void parseTileWork(
       Tile* pTile,
@@ -134,6 +135,10 @@ public:
 
   int32_t getNumberOfRastersLoaded() const noexcept;
 
+  size_t getTotalPendingCount();
+
+  void getRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
+
   bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
   bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
 
@@ -169,6 +174,23 @@ private:
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
+  void discoverLoadWork(
+      std::vector<TileLoadRequest>& requests,
+      double maximumScreenSpaceError,
+      std::vector<TileLoadWork>& outRequestWork);
+
+  void addWorkToManager(
+      std::vector<TileLoadWork>& requestWork,
+      size_t maxSimultaneousRequests);
+
+  void markWorkTilesAsLoading(std::vector<TileLoadWork*>& workVector);
+
+  void handleFailedRequestWork(std::vector<TileLoadWork>& workVector);
+
+  void dispatchProcessingWork(
+      std::vector<TileLoadWork>& workVector,
+      TilesetOptions& options);
+
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
@@ -177,6 +199,9 @@ private:
   std::vector<Credit> _tilesetCredits;
   RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection _overlayCollection;
+
+  TileWorkManager _tileWorkManager;
+
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;

@@ -4,38 +4,24 @@
 #include "TilesetContentLoader.h"
 
 namespace Cesium3DTilesSelection {
-class TilesetContentManager;
 class TilesetMetadata;
 
-typedef std::variant<Tile*, RasterMappedTo3DTile*> TileWorkRef;
-
-enum class TileLoadPriorityGroup {
-  /**
-   * @brief Low priority tiles that aren't needed right now, but
-   * are being preloaded for the future.
-   */
-  Preload = 0,
-
-  /**
-   * @brief Medium priority tiles that are needed to render the current view
-   * the appropriate level-of-detail.
-   */
-  Normal = 1,
-
-  /**
-   * @brief High priority tiles that are causing extra detail to be rendered
-   * in the scene, potentially creating a performance problem and aliasing
-   * artifacts.
-   */
-  Urgent = 2
+struct TileProcessingData {
+  Tile* pTile;
+  TileProcessingCallback tileCallback;
 };
 
-struct TileLoadWork {
-  TileWorkRef workRef;
-
-  RequestData requestData;
-  TileProcessingCallback tileCallback;
+struct RasterProcessingData {
+  RasterMappedTo3DTile* pRasterTile;
   RasterProcessingCallback rasterCallback;
+};
+
+typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
+
+struct TileLoadWork {
+  RequestData requestData;
+
+  ProcessingData processingData;
 
   std::vector<CesiumGeospatial::Projection> projections;
   TileLoadPriorityGroup group;
