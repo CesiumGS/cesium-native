@@ -201,7 +201,7 @@ struct MetadataConversions<
 
     char* pLastUsed;
     int64_t parsedValue = std::strtoll(from.c_str(), &pLastUsed, 10);
-    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+    if (errno == 0 && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as an integer of this type.
       return CesiumUtility::losslessNarrow<TTo, int64_t>(parsedValue);
     }
@@ -211,7 +211,7 @@ struct MetadataConversions<
     // Failed to parse as an integer. Maybe we can parse as a double and
     // truncate it?
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+    if (errno == 0 && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as a double.
       // Convert it to an integer if we can.
       double truncated = glm::trunc(parsedDouble);
@@ -264,7 +264,7 @@ struct MetadataConversions<
 
     char* pLastUsed;
     uint64_t parsedValue = std::strtoull(from.c_str(), &pLastUsed, 10);
-    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+    if (errno == 0 && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as an integer of this type.
       return CesiumUtility::losslessNarrow<TTo, uint64_t>(parsedValue);
     }
@@ -274,7 +274,7 @@ struct MetadataConversions<
     errno = 0;
 
     double parsedDouble = std::strtod(from.c_str(), &pLastUsed);
-    if (errno != ERANGE && pLastUsed == from.c_str() + from.size()) {
+    if (errno == 0 && pLastUsed == from.c_str() + from.size()) {
       // Successfully parsed the entire string as a double.
       // Convert it to an integer if we can.
       double truncated = glm::trunc(parsedDouble);
