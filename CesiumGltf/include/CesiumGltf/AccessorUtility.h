@@ -2,6 +2,8 @@
 
 #include "AccessorView.h"
 
+#include <CesiumGltf/MeshPrimitive.h>
+
 #include <glm/common.hpp>
 
 #include <variant>
@@ -113,16 +115,41 @@ getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
  */
 struct IndicesForFaceFromAccessor {
   std::array<int64_t, 3> operator()(std::monostate) {
-    if (faceIndex < 0 || faceIndex >= vertexCount / 3) {
+    int64_t firstVertex = faceIndex;
+    int64_t numFaces = 0;
+
+    switch (primitiveMode) {
+    case MeshPrimitive::Mode::TRIANGLE_STRIP:
+      numFaces = vertexCount - 2;
+      break;
+    case MeshPrimitive::Mode::TRIANGLE_FAN:
+      numFaces = vertexCount - 2;
+      firstVertex++;
+      break;
+    case MeshPrimitive::Mode::TRIANGLES:
+      numFaces = vertexCount / 3;
+      firstVertex *= 3;
+      break;
+    default:
+      // Unsupported primitive mode.
       return {-1, -1, -1};
     }
 
-    const int64_t firstVertex = faceIndex * 3;
+    if (faceIndex < 0 || faceIndex >= numFaces) {
+      return {-1, -1, -1};
+    }
+
     std::array<int64_t, 3> result;
 
-    for (int64_t i = 0; i < 3; i++) {
-      int64_t vertexIndex = firstVertex + i;
-      result[i] = vertexIndex < vertexCount ? vertexIndex : -1;
+    if (primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+      result[0] = 0;
+      result[1] = firstVertex < vertexCount ? firstVertex : -1;
+      result[2] = firstVertex + 1 < vertexCount ? firstVertex + 1 : -1;
+    } else {
+      for (int64_t i = 0; i < 3; i++) {
+        int64_t vertexIndex = firstVertex + i;
+        result[i] = vertexIndex < vertexCount ? vertexIndex : -1;
+      }
     }
 
     return result;
@@ -130,18 +157,41 @@ struct IndicesForFaceFromAccessor {
 
   template <typename T>
   std::array<int64_t, 3> operator()(const AccessorView<T>& value) {
-    if (faceIndex < 0 || faceIndex >= value.size() / 3) {
+    int64_t firstIndex = faceIndex;
+    int64_t numFaces = 0;
+
+    switch (primitiveMode) {
+    case MeshPrimitive::Mode::TRIANGLE_STRIP:
+      numFaces = value.size() - 2;
+      break;
+    case MeshPrimitive::Mode::TRIANGLE_FAN:
+      numFaces = value.size() - 2;
+      firstIndex++;
+      break;
+    case MeshPrimitive::Mode::TRIANGLES:
+      numFaces = value.size() / 3;
+      firstIndex *= 3;
+      break;
+    default:
+      // Unsupported primitive mode.
       return {-1, -1, -1};
     }
 
-    const int64_t firstVertex = faceIndex * 3;
+    if (faceIndex < 0 || faceIndex >= numFaces) {
+      return {-1, -1, -1};
+    }
+
     std::array<int64_t, 3> result;
 
-    for (int64_t i = 0; i < 3; i++) {
-      int64_t vertexIndex = firstVertex + i;
-      result[i] = vertexIndex < value.size()
-                      ? static_cast<int64_t>(value[vertexIndex])
-                      : -1;
+    if (primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+      result[0] = value[0];
+      result[1] = firstIndex < value.size() ? value[firstIndex] : -1;
+      result[2] = firstIndex + 1 < value.size() ? value[firstIndex + 1] : -1;
+    } else {
+      for (int64_t i = 0; i < 3; i++) {
+        int64_t index = firstIndex + i;
+        result[i] = index < value.size() ? value[index] : -1;
+      }
     }
 
     return result;
@@ -149,7 +199,8 @@ struct IndicesForFaceFromAccessor {
 
   int64_t faceIndex;
   int64_t vertexCount;
-};
+  int32_t primitiveMode;
+}; // namespace CesiumGltf
 
 /**
  * Type definition for all kinds of texture coordinate (TEXCOORD_n) accessors.
@@ -161,9 +212,9 @@ typedef std::variant<
     TexCoordAccessorType;
 
 /**
- * Retrieves an accessor view for the specified texture coordinate set from the
- * given glTF primitive and model. This verifies that the accessor is of a valid
- * type. If not, the returned accessor view will be invalid.,
+ * Retrieves an accessor view for the specified texture coordinate set from
+ * the given glTF primitive and model. This verifies that the accessor is of a
+ * valid type. If not, the returned accessor view will be invalid.,
  */
 TexCoordAccessorType getTexCoordAccessorView(
     const Model& model,
