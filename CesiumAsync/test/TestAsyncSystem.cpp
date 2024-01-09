@@ -601,6 +601,65 @@ TEST_CASE("AsyncSystem") {
     IntrusivePointer<TaskController> pController =
         new TaskController(PriorityGroup::Normal, 1.0f);
 
+    AsyncSystem taskSystem = asyncSystem.withController(pController);
+
+    pAssetAccessor
+        ->get(
+            taskSystem,
+            pNetworkRequests,
+            "https://example.com/whatever.json",
+            {})
+        .beginThrottle(pCpuProcessing)
+        .thenInWorkerThread([asyncSystem, pNetworkRequests, pAssetAccessor](
+                                std::shared_ptr<IAssetRequest>&& pRequest) {
+          if (doSomeCpuWorkOnResponse(pRequest->response()->data())) {
+            return pAssetAccessor
+                ->get(
+                    taskSystem,
+                    pNetworkRequests,
+                    "https://example.com/image.jpg",
+                    {})
+                .thenInWorkerThread(
+                    [](std::shared_ptr<IAssetRequest>&& pRequest) {
+                      doSomeMoreCpuWork(pRequest->response()->data());
+                    });
+          }
+          return asyncSystem.createResolvedFuture();
+        })
+        .endThrottle();
+
+    asyncSystem.beginThrottling(pNetworkRequests, pController)
+        .thenImmediately([asyncSystem, pAssetAccessor]() {
+          return pAssetAccessor->get(
+              asyncSystem,
+              "https://example.com/whatever.json",
+              {});
+        })
+        .endThrottling()
+        .beginThrottling(pCpuProcessing, pController)
+        .thenInWorkerThread(
+            [asyncSystem, pController, pNetworkRequests, pAssetAccessor](
+                std::shared_ptr<IAssetRequest>&& pRequest) {
+              if (doSomeCpuWorkOnResponse(pRequest->response()->data())) {
+                return asyncSystem
+                    .beginThrottling(pNetworkRequests, pController)
+                    .thenImmediately([pAssetAccessor, asyncSystem]() {
+                      return pAssetAccessor->get(
+                          asyncSystem,
+                          "https://example.com/image.jpg",
+                          {});
+                    })
+                    .endThrottling()
+                    .thenInMainThread(
+                        [](std::shared_ptr<IAssetRequest>&& pRequest) {
+                          doSomeMoreCpuWork(pRequest->response()->data());
+                          return 4;
+                        });
+              }
+              // TODO: support void return
+              return asyncSystem.createResolvedFuture(4);
+            });
+
     Future<std::shared_ptr<IAssetRequest>> future =
         pNetworkRequests->runInAnyThread(
             pController,

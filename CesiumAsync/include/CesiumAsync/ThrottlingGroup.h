@@ -39,7 +39,7 @@ public:
         promise.reject(std::current_exception());
       }
 
-      pController->_groupStack.pop();
+      pController->_groupStack.pop_back();
       that->onTaskComplete();
     };
 
