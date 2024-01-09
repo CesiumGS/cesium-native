@@ -1643,6 +1643,7 @@ void Tileset::discoverLoadWork(
       TileLoadWork newWorkUnit = {
           work.workRef,
           work.requestData,
+          work.processingCallback,
           work.projections,
           loadRequest.group,
           loadRequest.priority + priorityBias};
@@ -1769,6 +1770,7 @@ void Tileset::dispatchProcessingWork(std::vector<TileLoadWork>& workVector) {
       this->_pTilesetContentManager
           ->doTileContentWork(
               *pTile,
+              work.processingCallback,
               work.responsesByUrl,
               work.projections,
               _options)

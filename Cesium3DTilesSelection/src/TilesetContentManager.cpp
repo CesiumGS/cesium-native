@@ -288,6 +288,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
       RequestDataVec requests;
+      TileProcessingCallback processingCallback;
       pMapped->getLoadThrottledWork(requests);
 
       for (RequestData& request : requests) {
@@ -297,7 +298,8 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
             depthIndex,
             RequestData{
                 request.url,
-                request.headers.empty() ? defaultHeaders : request.headers}};
+                request.headers.empty() ? defaultHeaders : request.headers},
+            processingCallback };
         outWork.push_back(newWork);
       }
     }
@@ -877,6 +879,7 @@ void TilesetContentManager::parseTileWork(
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
       RequestDataVec requests;
+      TileProcessingCallback processingCallback;
       rasterTile.getLoadThrottledWork(requests);
 
       for (RequestData& request : requests) {
@@ -887,7 +890,8 @@ void TilesetContentManager::parseTileWork(
             RequestData{
                 request.url,
                 request.headers.empty() ? this->_requestHeaders
-                                        : request.headers}};
+                                        : request.headers},
+            processingCallback};
         outWork.push_back(newWork);
       }
     }
@@ -943,8 +947,9 @@ void TilesetContentManager::parseTileWork(
   // Default headers come from the this. Loader can override if needed
   RequestData requestData;
   requestData.headers = this->_requestHeaders;
+  TileProcessingCallback processingCallback;
 
-  pLoader->getRequestWork(pTile, requestData);
+  pLoader->getLoadWork(pTile, requestData, processingCallback);
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
@@ -955,13 +960,15 @@ void TilesetContentManager::parseTileWork(
       this->_requestHeaders,
       outWork);
 
-  ParsedTileWork newWork = {pTile, depthIndex, requestData, projections};
+  ParsedTileWork newWork =
+      {pTile, depthIndex, requestData, processingCallback, projections};
   outWork.push_back(newWork);
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>
 TilesetContentManager::doTileContentWork(
     Tile& tile,
+    TileProcessingCallback processingCallback,
     const ResponseDataMap& responsesByUrl,
     const std::vector<CesiumGeospatial::Projection>& projections,
     const TilesetOptions& tilesetOptions) {
@@ -992,12 +999,14 @@ TilesetContentManager::doTileContentWork(
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
-  return pLoader->loadTileContent(loadInput).thenImmediately(
-      [requestHeaders = this->_requestHeaders,
-       tileLoadInfo = std::move(tileLoadInfo),
-       projections = std::move(projections),
-       rendererOptions =
-           tilesetOptions.rendererOptions](TileLoadResult&& result) mutable {
+  assert(processingCallback);
+
+  return processingCallback(loadInput, pLoader)
+      .thenImmediately([requestHeaders = this->_requestHeaders,
+                        tileLoadInfo = std::move(tileLoadInfo),
+                        projections = std::move(projections),
+                        rendererOptions = tilesetOptions.rendererOptions](
+                           TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
         // thread. And most often than not, those main thread task is very

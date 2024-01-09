@@ -297,9 +297,17 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets);
 }
 
-void ImplicitOctreeLoader::getRequestWork(
+CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::doProcessing(
+    const TileLoadInput& loadInput,
+    TilesetContentLoader* loader) {
+  ImplicitOctreeLoader* thisLoader = static_cast<ImplicitOctreeLoader*>(loader);
+  return thisLoader->loadTileContent(loadInput);
+}
+
+void ImplicitOctreeLoader::getLoadWork(
     Tile* pTile,
-    RequestData& outRequest) {
+    RequestData& outRequest,
+    TileProcessingCallback& outCallback) {
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
@@ -341,6 +349,8 @@ void ImplicitOctreeLoader::getRequestWork(
 
   outRequest.url =
       resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pOctreeID);
+
+  outCallback = doProcessing;
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {

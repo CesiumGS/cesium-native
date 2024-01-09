@@ -87,8 +87,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-void RasterOverlayUpsampler::getRequestWork(Tile*, RequestData&) {
-  // This doesn't require request work
+void RasterOverlayUpsampler::getLoadWork(Tile*, RequestData&, TileProcessingCallback&) {
+  // This doesn't require work
 }
 
 TileChildrenResult

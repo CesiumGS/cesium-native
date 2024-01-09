@@ -66,7 +66,11 @@ public:
   struct ParsedTileWork {
     TileWorkRef workRef;
     size_t depthIndex;
+
     RequestData requestData;
+
+    TileProcessingCallback processingCallback;
+
     std::vector<CesiumGeospatial::Projection> projections;
 
     bool operator<(const ParsedTileWork& rhs) const noexcept {
@@ -82,6 +86,7 @@ public:
 
   CesiumAsync::Future<TileLoadResultAndRenderResources> doTileContentWork(
       Tile& tile,
+      TileProcessingCallback processingCallback,
       const ResponseDataMap& responsesByUrl,
       const std::vector<CesiumGeospatial::Projection>& projections,
       const TilesetOptions& tilesetOptions);

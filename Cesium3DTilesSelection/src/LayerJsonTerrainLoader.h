@@ -70,7 +70,10 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  void getRequestWork(Tile* pTile, RequestData& outRequest) override;
+  void getLoadWork(
+      Tile* pTile,
+      RequestData& outRequest,
+      TileProcessingCallback& outCallback) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
@@ -101,6 +104,9 @@ private:
   CesiumAsync::Future<TileLoadResult> upsampleParentTile(
       const Tile& tile,
       const CesiumAsync::AsyncSystem& asyncSystem);
+
+  static CesiumAsync::Future<TileLoadResult>
+  doProcessing(const TileLoadInput& loadInput, TilesetContentLoader* loader);
 
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;

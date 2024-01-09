@@ -22,6 +22,7 @@
 
 namespace Cesium3DTilesSelection {
 class Tile;
+class TilesetContentLoader;
 
 struct RequestData {
   std::string url;
@@ -104,6 +105,11 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   TileLoadResultState state;
 };
 
+typedef std::function<CesiumAsync::Future<TileLoadResult>(
+    const TileLoadInput& loadInput,
+    TilesetContentLoader*)>
+    TileProcessingCallback;
+
 /**
  * @brief The loader interface to load the tile content
  */
@@ -123,7 +129,10 @@ public:
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
 
-  virtual void getRequestWork(Tile* pTile, RequestData& outRequest) = 0;
+  virtual void getLoadWork(
+      Tile* pTile,
+      RequestData& outRequest,
+      TileProcessingCallback& outCallback) = 0;
 
   /**
    * @brief Create the tile's children.

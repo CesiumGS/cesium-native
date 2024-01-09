@@ -34,6 +34,7 @@ struct TileLoadWork {
   TileWorkRef workRef;
 
   RequestData requestData;
+  TileProcessingCallback processingCallback;
 
   std::vector<CesiumGeospatial::Projection> projections;
   TileLoadPriorityGroup group;

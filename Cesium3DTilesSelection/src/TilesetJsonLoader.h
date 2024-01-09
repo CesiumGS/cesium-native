@@ -21,7 +21,10 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  void getRequestWork(Tile* pTile, RequestData& outRequest) override;
+  void getLoadWork(
+      Tile* pTile,
+      RequestData& outRequest,
+      TileProcessingCallback& outCallback) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
@@ -43,6 +46,9 @@ public:
       const rapidjson::Document& tilesetJson);
 
 private:
+  static CesiumAsync::Future<TileLoadResult>
+  doProcessing(const TileLoadInput& loadInput, TilesetContentLoader* loader);
+
   std::string _baseUrl;
 
   /**

@@ -320,9 +320,18 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets);
 }
 
-void ImplicitQuadtreeLoader::getRequestWork(
+CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::doProcessing(
+    const TileLoadInput& loadInput,
+    TilesetContentLoader* loader) {
+  ImplicitQuadtreeLoader* thisLoader =
+      static_cast<ImplicitQuadtreeLoader*>(loader);
+  return thisLoader->loadTileContent(loadInput);
+}
+
+void ImplicitQuadtreeLoader::getLoadWork(
     Tile* pTile,
-    RequestData& outRequest) {
+    RequestData& outRequest,
+    TileProcessingCallback& outCallback) {
 
   // make sure the tile is a quadtree tile
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
@@ -369,6 +378,8 @@ void ImplicitQuadtreeLoader::getRequestWork(
 
   outRequest.url =
       resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
+
+  outCallback = doProcessing;
 }
 
 TileChildrenResult
