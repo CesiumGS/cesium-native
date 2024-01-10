@@ -168,10 +168,6 @@ private:
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);
 
-  static CesiumAsync::Future<LoadedRasterOverlayImage> doProcessing(
-      RasterOverlayTile& overlayTile,
-      RasterOverlayTileProvider* provider);
-
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;
   uint32_t _imageWidth;

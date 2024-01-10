@@ -14,9 +14,5 @@ public:
       TileProcessingCallback& outCallback) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;
-
-private:
-  static CesiumAsync::Future<TileLoadResult>
-  doProcessing(const TileLoadInput& loadInput, TilesetContentLoader* loader);
 };
 } // namespace Cesium3DTilesSelection

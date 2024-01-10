@@ -318,7 +318,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   ResponseDataMap::const_iterator foundIt = responsesByUrl.find(tileUrl);
   if (foundIt == responsesByUrl.end()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-      TileLoadResult::createRequestResult(RequestData{ tileUrl }));
+        TileLoadResult::createRequestResult(RequestData{tileUrl}));
   }
 
   return requestTileContent(
@@ -329,20 +329,15 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets);
 }
 
-CesiumAsync::Future<TileLoadResult> ImplicitQuadtreeLoader::doProcessing(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader* loader) {
-  ImplicitQuadtreeLoader* thisLoader =
-      static_cast<ImplicitQuadtreeLoader*>(loader);
-  return thisLoader->loadTileContent(loadInput);
-}
-
 void ImplicitQuadtreeLoader::getLoadWork(
     Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
   // LoadTileContent will control request / processing flow
-  outCallback = doProcessing;
+  outCallback =
+      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
 }
 
 TileChildrenResult

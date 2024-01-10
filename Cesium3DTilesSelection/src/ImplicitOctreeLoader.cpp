@@ -252,7 +252,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     ResponseDataMap::const_iterator foundIt = responsesByUrl.find(subtreeUrl);
     if (foundIt == responsesByUrl.end()) {
       return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createRequestResult(RequestData{ subtreeUrl }));
+          TileLoadResult::createRequestResult(RequestData{subtreeUrl}));
     }
 
     return SubtreeAvailability::loadSubtree(
@@ -296,7 +296,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   ResponseDataMap::const_iterator foundIt = responsesByUrl.find(tileUrl);
   if (foundIt == responsesByUrl.end()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-      TileLoadResult::createRequestResult(RequestData{ tileUrl }));
+        TileLoadResult::createRequestResult(RequestData{tileUrl}));
   }
 
   return requestTileContent(
@@ -307,19 +307,15 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets);
 }
 
-CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::doProcessing(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader* loader) {
-  ImplicitOctreeLoader* thisLoader = static_cast<ImplicitOctreeLoader*>(loader);
-  return thisLoader->loadTileContent(loadInput);
-}
-
 void ImplicitOctreeLoader::getLoadWork(
     Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
   // LoadTileContent will control request / processing flow
-  outCallback = doProcessing;
+  outCallback =
+      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {

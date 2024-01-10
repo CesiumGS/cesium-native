@@ -46,9 +46,6 @@ public:
       const rapidjson::Document& tilesetJson);
 
 private:
-  static CesiumAsync::Future<TileLoadResult>
-  doProcessing(const TileLoadInput& loadInput, TilesetContentLoader* loader);
-
   std::string _baseUrl;
 
   /**

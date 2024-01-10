@@ -909,13 +909,6 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-CesiumAsync::Future<TileLoadResult> TilesetJsonLoader::doProcessing(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader* loader) {
-  TilesetJsonLoader* thisLoader = static_cast<TilesetJsonLoader*>(loader);
-  return thisLoader->loadTileContent(loadInput);
-}
-
 void TilesetJsonLoader::getLoadWork(
     Tile* pTile,
     RequestData& outRequest,
@@ -934,7 +927,10 @@ void TilesetJsonLoader::getLoadWork(
 
   outRequest.url = CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
 
-  outCallback = doProcessing;
+  outCallback =
+      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
 }
 
 TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {

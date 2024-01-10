@@ -88,19 +88,14 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-CesiumAsync::Future<TileLoadResult> RasterOverlayUpsampler::doProcessing(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader* loader) {
-  RasterOverlayUpsampler* thisLoader =
-      static_cast<RasterOverlayUpsampler*>(loader);
-  return thisLoader->loadTileContent(loadInput);
-}
-
 void RasterOverlayUpsampler::getLoadWork(
     Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
-  outCallback = doProcessing;
+  outCallback =
+      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
 }
 
 TileChildrenResult

@@ -105,9 +105,6 @@ private:
       const Tile& tile,
       const CesiumAsync::AsyncSystem& asyncSystem);
 
-  static CesiumAsync::Future<TileLoadResult>
-  doProcessing(const TileLoadInput& loadInput, TilesetContentLoader* loader);
-
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
   CesiumGeospatial::Projection _projection;
   std::vector<Layer> _layers;

@@ -898,14 +898,6 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::doProcessing(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader* loader) {
-  LayerJsonTerrainLoader* thisLoader =
-      static_cast<LayerJsonTerrainLoader*>(loader);
-  return thisLoader->loadTileContent(loadInput);
-}
-
 void LayerJsonTerrainLoader::getLoadWork(
     Tile* pTile,
     RequestData& outRequest,
@@ -934,7 +926,10 @@ void LayerJsonTerrainLoader::getLoadWork(
   auto& currentLayer = *firstAvailableIt;
   outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 
-  outCallback = doProcessing;
+  outCallback =
+      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
 }
 
 TileChildrenResult

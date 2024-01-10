@@ -628,15 +628,6 @@ void blitImage(
 
 } // namespace
 
-CesiumAsync::Future<LoadedRasterOverlayImage>
-QuadtreeRasterOverlayTileProvider::doProcessing(
-    RasterOverlayTile& overlayTile,
-    RasterOverlayTileProvider* provider) {
-  QuadtreeRasterOverlayTileProvider* thisProvider =
-      static_cast<QuadtreeRasterOverlayTileProvider*>(provider);
-  return thisProvider->loadTileImage(overlayTile);
-}
-
 void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
     RasterOverlayTile& overlayTile,
     RequestDataVec& outRequests,
@@ -646,7 +637,13 @@ void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
       overlayTile.getTargetScreenPixels(),
       outRequests);
 
-  outCallback = doProcessing;
+  outCallback = [this](
+                    RasterOverlayTile& overlayTile,
+                    RasterOverlayTileProvider* provider) {
+    QuadtreeRasterOverlayTileProvider* thisProvider =
+        static_cast<QuadtreeRasterOverlayTileProvider*>(provider);
+    return thisProvider->loadTileImage(overlayTile);
+  };
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

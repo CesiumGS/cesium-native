@@ -64,9 +64,6 @@ private:
       const std::string& urlTemplate,
       const CesiumGeometry::OctreeTileID& octreeID);
 
-  static CesiumAsync::Future<TileLoadResult>
-  doProcessing(const TileLoadInput& loadInput, TilesetContentLoader* loader);
-
   std::string _baseUrl;
   std::string _contentUrlTemplate;
   std::string _subtreeUrlTemplate;
