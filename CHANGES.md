@@ -2,7 +2,6 @@
 
 ### ? - ?
 
-
 ##### Breaking Changes :mega:
 
 - `IndicesForFaceFromAccessor` now propertly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
