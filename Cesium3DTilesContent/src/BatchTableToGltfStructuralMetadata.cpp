@@ -355,12 +355,6 @@ public:
    */
   const std::optional<CesiumUtility::JsonValue>
   getSentinelValue() const noexcept {
-    if (isCompatibleWithUnsignedInteger()) {
-      return _canUseZeroSentinel
-                 ? std::make_optional<CesiumUtility::JsonValue>(0)
-                 : std::nullopt;
-    }
-
     if (isCompatibleWithSignedInteger()) {
       if (_canUseZeroSentinel) {
         return 0;
@@ -369,6 +363,12 @@ public:
       if (_canUseNegativeOneSentinel) {
         return -1;
       }
+    }
+
+    if (isCompatibleWithUnsignedInteger()) {
+      return _canUseZeroSentinel
+                 ? std::make_optional<CesiumUtility::JsonValue>(0)
+                 : std::nullopt;
     }
 
     if (isIncompatible()) {
