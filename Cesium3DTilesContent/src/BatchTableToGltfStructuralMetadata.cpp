@@ -371,10 +371,8 @@ public:
                  : std::nullopt;
     }
 
-    if (isIncompatible()) {
-      if (_canUseNullStringSentinel) {
-        return "null";
-      }
+    if (isIncompatible() && _canUseNullStringSentinel) {
+      return "null";
     }
 
     return std::nullopt;
