@@ -22,6 +22,7 @@ TileLoadResult TileLoadResult::createFailedResult() {
       std::nullopt,
       std::string(),
       {},
+      RequestData{},
       TileLoadResultState::Failed};
 }
 
@@ -34,6 +35,21 @@ TileLoadResult TileLoadResult::createRetryLaterResult() {
       std::nullopt,
       std::string(),
       {},
+      RequestData{},
       TileLoadResultState::RetryLater};
 }
+
+TileLoadResult TileLoadResult::createRequestResult(const RequestData& request) {
+  return TileLoadResult{
+      TileUnknownContent{},
+      CesiumGeometry::Axis::Y,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      std::string(),
+      {},
+      request,
+      TileLoadResultState::RequestRequired};
+}
+
 } // namespace Cesium3DTilesSelection

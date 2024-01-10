@@ -49,12 +49,13 @@ public:
         _pLogger(pLogger) {}
   ~TileWorkManager() noexcept;
 
-  void QueueWork(
-      const std::vector<TileLoadWork*>& requestWork,
-      const std::vector<TileLoadWork*>& processingWork,
-      size_t maxSimultaneousRequests);
+  void SetMaxSimultaneousRequests(size_t max);
 
-  void QueueProcessingWork(const std::vector<TileLoadWork*>& processingWork);
+  void QueueBatch(
+      const std::vector<TileLoadWork*>& requestWork,
+      const std::vector<TileLoadWork*>& processingWork);
+
+  void QueueSingleRequest(const TileLoadWork& requestWork);
 
   void TakeProcessingWork(
       size_t maxCount,

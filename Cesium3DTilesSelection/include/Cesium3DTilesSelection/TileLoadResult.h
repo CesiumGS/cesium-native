@@ -4,6 +4,7 @@
 #include "RasterOverlayDetails.h"
 #include "TileContent.h"
 
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltf/Model.h>
@@ -16,6 +17,11 @@
 namespace Cesium3DTilesSelection {
 
 class Tile;
+
+struct RequestData {
+  std::string url;
+  std::vector<CesiumAsync::IAssetAccessor::THeader> headers;
+};
 
 /**
  * @brief Store the content of the tile after finishing
@@ -62,7 +68,9 @@ enum class TileLoadResultState {
    * background work happenning and
    * __none__ of the fields in {@link TileLoadResult} or {@link TileChildrenResult} are applied to the tile
    */
-  RetryLater
+  RetryLater,
+
+  RequestRequired
 };
 
 /**
@@ -113,6 +121,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    */
   std::function<void(Tile&)> tileInitializer;
 
+  RequestData requestData;
+
   /**
    * @brief The result of loading a tile. Note that if the state is Failed or
    * RetryLater, __none__ of the fields above (including {@link TileLoadResult::tileInitializer}) will be
@@ -131,6 +141,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    *
    */
   static TileLoadResult createRetryLaterResult();
+
+  static TileLoadResult createRequestResult(const RequestData& request);
 };
 
 } // namespace Cesium3DTilesSelection

@@ -465,6 +465,7 @@ SubtreeAvailability::loadSubtree(
                                         asyncSystem = asyncSystem,
                                         pLogger = pLogger,
                                         responseData = responseData]() mutable {
+    // TODO, put response status code check back in
     return parseSubtreeRequest(
         powerOf2,
         std::move(asyncSystem),

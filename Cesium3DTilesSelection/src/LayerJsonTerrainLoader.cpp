@@ -58,6 +58,7 @@ TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
       std::nullopt,
       std::string(),
       {},
+      RequestData{},
       TileLoadResultState::Success};
 }
 
@@ -1195,6 +1196,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             std::nullopt,
             std::string(),
             {},
+            RequestData{},
             TileLoadResultState::Success};
       });
 }

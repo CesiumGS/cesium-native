@@ -195,6 +195,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           std::nullopt,
           tileUrl,
           {},
+          RequestData{},
           TileLoadResultState::Success};
     }
 
@@ -247,8 +248,12 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     std::string subtreeUrl =
         resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
 
+    // If subtree url is not loaded, request it and come back later
     ResponseDataMap::const_iterator foundIt = responsesByUrl.find(subtreeUrl);
-    assert(foundIt != responsesByUrl.end());
+    if (foundIt == responsesByUrl.end()) {
+      return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createRequestResult(RequestData{ subtreeUrl }));
+    }
 
     return SubtreeAvailability::loadSubtree(
                3,
@@ -280,14 +285,19 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::nullopt,
         std::string(),
         {},
+        RequestData{},
         TileLoadResultState::Success});
   }
 
   std::string tileUrl =
       resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pOctreeID);
 
+  // If tile url is not loaded, request it and come back later
   ResponseDataMap::const_iterator foundIt = responsesByUrl.find(tileUrl);
-  assert(foundIt != responsesByUrl.end());
+  if (foundIt == responsesByUrl.end()) {
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+      TileLoadResult::createRequestResult(RequestData{ tileUrl }));
+  }
 
   return requestTileContent(
       pLogger,
@@ -305,51 +315,10 @@ CesiumAsync::Future<TileLoadResult> ImplicitOctreeLoader::doProcessing(
 }
 
 void ImplicitOctreeLoader::getLoadWork(
-    Tile* pTile,
-    RequestData& outRequest,
+    Tile*,
+    RequestData&,
     TileProcessingCallback& outCallback) {
-
-  // make sure the tile is a octree tile
-  const CesiumGeometry::OctreeTileID* pOctreeID =
-      std::get_if<CesiumGeometry::OctreeTileID>(&pTile->getTileID());
-  if (!pOctreeID)
-    return;
-
-  // find the subtree ID
-  uint32_t subtreeLevelIdx = pOctreeID->level / this->_subtreeLevels;
-  if (subtreeLevelIdx >= this->_loadedSubtrees.size())
-    return;
-
-  uint64_t levelLeft = pOctreeID->level % this->_subtreeLevels;
-  uint32_t subtreeLevel = this->_subtreeLevels * subtreeLevelIdx;
-  uint32_t subtreeX = pOctreeID->x >> levelLeft;
-  uint32_t subtreeY = pOctreeID->y >> levelLeft;
-  uint32_t subtreeZ = pOctreeID->z >> levelLeft;
-  CesiumGeometry::OctreeTileID subtreeID{
-      subtreeLevel,
-      subtreeX,
-      subtreeY,
-      subtreeZ};
-
-  uint64_t subtreeMortonIdx =
-      libmorton::morton3D_64_encode(subtreeX, subtreeY, subtreeZ);
-  auto subtreeIt =
-      this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
-  if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
-    // subtree is not loaded, so load it now.
-    outRequest.url =
-        resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
-    return;
-  }
-
-  // subtree is available, so check if tile has content or not. If it has, then
-  // request it
-  if (!isTileContentAvailable(subtreeID, *pOctreeID, subtreeIt->second))
-    return;
-
-  outRequest.url =
-      resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pOctreeID);
-
+  // LoadTileContent will control request / processing flow
   outCallback = doProcessing;
 }
 

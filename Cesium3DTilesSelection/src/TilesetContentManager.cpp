@@ -921,6 +921,8 @@ void TilesetContentManager::addWorkToManager(
   if (loadWork.empty())
     return;
 
+  _tileWorkManager.SetMaxSimultaneousRequests(maxSimultaneousRequests);
+
   // Request work will always go to that queue first
   // Work with only processing can bypass it
   std::vector<TileLoadWork*> requestWork;
@@ -943,37 +945,33 @@ void TilesetContentManager::addWorkToManager(
   size_t pendingRequestCount = this->_tileWorkManager.GetPendingRequestsCount();
   assert(pendingRequestCount <= maxCountToQueue);
 
+  std::vector<TileLoadWork*> requestWorkToSubmit;
   size_t slotsOpen = maxCountToQueue - pendingRequestCount;
   if (slotsOpen == 0) {
     // No request slots open, we can at least insert our processing work
-    _tileWorkManager.QueueProcessingWork(processingWork);
   } else {
-    std::vector<TileLoadWork*> workToSubmit;
     if (slotsOpen >= requestWork.size()) {
       // We can take all incoming work
-      workToSubmit = requestWork;
+      requestWorkToSubmit = requestWork;
     } else {
       // We can only take part of the incoming work
       // Just submit the highest priority
-      workToSubmit = requestWork;
-      std::sort(workToSubmit.begin(), workToSubmit.end());
-      workToSubmit.resize(slotsOpen);
+      requestWorkToSubmit = requestWork;
+      std::sort(requestWorkToSubmit.begin(), requestWorkToSubmit.end());
+      requestWorkToSubmit.resize(slotsOpen);
     }
 
-    markWorkTilesAsLoading(workToSubmit);
+    markWorkTilesAsLoading(requestWorkToSubmit);
 
     SPDLOG_LOGGER_INFO(
         this->_externals.pLogger,
-        "Sending work to dispatcher: {} entries",
-        workToSubmit.size());
+        "Sending request work to dispatcher: {} entries",
+        requestWorkToSubmit.size());
 
     // TODO, assert tile is not already loading? or already post-processing?
-
-    _tileWorkManager.QueueWork(
-        workToSubmit,
-        processingWork,
-        maxSimultaneousRequests);
   }
+
+  _tileWorkManager.QueueBatch(requestWorkToSubmit, processingWork);
 }
 
 void TilesetContentManager::markWorkTilesAsLoading(
@@ -1045,15 +1043,27 @@ void TilesetContentManager::dispatchProcessingWork(
               work.responsesByUrl,
               work.projections,
               options)
-          .thenInMainThread([_pTile = pTile, _this = this](
-                                TileLoadResultAndRenderResources&& pair) {
-            _this->setTileContent(
-                *_pTile,
-                std::move(pair.result),
-                pair.pRenderResources);
+          .thenInMainThread(
+              [_pTile = pTile, _this = this, _work = std::move(work)](
+                  TileLoadResultAndRenderResources&& pair) mutable {
+                if (pair.result.state == TileLoadResultState::RequestRequired) {
+                  // This work goes back into the work manager queue
+                  // Override its request data with was specified
+                  RequestData& newRequestData = pair.result.requestData;
+                  _work.requestData.url = newRequestData.url;
+                  if (!newRequestData.headers.empty())
+                    _work.requestData.headers = newRequestData.headers;
 
-            _this->notifyTileDoneLoading(_pTile);
-          })
+                  _this->_tileWorkManager.QueueSingleRequest(_work);
+                } else {
+                  _this->setTileContent(
+                      *_pTile,
+                      std::move(pair.result),
+                      pair.pRenderResources);
+
+                  _this->notifyTileDoneLoading(_pTile);
+                }
+              })
           .catchInMainThread(
               [_pTile = pTile,
                _this = this,
@@ -1089,6 +1099,7 @@ void TilesetContentManager::processLoadRequests(
   std::vector<TileLoadWork> newLoadWork;
   discoverLoadWork(requests, options.maximumScreenSpaceError, newLoadWork);
 
+  assert(options.maximumSimultaneousTileLoads > 0);
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
   addWorkToManager(newLoadWork, maxTileLoads);
@@ -1252,7 +1263,7 @@ TilesetContentManager::doTileContentWork(
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
       this->_externals.pLogger,
-      std::move(responsesByUrl)};
+      responsesByUrl};
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
@@ -1488,7 +1499,10 @@ size_t TilesetContentManager::getTotalPendingCount() {
   return this->_tileWorkManager.GetTotalPendingCount();
 }
 
-void TilesetContentManager::getRequestsStats(size_t& queued, size_t& inFlight, size_t& done) {
+void TilesetContentManager::getRequestsStats(
+    size_t& queued,
+    size_t& inFlight,
+    size_t& done) {
   return this->_tileWorkManager.GetRequestsStats(queued, inFlight, done);
 }
 

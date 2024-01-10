@@ -15,10 +15,14 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-void TileWorkManager::QueueWork(
+void TileWorkManager::SetMaxSimultaneousRequests(size_t max) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  _maxSimultaneousRequests = max;
+}
+
+void TileWorkManager::QueueBatch(
     const std::vector<TileLoadWork*>& requestWork,
-    const std::vector<TileLoadWork*>& processingWork,
-    size_t maxSimultaneousRequests) {
+    const std::vector<TileLoadWork*>& processingWork) {
   if (requestWork.empty() && processingWork.empty())
     return;
 
@@ -30,21 +34,18 @@ void TileWorkManager::QueueWork(
 
     for (TileLoadWork* element : processingWork)
       _processingQueue.push_back(std::move(*element));
-
-    assert(maxSimultaneousRequests > 0);
-    _maxSimultaneousRequests = maxSimultaneousRequests;
   }
 
   transitionQueuedWork();
 }
 
-void TileWorkManager::QueueProcessingWork(
-    const std::vector<TileLoadWork*>& processingWork) {
-  if (processingWork.empty())
-    return;
-  std::lock_guard<std::mutex> lock(_requestsLock);
-  for (TileLoadWork* element : processingWork)
-    _processingQueue.push_back(std::move(*element));
+void TileWorkManager::QueueSingleRequest(const TileLoadWork& requestWork) {
+  {
+    std::lock_guard<std::mutex> lock(_requestsLock);
+    _requestQueue.push_back(std::move(requestWork));
+  }
+
+  transitionQueuedWork();
 }
 
 void TileWorkManager::onRequestFinished(

@@ -45,11 +45,6 @@ enum class TileLoadPriorityGroup {
   Urgent = 2
 };
 
-struct RequestData {
-  std::string url;
-  std::vector<CesiumAsync::IAssetAccessor::THeader> headers;
-};
-
 typedef std::vector<RequestData> RequestDataVec;
 
 struct ResponseData {

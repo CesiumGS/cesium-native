@@ -723,6 +723,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::nullopt,
       tileUrl,
       std::move(externalContentInitializer),
+      RequestData{},
       TileLoadResultState::Success};
 }
 
@@ -892,6 +893,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               std::nullopt,
               tileUrl,
               {},
+              RequestData{},
               TileLoadResultState::Success};
         } else {
           // not a renderable content, then it must be external tileset

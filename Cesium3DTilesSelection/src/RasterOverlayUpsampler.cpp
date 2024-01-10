@@ -83,6 +83,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             std::nullopt,
             std::string(),
             {},
+            RequestData{},
             TileLoadResultState::Success};
       });
 }
