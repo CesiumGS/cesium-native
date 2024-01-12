@@ -29,6 +29,8 @@ struct TileLoadWork {
 
   ResponseDataMap responsesByUrl;
 
+  std::vector<TileLoadWork> childWork;
+
   bool operator<(const TileLoadWork& rhs) const noexcept {
     if (this->group == rhs.group)
       return this->priority < rhs.priority;
@@ -62,6 +64,8 @@ public:
       std::vector<TileLoadWork>& outCompleted,
       std::vector<TileLoadWork>& outFailed);
 
+  void SignalWorkComplete(const TileLoadWork& work);
+
   size_t GetPendingRequestsCount();
   size_t GetTotalPendingCount();
 
@@ -84,6 +88,10 @@ private:
   bool isRequestAlreadyQueued(const TileLoadWork& newRequest);
   bool isRequestAlreadyInFlight(const TileLoadWork& newRequest);
   bool isWorkAlreadyProcessing(const TileLoadWork& newProcessing);
+
+  void eraseMatchingChildWork(
+      const TileLoadWork& work,
+      std::vector<TileLoadWork>& childWork);
 
   // Thread safe members
   std::mutex _requestsLock;

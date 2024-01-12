@@ -257,11 +257,10 @@ void createQuadtreeSubdividedChildren(
 
 std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     Tile& tile,
-    size_t depthIndex,
     RasterOverlayCollection& overlays,
     double maximumScreenSpaceError,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& defaultHeaders,
-    std::vector<TilesetContentManager::ParsedTileWork>& outWork) {
+    std::vector<TilesetContentManager::RasterWorkChain>& outWork) {
   // when tile fails temporarily, it may still have mapped raster tiles, so
   // clear it here
   tile.getMappedRasterTiles().clear();
@@ -293,11 +292,11 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       pMapped->getLoadThrottledWork(requestData, rasterCallback);
 
       if (!requestData.url.empty() || rasterCallback != nullptr) {
-        TilesetContentManager::ParsedTileWork newWork = {
-            depthIndex,
+        TilesetContentManager::RasterWorkChain newWorkChain = {
+            pMapped,
             requestData,
-            RasterProcessingData{pMapped, rasterCallback}};
-        outWork.push_back(newWork);
+            rasterCallback};
+        outWork.push_back(newWorkChain);
       }
     }
   }
@@ -900,13 +899,30 @@ void TilesetContentManager::discoverLoadWork(
       TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
 
       double priorityBias = double(maxDepth - work.depthIndex);
+      double resultPriority = loadRequest.priority + priorityBias;
 
       TileLoadWork newWorkUnit = {
-          work.requestData,
-          work.processingData,
+          work.tileWorkChain.requestData,
+          TileProcessingData{
+              work.tileWorkChain.pTile,
+              work.tileWorkChain.tileCallback},
           work.projections,
           loadRequest.group,
-          loadRequest.priority + priorityBias};
+          resultPriority};
+
+      for (auto rasterWorkChain : work.rasterWorkChains) {
+        TileLoadWork rasterWorkUnit = {
+            rasterWorkChain.requestData,
+            RasterProcessingData{
+                rasterWorkChain.pRasterTile,
+                rasterWorkChain.rasterCallback},
+            work.projections,
+            loadRequest.group,
+            resultPriority};
+
+        // Embed child work in parent
+        newWorkUnit.childWork.push_back(rasterWorkUnit);
+      }
 
       outLoadWork.push_back(newWorkUnit);
     }
@@ -921,11 +937,20 @@ void TilesetContentManager::addWorkToManager(
 
   _tileWorkManager.SetMaxSimultaneousRequests(maxSimultaneousRequests);
 
+  // Expand any child work
+  std::vector<TileLoadWork> flattenedWork;
+  for (TileLoadWork& work : loadWork) {
+    for (TileLoadWork& child : work.childWork) {
+      flattenedWork.push_back(child);
+    }
+    flattenedWork.push_back(work);
+  }
+
   // Request work will always go to that queue first
   // Work with only processing can bypass it
   std::vector<TileLoadWork*> requestWork;
   std::vector<TileLoadWork*> processingWork;
-  for (TileLoadWork& work : loadWork) {
+  for (TileLoadWork& work : flattenedWork) {
     if (work.requestData.url.empty())
       processingWork.push_back(&work);
     else
@@ -1103,6 +1128,8 @@ void TilesetContentManager::dispatchProcessingWork(
                 _work.requestData.headers = newRequestData.headers;
 
               _this->_tileWorkManager.QueueSingleRequest(_work);
+            } else {
+              _this->_tileWorkManager.SignalWorkComplete(_work);
             }
 
             _this->notifyRasterDoneLoading();
@@ -1171,10 +1198,11 @@ void TilesetContentManager::parseTileWork(
       rasterTile.getLoadThrottledWork(requestData, rasterCallback);
 
       if (!requestData.url.empty() || rasterCallback != nullptr) {
-        TilesetContentManager::ParsedTileWork newWork = {
-            depthIndex,
-            requestData,
-            RasterProcessingData{&rasterTile, rasterCallback}};
+        // TODO - This needs a different solution for continuation
+        // We can't pick up with an empty tile work chain
+        ParsedTileWork newWork = {depthIndex};
+        newWork.rasterWorkChains.push_back(
+            RasterWorkChain{&rasterTile, requestData, rasterCallback});
         outWork.push_back(newWork);
       }
     }
@@ -1234,20 +1262,17 @@ void TilesetContentManager::parseTileWork(
 
   pLoader->getLoadWork(pTile, requestData, tileCallback);
 
-  // map raster overlay to tile
-  std::vector<CesiumGeospatial::Projection> projections = mapOverlaysToTile(
-      *pTile,
+  ParsedTileWork newWork = {
       depthIndex,
+      TileWorkChain{pTile, requestData, tileCallback}};
+
+  newWork.projections = mapOverlaysToTile(
+      *pTile,
       this->_overlayCollection,
       maximumScreenSpaceError,
       this->_requestHeaders,
-      outWork);
+      newWork.rasterWorkChains);
 
-  ParsedTileWork newWork = {
-      depthIndex,
-      requestData,
-      TileProcessingData{pTile, tileCallback},
-      projections};
   outWork.push_back(newWork);
 }
 

@@ -92,10 +92,8 @@ void TileWorkManager::QueueBatch(
     std::lock_guard<std::mutex> lock(_requestsLock);
 
     for (TileLoadWork* element : requestWork) {
-      if (isRequestAlreadyQueued(*element))
-        continue;
-      if (isRequestAlreadyInFlight(*element))
-        continue;
+      assert(!isRequestAlreadyQueued(*element));
+      assert(!isRequestAlreadyInFlight(*element));
       _requestQueue.push_back(std::move(*element));
     }
 
@@ -112,13 +110,68 @@ void TileWorkManager::QueueBatch(
 void TileWorkManager::QueueSingleRequest(const TileLoadWork& requestWork) {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
+
+    // TODO - This needs to be an assertion
     if (!isRequestAlreadyQueued(requestWork) &&
-        !isRequestAlreadyInFlight(requestWork)) {
+        !isRequestAlreadyInFlight(requestWork))
       _requestQueue.push_back(std::move(requestWork));
-    }
   }
 
   transitionQueuedWork();
+}
+
+void TileWorkManager::eraseMatchingChildWork(
+    const TileLoadWork& work,
+    std::vector<TileLoadWork>& childWork) {
+  std::vector<TileLoadWork>::iterator childIt;
+  for (childIt = childWork.begin(); childIt != childWork.end(); ++childIt) {
+    bool baseWorkEqual = childIt->childWork.size() == work.childWork.size() &&
+                         childIt->group == work.group &&
+                         childIt->priority == work.priority;
+    bool workHasTileProcessing =
+        std::holds_alternative<TileProcessingData>(work.processingData);
+    bool childHasTileProcessing =
+        std::holds_alternative<TileProcessingData>(childIt->processingData);
+
+    if (!baseWorkEqual || workHasTileProcessing != childHasTileProcessing)
+      continue;
+
+    if (workHasTileProcessing) {
+      TileProcessingData workTileProcessing =
+          std::get<TileProcessingData>(work.processingData);
+      TileProcessingData childTileProcessing =
+          std::get<TileProcessingData>(childIt->processingData);
+      if (workTileProcessing.pTile != childTileProcessing.pTile)
+        continue;
+    } else {
+      RasterProcessingData workRasterProcessing =
+          std::get<RasterProcessingData>(work.processingData);
+      RasterProcessingData childRasterProcessing =
+          std::get<RasterProcessingData>(childIt->processingData);
+      if (workRasterProcessing.pRasterTile != childRasterProcessing.pRasterTile)
+        continue;
+    }
+
+    childWork.erase(childIt);
+    break;
+  }
+}
+
+void TileWorkManager::SignalWorkComplete(const TileLoadWork& work) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+
+  // Look for any work whose child matches this. And remove ourselves
+  for (TileLoadWork& existingRequest : _requestQueue)
+    eraseMatchingChildWork(work, existingRequest.childWork);
+
+  std::map<std::string, std::vector<TileLoadWork>>::iterator mapIt;
+  for (mapIt = _inFlightRequests.begin(); mapIt != _inFlightRequests.end();
+       ++mapIt)
+    for (TileLoadWork& inFlightWork : mapIt->second)
+      eraseMatchingChildWork(work, inFlightWork.childWork);
+
+  for (TileLoadWork& doneRequest : _processingQueue)
+    eraseMatchingChildWork(work, doneRequest.childWork);
 }
 
 void TileWorkManager::onRequestFinished(
@@ -259,22 +312,34 @@ void TileWorkManager::TakeProcessingWork(
   if (processingCount == 0)
     return;
 
+  // TODO - This list should be a map so it is always sorted
+  // Reverse sort so highest priority is at back
+  std::sort(_processingQueue.rbegin(), _processingQueue.rend());
+
   size_t numberToTake = std::min(processingCount, maxCount);
 
-  // If not taking everything, sort so more important work goes first
-  if (numberToTake < processingCount)
-    std::sort(_processingQueue.begin(), _processingQueue.end());
+  // Start from the back
+  std::vector<TileLoadWork>::iterator it = _processingQueue.end();
+  while (1) {
+    --it;
 
-  // Move work to output
-  for (auto workIt = _processingQueue.begin();
-       workIt != _processingQueue.begin() + numberToTake;
-       ++workIt)
-    outCompleted.push_back(std::move(*workIt));
+    TileLoadWork& work = *it;
+    if (!work.childWork.empty()) {
+      // Can't take this work yet
+      // Child work has to register completion first
+    } else {
+      // Move this work to output. Erase from queue
+      std::vector<TileLoadWork>::iterator eraseIt = it;
+      outCompleted.push_back(std::move(*eraseIt));
+      _processingQueue.erase(eraseIt);
+    }
 
-  // Remove these entries from the source
-  _processingQueue.erase(
-      _processingQueue.begin(),
-      _processingQueue.begin() + numberToTake);
+    if (outCompleted.size() >= numberToTake)
+      break;
+
+    if (it == _processingQueue.begin())
+      break;
+  }
 }
 
 void TileWorkManager::transitionQueuedWork() {

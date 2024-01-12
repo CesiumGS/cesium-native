@@ -62,12 +62,24 @@ public:
 
   ~TilesetContentManager() noexcept;
 
+  struct TileWorkChain {
+    Tile* pTile;
+    RequestData requestData;
+    TileProcessingCallback tileCallback;
+  };
+
+  struct RasterWorkChain {
+    RasterMappedTo3DTile* pRasterTile;
+    RequestData requestData;
+    RasterProcessingCallback rasterCallback;
+  };
+
   struct ParsedTileWork {
     size_t depthIndex;
 
-    RequestData requestData;
+    TileWorkChain tileWorkChain;
 
-    ProcessingData processingData;
+    std::vector<RasterWorkChain> rasterWorkChains;
 
     std::vector<CesiumGeospatial::Projection> projections;
 
