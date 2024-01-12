@@ -13,11 +13,26 @@
 namespace Cesium3DTilesSelection {
 
 class Tile;
-struct LoadedRasterOverlayImage;
 
-typedef std::function<CesiumAsync::Future<LoadedRasterOverlayImage>(
+struct RasterLoadResult {
+  std::optional<CesiumGltf::ImageCesium> image{};
+  CesiumGeometry::Rectangle rectangle = {};
+  std::vector<Credit> credits = {};
+  std::vector<std::string> errors{};
+  std::vector<std::string> warnings{};
+  bool moreDetailAvailable = false;
+
+  RequestData requestData;
+
+  RasterLoadState state = RasterLoadState::Unloaded;
+
+  void* pRendererResources = nullptr;
+};
+
+typedef std::function<CesiumAsync::Future<RasterLoadResult>(
     RasterOverlayTile&,
-    RasterOverlayTileProvider*)>
+    RasterOverlayTileProvider*,
+    const ResponseDataMap&)>
     RasterProcessingCallback;
 
 /**
@@ -189,12 +204,13 @@ public:
    * false. Otherwise, it begins the asynchronous process to load the tile and
    * returns true.
    */
-  CesiumAsync::Future<bool> loadThrottled(
+  CesiumAsync::Future<RasterLoadResult> loadThrottled(
       CesiumAsync::AsyncSystem& callerAsync,
+      const ResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback) noexcept;
 
   void getLoadThrottledWork(
-      RequestDataVec& outRequests,
+      RequestData& outRequest,
       RasterProcessingCallback& outCallback);
 
   /**

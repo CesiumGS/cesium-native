@@ -311,7 +311,7 @@ void ImplicitOctreeLoader::getLoadWork(
     Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
-  // LoadTileContent will control request / processing flow
+  // loadTileContent will control request / processing flow
   outCallback =
       [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
         return loader->loadTileContent(loadInput);

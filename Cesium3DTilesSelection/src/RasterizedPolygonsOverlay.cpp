@@ -20,7 +20,7 @@ using namespace CesiumUtility;
 namespace Cesium3DTilesSelection {
 namespace {
 void rasterizePolygons(
-    LoadedRasterOverlayImage& loaded,
+    RasterLoadResult& loaded,
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const glm::dvec2& textureSize,
     const std::vector<CartographicPolygon>& cartographicPolygons,
@@ -195,11 +195,12 @@ public:
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile&,
-      RequestDataVec&,
+      RequestData&,
       RasterProcessingCallback&) override {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override {
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      RasterOverlayTile& overlayTile,
+      const ResponseDataMap&) override {
     // Choose the texture size according to the geometry screen size and raster
     // SSE, but no larger than the maximum texture size.
     const RasterOverlayOptions& options = this->getOwner().getOptions();
@@ -212,11 +213,11 @@ public:
          invertSelection = this->_invertSelection,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
-         textureSize]() -> LoadedRasterOverlayImage {
+         textureSize]() -> RasterLoadResult {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
-          LoadedRasterOverlayImage result;
+          RasterLoadResult result;
           result.rectangle = rectangle;
 
           rasterizePolygons(

@@ -76,9 +76,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
   // If the loading tile has failed, try its parent's loading tile.
   Tile* pTile = &tile;
   while (this->_pLoadingTile &&
-         this->_pLoadingTile->getState() ==
-             RasterOverlayTile::LoadState::Failed &&
-         pTile) {
+         this->_pLoadingTile->getState() == RasterLoadState::Failed && pTile) {
     // Note when our original tile fails to load so that we don't report more
     // data available. This means - by design - we won't refine past a failed
     // tile.
@@ -97,7 +95,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
   // If the loading tile is now ready, make it the ready tile.
   if (this->_pLoadingTile &&
-      this->_pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded) {
+      this->_pLoadingTile->getState() >= RasterLoadState::Loaded) {
     // Unattach the old tile
     if (this->_pReadyTile && this->getState() != AttachmentState::Unattached) {
       prepareRendererResources.detachRasterInMainThread(
@@ -125,15 +123,13 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
       pCandidate = findTileOverlay(
           *pTile,
           this->_pLoadingTile->getTileProvider().getOwner());
-      if (pCandidate &&
-          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
+      if (pCandidate && pCandidate->getState() >= RasterLoadState::Loaded) {
         break;
       }
       pTile = pTile->getParent();
     }
 
-    if (pCandidate &&
-        pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
+    if (pCandidate && pCandidate->getState() >= RasterLoadState::Loaded &&
         this->_pReadyTile != pCandidate) {
       if (this->getState() != AttachmentState::Unattached) {
         prepareRendererResources.detachRasterInMainThread(
@@ -209,28 +205,32 @@ void RasterMappedTo3DTile::detachFromTile(
   this->_state = AttachmentState::Unattached;
 }
 
-CesiumAsync::Future<bool> RasterMappedTo3DTile::loadThrottled(
+CesiumAsync::Future<RasterLoadResult> RasterMappedTo3DTile::loadThrottled(
     CesiumAsync::AsyncSystem& callerAsync,
+    const ResponseDataMap& responsesByUrl,
     RasterProcessingCallback rasterCallback) noexcept {
   CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading) {
-    return callerAsync.createResolvedFuture<bool>(false);
+    RasterLoadResult result;
+    result.state = RasterLoadState::Failed;
+    return callerAsync.createResolvedFuture<RasterLoadResult>(
+        std::move(result));
   }
 
   RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  return provider.loadTileThrottled(*pLoading, rasterCallback);
+  return provider.loadTileThrottled(*pLoading, responsesByUrl, rasterCallback);
 }
 
 void RasterMappedTo3DTile::getLoadThrottledWork(
-    RequestDataVec& outRequests,
+    RequestData& outRequest,
     RasterProcessingCallback& outCallback) {
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading)
     return;
 
   RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  provider.getLoadTileThrottledWork(*pLoading, outRequests, outCallback);
+  provider.getLoadTileThrottledWork(*pLoading, outRequest, outCallback);
 }
 
 namespace {

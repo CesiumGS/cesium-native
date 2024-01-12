@@ -50,9 +50,9 @@ public:
   // The tiles that will return an error from loadQuadtreeTileImage.
   std::vector<QuadtreeTileID> errorTiles;
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<RasterLoadResult>
   loadQuadtreeTileImage(const QuadtreeTileID& tileID) const {
-    LoadedRasterOverlayImage result;
+    RasterLoadResult result;
     result.rectangle = this->getTilingScheme().tileToRectangle(tileID);
 
     if (std::find(errorTiles.begin(), errorTiles.end(), tileID) !=
@@ -159,11 +159,11 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         pProvider->getTile(rectangle, glm::dvec2(256));
     pProvider->loadTile(*pTile);
 
-    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
+    while (pTile->getState() != RasterLoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
     }
 
-    CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
+    CHECK(pTile->getState() == RasterLoadState::Loaded);
 
     const ImageCesium& image = pTile->getImage();
     CHECK(image.width > 0);
@@ -213,11 +213,11 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         pProvider->getTile(tileRectangle, targetScreenPixels);
     pProvider->loadTile(*pTile);
 
-    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
+    while (pTile->getState() != RasterLoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
     }
 
-    CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
+    CHECK(pTile->getState() == RasterLoadState::Loaded);
 
     const ImageCesium& image = pTile->getImage();
     CHECK(image.width > 0);

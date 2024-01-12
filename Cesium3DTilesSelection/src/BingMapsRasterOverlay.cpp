@@ -149,8 +149,9 @@ public:
   virtual ~BingMapsTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const ResponseDataMap& responsesByUrl) const override {
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         this->_urlTemplate,
         [this, &tileID](const std::string& key) {
@@ -197,30 +198,21 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, std::move(options));
-  }
+    // If tile url is not loaded, request it and come back later
+    ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
+    if (foundIt == responsesByUrl.end()) {
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          {std::nullopt,
+           options.rectangle,
+           {},
+           {"Failed to load image from TMS."},
+           {},
+           options.moreDetailAvailable,
+           RequestData{url},
+           RasterLoadState::RequestRequired});
+    }
 
-  virtual bool getLoadQuadtreeTileImageWork(
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      std::string& outUrl) override {
-    outUrl = CesiumUtility::Uri::substituteTemplateParameters(
-        this->_urlTemplate,
-        [this, &tileID](const std::string& key) {
-          if (key == "quadkey") {
-            return BingMapsTileProvider::tileXYToQuadKey(
-                tileID.level,
-                tileID.x,
-                tileID.computeInvertedY(this->getTilingScheme()));
-          }
-          if (key == "subdomain") {
-            const size_t subdomainIndex =
-                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
-            return this->_subdomains[subdomainIndex];
-          }
-          return key;
-        });
-
-    return true;
+    return this->loadTileImageFromUrl(url, foundIt->second, std::move(options));
   }
 
 private:

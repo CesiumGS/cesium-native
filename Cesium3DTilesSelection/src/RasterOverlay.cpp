@@ -18,15 +18,14 @@ public:
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
       : RasterOverlayTileProvider(pOwner, asyncSystem, pAssetAccessor) {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& /* overlayTile */) override {
-    return this->getAsyncSystem()
-        .createResolvedFuture<LoadedRasterOverlayImage>({});
+  virtual CesiumAsync::Future<RasterLoadResult>
+  loadTileImage(RasterOverlayTile&, const ResponseDataMap&) override {
+    return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>({});
   }
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile&,
-      RequestDataVec&,
+      RequestData&,
       RasterProcessingCallback&) override {}
 };
 } // namespace

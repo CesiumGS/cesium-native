@@ -15,10 +15,47 @@ struct Credit;
 class RasterOverlay;
 class RasterOverlayTileProvider;
 
+enum class RasterLoadState {
+  /**
+   * @brief Indicator for a placeholder tile.
+   */
+  Placeholder = -3,
+
+  /**
+   * @brief The image request or image creation failed.
+   */
+  Failed = -2,
+
+  /**
+   * @brief
+   */
+  RequestRequired = -1,
+
+  /**
+   * @brief The initial state
+   */
+  Unloaded = 0,
+
+  /**
+   * @brief The request for loading the image data is still pending.
+   */
+  Loading = 1,
+
+  /**
+   * @brief The image data has been loaded and the image has been created.
+   */
+  Loaded = 2,
+
+  /**
+   * @brief The rendering resources for the image data have been created.
+   */
+  Done = 3
+};
+
 /**
  * @brief Raster image data for a tile in a quadtree.
  *
- * Instances of this clas represent tiles of a quadtree that have
+ * Instances of this class represent tiles of a quadtree that have
  * an associated image, which us used as an imagery overlay
  * for tile geometry. The connection between the imagery data
  * and the actual tile geometry is established via the
@@ -29,41 +66,6 @@ class RasterOverlayTileProvider;
 class RasterOverlayTile final
     : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlayTile> {
 public:
-  /**
-   * @brief Lifecycle states of a raster overlay tile.
-   */
-  enum class LoadState {
-    /**
-     * @brief Indicator for a placeholder tile.
-     */
-    Placeholder = -2,
-
-    /**
-     * @brief The image request or image creation failed.
-     */
-    Failed = -1,
-
-    /**
-     * @brief The initial state
-     */
-    Unloaded = 0,
-
-    /**
-     * @brief The request for loading the image data is still pending.
-     */
-    Loading = 1,
-
-    /**
-     * @brief The image data has been loaded and the image has been created.
-     */
-    Loaded = 2,
-
-    /**
-     * @brief The rendering resources for the image data have been created.
-     */
-    Done = 3
-  };
-
   /**
    * @brief Tile availability states.
    *
@@ -90,7 +92,7 @@ public:
    * @brief Constructs a placeholder tile for the tile provider.
    *
    * The {@link getState} of this instance will always be
-   * {@link LoadState::Placeholder}.
+   * {@link RasterLoadState::Placeholder}.
    *
    * @param tileProvider The {@link RasterOverlayTileProvider}. This object
    * _must_ remain valid for the entire lifetime of the tile. If the tile
@@ -170,9 +172,9 @@ public:
   }
 
   /**
-   * @brief Returns the current {@link LoadState}.
+   * @brief Returns the current {@link RasterLoadState}.
    */
-  LoadState getState() const noexcept { return this->_state; }
+  RasterLoadState getState() const noexcept { return this->_state; }
 
   /**
    * @brief Returns the list of {@link Credit}s needed for this tile.
@@ -185,7 +187,7 @@ public:
    * @brief Returns the image data for the tile.
    *
    * This will only contain valid image data if the {@link getState} of
-   * this tile is {@link LoadState `Loaded`} or {@link LoadState `Done`}.
+   * this tile is {@link RasterLoadState `Loaded`} or {@link RasterLoadState `Done`}.
    *
    * @return The image data.
    */
@@ -197,7 +199,7 @@ public:
    * @brief Returns the image data for the tile.
    *
    * This will only contain valid image data if the {@link getState} of
-   * this tile is {@link LoadState `Loaded`} or {@link LoadState `Done`}.
+   * this tile is {@link RasterLoadState `Loaded`} or {@link RasterLoadState `Done`}.
    *
    * @return The image data.
    */
@@ -206,11 +208,11 @@ public:
   /**
    * @brief Create the renderer resources for the loaded image.
    *
-   * If the {@link getState} of this tile is not {@link LoadState `Loaded`},
+   * If the {@link getState} of this tile is not {@link RasterLoadState `Loaded`},
    * then nothing will be done. Otherwise, the renderer resources will be
    * prepared, so that they may later be obtained with
    * {@link getRendererResources}, and the {@link getState} of this tile
-   * will change to {@link LoadState `Done`}.
+   * will change to {@link RasterLoadState `Done`}.
    */
   void loadInMainThread();
 
@@ -243,7 +245,7 @@ private:
   friend class Tileset;
   friend class TilesetContentManager;
 
-  void setState(LoadState newState) noexcept;
+  void setState(RasterLoadState newState) noexcept;
 
   // This is a raw pointer instead of an IntrusivePointer in order to avoid
   // circular references, particularly among a placeholder tile provider and
@@ -254,7 +256,7 @@ private:
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;
-  LoadState _state;
+  RasterLoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
   MoreDetailAvailable _moreDetailAvailable;

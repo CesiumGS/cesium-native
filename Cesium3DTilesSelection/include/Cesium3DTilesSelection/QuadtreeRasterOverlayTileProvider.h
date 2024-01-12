@@ -105,29 +105,28 @@ protected:
    * @return A Future that resolves to the loaded image data or error
    * information.
    */
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
-
-  virtual bool getLoadQuadtreeTileImageWork(
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      std::string& outUrl) = 0;
+      const ResponseDataMap& responsesByUrl) const = 0;
 
 private:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override final;
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      RasterOverlayTile& overlayTile,
+      const ResponseDataMap& responsesByUrl) override final;
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile& overlayTile,
-      RequestDataVec& outRequests,
+      RequestData& outRequest,
       RasterProcessingCallback& outCallback) override;
 
   struct LoadedQuadtreeImage {
-    std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
+    std::shared_ptr<RasterLoadResult> pResult = nullptr;
     std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
   };
 
-  CesiumAsync::SharedFuture<LoadedQuadtreeImage>
-  getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
+  CesiumAsync::SharedFuture<LoadedQuadtreeImage> getQuadtreeTile(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const ResponseDataMap& responsesByUrl);
 
   /**
    * @brief Map raster tiles to geometry tile.
@@ -139,15 +138,11 @@ private:
    * data that is required to cover the rectangle with the given geometric
    * error.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
-  mapRasterTilesToGeometryTile(
-      const CesiumGeometry::Rectangle& geometryRectangle,
-      const glm::dvec2 targetScreenPixels);
-
-  void getMapRasterTilesToGeometryTileWork(
+  void mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       const glm::dvec2 targetScreenPixels,
-      RequestDataVec& outRequests);
+      const ResponseDataMap& responsesByUrl,
+      std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>& outTiles);
 
   void unloadCachedTiles();
 
@@ -163,7 +158,7 @@ private:
       const CesiumGeometry::Rectangle& targetRectangle,
       const std::vector<LoadedQuadtreeImage>& images);
 
-  static LoadedRasterOverlayImage combineImages(
+  static RasterLoadResult combineImages(
       const CesiumGeometry::Rectangle& targetRectangle,
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);

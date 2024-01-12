@@ -19,7 +19,7 @@ RasterOverlayTile::RasterOverlayTile(
       _targetScreenPixels(0.0),
       _rectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
       _tileCredits(),
-      _state(LoadState::Placeholder),
+      _state(RasterLoadState::Placeholder),
       _image(),
       _pRendererResources(nullptr),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
@@ -32,7 +32,7 @@ RasterOverlayTile::RasterOverlayTile(
       _targetScreenPixels(targetScreenPixels),
       _rectangle(rectangle),
       _tileCredits(),
-      _state(LoadState::Unloaded),
+      _state(RasterLoadState::Unloaded),
       _image(),
       _pRendererResources(nullptr),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
@@ -46,14 +46,12 @@ RasterOverlayTile::~RasterOverlayTile() {
       tileProvider.getPrepareRendererResources();
 
   if (pPrepareRendererResources) {
-    void* pLoadThreadResult =
-        this->getState() == RasterOverlayTile::LoadState::Done
-            ? nullptr
-            : this->_pRendererResources;
-    void* pMainThreadResult =
-        this->getState() == RasterOverlayTile::LoadState::Done
-            ? this->_pRendererResources
-            : nullptr;
+    void* pLoadThreadResult = this->getState() == RasterLoadState::Done
+                                  ? nullptr
+                                  : this->_pRendererResources;
+    void* pMainThreadResult = this->getState() == RasterLoadState::Done
+                                  ? this->_pRendererResources
+                                  : nullptr;
 
     pPrepareRendererResources->freeRaster(
         *this,
@@ -74,7 +72,7 @@ const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
 }
 
 void RasterOverlayTile::loadInMainThread() {
-  if (this->getState() != RasterOverlayTile::LoadState::Loaded) {
+  if (this->getState() != RasterLoadState::Loaded) {
     return;
   }
 
@@ -85,10 +83,10 @@ void RasterOverlayTile::loadInMainThread() {
           *this,
           this->_pRendererResources);
 
-  this->setState(LoadState::Done);
+  this->setState(RasterLoadState::Done);
 }
 
-void RasterOverlayTile::setState(LoadState newState) noexcept {
+void RasterOverlayTile::setState(RasterLoadState newState) noexcept {
   this->_state = newState;
 }
 

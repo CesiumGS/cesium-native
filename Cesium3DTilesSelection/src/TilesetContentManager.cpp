@@ -69,8 +69,7 @@ void unloadTileRecursively(
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
-    if (pLoading &&
-        pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+    if (pLoading && pLoading->getState() == RasterLoadState::Unloaded) {
       return true;
     }
   }
@@ -285,19 +284,18 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
         tile,
         projections);
     if (pMapped) {
-      // Try to load now, but if the mapped raster tile is a placeholder this
-      // won't do anything.
-      RequestDataVec requests;
+      // Try to load now, but if tile is a placeholder this won't do anything
+      // Default headers come from the this. Loader can override if needed
+      RequestData requestData;
+      requestData.headers = defaultHeaders;
       RasterProcessingCallback rasterCallback;
-      pMapped->getLoadThrottledWork(requests, rasterCallback);
 
-      for (RequestData& request : requests) {
-        // If loader doesn't specify headers, use content manager as default
+      pMapped->getLoadThrottledWork(requestData, rasterCallback);
+
+      if (!requestData.url.empty() || rasterCallback != nullptr) {
         TilesetContentManager::ParsedTileWork newWork = {
             depthIndex,
-            RequestData{
-                request.url,
-                request.headers.empty() ? defaultHeaders : request.headers},
+            requestData,
             RasterProcessingData{pMapped, rasterCallback}};
         outWork.push_back(newWork);
       }
@@ -943,13 +941,12 @@ void TilesetContentManager::addWorkToManager(
   size_t betweenFrameBuffer = 10;
   size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
   size_t pendingRequestCount = this->_tileWorkManager.GetPendingRequestsCount();
-  assert(pendingRequestCount <= maxCountToQueue);
 
   std::vector<TileLoadWork*> requestWorkToSubmit;
-  size_t slotsOpen = maxCountToQueue - pendingRequestCount;
-  if (slotsOpen == 0) {
+  if (pendingRequestCount >= maxCountToQueue) {
     // No request slots open, we can at least insert our processing work
   } else {
+    size_t slotsOpen = maxCountToQueue - pendingRequestCount;
     if (slotsOpen >= requestWork.size()) {
       // We can take all incoming work
       requestWorkToSubmit = requestWork;
@@ -991,7 +988,7 @@ void TilesetContentManager::markWorkTilesAsLoading(
           rasterProcessing.pRasterTile->getLoadingTile();
       assert(pLoading);
 
-      pLoading->setState(RasterOverlayTile::LoadState::Loading);
+      pLoading->setState(RasterLoadState::Loading);
     }
   }
 }
@@ -1019,7 +1016,7 @@ void TilesetContentManager::handleFailedRequestWork(
           rasterProcessing.pRasterTile->getLoadingTile();
       assert(pLoading);
 
-      pLoading->setState(RasterOverlayTile::LoadState::Failed);
+      pLoading->setState(RasterLoadState::Failed);
     }
   }
 }
@@ -1086,9 +1083,23 @@ void TilesetContentManager::dispatchProcessingWork(
       rasterProcessing.pRasterTile
           ->loadThrottled(
               _externals.asyncSystem,
+              work.responsesByUrl,
               rasterProcessing.rasterCallback)
-          .thenInMainThread(
-              [_this = this](bool) { _this->notifyRasterDoneLoading(); });
+          .thenInMainThread([_this = this, _work = std::move(work)](
+                                RasterLoadResult& result) mutable {
+            if (result.state == RasterLoadState::RequestRequired) {
+              // This work goes back into the work manager queue
+              // Override its request data with was specified
+              RequestData& newRequestData = result.requestData;
+              _work.requestData.url = newRequestData.url;
+              if (!newRequestData.headers.empty())
+                _work.requestData.headers = newRequestData.headers;
+
+              _this->_tileWorkManager.QueueSingleRequest(_work);
+            } else {
+              _this->notifyRasterDoneLoading();
+            }
+          });
     }
   }
 }
@@ -1145,18 +1156,17 @@ void TilesetContentManager::parseTileWork(
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
-      RequestDataVec requests;
+      // Default headers come from the this. Loader can override if needed
+      RequestData requestData;
+      requestData.headers = this->_requestHeaders;
       RasterProcessingCallback rasterCallback;
-      rasterTile.getLoadThrottledWork(requests, rasterCallback);
 
-      for (RequestData& request : requests) {
-        // If loader doesn't specify headers, use content manager as default
-        ParsedTileWork newWork = {
+      rasterTile.getLoadThrottledWork(requestData, rasterCallback);
+
+      if (!requestData.url.empty() || rasterCallback != nullptr) {
+        TilesetContentManager::ParsedTileWork newWork = {
             depthIndex,
-            RequestData{
-                request.url,
-                request.headers.empty() ? this->_requestHeaders
-                                        : request.headers},
+            requestData,
             RasterProcessingData{&rasterTile, rasterCallback}};
         outWork.push_back(newWork);
       }
@@ -1669,8 +1679,8 @@ void TilesetContentManager::updateDoneState(
       RasterMappedTo3DTile& mappedRasterTile = rasterTiles[i];
 
       RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-      if (pLoadingTile && pLoadingTile->getState() ==
-                              RasterOverlayTile::LoadState::Placeholder) {
+      if (pLoadingTile &&
+          pLoadingTile->getState() == RasterLoadState::Placeholder) {
         RasterOverlayTileProvider* pProvider =
             this->_overlayCollection.findTileProviderForOverlay(
                 pLoadingTile->getOverlay());

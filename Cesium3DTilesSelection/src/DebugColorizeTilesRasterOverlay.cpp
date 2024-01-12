@@ -33,12 +33,13 @@ public:
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile&,
-      RequestDataVec&,
+      RequestData&,
       RasterProcessingCallback&) override {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override {
-    LoadedRasterOverlayImage result;
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      RasterOverlayTile& overlayTile,
+      const ResponseDataMap&) override {
+    RasterLoadResult result;
 
     // Indicate that there is no more detail available so that tiles won't get
     // refined on our behalf.

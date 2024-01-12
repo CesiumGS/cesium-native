@@ -71,8 +71,9 @@ public:
   virtual ~WebMapServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const ResponseDataMap& responsesByUrl) const override {
 
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
@@ -120,56 +121,21 @@ protected:
                                  : Uri::escape(it->second);
         });
 
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
-  }
+    // If tile url is not loaded, request it and come back later
+    ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
+    if (foundIt == responsesByUrl.end()) {
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          {std::nullopt,
+           options.rectangle,
+           {},
+           {"Failed to load image from TMS."},
+           {},
+           options.moreDetailAvailable,
+           RequestData{url, this->_headers},
+           RasterLoadState::RequestRequired});
+    }
 
-  virtual bool getLoadQuadtreeTileImageWork(
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      std::string& outUrl) override {
-
-    const CesiumGeospatial::GlobeRectangle tileRectangle =
-        CesiumGeospatial::unprojectRectangleSimple(
-            this->getProjection(),
-            this->getTilingScheme().tileToRectangle(tileID));
-
-    std::string queryString = "?";
-
-    if (this->_url.find(queryString) != std::string::npos)
-      queryString = "&";
-
-    const std::string urlTemplate =
-        this->_url + queryString +
-        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
-        "WMS&"
-        "format={format}&styles="
-        "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
-        "&layers={layers}&crs=EPSG:4326";
-
-    const auto radiansToDegrees = [](double rad) {
-      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
-    };
-
-    const std::map<std::string, std::string> urlTemplateMap = {
-        {"baseUrl", this->_url},
-        {"version", this->_version},
-        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
-        {"maxy", radiansToDegrees(tileRectangle.getEast())},
-        {"minx", radiansToDegrees(tileRectangle.getSouth())},
-        {"miny", radiansToDegrees(tileRectangle.getWest())},
-        {"layers", this->_layers},
-        {"format", this->_format},
-        {"width", std::to_string(this->getWidth())},
-        {"height", std::to_string(this->getHeight())}};
-
-    outUrl = CesiumUtility::Uri::substituteTemplateParameters(
-        urlTemplate,
-        [&map = urlTemplateMap](const std::string& placeholder) {
-          auto it = map.find(placeholder);
-          return it == map.end() ? "{" + placeholder + "}"
-                                 : Uri::escape(it->second);
-        });
-
-    return true;
+    return this->loadTileImageFromUrl(url, foundIt->second, std::move(options));
   }
 
 private:
