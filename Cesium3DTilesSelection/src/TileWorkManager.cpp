@@ -20,6 +20,68 @@ void TileWorkManager::SetMaxSimultaneousRequests(size_t max) {
   _maxSimultaneousRequests = max;
 }
 
+bool TileWorkManager::isProcessingUnique(
+    const TileLoadWork& newRequest,
+    const TileLoadWork& existingRequest) {
+  if (std::holds_alternative<TileProcessingData>(newRequest.processingData) &&
+      std::holds_alternative<TileProcessingData>(
+          existingRequest.processingData)) {
+    TileProcessingData newTileProcessing =
+        std::get<TileProcessingData>(newRequest.processingData);
+    TileProcessingData existingTileProcessing =
+        std::get<TileProcessingData>(existingRequest.processingData);
+    return newTileProcessing.pTile != existingTileProcessing.pTile;
+  }
+
+  if (std::holds_alternative<RasterProcessingData>(newRequest.processingData) &&
+      std::holds_alternative<RasterProcessingData>(
+          existingRequest.processingData)) {
+    RasterProcessingData newTileProcessing =
+        std::get<RasterProcessingData>(newRequest.processingData);
+    RasterProcessingData existingTileProcessing =
+        std::get<RasterProcessingData>(existingRequest.processingData);
+    return newTileProcessing.pRasterTile != existingTileProcessing.pRasterTile;
+  }
+
+  // Processing data types are different
+  return true;
+}
+
+bool TileWorkManager::isWorkAlreadyProcessing(
+    const TileLoadWork& newProcessing) {
+  for (auto doneRequest : _processingQueue) {
+    if (!isProcessingUnique(newProcessing, doneRequest))
+      return true;
+  }
+  return false;
+}
+
+bool TileWorkManager::isRequestAlreadyInFlight(const TileLoadWork& newRequest) {
+  for (auto urlWorkPair : _inFlightRequests) {
+    for (auto work : urlWorkPair.second) {
+      if (newRequest.requestData.url != work.requestData.url)
+        continue;
+
+      // Urls do match. Do they point to the same tile?
+      if (!isProcessingUnique(newRequest, work))
+        return true;
+    }
+  }
+  return false;
+}
+
+bool TileWorkManager::isRequestAlreadyQueued(const TileLoadWork& newRequest) {
+  for (auto existingRequest : _requestQueue) {
+    if (newRequest.requestData.url != existingRequest.requestData.url)
+      continue;
+
+    // Urls do match. Do they point to the same tile?
+    if (!isProcessingUnique(newRequest, existingRequest))
+      return true;
+  }
+  return false;
+}
+
 void TileWorkManager::QueueBatch(
     const std::vector<TileLoadWork*>& requestWork,
     const std::vector<TileLoadWork*>& processingWork) {
@@ -29,11 +91,19 @@ void TileWorkManager::QueueBatch(
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
-    for (TileLoadWork* element : requestWork)
+    for (TileLoadWork* element : requestWork) {
+      if (isRequestAlreadyQueued(*element))
+        continue;
+      if (isRequestAlreadyInFlight(*element))
+        continue;
       _requestQueue.push_back(std::move(*element));
+    }
 
-    for (TileLoadWork* element : processingWork)
+    for (TileLoadWork* element : processingWork) {
+      if (isWorkAlreadyProcessing(*element))
+        continue;
       _processingQueue.push_back(std::move(*element));
+    }
   }
 
   transitionQueuedWork();
@@ -42,7 +112,10 @@ void TileWorkManager::QueueBatch(
 void TileWorkManager::QueueSingleRequest(const TileLoadWork& requestWork) {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
-    _requestQueue.push_back(std::move(requestWork));
+    if (!isRequestAlreadyQueued(requestWork) &&
+        !isRequestAlreadyInFlight(requestWork)) {
+      _requestQueue.push_back(std::move(requestWork));
+    }
   }
 
   transitionQueuedWork();

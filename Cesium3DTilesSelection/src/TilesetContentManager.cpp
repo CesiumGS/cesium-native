@@ -1089,6 +1089,13 @@ void TilesetContentManager::dispatchProcessingWork(
                                 RasterLoadResult& result) mutable {
             if (result.state == RasterLoadState::RequestRequired) {
               // This work goes back into the work manager queue
+
+              // Make sure we're not requesting something we have
+              assert(!result.requestData.url.empty());
+              assert(
+                  _work.responsesByUrl.find(result.requestData.url) ==
+                  _work.responsesByUrl.end());
+
               // Override its request data with was specified
               RequestData& newRequestData = result.requestData;
               _work.requestData.url = newRequestData.url;
@@ -1096,9 +1103,9 @@ void TilesetContentManager::dispatchProcessingWork(
                 _work.requestData.headers = newRequestData.headers;
 
               _this->_tileWorkManager.QueueSingleRequest(_work);
-            } else {
-              _this->notifyRasterDoneLoading();
             }
+
+            _this->notifyRasterDoneLoading();
           });
     }
   }

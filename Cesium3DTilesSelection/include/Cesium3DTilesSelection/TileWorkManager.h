@@ -77,6 +77,14 @@ private:
       gsl::span<const std::byte> responseBytes,
       const TileLoadWork& request);
 
+  bool isProcessingUnique(
+      const TileLoadWork& newRequest,
+      const TileLoadWork& existingRequest);
+
+  bool isRequestAlreadyQueued(const TileLoadWork& newRequest);
+  bool isRequestAlreadyInFlight(const TileLoadWork& newRequest);
+  bool isWorkAlreadyProcessing(const TileLoadWork& newProcessing);
+
   // Thread safe members
   std::mutex _requestsLock;
   bool _exitSignaled = false;

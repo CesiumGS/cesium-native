@@ -71,18 +71,15 @@ public:
   virtual ~WebMapServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+  virtual bool getQuadtreeTileImageRequest(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const ResponseDataMap& responsesByUrl) const override {
-
-    LoadTileImageFromUrlOptions options;
-    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+      RequestData& requestData,
+      std::string&) const override {
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
-            options.rectangle);
+            this->getTilingScheme().tileToRectangle(tileID));
 
     std::string queryString = "?";
 
@@ -113,7 +110,7 @@ protected:
         {"width", std::to_string(this->getWidth())},
         {"height", std::to_string(this->getHeight())}};
 
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
+    requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
         urlTemplate,
         [&map = urlTemplateMap](const std::string& placeholder) {
           auto it = map.find(placeholder);
@@ -121,21 +118,22 @@ protected:
                                  : Uri::escape(it->second);
         });
 
-    // If tile url is not loaded, request it and come back later
-    ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
-    if (foundIt == responsesByUrl.end()) {
-      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
-          {std::nullopt,
-           options.rectangle,
-           {},
-           {"Failed to load image from TMS."},
-           {},
-           options.moreDetailAvailable,
-           RequestData{url, this->_headers},
-           RasterLoadState::RequestRequired});
-    }
+    return true;
+  }
 
-    return this->loadTileImageFromUrl(url, foundIt->second, std::move(options));
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const RequestData& requestData,
+      const ResponseData& responseData) const override {
+
+    LoadTileImageFromUrlOptions options;
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+
+    return this->loadTileImageFromUrl(
+        requestData.url,
+        responseData,
+        std::move(options));
   }
 
 private:

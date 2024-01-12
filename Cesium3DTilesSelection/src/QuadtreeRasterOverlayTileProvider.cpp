@@ -280,8 +280,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const ResponseDataMap& responsesByUrl) {
 
-  // TODO, this future cache is a problem
-  // New responses in the data map never get processed
+  // Return any cached requests
   auto lookupIt = this->_tileLookup.find(tileID);
   if (lookupIt != this->_tileLookup.end()) {
     auto& cacheIt = lookupIt->second;
@@ -294,6 +293,42 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
     return cacheIt->future;
   }
+
+  // Not cached, discover request here
+  RequestData requestData;
+  ResponseDataMap::const_iterator foundIt;
+  std::string errorString;
+  if (this->getQuadtreeTileImageRequest(tileID, requestData, errorString)) {
+    // Successfully discovered a request. Find it in our responses
+    foundIt = responsesByUrl.find(requestData.url);
+    if (foundIt == responsesByUrl.end()) {
+      // If not there, request it and come back later
+      RasterLoadResult loadResult;
+      loadResult.requestData = requestData;
+      loadResult.state = RasterLoadState::RequestRequired;
+
+      Future<LoadedQuadtreeImage> future =
+          this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
+              {std::make_shared<RasterLoadResult>(std::move(loadResult))});
+
+      SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
+      return result;
+    }
+  } else {
+    // Error occurred while discovering request
+    RasterLoadResult loadResult;
+    loadResult.errors.push_back(errorString);
+    loadResult.state = RasterLoadState::Failed;
+
+    Future<LoadedQuadtreeImage> future =
+        this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
+            {std::make_shared<RasterLoadResult>(std::move(loadResult))});
+
+    SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
+    return result;
+  }
+
+  const ResponseData& responseData = foundIt->second;
 
   // We create this lambda here instead of where it's used below so that we
   // don't need to pass `this` through a thenImmediately lambda, which would
@@ -313,7 +348,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
   };
 
   Future<LoadedQuadtreeImage> future =
-      this->loadQuadtreeTileImage(tileID, responsesByUrl)
+      this->loadQuadtreeTileImage(tileID, requestData, responseData)
           .catchImmediately([](std::exception&& e) {
             // Turn an exception into an error.
             RasterLoadResult result;

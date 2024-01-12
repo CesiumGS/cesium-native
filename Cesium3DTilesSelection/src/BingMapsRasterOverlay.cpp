@@ -149,10 +149,11 @@ public:
   virtual ~BingMapsTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+  virtual bool getQuadtreeTileImageRequest(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const ResponseDataMap& responsesByUrl) const override {
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
+      RequestData& requestData,
+      std::string&) const override {
+    requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
         this->_urlTemplate,
         [this, &tileID](const std::string& key) {
           if (key == "quadkey") {
@@ -168,6 +169,13 @@ protected:
           }
           return key;
         });
+    return true;
+  }
+
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const RequestData& requestData,
+      const ResponseData& responseData) const override {
 
     LoadTileImageFromUrlOptions options;
     options.allowEmptyImages = true;
@@ -198,21 +206,10 @@ protected:
       }
     }
 
-    // If tile url is not loaded, request it and come back later
-    ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
-    if (foundIt == responsesByUrl.end()) {
-      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
-          {std::nullopt,
-           options.rectangle,
-           {},
-           {"Failed to load image from TMS."},
-           {},
-           options.moreDetailAvailable,
-           RequestData{url},
-           RasterLoadState::RequestRequired});
-    }
-
-    return this->loadTileImageFromUrl(url, foundIt->second, std::move(options));
+    return this->loadTileImageFromUrl(
+        requestData.url,
+        responseData,
+        std::move(options));
   }
 
 private:

@@ -105,9 +105,15 @@ protected:
    * @return A Future that resolves to the loaded image data or error
    * information.
    */
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      RequestData& requestData,
+      std::string& errorString) const = 0;
+
   virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const ResponseDataMap& responsesByUrl) const = 0;
+      const RequestData& requestData,
+      const ResponseData& responseData) const = 0;
 
 private:
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
