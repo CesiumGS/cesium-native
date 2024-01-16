@@ -6,6 +6,10 @@
 
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
+
 ### v0.31.0 - 2023-12-14
 
 ##### Additions :tada:

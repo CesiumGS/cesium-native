@@ -167,8 +167,16 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
     }
 
     const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
+
+    // We allow - but don't require - 8-byte padding.
+    int64_t maxPaddingBytes = 0;
+    int64_t paddingRemainder = buffer.byteLength % 8;
+    if (paddingRemainder > 0) {
+      maxPaddingBytes = 8 - paddingRemainder;
+    }
+
     if (buffer.byteLength > binaryChunkSize ||
-        buffer.byteLength + 3 < binaryChunkSize) {
+        buffer.byteLength + maxPaddingBytes < binaryChunkSize) {
       result.errors.emplace_back("Subtree binary chunk size does not match the "
                                  "size of the first buffer in the JSON chunk.");
       return asyncSystem.createResolvedFuture(std::move(result));
