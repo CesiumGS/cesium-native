@@ -39,12 +39,12 @@ FeatureIdTextureView::FeatureIdTextureView(
     return;
   }
 
-  if (texture.sampler >= model.samplers.size()) {
+  if (static_cast<size_t>(texture.sampler) >= model.samplers.size()) {
     this->_status = FeatureIdTextureViewStatus::ErrorInvalidSampler;
     return;
   }
 
-  this->_pSampler = &model.samplers[texture.sampler];
+  this->_pSampler = &model.samplers[static_cast<size_t>(texture.sampler)];
 
   // TODO: once compressed texture support is merged, check that the image is
   // decompressed here.
