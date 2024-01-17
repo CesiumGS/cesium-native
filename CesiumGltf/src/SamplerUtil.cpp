@@ -1,4 +1,5 @@
 #include "CesiumGltf/SamplerUtil.h"
+
 #include "CesiumGltf/Sampler.h"
 
 #include <glm/common.hpp>
