@@ -261,8 +261,10 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     double maximumScreenSpaceError,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& defaultHeaders,
     std::vector<TilesetContentManager::RasterWorkChain>& outWork) {
-  // when tile fails temporarily, it may still have mapped raster tiles, so
-  // clear it here
+
+  // We may still have mapped raster tiles that need to be reset if
+  // - The tile fails temporarily
+  // - The tile work is calculated last frame , but there's no room to add it
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
@@ -935,30 +937,19 @@ void TilesetContentManager::addWorkToManager(
   if (loadWork.empty())
     return;
 
+  // TODO, this function should be completely in the work manager
   _tileWorkManager.SetMaxSimultaneousRequests(maxSimultaneousRequests);
-
-  // Expand any child work
-  std::vector<TileLoadWork> flattenedWork;
-  for (TileLoadWork& work : loadWork) {
-    for (TileLoadWork& child : work.childWork) {
-      flattenedWork.push_back(child);
-    }
-    flattenedWork.push_back(work);
-  }
 
   // Request work will always go to that queue first
   // Work with only processing can bypass it
   std::vector<TileLoadWork*> requestWork;
   std::vector<TileLoadWork*> processingWork;
-  for (TileLoadWork& work : flattenedWork) {
+  for (TileLoadWork& work : loadWork) {
     if (work.requestData.url.empty())
       processingWork.push_back(&work);
     else
       requestWork.push_back(&work);
   }
-
-  // We're always going to do available processing work. Mark it as loading
-  markWorkTilesAsLoading(processingWork);
 
   // Figure out how much url work we will accept.
   // We want some work to be ready to go in between frames
@@ -983,14 +974,48 @@ void TilesetContentManager::addWorkToManager(
       requestWorkToSubmit.resize(slotsOpen);
     }
 
-    markWorkTilesAsLoading(requestWorkToSubmit);
-
-    SPDLOG_LOGGER_INFO(
-        this->_externals.pLogger,
-        "Sending request work to dispatcher: {} entries",
-        requestWorkToSubmit.size());
-
     // TODO, assert tile is not already loading? or already post-processing?
+  }
+
+  // Add child work. Only support one level deep, for now
+  // Children bypass the request throlling count, but in the
+  // end would just become pending anyway.
+  std::vector<TileLoadWork*> childRequestWork;
+  std::vector<TileLoadWork*> childProcessingWork;
+  for (TileLoadWork* work : requestWorkToSubmit) {
+    for (TileLoadWork& child : work->childWork) {
+      assert(child.childWork.empty());
+      if (child.requestData.url.empty())
+        childProcessingWork.push_back(&child);
+      else
+        childRequestWork.push_back(&child);
+    }
+  }
+
+  for (TileLoadWork* work : processingWork) {
+    for (TileLoadWork& child : work->childWork) {
+      assert(child.childWork.empty());
+      if (child.requestData.url.empty())
+        childProcessingWork.push_back(&child);
+      else
+        childRequestWork.push_back(&child);
+    }
+  }
+
+  if (childRequestWork.size() > 0)
+    requestWorkToSubmit.insert(requestWorkToSubmit.end(), childRequestWork.begin(), childRequestWork.end());
+
+  if (childProcessingWork.size() > 0)
+    processingWork.insert(processingWork.end(), childProcessingWork.begin(), childProcessingWork.end());
+
+  markWorkTilesAsLoading(requestWorkToSubmit);
+  markWorkTilesAsLoading(processingWork);
+
+  if (requestWorkToSubmit.size()) {
+    SPDLOG_LOGGER_INFO(
+      this->_externals.pLogger,
+      "Sending request work to dispatcher: {} entries",
+      requestWorkToSubmit.size());
   }
 
   _tileWorkManager.QueueBatch(requestWorkToSubmit, processingWork);

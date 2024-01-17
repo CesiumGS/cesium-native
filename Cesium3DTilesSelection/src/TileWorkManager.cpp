@@ -94,13 +94,12 @@ void TileWorkManager::QueueBatch(
     for (TileLoadWork* element : requestWork) {
       assert(!isRequestAlreadyQueued(*element));
       assert(!isRequestAlreadyInFlight(*element));
-      _requestQueue.push_back(std::move(*element));
+      _requestQueue.push_back(*element);
     }
 
     for (TileLoadWork* element : processingWork) {
-      if (isWorkAlreadyProcessing(*element))
-        continue;
-      _processingQueue.push_back(std::move(*element));
+      assert(!isWorkAlreadyProcessing(*element));
+      _processingQueue.push_back(*element);
     }
   }
 
@@ -111,10 +110,9 @@ void TileWorkManager::QueueSingleRequest(const TileLoadWork& requestWork) {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
-    // TODO - This needs to be an assertion
-    if (!isRequestAlreadyQueued(requestWork) &&
-        !isRequestAlreadyInFlight(requestWork))
-      _requestQueue.push_back(std::move(requestWork));
+    assert(!isRequestAlreadyQueued(requestWork));
+    assert(!isRequestAlreadyInFlight(requestWork));
+    _requestQueue.push_back(std::move(requestWork));
   }
 
   transitionQueuedWork();
