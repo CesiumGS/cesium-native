@@ -15,11 +15,6 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-void TileWorkManager::SetMaxSimultaneousRequests(size_t max) {
-  std::lock_guard<std::mutex> lock(_requestsLock);
-  _maxSimultaneousRequests = max;
-}
-
 bool TileWorkManager::isProcessingUnique(
     const TileLoadWork& newRequest,
     const TileLoadWork& existingRequest) {
@@ -70,6 +65,23 @@ bool TileWorkManager::isRequestAlreadyInFlight(const TileLoadWork& newRequest) {
   return false;
 }
 
+void TileWorkManager::discoverChildWork(
+    const std::vector<const TileLoadWork*>& workVec,
+    std::vector<const TileLoadWork*>& childRequestWork,
+    std::vector<const TileLoadWork*>& childProcessingWork) {
+  std::vector<const TileLoadWork*> childWork;
+  for (const TileLoadWork* work : workVec) {
+    for (const TileLoadWork& child : work->childWork) {
+      // Only support one level deep, for now
+      assert(child.childWork.empty());
+      if (child.requestData.url.empty())
+        childProcessingWork.push_back(&child);
+      else
+        childRequestWork.push_back(&child);
+    }
+  }
+}
+
 bool TileWorkManager::isRequestAlreadyQueued(const TileLoadWork& newRequest) {
   for (auto existingRequest : _requestQueue) {
     if (newRequest.requestData.url != existingRequest.requestData.url)
@@ -82,28 +94,100 @@ bool TileWorkManager::isRequestAlreadyQueued(const TileLoadWork& newRequest) {
   return false;
 }
 
-void TileWorkManager::QueueBatch(
-    const std::vector<TileLoadWork*>& requestWork,
-    const std::vector<TileLoadWork*>& processingWork) {
-  if (requestWork.empty() && processingWork.empty())
+void TileWorkManager::TryAddWork(
+    const std::vector<TileLoadWork>& loadWork,
+    size_t maxSimultaneousRequests,
+    std::vector<const TileLoadWork*>& workAdded) {
+  if (loadWork.empty())
     return;
+
+  // Request work will always go to that queue first
+  // Work with only processing can bypass it
+  std::vector<const TileLoadWork*> requestWork;
+  std::vector<const TileLoadWork*> processingWork;
+  for (const TileLoadWork& work : loadWork) {
+    if (work.requestData.url.empty())
+      processingWork.push_back(&work);
+    else
+      requestWork.push_back(&work);
+  }
+
+  // Figure out how much url work we will accept.
+  // We want some work to be ready to go in between frames
+  // so the dispatcher doesn't starve while we wait for a tick
+  size_t betweenFrameBuffer = 10;
+  size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
+  size_t pendingRequestCount = this->GetPendingRequestsCount();
+
+  std::vector<const TileLoadWork*> requestWorkToSubmit;
+  if (pendingRequestCount >= maxCountToQueue) {
+    // No request slots open, we can at least insert our processing work
+  } else {
+    size_t slotsOpen = maxCountToQueue - pendingRequestCount;
+    if (slotsOpen >= requestWork.size()) {
+      // We can take all incoming work
+      requestWorkToSubmit = requestWork;
+    } else {
+      // We can only take part of the incoming work
+      // Just submit the highest priority
+      requestWorkToSubmit = requestWork;
+      std::sort(requestWorkToSubmit.begin(), requestWorkToSubmit.end());
+      requestWorkToSubmit.resize(slotsOpen);
+    }
+  }
+
+  // Add child work
+  // Children bypass the request throlling count, but in the
+  // end would just become pending anyway.
+  std::vector<const TileLoadWork*> childRequestWork;
+  std::vector<const TileLoadWork*> childProcessingWork;
+  discoverChildWork(requestWorkToSubmit, childRequestWork, childProcessingWork);
+  discoverChildWork(processingWork, childRequestWork, childProcessingWork);
+  requestWorkToSubmit.insert(
+      requestWorkToSubmit.end(),
+      childRequestWork.begin(),
+      childRequestWork.end());
+  processingWork.insert(
+      processingWork.end(),
+      childProcessingWork.begin(),
+      childProcessingWork.end());
+
+  if (requestWorkToSubmit.empty() && processingWork.empty())
+    return;
+
+  workAdded.insert(
+      workAdded.end(),
+      requestWorkToSubmit.begin(),
+      requestWorkToSubmit.end());
+  workAdded.insert(
+      workAdded.end(),
+      processingWork.begin(),
+      processingWork.end());
 
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
+    this->_maxSimultaneousRequests = maxSimultaneousRequests;
 
-    for (TileLoadWork* element : requestWork) {
+    for (const TileLoadWork* element : requestWorkToSubmit) {
       assert(!isRequestAlreadyQueued(*element));
       assert(!isRequestAlreadyInFlight(*element));
       _requestQueue.push_back(*element);
     }
 
-    for (TileLoadWork* element : processingWork) {
+    for (const TileLoadWork* element : processingWork) {
       assert(!isWorkAlreadyProcessing(*element));
       _processingQueue.push_back(*element);
     }
   }
 
-  transitionQueuedWork();
+  if (requestWorkToSubmit.size()) {
+    SPDLOG_LOGGER_INFO(
+        this->_pLogger,
+        "Sending request work to dispatcher: {} entries",
+        requestWorkToSubmit.size());
+
+    transitionQueuedWork();
+  }
 }
 
 void TileWorkManager::QueueSingleRequest(const TileLoadWork& requestWork) {

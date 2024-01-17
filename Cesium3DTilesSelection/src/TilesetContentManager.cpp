@@ -931,103 +931,16 @@ void TilesetContentManager::discoverLoadWork(
   }
 }
 
-void TilesetContentManager::addWorkToManager(
-    std::vector<TileLoadWork>& loadWork,
-    size_t maxSimultaneousRequests) {
-  if (loadWork.empty())
-    return;
-
-  // TODO, this function should be completely in the work manager
-  _tileWorkManager.SetMaxSimultaneousRequests(maxSimultaneousRequests);
-
-  // Request work will always go to that queue first
-  // Work with only processing can bypass it
-  std::vector<TileLoadWork*> requestWork;
-  std::vector<TileLoadWork*> processingWork;
-  for (TileLoadWork& work : loadWork) {
-    if (work.requestData.url.empty())
-      processingWork.push_back(&work);
-    else
-      requestWork.push_back(&work);
-  }
-
-  // Figure out how much url work we will accept.
-  // We want some work to be ready to go in between frames
-  // so the dispatcher doesn't starve while we wait for a tick
-  size_t betweenFrameBuffer = 10;
-  size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
-  size_t pendingRequestCount = this->_tileWorkManager.GetPendingRequestsCount();
-
-  std::vector<TileLoadWork*> requestWorkToSubmit;
-  if (pendingRequestCount >= maxCountToQueue) {
-    // No request slots open, we can at least insert our processing work
-  } else {
-    size_t slotsOpen = maxCountToQueue - pendingRequestCount;
-    if (slotsOpen >= requestWork.size()) {
-      // We can take all incoming work
-      requestWorkToSubmit = requestWork;
-    } else {
-      // We can only take part of the incoming work
-      // Just submit the highest priority
-      requestWorkToSubmit = requestWork;
-      std::sort(requestWorkToSubmit.begin(), requestWorkToSubmit.end());
-      requestWorkToSubmit.resize(slotsOpen);
-    }
-
-    // TODO, assert tile is not already loading? or already post-processing?
-  }
-
-  // Add child work. Only support one level deep, for now
-  // Children bypass the request throlling count, but in the
-  // end would just become pending anyway.
-  std::vector<TileLoadWork*> childRequestWork;
-  std::vector<TileLoadWork*> childProcessingWork;
-  for (TileLoadWork* work : requestWorkToSubmit) {
-    for (TileLoadWork& child : work->childWork) {
-      assert(child.childWork.empty());
-      if (child.requestData.url.empty())
-        childProcessingWork.push_back(&child);
-      else
-        childRequestWork.push_back(&child);
-    }
-  }
-
-  for (TileLoadWork* work : processingWork) {
-    for (TileLoadWork& child : work->childWork) {
-      assert(child.childWork.empty());
-      if (child.requestData.url.empty())
-        childProcessingWork.push_back(&child);
-      else
-        childRequestWork.push_back(&child);
-    }
-  }
-
-  if (childRequestWork.size() > 0)
-    requestWorkToSubmit.insert(requestWorkToSubmit.end(), childRequestWork.begin(), childRequestWork.end());
-
-  if (childProcessingWork.size() > 0)
-    processingWork.insert(processingWork.end(), childProcessingWork.begin(), childProcessingWork.end());
-
-  markWorkTilesAsLoading(requestWorkToSubmit);
-  markWorkTilesAsLoading(processingWork);
-
-  if (requestWorkToSubmit.size()) {
-    SPDLOG_LOGGER_INFO(
-      this->_externals.pLogger,
-      "Sending request work to dispatcher: {} entries",
-      requestWorkToSubmit.size());
-  }
-
-  _tileWorkManager.QueueBatch(requestWorkToSubmit, processingWork);
-}
-
 void TilesetContentManager::markWorkTilesAsLoading(
-    std::vector<TileLoadWork*>& workVector) {
-  for (TileLoadWork* work : workVector) {
+    std::vector<const TileLoadWork*>& workVector) {
+
+  for (const TileLoadWork* work : workVector) {
     if (std::holds_alternative<TileProcessingData>(work->processingData)) {
       TileProcessingData tileProcessing =
           std::get<TileProcessingData>(work->processingData);
       assert(tileProcessing.pTile);
+      assert(tileProcessing.pTile->getState() == TileLoadState::Unloaded);
+
       tileProcessing.pTile->setState(TileLoadState::ContentLoading);
     } else {
       RasterProcessingData rasterProcessing =
@@ -1037,6 +950,7 @@ void TilesetContentManager::markWorkTilesAsLoading(
       RasterOverlayTile* pLoading =
           rasterProcessing.pRasterTile->getLoadingTile();
       assert(pLoading);
+      assert(pLoading->getState() == RasterLoadState::Unloaded);
 
       pLoading->setState(RasterLoadState::Loading);
     }
@@ -1172,7 +1086,11 @@ void TilesetContentManager::processLoadRequests(
   assert(options.maximumSimultaneousTileLoads > 0);
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
-  addWorkToManager(newLoadWork, maxTileLoads);
+
+  std::vector<const TileLoadWork*> workAdded;
+  this->_tileWorkManager.TryAddWork(newLoadWork, maxTileLoads, workAdded);
+
+  markWorkTilesAsLoading(workAdded);
 
   // Calculate how much processing work we can do right now
   int32_t numberOfTilesLoading = this->getNumberOfTilesLoading();

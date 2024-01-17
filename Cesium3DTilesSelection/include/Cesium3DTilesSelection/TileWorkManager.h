@@ -51,11 +51,10 @@ public:
         _pLogger(pLogger) {}
   ~TileWorkManager() noexcept;
 
-  void SetMaxSimultaneousRequests(size_t max);
-
-  void QueueBatch(
-      const std::vector<TileLoadWork*>& requestWork,
-      const std::vector<TileLoadWork*>& processingWork);
+  void TryAddWork(
+      const std::vector<TileLoadWork>& loadWork,
+      size_t maxSimultaneousRequests,
+      std::vector<const TileLoadWork*>& workAdded);
 
   void QueueSingleRequest(const TileLoadWork& requestWork);
 
@@ -92,6 +91,11 @@ private:
   void eraseMatchingChildWork(
       const TileLoadWork& work,
       std::vector<TileLoadWork>& childWork);
+
+  void discoverChildWork(
+      const std::vector<const TileLoadWork*>& workVec,
+      std::vector<const TileLoadWork*>& childRequestWork,
+      std::vector<const TileLoadWork*>& childProcessingWork);
 
   // Thread safe members
   std::mutex _requestsLock;

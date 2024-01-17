@@ -191,11 +191,7 @@ private:
       double maximumScreenSpaceError,
       std::vector<TileLoadWork>& outRequestWork);
 
-  void addWorkToManager(
-      std::vector<TileLoadWork>& requestWork,
-      size_t maxSimultaneousRequests);
-
-  void markWorkTilesAsLoading(std::vector<TileLoadWork*>& workVector);
+  void markWorkTilesAsLoading(std::vector<const TileLoadWork*>& workVector);
 
   void handleFailedRequestWork(std::vector<TileLoadWork>& workVector);
 
