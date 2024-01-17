@@ -6,6 +6,7 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 #include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/SamplerUtil.h"
 
 #include <array>
 #include <cassert>
