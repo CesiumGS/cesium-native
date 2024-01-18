@@ -467,7 +467,7 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
-  model.samplers.emplace_back();
+  Sampler& sampler = model.samplers.emplace_back();
 
   std::vector<uint8_t> featureIDs{1, 2, 0, 7};
 
@@ -496,11 +496,11 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
   FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
-  SECTION("REPEAT") {
-    model.samplers[texture.sampler].wrapS = Sampler::WrapS::REPEAT;
-    model.samplers[texture.sampler].wrapT = Sampler::WrapT::REPEAT;
+  FeatureIdTextureView view(model, featureIdTexture);
 
-    FeatureIdTextureView view(model, featureIdTexture);
+  SECTION("REPEAT") {
+    sampler.wrapS = Sampler::WrapS::REPEAT;
+    sampler.wrapT = Sampler::WrapT::REPEAT;
 
     std::vector<glm::dvec2> uvs{
         glm::dvec2(1.0, 0),
@@ -515,10 +515,8 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
   }
 
   SECTION("MIRRORED_REPEAT") {
-    model.samplers[texture.sampler].wrapS = Sampler::WrapS::MIRRORED_REPEAT;
-    model.samplers[texture.sampler].wrapT = Sampler::WrapT::MIRRORED_REPEAT;
-
-    FeatureIdTextureView view(model, featureIdTexture);
+    sampler.wrapS = Sampler::WrapS::MIRRORED_REPEAT;
+    sampler.wrapT = Sampler::WrapT::MIRRORED_REPEAT;
 
     // REPEAT:   | 1 2 3 | 1 2 3 |
     // MIRRORED: | 1 2 3 | 3 2 1 |
@@ -537,10 +535,8 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
   }
 
   SECTION("CLAMP_TO_EDGE") {
-    model.samplers[texture.sampler].wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
-    model.samplers[texture.sampler].wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
-
-    FeatureIdTextureView view(model, featureIdTexture);
+    sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
+    sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
     std::vector<glm::dvec2> uvs{
         glm::dvec2(-1.0, 0),
@@ -555,10 +551,8 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
   }
 
   SECTION("Mismatched wrap values") {
-    model.samplers[texture.sampler].wrapS = Sampler::WrapS::REPEAT;
-    model.samplers[texture.sampler].wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
-
-    FeatureIdTextureView view(model, featureIdTexture);
+    sampler.wrapS = Sampler::WrapS::REPEAT;
+    sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
     std::vector<glm::dvec2> uvs{
         glm::dvec2(1.0, 0),
