@@ -47,8 +47,10 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
   CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
-   * @brief Whether or not the native side will transform texture coordinates
-   * when textures have the KHR_texture_transform extension.
+   * @brief Whether or not to transform texture coordinates during load when
+   * textures have the `KHR_texture_transform` extension. Set this to false if
+   * texture coordinates will be transformed another way, such as in a vertex
+   * shader.
    */
   bool applyTextureTransform = true;
 };
