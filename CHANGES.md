@@ -10,6 +10,7 @@
 ##### Additions :tada:
 
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
+- Added `applyTextureTransform` property to `TilesetOptions`.
 
 ### v0.31.0 - 2023-12-14
 

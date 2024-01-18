@@ -903,6 +903,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               CesiumGltfReader::GltfReaderOptions gltfOptions;
               gltfOptions.ktx2TranscodeTargets =
                   contentOptions.ktx2TranscodeTargets;
+              gltfOptions.applyTextureTransform =
+                  contentOptions.applyTextureTransform;
               GltfConverterResult result = converter(responseData, gltfOptions);
 
               // Report any errors if there are any
