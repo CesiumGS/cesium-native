@@ -43,7 +43,7 @@ enum class FeatureIdTextureViewStatus {
   ErrorInvalidImage,
 
   /**
-   * @brief this feature ID texture has a sampler index that doesn't exist in
+   * @brief This feature ID texture has a sampler index that doesn't exist in
    * the glTF.
    */
   ErrorInvalidSampler,
@@ -121,9 +121,9 @@ public:
 
   /**
    * @brief Get the sampler describing how to sample the data from the
-   * property's texture.
+   * feature ID texture.
    *
-   * This will be nullptr if the property texture property view runs into
+   * This will be nullptr if the feature ID texture view runs into
    * problems during construction.
    */
   const Sampler* getSampler() const noexcept { return this->_pSampler; }

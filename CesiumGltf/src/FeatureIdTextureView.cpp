@@ -1,6 +1,6 @@
 #include "CesiumGltf/FeatureIdTextureView.h"
 
-#include "CesiumGltf/SamplerUtil.h"
+#include "CesiumGltf/SamplerUtility.h"
 
 namespace CesiumGltf {
 FeatureIdTextureView::FeatureIdTextureView() noexcept
@@ -32,14 +32,14 @@ FeatureIdTextureView::FeatureIdTextureView(
     return;
   }
 
-  // Ignore the texture's sampler, we will always use nearest pixel sampling.
   this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_status = FeatureIdTextureViewStatus::ErrorEmptyImage;
     return;
   }
 
-  if (static_cast<size_t>(texture.sampler) >= model.samplers.size()) {
+  if (texture.sampler < 0 ||
+      static_cast<size_t>(texture.sampler) >= model.samplers.size()) {
     this->_status = FeatureIdTextureViewStatus::ErrorInvalidSampler;
     return;
   }
@@ -76,11 +76,6 @@ FeatureIdTextureView::FeatureIdTextureView(
 
 int64_t FeatureIdTextureView::getFeatureID(double u, double v) noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
-    return -1;
-  }
-
-  if (this->_pSampler == nullptr) {
-    this->_status = FeatureIdTextureViewStatus::ErrorInvalidSampler;
     return -1;
   }
 

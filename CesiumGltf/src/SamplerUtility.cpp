@@ -1,4 +1,4 @@
-#include "CesiumGltf/SamplerUtil.h"
+#include "CesiumGltf/SamplerUtility.h"
 
 #include "CesiumGltf/Sampler.h"
 
