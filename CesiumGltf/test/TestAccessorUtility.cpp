@@ -290,97 +290,272 @@ TEST_CASE("Test getIndexAccessorView") {
   }
 }
 
-TEST_CASE("Test FaceVertexIndicesFromAccessor") {
+TEST_CASE("Test IndicesForFaceFromAccessor") {
   Model model;
-  std::vector<uint32_t> indices{0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 6, 7, 8};
   int64_t vertexCount = 9;
 
-  Buffer& buffer = model.buffers.emplace_back();
-  buffer.cesium.data.resize(indices.size() * sizeof(uint32_t));
-  std::memcpy(
-      buffer.cesium.data.data(),
-      indices.data(),
-      buffer.cesium.data.size());
-  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+  // Triangle mode indices
+  std::vector<uint32_t>
+      triangleIndices{0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 6, 7, 8};
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(triangleIndices.size() * sizeof(uint32_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        triangleIndices.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
-  BufferView& bufferView = model.bufferViews.emplace_back();
-  bufferView.buffer = 0;
-  bufferView.byteLength = buffer.byteLength;
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    bufferView.byteLength = buffer.byteLength;
 
-  Accessor& accessor = model.accessors.emplace_back();
-  accessor.bufferView = 0;
-  accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
-  accessor.type = Accessor::Type::SCALAR;
-  accessor.count =
-      bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
+  }
+
+  // Triangle strip and fan indices
+  std::vector<uint32_t> specialIndices{1, 2, 3, 4, 5, 6, 7, 8, 0};
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(specialIndices.size() * sizeof(uint32_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        specialIndices.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
+  }
 
   SECTION("Handles invalid accessor") {
+    REQUIRE(model.accessors.size() > 0);
     // Wrong component type
-    IndexAccessorType indexAccessor = AccessorView<uint8_t>(model, accessor);
-    auto indicesForFace =
-        std::visit(IndicesForFaceFromAccessor{0, vertexCount}, indexAccessor);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint8_t>(model, model.accessors[0]);
+    auto indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            0,
+            vertexCount,
+            MeshPrimitive::Mode::TRIANGLES},
+        indexAccessor);
     for (int64_t index : indicesForFace) {
       REQUIRE(index == -1);
     }
   }
 
   SECTION("Handles invalid face index") {
-    IndexAccessorType indexAccessor = AccessorView<uint32_t>(model, accessor);
-    auto indicesForFace =
-        std::visit(IndicesForFaceFromAccessor{-1, vertexCount}, indexAccessor);
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+    auto indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            -1,
+            vertexCount,
+            MeshPrimitive::Mode::TRIANGLES},
+        indexAccessor);
     for (int64_t index : indicesForFace) {
       REQUIRE(index == -1);
     }
 
-    indicesForFace =
-        std::visit(IndicesForFaceFromAccessor{10, vertexCount}, indexAccessor);
+    indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            10,
+            vertexCount,
+            MeshPrimitive::Mode::TRIANGLES},
+        indexAccessor);
     for (int64_t index : indicesForFace) {
       REQUIRE(index == -1);
     }
   }
 
-  SECTION("Retrieves from valid accessor and face index") {
-    IndexAccessorType indexAccessor = AccessorView<uint32_t>(model, accessor);
-    const size_t numFaces = indices.size() / 3;
+  SECTION("Handles invalid primitive modes") {
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+    auto indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            -1,
+            vertexCount,
+            MeshPrimitive::Mode::POINTS},
+        indexAccessor);
+    for (int64_t index : indicesForFace) {
+      REQUIRE(index == -1);
+    }
+
+    indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{10, vertexCount, MeshPrimitive::Mode::LINES},
+        indexAccessor);
+    for (int64_t index : indicesForFace) {
+      REQUIRE(index == -1);
+    }
+
+    indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            10,
+            vertexCount,
+            MeshPrimitive::Mode::LINE_LOOP},
+        indexAccessor);
+    for (int64_t index : indicesForFace) {
+      REQUIRE(index == -1);
+    }
+  }
+
+  SECTION("Retrieves from valid accessor and face index; triangles mode") {
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+    const size_t numFaces =
+        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) / 3);
+
     for (size_t i = 0; i < numFaces; i++) {
       auto indicesForFace = std::visit(
-          IndicesForFaceFromAccessor{static_cast<int64_t>(i), vertexCount},
+          IndicesForFaceFromAccessor{
+              static_cast<int64_t>(i),
+              vertexCount,
+              MeshPrimitive::Mode::TRIANGLES},
           indexAccessor);
 
       for (size_t j = 0; j < indicesForFace.size(); j++) {
-        int64_t expected = static_cast<int64_t>(indices[i * 3 + j]);
+        int64_t expected = static_cast<int64_t>(triangleIndices[i * 3 + j]);
         REQUIRE(indicesForFace[j] == expected);
       }
+    }
+  }
+
+  SECTION("Retrieves from valid accessor and face index; triangle strip mode") {
+    REQUIRE(model.accessors.size() > 1);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[1]);
+    const size_t numFaces =
+        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) - 2);
+    for (size_t i = 0; i < numFaces; i++) {
+      auto indicesForFace = std::visit(
+          IndicesForFaceFromAccessor{
+              static_cast<int64_t>(i),
+              vertexCount,
+              MeshPrimitive::Mode::TRIANGLE_STRIP},
+          indexAccessor);
+
+      for (size_t j = 0; j < indicesForFace.size(); j++) {
+        int64_t expected = static_cast<int64_t>(specialIndices[i + j]);
+        REQUIRE(indicesForFace[j] == expected);
+      }
+    }
+  }
+
+  SECTION("Retrieves from valid accessor and face index; triangle fan mode") {
+    REQUIRE(model.accessors.size() > 1);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[1]);
+    const size_t numFaces =
+        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) - 2);
+    for (size_t i = 0; i < numFaces; i++) {
+      auto indicesForFace = std::visit(
+          IndicesForFaceFromAccessor{
+              static_cast<int64_t>(i),
+              vertexCount,
+              MeshPrimitive::Mode::TRIANGLE_FAN},
+          indexAccessor);
+
+      REQUIRE(indicesForFace[0] == specialIndices[0]);
+      REQUIRE(indicesForFace[1] == specialIndices[i + 1]);
+      REQUIRE(indicesForFace[2] == specialIndices[i + 2]);
     }
   }
 
   SECTION("Handles invalid face index for nonexistent accessor") {
     IndexAccessorType indexAccessor;
-    auto indicesForFace =
-        std::visit(IndicesForFaceFromAccessor{-1, vertexCount}, indexAccessor);
+    auto indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            -1,
+            vertexCount,
+            MeshPrimitive::Mode::TRIANGLES},
+        indexAccessor);
     for (int64_t index : indicesForFace) {
       REQUIRE(index == -1);
     }
 
-    indicesForFace =
-        std::visit(IndicesForFaceFromAccessor{10, vertexCount}, indexAccessor);
+    indicesForFace = std::visit(
+        IndicesForFaceFromAccessor{
+            10,
+            vertexCount,
+            MeshPrimitive::Mode::TRIANGLES},
+        indexAccessor);
     for (int64_t index : indicesForFace) {
       REQUIRE(index == -1);
     }
   }
 
-  SECTION("Retrieves from valid face index for nonexistent accessor") {
+  SECTION("Retrieves from valid face index for nonexistent accessor; triangles "
+          "mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount / 3;
 
     for (int64_t i = 0; i < numFaces; i++) {
-      auto indicesForFace =
-          std::visit(IndicesForFaceFromAccessor{i, vertexCount}, indexAccessor);
+      auto indicesForFace = std::visit(
+          IndicesForFaceFromAccessor{
+              i,
+              vertexCount,
+              MeshPrimitive::Mode::TRIANGLES},
+          indexAccessor);
 
       for (size_t j = 0; j < indicesForFace.size(); j++) {
         int64_t expected = i * 3 + static_cast<int64_t>(j);
         REQUIRE(indicesForFace[j] == expected);
       }
+    }
+  }
+
+  SECTION("Retrieves from valid face index for nonexistent accessor; triangle "
+          "strip mode") {
+    IndexAccessorType indexAccessor;
+    const int64_t numFaces = vertexCount - 2;
+
+    for (int64_t i = 0; i < numFaces; i++) {
+      auto indicesForFace = std::visit(
+          IndicesForFaceFromAccessor{
+              i,
+              vertexCount,
+              MeshPrimitive::Mode::TRIANGLE_STRIP},
+          indexAccessor);
+
+      for (size_t j = 0; j < indicesForFace.size(); j++) {
+        int64_t expected = i + static_cast<int64_t>(j);
+        REQUIRE(indicesForFace[j] == expected);
+      }
+    }
+  }
+
+  SECTION("Retrieves from valid face index for nonexistent accessor; triangle "
+          "fan mode") {
+    IndexAccessorType indexAccessor;
+    const int64_t numFaces = vertexCount - 2;
+
+    for (int64_t i = 0; i < numFaces; i++) {
+      auto indicesForFace = std::visit(
+          IndicesForFaceFromAccessor{
+              i,
+              vertexCount,
+              MeshPrimitive::Mode::TRIANGLE_FAN},
+          indexAccessor);
+
+      REQUIRE(indicesForFace[0] == 0);
+      REQUIRE(indicesForFace[1] == i + 1);
+      REQUIRE(indicesForFace[2] == i + 2);
     }
   }
 }
