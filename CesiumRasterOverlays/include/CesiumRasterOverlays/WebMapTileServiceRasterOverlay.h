@@ -16,7 +16,7 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief Options for tile map service accesses.
+ * @brief Options for {@link WebMapTileServiceRasterOverlay}.
  */
 struct WebMapTileServiceRasterOverlayOptions {
 
@@ -125,7 +125,8 @@ struct WebMapTileServiceRasterOverlayOptions {
 };
 
 /**
- * @brief A {@link RasterOverlay} based on tile map service imagery.
+ * @brief A {@link RasterOverlay} accessing images from a Web Map Tile Service
+ * (WMTS) server.
  */
 class CESIUMRASTEROVERLAYS_API WebMapTileServiceRasterOverlay final
     : public RasterOverlay {
