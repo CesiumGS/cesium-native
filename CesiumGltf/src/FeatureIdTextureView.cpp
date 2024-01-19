@@ -74,7 +74,7 @@ FeatureIdTextureView::FeatureIdTextureView(
   this->_status = FeatureIdTextureViewStatus::Valid;
 }
 
-int64_t FeatureIdTextureView::getFeatureID(double u, double v) noexcept {
+int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
   }

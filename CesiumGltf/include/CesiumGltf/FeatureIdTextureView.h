@@ -102,7 +102,7 @@ public:
    * [0.0, 1.0].
    * @return The feature ID at the nearest pixel to the texture coordinates.
    */
-  int64_t getFeatureID(double u, double v) noexcept;
+  int64_t getFeatureID(double u, double v) const noexcept;
 
   /**
    * @brief Get the status of this view.

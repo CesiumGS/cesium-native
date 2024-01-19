@@ -7,6 +7,7 @@
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
 
 ##### Fixes :wrench:
+
 - Fixed `FeatureIdTextureView` ignoring the wrap values specified on the texture's sampler.
 
 ### v0.31.0 - 2023-12-14
