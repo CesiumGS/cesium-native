@@ -734,7 +734,9 @@ function makeNameIntoValidIdentifier(name) {
 }
 
 function makeNameIntoValidEnumIdentifier(name) {
-  // May use this in the future to deconflict glTF enums from system header defines
+  if (cppReservedWords.indexOf(name) >= 0) {
+    name += "_ENUM";
+  }
   return name;
 }
 

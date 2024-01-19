@@ -98,6 +98,7 @@ const cppReservedWords = [
   "while",
   "xor",
   "xor_eq",
+  "OPAQUE" // defined in wingdi.h
 ];
 
 module.exports = cppReservedWords;

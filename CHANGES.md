@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `IndicesForFaceFromAccessor` now propertly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
+- `CesiumGltf::Material::AlphaMode::OPAQUE` has been renamed to `OPAQUE_ENUM` to deconflict with the `OPAQUE` define in `wingdi.h`.
 
 ##### Additions :tada:
 

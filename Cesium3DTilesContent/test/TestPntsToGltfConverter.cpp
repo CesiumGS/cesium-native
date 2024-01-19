@@ -308,7 +308,7 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
-  CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
+  CHECK(material.alphaMode == Material::AlphaMode::OPAQUE_ENUM);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
@@ -368,7 +368,7 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
 
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
-  CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
+  CHECK(material.alphaMode == Material::AlphaMode::OPAQUE_ENUM);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
