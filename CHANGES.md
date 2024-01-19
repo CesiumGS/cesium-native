@@ -8,7 +8,7 @@
 
 ##### Additions :tada:
 
-- Added support for Web Map Tile Service (WMTS) with `WebMapTileServerRasterOverlay`.
+- Added support for Web Map Tile Service (WMTS) with `WebMapTileServiceRasterOverlay`.
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
 - Added `applyTextureTransform` property to `TilesetOptions`.
 
