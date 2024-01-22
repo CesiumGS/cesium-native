@@ -264,10 +264,13 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
             this->addSubtreeAvailability(
                 subtreeID,
                 std::move(*subtreeAvailability));
-          }
 
-          // tell client to retry later
-          return TileLoadResult::createRetryLaterResult(nullptr);
+            // tell client to retry later
+            return TileLoadResult::createRetryLaterResult(nullptr);
+          } else {
+            // Subtree load failed, so this tile fails, too.
+            return TileLoadResult::createFailedResult(nullptr);
+          }
         });
   }
 

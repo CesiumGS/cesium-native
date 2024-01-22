@@ -16,6 +16,10 @@
 
 - Fixed `FeatureIdTextureView` ignoring the wrap values specified on the texture's sampler.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
+
 ### v0.31.0 - 2023-12-14
 
 ##### Additions :tada:
