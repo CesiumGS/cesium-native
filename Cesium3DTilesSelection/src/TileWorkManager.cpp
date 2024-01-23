@@ -15,23 +15,6 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-void TileWorkManager::discoverChildWork(
-    const std::vector<const TileLoadWork*>& workVec,
-    std::vector<const TileLoadWork*>& childRequestWork,
-    std::vector<const TileLoadWork*>& childProcessingWork) {
-  std::vector<const TileLoadWork*> childWork;
-  for (const TileLoadWork* work : workVec) {
-    for (const TileLoadWork& child : work->childWork) {
-      // Only support one level deep, for now
-      assert(child.childWork.empty());
-      if (child.requestData.url.empty())
-        childProcessingWork.push_back(&child);
-      else
-        childRequestWork.push_back(&child);
-    }
-  }
-}
-
 WorkInstance* TileWorkManager::createWorkInstance(TileLoadWork* work) {
   bool workHasTileProcessing =
       std::holds_alternative<TileProcessingData>(work->processingData);

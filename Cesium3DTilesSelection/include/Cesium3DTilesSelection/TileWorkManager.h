@@ -107,11 +107,6 @@ private:
       gsl::span<const std::byte> responseBytes,
       const WorkInstance* request);
 
-  void discoverChildWork(
-      const std::vector<const TileLoadWork*>& workVec,
-      std::vector<const TileLoadWork*>& childRequestWork,
-      std::vector<const TileLoadWork*>& childProcessingWork);
-
   WorkInstance* createWorkInstance(TileLoadWork* loadWork);
 
   // Thread safe members
