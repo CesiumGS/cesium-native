@@ -91,8 +91,12 @@ void TileWorkManager::TryAddWork(
       // We can only take part of the incoming work
       // Just submit the highest priority
       requestWorkToSubmit = requestWork;
-      // XXX, check this. Is it sorting by ptr?
-      std::sort(requestWorkToSubmit.begin(), requestWorkToSubmit.end());
+
+      std::sort(
+          begin(requestWorkToSubmit),
+          end(requestWorkToSubmit),
+          [](WorkRequest* a, WorkRequest* b) { return (*a) < (*b); });
+
       requestWorkToSubmit.resize(slotsOpen);
     }
   }
