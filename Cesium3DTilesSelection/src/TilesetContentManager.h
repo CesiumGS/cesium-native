@@ -189,7 +189,7 @@ private:
   void discoverLoadWork(
       std::vector<TileLoadRequest>& requests,
       double maximumScreenSpaceError,
-      std::vector<TileLoadWork>& outRequestWork);
+      std::vector<WorkRequest>& outRequestWork);
 
   void markWorkTilesAsLoading(std::vector<const WorkInstance*>& workVector);
 

@@ -875,7 +875,7 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
     double maximumScreenSpaceError,
-    std::vector<TileLoadWork>& outLoadWork) {
+    std::vector<WorkRequest>& outLoadWork) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->parseTileWork(
@@ -903,22 +903,21 @@ void TilesetContentManager::discoverLoadWork(
       double priorityBias = double(maxDepth - work.depthIndex);
       double resultPriority = loadRequest.priority + priorityBias;
 
-      TileLoadWork newWorkUnit = {
+      WorkRequest newWorkUnit = {
           work.tileWorkChain.requestData,
           TileProcessingData{
               work.tileWorkChain.pTile,
-              work.tileWorkChain.tileCallback},
-          work.projections,
+              work.tileWorkChain.tileCallback,
+              work.projections},
           loadRequest.group,
           resultPriority};
 
       for (auto rasterWorkChain : work.rasterWorkChains) {
-        TileLoadWork rasterWorkUnit = {
+        WorkRequest rasterWorkUnit = {
             rasterWorkChain.requestData,
             RasterProcessingData{
                 rasterWorkChain.pRasterTile,
                 rasterWorkChain.rasterCallback},
-            work.projections,
             loadRequest.group,
             resultPriority};
 
@@ -1002,7 +1001,7 @@ void TilesetContentManager::dispatchProcessingWork(
               *pTile,
               tileProcessing.tileCallback,
               work->responsesByUrl,
-              work->projections,
+              tileProcessing.projections,
               options)
           .thenInMainThread(
               [_pTile = pTile, _this = this, _work = work](
@@ -1082,7 +1081,7 @@ void TilesetContentManager::dispatchProcessingWork(
 void TilesetContentManager::processLoadRequests(
     std::vector<TileLoadRequest>& requests,
     TilesetOptions& options) {
-  std::vector<TileLoadWork> newLoadWork;
+  std::vector<WorkRequest> newLoadWork;
   discoverLoadWork(requests, options.maximumScreenSpaceError, newLoadWork);
 
   assert(options.maximumSimultaneousTileLoads > 0);

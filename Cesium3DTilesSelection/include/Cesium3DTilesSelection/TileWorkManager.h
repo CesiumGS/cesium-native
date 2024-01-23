@@ -11,6 +11,7 @@ class TilesetMetadata;
 struct TileProcessingData {
   Tile* pTile;
   TileProcessingCallback tileCallback;
+  std::vector<CesiumGeospatial::Projection> projections;
 };
 
 struct RasterProcessingData {
@@ -22,18 +23,17 @@ typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
 
 typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
 
-struct TileLoadWork {
+struct WorkRequest {
   RequestData requestData;
 
   ProcessingData processingData;
 
-  std::vector<CesiumGeospatial::Projection> projections;
   TileLoadPriorityGroup group;
   double priority;
 
-  std::vector<TileLoadWork> childWork;
+  std::vector<WorkRequest> childWork;
 
-  bool operator<(const TileLoadWork& rhs) const noexcept {
+  bool operator<(const WorkRequest& rhs) const noexcept {
     if (this->group == rhs.group)
       return this->priority < rhs.priority;
     else
@@ -48,11 +48,10 @@ struct WorkInstance {
 
   ProcessingData processingData;
 
-  std::vector<CesiumGeospatial::Projection> projections;
   TileLoadPriorityGroup group;
   double priority;
 
-  bool operator<(const TileLoadWork& rhs) const noexcept {
+  bool operator<(const WorkInstance& rhs) const noexcept {
     if (this->group == rhs.group)
       return this->priority < rhs.priority;
     else
@@ -79,7 +78,7 @@ public:
   ~TileWorkManager() noexcept;
 
   void TryAddWork(
-      std::vector<TileLoadWork>& loadWork,
+      std::vector<WorkRequest>& loadWork,
       size_t maxSimultaneousRequests,
       std::vector<const WorkInstance*>& instancesCreated);
 
@@ -107,7 +106,7 @@ private:
       gsl::span<const std::byte> responseBytes,
       const WorkInstance* request);
 
-  WorkInstance* createWorkInstance(TileLoadWork* loadWork);
+  WorkInstance* createWorkInstance(WorkRequest* loadWork);
 
   // Thread safe members
   std::mutex _requestsLock;

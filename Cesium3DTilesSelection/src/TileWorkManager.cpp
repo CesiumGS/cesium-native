@@ -15,7 +15,7 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-WorkInstance* TileWorkManager::createWorkInstance(TileLoadWork* work) {
+WorkInstance* TileWorkManager::createWorkInstance(WorkRequest* work) {
   bool workHasTileProcessing =
       std::holds_alternative<TileProcessingData>(work->processingData);
 
@@ -37,7 +37,6 @@ WorkInstance* TileWorkManager::createWorkInstance(TileLoadWork* work) {
       tileSource,
       std::move(work->requestData),
       std::move(work->processingData),
-      std::move(work->projections),
       work->group,
       work->priority};
 
@@ -56,7 +55,7 @@ WorkInstance* TileWorkManager::createWorkInstance(TileLoadWork* work) {
 }
 
 void TileWorkManager::TryAddWork(
-    std::vector<TileLoadWork>& loadWork,
+    std::vector<WorkRequest>& loadWork,
     size_t maxSimultaneousRequests,
     std::vector<const WorkInstance*>& instancesCreated) {
   if (loadWork.empty())
@@ -64,9 +63,9 @@ void TileWorkManager::TryAddWork(
 
   // Request work will always go to that queue first
   // Work with only processing can bypass it
-  std::vector<TileLoadWork*> requestWork;
-  std::vector<TileLoadWork*> processingWork;
-  for (TileLoadWork& work : loadWork) {
+  std::vector<WorkRequest*> requestWork;
+  std::vector<WorkRequest*> processingWork;
+  for (WorkRequest& work : loadWork) {
     if (work.requestData.url.empty())
       processingWork.push_back(&work);
     else
@@ -80,7 +79,7 @@ void TileWorkManager::TryAddWork(
   size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
   size_t pendingRequestCount = this->GetPendingRequestsCount();
 
-  std::vector<TileLoadWork*> requestWorkToSubmit;
+  std::vector<WorkRequest*> requestWorkToSubmit;
   if (pendingRequestCount >= maxCountToQueue) {
     // No request slots open, we can at least insert our processing work
   } else {
@@ -106,14 +105,14 @@ void TileWorkManager::TryAddWork(
     this->_maxSimultaneousRequests = maxSimultaneousRequests;
 
     // Copy load requests into internal work we will own
-    for (TileLoadWork* element : requestWorkToSubmit) {
+    for (WorkRequest* element : requestWorkToSubmit) {
       WorkInstance* newInstance = createWorkInstance(element);
 
       instancesCreated.push_back(newInstance);
 
       // Create child work, if exists. Link parent->child with raw pointers
       // Only support one level deep, for now
-      for (TileLoadWork& childWork : element->childWork) {
+      for (WorkRequest& childWork : element->childWork) {
         WorkInstance* newChildInstance = createWorkInstance(&childWork);
         newInstance->children.insert(newChildInstance);
         newChildInstance->parent = newInstance;
