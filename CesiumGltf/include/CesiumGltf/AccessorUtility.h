@@ -107,8 +107,9 @@ getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 /**
  * Visitor that retrieves the vertex indices from the given accessor type
  * corresponding to a given face index. These indices are returned as an array
- * of int64_ts. This should be initialized with the index of the face and the
- * total number of vertices in the primitive.
+ * of int64_ts. This should be initialized with the index of the face, the
+ * total number of vertices in the primitive, and the
+ * `CesiumGltf::MeshPrimitive::Mode` of the primitive.
  *
  * -1 is used to indicate errors retrieving the index, e.g., if the given
  * index was out-of-bounds.

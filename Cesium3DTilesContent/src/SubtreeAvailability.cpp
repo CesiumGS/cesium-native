@@ -152,21 +152,22 @@ SubtreeAvailability::loadSubtree(
           [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree, pReader](
               ReadJsonResult<Subtree>&& subtree)
               -> std::optional<SubtreeAvailability> {
+            if (!subtree.errors.empty()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Errors while loading subtree from {}:\n- {}",
+                  subtreeUrl,
+                  CesiumUtility::joinToString(subtree.errors, "\n- "));
+            }
+            if (!subtree.warnings.empty()) {
+              SPDLOG_LOGGER_WARN(
+                  pLogger,
+                  "Warnings while loading subtree from {}:\n- {}",
+                  subtreeUrl,
+                  CesiumUtility::joinToString(subtree.warnings, "\n- "));
+            }
+
             if (!subtree.value) {
-              if (!subtree.errors.empty()) {
-                SPDLOG_LOGGER_ERROR(
-                    pLogger,
-                    "Errors while loading subtree from {}:\n- {}",
-                    subtreeUrl,
-                    CesiumUtility::joinToString(subtree.errors, "\n- "));
-              }
-              if (!subtree.warnings.empty()) {
-                SPDLOG_LOGGER_WARN(
-                    pLogger,
-                    "Warnings while loading subtree from {}:\n- {}",
-                    subtreeUrl,
-                    CesiumUtility::joinToString(subtree.warnings, "\n- "));
-              }
               return std::nullopt;
             }
 

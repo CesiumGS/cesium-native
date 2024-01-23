@@ -43,6 +43,12 @@ enum class FeatureIdTextureViewStatus {
   ErrorInvalidImage,
 
   /**
+   * @brief This feature ID texture has a sampler index that doesn't exist in
+   * the glTF.
+   */
+  ErrorInvalidSampler,
+
+  /**
    * @brief This feature ID texture has an empty image.
    */
   ErrorEmptyImage,
@@ -114,6 +120,15 @@ public:
   const ImageCesium* getImage() const { return _pImage; }
 
   /**
+   * @brief Get the sampler describing how to sample the data from the
+   * feature ID texture.
+   *
+   * This will be nullptr if the feature ID texture view runs into
+   * problems during construction.
+   */
+  const Sampler* getSampler() const noexcept { return this->_pSampler; }
+
+  /**
    * @brief Get the channels of this feature ID texture. The channels represent
    * the bytes of the actual feature ID, in little-endian order.
    */
@@ -131,5 +146,6 @@ private:
   std::vector<int64_t> _channels;
 
   const ImageCesium* _pImage;
+  const Sampler* _pSampler;
 };
 } // namespace CesiumGltf
