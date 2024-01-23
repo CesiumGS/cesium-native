@@ -15,56 +15,6 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-bool TileWorkManager::isProcessingUnique(
-    const TileLoadWork& newRequest,
-    const TileLoadWork& existingRequest) {
-  if (std::holds_alternative<TileProcessingData>(newRequest.processingData) &&
-      std::holds_alternative<TileProcessingData>(
-          existingRequest.processingData)) {
-    TileProcessingData newTileProcessing =
-        std::get<TileProcessingData>(newRequest.processingData);
-    TileProcessingData existingTileProcessing =
-        std::get<TileProcessingData>(existingRequest.processingData);
-    return newTileProcessing.pTile != existingTileProcessing.pTile;
-  }
-
-  if (std::holds_alternative<RasterProcessingData>(newRequest.processingData) &&
-      std::holds_alternative<RasterProcessingData>(
-          existingRequest.processingData)) {
-    RasterProcessingData newTileProcessing =
-        std::get<RasterProcessingData>(newRequest.processingData);
-    RasterProcessingData existingTileProcessing =
-        std::get<RasterProcessingData>(existingRequest.processingData);
-    return newTileProcessing.pRasterTile != existingTileProcessing.pRasterTile;
-  }
-
-  // Processing data types are different
-  return true;
-}
-
-bool TileWorkManager::isWorkAlreadyProcessing(
-    const TileLoadWork& newProcessing) {
-  for (auto doneRequest : _processingQueue) {
-    if (!isProcessingUnique(newProcessing, doneRequest))
-      return true;
-  }
-  return false;
-}
-
-bool TileWorkManager::isRequestAlreadyInFlight(const TileLoadWork& newRequest) {
-  for (auto urlWorkPair : _inFlightRequests) {
-    for (auto work : urlWorkPair.second) {
-      if (newRequest.requestData.url != work.requestData.url)
-        continue;
-
-      // Urls do match. Do they point to the same tile?
-      if (!isProcessingUnique(newRequest, work))
-        return true;
-    }
-  }
-  return false;
-}
-
 void TileWorkManager::discoverChildWork(
     const std::vector<const TileLoadWork*>& workVec,
     std::vector<const TileLoadWork*>& childRequestWork,
@@ -82,30 +32,58 @@ void TileWorkManager::discoverChildWork(
   }
 }
 
-bool TileWorkManager::isRequestAlreadyQueued(const TileLoadWork& newRequest) {
-  for (auto existingRequest : _requestQueue) {
-    if (newRequest.requestData.url != existingRequest.requestData.url)
-      continue;
+WorkInstance* TileWorkManager::createWorkInstance(TileLoadWork* work) {
+  bool workHasTileProcessing =
+      std::holds_alternative<TileProcessingData>(work->processingData);
 
-    // Urls do match. Do they point to the same tile?
-    if (!isProcessingUnique(newRequest, existingRequest))
-      return true;
+  TileSource tileSource;
+  if (workHasTileProcessing) {
+    TileProcessingData workTileProcessing =
+        std::get<TileProcessingData>(work->processingData);
+    tileSource = workTileProcessing.pTile;
+  } else {
+    RasterProcessingData workRasterProcessing =
+        std::get<RasterProcessingData>(work->processingData);
+    tileSource = workRasterProcessing.pRasterTile;
   }
-  return false;
+
+  // Assert any work isn't already owned by this manager
+  assert(_ownedWork.find(tileSource) == _ownedWork.end());
+
+  WorkInstance internalWork = {
+      tileSource,
+      std::move(work->requestData),
+      std::move(work->processingData),
+      std::move(work->projections),
+      work->group,
+      work->priority};
+
+  auto returnPair = _ownedWork.emplace(tileSource, std::move(internalWork));
+  assert(returnPair.second);
+
+  WorkInstance* workPointer = &returnPair.first->second;
+
+  // Put this in the appropriate starting queue
+  if (workPointer->requestData.url.empty())
+    _processingQueue.push_back(workPointer);
+  else
+    _requestQueue.push_back(workPointer);
+
+  return workPointer;
 }
 
 void TileWorkManager::TryAddWork(
-    const std::vector<TileLoadWork>& loadWork,
+    std::vector<TileLoadWork>& loadWork,
     size_t maxSimultaneousRequests,
-    std::vector<const TileLoadWork*>& workAdded) {
+    std::vector<const WorkInstance*>& instancesCreated) {
   if (loadWork.empty())
     return;
 
   // Request work will always go to that queue first
   // Work with only processing can bypass it
-  std::vector<const TileLoadWork*> requestWork;
-  std::vector<const TileLoadWork*> processingWork;
-  for (const TileLoadWork& work : loadWork) {
+  std::vector<TileLoadWork*> requestWork;
+  std::vector<TileLoadWork*> processingWork;
+  for (TileLoadWork& work : loadWork) {
     if (work.requestData.url.empty())
       processingWork.push_back(&work);
     else
@@ -119,7 +97,7 @@ void TileWorkManager::TryAddWork(
   size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
   size_t pendingRequestCount = this->GetPendingRequestsCount();
 
-  std::vector<const TileLoadWork*> requestWorkToSubmit;
+  std::vector<TileLoadWork*> requestWorkToSubmit;
   if (pendingRequestCount >= maxCountToQueue) {
     // No request slots open, we can at least insert our processing work
   } else {
@@ -131,52 +109,34 @@ void TileWorkManager::TryAddWork(
       // We can only take part of the incoming work
       // Just submit the highest priority
       requestWorkToSubmit = requestWork;
+      // XXX, check this. Is it sorting by ptr?
       std::sort(requestWorkToSubmit.begin(), requestWorkToSubmit.end());
       requestWorkToSubmit.resize(slotsOpen);
     }
   }
 
-  // Add child work
-  // Children bypass the request throlling count, but in the
-  // end would just become pending anyway.
-  std::vector<const TileLoadWork*> childRequestWork;
-  std::vector<const TileLoadWork*> childProcessingWork;
-  discoverChildWork(requestWorkToSubmit, childRequestWork, childProcessingWork);
-  discoverChildWork(processingWork, childRequestWork, childProcessingWork);
-  requestWorkToSubmit.insert(
-      requestWorkToSubmit.end(),
-      childRequestWork.begin(),
-      childRequestWork.end());
-  processingWork.insert(
-      processingWork.end(),
-      childProcessingWork.begin(),
-      childProcessingWork.end());
-
   if (requestWorkToSubmit.empty() && processingWork.empty())
     return;
-
-  workAdded.insert(
-      workAdded.end(),
-      requestWorkToSubmit.begin(),
-      requestWorkToSubmit.end());
-  workAdded.insert(
-      workAdded.end(),
-      processingWork.begin(),
-      processingWork.end());
 
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
     this->_maxSimultaneousRequests = maxSimultaneousRequests;
 
-    for (const TileLoadWork* element : requestWorkToSubmit) {
-      assert(!isRequestAlreadyQueued(*element));
-      assert(!isRequestAlreadyInFlight(*element));
-      _requestQueue.push_back(*element);
-    }
+    // Copy load requests into internal work we will own
+    for (TileLoadWork* element : requestWorkToSubmit) {
+      WorkInstance* newInstance = createWorkInstance(element);
 
-    for (const TileLoadWork* element : processingWork) {
-      assert(!isWorkAlreadyProcessing(*element));
-      _processingQueue.push_back(*element);
+      instancesCreated.push_back(newInstance);
+
+      // Create child work, if exists. Link parent->child with raw pointers
+      // Only support one level deep, for now
+      for (TileLoadWork& childWork : element->childWork) {
+        WorkInstance* newChildInstance = createWorkInstance(&childWork);
+        newInstance->children.insert(newChildInstance);
+        newChildInstance->parent = newInstance;
+
+        instancesCreated.push_back(newChildInstance);
+      }
     }
   }
 
@@ -190,104 +150,86 @@ void TileWorkManager::TryAddWork(
   }
 }
 
-void TileWorkManager::QueueSingleRequest(const TileLoadWork& requestWork) {
+void TileWorkManager::RequeueWorkForRequest(WorkInstance* requestWork) {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
-    assert(!isRequestAlreadyQueued(requestWork));
-    assert(!isRequestAlreadyInFlight(requestWork));
-    _requestQueue.push_back(std::move(requestWork));
+    // Assert this work is already owned by this manager
+    assert(_ownedWork.find(requestWork->tileSource) != _ownedWork.end());
+
+    // It goes in the request queue
+    _requestQueue.push_back(requestWork);
   }
 
   transitionQueuedWork();
 }
 
-void TileWorkManager::eraseMatchingChildWork(
-    const TileLoadWork& work,
-    std::vector<TileLoadWork>& childWork) {
-  std::vector<TileLoadWork>::iterator childIt;
-  for (childIt = childWork.begin(); childIt != childWork.end(); ++childIt) {
-    bool baseWorkEqual = childIt->childWork.size() == work.childWork.size() &&
-                         childIt->group == work.group &&
-                         childIt->priority == work.priority;
-    bool workHasTileProcessing =
-        std::holds_alternative<TileProcessingData>(work.processingData);
-    bool childHasTileProcessing =
-        std::holds_alternative<TileProcessingData>(childIt->processingData);
-
-    if (!baseWorkEqual || workHasTileProcessing != childHasTileProcessing)
-      continue;
-
-    if (workHasTileProcessing) {
-      TileProcessingData workTileProcessing =
-          std::get<TileProcessingData>(work.processingData);
-      TileProcessingData childTileProcessing =
-          std::get<TileProcessingData>(childIt->processingData);
-      if (workTileProcessing.pTile != childTileProcessing.pTile)
-        continue;
-    } else {
-      RasterProcessingData workRasterProcessing =
-          std::get<RasterProcessingData>(work.processingData);
-      RasterProcessingData childRasterProcessing =
-          std::get<RasterProcessingData>(childIt->processingData);
-      if (workRasterProcessing.pRasterTile != childRasterProcessing.pRasterTile)
-        continue;
-    }
-
-    childWork.erase(childIt);
-    break;
-  }
-}
-
-void TileWorkManager::SignalWorkComplete(const TileLoadWork& work) {
+void TileWorkManager::SignalWorkComplete(WorkInstance* work) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
-  // Look for any work whose child matches this. And remove ourselves
-  for (TileLoadWork& existingRequest : _requestQueue)
-    eraseMatchingChildWork(work, existingRequest.childWork);
+  // Assert this work is already owned by this manager
+  assert(_ownedWork.find(work->tileSource) != _ownedWork.end());
 
-  std::map<std::string, std::vector<TileLoadWork>>::iterator mapIt;
-  for (mapIt = _inFlightRequests.begin(); mapIt != _inFlightRequests.end();
-       ++mapIt)
-    for (TileLoadWork& inFlightWork : mapIt->second)
-      eraseMatchingChildWork(work, inFlightWork.childWork);
+  // Assert this is not in any other queues
+#ifndef NDEBUG
+  for (auto element : _requestQueue)
+    assert(element->tileSource != work->tileSource);
 
-  for (TileLoadWork& doneRequest : _processingQueue)
-    eraseMatchingChildWork(work, doneRequest.childWork);
+  for (auto urlWorkVecPair : _inFlightRequests)
+    for (auto element : urlWorkVecPair.second)
+      assert(element->tileSource != work->tileSource);
+
+  for (auto element : _processingQueue)
+    assert(element->tileSource != work->tileSource);
+#endif
+
+  // If this work has parent work, remove this reference
+  // Work with child work waits until the children are done
+  if (work->parent) {
+    // Child should be in parent's list, remove it
+    auto& childSet = work->parent->children;
+    assert(childSet.find(work) != childSet.end());
+    childSet.erase(work);
+  }
+
+  // Done work should have no registered child work
+  assert(work->children.empty());
+
+  // Remove it
+  _ownedWork.erase(work->tileSource);
 }
 
 void TileWorkManager::onRequestFinished(
     uint16_t responseStatusCode,
     gsl::span<const std::byte> responseBytes,
-    const TileLoadWork& request) {
+    const WorkInstance* request) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   if (_exitSignaled)
     return;
 
   // Find this request
-  std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _inFlightRequests.find(request.requestData.url);
+  auto foundIt = _inFlightRequests.find(request->requestData.url);
   assert(foundIt != _inFlightRequests.end());
 
   // Handle results
-  std::vector<TileLoadWork>& requestWorkVec = foundIt->second;
-  for (TileLoadWork& requestWork : requestWorkVec) {
+  std::vector<WorkInstance*>& requestWorkVec = foundIt->second;
+  for (WorkInstance* requestWork : requestWorkVec) {
 
     if (responseStatusCode == 0) {
       // A response code of 0 is not a valid HTTP code
       // and probably indicates a non-network error.
       // Put this work in a failed queue to be handled later
-      _failedWork.push_back(std::move(requestWork));
+      _failedWork.push_back(requestWork);
       continue;
     }
 
     // Add new entry
     assert(
-        requestWork.responsesByUrl.find(requestWork.requestData.url) ==
-        requestWork.responsesByUrl.end());
+        requestWork->responsesByUrl.find(requestWork->requestData.url) ==
+        requestWork->responsesByUrl.end());
     ResponseData& responseData =
-        requestWork.responsesByUrl[requestWork.requestData.url];
+        requestWork->responsesByUrl[requestWork->requestData.url];
 
     // Copy our results
     size_t byteCount = responseBytes.size();
@@ -301,19 +243,19 @@ void TileWorkManager::onRequestFinished(
     responseData.statusCode = responseStatusCode;
 
     // Put in processing queue
-    _processingQueue.push_back(std::move(requestWork));
+    _processingQueue.push_back(requestWork);
   }
 
   // Remove it
   _inFlightRequests.erase(foundIt);
 }
 
-void TileWorkManager::dispatchRequest(TileLoadWork& request) {
+void TileWorkManager::dispatchRequest(WorkInstance* request) {
   this->_pAssetAccessor
       ->get(
           this->_asyncSystem,
-          request.requestData.url,
-          request.requestData.headers)
+          request->requestData.url,
+          request->requestData.headers)
       .thenImmediately([_this = this, _request = request](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
         // Add payload to this work
@@ -333,20 +275,19 @@ void TileWorkManager::dispatchRequest(TileLoadWork& request) {
 }
 
 void TileWorkManager::stageQueuedWork(
-    std::vector<TileLoadWork>& workNeedingDispatch) {
+    std::vector<WorkInstance*>& workNeedingDispatch) {
   // Take from back of queue (highest priority).
   assert(_requestQueue.size() > 0);
-  TileLoadWork request = _requestQueue.back();
+  WorkInstance* request = _requestQueue.back();
   _requestQueue.pop_back();
 
   // Move to in flight registry
-  std::map<std::string, std::vector<TileLoadWork>>::iterator foundIt;
-  foundIt = _inFlightRequests.find(request.requestData.url);
+  auto foundIt = _inFlightRequests.find(request->requestData.url);
   if (foundIt == _inFlightRequests.end()) {
     // Request doesn't exist, set up a new one
-    std::vector<TileLoadWork> newWorkVec;
+    std::vector<WorkInstance*> newWorkVec;
     newWorkVec.push_back(request);
-    _inFlightRequests[request.requestData.url] = newWorkVec;
+    _inFlightRequests[request->requestData.url] = newWorkVec;
 
     // Copy to our output vector
     workNeedingDispatch.push_back(request);
@@ -379,15 +320,26 @@ void TileWorkManager::GetRequestsStats(
 
 void TileWorkManager::TakeProcessingWork(
     size_t maxCount,
-    std::vector<TileLoadWork>& outCompleted,
-    std::vector<TileLoadWork>& outFailed) {
+    std::vector<WorkInstance*>& outCompleted,
+    std::vector<WorkInstance>& outFailed) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // All failed requests go out
   if (_failedWork.empty()) {
-    outFailed = _failedWork;
-    _failedWork.clear();
+    // Failed work immediately releases ownership to caller
+    for (auto work : _failedWork) {
+      auto foundIt = _ownedWork.find(work->tileSource);
+      assert(foundIt != _ownedWork.end());
+
+      outFailed.push_back(std::move(foundIt->second));
+
+      _ownedWork.erase(foundIt);
+    }
   }
+
+  // If no room for completed work, stop here
+  if (maxCount == 0)
+    return;
 
   // Return completed work, up to the count specified
   size_t processingCount = _processingQueue.size();
@@ -401,18 +353,18 @@ void TileWorkManager::TakeProcessingWork(
   size_t numberToTake = std::min(processingCount, maxCount);
 
   // Start from the back
-  std::vector<TileLoadWork>::iterator it = _processingQueue.end();
+  std::vector<WorkInstance*>::iterator it = _processingQueue.end();
   while (1) {
     --it;
 
-    TileLoadWork& work = *it;
-    if (!work.childWork.empty()) {
+    WorkInstance* work = *it;
+    if (!work->children.empty()) {
       // Can't take this work yet
       // Child work has to register completion first
     } else {
       // Move this work to output. Erase from queue
-      std::vector<TileLoadWork>::iterator eraseIt = it;
-      outCompleted.push_back(std::move(*eraseIt));
+      std::vector<WorkInstance*>::iterator eraseIt = it;
+      outCompleted.push_back(*eraseIt);
       _processingQueue.erase(eraseIt);
     }
 
@@ -425,7 +377,7 @@ void TileWorkManager::TakeProcessingWork(
 }
 
 void TileWorkManager::transitionQueuedWork() {
-  std::vector<TileLoadWork> workNeedingDispatch;
+  std::vector<WorkInstance*> workNeedingDispatch;
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
@@ -453,7 +405,7 @@ void TileWorkManager::transitionQueuedWork() {
     }
   }
 
-  for (TileLoadWork& requestWork : workNeedingDispatch)
+  for (WorkInstance* requestWork : workNeedingDispatch)
     dispatchRequest(requestWork);
 }
 

@@ -191,12 +191,12 @@ private:
       double maximumScreenSpaceError,
       std::vector<TileLoadWork>& outRequestWork);
 
-  void markWorkTilesAsLoading(std::vector<const TileLoadWork*>& workVector);
+  void markWorkTilesAsLoading(std::vector<const WorkInstance*>& workVector);
 
-  void handleFailedRequestWork(std::vector<TileLoadWork>& workVector);
+  void handleFailedRequestWork(std::vector<WorkInstance>& workVector);
 
   void dispatchProcessingWork(
-      std::vector<TileLoadWork>& workVector,
+      std::vector<WorkInstance*>& workVector,
       TilesetOptions& options);
 
   TilesetExternals _externals;

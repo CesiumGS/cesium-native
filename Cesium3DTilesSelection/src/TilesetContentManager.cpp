@@ -932,9 +932,9 @@ void TilesetContentManager::discoverLoadWork(
 }
 
 void TilesetContentManager::markWorkTilesAsLoading(
-    std::vector<const TileLoadWork*>& workVector) {
+    std::vector<const WorkInstance*>& workVector) {
 
-  for (const TileLoadWork* work : workVector) {
+  for (const WorkInstance* work : workVector) {
     if (std::holds_alternative<TileProcessingData>(work->processingData)) {
       TileProcessingData tileProcessing =
           std::get<TileProcessingData>(work->processingData);
@@ -958,8 +958,8 @@ void TilesetContentManager::markWorkTilesAsLoading(
 }
 
 void TilesetContentManager::handleFailedRequestWork(
-    std::vector<TileLoadWork>& workVector) {
-  for (TileLoadWork& work : workVector) {
+    std::vector<WorkInstance>& workVector) {
+  for (WorkInstance& work : workVector) {
 
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
@@ -986,12 +986,12 @@ void TilesetContentManager::handleFailedRequestWork(
 }
 
 void TilesetContentManager::dispatchProcessingWork(
-    std::vector<TileLoadWork>& workVector,
+    std::vector<WorkInstance*>& workVector,
     TilesetOptions& options) {
-  for (TileLoadWork& work : workVector) {
-    if (std::holds_alternative<TileProcessingData>(work.processingData)) {
+  for (WorkInstance* work : workVector) {
+    if (std::holds_alternative<TileProcessingData>(work->processingData)) {
       TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work.processingData);
+          std::get<TileProcessingData>(work->processingData);
       assert(tileProcessing.pTile);
       Tile* pTile = tileProcessing.pTile;
 
@@ -1001,26 +1001,28 @@ void TilesetContentManager::dispatchProcessingWork(
       this->doTileContentWork(
               *pTile,
               tileProcessing.tileCallback,
-              work.responsesByUrl,
-              work.projections,
+              work->responsesByUrl,
+              work->projections,
               options)
           .thenInMainThread(
-              [_pTile = pTile, _this = this, _work = std::move(work)](
+              [_pTile = pTile, _this = this, _work = work](
                   TileLoadResultAndRenderResources&& pair) mutable {
                 if (pair.result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
                   // Override its request data with was specified
                   RequestData& newRequestData = pair.result.requestData;
-                  _work.requestData.url = newRequestData.url;
+                  _work->requestData.url = newRequestData.url;
                   if (!newRequestData.headers.empty())
-                    _work.requestData.headers = newRequestData.headers;
+                    _work->requestData.headers = newRequestData.headers;
 
-                  _this->_tileWorkManager.QueueSingleRequest(_work);
+                  _this->_tileWorkManager.RequeueWorkForRequest(_work);
                 } else {
                   _this->setTileContent(
                       *_pTile,
                       std::move(pair.result),
                       pair.pRenderResources);
+
+                  _this->_tileWorkManager.SignalWorkComplete(_work);
 
                   _this->notifyTileDoneLoading(_pTile);
                 }
@@ -1039,7 +1041,7 @@ void TilesetContentManager::dispatchProcessingWork(
               });
     } else {
       RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work.processingData);
+          std::get<RasterProcessingData>(work->processingData);
       assert(rasterProcessing.pRasterTile);
 
       this->notifyRasterStartLoading();
@@ -1047,32 +1049,32 @@ void TilesetContentManager::dispatchProcessingWork(
       rasterProcessing.pRasterTile
           ->loadThrottled(
               _externals.asyncSystem,
-              work.responsesByUrl,
+              work->responsesByUrl,
               rasterProcessing.rasterCallback)
-          .thenInMainThread([_this = this, _work = std::move(work)](
-                                RasterLoadResult& result) mutable {
-            if (result.state == RasterLoadState::RequestRequired) {
-              // This work goes back into the work manager queue
+          .thenInMainThread(
+              [_this = this, _work = work](RasterLoadResult& result) mutable {
+                if (result.state == RasterLoadState::RequestRequired) {
+                  // This work goes back into the work manager queue
 
-              // Make sure we're not requesting something we have
-              assert(!result.requestData.url.empty());
-              assert(
-                  _work.responsesByUrl.find(result.requestData.url) ==
-                  _work.responsesByUrl.end());
+                  // Make sure we're not requesting something we have
+                  assert(!result.requestData.url.empty());
+                  assert(
+                      _work->responsesByUrl.find(result.requestData.url) ==
+                      _work->responsesByUrl.end());
 
-              // Override its request data with was specified
-              RequestData& newRequestData = result.requestData;
-              _work.requestData.url = newRequestData.url;
-              if (!newRequestData.headers.empty())
-                _work.requestData.headers = newRequestData.headers;
+                  // Override its request data with was specified
+                  RequestData& newRequestData = result.requestData;
+                  _work->requestData.url = newRequestData.url;
+                  if (!newRequestData.headers.empty())
+                    _work->requestData.headers = newRequestData.headers;
 
-              _this->_tileWorkManager.QueueSingleRequest(_work);
-            } else {
-              _this->_tileWorkManager.SignalWorkComplete(_work);
-            }
+                  _this->_tileWorkManager.RequeueWorkForRequest(_work);
+                } else {
+                  _this->_tileWorkManager.SignalWorkComplete(_work);
+                }
 
-            _this->notifyRasterDoneLoading();
-          });
+                _this->notifyRasterDoneLoading();
+              });
     }
   }
 }
@@ -1087,10 +1089,10 @@ void TilesetContentManager::processLoadRequests(
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
-  std::vector<const TileLoadWork*> workAdded;
-  this->_tileWorkManager.TryAddWork(newLoadWork, maxTileLoads, workAdded);
+  std::vector<const WorkInstance*> workCreated;
+  this->_tileWorkManager.TryAddWork(newLoadWork, maxTileLoads, workCreated);
 
-  markWorkTilesAsLoading(workAdded);
+  markWorkTilesAsLoading(workCreated);
 
   // Calculate how much processing work we can do right now
   int32_t numberOfTilesLoading = this->getNumberOfTilesLoading();
@@ -1104,8 +1106,8 @@ void TilesetContentManager::processLoadRequests(
   if (totalLoads < maxTileLoads)
     availableSlots = maxTileLoads - totalLoads;
 
-  std::vector<TileLoadWork> completedWork;
-  std::vector<TileLoadWork> failedWork;
+  std::vector<WorkInstance*> completedWork;
+  std::vector<WorkInstance> failedWork;
   _tileWorkManager.TakeProcessingWork(
       availableSlots,
       completedWork,

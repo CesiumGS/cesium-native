@@ -3,6 +3,8 @@
 #include "Tile.h"
 #include "TilesetContentLoader.h"
 
+#include <set>
+
 namespace Cesium3DTilesSelection {
 class TilesetMetadata;
 
@@ -16,6 +18,8 @@ struct RasterProcessingData {
   RasterProcessingCallback rasterCallback;
 };
 
+typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
+
 typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
 
 struct TileLoadWork {
@@ -27,8 +31,6 @@ struct TileLoadWork {
   TileLoadPriorityGroup group;
   double priority;
 
-  ResponseDataMap responsesByUrl;
-
   std::vector<TileLoadWork> childWork;
 
   bool operator<(const TileLoadWork& rhs) const noexcept {
@@ -37,6 +39,31 @@ struct TileLoadWork {
     else
       return this->group > rhs.group;
   }
+};
+
+struct WorkInstance {
+  TileSource tileSource;
+
+  RequestData requestData;
+
+  ProcessingData processingData;
+
+  std::vector<CesiumGeospatial::Projection> projections;
+  TileLoadPriorityGroup group;
+  double priority;
+
+  bool operator<(const TileLoadWork& rhs) const noexcept {
+    if (this->group == rhs.group)
+      return this->priority < rhs.priority;
+    else
+      return this->group > rhs.group;
+  }
+
+  WorkInstance* parent;
+
+  std::set<WorkInstance*> children;
+
+  ResponseDataMap responsesByUrl;
 };
 
 class TileWorkManager {
@@ -52,18 +79,18 @@ public:
   ~TileWorkManager() noexcept;
 
   void TryAddWork(
-      const std::vector<TileLoadWork>& loadWork,
+      std::vector<TileLoadWork>& loadWork,
       size_t maxSimultaneousRequests,
-      std::vector<const TileLoadWork*>& workAdded);
+      std::vector<const WorkInstance*>& instancesCreated);
 
-  void QueueSingleRequest(const TileLoadWork& requestWork);
+  void RequeueWorkForRequest(WorkInstance* requestWork);
 
   void TakeProcessingWork(
       size_t maxCount,
-      std::vector<TileLoadWork>& outCompleted,
-      std::vector<TileLoadWork>& outFailed);
+      std::vector<WorkInstance*>& outCompleted,
+      std::vector<WorkInstance>& outFailed);
 
-  void SignalWorkComplete(const TileLoadWork& work);
+  void SignalWorkComplete(WorkInstance* work);
 
   size_t GetPendingRequestsCount();
   size_t GetTotalPendingCount();
@@ -72,38 +99,31 @@ public:
 
 private:
   void transitionQueuedWork();
-  void dispatchRequest(TileLoadWork& request);
-  void stageQueuedWork(std::vector<TileLoadWork>& workNeedingDispatch);
+  void dispatchRequest(WorkInstance* request);
+  void stageQueuedWork(std::vector<WorkInstance*>& workNeedingDispatch);
 
   void onRequestFinished(
       uint16_t responseStatusCode,
       gsl::span<const std::byte> responseBytes,
-      const TileLoadWork& request);
-
-  bool isProcessingUnique(
-      const TileLoadWork& newRequest,
-      const TileLoadWork& existingRequest);
-
-  bool isRequestAlreadyQueued(const TileLoadWork& newRequest);
-  bool isRequestAlreadyInFlight(const TileLoadWork& newRequest);
-  bool isWorkAlreadyProcessing(const TileLoadWork& newProcessing);
-
-  void eraseMatchingChildWork(
-      const TileLoadWork& work,
-      std::vector<TileLoadWork>& childWork);
+      const WorkInstance* request);
 
   void discoverChildWork(
       const std::vector<const TileLoadWork*>& workVec,
       std::vector<const TileLoadWork*>& childRequestWork,
       std::vector<const TileLoadWork*>& childProcessingWork);
 
+  WorkInstance* createWorkInstance(TileLoadWork* loadWork);
+
   // Thread safe members
   std::mutex _requestsLock;
   bool _exitSignaled = false;
-  std::vector<TileLoadWork> _requestQueue;
-  std::map<std::string, std::vector<TileLoadWork>> _inFlightRequests;
-  std::vector<TileLoadWork> _processingQueue;
-  std::vector<TileLoadWork> _failedWork;
+
+  std::map<TileSource, WorkInstance> _ownedWork;
+
+  std::vector<WorkInstance*> _requestQueue;
+  std::map<std::string, std::vector<WorkInstance*>> _inFlightRequests;
+  std::vector<WorkInstance*> _processingQueue;
+  std::vector<WorkInstance*> _failedWork;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 
