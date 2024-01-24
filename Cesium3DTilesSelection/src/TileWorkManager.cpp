@@ -111,6 +111,7 @@ void TileWorkManager::TryAddWork(
     } else {
       // We can only take part of the incoming work
       // Just submit the highest priority
+      // Put highest priority at front of vector
       requestOrdersToSubmit = requestOrders;
 
       std::sort(
@@ -343,9 +344,11 @@ void TileWorkManager::TakeProcessingWork(
     return;
 
   // TODO - This list should be a map so it is always sorted
-  // Reverse sort so highest priority is at back
-  // XXX - this is sorting by pointer, not value
-  std::sort(_processingQueue.rbegin(), _processingQueue.rend());
+  // Want highest priority at back
+  std::sort(
+    begin(_processingQueue),
+    end(_processingQueue),
+    [](Work* a, Work* b) { return (*b) < (*a); });
 
   size_t numberToTake = std::min(processingCount, maxCount);
 
@@ -389,9 +392,13 @@ void TileWorkManager::transitionQueuedWork() {
         size_t slotsAvailable = slotsTotal - slotsUsed;
 
         // Sort our incoming request queue by priority
-        // Sort descending so highest priority is at back of vector
-        if (queueCount > 1)
-          std::sort(_requestQueue.rbegin(), _requestQueue.rend());
+        // Want highest priority at back of vector
+        if (queueCount > 1) {
+          std::sort(
+            begin(_requestQueue),
+            end(_requestQueue),
+            [](Work* a, Work* b) { return (*b) < (*a); });
+        }
 
         // Stage amount of work specified by caller, or whatever is left
         size_t dispatchCount = std::min(queueCount, slotsAvailable);
