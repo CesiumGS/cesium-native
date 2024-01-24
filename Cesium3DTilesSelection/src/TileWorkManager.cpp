@@ -54,6 +54,27 @@ WorkInstance* TileWorkManager::createWorkInstance(WorkRequest* work) {
   return workPointer;
 }
 
+void TileWorkManager::requestsToInstances(
+    const std::vector<WorkRequest*>& requests,
+    std::vector<const WorkInstance*>& instancesCreated) {
+
+  for (WorkRequest* workRequest : requests) {
+    WorkInstance* newInstance = createWorkInstance(workRequest);
+
+    instancesCreated.push_back(newInstance);
+
+    // Create child work, if exists. Link parent->child with raw pointers
+    // Only support one level deep, for now
+    for (WorkRequest& childWork : workRequest->childWork) {
+      WorkInstance* newChildInstance = createWorkInstance(&childWork);
+      newInstance->children.insert(newChildInstance);
+      newChildInstance->parent = newInstance;
+
+      instancesCreated.push_back(newChildInstance);
+    }
+  }
+}
+
 void TileWorkManager::TryAddWork(
     std::vector<WorkRequest>& loadWork,
     size_t maxSimultaneousRequests,
@@ -109,21 +130,8 @@ void TileWorkManager::TryAddWork(
     this->_maxSimultaneousRequests = maxSimultaneousRequests;
 
     // Copy load requests into internal work we will own
-    for (WorkRequest* element : requestWorkToSubmit) {
-      WorkInstance* newInstance = createWorkInstance(element);
-
-      instancesCreated.push_back(newInstance);
-
-      // Create child work, if exists. Link parent->child with raw pointers
-      // Only support one level deep, for now
-      for (WorkRequest& childWork : element->childWork) {
-        WorkInstance* newChildInstance = createWorkInstance(&childWork);
-        newInstance->children.insert(newChildInstance);
-        newChildInstance->parent = newInstance;
-
-        instancesCreated.push_back(newChildInstance);
-      }
-    }
+    requestsToInstances(requestWorkToSubmit, instancesCreated);
+    requestsToInstances(processingWork, instancesCreated);
   }
 
   if (requestWorkToSubmit.size()) {

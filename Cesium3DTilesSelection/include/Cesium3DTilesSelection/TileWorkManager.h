@@ -108,6 +108,10 @@ private:
 
   WorkInstance* createWorkInstance(WorkRequest* loadWork);
 
+  void requestsToInstances(
+      const std::vector<WorkRequest*>& requests,
+      std::vector<const WorkInstance*>& instancesCreated);
+
   // Thread safe members
   std::mutex _requestsLock;
   bool _exitSignaled = false;
