@@ -19,8 +19,6 @@ struct RasterProcessingData {
   RasterProcessingCallback rasterCallback;
 };
 
-typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
-
 typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
 
 class TileWorkManager {
@@ -53,8 +51,10 @@ public:
     }
   };
 
+  typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
+
   struct Work {
-    TileSource tileSource;
+    TileSource uniqueId;
 
     RequestData requestData;
 

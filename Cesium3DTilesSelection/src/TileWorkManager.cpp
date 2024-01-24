@@ -19,28 +19,28 @@ TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* order) {
   bool workHasTileProcessing =
       std::holds_alternative<TileProcessingData>(order->processingData);
 
-  TileSource tileSource;
+  TileSource uniqueId;
   if (workHasTileProcessing) {
     TileProcessingData workTileProcessing =
         std::get<TileProcessingData>(order->processingData);
-    tileSource = workTileProcessing.pTile;
+    uniqueId = workTileProcessing.pTile;
   } else {
     RasterProcessingData workRasterProcessing =
         std::get<RasterProcessingData>(order->processingData);
-    tileSource = workRasterProcessing.pRasterTile;
+    uniqueId = workRasterProcessing.pRasterTile;
   }
 
   // Assert any work isn't already owned by this manager
-  assert(_ownedWork.find(tileSource) == _ownedWork.end());
+  assert(_ownedWork.find(uniqueId) == _ownedWork.end());
 
   Work internalWork = {
-      tileSource,
+      uniqueId,
       std::move(order->requestData),
       std::move(order->processingData),
       std::move(order->group),
       std::move(order->priority)};
 
-  auto returnPair = _ownedWork.emplace(tileSource, std::move(internalWork));
+  auto returnPair = _ownedWork.emplace(uniqueId, std::move(internalWork));
   assert(returnPair.second);
 
   Work* workPointer = &returnPair.first->second;
@@ -150,7 +150,7 @@ void TileWorkManager::RequeueWorkForRequest(Work* requestWork) {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
     // Assert this work is already owned by this manager
-    assert(_ownedWork.find(requestWork->tileSource) != _ownedWork.end());
+    assert(_ownedWork.find(requestWork->uniqueId) != _ownedWork.end());
 
     // It goes in the request queue
     _requestQueue.push_back(requestWork);
@@ -163,19 +163,19 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // Assert this work is already owned by this manager
-  assert(_ownedWork.find(work->tileSource) != _ownedWork.end());
+  assert(_ownedWork.find(work->uniqueId) != _ownedWork.end());
 
   // Assert this is not in any other queues
 #ifndef NDEBUG
   for (auto element : _requestQueue)
-    assert(element->tileSource != work->tileSource);
+    assert(element->uniqueId != work->uniqueId);
 
   for (auto urlWorkVecPair : _inFlightRequests)
     for (auto element : urlWorkVecPair.second)
-      assert(element->tileSource != work->tileSource);
+      assert(element->uniqueId != work->uniqueId);
 
   for (auto element : _processingQueue)
-    assert(element->tileSource != work->tileSource);
+    assert(element->uniqueId != work->uniqueId);
 #endif
 
   // If this work has parent work, remove this reference
@@ -191,7 +191,7 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
   assert(work->children.empty());
 
   // Remove it
-  _ownedWork.erase(work->tileSource);
+  _ownedWork.erase(work->uniqueId);
 }
 
 void TileWorkManager::onRequestFinished(
@@ -325,7 +325,7 @@ void TileWorkManager::TakeProcessingWork(
   if (_failedWork.empty()) {
     // Failed work immediately releases ownership to caller
     for (auto work : _failedWork) {
-      auto foundIt = _ownedWork.find(work->tileSource);
+      auto foundIt = _ownedWork.find(work->uniqueId);
       assert(foundIt != _ownedWork.end());
 
       outFailed.push_back(std::move(foundIt->second));
@@ -346,9 +346,9 @@ void TileWorkManager::TakeProcessingWork(
   // TODO - This list should be a map so it is always sorted
   // Want highest priority at back
   std::sort(
-    begin(_processingQueue),
-    end(_processingQueue),
-    [](Work* a, Work* b) { return (*b) < (*a); });
+      begin(_processingQueue),
+      end(_processingQueue),
+      [](Work* a, Work* b) { return (*b) < (*a); });
 
   size_t numberToTake = std::min(processingCount, maxCount);
 
@@ -395,9 +395,9 @@ void TileWorkManager::transitionQueuedWork() {
         // Want highest priority at back of vector
         if (queueCount > 1) {
           std::sort(
-            begin(_requestQueue),
-            end(_requestQueue),
-            [](Work* a, Work* b) { return (*b) < (*a); });
+              begin(_requestQueue),
+              end(_requestQueue),
+              [](Work* a, Work* b) { return (*b) < (*a); });
         }
 
         // Stage amount of work specified by caller, or whatever is left
